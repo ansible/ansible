@@ -6,23 +6,13 @@
 #
 # This module is proudly sponsored by iGeolise (www.igeolise.com) and
 # Tiny Lab Productions (www.tinylabproductions.com).
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -68,6 +58,11 @@ options:
         required: false
         default: normal
         choices: [normal, low]
+    host:
+        description: ["Host name to associate with the event."]
+        required: false
+        default: "{{ ansible_hostname }}"
+        version_added: "2.4"
     tags:
         description: ["Comma separated list of tags to apply to the event."]
         required: false
@@ -108,12 +103,18 @@ EXAMPLES = '''
     tags: 'aa,bb,#host:{{ inventory_hostname }}'
 '''
 
+import platform
+import traceback
+
 # Import Datadog
 try:
     from datadog import initialize, api
     HAS_DATADOG = True
 except:
     HAS_DATADOG = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 
 
 def main():
@@ -127,6 +128,7 @@ def main():
             priority=dict(
                 required=False, default='normal', choices=['normal', 'low']
             ),
+            host=dict(required=False, default=None),
             tags=dict(required=False, default=None, type='list'),
             alert_type=dict(
                 required=False, default='info',
@@ -153,8 +155,11 @@ def main():
 
 def _post_event(module):
     try:
+        if module.params['host'] is None:
+            module.params['host'] = platform.node().split('.')[0]
         msg = api.Event.create(title=module.params['title'],
                                text=module.params['text'],
+                               host=module.params['host'],
                                tags=module.params['tags'],
                                priority=module.params['priority'],
                                alert_type=module.params['alert_type'],
@@ -164,12 +169,9 @@ def _post_event(module):
             module.fail_json(msg=msg)
 
         module.exit_json(changed=True, msg=msg)
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg=str(e))
+    except Exception as e:
+        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 if __name__ == '__main__':
     main()

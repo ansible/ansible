@@ -1,22 +1,12 @@
 #!/usr/bin/python
 # Copyright 2016 Tomas Karasek <tom.to.the.k@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -29,7 +19,7 @@ description:
      - Create/delete an SSH key in Packet host.
      - API is documented at U(https://www.packet.net/help/api/#page:ssh-keys,header:ssh-keys-ssh-keys-post).
 version_added: "2.3"
-author: "Tomas Karasek <tom.to.the.k@gmail.com>"
+author: "Tomas Karasek (@t0mk) <tom.to.the.k@gmail.com>"
 options:
   state:
     description:
@@ -69,7 +59,7 @@ EXAMPLES = '''
   hosts: localhost
   tasks:
     packet_sshkey:
-      key: ssh-dss AAAAB3NzaC1kc3MAAACBAIfNT5S0ncP4BBJBYNhNPxFF9lqVhfPeu6SM1LoCocxqDc1AT3zFRi8hjIf6TLZ2AA4FYbcAWxLMhiBxZRVldT9GdBXile78kAK5z3bKTwq152DCqpxwwbaTIggLFhsU8wrfBsPWnDuAxZ0h7mmrCjoLIE3CNLDA/NmV3iB8xMThAAAAFQCStcesSgR1adPORzBxTr7hug92LwAAAIBOProm3Gk+HWedLyE8IfofLaOeRnbBRHAOL4z0SexKkVOnQ/LGN/uDIIPGGBDYTvXgKZT+jbHeulRJ2jKgfSpGKN4JxFQ8uzVH492jEiiUJtT72Ss1dCV4PmyERVIw+f54itihV3z/t25dWgowhb0int8iC/OY3cGodlmYb3wdcQAAAIBuLbB45djZXzUkOTzzcRDIRfhaxo5WipbtEM2B1fuBt2gyrvksPpH/LK6xTjdIIb0CxPu4OCxwJG0aOz5kJoRnOWIXQGhH7VowrJhsqhIc8gN9ErbO5ea8b1L76MNcAotmBDeTUiPw01IJ8MdDxfmcsCslJKgoRKSmQpCwXQtN2g== tomk@hp2
+      key: "{{ lookup('file', 'my_packet_sshkey.pub') }}"
 
 - name: create sshkey from file
   hosts: localhost
@@ -94,7 +84,7 @@ changed:
     returned: always
 sshkeys:
     description: Information about sshkeys that were createe/removed.
-    type: array
+    type: list
     sample: [
         {
             "fingerprint": "5c:93:74:7c:ed:07:17:62:28:75:79:23:d6:08:93:46",
@@ -104,7 +94,7 @@ sshkeys:
         }
     ]
     returned: always
-'''
+'''  # NOQA
 
 import os
 import uuid
@@ -112,8 +102,6 @@ import uuid
 from ansible.module_utils.basic import AnsibleModule
 
 HAS_PACKET_SDK = True
-
-
 try:
     import packet
 except ImportError:

@@ -19,15 +19,15 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.six import string_types
-
 import os
 import shutil
 import subprocess
 import tempfile
 
 from ansible.errors import AnsibleError
+from ansible.module_utils.six import string_types
 from ansible.playbook.role.definition import RoleDefinition
+
 
 __all__ = ['RoleRequirement']
 
@@ -45,6 +45,7 @@ try:
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
+
 
 class RoleRequirement(RoleDefinition):
 
@@ -83,7 +84,8 @@ class RoleRequirement(RoleDefinition):
         #   'version': 'v1.0',
         #   'name': 'repo'
         # }
-        display.deprecated("The comma separated role spec format, use the yaml/explicit format instead. Line that trigger this: %s" % role_spec)
+        display.deprecated("The comma separated role spec format, use the yaml/explicit format instead. Line that trigger this: %s" % role_spec,
+                           version="2.7")
 
         default_role_versions = dict(git='master', hg='tip')
 
@@ -192,7 +194,7 @@ class RoleRequirement(RoleDefinition):
                 raise AnsibleError("error executing: %s" % " ".join(clone_cmd))
             rc = popen.wait()
         if rc != 0:
-            raise AnsibleError ("- command %s failed in directory %s (rc=%s)" % (' '.join(clone_cmd), tempdir, rc))
+            raise AnsibleError("- command %s failed in directory %s (rc=%s)" % (' '.join(clone_cmd), tempdir, rc))
 
         if scm == 'git' and version:
             checkout_cmd = [scm, 'checkout', version]
@@ -227,4 +229,3 @@ class RoleRequirement(RoleDefinition):
 
         shutil.rmtree(tempdir, ignore_errors=True)
         return temp_file.name
-

@@ -1,0 +1,105 @@
+# Test code for the vmware_guest_facts module.
+# (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+- name: make sure pyvmomi is installed
+  pip:
+    name: pyvmomi
+    state: latest
+
+- name: store the vcenter container ip
+  set_fact:
+    vcsim: "{{ lookup('env', 'vcenter_host') }}"
+
+- debug: var=vcsim
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
+
+- name: kill vcsim
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/killall' }}"
+
+- name: start vcsim
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/spawn?datacenter=1&cluster=1&folder=0' }}"
+  register: vcsim_instance
+
+- name: Wait for vcsim server to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
+
+- name: get a list of Datacenter from vcsim
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=DC' }}"
+  register: datacenters
+
+- set_fact: dc1="{{ datacenters['json'][0] }}"
+
+- name: get a list of virtual machines from vcsim
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=VM' }}"
+  register: vms
+
+- set_fact: vm1="{{ vms['json'][0] }}"
+
+# Testcase 0001: Get details about virtual machines
+- name: get list of facts about virtual machines
+  vmware_guest_facts:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    datacenter: "{{ dc1 | basename }}"
+    name: "{{ vm1 | basename }}"
+    folder: "{{ vm1 | dirname }}"
+  register: guest_facts_0001
+
+- debug: msg="{{ guest_facts_0001 }}"
+
+- assert:
+    that:
+      - "guest_facts_0001['instance']['hw_name'] == vm1 | basename"
+      - "guest_facts_0001['instance']['hw_product_uuid'] is defined"
+
+- set_fact: vm1_uuid="{{ guest_facts_0001['instance']['hw_product_uuid'] }}"
+
+- debug: var=vm1_uuid
+
+# Testcase 0002: Get details about virtual machines using UUID
+- name: get list of facts about virtual machines using UUID
+  vmware_guest_facts:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    datacenter: "{{ dc1 | basename }}"
+    uuid: "{{ vm1_uuid }}"
+  register: guest_facts_0002
+
+- debug: msg="{{ guest_facts_0002 }}"
+
+- assert:
+    that:
+      - "guest_facts_0002['instance']['hw_name'] == vm1 | basename"
+      - "guest_facts_0002['instance']['hw_product_uuid'] is defined"
+      - "guest_facts_0002['instance']['hw_product_uuid'] == vm1_uuid"

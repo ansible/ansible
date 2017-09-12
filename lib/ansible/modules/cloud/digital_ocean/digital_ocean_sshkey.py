@@ -1,21 +1,14 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -23,163 +16,256 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: digital_ocean_sshkey
-short_description: Create/delete an SSH key in DigitalOcean
+short_description: Manage DigitalOcean SSH keys
 description:
-     - Create/delete an SSH key.
-version_added: "1.6"
-author: "Michael Gregson (@mgregson)"
+     - Create/delete DigitalOcean SSH keys.
+version_added: "2.4"
+author: "Patrick Marques (@pmarques)"
 options:
   state:
     description:
      - Indicate desired state of the target.
     default: present
     choices: ['present', 'absent']
-  client_id:
-     description:
-     - DigitalOcean manager id.
-  api_key:
+  fingerprint:
     description:
-     - DigitalOcean api key.
-  id:
-    description:
-     - Numeric, the SSH key id you want to operate on.
+     - This is a unique identifier for the SSH key used to delete a key
+    required: false
+    default: None
+    version_added: 2.4
   name:
     description:
-     - String, this is the name of an SSH key to create or destroy.
+     - The name for the SSH key
+    required: false
+    default: None
   ssh_pub_key:
     description:
-     - The public SSH key you want to add to your account.
+     - The Public SSH key to add.
+    required: false
+    default: None
+  oauth_token:
+    description:
+     - DigitalOcean OAuth token.
+    required: true
+    version_added: 2.4
 
 notes:
-  - Two environment variables can be used, DO_CLIENT_ID and DO_API_KEY.
-  - Version 1 of DigitalOcean API is used.
+  - Version 2 of DigitalOcean API is used.
 requirements:
   - "python >= 2.6"
-  - dopy
 '''
 
 
 EXAMPLES = '''
-# Ensure a SSH key is present
-# If a key matches this name, will return the ssh key id and changed = False
-# If no existing key matches this name, a new key is created, the ssh key id is returned and changed = False
-
-- digital_ocean_sshkey:
+- name: "Create ssh key"
+  digital_ocean_sshkey:
+    oauth_token: "{{ oauth_token }}"
+    name: "My SSH Public Key"
+    ssh_pub_key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAQQDDHr/jh2Jy4yALcK4JyWbVkPRaWmhck3IgCoeOO3z1e2dBowLh64QAM+Qb72pxekALga2oi4GvT+TlWNhzPH4V example"
     state: present
-    name: my_ssh_key
-    ssh_pub_key: 'ssh-rsa AAAA...'
-    client_id: XXX
-    api_key: XXX
+  register: result
 
+- name: "Delete ssh key"
+  digital_ocean_sshkey:
+    oauth_token: "{{ oauth_token }}"
+    state: "absent"
+    fingerprint: "3b:16:bf:e4:8b:00:8b:b8:59:8c:a9:d3:f0:19:45:fa"
 '''
 
-import os
-import traceback
 
-try:
-    from dopy.manager import DoError, DoManager
-    HAS_DOPY = True
-except ImportError:
-    HAS_DOPY = False
+RETURN = '''
+# Digital Ocean API info https://developers.digitalocean.com/documentation/v2/#list-all-keys
+data:
+    description: This is only present when C(state=present)
+    returned: when C(state=present)
+    type: dict
+    sample: {
+        "ssh_key": {
+            "id": 512189,
+            "fingerprint": "3b:16:bf:e4:8b:00:8b:b8:59:8c:a9:d3:f0:19:45:fa",
+            "name": "My SSH Public Key",
+            "public_key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAQQDDHr/jh2Jy4yALcK4JyWbVkPRaWmhck3IgCoeOO3z1e2dBowLh64QAM+Qb72pxekALga2oi4GvT+TlWNhzPH4V example"
+        }
+    }
+'''
 
+import json
+import hashlib
+import base64
+
+from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url
 
 
-class JsonfyMixIn(object):
-    def to_json(self):
-        return self.__dict__
+class Response(object):
+
+    def __init__(self, resp, info):
+        self.body = None
+        if resp:
+            self.body = resp.read()
+        self.info = info
+
+    @property
+    def json(self):
+        if not self.body:
+            if "body" in self.info:
+                return json.loads(self.info["body"])
+            return None
+        try:
+            return json.loads(self.body)
+        except ValueError:
+            return None
+
+    @property
+    def status_code(self):
+        return self.info["status"]
 
 
-class SSH(JsonfyMixIn):
-    manager = None
+class Rest(object):
 
-    def __init__(self, ssh_key_json):
-        self.__dict__.update(ssh_key_json)
-    update_attr = __init__
+    def __init__(self, module, headers):
+        self.module = module
+        self.headers = headers
+        self.baseurl = 'https://api.digitalocean.com/v2'
 
-    def destroy(self):
-        self.manager.destroy_ssh_key(self.id)
-        return True
+    def _url_builder(self, path):
+        if path[0] == '/':
+            path = path[1:]
+        return '%s/%s' % (self.baseurl, path)
 
-    @classmethod
-    def setup(cls, client_id, api_key):
-        cls.manager = DoManager(client_id, api_key)
+    def send(self, method, path, data=None, headers=None):
+        url = self._url_builder(path)
+        data = self.module.jsonify(data)
+        timeout = self.module.params['timeout']
 
-    @classmethod
-    def find(cls, name):
-        if not name:
-            return False
-        keys = cls.list_all()
-        for key in keys:
-            if key.name == name:
-                return key
-        return False
+        resp, info = fetch_url(self.module, url, data=data, headers=self.headers, method=method, timeout=timeout)
 
-    @classmethod
-    def list_all(cls):
-        json = cls.manager.all_ssh_keys()
-        return map(cls, json)
+        # Exceptions in fetch_url may result in a status -1, the ensures a
+        if info['status'] == -1:
+            self.module.fail_json(msg=info['msg'])
 
-    @classmethod
-    def add(cls, name, key_pub):
-        json = cls.manager.new_ssh_key(name, key_pub)
-        return cls(json)
+        return Response(resp, info)
+
+    def get(self, path, data=None, headers=None):
+        return self.send('GET', path, data, headers)
+
+    def put(self, path, data=None, headers=None):
+        return self.send('PUT', path, data, headers)
+
+    def post(self, path, data=None, headers=None):
+        return self.send('POST', path, data, headers)
+
+    def delete(self, path, data=None, headers=None):
+        return self.send('DELETE', path, data, headers)
 
 
 def core(module):
-    def getkeyordie(k):
-        v = module.params[k]
-        if v is None:
-            module.fail_json(msg='Unable to load %s' % k)
-        return v
-
-    try:
-        # params['client_id'] will be None even if client_id is not passed in
-        client_id = module.params['client_id'] or os.environ['DO_CLIENT_ID']
-        api_key = module.params['api_key'] or os.environ['DO_API_KEY']
-    except KeyError as e:
-        module.fail_json(msg='Unable to load %s' % e.message)
-
+    api_token = module.params['oauth_token']
     state = module.params['state']
+    fingerprint = module.params['fingerprint']
+    name = module.params['name']
+    ssh_pub_key = module.params['ssh_pub_key']
 
-    SSH.setup(client_id, api_key)
-    name = getkeyordie('name')
+    rest = Rest(module, {'Authorization': 'Bearer {0}'.format(api_token),
+                         'Content-type': 'application/json'})
+
+    fingerprint = fingerprint or ssh_key_fingerprint(ssh_pub_key)
+    response = rest.get('account/keys/{0}'.format(fingerprint))
+    status_code = response.status_code
+    json = response.json
+
+    if status_code not in (200, 404):
+        module.fail_json(msg='Error getting ssh key [{0}: {1}]'.format(
+            status_code, response.json['message']), fingerprint=fingerprint)
+
     if state in ('present'):
-        key = SSH.find(name)
-        if key:
-            module.exit_json(changed=False, ssh_key=key.to_json())
-        key = SSH.add(name, getkeyordie('ssh_pub_key'))
-        module.exit_json(changed=True, ssh_key=key.to_json())
+        if status_code == 404:
+            # IF key not found create it!
+
+            if module.check_mode:
+                module.exit_json(changed=True)
+
+            payload = {
+                'name': name,
+                'public_key': ssh_pub_key
+            }
+            response = rest.post('account/keys', data=payload)
+            status_code = response.status_code
+            json = response.json
+            if status_code == 201:
+                module.exit_json(changed=True, data=json)
+
+            module.fail_json(msg='Error creating ssh key [{0}: {1}]'.format(
+                status_code, response.json['message']))
+
+        elif status_code == 200:
+            # If key found was found, check if name needs to be updated
+            if name is None or json['ssh_key']['name'] == name:
+                module.exit_json(changed=False, data=json)
+
+            if module.check_mode:
+                module.exit_json(changed=True)
+
+            payload = {
+                'name': name,
+            }
+            response = rest.put('account/keys/{0}'.format(fingerprint), data=payload)
+            status_code = response.status_code
+            json = response.json
+            if status_code == 200:
+                module.exit_json(changed=True, data=json)
+
+            module.fail_json(msg='Error updating ssh key name [{0}: {1}]'.format(
+                status_code, response.json['message']), fingerprint=fingerprint)
 
     elif state in ('absent'):
-        key = SSH.find(name)
-        if not key:
-            module.exit_json(changed=False, msg='SSH key with the name of %s is not found.' % name)
-        key.destroy()
-        module.exit_json(changed=True)
+        if status_code == 404:
+            module.exit_json(changed=False)
+
+        if module.check_mode:
+            module.exit_json(changed=True)
+
+        response = rest.delete('account/keys/{0}'.format(fingerprint))
+        status_code = response.status_code
+        json = response.json
+        if status_code == 204:
+            module.exit_json(changed=True)
+
+        module.fail_json(msg='Error creating ssh key [{0}: {1}]'.format(
+            status_code, response.json['message']))
+
+
+def ssh_key_fingerprint(ssh_pub_key):
+    key = ssh_pub_key.split(None, 2)[1]
+    fingerprint = hashlib.md5(base64.decodestring(key)).hexdigest()
+    return ':'.join(a + b for a, b in zip(fingerprint[::2], fingerprint[1::2]))
 
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            state = dict(choices=['present', 'absent'], default='present'),
-            client_id = dict(aliases=['CLIENT_ID'], no_log=True),
-            api_key = dict(aliases=['API_KEY'], no_log=True),
-            name = dict(type='str'),
-            id = dict(aliases=['droplet_id'], type='int'),
-            ssh_pub_key = dict(type='str'),
+        argument_spec=dict(
+            state=dict(choices=['present', 'absent'], default='present'),
+            fingerprint=dict(aliases=['id'], required=False),
+            name=dict(required=False),
+            ssh_pub_key=dict(required=False),
+            oauth_token=dict(
+                no_log=True,
+                # Support environment variable for DigitalOcean OAuth Token
+                fallback=(env_fallback, ['DO_API_TOKEN', 'DO_API_KEY', 'DO_OAUTH_TOKEN']),
+                required=True,
+            ),
+            validate_certs=dict(type='bool', default=True),
+            timeout=dict(type='int', default=30),
         ),
-        required_one_of = (
-            ['id', 'name'],
+        required_one_of=(
+            ('fingerprint', 'ssh_pub_key'),
         ),
+        supports_check_mode=True,
     )
-    if not HAS_DOPY:
-        module.fail_json(msg='dopy required for this module')
 
-    try:
-        core(module)
-    except (DoError, Exception) as e:
-        module.fail_json(msg=str(e), exception=traceback.format_exc())
+    core(module)
+
 
 if __name__ == '__main__':
     main()

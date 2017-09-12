@@ -1,26 +1,15 @@
 #!/usr/bin/python
 #
 # (c) 2015 Peter Sprygada, <psprygada@ansible.com>
+# Copyright (c) 2017 Dell Inc.
 #
-# Copyright (c) 2016 Dell Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -195,9 +184,13 @@ saved:
   sample: True
 
 """
-from ansible.module_utils.netcfg import NetworkConfig, dumps
-from ansible.module_utils.network import NetworkModule
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.dellos10 import get_config, get_sublevel_config
+from ansible.module_utils.dellos10 import dellos10_argument_spec, check_args
+from ansible.module_utils.dellos10 import load_config, run_commands
+from ansible.module_utils.dellos10 import WARNING_PROMPTS_RE
+from ansible.module_utils.netcfg import NetworkConfig, dumps
+
 
 def get_candidate(module):
     candidate = NetworkConfig(indent=1)
@@ -223,16 +216,18 @@ def main():
         match=dict(default='line',
                    choices=['line', 'strict', 'exact', 'none']),
         replace=dict(default='line', choices=['line', 'block']),
+
         update=dict(choices=['merge', 'check'], default='merge'),
         save=dict(type='bool', default=False),
         config=dict(),
         backup=dict(type='bool', default=False)
     )
 
+    argument_spec.update(dellos10_argument_spec)
+
     mutually_exclusive = [('lines', 'src')]
 
-    module = NetworkModule(argument_spec=argument_spec,
-                           connect_on_load=False,
+    module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
@@ -240,24 +235,30 @@ def main():
 
     match = module.params['match']
     replace = module.params['replace']
-    result = dict(changed=False, saved=False)
+
+    warnings = list()
+    check_args(module, warnings)
+
+    result = dict(changed=False, saved=False, warnings=warnings)
 
     candidate = get_candidate(module)
-
     if match != 'none':
         config = get_config(module)
         if parents:
             contents = get_sublevel_config(config, module)
             config = NetworkConfig(contents=contents, indent=1)
+        else:
+            config = NetworkConfig(contents=config, indent=1)
         configobjs = candidate.difference(config, match=match, replace=replace)
 
     else:
         configobjs = candidate.items
 
     if module.params['backup']:
-        result['__backup__'] = module.cli('show running-config')[0]
+        result['__backup__'] = get_config(module)
 
     commands = list()
+
     if configobjs:
         commands = dumps(configobjs, 'commands')
         commands = commands.split('\n')
@@ -269,11 +270,11 @@ def main():
             commands.extend(module.params['after'])
 
         if not module.check_mode and module.params['update'] == 'merge':
-            response = module.config.load_config(commands)
-            result['responses'] = response
+            load_config(module, commands)
 
             if module.params['save']:
-                module.config.save_config()
+                cmd = {'command': 'copy runing-config startup-config', 'prompt': WARNING_PROMPTS_RE, 'answer': 'yes'}
+                run_commands(module, [cmd])
                 result['saved'] = True
 
         result['changed'] = True
@@ -281,6 +282,7 @@ def main():
     result['updates'] = commands
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

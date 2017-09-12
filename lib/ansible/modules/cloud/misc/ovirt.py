@@ -1,23 +1,13 @@
 #!/usr/bin/python
 
 # (c) 2013, Vincent Van der Kussen <vincent at vanderkussen.org>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -268,6 +258,7 @@ ovirt:
     rootpw: bigsecret
 
 '''
+import time
 
 try:
     from ovirtsdk.api import API
@@ -275,6 +266,9 @@ try:
     HAS_OVIRTSDK = True
 except ImportError:
     HAS_OVIRTSDK = False
+
+from ansible.module_utils.basic import AnsibleModule
+
 
 # ------------------------------------------------------------------- #
 # create connection with API
@@ -292,7 +286,9 @@ def conn(url, user, password):
 def create_vm(conn, vmtype, vmname, zone, vmdisk_size, vmcpus, vmnic, vmnetwork, vmmem, vmdisk_alloc, sdomain, vmcores, vmos, vmdisk_int):
     if vmdisk_alloc == 'thin':
         # define VM params
-        vmparams = params.VM(name=vmname,cluster=conn.clusters.get(name=zone),os=params.OperatingSystem(type_=vmos),template=conn.templates.get(name="Blank"),memory=1024 * 1024 * int(vmmem),cpu=params.CPU(topology=params.CpuTopology(cores=int(vmcores))), type_=vmtype)
+        vmparams = params.VM(name=vmname, cluster=conn.clusters.get(name=zone), os=params.OperatingSystem(type_=vmos),
+                             template=conn.templates.get(name="Blank"), memory=1024 * 1024 * int(vmmem),
+                             cpu=params.CPU(topology=params.CpuTopology(cores=int(vmcores))), type_=vmtype)
         # define disk params
         vmdisk= params.Disk(size=1024 * 1024 * 1024 * int(vmdisk_size), wipe_after_delete=True, sparse=True, interface=vmdisk_int, type_="System", format='cow',
         storage_domains=params.StorageDomains(storage_domain=[conn.storagedomains.get(name=sdomain)]))
@@ -301,10 +297,12 @@ def create_vm(conn, vmtype, vmname, zone, vmdisk_size, vmcpus, vmnic, vmnetwork,
         nic_net1 = params.NIC(name='nic1', network=network_net, interface='virtio')
     elif vmdisk_alloc == 'preallocated':
         # define VM params
-        vmparams = params.VM(name=vmname,cluster=conn.clusters.get(name=zone),os=params.OperatingSystem(type_=vmos),template=conn.templates.get(name="Blank"),memory=1024 * 1024 * int(vmmem),cpu=params.CPU(topology=params.CpuTopology(cores=int(vmcores))) ,type_=vmtype)
+        vmparams = params.VM(name=vmname, cluster=conn.clusters.get(name=zone), os=params.OperatingSystem(type_=vmos),
+                             template=conn.templates.get(name="Blank"), memory=1024 * 1024 * int(vmmem),
+                             cpu=params.CPU(topology=params.CpuTopology(cores=int(vmcores))) ,type_=vmtype)
         # define disk params
-        vmdisk= params.Disk(size=1024 * 1024 * 1024 * int(vmdisk_size), wipe_after_delete=True, sparse=False, interface=vmdisk_int, type_="System", format='raw',
-        storage_domains=params.StorageDomains(storage_domain=[conn.storagedomains.get(name=sdomain)]))
+        vmdisk= params.Disk(size=1024 * 1024 * 1024 * int(vmdisk_size), wipe_after_delete=True, sparse=False, interface=vmdisk_int, type_="System",
+                            format='raw', storage_domains=params.StorageDomains(storage_domain=[conn.storagedomains.get(name=sdomain)]))
         # define network parameters
         network_net = params.Network(name=vmnetwork)
         nic_net1 = params.NIC(name=vmnic, network=network_net, interface='virtio')
@@ -519,11 +517,6 @@ def main():
             vm_remove(c, vmname)
             module.exit_json(changed=True, msg="VM %s removed" % vmname)
 
-
-
-
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

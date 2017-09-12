@@ -1,0 +1,33 @@
+{# Not all Autoscaling API Actions allow specified resources #}
+{# See http://docs.aws.amazon.com/autoscaling/latest/userguide/control-access-using-iam.html#policy-auto-scaling-resources #}
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "DescribeAutoscaling",
+            "Effect": "Allow",
+            "Action": [
+                "autoscaling:DescribeAutoScalingGroups",
+                "autoscaling:DescribeLaunchConfigurations",
+                "autoscaling:DescribePolicies"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "AllowAutoscaling",
+            "Effect": "Allow",
+            "Action": [
+                "autoscaling:CreateLaunchConfiguration",
+                "autoscaling:CreateAutoScalingGroup",
+                "autoscaling:UpdateAutoScalingGroup",
+                "autoscaling:DeleteAutoScalingGroup",
+                "autoscaling:DeleteLaunchConfiguration",
+                "autoscaling:PutScalingPolicy",
+                "autoscaling:DeletePolicy"
+            ],
+            "Resource": [
+                "arn:aws:autoscaling:{{aws_region}}:{{aws_account}}:*"
+            ]
+        }
+    ]
+}

@@ -18,7 +18,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -54,7 +54,7 @@ options:
   value:
     description:
       - Blueprint parameter value.  This value may be transformed by using the
-        I(param_map) field; used when the the blueprint parameter requires
+        I(param_map) field; used when the blueprint parameter requires
         an AOS unique ID value.
   get_param_list:
     description:

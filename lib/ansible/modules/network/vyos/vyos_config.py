@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -34,6 +34,8 @@ description:
     configuration statements are based on `set` and `delete` commands
     in the device configuration.
 extends_documentation_fragment: vyos
+notes:
+  - Tested against VYOS 1.1.7
 options:
   lines:
     description:
@@ -269,9 +271,11 @@ def main():
         run(module, result)
 
     if module.params['save']:
-        if not module.check_mode:
-            run_commands(module, ['save'])
-        result['changed'] = True
+        diff = run_commands(module, commands=['configure', 'compare saved'])[1]
+        if diff != '[edit]':
+            run_commands(module, commands=['save'])
+            result['changed'] = True
+        run_commands(module, commands=['exit'])
 
     module.exit_json(**result)
 

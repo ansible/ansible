@@ -30,6 +30,7 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
+
 def get_reserved_names(include_private=True):
     ''' this function returns the list of reserved names associated with play objects'''
 
@@ -37,8 +38,8 @@ def get_reserved_names(include_private=True):
     private = set()
     result = set()
 
-    #FIXME: find a way to 'not hardcode', possibly need role deps/includes
-    class_list = [ Play, Role, Block, Task ]
+    # FIXME: find a way to 'not hardcode', possibly need role deps/includes
+    class_list = [Play, Role, Block, Task]
 
     for aclass in class_list:
         aobj = aclass()
@@ -55,7 +56,7 @@ def get_reserved_names(include_private=True):
         public.add('local_action')
 
     # loop implies with_
-    #FIXME: remove after with_ is not only deprecated but removed
+    # FIXME: remove after with_ is not only deprecated but removed
     if 'loop' in private or 'loop' in public:
         public.add('with_')
 
@@ -66,12 +67,14 @@ def get_reserved_names(include_private=True):
 
     return result
 
+
 def warn_if_reserved(myvars):
     ''' this function warns if any variable passed conflicts with internally reserved names '''
-    reserved = get_reserved_names()
-    for varname in myvars:
-        if varname == 'vars':
-            continue # we add this one internally
-        if varname in reserved:
-            display.warning('Found variable using reserved name: %s' % varname)
 
+    varnames = set(myvars)
+    varnames.discard('vars')  # we add this one internally, so safe to ignore
+    for varname in varnames.intersection(_RESERVED_NAMES):
+        display.warning('Found variable using reserved name: %s' % varname)
+
+
+_RESERVED_NAMES = frozenset(get_reserved_names())

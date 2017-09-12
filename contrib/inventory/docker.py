@@ -371,13 +371,25 @@ HAS_DOCKER_PY = True
 HAS_DOCKER_ERROR = False
 
 try:
-    from docker import Client
     from docker.errors import APIError, TLSParameterError
     from docker.tls import TLSConfig
     from docker.constants import DEFAULT_TIMEOUT_SECONDS, DEFAULT_DOCKER_API_VERSION
 except ImportError as exc:
     HAS_DOCKER_ERROR = str(exc)
     HAS_DOCKER_PY = False
+
+# Client has recently been split into DockerClient and APIClient
+try:
+    from docker import Client
+except ImportError as exc:
+    try:
+        from docker import APIClient as Client
+    except ImportError as exc:
+        HAS_DOCKER_ERROR = str(exc)
+        HAS_DOCKER_PY = False
+
+        class Client:
+            pass
 
 DEFAULT_DOCKER_HOST = 'unix://var/run/docker.sock'
 DEFAULT_TLS = False
@@ -525,7 +537,7 @@ class AnsibleDockerClient(Client):
             msg = "You asked for verification that Docker host name matches %s. The actual hostname is %s. " \
                 "Most likely you need to set DOCKER_TLS_HOSTNAME or pass tls_hostname with a value of %s. " \
                 "You may also use TLS without verification by setting the tls parameter to true." \
-                % (self.auth_params['tls_hostname'], match.group(1))
+                % (self.auth_params['tls_hostname'], match.group(1), match.group(1))
             self.fail(msg)
         self.fail("SSL Exception: %s" % (error))
 
@@ -779,6 +791,10 @@ class DockerInventory(object):
         if config_path:
             try:
                 config_file = os.path.abspath(config_path)
+                # default config path is docker.yml in same directory as this script
+                # old behaviour is docker.yml in current directory. Handle both.
+                if not os.path.exists(config_file):
+                    config_file = os.path.abspath(os.path.basename(config_path))
             except:
                 config_file = None
 
@@ -813,30 +829,30 @@ class DockerInventory(object):
         # Parse command line arguments
 
         basename = os.path.splitext(os.path.basename(__file__))[0]
-        default_config = basename + '.yml'
+        default_config = os.path.join(os.path.dirname(__file__), basename + '.yml')
 
         parser = argparse.ArgumentParser(
             description='Return Ansible inventory for one or more Docker hosts.')
         parser.add_argument('--list', action='store_true', default=True,
-                           help='List all containers (default: True)')
+                            help='List all containers (default: True)')
         parser.add_argument('--debug', action='store_true', default=False,
-                           help='Send debug messages to STDOUT')
+                            help='Send debug messages to STDOUT')
         parser.add_argument('--host', action='store',
                             help='Only get information for a specific container.')
         parser.add_argument('--pretty', action='store_true', default=False,
-                           help='Pretty print JSON output(default: False)')
+                            help='Pretty print JSON output(default: False)')
         parser.add_argument('--config-file', action='store', default=default_config,
                             help="Name of the config file to use. Default is %s" % (default_config))
         parser.add_argument('--docker-host', action='store', default=None,
                             help="The base url or Unix sock path to connect to the docker daemon. Defaults to %s"
-                                  % (DEFAULT_DOCKER_HOST))
+                                 % (DEFAULT_DOCKER_HOST))
         parser.add_argument('--tls-hostname', action='store', default='localhost',
                             help="Host name to expect in TLS certs. Defaults to 'localhost'")
         parser.add_argument('--api-version', action='store', default=None,
                             help="Docker daemon API version. Defaults to %s" % (DEFAULT_DOCKER_API_VERSION))
         parser.add_argument('--timeout', action='store', default=None,
                             help="Docker connection timeout in seconds. Defaults to %s"
-                                  % (DEFAULT_TIMEOUT_SECONDS))
+                                 % (DEFAULT_TIMEOUT_SECONDS))
         parser.add_argument('--cacert-path', action='store', default=None,
                             help="Path to the TLS certificate authority pem file.")
         parser.add_argument('--cert-path', action='store', default=None,

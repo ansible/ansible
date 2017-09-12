@@ -1,13 +1,4 @@
 ---
-- name: remove links if they exist as win_file struggles
-  win_command: cmd.exe /c rmdir "{{item}}"
-  ignore_errors: True
-  with_items:
-  - "{{win_find_dir}}\\nested\\link"
-  - "{{win_find_dir}}\\broken-link"
-  - "{{win_find_dir}}\\hard-link-dest\\hard-link.log"
-  - "{{win_find_dir}}\\junction-link"
-
 - name: ensure the testing directory is cleared before setting up test
   win_file:
     path: "{{win_find_dir}}"
@@ -18,18 +9,20 @@
     path: "{{item}}"
     state: directory
   with_items:
-  - "{{win_find_dir}}\\nested"
-  - "{{win_find_dir}}\\single"
-  - "{{win_find_dir}}\\link-dest"
-  - "{{win_find_dir}}\\link-dest\\sub-link"
-  - "{{win_find_dir}}\\hard-link-dest"
-  - "{{win_find_dir}}\\junction-link-dest"
-  - "{{win_find_dir}}\\broken-link-dest"
-  - "{{win_find_dir}}\\nested\\sub-nest"
-  - "{{win_find_dir}}\\shared"
-  - "{{win_find_dir}}\\shared\\folder"
-  - "{{win_find_dir}}\\hidden"
-  - "{{win_find_dir}}\\date"
+  - '{{win_find_dir}}\nested'
+  - '{{win_find_dir}}\single'
+  - '{{win_find_dir}}\link-dest'
+  - '{{win_find_dir}}\link-dest\sub-link'
+  - '{{win_find_dir}}\hard-link-dest'
+  - '{{win_find_dir}}\junction-link-dest'
+  - '{{win_find_dir}}\broken-link-dest'
+  - '{{win_find_dir}}\nested\sub-nest'
+  - '{{win_find_dir}}\shared'
+  - '{{win_find_dir}}\shared\folder'
+  - '{{win_find_dir}}\hidden'
+  - '{{win_find_dir}}\date'
+  - '{{win_find_dir}}\emptynested\nest\dir1'
+  - '{{win_find_dir}}\emptynested\nest\dir2'
 
 - name: create empty test files
   win_file:
@@ -140,19 +133,19 @@
   win_find:
     patterns: a
   register: actual
-  failed_when: "actual.msg != 'Missing required argument: paths'"
+  failed_when: "actual.msg != 'Get-AnsibleParam: Missing required argument: paths'"
 
 - name: expect failure when setting paths to a file
   win_find:
     paths: "{{win_output_dir}}\\win_find\\single\\large.ps1"
   register: actual
-  failed_when: "actual.msg != 'Argument path {{win_output_dir|regex_replace('\\\\', '\\\\\\\\')}}\\win_find\\single\\large.ps1 is a file not a directory'"
+  failed_when: actual.msg != 'Argument path ' + win_output_dir + '\\win_find\\single\\large.ps1 is a file not a directory'
 
-- name: expect failure whe path is set to a non existant folder
+- name: expect failure whe path is set to a non existent folder
   win_find:
     paths: "{{win_output_dir}}\\win_find\\thisisafakefolder"
   register: actual
-  failed_when: "actual.msg != 'Argument path {{win_output_dir|regex_replace('\\\\', '\\\\\\\\')}}\\\\win_find\\\\thisisafakefolder does not exist cannot get information on'"
+  failed_when: actual.msg != 'Argument path ' + win_output_dir + '\\win_find\\thisisafakefolder does not exist cannot get information on'
 
 - name: get files in single directory
   win_find:
@@ -164,6 +157,7 @@
     expected:
       changed: False
       examined: 5
+      failed: False
       files:
       - { isarchive: True,
           attributes: Archive,
@@ -173,7 +167,7 @@
           filename: large.ps1,
           ishidden: False,
           isdir: False,
-          islink: False,
+          islnk: False,
           lastaccesstime: 1477984205,
           lastwritetime: 1477984205,
           owner: BUILTIN\Administrators,
@@ -189,7 +183,7 @@
           filename: out_20161101-091005.log,
           ishidden: False,
           isdir: False,
-          islink: False,
+          islnk: False,
           lastaccesstime: 1477984205,
           lastwritetime: 1477984205,
           owner: BUILTIN\Administrators,
@@ -205,7 +199,7 @@
           filename: small.ps1,
           ishidden: False,
           isdir: False,
-          islink: False,
+          islnk: False,
           lastaccesstime: 1477984205,
           lastwritetime: 1477984205,
           owner: BUILTIN\Administrators,
@@ -221,7 +215,7 @@
           filename: test.ps1,
           ishidden: False,
           isdir: False,
-          islink: False,
+          islnk: False,
           lastaccesstime: 1477984205,
           lastwritetime: 1477984205,
           owner: BUILTIN\Administrators,
@@ -233,7 +227,7 @@
 
 - name: assert actual == expected
   assert:
-    that: "actual == expected"
+    that: actual == expected
 
 - name: find hidden files
   win_find:
@@ -246,6 +240,7 @@
     expected:
       changed: False
       examined: 11
+      failed: False
       files:
       - { isarchive: True,
           attributes: "Hidden, Archive",
@@ -255,7 +250,7 @@
           filename: hidden.ps1,
           ishidden: True,
           isdir: False,
-          islink: False,
+          islnk: False,
           lastaccesstime: 1477984205,
           lastwritetime: 1477984205,
           owner: BUILTIN\Administrators,
@@ -267,7 +262,7 @@
 
 - name: assert actual == expected
   assert:
-    that: "actual == expected"
+    that: actual == expected
 
 - name: find file based on pattern
   win_find:
@@ -287,6 +282,7 @@
     expected:
       changed: False
       examined: 5
+      failed: False
       files:
       - { isarchive: True,
           attributes: Archive,
@@ -296,7 +292,7 @@
           filename: out_20161101-091005.log,
           ishidden: False,
           isdir: False,
-          islink: False,
+          islnk: False,
           lastaccesstime: 1477984205,
           lastwritetime: 1477984205,
           owner: BUILTIN\Administrators,
@@ -309,8 +305,8 @@
 - name: assert actual == expected
   assert:
     that: 
-    - "actual_pattern == expected"
-    - "actual_regex == expected"
+    - actual_pattern == expected
+    - actual_regex == expected
 
 - name: find files with recurse set
   win_find:
@@ -324,6 +320,7 @@
     expected:
       changed: False
       examined: 8
+      failed: False
       files:
       - { isarchive: True,
           attributes: Archive,
@@ -333,7 +330,7 @@
           filename: test.ps1,
           ishidden: False,
           isdir: False,
-          islink: False,
+          islnk: False,
           lastaccesstime: 1477984205,
           lastwritetime: 1477984205,
           owner: BUILTIN\Administrators,
@@ -349,7 +346,7 @@
           filename: file.ps1,
           ishidden: False,
           isdir: False,
-          islink: False,
+          islnk: False,
           lastaccesstime: 1477984205,
           lastwritetime: 1477984205,
           owner: BUILTIN\Administrators,
@@ -365,7 +362,7 @@
           filename: test.ps1,
           ishidden: False,
           isdir: False,
-          islink: False,
+          islnk: False,
           lastaccesstime: 1477984205,
           lastwritetime: 1477984205,
           owner: BUILTIN\Administrators,
@@ -377,7 +374,7 @@
 
 - name: assert actual == expected
   assert:
-    that: "actual == expected"
+    that: actual == expected
 
 - name: find files with recurse set and follow links
   win_find:
@@ -392,6 +389,7 @@
     expected:
       changed: False
       examined: 10
+      failed: False
       files:
       - { isarchive: True,
           attributes: Archive,
@@ -401,7 +399,7 @@
           filename: link.ps1,
           ishidden: False,
           isdir: False,
-          islink: False,
+          islnk: False,
           lastaccesstime: 1477984205,
           lastwritetime: 1477984205,
           owner: BUILTIN\Administrators,
@@ -417,7 +415,7 @@
           filename: test.ps1,
           ishidden: False,
           isdir: False,
-          islink: False,
+          islnk: False,
           lastaccesstime: 1477984205,
           lastwritetime: 1477984205,
           owner: BUILTIN\Administrators,
@@ -433,7 +431,7 @@
           filename: file.ps1,
           ishidden: False,
           isdir: False,
-          islink: False,
+          islnk: False,
           lastaccesstime: 1477984205,
           lastwritetime: 1477984205,
           owner: BUILTIN\Administrators,
@@ -449,7 +447,7 @@
           filename: test.ps1,
           ishidden: False,
           isdir: False,
-          islink: False,
+          islnk: False,
           lastaccesstime: 1477984205,
           lastwritetime: 1477984205,
           owner: BUILTIN\Administrators,
@@ -461,7 +459,7 @@
 
 - name: assert actual == expected
   assert:
-    that: "actual == expected"
+    that: actual == expected
 
 - name: find directories
   win_find:
@@ -474,6 +472,7 @@
     expected:
       changed: False
       examined: 2
+      failed: False
       files:
       - { isarchive: False,
           attributes: Directory,
@@ -481,7 +480,7 @@
           filename: sub-link,
           ishidden: False,
           isdir: True,
-          islink: False,
+          islnk: False,
           lastaccesstime: 1477984205,
           lastwritetime: 1477984205,
           owner: BUILTIN\Administrators,
@@ -493,7 +492,7 @@
 
 - name: assert actual == expected
   assert:
-    that: "actual == expected"
+    that: actual == expected
 
 - name: find directories recurse and follow with a broken link
   win_find:
@@ -506,20 +505,20 @@
 - name: check directory count with recurse and follow is correct
   assert:
     that:
-    - "actual.examined == 33"
-    - "actual.matched == 13"
-    - "actual.files[0].filename == 'broken-link'"
-    - "actual.files[0].islink == True"
-    - "actual.files[2].filename == 'junction-link'"
-    - "actual.files[2].islink == True"
-    - "actual.files[2].lnk_source == '{{win_find_dir|regex_replace('\\\\', '\\\\\\\\')}}\\\\junction-link-dest'"
-    - "actual.files[7].filename == 'link'"
-    - "actual.files[7].islink == True"
-    - "actual.files[7].lnk_source == '{{win_find_dir|regex_replace('\\\\', '\\\\\\\\')}}\\\\link-dest'"
-    - "actual.files[11].filename == 'folder'"
-    - "actual.files[11].islink == False"
-    - "actual.files[11].isshared == True"
-    - "actual.files[11].sharename == 'folder-share'"
+    - actual.examined == 37
+    - actual.matched == 17
+    - actual.files[0].filename == 'broken-link'
+    - actual.files[0].islnk == True
+    - actual.files[6].filename == 'junction-link'
+    - actual.files[6].islnk == True
+    - actual.files[6].lnk_source == win_find_dir + '\\junction-link-dest'
+    - actual.files[11].filename == 'link'
+    - actual.files[11].islnk == True
+    - actual.files[11].lnk_source == win_find_dir + '\\link-dest'
+    - actual.files[15].filename == 'folder'
+    - actual.files[15].islnk == False
+    - actual.files[15].isshared == True
+    - actual.files[15].sharename == 'folder-share'
 
 - name: filter files by size without byte specified
   win_find:
@@ -538,6 +537,7 @@
     expected:
       changed: False
       examined: 5
+      failed: False
       files:
       - { isarchive: True,
           attributes: Archive,
@@ -547,7 +547,7 @@
           filename: large.ps1,
           ishidden: False,
           isdir: False,
-          islink: False,
+          islnk: False,
           lastaccesstime: 1477984205,
           lastwritetime: 1477984205,
           owner: BUILTIN\Administrators,
@@ -560,8 +560,8 @@
 - name: assert actual == expected
   assert:
     that: 
-    - "actual_without_byte == expected"
-    - "actual_with_byte == expected"
+    - actual_without_byte == expected
+    - actual_with_byte == expected
 
 - name: filter files by size (less than) without byte specified
   win_find:
@@ -580,6 +580,7 @@
     expected:
       changed: False
       examined: 5
+      failed: False
       files:
       - { isarchive: True,
           attributes: Archive,
@@ -589,7 +590,7 @@
           filename: small.ps1,
           ishidden: False,
           isdir: False,
-          islink: False,
+          islnk: False,
           lastaccesstime: 1477984205,
           lastwritetime: 1477984205,
           owner: BUILTIN\Administrators,
@@ -602,8 +603,8 @@
 - name: assert actual == expected
   assert:
     that: 
-    - "actual_without_byte == expected"
-    - "actual_with_byte == expected"
+    - actual_without_byte == expected
+    - actual_with_byte == expected
 
 # For dates we cannot assert against expected as the times change, this is a poor mans attempt at testing
 - name: filter files by age without unit specified
@@ -621,32 +622,30 @@
 - name: assert dates match each other
   assert:
     that:
-    - "actual_without_unit == actual_with_unit"
-    - "actual_without_unit.matched == 1"
-    - "actual_without_unit.files[0].checksum == '7454f04e3ac587f711a416f4edf26507255e0a2e'"
-    - "actual_without_unit.files[0].path == '{{win_find_dir|regex_replace('\\\\', '\\\\\\\\')}}\\\\date\\\\new.ps1'"
+    - actual_without_unit == actual_with_unit
+    - actual_without_unit.matched == 1
+    - actual_without_unit.files[0].checksum == '031a04ecc76f794d7842651de732075dec6fef04'
+    - actual_without_unit.files[0].path == win_find_dir + '\\date\\old.ps1'
 
-- name: filter files by age (older than) without unit specified
+- name: filter files by age (newer than) without unit specified
   win_find:
     paths: "{{win_find_dir}}\\date"
-    age: -1
+    age: -3600
   register: actual_without_unit
 
-- name: filter files by age (older than) without unit specified
+- name: filter files by age (newer than) without unit specified
   win_find:
     paths: "{{win_find_dir}}\\date"
-    age: -1s
+    age: -1h
   register: actual_with_unit
 
 - name: assert dates match each other
   assert:
     that:
-    - "actual_without_unit == actual_with_unit"
-    - "actual_without_unit.matched == 2"
-    - "actual_without_unit.files[0].checksum == '7454f04e3ac587f711a416f4edf26507255e0a2e'"
-    - "actual_without_unit.files[0].path == '{{win_find_dir|regex_replace('\\\\', '\\\\\\\\')}}\\\\date\\\\new.ps1'"
-    - "actual_without_unit.files[1].checksum == '031a04ecc76f794d7842651de732075dec6fef04'"
-    - "actual_without_unit.files[1].path == '{{win_find_dir|regex_replace('\\\\', '\\\\\\\\')}}\\\\date\\\\old.ps1'"
+    - actual_without_unit == actual_with_unit
+    - actual_without_unit.matched == 1
+    - actual_without_unit.files[0].checksum == '7454f04e3ac587f711a416f4edf26507255e0a2e'
+    - actual_without_unit.files[0].path == win_find_dir + '\\date\\new.ps1'
 
 - name: get list of files with md5 checksum
   win_find:
@@ -658,7 +657,7 @@
 - name: assert md5 checksum value
   assert:
     that:
-    - "actual_md5_checksum.files[0].checksum == 'd1713d0f1d2e8fae230328d8fd59de01'"
+    - actual_md5_checksum.files[0].checksum == 'd1713d0f1d2e8fae230328d8fd59de01'
   
 - name: get list of files with sha1 checksum
   win_find:
@@ -670,7 +669,7 @@
 - name: assert sha1 checksum value
   assert:
     that:
-    - "actual_sha1_checksum.files[0].checksum == '8df33cee3325596517df5bb5aa980cf9c5c1fda3'"
+    - actual_sha1_checksum.files[0].checksum == '8df33cee3325596517df5bb5aa980cf9c5c1fda3'
 
 - name: get list of files with sha256 checksum
   win_find:
@@ -682,7 +681,7 @@
 - name: assert sha256 checksum value
   assert:
     that:
-    - "actual_sha256_checksum.files[0].checksum == 'c20d2eba7ffda0079812721b6f4e4e109e2f0c5e8cc3d1273a060df6f7d9f339'"
+    - actual_sha256_checksum.files[0].checksum == 'c20d2eba7ffda0079812721b6f4e4e109e2f0c5e8cc3d1273a060df6f7d9f339'
 
 - name: get list of files with sha384 checksum
   win_find:
@@ -694,7 +693,7 @@
 - name: assert sha384 checksum value
   assert:
     that:
-    - "actual_sha384_checksum.files[0].checksum == 'aed515eb216b9c7009ae8c4680f46c1e22004528b231aa0482a8587543bca47d3504e9f77e884eb2d11b2f9f5dc01651'"
+    - actual_sha384_checksum.files[0].checksum == 'aed515eb216b9c7009ae8c4680f46c1e22004528b231aa0482a8587543bca47d3504e9f77e884eb2d11b2f9f5dc01651'
 
 - name: get list of files with sha512 checksum
   win_find:
@@ -706,7 +705,7 @@
 - name: assert sha512 checksum value
   assert:
     that:
-    - "actual_sha512_checksum.files[0].checksum == '05abf64a68c4731699c23b4fc6894a36646fce525f3c96f9cf743b5d0c3bfd933dad0e95e449e3afe1f74d534d69a53b8f46cf835763dd42915813c897b02b87'"
+    - actual_sha512_checksum.files[0].checksum == '05abf64a68c4731699c23b4fc6894a36646fce525f3c96f9cf743b5d0c3bfd933dad0e95e449e3afe1f74d534d69a53b8f46cf835763dd42915813c897b02b87'
 
 - name: get list of files without checksum
   win_find:
@@ -718,35 +717,18 @@
 - name: assert no checksum is returned
   assert:
     that:
-    - "actual_no_checksum.files[0].checksum is undefined"
+    - actual_no_checksum.files[0].checksum is undefined
 
-- name: check if broken symbolic link exists
-  win_stat:
-    path: "{{win_find_dir}}\\broken-link"
-  register: broken_link_exists
+# https://github.com/ansible/ansible/issues/26158
+- name: get list of files in an empty nested directory
+  win_find:
+    paths: '{{win_find_dir}}\emptynested'
+  register: actual_empty_nested
 
-- name: delete broken symbolic link if it exists
-  win_command: cmd.exe /c rmdir {{win_find_dir}}\broken-link
-
-  when: broken_link_exists.stat.exists
-
-- name: check if junction symbolic link exists
-  win_stat:
-    path: "{{win_find_dir}}\\junction-link"
-  register: junction_link_exists
-
-- name: delete junction symbolic link if it exists
-  win_command: cmd.exe /c rmdir {{win_find_dir}}\junction-link
-  when: junction_link_exists.stat.exists
-
-- name: check if nested symbolic link exists
-  win_stat:
-    path: "{{win_find_dir}}\\nested\\link"
-  register: nested_link_exists
-
-- name: delete nested symbolic link if it exists
-  win_command: cmd.exe /c rmdir {{win_find_dir}}\nested\link
-  when: nested_link_exists.stat.exists
+- name: assert get list of files in an empty nested directory
+  assert:
+    that:
+    - actual_empty_nested.matched == 0
 
 - name: remove testing folder
   win_file:

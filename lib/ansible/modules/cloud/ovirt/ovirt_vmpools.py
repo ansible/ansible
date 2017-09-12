@@ -19,7 +19,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -27,15 +27,15 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: ovirt_vmpools
-short_description: Module to manage VM pools in oVirt
+short_description: Module to manage VM pools in oVirt/RHV
 version_added: "2.3"
 author: "Ondra Machacek (@machacekondra)"
 description:
-    - "Module to manage VM pools in oVirt."
+    - "Module to manage VM pools in oVirt/RHV."
 options:
     name:
         description:
-            - "Name of the the VM pool to manage."
+            - "Name of the VM pool to manage."
         required: true
     state:
         description:
@@ -103,9 +103,10 @@ id:
     type: str
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 vm_pool:
-    description: "Dictionary of all the VM pool attributes. VM pool attributes can be found on your oVirt instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/vm_pool."
+    description: "Dictionary of all the VM pool attributes. VM pool attributes can be found on your oVirt/RHV instance
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/vm_pool."
     returned: On success if VM pool is found.
+    type: dict
 '''
 
 try:

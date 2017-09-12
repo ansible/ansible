@@ -1,0 +1,204 @@
+---
+- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_bgp_neighbor_af sanity test"
+
+- name: "Disable feature BGP"
+  nxos_feature: &disable_bgp
+    feature: bgp
+    state: disabled
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- name: "Enable feature BGP"
+  nxos_feature:
+    feature: bgp
+    state: enabled
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- block:
+  - name: "Configure BGP neighbor address-family defaults"
+    nxos_bgp_neighbor_af: &configure_default
+      asn: 65535
+      neighbor: '3.3.3.3'
+      afi: ipv4
+      safi: unicast
+      additional_paths_receive: 'inherit'
+      additional_paths_send: 'inherit'
+      advertise_map_exist: 'default'
+      # -----------------------------------------------
+      # advertise_map_exist and advertise_map_non_exist
+      # are mutually exclusive
+      #advertise_map_non_exist: 'default'
+      # -----------------------------------------------
+      allowas_in: 'false'
+      allowas_in_max: 'default'
+      as_override: 'false'
+      default_originate: 'false'
+      default_originate_route_map: 'default'
+      filter_list_in: 'default'
+      filter_list_out: 'default'
+      # ------------------------------------------
+      # max_prefix* properities are off by default
+      max_prefix_limit: 'default'
+      # For the default case, only max_prefix_limit
+      # is set.  The rest should be left unset.
+      #max_prefix_interval: 'default'
+      #max_prefix_threshold: 'default'
+      #max_prefix_warning: 'false'
+      # ------------------------------------------
+      next_hop_self: 'false'
+      next_hop_third_party: 'true'
+      prefix_list_in: 'default'
+      prefix_list_out: 'default'
+      route_map_in: 'default'
+      route_map_out: 'default'
+      route_reflector_client: 'false'
+      send_community: 'default'
+      soft_reconfiguration_in: 'inherit'
+      suppress_inactive: 'false'
+      unsuppress_map: 'default'
+      weight: 'default'
+      state: present
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: "Check Idempotence"
+    nxos_bgp_neighbor_af: *configure_default
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: "Setup: Remove BGP config"
+    nxos_bgp: &remove
+      asn: 65535
+      state: absent
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_bgp: *remove
+    register: result
+
+  - assert: *false
+
+  - name: "Configure eBGP setting remote_as 2 prior to non-defaults test"
+    nxos_bgp_neighbor:
+      asn: 65535
+      vrf: 'blue'
+      neighbor: '3.3.3.3'
+      remote_as: 2
+      provider: "{{ connection }}"
+
+  - name: "Configure BGP neighbor non-defaults"
+    nxos_bgp_neighbor_af: &configure_non_default
+      asn: 65535
+      vrf: 'blue'
+      neighbor: '3.3.3.3'
+      afi: ipv4
+      safi: unicast
+      additional_paths_receive: 'enable'
+      additional_paths_send: 'disable'
+      advertise_map_non_exist: ['ansible_rm', 'my_non_exist_map']
+      # -----------------------------------------------
+      # advertise_map_exist and advertise_map_non_exist
+      # are mutually exclusive
+      #advertise_map_exist: 'my_map'
+      # -----------------------------------------------
+      allowas_in: 'true'
+      allowas_in_max: '5'
+      as_override: 'true'
+      default_originate: 'true'
+      default_originate_route_map: 'my_route_map'
+      filter_list_in: 'my_filter_list_in'
+      filter_list_out: 'my_filter_list_out'
+      max_prefix_limit: 100
+      # max_prefix_interval and max_prefix_warning
+      # are mutually exclusive.
+      max_prefix_interval: 30
+      max_prefix_threshold: 50
+      #max_prefix_warning: 'true'
+      next_hop_self: 'true'
+      next_hop_third_party: 'false'
+      prefix_list_in: 'pfx_in'
+      prefix_list_out: 'pfx_out'
+      route_map_in: 'rm_in'
+      route_map_out: 'rm_out'
+      send_community: 'extended'
+      soft_reconfiguration_in: 'enable'
+      soo: '3:3'
+      suppress_inactive: 'true'
+      unsuppress_map: 'unsup_map'
+      weight: '30'
+      state: present
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_bgp_neighbor_af: *configure_non_default
+    register: result
+
+  - assert: *false
+
+  - name: "Remove BGP"
+    nxos_bgp: *remove
+    register: result
+
+  - assert: *true
+
+  - name: "Configure BGP neighbor af route_reflector_client"
+    nxos_bgp_neighbor:
+      asn: 65535
+      neighbor: '2.2.2.2'
+      remote_as: 65535
+      provider: "{{ connection }}"
+
+  - name: "Configure BGP neighbor af route_reflector_client"
+    nxos_bgp_neighbor_af: &configure_rr_client
+      asn: 65535
+      neighbor: '2.2.2.2'
+      afi: ipv4
+      safi: unicast
+      route_reflector_client: 'true'
+      #advertise_map_non_exist: ['ansible_rm', 'my_non_exist_map']
+      # -----------------------------------------------
+      # advertise_map_exist and advertise_map_non_exist
+      # are mutually exclusive
+      advertise_map_exist: ['ansible_rm', 'my_exist_map']
+      # -----------------------------------------------
+      # max_prefix_interval and max_prefix_warning
+      # are mutually exclusive. Add testing for
+      # warning since interval is tested above.
+      max_prefix_limit: 100
+      #max_prefix_interval: 30
+      max_prefix_threshold: 50
+      max_prefix_warning: 'true'
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_bgp_neighbor_af: *configure_rr_client
+    register: result
+
+  - assert: *false
+
+  always:
+  - name: "Cleanup BGP"
+    nxos_bgp: *remove
+    ignore_errors: yes
+
+  - name: "Disable feature bgp"
+    nxos_feature: *disable_bgp
+
+  - debug: msg="END TRANSPORT:{{ connection.transport }} nxos_bgp_neighbor_af sanity test"

@@ -18,7 +18,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -152,7 +152,7 @@ def logical_device_absent(module, aos, my_logical_dev):
             time.sleep(1)
             my_logical_dev.delete()
         except:
-            module.fail_json(msg="An error occured, while trying to delete the Logical Device")
+            module.fail_json(msg="An error occurred, while trying to delete the Logical Device")
 
     module.exit_json( changed=True,
                       name=my_logical_dev.name,

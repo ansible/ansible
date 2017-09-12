@@ -67,7 +67,7 @@ class TaskResult:
            'results' in self._result and True in [True for x in self._result['results'] if 'failed_when_result' in x]:
             return self._check_key('failed_when_result')
         else:
-            return self._check_key('failed') or self._result.get('rc', 0) != 0
+            return self._check_key('failed')
 
     def is_unreachable(self):
         return self._check_key('unreachable')

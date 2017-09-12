@@ -99,12 +99,13 @@ Function Join-Domain {
         [string] $dns_domain_name,
         [string] $new_hostname,
         [string] $domain_admin_user,
-        [string] $domain_admin_password
+        [string] $domain_admin_password,
+        [string] $domain_ou_path
     )
 
     Write-DebugLog ("Creating credential for user {0}" -f $domain_admin_user)
     $domain_cred = Create-Credential $domain_admin_user $domain_admin_password
-    
+
     $add_args = @{
         ComputerName="."
         Credential=$domain_cred
@@ -117,7 +118,13 @@ Function Join-Domain {
         $add_args["NewName"] = $new_hostname
     }
 
-    Write-DebugLog "calling Add-Computer"
+
+    if($domain_ou_path){
+        Write-DebugLog "adding OU destination arg to Add-Computer args"
+        $add_args["OUPath"] = $domain_ou_path
+    }
+    $argstr = $add_args | Out-String
+    Write-DebugLog "calling Add-Computer with args: $argstr"
     $add_result = Add-Computer @add_args
 
     Write-DebugLog ("Add-Computer result was \n{0}" -f $add_result | Out-String)
@@ -172,6 +179,7 @@ $hostname = Get-AnsibleParam $params "hostname"
 $workgroup_name = Get-AnsibleParam $params "workgroup_name"
 $domain_admin_user = Get-AnsibleParam $params "domain_admin_user" -failifempty $result
 $domain_admin_password = Get-AnsibleParam $params "domain_admin_password" -failifempty $result
+$domain_ou_path = Get-AnsibleParam $params "domain_ou_path"
 
 $log_path = Get-AnsibleParam $params "log_path"
 $_ansible_check_mode = Get-AnsibleParam $params "_ansible_check_mode" -default $false
@@ -221,8 +229,15 @@ Try {
                         Write-DebugLog "adding hostname change to domain-join args"
                         $join_args.new_hostname = $hostname
                     }
+                    If($domain_ou_path -ne $null){ # If OU Path is not empty
+                        Write-DebugLog "adding domain_ou_path to domain-join args"
+                        $join_args.domain_ou_path = $domain_ou_path
+                    }
 
                     $join_result = Join-Domain @join_args
+
+                    # this change requires a reboot
+                    $result.reboot_required = $true
                 }
                 ElseIf(-not $hostname_match) { # domain matches but hostname doesn't, just do a rename
                     Write-DebugLog ("domain matches, setting hostname to {0}" -f $hostname)
@@ -235,10 +250,13 @@ Try {
                     }
 
                     $rename_result = Rename-Computer @rename_args
+
+                    # this change requires a reboot
+                    $result.reboot_required = $true
+                } Else {
+                    # no change is needed
                 }
 
-                # all these changes require a reboot
-                $result.reboot_required = $true
             }
             Else {
                 Write-DebugLog "check mode, exiting early..."
@@ -255,11 +273,15 @@ Try {
                 If(-not $workgroup_match) {
                     Write-DebugLog ("setting workgroup to {0}" -f $workgroup_name)
                     $join_wg_result = Join-Workgroup -workgroup_name $workgroup_name -domain_admin_user $domain_admin_user -domain_admin_password $domain_admin_password
+
+                    # this change requires a reboot
                     $result.reboot_required = $true
                 }
                 If(-not $hostname_match) {
                     Write-DebugLog ("setting hostname to {0}" -f $hostname)
                     $rename_result = Rename-Computer -NewName $hostname
+
+                    # this change requires a reboot
                     $result.reboot_required = $true
                 }
             }
@@ -276,4 +298,3 @@ Catch {
 
     Throw
 }
-

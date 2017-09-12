@@ -1,26 +1,16 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2012, Jan-Piet Mens <jpmens () gmail.com>
-# (c) 2015, Ales Nosek <anosek.nosek () gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2012, Jan-Piet Mens <jpmens () gmail.com>
+# Copyright: (c) 2015, Ales Nosek <anosek.nosek () gmail.com>
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -136,22 +126,22 @@ from ansible.module_utils.basic import AnsibleModule
 
 def match_opt(option, line):
     option = re.escape(option)
-    return re.match(' *%s( |\t)*=' % option, line) \
-      or re.match('# *%s( |\t)*=' % option, line) \
-      or re.match('; *%s( |\t)*=' % option, line)
+    return re.match('( |\t)*%s( |\t)*=' % option, line) \
+      or re.match('#( |\t)*%s( |\t)*=' % option, line) \
+      or re.match(';( |\t)*%s( |\t)*=' % option, line)
 
 # ==============================================================
 # match_active_opt
 
 def match_active_opt(option, line):
     option = re.escape(option)
-    return re.match(' *%s( |\t)*=' % option, line)
+    return re.match('( |\t)*%s( |\t)*=' % option, line)
 
 # ==============================================================
 # do_ini
 
 def do_ini(module, filename, section=None, option=None, value=None,
-        state='present', backup=False, no_extra_spaces=False, create=False):
+        state='present', backup=False, no_extra_spaces=False, create=True):
 
     diff = {'before': '',
             'after': '',

@@ -1,20 +1,9 @@
 #!/usr/bin/python
-# This file is part of Ansible
 #
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# Copyright (c) 2017 Ansible Project
 #
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -31,7 +20,8 @@ author: "Jim Dalton (@jsdalton)"
 options:
   state:
     description:
-      - C(absent) or C(present) are idempotent actions that will create or destroy a cache cluster as needed. C(rebooted) will reboot the cluster, resulting in a momentary outage.
+      - C(absent) or C(present) are idempotent actions that will create or destroy a cache cluster as needed. C(rebooted) will reboot the cluster,
+        resulting in a momentary outage.
     choices: ['present', 'absent', 'rebooted']
     required: true
   name:
@@ -65,7 +55,8 @@ options:
     default: None
   cache_parameter_group:
     description:
-      - The name of the cache parameter group to associate with this cache cluster. If this argument is omitted, the default cache parameter group for the specified engine will be used.
+      - The name of the cache parameter group to associate with this cache cluster. If this argument is omitted, the default cache parameter group
+        for the specified engine will be used.
     required: false
     default: None
     version_added: "2.0"
@@ -138,20 +129,20 @@ EXAMPLES = """
     state: rebooted
 
 """
-
-import sys
-import time
+from time import sleep
+from traceback import format_exc
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn, HAS_BOTO3, camel_dict_to_snake_dict
 
 try:
-    import boto
-    from boto.elasticache.layer1 import ElastiCacheConnection
-    from boto.regioninfo import RegionInfo
-    HAS_BOTO = True
+    import boto3
+    import botocore
 except ImportError:
-    HAS_BOTO = False
+    pass  # will be detected by imported HAS_BOTO3
 
 
 class ElastiCacheManager(object):
+
     """Handles elasticache creation and destruction"""
 
     EXIST_STATUSES = ['available', 'creating', 'rebooting', 'modifying']
@@ -162,7 +153,7 @@ class ElastiCacheManager(object):
                  hard_modify, region, **aws_connect_kwargs):
         self.module = module
         self.name = name
-        self.engine = engine
+        self.engine = engine.lower()
         self.cache_engine_version = cache_engine_version
         self.node_type = node_type
         self.num_nodes = num_nodes
@@ -218,20 +209,25 @@ class ElastiCacheManager(object):
                 msg = "'%s' is currently deleting. Cannot create."
                 self.module.fail_json(msg=msg % self.name)
 
+        kwargs = dict(CacheClusterId=self.name,
+                      NumCacheNodes=self.num_nodes,
+                      CacheNodeType=self.node_type,
+                      Engine=self.engine,
+                      EngineVersion=self.cache_engine_version,
+                      CacheSecurityGroupNames=self.cache_security_groups,
+                      SecurityGroupIds=self.security_group_ids,
+                      CacheParameterGroupName=self.cache_parameter_group,
+                      CacheSubnetGroupName=self.cache_subnet_group,
+                      PreferredAvailabilityZone=self.zone)
+        if self.cache_port is not None:
+            kwargs['Port'] = self.cache_port
+
         try:
-            response = self.conn.create_cache_cluster(cache_cluster_id=self.name,
-                                                      num_cache_nodes=self.num_nodes,
-                                                      cache_node_type=self.node_type,
-                                                      engine=self.engine,
-                                                      engine_version=self.cache_engine_version,
-                                                      cache_security_group_names=self.cache_security_groups,
-                                                      security_group_ids=self.security_group_ids,
-                                                      cache_parameter_group_name=self.cache_parameter_group,
-                                                      cache_subnet_group_name=self.cache_subnet_group,
-                                                      preferred_availability_zone=self.zone,
-                                                      port=self.cache_port)
-        except boto.exception.BotoServerError as e:
-            self.module.fail_json(msg=e.message)
+            self.conn.create_cache_cluster(**kwargs)
+
+        except botocore.exceptions.ClientError as e:
+            self.module.fail_json(msg=e.message, exception=format_exc(),
+                                  **camel_dict_to_snake_dict(e.response))
 
         self._refresh_data()
 
@@ -256,10 +252,12 @@ class ElastiCacheManager(object):
                 self.module.fail_json(msg=msg % (self.name, self.status))
 
         try:
-            response = self.conn.delete_cache_cluster(cache_cluster_id=self.name)
-        except boto.exception.BotoServerError as e:
-            self.module.fail_json(msg=e.message)
-        cache_cluster_data = response['DeleteCacheClusterResponse']['DeleteCacheClusterResult']['CacheCluster']
+            response = self.conn.delete_cache_cluster(CacheClusterId=self.name)
+        except botocore.exceptions.ClientError as e:
+            self.module.fail_json(msg=e.message, exception=format_exc(),
+                                  **camel_dict_to_snake_dict(e.response))
+
+        cache_cluster_data = response['CacheCluster']
         self._refresh_data(cache_cluster_data)
 
         self.changed = True
@@ -298,16 +296,17 @@ class ElastiCacheManager(object):
         """Modify the cache cluster. Note it's only possible to modify a few select options."""
         nodes_to_remove = self._get_nodes_to_remove()
         try:
-            response = self.conn.modify_cache_cluster(cache_cluster_id=self.name,
-                                                  num_cache_nodes=self.num_nodes,
-                                                  cache_node_ids_to_remove=nodes_to_remove,
-                                                  cache_security_group_names=self.cache_security_groups,
-                                                  cache_parameter_group_name=self.cache_parameter_group,
-                                                  security_group_ids=self.security_group_ids,
-                                                  apply_immediately=True,
-                                                  engine_version=self.cache_engine_version)
-        except boto.exception.BotoServerError as e:
-            self.module.fail_json(msg=e.message)
+            self.conn.modify_cache_cluster(CacheClusterId=self.name,
+                                           NumCacheNodes=self.num_nodes,
+                                           CacheNodeIdsToRemove=nodes_to_remove,
+                                           CacheSecurityGroupNames=self.cache_security_groups,
+                                           CacheParameterGroupName=self.cache_parameter_group,
+                                           SecurityGroupIds=self.security_group_ids,
+                                           ApplyImmediately=True,
+                                           EngineVersion=self.cache_engine_version)
+        except botocore.exceptions.ClientError as e:
+            self.module.fail_json(msg=e.message, exception=format_exc(),
+                                  **camel_dict_to_snake_dict(e.response))
 
         self._refresh_data()
 
@@ -332,10 +331,11 @@ class ElastiCacheManager(object):
         # Collect ALL nodes for reboot
         cache_node_ids = [cn['CacheNodeId'] for cn in self.data['CacheNodes']]
         try:
-            response = self.conn.reboot_cache_cluster(cache_cluster_id=self.name,
-                                                      cache_node_ids_to_reboot=cache_node_ids)
-        except boto.exception.BotoServerError as e:
-            self.module.fail_json(msg=e.message)
+            self.conn.reboot_cache_cluster(CacheClusterId=self.name,
+                                           CacheNodeIdsToReboot=cache_node_ids)
+        except botocore.exceptions.ClientError as e:
+            self.module.fail_json(msg=e.message, exception=format_exc(),
+                                  **camel_dict_to_snake_dict(e.response))
 
         self._refresh_data()
 
@@ -352,7 +352,6 @@ class ElastiCacheManager(object):
         if self.data:
             info['data'] = self.data
         return info
-
 
     def _wait_for_status(self, awaited_status):
         """Wait for status to change from present status to awaited_status"""
@@ -374,7 +373,7 @@ class ElastiCacheManager(object):
             self.module.fail_json(msg=msg % awaited_status)
 
         while True:
-            time.sleep(1)
+            sleep(1)
             self._refresh_data()
             if self.status == awaited_status:
                 break
@@ -398,7 +397,7 @@ class ElastiCacheManager(object):
             return True
 
         # check vpc security groups
-        if len(self.security_group_ids) > 0:
+        if self.security_group_ids:
             vpc_security_groups = []
             security_groups = self.data['SecurityGroups'] or []
             for sg in security_groups:
@@ -427,15 +426,12 @@ class ElastiCacheManager(object):
 
     def _get_elasticache_connection(self):
         """Get an elasticache connection"""
-        try:
-            endpoint = "elasticache.%s.amazonaws.com" % self.region
-            connect_region = RegionInfo(name=self.region, endpoint=endpoint)
-            return ElastiCacheConnection(
-                region=connect_region,
-                **self.aws_connect_kwargs
-            )
-        except boto.exception.NoAuthHandlerFound as e:
-            self.module.fail_json(msg=e.message)
+        region, ec2_url, aws_connect_params = get_aws_connection_info(self.module, boto3=True)
+        if region:
+            return boto3_conn(self.module, conn_type='client', resource='elasticache',
+                              region=region, endpoint=ec2_url, **aws_connect_params)
+        else:
+            self.module.fail_json(msg="region must be specified")
 
     def _get_port(self):
         """Get the port. Where this information is retrieved from is engine dependent."""
@@ -451,13 +447,16 @@ class ElastiCacheManager(object):
 
         if cache_cluster_data is None:
             try:
-                response = self.conn.describe_cache_clusters(cache_cluster_id=self.name,
-                                                             show_cache_node_info=True)
-            except boto.exception.BotoServerError:
-                self.data = None
-                self.status = 'gone'
-                return
-            cache_cluster_data = response['DescribeCacheClustersResponse']['DescribeCacheClustersResult']['CacheClusters'][0]
+                response = self.conn.describe_cache_clusters(CacheClusterId=self.name, ShowCacheNodeInfo=True)
+            except botocore.exceptions.ClientError as e:
+                if e.response['Error']['Code'] == 'CacheClusterNotFound':
+                    self.data = None
+                    self.status = 'gone'
+                    return
+                else:
+                    self.module.fail_json(msg=e.message, exception=format_exc(),
+                                          **camel_dict_to_snake_dict(e.response))
+            cache_cluster_data = response['CacheClusters'][0]
         self.data = cache_cluster_data
         self.status = self.data['CacheClusterStatus']
 
@@ -471,7 +470,7 @@ class ElastiCacheManager(object):
         """If there are nodes to remove, it figures out which need to be removed"""
         num_nodes_to_remove = self.data['NumCacheNodes'] - self.num_nodes
         if num_nodes_to_remove <= 0:
-            return None
+            return []
 
         if not self.hard_modify:
             msg = "'%s' requires removal of cache nodes. 'hard_modify' must be set to true to proceed."
@@ -482,32 +481,32 @@ class ElastiCacheManager(object):
 
 
 def main():
+    """ elasticache ansible module """
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        state                 ={'required': True, 'choices': ['present', 'absent', 'rebooted']},
-        name                  ={'required': True},
-        engine                ={'required': False, 'default': 'memcached'},
-        cache_engine_version  ={'required': False},
-        node_type             ={'required': False, 'default': 'cache.m1.small'},
-        num_nodes             ={'required': False, 'default': None, 'type': 'int'},
+        state=dict(required=True, choices=['present', 'absent', 'rebooted']),
+        name=dict(required=True),
+        engine=dict(default='memcached'),
+        cache_engine_version=dict(default=""),
+        node_type=dict(default='cache.t2.small'),
+        num_nodes=dict(default=1, type='int'),
         # alias for compat with the original PR 1950
-        cache_parameter_group ={'required': False, 'default': None, 'aliases': ['parameter_group']},
-        cache_port            ={'required': False, 'type': 'int'},
-        cache_subnet_group    ={'required': False, 'default': None},
-        cache_security_groups ={'required': False, 'default': [], 'type': 'list'},
-        security_group_ids    ={'required': False, 'default': [], 'type': 'list'},
-        zone                  ={'required': False, 'default': None},
-        wait                  ={'required': False, 'type' : 'bool', 'default': True},
-        hard_modify           ={'required': False, 'type': 'bool', 'default': False}
-    )
-    )
+        cache_parameter_group=dict(default="", aliases=['parameter_group']),
+        cache_port=dict(type='int'),
+        cache_subnet_group=dict(default=""),
+        cache_security_groups=dict(default=[], type='list'),
+        security_group_ids=dict(default=[], type='list'),
+        zone=dict(default=""),
+        wait=dict(default=True, type='bool'),
+        hard_modify=dict(type='bool')
+    ))
 
     module = AnsibleModule(
         argument_spec=argument_spec,
     )
 
-    if not HAS_BOTO:
-        module.fail_json(msg='boto required for this module')
+    if not HAS_BOTO3:
+        module.fail_json(msg='boto3 required for this module')
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module)
 
@@ -532,9 +531,6 @@ def main():
     if state == 'present' and not num_nodes:
         module.fail_json(msg="'num_nodes' is a required parameter. Please specify num_nodes > 0")
 
-    if not region:
-        module.fail_json(msg=str("Either region or AWS_REGION or EC2_REGION environment variable or boto config aws_region or ec2_region must be set."))
-
     elasticache_manager = ElastiCacheManager(module, name, engine,
                                              cache_engine_version, node_type,
                                              num_nodes, cache_port,
@@ -555,10 +551,6 @@ def main():
                         elasticache=elasticache_manager.get_info())
 
     module.exit_json(**facts_result)
-
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

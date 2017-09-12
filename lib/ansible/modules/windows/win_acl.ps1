@@ -1,112 +1,43 @@
 #!powershell
-# This file is part of Ansible
-#
 # Copyright 2015, Phil Schwartz <schwartzmx@gmail.com>
 # Copyright 2015, Trond Hindenes
 # Copyright 2015, Hans-Joachim Kliemeck <git@kliemeck.de>
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
- 
-# WANT_JSON
-# POWERSHELL_COMMON
- 
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+#Requires -Module Ansible.ModuleUtils.Legacy.psm1
+#Requires -Module Ansible.ModuleUtils.SID.psm1
+
 # win_acl module (File/Resources Permission Additions/Removal)
- 
- 
+
 #Functions
-Function UserSearch
-{
-    Param ([string]$accountName)
-    #Check if there's a realm specified
+function Get-UserSID {
+    param(
+        [String]$AccountName
+    )
 
-    $searchDomain = $false
-    $searchDomainUPN = $false
-    $SearchAppPools = $false
-    if ($accountName.Split("\").count -gt 1)
-    {
-        if ($accountName.Split("\")[0] -eq $env:COMPUTERNAME)
-        {
+    $userSID = $null
+    $searchAppPools = $false
 
-        }
-        elseif ($accountName.Split("\")[0] -eq "IIS APPPOOL")
-        {
-            $SearchAppPools = $true
-            $accountName = $accountName.split("\")[1]
-        }
-        else
-        {
-            $searchDomain = $true
-            $accountName = $accountName.split("\")[1]
+    if ($AccountName.Split("\").Count -gt 1) {
+        if ($AccountName.Split("\")[0] -eq "IIS APPPOOL") {
+            $searchAppPools = $true
+            $AccountName = $AccountName.Split("\")[1]
         }
     }
-    Elseif ($accountName.contains("@"))
-    {
-        $searchDomain = $true
-        $searchDomainUPN = $true
-    }
-    Else
-    {
-        #Default to local user account
-        $accountName = $env:COMPUTERNAME + "\" + $accountName
-    }
 
-    if (($searchDomain -eq $false) -and ($SearchAppPools -eq $false))
-    {
-        # do not use Win32_UserAccount, because e.g. SYSTEM (BUILTIN\SYSTEM or COMPUUTERNAME\SYSTEM) will not be listed. on Win32_Account groups will be listed too
-        $localaccount = get-wmiobject -class "Win32_Account" -namespace "root\CIMV2" -filter "(LocalAccount = True)" | where {$_.Caption -eq $accountName}
-        if ($localaccount)
-        {
-            return $localaccount.SID
+    if ($searchAppPools) {
+        Import-Module -Name WebAdministration
+        $testIISPath = Test-Path -Path "IIS:"
+        if ($testIISPath) {
+            $appPoolObj = Get-ItemProperty -Path "IIS:\AppPools\$AccountName"
+            $userSID = $appPoolObj.applicationPoolSid
         }
     }
-    Elseif ($SearchAppPools -eq $true)
-    {
-        Import-Module WebAdministration
-        $testiispath = Test-path "IIS:"
-        if ($testiispath -eq $false)
-        {
-            return $null
-        }
-        else
-        {
-            $apppoolobj = Get-ItemProperty IIS:\AppPools\$accountName
-            return $apppoolobj.applicationPoolSid
-        }
+    else {
+        $userSID = Convert-ToSID -account_name $AccountName
     }
-    {
-        #Search by samaccountname
-        $Searcher = [adsisearcher]""
 
-        If ($searchDomainUPN -eq $false) {
-            $Searcher.Filter = "sAMAccountName=$($accountName)"
-        }
-        Else {
-            $Searcher.Filter = "userPrincipalName=$($accountName)"
-        }
-
-        $result = $Searcher.FindOne() 
-        if ($result)
-        {
-            $user = $result.GetDirectoryEntry()
-
-            # get binary SID from AD account
-            $binarySID = $user.ObjectSid.Value
-
-            # convert to string SID
-            return (New-Object System.Security.Principal.SecurityIdentifier($binarySID,0)).Value
-        }
-    }
+    return $userSID
 }
 
 # Need to adjust token privs when executing Set-ACL in certain cases.
@@ -214,8 +145,9 @@ Function SetPrivilegeTokens() {
 
 $params = Parse-Args $args;
 
-$result = New-Object PSObject;
-Set-Attr $result "changed" $false;
+$result = @{
+    changed = $false
+}
 
 $path = Get-Attr $params "path" -failifempty $true
 $user = Get-Attr $params "user" -failifempty $true
@@ -232,9 +164,8 @@ If (-Not (Test-Path -Path $path)) {
 }
 
 # Test that the user/group is resolvable on the local machine
-$sid = UserSearch -AccountName ($user)
-if (!$sid)
-{
+$sid = Get-UserSID -AccountName $user
+if (!$sid) {
     Fail-Json $result "$user is not a valid user or group on the host machine or domain"
 }
 
@@ -258,14 +189,14 @@ Try {
 
     $InheritanceFlag = [System.Security.AccessControl.InheritanceFlags]$inherit
     $PropagationFlag = [System.Security.AccessControl.PropagationFlags]$propagation
- 
+
     If ($type -eq "allow") {
         $objType =[System.Security.AccessControl.AccessControlType]::Allow
     }
     Else {
         $objType =[System.Security.AccessControl.AccessControlType]::Deny
     }
- 
+
     $objUser = New-Object System.Security.Principal.SecurityIdentifier($sid)
     If ($path -match "^HK(CC|CR|CU|LM|U):\\") {
         $objACE = New-Object System.Security.AccessControl.RegistryAccessRule ($objUser, $colRights, $InheritanceFlag, $PropagationFlag, $objType)
@@ -274,36 +205,31 @@ Try {
         $objACE = New-Object System.Security.AccessControl.FileSystemAccessRule ($objUser, $colRights, $InheritanceFlag, $PropagationFlag, $objType)
     }
     $objACL = Get-ACL $path
- 
+
     # Check if the ACE exists already in the objects ACL list
     $match = $false
-    If ($path -match "^HK(CC|CR|CU|LM|U):\\") {
-        ForEach($rule in $objACL.Access){
+
+    # Workaround to handle special use case 'APPLICATION PACKAGE AUTHORITY\ALL APPLICATION PACKAGES' and
+    # 'APPLICATION PACKAGE AUTHORITY\ALL RESTRICTED APPLICATION PACKAGES'- can't translate fully qualified name (win32 API bug/oddity)
+    # 'ALL APPLICATION PACKAGES' exists only on Win2k12 and Win2k16 and 'ALL RESTRICTED APPLICATION PACKAGES' exists only in Win2k16
+    $specialIdRefs = "ALL APPLICATION PACKAGES","ALL RESTRICTED APPLICATION PACKAGES"
+    ForEach($rule in $objACL.Access){
+        $idRefShortValue = ($rule.IdentityReference.Value).split('\')[-1]
+
+        if ( $idRefShortValue -in $specialIdRefs ) {
+            $ruleIdentity = (New-Object Security.Principal.NTAccount $idRefShortValue).Translate([Security.Principal.SecurityIdentifier])
+        }
+        else {
             $ruleIdentity = $rule.IdentityReference.Translate([System.Security.Principal.SecurityIdentifier])
+        }
+
+        If ($path -match "^HK(CC|CR|CU|LM|U):\\") {
             If (($rule.RegistryRights -eq $objACE.RegistryRights) -And ($rule.AccessControlType -eq $objACE.AccessControlType) -And ($ruleIdentity -eq $objACE.IdentityReference) -And ($rule.IsInherited -eq $objACE.IsInherited) -And ($rule.InheritanceFlags -eq $objACE.InheritanceFlags) -And ($rule.PropagationFlags -eq $objACE.PropagationFlags)) {
                 $match = $true
                 Break
             }
-        }
-    }
-    Else {
-        # Workaround to handle special use case 'APPLICATION PACKAGE AUTHORITY\ALL APPLICATION PACKAGES' and
-        # 'APPLICATION PACKAGE AUTHORITY\ALL RESTRICTED APPLICATION PACKAGES'- can't translate fully qualified name (win32 API bug/oddity)
-        # 'ALL APPLICATION PACKAGES' exists only on Win2k12 and Win2k16 and 'ALL RESTRICTED APPLICATION PACKAGES' exists only in Win2k16
-
-        $specialIdRefs = "ALL APPLICATION PACKAGES","ALL RESTRICTED APPLICATION PACKAGES"
-
-        ForEach($rule in $objACL.Access){
-
-            $idRefShortValue = ($rule.IdentityReference.Value).split('\')[-1]
-
-            if ( $idRefShortValue -in $specialIdRefs ) {
-                $ruleIdentity = (New-Object Security.Principal.NTAccount $idRefShortValue).Translate([Security.Principal.SecurityIdentifier])
-            }
-            else {
-                $ruleIdentity = $rule.IdentityReference.Translate([System.Security.Principal.SecurityIdentifier])
-            }
-            If (($rule.FileSystemRights -eq $objACE.FileSystemRights) -And ($rule.AccessControlType -eq $objACE.AccessControlType) -And ($ruleIdentity -eq $objACE.IdentityReference) -And ($rule.IsInherited -eq $objACE.IsInherited) -And ($rule.InheritanceFlags -eq $objACE.InheritanceFlags) -And ($rule.PropagationFlags -eq $objACE.PropagationFlags)) { 
+        } else {
+            If (($rule.FileSystemRights -eq $objACE.FileSystemRights) -And ($rule.AccessControlType -eq $objACE.AccessControlType) -And ($ruleIdentity -eq $objACE.IdentityReference) -And ($rule.IsInherited -eq $objACE.IsInherited) -And ($rule.InheritanceFlags -eq $objACE.InheritanceFlags) -And ($rule.PropagationFlags -eq $objACE.PropagationFlags)) {
                 $match = $true
                 Break
             }
@@ -314,7 +240,7 @@ Try {
         Try {
             $objACL.AddAccessRule($objACE)
             Set-ACL $path $objACL
-            Set-Attr $result "changed" $true;
+            $result.changed = $true
         }
         Catch {
             Fail-Json $result "an exception occurred when adding the specified rule - $($_.Exception.Message)"
@@ -324,7 +250,7 @@ Try {
         Try {
             $objACL.RemoveAccessRule($objACE)
             Set-ACL $path $objACL
-            Set-Attr $result "changed" $true;
+            $result.changed = $true
         }
         Catch {
             Fail-Json $result "an exception occurred when removing the specified rule - $($_.Exception.Message)"
@@ -338,11 +264,11 @@ Try {
         # A rule didn't exist that was trying to be removed
         Else {
             Exit-Json $result "the specified rule does not exist"
-        }       
+        }
     }
 }
 Catch {
     Fail-Json $result "an error occurred when attempting to $state $rights permission(s) on $path for $user - $($_.Exception.Message)"
 }
- 
+
 Exit-Json $result

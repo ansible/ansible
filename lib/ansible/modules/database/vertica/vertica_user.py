@@ -1,22 +1,13 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -127,6 +118,7 @@ EXAMPLES = """
     roles=schema_name_ro
     state=present
 """
+import traceback
 
 try:
     import pyodbc
@@ -136,7 +128,7 @@ else:
     pyodbc_found = True
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 
 
 class NotSupportedError(Exception):
@@ -193,7 +185,7 @@ def update_roles(user_facts, cursor, user,
         cursor.execute("alter user {0} default role {1}".format(user, ','.join(required)))
 
 def check(user_facts, user, profile, resource_pool,
-    locked, password, expired, ldap, roles):
+          locked, password, expired, ldap, roles):
     user_key = user.lower()
     if user_key not in user_facts:
         return False
@@ -205,16 +197,16 @@ def check(user_facts, user, profile, resource_pool,
         return False
     if password and password != user_facts[user_key]['password']:
         return False
-    if expired is not None and expired != (user_facts[user_key]['expired'] == 'True') or \
-       ldap is not None and ldap != (user_facts[user_key]['expired'] == 'True'):
+    if (expired is not None and expired != (user_facts[user_key]['expired'] == 'True') or
+           ldap is not None and ldap != (user_facts[user_key]['expired'] == 'True')):
         return False
-    if roles and (cmp(sorted(roles), sorted(user_facts[user_key]['roles'])) != 0 or \
-        cmp(sorted(roles), sorted(user_facts[user_key]['default_roles'])) != 0):
+    if roles and (sorted(roles) != sorted(user_facts[user_key]['roles']) or \
+            sorted(roles) != sorted(user_facts[user_key]['default_roles'])):
         return False
     return True
 
 def present(user_facts, cursor, user, profile, resource_pool,
-    locked, password, expired, ldap, roles):
+            locked, password, expired, ldap, roles):
     user_key = user.lower()
     if user_key not in user_facts:
         query_fragments = ["create user {0}".format(user)]
@@ -275,8 +267,8 @@ def present(user_facts, cursor, user, profile, resource_pool,
             changed = True
         if changed:
             cursor.execute(' '.join(query_fragments))
-        if roles and (cmp(sorted(roles), sorted(user_facts[user_key]['roles'])) != 0 or \
-            cmp(sorted(roles), sorted(user_facts[user_key]['default_roles'])) != 0):
+        if roles and (sorted(roles) != sorted(user_facts[user_key]['roles']) or \
+               sorted(roles) != sorted(user_facts[user_key]['default_roles'])):
             update_roles(user_facts, cursor, user,
                 user_facts[user_key]['roles'], user_facts[user_key]['default_roles'], roles)
             changed = True
@@ -360,8 +352,7 @@ def main():
                 module.params['login_user'], module.params['login_password'], 'true')
         db_conn = pyodbc.connect(dsn, autocommit=True)
         cursor = db_conn.cursor()
-    except Exception:
-        e = get_exception()
+    except Exception as e:
         module.fail_json(msg="Unable to connect to database: {0}.".format(e))
 
     try:
@@ -372,28 +363,23 @@ def main():
         elif state == 'absent':
             try:
                 changed = absent(user_facts, cursor, user, roles)
-            except pyodbc.Error:
-                e = get_exception()
-                module.fail_json(msg=str(e))
+            except pyodbc.Error as e:
+                module.fail_json(msg=to_native(e), exception=traceback.format_exc())
         elif state in ['present', 'locked']:
             try:
                 changed = present(user_facts, cursor, user, profile, resource_pool,
                     locked, password, expired, ldap, roles)
-            except pyodbc.Error:
-                e = get_exception()
-                module.fail_json(msg=str(e))
-    except NotSupportedError:
-        e = get_exception()
-        module.fail_json(msg=str(e), ansible_facts={'vertica_users': user_facts})
-    except CannotDropError:
-        e = get_exception()
-        module.fail_json(msg=str(e), ansible_facts={'vertica_users': user_facts})
+            except pyodbc.Error as e:
+                module.fail_json(msg=to_native(e), exception=traceback.format_exc())
+    except NotSupportedError as e:
+        module.fail_json(msg=to_native(e), ansible_facts={'vertica_users': user_facts})
+    except CannotDropError as e:
+        module.fail_json(msg=to_native(e), ansible_facts={'vertica_users': user_facts})
     except SystemExit:
         # avoid catching this on python 2.4
         raise
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg=e)
+    except Exception as e:
+        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
     module.exit_json(changed=changed, user=user, ansible_facts={'vertica_users': user_facts})
 

@@ -17,6 +17,7 @@
 ##  hosts:
 ##      green.example.com:
 ##          ansible_ssh_host: 191.168.100.32
+##          anyvariable: value
 ##      blue.example.com:
 ##      192.168.100.1:
 ##      192.168.100.10:
@@ -44,7 +45,7 @@
 ##                beta.example.org:
 
 # Ex 4: all vars
-# keeping withing 'all' group you can define common 'all' vars here with lowest precedence
+# keeping within 'all' group you can define common 'all' vars here with lowest precedence
 
 ##  vars:
 ##      commontoall: thisvar

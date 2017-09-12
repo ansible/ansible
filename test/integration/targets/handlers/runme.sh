@@ -42,6 +42,9 @@ ansible-playbook test_listening_handlers.yml -i inventory.handlers -v "$@"
 [ "$(ansible-playbook test_handlers_include.yml -i ../../inventory -v "$@" --tags role_include_handlers \
 | egrep -o 'RUNNING HANDLER \[test_handlers_include : .*?]')" = "RUNNING HANDLER [test_handlers_include : test handler]" ]
 
+[ "$(ansible-playbook test_handlers_include_role.yml -i ../../inventory -v "$@" \
+| egrep -o 'RUNNING HANDLER \[test_handlers_include_role : .*?]')" = "RUNNING HANDLER [test_handlers_include_role : test handler]" ]
+
 # Notify handler listen
 ansible-playbook test_handlers_listen.yml -i inventory.handlers -v "$@"
 

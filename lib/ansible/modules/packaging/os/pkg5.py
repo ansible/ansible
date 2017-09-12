@@ -3,20 +3,13 @@
 
 # Copyright 2014 Peter Oliver <ansible@mavit.org.uk>
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -90,7 +83,8 @@ def main():
                 default=False,
                 aliases=['accept_licences', 'accept'],
             ),
-        )
+        ),
+        supports_check_mode=True,
     )
 
     params = module.params
@@ -127,7 +121,9 @@ def ensure(module, state, packages, params):
             'subcommand': 'install',
         },
         'latest': {
-            'filter': lambda p: not is_latest(module, p),
+            'filter': lambda p: (
+                not is_installed(module, p) or not is_latest(module, p)
+            ),
             'subcommand': 'install',
         },
         'absent': {
@@ -135,6 +131,11 @@ def ensure(module, state, packages, params):
             'subcommand': 'uninstall',
         },
     }
+
+    if module.check_mode:
+        dry_run = ['-n']
+    else:
+        dry_run = []
 
     if params['accept_licenses']:
         accept_licenses = ['--accept']
@@ -147,6 +148,7 @@ def ensure(module, state, packages, params):
             [
                 'pkg', behaviour[state]['subcommand']
             ]
+            + dry_run
             + accept_licenses
             + [
                 '-q', '--'

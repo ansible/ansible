@@ -14,6 +14,7 @@ Starting in version 1.7, Ansible also contains support for managing Windows mach
 native PowerShell remoting, rather than SSH.
 
 Ansible will still be run from a Linux control machine, and uses the "winrm" Python module to talk to remote hosts.
+While not supported by Microsoft or Ansible, this Linux control machine can be a Windows Subsystem for Linux (WSL) bash shell.
 
 No additional software needs to be installed on the remote machines for Ansible to manage them, it still maintains the agentless properties that make it popular on Linux/Unix.
 
@@ -29,6 +30,44 @@ On a Linux control machine::
    pip install "pywinrm>=0.2.2"
 
 .. Note:: on distributions with multiple python versions, use pip2 or pip2.x, where x matches the python minor version Ansible is running under.
+
+
+.. _windows_control_machine:
+
+Using a Windows control machine
+```````````````````````````````
+A Linux control machine is required to manage Windows hosts. This Linux control machine can be a Windows Subsystem for Linux (WSL) bash shell.
+
+
+.. Note:: Running Ansible from a Windows control machine directly is not a goal of the project.  Refrain from asking for this feature, as it limits what technologies, features, and code we can use in the main project in the future.  
+
+.. Note:: The Windows Subsystem for Linux (Beta) is not supported by Microsoft or Ansible and should not be used for production systems. 
+
+If you would like to experiment with the Windows Subsystem for Linux (WSL), first enable the Windows Subsystem for Linux using
+`these instructions <https://www.jeffgeerling.com/blog/2017/using-ansible-through-windows-10s-subsystem-linux>`_.
+This requires a reboot.
+
+Once WSL is enabled, you can open the Bash terminal. At the prompt, you can quickly start using the latest Ansible release by running the following commands::
+
+    sudo apt-get update
+    sudo apt-get install python-pip git libffi-dev libssl-dev -y
+    pip install ansible pywinrm
+
+    # this step is only necessary for Windows builds earlier than 16188, and must be repeated each time bash is launched,
+    # unless bash is launched as ``bash --login``
+    # see https://github.com/Microsoft/BashOnWindows/issues/2148 and
+    # https://github.com/Microsoft/BashOnWindows/issues/816#issuecomment-301216901 for details
+    source ~/.profile
+
+After you've successfully run these commands, you can start to create your inventory, write example playbooks and start targeting systems using the plethora of available Windows modules.
+
+If you want to run Ansible from source for development purposes, simply uninstall the pip-installed version (which will leave all the necessary dependencies behind), then clone the Ansible source, and run the hacking script to configure it to run from source::
+
+    pip uninstall ansible -y
+    git clone https://github.com/ansible/ansible.git
+    source ansible/hacking/env-setup
+
+.. Note:: Ansible is also reported to "work" on Cygwin, but installation is more cumbersome, and will incur sporadic failures due to Cygwin's implementation of ``fork()``.
 
 
 Authentication Options
@@ -55,8 +94,12 @@ You can specify which authentication option you wish to use by setting it to the
 Certificate
 +++++++++++
 
-Certificate authentication is similar to SSH where a certificate is assigned to a local user and instead of using a password to authenticate a certificate is used instead.
+Certificate authentication is similar to SSH because it uses both a public and private key to access a local Windows user account. This removes the need for using a password.
 
+This requires two variables that specify the path to both the PEM file containing the certificate (cert_pem) and the related private key file (cert_key_pem).
+
+    ansible_winrm_cert_pem:
+    ansible_winrm_cert_key_pem:
 
 Kerberos
 ++++++++
@@ -107,13 +150,13 @@ Edit your /etc/krb5.conf (which should be installed as a result of installing pa
 
 In the section that starts with
 
-.. code-block:: bash
+.. code-block:: ini
 
    [realms]
 
 add the full domain name and the fully qualified domain names of your primary and secondary Active Directory domain controllers.  It should look something like this:
 
-.. code-block:: bash
+.. code-block:: ini
 
    [realms]
    
@@ -125,7 +168,7 @@ add the full domain name and the fully qualified domain names of your primary an
 
 and in the [domain_realm] section add a line like the following for each domain you want to access:
 
-.. code-block:: bash
+.. code-block:: ini
 
     [domain_realm]
         .my.domain.com = MY.DOMAIN.COM
@@ -148,6 +191,15 @@ To see what tickets if any you have acquired, use the command klist
 .. code-block:: bash
 
    klist
+
+Automatic kerberos ticket management
+------------------------------------
+
+Ansible defaults to automatically managing kerberos tickets (as of Ansible 2.3) when both username and password are specified for a host that's configured for kerberos. A new ticket is created in a temporary credential cache for each host, before each task executes (to minimize the chance of ticket expiration). The temporary credential caches are deleted after each task, and will not interfere with the default credential cache.
+
+To disable automatic ticket management (e.g., to use an existing SSO ticket or call ``kinit`` manually to populate the default credential cache), set ``ansible_winrm_kinit_mode=manual`` via inventory.
+
+Automatic ticket management requires a standard ``kinit`` binary on the control host system path. To specify a different location or binary name, set the ``ansible_winrm_kinit_cmd`` inventory var to the fully-qualified path to an MIT krbv5 ``kinit``-compatible binary.
 
 Troubleshooting kerberos connections
 ------------------------------------
@@ -252,8 +304,10 @@ Since 2.0, the following custom inventory variables are also supported for addit
 * ``ansible_winrm_path``: Specify an alternate path to the WinRM endpoint.  Ansible uses ``/wsman`` by default.
 * ``ansible_winrm_realm``: Specify the realm to use for Kerberos authentication.  If the username contains ``@``, Ansible will use the part of the username after ``@`` by default.
 * ``ansible_winrm_transport``: Specify one or more transports as a comma-separated list.  By default, Ansible will use ``kerberos,plaintext`` if the ``kerberos`` module is installed and a realm is defined, otherwise ``plaintext``.
-* ``ansible_winrm_server_cert_validation``: Specify the server certificate validation mode (``ignore`` or ``validate``). Ansible defaults to ``validate`` on Python 2.7.9 and higher, which will result in certificate validation errors against the Windows self-signed certificates. Unless verifiable certificates have been configured on the WinRM listeners, this should be set to ``ignore``
+* ``ansible_winrm_server_cert_validation``: Specify the server certificate validation mode (``ignore`` or ``validate``). Ansible defaults to ``validate`` on Python 2.7.9 and higher, which will result in certificate validation errors against the Windows self-signed certificates. Unless verifiable certificates have been configured on the WinRM listeners, this should be set to ``ignore``.
 * ``ansible_winrm_kerberos_delegation``: Set to ``true`` to enable delegation of commands on the remote host when using kerberos.
+* ``ansible_winrm_operation_timeout_sec``: Increase the default timeout for WinRM operations (default: ``20``).
+* ``ansible_winrm_read_timeout_sec``: Increase the WinRM read timeout if you experience read timeout errors (default: ``30``), e.g. intermittent network issues.
 * ``ansible_winrm_*``: Any additional keyword arguments supported by ``winrm.Protocol`` may be provided.
 
 .. _windows_system_prep:
@@ -317,20 +371,24 @@ In addition, the following core modules/action-plugins work with Windows:
 
 * add_host
 * assert
-* async
+* async_status
 * debug
 * fail
 * fetch
 * group_by
+* include
+* include_role
 * include_vars
 * meta
 * pause
 * raw
 * script
 * set_fact
+* set_stats
 * setup
 * slurp
 * template (also: win_template)
+* wait_for_connection
 
 Some modules can be utilised in playbooks that target windows by delegating to localhost, depending on what you are
 attempting to achieve.  For example, ``assemble`` can be used to create a file on your ansible controller that is then 
@@ -374,17 +432,6 @@ Modules (ps1 files) should start as follows::
 The above magic is necessary to tell Ansible to mix in some common code and also know how to push modules out.  The common code contains some nice wrappers around working with hash data structures and emitting JSON results, and possibly a few more useful things.  Regular Ansible has this same concept for reusing Python code - this is just the windows equivalent.
 
 What modules you see in ``windows/`` are just a start.  Additional modules may be submitted as pull requests to github.
-
-.. _windows_and_linux_control_machine:
-
-Reminder: You Must Have a Linux Control Machine
-```````````````````````````````````````````````
-
-Note running Ansible from a Windows control machine is NOT a goal of the project.  Refrain from asking for this feature,
-as it limits what technologies, features, and code we can use in the main project in the future.  A Linux control machine
-will be required to manage Windows hosts.
-
-Cygwin is not supported, so please do not ask questions about Ansible running from Cygwin.
 
 .. _windows_facts:
 
@@ -436,7 +483,7 @@ You may wind up with a more readable playbook by using the PowerShell equivalent
          - name: Move file on remote Windows Server from one location to another
            win_command: Powershell.exe "Move-Item C:\teststuff\myfile.conf C:\builds\smtp.conf"
 
-Bear in mind that using ``win_command`` or ``win_shell`` will always report ``changed``, and it is your responsiblity to ensure PowerShell will need to handle idempotency as appropriate (the move examples above are inherently not idempotent), so where possible use (or write) a module.
+Bear in mind that using ``win_command`` or ``win_shell`` will always report ``changed``, and it is your responsibility to ensure PowerShell will need to handle idempotency as appropriate (the move examples above are inherently not idempotent), so where possible use (or write) a module.
 
 Here's an example of how to use the ``win_stat`` module to test for file existence. Note that the data returned by the ``win_stat`` module is slightly different than what is provided by the Linux equivalent::
 

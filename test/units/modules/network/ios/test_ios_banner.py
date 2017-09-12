@@ -29,18 +29,18 @@ class TestIosBannerModule(TestIosModule):
     module = ios_banner
 
     def setUp(self):
-        self.mock_run_commands = patch('ansible.modules.network.ios.ios_banner.run_commands')
-        self.run_commands = self.mock_run_commands.start()
+        self.mock_exec_command = patch('ansible.modules.network.ios.ios_banner.exec_command')
+        self.exec_command = self.mock_exec_command.start()
 
         self.mock_load_config = patch('ansible.modules.network.ios.ios_banner.load_config')
         self.load_config = self.mock_load_config.start()
 
     def tearDown(self):
-        self.mock_run_commands.stop()
+        self.mock_exec_command.stop()
         self.mock_load_config.stop()
 
     def load_fixtures(self, commands=None):
-        self.run_commands.return_value = [load_fixture('ios_banner_show_banner.txt').strip()]
+        self.exec_command.return_value = (0, load_fixture('ios_banner_show_banner.txt').strip(), None)
         self.load_config.return_value = dict(diff=None, session='session')
 
     def test_ios_banner_create(self):

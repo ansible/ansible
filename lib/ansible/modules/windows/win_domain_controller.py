@@ -18,12 +18,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
 
 
-DOCUMENTATION='''
+DOCUMENTATION = '''
 module: win_domain_controller
 short_description: Manage domain controller/member server state for a Windows host
 version_added: 2.3
@@ -58,7 +58,7 @@ author:
     - Matt Davis (@nitzmahone)
 '''
 
-RETURN='''
+RETURN = '''
 reboot_required:
     description: True if changes were made that require a reboot.
     returned: always
@@ -67,7 +67,7 @@ reboot_required:
 
 '''
 
-EXAMPLES=r'''
+EXAMPLES = r'''
 # ensure a server is a domain controller
 - hosts: winclient
   gather_facts: no
@@ -75,8 +75,8 @@ EXAMPLES=r'''
   - win_domain_controller:
       dns_domain_name: ansible.vagrant
       domain_admin_user: testguy@ansible.vagrant
-      domain_admin_pass: password123!
-      safe_mode_pass: password123!
+      domain_admin_password: password123!
+      safe_mode_password: password123!
       state: domain_controller
       log_path: c:\ansible_win_domain_controller.txt
 
@@ -91,10 +91,9 @@ EXAMPLES=r'''
   tasks:
   - win_domain_controller:
       domain_admin_user: testguy@ansible.vagrant
-      domain_admin_pass: password123!
-      local_admin_pass: password123!
+      domain_admin_password: password123!
+      local_admin_password: password123!
       state: member_server
       log_path: c:\ansible_win_domain_controller.txt
 
 '''
-

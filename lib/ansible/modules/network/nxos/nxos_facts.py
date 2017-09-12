@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -35,8 +35,8 @@ description:
     base set of facts from the device and can enable or disable
     collection of additional facts.
 author:
-    - Jason Edelman (@jedelman8)
-    - Gabriele Gerbino (@GGabriele)
+  - Jason Edelman (@jedelman8)
+  - Gabriele Gerbino (@GGabriele)
 options:
   gather_subset:
     description:
@@ -52,17 +52,6 @@ options:
 """
 
 EXAMPLES = """
-# Note: examples below use the following provider dict to handle
-#       transport and authentication to the node.
----
-vars:
-  cli:
-    host: "{{ inventory_hostname }}"
-    username: admin
-    password: admin
-    transport: cli
-
----
 - nxos_facts:
     gather_subset: all
 
@@ -203,7 +192,7 @@ class FactsBase(object):
         try:
             return resp[0]
         except IndexError:
-            self.warnings.append('command %s returned to data, facts will not be populated' % command_string)
+            self.warnings.append('command %s failed, facts will not be populated' % command_string)
             return None
 
     def transform_dict(self, data, keymap):
@@ -216,7 +205,6 @@ class FactsBase(object):
     def transform_iterable(self, iterable, keymap):
         for item in iterable:
             yield self.transform_dict(item, keymap)
-
 
 
 class Default(FactsBase):
@@ -234,6 +222,7 @@ class Default(FactsBase):
         if data:
             self.facts.update(self.transform_dict(data, self.VERSION_MAP))
 
+
 class Config(FactsBase):
 
     def populate(self):
@@ -244,7 +233,6 @@ class Config(FactsBase):
 class Hardware(FactsBase):
 
     def populate(self):
-        cmd = {'command': 'dir', 'output': 'text'},
         data = self.run('dir', 'text')
         if data:
             self.facts['filesystems'] = self.parse_filesystems(data)
@@ -290,13 +278,13 @@ class Interfaces(FactsBase):
         if data:
             self.facts['interfaces'] = self.populate_interfaces(data)
 
-        data = self.run('show ipv6 inteface', 'json')
+        data = self.run('show ipv6 interface', 'json')
         if data:
-            self.parse_ipv6_interfaces(out)
+            self.parse_ipv6_interfaces(data)
 
         data = self.run('show lldp neighbors')
         if data:
-            self.facts['neighbors'] = self.populate_neighbors(out)
+            self.facts['neighbors'] = self.populate_neighbors(data)
 
     def populate_interfaces(self, data):
         interfaces = dict()
@@ -315,19 +303,37 @@ class Interfaces(FactsBase):
         return interfaces
 
     def populate_neighbors(self, data):
-        data = data['TABLE_nbor']['ROW_nbor']
-        if isinstance(data, dict):
-            data = [data]
-
         objects = dict()
-        for item in data:
-            local_intf = item['l_port_id']
-            if local_intf not in objects:
-                objects[local_intf] = list()
-            nbor = dict()
-            nbor['port'] = item['port_id']
-            nbor['host'] = item['chassis_id']
-            objects[local_intf].append(nbor)
+        if isinstance(data, str):
+            # if there are no neighbors the show command returns
+            # ERROR: No neighbour information
+            if data.startswith('ERROR'):
+                return dict()
+
+            regex = re.compile(r'(\S+)\s+(\S+)\s+\d+\s+\w+\s+(\S+)')
+
+            for item in data.split('\n')[4:-1]:
+                match = regex.match(item)
+                if match:
+                    nbor = {'host': match.group(1), 'port': match.group(3)}
+                    if match.group(2) not in objects:
+                        objects[match.group(2)] = []
+                    objects[match.group(2)].append(nbor)
+
+        elif isinstance(data, dict):
+            data = data['TABLE_nbor']['ROW_nbor']
+            if isinstance(data, dict):
+                data = [data]
+
+            for item in data:
+                local_intf = item['l_port_id']
+                if local_intf not in objects:
+                    objects[local_intf] = list()
+                nbor = dict()
+                nbor['port'] = item['port_id']
+                nbor['host'] = item['chassis_id']
+                objects[local_intf].append(nbor)
+
         return objects
 
     def parse_ipv6_interfaces(self, data):
@@ -339,6 +345,7 @@ class Interfaces(FactsBase):
             intf = self.facts['interfaces'][name]
             intf['ipv6'] = self.transform_dict(item, self.INTERFACE_IPV6_MAP)
             self.facts['all_ipv6_addresses'].append(item['ROW_intf']['addr'])
+
 
 class Legacy(FactsBase):
     # facts from nxos_facts 2.1
@@ -424,7 +431,10 @@ class Legacy(FactsBase):
         return objects
 
     def parse_power_supply_info(self, data):
-        data = data['powersup']['TABLE_psinfo']['ROW_psinfo']
+        if data.get('powersup').get('TABLE_psinfo_n3k'):
+            data = data['powersup']['TABLE_psinfo_n3k']['ROW_psinfo_n3k']
+        else:
+            data = data['powersup']['TABLE_psinfo']['ROW_psinfo']
         objects = list(self.transform_iterable(data, self.POWERSUP_MAP))
         return objects
 
@@ -438,6 +448,7 @@ FACT_SUBSETS = dict(
 )
 
 VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())
+
 
 def main():
     spec = dict(

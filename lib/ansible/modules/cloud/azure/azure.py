@@ -1,22 +1,15 @@
 #!/usr/bin/python
-# This file is part of Ansible
 #
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -53,12 +46,14 @@ options:
     required: true
   image:
     description:
-      - system image for creating the virtual machine (e.g., b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu_DAILY_BUILD-precise-12_04_3-LTS-amd64-server-20131205-en-us-30GB)
+      - system image for creating the virtual machine
+        (e.g., b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu_DAILY_BUILD-precise-12_04_3-LTS-amd64-server-20131205-en-us-30GB)
     required: true
     default: null
   role_size:
     description:
-      - azure role size for the new virtual machine (e.g., Small, ExtraLarge, A6). You have to pay attention to the fact that instances of type G and DS are not available in all regions (locations). Make sure if you selected the size and type of instance available in your chosen location.
+      - azure role size for the new virtual machine (e.g., Small, ExtraLarge, A6). You have to pay attention to the fact that instances of
+        type G and DS are not available in all regions (locations). Make sure if you selected the size and type of instance available in your chosen location.
     required: false
     default: Small
   endpoints:
@@ -78,7 +73,8 @@ options:
     default: null
   ssh_cert_path:
     description:
-      - path to an X509 certificate containing the public ssh key to install in the virtual machine. See http://www.windowsazure.com/en-us/manage/linux/tutorials/intro-to-linux/ for more details.
+      - path to an X509 certificate containing the public ssh key to install in the virtual machine.
+        See http://www.windowsazure.com/en-us/manage/linux/tutorials/intro-to-linux/ for more details.
       - if this option is specified, password-based ssh authentication will be disabled.
     required: false
     default: null
@@ -189,9 +185,11 @@ EXAMPLES = '''
 import base64
 import datetime
 import os
+import signal
 import time
 from urlparse import urlparse
-from ansible.module_utils.facts import * # TimeoutError
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.facts.timeout import TimeoutError
 
 AZURE_LOCATIONS = ['South Central US',
                    'Central US',
@@ -276,6 +274,7 @@ except ImportError:
 from types import MethodType
 import json
 
+
 def _wait_for_completion(azure, promise, wait_timeout, msg):
     if not promise:
         return
@@ -287,6 +286,7 @@ def _wait_for_completion(azure, promise, wait_timeout, msg):
             return
 
     raise AzureException('Timed out waiting for async operation ' + msg + ' "' + str(promise.request_id) + '" to complete.')
+
 
 def _delete_disks_when_detached(azure, wait_timeout, disk_names):
     def _handle_timeout(signum, frame):
@@ -302,9 +302,10 @@ def _delete_disks_when_detached(azure, wait_timeout, disk_names):
                     azure.delete_disk(disk.name, True)
                     disk_names.remove(disk_name)
     except AzureException as e:
-        module.fail_json(msg="failed to get or delete disk, error was: %s" % (disk_name, str(e)))
+        raise AzureException("failed to get or delete disk %s, error was: %s" % (disk_name, str(e)))
     finally:
         signal.alarm(0)
+
 
 def get_ssh_certificate_tokens(module, ssh_cert_path):
     """
@@ -373,7 +374,7 @@ def create_virtual_machine(module, azure):
             disable_ssh_password_authentication = not password
             vm_config = LinuxConfigurationSet(hostname, user, password, disable_ssh_password_authentication)
         else:
-            #Create Windows Config
+            # Create Windows Config
             vm_config = WindowsConfigurationSet(hostname, password, None, module.params.get('auto_updates'), None, user)
             vm_config.domain_join = None
             if module.params.get('enable_winrm'):
@@ -616,7 +617,5 @@ class Wrapper(object):
                     raise e
 
 
-# import module snippets
-from ansible.module_utils.basic import *
 if __name__ == '__main__':
     main()

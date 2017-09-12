@@ -18,7 +18,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -183,7 +183,7 @@ def ext_router_absent(module, aos, my_ext_router):
             time.sleep(2)
             my_ext_router.delete()
         except:
-            module.fail_json(msg="An error occured, while trying to delete the External Router")
+            module.fail_json(msg="An error occurred, while trying to delete the External Router")
 
     module.exit_json( changed=True,
                       name=my_ext_router.name,
@@ -213,7 +213,7 @@ def ext_router_present(module, aos, my_ext_router):
                                                           margs['asn'] )
                 my_ext_router = my_new_ext_router
             except:
-                module.fail_json(msg="An error occured while trying to create a new External Router")
+                module.fail_json(msg="An error occurred while trying to create a new External Router")
 
 
         module.exit_json( changed=True,

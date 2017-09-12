@@ -3,22 +3,15 @@
 
 # (c) 2015, Kevin Brebanov <https://github.com/kbrebanov>
 # Based on pacman (Afterburn <http://github.com/afterburn>, Aaron Bull Schaefer <aaron@elasticdog.com>)
-# and apt (Matthew Williams <matthew@flowroute.com>>) modules.
+# and apt (Matthew Williams <matthew@flowroute.com>) modules.
 #
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
@@ -32,11 +25,25 @@ description:
 author: "Kevin Brebanov (@kbrebanov)"
 version_added: "2.0"
 options:
+  available:
+    description:
+      - During upgrade, reset versioned world dependencies and change logic to prefer replacing or downgrading packages (instead of holding them)
+        if the currently installed package is no longer available from any repository.
+    required: false
+    default: no
+    choices: [ "yes", "no" ]
+    version_added: "2.4"
   name:
     description:
-      - A package name, like C(foo), or mutliple packages, like C(foo, bar).
+      - A package name, like C(foo), or multiple packages, like C(foo, bar).
     required: false
     default: null
+  repository:
+    description:
+      - A package repository or multiple repositories
+    required: false
+    default: null
+    version_added: "2.4"
   state:
     description:
       - Indicates the desired package(s) state.
@@ -109,21 +116,54 @@ EXAMPLES = '''
 - apk:
     upgrade: yes
 
+# Upgrade / replace / downgrade / uninstall all installed packages to the latest versions available
+- apk:
+    available: yes
+    upgrade: yes
+
 # Update repositories as a separate step
 - apk:
     update_cache: yes
+
+# Install package from a specific repository
+- apk:
+    name: foo
+    state: latest
+    update_cache: yes
+    repository: http://dl-3.alpinelinux.org/alpine/edge/main
 '''
 
-import os
-import re
+RETURN = '''
+packages:
+    description: a list of packages that have been changed
+    returned: when packages have changed
+    type: list
+    sample: ['package', 'other-package']
+'''
 
-def update_package_db(module):
+import re
+# Import module snippets.
+from ansible.module_utils.basic import AnsibleModule
+
+def parse_for_packages(stdout):
+    packages = []
+    data = stdout.split('\n')
+    regex = re.compile('^\(\d+/\d+\)\s+\S+\s+(\S+)')
+    for l in data:
+        p = regex.search(l)
+        if p:
+            packages.append(p.group(1))
+    return packages
+
+def update_package_db(module, exit):
     cmd = "%s update" % (APK_PATH)
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
-    if rc == 0:
-        return True
+    if rc != 0:
+        module.fail_json(msg="could not update package db", stdout=stdout, stderr=stderr)
+    elif exit:
+        module.exit_json(changed=True, msg='updated repository indexes', stdout=stdout, stderr=stderr)
     else:
-        module.fail_json(msg="could not update package db")
+        return True
 
 def query_package(module, name):
     cmd = "%s -v info --installed %s" % (APK_PATH, name)
@@ -136,7 +176,7 @@ def query_package(module, name):
 def query_latest(module, name):
     cmd = "%s version %s" % (APK_PATH, name)
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
-    search_pattern = "(%s)-[\d\.\w]+-[\d\w]+\s+(.)\s+[\d\.\w]+-[\d\w]+\s+" % (name)
+    search_pattern = r"(%s)-[\d\.\w]+-[\d\w]+\s+(.)\s+[\d\.\w]+-[\d\w]+\s+" % (re.escape(name))
     match = re.search(search_pattern, stdout)
     if match and match.group(2) == "<":
         return False
@@ -145,7 +185,7 @@ def query_latest(module, name):
 def query_virtual(module, name):
     cmd = "%s -v info --description %s" % (APK_PATH, name)
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
-    search_pattern = "^%s: virtual meta package" % (name)
+    search_pattern = r"^%s: virtual meta package" % (re.escape(name))
     if re.search(search_pattern, stdout):
         return True
     return False
@@ -159,17 +199,20 @@ def get_dependencies(module, name):
     else:
         return []
 
-def upgrade_packages(module):
+def upgrade_packages(module, available):
     if module.check_mode:
         cmd = "%s upgrade --simulate" % (APK_PATH)
     else:
         cmd = "%s upgrade" % (APK_PATH)
+    if available:
+        cmd = "%s --available" % cmd
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
+    packagelist = parse_for_packages(stdout)
     if rc != 0:
-        module.fail_json(msg="failed to upgrade packages")
-    if re.search('^OK', stdout):
-        module.exit_json(changed=False, msg="packages already upgraded")
-    module.exit_json(changed=True, msg="upgraded packages")
+        module.fail_json(msg="failed to upgrade packages", stdout=stdout, stderr=stderr, packages=packagelist)
+    if re.search(r'^OK', stdout):
+        module.exit_json(changed=False, msg="packages already upgraded", stdout=stdout, stderr=stderr, packages=packagelist)
+    module.exit_json(changed=True, msg="upgraded packages", stdout=stdout, stderr=stderr, packages=packagelist)
 
 def install_packages(module, names, state):
     upgrade = False
@@ -192,7 +235,7 @@ def install_packages(module, names, state):
         upgrade = True
     if not to_install and not upgrade:
         module.exit_json(changed=False, msg="package(s) already installed")
-    packages = " ".join(to_install) + " ".join(to_upgrade)
+    packages = " ".join(to_install + to_upgrade)
     if upgrade:
         if module.check_mode:
             cmd = "%s add --upgrade --simulate %s" % (APK_PATH, packages)
@@ -204,9 +247,10 @@ def install_packages(module, names, state):
         else:
             cmd = "%s add %s" % (APK_PATH, packages)
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
+    packagelist = parse_for_packages(stdout)
     if rc != 0:
-        module.fail_json(msg="failed to install %s" % (packages))
-    module.exit_json(changed=True, msg="installed %s package(s)" % (packages))
+        module.fail_json(msg="failed to install %s" % (packages), stdout=stdout, stderr=stderr, packages=packagelist)
+    module.exit_json(changed=True, msg="installed %s package(s)" % (packages), stdout=stdout, stderr=stderr, packages=packagelist)
 
 def remove_packages(module, names):
     installed = []
@@ -221,24 +265,27 @@ def remove_packages(module, names):
     else:
         cmd = "%s del --purge %s" % (APK_PATH, names)
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
+    packagelist = parse_for_packages(stdout)
     if rc != 0:
-        module.fail_json(msg="failed to remove %s package(s)" % (names))
-    module.exit_json(changed=True, msg="removed %s package(s)" % (names))
+        module.fail_json(msg="failed to remove %s package(s)" % (names), stdout=stdout, stderr=stderr, packages=packagelist)
+    module.exit_json(changed=True, msg="removed %s package(s)" % (names), stdout=stdout, stderr=stderr, packages=packagelist)
 
 # ==========================================
 # Main control flow.
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            state = dict(default='present', choices=['present', 'installed', 'absent', 'removed', 'latest']),
-            name = dict(type='list'),
-            update_cache = dict(default='no', type='bool'),
-            upgrade = dict(default='no', type='bool'),
+        argument_spec=dict(
+            state=dict(default='present', choices=['present', 'installed', 'absent', 'removed', 'latest']),
+            name=dict(type='list'),
+            repository=dict(type='list'),
+            update_cache=dict(default='no', type='bool'),
+            upgrade=dict(default='no', type='bool'),
+            available=dict(default='no', type='bool'),
         ),
-        required_one_of = [['name', 'update_cache', 'upgrade']],
-        mutually_exclusive = [['name', 'upgrade']],
-        supports_check_mode = True
+        required_one_of=[['name', 'update_cache', 'upgrade']],
+        mutually_exclusive=[['name', 'upgrade']],
+        supports_check_mode=True
     )
 
     # Set LANG env since we parse stdout
@@ -249,6 +296,11 @@ def main():
 
     p = module.params
 
+    # add repositories to the APK_PATH
+    if p['repository']:
+        for r in p['repository']:
+            APK_PATH = "%s --repository %s" % (APK_PATH, r)
+
     # normalize the state parameter
     if p['state'] in ['present', 'installed']:
         p['state'] = 'present'
@@ -256,19 +308,16 @@ def main():
         p['state'] = 'absent'
 
     if p['update_cache']:
-        update_package_db(module)
-        if not p['name']:
-            module.exit_json(changed=True, msg='updated repository indexes')
+        update_package_db(module, not p['name'] and not p['upgrade'])
 
     if p['upgrade']:
-        upgrade_packages(module)
+        upgrade_packages(module, p['available'])
 
     if p['state'] in ['present', 'latest']:
         install_packages(module, p['name'], p['state'])
     elif p['state'] == 'absent':
         remove_packages(module, p['name'])
 
-# Import module snippets.
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()

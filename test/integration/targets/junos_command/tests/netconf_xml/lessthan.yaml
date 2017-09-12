@@ -5,10 +5,10 @@
   junos_command:
     commands:
       - show version
-      - show interfaces fxp0
+      - show interfaces lo0
     format: xml
     wait_for:
-      - "result[1].rpc-reply.interface-information.physical-interface.mtu lt 9000"
+      - "result[1].rpc-reply.interface-information.physical-interface.local-index lt 7"
     provider: "{{ netconf }}"
   register: result
 
@@ -22,10 +22,10 @@
   junos_command:
     commands:
       - show version
-      - show interfaces fxp0
+      - show interfaces lo0
     format: xml
     wait_for:
-      - "result[1].rpc-reply.interface-information.physical-interface.mtu lt 9000"
+      - "result[1].rpc-reply.interface-information.physical-interface.local-index lt 7"
     provider: "{{ netconf }}"
   register: result
 

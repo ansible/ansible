@@ -20,7 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.errors import AnsibleParserError
-from ansible.playbook.attribute import Attribute, FieldAttribute
+from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.become import Become
 from ansible.playbook.conditional import Conditional
@@ -28,29 +28,30 @@ from ansible.playbook.helpers import load_list_of_tasks
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
 
+
 class Block(Base, Become, Conditional, Taggable):
 
     # main block fields containing the task lists
-    _block            = FieldAttribute(isa='list', default=[], inherit=False)
-    _rescue           = FieldAttribute(isa='list', default=[], inherit=False)
-    _always           = FieldAttribute(isa='list', default=[], inherit=False)
+    _block = FieldAttribute(isa='list', default=[], inherit=False)
+    _rescue = FieldAttribute(isa='list', default=[], inherit=False)
+    _always = FieldAttribute(isa='list', default=[], inherit=False)
 
     # other fields
-    _delegate_to      = FieldAttribute(isa='string')
-    _delegate_facts   = FieldAttribute(isa='bool', default=False)
-    _name             = FieldAttribute(isa='string', default='')
+    _delegate_to = FieldAttribute(isa='string')
+    _delegate_facts = FieldAttribute(isa='bool', default=False)
+    _name = FieldAttribute(isa='string', default='')
 
     # for future consideration? this would be functionally
     # similar to the 'else' clause for exceptions
-    #_otherwise = FieldAttribute(isa='list')
+    # _otherwise = FieldAttribute(isa='list')
 
     def __init__(self, play=None, parent_block=None, role=None, task_include=None, use_handlers=False, implicit=False):
-        self._play         = play
-        self._role         = role
-        self._parent       = None
-        self._dep_chain    = None
+        self._play = play
+        self._role = role
+        self._parent = None
+        self._dep_chain = None
         self._use_handlers = use_handlers
-        self._implicit     = implicit
+        self._implicit = implicit
 
         # end of role flag
         self._eor = False
@@ -120,8 +121,8 @@ class Block(Base, Become, Conditional, Taggable):
                 loader=self._loader,
                 use_handlers=self._use_handlers,
             )
-        except AssertionError:
-            raise AnsibleParserError("A malformed block was encountered.", obj=self._ds)
+        except AssertionError as e:
+            raise AnsibleParserError("A malformed block was encountered while loading a block", obj=self._ds, orig_exc=e)
 
     def _load_rescue(self, attr, ds):
         try:
@@ -135,8 +136,8 @@ class Block(Base, Become, Conditional, Taggable):
                 loader=self._loader,
                 use_handlers=self._use_handlers,
             )
-        except AssertionError:
-            raise AnsibleParserError("A malformed block was encountered.", obj=self._ds)
+        except AssertionError as e:
+            raise AnsibleParserError("A malformed block was encountered while loading rescue.", obj=self._ds, orig_exc=e)
 
     def _load_always(self, attr, ds):
         try:
@@ -150,8 +151,8 @@ class Block(Base, Become, Conditional, Taggable):
                 loader=self._loader,
                 use_handlers=self._use_handlers,
             )
-        except AssertionError:
-            raise AnsibleParserError("A malformed block was encountered.", obj=self._ds)
+        except AssertionError as e:
+            raise AnsibleParserError("A malformed block was encountered while loading always", obj=self._ds, orig_exc=e)
 
     def get_dep_chain(self):
         if self._dep_chain is None:
@@ -182,9 +183,9 @@ class Block(Base, Become, Conditional, Taggable):
             return new_task_list
 
         new_me = super(Block, self).copy()
-        new_me._play         = self._play
+        new_me._play = self._play
         new_me._use_handlers = self._use_handlers
-        new_me._eor          = self._eor
+        new_me._eor = self._eor
 
         if self._dep_chain is not None:
             new_me._dep_chain = self._dep_chain[:]
@@ -194,7 +195,7 @@ class Block(Base, Become, Conditional, Taggable):
             new_me._parent = self._parent.copy(exclude_tasks=exclude_tasks)
 
         if not exclude_tasks:
-            new_me.block  = _dupe_task_list(self.block or [], new_me)
+            new_me.block = _dupe_task_list(self.block or [], new_me)
             new_me.rescue = _dupe_task_list(self.rescue or [], new_me)
             new_me.always = _dupe_task_list(self.always or [], new_me)
 
@@ -280,7 +281,7 @@ class Block(Base, Become, Conditional, Taggable):
                 dep.set_loader(loader)
 
     def _get_attr_environment(self):
-        return self._get_parent_attribute('environment', extend=True)
+        return self._get_parent_attribute('environment', extend=True, prepend=True)
 
     def _get_parent_attribute(self, attr, extend=False, prepend=False):
         '''
@@ -331,7 +332,7 @@ class Block(Base, Become, Conditional, Taggable):
                         value = parent_value
                 except AttributeError:
                     pass
-        except KeyError as e:
+        except KeyError:
             pass
 
         return value
@@ -347,15 +348,15 @@ class Block(Base, Become, Conditional, Taggable):
             for task in target:
                 if isinstance(task, Block):
                     tmp_list.append(evaluate_block(task))
-                elif task.action == 'meta' \
-                    or (task.action == 'include' and task.evaluate_tags([], play_context.skip_tags, all_vars=all_vars)) \
-                    or task.evaluate_tags(play_context.only_tags, play_context.skip_tags, all_vars=all_vars):
+                elif (task.action == 'meta' or
+                        (task.action == 'include' and task.evaluate_tags([], play_context.skip_tags, all_vars=all_vars)) or
+                        task.evaluate_tags(play_context.only_tags, play_context.skip_tags, all_vars=all_vars)):
                     tmp_list.append(task)
             return tmp_list
 
         def evaluate_block(block):
             new_block = self.copy(exclude_tasks=True)
-            new_block.block  = evaluate_and_append_task(block.block)
+            new_block.block = evaluate_and_append_task(block.block)
             new_block.rescue = evaluate_and_append_task(block.rescue)
             new_block.always = evaluate_and_append_task(block.always)
             return new_block
@@ -385,4 +386,3 @@ class Block(Base, Become, Conditional, Taggable):
             return self._parent.all_parents_static()
 
         return True
-

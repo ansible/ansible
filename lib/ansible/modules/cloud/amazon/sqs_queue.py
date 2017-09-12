@@ -1,22 +1,14 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = """
@@ -89,34 +81,42 @@ extends_documentation_fragment:
 RETURN = '''
 default_visibility_timeout:
     description: The default visibility timeout in seconds.
+    type: int
     returned: always
     sample: 30
 delivery_delay:
     description: The delivery delay in seconds.
+    type: int
     returned: always
     sample: 0
 maximum_message_size:
     description: The maximum message size in bytes.
+    type: int
     returned: always
     sample: 262144
 message_retention_period:
     description: The message retention period in seconds.
+    type: int
     returned: always
     sample: 345600
 name:
     description: Name of the SQS Queue
+    type: string
     returned: always
     sample: "queuename-987d2de0"
 queue_arn:
     description: The queue's Amazon resource name (ARN).
+    type: string
     returned: on successful creation or update of the queue
     sample: 'arn:aws:sqs:us-east-1:199999999999:queuename-987d2de0'
 receive_message_wait_time:
     description: The receive message wait time in seconds.
+    type: int
     returned: always
     sample: 0
 region:
     description: Region that the queue was created within
+    type: string
     returned: always
     sample: 'us-east-1'
 '''

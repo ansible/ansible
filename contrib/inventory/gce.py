@@ -40,6 +40,7 @@ based on the data obtained from the libcloud Node object:
  - gce_tags
  - gce_metadata
  - gce_network
+ - gce_subnetwork
 
 When run in --list mode, instances are grouped by the following categories:
  - zone:
@@ -73,7 +74,6 @@ Contributors: Matt Hite <mhite@hotmail.com>, Tom Melendez <supertom@google.com>
 Version: 0.0.3
 '''
 
-__requires__ = ['pycrypto>=2.6']
 try:
     import pkg_resources
 except ImportError:
@@ -83,8 +83,8 @@ except ImportError:
     # library is used.
     pass
 
-USER_AGENT_PRODUCT="Ansible-gce_inventory_plugin"
-USER_AGENT_VERSION="v2"
+USER_AGENT_PRODUCT = "Ansible-gce_inventory_plugin"
+USER_AGENT_VERSION = "v2"
 
 import sys
 import os
@@ -92,7 +92,10 @@ import argparse
 
 from time import time
 
-import ConfigParser
+if sys.version_info >= (3, 0):
+    import configparser
+else:
+    import ConfigParser as configparser
 
 import logging
 logging.getLogger('libcloud.common.google').addHandler(logging.NullHandler())
@@ -213,7 +216,7 @@ class GceInventory(object):
         # This provides empty defaults to each key, so that environment
         # variable configuration (as opposed to INI configuration) is able
         # to work.
-        config = ConfigParser.SafeConfigParser(defaults={
+        config = configparser.SafeConfigParser(defaults={
             'gce_service_account_email_address': '',
             'gce_service_account_pem_file_path': '',
             'gce_project_id': '',
@@ -271,10 +274,11 @@ class GceInventory(object):
         # exists.
         secrets_path = self.config.get('gce', 'libcloud_secrets')
         secrets_found = False
+
         try:
             import secrets
-            args = list(getattr(secrets, 'GCE_PARAMS', []))
-            kwargs = getattr(secrets, 'GCE_KEYWORD_PARAMS', {})
+            args = list(secrets.GCE_PARAMS)
+            kwargs = secrets.GCE_KEYWORD_PARAMS
             secrets_found = True
         except:
             pass
@@ -292,10 +296,11 @@ class GceInventory(object):
                 secrets_found = True
             except:
                 pass
+
         if not secrets_found:
             args = [
-                self.config.get('gce','gce_service_account_email_address'),
-                self.config.get('gce','gce_service_account_pem_file_path')
+                self.config.get('gce', 'gce_service_account_email_address'),
+                self.config.get('gce', 'gce_service_account_pem_file_path')
             ]
             kwargs = {'project': self.config.get('gce', 'gce_project_id'),
                       'datacenter': self.config.get('gce', 'gce_zone')}
@@ -304,6 +309,8 @@ class GceInventory(object):
         # other configuration; process those into our args and kwargs.
         args[0] = os.environ.get('GCE_EMAIL', args[0])
         args[1] = os.environ.get('GCE_PEM_FILE_PATH', args[1])
+        args[1] = os.environ.get('GCE_CREDENTIALS_FILE_PATH', args[1])
+
         kwargs['project'] = os.environ.get('GCE_PROJECT', kwargs['project'])
         kwargs['datacenter'] = os.environ.get('GCE_ZONE', kwargs['datacenter'])
 
@@ -318,7 +325,7 @@ class GceInventory(object):
         '''returns a list of comma separated zones parsed from the GCE_ZONE environment variable.
         If provided, this will be used to filter the results of the grouped_instances call'''
         import csv
-        reader = csv.reader([os.environ.get('GCE_ZONE',"")], skipinitialspace=True)
+        reader = csv.reader([os.environ.get('GCE_ZONE', "")], skipinitialspace=True)
         zones = [r for r in reader]
         return [z for z in zones[0]]
 
@@ -328,16 +335,15 @@ class GceInventory(object):
         parser = argparse.ArgumentParser(
             description='Produce an Ansible Inventory file based on GCE')
         parser.add_argument('--list', action='store_true', default=True,
-                           help='List instances (default: True)')
+                            help='List instances (default: True)')
         parser.add_argument('--host', action='store',
-                           help='Get all information about an instance')
+                            help='Get all information about an instance')
         parser.add_argument('--pretty', action='store_true', default=False,
-                           help='Pretty format (default: False)')
+                            help='Pretty format (default: False)')
         parser.add_argument(
             '--refresh-cache', action='store_true', default=False,
             help='Force refresh of cache by making API requests (default: False - use cache files)')
         self.args = parser.parse_args()
-
 
     def node_to_dict(self, inst):
         md = {}
@@ -350,6 +356,9 @@ class GceInventory(object):
                 md[entry['key']] = entry['value']
 
         net = inst.extra['networkInterfaces'][0]['network'].split('/')[-1]
+        subnet = None
+        if 'subnetwork' in inst.extra['networkInterfaces'][0]:
+            subnet = inst.extra['networkInterfaces'][0]['subnetwork'].split('/')[-1]
         # default to exernal IP unless user has specified they prefer internal
         if self.ip_type == 'internal':
             ssh_host = inst.private_ips[0]
@@ -370,6 +379,7 @@ class GceInventory(object):
             'gce_tags': inst.extra['tags'],
             'gce_metadata': md,
             'gce_network': net,
+            'gce_subnetwork': subnet,
             # Hosts don't have a public name, so we add an IP
             'ansible_ssh_host': ssh_host
         }
@@ -397,7 +407,7 @@ class GceInventory(object):
         all_nodes = []
         params, more_results = {'maxResults': 500}, True
         while more_results:
-            self.driver.connection.gce_params=params
+            self.driver.connection.gce_params = params
             all_nodes.extend(self.driver.list_nodes())
             more_results = 'pageToken' in params
         return all_nodes
@@ -472,6 +482,13 @@ class GceInventory(object):
                 groups[stat].append(name)
             else:
                 groups[stat] = [name]
+
+            for private_ip in node.private_ips:
+                groups[private_ip] = [name]
+
+            if len(node.public_ips) >= 1:
+                for public_ip in node.public_ips:
+                    groups[public_ip] = [name]
 
         groups["_meta"] = meta
 

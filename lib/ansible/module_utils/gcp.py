@@ -29,6 +29,7 @@
 
 import json
 import os
+import time
 import traceback
 from distutils.version import LooseVersion
 
@@ -44,7 +45,7 @@ try:
     import google.auth
     from google.oauth2 import service_account
     HAS_GOOGLE_AUTH = True
-except ImportError as e:
+except ImportError:
     HAS_GOOGLE_AUTH = False
 
 # google-python-api
@@ -52,17 +53,17 @@ try:
     import google_auth_httplib2
     from httplib2 import Http
     from googleapiclient.http import set_user_agent
+    from googleapiclient.errors import HttpError
+    from apiclient.discovery import build
     HAS_GOOGLE_API_LIB = True
 except ImportError:
     HAS_GOOGLE_API_LIB = False
 
 
-# Ansible Display object for warnings
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+import ansible.module_utils.six.moves.urllib.parse as urlparse
+
+GCP_DEFAULT_SCOPES = ['https://www.googleapis.com/auth/cloud-platform']
+
 
 def _get_gcp_ansible_credentials(module):
     """Helper to fetch creds from AnsibleModule object."""
@@ -74,10 +75,12 @@ def _get_gcp_ansible_credentials(module):
 
     return (service_account_email, credentials_file, project_id)
 
+
 def _get_gcp_environ_var(var_name, default_value):
     """Wrapper around os.environ.get call."""
     return os.environ.get(
         var_name, default_value)
+
 
 def _get_gcp_environment_credentials(service_account_email, credentials_file, project_id):
     """Helper to look in environment variables for credentials."""
@@ -95,7 +98,8 @@ def _get_gcp_environment_credentials(service_account_email, credentials_file, pr
             'GOOGLE_CLOUD_PROJECT', None)
     return (service_account_email, credentials_file, project_id)
 
-def _get_gcp_libcloud_credentials(service_account_email=None, credentials_file=None, project_id=None):
+
+def _get_gcp_libcloud_credentials(module, service_account_email=None, credentials_file=None, project_id=None):
     """
     Helper to look for libcloud secrets.py file.
 
@@ -119,9 +123,9 @@ def _get_gcp_libcloud_credentials(service_account_email=None, credentials_file=N
     if service_account_email is None or credentials_file is None:
         try:
             import secrets
-            display.deprecated(msg=("secrets file found at '%s'.  This method of specifying "
-                                    "credentials is deprecated.  Please use env vars or "
-                                    "Ansible YAML files instead" % (secrets.__file__)), version=2.5)
+            module.deprecate(msg=("secrets file found at '%s'.  This method of specifying "
+                                  "credentials is deprecated.  Please use env vars or "
+                                  "Ansible YAML files instead" % (secrets.__file__)), version=2.5)
         except ImportError:
             secrets = None
         if hasattr(secrets, 'GCE_PARAMS'):
@@ -133,6 +137,7 @@ def _get_gcp_libcloud_credentials(service_account_email=None, credentials_file=N
         if not project_id:
             project_id = keyword_params.get('project', None)
     return (service_account_email, credentials_file, project_id)
+
 
 def _get_gcp_credentials(module, require_valid_json=True, check_libcloud=False):
     """
@@ -187,19 +192,20 @@ def _get_gcp_credentials(module, require_valid_json=True, check_libcloud=False):
     # get the remaining values from the libcloud secrets file.
     (service_account_email,
      credentials_file,
-     project_id) = _get_gcp_libcloud_credentials(service_account_email,
+     project_id) = _get_gcp_libcloud_credentials(module, service_account_email,
                                                  credentials_file, project_id)
 
     if credentials_file is None or project_id is None or service_account_email is None:
         if check_libcloud is True:
             if project_id is None:
-                # TODO(supertom): this message is legacy and integration tests depend on it.
+                # TODO(supertom): this message is legacy and integration tests
+                # depend on it.
                 module.fail_json(msg='Missing GCE connection parameters in libcloud '
                                  'secrets file.')
         else:
             if project_id is None:
                 module.fail_json(msg=('GCP connection error: unable to determine project (%s) or '
-                'credentials file (%s)' % (project_id, credentials_file)))
+                                      'credentials file (%s)' % (project_id, credentials_file)))
         # Set these fields to empty strings if they are None
         # consumers of this will make the distinction between an empty string
         # and None.
@@ -217,6 +223,7 @@ def _get_gcp_credentials(module, require_valid_json=True, check_libcloud=False):
     return {'service_account_email': service_account_email,
             'credentials_file': credentials_file,
             'project_id': project_id}
+
 
 def _validate_credentials_file(module, credentials_file, require_valid_json=True, check_libcloud=False):
     """
@@ -245,21 +252,24 @@ def _validate_credentials_file(module, credentials_file, require_valid_json=True
         with open(credentials_file) as credentials:
             json.loads(credentials.read())
             # If the credentials are proper JSON and we do not have the minimum
-            # required libcloud version, bail out and return a descriptive error
+            # required libcloud version, bail out and return a descriptive
+            # error
             if check_libcloud and LooseVersion(libcloud.__version__) < '0.17.0':
                 module.fail_json(msg='Using JSON credentials but libcloud minimum version not met. '
                                      'Upgrade to libcloud>=0.17.0.')
             return True
     except IOError as e:
-        module.fail_json(msg='GCP Credentials File %s not found.' % credentials_file, changed=False)
+        module.fail_json(msg='GCP Credentials File %s not found.' %
+                         credentials_file, changed=False)
         return False
     except ValueError as e:
         if require_valid_json:
-            module.fail_json(msg='GCP Credentials File %s invalid.  Must be valid JSON.' % credentials_file, changed=False)
+            module.fail_json(
+                msg='GCP Credentials File %s invalid.  Must be valid JSON.' % credentials_file, changed=False)
         else:
-            display.deprecated(msg=("Non-JSON credentials file provided. This format is deprecated. "
-                                    " Please generate a new JSON key from the Google Cloud console"),
-                               version=2.5)
+            module.deprecate(msg=("Non-JSON credentials file provided. This format is deprecated. "
+                                  " Please generate a new JSON key from the Google Cloud console"),
+                             version=2.5)
             return True
 
 
@@ -273,7 +283,7 @@ def gcp_connect(module, provider, get_driver, user_agent_product, user_agent_ver
                                  check_libcloud=True)
     try:
         gcp = get_driver(provider)(creds['service_account_email'], creds['credentials_file'],
-                datacenter=module.params.get('zone', None),
+                                   datacenter=module.params.get('zone', None),
                                    project=creds['project_id'])
         gcp.connection.user_agent_append("%s/%s" % (
             user_agent_product, user_agent_version))
@@ -318,8 +328,8 @@ def get_google_cloud_credentials(module, scopes=[]):
         module.fail_json(msg='Please install google-auth.')
 
     conn_params = _get_gcp_credentials(module,
-                                 require_valid_json=True,
-                                 check_libcloud=False)
+                                       require_valid_json=True,
+                                       check_libcloud=False)
     try:
         if conn_params['credentials_file']:
             credentials = service_account.Credentials.from_service_account_file(
@@ -336,6 +346,7 @@ def get_google_cloud_credentials(module, scopes=[]):
     except Exception as e:
         module.fail_json(msg=unexpected_error_msg(e), changed=False)
         return (None, None)
+
 
 def get_google_api_auth(module, scopes=[], user_agent_product='ansible-python-api', user_agent_version='NA'):
     """
@@ -375,18 +386,42 @@ def get_google_api_auth(module, scopes=[], user_agent_product='ansible-python-ap
     """
     if not HAS_GOOGLE_API_LIB:
         module.fail_json(msg="Please install google-api-python-client library")
-    # TODO(supertom): verify scopes
     if not scopes:
-        scopes = ['https://www.googleapis.com/auth/cloud-platform']
+        scopes = GCP_DEFAULT_SCOPES
     try:
         (credentials, conn_params) = get_google_cloud_credentials(module, scopes)
-        http = set_user_agent(Http(), '%s-%s' % (user_agent_product, user_agent_version))
+        http = set_user_agent(Http(), '%s-%s' %
+                              (user_agent_product, user_agent_version))
         http_auth = google_auth_httplib2.AuthorizedHttp(credentials, http=http)
 
         return (http_auth, conn_params)
     except Exception as e:
         module.fail_json(msg=unexpected_error_msg(e), changed=False)
         return (None, None)
+
+
+def get_google_api_client(module, service, user_agent_product, user_agent_version,
+                          scopes=None, api_version='v1'):
+    """
+    Get the discovery-based python client. Use when a cloud client is not available.
+
+    client = get_google_api_client(module, 'compute', user_agent_product=USER_AGENT_PRODUCT,
+                                   user_agent_version=USER_AGENT_VERSION)
+
+    :returns: A tuple containing the authorized client to the specified service and a
+              params dict {'service_account_email': '...', 'credentials_file': '...', 'project_id': ...}
+    :rtype: ``tuple``
+    """
+    if not scopes:
+        scopes = GCP_DEFAULT_SCOPES
+
+    http_auth, conn_params = get_google_api_auth(module, scopes=scopes,
+                                                 user_agent_product=user_agent_product,
+                                                 user_agent_version=user_agent_version)
+    client = build(service, api_version, http=http_auth)
+
+    return (client, conn_params)
+
 
 def check_min_pkg_version(pkg_name, minimum_version):
     """Minimum required version is >= installed version."""
@@ -397,9 +432,11 @@ def check_min_pkg_version(pkg_name, minimum_version):
     except Exception as e:
         return False
 
+
 def unexpected_error_msg(error):
     """Create an error string based on passed in error."""
     return 'Unexpected response: (%s). Detail: %s' % (str(error), traceback.format_exc())
+
 
 def get_valid_location(module, driver, location, location_type='zone'):
     if location_type == 'zone':
@@ -413,3 +450,414 @@ def get_valid_location(module, driver, location, location_type='zone'):
                                   location_type, location, location_type, link)),
                          changed=False)
     return l
+
+
+def check_params(params, field_list):
+    """
+    Helper to validate params.
+
+    Use this in function definitions if they require specific fields
+    to be present.
+
+    :param params: structure that contains the fields
+    :type params: ``dict``
+
+    :param field_list: list of dict representing the fields
+                       [{'name': str, 'required': True/False', 'type': cls}]
+    :type field_list: ``list`` of ``dict``
+
+    :return True or raises ValueError
+    :rtype: ``bool`` or `class:ValueError`
+    """
+    for d in field_list:
+        if not d['name'] in params:
+            if 'required' in d and d['required'] is True:
+                raise ValueError(("%s is required and must be of type: %s" %
+                                  (d['name'], str(d['type']))))
+        else:
+            if not isinstance(params[d['name']], d['type']):
+                raise ValueError(("%s must be of type: %s. %s (%s) provided." % (
+                    d['name'], str(d['type']), params[d['name']],
+                    type(params[d['name']]))))
+            if 'values' in d:
+                if params[d['name']] not in d['values']:
+                    raise ValueError(("%s must be one of: %s" % (
+                        d['name'], ','.join(d['values']))))
+            if isinstance(params[d['name']], int):
+                if 'min' in d:
+                    if params[d['name']] < d['min']:
+                        raise ValueError(("%s must be greater than or equal to: %s" % (
+                            d['name'], d['min'])))
+                if 'max' in d:
+                    if params[d['name']] > d['max']:
+                        raise ValueError("%s must be less than or equal to: %s" % (
+                            d['name'], d['max']))
+    return True
+
+
+class GCPUtils(object):
+    """
+    Helper utilities for GCP.
+    """
+
+    @staticmethod
+    def underscore_to_camel(txt):
+        return txt.split('_')[0] + ''.join(x.capitalize() or '_' for x in txt.split('_')[1:])
+
+    @staticmethod
+    def remove_non_gcp_params(params):
+        """
+        Remove params if found.
+        """
+        params_to_remove = ['state']
+        for p in params_to_remove:
+            if p in params:
+                del params[p]
+
+        return params
+
+    @staticmethod
+    def params_to_gcp_dict(params, resource_name=None):
+        """
+        Recursively convert ansible params to GCP Params.
+
+        Keys are converted from snake to camelCase
+        ex: default_service to defaultService
+
+        Handles lists, dicts and strings
+
+        special provision for the resource name
+        """
+        if not isinstance(params, dict):
+            return params
+        gcp_dict = {}
+        params = GCPUtils.remove_non_gcp_params(params)
+        for k, v in params.items():
+            gcp_key = GCPUtils.underscore_to_camel(k)
+            if isinstance(v, dict):
+                retval = GCPUtils.params_to_gcp_dict(v)
+                gcp_dict[gcp_key] = retval
+            elif isinstance(v, list):
+                gcp_dict[gcp_key] = [GCPUtils.params_to_gcp_dict(x) for x in v]
+            else:
+                if resource_name and k == resource_name:
+                    gcp_dict['name'] = v
+                else:
+                    gcp_dict[gcp_key] = v
+        return gcp_dict
+
+    @staticmethod
+    def execute_api_client_req(req, client=None, raw=True,
+                               operation_timeout=180, poll_interval=5,
+                               raise_404=True):
+        """
+        General python api client interaction function.
+
+        For use with google-api-python-client, or clients created
+        with get_google_api_client function
+        Not for use with Google Cloud client libraries
+
+        For long-running operations, we make an immediate query and then
+        sleep poll_interval before re-querying.  After the request is done
+        we rebuild the request with a get method and return the result.
+
+        """
+        try:
+            resp = req.execute()
+
+            if not resp:
+                return None
+
+            if raw:
+                return resp
+
+            if resp['kind'] == 'compute#operation':
+                resp = GCPUtils.execute_api_client_operation_req(req, resp,
+                                                                 client,
+                                                                 operation_timeout,
+                                                                 poll_interval)
+
+            if 'items' in resp:
+                return resp['items']
+
+            return resp
+        except HttpError as h:
+            # Note: 404s can be generated (incorrectly) for dependent
+            # resources not existing.  We let the caller determine if
+            # they want 404s raised for their invocation.
+            if h.resp.status == 404 and not raise_404:
+                return None
+            else:
+                raise
+        except Exception:
+            raise
+
+    @staticmethod
+    def execute_api_client_operation_req(orig_req, op_resp, client,
+                                         operation_timeout=180, poll_interval=5):
+        """
+        Poll an operation for a result.
+        """
+        parsed_url = GCPUtils.parse_gcp_url(orig_req.uri)
+        project_id = parsed_url['project']
+        resource_name = GCPUtils.get_gcp_resource_from_methodId(
+            orig_req.methodId)
+        resource = GCPUtils.build_resource_from_name(client, resource_name)
+
+        start_time = time.time()
+
+        complete = False
+        attempts = 1
+        while not complete:
+            if start_time + operation_timeout >= time.time():
+                op_req = client.globalOperations().get(
+                    project=project_id, operation=op_resp['name'])
+                op_resp = op_req.execute()
+                if op_resp['status'] != 'DONE':
+                    time.sleep(poll_interval)
+                    attempts += 1
+                else:
+                    complete = True
+                    if op_resp['operationType'] == 'delete':
+                        # don't wait for the delete
+                        return True
+                    elif op_resp['operationType'] in ['insert', 'update', 'patch']:
+                        # TODO(supertom): Isolate 'build-new-request' stuff.
+                        resource_name_singular = GCPUtils.get_entity_name_from_resource_name(
+                            resource_name)
+                        if op_resp['operationType'] == 'insert' or 'entity_name' not in parsed_url:
+                            parsed_url['entity_name'] = GCPUtils.parse_gcp_url(op_resp['targetLink'])[
+                                'entity_name']
+                        args = {'project': project_id,
+                                resource_name_singular: parsed_url['entity_name']}
+                        new_req = resource.get(**args)
+                        resp = new_req.execute()
+                        return resp
+                    else:
+                        # assuming multiple entities, do a list call.
+                        new_req = resource.list(project=project_id)
+                        resp = new_req.execute()
+                        return resp
+            else:
+                # operation didn't complete on time.
+                raise GCPOperationTimeoutError("Operation timed out: %s" % (
+                    op_resp['targetLink']))
+
+    @staticmethod
+    def build_resource_from_name(client, resource_name):
+        try:
+            method = getattr(client, resource_name)
+            return method()
+        except AttributeError:
+            raise NotImplementedError('%s is not an attribute of %s' % (resource_name,
+                                                                        client))
+
+    @staticmethod
+    def get_gcp_resource_from_methodId(methodId):
+        try:
+            parts = methodId.split('.')
+            if len(parts) != 3:
+                return None
+            else:
+                return parts[1]
+        except AttributeError:
+            return None
+
+    @staticmethod
+    def get_entity_name_from_resource_name(resource_name):
+        if not resource_name:
+            return None
+
+        try:
+            # Chop off global or region prefixes
+            if resource_name.startswith('global'):
+                resource_name = resource_name.replace('global', '')
+            elif resource_name.startswith('regional'):
+                resource_name = resource_name.replace('region', '')
+
+            # ensure we have a lower case first letter
+            resource_name = resource_name[0].lower() + resource_name[1:]
+
+            if resource_name[-3:] == 'ies':
+                return resource_name.replace(
+                    resource_name[-3:], 'y')
+            if resource_name[-1] == 's':
+                return resource_name[:-1]
+
+            return resource_name
+
+        except AttributeError:
+            return None
+
+    @staticmethod
+    def parse_gcp_url(url):
+        """
+        Parse GCP urls and return dict of parts.
+
+        Supported URL structures:
+        /SERVICE/VERSION/'projects'/PROJECT_ID/RESOURCE
+        /SERVICE/VERSION/'projects'/PROJECT_ID/RESOURCE/ENTITY_NAME
+        /SERVICE/VERSION/'projects'/PROJECT_ID/RESOURCE/ENTITY_NAME/METHOD_NAME
+        /SERVICE/VERSION/'projects'/PROJECT_ID/'global'/RESOURCE
+        /SERVICE/VERSION/'projects'/PROJECT_ID/'global'/RESOURCE/ENTITY_NAME
+        /SERVICE/VERSION/'projects'/PROJECT_ID/'global'/RESOURCE/ENTITY_NAME/METHOD_NAME
+        /SERVICE/VERSION/'projects'/PROJECT_ID/LOCATION_TYPE/LOCATION/RESOURCE
+        /SERVICE/VERSION/'projects'/PROJECT_ID/LOCATION_TYPE/LOCATION/RESOURCE/ENTITY_NAME
+        /SERVICE/VERSION/'projects'/PROJECT_ID/LOCATION_TYPE/LOCATION/RESOURCE/ENTITY_NAME/METHOD_NAME
+
+        :param url: GCP-generated URL, such as a selflink or resource location.
+        :type url: ``str``
+
+        :return: dictionary of parts. Includes stanard components of urlparse, plus
+                 GCP-specific 'service', 'api_version', 'project' and
+                 'resource_name' keys. Optionally, 'zone', 'region', 'entity_name'
+                 and 'method_name', if applicable.
+        :rtype: ``dict``
+        """
+
+        p = urlparse.urlparse(url)
+        if not p:
+            return None
+        else:
+            # we add extra items such as
+            # zone, region and resource_name
+            url_parts = {}
+            url_parts['scheme'] = p.scheme
+            url_parts['host'] = p.netloc
+            url_parts['path'] = p.path
+            if p.path.find('/') == 0:
+                url_parts['path'] = p.path[1:]
+            url_parts['params'] = p.params
+            url_parts['fragment'] = p.fragment
+            url_parts['query'] = p.query
+            url_parts['project'] = None
+            url_parts['service'] = None
+            url_parts['api_version'] = None
+
+            path_parts = url_parts['path'].split('/')
+            url_parts['service'] = path_parts[0]
+            url_parts['api_version'] = path_parts[1]
+            if path_parts[2] == 'projects':
+                url_parts['project'] = path_parts[3]
+            else:
+                # invalid URL
+                raise GCPInvalidURLError('unable to parse: %s' % url)
+
+            if 'global' in path_parts:
+                url_parts['global'] = True
+                idx = path_parts.index('global')
+                if len(path_parts) - idx == 4:
+                    # we have a resource, entity and method_name
+                    url_parts['resource_name'] = path_parts[idx + 1]
+                    url_parts['entity_name'] = path_parts[idx + 2]
+                    url_parts['method_name'] = path_parts[idx + 3]
+
+                if len(path_parts) - idx == 3:
+                    # we have a resource and entity
+                    url_parts['resource_name'] = path_parts[idx + 1]
+                    url_parts['entity_name'] = path_parts[idx + 2]
+
+                if len(path_parts) - idx == 2:
+                    url_parts['resource_name'] = path_parts[idx + 1]
+
+                if len(path_parts) - idx < 2:
+                    # invalid URL
+                    raise GCPInvalidURLError('unable to parse: %s' % url)
+
+            elif 'regions' in path_parts or 'zones' in path_parts:
+                idx = -1
+                if 'regions' in path_parts:
+                    idx = path_parts.index('regions')
+                    url_parts['region'] = path_parts[idx + 1]
+                else:
+                    idx = path_parts.index('zones')
+                    url_parts['zone'] = path_parts[idx + 1]
+
+                if len(path_parts) - idx == 5:
+                    # we have a resource, entity and method_name
+                    url_parts['resource_name'] = path_parts[idx + 2]
+                    url_parts['entity_name'] = path_parts[idx + 3]
+                    url_parts['method_name'] = path_parts[idx + 4]
+
+                if len(path_parts) - idx == 4:
+                    # we have a resource and entity
+                    url_parts['resource_name'] = path_parts[idx + 2]
+                    url_parts['entity_name'] = path_parts[idx + 3]
+
+                if len(path_parts) - idx == 3:
+                    url_parts['resource_name'] = path_parts[idx + 2]
+
+                if len(path_parts) - idx < 3:
+                    # invalid URL
+                    raise GCPInvalidURLError('unable to parse: %s' % url)
+
+            else:
+                # no location in URL.
+                idx = path_parts.index('projects')
+                if len(path_parts) - idx == 5:
+                    # we have a resource, entity and method_name
+                    url_parts['resource_name'] = path_parts[idx + 2]
+                    url_parts['entity_name'] = path_parts[idx + 3]
+                    url_parts['method_name'] = path_parts[idx + 4]
+
+                if len(path_parts) - idx == 4:
+                    # we have a resource and entity
+                    url_parts['resource_name'] = path_parts[idx + 2]
+                    url_parts['entity_name'] = path_parts[idx + 3]
+
+                if len(path_parts) - idx == 3:
+                    url_parts['resource_name'] = path_parts[idx + 2]
+
+                if len(path_parts) - idx < 3:
+                    # invalid URL
+                    raise GCPInvalidURLError('unable to parse: %s' % url)
+
+            return url_parts
+
+    @staticmethod
+    def build_googleapi_url(project, api_version='v1', service='compute'):
+        return 'https://www.googleapis.com/%s/%s/projects/%s' % (service, api_version, project)
+
+    @staticmethod
+    def filter_gcp_fields(params, excluded_fields=None):
+        new_params = {}
+        if not excluded_fields:
+            excluded_fields = ['creationTimestamp', 'id', 'kind',
+                               'selfLink', 'fingerprint', 'description']
+
+        if isinstance(params, list):
+            new_params = [GCPUtils.filter_gcp_fields(
+                x, excluded_fields) for x in params]
+        elif isinstance(params, dict):
+            for k in params.keys():
+                if k not in excluded_fields:
+                    new_params[k] = GCPUtils.filter_gcp_fields(
+                        params[k], excluded_fields)
+        else:
+            new_params = params
+
+        return new_params
+
+    @staticmethod
+    def are_params_equal(p1, p2):
+        """
+        Check if two params dicts are equal.
+        TODO(supertom): need a way to filter out URLs, or they need to be built
+        """
+        filtered_p1 = GCPUtils.filter_gcp_fields(p1)
+        filtered_p2 = GCPUtils.filter_gcp_fields(p2)
+        if filtered_p1 != filtered_p2:
+            return False
+        return True
+
+
+class GCPError(Exception):
+    pass
+
+
+class GCPOperationTimeoutError(GCPError):
+    pass
+
+
+class GCPInvalidURLError(GCPError):
+    pass

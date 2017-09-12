@@ -10,11 +10,11 @@ Version:   %{ansible_version}
 Release:   1%{?dist}
 Url:       https://www.ansible.com
 Summary:   SSH-based application deployment, configuration management, and IT orchestration platform
-License:   GPLv3
+License:   GPLv3+
 Group:     Development/Libraries
 Source:    http://releases.ansible.com/ansible/%{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
-%{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")}
+%{!?python_sitelib: %global python_sitelib %(%{__python2} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")}
 
 BuildArch: noarch
 
@@ -33,7 +33,12 @@ Requires: python26-six
 
 # RHEL == 6
 %if 0%{?rhel} == 6
-Requires: python-crypto2.6
+Requires: python-crypto
+%endif
+
+# RHEL >=7
+%if 0%{?rhel} >= 7
+Requires: python2-cryptography
 %endif
 
 # RHEL > 5
@@ -43,8 +48,6 @@ BuildRequires: python-setuptools
 Requires: PyYAML
 Requires: python-paramiko
 Requires: python-jinja2
-Requires: python-keyczar
-Requires: python-httplib2
 Requires: python-setuptools
 Requires: python-six
 %endif
@@ -63,7 +66,7 @@ Requires: python-six
 %endif
 
 # SuSE/openSuSE
-%if 0%{?suse_version} 
+%if 0%{?suse_version}
 BuildRequires: python-devel
 BuildRequires: python-setuptools
 Requires: python-paramiko
@@ -89,10 +92,16 @@ are transferred to managed machines automatically.
 %setup -q
 
 %build
-%{__python} setup.py build
+%{__python2} setup.py build
 
 %install
-%{__python} setup.py install -O1 --prefix=%{_prefix} --root=%{buildroot}
+%{__python2} setup.py install --root=%{buildroot}
+
+for i in %{buildroot}/%{_bindir}/{ansible,ansible-console,ansible-doc,ansible-galaxy,ansible-playbook,ansible-pull,ansible-vault}; do
+    mv $i $i-%{python2_version}
+    ln -s %{_bindir}/$(basename $i)-%{python2_version} $i
+    ln -s %{_bindir}/$(basename $i)-%{python2_version} $i-2
+done
 
 # Amazon Linux doesn't install to dist-packages but python_sitelib expands to
 # that location and the python interpreter expects things to be there.
@@ -105,6 +114,7 @@ if expr x'%{python_sitelib}' : 'x.*dist-packages/\?' ; then
 fi
 
 mkdir -p %{buildroot}/etc/ansible/
+mkdir -p %{buildroot}/etc/ansible/roles/
 cp examples/hosts %{buildroot}/etc/ansible/
 cp examples/ansible.cfg %{buildroot}/etc/ansible/
 mkdir -p %{buildroot}/%{_mandir}/man1/
@@ -120,7 +130,7 @@ rm -rf %{buildroot}
 %{_bindir}/ansible*
 %dir %{_datadir}/ansible
 %config(noreplace) %{_sysconfdir}/ansible
-%doc README.md PKG-INFO COPYING
+%doc README.md PKG-INFO COPYING CHANGELOG.md
 %doc %{_mandir}/man1/ansible*
 
 %changelog

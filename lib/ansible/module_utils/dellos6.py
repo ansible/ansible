@@ -1,4 +1,3 @@
-
 #
 # (c) 2015 Peter Sprygada, <psprygada@ansible.com>
 #
@@ -29,22 +28,97 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-
 import re
 
-from ansible.module_utils.shell import CliBase
-from ansible.module_utils.network import Command, register_transport, to_list
+from ansible.module_utils._text import to_text
+from ansible.module_utils.basic import env_fallback, return_values
+from ansible.module_utils.network_common import to_list, ComplexList
+from ansible.module_utils.connection import exec_command
 from ansible.module_utils.netcfg import NetworkConfig, ConfigLine, ignore_line, DEFAULT_COMMENT_TOKENS
 
+_DEVICE_CONFIGS = {}
 
-def get_config(module):
-    contents = module.params['config']
-    if not contents:
-        contents = module.config.get_config()
-        module.params['config'] = contents
-        return Dellos6NetworkConfig(indent=0, contents=contents[0])
-    else:
-        return Dellos6NetworkConfig(indent=0, contents=contents)
+WARNING_PROMPTS_RE = [
+    r"[\r\n]?\[confirm yes/no\]:\s?$",
+    r"[\r\n]?\[y/n\]:\s?$",
+    r"[\r\n]?\[yes/no\]:\s?$"
+]
+
+dellos6_provider_spec = {
+    'host': dict(),
+    'port': dict(type='int'),
+    'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
+    'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
+    'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
+    'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
+    'auth_pass': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS']), no_log=True),
+    'timeout': dict(type='int'),
+}
+dellos6_argument_spec = {
+    'provider': dict(type='dict', options=dellos6_provider_spec),
+}
+dellos6_argument_spec.update(dellos6_provider_spec)
+
+
+def check_args(module, warnings):
+    for key in dellos6_argument_spec:
+        if key != 'provider' and module.params[key]:
+            warnings.append('argument %s has been deprecated and will be '
+                            'removed in a future version' % key)
+
+
+def get_config(module, flags=[]):
+    cmd = 'show running-config '
+    cmd += ' '.join(flags)
+    cmd = cmd.strip()
+
+    try:
+        return _DEVICE_CONFIGS[cmd]
+    except KeyError:
+        rc, out, err = exec_command(module, cmd)
+        if rc != 0:
+            module.fail_json(msg='unable to retrieve current config', stderr=to_text(err, errors='surrogate_or_strict'))
+        cfg = to_text(out, errors='surrogate_or_strict').strip()
+        _DEVICE_CONFIGS[cmd] = cfg
+        return cfg
+
+
+def to_commands(module, commands):
+    spec = {
+        'command': dict(key=True),
+        'prompt': dict(),
+        'answer': dict()
+    }
+    transform = ComplexList(spec, module)
+    return transform(commands)
+
+
+def run_commands(module, commands, check_rc=True):
+    responses = list()
+    commands = to_commands(module, to_list(commands))
+    for cmd in commands:
+        cmd = module.jsonify(cmd)
+        rc, out, err = exec_command(module, cmd)
+        if check_rc and rc != 0:
+            module.fail_json(msg=to_text(err, errors='surrogate_or_strict'), rc=rc)
+        responses.append(to_text(out, errors='surrogate_or_strict'))
+    return responses
+
+
+def load_config(module, commands):
+    rc, out, err = exec_command(module, 'configure terminal')
+    if rc != 0:
+        module.fail_json(msg='unable to enter configuration mode', err=to_text(err, errors='surrogate_or_strict'))
+
+    for command in to_list(commands):
+        if command == 'end':
+            continue
+        cmd = {'command': command, 'prompt': WARNING_PROMPTS_RE, 'answer': 'yes'}
+        rc, out, err = exec_command(module, module.jsonify(cmd))
+        if rc != 0:
+            module.fail_json(msg=to_text(err, errors='surrogate_or_strict'), command=command, rc=rc)
+    exec_command(module, 'end')
+
 
 def get_sublevel_config(running_config, module):
     contents = list()
@@ -52,7 +126,7 @@ def get_sublevel_config(running_config, module):
     sublevel_config = Dellos6NetworkConfig(indent=0)
     obj = running_config.get_object(module.params['parents'])
     if obj:
-        contents = obj.children
+        contents = obj._children
     for c in contents:
         if isinstance(c, ConfigLine):
             current_config_contents.append(c.raw)
@@ -104,42 +178,42 @@ def os6_parse(lines, indent=None, comment_tokens=None):
             continue
 
         else:
-            parent_match=False
+            parent_match = False
             # handle sublevel parent
             for pr in sublevel_cmds:
                 if pr.match(line):
                     if len(parent) != 0:
-                        cfg.parents.extend(parent)
+                        cfg._parents.extend(parent)
                     parent.append(cfg)
                     config.append(cfg)
                     if children:
-                        children.insert(len(parent) - 1,[])
+                        children.insert(len(parent) - 1, [])
                         children[len(parent) - 2].append(cfg)
-                    parent_match=True
+                    parent_match = True
                     continue
             # handle exit
             if childline.match(line):
                 if children:
-                    parent[len(children) - 1].children.extend(children[len(children) - 1])
-                    if len(children)>1:
-                        parent[len(children) - 2].children.extend(parent[len(children) - 1].children)
-                    cfg.parents.extend(parent)
+                    parent[len(children) - 1]._children.extend(children[len(children) - 1])
+                    if len(children) > 1:
+                        parent[len(children) - 2]._children.extend(parent[len(children) - 1]._children)
+                    cfg._parents.extend(parent)
                     children.pop()
                     parent.pop()
                 if not children:
                     children = list()
                     if parent:
-                        cfg.parents.extend(parent)
+                        cfg._parents.extend(parent)
                     parent = list()
                     config.append(cfg)
             # handle sublevel children
-            elif parent_match is False and len(parent)>0 :
+            elif parent_match is False and len(parent) > 0:
                 if not children:
-                    cfglist=[cfg]
+                    cfglist = [cfg]
                     children.append(cfglist)
                 else:
                     children[len(parent) - 1].append(cfg)
-                cfg.parents.extend(parent)
+                cfg._parents.extend(parent)
                 config.append(cfg)
             # handle global commands
             elif not parent:
@@ -150,71 +224,16 @@ def os6_parse(lines, indent=None, comment_tokens=None):
 class Dellos6NetworkConfig(NetworkConfig):
 
     def load(self, contents):
-        self._config = os6_parse(contents, self.indent, DEFAULT_COMMENT_TOKENS)
+        self._items = os6_parse(contents, self._indent, DEFAULT_COMMENT_TOKENS)
 
-    def diff_line(self, other, path=None):
+    def _diff_line(self, other, path=None):
         diff = list()
         for item in self.items:
             if str(item) == "exit":
                 for diff_item in diff:
-                    if item.parents == diff_item.parents:
+                    if item._parents == diff_item._parents:
                         diff.append(item)
                         break
             elif item not in other:
                 diff.append(item)
         return diff
-
-
-class Cli(CliBase):
-
-    NET_PASSWD_RE = re.compile(r"[\r\n]?password:\s?$", re.I)
-
-    CLI_PROMPTS_RE = [
-        re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
-        re.compile(r"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
-    ]
-
-    CLI_ERRORS_RE = [
-        re.compile(r"% ?Error"),
-        re.compile(r"% ?Bad secret"),
-        re.compile(r"invalid input", re.I),
-        re.compile(r"(?:incomplete|ambiguous) command", re.I),
-        re.compile(r"connection timed out", re.I),
-        re.compile(r"[^\r\n]+ not found", re.I),
-        re.compile(r"'[^']' +returned error code: ?\d+")]
-
-
-    def connect(self, params, **kwargs):
-        super(Cli, self).connect(params, kickstart=False, **kwargs)
-
-
-    def authorize(self, params, **kwargs):
-        passwd = params['auth_pass']
-        self.run_commands(
-            Command('enable', prompt=self.NET_PASSWD_RE, response=passwd)
-        )
-        self.run_commands('terminal length 0')
-
-
-    def configure(self, commands, **kwargs):
-        cmds = ['configure terminal']
-        cmds.extend(to_list(commands))
-        cmds.append('end')
-        responses = self.execute(cmds)
-        responses.pop(0)
-        return responses
-
-
-    def get_config(self, **kwargs):
-        return self.execute(['show running-config'])
-
-
-    def load_config(self, commands, **kwargs):
-        return self.configure(commands)
-
-
-    def save_config(self):
-        self.execute(['copy running-config startup-config'])
-
-
-Cli = register_transport('cli', default=True)(Cli)

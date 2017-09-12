@@ -9,7 +9,7 @@
 #   make deb-src -------------- produce a DEB source
 #   make deb ------------------ produce a DEB
 #   make docs ----------------- rebuild the manpages (results are checked in)
-#   make tests ---------------- run the tests (see test/README.md for requirements)
+#   make tests ---------------- run the tests (see https://docs.ansible.com/ansible/dev_guide/testing_units.html for requirements)
 #   make pyflakes, make pep8 -- source code checks
 
 ########################################################
@@ -21,13 +21,15 @@ OS = $(shell uname -s)
 # Manpages are currently built with asciidoc -- would like to move to markdown
 # This doesn't evaluate until it's called. The -D argument is the
 # directory of the target file ($@), kinda like `dirname`.
-MANPAGES := docs/man/man1/ansible.1 docs/man/man1/ansible-playbook.1 docs/man/man1/ansible-pull.1 docs/man/man1/ansible-doc.1 docs/man/man1/ansible-galaxy.1 docs/man/man1/ansible-vault.1 docs/man/man1/ansible-console.1
+
+MANPAGES ?= $(patsubst %.asciidoc.in,%,$(wildcard ./docs/man/man1/ansible*.1.asciidoc.in))
 ifneq ($(shell which a2x 2>/dev/null),)
 ASCII2MAN = a2x -L -D $(dir $@) -d manpage -f manpage $<
 ASCII2HTMLMAN = a2x -L -D docs/html/man/ -d manpage -f xhtml
 else
 ASCII2MAN = @echo "ERROR: AsciiDoc 'a2x' command is not installed but is required to build $(MANPAGES)" && exit 1
 endif
+GENERATE_CLI = docs/bin/generate_man.py
 
 PYTHON=python
 SITELIB = $(shell $(PYTHON) -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")
@@ -92,6 +94,10 @@ RPMRELEASE = $(RELEASE)
 ifneq ($(OFFICIAL),yes)
     RPMRELEASE = 100.git$(DATE)$(GITINFO)
 endif
+ifeq ($(PUBLISH),nightly)
+    # https://fedoraproject.org/wiki/Packaging:Versioning#Snapshots
+    RPMRELEASE = $(RELEASE).$(DATE)git.$(GIT_HASH)
+endif
 RPMNVR = "$(NAME)-$(VERSION)-$(RPMRELEASE)$(RPMDIST)"
 
 # MOCK build parameters
@@ -112,17 +118,26 @@ TARGET ?=
 
 ########################################################
 
+.PHONY: all
 all: clean python
 
+.PHONY: tests
 tests:
 	$(ANSIBLE_TEST) units -v --python $(PYTHON_VERSION) $(TEST_FLAGS)
 
+.PHONY: tests-py3
 tests-py3:
 	$(ANSIBLE_TEST) units -v --python $(PYTHON3_VERSION) $(TEST_FLAGS)
 
+.PHONY: tests-nonet
+tests-nonet:
+	$(ANSIBLE_TEST) units -v --python $(PYTHON_VERSION) $(TEST_FLAGS)  --exclude test/units/modules/network/
+
+.PHONY: integration
 integration:
 	$(ANSIBLE_TEST) integration -v --docker $(IMAGE) $(TARGET) $(TEST_FLAGS)
 
+.PHONY: authors
 authors:
 	sh hacking/authors.sh
 
@@ -136,15 +151,19 @@ authors:
 %.1: %.1.asciidoc VERSION
 	$(ASCII2MAN)
 
+.PHONY: loc
 loc:
 	sloccount lib library bin
 
+.PHONY: pep8
 pep8:
 	$(ANSIBLE_TEST) sanity --test pep8 --python $(PYTHON_VERSION) $(TEST_FLAGS)
 
+.PHONY: pyflakes
 pyflakes:
 	pyflakes lib/ansible/*.py lib/ansible/*/*.py bin/*
 
+.PHONY: clean
 clean:
 	@echo "Cleaning up distutils stuff"
 	rm -rf build
@@ -160,8 +179,15 @@ clean:
 	find ./docs/man -type f -name "*.xml" -delete
 	find ./docs/man -type f -name "*.asciidoc" -delete
 	find ./docs/man/man3 -type f -name "*.3" -delete
+	rm -f ./docs/man/man1/*
 	@echo "Cleaning up output from test runs"
 	rm -rf test/test_data
+	rm -rf shippable/
+	rm -rf logs/
+	rm -rf .cache/
+	rm -f test/units/.coverage*
+	rm -f test/results/*/*
+	find test/ -type f -name '*.retry' -delete
 	@echo "Cleaning up RPM building stuff"
 	rm -rf MANIFEST rpm-build
 	@echo "Cleaning up Debian building stuff"
@@ -171,44 +197,49 @@ clean:
 	rm -rf docs/js
 	@echo "Cleaning up authors file"
 	rm -f AUTHORS.TXT
-	@echo "Cleaning up tests"
-	rm -f test/units/.coverage*
-	rm -f test/results/*/*
 	@echo "Cleaning up docsite"
 	$(MAKE) -C docs/docsite clean
 	$(MAKE) -C docs/api clean
 
+.PHONY: python
 python:
 	$(PYTHON) setup.py build
 
+.PHONY: install
 install:
 	$(PYTHON) setup.py install
 
+.PHONY: sdist
 sdist: clean docs
 	$(PYTHON) setup.py sdist
 
+.PHONY: sdist_upload
 sdist_upload: clean docs
 	$(PYTHON) setup.py sdist upload 2>&1 |tee upload.log
 
-rpmcommon: $(MANPAGES) sdist
+.PHONY: rpmcommon
+rpmcommon: sdist
 	@mkdir -p rpm-build
 	@cp dist/*.gz rpm-build/
-	@sed -e 's#^Version:.*#Version: $(VERSION)#' -e 's#^Release:.*#Release: $(RPMRELEASE)%{?dist}#' $(RPMSPEC) >rpm-build/$(NAME).spec
+	@sed -e 's#^Version:.*#Version: $(VERSION)#' -e 's#^Release:.*#Release: $(RPMRELEASE)%{?dist}$(REPOTAG)#' $(RPMSPEC) >rpm-build/$(NAME).spec
 
+.PHONY: mock-srpm
 mock-srpm: /etc/mock/$(MOCK_CFG).cfg rpmcommon
-	$(MOCK_BIN) -r $(MOCK_CFG) --resultdir rpm-build/  --buildsrpm --spec rpm-build/$(NAME).spec --sources rpm-build/
+	$(MOCK_BIN) -r $(MOCK_CFG) $(MOCK_ARGS) --resultdir rpm-build/  --buildsrpm --spec rpm-build/$(NAME).spec --sources rpm-build/
 	@echo "#############################################"
 	@echo "Ansible SRPM is built:"
 	@echo rpm-build/*.src.rpm
 	@echo "#############################################"
 
+.PHONY: mock-rpm
 mock-rpm: /etc/mock/$(MOCK_CFG).cfg mock-srpm
-	$(MOCK_BIN) -r $(MOCK_CFG) --resultdir rpm-build/ --rebuild rpm-build/$(NAME)-*.src.rpm
+	$(MOCK_BIN) -r $(MOCK_CFG) $(MOCK_ARGS) --resultdir rpm-build/ --rebuild rpm-build/$(NAME)-*.src.rpm
 	@echo "#############################################"
 	@echo "Ansible RPM is built:"
 	@echo rpm-build/*.noarch.rpm
 	@echo "#############################################"
 
+.PHONY: srpm
 srpm: rpmcommon
 	@rpmbuild --define "_topdir %(pwd)/rpm-build" \
 	--define "_builddir %{_topdir}" \
@@ -223,6 +254,7 @@ srpm: rpmcommon
 	@echo "    rpm-build/$(RPMNVR).src.rpm"
 	@echo "#############################################"
 
+.PHONY: rpm
 rpm: rpmcommon
 	@rpmbuild --define "_topdir %(pwd)/rpm-build" \
 	--define "_builddir %{_topdir}" \
@@ -239,6 +271,7 @@ rpm: rpmcommon
 	@echo "    rpm-build/$(RPMNVR).noarch.rpm"
 	@echo "#############################################"
 
+.PHONY: debian
 debian: sdist
 	@for DIST in $(DEB_DIST) ; do \
 	    mkdir -p deb-build/$${DIST} ; \
@@ -247,6 +280,7 @@ debian: sdist
         sed -ie "s|%VERSION%|$(VERSION)|g;s|%RELEASE%|$(DEB_RELEASE)|;s|%DIST%|$${DIST}|g;s|%DATE%|$(DEB_DATE)|g" deb-build/$${DIST}/$(NAME)-$(VERSION)/debian/changelog ; \
 	done
 
+.PHONY: deb
 deb: deb-src
 	@for DIST in $(DEB_DIST) ; do \
 	    PBUILDER_OPTS="$(PBUILDER_OPTS) --distribution $${DIST} --basetgz $(PBUILDER_CACHE_DIR)/$${DIST}-$(PBUILDER_ARCH)-base.tgz --buildresult $(CURDIR)/deb-build/$${DIST}" ; \
@@ -263,6 +297,7 @@ deb: deb-src
 
 # Build package outside of pbuilder, with locally installed dependencies.
 # Install BuildRequires as noted in packaging/debian/control.
+.PHONY: local_deb
 local_deb: debian
 	@for DIST in $(DEB_DIST) ; do \
 	    (cd deb-build/$${DIST}/$(NAME)-$(VERSION)/ && $(DEBUILD) -b) ; \
@@ -274,6 +309,7 @@ local_deb: debian
 	done
 	@echo "#############################################"
 
+.PHONY: deb-src
 deb-src: debian
 	@for DIST in $(DEB_DIST) ; do \
 	    (cd deb-build/$${DIST}/$(NAME)-$(VERSION)/ && $(DEBUILD) -S) ; \
@@ -285,21 +321,39 @@ deb-src: debian
 	done
 	@echo "#############################################"
 
+.PHONY: deb-upload
 deb-upload: deb
 	@for DIST in $(DEB_DIST) ; do \
 	    $(DPUT_BIN) $(DPUT_OPTS) $(DEB_PPA) deb-build/$${DIST}/$(NAME)_$(VERSION)-$(DEB_RELEASE)~$${DIST}_amd64.changes ; \
 	done
 
+.PHONY: deb-src-upload
 deb-src-upload: deb-src
 	@for DIST in $(DEB_DIST) ; do \
 	    $(DPUT_BIN) $(DPUT_OPTS) $(DEB_PPA) deb-build/$${DIST}/$(NAME)_$(VERSION)-$(DEB_RELEASE)~$${DIST}_source.changes ; \
 	done
 
-# for arch or gentoo, read instructions in the appropriate 'packaging' subdirectory directory
+.PHONY: epub
+epub:
+	(cd docs/docsite/; CPUS=$(CPUS) make epub)
 
+# for arch or gentoo, read instructions in the appropriate 'packaging' subdirectory directory
+.PHONY: webdocs
 webdocs:
 	(cd docs/docsite/; CPUS=$(CPUS) make docs)
 
-docs: $(MANPAGES)
+.PHONY: generate_asciidoc
+generate_asciidoc: lib/ansible/cli/*.py
+	mkdir -p ./docs/man/man1/ ; \
+	PYTHONPATH=./lib $(GENERATE_CLI) --template-file=docs/templates/man.j2 --output-dir=docs/man/man1/ --output-format man lib/ansible/cli/*.py
 
+
+docs: generate_asciidoc
+	make $(MANPAGES)
+
+.PHONY: alldocs
 alldocs: docs webdocs
+
+version:
+	@echo $(VERSION)
+

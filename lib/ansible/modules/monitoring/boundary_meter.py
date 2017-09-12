@@ -1,28 +1,13 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+# (c) 2013, curtis <curtis@serverascode.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-"""
-Ansible module to add boundary meters.
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-(c) 2013, curtis <curtis@serverascode.com>
 
-This file is part of Ansible
-
-Ansible is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Ansible is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-"""
-
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -88,16 +73,8 @@ EXAMPLES='''
 '''
 
 import base64
+import json
 import os
-
-try:
-    import json
-except ImportError:
-    try:
-        import simplejson as json
-    except ImportError:
-        # Let snippet from module_utils/basic.py return a proper error in this case
-        pass
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
@@ -170,7 +147,7 @@ def create_meter(module, name, apiid, apikey):
         for cert_type in types:
             try:
                 # If we can't open the file it's not there, so we should download it
-                cert_file = open('%s/%s.pem' % (config_directory,cert_type))
+                dummy = open('%s/%s.pem' % (config_directory,cert_type))
             except IOError:
                 # Now download the file...
                 rc = download_request(module, name, apiid, apikey, cert_type)
@@ -205,6 +182,7 @@ def delete_meter(module, name, apiid, apikey):
     if meter_id is None:
         return 1, "Meter does not exist, so can't delete it"
     else:
+        action = "delete"
         response, info = http_request(module, name, apiid, apikey, action, meter_id)
         if info['status'] != 200:
             module.fail_json(msg="Failed to delete meter")
@@ -230,7 +208,7 @@ def download_request(module, name, apiid, apikey, cert_type):
         if info['status'] != 200:
             module.fail_json(msg="Failed to connect to api host to download certificate")
 
-        if result:
+        if response:
             try:
                 cert_file_path = '%s/%s.pem' % (config_directory,cert_type)
                 body = response.read()
@@ -276,4 +254,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

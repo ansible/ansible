@@ -22,7 +22,7 @@
 # Lenovo Networking
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -358,10 +358,10 @@ Tasks: The following are examples of using the module cnos_bgp. These are writte
 
 '''
 RETURN = '''
-  return value: |
-    On successful execution, the method returns an empty string with the following message in JSON format.
-    [BGP configurations accomplished]
-    Upon any failure, the method returns an error display string. The error must be corrected before attempting the method again.
+msg:
+  description: Success or failure message. Upon any failure, the method returns an error display string.
+  returned: always
+  type: string
 '''
 
 import sys

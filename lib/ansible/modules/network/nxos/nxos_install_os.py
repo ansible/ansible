@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = '''
@@ -30,6 +30,7 @@ description:
     - Install an operating system by setting the boot options like boot
       image and kickstart image.
 notes:
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
     - The module will fail due to timeout issues, but the install will go on
       anyway. Ansible's block and rescue can be leveraged to handle this kind
       of failure and check actual module results. See EXAMPLE for more about
@@ -66,10 +67,6 @@ EXAMPLES = '''
     - name: Install OS
       nxos_install_os:
         system_image_file: nxos.7.0.3.I2.2d.bin
-        host: "{{ inventory_hostname }}"
-        username: "{{ un }}"
-        password: "{{ pwd }}"
-        transport: nxapi
   rescue:
     - name: Wait for device to perform checks
       wait_for:
@@ -77,22 +74,16 @@ EXAMPLES = '''
         state: stopped
         timeout: 300
         delay: 60
-        host: "{{ inventory_hostname }}"
     - name: Wait for device to come back up
       wait_for:
         port: 22
         state: started
         timeout: 300
         delay: 60
-        host: "{{ inventory_hostname }}"
     - name: Check installed OS
       nxos_command:
         commands:
           - show version
-        username: "{{ un }}"
-        password: "{{ pwd }}"
-        host: "{{ inventory_hostname }}"
-        transport: nxapi
       register: output
     - assert:
         that:
@@ -101,6 +92,7 @@ EXAMPLES = '''
 
 RETURN = '''
 install_state:
+    description: Boot and install information.
     returned: always
     type: dictionary
     sample: {
@@ -118,20 +110,19 @@ install_state:
 
 
 import re
+
 from ansible.module_utils.nxos import get_config, load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
 
 
-def execute_show_command(command, module, command_type='cli_show_ascii'):
-    cmds = [command]
-    if module.params['transport'] == 'cli':
-        body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
-        body = run_commands(module, cmds)
+def execute_show_command(command, module):
+    command = {
+        'command': command,
+        'output': 'text',
+    }
 
-    return body
+    return run_commands(module, [command])
 
 
 def get_boot_options(module):
@@ -198,7 +189,7 @@ def main():
     warnings = list()
     check_args(module, warnings)
 
-
+    install_state = module.params['install_state']
     system_image_file = module.params['system_image_file']
     kickstart_image_file = module.params['kickstart_image_file']
 
@@ -230,4 +221,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

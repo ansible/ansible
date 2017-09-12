@@ -1,0 +1,124 @@
+# Test code for the vmware_host module.
+# (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: make sure pyvmomi is installed
+  pip:
+    name: pyvmomi
+    state: latest
+
+- name: store the vcenter container ip
+  set_fact:
+    vcsim: "{{ lookup('env', 'vcenter_host') }}"
+
+- debug: var=vcsim
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
+
+- name: kill vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/killall
+
+- name: start vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/spawn?cluster=2
+  register: vcsim_instance
+
+- debug:
+    var: vcsim_instance
+
+- name: Wait for vcsim server to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
+
+- name: get a list of Datacenter from vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/govc_find?filter=DC
+  register: datacenters
+
+- name: get a datacenter
+  set_fact:
+    dc1: "{{ datacenters.json[0] | basename }}"
+
+- debug: var=dc1
+
+
+- name: get a list of Cluster from vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/govc_find?filter=CCR
+  register: clusters
+
+- name: get a cluster
+  set_fact:
+    ccr1: "{{ clusters.json[0] | basename }}"
+
+- debug: var=ccr1
+
+# Testcase 0001: Add Host
+- name: add host
+  vmware_host:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance.json.username }}"
+    password: "{{ vcsim_instance.json.password }}"
+    validate_certs: no
+    esxi_hostname: test_host_system_0001
+    esxi_username: "{{ vcsim_instance.json.username }}"
+    esxi_password: "{{ vcsim_instance.json.password }}"
+    datacenter_name: "{{ dc1 }}"
+    cluster_name: "{{ ccr1 }}"
+    state: present
+  register: host_system_result_0001
+
+- name: get a list of host system from vcsim after adding host system
+  uri:
+    url: http://{{ vcsim }}:5000/govc_find?filter=H
+  register: new_host_list
+
+- set_fact:
+    new_host: "{% for host in new_host_list.json %} {{ True if (host | basename) == 'test_host_system_0001' else False }} {% endfor %}"
+
+- name: ensure host system is present
+  assert:
+    that:
+        - host_system_result_0001.changed == true
+        - "'True' in new_host"
+
+# Testcase 0002: Add Host again
+- name: add host again
+  vmware_host:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance.json.username }}"
+    password: "{{ vcsim_instance.json.password }}"
+    validate_certs: no
+    esxi_hostname: test_host_system_0001
+    esxi_username: "{{ vcsim_instance.json.username }}"
+    esxi_password: "{{ vcsim_instance.json.password }}"
+    datacenter_name: "{{ dc1 }}"
+    cluster_name: "{{ ccr1 }}"
+    state: present
+  register: host_system_result_0002
+
+- name: ensure host system is present
+  assert:
+    that:
+        - host_system_result_0002.changed == false

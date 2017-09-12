@@ -1,25 +1,14 @@
 #!/usr/bin/python
 #
 # (c) 2015 Peter Sprygada, <psprygada@ansible.com>
-#
-# Copyright (c) 2016 Dell Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+# Copyright (c) 2017 Dell Inc.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -134,48 +123,54 @@ ansible_net_neighbors:
 
 import re
 
-from ansible.module_utils.basic import get_exception
-from ansible.module_utils.netcli import CommandRunner
-from ansible.module_utils.network import NetworkModule
-import ansible.module_utils.dellos10
-
 try:
     from lxml import etree as ET
 except ImportError:
     import xml.etree.ElementTree as ET
 
+from ansible.module_utils.dellos10 import run_commands
+from ansible.module_utils.dellos10 import dellos10_argument_spec, check_args
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import iteritems
+
+
 class FactsBase(object):
 
-    def __init__(self, runner):
-        self.runner = runner
-        self.facts = dict()
+    COMMANDS = []
 
-        self.commands()
+    def __init__(self, module):
+        self.module = module
+        self.facts = dict()
+        self.responses = None
+
+    def populate(self):
+        self.responses = run_commands(self.module, self.COMMANDS, check_rc=False)
+
+    def run(self, cmd):
+        return run_commands(self.module, cmd, check_rc=False)
 
 
 class Default(FactsBase):
 
-    def commands(self):
-        self.runner.add_command('show version | display-xml')
-        self.runner.add_command('show system | display-xml')
-        self.runner.add_command('show running-configuration | grep hostname')
+    COMMANDS = [
+        'show version | display-xml',
+        'show system | display-xml',
+    ]
 
     def populate(self):
-
-        data = self.runner.get_command('show version | display-xml')
+        super(Default, self).populate()
+        data = self.responses[0]
         xml_data = ET.fromstring(data)
 
         self.facts['name'] = self.parse_name(xml_data)
         self.facts['version'] = self.parse_version(xml_data)
+        self.facts['model'] = self.parse_model(xml_data)
+        self.facts['hostname'] = self.parse_hostname(xml_data)
 
-        data = self.runner.get_command('show system | display-xml')
+        data = self.responses[1]
         xml_data = ET.fromstring(data)
 
-        self.facts['servicetag'] = self.parse_serialnum(xml_data)
-        self.facts['model'] = self.parse_model(xml_data)
-
-        data = self.runner.get_command('show running-configuration | grep hostname')
-        self.facts['hostname'] = self.parse_hostname(data)
+        self.facts['servicetag'] = self.parse_servicetag(xml_data)
 
     def parse_name(self, data):
         sw_name = data.find('./data/system-sw-state/sw-version/sw-name')
@@ -192,18 +187,20 @@ class Default(FactsBase):
             return ""
 
     def parse_hostname(self, data):
-        match = re.search(r'hostname\s+(\S+)', data, re.M)
-        if match:
-            return match.group(1)
+        hostname = data.find('./data/system-state/system-status/hostname')
+        if hostname is not None:
+            return hostname.text
+        else:
+            return ""
 
     def parse_model(self, data):
-        prod_name = data.find('./data/system/node/mfg-info/product-name')
+        prod_name = data.find('./data/system-sw-state/sw-version/sw-platform')
         if prod_name is not None:
             return prod_name.text
         else:
             return ""
 
-    def parse_serialnum(self, data):
+    def parse_servicetag(self, data):
         svc_tag = data.find('./data/system/node/unit/mfg-info/service-tag')
         if svc_tag is not None:
             return svc_tag.text
@@ -213,22 +210,25 @@ class Default(FactsBase):
 
 class Hardware(FactsBase):
 
-    def commands(self):
-        self.runner.add_command('show processes memory | grep Total')
+    COMMANDS = [
+        'show version | display-xml',
+        'show processes node-id 1 | grep "Mem:"'
+    ]
 
     def populate(self):
 
-        data = self.runner.get_command('show version | display-xml')
+        super(Hardware, self).populate()
+        data = self.responses[0]
+
         xml_data = ET.fromstring(data)
 
         self.facts['cpu_arch'] = self.parse_cpu_arch(xml_data)
 
-        data = self.runner.get_command('show processes memory | grep Total')
-
+        data = self.responses[1]
         match = self.parse_memory(data)
         if match:
-            self.facts['memtotal_mb'] = int(match[0]) / 1024
-            self.facts['memfree_mb'] = int(match[2]) / 1024
+            self.facts['memtotal_mb'] = int(match[0]) // 1024
+            self.facts['memfree_mb'] = int(match[2]) // 1024
 
     def parse_cpu_arch(self, data):
         cpu_arch = data.find('./data/system-sw-state/sw-version/cpu-arch')
@@ -238,37 +238,82 @@ class Hardware(FactsBase):
             return ""
 
     def parse_memory(self, data):
-        return re.findall(r'\:\s*(\d+)', data, re.M)
+        return re.findall(r'(\d+)', data, re.M)
 
 
 class Config(FactsBase):
 
-    def commands(self):
-        self.runner.add_command('show running-config')
+    COMMANDS = ['show running-config']
 
     def populate(self):
-        config = self.runner.get_command('show running-config')
-        self.facts['config'] = config
+        super(Config, self).populate()
+        self.facts['config'] = self.responses[0]
 
 
 class Interfaces(FactsBase):
 
-    def commands(self):
-        self.runner.add_command('show interface | display-xml')
+    COMMANDS = [
+        'show interface | display-xml',
+        'show lldp neighbors | display-xml'
+    ]
+
+    def __init__(self, module):
+        self.intf_facts = dict()
+        self.lldp_facts = dict()
+        super(Interfaces, self).__init__(module)
 
     def populate(self):
+        super(Interfaces, self).populate()
         self.facts['all_ipv4_addresses'] = list()
         self.facts['all_ipv6_addresses'] = list()
 
-        data = self.runner.get_command('show interface | display-xml')
+        int_show_data = (self.responses[0]).splitlines()
+        pattern = '?xml version'
+        data = ''
+        skip = True
 
-        xml_data = ET.fromstring(data)
+        # The output returns multiple xml trees
+        # parse them before handling.
+        for line in int_show_data:
+            if pattern in line:
+                if skip is False:
+                    xml_data = ET.fromstring(data)
+                    self.populate_interfaces(xml_data)
+                    data = ''
+                else:
+                    skip = False
 
-        self.facts['interfaces'] = self.populate_interfaces(xml_data)
-        self.facts['neighbors'] = self.populate_neighbors(xml_data)
+            data += line
+
+        if skip is False:
+            xml_data = ET.fromstring(data)
+            self.populate_interfaces(xml_data)
+
+        self.facts['interfaces'] = self.intf_facts
+
+        lldp_data = (self.responses[1]).splitlines()
+        data = ''
+        skip = True
+        # The output returns multiple xml trees
+        # parse them before handling.
+        for line in lldp_data:
+            if pattern in line:
+                if skip is False:
+                    xml_data = ET.fromstring(data)
+                    self.populate_neighbors(xml_data)
+                    data = ''
+                else:
+                    skip = False
+
+            data += line
+
+        if skip is False:
+            xml_data = ET.fromstring(data)
+            self.populate_neighbors(xml_data)
+
+        self.facts['neighbors'] = self.lldp_facts
 
     def populate_interfaces(self, interfaces):
-        int_facts = dict()
 
         for interface in interfaces.findall('./data/interfaces/interface'):
             intf = dict()
@@ -282,35 +327,40 @@ class Interfaces(FactsBase):
             intf['mtu'] = self.parse_item(interface, 'mtu')
             intf['type'] = self.parse_item(interface, 'type')
 
-            int_facts[name] = intf
+            self.intf_facts[name] = intf
 
-        for interface in interfaces.findall('./data/interfaces-state/interface'):
+        for interface in interfaces.findall('./bulk/data/interface'):
             name = self.parse_item(interface, 'name')
-            intf = int_facts[name]
-            intf['bandwidth'] = self.parse_item(interface, 'speed')
-            intf['adminstatus'] = self.parse_item(interface, 'admin-status')
-            intf['operstatus'] = self.parse_item(interface, 'oper-status')
-            intf['macaddress'] = self.parse_item(interface, 'phys-address')
+            try:
+                intf = self.intf_facts[name]
+                intf['bandwidth'] = self.parse_item(interface, 'speed')
+                intf['adminstatus'] = self.parse_item(interface, 'admin-status')
+                intf['operstatus'] = self.parse_item(interface, 'oper-status')
+                intf['macaddress'] = self.parse_item(interface, 'phys-address')
+            except KeyError:
+                # skip the reserved interfaces
+                pass
 
         for interface in interfaces.findall('./data/ports/ports-state/port'):
             name = self.parse_item(interface, 'name')
-            fanout = self.parse_item(interface, 'fanout-state')
+            # media-type name interface name format phy-eth 1/1/1
             mediatype = self.parse_item(interface, 'media-type')
 
             typ, sname = name.split('-eth')
-
-            if fanout == "BREAKOUT_1x1":
-                name = "ethernet" + sname
-                intf = int_facts[name]
+            name = "ethernet" + sname
+            try:
+                intf = self.intf_facts[name]
                 intf['mediatype'] = mediatype
-            else:
-                # TODO: Loop for the exact subport
-                for subport in xrange(1, 5):
+            except:
+                # fanout
+                for subport in range(1, 5):
                     name = "ethernet" + sname + ":" + str(subport)
-                    intf = int_facts[name]
-                    intf['mediatype'] = mediatype
-
-        return int_facts
+                    try:
+                        intf = self.intf_facts[name]
+                        intf['mediatype'] = mediatype
+                    except:
+                        # valid case to handle 2x50G
+                        pass
 
     def add_ip_address(self, address, family):
         if family == 'ipv4':
@@ -329,7 +379,7 @@ class Interfaces(FactsBase):
         ipv4 = interface.find('ipv4')
         ip_address = ""
         if ipv4 is not None:
-            prim_ipaddr  = ipv4.find('./address/primary-addr')
+            prim_ipaddr = ipv4.find('./address/primary-addr')
             if prim_ipaddr is not None:
                 ip_address = prim_ipaddr.text
                 self.add_ip_address(ip_address, 'ipv4')
@@ -340,7 +390,7 @@ class Interfaces(FactsBase):
         ipv4 = interface.find('ipv4')
         ip_address = ""
         if ipv4 is not None:
-            sec_ipaddr  = ipv4.find('./address/secondary-addr')
+            sec_ipaddr = ipv4.find('./address/secondary-addr')
             if sec_ipaddr is not None:
                 ip_address = sec_ipaddr.text
                 self.add_ip_address(ip_address, 'ipv4')
@@ -348,30 +398,31 @@ class Interfaces(FactsBase):
         return ip_address
 
     def parse_ipv6_address(self, interface):
-        ipv6 = interface.find('ipv6')
-        ip_address = ""
-        if ipv6 is not None:
-            ipv6_addr  = ipv6.find('./address/ipv6-address')
+
+        ip_address = list()
+
+        for addr in interface.findall('./ipv6/ipv6-addresses/address'):
+
+            ipv6_addr = addr.find('./ipv6-address')
+
             if ipv6_addr is not None:
-                ip_address = ipv6_addr.text
-                self.add_ip_address(ip_address, 'ipv6')
+                ip_address.append(ipv6_addr.text)
+                self.add_ip_address(ipv6_addr.text, 'ipv6')
 
         return ip_address
 
     def populate_neighbors(self, interfaces):
-        lldp_facts = dict()
-        for interface in interfaces.findall('./data/interfaces-state/interface'):
+        for interface in interfaces.findall('./bulk/data/interface'):
             name = interface.find('name').text
             rem_sys_name = interface.find('./lldp-rem-neighbor-info/info/rem-system-name')
             if rem_sys_name is not None:
-                lldp_facts[name] = list()
+                self.lldp_facts[name] = list()
                 fact = dict()
                 fact['host'] = rem_sys_name.text
                 rem_sys_port = interface.find('./lldp-rem-neighbor-info/info/rem-lldp-port-id')
                 fact['port'] = rem_sys_port.text
-                lldp_facts[name].append(fact)
+                self.lldp_facts[name].append(fact)
 
-        return lldp_facts
 
 FACT_SUBSETS = dict(
     default=Default,
@@ -384,11 +435,16 @@ VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())
 
 
 def main():
-    spec = dict(
+    """main entry point for module execution
+    """
+    argument_spec = dict(
         gather_subset=dict(default=['!config'], type='list')
     )
 
-    module = NetworkModule(argument_spec=spec, supports_check_mode=True)
+    argument_spec.update(dellos10_argument_spec)
+
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True)
 
     gather_subset = module.params['gather_subset']
 
@@ -426,28 +482,23 @@ def main():
     facts = dict()
     facts['gather_subset'] = list(runable_subsets)
 
-    runner = CommandRunner(module)
-
     instances = list()
     for key in runable_subsets:
-        runs = FACT_SUBSETS[key](runner)
-        instances.append(runs)
+        instances.append(FACT_SUBSETS[key](module))
 
-    runner.run()
-
-    try:
-        for inst in instances:
-            inst.populate()
-            facts.update(inst.facts)
-    except Exception:
-        module.exit_json(out=module.from_json(runner.items))
+    for inst in instances:
+        inst.populate()
+        facts.update(inst.facts)
 
     ansible_facts = dict()
-    for key, value in facts.items():
+    for key, value in iteritems(facts):
         key = 'ansible_net_%s' % key
         ansible_facts[key] = value
 
-    module.exit_json(ansible_facts=ansible_facts)
+    warnings = list()
+    check_args(module, warnings)
+
+    module.exit_json(ansible_facts=ansible_facts, warnings=warnings)
 
 
 if __name__ == '__main__':

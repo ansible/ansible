@@ -21,7 +21,7 @@
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -34,7 +34,8 @@ short_description: Merges the contents of a registry file into the windows regis
 description:
     - Wraps the reg.exe command to import the contents of a registry file.
     - Suitable for use with registry files created using M(win_template).
-    - Windows registry files have a specific format and must be constructed correctly with carriage return and line feed line endings otherwise they will not be merged.
+    - Windows registry files have a specific format and must be constructed correctly with carriage return and line feed line endings otherwise they will not
+      be merged.
     - Exported registry files often start with a Byte Order Mark which must be removed if the file is to templated using M(win_template).
     - Registry file format is described at U(https://support.microsoft.com/en-us/kb/310516)
     - See also M(win_template), M(win_regedit)
@@ -46,7 +47,8 @@ options:
     default: no default
   compare_key:
     description:
-      - The parent key to use when comparing the contents of the registry to the contents of the file.  Needs to be in HKLM or HKCU part of registry.  Use a PS-Drive style path for example HKLM:\SOFTWARE not HKEY_LOCAL_MACHINE\SOFTWARE
+      - The parent key to use when comparing the contents of the registry to the contents of the file.  Needs to be in HKLM or HKCU part of registry.
+        Use a PS-Drive style path for example HKLM:\SOFTWARE not HKEY_LOCAL_MACHINE\SOFTWARE
         If not supplied, or the registry key is not found, no comparison will be made, and the module will report changed.
     required: false
     default: no default
@@ -82,7 +84,7 @@ compare_to_key_found:
 difference_count:
     description: number of differences between the registry and the file
     returned: changed
-    type: integer
+    type: int
     sample: 1
 compared:
     description: whether a comparison has taken place between the registry and the file

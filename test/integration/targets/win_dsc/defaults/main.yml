@@ -1,0 +1,4 @@
+---
+
+# Feature not normally installed by default.
+test_win_feature_name: Telnet-Client

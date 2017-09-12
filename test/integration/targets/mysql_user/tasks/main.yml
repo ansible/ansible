@@ -150,7 +150,7 @@
 # Update user password for a user.
 # Assert the user password is updated and old password can no longer be used.
 #
-- include: user_password_update_test.yml
+#- include: user_password_update_test.yml
 
 # ============================================================
 # Assert create user with SELECT privileges, attempt to create database and update privileges to create database

@@ -2,25 +2,14 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2013-2014, Epic Games, Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -75,7 +64,9 @@ options:
             - If the screen(s) already been added, the screen(s) name won't be updated.
             - When creating or updating screen(s), C(screen_name), C(host_group) are required.
             - When deleting screen(s), the C(screen_name) is required.
-            - 'The available states are: C(present) (default) and C(absent). If the screen(s) already exists, and the state is not C(absent), the screen(s) will just be updated as needed.'
+            - >
+              The available states are: C(present) (default) and C(absent). If the screen(s) already exists, and the state is not C(absent), the screen(s)
+              will just be updated as needed.
         required: true
 notes:
     - Too many concurrent updates to the same screen may cause Zabbix to return errors, see examples for a workaround if needed.
@@ -124,7 +115,7 @@ EXAMPLES = '''
         graph_width: 200
         graph_height: 100
 
-# Limit the Zabbix screen creations to one host since Zabbix can return an error when doing concurent updates
+# Limit the Zabbix screen creations to one host since Zabbix can return an error when doing concurrent updates
 - name: Create a new screen or update an existing screen's items
   local_action:
     module: zabbix_screen
@@ -162,6 +153,9 @@ try:
     HAS_ZABBIX_API = True
 except ImportError:
     HAS_ZABBIX_API = False
+
+from ansible.module_utils.basic import AnsibleModule
+
 
 class Screen(object):
     def __init__(self, module, zbx):
@@ -289,7 +283,7 @@ class Screen(object):
                 h_size = 2
             else:
                 h_size = 3
-            v_size = (v_size - 1) / h_size + 1
+            v_size = (v_size - 1) // h_size + 1
         return h_size, v_size
 
     # create screen_items
@@ -311,7 +305,7 @@ class Screen(object):
                     if graph_id is not None:
                         self._zapi.screenitem.create({'screenid': screen_id, 'resourcetype': 0, 'resourceid': graph_id,
                                                       'width': width, 'height': height,
-                                                      'x': i % h_size, 'y': i / h_size, 'colspan': 1, 'rowspan': 1,
+                                                      'x': i % h_size, 'y': i // h_size, 'colspan': 1, 'rowspan': 1,
                                                       'elements': 0, 'valign': 0, 'halign': 0,
                                                       'style': 0, 'dynamic': 0, 'sort_triggers': 0})
             else:
@@ -343,7 +337,7 @@ def main():
     )
 
     if not HAS_ZABBIX_API:
-        module.fail_json(msg="Missing requried zabbix-api module (check docs or install with: pip install zabbix-api)")
+        module.fail_json(msg="Missing required zabbix-api module (check docs or install with: pip install zabbix-api)")
 
     server_url = module.params['server_url']
     login_user = module.params['login_user']
@@ -423,7 +417,8 @@ def main():
                         changed_screens.append(screen_name)
 
     if created_screens and changed_screens:
-        module.exit_json(changed=True, result="Successfully created screen(s): %s, and updated screen(s): %s" % (",".join(created_screens), ",".join(changed_screens)))
+        module.exit_json(changed=True, result="Successfully created screen(s): %s, and updated screen(s): %s" % (",".join(created_screens),
+                                                                                                                 ",".join(changed_screens)))
     elif created_screens:
         module.exit_json(changed=True, result="Successfully created screen(s): %s" % ",".join(created_screens))
     elif changed_screens:
@@ -433,7 +428,6 @@ def main():
     else:
         module.exit_json(changed=False)
 
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

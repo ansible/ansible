@@ -1,0 +1,23 @@
+{
+    "data": {
+        "bandwidth": "1Gbps",
+        "connectionName": "Requested Connection 1 for Lag dxlag-fgkk4dja",
+        "ResponseMetadata": {
+            "RetryAttempts": 0,
+            "HTTPStatusCode": 200,
+            "HTTPHeaders": {
+                "content-type": "application/x-amz-json-1.1",
+                "x-amzn-requestid": "bf0c687a-70a7-11e7-83ab-ef16f9ac5159",
+                "content-length": "218",
+                "date": "Mon, 24 Jul 2017 19:39:01 GMT"
+            },
+            "RequestId": "bf0c687a-70a7-11e7-83ab-ef16f9ac5159"
+        },
+        "location": "EqSe2",
+        "ownerAccount": "448830907657",
+        "region": "us-west-2",
+        "connectionState": "requested",
+        "connectionId": "dxcon-ffx41o23"
+    },
+    "status_code": 200
+}

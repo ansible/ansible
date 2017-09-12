@@ -44,27 +44,27 @@ class TestEosUserModule(TestEosModule):
         self.load_config.return_value = dict(diff=None, session='session')
 
     def test_eos_user_create(self):
-        set_module_args(dict(username='test', nopassword=True))
+        set_module_args(dict(name='test', nopassword=True))
         commands = ['username test nopassword']
         self.execute_module(changed=True, commands=commands)
 
     def test_eos_user_delete(self):
-        set_module_args(dict(username='ansible', state='absent'))
+        set_module_args(dict(name='ansible', state='absent'))
         commands = ['no username ansible']
         self.execute_module(changed=True, commands=commands)
 
     def test_eos_user_password(self):
-        set_module_args(dict(username='ansible', password='test'))
+        set_module_args(dict(name='ansible', configured_password='test'))
         commands = ['username ansible secret test']
         self.execute_module(changed=True, commands=commands)
 
     def test_eos_user_privilege(self):
-        set_module_args(dict(username='ansible', privilege=15))
-        commands = ['username ansible privilege 15']
-        self.execute_module(changed=True, commands=commands)
+        set_module_args(dict(name='ansible', privilege=15, configured_password='test'))
+        result = self.execute_module(changed=True)
+        self.assertIn('username ansible privilege 15', result['commands'])
 
     def test_eos_user_privilege_invalid(self):
-        set_module_args(dict(username='ansible', privilege=25))
+        set_module_args(dict(name='ansible', privilege=25, configured_password='test'))
         self.execute_module(failed=True)
 
     def test_eos_user_purge(self):
@@ -73,27 +73,25 @@ class TestEosUserModule(TestEosModule):
         self.execute_module(changed=True, commands=commands)
 
     def test_eos_user_role(self):
-        set_module_args(dict(username='ansible', role='test'))
-        commands = ['username ansible role test']
-        self.execute_module(changed=True, commands=commands)
+        set_module_args(dict(name='ansible', role='test', configured_password='test'))
+        result = self.execute_module(changed=True)
+        self.assertIn('username ansible role test', result['commands'])
 
     def test_eos_user_sshkey(self):
-        set_module_args(dict(username='ansible', sshkey='test'))
+        set_module_args(dict(name='ansible', sshkey='test'))
         commands = ['username ansible sshkey test']
         self.execute_module(changed=True, commands=commands)
 
     def test_eos_user_update_password_changed(self):
-        set_module_args(dict(username='test', password='test', update_password='on_create'))
+        set_module_args(dict(name='test', configured_password='test', update_password='on_create'))
         commands = ['username test secret test']
         self.execute_module(changed=True, commands=commands)
 
     def test_eos_user_update_password_on_create_ok(self):
-        set_module_args(dict(username='ansible', password='test', update_password='on_create'))
+        set_module_args(dict(name='ansible', configured_password='test', update_password='on_create'))
         self.execute_module()
 
     def test_eos_user_update_password_always(self):
-        set_module_args(dict(username='ansible', password='test', update_password='always'))
+        set_module_args(dict(name='ansible', configured_password='test', update_password='always'))
         commands = ['username ansible secret test']
         self.execute_module(changed=True, commands=commands)
-
-

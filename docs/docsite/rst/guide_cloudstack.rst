@@ -67,9 +67,9 @@ The ENV variables support ``CLOUDSTACK_*`` as written in the documentation of th
     endpoint = https://cloud.example.com/client/api
     timeout = 30
 
- and fulfill the missing data by either setting ENV variables or tasks params:
+and fulfill the missing data by either setting ENV variables or tasks params:
 
- .. code-block:: yaml
+.. code-block:: yaml
 
     ---
     - name: provision our VMs

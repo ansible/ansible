@@ -1,22 +1,12 @@
 #!/usr/bin/python
 # Copyright 2015 Google Inc. All Rights Reserved.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -52,6 +42,14 @@ options:
         This option is mutually exclusive with C('inline_data').
     required: false
     default: null
+  patch_operation:
+    description: >
+      - Specify patch operation for Kubernetes resource update. For details, see the description of PATCH operations at
+        U(https://github.com/kubernetes/kubernetes/blob/release-1.5/docs/devel/api-conventions.md#patch-operations).
+    default: Strategic Merge Patch
+    aliases: ["patch_strategy"]
+    choices: ["JSON Patch", "Merge Patch", "Strategic Merge Patch"]
+    version_added: 2.4
   certificate_authority_data:
     description:
       - Certificate Authority data for Kubernetes server. Should be in either
@@ -138,7 +136,7 @@ RETURN = '''
 api_response:
     description: Raw response from Kubernetes API, content varies with API.
     returned: success
-    type: dictionary
+    type: complex
     contains:
         apiVersion: "v1"
         kind: "Namespace"
@@ -156,12 +154,17 @@ api_response:
 '''
 
 import base64
+import json
 
 try:
     import yaml
     has_lib_yaml = True
 except ImportError:
     has_lib_yaml = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url
+
 
 ############################################################################
 ############################################################################
@@ -192,9 +195,9 @@ except ImportError:
 #     for a in apis.keys():
 #         results.append('"%s": "%s"' % (a[3:].lower(), apis[a]))
 #     results.sort()
-#     print "KIND_URL = {"
-#     print ",\n".join(results)
-#     print "}"
+#     print("KIND_URL = {")
+#     print(",\n".join(results))
+#     print("}")
 #
 # if __name__ == '__main__':
 #     print_kind_url_map()
@@ -203,6 +206,7 @@ except ImportError:
 
 KIND_URL = {
     "binding": "/api/v1/namespaces/{namespace}/bindings",
+    "configmap": "/api/v1/namespaces/{namespace}/configmaps",
     "endpoints": "/api/v1/namespaces/{namespace}/endpoints",
     "limitrange": "/api/v1/namespaces/{namespace}/limitranges",
     "namespace": "/api/v1/namespaces",
@@ -215,7 +219,12 @@ KIND_URL = {
     "resourcequota": "/api/v1/namespaces/{namespace}/resourcequotas",
     "secret": "/api/v1/namespaces/{namespace}/secrets",
     "service": "/api/v1/namespaces/{namespace}/services",
-    "serviceaccount": "/api/v1/namespaces/{namespace}/serviceaccounts"
+    "serviceaccount": "/api/v1/namespaces/{namespace}/serviceaccounts",
+    "daemonset": "/apis/extensions/v1beta1/namespaces/{namespace}/daemonsets",
+    "deployment": "/apis/extensions/v1beta1/namespaces/{namespace}/deployments",
+    "horizontalpodautoscaler": "/apis/extensions/v1beta1/namespaces/{namespace}/horizontalpodautoscalers",  # NOQA
+    "ingress": "/apis/extensions/v1beta1/namespaces/{namespace}/ingresses",
+    "job": "/apis/extensions/v1beta1/namespaces/{namespace}/jobs",
 }
 USER_AGENT = "ansible-k8s-module/0.0.1"
 
@@ -296,12 +305,20 @@ def k8s_replace_resource(module, url, data):
     return True, body
 
 
-def k8s_update_resource(module, url, data):
+def k8s_update_resource(module, url, data, patch_operation):
+    # PATCH operations are explained in details at:
+    # https://github.com/kubernetes/kubernetes/blob/release-1.5/docs/devel/api-conventions.md#patch-operations
+    PATCH_OPERATIONS_MAP = {
+        'JSON Patch': 'application/json-patch+json',
+        'Merge Patch': 'application/merge-patch+json',
+        'Strategic Merge Patch': 'application/strategic-merge-patch+json',
+    }
+
     name = data.get('metadata', {}).get('name')
     if name is None:
         module.fail_json(msg="Missing a named resource in object metadata when trying to update a resource")
 
-    headers = {"Content-Type": "application/strategic-merge-patch+json"}
+    headers = {"Content-Type": PATCH_OPERATIONS_MAP[patch_operation]}
     url = url + '/' + name
     info, body = api_request(module, url, method="PATCH", data=data, headers=headers)
     if info['status'] == 409:
@@ -325,6 +342,7 @@ def main():
             certificate_authority_data=dict(required=False),
             insecure=dict(default=False, type='bool'),
             api_endpoint=dict(required=True),
+            patch_operation=dict(default='Strategic Merge Patch', aliases=['patch_strategy'], choices=['JSON Patch', 'Merge Patch', 'Strategic Merge Patch']),
             file_reference=dict(required=False),
             inline_data=dict(required=False),
             state=dict(default="present", choices=["present", "absent", "update", "replace"])
@@ -345,6 +363,7 @@ def main():
     insecure = module.params.get('insecure')
     inline_data = module.params.get('inline_data')
     file_reference = module.params.get('file_reference')
+    patch_operation = module.params.get('patch_operation')
 
     if inline_data:
         if not isinstance(inline_data, dict) and not isinstance(inline_data, list):
@@ -395,17 +414,12 @@ def main():
         elif state == 'replace':
             item_changed, item_body = k8s_replace_resource(module, url, item)
         elif state == 'update':
-            item_changed, item_body = k8s_update_resource(module, url, item)
+            item_changed, item_body = k8s_update_resource(module, url, item, patch_operation)
 
         changed |= item_changed
         body.append(item_body)
 
     module.exit_json(changed=changed, api_response=body)
-
-
-# import module snippets
-from ansible.module_utils.basic import *    # NOQA
-from ansible.module_utils.urls import *     # NOQA
 
 
 if __name__ == '__main__':

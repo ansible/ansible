@@ -22,7 +22,7 @@
 # Lenovo Networking
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -56,12 +56,12 @@ Tasks : The following are examples of using the module cnos_facts. These are wri
       outputfile: "./results/cnos_facts_{{ inventory_hostname }}_output.txt"
 '''
 RETURN = '''
-  return value: |
-    On successful execution, the method returns a message in JSON format
-    [Device Sys Info is saved to file]
-    Upon any failure, the method returns an error display string.
+msg:
+  description: Success or failure message
+  returned: always
+  type: string
+  sample: "Device Sys Info is saved to file"
 '''
-
 
 import sys
 import paramiko

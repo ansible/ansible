@@ -1,22 +1,13 @@
 #!/usr/bin/python
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -26,7 +17,7 @@ DOCUMENTATION = """
 module: asa_config
 version_added: "2.2"
 author: "Peter Sprygada (@privateip), Patrick Ogenstad (@ogenstad)"
-short_description: Manage Cisco ASA configuration sections
+short_description: Manage configuration sections on Cisco ASA devices
 description:
   - Cisco ASA configurations use a simple block indent file syntax
     for segmenting configuration into sections.  This module provides
@@ -181,7 +172,6 @@ vars:
     password: cisco
     authorize: yes
     auth_pass: cisco
-    transport: cli
 
 ---
 - asa_config:
@@ -223,33 +213,16 @@ updates:
 backup_path:
   description: The full path to the backup file
   returned: when backup is yes
-  type: path
+  type: string
   sample: /playbooks/ansible/backup/asa_config.2016-07-16@22:28:34
-responses:
-  description: The set of responses from issuing the commands on the device
-  returned: when not check_mode
-  type: list
-  sample: ['...', '...']
 """
-import re
-
-import ansible.module_utils.asa
-
-from ansible.module_utils.basic import get_exception
-from ansible.module_utils.network import NetworkModule, NetworkError
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.asa import asa_argument_spec, check_args
+from ansible.module_utils.asa import get_config, load_config, run_commands
 from ansible.module_utils.netcfg import NetworkConfig, dumps
+from ansible.module_utils._text import to_native
 
-def get_config(module):
-    contents = module.params['config']
-    if not contents:
-        if module.params['defaults']:
-            include = 'defaults'
-        elif module.params['passwords']:
-            include = 'passwords'
-        else:
-            include = None
-        contents = module.config.get_config(include=include)
-    return NetworkConfig(indent=1, contents=contents)
+
 
 def get_candidate(module):
     candidate = NetworkConfig(indent=1)
@@ -266,11 +239,14 @@ def run(module, result):
     path = module.params['parents']
 
     candidate = get_candidate(module)
-
     if match != 'none':
-        config = get_config(module)
-        configobjs = candidate.difference(config, path=path, match=match,
-                                          replace=replace)
+        contents = module.params['config']
+        if not contents:
+            contents = get_config(module)
+            config = NetworkConfig(indent=1, contents=contents)
+            configobjs = candidate.difference(config, path=path, match=match,
+                                              replace=replace)
+
     else:
         configobjs = candidate.items
 
@@ -289,7 +265,7 @@ def run(module, result):
         # send the configuration commands to the device and merge
         # them with the current running config
         if not module.check_mode:
-            module.config.load_config(commands)
+            load_config(module, commands)
         result['changed'] = True
 
     if module.params['save']:
@@ -320,30 +296,33 @@ def main():
         save=dict(type='bool', default=False),
     )
 
+    argument_spec.update(asa_argument_spec)
+
     mutually_exclusive = [('lines', 'src'), ('defaults', 'passwords')]
 
     required_if = [('match', 'strict', ['lines']),
                    ('match', 'exact', ['lines']),
                    ('replace', 'block', ['lines'])]
 
-    module = NetworkModule(argument_spec=argument_spec,
-                           connect_on_load=False,
+    module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
                            required_if=required_if,
                            supports_check_mode=True)
 
-    result = dict(changed=False)
+    result = {'changed': False}
+
+    check_args(module)
+
+    config = None
+
 
     if module.params['backup']:
-        result['__backup__'] = module.config.get_config()
+        result['__backup__'] = get_config(module)
 
-    try:
-        run(module, result)
-    except NetworkError:
-        exc = get_exception()
-        module.fail_json(msg=str(exc), **exc.kwargs)
+    run(module, result)
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

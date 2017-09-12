@@ -13,14 +13,14 @@ This section discusses how to develop, debug, review, and test modules.
 Ansible modules are reusable, standalone scripts that can be used by the Ansible API,
 or by the :command:`ansible` or :command:`ansible-playbook` programs.  They
 return information to ansible by printing a JSON string to stdout before
-exiting.  They take arguments in in one of several ways which we'll go into
+exiting.  They take arguments in one of several ways which we'll go into
 as we work through this tutorial.
 
 See :doc:`../modules` for a list of existing modules.
 
 Modules can be written in any language and are found in the path specified
 by :envvar:`ANSIBLE_LIBRARY` or the ``--module-path`` command line option or
-in the `library section of the Ansible configration file <http://docs.ansible.com/ansible/intro_configuration.html#library>`_.
+in the `library section of the Ansible configuration file <http://docs.ansible.com/ansible/intro_configuration.html#library>`_.
 
 .. _module_dev_should_you:
 
@@ -31,17 +31,27 @@ develop a module. Ask the following questions:
 
 1. Does a similar module already exist?
 
-There are a lot of existing modules available, and more that are in development. You should check out the list of existing modules at :doc:`../modules` or look at the `module PRs <https://github.com/ansible/ansible/labels/module>`_ for the ansible repository on Github to see if a module that does what you want exists or is in development.
+There are a lot of existing modules available, you should check out the list of existing modules at :doc:`../modules`
 
-2. Should you use or develop an action plugin instead?
+2. Has someone already worked on a similar Pull Request?
+
+It's possible that someone has already started developing a similar PR. There are a few ways to find open module Pull Requests:
+
+* `GitHub new module PRs <https://github.com/ansible/ansible/labels/new_module>`_
+* `All updates to modules <https://github.com/ansible/ansible/labels/module>`_
+* `New module PRs listed by directory <https://ansible.sivel.net/pr/byfile.html>`_ search for `lib/ansible/modules/`
+
+If you find an existing PR that looks like it addresses the issue you are trying to solve, please provide feedback on the PR -  this will speed up getting the PR merged.
+
+3. Should you use or develop an action plugin instead?
 
 Action plugins get run on the master instead of on the target. For modules like file/copy/template, some of the work needs to be done on the master before the module executes on the target. Action plugins execute first on the master and can then execute the normal module on the target if necessary.
 
-For more information about action plugins, go `here <https://docs.ansible.com/ansible/dev_guide/developing_plugins.html>`_.
+For more information about action plugins, `read the action plugins documentation here <https://docs.ansible.com/ansible/dev_guide/developing_plugins.html>`_.
 
-3. Should you use a role instead?
+4. Should you use a role instead?
 
-Check out the roles documentation `here <http://docs.ansible.com/ansible/playbooks_roles.html#roles>`_.
+Check out the roles documentation `available here <http://docs.ansible.com/ansible/playbooks_reuse_roles.html#roles>`_.
 
 
 .. _developing_modules_all:
@@ -53,13 +63,17 @@ The following topics will discuss how to develop and work with modules:
 
 :doc:`developing_modules_general`
     A general overview of how to develop, debug, and test modules.
+:doc:`developing_modules_general_windows`
+    A general overview of how to develop, debug and test Windows modules.
 :doc:`developing_modules_documenting`
     How to include in-line documentation in your module.
 :doc:`developing_modules_best_practices`
     Best practices, recommendations, and things to avoid.
 :doc:`developing_modules_checklist`
      Checklist for contributing your module to Ansible.
-:doc:`developing_modules_python3`
+:doc:`testing`
+    Developing unit and integration tests.
+:doc:`developing_python3`
     Adding Python 3 support to modules (all new modules must be Python-2.6 and Python-3.5 compatible).
 :doc:`developing_modules_in_groups`
     A guide for partners wanting to submit multiple modules.

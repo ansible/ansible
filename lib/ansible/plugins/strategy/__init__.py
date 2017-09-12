@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import os
 import threading
 import time
 
@@ -27,22 +28,22 @@ from multiprocessing import Lock
 from jinja2.exceptions import UndefinedError
 
 from ansible import constants as C
-from ansible.compat.six.moves import queue as Queue
-from ansible.compat.six import iteritems, string_types
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable
 from ansible.executor import action_write_locks
 from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.task_result import TaskResult
 from ansible.inventory.host import Host
-from ansible.inventory.group import Group
+from ansible.module_utils.six.moves import queue as Queue
+from ansible.module_utils.six import iteritems, string_types
+from ansible.module_utils._text import to_text
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.included_file import IncludedFile
 from ansible.playbook.task_include import TaskInclude
 from ansible.playbook.role_include import IncludeRole
-from ansible.plugins import action_loader, connection_loader, filter_loader, lookup_loader, module_loader, test_loader
+from ansible.plugins.loader import action_loader, connection_loader, filter_loader, lookup_loader, module_loader, test_loader
 from ansible.template import Templar
-from ansible.vars import combine_vars, strip_internal_keys
-from ansible.module_utils._text import to_text
+from ansible.utils.vars import combine_vars
+from ansible.vars.manager import strip_internal_keys
 
 
 try:
@@ -52,6 +53,11 @@ except ImportError:
     display = Display()
 
 __all__ = ['StrategyBase']
+
+
+class StrategySentinel:
+    pass
+
 
 # TODO: this should probably be in the plugins/__init__.py, with
 #       a smarter mechanism to set all of the attributes based on
@@ -65,17 +71,18 @@ class SharedPluginLoaderObj:
         self.action_loader = action_loader
         self.connection_loader = connection_loader
         self.filter_loader = filter_loader
-        self.test_loader   = test_loader
+        self.test_loader = test_loader
         self.lookup_loader = lookup_loader
         self.module_loader = module_loader
 
+_sentinel = StrategySentinel()
 
-_sentinel = object()
+
 def results_thread_main(strategy):
     while True:
         try:
             result = strategy._final_q.get()
-            if type(result) == object:
+            if isinstance(result, StrategySentinel):
                 break
             else:
                 strategy._results_lock.acquire()
@@ -86,6 +93,7 @@ def results_thread_main(strategy):
         except Queue.Empty:
             pass
 
+
 class StrategyBase:
 
     '''
@@ -94,27 +102,27 @@ class StrategyBase:
     '''
 
     def __init__(self, tqm):
-        self._tqm               = tqm
-        self._inventory         = tqm.get_inventory()
-        self._workers           = tqm.get_workers()
+        self._tqm = tqm
+        self._inventory = tqm.get_inventory()
+        self._workers = tqm.get_workers()
         self._notified_handlers = tqm._notified_handlers
         self._listening_handlers = tqm._listening_handlers
-        self._variable_manager  = tqm.get_variable_manager()
-        self._loader            = tqm.get_loader()
-        self._final_q           = tqm._final_q
-        self._step              = getattr(tqm._options, 'step', False)
-        self._diff              = getattr(tqm._options, 'diff', False)
+        self._variable_manager = tqm.get_variable_manager()
+        self._loader = tqm.get_loader()
+        self._final_q = tqm._final_q
+        self._step = getattr(tqm._options, 'step', False)
+        self._diff = getattr(tqm._options, 'diff', False)
 
         # Backwards compat: self._display isn't really needed, just import the global display and use that.
-        self._display           = display
+        self._display = display
 
         # internal counters
-        self._pending_results   = 0
-        self._cur_worker        = 0
+        self._pending_results = 0
+        self._cur_worker = 0
 
         # this dictionary is used to keep track of hosts that have
         # outstanding tasks still in queue
-        self._blocked_hosts     = dict()
+        self._blocked_hosts = dict()
 
         self._results = deque()
         self._results_lock = threading.Condition(threading.Lock())
@@ -137,7 +145,7 @@ class StrategyBase:
 
         # save the failed/unreachable hosts, as the run_handlers()
         # method will clear that information during its execution
-        failed_hosts      = iterator.get_failed_hosts()
+        failed_hosts = iterator.get_failed_hosts()
         unreachable_hosts = self._tqm._unreachable_hosts.keys()
 
         display.debug("running handlers")
@@ -149,7 +157,7 @@ class StrategyBase:
 
         # now update with the hosts (if any) that failed or were
         # unreachable during the handler execution phase
-        failed_hosts      = set(failed_hosts).union(iterator.get_failed_hosts())
+        failed_hosts = set(failed_hosts).union(iterator.get_failed_hosts())
         unreachable_hosts = set(unreachable_hosts).union(self._tqm._unreachable_hosts.keys())
 
         # return the appropriate code, depending on the status hosts after the run
@@ -212,7 +220,7 @@ class StrategyBase:
                     worker_prc = WorkerProcess(self._final_q, task_vars, host, task, play_context, self._loader, self._variable_manager, shared_loader_obj)
                     self._workers[self._cur_worker][0] = worker_prc
                     worker_prc.start()
-                    display.debug("worker is %d (out of %d available)" % (self._cur_worker+1, len(self._workers)))
+                    display.debug("worker is %d (out of %d available)" % (self._cur_worker + 1, len(self._workers)))
                     queued = True
                 self._cur_worker += 1
                 if self._cur_worker >= len(self._workers):
@@ -237,11 +245,13 @@ class StrategyBase:
         return host_list
 
     def get_delegated_hosts(self, result, task):
-
-        host_name = task.delegate_to
-        actual_host = self._inventory.get_host(host_name)
-        if actual_host is None:
-            actual_host = Host(name=host_name)
+        host_name = result.get('_ansible_delegated_vars', {}).get('ansible_delegated_host', None)
+        if host_name is not None:
+            actual_host = self._inventory.get_host(host_name)
+            if actual_host is None:
+                actual_host = Host(name=host_name)
+        else:
+            actual_host = Host(name=task.delegate_to)
 
         return [actual_host]
 
@@ -254,9 +264,10 @@ class StrategyBase:
         ret_results = []
 
         def get_original_host(host_name):
+            # FIXME: this should not need x2 _inventory
             host_name = to_text(host_name)
-            if host_name in self._inventory._hosts_cache:
-                return self._inventory._hosts_cache[host_name]
+            if host_name in self._inventory.hosts:
+                return self._inventory.hosts[host_name]
             else:
                 return self._inventory.get_host(host_name)
 
@@ -264,7 +275,7 @@ class StrategyBase:
             for handler_block in handler_blocks:
                 for handler_task in handler_block.block:
                     if handler_task.name:
-                        handler_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, task=handler_task)
+                        handler_vars = self._variable_manager.get_vars(play=iterator._play, task=handler_task)
                         templar = Templar(loader=self._loader, variables=handler_vars)
                         try:
                             # first we check with the full result of get_name(), which may
@@ -286,7 +297,6 @@ class StrategyBase:
                             continue
             return None
 
-
         def search_handler_blocks_by_uuid(handler_uuid, handler_blocks):
             for handler_block in handler_blocks:
                 for handler_task in handler_block.block:
@@ -298,7 +308,7 @@ class StrategyBase:
             if target_handler:
                 if isinstance(target_handler, (TaskInclude, IncludeRole)):
                     try:
-                        handler_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, task=target_handler)
+                        handler_vars = self._variable_manager.get_vars(play=iterator._play, task=target_handler)
                         templar = Templar(loader=self._loader, variables=handler_vars)
                         target_handler_name = templar.template(target_handler.name)
                         if target_handler_name == handler_name:
@@ -317,7 +327,7 @@ class StrategyBase:
         while True:
             try:
                 self._results_lock.acquire()
-                task_result = self._results.pop()
+                task_result = self._results.popleft()
             except IndexError:
                 break
             finally:
@@ -328,8 +338,7 @@ class StrategyBase:
             found_task = iterator.get_original_task(original_host, task_result._task)
             original_task = found_task.copy(exclude_parent=True, exclude_tasks=True)
             original_task._parent = found_task._parent
-            for (attr, val) in iteritems(task_result._task_fields):
-                setattr(original_task, attr, val)
+            original_task.from_attrs(task_result._task_fields)
 
             task_result._host = original_host
             task_result._task = original_task
@@ -423,7 +432,7 @@ class StrategyBase:
                     # loop over all of them instead of a single result
                     result_items = task_result._result.get('results', [])
                 else:
-                    result_items = [ task_result._result ]
+                    result_items = [task_result._result]
 
                 for result_item in result_items:
                     if '_ansible_notify' in result_item:
@@ -441,6 +450,8 @@ class StrategyBase:
                                 target_handler = search_handler_blocks_by_name(handler_name, iterator._play.handlers)
                                 if target_handler is not None:
                                     found = True
+                                    if target_handler._uuid not in self._notified_handlers:
+                                        self._notified_handlers[target_handler._uuid] = []
                                     if original_host not in self._notified_handlers[target_handler._uuid]:
                                         self._notified_handlers[target_handler._uuid].append(original_host)
                                         # FIXME: should this be a callback?
@@ -451,9 +462,10 @@ class StrategyBase:
                                     for target_handler_uuid in self._notified_handlers:
                                         target_handler = search_handler_blocks_by_uuid(target_handler_uuid, iterator._play.handlers)
                                         if target_handler and parent_handler_match(target_handler, handler_name):
-                                            self._notified_handlers[target_handler._uuid].append(original_host)
-                                            display.vv("NOTIFIED HANDLER %s" % (target_handler.get_name(),))
                                             found = True
+                                            if original_host not in self._notified_handlers[target_handler._uuid]:
+                                                self._notified_handlers[target_handler._uuid].append(original_host)
+                                                display.vv("NOTIFIED HANDLER %s" % (target_handler.get_name(),))
 
                                 if handler_name in self._listening_handlers:
                                     for listening_handler_uuid in self._listening_handlers[handler_name]:
@@ -468,7 +480,8 @@ class StrategyBase:
 
                                 # and if none were found, then we raise an error
                                 if not found:
-                                    msg = "The requested handler '%s' was not found in either the main handlers list nor in the listening handlers list" % handler_name
+                                    msg = ("The requested handler '%s' was not found in either the main handlers list nor in the listening "
+                                           "handlers list" % handler_name)
                                     if C.ERROR_ON_MISSING_HANDLER:
                                         raise AnsibleError(msg)
                                     else:
@@ -485,30 +498,26 @@ class StrategyBase:
 
                     if 'ansible_facts' in result_item:
 
+                        # if delegated fact and we are delegating facts, we need to change target host for them
+                        if original_task.delegate_to is not None and original_task.delegate_facts:
+                            host_list = self.get_delegated_hosts(result_item, original_task)
+                        else:
+                            host_list = self.get_task_hosts(iterator, original_host, original_task)
+
                         if original_task.action == 'include_vars':
-
-                            if original_task.delegate_to is not None:
-                                host_list = self.get_delegated_hosts(result_item, original_task)
-                            else:
-                                host_list = self.get_task_hosts(iterator, original_host, original_task)
-
                             for (var_name, var_value) in iteritems(result_item['ansible_facts']):
                                 # find the host we're actually referring too here, which may
                                 # be a host that is not really in inventory at all
                                 for target_host in host_list:
                                     self._variable_manager.set_host_variable(target_host, var_name, var_value)
                         else:
-                            # if delegated fact and we are delegating facts, we need to change target host for them
-                            if original_task.delegate_to is not None and original_task.delegate_facts:
-                                host_list = self.get_delegated_hosts(result_item, original_task)
-                            else:
-                                host_list = self.get_task_hosts(iterator, original_host, original_task)
-
+                            cacheable = result_item.pop('ansible_facts_cacheable', True)
                             for target_host in host_list:
-                                if original_task.action == 'set_fact':
-                                    self._variable_manager.set_nonpersistent_facts(target_host, result_item['ansible_facts'].copy())
-                                else:
+                                if cacheable:
                                     self._variable_manager.set_host_facts(target_host, result_item['ansible_facts'].copy())
+
+                                # If we are setting a fact, it should populate non_persistent_facts as well
+                                self._variable_manager.set_nonpersistent_facts(target_host, result_item['ansible_facts'].copy())
 
                     if 'ansible_stats' in result_item and 'data' in result_item['ansible_stats'] and result_item['ansible_stats']['data']:
 
@@ -530,7 +539,7 @@ class StrategyBase:
                     if self._diff:
                         self._tqm.send_callback('v2_on_file_diff', task_result)
 
-                if original_task.action not in ['include', 'include_role']:
+                if not isinstance(original_task, TaskInclude):
                     self._tqm._stats.increment('ok', original_host.name)
                     if 'changed' in task_result._result and task_result._result['changed']:
                         self._tqm._stats.increment('changed', original_host.name)
@@ -544,7 +553,7 @@ class StrategyBase:
 
             # If this is a role task, mark the parent role as being run (if
             # the task was ok or failed, but not skipped or unreachable)
-            if original_task._role is not None and role_ran: #TODO:  and original_task.action != 'include_role':?
+            if original_task._role is not None and role_ran:  # TODO:  and original_task.action != 'include_role':?
                 # lookup the role in the ROLE_CACHE to make sure we're dealing
                 # with the correct object and mark it as executed
                 for (entry, role_obj) in iteritems(iterator._play.ROLE_CACHE[original_task._role._role_name]):
@@ -553,7 +562,7 @@ class StrategyBase:
 
             ret_results.append(task_result)
 
-            if one_pass or max_passes is not None and (cur_pass+1) >= max_passes:
+            if one_pass or max_passes is not None and (cur_pass + 1) >= max_passes:
                 break
 
             cur_pass += 1
@@ -588,50 +597,29 @@ class StrategyBase:
         Helper function to add a new host to inventory based on a task result.
         '''
 
-        host_name = host_info.get('host_name')
+        if host_info:
+            host_name = host_info.get('host_name')
 
-        # Check if host in inventory, add if not
-        new_host = self._inventory.get_host(host_name)
-        if not new_host:
-            new_host = Host(name=host_name)
-            self._inventory._hosts_cache[host_name] = new_host
-            self._inventory.get_host_vars(new_host)
+            # Check if host in inventory, add if not
+            if host_name not in self._inventory.hosts:
+                self._inventory.add_host(host_name, 'all')
+            new_host = self._inventory.hosts.get(host_name)
 
-            allgroup = self._inventory.get_group('all')
-            allgroup.add_host(new_host)
+            # Set/update the vars for this host
+            new_host.vars = combine_vars(new_host.get_vars(), host_info.get('host_vars', dict()))
 
-        # Set/update the vars for this host
-        new_host.vars = combine_vars(new_host.vars, self._inventory.get_host_vars(new_host))
-        new_host.vars = combine_vars(new_host.vars,  host_info.get('host_vars', dict()))
+            new_groups = host_info.get('groups', [])
+            for group_name in new_groups:
+                if group_name not in self._inventory.groups:
+                    self._inventory.add_group(group_name)
+                new_group = self._inventory.groups[group_name]
+                new_group.add_host(self._inventory.hosts[host_name])
 
-        new_groups = host_info.get('groups', [])
-        for group_name in new_groups:
-            if not self._inventory.get_group(group_name):
-                new_group = Group(group_name)
-                self._inventory.add_group(new_group)
-                self._inventory.get_group_vars(new_group)
-                new_group.vars = self._inventory.get_group_variables(group_name)
-            else:
-                new_group = self._inventory.get_group(group_name)
+            # clear pattern caching completely since it's unpredictable what patterns may have referenced the group
+            self._inventory.clear_pattern_cache()
 
-            new_group.add_host(new_host)
-
-            # add this host to the group cache
-            if self._inventory.groups is not None:
-                if group_name in self._inventory.groups:
-                    if new_host not in self._inventory.get_group(group_name).hosts:
-                        self._inventory.get_group(group_name).hosts.append(new_host.name)
-
-        # clear pattern caching completely since it's unpredictable what
-        # patterns may have referenced the group
-        self._inventory.clear_pattern_cache()
-
-        # clear cache of group dict, which is used in magic host variables
-        self._inventory.clear_group_dict_cache()
-
-        # also clear the hostvar cache entry for the given play, so that
-        # the new hosts are available if hostvars are referenced
-        self._variable_manager.invalidate_hostvars_cache(play=iterator._play)
+            # reconcile inventory, ensures inventory rules are followed
+            self._inventory.reconcile_inventory()
 
     def _add_group(self, host, result_item):
         '''
@@ -644,28 +632,31 @@ class StrategyBase:
         # the host here is from the executor side, which means it was a
         # serialized/cloned copy and we'll need to look up the proper
         # host object from the master inventory
-        real_host = self._inventory.get_host(host.name)
-
+        real_host = self._inventory.hosts[host.name]
         group_name = result_item.get('add_group')
-        new_group = self._inventory.get_group(group_name)
-        if not new_group:
-            # create the new group and add it to inventory
-            new_group = Group(name=group_name)
-            self._inventory.add_group(new_group)
-            new_group.vars = self._inventory.get_group_vars(new_group)
+        parent_group_names = result_item.get('parent_groups', [])
 
-            # and add the group to the proper hierarchy
-            allgroup = self._inventory.get_group('all')
-            allgroup.add_child_group(new_group)
+        for name in [group_name] + parent_group_names:
+            if name not in self._inventory.groups:
+                # create the new group and add it to inventory
+                self._inventory.add_group(name)
+                changed = True
+        group = self._inventory.groups[group_name]
+        for parent_group_name in parent_group_names:
+            parent_group = self._inventory.groups[parent_group_name]
+            parent_group.add_child_group(group)
+
+        if real_host.name not in group.get_hosts():
+            group.add_host(real_host)
             changed = True
 
         if group_name not in host.get_groups():
-            new_group.add_host(real_host)
+            real_host.add_group(group)
             changed = True
 
         if changed:
-            # clear cache of group dict, which is used in magic host variables
-            self._inventory.clear_group_dict_cache()
+            self._inventory.clear_pattern_cache()
+            self._inventory.reconcile_inventory()
 
         return changed
 
@@ -693,8 +684,9 @@ class StrategyBase:
                 tags = tags.split(',')
             if len(tags) > 0:
                 if len(included_file._task.tags) > 0:
-                    raise AnsibleParserError("Include tasks should not specify tags in more than one way (both via args and directly on the task). Mixing tag specify styles is prohibited for whole import hierarchy, not only for single import statement",
-                            obj=included_file._task._ds)
+                    raise AnsibleParserError("Include tasks should not specify tags in more than one way (both via args and directly on the task). "
+                                             "Mixing tag specify styles is prohibited for whole import hierarchy, not only for single import statement",
+                                             obj=included_file._task._ds)
                 display.deprecated("You should not specify tags in the include parameters. All tags should be specified using the task-level option")
                 included_file._task.tags = tags
 
@@ -753,10 +745,10 @@ class StrategyBase:
     def _do_handler_run(self, handler, handler_name, iterator, play_context, notified_hosts=None):
 
         # FIXME: need to use iterator.get_failed_hosts() instead?
-        #if not len(self.get_hosts_remaining(iterator._play)):
-        #    self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')
-        #    result = False
-        #    break
+        # if not len(self.get_hosts_remaining(iterator._play)):
+        #     self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')
+        #     result = False
+        #     break
         saved_name = handler.name
         handler.name = handler_name
         self._tqm.send_callback('v2_playbook_on_handler_task_start', handler)
@@ -778,7 +770,9 @@ class StrategyBase:
         host_results = []
         for host in notified_hosts:
             if not handler.has_triggered(host) and (not iterator.is_failed(host) or play_context.force_handlers):
-                task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=handler)
+                if handler._uuid not in iterator._task_uuid_cache:
+                    iterator._task_uuid_cache[handler._uuid] = handler
+                task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=handler)
                 self.add_tqm_variables(task_vars, play=iterator._play)
                 self._queue_task(host, handler, task_vars, play_context)
                 if run_once:
@@ -833,14 +827,14 @@ class StrategyBase:
 
     def _take_step(self, task, host=None):
 
-        ret=False
-        msg=u'Perform task: %s ' % task
+        ret = False
+        msg = u'Perform task: %s ' % task
         if host:
             msg += u'on %s ' % host
         msg += u'(N)o/(y)es/(c)ontinue: '
         resp = display.prompt(msg)
 
-        if resp.lower() in ['y','yes']:
+        if resp.lower() in ['y', 'yes']:
             display.debug("User ran task")
             ret = True
         elif resp.lower() in ['c', 'continue']:
@@ -865,7 +859,7 @@ class StrategyBase:
         #   on a meta task that doesn't support them
 
         def _evaluate_conditional(h):
-            all_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=h, task=task)
+            all_vars = self._variable_manager.get_vars(play=iterator._play, host=h, task=task)
             templar = Templar(loader=self._loader, variables=all_vars)
             return task.evaluate_conditional(templar, all_vars)
 
@@ -873,7 +867,7 @@ class StrategyBase:
         msg = ''
         if meta_action == 'noop':
             # FIXME: issue a callback for the noop here?
-            msg="noop"
+            msg = "noop"
         elif meta_action == 'flush_handlers':
             self.run_handlers(iterator, play_context)
             msg = "ran handlers"
@@ -883,7 +877,8 @@ class StrategyBase:
         elif meta_action == 'clear_facts':
             if _evaluate_conditional(target_host):
                 for host in self._inventory.get_hosts(iterator._play.hosts):
-                    self._variable_manager.clear_facts(host)
+                    hostname = host.get_name()
+                    self._variable_manager.clear_facts(hostname)
                 msg = "facts cleared"
             else:
                 skipped = True
@@ -893,23 +888,27 @@ class StrategyBase:
                     self._tqm._failed_hosts.pop(host.name, False)
                     self._tqm._unreachable_hosts.pop(host.name, False)
                     iterator._host_states[host.name].fail_state = iterator.FAILED_NONE
-                msg="cleared host errors"
+                msg = "cleared host errors"
             else:
                 skipped = True
         elif meta_action == 'end_play':
             if _evaluate_conditional(target_host):
                 for host in self._inventory.get_hosts(iterator._play.hosts):
-                    if not host.name in self._tqm._unreachable_hosts:
+                    if host.name not in self._tqm._unreachable_hosts:
                         iterator._host_states[host.name].run_state = iterator.ITERATING_COMPLETE
-                msg="ending play"
+                msg = "ending play"
         elif meta_action == 'reset_connection':
-            connection = connection_loader.get(play_context.connection, play_context, '/dev/null')
-            connection.reset()
-            msg= 'reset connection'
+            connection = connection_loader.get(play_context.connection, play_context, os.devnull)
+            play_context.set_options_from_plugin(connection)
+            if connection:
+                connection.reset()
+                msg = 'reset connection'
+            else:
+                msg = 'no connection, nothing to reset'
         else:
             raise AnsibleError("invalid meta action requested: %s" % meta_action, obj=task._ds)
 
-        result = { 'msg': msg }
+        result = {'msg': msg}
         if skipped:
             result['skipped'] = True
         else:

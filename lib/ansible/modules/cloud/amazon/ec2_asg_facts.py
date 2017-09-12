@@ -1,20 +1,12 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -35,7 +27,9 @@ options:
     required: false
   tags:
     description:
-      - "A dictionary/hash of tags in the format { tag1_name: 'tag1_value', tag2_name: 'tag2_value' } to match against the auto scaling group(s) you are searching for."
+      - >
+        A dictionary/hash of tags in the format { tag1_name: 'tag1_value', tag2_name: 'tag2_value' } to match against the auto scaling
+        group(s) you are searching for.
     required: false
 extends_documentation_fragment:
     - aws
@@ -137,6 +131,13 @@ instances:
             "protected_from_scale_in": "false"
         }
     ]
+launch_config_name:
+    description: >
+      Name of launch configuration associated with the ASG. Same as launch_configuration_name,
+      provided for compatibility with ec2_asg module.
+    returned: success
+    type: str
+    sample: "public-webapp-production-1"
 launch_configuration_name:
     description: Name of launch configuration associated with the ASG.
     returned: success
@@ -192,6 +193,22 @@ tags:
             "propagate_at_launch": "true"
         }
     ]
+target_group_arns:
+    description: List of ARNs of the target groups that the ASG populates
+    returned: success
+    type: list
+    sample: [
+        "arn:aws:elasticloadbalancing:ap-southeast-2:123456789012:targetgroup/target-group-host-hello/1a2b3c4d5e6f1a2b",
+        "arn:aws:elasticloadbalancing:ap-southeast-2:123456789012:targetgroup/target-group-path-world/abcd1234abcd1234"
+    ]
+target_group_names:
+    description: List of names of the target groups that the ASG populates
+    returned: success
+    type: list
+    sample: [
+        "target-group-host-hello",
+        "target-group-path-world"
+    ]
 termination_policies:
     description: A list of termination policies for the group.
     returned: success
@@ -199,12 +216,17 @@ termination_policies:
     sample: ["Default"]
 '''
 
+import re
+
 try:
-    import boto3
     from botocore.exceptions import ClientError
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
+    pass  # caught by imported HAS_BOTO3
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import (get_aws_connection_info, boto3_conn, ec2_argument_spec,
+                                      camel_dict_to_snake_dict, HAS_BOTO3)
+
 
 def match_asg_tags(tags_to_match, asg):
     for key, value in tags_to_match.items():
@@ -214,6 +236,7 @@ def match_asg_tags(tags_to_match, asg):
         else:
             return False
     return True
+
 
 def find_asgs(conn, module, name=None, tags=None):
     """
@@ -232,7 +255,10 @@ def find_asgs(conn, module, name=None, tags=None):
         List
         [
             {
-                "auto_scaling_group_arn": "arn:aws:autoscaling:us-west-2:275977225706:autoScalingGroup:58abc686-9783-4528-b338-3ad6f1cbbbaf:autoScalingGroupName/public-webapp-production",
+                "auto_scaling_group_arn": (
+                    "arn:aws:autoscaling:us-west-2:275977225706:autoScalingGroup:58abc686-9783-4528-b338-3ad6f1cbbbaf:"
+                    "autoScalingGroupName/public-webapp-production"
+                ),
                 "auto_scaling_group_name": "public-webapp-production",
                 "availability_zones": ["us-west-2c", "us-west-2b", "us-west-2a"],
                 "created_time": "2016-02-02T23:28:42.481000+00:00",
@@ -260,6 +286,7 @@ def find_asgs(conn, module, name=None, tags=None):
                         "protected_from_scale_in": false
                     }
                 ],
+                "launch_config_name": "public-webapp-production-1",
                 "launch_configuration_name": "public-webapp-production-1",
                 "load_balancer_names": ["public-webapp-production-lb"],
                 "max_size": 4,
@@ -285,6 +312,8 @@ def find_asgs(conn, module, name=None, tags=None):
                         "value": "production"
                     }
                 ],
+                "target_group_names": [],
+                "target_group_arns": [],
                 "termination_policies":
                 [
                     "Default"
@@ -305,6 +334,14 @@ def find_asgs(conn, module, name=None, tags=None):
     except ClientError as e:
         module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
 
+    if not asgs:
+        return asgs
+    try:
+        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
+        elbv2 = boto3_conn(module, conn_type='client', resource='elbv2', region=region, endpoint=ec2_url, **aws_connect_kwargs)
+    except ClientError as e:
+        # This is nice to have, not essential
+        elbv2 = None
     matched_asgs = []
 
     if name is not None:
@@ -323,7 +360,21 @@ def find_asgs(conn, module, name=None, tags=None):
             matched_tags = True
 
         if matched_name and matched_tags:
-            matched_asgs.append(camel_dict_to_snake_dict(asg))
+            asg = camel_dict_to_snake_dict(asg)
+            # compatibility with ec2_asg module
+            asg['launch_config_name'] = asg['launch_configuration_name']
+            # workaround for https://github.com/ansible/ansible/pull/25015
+            if 'target_group_ar_ns' in asg:
+                asg['target_group_arns'] = asg['target_group_ar_ns']
+                del(asg['target_group_ar_ns'])
+            if asg.get('target_group_arns'):
+                if elbv2:
+                    tg_paginator = elbv2.get_paginator('describe_target_groups')
+                    tg_result = tg_paginator.paginate(TargetGroupArns=asg['target_group_arns']).build_full_result()
+                    asg['target_group_names'] = [tg['TargetGroupName'] for tg in tg_result['TargetGroups']]
+            else:
+                asg['target_group_names'] = []
+            matched_asgs.append(asg)
 
     return matched_asgs
 
@@ -354,9 +405,6 @@ def main():
     results = find_asgs(autoscaling, module, name=asg_name, tags=asg_tags)
     module.exit_json(results=results)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

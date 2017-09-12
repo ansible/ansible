@@ -1,0 +1,15 @@
+---
+
+- name: Setup gslb service 2
+
+  delegate_to: localhost
+  register: result
+  check_mode: "{{ check_mode }}"
+
+  netscaler_gslb_service:
+    operation: present
+
+    servicename: gslb-service-2
+    cnameentry: example.com
+    comment: added comment
+    sitename: gslb-site-1

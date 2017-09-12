@@ -1,0 +1,423 @@
+---
+- name: fail run win_regedit with larger dword
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    name: test
+    data: 0xffffffff1
+    type: dword
+    state: present
+  register: large_dword
+  failed_when: large_dword.msg != 'data cannot be larger than 0xffffffff when type is dword'
+
+- name: fail run win_regedit with larger qword
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    name: test
+    data: 0xffffffffffffffff1
+    type: qword
+    state: present
+  register: large_qword
+  failed_when: large_qword.msg != 'data cannot be larger than 0xffffffffffffffff when type is qword'
+
+- name: run win_regedit with invalid path
+  win_regedit:
+    path: ABCD:\efg
+  register: invalid_path
+  failed_when: "invalid_path.msg != 'path: ABCD:\\efg is not a valid powershell path, see module documentation for examples.'"
+
+- name: change string to binary check
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    name: data_string
+    data: hex:00,01
+    type: binary
+    state: present
+  register: change_string_binary_check
+  check_mode: yes
+
+- name: get actual change string to binary check
+  win_reg_stat:
+    path: '{{test_win_regedit_local_key}}'
+    name: data_string
+  register: change_string_binary_actual_check
+
+- name: assert change string to binary check
+  assert:
+    that:
+    - change_string_binary_check|changed
+    - change_string_binary_check.data_changed == True
+    - change_string_binary_check.data_type_changed == True
+    - change_string_binary_actual_check.type == 'REG_SZ'
+    - change_string_binary_actual_check.raw_value == "new hello world"
+
+- name: change string to binary
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    name: data_string
+    data: hex:00,01
+    type: binary
+    state: present
+  register: change_string_binary
+
+- name: get actual change string to binary
+  win_reg_stat:
+    path: '{{test_win_regedit_local_key}}'
+    name: data_string
+  register: change_string_binary_actual
+
+- name: assert change string to binary check
+  assert:
+    that:
+    - change_string_binary|changed
+    - change_string_binary.data_changed == True
+    - change_string_binary.data_type_changed == True
+    - change_string_binary_actual.type == 'REG_BINARY'
+    - change_string_binary_actual.raw_value == ["0x00", "0x01"]
+
+- name: modify the (Default) key property check
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    data: default value
+    state: present
+  register: modify_default_check
+  check_mode: yes
+
+# win_reg_stat struggles with the (Default) property just use powershell
+- name: get actual modify the (Default) key property check
+  win_command: powershell.exe "(Get-Item -Path '{{test_win_regedit_local_key}}').GetValue($null, $null)"
+  register: modify_default_actual_check
+
+- name: assert modify the (Default) key property check
+  assert:
+    that:
+    - modify_default_check|changed
+    - modify_default_actual_check.stdout == ""
+
+- name: modify the (Default) key property
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    data: default value
+    state: present
+  register: modify_default
+
+- name: get actual modify the (Default) key property
+  win_command: powershell.exe "(Get-Item -Path '{{test_win_regedit_local_key}}').GetValue($null, $null)"
+  register: modify_default_actual
+
+- name: assert modify the (Default) key property
+  assert:
+    that:
+    - modify_default|changed
+    - modify_default_actual.stdout == "default value\r\n"
+
+- name: create an actual property called (Default)
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    name: (Default)
+    data: custom default value
+    type: expandstring
+    state: present
+  register: create_specific_default_check
+  check_mode: yes
+
+- name: get actual value for (Default) property to ensure it didn't change check
+  win_command: powershell.exe "(Get-Item -Path '{{test_win_regedit_local_key}}').GetValue($null, $null)"
+  register: create_specific_default_actual_default_check
+
+- name: get actual for create specific property called (Default) check
+  win_command: powershell.exe "(Get-Item -Path '{{test_win_regedit_local_key}}').GetValue('(Default)', $null)"
+  register: create_specific_default_actual_check
+
+- name: assert create specific property called (Default) check
+  assert:
+    that:
+    - create_specific_default_check|changed
+    - create_specific_default_actual_default_check.stdout == "default value\r\n"
+    - create_specific_default_actual_check.stdout == ""
+
+- name: create an actual property called (Default)
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    name: (Default)
+    data: custom default value
+    type: expandstring
+    state: present
+  register: create_specific_default
+
+- name: get actual value for (Default) property to ensure it didn't change
+  win_command: powershell.exe "(Get-Item -Path '{{test_win_regedit_local_key}}').GetValue($null, $null)"
+  register: create_specific_default_actual_default
+
+- name: get actual for specific property called (Default)
+  win_command: powershell.exe "(Get-Item -Path '{{test_win_regedit_local_key}}').GetValue('(Default)', $null)"
+  register: create_specific_default_actual
+
+- name: assert create specific property called (Default)
+  assert:
+    that:
+    - create_specific_default|changed
+    - create_specific_default_actual_default.stdout == "default value\r\n"
+    - create_specific_default_actual.stdout == "custom default value\r\n"
+
+- name: delete property check
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    name: data_binary
+    state: absent
+  register: delete_property_check
+  check_mode: yes
+
+- name: get actual of delete property check
+  win_reg_stat:
+    path: '{{test_win_regedit_local_key}}'
+    name: data_binary
+  register: delete_property_actual_check
+
+- name: assert delete property check
+  assert:
+    that:
+    - delete_property_check|changed
+    - delete_property_actual_check.exists == True
+
+- name: delete property
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    name: data_binary
+    state: absent
+  register: delete_property
+
+- name: get actual of delete property
+  win_reg_stat:
+    path: '{{test_win_regedit_local_key}}'
+    name: data_binary
+  register: delete_property_actual
+
+- name: assert delete property
+  assert:
+    that:
+    - delete_property|changed
+    - delete_property_actual.exists == False
+
+- name: delete property again
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    name: data_binary
+    state: absent
+  register: delete_property_again
+
+- name: assert delete property again
+  assert:
+    that:
+    - not delete_property_again|changed
+
+- name: delete the key's (Default) property check
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    state: absent
+    delete_key: no
+  register: delete_default_check
+  check_mode: yes
+
+- name: get actual of key's (Default) property check
+  win_command: powershell.exe "(Get-Item -Path '{{test_win_regedit_local_key}}').GetValue($null, $null)"
+  register: delete_default_actual_check
+
+- name: get actual of custom (Default) property check
+  win_command: powershell.exe "(Get-Item -Path '{{test_win_regedit_local_key}}').GetValue('(Default)', $null)"
+  register: delete_default_custom_actual_check
+
+- name: assert delete the key's (Default) property check
+  assert:
+    that:
+    - delete_default_check|changed
+    - delete_default_actual_check.stdout == "default value\r\n"
+    - delete_default_custom_actual_check.stdout == "custom default value\r\n"
+
+- name: delete the key's (Default) property
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    state: absent
+    delete_key: no
+  register: delete_default
+
+- name: get actual of key's (Default) property
+  win_command: powershell.exe "(Get-Item -Path '{{test_win_regedit_local_key}}').GetValue($null, $null)"
+  register: delete_default_actual
+
+- name: get actual of custom (Default) property
+  win_command: powershell.exe "(Get-Item -Path '{{test_win_regedit_local_key}}').GetValue('(Default)', $null)"
+  register: delete_default_custom_actual
+
+- name: assert delete the key's (Default) property
+  assert:
+    that:
+    - delete_default|changed
+    - delete_default_actual.stdout == ""
+    - delete_default_custom_actual.stdout == "custom default value\r\n"
+
+- name: recreate the key's (Default) property for next test
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    data: default value
+
+- name: delete the custom (Default) property check
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    name: (Default)
+    state: absent
+    delete_key: no
+  register: delete_custom_default_check
+  check_mode: yes
+
+- name: get actual of key's (Default) property check
+  win_command: powershell.exe "(Get-Item -Path '{{test_win_regedit_local_key}}').GetValue($null, $null)"
+  register: delete_custom_default_actual_check
+
+- name: get actual of custom (Default) property check
+  win_command: powershell.exe "(Get-Item -Path '{{test_win_regedit_local_key}}').GetValue('(Default)', $null)"
+  register: delete_custom_default_custom_actual_check
+
+- name: assert delete the custom (Default) property check
+  assert:
+    that:
+    - delete_custom_default_check|changed
+    - delete_custom_default_actual_check.stdout == "default value\r\n"
+    - delete_custom_default_custom_actual_check.stdout == "custom default value\r\n"
+
+- name: delete the custom (Default) property
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    name: (Default)
+    state: absent
+    delete_key: no
+  register: delete_custom_default
+
+- name: get actual of key's (Default) property
+  win_command: powershell.exe "(Get-Item -Path '{{test_win_regedit_local_key}}').GetValue($null, $null)"
+  register: delete_custom_default_actual
+
+- name: get actual of custom (Default) property
+  win_command: powershell.exe "(Get-Item -Path '{{test_win_regedit_local_key}}').GetValue('(Default)', $null)"
+  register: delete_custom_default_custom_actual
+
+- name: assert delete the custom (Default) property
+  assert:
+    that:
+    - delete_custom_default|changed
+    - delete_custom_default_actual.stdout == "default value\r\n"
+    - delete_custom_default_custom_actual.stdout == ""
+
+- name: add some nested keys for later deletion
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}\{{item}}'
+    state: present
+  items:
+  - nest1
+  - nest2
+  - nest1\nested
+
+- name: delete key and it's sub keys check
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    state: absent
+    delete_key: yes
+  register: delete_key_check
+  check_mode: yes
+
+- name: get actual of delete key and it's sub keys check
+  win_reg_stat:
+    path: '{{test_win_regedit_local_key}}'
+  register: delete_key_actual_check
+
+- name: assert delete key and it's sub keys check
+  assert:
+    that:
+    - delete_key_check|changed
+    - delete_key_actual_check.exists
+    - delete_key_actual_check.sub_keys == ["nest1", "nest2"]
+
+- name: delete key and it's sub keys
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    state: absent
+    delete_key: yes
+  register: delete_key
+
+- name: get actual of delete key and it's sub keys
+  win_reg_stat:
+    path: '{{test_win_regedit_local_key}}'
+  register: delete_key_actual
+
+- name: assert delete key and it's sub keys
+  assert:
+    that:
+    - delete_key|changed
+    - delete_key_actual.exists == False
+
+- name: delete key and it's sub keys again
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    state: absent
+    delete_key: yes
+  register: delete_key_again
+
+- name: assert delete key and it's sub keys again
+  assert:
+    that:
+    - not delete_key_again|changed
+
+- name: create key in HKEY_CLASSES_ROOT check
+  win_regedit:
+    path: '{{test_win_regedit_classes_key}}'
+    name: test
+    data: test
+    type: string
+    state: present
+  register: create_hkcr_key_check
+  check_mode: yes
+
+- name: get actual of create key in HKEY_CLASSES_ROOT check
+  win_reg_stat:
+    path: '{{test_win_regedit_classes_key}}'
+  register: create_hkcr_key_actual_check
+
+- name: assert create key in HKEY_CLASSES_ROOT check
+  assert:
+    that:
+    - create_hkcr_key_check|changed
+    - create_hkcr_key_actual_check.exists == False
+
+- name: create key in HKEY_CLASSES_ROOT
+  win_regedit:
+    path: '{{test_win_regedit_classes_key}}'
+    name: test
+    data: test
+    type: string
+    state: present
+  register: create_hkcr_key
+
+- name: get actual of create key in HKEY_CLASSES_ROOT
+  win_reg_stat:
+    path: '{{test_win_regedit_classes_key}}'
+  register: create_hkcr_key_actual
+
+- name: assert create key in HKEY_CLASSES_ROOT
+  assert:
+    that:
+    - create_hkcr_key|changed
+    - create_hkcr_key_actual.exists == True
+    - create_hkcr_key_actual.properties.test is defined
+
+- name: create key in HKEY_CLASSES_ROOT again
+  win_regedit:
+    path: '{{test_win_regedit_classes_key}}'
+    name: test
+    data: test
+    type: string
+    state: present
+  register: create_hkcr_key_again
+
+- name: assert create key in HKEY_CLASSES_ROOT again
+  assert:
+    that:
+    - not create_hkcr_key_again|changed

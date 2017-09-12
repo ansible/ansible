@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -35,6 +35,8 @@ description:
   - This module does not support running commands in configuration mode.
     Please use M(ios_config) to configure IOS devices.
 extends_documentation_fragment: ios
+notes:
+  - Tested against IOS 15.6
 options:
   commands:
     description:
@@ -115,12 +117,12 @@ tasks:
 RETURN = """
 stdout:
   description: The set of responses from the commands
-  returned: always
+  returned: always apart from low level errors (such as action plugin)
   type: list
   sample: ['...', '...']
 stdout_lines:
   description: The value of stdout split into a list
-  returned: always
+  returned: always apart from low level errors (such as action plugin)
   type: list
   sample: [['...', '...'], ['...'], ['...']]
 failed_conditions:
@@ -151,12 +153,13 @@ def parse_commands(module, warnings):
         answer=dict()
     ), module)
     commands = command(module.params['commands'])
-    for index, item in enumerate(commands):
+    for item in list(commands):
         if module.check_mode and not item['command'].startswith('show'):
             warnings.append(
                 'only show commands are supported when using check mode, not '
                 'executing `%s`' % item['command']
             )
+            commands.remove(item)
         elif item['command'].startswith('conf'):
             module.fail_json(
                 msg='ios_command does not support running config mode '
@@ -218,11 +221,11 @@ def main():
         module.fail_json(msg=msg, failed_conditions=failed_conditions)
 
 
-    result = {
+    result.update({
         'changed': False,
         'stdout': responses,
         'stdout_lines': list(to_lines(responses))
-    }
+    })
 
     module.exit_json(**result)
 

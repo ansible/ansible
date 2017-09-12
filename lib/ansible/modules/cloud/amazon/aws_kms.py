@@ -14,9 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
@@ -104,6 +104,7 @@ statement_label = {
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import boto_exception
 
 # import a class, we'll use a fully qualified path
 import ansible.module_utils.ec2
@@ -117,16 +118,6 @@ try:
 except ImportError:
     HAS_BOTO3 = False
 
-def boto_exception(err):
-    '''generic error message handler'''
-    if hasattr(err, 'error_message'):
-        error = err.error_message
-    elif hasattr(err, 'message'):
-        error = str(err.message) + ' ' + str(err) + ' - ' + str(type(err))
-    else:
-        error = '%s: %s' % (Exception, err)
-
-    return error
 
 def get_arn_from_kms_alias(kms, aliasname):
     ret = kms.list_aliases()
@@ -165,12 +156,18 @@ def do_grant(kms, keyarn, role_arn, granttypes, mode='grant', dry_run=True, clea
             # do we want this grant type? Are we on its statement?
             # and does the role have this grant type?
 
+            # Ensure statement looks as expected
+            if not statement.get('Principal'):
+                statement['Principal'] = {'AWS': []}
+            if not isinstance(statement['Principal']['AWS'], list):
+                statement['Principal']['AWS'] = [statement['Principal']['AWS']]
+
             if mode == 'grant' and statement['Sid'] == statement_label[granttype]:
                 # we're granting and we recognize this statement ID.
 
                 if granttype in granttypes:
                     invalid_entries = list(filter(lambda x: not x.startswith('arn:aws:iam::'), statement['Principal']['AWS']))
-                    if clean_invalid_entries and len(list(invalid_entries)):
+                    if clean_invalid_entries and invalid_entries:
                         # we have bad/invalid entries. These are roles that were deleted.
                         # prune the list.
                         valid_entries = filter(lambda x: x.startswith('arn:aws:iam::'), statement['Principal']['AWS'])
@@ -197,12 +194,12 @@ def do_grant(kms, keyarn, role_arn, granttypes, mode='grant', dry_run=True, clea
     try:
         if len(changes_needed) and not dry_run:
             policy_json_string = json.dumps(policy)
-            kms.put_key_policy(KeyId=keyarn, PolicyName='default', Policy=policy_json_string)
-    except:
-        raise Exception("{}: // {}".format("e", policy_json_string))
+    except Exception as e:
+            raise Exception("{0}: // {1}".format(e, repr(policy)))
+    kms.put_key_policy(KeyId=keyarn, PolicyName='default', Policy=policy_json_string)
 
-        # returns nothing, so we have to just assume it didn't throw
-        ret['changed'] = True
+    # returns nothing, so we have to just assume it didn't throw
+    ret['changed'] = changes_needed and not had_invalid_entries
 
     ret['changes_needed'] = changes_needed
     ret['had_invalid_entries'] = had_invalid_entries
@@ -283,7 +280,8 @@ def main():
                 if not g in statement_label:
                     module.fail_json(msg='{} is an unknown grant type.'.format(g))
 
-        ret = do_grant(kms, module.params['key_arn'], module.params['role_arn'], module.params['grant_types'], mode=mode, dry_run=module.check_mode, clean_invalid_entries=module.params['clean_invalid_entries'])
+        ret = do_grant(kms, module.params['key_arn'], module.params['role_arn'], module.params['grant_types'], mode=mode, dry_run=module.check_mode,
+                       clean_invalid_entries=module.params['clean_invalid_entries'])
         result.update(ret)
 
     except Exception as err:

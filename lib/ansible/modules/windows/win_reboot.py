@@ -1,28 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# this is a windows documentation stub.  actual code lives in the .ps1
-# file of the same name
-
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
-
 
 DOCUMENTATION = r'''
 ---
@@ -32,24 +15,35 @@ description:
      - Reboot a Windows machine, wait for it to go down, come back up, and respond to commands.
 version_added: "2.1"
 options:
-  pre_reboot_delay_sec:
+  pre_reboot_delay:
     description:
     - Seconds for shutdown to wait before requesting reboot
     default: 2
-  shutdown_timeout_sec:
+    aliases: [ pre_reboot_delay_sec ]
+  post_reboot_delay:
+    description:
+    - Seconds to wait after the reboot was successful and the connection was re-established
+    - This is useful if you want wait for something to settle despite your connection already working
+    default: 0
+    version_added: '2.4'
+    aliases: [ post_reboot_delay_sec ]
+  shutdown_timeout:
     description:
     - Maximum seconds to wait for shutdown to occur
     - Increase this timeout for very slow hardware, large update applications, etc
     default: 600
-  reboot_timeout_sec:
+    aliases: [ shutdown_timeout_sec ]
+  reboot_timeout:
     description:
     - Maximum seconds to wait for machine to re-appear on the network and respond to a test command
     - This timeout is evaluated separately for both network appearance and test command success (so maximum clock time is actually twice this value)
     default: 600
-  connect_timeout_sec:
+    aliases: [ reboot_timeout_sec ]
+  connect_timeout:
     description:
     - Maximum seconds to wait for a single successful TCP connection to the WinRM endpoint before trying again
     default: 5
+    aliases: [ connect_timeout_sec ]
   test_command:
     description:
     - Command to expect success for to determine the machine is ready for management
@@ -76,14 +70,19 @@ EXAMPLES = r'''
 
 # Reboot a slow machine that might have lots of updates to apply
 - win_reboot:
-    shutdown_timeout_sec: 3600
-    reboot_timeout_sec: 3600
+    shutdown_timeout: 3600
+    reboot_timeout: 3600
 '''
 
 RETURN = r'''
 rebooted:
-    description: true if the machine was rebooted
-    returned: always
-    type: boolean
-    sample: true
+  description: true if the machine was rebooted
+  returned: always
+  type: boolean
+  sample: true
+elapsed:
+  description: The number of seconds that elapsed waiting for the system to be rebooted.
+  returned: always
+  type: int
+  sample: 23
 '''

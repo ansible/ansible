@@ -26,13 +26,8 @@ import stat
 from ansible.cli import CLI
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.executor.playbook_executor import PlaybookExecutor
-from ansible.inventory import Inventory
-from ansible.parsing.dataloader import DataLoader
 from ansible.playbook.block import Block
 from ansible.playbook.play_context import PlayContext
-from ansible.utils.vars import load_extra_vars
-from ansible.utils.vars import load_options_vars
-from ansible.vars import VariableManager
 
 try:
     from __main__ import display
@@ -41,16 +36,15 @@ except ImportError:
     display = Display()
 
 
-#---------------------------------------------------------------------------------------------------
-
 class PlaybookCLI(CLI):
-    ''' code behind ansible playbook cli'''
+    ''' the tool to run *Ansible playbooks*, which are a configuration and multinode deployment system.
+        See the project home page (https://docs.ansible.com) for more information. '''
 
     def parse(self):
 
         # create parser for CLI options
         parser = CLI.base_parser(
-            usage = "%prog playbook.yml",
+            usage="%prog [options] playbook.yml [playbook2 ...]",
             connect_opts=True,
             meta_opts=True,
             runas_opts=True,
@@ -61,17 +55,18 @@ class PlaybookCLI(CLI):
             vault_opts=True,
             fork_opts=True,
             module_opts=True,
+            desc="Runs Ansible playbooks, executing the defined tasks on the targeted hosts.",
         )
 
         # ansible playbook specific opts
         parser.add_option('--list-tasks', dest='listtasks', action='store_true',
-            help="list all tasks that would be executed")
+                          help="list all tasks that would be executed")
         parser.add_option('--list-tags', dest='listtags', action='store_true',
-            help="list all available tags")
+                          help="list all available tags")
         parser.add_option('--step', dest='step', action='store_true',
-            help="one-step-at-a-time: confirm each task before running")
+                          help="one-step-at-a-time: confirm each task before running")
         parser.add_option('--start-at-task', dest='start_at_task',
-            help="start the playbook at the task matching this name")
+                          help="start the playbook at the task matching this name")
 
         self.parser = parser
         super(PlaybookCLI, self).parse()
@@ -88,9 +83,8 @@ class PlaybookCLI(CLI):
 
         # Note: slightly wrong, this is written so that implicit localhost
         # Manage passwords
-        sshpass    = None
-        becomepass    = None
-        b_vault_pass = None
+        sshpass = None
+        becomepass = None
         passwords = {}
 
         # initial error check, to make sure all specified playbooks are accessible
@@ -105,28 +99,9 @@ class PlaybookCLI(CLI):
         if not self.options.listhosts and not self.options.listtasks and not self.options.listtags and not self.options.syntax:
             self.normalize_become_options()
             (sshpass, becomepass) = self.ask_passwords()
-            passwords = { 'conn_pass': sshpass, 'become_pass': becomepass }
+            passwords = {'conn_pass': sshpass, 'become_pass': becomepass}
 
-        loader = DataLoader()
-
-        if self.options.vault_password_file:
-            # read vault_pass from a file
-            b_vault_pass = CLI.read_vault_password_file(self.options.vault_password_file, loader=loader)
-            loader.set_vault_password(b_vault_pass)
-        elif self.options.ask_vault_pass:
-            b_vault_pass = self.ask_vault_passwords()
-            loader.set_vault_password(b_vault_pass)
-
-        # create the variable manager, which will be shared throughout
-        # the code, ensuring a consistent view of global variables
-        variable_manager = VariableManager()
-        variable_manager.extra_vars = load_extra_vars(loader=loader, options=self.options)
-
-        variable_manager.options_vars = load_options_vars(self.options)
-
-        # create the inventory, and filter it based on the subset specified (if any)
-        inventory = Inventory(loader=loader, variable_manager=variable_manager, host_list=self.options.inventory)
-        variable_manager.set_inventory(inventory)
+        loader, inventory, variable_manager = self._play_prereqs(self.options)
 
         # (which is not returned in list_hosts()) is taken into account for
         # warning if inventory is empty.  But it can't be taken into account for
@@ -149,7 +124,8 @@ class PlaybookCLI(CLI):
             self._flush_cache(inventory, variable_manager)
 
         # create the playbook executor, which manages running the plays via a task queue manager
-        pbex = PlaybookExecutor(playbooks=self.args, inventory=inventory, variable_manager=variable_manager, loader=loader, options=self.options, passwords=passwords)
+        pbex = PlaybookExecutor(playbooks=self.args, inventory=inventory, variable_manager=variable_manager, loader=loader, options=self.options,
+                                passwords=passwords)
 
         results = pbex.run()
 
@@ -203,7 +179,7 @@ class PlaybookCLI(CLI):
 
                             return taskmsg
 
-                        all_vars = variable_manager.get_vars(loader=loader, play=play)
+                        all_vars = variable_manager.get_vars(play=play)
                         play_context = PlayContext(play=play, options=self.options)
                         for block in play.compile():
                             block = block.filter_tagged_tasks(play_context, all_vars)

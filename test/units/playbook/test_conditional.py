@@ -97,11 +97,11 @@ class TestConditional(unittest.TestCase):
                      }
 
         when = [u"some_dict.some_dict_key1 == hostvars['host3']"]
-        #self._eval_con(when, variables)
+        # self._eval_con(when, variables)
         self.assertRaisesRegexp(errors.AnsibleError,
                                 "The conditional check 'some_dict.some_dict_key1 == hostvars\['host3'\]' failed",
-                                #"The conditional check 'some_dict.some_dict_key1 == hostvars['host3']' failed",
-                                #"The conditional check 'some_dict.some_dict_key1 == hostvars['host3']' failed.",
+                                # "The conditional check 'some_dict.some_dict_key1 == hostvars['host3']' failed",
+                                # "The conditional check 'some_dict.some_dict_key1 == hostvars['host3']' failed.",
                                 self._eval_con,
                                 when, variables)
 

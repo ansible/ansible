@@ -2,13 +2,17 @@
 
 from __future__ import absolute_import, print_function
 
+import collections
 import os
 import re
 import errno
 import itertools
 import abc
+import sys
 
-from lib.util import ApplicationError
+from lib.util import (
+    ApplicationError,
+)
 
 MODULE_EXTENSIONS = '.py', '.ps1'
 
@@ -21,7 +25,8 @@ def find_target_completion(target_func, prefix):
     """
     try:
         targets = target_func()
-        prefix = prefix.encode()
+        if sys.version_info[0] == 2:
+            prefix = prefix.encode()
         short = os.environ.get('COMP_TYPE') == '63'  # double tab completion from bash
         matches = walk_completion_targets(targets, prefix, short)
         return matches
@@ -207,7 +212,7 @@ def walk_compile_targets():
     """
     :rtype: collections.Iterable[TestTarget]
     """
-    return walk_test_targets(module_path='lib/ansible/modules/', extensions=('.py',))
+    return walk_test_targets(module_path='lib/ansible/modules/', extensions=('.py',), extra_dirs=('bin',))
 
 
 def walk_sanity_targets():
@@ -217,30 +222,33 @@ def walk_sanity_targets():
     return walk_test_targets(module_path='lib/ansible/modules/')
 
 
-def walk_posix_integration_targets():
+def walk_posix_integration_targets(include_hidden=False):
     """
+    :type include_hidden: bool
     :rtype: collections.Iterable[IntegrationTarget]
     """
     for target in walk_integration_targets():
-        if 'posix/' in target.aliases:
+        if 'posix/' in target.aliases or (include_hidden and 'hidden/posix/' in target.aliases):
             yield target
 
 
-def walk_network_integration_targets():
+def walk_network_integration_targets(include_hidden=False):
     """
+    :type include_hidden: bool
     :rtype: collections.Iterable[IntegrationTarget]
     """
     for target in walk_integration_targets():
-        if 'network/' in target.aliases:
+        if 'network/' in target.aliases or (include_hidden and 'hidden/network/' in target.aliases):
             yield target
 
 
-def walk_windows_integration_targets():
+def walk_windows_integration_targets(include_hidden=False):
     """
+    :type include_hidden: bool
     :rtype: collections.Iterable[IntegrationTarget]
     """
     for target in walk_integration_targets():
-        if 'windows/' in target.aliases:
+        if 'windows/' in target.aliases or (include_hidden and 'hidden/windows/' in target.aliases):
             yield target
 
 
@@ -254,7 +262,8 @@ def walk_integration_targets():
     prefixes = load_integration_prefixes()
 
     for path in paths:
-        yield IntegrationTarget(path, modules, prefixes)
+        if os.path.isdir(path):
+            yield IntegrationTarget(path, modules, prefixes)
 
 
 def load_integration_prefixes():
@@ -273,12 +282,13 @@ def load_integration_prefixes():
     return prefixes
 
 
-def walk_test_targets(path=None, module_path=None, extensions=None, prefix=None):
+def walk_test_targets(path=None, module_path=None, extensions=None, prefix=None, extra_dirs=None):
     """
     :type path: str | None
     :type module_path: str | None
     :type extensions: tuple[str] | None
     :type prefix: str | None
+    :type extra_dirs: tuple[str] | None
     :rtype: collections.Iterable[TestTarget]
     """
     for root, _, file_names in os.walk(path or '.', topdown=False):
@@ -291,7 +301,7 @@ def walk_test_targets(path=None, module_path=None, extensions=None, prefix=None)
         if path is None:
             root = root[2:]
 
-        if root.startswith('.'):
+        if root.startswith('.') and root != '.github':
             continue
 
         for file_name in file_names:
@@ -306,7 +316,64 @@ def walk_test_targets(path=None, module_path=None, extensions=None, prefix=None)
             if prefix and not name.startswith(prefix):
                 continue
 
-            yield TestTarget(os.path.join(root, file_name), module_path, prefix, path)
+            file_path = os.path.join(root, file_name)
+
+            if os.path.islink(file_path):
+                continue
+
+            yield TestTarget(file_path, module_path, prefix, path)
+
+    if extra_dirs:
+        for extra_dir in extra_dirs:
+            file_names = os.listdir(extra_dir)
+
+            for file_name in file_names:
+                file_path = os.path.join(extra_dir, file_name)
+
+                if os.path.isfile(file_path) and not os.path.islink(file_path):
+                    yield TestTarget(file_path, module_path, prefix, path)
+
+
+def analyze_integration_target_dependencies(integration_targets):
+    """
+    :type integration_targets: list[IntegrationTarget]
+    :rtype: dict[str,set[str]]
+    """
+    hidden_role_target_names = set(t.name for t in integration_targets if t.type == 'role' and 'hidden/' in t.aliases)
+    normal_role_targets = [t for t in integration_targets if t.type == 'role' and 'hidden/' not in t.aliases]
+    dependencies = collections.defaultdict(set)
+
+    # handle setup dependencies
+    for target in integration_targets:
+        for setup_target_name in target.setup_always + target.setup_once:
+            dependencies[setup_target_name].add(target.name)
+
+    # intentionally primitive analysis of role meta to avoid a dependency on pyyaml
+    for role_target in normal_role_targets:
+        meta_dir = os.path.join(role_target.path, 'meta')
+
+        if not os.path.isdir(meta_dir):
+            continue
+
+        meta_paths = sorted([os.path.join(meta_dir, name) for name in os.listdir(meta_dir)])
+
+        for meta_path in meta_paths:
+            if os.path.exists(meta_path):
+                with open(meta_path, 'r') as meta_fd:
+                    meta_lines = meta_fd.read().splitlines()
+
+                for meta_line in meta_lines:
+                    if re.search(r'^ *#.*$', meta_line):
+                        continue
+
+                    if not meta_line.strip():
+                        continue
+
+                    for hidden_target_name in hidden_role_target_names:
+                        if hidden_target_name in meta_line:
+                            dependencies[hidden_target_name].add(role_target.name)
+
+    return dependencies
 
 
 class CompletionTarget(object):
@@ -323,8 +390,8 @@ class CompletionTarget(object):
     def __eq__(self, other):
         if isinstance(other, CompletionTarget):
             return self.__repr__() == other.__repr__()
-        else:
-            return False
+
+        return False
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -434,7 +501,7 @@ class IntegrationTarget(CompletionTarget):
             self.script_path = os.path.join(path, runme_files[0])
         elif test_files:
             self.type = 'special'
-        elif os.path.isdir(os.path.join(path, 'tasks')):
+        elif os.path.isdir(os.path.join(path, 'tasks')) or os.path.isdir(os.path.join(path, 'defaults')):
             self.type = 'role'
         else:
             self.type = 'unknown'
@@ -452,13 +519,13 @@ class IntegrationTarget(CompletionTarget):
         # modules
 
         if self.name in modules:
-            module = self.name
+            module_name = self.name
         elif self.name.startswith('win_') and self.name[4:] in modules:
-            module = self.name[4:]
+            module_name = self.name[4:]
         else:
-            module = None
+            module_name = None
 
-        self.modules = tuple(sorted(a for a in static_aliases + tuple([module]) if a in modules))
+        self.modules = tuple(sorted(a for a in static_aliases + tuple([module_name]) if a in modules))
 
         # groups
 
@@ -516,6 +583,11 @@ class IntegrationTarget(CompletionTarget):
             aliases = ['hidden/'] + ['hidden/%s' % a for a in aliases if not a.startswith('hidden/')]
 
         self.aliases = tuple(sorted(set(aliases)))
+
+        # configuration
+
+        self.setup_once = tuple(sorted(set(g.split('/')[2] for g in groups if g.startswith('setup/once/'))))
+        self.setup_always = tuple(sorted(set(g.split('/')[2] for g in groups if g.startswith('setup/always/'))))
 
 
 class TargetPatternsNotMatched(ApplicationError):

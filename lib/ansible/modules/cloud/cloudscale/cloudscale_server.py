@@ -2,23 +2,13 @@
 # -*- coding: utf-8 -*-
 #
 # (c) 2017, Gaudenz Steinlin <gaudenz.steinlin@cloudscale.ch>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -31,12 +21,15 @@ description:
   - Create, start, stop and delete servers on the cloudscale.ch IaaS service.
   - All operations are performed using the cloudscale.ch public API v1.
   - "For details consult the full API documentation: U(https://www.cloudscale.ch/en/api/v1)."
-  - An valid API token is required for all operations. You can create as many tokens as you like using the cloudscale.ch control panel at U(https://control.cloudscale.ch).
+  - An valid API token is required for all operations. You can create as many tokens as you like using the cloudscale.ch control panel at
+    U(https://control.cloudscale.ch).
 notes:
   - Instead of the api_token parameter the CLOUDSCALE_API_TOKEN environment variable can be used.
   - To create a new server at least the C(name), C(ssh_key), C(image) and C(flavor) options are required.
   - If more than one server with the name given by the C(name) option exists, execution is aborted.
-  - Once a server is created all parameters except C(state) are read-only. You can't change the name, flavor or any other property. This is a limitation of the cloudscale.ch API. The module will silently ignore differences between the configured parameters and the running server if a server with the correct name or UUID exists. Only state changes will be applied.
+  - Once a server is created all parameters except C(state) are read-only. You can't change the name, flavor or any other property. This is a limitation
+    of the cloudscale.ch API. The module will silently ignore differences between the configured parameters and the running server if a server with the
+    correct name or UUID exists. Only state changes will be applied.
 version_added: 2.3
 author: "Gaudenz Steinlin <gaudenz.steinlin@cloudscale.ch>"
 options:
@@ -218,14 +211,15 @@ anti_affinity_with:
   sample: []
 '''
 
-from datetime import datetime, timedelta
 import json
 import os
+from datetime import datetime, timedelta
 from time import sleep
-from urllib import urlencode
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils.urls import fetch_url
+
 
 API_URL      = 'https://api.cloudscale.ch/v1/'
 TIMEOUT_WAIT = 30
@@ -233,6 +227,7 @@ ALLOWED_STATES = ('running',
                   'stopped',
                   'absent',
                   )
+
 
 class AnsibleCloudscaleServer(object):
 

@@ -1,22 +1,14 @@
 #!/usr/bin/python
-#coding: utf-8 -*-
+# coding: utf-8 -*-
 
 # (c) 2017, Wayne Witzel III <wayne@riotousliving.com>
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -54,7 +46,7 @@ options:
       default: null
     extra_vars:
       description:
-        - Extra_vars to use for the job_template. Use '@' for a file.
+        - Extra_vars to use for the job_template. Prepend '@' if a file.
       default: null
     limit:
       description:
@@ -75,7 +67,7 @@ EXAMPLES = '''
 - name: Launch a job
   tower_job_launch:
     job_template: "My Job Template"
-    register: job
+  register: job
 - name: Wait for job max 120s
   tower_job_wait:
     job_id: job.id
@@ -117,13 +109,13 @@ except ImportError:
 def main():
     argument_spec = tower_argument_spec()
     argument_spec.update(dict(
-        job_template = dict(required=True),
-        job_type = dict(choices=['run', 'check', 'scan']),
-        inventory = dict(),
-        credential = dict(),
-        limit = dict(),
-        tags = dict(type='list'),
-        extra_vars = dict(type='list'),
+        job_template=dict(required=True),
+        job_type=dict(choices=['run', 'check', 'scan']),
+        inventory=dict(),
+        credential=dict(),
+        limit=dict(),
+        tags=dict(type='list'),
+        extra_vars=dict(type='list'),
     ))
 
     module = AnsibleModule(

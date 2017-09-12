@@ -23,23 +23,22 @@ import fcntl
 import gettext
 import os
 import shlex
-from abc import ABCMeta, abstractmethod, abstractproperty
-
+from abc import abstractmethod, abstractproperty
 from functools import wraps
-from ansible.compat.six import with_metaclass
 
 from ansible import constants as C
-from ansible.compat.six import string_types
 from ansible.errors import AnsibleError
+from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_bytes, to_text
-from ansible.plugins import shell_loader
-
+from ansible.plugins import AnsiblePlugin
+from ansible.plugins.loader import shell_loader
 
 try:
     from __main__ import display
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
+
 
 __all__ = ['ConnectionBase', 'ensure_connect']
 
@@ -55,14 +54,14 @@ def ensure_connect(func):
     return wrapped
 
 
-class ConnectionBase(with_metaclass(ABCMeta, object)):
+class ConnectionBase(AnsiblePlugin):
     '''
     A base class for connections to contain common code.
     '''
 
     has_pipelining = False
-    has_native_async = False # eg, winrm
-    always_pipeline_modules = False # eg, winrm
+    has_native_async = False  # eg, winrm
+    always_pipeline_modules = False  # eg, winrm
     become_methods = C.BECOME_METHODS
     # When running over this connection type, prefer modules written in a certain language
     # as discovered by the specified file extension.  An empty string as the
@@ -71,6 +70,9 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
     allow_executable = True
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
+
+        super(ConnectionBase, self).__init__()
+
         # All these hasattrs allow subclasses to override these parameters
         if not hasattr(self, '_play_context'):
             self._play_context = play_context
@@ -255,8 +257,9 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
         if self._play_context.prompt is None:
             return False
         elif isinstance(self._play_context.prompt, string_types):
-            b_prompt = to_bytes(self._play_context.prompt)
-            return b_prompt in b_output
+            b_prompt = to_bytes(self._play_context.prompt).strip()
+            b_lines = b_output.splitlines()
+            return any(l.strip().startswith(b_prompt) for l in b_lines)
         else:
             return self._play_context.prompt(b_output)
 
@@ -278,3 +281,6 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
         f = self._play_context.connection_lockfd
         fcntl.lockf(f, fcntl.LOCK_UN)
         display.vvvv('CONNECTION: pid %d released lock on %d' % (os.getpid(), f), host=self._play_context.remote_addr)
+
+    def reset(self):
+        display.warning("Reset is not implemented for this connection")

@@ -16,22 +16,23 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['deprecated'],
-                    'supported_by': 'community',
-                    'metadata_version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['deprecated'],
+                    'supported_by': 'network'}
 
 DOCUMENTATION = '''
 ---
 module: nxos_mtu
 extends_documentation_fragment: nxos
 version_added: "2.2"
-deprecated: Deprecated in 2.2 use M(nxos_system)'s C(mtu) option.
+deprecated: Deprecated in 2.3 use M(nxos_system)'s C(mtu) option.
 short_description: Manages MTU settings on Nexus switch.
 description:
     - Manages MTU settings on Nexus switch.
 author:
     - Jason Edelman (@jedelman8)
 notes:
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
     - Either C(sysmtu) param is required or (C(interface) AND C(mtu)) parameters are required.
     - C(state=absent) unconfigures a given MTU if that value is currently present.
 options:
@@ -42,12 +43,12 @@ options:
         default: null
     mtu:
         description:
-            - MTU for a specific interface.
+            - MTU for a specific interface. Must be an even number between 576 and 9216.
         required: false
         default: null
     sysmtu:
         description:
-            - System jumbo MTU.
+            - System jumbo MTU. Must be an even number between 576 and 9216.
         required: false
         default: null
     state:
@@ -101,6 +102,7 @@ proposed:
 existing:
     description:
         - k/v pairs of existing mtu/sysmtu on the interface/system
+    returned: always
     type: dict
     sample: {"mtu": "1600", "sysmtu": "9216"}
 end_state:

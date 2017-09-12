@@ -9,7 +9,7 @@ The roadmap will be updated by version. Based on team and community feedback, an
 
 These roadmaps are the team's *best guess* roadmaps based on the Ansible team's experience and are also based on requests and feedback from the community.  There are things that may not make it on due to time constraints, lack of community maintainers, etc.  And there may be things that got missed, so each roadmap is published both as an idea of what is upcoming in Ansible, and as a medium for seeking further feedback from the community. Here are the good places for you to submit feedback:
 
-- Add to the agenda of a `Core IRC Meetings <https://github.com/ansible/community/blob/master/MEETINGS.md>`_ (preferred)
+- Add to the agenda of a `Core IRC Meetings <https://github.com/ansible/community/blob/master/meetings/README.md>`_ (preferred)
 - Ansible's google-group: ansible-devel
 - AnsibleFest conferences.
 - IRC freenode channel: #ansible-devel (this one may have things lost in lots of conversation, so a caution).

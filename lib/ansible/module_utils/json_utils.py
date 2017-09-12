@@ -29,6 +29,7 @@ try:
 except ImportError:
     import simplejson as json
 
+
 # NB: a copy of this function exists in ../../modules/core/async_wrapper.py. Ensure any
 # changes are propagated there.
 def _filter_non_json_lines(data):

@@ -21,8 +21,8 @@ __metaclass__ = type
 
 from ansible.compat.tests import unittest
 
-from ansible.compat.six import string_types
 from ansible.errors import AnsibleParserError
+from ansible.module_utils.six import string_types
 from ansible.playbook.attribute import FieldAttribute
 from ansible.template import Templar
 from ansible.playbook import base
@@ -114,7 +114,7 @@ class TestBase(unittest.TestCase):
         data = {'no_log': False,
                 'remote_user': None,
                 'vars': self.assorted_vars,
-                #'check_mode': False,
+                # 'check_mode': False,
                 'always_run': False,
                 'environment': [],
                 'run_once': False,
@@ -245,43 +245,66 @@ class TestBase(unittest.TestCase):
         self.assertEquals(variable_manager, self.b._variable_manager)
 
 
-# TODO/FIXME: test methods for each of the compares would be more precise
 class TestExtendValue(unittest.TestCase):
-    def test_extend_value(self):
-        # _extend_value could be a module or staticmethod but since its
-        # not, the test is here.
+    # _extend_value could be a module or staticmethod but since its
+    # not, the test is here.
+    def test_extend_value_list_newlist(self):
         b = base.Base()
         value_list = ['first', 'second']
         new_value_list = ['new_first', 'new_second']
         ret = b._extend_value(value_list, new_value_list)
         self.assertEquals(value_list + new_value_list, ret)
 
+    def test_extend_value_list_newlist_prepend(self):
+        b = base.Base()
+        value_list = ['first', 'second']
+        new_value_list = ['new_first', 'new_second']
         ret_prepend = b._extend_value(value_list, new_value_list, prepend=True)
         self.assertEquals(new_value_list + value_list, ret_prepend)
 
+    def test_extend_value_newlist_list(self):
+        b = base.Base()
+        value_list = ['first', 'second']
+        new_value_list = ['new_first', 'new_second']
         ret = b._extend_value(new_value_list, value_list)
         self.assertEquals(new_value_list + value_list, ret)
 
+    def test_extend_value_newlist_list_prepend(self):
+        b = base.Base()
+        value_list = ['first', 'second']
+        new_value_list = ['new_first', 'new_second']
         ret = b._extend_value(new_value_list, value_list, prepend=True)
         self.assertEquals(value_list + new_value_list, ret)
 
+    def test_extend_value_string_newlist(self):
+        b = base.Base()
         some_string = 'some string'
+        new_value_list = ['new_first', 'new_second']
         ret = b._extend_value(some_string, new_value_list)
         self.assertEquals([some_string] + new_value_list, ret)
 
+    def test_extend_value_string_newstring(self):
+        b = base.Base()
+        some_string = 'some string'
         new_value_string = 'this is the new values'
         ret = b._extend_value(some_string, new_value_string)
         self.assertEquals([some_string, new_value_string], ret)
 
+    def test_extend_value_list_newstring(self):
+        b = base.Base()
+        value_list = ['first', 'second']
+        new_value_string = 'this is the new values'
         ret = b._extend_value(value_list, new_value_string)
         self.assertEquals(value_list + [new_value_string], ret)
 
-    def test_extend_value_none(self):
+    def test_extend_value_none_none(self):
         b = base.Base()
         ret = b._extend_value(None, None)
         self.assertEquals(len(ret), 0)
         self.assertFalse(ret)
 
+    def test_extend_value_none_list(self):
+        b = base.Base()
         ret = b._extend_value(None, ['foo'])
         self.assertEquals(ret, ['foo'])
 
@@ -340,8 +363,7 @@ class BaseSubClass(base.Base):
     _test_attr_unknown_isa = FieldAttribute(isa='not_a_real_isa', always_post_validate=True)
     _test_attr_example = FieldAttribute(isa='string', default='the_default',
                                         always_post_validate=True)
-    _test_attr_none = FieldAttribute(isa='string',
-                                    always_post_validate=True)
+    _test_attr_none = FieldAttribute(isa='string', always_post_validate=True)
     _test_attr_preprocess = FieldAttribute(isa='string', default='the default for preprocess')
     _test_attr_method = FieldAttribute(isa='string', default='some attr with a getter',
                                        always_post_validate=True)
@@ -508,8 +530,8 @@ class TestBaseSubClass(TestBase):
 
     def test_attr_example_undefined(self):
         ds = {'test_attr_example': '{{ some_var_that_shouldnt_exist_to_test_omit }}'}
-        exc_regex_str = 'test_attr_example.*which appears to include a variable that is undefined.*some_var_that_shouldnt'
-        self.assertRaisesRegexp(AnsibleParserError, exc_regex_str, self._base_validate, ds)
+        exc_regex_str = 'test_attr_example.*has an invalid value, which includes an undefined variable.*some_var_that_shouldnt*'
+        self.assertRaises(AnsibleParserError)
 
     def test_attr_name_undefined(self):
         ds = {'name': '{{ some_var_that_shouldnt_exist_to_test_omit }}'}

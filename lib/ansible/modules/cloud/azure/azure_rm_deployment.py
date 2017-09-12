@@ -1,22 +1,15 @@
 #!/usr/bin/python
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+# Copyright (c) Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
@@ -233,7 +226,9 @@ EXAMPLES = '''
             - "14.04.2-LTS"
             - "15.04"
           metadata:
-            description: "The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version. Allowed values: 12.04.5-LTS, 14.04.2-LTS, 15.04."
+            description: >
+                         The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version.
+                         Allowed values: 12.04.5-LTS, 14.04.2-LTS, 15.04."
       variables:
         location: "West US"
         imagePublisher: "Canonical"
@@ -320,7 +315,9 @@ EXAMPLES = '''
               osDisk:
                 name: "osdisk"
                 vhd:
-                  uri: "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]"
+                  uri: >
+                       [concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',
+                       variables('OSDiskName'),'.vhd')]
                 caching: "ReadWrite"
                 createOption: "FromImage"
             networkProfile:
@@ -370,19 +367,17 @@ deployment:
         returned: always
 '''
 
-PREREQ_IMPORT_ERROR = None
+import time
 
 try:
+    from azure.common.credentials import ServicePrincipalCredentials
     import time
     import yaml
 except ImportError as exc:
     IMPORT_ERROR = "Error importing module prerequisites: %s" % exc
 
-from ansible.module_utils.azure_rm_common import *
-
 try:
     from itertools import chain
-    from azure.common.credentials import ServicePrincipalCredentials
     from azure.common.exceptions import CloudError
     from azure.mgmt.resource.resources.models import (DeploymentProperties,
                                                       ParametersLink,
@@ -396,6 +391,8 @@ try:
 except ImportError:
     # This is handled in azure_rm_common
     pass
+
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 
 class AzureRMDeploymentManager(AzureRMModuleBase):
@@ -444,10 +441,7 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
 
     def exec_module(self, **kwargs):
 
-        if PREREQ_IMPORT_ERROR:
-            self.fail(PREREQ_IMPORT_ERROR)
-
-        for key in self.module_arg_spec.keys() + ['tags']:
+        for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
 
         if self.state == 'present':
@@ -564,7 +558,7 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
                                                                                       nested_deployment)
                     except CloudError as exc:
                         self.fail("List nested deployment operations failed with status code: %s and message: %s" %
-                                 (e.status_code, e.message))
+                                 (exc.status_code, exc.message))
                     new_nested_operations = self._get_failed_nested_operations(nested_operations)
                     new_operations += new_nested_operations
         return new_operations
@@ -643,15 +637,15 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
         )
         if ip.dns_settings:
             ip_dict['dns_settings'] = {
-                'domain_name_label':ip.dns_settings.domain_name_label,
-                'fqdn':ip.dns_settings.fqdn
+                'domain_name_label': ip.dns_settings.domain_name_label,
+                'fqdn': ip.dns_settings.fqdn
             }
         return ip_dict
 
     def _nic_to_public_ips_instance(self, nics):
         return [self.network_client.public_ip_addresses.get(public_ip_id.split('/')[4], public_ip_id.split('/')[-1])
-                  for nic_obj in [self.network_client.network_interfaces.get(self.resource_group_name,
-                                                                             nic['dep'].resource_name) for nic in nics]
+                for nic_obj in (self.network_client.network_interfaces.get(self.resource_group_name,
+                                                                           nic['dep'].resource_name) for nic in nics)
                   for public_ip_id in [ip_conf_instance.public_ip_address.id
                                        for ip_conf_instance in nic_obj.ip_configurations
                                        if ip_conf_instance.public_ip_address]]
@@ -660,7 +654,6 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
 def main():
     AzureRMDeploymentManager()
 
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()
-

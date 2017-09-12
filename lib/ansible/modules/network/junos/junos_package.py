@@ -1,24 +1,16 @@
 #!/usr/bin/python
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# -*- coding: utf-8 -*-
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+# (c) 2017, Ansible by Red Hat, inc
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -79,9 +71,11 @@ options:
     choices: ['true', 'false']
 requirements:
   - junos-eznc
+  - ncclient (>=v0.5.2)
 notes:
   - This module requires the netconf system service be enabled on
-    the remote device being managed
+    the remote device being managed.
+  - Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
 """
 
 EXAMPLES = """
@@ -97,22 +91,53 @@ EXAMPLES = """
     src: junos-vsrx-12.1X46-D10.2-domestic.tgz
     reboot: no
 """
-import ansible.module_utils.junos
-
-from ansible.module_utils.network import NetworkModule
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.junos import junos_argument_spec, get_param
+from ansible.module_utils.pycompat24 import get_exception
 
 try:
+    from jnpr.junos import Device
     from jnpr.junos.utils.sw import SW
-    HAS_SW = True
+    from jnpr.junos.exception import ConnectError
+    HAS_PYEZ = True
 except ImportError:
-    HAS_SW = False
+    HAS_PYEZ = False
 
-def install_package(module):
-    junos = SW(module.connection.device)
+
+def connect(module):
+    host = get_param(module, 'host')
+
+    kwargs = {
+        'port': get_param(module, 'port') or 830,
+        'user': get_param(module, 'username')
+    }
+
+    if get_param(module, 'password'):
+        kwargs['passwd'] = get_param(module, 'password')
+
+    if get_param(module, 'ssh_keyfile'):
+        kwargs['ssh_private_key_file'] = get_param(module, 'ssh_keyfile')
+
+    kwargs['gather_facts'] = False
+
+    try:
+        device = Device(host, **kwargs)
+        device.open()
+        device.timeout = get_param(module, 'timeout') or 10
+    except ConnectError:
+        exc = get_exception()
+        module.fail_json('unable to connect to %s: %s' % (host, str(exc)))
+
+    return device
+
+
+def install_package(module, device):
+    junos = SW(device)
     package = module.params['src']
     no_copy = module.params['no_copy']
 
-    progress_log = lambda x, y: module.log(y)
+    def progress_log(dev, report):
+        module.log(report)
 
     module.log('installing package')
     result = junos.install(package, progress=progress_log, no_copy=no_copy)
@@ -126,7 +151,9 @@ def install_package(module):
 
 
 def main():
-    spec = dict(
+    """ Main entry point for Ansible module execution
+    """
+    argument_spec = dict(
         src=dict(type='path', required=True, aliases=['package']),
         version=dict(),
         reboot=dict(type='bool', default=True),
@@ -135,23 +162,35 @@ def main():
         transport=dict(default='netconf', choices=['netconf'])
     )
 
-    module = NetworkModule(argument_spec=spec,
+    argument_spec.update(junos_argument_spec)
+
+    module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
-    if not HAS_SW:
-        module.fail_json(msg='Missing jnpr.junos.utils.sw module')
+    if module.params['provider'] is None:
+        module.params['provider'] = {}
+
+    if not HAS_PYEZ:
+        module.fail_json(
+            msg='junos-eznc is required but does not appear to be installed. '
+                'It can be installed using `pip  install junos-eznc`'
+        )
 
     result = dict(changed=False)
 
     do_upgrade = module.params['force'] or False
+
+    device = connect(module)
+
     if not module.params['force']:
-        has_ver = module.connection.get_facts().get('version')
+        facts = device.facts_refresh()
+        has_ver = device.facts.get('version')
         wants_ver = module.params['version']
         do_upgrade = has_ver != wants_ver
 
     if do_upgrade:
         if not module.check_mode:
-            install_package(module)
+            install_package(module, device)
         result['changed'] = True
 
     module.exit_json(**result)

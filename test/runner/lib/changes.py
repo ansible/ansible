@@ -39,11 +39,7 @@ class InvalidBranch(ApplicationError):
 
 class ChangeDetectionNotSupported(ApplicationError):
     """Exception for cases where change detection is not supported."""
-    def __init__(self, message):
-        """
-        :type message: str
-        """
-        super(ChangeDetectionNotSupported, self).__init__(message)
+    pass
 
 
 class ShippableChanges(object):
@@ -78,9 +74,9 @@ class ShippableChanges(object):
                 self.paths = sorted(git.get_diff_names([last_successful_commit, self.commit]))
                 self.diff = git.get_diff([last_successful_commit, self.commit])
             else:
-                # tracked files (including unchanged)
-                self.paths = sorted(git.get_file_names(['--cached']))
-                self.diff = None
+                # first run for branch
+                self.paths = None  # act as though change detection not enabled, do not filter targets
+                self.diff = []
 
     def get_merge_runs(self, project_id, branch):
         """
@@ -120,6 +116,9 @@ class ShippableChanges(object):
                 if merge_run['statusCode'] == 30:
                     if git.is_valid_ref(commit_sha):
                         last_successful_commit = commit_sha
+
+        if last_successful_commit is None:
+            display.warning('No successful commit found. All tests will be executed.')
 
         return last_successful_commit
 

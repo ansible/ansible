@@ -69,22 +69,6 @@ function Date_To_Timestamp($start_date, $end_date)
     }
 }
 
-function Get-Hash($path, $algorithm) {
-    # Using PowerShell V4 and above we can use some powershell cmdlets instead of .net
-    If ($PSVersionTable.PSVersion.Major -ge 4)
-    {
-        $hash = (Get-FileHash -Path $path -Algorithm $algorithm).Hash
-    }
-    Else
-    {
-        $net_algorithm = [Security.Cryptography.HashAlgorithm]::Create($algorithm)
-        $raw_hash = [System.BitConverter]::ToString($net_algorithm.ComputeHash([System.IO.File]::ReadAllBytes($path)))
-        $hash = $raw_hash -replace '-'
-    }
-
-    $hash.ToLower()
-}
-
 $params = Parse-Args $args -supports_check_mode $true
 
 $path = Get-AnsibleParam -obj $params -name "path" -type "path" -failifempty $true -aliases "dest","name"
@@ -94,8 +78,10 @@ $checksum_algorithm = Get-AnsibleParam -obj $params -name "checksum_algorithm" -
 
 $result = @{
     changed = $false
-    stat = @{}
-};
+    stat = @{
+        exists = $false
+    }
+}
 
 # Backward compatibility
 if ($get_md5 -eq $true -and (Get-Member -inputobject $params -name "get_md5") ) {
@@ -108,7 +94,8 @@ If (Test-Path -Path $path)
 
     # Initial values
     $result.stat.isdir = $false
-    $result.stat.islink = $false
+    $result.stat.islnk = $false
+    $result.stat.isreg = $false
     $result.stat.isshared = $false
 
     # Need to use -Force so it picks up hidden files
@@ -124,7 +111,7 @@ If (Test-Path -Path $path)
 
     $attributes = @()
     foreach ($attribute in ($info.Attributes -split ',')) {
-        $attributes += $attribute.Trim();
+        $attributes += $attribute.Trim()
     }
     $result.stat.attributes = $info.Attributes.ToString()
     $result.stat.isarchive = $attributes -contains "Archive"
@@ -133,11 +120,11 @@ If (Test-Path -Path $path)
 
     If ($info)
     {
-        $accesscontrol = $info.GetAccessControl();
+        $accesscontrol = $info.GetAccessControl()
     }
     Else
     {
-        $accesscontrol = $null;
+        $accesscontrol = $null
     }
     $result.stat.owner = $accesscontrol.Owner
 
@@ -145,7 +132,7 @@ If (Test-Path -Path $path)
     If ($attributes -contains 'ReparsePoint')
     {
         # TODO: Find a way to differenciate between soft and junction links
-        $result.stat.islink = $true
+        $result.stat.islnk = $true
         $result.stat.isdir = $true
         # Try and get the symlink source, can result in failure if link is broken
         try {
@@ -165,7 +152,7 @@ If (Test-Path -Path $path)
             $result.stat.sharename = $share_info.Name
         }
 
-        $dir_files_sum = Get-ChildItem $info.FullName -Recurse | Measure-Object -property length -sum;
+        $dir_files_sum = Get-ChildItem $info.FullName -Recurse | Measure-Object -property length -sum
         If ($dir_files_sum -eq $null)
         {
             $result.stat.size = 0
@@ -176,21 +163,26 @@ If (Test-Path -Path $path)
     }
     Else
     {
-        $result.stat.size = $info.Length
         $result.stat.extension = $info.Extension
+        $result.stat.isreg = $true
+        $result.stat.size = $info.Length
 
         If ($get_md5) {
-            $result.stat.md5 = Get-Hash -Path $path -Algorithm "md5"
+            try {
+                $result.stat.md5 = Get-FileChecksum -path $path -algorithm "md5"
+            } catch {
+                Fail-Json -obj $result -message "failed to get MD5 hash of file, set get_md5 to False to ignore this error: $($_.Exception.Message)"
+            }
         }
 
         If ($get_checksum) {
-            $result.stat.checksum = Get-Hash -Path $path -Algorithm $checksum_algorithm
+            try {
+                $result.stat.checksum = Get-FileChecksum -path $path -algorithm $checksum_algorithm
+            } catch {
+                Fail-Json -obj $result -message "failed to get hash of file, set get_checksum to False to ignore this error: $($_.Exception.Message)"
+            }
         }
     }
 }
-Else
-{
-    $result.stat.exists = $false
-}
 
-Exit-Json $result;
+Exit-Json $result

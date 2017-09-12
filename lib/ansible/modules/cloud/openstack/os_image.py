@@ -18,7 +18,7 @@
 
 #TODO(mordred): we need to support "location"(v1) and "locations"(v2)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -37,6 +37,12 @@ options:
      description:
         - Name that has to be given to the image
      required: true
+     default: None
+   id:
+     version_added: "2.4"
+     description:
+        - The Id of the image
+     required: false
      default: None
    disk_format:
      description:
@@ -95,7 +101,7 @@ options:
      default: present
    availability_zone:
      description:
-       - Ignored. Present for backwards compatability
+       - Ignored. Present for backwards compatibility
      required: false
 requirements: ["shade"]
 '''
@@ -131,6 +137,7 @@ def main():
 
     argument_spec = openstack_full_argument_spec(
         name              = dict(required=True),
+        id                = dict(default=None),
         disk_format       = dict(default='qcow2', choices=['ami', 'ari', 'aki', 'vhd', 'vmdk', 'raw', 'qcow2', 'vdi', 'iso', 'vhdx', 'ploop']),
         container_format  = dict(default='bare', choices=['ami', 'aki', 'ari', 'bare', 'ovf', 'ova', 'docker']),
         owner             = dict(default=None),
@@ -157,6 +164,9 @@ def main():
 
         if module.params['state'] == 'present':
             if not image:
+                kwargs={}
+                if module.params['id'] is not None:
+                    kwargs['id'] = module.params['id']
                 image = cloud.create_image(
                     name=module.params['name'],
                     filename=module.params['filename'],
@@ -166,7 +176,8 @@ def main():
                     timeout=module.params['timeout'],
                     is_public=module.params['is_public'],
                     min_disk=module.params['min_disk'],
-                    min_ram=module.params['min_ram']
+                    min_ram=module.params['min_ram'],
+                    **kwargs
                 )
                 changed = True
                 if not module.params['wait']:

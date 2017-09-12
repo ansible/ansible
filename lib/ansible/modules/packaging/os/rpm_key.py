@@ -4,22 +4,13 @@
 # Ansible module to import third party repo keys to your rpm db
 # (c) 2013, Héctor Acosta <hector.acosta@gazzang.com>
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
 
@@ -75,12 +66,19 @@ import re
 import os.path
 import tempfile
 
+# import module snippets
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url
+from ansible.module_utils._text import to_native
+
+
 def is_pubkey(string):
     """Verifies if string is a pubkey"""
     pgp_regex = ".*?(-----BEGIN PGP PUBLIC KEY BLOCK-----.*?-----END PGP PUBLIC KEY BLOCK-----).*"
-    return re.match(pgp_regex, string, re.DOTALL)
+    return bool(re.match(pgp_regex, to_native(string, errors='surrogate_or_strict'), re.DOTALL))
 
-class RpmKey:
+
+class RpmKey(object):
 
     def __init__(self, module):
         # If the key is a url, we need to check if it's present to be idempotent,
@@ -91,6 +89,10 @@ class RpmKey:
         self.rpm = self.module.get_bin_path('rpm', True)
         state = module.params['state']
         key = module.params['key']
+
+        self.gpg = self.module.get_bin_path('gpg')
+        if not self.gpg:
+            self.gpg = self.module.get_bin_path('gpg2',required=True)
 
         if '://' in key:
             keyfile = self.fetch_key(key)
@@ -111,17 +113,16 @@ class RpmKey:
             else:
                 if not keyfile:
                     self.module.fail_json(msg="When importing a key, a valid file must be given")
-                self.import_key(keyfile, dryrun=module.check_mode)
+                self.import_key(keyfile)
                 if should_cleanup_keyfile:
                     self.module.cleanup(keyfile)
                 module.exit_json(changed=True)
         else:
             if self.is_key_imported(keyid):
-                self.drop_key(keyid, dryrun=module.check_mode)
+                self.drop_key(keyid)
                 module.exit_json(changed=True)
             else:
                 module.exit_json(changed=False)
-
 
     def fetch_key(self, url):
         """Downloads a key from url, returns a valid path to a gpg key"""
@@ -133,14 +134,15 @@ class RpmKey:
         if not is_pubkey(key):
             self.module.fail_json(msg="Not a public key: %s" % url)
         tmpfd, tmpname = tempfile.mkstemp()
+        self.module.add_cleanup_file(tmpname)
         tmpfile = os.fdopen(tmpfd, "w+b")
         tmpfile.write(key)
         tmpfile.close()
         return tmpname
 
     def normalize_keyid(self, keyid):
-        """Ensure a keyid doesn't have a leading 0x, has leading or trailing whitespace, and make sure is lowercase"""
-        ret = keyid.strip().lower()
+        """Ensure a keyid doesn't have a leading 0x, has leading or trailing whitespace, and make sure is uppercase"""
+        ret = keyid.strip().upper()
         if ret.startswith('0x'):
             return ret[2:]
         elif ret.startswith('0X'):
@@ -149,54 +151,39 @@ class RpmKey:
             return ret
 
     def getkeyid(self, keyfile):
-
-        gpg = self.module.get_bin_path('gpg')
-        if not gpg:
-            gpg = self.module.get_bin_path('gpg2')
-
-        if not gpg:
-            self.json_fail(msg="rpm_key requires a command line gpg or gpg2, none found")
-
-        stdout, stderr = self.execute_command([gpg, '--no-tty', '--batch', '--with-colons', '--fixed-list-mode', '--list-packets', keyfile])
+        stdout, stderr = self.execute_command([self.gpg, '--no-tty', '--batch', '--with-colons', '--fixed-list-mode', keyfile])
         for line in stdout.splitlines():
             line = line.strip()
-            if line.startswith(':signature packet:'):
-                # We want just the last 8 characters of the keyid
-                keyid = line.split()[-1].strip()[8:]
-                return keyid
-        self.json_fail(msg="Unexpected gpg output")
+            if line.startswith('pub:'):
+                return line.split(':')[4]
+
+        self.module.fail_json(msg="Unexpected gpg output")
 
     def is_keyid(self, keystr):
         """Verifies if a key, as provided by the user is a keyid"""
         return re.match('(0x)?[0-9a-f]{8}', keystr, flags=re.IGNORECASE)
 
     def execute_command(self, cmd):
-        rc, stdout, stderr = self.module.run_command(cmd)
+        rc, stdout, stderr = self.module.run_command(cmd, use_unsafe_shell=True)
         if rc != 0:
             self.module.fail_json(msg=stderr)
         return stdout, stderr
 
     def is_key_imported(self, keyid):
-        stdout, stderr = self.execute_command([self.rpm, '-qa', 'gpg-pubkey'])
+        cmd=self.rpm + ' -q  gpg-pubkey --qf "%{description}" | ' + self.gpg + ' --no-tty --batch --with-colons --fixed-list-mode -'
+        stdout, stderr = self.execute_command(cmd)
         for line in stdout.splitlines():
-            line = line.strip()
-            if not line:
-                continue
-            match = re.match('gpg-pubkey-([0-9a-f]+)-([0-9a-f]+)', line)
-            if not match:
-                self.module.fail_json(msg="rpm returned unexpected output [%s]" % line)
-            else:
-                if keyid == match.group(1):
+            if keyid in line.split(':')[4]:
                     return True
         return False
 
-    def import_key(self, keyfile, dryrun=False):
-        if not dryrun:
+    def import_key(self, keyfile):
+        if not self.module.check_mode:
             self.execute_command([self.rpm, '--import', keyfile])
 
-    def drop_key(self, key, dryrun=False):
-        if not dryrun:
-            self.execute_command([self.rpm, '--erase', '--allmatches', "gpg-pubkey-%s" % key])
+    def drop_key(self, keyid):
+        if not self.module.check_mode:
+            self.execute_command([self.rpm, '--erase', '--allmatches', "gpg-pubkey-%s" % keyid[8:].lower()])
 
 
 def main():
@@ -212,9 +199,5 @@ def main():
     RpmKey(module)
 
 
-
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 if __name__ == '__main__':
     main()

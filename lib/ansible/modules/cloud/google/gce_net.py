@@ -1,22 +1,12 @@
 #!/usr/bin/python
 # Copyright 2013 Google Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -65,20 +55,20 @@ options:
     description:
       - the source IPv4 address range in CIDR notation
     required: false
-    default: null
+    default: []
     aliases: ['src_cidr']
   src_tags:
     description:
       - the source instance tags for creating a firewall rule
     required: false
-    default: null
+    default: []
     aliases: []
   target_tags:
     version_added: "1.9"
     description:
       - the target instance tags for creating a firewall rule
     required: false
-    default: null
+    default: []
     aliases: []
   state:
     description:
@@ -281,6 +271,10 @@ try:
 except ImportError:
     HAS_LIBCLOUD = False
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.gce import gce_connect, unexpected_error_msg
+
+
 def format_allowed_section(allowed):
     """Format each section of the allowed list"""
     if allowed.count(":") == 0:
@@ -325,9 +319,9 @@ def main():
             ipv4_range = dict(),
             fwname = dict(),
             name = dict(),
-            src_range = dict(type='list'),
-            src_tags = dict(type='list'),
-            target_tags = dict(type='list'),
+            src_range = dict(default=[], type='list'),
+            src_tags = dict(default=[], type='list'),
+            target_tags = dict(default=[], type='list'),
             state = dict(default='present'),
             service_account_email = dict(),
             pem_file = dict(type='path'),
@@ -552,9 +546,6 @@ def main():
     json_output['changed'] = changed
     module.exit_json(**json_output)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.gce import *
 
 if __name__ == '__main__':
     main()

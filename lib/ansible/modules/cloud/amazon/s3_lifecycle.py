@@ -1,21 +1,14 @@
 #!/usr/bin/python
-#
-# This is a free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This Ansible library is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this library.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
@@ -38,7 +31,9 @@ options:
     required: true
   expiration_date:
     description:
-      - "Indicates the lifetime of the objects that are subject to the rule by the date they will expire. The value must be ISO-8601 format, the time must be midnight and a GMT timezone must be specified."
+      - >
+        Indicates the lifetime of the objects that are subject to the rule by the date they will expire. The value must be ISO-8601 format, the time must
+        be midnight and a GMT timezone must be specified.
     required: false
     default: null
   expiration_days:
@@ -77,7 +72,10 @@ options:
     choices: [ 'glacier', 'standard_ia']
   transition_date:
     description:
-      - "Indicates the lifetime of the objects that are subject to the rule by the date they will transition to a different storage class. The value must be ISO-8601 format, the time must be midnight and a GMT timezone must be specified. If transition_days is not specified, this parameter is required."
+      - >
+        Indicates the lifetime of the objects that are subject to the rule by the date they will transition to a different storage class.
+        The value must be ISO-8601 format, the time must be midnight and a GMT timezone must be specified. If transition_days is not specified,
+        this parameter is required."
     required: false
     default: null
   transition_days:
@@ -110,7 +108,8 @@ EXAMPLES = '''
     status: enabled
     state: present
 
-# Configure a lifecycle rule to transition all items with a prefix of /logs/ to glacier on 31 Dec 2020 and then delete on 31 Dec 2030. Note that midnight GMT must be specified.
+# Configure a lifecycle rule to transition all items with a prefix of /logs/ to glacier on 31 Dec 2020 and then delete on 31 Dec 2030.
+# Note that midnight GMT must be specified.
 # Be sure to quote your date strings
 - s3_lifecycle:
     name: mybucket
@@ -159,13 +158,14 @@ try:
     import boto.ec2
     from boto.s3.connection import OrdinaryCallingFormat, Location
     from boto.s3.lifecycle import Lifecycle, Rule, Expiration, Transition
-    from boto.exception import BotoServerError, S3CreateError, S3ResponseError
+    from boto.exception import BotoServerError, S3ResponseError
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import AnsibleAWSError, ec2_argument_spec, get_aws_connection_info
+
 
 def create_lifecycle_rule(connection, module):
 
@@ -295,7 +295,9 @@ def compare_rule(rule_a, rule_b):
     if rule2_expiration is None:
         rule2_expiration = Expiration()
 
-    if (rule1.__dict__ == rule2.__dict__) and (rule1_expiration.__dict__ == rule2_expiration.__dict__) and (rule1_transition.__dict__ == rule2_transition.__dict__):
+    if (rule1.__dict__ == rule2.__dict__ and
+            rule1_expiration.__dict__ == rule2_expiration.__dict__ and
+            rule1_transition.__dict__ == rule2_transition.__dict__):
         return True
     else:
         return False

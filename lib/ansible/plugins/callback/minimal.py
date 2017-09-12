@@ -1,23 +1,19 @@
 # (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+DOCUMENTATION = '''
+    callback: minimal
+    type: stdout
+    short_description: minimal Ansible screen output
+    version_added: historical
+    description:
+        - This is the default output callback used by the ansible command (ad-hoc)
+'''
 
 from ansible.plugins.callback import CallbackBase
 from ansible import constants as C
@@ -38,9 +34,9 @@ class CallbackModule(CallbackBase):
         ''' output the result of a command run '''
 
         buf = "%s | %s | rc=%s >>\n" % (host, caption, result.get('rc', -1))
-        buf += result.get('stdout','')
-        buf += result.get('stderr','')
-        buf += result.get('msg','')
+        buf += result.get('stdout', '')
+        buf += result.get('stderr', '')
+        buf += result.get('msg', '')
 
         return buf + "\n"
 

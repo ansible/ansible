@@ -1,0 +1,22 @@
+---
+
+
+- name: Setup cs action
+  delegate_to: localhost
+  register: result
+  check_mode: "{{ check_mode }}"
+  netscaler_ssl_certkey:
+    nitro_user: "{{nitro_user}}"
+    nitro_pass: "{{nitro_pass}}"
+    nsip: "{{nsip}}"
+
+    state: present
+
+    certkey: certirificate_1
+    cert: server.crt
+    key: server.key
+    expirymonitor: enabled
+    notificationperiod: 30
+    inform: PEM
+    password: False
+    passplain: somesecret

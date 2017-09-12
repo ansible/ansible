@@ -3,39 +3,34 @@
 # (c) 2016, Matt Baldwin <baldwin@stackpointcloud.com>
 # (c) 2016, Thibaud Morel l'Horset <teebes@gmail.com>
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
 module: packet_device
 
-short_description: create, destroy, start, stop, and reboot a Packet Host machine.
+short_description: Manage a bare metal server in the Packet Host.
 
 description:
-    - create, destroy, update, start, stop, and reboot a Packet Host machine. When the machine is created it can optionally wait for it to have an IP address before returning. This module has a dependency on packet >= 1.0.
-    - API is documented at U(https://www.packet.net/help/api/#page:devices,header:devices-devices-post).
+    - Manage a bare metal server in the Packet Host (a "device" in the API terms).
+    - When the machine is created it can optionally wait for public IP address, or for active state.
+    - This module has a dependency on packet >= 1.0.
+    - API is documented at U(https://www.packet.net/developers/api/devices).
 
-version_added: 2.3
+version_added: "2.3"
 
-author: Tomas Karasek <tom.to.the.k@gmail.com>, Matt Baldwin <baldwin@stackpointcloud.com>, Thibaud Morel l'Horset <teebes@gmail.com>
+author:
+    - Tomas Karasek (@t0mk) <tom.to.the.k@gmail.com>
+    - Matt Baldwin <baldwin@stackpointcloud.com>
+    - Thibaud Morel l'Horset <teebes@gmail.com>
 
 options:
   auth_token:
@@ -45,10 +40,12 @@ options:
   count:
     description:
       - The number of devices to create. Count number can be included in hostname via the %d string formatter.
+    default: 1
 
   count_offset:
     description:
       - From which number to start the count.
+    default: 1
 
   device_ids:
     description:
@@ -56,7 +53,7 @@ options:
 
   facility:
     description:
-      - Facility slug for device creation. As of 2016, it should be one of [ewr1, sjc1, ams1, nrt1].
+      - Facility slug for device creation. See Packet API for current list - U(https://www.packet.net/developers/api/facilities/).
 
   features:
     description:
@@ -65,22 +62,24 @@ options:
   hostnames:
     description:
       - A hostname of a device, or a list of hostnames.
-      - If given string or one-item list, you can use the C("%d") Python string format to expand numbers from count.
-      - If only one hostname, it might be expanded to list if count>1.
+      - If given string or one-item list, you can use the C("%d") Python string format to expand numbers from I(count).
+      - If only one hostname, it might be expanded to list if I(count)>1.
     aliases: [name]
 
-  lock:
+  locked:
     description:
       - Whether to lock a created device.
     default: false
+    version_added: "2.4"
+    aliases: [lock]
 
   operating_system:
     description:
-      - OS slug for device creation. See Packet docs or API for current list.
+      - OS slug for device creation. See Packet API for current list - U(https://www.packet.net/developers/api/operatingsystems/).
 
   plan:
     description:
-      - Plan slug for device creation. See Packet docs or API for current list.
+      - Plan slug for device creation. See Packet API for current list - U(https://www.packet.net/developers/api/plans/).
 
   project_id:
     description:
@@ -90,30 +89,53 @@ options:
   state:
     description:
       - Desired state of the device.
+      - If set to C(present) (the default), the module call will return immediately after the device-creating HTTP request successfully returns.
+      - If set to C(active), the module call will block until all the specified devices are in state active due to the Packet API, or until I(wait_timeout).
     choices: [present, absent, active, inactive, rebooted]
-    default: 'present'
+    default: present
 
   user_data:
     description:
       - Userdata blob made available to the machine
-    required: false
-    default: None
 
   wait:
     description:
       - Whether to wait for the instance to be assigned IP address before returning.
-    required: false
-    default: False
-    type: bool
+      - This option has been deprecated in favor of C(wait_for_public_IPv).
+    default: false
+
+  wait_for_public_IPv:
+    description:
+      - Whether to wait for the instance to be assigned a public IPv4/IPv6 address.
+      - If set to 4, it will wait until IPv4 is assigned to the instance.
+      - If set to 6, wait until public IPv6 is assigned to the instance.
+    choices: [4,6]
+    version_added: "2.4"
 
   wait_timeout:
     description:
-      - How long to wait for IP address of new devices before quitting. In seconds.
-    default: 60
+      - How long (seconds) to wait either for automatic IP address assignment, or for the device to reach the C(active) I(state).
+      - If I(wait_for_public_IPv) is set and I(state) is C(active), the module will wait for both events consequently, applying the timeout twice.
+    default: 900
+  ipxe_script_url:
+    description:
+      - URL of custom iPXE script for provisioning.
+      - More about custome iPXE for Packet devices at U(https://help.packet.net/technical/infrastructure/custom-ipxe).
+    version_added: "2.4"
+  always_pxe:
+    description:
+      - Persist PXE as the first boot option.
+      - Normally, the PXE process happens only on the first boot. Set this arg to have your device continuously boot to iPXE.
+    default: false
+    version_added: "2.4"
+
 
 requirements:
-     - packet-python
-     - "python >= 2.6"
+     - "packet-python >= 1.35"
+
+notes:
+     - Doesn't support check mode.
+
 '''
 
 EXAMPLES = '''
@@ -131,6 +153,22 @@ EXAMPLES = '''
       operating_system: ubuntu_16_04
       plan: baremetal_0
       facility: sjc1
+
+# Create the same device and wait until it is in state "active", (when it's
+# ready for other API operations). Fail if the devices in not "active" in
+# 10 minutes.
+
+- name: create device and wait up to 10 minutes for active state
+  hosts: localhost
+  tasks:
+  - packet_device:
+      project_id: 89b497ee-5afc-420a-8fb5-56984898f4df
+      hostnames: myserver
+      operating_system: ubuntu_16_04
+      plan: baremetal_0
+      facility: sjc1
+      state: active
+      wait_timeout: 600
 
 - name: create 3 ubuntu devices called server-01, server-02 and server-03
   hosts: localhost
@@ -154,10 +192,11 @@ EXAMPLES = '''
       facility: ewr1
       locked: true
       project_id: 89b497ee-5afc-420a-8fb5-56984898f4df
+      wait_for_public_IPv: 4
       user_data: |
         #cloud-config
         ssh_authorized_keys:
-          - ssh-dss AAAAB3NzaC1kc3MAAACBAIfNT5S0ncP4BBJBYNhNPxFF9lqVhfPeu6SM1LoCocxqDc1AT3zFRi8hjIf6TLZ2AA4FYbcAWxLMhiBxZRVldT9GdBXile78kAK5z3bKTwq152DCqpxwwbaTIggLFhsU8wrfBsPWnDuAxZ0h7mmrCjoLIE3CNLDA/NmV3iB8xMThAAAAFQCStcesSgR1adPORzBxTr7hug92LwAAAIBOProm3Gk+HWedLyE8IfofLaOeRnbBRHAOL4z0SexKkVOnQ/LGN/uDIIPGGBDYTvXgKZT+jbHeulRJ2jKgfSpGKN4JxFQ8uzVH492jEiiUJtT72Ss1dCV4PmyERVIw+f54itihV3z/t25dWgowhb0int8iC/OY3cGodlmYb3wdcQAAAIBuLbB45djZXzUkOTzzcRDIRfhaxo5WipbtEM2B1fuBt2gyrvksPpH/LK6xTjdIIb0CxPu4OCxwJG0aOz5kJoRnOWIXQGhH7VowrJhsqhIc8gN9ErbO5ea8b1L76MNcAotmBDeTUiPw01IJ8MdDxfmcsCslJKgoRKSmQpCwXQtN2g== tomk@hp2
+          - {{ lookup('file', 'my_packet_sshkey') }}
         coreos:
           etcd:
             discovery: https://discovery.etcd.io/6a28e078895c5ec737174db2419bb2f3
@@ -201,31 +240,38 @@ changed:
     description: True if a device was altered in any way (created, modified or removed)
     type: bool
     sample: True
-    returned: always
+    returned: success
+
 devices:
     description: Information about each device that was processed
-    type: array
-    sample: '[{"hostname": "my-server.com", "id": "server-id", "public-ipv4": "147.229.15.12", "private-ipv4": "10.0.15.12", "public-ipv6": ""2604:1380:2:5200::3"}]'
-    returned: always
-'''
+    type: list
+    sample: '[{"hostname": "my-server.com", "id": "2a5122b9-c323-4d5c-b53c-9ad3f54273e7",
+               "public_ipv4": "147.229.15.12", "private-ipv4": "10.0.15.12",
+               "tags": [], "locked": false, "state": "provisioning",
+               "public_ipv6": ""2604:1380:2:5200::3"}]'
+    returned: success
+'''  # NOQA
 
 
 import os
+import re
 import time
 import uuid
-import re
+import traceback
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 
 HAS_PACKET_SDK = True
-
 try:
     import packet
 except ImportError:
     HAS_PACKET_SDK = False
 
+from ansible.module_utils.basic import AnsibleModule
 
-NAME_RE = '({0}|{0}{1}*{0})'.format('[a-zA-Z0-9]','[a-zA-Z0-9\-]')
+
+NAME_RE = '({0}|{0}{1}*{0})'.format('[a-zA-Z0-9]', '[a-zA-Z0-9\-]')
 HOSTNAME_RE = '({0}\.)*{0}$'.format(NAME_RE)
 MAX_DEVICES = 100
 
@@ -255,6 +301,7 @@ def serialize_device(device):
             'hostname': 'device_hostname',
             'tags': [],
             'locked': false,
+            'state': 'provisioning',
             'ip_addresses': [
                 {
                     "address": "147.75.194.227",
@@ -283,6 +330,7 @@ def serialize_device(device):
     device_data['hostname'] = device.hostname
     device_data['tags'] = device.tags
     device_data['locked'] = device.locked
+    device_data['state'] = device.state
     device_data['ip_addresses'] = [
         {
             'address': addr_data['address'],
@@ -327,14 +375,14 @@ def is_valid_uuid(myuuid):
 
 def listify_string_name_or_id(s):
     if ',' in s:
-        return [i for i in s.split(',')]
+        return s.split(',')
     else:
         return [s]
 
 
 def get_hostname_list(module):
     # hostname is a list-typed param, so I guess it should return list
-    # (and it does, in Ansbile 2.2.1) but in order to be defensive,
+    # (and it does, in Ansible 2.2.1) but in order to be defensive,
     # I keep here the code to convert an eventual string to list
     hostnames = module.params.get('hostnames')
     count = module.params.get('count')
@@ -366,8 +414,8 @@ def get_hostname_list(module):
             raise Exception("Hostname '%s' does not seem to be valid" % hn)
 
     if len(hostnames) > MAX_DEVICES:
-        raise Exception("You specified too many devices, max is %d" %
-                         MAX_DEVICES)
+        raise Exception("You specified too many hostnames, max is %d" %
+                        MAX_DEVICES)
     return hostnames
 
 
@@ -385,7 +433,7 @@ def get_device_id_list(module):
 
     if len(device_ids) > MAX_DEVICES:
         raise Exception("You specified too many devices, max is %d" %
-                         MAX_DEVICES)
+                        MAX_DEVICES)
     return device_ids
 
 
@@ -394,15 +442,15 @@ def create_single_device(module, packet_conn, hostname):
     for param in ('hostnames', 'operating_system', 'plan'):
         if not module.params.get(param):
             raise Exception("%s parameter is required for new device."
-                             % param)
+                            % param)
     project_id = module.params.get('project_id')
     plan = module.params.get('plan')
     user_data = module.params.get('user_data')
     facility = module.params.get('facility')
-    locked = module.params.get('lock')
     operating_system = module.params.get('operating_system')
     locked = module.params.get('locked')
-
+    ipxe_script_url = module.params.get('ipxe_script_url')
+    always_pxe = module.params.get('always_pxe')
     device = packet_conn.create_device(
         project_id=project_id,
         hostname=hostname,
@@ -414,35 +462,53 @@ def create_single_device(module, packet_conn, hostname):
     return device
 
 
-def wait_for_ips(module, packet_conn, created_devices):
+def refresh_device_list(module, packet_conn, devices):
+    device_ids = [d.id for d in devices]
+    new_device_list = get_existing_devices(module, packet_conn)
+    return [d for d in new_device_list if d.id in device_ids]
 
-    def has_public_ip(addr_list):
-        return any([a['public'] and (len(a['address']) > 0) for a in addr_list])
 
-    def all_have_public_ip(ds):
-        return all([has_public_ip(d.ip_addresses) for d in ds])
+def wait_for_devices_active(module, packet_conn, watched_devices):
+    wait_timeout = module.params.get('wait_timeout')
+    wait_timeout = time.time() + wait_timeout
+    refreshed = watched_devices
+    while wait_timeout > time.time():
+        refreshed = refresh_device_list(module, packet_conn, watched_devices)
+        if all(d.state == 'active' for d in refreshed):
+            return refreshed
+        time.sleep(5)
+    raise Exception("Waiting for state \"active\" timed out for devices: %s"
+                    % [d.hostname for d in refreshed if d.state != "active"])
 
-    def refresh_created_devices(ids_of_created_devices, module, packet_conn):
-        new_device_list = get_existing_devices(module, packet_conn)
-        return [d for d in new_device_list if d.id in ids_of_created_devices]
 
-    created_ids = [d.id for d in created_devices]
+def wait_for_public_IPv(module, packet_conn, created_devices):
+
+    def has_public_ip(addr_list, ip_v):
+        return any([a['public'] and a['address_family'] == ip_v and
+                    a['address'] for a in addr_list])
+
+    def all_have_public_ip(ds, ip_v):
+        return all([has_public_ip(d.ip_addresses, ip_v) for d in ds])
+
+    address_family = module.params.get('wait_for_public_IPv')
+
     wait_timeout = module.params.get('wait_timeout')
     wait_timeout = time.time() + wait_timeout
     while wait_timeout > time.time():
-        refreshed = refresh_created_devices(created_ids, module,
-                                            packet_conn)
-        if all_have_public_ip(refreshed):
+        refreshed = refresh_device_list(module, packet_conn, created_devices)
+        if all_have_public_ip(refreshed, address_family):
             return refreshed
         time.sleep(5)
 
-    raise Exception("Waiting for IP assignment timed out. Hostnames: %s"
-                     % [d.hostname for d in created_devices])
+    raise Exception("Waiting for IPv%d address timed out. Hostnames: %s"
+                    % (address_family, [d.hostname for d in created_devices]))
 
 
 def get_existing_devices(module, packet_conn):
     project_id = module.params.get('project_id')
-    return packet_conn.list_devices(project_id, params={'per_page': MAX_DEVICES})
+    return packet_conn.list_devices(
+        project_id, params={
+            'per_page': MAX_DEVICES})
 
 
 def get_specified_device_identifiers(module):
@@ -454,7 +520,7 @@ def get_specified_device_identifiers(module):
         return {'hostnames': hostname_list, 'ids': []}
 
 
-def act_on_devices(target_state, module, packet_conn):
+def act_on_devices(module, packet_conn, target_state):
     specified_identifiers = get_specified_device_identifiers(module)
     existing_devices = get_existing_devices(module, packet_conn)
     changed = False
@@ -465,9 +531,9 @@ def act_on_devices(target_state, module, packet_conn):
         create_hostnames = [hn for hn in specified_identifiers['hostnames']
                             if hn not in existing_devices_names]
 
-    process_devices  = [d for d in existing_devices
-                        if (d.id in specified_identifiers['ids']) or
-                           (d.hostname in specified_identifiers['hostnames'])]
+    process_devices = [d for d in existing_devices
+                       if (d.id in specified_identifiers['ids']) or
+                       (d.hostname in specified_identifiers['hostnames'])]
 
     if target_state != 'present':
         _absent_state_map = {}
@@ -476,27 +542,30 @@ def act_on_devices(target_state, module, packet_conn):
 
         state_map = {
             'absent': _absent_state_map,
-            'active': {'inactive': packet.Device.power_on},
+            'active': {'inactive': packet.Device.power_on,
+                       'provisioning': None, 'rebooting': None
+                       },
             'inactive': {'active': packet.Device.power_off},
             'rebooted': {'active': packet.Device.reboot,
-                       'inactive': packet.Device.power_on},
-            }
+                         'inactive': packet.Device.power_on,
+                         'provisioning': None, 'rebooting': None
+                         },
+        }
 
         # First do non-creation actions, it might be faster
         for d in process_devices:
+            if d.state == target_state:
+                continue
             if d.state in state_map[target_state]:
                 api_operation = state_map[target_state].get(d.state)
-                try:
+                if api_operation is not None:
                     api_operation(d)
                     changed = True
-                except Exception as e:
-                    _msg = ("while trying to make device %s, id %s %s, from state %s, "
-                            "with api call by %s got error: %s" %
-                           (d.hostname, d.id, target_state, d.state, api_operation, e))
-                    raise Exception(_msg)
             else:
-                _msg = ("I don't know how to process existing device %s from state %s "
-                        "to state %s" % (d.hostname, d.state, target_state))
+                _msg = (
+                    "I don't know how to process existing device %s from state %s "
+                    "to state %s" %
+                    (d.hostname, d.state, target_state))
                 raise Exception(_msg)
 
     # At last create missing devices
@@ -504,11 +573,15 @@ def act_on_devices(target_state, module, packet_conn):
     if create_hostnames:
         created_devices = [create_single_device(module, packet_conn, n)
                            for n in create_hostnames]
-        if module.params.get('wait'):
-            created_devices = wait_for_ips(module, packet_conn, created_devices)
+        if module.params.get('wait_for_public_IPv'):
+            created_devices = wait_for_public_IPv(
+                module, packet_conn, created_devices)
         changed = True
 
     processed_devices = created_devices + process_devices
+    if target_state == 'active':
+        processed_devices = wait_for_devices_active(
+            module, packet_conn, processed_devices)
 
     return {
         'changed': changed,
@@ -524,34 +597,37 @@ def main():
             count=dict(type='int', default=1),
             count_offset=dict(type='int', default=1),
             device_ids=dict(type='list'),
-            facility=dict(default='ewr1'),
+            facility=dict(),
             features=dict(type='dict'),
             hostnames=dict(type='list', aliases=['name']),
-            locked=dict(type='bool', default=False),
+            locked=dict(type='bool', default=False, aliases=['lock']),
             operating_system=dict(),
             plan=dict(),
             project_id=dict(required=True),
             state=dict(choices=ALLOWED_STATES, default='present'),
             user_data=dict(default=None),
-            wait=dict(type='bool', default=False),
-            wait_timeout=dict(type='int', default=60),
-
+            wait_for_public_IPv=dict(type='int', choices=[4, 6]),
+            wait_timeout=dict(type='int', default=900),
+            ipxe_script_url=dict(default=''),
+            always_pxe=dict(type='bool', default=False),
         ),
-        required_one_of=[('device_ids','hostnames',)],
+        required_one_of=[('device_ids', 'hostnames',)],
         mutually_exclusive=[
+            ('always_pxe', 'operating_system'),
+            ('ipxe_script_url', 'operating_system'),
             ('hostnames', 'device_ids'),
             ('count', 'device_ids'),
             ('count_offset', 'device_ids'),
-            ]
+        ]
     )
 
     if not HAS_PACKET_SDK:
         module.fail_json(msg='packet required for this module')
 
     if not module.params.get('auth_token'):
-        _fail_msg = ( "if Packet API token is not in environment variable %s, "
-                      "the auth_token parameter is required" %
-                       PACKET_API_TOKEN_ENV_VAR)
+        _fail_msg = ("if Packet API token is not in environment variable %s, "
+                     "the auth_token parameter is required" %
+                     PACKET_API_TOKEN_ENV_VAR)
         module.fail_json(msg=_fail_msg)
 
     auth_token = module.params.get('auth_token')
@@ -561,11 +637,10 @@ def main():
     state = module.params.get('state')
 
     try:
-        module.exit_json(**act_on_devices(state, module, packet_conn))
+        module.exit_json(**act_on_devices(module, packet_conn, state))
     except Exception as e:
-        module.fail_json(msg='failed to set machine state %s, error: %s' % (state,str(e)))
-
-
+        module.fail_json(msg='failed to set device state %s, error: %s' %
+                         (state, to_native(e)), exception=traceback.format_exc())
 
 if __name__ == '__main__':
     main()

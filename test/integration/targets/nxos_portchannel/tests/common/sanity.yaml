@@ -1,0 +1,99 @@
+---
+- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_portchannel sanity test"
+
+- set_fact: testint1="{{ nxos_int1 }}"
+- set_fact: testint2="{{ nxos_int2 }}"
+
+- name: "Enable feature LACP"
+  nxos_feature:
+    feature: lacp
+    state: enabled
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- name: "Put interface {{testint1}} into default state"
+  nxos_config: &intdefault1
+    lines:
+      - "default interface {{ testint1 }}"
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- name: "Put interface {{testint2}} into default state"
+  nxos_config: &intdefault2
+    lines:
+      - "default interface {{ testint2 }}"
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- name: Remove possibly configured port-channel 99
+  nxos_portchannel: &delpc
+    group: 99
+    members: ["{{ testint1 }}", "{{ testint2 }}"]
+    force: 'true'
+    state: absent
+    timeout: 60
+    provider: "{{ connection }}"
+
+- block:
+  - name: Configure port-channel mode active
+    nxos_portchannel: &configpc
+      group: 99
+      members: ["{{ testint1 }}", "{{ testint2 }}"]
+      mode: active
+      force: 'true'
+      state: present
+      timeout: 60
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: Check Idempotence
+    nxos_portchannel: *configpc
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: Configure port-channel mode passive
+    nxos_portchannel: &configpcpassive
+      group: 99
+      members: ["{{ testint1 }}", "{{ testint2 }}"]
+      mode: passive
+      force: 'true'
+      state: present
+      timeout: 60
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: Check Idempotence
+    nxos_portchannel: *configpcpassive
+    register: result
+
+  - assert: *false
+
+  - name: Configure port-channel
+    nxos_portchannel: *delpc
+    register: result
+
+  - assert: *true
+
+  rescue:
+  - name: "Disable feature LACP"
+    nxos_feature:
+      feature: lacp
+      state: disabled
+      timeout: 60
+      provider: "{{ connection }}"
+
+  always:
+  - name: Delete port-channel
+    nxos_portchannel: *delpc
+    register: result
+
+  - debug: msg="END TRANSPORT:{{ connection.transport }} nxos_portchannel sanity test"

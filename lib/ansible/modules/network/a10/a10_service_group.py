@@ -1,28 +1,16 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-"""
-Ansible module to manage A10 Networks slb service-group objects
-(c) 2014, Mischa Peters <mpeters@a10networks.com>,
-Eric Chou <ericc@a10networks.com>
+# (c) 2014, Mischa Peters <mpeters@a10networks.com>,
+#           Eric Chou <ericc@a10networks.com>
+#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-This file is part of Ansible
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-Ansible is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
 
-Ansible is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-"""
-
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -65,7 +53,18 @@ options:
     required: false
     default: round-robin
     aliases: ['method']
-    choices: ['round-robin', 'weighted-rr', 'least-connection', 'weighted-least-connection', 'service-least-connection', 'service-weighted-least-connection', 'fastest-response', 'least-request', 'round-robin-strict', 'src-ip-only-hash', 'src-ip-hash']
+    choices:
+        - 'round-robin'
+        - 'weighted-rr'
+        - 'least-connection'
+        - 'weighted-least-connection'
+        - 'service-least-connection'
+        - 'service-weighted-least-connection'
+        - 'fastest-response'
+        - 'least-request'
+        - 'round-robin-strict'
+        - 'src-ip-only-hash'
+        - 'src-ip-hash'
   servers:
     description:
       - A list of servers to add to the service group. Each list item should be a
@@ -81,10 +80,6 @@ options:
     default: 'yes'
     choices: ['yes', 'no']
 
-'''
-
-RETURN = '''
-#
 '''
 
 EXAMPLES = '''
@@ -115,9 +110,17 @@ content:
   type: string
   sample: "mynewservicegroup"
 '''
+import json
+
+from ansible.module_utils.a10 import (axapi_call, a10_argument_spec, axapi_authenticate, axapi_failure,
+                                      axapi_enabled_disabled)
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import url_argument_spec
+
 
 VALID_SERVICE_GROUP_FIELDS = ['name', 'protocol', 'lb_method']
 VALID_SERVER_FIELDS = ['server', 'port', 'status']
+
 
 def validate_servers(module, servers):
     for item in servers:
@@ -222,7 +225,7 @@ def main():
     # first we authenticate to get a session id
     session_url = axapi_authenticate(module, axapi_base_url, username, password)
     # then we select the active-partition
-    slb_server_partition = axapi_call(module, session_url + '&method=system.partition.active', json.dumps({'name': partition}))
+    axapi_call(module, session_url + '&method=system.partition.active', json.dumps({'name': partition}))
     # then we check to see if the specified group exists
     slb_result = axapi_call(module, session_url + '&method=slb.service_group.search', json.dumps({'name': slb_service_group}))
     slb_service_group_exist = not axapi_failure(slb_result)
@@ -328,13 +331,6 @@ def main():
     # log out of the session nicely and exit
     axapi_call(module, session_url + '&method=session.close')
     module.exit_json(changed=changed, content=result)
-
-# standard ansible module imports
-import json
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.urls import url_argument_spec
-from ansible.module_utils.a10 import axapi_call, a10_argument_spec, axapi_authenticate, axapi_failure, axapi_enabled_disabled
-
 
 if __name__ == '__main__':
     main()

@@ -27,9 +27,6 @@
   failed_when: False
   register: rpm_result
 
-- debug: var=dnf_result
-- debug: var=rpm_result
-
 - name: verify uninstallation of sos
   assert:
     that:
@@ -59,9 +56,6 @@
   shell: rpm -q sos
   failed_when: False
   register: rpm_result
-
-- debug: var=dnf_result
-- debug: var=rpm_result
 
 - name: verify installation of sos
   assert:
@@ -221,9 +215,6 @@
   failed_when: False
   register: rpm_result
 
-- debug: var=dnf_result
-- debug: var=rpm_result
-
 - name: verify installation of sos in /
   assert:
     that:
@@ -240,3 +231,182 @@
 - name: uninstall sos in /
   dnf: name=sos installroot='/'
   register: dnf_result
+
+# GROUP INSTALL
+# Using 'Books and Guides' because it is only 5 packages and a 7.3 M download on Fedora 26.
+# It also doesn't install anything that will tamper with our Python environment.
+- name: install Books and Guides group
+  dnf:
+    name: "@Books and Guides"
+    state: present
+  register: dnf_result
+
+- name: verify installation of the group
+  assert:
+    that:
+        - "not dnf_result.failed | default(False)"
+        - "dnf_result.changed"
+
+- name: verify dnf module outputs
+  assert:
+    that:
+        - "'changed' in dnf_result"
+        - "'results' in dnf_result"
+
+- name: install the group again
+  dnf:
+    name: "@Books and Guides"
+    state: present
+  register: dnf_result
+
+- name: verify nothing changed
+  assert:
+    that:
+        - "not dnf_result.changed"
+
+- name: verify dnf module outputs
+  assert:
+    that:
+        - "'changed' in dnf_result"
+        - "'msg' in dnf_result"
+
+- name: install the group again but also with a package that is not yet installed
+  dnf:
+    name:
+      - "@Books and Guides"
+      - bc
+    state: present
+  register: dnf_result
+
+- name: verify bc is installed
+  assert:
+    that:
+        - "dnf_result.changed"
+
+- name: verify dnf module outputs
+  assert:
+    that:
+        - "'changed' in dnf_result"
+        - "'results' in dnf_result"
+
+- name: try to install the group again, with --check to check 'changed'
+  dnf:
+    name: "@Books and Guides"
+    state: present
+  check_mode: yes
+  register: dnf_result
+
+- name: verify nothing changed
+  assert:
+    that:
+        - "not dnf_result.changed"
+
+- name: verify dnf module outputs
+  assert:
+    that:
+        - "'changed' in dnf_result"
+        - "'msg' in dnf_result"
+
+# cleanup until https://github.com/ansible/ansible/issues/27377 is resolved
+- shell: dnf -y group install "Books and Guides" && dnf -y group remove "Books and Guides"
+
+# GROUP UPGRADE - this will go to the same method as group install
+# but through group_update - it is its invocation we're testing here
+# see commit 119c9e5d6eb572c4a4800fbe8136095f9063c37b
+- name: install latest Books and Guides
+  dnf:
+    name: "@Books and Guides"
+    state: latest
+  register: dnf_result
+
+- name: verify installation of the group
+  assert:
+    that:
+        - "not dnf_result.failed | default(False)"
+        - "dnf_result.changed"
+
+- name: verify dnf module outputs
+  assert:
+    that:
+        - "'changed' in dnf_result"
+        - "'results' in dnf_result"
+
+# cleanup until https://github.com/ansible/ansible/issues/27377 is resolved
+- shell: dnf -y group install "Books and Guides" && dnf -y group remove "Books and Guides"
+
+- name: try to install non existing group
+  dnf:
+    name: "@non-existing-group"
+    state: present
+  register: dnf_result
+  ignore_errors: True
+
+- name: verify installation of the non existing group failed
+  assert:
+    that:
+        - "not dnf_result.changed"
+        - "dnf_result|failed"
+
+- name: verify dnf module outputs
+  assert:
+    that:
+        - "'changed' in dnf_result"
+        - "'msg' in dnf_result"
+
+- name: try to install non existing file
+  dnf:
+    name: /tmp/non-existing-1.0.0.fc26.noarch.rpm
+    state: present
+  register: dnf_result
+  ignore_errors: yes
+
+- name: verify installation failed
+  assert:
+    that:
+        - "dnf_result|failed"
+        - "not dnf_result.changed"
+
+- name: verify dnf module outputs
+  assert:
+    that:
+        - "'changed' in dnf_result"
+        - "'msg' in dnf_result"
+
+- name: try to install from non existing url
+  dnf:
+    name: http://non-existing.com/non-existing-1.0.0.fc26.noarch.rpm
+    state: present
+  register: dnf_result
+  ignore_errors: yes
+
+- name: verify installation failed
+  assert:
+    that:
+        - "dnf_result|failed"
+        - "not dnf_result.changed"
+
+- name: verify dnf module outputs
+  assert:
+    that:
+        - "'changed' in dnf_result"
+        - "'msg' in dnf_result"
+
+# ENVIRONMENT UPGRADE
+# see commit de299ef77c03a64a8f515033a79ac6b7db1bc710
+- name: install Web Server environment
+  dnf:
+    name: "@Web Server"
+    state: latest
+  register: dnf_result
+
+- name: verify installation of the environment
+  assert:
+    that:
+        - "not dnf_result.failed | default(False)"
+        - "dnf_result.changed"
+
+- name: verify dnf module outputs
+  assert:
+    that:
+        - "'changed' in dnf_result"
+        - "'results' in dnf_result"

@@ -1,21 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -37,7 +28,6 @@ options:
   description:
     description:
     - A description of this host.
-    required: false
   force:
     description:
     - Force host name even if not in DNS.
@@ -45,70 +35,37 @@ options:
   ip_address:
     description:
     - Add the host to DNS with this IP address.
-    required: false
   mac_address:
     description:
     - List of Hardware MAC address(es) off this host.
     - If option is omitted MAC addresses will not be checked or changed.
     - If an empty list is passed all assigned MAC addresses will be removed.
     - MAC addresses that are already assigned but not passed will be removed.
-    required: false
     aliases: ["macaddress"]
   ns_host_location:
     description:
     - Host location (e.g. "Lab 2")
-    required: false
     aliases: ["nshostlocation"]
   ns_hardware_platform:
     description:
     - Host hardware platform (e.g. "Lenovo T61")
-    required: false
     aliases: ["nshardwareplatform"]
   ns_os_version:
     description:
     - Host operating system and version (e.g. "Fedora 9")
-    required: false
     aliases: ["nsosversion"]
   user_certificate:
     description:
     - List of Base-64 encoded server certificates.
     - If option is omitted certificates will not be checked or changed.
-    - If an emtpy list is passed all assigned certificates will be removed.
+    - If an empty list is passed all assigned certificates will be removed.
     - Certificates already assigned but not passed will be removed.
-    required: false
     aliases: ["usercertificate"]
   state:
     description: State to ensure
-    required: false
     default: present
     choices: ["present", "absent", "disabled"]
-  ipa_port:
-    description: Port of IPA server
-    required: false
-    default: 443
-  ipa_host:
-    description: IP or hostname of IPA server
-    required: false
-    default: ipa.example.com
-  ipa_user:
-    description: Administrative account used on IPA server
-    required: false
-    default: admin
-  ipa_pass:
-    description: Password of administrative user
-    required: true
-  ipa_prot:
-    description: Protocol used by IPA server
-    required: false
-    default: https
-    choices: ["http", "https"]
-  validate_certs:
-    description:
-    - This only applies if C(ipa_prot) is I(https).
-    - If set to C(no), the SSL certificates will not be validated.
-    - This should only set to C(no) used on personally controlled sites using self-signed certificates.
-    required: false
-    default: true
+extends_documentation_fragment: ipa.documentation
 version_added: "2.3"
 '''
 
@@ -165,9 +122,11 @@ host_diff:
   type: list
 '''
 
+import traceback
+
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.ipa import IPAClient
+from ansible.module_utils.ipa import IPAClient, ipa_argument_spec
+from ansible.module_utils._text import to_native
 
 
 class HostIPAClient(IPAClient):
@@ -222,7 +181,7 @@ def get_host_diff(client, ipa_host, module_host):
 
 
 def ensure(module, client):
-    name = module.params['name']
+    name = module.params['fqdn']
     state = module.params['state']
 
     ipa_host = client.host_find(name=name)
@@ -259,28 +218,20 @@ def ensure(module, client):
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec=dict(
-            description=dict(type='str', required=False),
-            fqdn=dict(type='str', required=True, aliases=['name']),
-            force=dict(type='bool', required=False),
-            ip_address=dict(type='str', required=False),
-            ns_host_location=dict(type='str', required=False, aliases=['nshostlocation']),
-            ns_hardware_platform=dict(type='str', required=False, aliases=['nshardwareplatform']),
-            ns_os_version=dict(type='str', required=False, aliases=['nsosversion']),
-            user_certificate=dict(type='list', required=False, aliases=['usercertificate']),
-            mac_address=dict(type='list', required=False, aliases=['macaddress']),
-            state=dict(type='str', required=False, default='present',
-                       choices=['present', 'absent', 'enabled', 'disabled']),
-            ipa_prot=dict(type='str', required=False, default='https', choices=['http', 'https']),
-            ipa_host=dict(type='str', required=False, default='ipa.example.com'),
-            ipa_port=dict(type='int', required=False, default=443),
-            ipa_user=dict(type='str', required=False, default='admin'),
-            ipa_pass=dict(type='str', required=True, no_log=True),
-            validate_certs=dict(type='bool', required=False, default=True),
-        ),
-        supports_check_mode=True,
-    )
+    argument_spec = ipa_argument_spec()
+    argument_spec.update(description=dict(type='str'),
+                         fqdn=dict(type='str', required=True, aliases=['name']),
+                         force=dict(type='bool'),
+                         ip_address=dict(type='str'),
+                         ns_host_location=dict(type='str', aliases=['nshostlocation']),
+                         ns_hardware_platform=dict(type='str', aliases=['nshardwareplatform']),
+                         ns_os_version=dict(type='str', aliases=['nsosversion']),
+                         user_certificate=dict(type='list', aliases=['usercertificate']),
+                         mac_address=dict(type='list', aliases=['macaddress']),
+                         state=dict(type='str', default='present', choices=['present', 'absent', 'enabled', 'disabled']))
+
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True)
 
     client = HostIPAClient(module=module,
                            host=module.params['ipa_host'],
@@ -292,10 +243,8 @@ def main():
                      password=module.params['ipa_pass'])
         changed, host = ensure(module, client)
         module.exit_json(changed=changed, host=host)
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg=str(e))
-
+    except Exception as e:
+        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
 if __name__ == '__main__':
     main()

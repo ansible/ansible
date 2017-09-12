@@ -1,23 +1,13 @@
 #!/usr/bin/python
 
 # (c) 2016, NetApp, Inc
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -30,36 +20,18 @@ description:
     - Create, update, remove hosts on NetApp E-series storage arrays
 version_added: '2.2'
 author: Kevin Hulquest (@hulquest)
+extends_documentation_fragment:
+    - netapp.eseries
 options:
-    api_username:
-        required: true
-        description:
-        - The username to authenticate with the SANtricity WebServices Proxy or embedded REST API.
-    api_password:
-        required: true
-        description:
-        - The password to authenticate with the SANtricity WebServices Proxy or embedded REST API.
-    api_url:
-        required: true
-        description:
-        - The url to the SANtricity WebServices Proxy or embedded REST API, for example C(https://prod-1.wahoo.acme.com/devmgr/v2).
-    validate_certs:
-        required: false
-        default: true
-        description:
-        - Should https certificates be validated?
-    ssid:
-        description:
-            - the id of the storage array you wish to act against
-        required: True
     name:
         description:
-            - If the host doesnt yet exist, the label to assign at creation time.
+            - If the host doesn't yet exist, the label to assign at creation time.
             - If the hosts already exists, this is what is used to identify the host to apply any desired changes
         required: True
     host_type_index:
         description:
-            - The index that maps to host type you wish to create. It is recommended to use the M(netapp_e_facts) module to gather this information. Alternatively you can use the WSP portal to retrieve the information.
+            - The index that maps to host type you wish to create. It is recommended to use the M(netapp_e_facts) module to gather this information.
+              Alternatively you can use the WSP portal to retrieve the information.
         required: True
     ports:
         description:
@@ -92,11 +64,9 @@ msg:
 """
 import json
 
-from ansible.module_utils.api import basic_auth_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.netapp import request, eseries_host_argument_spec
 from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.urls import open_url
-from ansible.module_utils.six.moves.urllib.error import HTTPError
 
 HEADERS = {
     "Content-Type": "application/json",
@@ -104,46 +74,10 @@ HEADERS = {
 }
 
 
-def request(url, data=None, headers=None, method='GET', use_proxy=True,
-            force=False, last_mod_time=None, timeout=10, validate_certs=True,
-            url_username=None, url_password=None, http_agent=None, force_basic_auth=True, ignore_errors=False):
-    try:
-        r = open_url(url=url, data=data, headers=headers, method=method, use_proxy=use_proxy,
-                     force=force, last_mod_time=last_mod_time, timeout=timeout, validate_certs=validate_certs,
-                     url_username=url_username, url_password=url_password, http_agent=http_agent,
-                     force_basic_auth=force_basic_auth)
-    except HTTPError:
-        err = get_exception()
-        r = err.fp
-
-    try:
-        raw_data = r.read()
-        if raw_data:
-            data = json.loads(raw_data)
-        else:
-            raw_data is None
-    except:
-        if ignore_errors:
-            pass
-        else:
-            raise Exception(raw_data)
-
-    resp_code = r.getcode()
-
-    if resp_code >= 400 and not ignore_errors:
-        raise Exception(resp_code, data)
-    else:
-        return resp_code, data
-
-
 class Host(object):
     def __init__(self):
-        argument_spec = basic_auth_argument_spec()
+        argument_spec = eseries_host_argument_spec()
         argument_spec.update(dict(
-            api_username=dict(type='str', required=True),
-            api_password=dict(type='str', required=True, no_log=True),
-            api_url=dict(type='str', required=True),
-            ssid=dict(type='str', required=True),
             state=dict(type='str', required=True, choices=['absent', 'present']),
             group=dict(type='str', required=False),
             ports=dict(type='list', required=False),
@@ -203,7 +137,7 @@ class Host(object):
         if len(self.available_ports) > 0 and len(self.ports) <= len(self.available_ports):
             for port in self.ports:
                 for free_port in self.available_ports:
-                    # Desired Type matches but also make sure we havent already used the ID
+                    # Desired Type matches but also make sure we haven't already used the ID
                     if not free_port['id'] in used_ids:
                         # update the port arg to have an id attribute
                         used_ids.append(free_port['id'])
@@ -288,7 +222,9 @@ class Host(object):
                         needs_update = True
                     else:
                         self.module.fail_json(
-                            msg="The port you specified:\n%s\n is associated with a different host. Specify force_port as True or try a different port spec" % arg_port)
+                            msg="The port you specified:\n%s\n is associated with a different host. Specify force_port as True or try a different "
+                                "port spec" % arg_port
+                        )
 
         return needs_update
 
@@ -315,7 +251,7 @@ class Host(object):
                 self.post_body['portsToUpdate'].update(dict(
                     portRef=self.other_host['hostPortRef'],
                     hostRef=self.host_obj['id'],
-                    # Doesnt yet address port identifier or chap secret
+                    # Doesn't yet address port identifier or chap secret
                 ))
 
         if apply:

@@ -27,6 +27,14 @@ from lib.executor import (
     command_shell,
     SUPPORTED_PYTHON_VERSIONS,
     COMPILE_PYTHON_VERSIONS,
+    ApplicationWarning,
+    Delegate,
+    generate_pip_install,
+    check_startup,
+)
+
+from lib.config import (
+    IntegrationConfig,
     PosixIntegrationConfig,
     WindowsIntegrationConfig,
     NetworkIntegrationConfig,
@@ -34,10 +42,6 @@ from lib.executor import (
     UnitsConfig,
     CompileConfig,
     ShellConfig,
-    ApplicationWarning,
-    Delegate,
-    generate_pip_install,
-    check_startup,
 )
 
 from lib.sanity import (
@@ -60,6 +64,10 @@ from lib.core_ci import (
     AWS_ENDPOINTS,
 )
 
+from lib.cloud import (
+    initialize_cloud_plugins,
+)
+
 import lib.cover
 
 
@@ -68,12 +76,13 @@ def main():
     try:
         git_root = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
         os.chdir(git_root)
+        initialize_cloud_plugins()
         sanity_init()
         args = parse_args()
         config = args.config(args)
         display.verbosity = config.verbosity
         display.color = config.color
-        display.info_stderr = isinstance(config, SanityConfig) and config.lint
+        display.info_stderr = (isinstance(config, SanityConfig) and config.lint) or (isinstance(config, IntegrationConfig) and config.list_targets)
         check_startup()
 
         try:
@@ -163,6 +172,10 @@ def parse_args():
                       action='store_true',
                       help='analyze code coverage when running tests')
 
+    test.add_argument('--coverage-label',
+                      default='',
+                      help='label to include in coverage output file names')
+
     test.add_argument('--metadata',
                       help=argparse.SUPPRESS)
 
@@ -173,7 +186,7 @@ def parse_args():
 
     integration.add_argument('--python',
                              metavar='VERSION',
-                             choices=SUPPORTED_PYTHON_VERSIONS,
+                             choices=SUPPORTED_PYTHON_VERSIONS + ('default',),
                              help='python version: %s' % ', '.join(SUPPORTED_PYTHON_VERSIONS))
 
     integration.add_argument('--start-at',
@@ -184,6 +197,18 @@ def parse_args():
                              metavar='TASK',
                              help='start at the specified task')
 
+    integration.add_argument('--tags',
+                             metavar='TAGS',
+                             help='only run plays and tasks tagged with these values')
+
+    integration.add_argument('--skip-tags',
+                             metavar='TAGS',
+                             help='only run plays and tasks whose tags do not match these values')
+
+    integration.add_argument('--diff',
+                             action='store_true',
+                             help='show diff output')
+
     integration.add_argument('--allow-destructive',
                              action='store_true',
                              help='allow destructive tests (--local and --tox only)')
@@ -191,6 +216,23 @@ def parse_args():
     integration.add_argument('--retry-on-error',
                              action='store_true',
                              help='retry failed test with increased verbosity')
+
+    integration.add_argument('--continue-on-error',
+                             action='store_true',
+                             help='continue after failed test')
+
+    integration.add_argument('--debug-strategy',
+                             action='store_true',
+                             help='run test playbooks using the debug strategy')
+
+    integration.add_argument('--changed-all-target',
+                             metavar='TARGET',
+                             default='all',
+                             help='target to run when all tests are needed')
+
+    integration.add_argument('--list-targets',
+                             action='store_true',
+                             help='list matching targets instead of running tests')
 
     subparsers = parser.add_subparsers(metavar='COMMAND')
     subparsers.required = True  # work-around for python 3 bug which makes subparsers optional
@@ -218,6 +260,10 @@ def parse_args():
                                      action='append',
                                      help='network platform/version').completer = complete_network_platform
 
+    network_integration.add_argument('--inventory',
+                                     metavar='PATH',
+                                     help='path to inventory used for tests')
+
     windows_integration = subparsers.add_parser('windows-integration',
                                                 parents=[integration],
                                                 help='windows integration tests')
@@ -241,7 +287,7 @@ def parse_args():
 
     units.add_argument('--python',
                        metavar='VERSION',
-                       choices=SUPPORTED_PYTHON_VERSIONS,
+                       choices=SUPPORTED_PYTHON_VERSIONS + ('default',),
                        help='python version: %s' % ', '.join(SUPPORTED_PYTHON_VERSIONS))
 
     units.add_argument('--collect-only',
@@ -260,7 +306,7 @@ def parse_args():
 
     compiler.add_argument('--python',
                           metavar='VERSION',
-                          choices=COMPILE_PYTHON_VERSIONS,
+                          choices=COMPILE_PYTHON_VERSIONS + ('default',),
                           help='python version: %s' % ', '.join(COMPILE_PYTHON_VERSIONS))
 
     add_lint(compiler)
@@ -292,7 +338,7 @@ def parse_args():
 
     sanity.add_argument('--python',
                         metavar='VERSION',
-                        choices=SUPPORTED_PYTHON_VERSIONS,
+                        choices=SUPPORTED_PYTHON_VERSIONS + ('default',),
                         help='python version: %s' % ', '.join(SUPPORTED_PYTHON_VERSIONS))
 
     sanity.add_argument('--base-branch',
@@ -328,6 +374,8 @@ def parse_args():
     coverage_combine.set_defaults(func=lib.cover.command_coverage_combine,
                                   config=lib.cover.CoverageConfig)
 
+    add_extra_coverage_options(coverage_combine)
+
     coverage_erase = coverage_subparsers.add_parser('erase',
                                                     parents=[coverage_common],
                                                     help='erase coverage data files')
@@ -340,7 +388,13 @@ def parse_args():
                                                      help='generate console coverage report')
 
     coverage_report.set_defaults(func=lib.cover.command_coverage_report,
-                                 config=lib.cover.CoverageConfig)
+                                 config=lib.cover.CoverageReportConfig)
+
+    coverage_report.add_argument('--show-missing',
+                                 action='store_true',
+                                 help='show line numbers of statements not executed')
+
+    add_extra_coverage_options(coverage_report)
 
     coverage_html = coverage_subparsers.add_parser('html',
                                                    parents=[coverage_common],
@@ -349,12 +403,16 @@ def parse_args():
     coverage_html.set_defaults(func=lib.cover.command_coverage_html,
                                config=lib.cover.CoverageConfig)
 
+    add_extra_coverage_options(coverage_html)
+
     coverage_xml = coverage_subparsers.add_parser('xml',
                                                   parents=[coverage_common],
                                                   help='generate xml coverage report')
 
     coverage_xml.set_defaults(func=lib.cover.command_coverage_xml,
                               config=lib.cover.CoverageConfig)
+
+    add_extra_coverage_options(coverage_xml)
 
     if argcomplete:
         argcomplete.autocomplete(parser, always_complete_options=False, validator=lambda i, k: True)
@@ -389,7 +447,6 @@ def add_lint(parser):
     parser.add_argument('--failure-ok',
                         action='store_true',
                         help='exit successfully on failed tests after saving results')
-
 
 
 def add_changes(parser, argparse):
@@ -452,6 +509,7 @@ def add_environments(parser, tox_version=False, tox_only=False):
             remote=None,
             remote_stage=None,
             remote_aws_region=None,
+            remote_terminate=None,
         )
 
         return
@@ -481,6 +539,31 @@ def add_environments(parser, tox_version=False, tox_only=False):
                         help='remote aws region to use: %(choices)s (default: auto)',
                         choices=sorted(AWS_ENDPOINTS),
                         default=None)
+
+    remote.add_argument('--remote-terminate',
+                        metavar='WHEN',
+                        help='terminate remote instance: %(choices)s (default: %(default)s)',
+                        choices=['never', 'always', 'success'],
+                        default='never')
+
+
+def add_extra_coverage_options(parser):
+    """
+    :type parser: argparse.ArgumentParser
+    """
+    parser.add_argument('--group-by',
+                        metavar='GROUP',
+                        action='append',
+                        choices=lib.cover.COVERAGE_GROUPS,
+                        help='group output by: %s' % ', '.join(lib.cover.COVERAGE_GROUPS))
+
+    parser.add_argument('--all',
+                        action='store_true',
+                        help='include all python source files')
+
+    parser.add_argument('--stub',
+                        action='store_true',
+                        help='generate empty report of all python source files')
 
 
 def add_extra_docker_options(parser, integration=True):

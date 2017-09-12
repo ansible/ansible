@@ -2,24 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2014, Kevin Carter <kevin.carter@rackspace.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -392,7 +381,7 @@ RETURN="""
 lxc_container:
     description: container information
     returned: success
-    type: list
+    type: complex
     contains:
         name:
             description: name of the lxc container
@@ -431,7 +420,13 @@ lxc_container:
             sample: True
 """
 
+import os
+import os.path
 import re
+import shutil
+import subprocess
+import tempfile
+import time
 
 try:
     import lxc
@@ -439,6 +434,10 @@ except ImportError:
     HAS_LXC = False
 else:
     HAS_LXC = True
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE, BOOLEANS_TRUE
+from ansible.module_utils.six.moves import xrange
 
 
 # LXC_COMPRESSION_MAP is a map of available compression types when creating
@@ -478,7 +477,15 @@ LXC_COMMAND_MAP = {
         }
     },
     'clone': {
-        'variables': {
+        'variables-lxc-copy': {
+            'backing_store': '--backingstorage',
+            'lxc_path': '--lxcpath',
+            'fs_size': '--fssize',
+            'name': '--name',
+            'clone_name': '--newname'
+        },
+        # lxc-clone is deprecated in favor of lxc-copy
+        'variables-lxc-clone': {
             'backing_store': '--backingstore',
             'lxc_path': '--lxcpath',
             'fs_size': '--fssize',
@@ -561,11 +568,6 @@ def create_script(command):
                     with newlines as separation.
     :type command: ``str``
     """
-
-    import os
-    import os.path as path
-    import subprocess
-    import tempfile
 
     (fd, script_file) = tempfile.mkstemp(prefix='lxc-attach-script')
     f = os.fdopen(fd, 'wb')
@@ -682,7 +684,7 @@ class LxcContainerManagement(object):
             variables.pop(v, None)
 
         return_dict = dict()
-        false_values = [None, ''] + BOOLEANS_FALSE
+        false_values = BOOLEANS_FALSE.union([None, ''])
         for k, v in variables.items():
             _var = self.module.params.get(k)
             if _var not in false_values:
@@ -794,13 +796,20 @@ class LxcContainerManagement(object):
             self.state_change = True
             self.container.stop()
 
+        # lxc-clone is deprecated in favor of lxc-copy
+        clone_vars = 'variables-lxc-copy'
+        clone_cmd = self.module.get_bin_path('lxc-copy')
+        if not clone_cmd:
+            clone_vars = 'variables-lxc-clone'
+            clone_cmd = self.module.get_bin_path('lxc-clone', True)
+
         build_command = [
-            self.module.get_bin_path('lxc-clone', True),
+            clone_cmd,
         ]
 
         build_command = self._add_variables(
             variables_dict=self._get_vars(
-                variables=LXC_COMMAND_MAP['clone']['variables']
+                variables=LXC_COMMAND_MAP['clone'][clone_vars]
             ),
             build_command=build_command
         )
@@ -816,7 +825,7 @@ class LxcContainerManagement(object):
 
         rc, return_data, err = self._run_command(build_command)
         if rc != 0:
-            message = "Failed executing lxc-clone."
+            message = "Failed executing %s." % os.path.basename(clone_cmd)
             self.failure(
                 err=err, rc=rc, msg=message, command=' '.join(
                     build_command
@@ -1761,7 +1770,5 @@ def main():
     lxc_manage.run()
 
 
-# import module bits
-from ansible.module_utils.basic import *
 if __name__ == '__main__':
     main()

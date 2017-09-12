@@ -14,9 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = """
@@ -73,7 +73,34 @@ options:
         description:
           - The threshold's unit of measurement
         required: false
-        choices: ['Seconds','Microseconds','Milliseconds','Bytes','Kilobytes','Megabytes','Gigabytes','Terabytes','Bits','Kilobits','Megabits','Gigabits','Terabits','Percent','Count','Bytes/Second','Kilobytes/Second','Megabytes/Second','Gigabytes/Second','Terabytes/Second','Bits/Second','Kilobits/Second','Megabits/Second','Gigabits/Second','Terabits/Second','Count/Second','None']
+        choices:
+            - 'Seconds'
+            - 'Microseconds'
+            - 'Milliseconds'
+            - 'Bytes'
+            - 'Kilobytes'
+            - 'Megabytes'
+            - 'Gigabytes'
+            - 'Terabytes'
+            - 'Bits'
+            - 'Kilobits'
+            - 'Megabits'
+            - 'Gigabits'
+            - 'Terabits'
+            - 'Percent'
+            - 'Count'
+            - 'Bytes/Second'
+            - 'Kilobytes/Second'
+            - 'Megabytes/Second'
+            - 'Gigabytes/Second'
+            - 'Terabytes/Second'
+            - 'Bits/Second'
+            - 'Kilobits/Second'
+            - 'Megabits/Second'
+            - 'Gigabits/Second'
+            - 'Terabits/Second'
+            - 'Count/Second'
+            - 'None'
     description:
         description:
           - A longer description of the alarm
@@ -198,7 +225,9 @@ def create_metric_alarm(connection, module):
 
         for attr in ('alarm_actions','insufficient_data_actions','ok_actions'):
             action = module.params.get(attr) or []
-            if getattr(alarm, attr) != action:
+            # Boto and/or ansible may provide same elements in lists but in different order.
+            # Compare on sets since they do not need any order.
+            if set(getattr(alarm, attr)) != set(action):
                 changed = True
                 setattr(alarm, attr, module.params.get(attr))
 
@@ -254,7 +283,10 @@ def main():
             comparison=dict(type='str', choices=['<=', '<', '>', '>=']),
             threshold=dict(type='float'),
             period=dict(type='int'),
-            unit=dict(type='str', choices=['Seconds', 'Microseconds', 'Milliseconds', 'Bytes', 'Kilobytes', 'Megabytes', 'Gigabytes', 'Terabytes', 'Bits', 'Kilobits', 'Megabits', 'Gigabits', 'Terabits', 'Percent', 'Count', 'Bytes/Second', 'Kilobytes/Second', 'Megabytes/Second', 'Gigabytes/Second', 'Terabytes/Second', 'Bits/Second', 'Kilobits/Second', 'Megabits/Second', 'Gigabits/Second', 'Terabits/Second', 'Count/Second', 'None']),
+            unit=dict(type='str', choices=['Seconds', 'Microseconds', 'Milliseconds', 'Bytes', 'Kilobytes', 'Megabytes', 'Gigabytes', 'Terabytes',
+                                           'Bits', 'Kilobits', 'Megabits', 'Gigabits', 'Terabits', 'Percent', 'Count', 'Bytes/Second', 'Kilobytes/Second',
+                                           'Megabytes/Second', 'Gigabytes/Second', 'Terabytes/Second', 'Bits/Second', 'Kilobits/Second', 'Megabits/Second',
+                                           'Gigabits/Second', 'Terabits/Second', 'Count/Second', 'None']),
             evaluation_periods=dict(type='int'),
             description=dict(type='str'),
             dimensions=dict(type='dict', default={}),

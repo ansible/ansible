@@ -14,22 +14,33 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.six import iteritems
+DOCUMENTATION = '''
+    strategy: linear
+    short_description: Executes tasks in a linear fashion
+    description:
+        - Task execution is in lockstep per host batch as defined by C(serial) (default all).
+          Up to the fork limit of hosts will execute each task at the same time and then
+          the next series of hosts until the batch is done, before going on to the next task.
+    version_added: "2.0"
+    notes:
+     - This was the default Ansible behaviour before 'strategy plugins' were introduced in 2.0.
+    author: Ansible Core Team
+'''
 
 from ansible.errors import AnsibleError
 from ansible.executor.play_iterator import PlayIterator
+from ansible.module_utils.six import iteritems
+from ansible.module_utils._text import to_text
 from ansible.playbook.block import Block
 from ansible.playbook.included_file import IncludedFile
 from ansible.playbook.task import Task
-from ansible.plugins import action_loader
+from ansible.plugins.loader import action_loader
 from ansible.plugins.strategy import StrategyBase
 from ansible.template import Templar
-from ansible.module_utils._text import to_text
 
 
 try:
@@ -60,7 +71,7 @@ class StrategyModule(StrategyBase):
         display.debug("done building task lists")
 
         num_setups = 0
-        num_tasks  = 0
+        num_tasks = 0
         num_rescue = 0
         num_always = 0
 
@@ -73,7 +84,7 @@ class StrategyModule(StrategyBase):
             try:
                 lowest_cur_block = min(
                     (s.cur_block for h, (s, t) in host_tasks_to_run
-                    if s.run_state != PlayIterator.ITERATING_COMPLETE))
+                     if s.run_state != PlayIterator.ITERATING_COMPLETE))
             except ValueError:
                 lowest_cur_block = None
         else:
@@ -96,7 +107,10 @@ class StrategyModule(StrategyBase):
                 num_rescue += 1
             elif s.run_state == PlayIterator.ITERATING_ALWAYS:
                 num_always += 1
-        display.debug("done counting tasks in each state of execution:\n\tnum_setups: %s\n\tnum_tasks: %s\n\tnum_rescue: %s\n\tnum_always: %s" % (num_setups, num_tasks, num_rescue, num_always))
+        display.debug("done counting tasks in each state of execution:\n\tnum_setups: %s\n\tnum_tasks: %s\n\tnum_rescue: %s\n\tnum_always: %s" % (num_setups,
+                                                                                                                                                  num_tasks,
+                                                                                                                                                  num_rescue,
+                                                                                                                                                  num_always))
 
         def _advance_selected_hosts(hosts, cur_block, cur_state):
             '''
@@ -178,7 +192,7 @@ class StrategyModule(StrategyBase):
                 host_tasks = self._get_next_task_lockstep(hosts_left, iterator)
 
                 # skip control
-                skip_rest   = False
+                skip_rest = False
                 choose_step = True
 
                 # flag set if task is set to any_errors_fatal
@@ -231,7 +245,7 @@ class StrategyModule(StrategyBase):
                                 break
 
                         display.debug("getting variables")
-                        task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=task)
+                        task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=task)
                         self.add_tqm_variables(task_vars, play=iterator._play)
                         templar = Templar(loader=self._loader, variables=task_vars)
                         display.debug("done getting variables")
@@ -289,7 +303,7 @@ class StrategyModule(StrategyBase):
                                 loop_var = hr._task.loop_control.loop_var or 'item'
                             include_results = hr._result.get('results', [])
                         else:
-                            include_results = [ hr._result ]
+                            include_results = [hr._result]
 
                         for include_result in include_results:
                             if 'skipped' in include_result and include_result['skipped'] or 'failed' in include_result and include_result['failed']:
@@ -301,7 +315,9 @@ class StrategyModule(StrategyBase):
                             if loop_var and loop_var in include_result:
                                 new_ir.vars[loop_var] = include_result[loop_var]
 
-                            all_role_blocks.extend(new_ir.get_block_list(play=iterator._play, variable_manager=self._variable_manager, loader=self._loader))
+                            blocks, handler_blocks = new_ir.get_block_list(play=iterator._play, variable_manager=self._variable_manager, loader=self._loader)
+                            all_role_blocks.extend(blocks)
+                            self._tqm.update_handler_list([handler for handler_block in handler_blocks for handler in handler_block.block])
 
                 if len(all_role_blocks) > 0:
                     for host in hosts_left:
@@ -341,7 +357,6 @@ class StrategyModule(StrategyBase):
                             display.debug("iterating over new_blocks loaded from include file")
                             for new_block in new_blocks:
                                 task_vars = self._variable_manager.get_vars(
-                                    loader=self._loader,
                                     play=iterator._play,
                                     task=included_file._task,
                                 )
@@ -350,7 +365,7 @@ class StrategyModule(StrategyBase):
                                 display.debug("done filtering new block on tags")
 
                                 noop_block = Block(parent_block=task._parent)
-                                noop_block.block  = [noop_task for t in new_block.block]
+                                noop_block.block = [noop_task for t in new_block.block]
                                 noop_block.always = [noop_task for t in new_block.always]
                                 noop_block.rescue = [noop_task for t in new_block.rescue]
 
@@ -385,7 +400,7 @@ class StrategyModule(StrategyBase):
                 failed_hosts = []
                 unreachable_hosts = []
                 for res in results:
-                    if res.is_failed():
+                    if res.is_failed() and iterator.is_failed(res._host):
                         failed_hosts.append(res._host.name)
                     elif res.is_unreachable():
                         unreachable_hosts.append(res._host.name)

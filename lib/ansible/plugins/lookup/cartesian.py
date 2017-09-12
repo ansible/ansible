@@ -17,11 +17,43 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+    lookup: cartesian
+    version_added: "2.1"
+    short_description: returns the cartesian product of lists
+    description:
+        - Takes the input lists and returns a list that represents the product of the input lists.
+    options:
+        _raw:
+            description:
+                - a set of lists
+            required: True
+"""
+
+EXAMPLES = """
+
+  - name: outputs the cartesian product of the supplied lists
+    debug: msg="{{item}}"
+    with_cartesian:
+         - "{{list1}}"
+         - "{{list2}}"
+  - name: used as lookup changes [1, 2, 3], [a, b] into [1, a], [1, b], [2, a], [2, b], [3, a], [3, b]
+    debug: msg="{{ [1,2,3]|lookup('cartesian', [a, b])}}"
+"""
+
+RETURN = """
+  _list:
+    description:
+      - list of lists composed of elements of the input lists
+    type: lists
+"""
+
 from itertools import product
 
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.listify import listify_lookup_plugin_terms
+
 
 class LookupModule(LookupBase):
     """
@@ -51,4 +83,3 @@ class LookupModule(LookupBase):
             raise AnsibleError("with_cartesian requires at least one element in each list")
 
         return [self._flatten(x) for x in product(*my_list)]
-

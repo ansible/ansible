@@ -6,6 +6,7 @@
     lines:
       - no ip domain-list ansible.com
       - no ip domain-list redhat.com
+    timeout: 30
     match: none
     provider: "{{ eapi }}"
 
@@ -14,6 +15,7 @@
     domain_list:
       - ansible.com
       - redhat.com
+    timeout: 30
     provider: "{{ eapi }}"
   register: result
 
@@ -28,6 +30,7 @@
     domain_list:
       - ansible.com
       - redhat.com
+    timeout: 30
     provider: "{{ eapi }}"
   register: result
 
@@ -39,6 +42,7 @@
   eos_system:
     domain_list:
       - ansible.com
+    timeout: 30
     provider: "{{ eapi }}"
   register: result
 
@@ -51,6 +55,7 @@
   eos_system:
     domain_list:
       - ansible.com
+    timeout: 30
     provider: "{{ eapi }}"
   register: result
 
@@ -63,6 +68,7 @@
     domain_list:
       - ansible.com
       - redhat.com
+    timeout: 30
     provider: "{{ eapi }}"
   register: result
 
@@ -76,6 +82,7 @@
     domain_list:
       - ansible.com
       - redhat.com
+    timeout: 30
     provider: "{{ eapi }}"
   register: result
 
@@ -88,6 +95,7 @@
     domain_list:
       - ansible.com
       - eng.ansible.com
+    timeout: 30
     provider: "{{ eapi }}"
   register: result
 
@@ -103,6 +111,7 @@
     domain_list:
       - ansible.com
       - eng.ansible.com
+    timeout: 30
     provider: "{{ eapi }}"
   register: result
 
@@ -116,6 +125,7 @@
       - no ip domain-list ansible.com
       - no ip domain-list redhat.com
       - no ip domain-list eng.ansible.com
+    timeout: 30
     match: none
     provider: "{{ eapi }}"
 

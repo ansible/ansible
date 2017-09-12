@@ -27,12 +27,13 @@ from functools import partial
 
 from jinja2.exceptions import UndefinedError
 
-from ansible.compat.six import iteritems, string_types, with_metaclass
+from ansible import constants as C
+from ansible.module_utils.six import iteritems, string_types, with_metaclass
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_text, to_native
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.parsing.dataloader import DataLoader
-from ansible.constants import mk_boolean as boolean
 from ansible.utils.vars import combine_vars, isidentifier, get_unique_id
 
 try:
@@ -149,12 +150,12 @@ class BaseMeta(type):
 class Base(with_metaclass(BaseMeta, object)):
 
     # connection/transport
-    _connection          = FieldAttribute(isa='string')
-    _port                = FieldAttribute(isa='int')
-    _remote_user         = FieldAttribute(isa='string')
+    _connection  = FieldAttribute(isa='string')
+    _port        = FieldAttribute(isa='int')
+    _remote_user = FieldAttribute(isa='string')
 
     # variables
-    _vars                = FieldAttribute(isa='dict', priority=100, inherit=False)
+    _vars = FieldAttribute(isa='dict', priority=100, inherit=False)
 
     # flags and misc. settings
     _environment         = FieldAttribute(isa='list')
@@ -163,7 +164,8 @@ class Base(with_metaclass(BaseMeta, object)):
     _run_once            = FieldAttribute(isa='bool')
     _ignore_errors       = FieldAttribute(isa='bool')
     _check_mode          = FieldAttribute(isa='bool')
-    _any_errors_fatal     = FieldAttribute(isa='bool', default=False, always_post_validate=True)
+    _diff                = FieldAttribute(isa='bool')
+    _any_errors_fatal     = FieldAttribute(isa='bool', default=C.ANY_ERRORS_FATAL, always_post_validate=True)
 
     # param names which have been deprecated/removed
     DEPRECATED_ATTRIBUTES = [
@@ -180,14 +182,14 @@ class Base(with_metaclass(BaseMeta, object)):
 
         # other internal params
         self._validated = False
-        self._squashed  = False
+        self._squashed = False
         self._finalized = False
 
         # every object gets a random uuid:
         self._uuid = get_unique_id()
 
         # we create a copy of the attributes here due to the fact that
-        # it was intialized as a class param in the meta class, so we
+        # it was initialized as a class param in the meta class, so we
         # need a unique object here (all members contained within are
         # unique already).
         self._attributes = self._attributes.copy()
@@ -196,17 +198,18 @@ class Base(with_metaclass(BaseMeta, object)):
         self.vars = dict()
 
     def dump_me(self, depth=0):
+        ''' this is never called from production code, it is here to be used when debugging as a 'complex print' '''
         if depth == 0:
-            print("DUMPING OBJECT ------------------------------------------------------")
-        print("%s- %s (%s, id=%s)" % (" " * depth, self.__class__.__name__, self, id(self)))
+            display.debug("DUMPING OBJECT ------------------------------------------------------")
+        display.debug("%s- %s (%s, id=%s)" % (" " * depth, self.__class__.__name__, self, id(self)))
         if hasattr(self, '_parent') and self._parent:
-            self._parent.dump_me(depth+2)
+            self._parent.dump_me(depth + 2)
             dep_chain = self._parent.get_dep_chain()
             if dep_chain:
                 for dep in dep_chain:
-                    dep.dump_me(depth+2)
+                    dep.dump_me(depth + 2)
         if hasattr(self, '_play') and self._play:
-            self._play.dump_me(depth+2)
+            self._play.dump_me(depth + 2)
 
     def preprocess_data(self, ds):
         ''' infrequently used method to do some pre-processing of legacy terms '''
@@ -220,7 +223,7 @@ class Base(with_metaclass(BaseMeta, object)):
     def load_data(self, ds, variable_manager=None, loader=None):
         ''' walk the input datastructure and assign any values '''
 
-        assert ds is not None
+        assert ds is not None, 'ds (%s) should not be None but it is.' % ds
 
         # cache the datastructure internally
         setattr(self, '_ds', ds)
@@ -387,7 +390,7 @@ class Base(with_metaclass(BaseMeta, object)):
                     elif attribute.isa == 'float':
                         value = float(value)
                     elif attribute.isa == 'bool':
-                        value = boolean(value)
+                        value = boolean(value, strict=False)
                     elif attribute.isa == 'percent':
                         # special value, which may be an integer or float
                         # with an optional '%' at the end
@@ -405,12 +408,12 @@ class Base(with_metaclass(BaseMeta, object)):
                                 )
                                 value = value.split(',')
                             else:
-                                value = [ value ]
+                                value = [value]
                         if attribute.listof is not None:
                             for item in value:
                                 if not isinstance(item, attribute.listof):
-                                    raise AnsibleParserError("the field '%s' should be a list of %s,"
-                                            " but the item '%s' is a %s" % (name, attribute.listof, item, type(item)), obj=self.get_ds())
+                                    raise AnsibleParserError("the field '%s' should be a list of %s, "
+                                                             "but the item '%s' is a %s" % (name, attribute.listof, item, type(item)), obj=self.get_ds())
                                 elif attribute.required and attribute.listof == string_types:
                                     if item is None or item.strip() == "":
                                         raise AnsibleParserError("the field '%s' is required, and cannot have empty values" % (name,), obj=self.get_ds())
@@ -423,7 +426,7 @@ class Base(with_metaclass(BaseMeta, object)):
                             else:
                                 # Making a list like this handles strings of
                                 # text and bytes properly
-                                value = [ value ]
+                                value = [value]
                         if not isinstance(value, set):
                             value = set(value)
                     elif attribute.isa == 'dict':
@@ -438,14 +441,16 @@ class Base(with_metaclass(BaseMeta, object)):
 
                 # and assign the massaged value back to the attribute field
                 setattr(self, name, value)
-
             except (TypeError, ValueError) as e:
                 raise AnsibleParserError("the field '%s' has an invalid value (%s), and could not be converted to an %s."
-                        " Error was: %s" % (name, value, attribute.isa, e), obj=self.get_ds())
+                                         "The error was: %s" % (name, value, attribute.isa, e), obj=self.get_ds(), orig_exc=e)
             except (AnsibleUndefinedVariable, UndefinedError) as e:
                 if templar._fail_on_undefined_errors and name != 'name':
-                    raise AnsibleParserError("the field '%s' has an invalid value, which appears to include a variable that is undefined."
-                            " The error was: %s" % (name,e), obj=self.get_ds())
+                    if name == 'args':
+                        msg= "The task includes an option with an undefined variable. The error was: %s" % (to_native(e))
+                    else:
+                        msg= "The field '%s' has an invalid value, which includes an undefined variable. The error was: %s" % (name, to_native(e))
+                    raise AnsibleParserError(msg, obj=self.get_ds(), orig_exc=e)
 
         self._finalized = True
 
@@ -477,10 +482,11 @@ class Base(with_metaclass(BaseMeta, object)):
                 return {}
             else:
                 raise ValueError
-        except ValueError:
-            raise AnsibleParserError("Vars in a %s must be specified as a dictionary, or a list of dictionaries" % self.__class__.__name__, obj=ds)
+        except ValueError as e:
+            raise AnsibleParserError("Vars in a %s must be specified as a dictionary, or a list of dictionaries" % self.__class__.__name__,
+                                     obj=ds, orig_exc=e)
         except TypeError as e:
-            raise AnsibleParserError("Invalid variable name in vars specified for %s: %s" % (self.__class__.__name__, e), obj=ds)
+            raise AnsibleParserError("Invalid variable name in vars specified for %s: %s" % (self.__class__.__name__, e), obj=ds, orig_exc=e)
 
     def _extend_value(self, value, new_value, prepend=False):
         '''
@@ -490,25 +496,43 @@ class Base(with_metaclass(BaseMeta, object)):
         '''
 
         if not isinstance(value, list):
-            value = [ value ]
+            value = [value]
         if not isinstance(new_value, list):
-            new_value = [ new_value ]
+            new_value = [new_value]
 
         if prepend:
             combined = new_value + value
         else:
             combined = value + new_value
 
-        return [i for i,_ in itertools.groupby(combined) if i is not None]
+        return [i for i, _ in itertools.groupby(combined) if i is not None]
 
     def dump_attrs(self):
         '''
         Dumps all attributes to a dictionary
         '''
         attrs = dict()
-        for name in self._valid_attrs.keys():
-            attrs[name] = getattr(self, name)
+        for (name, attribute) in iteritems(self._valid_attrs):
+            attr = getattr(self, name)
+            if attribute.isa == 'class' and attr is not None and hasattr(attr, 'serialize'):
+                attrs[name] = attr.serialize()
+            else:
+                attrs[name] = attr
         return attrs
+
+    def from_attrs(self, attrs):
+        '''
+        Loads attributes from a dictionary
+        '''
+        for (attr, value) in iteritems(attrs):
+            if attr in self._valid_attrs:
+                attribute = self._valid_attrs[attr]
+                if attribute.isa == 'class' and isinstance(value, dict):
+                    obj = attribute.class_type()
+                    obj.deserialize(value)
+                    setattr(self, attr, obj)
+                else:
+                    setattr(self, attr, value)
 
     def serialize(self):
         '''
@@ -536,7 +560,7 @@ class Base(with_metaclass(BaseMeta, object)):
         and extended.
         '''
 
-        assert isinstance(data, dict)
+        assert isinstance(data, dict), 'data (%s) should be a dict but is a %s' % (data, type(data))
 
         for (name, attribute) in iteritems(self._valid_attrs):
             if name in data:

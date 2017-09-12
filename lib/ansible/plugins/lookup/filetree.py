@@ -22,21 +22,22 @@ import pwd
 import grp
 import stat
 
-HAVE_SELINUX=False
+HAVE_SELINUX = False
 try:
     import selinux
-    HAVE_SELINUX=True
+    HAVE_SELINUX = True
 except ImportError:
     pass
 
 from ansible.plugins.lookup import LookupBase
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_text
 
 try:
     from __main__ import display
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
+
 
 # If selinux fails to find a default, return an array of None
 def selinux_context(path):
@@ -86,7 +87,7 @@ def file_props(root, path):
     except KeyError:
         ret['owner'] = st.st_uid
     try:
-        ret['group'] = grp.getgrgid(st.st_gid).gr_name
+        ret['group'] = to_text(grp.getgrgid(st.st_gid).gr_name)
     except KeyError:
         ret['group'] = st.st_gid
     ret['mode'] = '0%03o' % (stat.S_IMODE(st.st_mode))
@@ -119,7 +120,7 @@ class LookupModule(LookupBase):
                     relpath = os.path.relpath(os.path.join(root, entry), path)
 
                     # Skip if relpath was already processed (from another root)
-                    if relpath not in [ entry['path'] for entry in ret ]:
+                    if relpath not in [entry['path'] for entry in ret]:
                         props = file_props(path, relpath)
                         if props is not None:
                             ret.append(props)

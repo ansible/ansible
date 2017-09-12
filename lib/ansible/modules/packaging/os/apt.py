@@ -5,21 +5,13 @@
 # Written by Matthew Williams <matthew@flowroute.com>
 # Based on yum module written by Seth Vidal <skvidal at fedoraproject.org>
 #
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
@@ -34,13 +26,17 @@ version_added: "0.0.2"
 options:
   name:
     description:
-      - A package name, like C(foo), or package specifier with version, like C(foo=1.0). Name wildcards (fnmatch) like C(apt*) and version wildcards like C(foo=1.0*) are also supported.  Note that the apt-get commandline supports implicit regex matches here but we do not because it can let typos through easier (If you typo C(foo) as C(fo) apt-get would install packages that have "fo" in their name with a warning and a prompt for the user.  Since we don't have warnings and prompts before installing we disallow this.  Use an explicit fnmatch pattern if you want wildcarding)
+      - A package name, like C(foo), or package specifier with version, like C(foo=1.0). Name wildcards (fnmatch) like C(apt*) and version wildcards
+        like C(foo=1.0*) are also supported.  Note that the apt-get commandline supports implicit regex matches here but we do not because it can let
+        typos through easier (If you typo C(foo) as C(fo) apt-get would install packages that have "fo" in their name with a warning and a prompt for
+        the user.  Since we don't have warnings and prompts before installing we disallow this.  Use an explicit fnmatch pattern if you want wildcarding)
     required: false
     default: null
     aliases: [ 'pkg', 'package' ]
   state:
     description:
-      - Indicates the desired package state. C(latest) ensures that the latest version is installed. C(build-dep) ensures the package build dependencies are installed.
+      - Indicates the desired package state. C(latest) ensures that the latest version is installed. C(build-dep) ensures the package build dependencies
+        are installed.
     required: false
     default: present
     choices: [ "latest", "absent", "present", "build-dep" ]
@@ -53,6 +49,7 @@ options:
   cache_valid_time:
     description:
       - Update the apt cache if its older than the I(cache_valid_time). This option is set in seconds.
+        As of Ansible 2.4, this implicitly sets I(update_cache) if set.
     required: false
     default: 0
   purge:
@@ -68,7 +65,8 @@ options:
     default: null
   install_recommends:
     description:
-      - Corresponds to the C(--no-install-recommends) option for I(apt). C(yes) installs recommended packages.  C(no) does not install recommended packages. By default, Ansible will use the same defaults as the operating system. Suggested packages are never installed.
+      - Corresponds to the C(--no-install-recommends) option for I(apt). C(yes) installs recommended packages.  C(no) does not install
+        recommended packages. By default, Ansible will use the same defaults as the operating system. Suggested packages are never installed.
     required: false
     default: null
     choices: [ "yes", "no" ]
@@ -91,6 +89,7 @@ options:
       - 'If full, performs an aptitude full-upgrade.'
       - 'If dist, performs an apt-get dist-upgrade.'
       - 'Note: This does not upgrade a specific package, use state=latest for that.'
+      - 'Note: Since 2.4, apt-get is used as a fall-back if aptitude is not present.'
     version_added: "1.1"
     required: false
     default: "no"
@@ -110,25 +109,39 @@ options:
   autoremove:
     description:
       - If C(yes), remove unused dependency packages for all module states except I(build-dep). It can also be used as the only option.
+      - Previous to version 2.4, autoclean was also an alias for autoremove, now it is its own separate command. See documentation for further information.
     required: false
     default: no
     choices: [ "yes", "no" ]
-    aliases: [ 'autoclean']
     version_added: "2.1"
+  autoclean:
+    description:
+      - If C(yes), cleans the local repository of retrieved package files that can no longer be downloaded.
+    required: false
+    default: no
+    choices: [ "yes", "no" ]
+    version_added: "2.4"
   only_upgrade:
     description:
       - Only upgrade a package if it is already installed.
     required: false
     default: false
     version_added: "2.1"
+  force_apt_get:
+    description:
+      - Force usage of apt-get instead of aptitude
+    required: false
+    default: false
+    version_added: "2.4"
 requirements:
    - python-apt (python 2)
    - python3-apt (python 3)
-   - aptitude
+   - aptitude (before 2.4)
 author: "Matthew Williams (@mgwilliams)"
 notes:
-   - Three of the upgrade modes (C(full), C(safe) and its alias C(yes)) require C(aptitude), otherwise
-     C(apt-get) suffices.
+   - Three of the upgrade modes (C(full), C(safe) and its alias C(yes))
+     required C(aptitude) up to 2.3, since 2.4 C(apt-get) is used as a
+     fall-back.
 '''
 
 EXAMPLES = '''
@@ -165,6 +178,11 @@ EXAMPLES = '''
     state: latest
     install_recommends: no
 
+- name: Upgrade all packages to the latest version
+  apt:
+    name: "*"
+    state: latest
+
 - name: Update all packages to the latest version
   apt:
     upgrade: dist
@@ -196,6 +214,14 @@ EXAMPLES = '''
 - name: Install a .deb package from the internet.
   apt:
     deb: https://example.com/python-ppq_0.1-1_all.deb
+
+- name: Remove useless packages from the cache
+  apt:
+    autoclean: yes
+
+- name: Remove dependencies that are no longer required
+  apt:
+    autoremove: yes
 '''
 
 RETURN = '''
@@ -207,7 +233,7 @@ cache_updated:
 cache_update_time:
     description: time of the last cache update (0 if unknown)
     returned: success, in some cases
-    type: datetime
+    type: int
     sample: 1425828348000
 stdout:
     description: output from apt
@@ -219,7 +245,7 @@ stderr:
     returned: success, when needed
     type: string
     sample: "AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 127.0.1.1. Set the 'ServerName' directive globally to ..."
-'''
+'''  # NOQA
 
 # added to stave off future warnings about apt api
 import warnings
@@ -240,14 +266,14 @@ from ansible.module_utils.urls import fetch_url
 
 # APT related constants
 APT_ENV_VARS = dict(
-    DEBIAN_FRONTEND = 'noninteractive',
-    DEBIAN_PRIORITY = 'critical',
+    DEBIAN_FRONTEND='noninteractive',
+    DEBIAN_PRIORITY='critical',
     # We screenscrape apt-get and aptitude output for information so we need
     # to make sure we use the C locale when running commands
-    LANG = 'C',
-    LC_ALL = 'C',
-    LC_MESSAGES = 'C',
-    LC_CTYPE = 'C',
+    LANG='C',
+    LC_ALL='C',
+    LC_MESSAGES='C',
+    LC_CTYPE='C',
 )
 
 DPKG_OPTIONS = 'force-confdef,force-confold'
@@ -465,7 +491,7 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
 
         name, version = package_split(package)
         installed, upgradable, has_files = package_status(m, name, version, cache, state='install')
-        if not installed or (upgrade and upgradable):
+        if (not installed and not only_upgrade) or (upgrade and upgradable):
             pkg_list.append("'%s'" % package)
         if installed and upgradable and version:
             # This happens when the package is installed, a newer version is
@@ -521,7 +547,7 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
         else:
             diff = {}
         if rc:
-            return (False, dict(msg="'%s' failed: %s" % (cmd, err), stdout=out, stderr=err))
+            return (False, dict(msg="'%s' failed: %s" % (cmd, err), stdout=out, stderr=err, rc=rc))
         else:
             return (True, dict(changed=True, stdout=out, stderr=err, diff=diff))
     else:
@@ -538,7 +564,7 @@ def get_field_of_deb(m, deb_file, field="Version"):
 
 
 def install_deb(m, debs, cache, force, install_recommends, allow_unauthenticated, dpkg_options):
-    changed=False
+    changed = False
     deps_to_install = []
     pkgs_to_install = []
     for deb_file in debs.split(','):
@@ -546,8 +572,13 @@ def install_deb(m, debs, cache, force, install_recommends, allow_unauthenticated
             pkg = apt.debfile.DebPackage(deb_file)
             pkg_name = get_field_of_deb(m, deb_file, "Package")
             pkg_version = get_field_of_deb(m, deb_file, "Version")
+            if len(apt_pkg.get_architectures()) > 1:
+                pkg_arch = get_field_of_deb(m, deb_file, "Architecture")
+                pkg_key = "%s:%s" % (pkg_name, pkg_arch)
+            else:
+                pkg_key = pkg_name
             try:
-                installed_pkg = apt.Cache()[pkg_name]
+                installed_pkg = apt.Cache()[pkg_key]
                 installed_version = installed_pkg.installed.version
                 if package_version_compare(pkg_version, installed_version) == 0:
                     # Does not need to down-/upgrade, move on to next package
@@ -609,7 +640,7 @@ def install_deb(m, debs, cache, force, install_recommends, allow_unauthenticated
         else:
             m.fail_json(msg="%s failed" % cmd, stdout=stdout, stderr=stderr)
     else:
-        m.exit_json(changed=changed, stdout=retvals.get('stdout',''), stderr=retvals.get('stderr',''), diff=retvals.get('diff', ''))
+        m.exit_json(changed=changed, stdout=retvals.get('stdout', ''), stderr=retvals.get('stderr', ''), diff=retvals.get('diff', ''))
 
 
 def remove(m, pkgspec, cache, purge=False, force=False,
@@ -646,7 +677,7 @@ def remove(m, pkgspec, cache, purge=False, force=False,
         else:
             check_arg = ''
 
-        cmd = "%s -q -y %s %s %s %s %s remove %s" % (APT_GET_CMD, dpkg_options, purge, force_yes ,autoremove, check_arg, packages)
+        cmd = "%s -q -y %s %s %s %s %s remove %s" % (APT_GET_CMD, dpkg_options, purge, force_yes, autoremove, check_arg, packages)
 
         rc, out, err = m.run_command(cmd)
         if m._diff:
@@ -654,11 +685,41 @@ def remove(m, pkgspec, cache, purge=False, force=False,
         else:
             diff = {}
         if rc:
-            m.fail_json(msg="'apt-get remove %s' failed: %s" % (packages, err), stdout=out, stderr=err)
+            m.fail_json(msg="'apt-get remove %s' failed: %s" % (packages, err), stdout=out, stderr=err, rc=rc)
         m.exit_json(changed=True, stdout=out, stderr=err, diff=diff)
 
 
+def cleanup(m, purge=False, force=False, operation=None,
+            dpkg_options=expand_dpkg_options(DPKG_OPTIONS)):
+    if force:
+        force_yes = '--force-yes'
+    else:
+        force_yes = ''
+
+    if purge:
+        purge = '--purge'
+    else:
+        purge = ''
+
+    if m.check_mode:
+        check_arg = '--simulate'
+    else:
+        check_arg = ''
+
+    cmd = "%s -y %s %s %s %s %s" % (APT_GET_CMD, dpkg_options, purge, force_yes, operation, check_arg)
+
+    rc, out, err = m.run_command(cmd)
+    if m._diff:
+        diff = parse_diff(out)
+    else:
+        diff = {}
+    if rc:
+        m.fail_json(msg="'apt-get %s' failed: %s" % (operation, err), stdout=out, stderr=err, rc=rc)
+    m.exit_json(changed=bool(len(diff)), stdout=out, stderr=err, diff=diff)
+
+
 def upgrade(m, mode="yes", force=False, default_release=None,
+            use_apt_get=False,
             dpkg_options=expand_dpkg_options(DPKG_OPTIONS)):
     if m.check_mode:
         check_arg = '--simulate'
@@ -667,19 +728,23 @@ def upgrade(m, mode="yes", force=False, default_release=None,
 
     apt_cmd = None
     prompt_regex = None
-    if mode == "dist":
+    if mode == "dist" or (mode == "full" and use_apt_get):
         # apt-get dist-upgrade
         apt_cmd = APT_GET_CMD
         upgrade_command = "dist-upgrade"
-    elif mode == "full":
+    elif mode == "full" and not use_apt_get:
         # aptitude full-upgrade
         apt_cmd = APTITUDE_CMD
         upgrade_command = "full-upgrade"
     else:
-        # aptitude safe-upgrade # mode=yes # default
-        apt_cmd = APTITUDE_CMD
-        upgrade_command = "safe-upgrade"
-        prompt_regex = r"(^Do you want to ignore this warning and proceed anyway\?|^\*\*\*.*\[default=.*\])"
+        if use_apt_get:
+            apt_cmd = APT_GET_CMD
+            upgrade_command = "upgrade --with-new-pkgs --autoremove"
+        else:
+            # aptitude safe-upgrade # mode=yes # default
+            apt_cmd = APTITUDE_CMD
+            upgrade_command = "safe-upgrade"
+            prompt_regex = r"(^Do you want to ignore this warning and proceed anyway\?|^\*\*\*.*\[default=.*\])"
 
     if force:
         if apt_cmd == APT_GET_CMD:
@@ -692,7 +757,7 @@ def upgrade(m, mode="yes", force=False, default_release=None,
     apt_cmd_path = m.get_bin_path(apt_cmd, required=True)
 
     cmd = '%s -y %s %s %s %s' % (apt_cmd_path, dpkg_options,
-                                    force_yes, check_arg, upgrade_command)
+                                 force_yes, check_arg, upgrade_command)
 
     if default_release:
         cmd += " -t '%s'" % (default_release,)
@@ -703,7 +768,7 @@ def upgrade(m, mode="yes", force=False, default_release=None,
     else:
         diff = {}
     if rc:
-        m.fail_json(msg="'%s %s' failed: %s" % (apt_cmd, upgrade_command, err), stdout=out)
+        m.fail_json(msg="'%s %s' failed: %s" % (apt_cmd, upgrade_command, err), stdout=out, rc=rc)
     if (apt_cmd == APT_GET_CMD and APT_GET_ZERO in out) or (apt_cmd == APTITUDE_CMD and APTITUDE_ZERO in out):
         m.exit_json(changed=False, msg=out, stdout=out, stderr=err)
     m.exit_json(changed=True, msg=out, stdout=out, stderr=err, diff=diff)
@@ -717,7 +782,10 @@ def download(module, deb):
     BUFSIZE = 65536
 
     try:
-        rsp, info = fetch_url(module, deb)
+        rsp, info = fetch_url(module, deb, method='GET')
+        if info['status'] != 200:
+            module.fail_json(msg="Failed to download %s, %s" % (deb,
+                                                                info['msg']))
         # Ensure file is open in binary mode for Python 3
         f = open(package, 'wb')
         # Read 1kb at a time to save on ram
@@ -780,7 +848,7 @@ def get_cache(module):
                 if rc == 0:
                     break
             if rc != 0:
-                module.fail_json(msg='Updating the cache to correct corrupt package lists failed:\n%s\n%s' % (str(e), str(so) + str(se)))
+                module.fail_json(msg='Updating the cache to correct corrupt package lists failed:\n%s\n%s' % (str(e), str(so) + str(se)), rc=rc)
             # try again
             cache = apt.Cache()
         else:
@@ -790,25 +858,27 @@ def get_cache(module):
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            state = dict(default='present', choices=['installed', 'latest', 'removed', 'absent', 'present', 'build-dep']),
-            update_cache = dict(aliases=['update-cache'], type='bool'),
-            cache_valid_time = dict(type='int', default=0),
-            purge = dict(default=False, type='bool'),
-            package = dict(default=None, aliases=['pkg', 'name'], type='list'),
-            deb = dict(default=None, type='path'),
-            default_release = dict(default=None, aliases=['default-release']),
-            install_recommends = dict(default=None, aliases=['install-recommends'], type='bool'),
-            force = dict(default='no', type='bool'),
-            upgrade = dict(choices=['no', 'yes', 'safe', 'full', 'dist']),
-            dpkg_options = dict(default=DPKG_OPTIONS),
-            autoremove = dict(type='bool', aliases=['autoclean']),
-            only_upgrade = dict(type='bool', default=False),
-            allow_unauthenticated = dict(default='no', aliases=['allow-unauthenticated'], type='bool'),
+        argument_spec=dict(
+            state=dict(default='present', choices=['installed', 'latest', 'removed', 'absent', 'present', 'build-dep']),
+            update_cache=dict(aliases=['update-cache'], type='bool'),
+            cache_valid_time=dict(type='int', default=0),
+            purge=dict(default=False, type='bool'),
+            package=dict(default=None, aliases=['pkg', 'name'], type='list'),
+            deb=dict(default=None, type='path'),
+            default_release=dict(default=None, aliases=['default-release']),
+            install_recommends=dict(default=None, aliases=['install-recommends'], type='bool'),
+            force=dict(default='no', type='bool'),
+            upgrade=dict(choices=['no', 'yes', 'safe', 'full', 'dist']),
+            dpkg_options=dict(default=DPKG_OPTIONS),
+            autoremove=dict(type='bool', default='no'),
+            autoclean=dict(type='bool', default='no'),
+            only_upgrade=dict(type='bool', default=False),
+            force_apt_get=dict(type='bool', default=False),
+            allow_unauthenticated=dict(default='no', aliases=['allow-unauthenticated'], type='bool'),
         ),
-        mutually_exclusive = [['package', 'upgrade', 'deb']],
-        required_one_of = [['package', 'upgrade', 'update_cache', 'deb', 'autoremove']],
-        supports_check_mode = True
+        mutually_exclusive=[['package', 'upgrade', 'deb']],
+        required_one_of=[['package', 'upgrade', 'update_cache', 'deb', 'autoremove']],
+        supports_check_mode=True
     )
 
     module.run_command_environ_update = APT_ENV_VARS
@@ -838,8 +908,11 @@ def main():
     if p['upgrade'] == 'no':
         p['upgrade'] = None
 
-    if not APTITUDE_CMD and p.get('upgrade', None) in [ 'full', 'safe', 'yes' ]:
-        module.fail_json(msg="Could not find aptitude. Please ensure it is installed.")
+    use_apt_get = p['force_apt_get']
+
+    if not use_apt_get and not APTITUDE_CMD and p.get('upgrade', None) in ['full', 'safe', 'yes']:
+        module.warn("Could not find aptitude. Using apt-get instead")
+        use_apt_get = True
 
     updated_cache = False
     updated_cache_time = 0
@@ -847,6 +920,7 @@ def main():
     allow_unauthenticated = p['allow_unauthenticated']
     dpkg_options = expand_dpkg_options(p['dpkg_options'])
     autoremove = p['autoremove']
+    autoclean = p['autoclean']
 
     # Deal with deprecated aliases
     if p['state'] == 'installed':
@@ -870,7 +944,7 @@ def main():
         # Cache valid time is default 0, which will update the cache if
         #  needed and `update_cache` was set to true
         updated_cache = False
-        if p['update_cache']:
+        if p['update_cache'] or p['cache_valid_time']:
             now = datetime.datetime.now()
             tdelta = datetime.timedelta(seconds=p['cache_valid_time'])
             if not mtimestamp + tdelta >= now:
@@ -899,7 +973,7 @@ def main():
         force_yes = p['force']
 
         if p['upgrade']:
-            upgrade(module, p['upgrade'], force_yes, p['default_release'], dpkg_options)
+            upgrade(module, p['upgrade'], force_yes, p['default_release'], use_apt_get, dpkg_options)
 
         if p['deb']:
             if p['state'] != 'present':
@@ -911,14 +985,28 @@ def main():
                         allow_unauthenticated=allow_unauthenticated,
                         force=force_yes, dpkg_options=p['dpkg_options'])
 
-        packages = p['package']
+        unfiltered_packages = p['package'] or ()
+        packages = [package for package in unfiltered_packages if package != '*']
+        all_installed = '*' in unfiltered_packages
         latest = p['state'] == 'latest'
+
+        if latest and all_installed:
+            if packages:
+                module.fail_json(msg='unable to install additional packages when ugrading all installed packages')
+            upgrade(module, 'yes', force_yes, p['default_release'], use_apt_get, dpkg_options)
+
         if packages:
             for package in packages:
                 if package.count('=') > 1:
                     module.fail_json(msg="invalid package spec: %s" % package)
                 if latest and '=' in package:
                     module.fail_json(msg='version number inconsistent with state=latest: %s' % package)
+
+        if not packages:
+            if autoclean:
+                cleanup(module, p['purge'], force=force_yes, operation='autoclean', dpkg_options=dpkg_options)
+            if autoremove:
+                cleanup(module, p['purge'], force=force_yes, operation='autoremove', dpkg_options=dpkg_options)
 
         if p['state'] in ('latest', 'present', 'build-dep'):
             state_upgrade = False

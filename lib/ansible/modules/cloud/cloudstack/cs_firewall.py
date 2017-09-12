@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
@@ -115,6 +115,14 @@ options:
       - Poll async jobs until job has finished.
     required: false
     default: true
+  tags:
+    description:
+      - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).
+      - "To delete all tags, set a empty list e.g. C(tags: [])."
+    required: false
+    default: null
+    aliases: [ 'tag' ]
+    version_added: "2.4"
 extends_documentation_fragment: cloudstack
 '''
 
@@ -218,7 +226,6 @@ network:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.cloudstack import (
     AnsibleCloudStack,
-    CloudStackException,
     cs_argument_spec,
     cs_required_together
 )
@@ -268,12 +275,12 @@ class AnsibleCloudStackFirewall(AnsibleCloudStack):
                 args['networkid'] = self.get_network(key='id')
                 if not args['networkid']:
                     self.module.fail_json(msg="missing required argument for type egress: network")
-                firewall_rules = self.cs.listEgressFirewallRules(**args)
+                firewall_rules = self.query_api('listEgressFirewallRules', **args)
             else:
                 args['ipaddressid'] = self.get_ip_address('id')
                 if not args['ipaddressid']:
                     self.module.fail_json(msg="missing required argument for type ingress: ip_address")
-                firewall_rules = self.cs.listFirewallRules(**args)
+                firewall_rules = self.query_api('listFirewallRules', **args)
 
             if firewall_rules and 'firewallrule' in firewall_rules:
                 for rule in firewall_rules['firewallrule']:
@@ -334,17 +341,19 @@ class AnsibleCloudStackFirewall(AnsibleCloudStack):
             if not self.module.check_mode:
                 if fw_type == 'egress':
                     args['networkid'] = self.get_network(key='id')
-                    res = self.cs.createEgressFirewallRule(**args)
+                    res = self.query_api('createEgressFirewallRule', **args)
                 else:
                     args['ipaddressid'] = self.get_ip_address('id')
-                    res = self.cs.createFirewallRule(**args)
-
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                    res = self.query_api('createFirewallRule', **args)
 
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
                     firewall_rule = self.poll_job(res, 'firewallrule')
+
+        if firewall_rule:
+            firewall_rule = self.ensure_tags(resource=firewall_rule, resource_type='Firewallrule')
+            self.firewall_rule = firewall_rule
+
         return firewall_rule
 
     def remove_firewall_rule(self):
@@ -359,12 +368,9 @@ class AnsibleCloudStackFirewall(AnsibleCloudStack):
             fw_type = self.module.params.get('type')
             if not self.module.check_mode:
                 if fw_type == 'egress':
-                    res = self.cs.deleteEgressFirewallRule(**args)
+                    res = self.query_api('deleteEgressFirewallRule', **args)
                 else:
-                    res = self.cs.deleteFirewallRule(**args)
-
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                    res = self.query_api('deleteFirewallRule', **args)
 
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
@@ -398,6 +404,7 @@ def main():
         account=dict(),
         project=dict(),
         poll_async=dict(type='bool', default=True),
+        tags=dict(type='list', aliases=['tag'], default=None),
     ))
 
     required_together = cs_required_together()
@@ -419,19 +426,15 @@ def main():
         supports_check_mode=True
     )
 
-    try:
-        acs_fw = AnsibleCloudStackFirewall(module)
+    acs_fw = AnsibleCloudStackFirewall(module)
 
-        state = module.params.get('state')
-        if state in ['absent']:
-            fw_rule = acs_fw.remove_firewall_rule()
-        else:
-            fw_rule = acs_fw.create_firewall_rule()
+    state = module.params.get('state')
+    if state in ['absent']:
+        fw_rule = acs_fw.remove_firewall_rule()
+    else:
+        fw_rule = acs_fw.create_firewall_rule()
 
-        result = acs_fw.get_result(fw_rule)
-
-    except CloudStackException as e:
-        module.fail_json(msg='CloudStackException: %s' % str(e))
+    result = acs_fw.get_result(fw_rule)
 
     module.exit_json(**result)
 

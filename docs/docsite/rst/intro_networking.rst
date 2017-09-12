@@ -140,11 +140,15 @@ Networking Environment Variables
 
 The following environment variables are available to Ansible networking modules:
 
-username ANSIBLE_NET_USERNAME
-password ANSIBLE_NET_PASSWORD
-ssh_keyfile ANSIBLE_NET_SSH_KEYFILE
-authorize ANSIBLE_NET_AUTHORIZE
-auth_pass ANSIBLE_NET_AUTH_PASS
+username :envvar:`ANSIBLE_NET_USERNAME`
+
+password :envvar:`ANSIBLE_NET_PASSWORD`
+
+ssh_keyfile :envvar:`ANSIBLE_NET_SSH_KEYFILE`
+
+authorize :envvar:`ANSIBLE_NET_AUTHORIZE`
+
+auth_pass :envvar:`ANSIBLE_NET_AUTH_PASS`
 
 Variables are evaulated in the following order, listed from lowest to highest priority:
 
@@ -169,9 +173,9 @@ Ansible allows you to use conditionals to control the flow of your playbooks. An
 * contains - Object contains specified item
 
 
-Conditional statements evalute the results from the commands that are
+Conditional statements evaluate the results from the commands that are
 executed remotely on the device.  Once the task executes the command
-set, the waitfor argument can be used to evalute the results before
+set, the waitfor argument can be used to evaluate the results before
 returning control to the Ansible playbook.
 
 For example::

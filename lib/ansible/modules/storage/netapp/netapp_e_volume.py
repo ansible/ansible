@@ -1,27 +1,15 @@
 #!/usr/bin/python
 
 # (c) 2016, NetApp, Inc
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -30,28 +18,9 @@ version_added: "2.2"
 short_description: Manage storage volumes (standard and thin)
 description:
     - Create or remove volumes (standard and thin) for NetApp E/EF-series storage arrays.
+extends_documentation_fragment:
+    - netapp.eseries
 options:
-  api_username:
-      required: true
-      description:
-      - The username to authenticate with the SANtricity WebServices Proxy or embedded REST API.
-  api_password:
-      required: true
-      description:
-      - The password to authenticate with the SANtricity WebServices Proxy or embedded REST API.
-  api_url:
-      required: true
-      description:
-      - The url to the SANtricity WebServices Proxy or embedded REST API.
-  validate_certs:
-      required: false
-      default: true
-      description:
-      - Should https certificates be validated?
-  ssid:
-    required: true
-    description:
-    - The ID of the array to manage (as configured on the web services proxy).
   state:
     required: true
     description:
@@ -134,12 +103,11 @@ EXAMPLES = '''
 '''
 RETURN = '''
 ---
-msg: "Standard volume [workload_vol_1] has been created."
-msg: "Thin volume [workload_thin_vol] has been created."
-msg: "Volume [workload_vol_1] has been expanded."
-msg: "Volume [workload_vol_1] has been deleted."
-msg: "Volume [workload_vol_1] did not exist."
-msg: "Volume [workload_vol_1] already exists."
+msg:
+    description: State of volume
+    type: string
+    returned: always
+    sample: "Standard volume [workload_vol_1] has been created."
 '''
 
 import json
@@ -148,42 +116,13 @@ import time
 from traceback import format_exc
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.netapp import request, eseries_host_argument_spec
 from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.urls import open_url
-from ansible.module_utils.six.moves.urllib.error import HTTPError
-from ansible.module_utils.api import basic_auth_argument_spec
 
-
-def request(url, data=None, headers=None, method='GET', use_proxy=True,
-            force=False, last_mod_time=None, timeout=10, validate_certs=True,
-            url_username=None, url_password=None, http_agent=None, force_basic_auth=True, ignore_errors=False):
-    try:
-        r = open_url(url=url, data=data, headers=headers, method=method, use_proxy=use_proxy,
-                     force=force, last_mod_time=last_mod_time, timeout=timeout, validate_certs=validate_certs,
-                     url_username=url_username, url_password=url_password, http_agent=http_agent,
-                     force_basic_auth=force_basic_auth)
-    except HTTPError:
-        err = get_exception()
-        r = err.fp
-
-    try:
-        raw_data = r.read()
-        if raw_data:
-            data = json.loads(raw_data)
-        else:
-            raw_data is None
-    except:
-        if ignore_errors:
-            pass
-        else:
-            raise Exception(raw_data)
-
-    resp_code = r.getcode()
-
-    if resp_code >= 400 and not ignore_errors:
-        raise Exception(resp_code, data)
-    else:
-        return resp_code, data
+HEADERS = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+}
 
 
 def ifilter(predicate, iterable):
@@ -210,13 +149,9 @@ class NetAppESeriesVolume(object):
             yb=1024 ** 8
         )
 
-        self._post_headers = dict(Accept="application/json")
-        self._post_headers['Content-Type'] = 'application/json'
-
-        argument_spec = basic_auth_argument_spec()
+        argument_spec = eseries_host_argument_spec()
         argument_spec.update(dict(
             state=dict(required=True, choices=['present', 'absent']),
-            ssid=dict(required=True, type='str'),
             name=dict(required=True, type='str'),
             storage_pool_name=dict(type='str'),
             size_unit=dict(default='gb', choices=['bytes', 'b', 'kb', 'mb', 'gb', 'tb', 'pb', 'eb', 'zb', 'yb'],
@@ -230,10 +165,6 @@ class NetAppESeriesVolume(object):
             thin_volume_max_repo_size=dict(type='int'),
             # TODO: add cache, owning controller support, thin expansion policy, etc
             log_path=dict(type='str'),
-            api_url=dict(type='str'),
-            api_username=dict(type='str'),
-            api_password=dict(type='str', no_log=True),
-            validate_certs=dict(type='bool'),
         ))
 
         self.module = AnsibleModule(argument_spec=argument_spec,
@@ -349,7 +280,7 @@ class NetAppESeriesVolume(object):
         self.debug("creating volume '%s'" % name)
         try:
             (rc, resp) = request(self.api_url + "/storage-systems/%s/volumes" % (self.ssid),
-                                 data=json.dumps(volume_add_req), headers=self._post_headers, method='POST',
+                                 data=json.dumps(volume_add_req), headers=HEADERS, method='POST',
                                  url_username=self.api_usr, url_password=self.api_pwd,
                                  validate_certs=self.validate_certs,
                                  timeout=120)
@@ -374,7 +305,7 @@ class NetAppESeriesVolume(object):
         self.debug("creating thin-volume '%s'" % name)
         try:
             (rc, resp) = request(self.api_url + "/storage-systems/%s/thin-volumes" % (self.ssid),
-                                 data=json.dumps(thin_volume_add_req), headers=self._post_headers, method='POST',
+                                 data=json.dumps(thin_volume_add_req), headers=HEADERS, method='POST',
                                  url_username=self.api_usr, url_password=self.api_pwd,
                                  validate_certs=self.validate_certs,
                                  timeout=120)
@@ -432,7 +363,7 @@ class NetAppESeriesVolume(object):
             (rc, resp) = request(
                 self.api_url + "/storage-systems/%s/%s/%s/" % (self.ssid, self.volume_resource_name,
                                                                self.volume_detail['id']),
-                data=json.dumps(update_volume_req), headers=self._post_headers, method='POST',
+                data=json.dumps(update_volume_req), headers=HEADERS, method='POST',
                 url_username=self.api_usr, url_password=self.api_pwd, validate_certs=self.validate_certs,
                 timeout=120)
         except Exception:
@@ -465,7 +396,7 @@ class NetAppESeriesVolume(object):
                 (rc, resp) = request(self.api_url + "/storage-systems/%s/thin-volumes/%s/expand" % (self.ssid,
                                                                                                     self.volume_detail[
                                                                                                         'id']),
-                                     data=json.dumps(thin_volume_expand_req), headers=self._post_headers, method='POST',
+                                     data=json.dumps(thin_volume_expand_req), headers=HEADERS, method='POST',
                                      url_username=self.api_usr, url_password=self.api_pwd,
                                      validate_certs=self.validate_certs, timeout=120)
             except Exception:
@@ -486,7 +417,7 @@ class NetAppESeriesVolume(object):
                 (rc, resp) = request(
                     self.api_url + "/storage-systems/%s/volumes/%s/expand" % (self.ssid,
                                                                               self.volume_detail['id']),
-                    data=json.dumps(volume_expand_req), headers=self._post_headers, method='POST',
+                    data=json.dumps(volume_expand_req), headers=HEADERS, method='POST',
                     url_username=self.api_usr, url_password=self.api_pwd, validate_certs=self.validate_certs,
                     timeout=120)
             except Exception:

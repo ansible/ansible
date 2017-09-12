@@ -23,15 +23,31 @@
 - name: assert the ping worked
   assert:
     that:
-    - "result.changed == false"
-    - "result.ping == 'pong'"
+    - not result|failed
+    - not result|changed
+    - result.ping == 'pong'
 
 - name: ping with data
-  ping: data="testing"
+  ping:
+    data: testing
   register: result
 
 - name: assert the ping worked with data
   assert:
     that:
-    - "result.changed == false"
-    - "result.ping == 'testing'"
+    - not result|failed
+    - not result|changed
+    - result.ping == 'testing'
+
+- name: ping with data=crash
+  ping:
+    data: crash
+  register: result
+  ignore_errors: yes
+
+- name: assert the ping failed with data=boom
+  assert:
+    that:
+    - result|failed
+    - not result|changed
+    - "'Exception: boom' in result.module_stderr"

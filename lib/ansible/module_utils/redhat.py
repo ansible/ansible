@@ -28,6 +28,8 @@
 
 import os
 import re
+import shutil
+import tempfile
 import types
 
 from ansible.module_utils.six.moves import configparser
@@ -59,16 +61,22 @@ class RegistrationBase(object):
 
     def update_plugin_conf(self, plugin, enabled=True):
         plugin_conf = '/etc/yum/pluginconf.d/%s.conf' % plugin
+
         if os.path.isfile(plugin_conf):
+            tmpfd, tmpfile = tempfile.mkstemp()
+            shutil.copy2(plugin_conf, tmpfile)
             cfg = configparser.ConfigParser()
-            cfg.read([plugin_conf])
+            cfg.read([tmpfile])
+
             if enabled:
                 cfg.set('main', 'enabled', 1)
             else:
                 cfg.set('main', 'enabled', 0)
-            fd = open(plugin_conf, 'rwa+')
+
+            fd = open(tmpfile, 'w+')
             cfg.write(fd)
             fd.close()
+            self.module.atomic_move(tmpfile, plugin_conf)
 
     def subscribe(self, **kwargs):
         raise NotImplementedError("Must be implemented by a sub-class")
@@ -125,9 +133,9 @@ class Rhsm(RegistrationBase):
         # Pass supplied **kwargs as parameters to subscription-manager.  Ignore
         # non-configuration parameters and replace '_' with '.'.  For example,
         # 'server_hostname' becomes '--system.hostname'.
-        for k,v in kwargs.items():
+        for k, v in kwargs.items():
             if re.search(r'^(system|rhsm)_', k):
-                args.append('--%s=%s' % (k.replace('_','.'), v))
+                args.append('--%s=%s' % (k.replace('_', '.'), v))
 
         self.module.run_command(args, check_rc=True)
 
@@ -190,6 +198,8 @@ class Rhsm(RegistrationBase):
         '''
         args = ['subscription-manager', 'unregister']
         rc, stderr, stdout = self.module.run_command(args, check_rc=True)
+        self.update_plugin_conf('rhnplugin', False)
+        self.update_plugin_conf('subscription-manager', False)
 
     def subscribe(self, regexp):
         '''
@@ -213,7 +223,7 @@ class RhsmPool(object):
 
     def __init__(self, module, **kwargs):
         self.module = module
-        for k,v in kwargs.items():
+        for k, v in kwargs.items():
             setattr(self, k, v)
 
     def __str__(self):
@@ -255,7 +265,7 @@ class RhsmPools(object):
                 continue
             # If a colon ':' is found, parse
             elif ':' in line:
-                (key, value) = line.split(':',1)
+                (key, value) = line.split(':', 1)
                 key = key.strip().replace(" ", "")  # To unify
                 value = value.strip()
                 if key in ['ProductName', 'SubscriptionName']:
@@ -265,7 +275,7 @@ class RhsmPools(object):
                     # Associate value with most recently recorded product
                     products[-1].__setattr__(key, value)
                 # FIXME - log some warning?
-                #else:
+                # else:
                     # warnings.warn("Unhandled subscription key/value: %s/%s" % (key,value))
         return products
 
@@ -277,4 +287,3 @@ class RhsmPools(object):
         for product in self.products:
             if r.search(product._name):
                 yield product
-

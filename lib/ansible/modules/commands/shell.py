@@ -1,23 +1,15 @@
-# There is actually no actual shell module source, when you use 'shell' in ansible,
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# # There is no actual shell module source, when you use 'shell' in ansible,
 # it runs the 'command' module with special arguments and it behaves differently.
 # See the command source and the comment "#USE_SHELL".
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
@@ -30,6 +22,7 @@ description:
      - The C(shell) module takes the command name followed by a list of space-delimited arguments.
        It is almost exactly like the M(command) module but runs
        the command through a shell (C(/bin/sh)) on the remote node.
+     - For Windows targets, use the M(win_shell) module instead.
 version_added: "0.2"
 options:
   free_form:
@@ -67,6 +60,12 @@ options:
     required: false
     default: True
     version_added: "1.8"
+  stdin:
+    version_added: "2.4"
+    description:
+      - Set the stdin of the command directly to the specified value.
+    required: false
+    default: null
 notes:
    -  If you want to execute a command securely and predictably, it may be
       better to use the M(command) module instead. Best practices when writing
@@ -75,7 +74,7 @@ notes:
       judgement.
    -  To sanitize any variables passed to the shell module, you should use
       "{{ var | quote }}" instead of just "{{ var }}" to make sure they don't include evil things like semicolons.
-
+   - For Windows targets, use the M(win_shell) module instead.
 requirements: [ ]
 author:
     - Ansible Core Team
@@ -171,6 +170,6 @@ rc:
 stdout_lines:
     description: The command standard output split in lines
     returned: always
-    type: list of strings
+    type: list
     sample: [u'Clustering node rabbit@slave1 with rabbit@master ...']
 '''

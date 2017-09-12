@@ -1,28 +1,20 @@
 #!/usr/bin/python
 #
-# PubNub Real-time Cloud-Hosted Push API and Push Notification Client Frameworks
+# PubNub Real-time Cloud-Hosted Push API and Push Notification Client
+# Frameworks
 # Copyright (C) 2016 PubNub Inc.
 # http://www.pubnub.com/
 # http://www.pubnub.com/terms
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 
 DOCUMENTATION = '''
@@ -61,6 +53,13 @@ options:
        gathered artifacts and pass them to this parameter.
     required: false
     default: {}
+  account:
+    description:
+      - "Name of PubNub account for from which C(application) will be used to
+      manage blocks."
+      - "User\'s account will be used if value not set or empty."
+    required: false
+    version_added: '2.4'
   application:
     description:
       - "Name of target PubNub application for which blocks configuration on
@@ -220,49 +219,89 @@ module_cache:
   used few times it is better to pass cached data to next module calls to speed
   up process."
   type: dict
+  returned: always
 '''
 import copy
 import os
 
-# Import module snippets
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import *
-
 try:
     # Import PubNub BLOCKS client.
-    from pubnub_blocks_client import Account, Application, Keyset, Block
-    from pubnub_blocks_client import EventHandler
+    from pubnub_blocks_client import User, Account, Owner, Application, Keyset
+    from pubnub_blocks_client import Block, EventHandler
     import pubnub_blocks_client.exceptions as exceptions
     HAS_PUBNUB_BLOCKS_CLIENT = True
 except ImportError:
     HAS_PUBNUB_BLOCKS_CLIENT = False
+    User = None
+    Account = None
+    Owner = None
+    Application = None
+    Keyset = None
+    Block = None
+    EventHandler = None
+    exceptions = None
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_text
 
 
-def pubnub_account(module):
-    """Create and configure account if it is possible.
+def pubnub_user(module):
+    """Create and configure user model if it possible.
 
     :type module:  AnsibleModule
     :param module: Reference on module which contain module launch
                    information and status report methods.
 
-    :rtype:  Account
-    :return: Reference on initialized and ready to use account or 'None' in
+    :rtype:  User
+    :return: Reference on initialized and ready to use user or 'None' in
              case if not all required information has been passed to block.
     """
-    account = None
+    user = None
     params = module.params
+
     if params.get('cache') and params['cache'].get('module_cache'):
-        account = Account()
-        account.restore(cache=copy.deepcopy(params['cache']['module_cache']))
+        cache = params['cache']['module_cache']
+        user = User()
+        user.restore(cache=copy.deepcopy(cache['pnm_user']))
     elif params.get('email') and params.get('password'):
-        account = Account(email=params.get('email'),
-                          password=params.get('password'))
+        user = User(email=params.get('email'), password=params.get('password'))
     else:
         err_msg = 'It looks like not account credentials has been passed or ' \
                   '\'cache\' field doesn\'t have result of previous module ' \
                   'call.'
         module.fail_json(msg='Missing account credentials.',
                          description=err_msg, changed=False)
+
+    return user
+
+
+def pubnub_account(module, user):
+    """Create and configure account if it is possible.
+
+    :type module:  AnsibleModule
+    :param module: Reference on module which contain module launch
+                   information and status report methods.
+    :type user:    User
+    :param user:   Reference on authorized user for which one of accounts
+                   should be used during manipulations with block.
+
+    :rtype:  Account
+    :return: Reference on initialized and ready to use account or 'None' in
+             case if not all required information has been passed to block.
+    """
+    params = module.params
+    if params.get('account'):
+        account_name = params.get('account')
+        account = user.account(name=params.get('account'))
+        if account is None:
+            err_frmt = 'It looks like there is no \'{0}\' account for ' \
+                       'authorized user. Please make sure what correct ' \
+                       'name has been passed during module configuration.'
+            module.fail_json(msg='Missing account.',
+                             description=err_frmt.format(account_name),
+                             changed=False)
+    else:
+        account = user.accounts()[0]
 
     return account
 
@@ -444,8 +483,16 @@ def _failure_title_from_exception(exception):
              failure.
     """
     title = 'General REST API access error.'
-    if exception.code == exceptions.PN_AUTHORIZATION_WRONG_CREDENTIALS:
-        title = 'Authorization error (wrong credentials).'
+    if exception.code == exceptions.PN_AUTHORIZATION_MISSING_CREDENTIALS:
+        title = 'Authorization error: missing credentials.'
+    elif exception.code == exceptions.PN_AUTHORIZATION_WRONG_CREDENTIALS:
+        title = 'Authorization error: wrong credentials.'
+    elif exception.code == exceptions.PN_USER_INSUFFICIENT_RIGHTS:
+        title = 'API access error: insufficient access rights.'
+    elif exception.code == exceptions.PN_API_ACCESS_TOKEN_EXPIRED:
+        title = 'API access error: time token expired.'
+    elif exception.code == exceptions.PN_KEYSET_BLOCK_EXISTS:
+        title = 'Block create did fail: block with same name already exists).'
     elif exception.code == exceptions.PN_KEYSET_BLOCKS_FETCH_DID_FAIL:
         title = 'Unable fetch list of blocks for keyset.'
     elif exception.code == exceptions.PN_BLOCK_CREATE_DID_FAIL:
@@ -457,6 +504,8 @@ def _failure_title_from_exception(exception):
     elif exception.code == exceptions.PN_BLOCK_START_STOP_DID_FAIL:
         title = 'Block start/stop did fail.'
     elif exception.code == exceptions.PN_EVENT_HANDLER_MISSING_FIELDS:
+        title = 'Event handler creation did fail: missing fields.'
+    elif exception.code == exceptions.PN_BLOCK_EVENT_HANDLER_EXISTS:
         title = 'Event handler creation did fail: missing fields.'
     elif exception.code == exceptions.PN_EVENT_HANDLER_CREATE_DID_FAIL:
         title = 'Event handler creation did fail.'
@@ -493,6 +542,7 @@ def main():
     fields = dict(
         email=dict(default='', required=False, type='str'),
         password=dict(default='', required=False, type='str', no_log=True),
+        account=dict(default='', required=False, type='str'),
         application=dict(required=True, type='str'),
         keyset=dict(required=True, type='str'),
         state=dict(default='present', type='str',
@@ -509,8 +559,10 @@ def main():
 
     params = module.params
 
+    # Authorize user.
+    user = pubnub_user(module)
     # Initialize PubNub account instance.
-    account = pubnub_account(module)
+    account = pubnub_account(module, user=user)
     # Try fetch application with which module should work.
     application = pubnub_application(module, account=account)
     # Try fetch keyset with which module should work.
@@ -548,18 +600,22 @@ def main():
     if not module.check_mode:
         try:
             account.save()
-        except (exceptions.AccountError, exceptions.KeysetError,
+        except (exceptions.APIAccessError, exceptions.KeysetError,
                 exceptions.BlockError, exceptions.EventHandlerError,
                 exceptions.GeneralPubNubError) as exc:
+            module_cache = dict(account)
+            module_cache.update(dict(pnm_user=dict(user)))
             exc_msg = _failure_title_from_exception(exc)
             exc_descr = exc.message if hasattr(exc, 'message') else exc.args[0]
             module.fail_json(msg=exc_msg, description=exc_descr,
                              changed=account.changed,
-                             module_cache=dict(account))
+                             module_cache=module_cache)
 
     # Report module execution results.
+    module_cache = dict(account)
+    module_cache.update(dict(pnm_user=dict(user)))
     changed_will_change = account.changed or account.will_change
-    module.exit_json(changed=changed_will_change, module_cache=dict(account))
+    module.exit_json(changed=changed_will_change, module_cache=module_cache)
 
 
 if __name__ == '__main__':

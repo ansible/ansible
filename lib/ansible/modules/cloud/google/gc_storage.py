@@ -1,20 +1,13 @@
 #!/usr/bin/python
-# This file is part of Ansible
 #
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -25,7 +18,10 @@ module: gc_storage
 version_added: "1.4"
 short_description: This module manages objects/buckets in Google Cloud Storage.
 description:
-    - This module allows users to manage their objects/buckets in Google Cloud Storage.  It allows upload and download operations and can set some canned permissions. It also allows retrieval of URLs for objects for use in playbooks, and retrieval of string contents of objects.  This module requires setting the default project in GCS prior to playbook usage.  See U(https://developers.google.com/storage/docs/reference/v1/apiversion1) for information about setting the default project.
+    - This module allows users to manage their objects/buckets in Google Cloud Storage.  It allows upload and download operations and can set some
+      canned permissions. It also allows retrieval of URLs for objects for use in playbooks, and retrieval of string contents of objects.  This module
+      requires setting the default project in GCS prior to playbook usage.  See U(https://developers.google.com/storage/docs/reference/v1/apiversion1) for
+      information about setting the default project.
 
 options:
   bucket:
@@ -54,7 +50,8 @@ options:
     aliases: [ 'overwrite' ]
   permission:
     description:
-      - This option let's the user set the canned permissions on the object/bucket that are created. The permissions that can be set are 'private', 'public-read', 'authenticated-read'.
+      - This option let's the user set the canned permissions on the object/bucket that are created. The permissions that can be set are 'private',
+        'public-read', 'authenticated-read'.
     required: false
     default: private
   headers:
@@ -65,12 +62,14 @@ options:
     default: '{}'
   expiration:
     description:
-      - Time limit (in seconds) for the URL generated and returned by GCA when performing a mode=put or mode=get_url operation. This url is only available when public-read is the acl for the object.
+      - Time limit (in seconds) for the URL generated and returned by GCA when performing a mode=put or mode=get_url operation. This url is only
+        available when public-read is the acl for the object.
     required: false
     default: null
   mode:
     description:
-      - Switches the module behaviour between upload, download, get_url (return download url) , get_str (download object as string), create (bucket) and delete (bucket).
+      - Switches the module behaviour between upload, download, get_url (return download url) , get_str (download object as string), create (bucket) and
+        delete (bucket).
     required: true
     default: null
     choices: [ 'get', 'put', 'get_url', 'get_str', 'delete', 'create' ]
@@ -84,12 +83,25 @@ options:
       - GS access key. If not set then the value of the GS_ACCESS_KEY_ID environment variable is used.
     required: true
     default: null
+  region:
+    version_added: "2.4"
+    description:
+      - The gs region to use. If not defined then the value 'US' will be used. See U(https://cloud.google.com/storage/docs/bucket-locations)
+    required: false
+    default: 'US'
+  versioning:
+    version_added: "2.4"
+    description:
+      - Whether versioning is enabled or disabled (note that once versioning is enabled, it can only be suspended)
+    required: false
+    default: null
+    choices: [ 'yes', 'no' ]
 
 requirements:
     - "python >= 2.6"
     - "boto >= 2.9"
 
-author: "Benno Joy (@bennojoy)"
+author: "Benno Joy (@bennojoy), extended by Lukas Beumer (@nitaco)"
 
 '''
 
@@ -137,17 +149,31 @@ EXAMPLES = '''
   gc_storage:
     bucket: mybucket
     mode: delete
+
+- name: Create a bucket with versioning enabled
+  gc_storage:
+    bucket: "mybucket"
+    versioning: yes
+    mode: create
+
+- name: Create a bucket located in the eu
+  gc_storage:
+    bucket: "mybucket"
+    region: "europe-west3"
+    mode: create
+
 '''
 
 import os
-import urlparse
-import hashlib
 
 try:
     import boto
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
+
+from ansible.module_utils.basic import AnsibleModule
+
 
 def grant_check(module, gs, obj):
     try:
@@ -180,6 +206,7 @@ def key_check(module, gs, bucket, obj):
     else:
         return False
 
+
 def keysum(module, gs, bucket, obj):
     bucket = gs.lookup(bucket)
     key_check = bucket.get_key(obj)
@@ -190,6 +217,7 @@ def keysum(module, gs, bucket, obj):
     if etag_multipart is True:
         module.fail_json(msg="Files uploaded with multipart of gs are not supported with checksum, unable to compute checksum.")
     return md5_remote
+
 
 def bucket_check(module, gs, bucket):
     try:
@@ -202,14 +230,17 @@ def bucket_check(module, gs, bucket):
     else:
         return False
 
+
 def create_bucket(module, gs, bucket):
     try:
-        bucket = gs.create_bucket(bucket)
+        bucket = gs.create_bucket(bucket, transform_headers(module.params.get('headers')), module.params.get('region'))
         bucket.set_acl(module.params.get('permission'))
+        bucket.configure_versioning(module.params.get('versioning'))
     except gs.provider.storage_response_error as e:
         module.fail_json(msg= str(e))
     if bucket:
         return True
+
 
 def delete_bucket(module, gs, bucket):
     try:
@@ -222,6 +253,7 @@ def delete_bucket(module, gs, bucket):
     except gs.provider.storage_response_error as e:
         module.fail_json(msg= str(e))
 
+
 def delete_key(module, gs, bucket, obj):
     try:
         bucket = gs.lookup(bucket)
@@ -229,6 +261,7 @@ def delete_key(module, gs, bucket, obj):
         module.exit_json(msg="Object deleted from bucket ", changed=True)
     except gs.provider.storage_response_error as e:
         module.fail_json(msg= str(e))
+
 
 def create_dirkey(module, gs, bucket, obj):
     try:
@@ -239,11 +272,13 @@ def create_dirkey(module, gs, bucket, obj):
     except gs.provider.storage_response_error as e:
         module.fail_json(msg= str(e))
 
+
 def path_check(path):
     if os.path.exists(path):
         return True
     else:
         return False
+
 
 def transform_headers(headers):
     """
@@ -260,6 +295,7 @@ def transform_headers(headers):
         headers[key] = str(value)
     return headers
 
+
 def upload_gsfile(module, gs, bucket, obj, src, expiry):
     try:
         bucket = gs.lookup(bucket)
@@ -274,6 +310,7 @@ def upload_gsfile(module, gs, bucket, obj, src, expiry):
     except gs.provider.storage_copy_error as e:
         module.fail_json(msg= str(e))
 
+
 def download_gsfile(module, gs, bucket, obj, dest):
     try:
         bucket = gs.lookup(bucket)
@@ -282,6 +319,7 @@ def download_gsfile(module, gs, bucket, obj, dest):
         module.exit_json(msg="GET operation complete", changed=True)
     except gs.provider.storage_copy_error as e:
         module.fail_json(msg= str(e))
+
 
 def download_gsstr(module, gs, bucket, obj):
     try:
@@ -292,6 +330,7 @@ def download_gsstr(module, gs, bucket, obj):
     except gs.provider.storage_copy_error as e:
         module.fail_json(msg= str(e))
 
+
 def get_download_url(module, gs, bucket, obj, expiry):
     try:
         bucket = gs.lookup(bucket)
@@ -300,6 +339,7 @@ def get_download_url(module, gs, bucket, obj, expiry):
         module.exit_json(msg="Download url:", url=url, expiration=expiry, changed=True)
     except gs.provider.storage_response_error as e:
         module.fail_json(msg= str(e))
+
 
 def handle_get(module, gs, bucket, obj, overwrite, dest):
     md5_remote = keysum(module, gs, bucket, obj)
@@ -310,6 +350,7 @@ def handle_get(module, gs, bucket, obj, overwrite, dest):
         module.exit_json(msg="WARNING: Checksums do not match. Use overwrite parameter to force download.", failed=True)
     else:
         download_gsfile(module, gs, bucket, obj, dest)
+
 
 def handle_put(module, gs, bucket, obj, overwrite, src, expiration):
     # Lets check to see if bucket exists to get ground truth.
@@ -335,6 +376,7 @@ def handle_put(module, gs, bucket, obj, overwrite, src, expiration):
     if bucket_rc and not key_rc:
         upload_gsfile(module, gs, bucket, obj, src, expiration)
 
+
 def handle_delete(module, gs, bucket, obj):
     if bucket and not obj:
         if bucket_check(module, gs, bucket):
@@ -351,6 +393,7 @@ def handle_delete(module, gs, bucket, obj):
             module.exit_json(msg="Bucket does not exist.", changed=False)
     else:
         module.fail_json(msg="Bucket or Bucket & object  parameter is required.", failed=True)
+
 
 def handle_create(module, gs, bucket, obj):
     if bucket and not obj:
@@ -373,6 +416,7 @@ def handle_create(module, gs, bucket, obj):
             create_bucket(module, gs, bucket)
             create_dirkey(module, gs, bucket, dirobj)
 
+
 def main():
     module = AnsibleModule(
         argument_spec = dict(
@@ -387,6 +431,8 @@ def main():
             gs_secret_key  = dict(no_log=True, required=True),
             gs_access_key  = dict(required=True),
             overwrite      = dict(default=True, type='bool', aliases=['force']),
+            region         = dict(default='US', type='str'),
+            versioning     = dict(default='no', type='bool')
         ),
     )
 
@@ -455,7 +501,5 @@ def main():
             module.fail_json(msg="Bucket and Object parameters must be set", failed=True)
 
 
-# import module snippets
-from ansible.module_utils.basic import *
 if __name__ == '__main__':
     main()

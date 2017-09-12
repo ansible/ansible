@@ -60,22 +60,54 @@ namespace Ansible.Shell
 }
 "@
 
-$parsed_args = Parse-Args $args $false
+# Cleanse CLIXML from stderr (sift out error stream data, discard others for now)
+Function Cleanse-Stderr($raw_stderr) {
+    Try {
+        # NB: this regex isn't perfect, but is decent at finding CLIXML amongst other stderr noise
+        If($raw_stderr -match "(?s)(?<prenoise1>.*)#< CLIXML(?<prenoise2>.*)(?<clixml><Objs.+</Objs>)(?<postnoise>.*)") {
+            $clixml = [xml]$matches["clixml"]
 
-$raw_command_line = $(Get-AnsibleParam $parsed_args "_raw_params" -failifempty $true).Trim()
-$chdir = Get-AnsibleParam $parsed_args "chdir" -type "path"
-$executable = Get-AnsibleParam $parsed_args "executable" -type "path"
-$creates = Get-AnsibleParam $parsed_args "creates" -type "path"
-$removes = Get-AnsibleParam $parsed_args "removes" -type "path"
+            $merged_stderr = "{0}{1}{2}{3}" -f @(
+               $matches["prenoise1"],
+               $matches["prenoise2"],
+               # filter out just the Error-tagged strings for now, and zap embedded CRLF chars
+               ($clixml.Objs.ChildNodes | ? { $_.Name -eq 'S' } | ? { $_.S -eq 'Error' } | % { $_.'#text'.Replace('_x000D__x000A_','') } | Out-String),
+               $matches["postnoise"]) | Out-String
 
-$result = @{changed=$true; warnings=@(); cmd=$raw_command_line}
+            return $merged_stderr.Trim()
+
+            # FUTURE: parse/return other streams
+        }
+        Else {
+            $raw_stderr
+        }
+    }
+    Catch {
+        "***EXCEPTION PARSING CLIXML: $_***" + $raw_stderr
+    }
+}
+
+$params = Parse-Args $args -supports_check_mode $false
+
+$raw_command_line = Get-AnsibleParam -obj $params -name "_raw_params" -type "str" -failifempty $true
+$chdir = Get-AnsibleParam -obj $params -name "chdir" -type "path"
+$executable = Get-AnsibleParam -obj $params -name "executable" -type "path"
+$creates = Get-AnsibleParam -obj $params -name "creates" -type "path"
+$removes = Get-AnsibleParam -obj $params -name "removes" -type "path"
+
+$raw_command_line = $raw_command_line.Trim()
+
+$result = @{
+    changed = $true
+    cmd = $raw_command_line
+}
 
 If($creates -and $(Test-Path $creates)) {
-    Exit-Json @{cmd=$raw_command_line; msg="skipped, since $creates exists"; changed=$false; skipped=$true; rc=0}
+    Exit-Json @{msg="skipped, since $creates exists";cmd=$raw_command_line;changed=$false;skipped=$true;rc=0}
 }
 
 If($removes -and -not $(Test-Path $removes)) {
-    Exit-Json @{cmd=$raw_command_line; msg="skipped, since $removes does not exist"; changed=$false; skipped=$true; rc=0}
+    Exit-Json @{msg="skipped, since $removes does not exist";cmd=$raw_command_line;changed=$false;skipped=$true;rc=0}
 }
 
 Add-Type -TypeDefinition $helper_def
@@ -84,6 +116,9 @@ $exec_args = $null
 
 If(-not $executable -or $executable -eq "powershell") {
     $exec_application = "powershell"
+
+    # force input encoding to preamble-free UTF8 so PS sub-processes (eg, Start-Job) don't blow up
+    $raw_command_line = "[Console]::InputEncoding = New-Object Text.UTF8Encoding `$false; " + $raw_command_line
 
     # Base64 encode the command so we don't have to worry about the various levels of escaping
     $encoded_command = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($raw_command_line))
@@ -117,7 +152,7 @@ Catch [System.ComponentModel.Win32Exception] {
     # fail nicely for "normal" error conditions
     # FUTURE: this probably won't work on Nano Server
     $excep = $_
-    Exit-Json @{failed=$true;changed=$false;cmd=$raw_command_line;rc=$excep.Exception.NativeErrorCode;msg=$excep.Exception.Message}
+    Exit-Json @{msg = $excep.Exception.Message; cmd = $raw_command_line; changed = $false; rc = $excep.Exception.NativeErrorCode}
 }
 
 $stdout = $stderr = [string] $null
@@ -125,7 +160,7 @@ $stdout = $stderr = [string] $null
 [Ansible.Shell.ProcessUtil]::GetProcessOutput($proc.StandardOutput, $proc.StandardError, [ref] $stdout, [ref] $stderr) | Out-Null
 
 $result.stdout = $stdout
-$result.stderr = $stderr
+$result.stderr = Cleanse-Stderr $stderr
 
 # TODO: decode CLIXML stderr output (and other streams?)
 
@@ -138,5 +173,9 @@ $end_datetime = [DateTime]::UtcNow
 $result.start = $start_datetime.ToString("yyyy-MM-dd hh:mm:ss.ffffff")
 $result.end = $end_datetime.ToString("yyyy-MM-dd hh:mm:ss.ffffff")
 $result.delta = $($end_datetime - $start_datetime).ToString("h\:mm\:ss\.ffffff")
+
+If ($result.rc -ne 0) {
+    Fail-Json -obj $result -message "non-zero return code"
+}
 
 Exit-Json $result

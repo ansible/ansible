@@ -1,30 +1,54 @@
 # (c) 2017, Brian Coca
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+DOCUMENTATION = '''
+    cache: pickle
+    short_description: Pickle formatted files.
+    description:
+        - This cache uses Python's pickle serialization format, in per host files, saved to the filesystem.
+    version_added: "2.3"
+    author: Brian Coca (@bcoca)
+    options:
+      _uri:
+        required: True
+        description:
+          - Path in which the cache plugin will save the files
+        type: list
+        env:
+          - name: ANSIBLE_CACHE_PLUGIN_CONNECTION
+        ini:
+          - key: fact_caching_connection
+            section: defaults
+      _prefix:
+        description: User defined prefix to use when creating the files
+        env:
+          - name: ANSIBLE_CACHE_PLUGIN_PREFIX
+        ini:
+          - key: fact_caching_prefix
+          - section: defaults
+      _timeout:
+        default: 86400
+        description: Expiration timeout for the cache plugin data
+        env:
+          - name: ANSIBLE_CACHE_PLUGIN_TIMEOUT
+        ini:
+          - key: fact_caching_timeout
+            section: defaults
+'''
 
 try:
     import cPickle as pickle
 except ImportError:
     import pickle
 
-from ansible.plugins.cache.base import BaseFileCacheModule
+from ansible.module_utils.six import PY3
+from ansible.plugins.cache import BaseFileCacheModule
+
 
 class CacheModule(BaseFileCacheModule):
     """
@@ -34,7 +58,10 @@ class CacheModule(BaseFileCacheModule):
     def _load(self, filepath):
         # Pickle is a binary format
         with open(filepath, 'rb') as f:
-            return pickle.load(f)
+            if PY3:
+                return pickle.load(f, encoding='bytes')
+            else:
+                return pickle.load(f)
 
     def _dump(self, value, filepath):
         with open(filepath, 'wb') as f:

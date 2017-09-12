@@ -21,10 +21,9 @@ __metaclass__ = type
 import os
 
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_native
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_text
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
-from ansible.constants import mk_boolean as boolean
 
 
 class ActionModule(ActionBase):
@@ -38,10 +37,11 @@ class ActionModule(ActionBase):
 
         result = super(ActionModule, self).run(tmp, task_vars)
 
-        source  = self._task.args.get('src', None)
-        dest    = self._task.args.get('dest', None)
-        remote_src = boolean(self._task.args.get('remote_src', False))
+        source = self._task.args.get('src', None)
+        dest = self._task.args.get('dest', None)
+        remote_src = boolean(self._task.args.get('remote_src', False), strict=False)
         creates = self._task.args.get('creates', None)
+        decrypt = self._task.args.get('decrypt', True)
 
         # "copy" is deprecated in favor of "remote_src".
         if 'copy' in self._task.args:
@@ -52,7 +52,7 @@ class ActionModule(ActionBase):
                 return result
             # We will take the information from copy and store it in
             # the remote_src var to use later in this file.
-            remote_src = not boolean(self._task.args.get('copy'))
+            self._task.args['remote_src'] = remote_src = not boolean(self._task.args.pop('copy'), strict=False)
 
         if source is None or dest is None:
             result['failed'] = True
@@ -66,29 +66,30 @@ class ActionModule(ActionBase):
             # do not run the command if the line contains creates=filename
             # and the filename already exists. This allows idempotence
             # of command executions.
+            creates = self._remote_expand_user(creates)
             if self._remote_file_exists(creates):
                 result['skipped'] = True
                 result['msg'] = "skipped, since %s exists" % creates
                 self._remove_tmp_path(tmp)
                 return result
 
-        dest = self._remote_expand_user(dest) # CCTODO: Fix path for Windows hosts.
+        dest = self._remote_expand_user(dest)  # CCTODO: Fix path for Windows hosts.
         source = os.path.expanduser(source)
 
         if not remote_src:
             try:
-                source = self._loader.get_real_file(self._find_needle('files', source))
-            except AnsibleError:
+                source = self._loader.get_real_file(self._find_needle('files', source), decrypt=decrypt)
+            except AnsibleError as e:
                 result['failed'] = True
-                result['msg'] = to_native(get_exception())
+                result['msg'] = to_text(e)
                 self._remove_tmp_path(tmp)
                 return result
 
         try:
             remote_stat = self._execute_remote_stat(dest, all_vars=task_vars, follow=True)
-        except AnsibleError:
+        except AnsibleError as e:
             result['failed'] = True
-            result['msg'] = to_native(get_exception())
+            result['msg'] = to_text(e)
             self._remove_tmp_path(tmp)
             return result
 
@@ -125,6 +126,11 @@ class ActionModule(ActionBase):
                     original_basename=os.path.basename(source),
                 ),
             )
+
+        # remove action plugin only key
+        for key in ('decrypt',):
+            if key in new_module_args:
+                del new_module_args[key]
 
         # execute the unarchive module now, with the updated args
         result.update(self._execute_module(module_args=new_module_args, task_vars=task_vars))

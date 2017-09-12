@@ -13,9 +13,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'core'}
 
 
 DOCUMENTATION = '''
@@ -29,7 +29,8 @@ author: "Rob White (@wimnat)"
 options:
   filters:
     description:
-      - A dict of filters to apply. Each dict item consists of a filter key and a filter value. See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeSubnets.html) for possible filters.
+      - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
+        See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeSubnets.html) for possible filters.
     required: false
     default: null
 extends_documentation_fragment:
@@ -89,18 +90,18 @@ from ansible.module_utils.ec2 import AnsibleAWSError, connect_to_aws, ec2_argume
 
 def get_subnet_info(subnet):
 
-    subnet_info = { 'id': subnet.id,
-                    'availability_zone': subnet.availability_zone,
-                    'available_ip_address_count': subnet.available_ip_address_count,
-                    'cidr_block': subnet.cidr_block,
-                    'default_for_az': subnet.defaultForAz,
-                    'map_public_ip_on_launch': subnet.mapPublicIpOnLaunch,
-                    'state': subnet.state,
-                    'tags': subnet.tags,
-                    'vpc_id': subnet.vpc_id
-                  }
+    subnet_info = {'id': subnet.id,
+                   'availability_zone': subnet.availability_zone,
+                   'available_ip_address_count': subnet.available_ip_address_count,
+                   'cidr_block': subnet.cidr_block,
+                   'default_for_az': subnet.defaultForAz,
+                   'map_public_ip_on_launch': subnet.mapPublicIpOnLaunch,
+                   'state': subnet.state,
+                   'tags': subnet.tags,
+                   'vpc_id': subnet.vpc_id}
 
     return subnet_info
+
 
 def list_ec2_vpc_subnets(connection, module):
 
@@ -122,11 +123,12 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            filters = dict(default=None, type='dict')
+            filters=dict(default=None, type='dict')
         )
     )
 
-    module = AnsibleModule(argument_spec=argument_spec)
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True)
 
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')

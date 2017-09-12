@@ -1,67 +1,103 @@
-""" (c) 2015, Logentries.com, Jimmy Tang <jimmy.tang@logentries.com>
+# (c) 2015, Logentries.com, Jimmy Tang <jimmy.tang@logentries.com>
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+DOCUMENTATION = '''
+    callback: logentries
+    type: notification
+    short_description: Sends events to Logentries
+    description:
+      - This callback plugin will generate JSON objects and send them to Logentries via TCP for auditing/debugging purposes.
+      - Before 2.4, if you wanted to use an ini configuration, the file must be placed in the same directory as this plugin and named logentries.ini
+      - In 2.4 and above you can just put it in the main Ansible configuration file.
+    version_added: "2.0"
+    requirements:
+      - whitelisting in configuration
+      - certifi (python library)
+      - flatdict (pytnon library), if you want to use the 'flatten' option
+    options:
+      api:
+        description: URI to the Logentries API
+        env:
+          - name: LOGENTRIES_API
+        default: data.logentries.com
+        ini:
+          - section: callback_logentries
+            key: api
+      port:
+        description: Http port to use when connecting to the API
+        env:
+            - name: LOGENTRIES_PORT
+        default: 80
+        ini:
+          - section: callback_logentries
+            key: port
+      tls_port:
+        description: Port to use when connecting to the API when TLS is enabled
+        env:
+            - name: LOGENTRIES_TLS_PORT
+        default: 443
+        ini:
+          - section: callback_logentries
+            key: tls_port
+      token:
+        description: The logentries "TCP token"
+        env:
+          - name: LOGENTRIES_ANSIBLE_TOKEN
+        required: True
+        ini:
+          - section: callback_logentries
+            key: token
+      use_tls:
+        description:
+          - Toggle to decidewhether to use TLS to encrypt the communications with the API server
+        env:
+          - name: LOGENTRIES_USE_TLS
+        default: False
+        type: boolean
+        ini:
+          - section: callback_logentries
+            key: use_tls
+      flatten:
+        description: flatten complex data structures into a single dictionary with complex keys
+        type: boolean
+        default: False
+        env:
+          - name: LOGENTRIES_FLATTEN
+        ini:
+          - section: callback_logentries
+            key: flatten
+'''
 
-This callback plugin will generate json objects to be sent to logentries
-for auditing/debugging purposes.
-
-Todo:
-
-* Better formatting of output before sending out to logentries data/api nodes.
-
-To use:
-
-Add this to your ansible.cfg file in the defaults block
+EXAMPLES = '''
+examples: >
+  To enable, add this to your ansible.cfg file in the defaults block
 
     [defaults]
-    callback_plugins = ./callback_plugins
-    callback_stdout = logentries
     callback_whitelist = logentries
 
-Copy the callback plugin into the callback_plugins directory
-
-Either set the environment variables
-
+  Either set the environment variables
     export LOGENTRIES_API=data.logentries.com
     export LOGENTRIES_PORT=10000
     export LOGENTRIES_ANSIBLE_TOKEN=dd21fc88-f00a-43ff-b977-e3a4233c53af
 
-Or create a logentries.ini config file that sites next to the plugin with the following contents
-
-    [logentries]
+  Or in the main Ansible config file
+    [callback_logentries]
     api = data.logentries.com
     port = 10000
     tls_port = 20000
     use_tls = no
     token = dd21fc88-f00a-43ff-b977-e3a4233c53af
     flatten = False
-
-
-"""
-
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+'''
 
 import os
 import socket
 import random
 import time
-import codecs
 import uuid
-from ansible.compat.six.moves import configparser
 
 try:
     import certifi
@@ -75,23 +111,16 @@ try:
 except ImportError:
     HAS_FLATDICT = False
 
+from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_bytes, to_text, to_native
 from ansible.plugins.callback import CallbackBase
 
-
-def is_unicode(ch):
-    return isinstance(ch, unicode)
-
-
-def create_unicode(ch):
-    return unicode(ch, 'utf-8')
+# Todo:
+#  * Better formatting of output before sending out to logentries data/api nodes.
 
 
 class PlainTextSocketAppender(object):
-    def __init__(self,
-                 verbose=True,
-                 LE_API='data.logentries.com',
-                 LE_PORT=80,
-                 LE_TLS_PORT=443):
+    def __init__(self, display, LE_API='data.logentries.com', LE_PORT=80, LE_TLS_PORT=443):
 
         self.LE_API = LE_API
         self.LE_PORT = LE_PORT
@@ -99,12 +128,11 @@ class PlainTextSocketAppender(object):
         self.MIN_DELAY = 0.1
         self.MAX_DELAY = 10
         # Error message displayed when an incorrect Token has been detected
-        self.INVALID_TOKEN = ("\n\nIt appears the LOGENTRIES_TOKEN "
-                              "parameter you entered is incorrect!\n\n")
+        self.INVALID_TOKEN = ("\n\nIt appears the LOGENTRIES_TOKEN parameter you entered is incorrect!\n\n")
         # Unicode Line separator character   \u2028
         self.LINE_SEP = u'\u2028'
 
-        self.verbose = verbose
+        self._display = display
         self._conn = None
 
     def open_connection(self):
@@ -119,9 +147,8 @@ class PlainTextSocketAppender(object):
             try:
                 self.open_connection()
                 return
-            except Exception:
-                if self.verbose:
-                    self._display.warning("Unable to connect to Logentries")
+            except Exception as e:
+                self._display.vvvv("Unable to connect to Logentries: %s" % str(e))
 
             root_delay *= 2
             if (root_delay > self.MAX_DELAY):
@@ -130,6 +157,7 @@ class PlainTextSocketAppender(object):
             wait_for = root_delay + random.uniform(0, root_delay)
 
             try:
+                self._display.vvvv("sleeping %s before retry" % wait_for)
                 time.sleep(wait_for)
             except KeyboardInterrupt:
                 raise
@@ -141,15 +169,13 @@ class PlainTextSocketAppender(object):
     def put(self, data):
         # Replace newlines with Unicode line separator
         # for multi-line events
-        if not is_unicode(data):
-            multiline = create_unicode(data).replace('\n', self.LINE_SEP)
-        else:
-            multiline = data.replace('\n', self.LINE_SEP)
-        multiline += "\n"
+        data = to_text(data, errors='surrogate_or_strict')
+        multiline = data.replace(u'\n', self.LINE_SEP)
+        multiline += u"\n"
         # Send data, reconnect if needed
         while True:
             try:
-                self._conn.send(multiline.encode('utf-8'))
+                self._conn.send(to_bytes(multiline, errors='surrogate_or_strict'))
             except socket.error:
                 self.reopen_connection()
                 continue
@@ -160,10 +186,10 @@ class PlainTextSocketAppender(object):
 
 try:
     import ssl
-    HAS_SSL=True
+    HAS_SSL = True
 except ImportError:  # for systems without TLS support.
     SocketAppender = PlainTextSocketAppender
-    HAS_SSL=False
+    HAS_SSL = False
 else:
 
     class TLSSocketAppender(PlainTextSocketAppender):
@@ -193,88 +219,76 @@ class CallbackModule(CallbackBase):
     CALLBACK_NEEDS_WHITELIST = True
 
     def __init__(self):
+
+        # TODO: allow for alternate posting methods (REST/UDP/agent/etc)
         super(CallbackModule, self).__init__()
 
+        # verify dependencies
         if not HAS_SSL:
             self._display.warning("Unable to import ssl module. Will send over port 80.")
 
         if not HAS_CERTIFI:
-            self.disabled =True
-            self._display.warning('The `certifi` python module is not installed. '
-                                 'Disabling the Logentries callback plugin.')
+            self.disabled = True
+            self._display.warning('The `certifi` python module is not installed.\nDisabling the Logentries callback plugin.')
 
-        if not HAS_FLATDICT:
-            self.disabled =True
-            self._display.warning('The `flatdict` python module is not installed. '
-                                 'Disabling the Logentries callback plugin.')
-
-        config_path = os.path.abspath(os.path.dirname(__file__))
-        config = configparser.ConfigParser()
-        try:
-            config.readfp(open(os.path.join(config_path, 'logentries.ini')))
-            if config.has_option('logentries', 'api'):
-                self.api_uri = config.get('logentries', 'api')
-            if config.has_option('logentries', 'port'):
-                self.api_port = config.getint('logentries', 'port')
-            if config.has_option('logentries', 'tls_port'):
-                self.api_tls_port = config.getint('logentries', 'tls_port')
-            if config.has_option('logentries', 'use_tls'):
-                self.use_tls = config.getboolean('logentries', 'use_tls')
-            if config.has_option('logentries', 'token'):
-                self.token = config.get('logentries', 'token')
-            if config.has_option('logentries', 'flatten'):
-                self.flatten = config.getboolean('logentries', 'flatten')
-
-        except:
-            self.api_uri = os.getenv('LOGENTRIES_API')
-            if self.api_uri is None:
-                self.api_uri = 'data.logentries.com'
-
-            try:
-                self.api_port = int(os.getenv('LOGENTRIES_PORT'))
-                if self.api_port is None:
-                    self.api_port = 80
-            except TypeError:
-                self.api_port = 80
-
-            try:
-                self.api_tls_port = int(os.getenv('LOGENTRIES_TLS_PORT'))
-                if self.api_tls_port is None:
-                    self.api_tls_port = 443
-            except TypeError:
-                self.api_tls_port = 443
-
-            # this just needs to be set to use TLS
-            self.use_tls = os.getenv('LOGENTRIES_USE_TLS')
-            if self.use_tls is None:
-                self.use_tls = False
-            elif self.use_tls.lower() in ['yes', 'true']:
-                self.use_tls = True
-
-            self.token = os.getenv('LOGENTRIES_ANSIBLE_TOKEN')
-            if self.token is None:
-                self.disabled = True
-                self._display.warning('Logentries token could not be loaded. The logentries token can be provided using the `LOGENTRIES_TOKEN` environment variable')
-
-            self.flatten = os.getenv('LOGENTRIES_FLATTEN')
-            if self.flatten is None:
-                self.flatten = False
-            elif self.flatten.lower() in ['yes', 'true']:
-                self.flatten = True
-
-        self.verbose = False
-        self.timeout = 10
         self.le_jobid = str(uuid.uuid4())
 
-        if self.use_tls:
-            self._appender = TLSSocketAppender(verbose=self.verbose,
-                                               LE_API=self.api_uri,
-                                               LE_TLS_PORT=self.api_tls_port)
-        else:
-            self._appender = PlainTextSocketAppender(verbose=self.verbose,
-                                                     LE_API=self.api_uri,
-                                                     LE_PORT=self.api_port)
-        self._appender.reopen_connection()
+        # FIXME: remove when done testing
+        # initialize configurable
+        self.api_url = 'data.logentries.com'
+        self.api_port = 80
+        self.api_tls_port = 443
+        self.use_tls = False
+        self.flatten = False
+        self.token = None
+
+        # FIXME: make configurable, move to options
+        self.timeout = 10
+
+        # FIXME: remove testing
+        # self.set_options({'api': 'data.logentries.com', 'port': 80,
+        # 'tls_port': 10000, 'use_tls': True, 'flatten': False, 'token': 'ae693734-4c5b-4a44-8814-1d2feb5c8241'})
+
+    def set_option(self, name, value):
+        raise AnsibleError("The Logentries callabck plugin does not suport setting individual options.")
+
+    def set_options(self, options):
+
+        super(CallbackModule, self).set_options(options)
+
+        # get options
+        try:
+            self.api_url = self._plugin_options['api']
+            self.api_port = self._plugin_options['port']
+            self.api_tls_port = self._plugin_options['tls_port']
+            self.use_tls = self._plugin_options['use_tls']
+            self.flatten = self._plugin_options['flatten']
+        except KeyError as e:
+            self._display.warning("Missing option for Logentries callback plugin: %s" % to_native(e))
+            self.disabled = True
+
+        try:
+            self.token = self._plugin_options['token']
+        except KeyError as e:
+            self._display.warning('Logentries token was not provided, this is required for this callback to operate, disabling')
+            self.disabled = True
+
+        if self.flatten and not HAS_FLATDICT:
+            self.disabled = True
+            self._display.warning('You have chosen to flatten and the `flatdict` python module is not installed.\nDisabling the Logentries callback plugin.')
+
+        self._initialize_connections()
+
+    def _initialize_connections(self):
+
+        if not self.disabled:
+            if self.use_tls:
+                self._display.vvvv("Connecting to %s:%s with TLS" % (self.api_url, self.api_tls_port))
+                self._appender = TLSSocketAppender(display=self._display, LE_API=self.api_url, LE_TLS_PORT=self.api_tls_port)
+            else:
+                self._display.vvvv("Connecting to %s:%s" % (self.api_url, self.api_port))
+                self._appender = PlainTextSocketAppender(display=self._display, LE_API=self.api_url, LE_PORT=self.api_port)
+            self._appender.reopen_connection()
 
     def emit_formatted(self, record):
         if self.flatten:
@@ -287,43 +301,34 @@ class CallbackModule(CallbackBase):
         msg = record.rstrip('\n')
         msg = "{} {}".format(self.token, msg)
         self._appender.put(msg)
+        self._display.vvvv("Sent event to logentries")
+
+    def _set_info(self, host, res):
+        return {'le_jobid': self.le_jobid, 'hostname': host, 'results': res}
 
     def runner_on_ok(self, host, res):
-        results = {}
-        results['le_jobid'] = self.le_jobid
-        results['hostname'] = host
-        results['results'] = res
+        results = self._set_info(host, res)
         results['status'] = 'OK'
         self.emit_formatted(results)
 
     def runner_on_failed(self, host, res, ignore_errors=False):
-        results = {}
-        results['le_jobid'] = self.le_jobid
-        results['hostname'] = host
-        results['results'] = res
+        results = self._set_info(host, res)
         results['status'] = 'FAILED'
         self.emit_formatted(results)
 
     def runner_on_skipped(self, host, item=None):
-        results = {}
-        results['le_jobid'] = self.le_jobid
-        results['hostname'] = host
+        results = self._set_info(host, item)
+        del results['results']
         results['status'] = 'SKIPPED'
         self.emit_formatted(results)
 
     def runner_on_unreachable(self, host, res):
-        results = {}
-        results['le_jobid'] = self.le_jobid
-        results['hostname'] = host
-        results['results'] = res
+        results = self._set_info(host, res)
         results['status'] = 'UNREACHABLE'
         self.emit_formatted(results)
 
     def runner_on_async_failed(self, host, res, jid):
-        results = {}
-        results['le_jobid'] = self.le_jobid
-        results['hostname'] = host
-        results['results'] = res
+        results = self._set_info(host, res)
         results['jid'] = jid
         results['status'] = 'ASYNC_FAILED'
         self.emit_formatted(results)

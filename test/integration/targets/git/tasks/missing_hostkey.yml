@@ -1,22 +1,16 @@
 ---
 
-- name: remove known_host files
-  file:
-    state: absent
-    path: '{{ item }}'
-  with_items: "{{known_host_files}}"
-
 - name: checkout ssh://git@github.com repo without accept_hostkey (expected fail)
   git:
     repo: '{{ repo_format2 }}'
     dest: '{{ checkout_dir }}'
+    ssh_opts: '-o UserKnownHostsFile={{ output_dir }}/known_hosts'
   register: git_result
   ignore_errors: true
 
 - assert:
     that:
       - 'git_result.failed'
-      - 'git_result.msg == "github.com has an unknown hostkey. Set accept_hostkey to True or manually add the hostkey prior to running the git module"'
 
 - name: checkout git@github.com repo with accept_hostkey (expected pass)
   git:
@@ -24,19 +18,20 @@
     dest: '{{ checkout_dir }}'
     accept_hostkey: true
     key_file: '{{ github_ssh_private_key }}'
+    ssh_opts: '-o UserKnownHostsFile={{ output_dir }}/known_hosts'
   register: git_result
   when: github_ssh_private_key is defined
 
 - assert:
     that:
       - 'git_result.changed'
-  when: not git_result|skipped
-
+  when: github_ssh_private_key is defined
 
 - name: clear checkout_dir
   file:
     state: absent
     path: '{{ checkout_dir }}'
+  when: github_ssh_private_key is defined
 
 - name: checkout ssh://git@github.com repo with accept_hostkey (expected pass)
   git:
@@ -45,10 +40,11 @@
     version: 'master'
     accept_hostkey: false # should already have been accepted
     key_file: '{{ github_ssh_private_key }}'
+    ssh_opts: '-o UserKnownHostsFile={{ output_dir }}/known_hosts'
   register: git_result
   when: github_ssh_private_key is defined
 
 - assert:
     that:
       - 'git_result.changed'
-  when: not git_result|skipped
+  when: github_ssh_private_key is defined

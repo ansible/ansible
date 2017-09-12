@@ -19,72 +19,129 @@
 # WANT_JSON
 # POWERSHELL_COMMON
 
+# TODO: This module is not idempotent (it will always unzip and report change)
 
-$params = Parse-Args $args;
+$ErrorActionPreference = "Stop"
 
-$result = New-Object psobject @{
-    win_unzip = New-Object psobject
-    changed = $false
-}
+$pcx_extensions = @('.bz2', '.gz', '.msu', '.tar', '.zip')
 
-$creates = Get-AnsibleParam -obj $params -name "creates" -type "path"
-If ($creates -ne $null) {
-    If (Test-Path $creates) {
-        $result.msg = "The 'creates' file or directory ($creates) already exists."
-        Exit-Json $result
-    }
-}
+$params = Parse-Args $args -supports_check_mode $true
+$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
 $src = Get-AnsibleParam -obj $params -name "src" -type "path" -failifempty $true
-If (-Not (Test-Path -path $src)){
-    Fail-Json $result "src file: $src does not exist."
+$dest = Get-AnsibleParam -obj $params -name "dest" -type "path" -failifempty $true
+$creates = Get-AnsibleParam -obj $params -name "creates" -type "path"
+$recurse = Get-AnsibleParam -obj $params -name "recurse" -type "bool" -default $false
+$delete_archive = Get-AnsibleParam -obj $params -name "delete_archive" -type "bool" -default $false -aliases 'rm'
+
+# Fixes a fail error message (when the task actually succeeds) for a
+# "Convert-ToJson: The converted JSON string is in bad format"
+# This happens when JSON is parsing a string that ends with a "\",
+# which is possible when specifying a directory to download to.
+# This catches that possible error, before assigning the JSON $result
+$result = @{
+    changed = $false
+    dest = $dest -replace '\$',''
+    removed = $false
+    src = $src -replace '\$',''
+}
+
+Function Extract-Zip($src, $dest) {
+    $archive = [System.IO.Compression.ZipFile]::Open($src, [System.IO.Compression.ZipArchiveMode]::Read, [System.Text.Encoding]::UTF8)
+    foreach ($entry in $archive.Entries) {
+        $archive_name = $entry.FullName
+
+        $entry_target_path = [System.IO.Path]::Combine($dest, $archive_name)
+        $entry_dir = [System.IO.Path]::GetDirectoryName($entry_target_path)
+
+        if (-not (Test-Path -Path $entry_dir)) {
+            New-Item -Path $entry_dir -ItemType Directory -WhatIf:$check_mode | Out-Null
+            $result.changed = $true
+        }
+
+        if ((-not ($entry_target_path.EndsWith("\") -or $entry_target_path.EndsWith("/"))) -and (-not $check_mode)) {
+            [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $entry_target_path, $true)
+        }
+        $result.changed = $true
+    }
+    $archive.Dispose()
+}
+
+Function Extract-ZipLegacy($src, $dest) {
+    # [System.IO.Compression.ZipFile] was only added in .net 4.5, this is used
+    # when .net is older than that.
+    $shell = New-Object -ComObject Shell.Application
+    $zip = $shell.NameSpace([IO.Path]::GetFullPath($src))
+    $dest_path = $shell.NameSpace([IO.Path]::GetFullPath($dest))
+
+    $shell = New-Object -ComObject Shell.Application
+
+    if (-not $check_mode) {
+        # https://msdn.microsoft.com/en-us/library/windows/desktop/bb787866.aspx
+        # From Folder.CopyHere documentation, 1044 means:
+        #  - 1024: do not display a user interface if an error occurs
+        #  -   16: respond with "yes to all" for any dialog box that is displayed
+        #  -    4: do not display a progress dialog box
+        $dest_path.CopyHere($zip.Items(), 1044)
+    }
+    $result.changed = $true
+}
+
+If ($creates -and (Test-Path -LiteralPath $creates)) {
+    $result.skipped = $true
+    $result.msg = "The file or directory '$creates' already exists."
+    Exit-Json -obj $result
+}
+
+If (-Not (Test-Path -LiteralPath $src)) {
+    Fail-Json -obj $result -message "File '$src' does not exist."
 }
 
 $ext = [System.IO.Path]::GetExtension($src)
 
-
-$dest = Get-AnsibleParam -obj $params -name "dest" -type "path" -failifempty $true
-If (-Not (Test-Path $dest -PathType Container)){
+If (-Not (Test-Path -LiteralPath $dest -PathType Container)){
     Try{
-        New-Item -itemtype directory -path $dest
-    }
-    Catch {
-        $err_msg = $_.Exception.Message
-        Fail-Json $result "Error creating $dest directory! Msg: $err_msg"
+        New-Item -ItemType "directory" -path $dest -WhatIf:$check_mode
+    } Catch {
+        Fail-Json -obj $result -message "Error creating '$dest' directory! Msg: $($_.Exception.Message)"
     }
 }
-
-$recurse = ConvertTo-Bool (Get-AnsibleParam -obj $params -name "recurse" -default "false")
-$rm = ConvertTo-Bool (Get-AnsibleParam -obj $params -name "rm" -default "false")
 
 If ($ext -eq ".zip" -And $recurse -eq $false) {
-    Try {
-        $shell = New-Object -ComObject Shell.Application
-        $zipPkg = $shell.NameSpace([IO.Path]::GetFullPath($src))
-        $destPath = $shell.NameSpace([IO.Path]::GetFullPath($dest))
-        # From Folder.CopyHere documentation (https://msdn.microsoft.com/en-us/library/windows/desktop/bb787866.aspx)
-        # 1044 means do not display any error dialog (1024), progress dialog (4) and overwrite any file (16)
-        $destPath.CopyHere($zipPkg.Items(), 1044)
-        $result.changed = $true
+    # TODO: PS v5 supports zip extraction, use that if available
+    $use_legacy = $false
+    try {
+        # determines if .net 4.5 is available, if this fails we need to fall
+        # back to the legacy COM Shell.Application to extract the zip
+        Add-Type -AssemblyName System.IO.Compression.FileSystem | Out-Null
+        Add-Type -AssemblyName System.IO.Compression | Out-Null
+    } catch {
+        $use_legacy = $true
     }
-    Catch {
-        $err_msg = $_.Exception.Message
-        Fail-Json $result "Error unzipping $src to $dest! Msg: $err_msg"
+
+    if ($use_legacy) {
+        try {
+            Extract-ZipLegacy -src $src -dest $dest
+        } catch {
+            Fail-Json -obj $result -message "Error unzipping '$src' to '$dest'!. Method: COM Shell.Application, Exception: $($_.Exception.Message)"
+        }
+    } else {
+        try {
+            Extract-Zip -src $src -dest $dest
+        } catch {
+            Fail-Json -obj $result -message "Error unzipping '$src' to '$dest'!. Method: System.IO.Compression.ZipFile, Exception: $($_.Exception.Message)"
+        }
     }
-}
-# Requires PSCX
-Else {
+} Else {
     # Check if PSCX is installed
     $list = Get-Module -ListAvailable
 
     If (-Not ($list -match "PSCX")) {
-        Fail-Json $result "PowerShellCommunityExtensions PowerShell Module (PSCX) is required for non-'.zip' compressed archive types."
-    }
-    Else {
-        Set-Attr $result.win_unzip "pscx_status" "present"
+        Fail-Json -obj $result -message "PowerShellCommunityExtensions PowerShell Module (PSCX) is required for non-'.zip' compressed archive types."
+    } Else {
+        $result.pscx_status = "present"
     }
 
-    # Import
     Try {
         Import-Module PSCX
     }
@@ -93,53 +150,35 @@ Else {
     }
 
     Try {
-        If ($recurse) {
-            Expand-Archive -Path $src -OutputPath $dest -Force
-
-            If ($rm -eq $true) {
-                Get-ChildItem $dest -recurse | Where {$_.extension -eq ".gz" -Or $_.extension -eq ".zip" -Or $_.extension -eq ".bz2" -Or $_.extension -eq ".tar" -Or $_.extension -eq ".msu"} | % {
-                    Expand-Archive $_.FullName -OutputPath $dest  -Force
-                    Remove-Item $_.FullName -Force
-                }
-            }
-            Else {
-                Get-ChildItem $dest -recurse | Where {$_.extension -eq ".gz" -Or $_.extension -eq ".zip" -Or $_.extension -eq ".bz2" -Or $_.extension -eq ".tar" -Or $_.extension -eq ".msu"} | % {
-                    Expand-Archive $_.FullName -OutputPath $dest  -Force
-                }
-            }
-        }
-        Else {
-            Expand-Archive -Path $src -OutputPath $dest -Force
-        }
-        $result.changed = $true
+        Expand-Archive -Path $src -OutputPath $dest -Force -WhatIf:$check_mode
+    } Catch {
+        Fail-Json -obj $result -message "Error expanding '$src' to '$dest'! Msg: $($_.Exception.Message)"
     }
-    Catch {
-        $err_msg = $_.Exception.Message
-        If ($recurse) {
-            Fail-Json $result "Error recursively expanding $src to $dest! Msg: $err_msg"
-        }
-        Else {
-            Fail-Json $result "Error expanding $src to $dest! Msg: $err_msg"
+
+    If ($recurse) {
+        Get-ChildItem $dest -recurse | Where {$pcx_extensions -contains $_.extension} | % {
+            Try {
+                Expand-Archive $_.FullName -OutputPath $dest -Force -WhatIf:$check_mode
+            } Catch {
+                Fail-Json -obj $result -message "Error recursively expanding '$src' to '$dest'! Msg: $($_.Exception.Message)"
+            }
+            If ($delete_archive) {
+                Remove-Item $_.FullName -Force -WhatIf:$check_mode
+                $result.removed = $true
+            }
         }
     }
+
+    $result.changed = $true
 }
 
-If ($rm -eq $true){
-    Remove-Item $src -Recurse -Force
-    Set-Attr $result.win_unzip "rm" "true"
+If ($delete_archive){
+    try {
+        Remove-Item $src -Recurse -Force -WhatIf:$check_mode
+    } catch {
+        Fail-Json -obj $result -message "failed to delete archive at '$src': $($_.Exception.Message)"
+    }
+    $result.removed = $true
 }
-
-# Fixes a fail error message (when the task actually succeeds) for a "Convert-ToJson: The converted JSON string is in bad format"
-# This happens when JSON is parsing a string that ends with a "\", which is possible when specifying a directory to download to.
-# This catches that possible error, before assigning the JSON $result
-If ($src[$src.length-1] -eq "\") {
-    $src = $src.Substring(0, $src.length-1)
-}
-If ($dest[$dest.length-1] -eq "\") {
-    $dest = $dest.Substring(0, $dest.length-1)
-}
-Set-Attr $result.win_unzip "src" $src.toString()
-Set-Attr $result.win_unzip "dest" $dest.toString()
-Set-Attr $result.win_unzip "recurse" $recurse.toString()
 
 Exit-Json $result

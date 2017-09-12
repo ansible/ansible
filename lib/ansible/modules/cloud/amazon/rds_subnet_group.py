@@ -1,20 +1,12 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
@@ -81,6 +73,9 @@ try:
 except ImportError:
     HAS_BOTO = False
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import HAS_BOTO, connect_to_aws, ec2_argument_spec, get_aws_connection_info
+
 
 def main():
     argument_spec = ec2_argument_spec()
@@ -118,7 +113,7 @@ def main():
 
     try:
         conn = connect_to_aws(boto.rds, region, **aws_connect_kwargs)
-    except boto.exception.BotoServerError as e:
+    except BotoServerError as e:
         module.fail_json(msg = e.error_message)
 
     try:
@@ -144,7 +139,9 @@ def main():
                 # Sort the subnet groups before we compare them
                 matching_groups[0].subnet_ids.sort()
                 group_subnets.sort()
-                if ( (matching_groups[0].name != group_name) or (matching_groups[0].description != group_description) or (matching_groups[0].subnet_ids != group_subnets) ):
+                if (matching_groups[0].name != group_name or
+                        matching_groups[0].description != group_description or
+                        matching_groups[0].subnet_ids != group_subnets):
                     changed_group = conn.modify_db_subnet_group(group_name, description=group_description, subnet_ids=group_subnets)
                     changed = True
     except BotoServerError as e:
@@ -152,9 +149,6 @@ def main():
 
     module.exit_json(changed=changed)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = '''
@@ -28,73 +28,74 @@ extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Manages global VPC configuration
 description:
-    - Manages global VPC configuration
+  - Manages global VPC configuration
 author:
-    - Jason Edelman (@jedelman8)
-    - Gabriele Gerbino (@GGabriele)
+  - Jason Edelman (@jedelman8)
+  - Gabriele Gerbino (@GGabriele)
 notes:
-    - The feature vpc must be enabled before this module can be used
-    - If not using management vrf, vrf must be globally on the device
-      before using in the pkl config
-    - Although source IP isn't required on the command line it is
-      required when using this module.  The PKL VRF must also be configured
-      prior to using this module.
-    - Both pkl_src and pkl_dest are needed when changing PKL VRF.
+  - Tested against NXOSv 7.3.(0)D1(1) on VIRL
+  - The feature vpc must be enabled before this module can be used
+  - If not using management vrf, vrf must be globally on the device
+    before using in the pkl config
+  - Although source IP isn't required on the command line it is
+    required when using this module.  The PKL VRF must also be configured
+    prior to using this module.
+  - Both pkl_src and pkl_dest are needed when changing PKL VRF.
 options:
-    domain:
-        description:
-            - VPC domain
-        required: true
-    role_priority:
-        description:
-            - Role priority for device. Remember lower is better.
-        required: false
-        default: null
-    system_priority:
-        description:
-            - System priority device.  Remember they must match between peers.
-        required: false
-        default: null
-    pkl_src:
-        description:
-            - Source IP address used for peer keepalive link
-        required: false
-        default: null
-    pkl_dest:
-        description:
-            - Destination (remote) IP address used for peer keepalive link
-        required: false
-        default: null
-    pkl_vrf:
-        description:
-            - VRF used for peer keepalive link
-        required: false
-        default: management
-    peer_gw:
-        description:
-            - Enables/Disables peer gateway
-        required: true
-        choices: ['true','false']
-    auto_recovery:
-        description:
-            - Enables/Disables auto recovery
-        required: true
-        choices: ['true','false']
-    delay_restore:
-        description:
-            - manages delay restore command and config value in seconds
-        required: false
-        default: null
-    state:
-        description:
-            - Manages desired state of the resource
-        required: true
-        choices: ['present','absent']
+  domain:
+    description:
+      - VPC domain
+    required: true
+  role_priority:
+    description:
+      - Role priority for device. Remember lower is better.
+    required: false
+    default: null
+  system_priority:
+    description:
+      - System priority device.  Remember they must match between peers.
+    required: false
+    default: null
+  pkl_src:
+    description:
+      - Source IP address used for peer keepalive link
+    required: false
+    default: null
+  pkl_dest:
+    description:
+      - Destination (remote) IP address used for peer keepalive link
+    required: false
+    default: null
+  pkl_vrf:
+    description:
+      - VRF used for peer keepalive link
+    required: false
+    default: management
+  peer_gw:
+    description:
+      - Enables/Disables peer gateway
+    required: true
+    choices: ['true','false']
+  auto_recovery:
+    description:
+      - Enables/Disables auto recovery
+    required: true
+    choices: ['true','false']
+  delay_restore:
+    description:
+      - manages delay restore command and config value in seconds
+    required: false
+    default: null
+  state:
+    description:
+      - Manages desired state of the resource
+    required: true
+    choices: ['present','absent']
 '''
 
 EXAMPLES = '''
-# configure a simple asn
-- nxos_vpc:
+- name: configure a simple asn
+  nxos_vpc:
     domain: 100
     role_priority: 1000
     system_priority: 2000
@@ -102,65 +103,40 @@ EXAMPLES = '''
     pkl_src: 10.1.100.20
     peer_gw: true
     auto_recovery: true
-    username: "{{ un }}"
-    password: "{{ pwd }}"
-    host: "{{ inventory_hostname }}"
+
+- name: configure
+  nxos_vpc:
+    domain: 100
+    role_priority: 32667
+    system_priority: 2000
+    peer_gw: true
+    pkl_src: 10.1.100.2
+    pkl_dest: 192.168.100.4
+    auto_recovery: true
 '''
 
 RETURN = '''
-proposed:
-    description: k/v pairs of parameters passed into module
-    returned: always
-    type: dict
-    sample: {"auto_recovery": true, "domain": "100",
-            "peer_gw": true, "pkl_dest": "192.168.100.4",
-            "pkl_src": "10.1.100.20", "pkl_vrf": "management",
-            "role_priority": "1000", "system_priority": "2000"}
-existing:
-    description: k/v pairs of existing VPC configuration
-    type: dict
-    sample: {"auto_recovery": true, "delay_restore": null,
-            "domain": "100", "peer_gw": true,
-            "pkl_dest": "192.168.100.2", "pkl_src": "10.1.100.20",
-            "pkl_vrf": "management", "role_priority": "1000",
-            "system_priority": "2000"}
-end_state:
-    description: k/v pairs of VPC configuration after module execution
-    returned: always
-    type: dict
-    sample: {"auto_recovery": true, "domain": "100",
-            "peer_gw": true, "pkl_dest": "192.168.100.4",
-            "pkl_src": "10.1.100.20", "pkl_vrf": "management",
-            "role_priority": "1000", "system_priority": "2000"}
-updates:
+commands:
     description: commands sent to the device
     returned: always
     type: list
     sample: ["vpc domain 100",
             "peer-keepalive destination 192.168.100.4 source 10.1.100.20 vrf management",
             "auto-recovery", "peer-gateway"]
-changed:
-    description: check to see if a change was made on the device
-    returned: always
-    type: boolean
-    sample: true
 '''
 
 from ansible.module_utils.nxos import get_config, load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
 
-def execute_show_command(command, module, command_type='cli_show'):
-    if module.params['transport'] == 'cli':
-        if "section" not in command:
-            command += ' | json'
-        cmds = [command]
-        body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
-        cmds = [command]
-        body = run_commands(module, cmds)
-    return body
+
+CONFIG_ARGS = {
+    'role_priority': 'role priority {role_priority}',
+    'system_priority': 'system-priority {system_priority}',
+    'delay_restore': 'delay restore {delay_restore}',
+    'peer_gw': '{peer_gw} peer-gateway',
+    'auto_recovery': '{auto_recovery} auto-recovery',
+}
 
 
 def flatten_list(command_lists):
@@ -174,13 +150,10 @@ def flatten_list(command_lists):
 
 
 def get_vrf_list(module):
-    command = 'show vrf all'
-    vrf_table = None
-
-    body = execute_show_command(command, module)
 
     try:
-        vrf_table = body[0]['TABLE_vrf']['ROW_vrf']
+        body = run_commands(module, ['show vrf all | json'])[0]
+        vrf_table = body['TABLE_vrf']['ROW_vrf']
     except (KeyError, AttributeError):
         return []
 
@@ -192,46 +165,29 @@ def get_vrf_list(module):
     return vrf_list
 
 
-def get_autorecovery(auto):
-    auto_recovery = auto.split(' ')[0]
-    if 'enabled' in auto_recovery.lower():
-        return True
-    else:
-        return False
-
-
-def get_vpc_running_config(module):
-    command = 'show running section vpc'
-    body = execute_show_command(command, module, command_type='cli_show_ascii')
-
-    return body
-
-
 def get_vpc(module):
-    vpc = {}
+    body = run_commands(module, ['show vpc | json'])[0]
 
-    command = 'show vpc'
-    body = execute_show_command(command, module)[0]
     domain = str(body['vpc-domain-id'])
-    auto_recovery = get_autorecovery(str(
-        body['vpc-auto-recovery-status']))
+    auto_recovery = 'enabled' in str(body['vpc-auto-recovery-status']).lower()
 
+    vpc = {}
     if domain != 'not configured':
         delay_restore = None
         pkl_src = None
-        role_priority = None
+        role_priority = '32667'
         system_priority = None
         pkl_dest = None
         pkl_vrf = None
         peer_gw = False
 
-        run = get_vpc_running_config(module)[0]
+        run = get_config(module, flags=['section vpc'])
         if run:
             vpc_list = run.split('\n')
             for each in vpc_list:
                 if 'delay restore' in each:
                     line = each.split()
-                    if len(line) == 5:
+                    if len(line) == 3:
                         delay_restore = line[-1]
                 if 'peer-keepalive destination' in each:
                     line = each.split()
@@ -249,9 +205,7 @@ def get_vpc(module):
                 if 'peer-gateway' in each:
                     peer_gw = True
 
-
-        command = 'show vpc peer-keepalive'
-        body = execute_show_command(command, module)[0]
+        body = run_commands(module, ['show vpc peer-keepalive | json'])[0]
 
         if body:
             pkl_dest = body['vpc-keepalive-dest']
@@ -270,8 +224,6 @@ def get_vpc(module):
         vpc['pkl_dest'] = pkl_dest
         vpc['pkl_vrf'] = pkl_vrf
         vpc['peer_gw'] = peer_gw
-    else:
-        vpc = {}
 
     return vpc
 
@@ -299,7 +251,7 @@ def get_commands_to_config_vpc(module, vpc, domain, existing):
         pkl_dest = existing.get('pkl_dest')
         if pkl_src and pkl_dest:
             pkl_command = ('peer-keepalive destination {0}'
-                          ' source {1} vrf {2}'.format(pkl_dest, pkl_src, pkl_vrf))
+                           ' source {1} vrf {2}'.format(pkl_dest, pkl_src, pkl_vrf))
             commands.append(pkl_command)
 
     if vpc.get('auto_recovery') is False:
@@ -307,24 +259,24 @@ def get_commands_to_config_vpc(module, vpc, domain, existing):
     else:
         vpc['auto_recovery'] = ''
 
-    if vpc.get('peer_gw') is False:
-        vpc['peer_gw'] = 'no'
+    if 'peer_gw' in vpc:
+        if vpc.get('peer_gw') is False:
+            vpc['peer_gw'] = 'no'
+        else:
+            vpc['peer_gw'] = ''
     else:
-        vpc['peer_gw'] = ''
+        if existing.get('peer_gw') is False:
+            vpc['peer_gw'] = 'no'
+        else:
+            vpc['peer_gw'] = ''
 
-    CONFIG_ARGS = {
-        'role_priority': 'role priority {role_priority}',
-        'system_priority': 'system-priority {system_priority}',
-        'delay_restore': 'delay restore {delay_restore}',
-        'peer_gw': '{peer_gw} peer-gateway',
-        'auto_recovery': '{auto_recovery} auto-recovery',
-        }
-
-    for param, value in vpc.items():
-        command = CONFIG_ARGS.get(param, 'DNE').format(**vpc)
-        if command and command != 'DNE':
-            commands.append(command.strip())
-        command = None
+    for param in vpc:
+        command = CONFIG_ARGS.get(param)
+        if command is not None:
+            command = command.format(**vpc).strip()
+            if 'peer-gateway' in command:
+                commands.append('terminal dont-ask')
+            commands.append(command)
 
     if commands or domain_only:
         commands.insert(0, 'vpc domain {0}'.format(domain))
@@ -351,18 +303,16 @@ def main():
         auto_recovery=dict(required=True, type='bool'),
         delay_restore=dict(required=False, type='str'),
         state=dict(choices=['absent', 'present'], default='present'),
-        include_defaults=dict(default=False),
-        config=dict(),
-        save=dict(type='bool', default=False)
     )
 
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
-                                supports_check_mode=True)
+                           supports_check_mode=True)
 
     warnings = list()
     check_args(module, warnings)
+    results = {'changed': False, 'warnings': warnings}
 
     domain = module.params['domain']
     role_priority = module.params['role_priority']
@@ -399,9 +349,7 @@ def main():
                                  'keepalive link is not on device yet. Add it'
                                  ' first, please.')
     proposed = dict((k, v) for k, v in args.items() if v is not None)
-    changed = False
     existing = get_vpc(module)
-    end_state = existing
 
     commands = []
     if state == 'present':
@@ -415,31 +363,21 @@ def main():
                 module.fail_json(msg="You are trying to remove a domain that "
                                      "does not exist on the device")
             else:
+                commands.append('terminal dont-ask')
                 commands.append('no vpc domain {0}'.format(domain))
 
     cmds = flatten_list(commands)
+    results['commands'] = cmds
 
     if cmds:
-        if module.check_mode:
-            module.exit_json(changed=True, commands=cmds)
-        else:
-            changed = True
+        results['changed'] = True
+        if not module.check_mode:
             load_config(module, cmds)
-            end_state = get_vpc(module)
             if 'configure' in cmds:
                 cmds.pop(0)
-
-    results = {}
-    results['proposed'] = proposed
-    results['existing'] = existing
-    results['end_state'] = end_state
-    results['updates'] = cmds
-    results['changed'] = changed
-    results['warnings'] = warnings
 
     module.exit_json(**results)
 
 
 if __name__ == '__main__':
     main()
-

@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = '''
@@ -33,6 +33,7 @@ description:
 author:
     - Jason Edelman (@jedelman8)
 notes:
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
     - At least one of C(master) or C(logging) params must be supplied.
     - When C(state=absent), boolean parameters are flipped,
       e.g. C(master=true) will disable the authoritative server.
@@ -77,144 +78,36 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-proposed:
-    description: k/v pairs of parameters passed into module
-    returned: always
-    type: dict
-    sample: {"logging": false, "master": true, "stratum": "11"}
-existing:
-    description:
-        - k/v pairs of existing ntp options
-    type: dict
-    sample: {"logging": true, "master": true, "stratum": "8"}
-end_state:
-    description: k/v pairs of ntp options after module execution
-    returned: always
-    type: dict
-    sample: {"logging": false, "master": true, "stratum": "11"}
 updates:
     description: command sent to the device
     returned: always
     type: list
     sample: ["no ntp logging", "ntp master 11"]
-changed:
-    description: check to see if a change was made on the device
-    returned: always
-    type: boolean
-    sample: true
 '''
-
+import re
 
 from ansible.module_utils.nxos import get_config, load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
 
 
-import re
+def get_current(module):
+    cmd = ('show running-config', 'show ntp logging')
 
+    output = run_commands(module, ({'command': cmd[0], 'output': 'text'},
+                                  {'command': cmd[1], 'output': 'text'}))
 
-def execute_show_command(command, module, command_type='cli_show'):
-    if module.params['transport'] == 'cli':
-        if 'show run' not in command:
-            command += ' | json'
-        cmds = [command]
-        body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
-        cmds = [command]
-        body = run_commands(module, cmds)
-
-    return body
-
-
-def flatten_list(command_lists):
-    flat_command_list = []
-    for command in command_lists:
-        if isinstance(command, list):
-            flat_command_list.extend(command)
-        else:
-            flat_command_list.append(command)
-    return flat_command_list
-
-
-def apply_key_map(key_map, table):
-    new_dict = {}
-    for key, value in table.items():
-        new_key = key_map.get(key)
-        if new_key:
-            value = table.get(key)
-            if value:
-                new_dict[new_key] = str(value)
-            else:
-                new_dict[new_key] = value
-    return new_dict
-
-
-def get_ntp_master(module):
-    command = 'show run | inc ntp.master'
-    master_string = execute_show_command(command, module, command_type='cli_show_ascii')
-
-    if master_string:
-        if master_string[0]:
-            master = True
-        else:
-            master = False
+    match = re.search("^ntp master(?: (\d+))", output[0], re.M)
+    if match:
+        master = True
+        stratum = match.group(1)
     else:
         master = False
-
-    if master is True:
-        stratum = str(master_string[0].split()[2])
-    else:
         stratum = None
 
-    return master, stratum
+    logging = 'Enabled' in output[1]
 
-
-def get_ntp_log(module):
-    command = 'show ntp logging'
-    body = execute_show_command(command, module)[0]
-
-    logging_string = body['loggingstatus']
-    if 'enabled' in logging_string:
-        ntp_log = True
-    else:
-        ntp_log = False
-
-    return ntp_log
-
-
-def get_ntp_options(module):
-    existing = {}
-    existing['logging'] = get_ntp_log(module)
-    existing['master'], existing['stratum'] = get_ntp_master(module)
-
-    return existing
-
-
-def config_ntp_options(delta, flip=False):
-    master = delta.get('master')
-    stratum = delta.get('stratum')
-    log = delta.get('logging')
-    ntp_cmds = []
-
-    if flip:
-        log = not log
-        master = not master
-
-    if log is not None:
-        if log is True:
-            ntp_cmds.append('ntp logging')
-        elif log is False:
-            ntp_cmds.append('no ntp logging')
-    if master is not None:
-        if master is True:
-            if not stratum:
-                stratum = ''
-            ntp_cmds.append('ntp master {0}'.format(stratum))
-        elif master is False:
-            ntp_cmds.append('no ntp master')
-
-    return ntp_cmds
+    return {'master': master, 'stratum': stratum, 'logging': logging}
 
 
 def main():
@@ -227,13 +120,14 @@ def main():
 
     argument_spec.update(nxos_argument_spec)
 
+    required_together = [('master', 'stratum')]
+
     module = AnsibleModule(argument_spec=argument_spec,
-                                required_one_of=[['master', 'logging']],
-                                supports_check_mode=True)
+                           required_together=required_together,
+                           supports_check_mode=True)
 
     warnings = list()
     check_args(module, warnings)
-
 
     master = module.params['master']
     stratum = module.params['stratum']
@@ -241,70 +135,54 @@ def main():
     state = module.params['state']
 
     if stratum:
-        if master is None:
-            module.fail_json(msg='The master param must be supplied when '
-                                 'stratum is supplied')
         try:
             stratum_int = int(stratum)
             if stratum_int < 1 or stratum_int > 15:
                 raise ValueError
         except ValueError:
-            module.fail_json(msg='Stratum must be an integer between 1 and 15')
+            module.fail_json(msg='stratum must be an integer between 1 and 15')
 
-    existing = get_ntp_options(module)
-    end_state = existing
+    desired = {'master': master, 'stratum': stratum, 'logging': logging}
+    current = get_current(module)
 
-    args = dict(master=master, stratum=stratum, logging=logging)
+    result = {'changed': False}
 
-    changed = False
-    proposed = dict((k, v) for k, v in args.items() if v is not None)
+    commands = list()
 
-    if master is False:
-        proposed['stratum'] = None
-        stratum = None
+    if state == 'absent':
+        if current['master']:
+            commands.append('no ntp master')
+        if current['logging']:
+            commands.append('no ntp logging')
 
-    delta = dict(set(proposed.items()).difference(existing.items()))
-    delta_stratum = delta.get('stratum')
+    elif state == 'present':
+        if desired['master'] and desired['master'] != current['master']:
+            if desired['stratum']:
+                commands.append('ntp master %s' % stratum)
+            else:
+                commands.append('ntp master')
+        elif desired['stratum'] and desired['stratum'] != current['stratum']:
+            commands.append('ntp master %s' % stratum)
 
-    if delta_stratum:
-        delta['master'] = True
+        if desired['logging'] and desired['logging'] != current['logging']:
+            if desired['logging']:
+                commands.append('ntp logging')
+            else:
+                commands.append('no ntp logging')
 
-    commands = []
-    if state == 'present':
-        if delta:
-            command = config_ntp_options(delta)
-            if command:
-                commands.append(command)
-    elif state == 'absent':
-        if existing:
-            isection = dict(set(proposed.items()).intersection(
-                existing.items()))
-            command = config_ntp_options(isection, flip=True)
-            if command:
-                commands.append(command)
 
-    cmds = flatten_list(commands)
-    if cmds:
-        if module.check_mode:
-            module.exit_json(changed=True, commands=cmds)
-        else:
-            changed = True
-            load_config(module, cmds)
-            end_state = get_ntp_options(module)
-            if 'configure' in cmds:
-                cmds.pop(0)
+    result['commands'] = commands
+    result['updates'] = commands
 
-    results = {}
-    results['proposed'] = proposed
-    results['existing'] = existing
-    results['updates'] = cmds
-    results['changed'] = changed
-    results['warnings'] = warnings
-    results['end_state'] = end_state
+    if commands:
+        if not module.check_mode:
+            load_config(module, commands)
+        result['changed'] = True
 
-    module.exit_json(**results)
+    result['warnings'] = warnings
+
+    module.exit_json(**result)
 
 
 if __name__ == '__main__':
     main()
-

@@ -4,23 +4,13 @@
 # (c) 2014, Steve Smith <ssmith@atlassian.com>
 # Atlassian open-source approval reference OSR-76.
 #
-# This file is part of Ansible.
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -41,7 +31,7 @@ options:
   operation:
     required: true
     aliases: [ command ]
-    choices: [ create, comment, edit, fetch, transition ]
+    choices: [ create, comment, edit, fetch, transition , link ]
     description:
       - The operation to perform.
 
@@ -211,13 +201,15 @@ EXAMPLES = """
     name: '{{ issue.meta.fields.creator.name }}'
     comment: '{{ issue.meta.fields.creator.displayName }}'
 
+# You can get list of valid linktypes at /rest/api/2/issueLinkType
+# url of your jira installation.
 - name: Create link from HSP-1 to MKY-1
   jira:
     uri: '{{ server }}'
     username: '{{ user }}'
     password: '{{ pass }}'
     operation: link
-    linktype: Relate
+    linktype: Relates
     inwardissue: HSP-1
     outwardissue: MKY-1
 
@@ -232,20 +224,13 @@ EXAMPLES = """
     status: Done
 """
 
-try:
-    import json
-except ImportError:
-    try:
-        import simplejson as json
-    except ImportError:
-        # Let snippet from module_utils/basic.py return a proper error in this case
-        pass
-
 import base64
+import json
+import sys
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url
+
 
 def request(url, user, passwd, timeout, data=None, method=None):
     if data:
@@ -260,8 +245,8 @@ def request(url, user, passwd, timeout, data=None, method=None):
     # the requests as authorized for this user.
     auth = base64.encodestring('%s:%s' % (user, passwd)).replace('\n', '')
     response, info = fetch_url(module, url, data=data, method=method, timeout=timeout,
-                               headers={'Content-Type':'application/json',
-                                        'Authorization':"Basic %s" % auth})
+                               headers={'Content-Type': 'application/json',
+                                        'Authorization': "Basic %s" % auth})
 
     if info['status'] not in (200, 201, 204):
         module.fail_json(msg=info['msg'])
@@ -273,11 +258,14 @@ def request(url, user, passwd, timeout, data=None, method=None):
     else:
         return {}
 
+
 def post(url, user, passwd, timeout, data):
     return request(url, user, passwd, timeout, data=data, method='POST')
 
+
 def put(url, user, passwd, timeout, data):
     return request(url, user, passwd, timeout, data=data, method='PUT')
+
 
 def get(url, user, passwd, timeout):
     return request(url, user, passwd, timeout)
@@ -285,10 +273,10 @@ def get(url, user, passwd, timeout):
 
 def create(restbase, user, passwd, params):
     createfields = {
-        'project': { 'key': params['project'] },
+        'project': {'key': params['project']},
         'summary': params['summary'],
         'description': params['description'],
-        'issuetype': { 'name': params['issuetype'] }}
+        'issuetype': {'name': params['issuetype']}}
 
     # Merge in any additional or overridden fields
     if params['fields']:
@@ -306,7 +294,7 @@ def create(restbase, user, passwd, params):
 def comment(restbase, user, passwd, params):
     data = {
         'body': params['comment']
-        }
+    }
 
     url = restbase + '/issue/' + params['issue'] + '/comment'
 
@@ -318,11 +306,11 @@ def comment(restbase, user, passwd, params):
 def edit(restbase, user, passwd, params):
     data = {
         'fields': params['fields']
-        }
+    }
 
     url = restbase + '/issue/' + params['issue']
 
-    ret = put(url, user, passwd, params['timeout'],data)
+    ret = put(url, user, passwd, params['timeout'], data)
 
     return ret
 
@@ -350,18 +338,19 @@ def transition(restbase, user, passwd, params):
 
     # Perform it
     url = restbase + '/issue/' + params['issue'] + "/transitions"
-    data = { 'transition': { "id" : tid },
-             'fields': params['fields']}
+    data = {'transition': {"id": tid},
+            'fields': params['fields']}
 
     ret = post(url, user, passwd, params['timeout'], data)
 
     return ret
 
+
 def link(restbase, user, passwd, params):
     data = {
-        'type': { 'name': params['linktype'] },
-        'inwardIssue': { 'key': params['inwardissue'] },
-        'outwardIssue': { 'key': params['outwardissue'] },
+        'type': {'name': params['linktype']},
+        'inwardIssue': {'key': params['inwardissue']},
+        'outwardIssue': {'key': params['outwardissue']},
     }
 
     url = restbase + '/issueLink/'
@@ -377,6 +366,7 @@ OP_REQUIRED = dict(create=['project', 'issuetype', 'summary', 'description'],
                    fetch=['issue'],
                    transition=['status'],
                    link=['linktype', 'inwardissue', 'outwardissue'])
+
 
 def main():
 
@@ -420,10 +410,10 @@ def main():
     user = module.params['username']
     passwd = module.params['password']
     if module.params['assignee']:
-        module.params['fields']['assignee'] = { 'name': module.params['assignee'] }
+        module.params['fields']['assignee'] = {'name': module.params['assignee']}
 
     if not uri.endswith('/'):
-        uri = uri+'/'
+        uri = uri + '/'
     restbase = uri + 'rest/api/2'
 
     # Dispatch
@@ -436,10 +426,8 @@ def main():
 
         ret = method(restbase, user, passwd, module.params)
 
-    except Exception:
-        e = get_exception()
+    except Exception as e:
         return module.fail_json(msg=e.message)
-
 
     module.exit_json(changed=True, meta=ret)
 

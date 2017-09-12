@@ -1,0 +1,8 @@
+ssh_keys:
+  - path: '/home/chouseknecht/.ssh/authorized_keys'
+    key_data: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1igsIlcmTa/yfsJnTtnrEX7PP/a01gwbXcig6JOKyrUmJB8E6c/wtZwP115VSyDRTO6TEL/sBFUpkSw01zM8ydNATErh8meBlAlbnDq5NLhDXnMizgG0VNn0iLc/WplFTqkefsHXa8NtIxAtyEVIj/fKbK3XfBOdEpE3+MJYNtGlWyaod28W+5qmQPZDQys+YnE4OjSwN7D3g85/7dtLFvDH+lEC4ooJOaxVFr9VSMXUIkaRF6oI+R1Zu803LFSCTb4BfFOYOHPuQ/rEMP0KuUzggvP+TEBY14PEA2FoHOn+oRsT0ZR2+loGRaxSVqCQKaEHbNbkm+6Rllx2NQRO0BJxCSKRU1iifInLPxmSc4gvsHCKMAWy/tGkmKHPWIfN8hvwyDMK5MNBp/SJ1pVx4xuFDQjVWNbll0yk2+72uJgtFHHwEPK9QsOz45gX85vS3yhYCKrscS/W9h2l36SWwQXuGy4fXotE7esPsvNGAzBndHX1O8RMPg47qJXz059RyoGforoa9TnzIs3hIv+ts7ESx3OEq3HNk0FJ+wDka7IM7WQpGrVToJ0vfDy9Q46nw54vv5Zc/u4OZF3F5twHmyf3rLYKXRDuCvZQKT2iWQKVX6j63bq6orA5hwl22zndxWZNtOwtq8Sd0Ns0K/Fo/ggYDDGBtr68DwhA+MrxrHw== chouseknecht@ansible.com"
+image:
+  offer: CentOS
+  publisher: OpenLogic
+  sku: '7.1'
+  version: latest

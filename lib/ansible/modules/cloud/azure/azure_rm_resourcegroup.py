@@ -3,25 +3,15 @@
 # Copyright (c) 2016 Matt Davis, <mdavis@ansible.com>
 #                    Chris Houseknecht, <house@redhat.com>
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
@@ -85,6 +75,7 @@ EXAMPLES = '''
 RETURN = '''
 contains_resources:
     description: Whether or not the resource group contains associated resources.
+    returned: always
     type: bool
     sample: True
 state:
@@ -103,15 +94,13 @@ state:
     }
 '''
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.azure_rm_common import *
-
-
 try:
     from msrestazure.azure_exceptions import CloudError
     from azure.mgmt.resource.resources.models import ResourceGroup
 except ImportError:
     pass
+
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 
 def resource_group_to_dict(rg):
@@ -152,7 +141,7 @@ class AzureRMResourceGroup(AzureRMModuleBase):
 
     def exec_module(self, **kwargs):
 
-        for key in self.module_arg_spec.keys() + ['tags']:
+        for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
 
         results = dict()
@@ -200,8 +189,7 @@ class AzureRMResourceGroup(AzureRMModuleBase):
                     # Create resource group
                     self.log("Creating resource group {0}".format(self.name))
                     if not self.location:
-                        self.fail("Parameter error: location is required when creating a resource "
-                                  "group.".format(self.name))
+                        self.fail("Parameter error: location is required when creating a resource group.")
                     if self.name_exists():
                         self.fail("Error: a resource group with the name {0} already exists in your subscription."
                                   .format(self.name))
@@ -245,9 +233,12 @@ class AzureRMResourceGroup(AzureRMModuleBase):
     def resources_exist(self):
         found = False
         try:
+            response = self.rm_client.resources.list_by_resource_group(self.name)
+        except AttributeError:
             response = self.rm_client.resource_groups.list_resources(self.name)
         except Exception as exc:
             self.fail("Error checking for resource existence in {0} - {1}".format(self.name, str(exc)))
+
         for item in response:
             found = True
             break
@@ -266,4 +257,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

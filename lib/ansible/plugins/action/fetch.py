@@ -20,12 +20,19 @@ __metaclass__ = type
 import os
 import base64
 
-from ansible.constants import mk_boolean as boolean
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes
+from ansible.module_utils.six import string_types
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum, checksum_s, md5, secure_hash
 from ansible.utils.path import makedirs_safe
+
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
 
 
 class ActionModule(ActionBase):
@@ -42,20 +49,33 @@ class ActionModule(ActionBase):
             result['msg'] = 'check mode not (yet) supported for this module'
             return result
 
-        source            = self._task.args.get('src', None)
-        dest              = self._task.args.get('dest', None)
-        flat              = boolean(self._task.args.get('flat'))
-        fail_on_missing   = boolean(self._task.args.get('fail_on_missing'))
-        validate_checksum = boolean(self._task.args.get('validate_checksum', self._task.args.get('validate_md5')))
+        source = self._task.args.get('src', None)
+        dest = self._task.args.get('dest', None)
+        flat = boolean(self._task.args.get('flat'), strict=False)
+        fail_on_missing = boolean(self._task.args.get('fail_on_missing'), strict=False)
+        validate_checksum = boolean(self._task.args.get('validate_checksum',
+                                                        self._task.args.get('validate_md5', True)),
+                                    strict=False)
 
+        # validate source and dest are strings FIXME: use basic.py and module specs
+        if not isinstance(source, string_types):
+            result['msg'] = "Invalid type supplied for source option, it must be a string"
+
+        if not isinstance(dest, string_types):
+            result['msg'] = "Invalid type supplied for dest option, it must be a string"
+
+        # validate_md5 is the deprecated way to specify validate_checksum
         if 'validate_md5' in self._task.args and 'validate_checksum' in self._task.args:
-            result['failed'] = True
             result['msg'] = "validate_checksum and validate_md5 cannot both be specified"
-            return result
+
+        if 'validate_md5' in self._task.args:
+            display.deprecated('Use validate_checksum instead of validate_md5', version='2.8')
 
         if source is None or dest is None:
-            result['failed'] = True
             result['msg'] = "src and dest are required"
+
+        if result.get('msg'):
+            result['failed'] = True
             return result
 
         source = self._connection._shell.join_path(source)
@@ -100,6 +120,11 @@ class ActionModule(ActionBase):
 
         dest = os.path.expanduser(dest)
         if flat:
+            if os.path.isdir(to_bytes(dest, errors='surrogate_or_strict')) and not dest.endswith(os.sep):
+                result['msg'] = "dest is an existing directory, use a trailing slash if you want to fetch src into that directory"
+                result['file'] = dest
+                result['failed'] = True
+                return result
             if dest.endswith(os.sep):
                 # if the path ends with "/", we'll use the source filename as the
                 # destination filename
@@ -116,28 +141,33 @@ class ActionModule(ActionBase):
                 target_name = self._play_context.remote_addr
             dest = "%s/%s/%s" % (self._loader.path_dwim(dest), target_name, source_local)
 
-        dest = dest.replace("//","/")
+        dest = dest.replace("//", "/")
 
-        if remote_checksum in ('0', '1', '2', '3', '4'):
-            # these don't fail because you may want to transfer a log file that
-            # possibly MAY exist but keep going to fetch other log files
+        if remote_checksum in ('0', '1', '2', '3', '4', '5'):
             result['changed'] = False
             result['file'] = source
             if remote_checksum == '0':
                 result['msg'] = "unable to calculate the checksum of the remote file"
             elif remote_checksum == '1':
-                if fail_on_missing:
-                    result['failed'] = True
-                    del result['changed']
-                    result['msg'] = "the remote file does not exist"
-                else:
-                    result['msg'] = "the remote file does not exist, not transferring, ignored"
+                result['msg'] = "the remote file does not exist"
             elif remote_checksum == '2':
-                result['msg'] = "no read permission on remote file, not transferring, ignored"
+                result['msg'] = "no read permission on remote file"
             elif remote_checksum == '3':
                 result['msg'] = "remote file is a directory, fetch cannot work on directories"
             elif remote_checksum == '4':
                 result['msg'] = "python isn't present on the system.  Unable to compute checksum"
+            elif remote_checksum == '5':
+                result['msg'] = "stdlib json or simplejson was not found on the remote machine. Only the raw module can work without those installed"
+            # Historically, these don't fail because you may want to transfer
+            # a log file that possibly MAY exist but keep going to fetch other
+            # log files. Today, this is better achieved by adding
+            # ignore_errors or failed_when to the task.  Control the behaviour
+            # via fail_when_missing
+            if fail_on_missing:
+                result['failed'] = True
+                del result['changed']
+            else:
+                result['msg'] += ", not transferring, ignored"
             return result
 
         # calculate checksum for the local file
@@ -166,10 +196,12 @@ class ActionModule(ActionBase):
 
             if validate_checksum and new_checksum != remote_checksum:
                 result.update(dict(failed=True, md5sum=new_md5,
-                    msg="checksum mismatch", file=source, dest=dest, remote_md5sum=None,
-                    checksum=new_checksum, remote_checksum=remote_checksum))
+                                   msg="checksum mismatch", file=source, dest=dest, remote_md5sum=None,
+                                   checksum=new_checksum, remote_checksum=remote_checksum))
             else:
-                result.update(dict(changed=True, md5sum=new_md5, dest=dest, remote_md5sum=None, checksum=new_checksum, remote_checksum=remote_checksum))
+                result.update({'changed': True, 'md5sum': new_md5, 'dest': dest,
+                               'remote_md5sum': None, 'checksum': new_checksum,
+                               'remote_checksum': remote_checksum})
         else:
             # For backwards compatibility. We'll return None on FIPS enabled systems
             try:

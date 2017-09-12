@@ -16,10 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
-
+                    'supported_by': 'network'}
 
 DOCUMENTATION = '''
 ---
@@ -28,52 +27,54 @@ extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Manages port-channel interfaces.
 description:
-    - Manages port-channel specific configuration parameters.
+  - Manages port-channel specific configuration parameters.
 author:
-    - Jason Edelman (@jedelman8)
-    - Gabriele Gerbino (@GGabriele)
+  - Jason Edelman (@jedelman8)
+  - Gabriele Gerbino (@GGabriele)
 notes:
-    - C(state=absent) removes the portchannel config and interface if it
-      already exists. If members to be removed are not explicitly
-      passed, all existing members (if any), are removed.
-    - Members must be a list.
-    - LACP needs to be enabled first if active/passive modes are used.
+  - Tested against NXOSv 7.3.(0)D1(1) on VIRL
+  - C(state=absent) removes the portchannel config and interface if it
+    already exists. If members to be removed are not explicitly
+    passed, all existing members (if any), are removed.
+  - Members must be a list.
+  - LACP needs to be enabled first if active/passive modes are used.
 options:
-    group:
-        description:
-            - Channel-group number for the port-channel.
-        required: true
-    mode:
-        description:
-            - Mode for the port-channel, i.e. on, active, passive.
-        required: false
-        default: on
-        choices: ['active','passive','on']
-    min_links:
-        description:
-            - Min links required to keep portchannel up.
-        required: false
-        default: null
-    members:
-        description:
-            - List of interfaces that will be managed in a given portchannel.
-        required: false
-        default: null
-    force:
-        description:
-            - When true it forces port-channel members to match what is
-              declared in the members param. This can be used to remove
-              members.
-        required: false
-        choices: ['true', 'false']
-        default: false
-    state:
-        description:
-            - Manage the state of the resource.
-        required: false
-        default: present
-        choices: ['present','absent']
+  group:
+    description:
+      - Channel-group number for the port-channel.
+    required: true
+  mode:
+    description:
+      - Mode for the port-channel, i.e. on, active, passive.
+    required: false
+    default: on
+    choices: ['active','passive','on']
+  min_links:
+    description:
+      - Min links required to keep portchannel up.
+    required: false
+    default: null
+  members:
+    description:
+      - List of interfaces that will be managed in a given portchannel.
+    required: false
+    default: null
+  force:
+    description:
+      - When true it forces port-channel members to match what is
+        declared in the members param. This can be used to remove
+        members.
+    required: false
+    choices: ['true', 'false']
+    default: false
+  state:
+    description:
+      - Manage the state of the resource.
+    required: false
+    default: present
+    choices: ['present','absent']
 '''
+
 EXAMPLES = '''
 # Ensure port-channel99 is created, add two members, and set to mode on
 - nxos_portchannel:
@@ -81,37 +82,10 @@ EXAMPLES = '''
     members: ['Ethernet1/1','Ethernet1/2']
     mode: 'active'
     state: present
-    username: "{{ un }}"
-    password: "{{ pwd }}"
-    host: "{{ inventory_hostname }}"
 '''
 
 RETURN = '''
-proposed:
-    description: k/v pairs of parameters passed into module
-    returned: always
-    type: dict
-    sample: {"group": "12", "members": ["Ethernet2/5",
-            "Ethernet2/6"], "mode": "on"}
-existing:
-    description:
-        - k/v pairs of existing portchannel
-    type: dict
-    sample: {"group": "12", "members": ["Ethernet2/5",
-            "Ethernet2/6"], "members_detail": {
-            "Ethernet2/5": {"mode": "active", "status": "D"},
-            "Ethernet2/6": {"mode": "active", "status": "D"}},
-            "min_links": null, "mode": "active"}
-end_state:
-    description: k/v pairs of portchannel info after module execution
-    returned: always
-    type: dict
-    sample: {"group": "12", "members": ["Ethernet2/5",
-            "Ethernet2/6"], "members_detail": {
-            "Ethernet2/5": {"mode": "on", "status": "D"},
-            "Ethernet2/6": {"mode": "on", "status": "D"}},
-            "min_links": null, "mode": "on"}
-updates:
+commands:
     description: command sent to the device
     returned: always
     type: list
@@ -119,38 +93,25 @@ updates:
              "interface Ethernet2/5", "no channel-group 12",
              "interface Ethernet2/6", "channel-group 12 mode on",
              "interface Ethernet2/5", "channel-group 12 mode on"]
-changed:
-    description: check to see if a change was made on the device
-    returned: always
-    type: boolean
-    sample: true
 '''
+
+import collections
+import re
 
 from ansible.module_utils.nxos import get_config, load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netcfg import CustomNetworkConfig
 
-import collections
-
-import re
-import re
-WARNINGS = []
-PARAM_TO_COMMAND_KEYMAP = {
-    'min_links': 'lacp min-links'
-}
-
-
-def invoke(name, *args, **kwargs):
-    func = globals().get(name)
-    if func:
-        return func(*args, **kwargs)
-
 
 def get_value(arg, config, module):
-    REGEX = re.compile(r'(?:{0}\s)(?P<value>.*)$'.format(PARAM_TO_COMMAND_KEYMAP[arg]), re.M)
+    param_to_command_keymap = {
+        'min_links': 'lacp min-links'
+    }
+
+    REGEX = re.compile(r'(?:{0}\s)(?P<value>.*)$'.format(param_to_command_keymap[arg]), re.M)
     value = ''
-    if PARAM_TO_COMMAND_KEYMAP[arg] in config:
+    if param_to_command_keymap[arg] in config:
         value = REGEX.search(config).group('value')
     return value
 
@@ -180,7 +141,7 @@ def get_custom_value(arg, config, module):
     return value
 
 
-def execute_show_command(command, module, command_type='cli_show'):
+def execute_show_command(command, module):
     if module.params['transport'] == 'cli':
         if 'show port-channel summary' in command:
             command += ' | json'
@@ -206,7 +167,7 @@ def get_portchannel_mode(interface, protocol, module, netcfg):
     if protocol != 'LACP':
         mode = 'on'
     else:
-        netcfg = get_config(module)
+        netcfg = CustomNetworkConfig(indent=2, contents=get_config(module))
         parents = ['interface {0}'.format(interface.capitalize())]
         body = netcfg.get_section(parents)
 
@@ -231,10 +192,9 @@ def get_portchannel(module, netcfg=None):
     portchannel_table = {}
     members = []
 
-    body = execute_show_command(command, module)
-
     try:
-        pc_table = body[0]['TABLE_channel']['ROW_channel']
+        body = execute_show_command(command, module)[0]
+        pc_table = body['TABLE_channel']['ROW_channel']
 
         if isinstance(pc_table, dict):
             pc_table = [pc_table]
@@ -280,7 +240,7 @@ def get_portchannel(module, netcfg=None):
 
 def get_existing(module, args):
     existing = {}
-    netcfg = get_config(module)
+    netcfg = CustomNetworkConfig(indent=2, contents=get_config(module))
 
     interface_exist = check_interface(module, netcfg)
     if interface_exist:
@@ -294,29 +254,18 @@ def get_existing(module, args):
     return existing, interface_exist
 
 
-def apply_key_map(key_map, table):
-    new_dict = {}
-    for key, value in table.items():
-        new_key = key_map.get(key)
-        if new_key:
-            value = table.get(key)
-            if value:
-                new_dict[new_key] = value
-            else:
-                new_dict[new_key] = value
-    return new_dict
-
-
-def config_portchannel(proposed, mode, group):
+def config_portchannel(proposed, mode, group, force):
     commands = []
+    # NOTE: Leading whitespace for force option is important
+    force = ' force' if force else ''
     config_args = {
-        'mode': 'channel-group {group} mode {mode}',
+        'mode': 'channel-group {group}{force} mode {mode}',
         'min_links': 'lacp min-links {min_links}',
     }
 
     for member in proposed.get('members', []):
         commands.append('interface {0}'.format(member))
-        commands.append(config_args.get('mode').format(group=group, mode=mode))
+        commands.append(config_args.get('mode').format(group=group, force=force, mode=mode))
 
     min_links = proposed.get('min_links', None)
     if min_links:
@@ -328,7 +277,7 @@ def config_portchannel(proposed, mode, group):
     return commands
 
 
-def get_commands_to_add_members(proposed, existing, module):
+def get_commands_to_add_members(proposed, existing, force, module):
     try:
         proposed_members = proposed['members']
     except KeyError:
@@ -342,11 +291,13 @@ def get_commands_to_add_members(proposed, existing, module):
     members_to_add = list(set(proposed_members).difference(existing_members))
 
     commands = []
+    # NOTE: Leading whitespace for force option is important
+    force = ' force' if force else ''
     if members_to_add:
         for member in members_to_add:
             commands.append('interface {0}'.format(member))
-            commands.append('channel-group {0} mode {1}'.format(
-                existing['group'], proposed['mode']))
+            commands.append('channel-group {0}{1} mode {2}'.format(
+                existing['group'], force, proposed['mode']))
 
     return commands
 
@@ -372,7 +323,7 @@ def get_commands_to_remove_members(proposed, existing, module):
     return commands
 
 
-def get_commands_if_mode_change(proposed, existing, group, mode, module):
+def get_commands_if_mode_change(proposed, existing, group, mode, force, module):
     try:
         proposed_members = proposed['members']
     except KeyError:
@@ -398,6 +349,8 @@ def get_commands_if_mode_change(proposed, existing, group, mode, module):
                     members_with_mode_change.append(interface)
 
     commands = []
+    # NOTE: Leading whitespace for force option is important
+    force = ' force' if force else ''
     if members_with_mode_change:
         for member in members_with_mode_change:
             commands.append('interface {0}'.format(member))
@@ -405,7 +358,7 @@ def get_commands_if_mode_change(proposed, existing, group, mode, module):
 
         for member in members_with_mode_change:
             commands.append('interface {0}'.format(member))
-            commands.append('channel-group {0} mode {1}'.format(group, mode))
+            commands.append('channel-group {0}{1} mode {2}'.format(group, force, mode))
 
     return commands
 
@@ -433,17 +386,53 @@ def flatten_list(command_lists):
     return flat_command_list
 
 
+def state_present(module, existing, proposed, interface_exist, force, warnings):
+    commands = []
+    group = str(module.params['group'])
+    mode = module.params['mode']
+    min_links = module.params['min_links']
+
+    if not interface_exist:
+        command = config_portchannel(proposed, mode, group, force)
+        commands.append(command)
+        commands.insert(0, 'interface port-channel{0}'.format(group))
+        warnings.append("The proposed port-channel interface did not "
+                        "exist. It's recommended to use nxos_interface to "
+                        "create all logical interfaces.")
+
+    elif existing and interface_exist:
+        if force:
+            command = get_commands_to_remove_members(proposed, existing, module)
+            commands.append(command)
+
+        command = get_commands_to_add_members(proposed, existing, force, module)
+        commands.append(command)
+
+        mode_command = get_commands_if_mode_change(proposed, existing, group, mode, force, module)
+        commands.insert(0, mode_command)
+
+        if min_links:
+            command = get_commands_min_links(existing, proposed, group, min_links, module)
+            commands.append(command)
+
+    return commands
+
+
+def state_absent(module, existing, proposed):
+    commands = []
+    group = str(module.params['group'])
+    commands.append(['no interface port-channel{0}'.format(group)])
+    return commands
+
+
 def main():
     argument_spec = dict(
         group=dict(required=True, type='str'),
-        mode=dict(required=False, choices=['on', 'active', 'passive'],
-                      default='on', type='str'),
+        mode=dict(required=False, choices=['on', 'active', 'passive'], default='on', type='str'),
         min_links=dict(required=False, default=None, type='str'),
         members=dict(required=False, default=None, type='list'),
-        force=dict(required=False, default='false', type='str',
-                       choices=['true', 'false']),
-        state=dict(required=False, choices=['absent', 'present'],
-                       default='present'),
+        force=dict(required=False, default='false', type='str', choices=['true', 'false']),
+        state=dict(required=False, choices=['absent', 'present'], default='present'),
         include_defaults=dict(default=False),
         config=dict(),
         save=dict(type='bool', default=False)
@@ -451,12 +440,11 @@ def main():
 
     argument_spec.update(nxos_argument_spec)
 
-    module = AnsibleModule(argument_spec=argument_spec,
-                                supports_check_mode=True)
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
     warnings = list()
     check_args(module, warnings)
-
+    results = dict(changed=False, warnings=warnings)
 
     group = str(module.params['group'])
     mode = module.params['mode']
@@ -474,76 +462,37 @@ def main():
         module.fail_json(msg='"members" is required when state=present and '
                              '"min_links" or "mode" are provided')
 
-    changed = False
-    args =  [
+    args = [
         'group',
         'members',
         'min_links',
         'mode'
     ]
 
-    existing, interface_exist = invoke('get_existing', module, args)
-    end_state = existing
+    existing, interface_exist = get_existing(module, args)
     proposed = dict((k, v) for k, v in module.params.items()
                     if v is not None and k in args)
 
-    result = {}
     commands = []
-    if state == 'absent':
-        if existing:
-            commands.append(['no interface port-channel{0}'.format(group)])
+
+    if state == 'absent' and existing:
+        commands = state_absent(module, existing, proposed)
     elif state == 'present':
-        if not interface_exist:
-            command = config_portchannel(proposed, mode, group)
-            commands.append(command)
-            commands.insert(0, 'interface port-channel{0}'.format(group))
-            WARNINGS.append("The proposed port-channel interface did not "
-                            "exist. It's recommended to use nxos_interface to "
-                            "create all logical interfaces.")
-
-        elif existing and interface_exist:
-            if force:
-                command = get_commands_to_remove_members(proposed, existing, module)
-                commands.append(command)
-
-            command = get_commands_to_add_members(proposed, existing, module)
-            commands.append(command)
-
-            mode_command = get_commands_if_mode_change(proposed, existing,
-                                                       group, mode, module)
-
-            commands.insert(0, mode_command)
-
-            if min_links:
-                command = get_commands_min_links(existing, proposed,
-                                                 group, min_links, module)
-                commands.append(command)
+        commands = state_present(module, existing, proposed, interface_exist, force, warnings)
 
     cmds = flatten_list(commands)
     if cmds:
         if module.check_mode:
-            module.exit_json(changed=True, commands=cmds)
+            module.exit_json(**results)
         else:
             load_config(module, cmds)
-            changed = True
-            end_state, interface_exist = get_existing(module, args)
+            results['changed'] = True
             if 'configure' in cmds:
                 cmds.pop(0)
 
-    results = {}
-    results['proposed'] = proposed
-    results['existing'] = existing
-    results['end_state'] = end_state
-    results['updates'] = cmds
-    results['changed'] = changed
-    results['warnings'] = warnings
-
-    if WARNINGS:
-        results['warnings'] = WARNINGS
-
+    results['commands'] = cmds
     module.exit_json(**results)
 
 
 if __name__ == '__main__':
     main()
-

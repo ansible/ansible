@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -121,6 +121,12 @@ options:
       - yes
       - no
     version_added: 2.1
+  priority_group:
+    description:
+      - Sets priority group for a pool member.
+    required: false
+    default: null
+    version_added: 2.4
 extends_documentation_fragment: f5
 '''
 
@@ -331,6 +337,24 @@ def set_ratio(api, pool, address, port, ratio):
     )
 
 
+def get_priority_group(api, pool, address, port):
+    members = [{'address': address, 'port': port}]
+    result = api.LocalLB.Pool.get_member_priority(
+        pool_names=[pool],
+        members=[members]
+    )[0][0]
+    return result
+
+
+def set_priority_group(api, pool, address, port, priority_group):
+    members = [{'address': address, 'port': port}]
+    api.LocalLB.Pool.set_member_priority(
+        pool_names=[pool],
+        members=[members],
+        priorities=[[priority_group]]
+    )
+
+
 def set_member_session_enabled_state(api, pool, address, port, session_state):
     members = [{'address': address, 'port': port}]
     session_state = ["STATE_%s" % session_state.strip().upper()]
@@ -384,7 +408,8 @@ def main():
         description=dict(type='str'),
         rate_limit=dict(type='int'),
         ratio=dict(type='int'),
-        preserve_node=dict(type='bool', default=False)
+        preserve_node=dict(type='bool', default=False),
+        priority_group=dict(type='int')
     )
     argument_spec.update(meta_args)
 
@@ -396,7 +421,9 @@ def main():
     if module.params['validate_certs']:
         import ssl
         if not hasattr(ssl, 'SSLContext'):
-            module.fail_json(msg='bigsuds does not support verifying certificates with python < 2.7.9.  Either update python or set validate_certs=False on the task')
+            module.fail_json(
+                msg='bigsuds does not support verifying certificates with python < 2.7.9.  Either update python or set validate_certs=False on the task'
+            )
 
     server = module.params['server']
     server_port = module.params['server_port']
@@ -413,6 +440,7 @@ def main():
     description = module.params['description']
     rate_limit = module.params['rate_limit']
     ratio = module.params['ratio']
+    priority_group = module.params['priority_group']
     host = module.params['host']
     address = fq_name(partition, host)
     port = module.params['port']
@@ -458,6 +486,8 @@ def main():
                         set_member_session_enabled_state(api, pool, address, port, session_state)
                     if monitor_state is not None:
                         set_member_monitor_state(api, pool, address, port, monitor_state)
+                    if priority_group is not None:
+                        set_priority_group(api, pool, address, port, priority_group)
                 result = {'changed': True}
             else:
                 # pool member exists -- potentially modify attributes
@@ -497,6 +527,10 @@ def main():
                         if not module.check_mode:
                             set_member_monitor_state(api, pool, address, port, monitor_state)
                         result = {'changed': True}
+                if priority_group is not None and priority_group != get_priority_group(api, pool, address, port):
+                    if not module.check_mode:
+                        set_priority_group(api, pool, address, port, priority_group)
+                    result = {'changed': True}
 
     except Exception as e:
         module.fail_json(msg="received exception: %s" % e)

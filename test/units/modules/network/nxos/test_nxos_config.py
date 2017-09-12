@@ -43,8 +43,8 @@ class TestNxosConfigModule(TestNxosModule):
         self.mock_get_config.stop()
         self.mock_load_config.stop()
 
-    def load_fixtures(self, commands=None):
-        self.get_config.return_value = load_fixture('nxos_config/config.cfg')
+    def load_fixtures(self, commands=None, device=''):
+        self.get_config.return_value = load_fixture('nxos_config', 'config.cfg')
         self.load_config.return_value = None
 
     def test_nxos_config_no_change(self):
@@ -53,7 +53,7 @@ class TestNxosConfigModule(TestNxosModule):
         result = self.execute_module()
 
     def test_nxos_config_src(self):
-        args = dict(src=load_fixture('nxos_config/candidate.cfg'))
+        args = dict(src=load_fixture('nxos_config', 'candidate.cfg'))
         set_module_args(args)
 
         result = self.execute_module(changed=True)
@@ -73,7 +73,7 @@ class TestNxosConfigModule(TestNxosModule):
 
     def test_nxos_config_before(self):
         args = dict(lines=['hostname switch01', 'ip domain-name eng.ansible.com'],
-                     before=['before command'])
+                    before=['before command'])
 
         set_module_args(args)
 
@@ -85,7 +85,7 @@ class TestNxosConfigModule(TestNxosModule):
 
     def test_nxos_config_after(self):
         args = dict(lines=['hostname switch01', 'ip domain-name eng.ansible.com'],
-                     after=['after command'])
+                    after=['after command'])
 
         set_module_args(args)
 
@@ -134,6 +134,3 @@ class TestNxosConfigModule(TestNxosModule):
         set_module_args(args)
         result = self.execute_module()
         self.assertIn('__backup__', result)
-
-
-

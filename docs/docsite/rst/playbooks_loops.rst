@@ -59,6 +59,31 @@ Also be aware that when combining `when` with `with_items` (or any other loop st
 
 Loops are actually a combination of things `with_` + `lookup()`, so any lookup plugin can be used as a source for a loop, 'items' is lookup.
 
+Please note that ``with_items`` flattens the first depth of the list it is
+provided and can yield unexpected results if you pass a list which is composed
+of lists. You can work around this by wrapping your nested list inside a list::
+
+    # This will run debug three times since the list is flattened
+    - debug:
+        msg: "{{ item }}"
+      vars:
+        nested_list:
+          - - one
+            - two
+            - three
+      with_items: "{{ nested_list }}"
+
+    # This will run debug once with the three items
+    - debug:
+        msg: "{{ item }}"
+      vars:
+        nested_list:
+          - - one
+            - two
+            - three
+      with_items:
+        - "{{ nested_list }}"
+
 .. _nested_loops:
 
 Nested Loops
@@ -170,24 +195,87 @@ Looping over Fileglobs
             src: "{{ item }}"
             dest: "/etc/fooapp/"
             owner: "root"
-            mode: 600
+            mode: 0600
           with_fileglob:
             - "/playbooks/files/fooapp/*"
 
 .. note:: When using a relative path with ``with_fileglob`` in a role, Ansible resolves the path relative to the `roles/<rolename>/files` directory.
 
+
+Looping over Filetrees
+``````````````````````
+
+``with_filetree`` recursively matches all files in a directory tree, enabling you to template a complete tree of files on a target system while retaining permissions and ownership.
+
+The ``filetree`` lookup-plugin supports directories, files and symlinks, including SELinux and other file properties. Here is a complete list of what each file object consists of:
+
+* src
+* root
+* path
+* mode
+* state
+* owner
+* group
+* seuser
+* serole
+* setype
+* selevel
+* uid
+* gid
+* size
+* mtime
+* ctime
+
+If you provide more than one path, it will implement a ``with_first_found`` logic, and will not process entries it already processed in previous paths. This enables the user to merge different trees in order of importance, or add role_vars specific paths to influence different instances of the same role.
+
+Here is an example of how we use with_filetree within a role. The ``web/`` path is relative to either ``roles/<role>/files/`` or ``files/``::
+
+    ---
+    - name: Create directories
+      file:
+        path: /web/{{ item.path }}
+        state: directory
+        mode: '{{ item.mode }}'
+      with_filetree: web/
+      when: item.state == 'directory'
+
+    - name: Template files
+      template:
+        src: '{{ item.src }}'
+        dest: /web/{{ item.path }}
+        mode: '{{ item.mode }}'
+      with_filetree: web/
+      when: item.state == 'file'
+
+    - name: Recreate symlinks
+      file:
+        src: '{{ item.src }}'
+        dest: /web/{{ item.path }}
+        state: link
+        force: yes
+        mode: '{{ item.mode }}'
+      with_filetree: web/
+      when: item.state == 'link'
+
+
+The following properties are also available:
+
+* ``root``: allows filtering by original location
+* ``path``: contains the relative path to root
+* ``uidi``, ``gid``: force-create by exact id, rather than by name
+* ``size``, ``mtime``, ``ctime``: filter out files by size, mtime or ctime
+
+
 Looping over Parallel Sets of Data
 ``````````````````````````````````
 
-.. note:: This is an uncommon thing to want to do, but we're documenting it for completeness.  You probably won't be reaching for this one often.
-
-Suppose you have the following variable data was loaded in via somewhere::
+Suppose you have the following variable data::
 
     ---
     alpha: [ 'a', 'b', 'c', 'd' ]
     numbers:  [ 1, 2, 3, 4 ]
 
-And you want the set of '(a, 1)' and '(b, 2)' and so on.   Use 'with_together' to get this::
+...and you want the set of '(a, 1)' and '(b, 2)'.   Use 'with_together' to get this::
 
     tasks:
         - debug:
@@ -202,7 +290,7 @@ Looping over Subelements
 Suppose you want to do something like loop over a list of users, creating them, and allowing them to login by a certain set of
 SSH keys.
 
-How might that be accomplished?  Let's assume you had the following defined and loaded in via "vars_files" or maybe a "group_vars/all" file::
+In this example, we'll assume you have the following defined and loaded in via "vars_files" or maybe a "group_vars/all" file::
 
     ---
     users:
@@ -231,7 +319,7 @@ How might that be accomplished?  Let's assume you had the following defined and 
               - "*.*:SELECT"
               - "DB2.*:ALL"
 
-It might happen like so::
+You could loop over these subelements like this::
 
     - name: Create User
       user:
@@ -259,7 +347,7 @@ Given the mysql hosts and privs subkey lists, you can also iterate over a list i
         priv: "{{ item.0.mysql.privs | join('/') }}"
       with_subelements:
         - "{{ users }}"
-        - "{{ mysql.hosts }}"
+        - mysql.hosts
 
 Subelements walks a list of hashes (aka dictionaries) and then traverses a list with a given (nested sub-)key inside of those
 records.
@@ -277,10 +365,12 @@ The authorized_key pattern is exactly where it comes up most.
 Looping over Integer Sequences
 ``````````````````````````````
 
-``with_sequence`` generates a sequence of items in ascending numerical order. You
-can specify a start, end, and an optional step value.
+``with_sequence`` generates a sequence of items. You
+can specify a start value, an end value, an optional "stride" value that specifies the number of steps to increment the sequence, and an optional printf-style format string.
 
-Arguments should be specified in key=value pairs.  If supplied, the 'format' is a printf style string.
+Arguments should be specified as key=value pair strings.
+
+A simple shortcut form of the arguments string is also accepted: ``[start-]end[/stride][:format]``.
 
 Numerical values can be specified in decimal, hexadecimal (0x3f8) or octal (0600).
 Negative numbers are not supported.  This works as follows::
@@ -303,27 +393,20 @@ Negative numbers are not supported.  This works as follows::
             name: "{{ item }}"
             state: present
             groups: "evens"
-          with_sequence:
-            - start: 0
-            - end: 32
-            - format: testuser%02x
+          with_sequence: start=0 end=32 format=testuser%02x
 
         # create a series of directories with even numbers for some reason
         - file:
             dest: "/var/stuff/{{ item }}"
             state: directory
-          with_sequence:
-            - start: 4
-            - end: 16
-            - stride: 2
+          with_sequence: start=4 end=16 stride=2
 
         # a simpler way to use the sequence plugin
         # create 4 groups
         - group:
             name: "group{{ item }}"
             state: present
-          with_sequence:
-            count: 4
+          with_sequence: count=4
 
 .. _random_choice:
 
@@ -354,8 +437,7 @@ Do-Until Loops
 
 Sometimes you would want to retry a task until a certain condition is met.  Here's an example::
 
-    - action:
-        shell /usr/bin/foo
+    - shell: /usr/bin/foo
       register: result
       until: result.stdout.find("all systems go") != -1
       retries: 5
@@ -366,6 +448,8 @@ been retried for 5 times with a delay of 10 seconds. The default value for "retr
 
 The task returns the results returned by the last task run. The results of individual retries can be viewed by -vv option.
 The registered variable will also have a new key "attempts" which will have the number of the retries for the task.
+
+.. note:: If the "until" parameter isn't defined, the value for the "retries" parameter is forced to 1.
 
 .. _with_first_found:
 
@@ -617,7 +701,7 @@ Looping over the inventory
 ``````````````````````````
 
 If you wish to loop over the inventory, or just a subset of it, there is multiple ways.
-One can use a regular ``with_items`` with the ``play_hosts`` or ``groups`` variables, like this::
+One can use a regular ``with_items`` with the ``ansible_play_batch`` or ``groups`` variables, like this::
 
     # show all the hosts in the inventory
     - debug:
@@ -629,7 +713,7 @@ One can use a regular ``with_items`` with the ``play_hosts`` or ``groups`` varia
     - debug:
         msg: "{{ item }}"
       with_items:
-        - "{{ play_hosts }}"
+        - "{{ ansible_play_batch }}"
 
 There is also a specific lookup plugin ``inventory_hostnames`` that can be used like this::
 
@@ -753,7 +837,7 @@ information.  Each of the above features are implemented as plugins in ansible, 
 
    :doc:`playbooks`
        An introduction to playbooks
-   :doc:`playbooks_roles`
+   :doc:`playbooks_reuse_roles`
        Playbook organization by roles
    :doc:`playbooks_best_practices`
        Best practices in playbooks

@@ -1,362 +1,276 @@
 #!powershell
-#
-# (c) 2014, Timothy Vandenbrande <timothy.vandenbrande@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright (c) 2017 Artem Zinenko <zinenkoartem@gmail.com>
+# Copyright (c) 2014 Timothy Vandenbrande <timothy.vandenbrande@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 # WANT_JSON
 # POWERSHELL_COMMON
 
-function getFirewallRule ($fwsettings) {
-    try {
+function Parse-ProtocolType {
+    param($protocol)
 
-        #$output = Get-NetFirewallRule -name $($fwsettings.'Rule Name');
-        $rawoutput=@(netsh advfirewall firewall show rule name="$($fwsettings.'Rule Name')" verbose)
-        if (!($rawoutput -eq 'No rules match the specified criteria.')){
-            $rawoutput | Where {$_ -match '^([^:]+):\s*(\S.*)$'} | Foreach -Begin {
-                    $FirstRun = $true;
-                    $HashProps = @{};
-                } -Process {
-                    if (($Matches[1] -eq 'Rule Name') -and (!($FirstRun))) {
-                        #$output=New-Object -TypeName PSCustomObject -Property $HashProps;
-                        $output=$HashProps;
-                        $HashProps = @{};
-                    };
-                    $HashProps.$($Matches[1]) = $Matches[2];
-                    $FirstRun = $false;
-                } -End {
-                #$output=New-Object -TypeName PSCustomObject -Property $HashProps;
-                $output=$HashProps;
-                }
-        }
-        $exists=$false;
-        $correct=$true;
-        $diff=$false;
-        $multi=$false;
-        $correct=$false;
-        $difference=@();
-        $msg=@();
-        if ($($output|measure).count -gt 0) {
-            $exists=$true;
-            $msg += @("The rule '" + $fwsettings.'Rule Name' + "' exists.");
-            if ($($output|measure).count -gt 1) {
-                $multi=$true
-                $msg += @("The rule '" + $fwsettings.'Rule Name' + "' has multiple entries.");
-                ForEach($rule in $output.GetEnumerator()) {
-                    ForEach($fwsetting in $fwsettings.GetEnumerator()) {
-                        if ( $rule.$fwsetting -ne $fwsettings.$fwsetting) {
-                            $diff=$true;
-                            #$difference+=@($fwsettings.$($fwsetting.Key));
-                            $difference+=@("output:$rule.$fwsetting,fwsetting:$fwsettings.$fwsetting");
-                        };
-                    };
-                    if ($diff -eq $false) {
-                        $correct=$true
-                    };
-                };
-            } else {
-                ForEach($fwsetting in $fwsettings.GetEnumerator()) {
-                    if ( $output.$($fwsetting.Key) -ne $fwsettings.$($fwsetting.Key)) {
+    $protocolNumber = $protocol -as [int]
+    if ($protocolNumber -is [int]) {
+        return $protocolNumber
+    }
 
-                        if (($fwsetting.Key -eq 'RemoteIP') -and ($output.$($fwsetting.Key) -eq ($fwsettings.$($fwsetting.Key)+'-'+$fwsettings.$($fwsetting.Key)))) {
-                            $donothing=$false
-                        } elseif (($fwsetting.Key -eq 'DisplayName') -and ($output."Rule Name" -eq $fwsettings.$($fwsetting.Key))) {
-                            $donothing=$false
-                        } else {
-                            $diff=$true;
-                            $difference+=@($fwsettings.$($fwsetting.Key));
-                        };
-                    };
-                };
-                if ($diff -eq $false) {
-                    $correct=$true
-                };
-            };
-            if ($correct) {
-                $msg += @("An identical rule exists");
-            } else {
-                $msg += @("The rule exists but has different values");
-            }
-        } else {
-            $msg += @("No rule could be found");
-        };
-        $result = @{
-            failed = $false
-            exists = $exists
-            identical = $correct
-            multiple = $multi
-            difference = $difference
-            msg = $msg
-        }
-    } catch [Exception]{
-        $result = @{
-            failed = $true
-            error = $_.Exception.Message
-            msg = $msg
-        }
-    };
-    return $result
-};
-
-function createFireWallRule ($fwsettings) {
-    $msg=@()
-    $execString="netsh advfirewall firewall add rule"
-
-    ForEach ($fwsetting in $fwsettings.GetEnumerator()) {
-        if ($fwsetting.key -eq 'Direction') {
-            $key='dir'
-        } elseif ($fwsetting.key -eq 'Rule Name') {
-            $key='name'
-        } elseif ($fwsetting.key -eq 'Enabled') {
-            $key='enable'
-        } elseif ($fwsetting.key -eq 'Profiles') {
-            $key='profile'
-        } else {
-            $key=$($fwsetting.key).ToLower()
-        };
-        $execString+=" ";
-        $execString+=$key;
-        $execString+="=";
-        $execString+='"';
-        $execString+=$fwsetting.value;
-        $execString+='"';
-    };
-    try {
-        #$msg+=@($execString);
-        $output=$(Invoke-Expression $execString| ? {$_});
-        $msg+=@("Created firewall rule $name");
-
-        $result=@{
-            failed = $false
-            output=$output
-            changed=$true
-            msg=$msg
-        };
-
-    } catch [Exception]{
-        $msg=@("Failed to create the rule")
-        $result=@{
-            output=$output
-            failed=$true
-            error=$_.Exception.Message
-            msg=$msg
-        };
-    };
-    return $result
-};
-
-function removeFireWallRule ($fwsettings) {
-    $msg=@()
-    try {
-        $rawoutput=@(netsh advfirewall firewall delete rule name="$($fwsettings.'Rule Name')")
-        $rawoutput | Where {$_ -match '^([^:]+):\s*(\S.*)$'} | Foreach -Begin {
-                $FirstRun = $true;
-                $HashProps = @{};
-            } -Process {
-                if (($Matches[1] -eq 'Rule Name') -and (!($FirstRun))) {
-                    $output=$HashProps;
-                    $HashProps = @{};
-                };
-                $HashProps.$($Matches[1]) = $Matches[2];
-                $FirstRun = $false;
-            } -End {
-                $output=$HashProps;
-            };
-        $msg+=@("Removed the rule")
-        $result=@{
-            failed=$false
-            changed=$true
-            msg=$msg
-            output=$output
-        };
-    } catch [Exception]{
-        $msg+=@("Failed to remove the rule")
-        $result=@{
-            failed=$true
-            error=$_.Exception.Message
-            msg=$msg
-        }
-    };
-    return $result
+    switch -wildcard ($protocol) {
+        "tcp" { return [System.Net.Sockets.ProtocolType]::Tcp -as [int] }
+        "udp" { return [System.Net.Sockets.ProtocolType]::Udp -as [int] }
+        "icmpv4*" { return [System.Net.Sockets.ProtocolType]::Icmp -as [int] }
+        "icmpv6*" { return [System.Net.Sockets.ProtocolType]::IcmpV6 -as [int] }
+        default { throw "Unknown protocol '$protocol'." }
+    }
 }
 
-# Mount Drives
-$change=$false;
-$fail=$false;
-$msg=@();
-$fwsettings=@{}
+# See 'Direction' constants here: https://msdn.microsoft.com/en-us/library/windows/desktop/aa364724(v=vs.85).aspx
+function Parse-Direction {
+    param($directionStr)
 
-# Variabelise the arguments
-$params=Parse-Args $args;
+    switch ($directionStr) {
+        "in" { return 1 }
+        "out" { return 2 }
+        default { throw "Unknown direction '$directionStr'." }
+    }
+}
+
+# See 'Action' constants here: https://msdn.microsoft.com/en-us/library/windows/desktop/aa364724(v=vs.85).aspx
+function Parse-Action {
+    param($actionStr)
+
+    switch ($actionStr) {
+        "block" { return 0 }
+        "allow" { return 1 }
+        default { throw "Unknown action '$actionStr'." }
+    }
+}
+
+# Profile enum values: https://msdn.microsoft.com/en-us/library/windows/desktop/aa366303(v=vs.85).aspx
+function Parse-Profiles
+{
+    param($profilesStr)
+
+    $profiles = ($profilesStr.Split(',') | Select -uniq | ForEach {
+        switch ($_) {
+            "domain" { return 1 }
+            "private" { return 2 }
+            "public" { return 4 }
+            default { throw "Unknown profile '$_'." }
+        }
+    } | Measure-Object -Sum).Sum
+
+    if ($profiles -eq 7) { return 0x7fffffff }
+    return $profiles
+}
+
+function Parse-InterfaceTypes
+{
+    param($interfaceTypesStr)
+
+    return ($interfaceTypesStr.Split(',') | Select -uniq | ForEach {
+        switch ($_) {
+            "wireless" { return "Wireless" }
+            "lan" { return "Lan" }
+            "ras" { return "RemoteAccess" }
+            default { throw "Unknown interface type '$_'." }
+        }
+    }) -Join ","
+}
+
+function Parse-EdgeTraversalOptions
+{
+    param($edgeTraversalOptionsStr)
+
+    switch ($edgeTraversalOptionsStr) {
+        "yes" { return 1 }
+        "deferapp" { return 2 }
+        "deferuser" { return 3 }
+        default { throw "Unknown edge traversal options '$edgeTraversalOptionsStr'." }
+    }
+}
+
+function Parse-SecureFlags
+{
+    param($secureFlagsStr)
+
+    switch ($secureFlagsStr) {
+        "authnoencap" { return 1 }
+        "authenticate" { return 2 }
+        "authdynenc" { return 3 }
+        "authenc" { return 4 }
+        default { throw "Unknown secure flags '$secureFlagsStr'." }
+    }
+}
+
+function New-FWRule
+{
+    param (
+        [string]$name,
+        [string]$description,
+        [string]$applicationName,
+        [string]$serviceName,
+        [string]$protocol,
+        [string]$localPorts,
+        [string]$remotePorts,
+        [string]$localAddresses,
+        [string]$remoteAddresses,
+        [string]$direction,
+        [string]$action,
+        [bool]$enabled,
+        [string]$profiles,
+        [string]$interfaceTypes,
+        [string]$edgeTraversalOptions,
+        [string]$secureFlags
+    )
+
+    # INetFwRule interface description: https://msdn.microsoft.com/en-us/library/windows/desktop/aa365344(v=vs.85).aspx
+    $rule = New-Object -ComObject HNetCfg.FWRule
+    $rule.Name = $name
+    $rule.Enabled = $enabled
+    if ($description) { $rule.Description = $description }
+    if ($applicationName) { $rule.ApplicationName = $applicationName }
+    if ($serviceName) { $rule.ServiceName = $serviceName }
+    if ($protocol -and $protocol -ne "any") { $rule.Protocol = Parse-ProtocolType -protocol $protocol }
+    if ($localPorts -and $localPorts -ne "any") { $rule.LocalPorts = $localPorts }
+    if ($remotePorts -and $remotePorts -ne "any") { $rule.RemotePorts = $remotePorts }
+    if ($localAddresses -and $localAddresses -ne "any") { $rule.LocalAddresses = $localAddresses }
+    if ($remoteAddresses -and $remoteAddresses -ne "any") { $rule.RemoteAddresses = $remoteAddresses }
+    if ($direction) { $rule.Direction = Parse-Direction -directionStr $direction }
+    if ($action) { $rule.Action = Parse-Action -actionStr $action }
+    if ($profiles) { $rule.Profiles = Parse-Profiles -profilesStr $profiles }
+    if ($interfaceTypes -and $interfaceTypes -ne "any") { $rule.InterfaceTypes = Parse-InterfaceTypes -interfaceTypesStr $interfaceTypes }
+    if ($edgeTraversalOptions -and $edgeTraversalOptions -ne "no") {
+        # EdgeTraversalOptions property exists only from Windows 7/Windows Server 2008 R2: https://msdn.microsoft.com/en-us/library/windows/desktop/dd607256(v=vs.85).aspx
+        if ($rule | Get-Member -Name 'EdgeTraversalOptions') {
+            $rule.EdgeTraversalOptions = Parse-EdgeTraversalOptions -edgeTraversalOptionsStr $edgeTraversalOptions
+        }
+    }
+    if ($secureFlags -and $secureFlags -ne "notrequired") {
+        # SecureFlags property exists only from Windows 8/Windows Server 2012: https://msdn.microsoft.com/en-us/library/windows/desktop/hh447465(v=vs.85).aspx
+        if ($rule | Get-Member -Name 'SecureFlags') {
+            $rule.SecureFlags = Parse-SecureFlags -secureFlagsStr $secureFlags
+        }
+    }
+
+    return $rule
+}
+
+$ErrorActionPreference = "Stop"
+
+$result = @{
+    changed = $false
+}
+
+$params = Parse-Args $args -supports_check_mode $true
+$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
+$diff_support = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool" -default $false
 
 $name = Get-AnsibleParam -obj $params -name "name" -failifempty $true
-$direction = Get-AnsibleParam -obj $params -name "direction" -failifempty $true -validateSet "in","out"
-$action = Get-AnsibleParam -obj $params -name "action" -failifempty $true -validateSet "allow","block","bypass"
-$program = Get-AnsibleParam -obj $params -name "program"
-$service = Get-AnsibleParam -obj $params -name "service" -default "any"
-$description = Get-AnsibleParam -obj $params -name "description"
-$enable = ConvertTo-Bool (Get-AnsibleParam -obj $params -name "enable" -default "true")
-$winprofile = Get-AnsibleParam -obj $params -name "profile" -default "any"
-$localip = Get-AnsibleParam -obj $params -name "localip" -default "any"
-$remoteip = Get-AnsibleParam -obj $params -name "remoteip" -default "any"
-$localport = Get-AnsibleParam -obj $params -name "localport" -default "any"
-$remoteport = Get-AnsibleParam -obj $params -name "remoteport" -default "any"
-$protocol = Get-AnsibleParam -obj $params -name "protocol" -default "any"
+$description = Get-AnsibleParam -obj $params -name "description" -type "str"
+$direction = Get-AnsibleParam -obj $params -name "direction" -type "str" -failifempty $true -validateset "in","out"
+$action = Get-AnsibleParam -obj $params -name "action" -type "str" -failifempty $true -validateset "allow","block","bypass"
+$program = Get-AnsibleParam -obj $params -name "program" -type "str"
+$service = Get-AnsibleParam -obj $params -name "service" -type "str"
+$enabled = Get-AnsibleParam -obj $params -name "enabled" -type "bool" -default $true -aliases "enable"
+$profiles = Get-AnsibleParam -obj $params -name "profiles" -type "str" -default "domain,private,public" -aliases "profile"
+$localip = Get-AnsibleParam -obj $params -name "localip" -type "str" -default "any"
+$remoteip = Get-AnsibleParam -obj $params -name "remoteip" -type "str" -default "any"
+$localport = Get-AnsibleParam -obj $params -name "localport" -type "str"
+$remoteport = Get-AnsibleParam -obj $params -name "remoteport" -type "str"
+$protocol = Get-AnsibleParam -obj $params -name "protocol" -type "str" -default "any"
+$interfacetypes = Get-AnsibleParam -obj $params -name "interfacetypes" -type "str" -default "any"
+$edge = Get-AnsibleParam -obj $params -name "edge" -type "str" -default "no" -validateset "no","yes","deferapp","deferuser"
+$security = Get-AnsibleParam -obj $params -name "security" -type "str" -default "notrequired" -validateset "notrequired","authnoencap","authenticate","authdynenc","authenc"
 
-$state = Get-AnsibleParam -obj $params -name "state" -failifempty $true -validateSet "present","absent"
-$force = ConvertTo-Bool (Get-AnsibleParam -obj $params -name "force" -default "false")
+$state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent"
+$force = Get-AnsibleParam -obj $params -name "force" -type "bool" -default $false
 
-# Check the arguments
-If ($enable -eq $true) {
-    $fwsettings.Add("Enabled", "yes");
-} Else {
-    $fwsettings.Add("Enabled", "no");
-};
-
-$fwsettings.Add("Rule Name", $name)
-#$fwsettings.Add("displayname", $name)
-
-$state = $state.ToString().ToLower()
-If ($state -eq "present"){
-    $fwsettings.Add("Direction", $direction)
-    $fwsettings.Add("Action", $action)
-};
-
-If ($description) {
-    $fwsettings.Add("Description", $description);
+if ($diff_support) {
+    $result.diff = @{}
+    $result.diff.prepared = ""
 }
 
-If ($program) {
-    $fwsettings.Add("Program", $program);
-}
+try {
+    $fw = New-Object -ComObject HNetCfg.FwPolicy2
 
-$fwsettings.Add("LocalIP", $localip);
-$fwsettings.Add("RemoteIP", $remoteip);
-$fwsettings.Add("LocalPort", $localport);
-$fwsettings.Add("RemotePort", $remoteport);
-$fwsettings.Add("Service", $service);
-$fwsettings.Add("Protocol", $protocol);
-$fwsettings.Add("Profiles", $winprofile)
+    $existingRule = $fw.Rules | Where { $_.Name -eq $name }
 
-$output=@()
-$capture=getFirewallRule ($fwsettings);
-if ($capture.failed -eq $true) {
-    $msg+=$capture.msg;
-    $result=New-Object psobject @{
-        changed=$false
-        failed=$true
-        error=$capture.error
-        msg=$msg
-    };
-    Exit-Json $result;
-} else {
-    $diff=$capture.difference
-    $msg+=$capture.msg;
-    $identical=$capture.identical;
-    $multiple=$capture.multiple;
-}
-
-
-switch ($state){
-    "present" {
-        if ($capture.exists -eq $false) {
-            $capture=createFireWallRule($fwsettings);
-            $msg+=$capture.msg;
-            $change=$true;
-            if ($capture.failed -eq $true){
-                $result=New-Object psobject @{
-                    failed=$capture.failed
-                    error=$capture.error
-                    output=$capture.output
-                    changed=$change
-                    msg=$msg
-                    difference=$diff
-                    fwsettings=$fwsettings
-                };
-                Exit-Json $result;
-            }
-        } elseif ($capture.identical -eq $false) {
-            if ($force -eq $true) {
-                $capture=removeFirewallRule($fwsettings);
-                $msg+=$capture.msg;
-                $change=$true;
-                if ($capture.failed -eq $true){
-                    $result=New-Object psobject @{
-                        failed=$capture.failed
-                        error=$capture.error
-                        changed=$change
-                        msg=$msg
-                        output=$capture.output
-                        fwsettings=$fwsettings
-                    };
-                    Exit-Json $result;
-                }
-                $capture=createFireWallRule($fwsettings);
-                $msg+=$capture.msg;
-                $change=$true;
-                if ($capture.failed -eq $true){
-                    $result=New-Object psobject @{
-                        failed=$capture.failed
-                        error=$capture.error
-                        changed=$change
-                        msg=$msg
-                        difference=$diff
-                        fwsettings=$fwsettings
-                    };
-                    Exit-Json $result;
-                }
-
-            } else {
-                $fail=$true
-                $msg+=@("There was already a rule $name with different values, use force=True to overwrite it");
-            }
-        } elseif ($capture.identical -eq $true) {
-            $msg+=@("Firewall rule $name was already created");
-        };
+    if ($existingRule -is [System.Array]) {
+        Fail-Json $result "Multiple firewall rules with name '$name' found."
     }
-    "absent" {
-        if ($capture.exists -eq $true) {
-            $capture=removeFirewallRule($fwsettings);
-            $msg+=$capture.msg;
-            $change=$true;
-            if ($capture.failed -eq $true){
-                $result=New-Object psobject @{
-                    failed=$capture.failed
-                    error=$capture.error
-                    changed=$change
-                    msg=$msg
-                    output=$capture.output
-                    fwsettings=$fwsettings
-                };
-                Exit-Json $result;
-            }
+
+    $rule = New-FWRule -name $name `
+                       -description $description `
+                       -direction $direction `
+                       -action $action `
+                       -applicationName $program `
+                       -serviceName $service `
+                       -enabled $enabled `
+                       -profiles $profiles `
+                       -localAddresses $localip `
+                       -remoteAddresses $remoteip `
+                       -localPorts $localport `
+                       -remotePorts $remoteport `
+                       -protocol $protocol `
+                       -interfaceTypes $interfacetypes `
+                       -edgeTraversalOptions $edge `
+                       -secureFlags $security
+
+    $fwPropertiesToCompare = @('Name','Description','Direction','Action','ApplicationName','ServiceName','Enabled','Profiles','LocalAddresses','RemoteAddresses','LocalPorts','RemotePorts','Protocol','InterfaceTypes', 'EdgeTraversalOptions', 'SecureFlags')
+
+    if ($state -eq "absent") {
+        if ($existingRule -eq $null) {
+            $result.msg = "Firewall rule '$name' does not exist."
         } else {
-            $msg+=@("Firewall rule $name did not exist");
-        };
+            if ($diff_support) {
+                foreach ($prop in $fwPropertiesToCompare) {
+                    $result.diff.prepared += "-[$($prop)='$($existingRule.$prop)']`n"
+                }
+            }
+
+            if (-not $check_mode) {
+                $fw.Rules.Remove($existingRule.Name)
+            }
+            $result.changed = $true
+            $result.msg = "Firewall rule '$name' removed."
+        }
+    } elseif ($state -eq "present") {
+        if ($existingRule -eq $null) {
+            if ($diff_support) {
+                foreach ($prop in $fwPropertiesToCompare) {
+                    $result.diff.prepared += "+[$($prop)='$($existingRule.$prop)']`n"
+                }
+            }
+
+            if (-not $check_mode) {
+                $fw.Rules.Add($rule)
+            }
+            $result.changed = $true
+            $result.msg = "Firewall rule '$name' created."
+        } else {
+            foreach ($prop in $fwPropertiesToCompare) {
+                if ($existingRule.$prop -ne $rule.$prop) {
+                    if ($diff_support) {
+                        $result.diff.prepared += "-[$($prop)='$($existingRule.$prop)']`n"
+                        $result.diff.prepared += "+[$($prop)='$($rule.$prop)']`n"
+                    }
+
+                    if (-not $check_mode) {
+                        $existingRule.$prop = $rule.$prop
+                    }
+                    $result.changed = $true
+                }
+            }
+
+            if ($result.changed) {
+                $result.msg = "Firewall rule '$name' changed."
+            } else {
+                $result.msg = "Firewall rule '$name' already exists."
+            }
+        }
     }
-};
+} catch [Exception] {
+    Fail-Json $result $_.Exception.Message
+}
 
-
-$result=New-Object psobject @{
-    failed=$fail
-    changed=$change
-    msg=$msg
-    difference=$diff
-    fwsettings=$fwsettings
-};
-
-
-Exit-Json $result;
+Exit-Json $result

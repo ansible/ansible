@@ -1,22 +1,14 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -114,6 +106,7 @@ EXAMPLES = """
     db=db_name
     state=present
 """
+import traceback
 
 try:
     import pyodbc
@@ -123,7 +116,7 @@ else:
     pyodbc_found = True
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 
 
 class NotSupportedError(Exception):
@@ -193,9 +186,9 @@ def check(schema_facts, schema, usage_roles, create_roles, owner):
         return False
     if owner and owner.lower() == schema_facts[schema_key]['owner'].lower():
         return False
-    if cmp(sorted(usage_roles), sorted(schema_facts[schema_key]['usage_roles'])) != 0:
+    if sorted(usage_roles) != sorted(schema_facts[schema_key]['usage_roles']):
         return False
-    if cmp(sorted(create_roles), sorted(schema_facts[schema_key]['create_roles'])) != 0:
+    if sorted(create_roles) != sorted(schema_facts[schema_key]['create_roles']):
         return False
     return True
 
@@ -216,8 +209,9 @@ def present(schema_facts, cursor, schema, usage_roles, create_roles, owner):
                 "Changing schema owner is not supported. "
                 "Current owner: {0}."
                 ).format(schema_facts[schema_key]['owner']))
-        if cmp(sorted(usage_roles), sorted(schema_facts[schema_key]['usage_roles'])) != 0 or \
-            cmp(sorted(create_roles), sorted(schema_facts[schema_key]['create_roles'])) != 0:
+        if sorted(usage_roles) != sorted(schema_facts[schema_key]['usage_roles']) or \
+           sorted(create_roles) != sorted(schema_facts[schema_key]['create_roles']):
+
             update_roles(schema_facts, cursor, schema,
                 schema_facts[schema_key]['usage_roles'], usage_roles,
                 schema_facts[schema_key]['create_roles'], create_roles)
@@ -291,9 +285,8 @@ def main():
                 module.params['login_user'], module.params['login_password'], 'true')
         db_conn = pyodbc.connect(dsn, autocommit=True)
         cursor = db_conn.cursor()
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg="Unable to connect to database: {0}.".format(e))
+    except Exception as e:
+        module.fail_json(msg="Unable to connect to database: {0}.".format(to_native(e)))
 
     try:
         schema_facts = get_schema_facts(cursor)
@@ -302,27 +295,22 @@ def main():
         elif state == 'absent':
             try:
                 changed = absent(schema_facts, cursor, schema, usage_roles, create_roles)
-            except pyodbc.Error:
-                e = get_exception()
-                module.fail_json(msg=str(e))
+            except pyodbc.Error as e:
+                module.fail_json(msg=to_native(e), exception=traceback.format_exc())
         elif state == 'present':
             try:
                 changed = present(schema_facts, cursor, schema, usage_roles, create_roles, owner)
-            except pyodbc.Error:
-                e = get_exception()
-                module.fail_json(msg=str(e))
-    except NotSupportedError:
-        e = get_exception()
-        module.fail_json(msg=str(e), ansible_facts={'vertica_schemas': schema_facts})
-    except CannotDropError:
-        e = get_exception()
-        module.fail_json(msg=str(e), ansible_facts={'vertica_schemas': schema_facts})
+            except pyodbc.Error as e:
+                module.fail_json(msg=to_native(e), exception=traceback.format_exc())
+    except NotSupportedError as e:
+        module.fail_json(msg=to_native(e), ansible_facts={'vertica_schemas': schema_facts})
+    except CannotDropError as e:
+        module.fail_json(msg=to_native(e), ansible_facts={'vertica_schemas': schema_facts})
     except SystemExit:
         # avoid catching this on python 2.4
         raise
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg=e)
+    except Exception as e:
+        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
     module.exit_json(changed=changed, schema=schema, ansible_facts={'vertica_schemas': schema_facts})
 

@@ -2,7 +2,9 @@
 
 from __future__ import absolute_import, print_function
 
+import os
 import pipes
+import tempfile
 
 from time import sleep
 
@@ -71,17 +73,23 @@ class ManageNetworkCI(object):
         """Wait for instance to respond to ansible ping."""
         extra_vars = [
             'ansible_host=%s' % self.core_ci.connection.hostname,
-            'ansible_user=%s' % self.core_ci.connection.username,
             'ansible_port=%s' % self.core_ci.connection.port,
             'ansible_connection=local',
             'ansible_ssh_private_key_file=%s' % self.core_ci.ssh_key.key,
-            'ansible_network_os=%s' % self.core_ci.platform,
         ]
 
-        name = '%s-%s' % (self.core_ci.platform, self.core_ci.version.replace('.', '_'))
+        name = '%s-%s' % (self.core_ci.platform, self.core_ci.version.replace('.', '-'))
 
         env = ansible_environment(self.core_ci.args)
-        cmd = ['ansible', '-m', 'net_command', '-a', '?', '-i', '%s,' % name, name, '-e', ' '.join(extra_vars)]
+        cmd = [
+            'ansible',
+            '-m', '%s_command' % self.core_ci.platform,
+            '-a', 'commands=?',
+            '-u', self.core_ci.connection.username,
+            '-i', '%s,' % name,
+            '-e', ' '.join(extra_vars),
+            name,
+        ]
 
         for _ in range(1, 90):
             try:
@@ -102,12 +110,25 @@ class ManagePosixCI(object):
         :type core_ci: AnsibleCoreCI
         """
         self.core_ci = core_ci
-        self.ssh_args = ['-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=no', '-i', self.core_ci.ssh_key.key]
+        self.ssh_args = ['-i', self.core_ci.ssh_key.key]
+
+        ssh_options = dict(
+            BatchMode='yes',
+            StrictHostKeyChecking='no',
+            UserKnownHostsFile='/dev/null',
+            ServerAliveInterval=15,
+            ServerAliveCountMax=4,
+        )
+
+        for ssh_option in sorted(ssh_options):
+            self.ssh_args += ['-o', '%s=%s' % (ssh_option, ssh_options[ssh_option])]
 
         if self.core_ci.platform == 'freebsd':
             self.become = ['su', '-l', 'root', '-c']
         elif self.core_ci.platform == 'osx':
             self.become = ['sudo', '-in', 'PATH=/usr/local/bin:$PATH']
+        elif self.core_ci.platform == 'rhel':
+            self.become = ['sudo', '-in', 'bash', '-c']
 
     def setup(self):
         """Start instance and wait for it to become ready and respond to an ansible ping."""
@@ -135,11 +156,15 @@ class ManagePosixCI(object):
 
     def upload_source(self):
         """Upload and extract source."""
-        if not self.core_ci.args.explain:
-            lib.pytar.create_tarfile('/tmp/ansible.tgz', '.', lib.pytar.ignore)
+        with tempfile.NamedTemporaryFile(prefix='ansible-source-', suffix='.tgz') as local_source_fd:
+            remote_source_dir = '/tmp'
+            remote_source_path = os.path.join(remote_source_dir, os.path.basename(local_source_fd.name))
 
-        self.upload('/tmp/ansible.tgz', '/tmp')
-        self.ssh('rm -rf ~/ansible && mkdir ~/ansible && cd ~/ansible && tar oxzf /tmp/ansible.tgz')
+            if not self.core_ci.args.explain:
+                lib.pytar.create_tarfile(local_source_fd.name, '.', lib.pytar.ignore)
+
+            self.upload(local_source_fd.name, remote_source_dir)
+            self.ssh('rm -rf ~/ansible && mkdir ~/ansible && cd ~/ansible && tar oxzf %s' % remote_source_path)
 
     def download(self, remote, local):
         """
@@ -155,15 +180,20 @@ class ManagePosixCI(object):
         """
         self.scp(local, '%s@%s:%s' % (self.core_ci.connection.username, self.core_ci.connection.hostname, remote))
 
-    def ssh(self, command):
+    def ssh(self, command, options=None):
         """
         :type command: str | list[str]
+        :type options: list[str] | None
         """
+        if not options:
+            options = []
+
         if isinstance(command, list):
             command = ' '.join(pipes.quote(c) for c in command)
 
         run_command(self.core_ci.args,
                     ['ssh', '-tt', '-q'] + self.ssh_args +
+                    options +
                     ['-p', str(self.core_ci.connection.port),
                      '%s@%s' % (self.core_ci.connection.username, self.core_ci.connection.hostname)] +
                     self.become + [pipes.quote(command)])

@@ -1,9 +1,10 @@
+import collections
+import inspect
 import mock
 import pytest
 import yaml
-import inspect
-import collections
 
+from ansible.module_utils.six import string_types
 from ansible.modules.cloud.openstack import os_server
 
 
@@ -26,7 +27,7 @@ def params_from_doc(func):
     for task in cfg:
         for module, params in task.items():
             for k, v in params.items():
-                if k in ['nics'] and type(v) == str:
+                if k in ['nics'] and isinstance(v, string_types):
                     params[k] = [v]
         task[module] = collections.defaultdict(str,
                                                params)
@@ -187,12 +188,9 @@ class TestCreateServer(object):
             os_server._create_server(self.module, self.cloud)
 
         assert(self.cloud.create_server.call_count == 1)
-        assert(self.cloud.create_server.call_args[1]['image']
-               == self.cloud.get_image_id('cirros'))
-        assert(self.cloud.create_server.call_args[1]['flavor']
-               == self.cloud.get_flavor('m1.tiny')['id'])
-        assert(self.cloud.create_server.call_args[1]['nics'][0]['net-id']
-               == self.cloud.get_network('network1')['id'])
+        assert(self.cloud.create_server.call_args[1]['image'] == self.cloud.get_image_id('cirros'))
+        assert(self.cloud.create_server.call_args[1]['flavor'] == self.cloud.get_flavor('m1.tiny')['id'])
+        assert(self.cloud.create_server.call_args[1]['nics'][0]['net-id'] == self.cloud.get_network('network1')['id'])
 
     def test_create_server_bad_flavor(self):
         '''

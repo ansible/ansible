@@ -2,9 +2,10 @@
 *.py[co]
 build
 AUTHORS.TXT
-# Emacs backup files...
+# Emacs backup and autosave files...
 *~
 .\#*
+\#*
 # RPM stuff...
 MANIFEST
 dist
@@ -19,21 +20,23 @@ rpm-build
 # Mac OS X stuff...
 .DS_Store
 # manpage build stuff...
-docs/man/man1/ansible.1
-docs/man/man1/ansible-doc.1
-docs/man/man1/ansible-galaxy.1
-docs/man/man1/ansible-playbook.1
-docs/man/man1/ansible-pull.1
-docs/man/man1/ansible-vault.1
+docs/man/man1/ansible*.1
+docs/man/man1/ansible*.1.asciidoc.in
 docs/man/man3/*
 # Sublime stuff
 *.sublime-project
 *.sublime-workspace
 # docsite stuff...
-docs/docsite/rst/modules_by_category.rst
-docs/docsite/rst/playbooks_directives.rst
+docs/docsite/rst/community_maintained.rst
+docs/docsite/rst/config.rst
+docs/docsite/rst/core_maintained.rst
 docs/docsite/rst/list_of_*.rst
 docs/docsite/rst/*_module.rst
+docs/docsite/rst/modules_by_category.rst
+docs/docsite/rst/network_maintained.rst
+docs/docsite/rst/partner_maintained.rst
+docs/docsite/rst/playbook_keywords.rst
+docs/docsite/rst/playbooks_directives.rst
 docs/docsite/*.html
 docs/docsite/_static/*.gif
 docs/docsite/_static/*.png
@@ -66,21 +69,22 @@ Vagrantfile
 .vagrant
 ansible.egg-info/
 /shippable/
+/test/integration/cloud-config-azure.yml
 # Release directory
 packaging/release/ansible_release
 /.cache/
+/test/results/coverage/*=coverage.*
 /test/results/coverage/coverage*
-/test/results/reports/coverage.xml
-/test/results/reports/coverage/
+/test/results/reports/coverage*.xml
+/test/results/reports/coverage*/
 /test/results/bot/*.json
 /test/results/junit/*.xml
 /test/results/logs/*.log
+/test/results/data/*.json
 /test/integration/inventory.remote
 /test/integration/inventory.networking
 /test/integration/inventory.winrm
-# old submodule dirs
-lib/ansible/modules/core
-lib/ansible/modules/extras
+/test/integration/cloud-config-aws.yml
 # python 'rope' stuff
 .ropeproject
 # local 'ack' config files
@@ -91,3 +95,4 @@ htmlcov/
 .coverage
 # ansible-test coverage results
 test/units/.coverage.*
+/test/integration/cloud-config-azure.yml

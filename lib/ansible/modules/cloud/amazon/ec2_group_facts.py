@@ -1,20 +1,12 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -94,18 +86,21 @@ RETURN = '''
 security_groups:
     description: Security groups that match the provided filters. Each element consists of a dict with all the information related to that security group.
     type: list
+    returned: always
     sample:
 '''
 
+import traceback
 
 try:
-    import boto3
     from botocore.exceptions import ClientError
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
+    pass  # caught by imported HAS_BOTO3
 
-import traceback
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import (ec2_argument_spec, boto3_conn, HAS_BOTO3, get_aws_connection_info,
+                                      boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_filter_list,
+                                      camel_dict_to_snake_dict)
 
 
 def main():
@@ -116,7 +111,8 @@ def main():
         )
     )
 
-    module = AnsibleModule(argument_spec=argument_spec)
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True)
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')
@@ -148,21 +144,16 @@ def main():
     except ClientError as e:
         module.fail_json(msg=e.message, exception=traceback.format_exc())
 
-    # Turn the boto3 result in to ansible_friendly_snaked_names
     snaked_security_groups = []
     for security_group in security_groups['SecurityGroups']:
-        snaked_security_groups.append(camel_dict_to_snake_dict(security_group))
-
-    # Turn the boto3 result in to ansible friendly tag dictionary
-    for security_group in snaked_security_groups:
-        if 'tags' in security_group:
-            security_group['tags'] = boto3_tag_list_to_ansible_dict(security_group['tags'])
+        # Modify boto3 tags list to be ansible friendly dict
+        # but don't camel case tags
+        security_group = camel_dict_to_snake_dict(security_group)
+        security_group['tags'] = boto3_tag_list_to_ansible_dict(security_group.get('tags', {}), tag_name_key_name='key', tag_value_key_name='value')
+        snaked_security_groups.append(security_group)
 
     module.exit_json(security_groups=snaked_security_groups)
 
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

@@ -19,7 +19,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -28,12 +28,14 @@ DOCUMENTATION = '''
 ---
 module: panos_security_policy
 short_description: Create security rule policy on PanOS devices.
-description: >
-    Security policies allow you to enforce rules and take action, and can be as general or specific as needed.
-    The policy rules are compared against the incoming traffic in sequence, and because the first rule that matches
-    the traffic is applied, the more specific rules must precede the more general ones.
+description:
+    - Security policies allow you to enforce rules and take action, and can be as
+      general or specific as needed. The policy rules are compared against the
+      incoming traffic in sequence, and because the first rule that matches the
+      traffic is applied, the more specific rules must precede the more general ones.
 author: "Ivan Bojer (@ivanbojer)"
 version_added: "2.3"
+deprecated: In 2.4 use M(panos_security_rule) instead.
 requirements:
     - pan-python can be obtained from PyPi U(https://pypi.python.org/pypi/pan-python)
     - pandevice can be obtained from PyPi U(https://pypi.python.org/pypi/pandevice)
@@ -271,22 +273,39 @@ except ImportError:
     HAS_LIB = False
 
 
-def security_rule_exists(device, rule_name):
+def security_rule_exists(device, sec_rule):
     if isinstance(device, pandevice.firewall.Firewall):
         rule_base = pandevice.policies.Rulebase.refreshall(device)
     elif isinstance(device, pandevice.panorama.Panorama):
         # look for only pre-rulebase ATM
         rule_base = pandevice.policies.PreRulebase.refreshall(device)
 
+    match_check = ['name', 'description', 'group_profile', 'antivirus', 'vulnerability'
+                   'spyware', 'url_filtering', 'file_blocking', 'data_filtering',
+                   'wildfire_analysis', 'type', 'action', 'tag', 'log_start', 'log_end']
+    list_check = ['tozone', 'fromzone', 'source', 'source_user', 'destination', 'category',
+                  'application', 'service', 'hip_profiles']
+
+    change_check = False
     if rule_base:
         rule_base = rule_base[0]
         security_rules = rule_base.findall(pandevice.policies.SecurityRule)
-
         if security_rules:
             for r in security_rules:
-                if r.name == rule_name:
-                    return True
-
+                if r.name == sec_rule.name:
+                    change_check = True
+                    for check in match_check:
+                        propose_check = getattr(sec_rule, check, None)
+                        current_check = getattr(r, check, None)
+                        if propose_check != current_check:
+                            return True
+                    for check in list_check:
+                        propose_check = getattr(sec_rule, check, [])
+                        current_check = getattr(r, check, [])
+                        if set(propose_check) != set(current_check):
+                            return True
+    if change_check:
+        return 'no_change'
     return False
 
 
@@ -333,13 +352,15 @@ def create_security_rule(**kwargs):
     return security_rule
 
 
-def add_security_rule(device, sec_rule):
+def add_security_rule(device, sec_rule, rule_exist):
     if isinstance(device, pandevice.firewall.Firewall):
         rule_base = pandevice.policies.Rulebase.refreshall(device)
     elif isinstance(device, pandevice.panorama.Panorama):
         # look for only pre-rulebase ATM
         rule_base = pandevice.policies.PreRulebase.refreshall(device)
 
+    if rule_exist:
+        return False
     if rule_base:
         rule_base = rule_base[0]
 
@@ -400,6 +421,10 @@ def main():
     )
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False,
                            required_one_of=[['api_key', 'password']])
+
+    if module._name == 'panos_security_policy':
+        module.deprecate("The 'panos_security_policy' module is being renamed 'panos_security_rule'", version=2.8)
+
     if not HAS_LIB:
         module.fail_json(msg='Missing required pan-python and pandevice modules.')
 
@@ -448,38 +473,38 @@ def main():
     else:
         device = pandevice.firewall.Firewall(ip_address, username, password, api_key=api_key)
 
-    if security_rule_exists(device, rule_name):
-        module.fail_json(msg='Rule with the same name already exists.')
+    sec_rule = create_security_rule(
+        rule_name=rule_name,
+        description=description,
+        tag=tag,
+        from_zone=from_zone,
+        to_zone=to_zone,
+        source=source,
+        source_user=source_user,
+        destination=destination,
+        category=category,
+        application=application,
+        service=service,
+        hip_profiles=hip_profiles,
+        group_profile=group_profile,
+        antivirus=antivirus,
+        vulnerability=vulnerability,
+        spyware=spyware,
+        url_filtering=url_filtering,
+        file_blocking=file_blocking,
+        data_filtering=data_filtering,
+        wildfire_analysis=wildfire_analysis,
+        log_start=log_start,
+        log_end=log_end,
+        rule_type=rule_type,
+        action=action
+    )
 
+    rule_exist = security_rule_exists(device, sec_rule)
+    if rule_exist is True:
+        module.fail_json(msg='Rule with the same name but different objects exists.')
     try:
-        sec_rule = create_security_rule(
-            rule_name=rule_name,
-            description=description,
-            tag=tag,
-            from_zone=from_zone,
-            to_zone=to_zone,
-            source=source,
-            source_user=source_user,
-            destination=destination,
-            category=category,
-            application=application,
-            service=service,
-            hip_profiles=hip_profiles,
-            group_profile=group_profile,
-            antivirus=antivirus,
-            vulnerability=vulnerability,
-            spyware=spyware,
-            url_filtering=url_filtering,
-            file_blocking=file_blocking,
-            data_filtering=data_filtering,
-            wildfire_analysis=wildfire_analysis,
-            log_start=log_start,
-            log_end=log_end,
-            rule_type=rule_type,
-            action=action
-        )
-
-        changed = add_security_rule(device, sec_rule)
+        changed = add_security_rule(device, sec_rule, rule_exist)
     except PanXapiError:
         exc = get_exception()
         module.fail_json(msg=exc.message)

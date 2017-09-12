@@ -1,25 +1,25 @@
 # (c) 2015, Andrew Gaffney <andrew@agaffney.org>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = '''
+    callback: actionable
+    type: stdout
+    short_description: shows only items that need attention
+    description:
+      - Use this callback when you dont care about OK nor Skipped.
+      - This callback suppreses any non Failed or Changed status.
+    version_added: "2.1"
+    requirements:
+      - set as stdout callback in configuration
+'''
+
 from ansible.plugins.callback.default import CallbackModule as CallbackModule_default
+
 
 class CallbackModule(CallbackModule_default):
 
@@ -76,4 +76,3 @@ class CallbackModule(CallbackModule_default):
     def v2_runner_item_on_failed(self, result):
         self.display_task_banner()
         self.super_ref.v2_runner_item_on_failed(result)
-

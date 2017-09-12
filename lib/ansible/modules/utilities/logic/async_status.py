@@ -2,24 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>, and others
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
@@ -29,43 +18,44 @@ DOCUMENTATION = '''
 module: async_status
 short_description: Obtain status of asynchronous task
 description:
-     - "This module gets the status of an asynchronous task."
+     - This module gets the status of an asynchronous task.
+     - This module is also supported for Windows targets.
 version_added: "0.5"
 options:
   jid:
     description:
       - Job or task identifier
     required: true
-    default: null
-    aliases: []
   mode:
     description:
       - if C(status), obtain the status; if C(cleanup), clean up the async job cache
         located in C(~/.ansible_async/) for the specified job I(jid).
-    required: false
     choices: [ "status", "cleanup" ]
     default: "status"
 notes:
     - See also U(http://docs.ansible.com/playbooks_async.html)
-requirements: []
+    - This module is also supported for Windows targets.
 author:
     - "Ansible Core Team"
     - "Michael DeHaan"
 '''
 
-import datetime
-import traceback
+import json
+import os
+
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
+
 
 def main():
 
     module = AnsibleModule(argument_spec=dict(
         jid=dict(required=True),
-        mode=dict(default='status', choices=['status','cleanup']),
+        mode=dict(default='status', choices=['status', 'cleanup']),
     ))
 
     mode = module.params['mode']
-    jid  = module.params['jid']
+    jid = module.params['jid']
 
     # setup logging directory
     logdir = os.path.expanduser("~/.ansible_async")
@@ -92,9 +82,9 @@ def main():
             module.exit_json(results_file=log_path, ansible_job_id=jid, started=1, finished=0)
         else:
             module.fail_json(ansible_job_id=jid, results_file=log_path,
-                msg="Could not parse job output: %s" % data, started=1, finished=1)
+                             msg="Could not parse job output: %s" % data, started=1, finished=1)
 
-    if not 'started' in data:
+    if 'started' not in data:
         data['finished'] = 1
         data['ansible_job_id'] = jid
     elif 'finished' not in data:
@@ -105,8 +95,6 @@ def main():
 
     module.exit_json(**data)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

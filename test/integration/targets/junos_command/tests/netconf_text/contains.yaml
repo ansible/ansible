@@ -5,11 +5,10 @@
   junos_command:
     commands:
       - show version
-      - show interfaces fxp0
+      - show interfaces lo0
     display: text
     wait_for:
-      - "result[0] contains {{ inventory_hostname_short }}"
-      - "result[1] contains fxp0"
+      - "result[1] contains lo0"
     provider: "{{ netconf }}"
   register: result
 

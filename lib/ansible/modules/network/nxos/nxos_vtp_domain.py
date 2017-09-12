@@ -15,9 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = '''
@@ -31,6 +31,7 @@ description:
 author:
     - Gabriele Gerbino (@GGabriele)
 notes:
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
     - VTP feature must be active on the device to use this module.
     - This module is used to manage only VTP domain names.
     - VTP domain names are case-sensible.
@@ -65,6 +66,7 @@ proposed:
 existing:
     description:
         - k/v pairs of existing vtp domain
+    returned: always
     type: dict
     sample: {"domain": "testing", "version": "2", "vtp_password": "\"}
 end_state:
@@ -85,23 +87,22 @@ changed:
 '''
 
 
-from ansible.module_utils.nxos import get_config, load_config, run_commands
+from ansible.module_utils.nxos import load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
 import re
 
 
 def execute_show_command(command, module, command_type='cli_show'):
-    if module.params['transport'] == 'cli':
-        if 'status' not in command:
-            command += ' | json'
-        cmds = [command]
-        body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
-        cmds = [command]
-        body = run_commands(module, cmds)
-
+    if 'status' not in command:
+        output = 'json'
+    else:
+        output = 'text'
+    cmds = [{
+        'command': command,
+        'output': output,
+    }]
+    body = run_commands(module, cmds)
     return body
 
 
@@ -117,9 +118,8 @@ def flatten_list(command_lists):
 
 def get_vtp_config(module):
     command = 'show vtp status'
-
     body = execute_show_command(
-        command, module, command_type='cli_show_ascii')[0]
+        command, module)[0]
     vtp_parsed = {}
 
     if body:
@@ -169,7 +169,6 @@ def main():
     warnings = list()
     check_args(module, warnings)
 
-
     domain = module.params['domain']
 
     existing = get_vtp_config(module)
@@ -209,4 +208,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

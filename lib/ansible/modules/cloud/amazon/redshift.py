@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -80,6 +80,19 @@ options:
       - VPC security group
     aliases: ['vpc_security_groups']
     default: null
+  skip_final_cluster_snapshot:
+    description:
+      - skip a final snapshot before deleting the cluster. Used only when command=delete.
+    aliases: ['skip_final_snapshot']
+    default: false
+    version_added: "2.4"
+  final_cluster_snapshot_identifier:
+    description:
+      - identifier of the final snapshot to be created before deleting the cluster. If this parameter is provided,
+        final_cluster_snapshot_identifier must be false. Used only when command=delete.
+    aliases: ['final_snapshot_id']
+    default: null
+    version_added: "2.4"
   preferred_maintenance_window:
     description:
       - maintenance window
@@ -129,7 +142,8 @@ options:
     default: null
   wait:
     description:
-      - When command=create, modify or restore then wait for the database to enter the 'available' state. When command=delete wait for the database to be terminated.
+      - When command=create, modify or restore then wait for the database to enter the 'available' state. When command=delete wait for the database to be
+        terminated.
     default: "no"
     choices: [ "yes", "no" ]
   wait_timeout:
@@ -148,13 +162,20 @@ EXAMPLES = '''
     identifier=new_cluster
     username=cluster_admin
     password=1nsecure
+
+# Cluster delete example
+- redshift:
+    command: delete
+    identifier: new_cluster
+    skip_final_cluster_snapshot: true
+    wait: true
 '''
 
 RETURN = '''
 cluster:
     description: dictionary containing all the cluster information
     returned: success
-    type: dictionary
+    type: complex
     contains:
         identifier:
             description: Id of the cluster.
@@ -326,12 +347,18 @@ def delete_cluster(module, redshift):
     redshift: authenticated redshift connection object
     """
 
-    identifier   = module.params.get('identifier')
-    wait         = module.params.get('wait')
+    identifier = module.params.get('identifier')
+    wait = module.params.get('wait')
     wait_timeout = module.params.get('wait_timeout')
+    skip_final_cluster_snapshot = module.params.get('skip_final_cluster_snapshot')
+    final_cluster_snapshot_identifier = module.params.get('final_cluster_snapshot_identifier')
 
     try:
-        redshift.delete_custer( identifier )
+        redshift.delete_cluster(
+            identifier,
+            skip_final_cluster_snapshot,
+            final_cluster_snapshot_identifier
+        )
     except boto.exception.JSONResponseError as e:
         module.fail_json(msg=str(e))
 
@@ -413,13 +440,16 @@ def main():
     argument_spec.update(dict(
         command                             = dict(choices=['create', 'facts', 'delete', 'modify'], required=True),
         identifier                          = dict(required=True),
-        node_type                           = dict(choices=['ds1.xlarge', 'ds1.8xlarge', 'ds2.xlarge', 'ds2.8xlarge', 'dc1.large', 'dc1.8xlarge', 'dw1.xlarge', 'dw1.8xlarge', 'dw2.large', 'dw2.8xlarge'], required=False),
+        node_type                           = dict(choices=['ds1.xlarge', 'ds1.8xlarge', 'ds2.xlarge', 'ds2.8xlarge', 'dc1.large', 'dc1.8xlarge',
+                                                            'dw1.xlarge', 'dw1.8xlarge', 'dw2.large', 'dw2.8xlarge'], required=False),
         username                            = dict(required=False),
         password                            = dict(no_log=True, required=False),
         db_name                             = dict(require=False),
         cluster_type                        = dict(choices=['multi-node', 'single-node', ], default='single-node'),
         cluster_security_groups             = dict(aliases=['security_groups'], type='list'),
         vpc_security_group_ids              = dict(aliases=['vpc_security_groups'], type='list'),
+        skip_final_cluster_snapshot         = dict(aliases=['skip_final_snapshot'], type='bool', default=False),
+        final_cluster_snapshot_identifier   = dict(aliases=['final_snapshot_id'], required=False),
         cluster_subnet_group_name           = dict(aliases=['subnet']),
         availability_zone                   = dict(aliases=['aws_zone', 'zone']),
         preferred_maintenance_window        = dict(aliases=['maintance_window', 'maint_window']),
@@ -434,12 +464,17 @@ def main():
         elastic_ip                          = dict(required=False),
         new_cluster_identifier              = dict(aliases=['new_identifier']),
         wait                                = dict(type='bool', default=False),
-        wait_timeout                        = dict(default=300),
-    )
-    )
+        wait_timeout                        = dict(type='int', default=300),
+    ))
+
+    required_if = [
+        ('command', 'delete', ['skip_final_cluster_snapshot']),
+        ('skip_final_cluster_snapshot', False, ['final_cluster_snapshot_identifier'])
+    ]
 
     module = AnsibleModule(
         argument_spec=argument_spec,
+        required_if=required_if
     )
 
     if not HAS_BOTO:

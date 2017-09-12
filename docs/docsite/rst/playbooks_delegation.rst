@@ -11,9 +11,11 @@ Additional features allow for tuning the orders in which things complete, and as
 
 This section covers all of these features.  For examples of these items in use, `please see the ansible-examples repository <https://github.com/ansible/ansible-examples/>`_. There are quite a few examples of zero-downtime update procedures for different kinds of applications.
 
-You should also consult the :doc:`modules` section, various modules like 'ec2_elb', 'nagios', and 'bigip_pool', and 'netscaler' dovetail neatly with the concepts mentioned here.  
+You should also consult the :doc:`modules` section, various modules like 'ec2_elb', 'nagios', and 'bigip_pool', and 'netscaler' dovetail neatly with the concepts mentioned here.
 
-You'll also want to read up on :doc:`playbooks_roles`, as the 'pre_task' and 'post_task' concepts are the places where you would typically call these modules. 
+You'll also want to read up on :doc:`playbooks_reuse_roles`, as the 'pre_task' and 'post_task' concepts are the places where you would typically call these modules.
+
+Be aware that certain tasks are impossible to delegate, i.e. `include`, `add_host`, `debug`, etc as they always execute on the controller.
 
 .. _rolling_update_batch_size:
 
@@ -54,7 +56,7 @@ As of Ansible 2.2, the batch sizes can be specified as a list, as follows::
 In the above example, the first batch would contain a single host, the next would contain 5 hosts, and (if there are any hosts left),
 every following batch would contain 10 hosts until all available hosts are used.
 
-It is also possible to list multiple batche sizes as percentages::
+It is also possible to list multiple batch sizes as percentages::
 
     - name: test play
       hosts: webservers
@@ -108,9 +110,9 @@ Delegation
 This isn't actually rolling update specific but comes up frequently in those cases.
 
 If you want to perform a task on one host with reference to other hosts, use the 'delegate_to' keyword on a task.
-This is ideal for placing nodes in a load balanced pool, or removing them.  It is also very useful for controlling
-outage windows.  Using this with the 'serial' keyword to control the number of hosts executing at one time is also
-a good idea::
+This is ideal for placing nodes in a load balanced pool, or removing them.  It is also very useful for controlling outage windows.
+Be aware that it does not make sense to delegate all tasks, debug, add_host, include, etc always get executed on the controller.
+Using this with the 'serial' keyword to control the number of hosts executing at one time is also a good idea::
 
     ---
 
@@ -160,6 +162,20 @@ Here is an example::
 Note that you must have passphrase-less SSH keys or an ssh-agent configured for this to work, otherwise rsync
 will need to ask for a passphrase.
 
+In case you have to specify more arguments you can use the following syntax::
+
+    ---
+    # ...
+      tasks:
+
+      - name: Send summary mail
+        local_action:
+          module: mail
+          subject: "Summary Mail"
+          to: "{{ mail_recipient }}"
+          body: "{{ mail_body }}"
+        run_once: True
+          
 The `ansible_host` variable (`ansible_ssh_host` in 1.x or specific to ssh/paramiko plugins) reflects the host a task is delegated to.
 
 .. _delegate_facts:
@@ -182,7 +198,7 @@ In 2.0, the directive `delegate_facts` may be set to `True` to assign the task's
           with_items: "{{groups['dbservers']}}"
 
 The above will gather facts for the machines in the dbservers group and assign the facts to those machines and not to app_servers.
-This way you can lookup `hostvars['dbhost1']['default_ipv4_addresses'][0]` even though dbservers were not part of the play, or left out by using `--limit`.
+This way you can lookup `hostvars['dbhost1']['default_ipv4']['address']` even though dbservers were not part of the play, or left out by using `--limit`.
 
 
 .. _run_once:

@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -91,20 +91,25 @@ endpoint:
   type: string
   sample: http://cloud.example.com
 gslb_service_enabled:
-  description: Whether the GSLB service is enabled or not
+  description: Whether the GSLB service is enabled or not.
   returned: success
   type: bool
   sample: true
 portable_ip_service_enabled:
-  description: Whether the portable IP service is enabled or not
+  description: Whether the portable IP service is enabled or not.
   returned: success
   type: bool
   sample: true
 '''
 
 
-from ansible.module_utils.cloudstack import *
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.cloudstack import (
+    AnsibleCloudStack,
+    cs_argument_spec,
+    cs_required_together
+)
+
 
 class AnsibleCloudStackRegion(AnsibleCloudStack):
 
@@ -118,7 +123,7 @@ class AnsibleCloudStackRegion(AnsibleCloudStack):
 
     def get_region(self):
         id = self.module.params.get('id')
-        regions = self.cs.listRegions(id=id)
+        regions = self.query_api('listRegions', id=id)
         if regions:
             return regions['region'][0]
         return None
@@ -139,9 +144,7 @@ class AnsibleCloudStackRegion(AnsibleCloudStack):
             'endpoint': self.module.params.get('endpoint')
         }
         if not self.module.check_mode:
-            res = self.cs.addRegion(**args)
-            if 'errortext' in res:
-                self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+            res = self.query_api('addRegion', **args)
             region = res['region']
         return region
 
@@ -154,9 +157,7 @@ class AnsibleCloudStackRegion(AnsibleCloudStack):
         if self.has_changed(args, region):
             self.result['changed'] = True
             if not self.module.check_mode:
-                res = self.cs.updateRegion(**args)
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                res = self.query_api('updateRegion', **args)
                 region = res['region']
         return region
 
@@ -165,9 +166,7 @@ class AnsibleCloudStackRegion(AnsibleCloudStack):
         if region:
             self.result['changed'] = True
             if not self.module.check_mode:
-                res = self.cs.removeRegion(id=region['id'])
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                self.query_api('removeRegion', id=region['id'])
         return region
 
 
@@ -175,8 +174,8 @@ def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
         id=dict(required=True, type='int'),
-        name=dict(default=None),
-        endpoint=dict(default=None),
+        name=dict(),
+        endpoint=dict(),
         state=dict(choices=['present', 'absent'], default='present'),
     ))
 
@@ -189,21 +188,17 @@ def main():
         supports_check_mode=True
     )
 
-    try:
-        acs_region = AnsibleCloudStackRegion(module)
+    acs_region = AnsibleCloudStackRegion(module)
 
-        state = module.params.get('state')
-        if state == 'absent':
-            region = acs_region.absent_region()
-        else:
-            region = acs_region.present_region()
+    state = module.params.get('state')
+    if state == 'absent':
+        region = acs_region.absent_region()
+    else:
+        region = acs_region.present_region()
 
-        result = acs_region.get_result(region)
-
-    except CloudStackException as e:
-        module.fail_json(msg='CloudStackException: %s' % str(e))
-
+    result = acs_region.get_result(region)
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

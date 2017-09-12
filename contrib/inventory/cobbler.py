@@ -110,9 +110,9 @@ class CobblerInventory(object):
         if self.args.host:
             data_to_print += self.get_host_info()
         else:
-            self.inventory['_meta'] = { 'hostvars': {} }
+            self.inventory['_meta'] = {'hostvars': {}}
             for hostname in self.cache:
-                self.inventory['_meta']['hostvars'][hostname] = {'cobbler': self.cache[hostname] }
+                self.inventory['_meta']['hostvars'][hostname] = {'cobbler': self.cache[hostname]}
             data_to_print += self.json_format_dict(self.inventory, True)
 
         print(data_to_print)
@@ -179,7 +179,7 @@ class CobblerInventory(object):
 
         for host in data:
             # Get the FQDN for the host and add it to the right groups
-            dns_name = host['hostname'] #None
+            dns_name = host['hostname']  # None
             ksmeta = None
             interfaces = host['interfaces']
             # hostname is often empty for non-static IP hosts
@@ -190,7 +190,7 @@ class CobblerInventory(object):
                         if this_dns_name is not None and this_dns_name is not "":
                             dns_name = this_dns_name
 
-            if dns_name == '':
+            if dns_name == '' or dns_name is None:
                 continue
 
             status = host['status']
@@ -229,11 +229,11 @@ class CobblerInventory(object):
             # Need to load index from cache
             self.load_cache_from_cache()
 
-        if not self.args.host in self.cache:
+        if self.args.host not in self.cache:
             # try updating the cache
             self.update_cache()
 
-            if not self.args.host in self.cache:
+            if self.args.host not in self.cache:
                 # host might not exist anymore
                 return self.json_format_dict({}, True)
 

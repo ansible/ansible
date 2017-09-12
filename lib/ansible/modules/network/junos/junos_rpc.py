@@ -1,24 +1,16 @@
 #!/usr/bin/python
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# -*- coding: utf-8 -*-
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+# (c) 2017, Ansible by Red Hat, inc
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -26,11 +18,11 @@ DOCUMENTATION = """
 module: junos_rpc
 version_added: "2.3"
 author: "Peter Sprygada (@privateip)"
-short_description: Runs an arbitrary RPC on the remote device over NetConf
+short_description: Runs an arbitrary RPC over NetConf on an Juniper JUNOS device
 description:
   - Sends a request to the remote device running JUNOS to execute the
     specified RPC using the NetConf transport.  The reply is then
-    returned to the playbook in the c(xml) key.  If an alternate output
+    returned to the playbook in the C(xml) key.  If an alternate output
     format is requested, the reply is transformed to the requested output.
 extends_documentation_fragment: junos
 options:
@@ -55,6 +47,12 @@ options:
         version of software that supports native JSON output.
     required: false
     default: xml
+requirements:
+  - ncclient (>=v0.5.2)
+notes:
+  - This module requires the netconf system service be enabled on
+    the remote device being managed.
+  - Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
 """
 
 EXAMPLES = """
@@ -62,7 +60,7 @@ EXAMPLES = """
   junos_rpc:
     rpc: get-interface-information
     args:
-      interface: em0
+      interface-name: em0
       media: True
 
 - name: get system information
@@ -72,21 +70,29 @@ EXAMPLES = """
 
 RETURN = """
 xml:
-  description: The xml return string from the rpc request
+  description: The xml return string from the rpc request.
   returned: always
+  type: string
 output:
-  description: The rpc rely converted to the output format
+  description: The rpc rely converted to the output format.
   returned: always
+  type: string
 output_lines:
-  description: The text output split into lines for readability
+  description: The text output split into lines for readability.
   returned: always
+  type: list
 """
-from ncclient.xml_ import new_ele, sub_ele, to_xml, to_ele
-
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.junos import junos_argument_spec, check_args
 from ansible.module_utils.netconf import send_request
 from ansible.module_utils.six import iteritems
 
+USE_PERSISTENT_CONNECTION = True
+
+try:
+    from lxml.etree import Element, SubElement, tostring
+except ImportError:
+    from xml.etree.ElementTree import Element, SubElement, tostring
 
 
 def main():
@@ -98,10 +104,15 @@ def main():
         output=dict(default='xml', choices=['xml', 'json', 'text']),
     )
 
+    argument_spec.update(junos_argument_spec)
+
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=False)
 
-    result = {'changed': False}
+    warnings = list()
+    check_args(module, warnings)
+
+    result = {'changed': False, 'warnings': warnings}
 
     rpc = str(module.params['rpc']).replace('_', '-')
 
@@ -112,37 +123,34 @@ def main():
 
     xattrs = {'format': module.params['output']}
 
-    element = new_ele(module.params['rpc'], xattrs)
+    element = Element(module.params['rpc'], xattrs)
 
     for key, value in iteritems(args):
         key = str(key).replace('_', '-')
         if isinstance(value, list):
             for item in value:
-                child = sub_ele(element, key)
+                child = SubElement(element, key)
                 if item is not True:
                     child.text = item
         else:
-            child = sub_ele(element, key)
+            child = SubElement(element, key)
             if value is not True:
                 child.text = value
 
     reply = send_request(module, element)
 
-    result['xml'] = str(to_xml(reply))
+    result['xml'] = str(tostring(reply))
 
     if module.params['output'] == 'text':
-        reply = to_ele(reply)
-        data = reply.xpath('//output')
-        result['output'] = data[0].text.strip()
+        data = reply.find('.//output')
+        result['output'] = data.text.strip()
         result['output_lines'] = result['output'].split('\n')
 
     elif module.params['output'] == 'json':
-        reply = to_ele(reply)
-        data = reply.xpath('//rpc-reply')
-        result['output'] = module.from_json(data[0].text.strip())
+        result['output'] = module.from_json(reply.text.strip())
 
     else:
-        result['output'] = str(to_xml(reply)).split('\n')
+        result['output'] = str(tostring(reply)).split('\n')
 
     module.exit_json(**result)
 

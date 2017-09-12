@@ -19,7 +19,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -27,25 +27,26 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: ovirt_tags
-short_description: Module to manage tags in oVirt
+short_description: Module to manage tags in oVirt/RHV
 version_added: "2.3"
 author: "Ondra Machacek (@machacekondra)"
 description:
-    - "This module manage tags in oVirt. It can also manage assignments
+    - "This module manage tags in oVirt/RHV. It can also manage assignments
        of those tags to entities."
 options:
     name:
         description:
-            - "Name of the the tag to manage."
+            - "Name of the tag to manage."
         required: true
     state:
         description:
-            - "Should the tag be present or absent."
-        choices: ['present', 'absent']
+            - "Should the tag be present/absent/attached/detached."
+            - "C(Note): I(attached) and I(detached) states are supported since version 2.4."
+        choices: ['present', 'absent', 'attached', 'detached']
         default: present
     description:
         description:
-            - "Description of the the tag to manage."
+            - "Description of the tag to manage."
     parent:
         description:
             - "Name of the parent tag."
@@ -69,6 +70,20 @@ EXAMPLES = '''
       - vm1
       - vm2
 
+# Attach a tag to VM 'vm1', keeping the rest already attached tags on VM:
+- ovirt_tags:
+    name: mytag
+    state: attached
+    vms:
+      - vm3
+
+# Detach a tag from VM 'vm1', keeping the rest already attached tags on VM:
+- ovirt_tags:
+    name: mytag
+    state: detached
+    vms:
+      - vm3
+
 # To detach all VMs from tag:
 - ovirt_tags:
     name: mytag
@@ -87,9 +102,10 @@ id:
     type: str
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 tag:
-    description: "Dictionary of all the tag attributes. Tag attributes can be found on your oVirt instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/tag."
+    description: "Dictionary of all the tag attributes. Tag attributes can be found on your oVirt/RHV instance
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/tag."
     returned: On success if tag is found.
+    type: dict
 '''
 
 import traceback
@@ -105,8 +121,8 @@ from ansible.module_utils.ovirt import (
     check_sdk,
     create_connection,
     equal,
+    get_id_by_name,
     ovirt_full_argument_spec,
-    search_by_name,
 )
 
 
@@ -128,34 +144,45 @@ class TagsModule(BaseModule):
         if self._module.params[name] is None:
             return
 
+        state = self.param('state')
         entities_service = getattr(self._connection.system_service(), '%s_service' % name)()
         current_vms = [
             vm.name
             for vm in entities_service.list(search='tag=%s' % self._module.params['name'])
         ]
         # Assign tags:
-        for entity_name in self._module.params[name]:
-            entity = search_by_name(entities_service, entity_name)
-            tags_service = entities_service.service(entity.id).tags_service()
-            current_tags = [tag.name for tag in tags_service.list()]
-            # Assign the tag:
-            if self._module.params['name'] not in current_tags:
-                if not self._module.check_mode:
-                    tags_service.add(
-                        tag=otypes.Tag(
-                            name=self._module.params['name'],
-                        ),
-                    )
-                self.changed = True
+        if state in ['present', 'attached', 'detached']:
+            for entity_name in self._module.params[name]:
+                entity_id = get_id_by_name(entities_service, entity_name)
+                tags_service = entities_service.service(entity_id).tags_service()
+                current_tags = [tag.name for tag in tags_service.list()]
+                # Assign the tag:
+                if state in ['attached', 'present']:
+                    if self._module.params['name'] not in current_tags:
+                        if not self._module.check_mode:
+                            tags_service.add(
+                                tag=otypes.Tag(
+                                    name=self._module.params['name'],
+                                ),
+                            )
+                        self.changed = True
+                # Detach the tag:
+                elif state == 'detached':
+                    if self._module.params['name'] in current_tags:
+                        tag_id = get_id_by_name(tags_service, self.param('name'))
+                        if not self._module.check_mode:
+                            tags_service.tag_service(tag_id).remove()
+                        self.changed = True
 
         # Unassign tags:
-        for entity_name in [e for e in current_vms if e not in self._module.params[name]]:
-            if not self._module.check_mode:
-                entity = search_by_name(entities_service, entity_name)
-                tags_service = entities_service.service(entity.id).tags_service()
-                tag_id = [tag.id for tag in tags_service.list() if tag.name == self._module.params['name']][0]
-                tags_service.tag_service(tag_id).remove()
-            self.changed = True
+        if state == 'present':
+            for entity_name in [e for e in current_vms if e not in self._module.params[name]]:
+                if not self._module.check_mode:
+                    entity_id = get_id_by_name(entities_service, entity_name)
+                    tags_service = entities_service.service(entity_id).tags_service()
+                    tag_id = get_id_by_name(tags_service, self.param('name'))
+                    tags_service.tag_service(tag_id).remove()
+                self.changed = True
 
     def _get_parent(self, entity):
         parent = None
@@ -175,7 +202,7 @@ class TagsModule(BaseModule):
 def main():
     argument_spec = ovirt_full_argument_spec(
         state=dict(
-            choices=['present', 'absent'],
+            choices=['present', 'absent', 'attached', 'detached'],
             default='present',
         ),
         name=dict(default=None, required=True),
@@ -201,7 +228,7 @@ def main():
         )
 
         state = module.params['state']
-        if state == 'present':
+        if state in ['present', 'attached', 'detached']:
             ret = tags_module.create()
         elif state == 'absent':
             ret = tags_module.remove()

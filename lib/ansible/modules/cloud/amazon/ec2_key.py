@@ -15,9 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
@@ -117,6 +117,7 @@ try:
 except ImportError:
     HAS_BOTO = False
 
+from ansible.module_utils._text import to_bytes
 import random
 import string
 
@@ -195,7 +196,7 @@ def main():
                     test = ec2.get_key_pair(tmpkeyname)
 
                 # create tmp key
-                tmpkey = ec2.import_key_pair(tmpkeyname, key_material)
+                tmpkey = ec2.import_key_pair(tmpkeyname, to_bytes(key_material))
                 # get tmp key fingerprint
                 tmpfingerprint = tmpkey.fingerprint
                 # delete tmp key
@@ -204,7 +205,7 @@ def main():
                 if key.fingerprint != tmpfingerprint:
                     if not module.check_mode:
                         key.delete()
-                        key = ec2.import_key_pair(name, key_material)
+                        key = ec2.import_key_pair(name, to_bytes(key_material))
 
                         if wait:
                             start = time.time()
@@ -226,7 +227,7 @@ def main():
             if not module.check_mode:
                 if key_material:
                     '''We are providing the key, need to import'''
-                    key = ec2.import_key_pair(name, key_material)
+                    key = ec2.import_key_pair(name, to_bytes(key_material))
                 else:
                     '''
                     No material provided, let AWS handle the key creation and

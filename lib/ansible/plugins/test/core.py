@@ -21,49 +21,50 @@ __metaclass__ = type
 
 import re
 import operator as py_operator
+from collections import MutableMapping, MutableSequence
 from distutils.version import LooseVersion, StrictVersion
 
 from ansible import errors
 
-def failed(*a, **kw):
+
+def failed(result):
     ''' Test if task result yields failed '''
-    item = a[0]
-    if type(item) != dict:
+    if not isinstance(result, MutableMapping):
         raise errors.AnsibleFilterError("|failed expects a dictionary")
-    rc = item.get('rc',0)
-    failed = item.get('failed',False)
-    if rc != 0 or failed:
-        return True
-    else:
-        return False
+    return result.get('failed', False)
 
-def success(*a, **kw):
+
+def success(result):
     ''' Test if task result yields success '''
-    return not failed(*a, **kw)
+    return not failed(result)
 
-def changed(*a, **kw):
+
+def changed(result):
     ''' Test if task result yields changed '''
-    item = a[0]
-    if type(item) != dict:
+    if not isinstance(result, MutableMapping):
         raise errors.AnsibleFilterError("|changed expects a dictionary")
-    if not 'changed' in item:
+    if 'changed' not in result:
         changed = False
-        if ('results' in item    # some modules return a 'results' key
-                and type(item['results']) == list
-                and type(item['results'][0]) == dict):
-            for result in item['results']:
-                changed = changed or result.get('changed', False)
+        if (
+            'results' in result and   # some modules return a 'results' key
+            isinstance(result['results'], MutableSequence) and
+            isinstance(result['results'][0], MutableMapping)
+        ):
+            for res in result['results']:
+                if res.get('changed', False):
+                    changed = True
+                    break
     else:
-        changed = item.get('changed', False)
+        changed = result.get('changed', False)
     return changed
 
-def skipped(*a, **kw):
+
+def skipped(result):
     ''' Test if task result yields skipped '''
-    item = a[0]
-    if type(item) != dict:
+    if not isinstance(result, MutableMapping):
         raise errors.AnsibleFilterError("|skipped expects a dictionary")
-    skipped = item.get('skipped', False)
-    return skipped
+    return result.get('skipped', False)
+
 
 def regex(value='', pattern='', ignorecase=False, multiline=False, match_type='search'):
     ''' Expose `re` as a boolean filter using the `search` method by default.
@@ -79,21 +80,24 @@ def regex(value='', pattern='', ignorecase=False, multiline=False, match_type='s
     _bool = __builtins__.get('bool')
     return _bool(getattr(_re, match_type, 'search')(value))
 
+
 def match(value, pattern='', ignorecase=False, multiline=False):
     ''' Perform a `re.match` returning a boolean '''
     return regex(value, pattern, ignorecase, multiline, 'match')
+
 
 def search(value, pattern='', ignorecase=False, multiline=False):
     ''' Perform a `re.search` returning a boolean '''
     return regex(value, pattern, ignorecase, multiline, 'search')
 
+
 def version_compare(value, version, operator='eq', strict=False):
     ''' Perform a version comparison on a value '''
     op_map = {
-        '==': 'eq', '=':  'eq', 'eq': 'eq',
-        '<':  'lt', 'lt': 'lt',
+        '==': 'eq', '=': 'eq', 'eq': 'eq',
+        '<': 'lt', 'lt': 'lt',
         '<=': 'le', 'le': 'le',
-        '>':  'gt', 'gt': 'gt',
+        '>': 'gt', 'gt': 'gt',
         '>=': 'ge', 'ge': 'ge',
         '!=': 'ne', '<>': 'ne', 'ne': 'ne'
     }
@@ -114,20 +118,25 @@ def version_compare(value, version, operator='eq', strict=False):
     except Exception as e:
         raise errors.AnsibleFilterError('Version comparison: %s' % e)
 
+
 class TestModule(object):
     ''' Ansible core jinja2 tests '''
 
     def tests(self):
         return {
             # failure testing
-            'failed'    : failed,
-            'succeeded' : success,
+            'failed': failed,
+            'failure': failed,
+            'succeeded': success,
+            'success': success,
 
             # changed testing
-            'changed' : changed,
+            'changed': changed,
+            'change': changed,
 
             # skip testing
-            'skipped' : skipped,
+            'skipped': skipped,
+            'skip': skipped,
 
             # regex
             'match': match,

@@ -4,6 +4,7 @@
   ios_banner:
     banner: motd
     state: absent
+    provider: "{{ cli }}"
     authorize: yes
 
 - name: Set motd
@@ -24,8 +25,7 @@
 - assert:
     that:
       - "result.changed == true"
-      - "'this is my motd banner' in result.commands"
-      - "'that has a multiline' in result.commands"
+      - "'banner motd @\nthis is my motd banner\nthat has a multiline\nstring\n@' in result.commands"
 
 - name: Set motd again (idempotent)
   ios_banner:

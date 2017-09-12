@@ -1,0 +1,34 @@
+---
+
+- name: Setup gslb service
+
+  delegate_to: localhost
+  register: result
+  check_mode: "{{ check_mode }}"
+
+  netscaler_gslb_service:
+    nitro_user: "{{nitro_user}}"
+    nitro_pass: "{{nitro_pass}}"
+    nsip: "{{nsip}}"
+
+    servicename: gslb-service-1
+    servicetype: HTTP
+    sitename: gslb-site-1
+    ipaddress: 10.10.10.11
+    port: 80
+    publicip: 10.10.10.11
+    publicport: 80
+    maxclient: 100
+    healthmonitor: "NO"
+    cip: enabled
+    cipheader: hello
+    sitepersistence: NONE
+    siteprefix: prefix
+    clttimeout: 100
+    maxbandwidth: 100
+    downstateflush: enabled
+    maxaaausers: 100
+    monthreshold: 500
+    hashid: 10
+    comment: some other comment
+    appflowlog: enabled

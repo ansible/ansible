@@ -14,20 +14,56 @@ syntax highlighting before you include it in your Python file.
 
 All modules must have the following sections defined in this order:
 
-1. ANSIBLE_METADATA
-2. DOCUMENTATION
-3. EXAMPLES
-4. RETURNS
-5. Python imports
+1. Copyright
+2. ANSIBLE_METADATA
+3. DOCUMENTATION
+4. EXAMPLES
+5. RETURN
+6. Python imports
 
 .. note:: Why don't the imports go first?
 
-  Keen Python programmers may notice that contrary to PEP8's advice we don't put ``imports`` at the top of the file. This is because the ``ANSIBLE_METADATA`` through ``RETURNS`` sections are not used by the module code itself; they are essentially extra docstrings for the file. The imports are placed after these special variables for the same reason as PEP8 puts the imports after the introductory comments and docstrings. This keeps the active parts of the code together and the pieces which are purely informational apart. The decision to exclude E402 is based on readability (which is what PEP8 is about). Documentation strings in a module are much more similar to module level docstrings, than code, and are never utilized by the module itself. Placing the imports below this documentation and closer to the code, consolidates and groups all related code in a congruent manner to improve readability, debugging and understanding.
+  Keen Python programmers may notice that contrary to PEP 8's advice we don't put ``imports`` at the top of the file. This is because the ``ANSIBLE_METADATA`` through ``RETURN`` sections are not used by the module code itself; they are essentially extra docstrings for the file. The imports are placed after these special variables for the same reason as PEP 8 puts the imports after the introductory comments and docstrings. This keeps the active parts of the code together and the pieces which are purely informational apart. The decision to exclude E402 is based on readability (which is what PEP 8 is about). Documentation strings in a module are much more similar to module level docstrings, than code, and are never utilized by the module itself. Placing the imports below this documentation and closer to the code, consolidates and groups all related code in a congruent manner to improve readability, debugging and understanding.
 
 .. warning:: Why do some modules have imports at the bottom of the file?
 
   If you look at some existing older modules, you may find imports at the bottom of the file. Do not copy that idiom into new modules as it is a historical oddity due to how modules used to be combined with libraries. Over time we're moving the imports to be in their proper place.
 
+
+
+Copyright
+----------------------
+
+The beginning of every module should look about the same. After the shebang,
+there should be at least two lines covering copyright and licensing of the
+code.
+
+.. code-block:: python
+
+    #!/usr/bin/python
+    # Copyright (c) 2017 Ansible Project
+    # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+Every file should have a copyright line with the original copyright holder.
+Major additions to the module (for instance, rewrites)  may add additional
+copyright lines. Code from the Ansible community should typically be assigned
+as "Copyright (c) 2017 Ansible Project" which covers all contributors. Any
+legal questions need to review the source control history, so an exhaustive
+copyright header is not necessary.
+
+The license declaration should be ONLY one line, not the full GPL prefix. If
+you notice a module with the full prefix, feel free to switch it to the
+one-line declaration instead.
+
+When adding a copyright line after completing a significant feature or rewrite,
+add the newer line above the older one, like so:
+
+.. code-block:: python
+
+    #!/usr/bin/python
+    # Copyright (c) 2017 [New Contributor(s)]
+    # Copyright (c) 2015 [Original Contributor(s)]
+    # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 
 ANSIBLE_METADATA Block
@@ -39,7 +75,7 @@ For new modules, the following block can be simply added into your module
 
 .. code-block:: python
 
-   ANSIBLE_METADATA = {'metadata_version': '1.0',
+   ANSIBLE_METADATA = {'metadata_version': '1.1',
                        'status': ['preview'],
                        'supported_by': 'community'}
 
@@ -56,22 +92,22 @@ For new modules, the following block can be simply added into your module
     ANSIBLE_METADATA doesn't look quite right because of this.  Module
     metadata should be fixed before checking it into the repository.
 
-Version 1.0 of the metadata
+Version 1.1 of the metadata
 +++++++++++++++++++++++++++
 
 Structure
-`````````
+^^^^^^^^^
 
 .. code-block:: python
 
   ANSIBLE_METADATA = {
-      'metadata_version': '1.0',
+      'metadata_version': '1.1',
       'supported_by': 'community',
       'status': ['preview', 'deprecated']
   }
 
 Fields
-``````
+^^^^^^
 
 :metadata_version: An “X.Y” formatted string. X and Y are integers which
    define the metadata format version. Modules shipped with Ansible are
@@ -79,15 +115,19 @@ Fields
    of the metadata. We’ll increment Y if we add fields or legal values
    to an existing field. We’ll increment X if we remove fields or values
    or change the type or meaning of a field.
+   Current metadata_version is "1.1"
 :supported_by: This field records who supports the module.
    Default value is ``community``. Values are:
 
-   :core:
-   :curated:
-   :community:
-   
+   * core
+   * network
+   * certified
+   * community
+   * curated (Deprecated.  Modules in this category should probably be core or
+     certified instead)
+
    For information on what the support level values entail, please see
-   :doc:`../modules_support.rst`
+   `Modules Support <http://docs.ansible.com/ansible/modules_support.html>`_.
 
 :status: This field records information about the module that is
    important to the end user. It’s a list of strings. The default value
@@ -106,6 +146,18 @@ Fields
       kept so that documentation can be built. The documentation helps
       users port from the removed module to new modules.
 
+Changes from Version 1.0
+++++++++++++++++++++++++
+
+:metadata_version: Version updated from 1.0 to 1.1
+:supported_by: All substantive changes were to potential values of the supported_by field
+
+  * Added the certified value
+  * Deprecated the curated value, modules shipped with Ansible will use
+    certified instead.  Third party modules are encouraged not to use this as
+    it is meaningless within Ansible proper.
+  * Added the network value
+
 DOCUMENTATION Block
 -------------------
 
@@ -116,7 +168,8 @@ Include it in your module file like this:
 .. code-block:: python
 
     #!/usr/bin/python
-    # Copyright header....
+    # Copyright (c) 2017 [REPLACE THIS]
+    # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
     DOCUMENTATION = '''
     ---
@@ -124,6 +177,8 @@ Include it in your module file like this:
     short_description: This is a sentence describing the module
     # ... snip ...
     '''
+
+
 
 
 The following fields can be used and are all required unless specified otherwise:
@@ -219,7 +274,7 @@ RETURN Block
 The RETURN section documents what the module returns, and is required for all new modules.
 
 For each value returned, provide a ``description``, in what circumstances the value is ``returned``,
-the ``type`` of the value and a ``sample``.  For example, from the ``copy`` module::
+the ``type`` of the value and a ``sample``.  For example, from the ``copy`` module:
 
 
 The following fields can be used and are all required unless specified otherwise.
@@ -235,6 +290,9 @@ The following fields can be used and are all required unless specified otherwise
     Data type
   :sample:
     One or more examples.
+  :version_added:
+    Only needed if this return was extended after initial Ansible release, i.e. this is greater than the top level `version_added` field.
+    This is a string, and not a float, i.e. ``version_added: "2.3"``.
   :contains:
     Optional, if you set `type: complex` you can detail the dictionary here by repeating the above elements.
 
@@ -249,6 +307,9 @@ The following fields can be used and are all required unless specified otherwise
         Data type
       :sample:
         One or more examples.
+      :version_added:
+        Only needed if this return was extended after initial Ansible release, i.e. this is greater than the top level `version_added` field.
+        This is a string, and not a float, i.e. ``version_added: "2.3"``.
 
 
 For complex nested returns type can be specified as ``type: complex``.
@@ -338,6 +399,15 @@ Put your completed module file into the ``lib/ansible/modules/$CATEGORY/`` direc
 run the command: ``make webdocs``. The new 'modules.html' file will be
 built in the ``docs/docsite/_build/html/$MODULENAME_module.html`` directory.
 
+In order to speed up the build process, you can limit the documentation build to
+only include modules you specify, or no modules at all. To do this, run the command:
+``MODULES=$MODULENAME make webdocs``. The ``MODULES`` environment variable
+accepts a comma-separated list of module names. To skip building
+documentation for all modules, specify a non-existent module name, for example:
+``MODULES=none make webdocs``.
+
+You may also build a single page of the entire docsite. From ``ansible/docs/docsite`` run ``make htmlsingle rst=[relative path to the .rst file]``, for example: ``make htmlsingle rst=dev_guide/developing_modules_documenting.rst``
+
 To test your documentation against your ``argument_spec`` you can use ``validate-modules``. Note that this option isn't currently enabled in Shippable due to the time it takes to run.
 
 .. code-block:: bash
@@ -350,3 +420,5 @@ To test your documentation against your ``argument_spec`` you can use ``validate
 
    If you're having a problem with the syntax of your YAML you can
    validate it on the `YAML Lint <http://www.yamllint.com/>`_ website.
+
+For more information in testing, including how to add unit and integration tests, see :doc:`testing`.

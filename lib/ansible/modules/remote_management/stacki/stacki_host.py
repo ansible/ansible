@@ -2,21 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2016, Hugh Ma <Hugh.Ma@flextronics.com>
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -108,15 +100,15 @@ stdout_lines:
   sample: [['...', '...'], ['...'], ['...']]
 '''
 
-import os
-import re
-import tempfile
 import json
-import urllib
+import os
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves.urllib.parse import urlencode
+from ansible.module_utils.urls import fetch_url
 
 
-
-class StackiHost:
+class StackiHost(object):
 
     def __init__(self, module):
         self.module = module
@@ -133,7 +125,7 @@ class StackiHost:
         auth_creds  = {'USERNAME': module.params['stacki_user'],
                        'PASSWORD': module.params['stacki_password']}
 
-        # Get Intial CSRF
+        # Get Initial CSRF
         cred_a = self.do_request(self.module, self.endpoint, method="GET")
         cookie_a = cred_a.headers.get('Set-Cookie').split(';')
         init_csrftoken = None
@@ -152,7 +144,7 @@ class StackiHost:
 
         # Get Final CSRF and Session ID
         login_req = self.do_request(self.module, login_endpoint, headers=header,
-                                    payload=urllib.urlencode(auth_creds), method="POST")
+                                    payload=urlencode(auth_creds), method='POST')
 
         cookie_f = login_req.headers.get('Set-Cookie').split(';')
         csrftoken = None
@@ -192,21 +184,21 @@ class StackiHost:
 
     def stack_sync(self):
 
-        res = self.do_request(self.module, self.endpoint, payload=json.dumps({ "cmd": "sync config"}),
+        self.do_request(self.module, self.endpoint, payload=json.dumps({ "cmd": "sync config"}),
                               headers=self.header, method="POST")
 
-        res = self.do_request(self.module, self.endpoint, payload=json.dumps({"cmd": "sync host config"}),
+        self.do_request(self.module, self.endpoint, payload=json.dumps({"cmd": "sync host config"}),
                               headers=self.header, method="POST")
 
 
-    def stack_force_install(self):
+    def stack_force_install(self, result):
 
         data = dict()
         changed = False
 
         data['cmd'] = "set host boot {0} action=install" \
             .format(self.hostname)
-        res = self.do_request(self.module, self.endpoint, payload=json.dumps(data),
+        self.do_request(self.module, self.endpoint, payload=json.dumps(data),
                               headers=self.header, method="POST")
         changed = True
 
@@ -215,15 +207,6 @@ class StackiHost:
         result['changed'] = changed
         result['stdout'] = "api call successful".rstrip("\r\n")
 
-
-    def stack_add_interface(self):
-
-        data['cmd'] = "add host interface {0} interface={1} ip={2} network={3} mac={4} default=true"\
-            .format(self.hostname, self.prim_intf, self.prim_intf_ip, self.network, self.prim_intf_mac)
-        res = self.do_request(self.module, self.endpoint, payload=json.dumps(data),
-                              headers=self.header, method="POST")
-
-
     def stack_add(self, result):
 
         data            = dict()
@@ -231,7 +214,7 @@ class StackiHost:
 
         data['cmd'] = "add host {0} rack={1} rank={2} appliance={3}"\
             .format(self.hostname, self.rack, self.rank, self.appliance)
-        res = self.do_request(self.module, self.endpoint, payload=json.dumps(data),
+        self.do_request(self.module, self.endpoint, payload=json.dumps(data),
                               headers=self.header, method="POST")
 
         self.stack_sync()
@@ -246,7 +229,7 @@ class StackiHost:
 
         data['cmd'] = "remove host {0}"\
             .format(self.hostname)
-        res = self.do_request(self.module, self.endpoint, payload=json.dumps(data),
+        self.do_request(self.module, self.endpoint, payload=json.dumps(data),
                               headers=self.header, method="POST")
 
         self.stack_sync()
@@ -305,9 +288,6 @@ def main():
 
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.urls import fetch_url, ConnectionError
 
 if __name__ == '__main__':
     main()

@@ -2,23 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
@@ -34,6 +24,7 @@ short_description:  Manage services.
 description:
     - Controls services on remote hosts. Supported init systems include BSD init,
       OpenRC, SysV, Solaris SMF, systemd, upstart.
+    - For Windows targets, use the M(win_service) module instead.
 options:
     name:
         required: true
@@ -87,6 +78,8 @@ options:
             - Normally it uses the value of the 'ansible_service_mgr' fact and falls back to the old 'service' module when none matching is found.
         default: 'auto'
         version_added: 2.2
+notes:
+    - For Windows targets, use the M(win_service) module instead.
 '''
 
 EXAMPLES = '''
@@ -490,7 +483,7 @@ class LinuxService(Service):
             self.upstart_version = LooseVersion('0.0.0')
             try:
                 version_re = re.compile(r'\(upstart (.*)\)')
-                rc,stdout,stderr = self.module.run_command('initctl version')
+                rc,stdout,stderr = self.module.run_command('%s version' % location['initctl'])
                 if rc == 0:
                     res = version_re.search(stdout)
                     if res:
@@ -498,9 +491,7 @@ class LinuxService(Service):
             except:
                 pass  # we'll use the default of 0.0.0
 
-            if location.get('start', False):
-                # upstart -- rather than being managed by one command, start/stop/restart are actual commands
-                self.svc_cmd = ''
+            self.svc_cmd = location['initctl']
 
         elif location.get('rc-service', False):
             # service is managed by OpenRC
@@ -621,7 +612,7 @@ class LinuxService(Service):
         # if we have decided the service is managed by upstart, we check for some additional output...
         if self.svc_initctl and self.running is None:
             # check the job status by upstart response
-            initctl_rc, initctl_status_stdout, initctl_status_stderr = self.execute_command("%s status %s" % (self.svc_initctl, self.name))
+            initctl_rc, initctl_status_stdout, initctl_status_stderr = self.execute_command("%s status %s %s" % (self.svc_initctl, self.name, self.arguments ))
             if "stop/waiting" in initctl_status_stdout:
                 self.running = False
             elif "start/running" in initctl_status_stdout:
@@ -853,13 +844,13 @@ class LinuxService(Service):
             return
 
         #
-        # insserv (Debian 7)
+        # insserv (Debian <=7, SLES, others)
         #
         if self.enable_cmd.endswith("insserv"):
             if self.enable:
-                (rc, out, err) = self.execute_command("%s -n %s" % (self.enable_cmd, self.name))
+                (rc, out, err) = self.execute_command("%s -n -v %s" % (self.enable_cmd, self.name))
             else:
-                (rc, out, err) = self.execute_command("%s -nr %s" % (self.enable_cmd, self.name))
+                (rc, out, err) = self.execute_command("%s -n -r -v %s" % (self.enable_cmd, self.name))
 
             self.changed = False
             for line in err.splitlines():
@@ -922,8 +913,13 @@ class LinuxService(Service):
         arguments = self.arguments
         if self.svc_cmd:
             if not self.svc_cmd.endswith("systemctl"):
-                # SysV and OpenRC take the form <cmd> <name> <action>
-                svc_cmd = "%s %s" % (self.svc_cmd, self.name)
+                if self.svc_cmd.endswith("initctl"):
+                    # initctl commands take the form <cmd> <action> <name>
+                    svc_cmd = self.svc_cmd
+                    arguments = "%s %s" % (self.name, arguments)
+                else:
+                    # SysV and OpenRC take the form <cmd> <name> <action>
+                    svc_cmd = "%s %s" % (self.svc_cmd, self.name)
             else:
                 # systemd commands take the form <cmd> <action> <name>
                 svc_cmd = self.svc_cmd
@@ -1392,20 +1388,21 @@ class SunOSService(Service):
         elif (not self.enable) and (not startup_enabled):
             return
 
-        # Mark service as started or stopped (this will have the side effect of
-        # actually stopping or starting the service)
-        if self.enable:
-            subcmd = "enable -rs"
-        else:
-            subcmd = "disable -s"
-
-        rc, stdout, stderr = self.execute_command("%s %s %s" % (self.svcadm_cmd, subcmd, self.name))
-
-        if rc != 0:
-            if stderr:
-                self.module.fail_json(msg=stderr)
+        if not self.module.check_mode:
+            # Mark service as started or stopped (this will have the side effect of
+            # actually stopping or starting the service)
+            if self.enable:
+                subcmd = "enable -rs"
             else:
-                self.module.fail_json(msg=stdout)
+                subcmd = "disable -s"
+
+            rc, stdout, stderr = self.execute_command("%s %s %s" % (self.svcadm_cmd, subcmd, self.name))
+
+            if rc != 0:
+                if stderr:
+                    self.module.fail_json(msg=stderr)
+                else:
+                    self.module.fail_json(msg=stdout)
 
         self.changed = True
 

@@ -30,6 +30,7 @@ import os
 
 from ansible.module_utils.six import iteritems
 
+
 def openstack_argument_spec():
     # DEPRECATED: This argument spec is only used for the deprecated old
     # OpenStack modules. It turns out that modern OpenStack auth is WAY
@@ -37,17 +38,17 @@ def openstack_argument_spec():
     # Consume standard OpenStack environment variables.
     # This is mainly only useful for ad-hoc command line operation as
     # in playbooks one would assume variables would be used appropriately
-    OS_AUTH_URL=os.environ.get('OS_AUTH_URL', 'http://127.0.0.1:35357/v2.0/')
-    OS_PASSWORD=os.environ.get('OS_PASSWORD', None)
-    OS_REGION_NAME=os.environ.get('OS_REGION_NAME', None)
-    OS_USERNAME=os.environ.get('OS_USERNAME', 'admin')
-    OS_TENANT_NAME=os.environ.get('OS_TENANT_NAME', OS_USERNAME)
+    OS_AUTH_URL = os.environ.get('OS_AUTH_URL', 'http://127.0.0.1:35357/v2.0/')
+    OS_PASSWORD = os.environ.get('OS_PASSWORD', None)
+    OS_REGION_NAME = os.environ.get('OS_REGION_NAME', None)
+    OS_USERNAME = os.environ.get('OS_USERNAME', 'admin')
+    OS_TENANT_NAME = os.environ.get('OS_TENANT_NAME', OS_USERNAME)
 
     spec = dict(
-        login_username                  = dict(default=OS_USERNAME),
-        auth_url                        = dict(default=OS_AUTH_URL),
-        region_name                     = dict(default=OS_REGION_NAME),
-        availability_zone               = dict(default=None),
+        login_username=dict(default=OS_USERNAME),
+        auth_url=dict(default=OS_AUTH_URL),
+        region_name=dict(default=OS_REGION_NAME),
+        availability_zone=dict(),
     )
     if OS_PASSWORD:
         spec['login_password'] = dict(default=OS_PASSWORD)
@@ -58,6 +59,7 @@ def openstack_argument_spec():
     else:
         spec['login_tenant_name'] = dict(required=True)
     return spec
+
 
 def openstack_find_nova_addresses(addresses, ext_tag, key_name=None):
 
@@ -70,6 +72,7 @@ def openstack_find_nova_addresses(addresses, ext_tag, key_name=None):
                 if 'OS-EXT-IPS:type' in interface_spec and interface_spec['OS-EXT-IPS:type'] == ext_tag:
                     ret.append(interface_spec['addr'])
     return ret
+
 
 def openstack_full_argument_spec(**kwargs):
     spec = dict(

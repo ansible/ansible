@@ -2,23 +2,13 @@
 # encoding: utf-8
 
 # (c) 2015, Jose Armesto <jose@armesto.net>
-#
-# This file is part of Ansible
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -83,9 +73,9 @@ user_data:
     description: User data used to start instance
     returned: when Launch Configuration was found
     type: string
-    user_data: "ZXhwb3J0IENMT1VE"
+    sample: "ZXhwb3J0IENMT1VE"
 name:
-    description: Name of the AMI
+    description: Name of the Launch Configuration
     returned: when Launch Configuration was found
     type: string
     sample: "myapp-v123"
@@ -151,6 +141,10 @@ associate_public_address:
     sample: True
 ...
 '''
+import re
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
 
 
 def find_launch_configs(client, module):
@@ -221,10 +215,6 @@ def main():
     client = boto3_conn(module=module, conn_type='client', resource='autoscaling', region=region, **aws_connect_params)
     find_launch_configs(client, module)
 
-
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

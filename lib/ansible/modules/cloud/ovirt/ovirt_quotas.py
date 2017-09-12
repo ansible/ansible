@@ -19,7 +19,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -27,15 +27,15 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: ovirt_quotas
-short_description: Module to manage datacenter quotas in oVirt
+short_description: Module to manage datacenter quotas in oVirt/RHV
 version_added: "2.3"
 author: "Ondra Machacek (@machacekondra)"
 description:
-    - "Module to manage datacenter quotas in oVirt"
+    - "Module to manage datacenter quotas in oVirt/RHV"
 options:
     name:
         description:
-            - "Name of the the quota to manage."
+            - "Name of the quota to manage."
         required: true
     state:
         description:
@@ -48,7 +48,7 @@ options:
         required: true
     description:
         description:
-            - "Description of the the quota to manage."
+            - "Description of the quota to manage."
     cluster_threshold:
         description:
             - "Cluster threshold(soft limit) defined in percentage (0-100)."
@@ -122,9 +122,10 @@ id:
     type: str
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 quota:
-    description: "Dictionary of all the quota attributes. Quota attributes can be found on your oVirt instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/quota."
+    description: "Dictionary of all the quota attributes. Quota attributes can be found on your oVirt/RHV instance
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/quota."
     returned: On success if quota is found.
+    type: dict
 '''
 
 try:

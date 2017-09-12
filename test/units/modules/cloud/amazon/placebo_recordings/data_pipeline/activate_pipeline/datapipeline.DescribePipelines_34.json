@@ -1,0 +1,82 @@
+{
+    "status_code": 200,
+    "data": {
+        "pipelineDescriptionList": [
+            {
+                "fields": [
+                    {
+                        "stringValue": "2017-07-14T19:22:17",
+                        "key": "@lastActivationTime"
+                    },
+                    {
+                        "stringValue": "2017-07-14T19:16:35",
+                        "key": "@creationTime"
+                    },
+                    {
+                        "stringValue": "ansible-datapipeline-unit-test",
+                        "key": "description"
+                    },
+                    {
+                        "stringValue": "PIPELINE",
+                        "key": "@sphere"
+                    },
+                    {
+                        "stringValue": "AIDAJKBIP5ANB55M7EUTC",
+                        "key": "pipelineCreator"
+                    },
+                    {
+                        "stringValue": "2017-07-14T19:22:18",
+                        "key": "@finishedTime"
+                    },
+                    {
+                        "stringValue": "2",
+                        "key": "@version"
+                    },
+                    {
+                        "stringValue": "ansible-test-create-pipeline",
+                        "key": "name"
+                    },
+                    {
+                        "stringValue": "df-0590406117G8DPQZY2HA",
+                        "key": "@id"
+                    },
+                    {
+                        "stringValue": "FINISHED",
+                        "key": "@pipelineState"
+                    },
+                    {
+                        "stringValue": "448830907657",
+                        "key": "@accountId"
+                    },
+                    {
+                        "stringValue": "881b104bff5f07052e897bd79048b951",
+                        "key": "uniqueId"
+                    },
+                    {
+                        "stringValue": "AIDAJKBIP5ANB55M7EUTC",
+                        "key": "@userId"
+                    },
+                    {
+                        "stringValue": "2017-07-14T19:16:40",
+                        "key": "@firstActivationTime"
+                    }
+                ],
+                "name": "ansible-test-create-pipeline",
+                "description": "ansible-datapipeline-unit-test",
+                "tags": [],
+                "pipelineId": "df-0590406117G8DPQZY2HA"
+            }
+        ],
+        "ResponseMetadata": {
+            "RequestId": "74c54ffa-68ca-11e7-b9c1-53eb374c7a33",
+            "HTTPHeaders": {
+                "date": "Fri, 14 Jul 2017 19:27:20 GMT",
+                "x-amzn-requestid": "74c54ffa-68ca-11e7-b9c1-53eb374c7a33",
+                "content-type": "application/x-amz-json-1.1",
+                "content-length": "980"
+            },
+            "RetryAttempts": 0,
+            "HTTPStatusCode": 200
+        }
+    }
+}

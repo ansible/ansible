@@ -28,23 +28,13 @@ from collections import defaultdict
 from distutils.version import StrictVersion
 from pprint import pformat, pprint
 
-import yaml
-
-from ansible.module_utils._text import to_text
-from ansible.plugins import module_loader
+from ansible.parsing.metadata import DEFAULT_METADATA, ParseError, extract_metadata
+from ansible.plugins.loader import module_loader
 
 
 # There's a few files that are not new-style modules.  Have to blacklist them
 NONMODULE_PY_FILES = frozenset(('async_wrapper.py',))
 NONMODULE_MODULE_NAMES = frozenset(os.path.splitext(p)[0] for p in NONMODULE_PY_FILES)
-
-# Default metadata
-DEFAULT_METADATA = {'metadata_version': '1.0', 'status': ['preview'], 'supported_by':'community'}
-
-
-class ParseError(Exception):
-    """Thrown when parsing a file fails"""
-    pass
 
 
 class MissingModuleError(Exception):
@@ -85,180 +75,6 @@ def parse_args(arg_string):
         usage()
 
     return action, {'version': version, 'overwrite': overwrite, 'csvfile': csvfile}
-
-def seek_end_of_dict(module_data, start_line, start_col, next_node_line, next_node_col):
-    """Look for the end of a dict in a set of lines
-
-    We know the starting position of the dict and we know the start of the
-    next code node but in between there may be multiple newlines and comments.
-    There may also be multiple python statements on the same line (separated
-    by semicolons)
-
-    Examples::
-        ANSIBLE_METADATA = {[..]}
-        DOCUMENTATION = [..]
-
-        ANSIBLE_METADATA = {[..]} # Optional comments with confusing junk => {}
-        # Optional comments {}
-        DOCUMENTATION = [..]
-
-        ANSIBLE_METADATA = {
-            [..]
-            }
-        # Optional comments {}
-        DOCUMENTATION = [..]
-
-        ANSIBLE_METADATA = {[..]} ; DOCUMENTATION = [..]
-
-        ANSIBLE_METADATA = {}EOF
-    """
-    if next_node_line is None:
-        # The dict is the last statement in the file
-        snippet = module_data.splitlines()[start_line:]
-        next_node_col = 0
-        # Include the last line in the file
-        last_line_offset = 0
-    else:
-        # It's somewhere in the middle so we need to separate it from the rest
-        snippet = module_data.splitlines()[start_line:next_node_line]
-        # Do not include the last line because that's where the next node
-        # starts
-        last_line_offset = 1
-
-    if next_node_col == 0:
-        # This handles all variants where there are only comments and blank
-        # lines between the dict and the next code node
-
-        # Step backwards through all the lines in the snippet
-        for line_idx, line in tuple(reversed(tuple(enumerate(snippet))))[last_line_offset:]:
-            end_col = None
-            # Step backwards through all the characters in the line
-            for col_idx, char in reversed(tuple(enumerate(c for c in line))):
-                if char == '}' and end_col is None:
-                    # Potentially found the end of the dict
-                    end_col = col_idx
-
-                elif char == '#' and end_col is not None:
-                    # The previous '}' was part of a comment.  Keep trying
-                    end_col = None
-
-            if end_col is not None:
-                # Found the end!
-                end_line = start_line + line_idx
-                break
-    else:
-        # Harder cases involving multiple statements on one line
-        # Good Ansible Module style doesn't do this so we're just going to
-        # treat this as an error for now:
-        raise ParseError('Multiple statements per line confuses the module metadata parser.')
-
-    return end_line, end_col
-
-
-def seek_end_of_string(module_data, start_line, start_col, next_node_line, next_node_col):
-    """
-    This is much trickier than finding the end of a dict.  A dict has only one
-    ending character, "}".  Strings have four potential ending characters.  We
-    have to parse the beginning of the string to determine what the ending
-    character will be.
-
-    Examples:
-        ANSIBLE_METADATA = '''[..]''' # Optional comment with confusing chars '''
-        # Optional comment with confusing chars '''
-        DOCUMENTATION = [..]
-
-        ANSIBLE_METADATA = '''
-            [..]
-            '''
-        DOCUMENTATIONS = [..]
-
-        ANSIBLE_METADATA = '''[..]''' ; DOCUMENTATION = [..]
-
-        SHORT_NAME = ANSIBLE_METADATA = '''[..]''' ; DOCUMENTATION = [..]
-
-    String marker variants:
-        * '[..]'
-        * "[..]"
-        * '''[..]'''
-        * \"\"\"[..]\"\"\"
-
-    Each of these come in u, r, and b variants:
-        * '[..]'
-        * u'[..]'
-        * b'[..]'
-        * r'[..]'
-        * ur'[..]'
-        * ru'[..]'
-        * br'[..]'
-        * b'[..]'
-        * rb'[..]'
-    """
-    raise NotImplementedError('Finding end of string not yet implemented')
-
-
-def extract_metadata(module_data):
-    """Extract the metadata from a module
-
-    :arg module_data: Byte string containing a module's code
-    :returns: a tuple of metadata (a dict), line the metadata starts on,
-        column the metadata starts on, line the metadata ends on, column the
-        metadata ends on, and the names the metadata is assigned to.  One of
-        the names the metadata is assigned to will be ANSIBLE_METADATA If no
-        metadata is found, the tuple will be (None, -1, -1, -1, -1, None)
-    """
-    metadata = None
-    start_line = -1
-    start_col = -1
-    end_line = -1
-    end_col = -1
-    targets = None
-    mod_ast_tree = ast.parse(module_data)
-    for root_idx, child in enumerate(mod_ast_tree.body):
-        if isinstance(child, ast.Assign):
-            for target in child.targets:
-                if target.id == 'ANSIBLE_METADATA':
-                    if isinstance(child.value, ast.Dict):
-                        metadata = ast.literal_eval(child.value)
-
-                        try:
-                            # Determine where the next node starts
-                            next_node = mod_ast_tree.body[root_idx+1]
-                            next_lineno = next_node.lineno
-                            next_col_offset = next_node.col_offset
-                        except IndexError:
-                            # Metadata is defined in the last node of the file
-                            next_lineno = None
-                            next_col_offset = None
-
-                        # Determine where the current metadata ends
-                        end_line, end_col = seek_end_of_dict(module_data,
-                                child.lineno - 1, child.col_offset, next_lineno,
-                                next_col_offset)
-
-                    elif isinstance(child.value, ast.Str):
-                        metadata = yaml.safe_load(child.value.s)
-                        end_line = seek_end_of_string(module_data)
-                    elif isinstance(child.value, ast.Bytes):
-                        metadata = yaml.safe_load(to_text(child.value.s, errors='surrogate_or_strict'))
-                        end_line = seek_end_of_string(module_data)
-                    else:
-                        # Example:
-                        #   ANSIBLE_METADATA = 'junk'
-                        #   ANSIBLE_METADATA = { [..the real metadata..] }
-                        continue
-
-                    # Do these after the if-else so we don't pollute them in
-                    # case this was a false positive
-                    start_line = child.lineno - 1
-                    start_col = child.col_offset
-                    targets = [t.id for t in child.targets]
-                    break
-
-        if metadata is not None:
-            # Once we've found the metadata we're done
-            break
-
-    return metadata, start_line, start_col, end_line, end_col, targets
 
 
 def find_documentation(module_data):
@@ -304,7 +120,7 @@ def insert_metadata(module_data, new_metadata, insertion_line, targets=('ANSIBLE
             new_lines.append('{}{}'.format(' ' * (len(assignments) - 1 + len(' = {')), line))
 
     old_lines = module_data.split('\n')
-    lines = old_lines[:insertion_line] + new_lines + [''] + old_lines[insertion_line:]
+    lines = old_lines[:insertion_line] + new_lines + old_lines[insertion_line:]
     return '\n'.join(lines)
 
 
@@ -355,13 +171,13 @@ def parse_assigned_metadata(csvfile):
     Fields:
         :0: Module name
         :1: supported_by  string.  One of the valid support fields
-            core, community, curated
+            core, community, certified, network
         :2: stableinterface
         :3: preview
         :4: deprecated
         :5: removed
 
-        https://github.com/ansible/proposals/issues/30
+        http://docs.ansible.com/ansible/latest/dev_guide/developing_modules_documenting.html#ansible-metadata-block
     """
     with open(csvfile, 'rb') as f:
         for record in csv.reader(f):
@@ -378,7 +194,7 @@ def parse_assigned_metadata(csvfile):
             if not status or record[3]:
                 status.append('preview')
 
-            yield (module, {'metadata_version': '1.0', 'supported_by': supported_by, 'status': status})
+            yield (module, {'metadata_version': '1.1', 'supported_by': supported_by, 'status': status})
 
 
 def write_metadata(filename, new_metadata, version=None, overwrite=False):
@@ -386,7 +202,8 @@ def write_metadata(filename, new_metadata, version=None, overwrite=False):
         module_data = f.read()
 
     try:
-        current_metadata, start_line, start_col, end_line, end_col, targets = extract_metadata(module_data)
+        current_metadata, start_line, start_col, end_line, end_col, targets = \
+            extract_metadata(module_data=module_data, offsets=True)
     except SyntaxError:
         if filename.endswith('.py'):
             raise
@@ -395,7 +212,7 @@ def write_metadata(filename, new_metadata, version=None, overwrite=False):
         raise ParseError('Could not add metadata to {}'.format(filename))
 
     if current_metadata is None:
-        # No curent metadata so we can just add it
+        # No current metadata so we can just add it
         start_line = find_documentation(module_data)
         if start_line < 0:
             if os.path.basename(filename) in NONMODULE_PY_FILES:
@@ -438,7 +255,7 @@ def return_metadata(plugins):
         if name not in metadata or metadata[name] is not None:
             with open(filename, 'rb') as f:
                 module_data = f.read()
-            metadata[name] = extract_metadata(module_data)[0]
+            metadata[name] = extract_metadata(module_data=module_data, offsets=True)[0]
     return metadata
 
 
@@ -483,9 +300,8 @@ def metadata_summary(plugins, version=None):
 
     return list(no_metadata.values()), list(has_metadata.values()), supported_by, status
 
-#
 # Filters to convert between metadata versions
-#
+
 
 def convert_metadata_pre_1_0_to_1_0(metadata):
     """
@@ -511,16 +327,40 @@ def convert_metadata_pre_1_0_to_1_0(metadata):
 
     return new_metadata
 
-#
+
+def convert_metadata_1_0_to_1_1(metadata):
+    """
+    Convert 1.0 to 1.1 metadata format
+
+    :arg metadata: The old metadata
+    :returns: The new metadata
+
+    Changes from 1.0 to 1.1:
+
+    * ``supported_by`` field value ``curated`` has been removed
+    * ``supported_by`` field value ``certified`` has been added
+    * ``supported_by`` field value ``network`` has been added
+    """
+    new_metadata = {'metadata_version': '1.1',
+                    'supported_by': metadata['supported_by'],
+                    'status': metadata['status']
+                    }
+    if new_metadata['supported_by'] == 'unmaintained':
+        new_metadata['supported_by'] = 'community'
+    elif new_metadata['supported_by'] == 'curated':
+        new_metadata['supported_by'] = 'certified'
+
+    return new_metadata
+
 # Subcommands
-#
+
 
 def add_from_csv(csv_file, version=None, overwrite=False):
     """Implement the subcommand to add metadata from a csv file
     """
     # Add metadata for everything from the CSV file
     diagnostic_messages = []
-    for module_name, new_metadata in parse_assigned_metadata_initial(csv_file):
+    for module_name, new_metadata in parse_assigned_metadata(csv_file):
         filename = module_loader.find_plugin(module_name, mod_type='.py')
         if filename is None:
             diagnostic_messages.append('Unable to find the module file for {}'.format(module_name))
@@ -591,7 +431,7 @@ def upgrade_metadata(version=None):
         # For each plugin, read the existing metadata
         with open(filename, 'rb') as f:
             module_data = f.read()
-        metadata = extract_metadata(module_data)[0]
+        metadata = extract_metadata(module_data=module_data, offsets=True)[0]
 
         # If the metadata isn't the requested version, convert it to the new
         # version
@@ -606,7 +446,10 @@ def upgrade_metadata(version=None):
                 metadata = convert_metadata_pre_1_0_to_1_0(metadata)
 
             if metadata['metadata_version'] == '1.0' and StrictVersion('1.0') < requested_version:
-                # 1.0 version => XXX.  We don't yet have anything beyond 1.0
+                metadata = convert_metadata_1_0_to_1_1(metadata)
+
+            if metadata['metadata_version'] == '1.1' and StrictVersion('1.1') < requested_version:
+                # 1.1 version => XXX.  We don't yet have anything beyond 1.1
                 # so there's nothing here
                 pass
 
@@ -651,8 +494,10 @@ def report(version=None):
 
     print('== Supported by core ==')
     pprint(sorted(support['core']))
-    print('== Supported by value curated ==')
-    pprint(sorted(support['curated']))
+    print('== Supported by value certified ==')
+    pprint(sorted(support['certified']))
+    print('== Supported by value network ==')
+    pprint(sorted(support['network']))
     print('== Supported by community ==')
     pprint(sorted(support['community']))
     print('')
@@ -669,10 +514,10 @@ def report(version=None):
 
     print('== Summary ==')
     print('No Metadata: {0}             Has Metadata: {1}'.format(len(no_metadata), len(has_metadata)))
-    print('Supported by core: {0}      Supported by community: {1}    Supported by value curated: {2}'.format(len(support['core']),
-                len(support['community']), len(support['curated'])))
+    print('Support level: core: {0}   community: {1}   certified: {2}   network: {3}'.format(len(support['core']),
+          len(support['community']), len(support['certified']), len(support['network'])))
     print('Status StableInterface: {0} Status Preview: {1}            Status Deprecated: {2}      Status Removed: {3}'.format(len(status['stableinterface']),
-                len(status['preview']), len(status['deprecated']), len(status['removed'])))
+          len(status['preview']), len(status['deprecated']), len(status['removed'])))
 
     return 0
 

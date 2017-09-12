@@ -1,0 +1,136 @@
+---
+
+- name: install module from Powershell Gallery
+  win_psmodule:
+    name: "{{ powershell_module }}"
+    state: present
+  register: module_setup
+
+- name: test Powershell Gallery module setup
+  assert:
+    that:
+      - "module_setup|changed"
+      - "module_setup.output == 'Module {{ powershell_module }} installed'"
+
+- name: check idempotency reinstalling module
+  win_psmodule:
+    name: "{{ powershell_module }}"
+    state: present
+  register: module_reinstall
+
+- name: test win_psmodule idempotency
+  assert:
+    that:
+      - "not module_reinstall|changed"
+
+- name: check module install with allow_clobber not active
+  win_psmodule:
+    name: "{{ allow_clobber_module }}"
+  register: fail_allow_clobber
+  ignore_errors: yes
+
+- name: test allow_clobber has failed
+  assert:
+    that:
+      - "fail_allow_clobber|failed"
+
+- name: check module install with allow_clobber active
+  win_psmodule:
+    name: "{{ allow_clobber_module }}"
+    allow_clobber: yes
+  register: ok_allow_clobber
+
+- name: test module install with allow_clobber active
+  assert:
+    that:
+      - "ok_allow_clobber|changed"
+
+- name: check wrong module install attempt
+  win_psmodule: 
+    name: "{{ wrong_module }}"
+    state: present
+  ignore_errors: yes
+  register: module_fail
+
+- name: test module setup fails
+  assert:
+    that:
+      - "module_fail|failed"
+
+- name: check fake custom ps repository registration attempt
+  win_psmodule:
+    name: "{{ wrong_module }}"
+    repository: Fake repository
+    url: http://my_fake_repo.com/repo/
+  ignore_errors: yes
+  register: repo_fail
+
+- name: test fake custom ps repository registration attempt
+  assert:
+    that:
+      - "repo_fail|failed"
+
+- name: check module is installed
+  win_shell: (Get-Module -Name {{ powershell_module }} -ListAvailable).Name
+  register: module_check
+
+- name: test module is installed
+  assert:
+    that:
+      - "module_check.stdout_lines[0] == '{{ powershell_module }}'"
+
+- name: check allow_clobber module is installed
+  win_shell: (Get-Module -Name {{ allow_clobber_module }} -ListAvailable).Name
+  register: allow_clobber_check
+
+- name: test allow_clobber module is installed
+  assert:
+    that:
+      - "allow_clobber_check.stdout_lines[0] == '{{ allow_clobber_module }}'"
+
+- name: remove installed powershell module
+  win_psmodule:
+    name: powershell-yaml
+    state: absent
+  register: module_uninstall
+
+- name: test powershell module removal
+  assert:
+    that:
+      - "module_uninstall|changed"
+      - "module_uninstall.output == 'Module {{ powershell_module }} removed'"
+
+- name: check module is uninstalled
+  win_shell: (Get-Module -Name {{ powershell_module }} -ListAvailable).Name
+  register: module_check
+
+- name: test module is no more present
+  assert:
+    that:
+      - "module_check.stdout == ''"
+
+- name: check idempotency re-removing module
+  win_psmodule:
+    name: "{{ powershell_module }}"
+    state: absent
+  register: module_uninstall_2
+
+- name: test idempotency
+  assert:
+    that:
+      - "not module_uninstall_2|changed"
+
+- name: check removing allow_clobber module
+  win_psmodule:
+    name: "{{ allow_clobber_module }}"
+    state: absent
+  register: module_uninstall_3
+
+- name: test removing allow_clobber module
+  assert:
+    that:
+      - "not module_uninstall_2|changed"
+      - "module_uninstall_3|changed"
+
+      
+      

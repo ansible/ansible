@@ -1,19 +1,12 @@
 #!/usr/bin/python
-#
-# This is a free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This Ansible library is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this library.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -44,7 +37,10 @@ options:
     default: null
   region:
     description:
-     - "AWS region to create the bucket in. If not set then the value of the AWS_REGION and EC2_REGION environment variables are checked, followed by the aws_region and ec2_region settings in the Boto config file.  If none of those are set the region defaults to the S3 Location: US Standard."
+     - >
+       AWS region to create the bucket in. If not set then the value of the AWS_REGION and EC2_REGION environment variables are checked,
+       followed by the aws_region and ec2_region settings in the Boto config file.  If none of those are set the region defaults to the
+       S3 Location: US Standard.
     required: false
     default: null
   state:
@@ -55,7 +51,10 @@ options:
     choices: [ 'present', 'absent' ]
   suffix:
     description:
-      - "Suffix that is appended to a request that is for a directory on the website endpoint (e.g. if the suffix is index.html and you make a request to samplebucket/images/ the data that is returned will be for the object with the key name images/index.html). The suffix must not include a slash character."
+      - >
+        Suffix that is appended to a request that is for a directory on the website endpoint (e.g. if the suffix is index.html and you make a request to
+        samplebucket/images/ the data that is returned will be for the object with the key name images/index.html). The suffix must not include a slash
+        character.
     required: false
     default: index.html
 
@@ -89,53 +88,74 @@ EXAMPLES = '''
 
 RETURN = '''
 index_document:
-  suffix:
-    description: suffix that is appended to a request that is for a directory on the website endpoint
-    returned: success
-    type: string
-    sample: index.html
+    description: index document
+    type: complex
+    returned: always
+    contains:
+        suffix:
+            description: suffix that is appended to a request that is for a directory on the website endpoint
+            returned: success
+            type: string
+            sample: index.html
 error_document:
-  key:
-    description:  object key name to use when a 4XX class error occurs
-    returned: when error_document parameter set
-    type: string
-    sample: error.html
+    description: error document
+    type: complex
+    returned: always
+    contains:
+        key:
+            description:  object key name to use when a 4XX class error occurs
+            returned: when error_document parameter set
+            type: string
+            sample: error.html
 redirect_all_requests_to:
-  host_name:
-    description: name of the host where requests will be redirected.
-    returned: when redirect all requests parameter set
-    type: string
-    sample: ansible.com
+    description: where to redirect requests
+    type: complex
+    returned: always
+    contains:
+        host_name:
+            description: name of the host where requests will be redirected.
+            returned: when redirect all requests parameter set
+            type: string
+            sample: ansible.com
 routing_rules:
-  routing_rule:
-    host_name:
-      description: name of the host where requests will be redirected.
-      returned: when host name set as part of redirect rule
-      type: string
-      sample: ansible.com
-    condition:
-      key_prefix_equals:
-        description: object key name prefix when the redirect is applied. For example, to redirect requests for ExamplePage.html, the key prefix will be ExamplePage.html
-        returned: when routing rule present
-        type: string
-        sample: docs/
-    redirect:
-      replace_key_prefix_with:
-        description: object key prefix to use in the redirect request
-        returned: when routing rule present
-        type: string
-        sample: documents/
-
+    description: routing rules
+    type: complex
+    returned: always
+    contains:
+        routing_rule:
+            host_name:
+                description: name of the host where requests will be redirected.
+                returned: when host name set as part of redirect rule
+                type: string
+                sample: ansible.com
+        condition:
+            key_prefix_equals:
+            description: object key name prefix when the redirect is applied. For example, to redirect requests for ExamplePage.html, the key prefix will be
+                     ExamplePage.html
+            returned: when routing rule present
+            type: string
+            sample: docs/
+        redirect:
+            replace_key_prefix_with:
+                description: object key prefix to use in the redirect request
+                returned: when routing rule present
+                type: string
+                sample: documents/
 '''
 
 import time
 
 try:
-    from botocore.exceptions import ClientError, ParamValidationError, NoCredentialsError
     import boto3
+    from botocore.exceptions import ClientError, ParamValidationError
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import (HAS_BOTO3, boto3_conn, camel_dict_to_snake_dict, ec2_argument_spec,
+                                      get_aws_connection_info)
+
 
 def _create_redirect_dict(url):
 
@@ -290,9 +310,6 @@ def main():
     elif state == 'absent':
         disable_bucket_as_website(client_connection, module)
 
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

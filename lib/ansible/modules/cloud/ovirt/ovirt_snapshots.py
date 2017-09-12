@@ -19,7 +19,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -27,11 +27,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: ovirt_snapshots
-short_description: "Module to manage Virtual Machine Snapshots in oVirt"
+short_description: "Module to manage Virtual Machine Snapshots in oVirt/RHV"
 version_added: "2.3"
 author: "Ondra Machacek (@machacekondra)"
 description:
-    - "Module to manage Virtual Machine Snapshots in oVirt"
+    - "Module to manage Virtual Machine Snapshots in oVirt/RHV"
 options:
     snapshot_id:
         description:
@@ -104,9 +104,10 @@ id:
     type: str
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 snapshot:
-    description: "Dictionary of all the snapshot attributes. Snapshot attributes can be found on your oVirt instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/snapshot."
+    description: "Dictionary of all the snapshot attributes. Snapshot attributes can be found on your oVirt/RHV instance
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/snapshot."
     returned: On success if snapshot is found.
+    type: dict
 '''
 
 

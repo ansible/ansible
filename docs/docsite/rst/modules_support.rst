@@ -1,44 +1,50 @@
-Module Support
---------------
+Module Maintenance & Support
+----------------------------
 
 .. toctree:: :maxdepth: 1
 
-Ansible has many modules, but not all of them are maintained by the core project commiters. Each module should have associated metadata that indicates which of the following categories they fall into. This should be visible in each module's documentation.
-
-Documentation updates for each module can also be edited directly in the module and by submitting a pull request to the module source code; just look for the "DOCUMENTATION" block in the source tree.
-
-If you believe you have found a bug in a module and are already running the latest stable or development version of Ansible, first look in the `issue tracker at github.com/ansible/ansible <http://github.com/ansible/ansible/issues>`_ to see if a bug has already been filed.  If not, we would be grateful if you would file one.
-
-Should you have a question rather than a bug report, inquiries are welcome on the `ansible-project google group <https://groups.google.com/forum/#!forum/ansible-project>`_ or on Ansible's "#ansible" channel, located on irc.freenode.net.
-
-For development-oriented topics, use the `ansible-devel google group <https://groups.google.com/forum/#!forum/ansible-devel>`_  or Ansible's "#ansible" and "#ansible-devel" channels, located on irc.freenode.net.  You should also read :doc:`community`, :doc:`dev_guide/developing_test_pr` and :doc:`dev_guide/developing_modules`.
-
-The modules are hosted on GitHub in a subdirectory of the `ansible <https://github.com/ansible/ansible/tree/devel/lib/ansible/modules>`_ repo.
+To help identify maintainers and understand how the included modules are officially supported, each module now has associated metadata that provides additional clarity for maintenance and support.
 
 Core
 ````
 
-These are modules that the core ansible team maintains and will always ship with ansible itself.
-They will also receive slightly higher priority for all requests. Non-core modules are still fully usable.
+:doc:`Core modules are maintained by the Ansible Engineering Team<core_maintained>`.
+These modules are integral to the basic foundations of the Ansible distribution.
 
-Curated
+Network
 ```````
 
-Some examples of Curated modules are submitted by other companies or maintained by the community. Maintainers of these types of modules must watch for any issues reported or pull requests raised against the module.
+:doc:`Network modules are maintained by the Ansible Network Team<network_maintained>`. Please note there are :doc:`additional networking modules<list_of_network_modules>` that are categorized as Certified or Community not maintained by Ansible.
 
-Core Committers will review all modules becoming Curated.  Core Committers will review proposed changes to existing Curated modules once the community maintainers of the module have approved the changes. Core committers will also ensure that any issues that arise due to Ansible engine changes will be remediated.
-Also, it is strongly recommended (but not presently required) for these types of modules to have unit tests.
 
-These modules are currently shipped with Ansible, but might be shipped separately in the future.
+Certified
+`````````
+
+Certified modules are part of a future planned program currently in development.
 
 Community
 `````````
-These modules **are not** supported by Core Committers or by companies/partners associated to the module. They are maintained by the community.
 
-They are still fully usable, but the response rate to issues is purely up to the community.  Best effort support will be provided but is not covered under any support contracts.
+:doc:`Community modules are submitted and maintained by the Ansible community<community_maintained>`.  These modules are not maintained by Ansible, and are included as a convenience.
 
-These modules are currently shipped with Ansible, but will most likely be shipped separately in the future.
+Issue Reporting
+```````````````
 
+If you believe you have found a bug in a module and are already running the latest stable or development version of Ansible, first look at the `issue tracker in the Ansible repo <https://github.com/ansible/ansible/issues>`_ to see if an issue has already been filed. If not, please file one.
+
+Should you have a question rather than a bug report, inquiries are welcome on the `ansible-project Google group <https://groups.google.com/forum/#%21forum/ansible-project>`_ or on Ansible’s “#ansible” channel, located on irc.freenode.net.
+
+For development-oriented topics, use the `ansible-devel Google group <https://groups.google.com/forum/#%21forum/ansible-devel>`_ or Ansible’s #ansible and #ansible-devel channels, located on irc.freenode.net. You should also read :doc:`Community Information & Contributing <community>`, :doc:`Testing Ansible <testing>`, and :doc:`Developing Modules <developing_modules>`.
+
+The modules are hosted on GitHub in a subdirectory of the `Ansible <https://github.com/ansible/ansible/tree/devel/lib/ansible/modules>`_ repo.
+
+NOTE: If you have a Red Hat Ansible Engine product subscription, please follow the standard issue reporting process via the Red Hat Customer Portal.
+
+Support
+```````
+
+For more information on how included Ansible modules are supported by Red Hat,
+please refer to the following `knowledgebase article <https://access.redhat.com/articles/3166901>`_ as well as other resources on the `Red Hat Customer Portal. <https://access.redhat.com/>`_
 
 .. seealso::
 

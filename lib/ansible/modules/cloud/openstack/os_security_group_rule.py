@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -78,7 +78,7 @@ options:
      default: present
    availability_zone:
      description:
-       - Ignored. Present for backwards compatability
+       - Ignored. Present for backwards compatibility
      required: false
 requirements: ["shade"]
 '''
@@ -136,35 +136,43 @@ RETURN = '''
 id:
   description: Unique rule UUID.
   type: string
+  returned: state == present
 direction:
   description: The direction in which the security group rule is applied.
   type: string
   sample: 'egress'
+  returned: state == present
 ethertype:
   description: One of IPv4 or IPv6.
   type: string
   sample: 'IPv4'
+  returned: state == present
 port_range_min:
   description: The minimum port number in the range that is matched by
                the security group rule.
   type: int
   sample: 8000
+  returned: state == present
 port_range_max:
   description: The maximum port number in the range that is matched by
                the security group rule.
   type: int
   sample: 8000
+  returned: state == present
 protocol:
   description: The protocol that is matched by the security group rule.
   type: string
   sample: 'tcp'
+  returned: state == present
 remote_ip_prefix:
   description: The remote IP prefix to be associated with this security group rule.
   type: string
   sample: '0.0.0.0/0'
+  returned: state == present
 security_group_id:
   description: The security group ID to associate with this security group rule.
   type: string
+  returned: state == present
 '''
 
 try:

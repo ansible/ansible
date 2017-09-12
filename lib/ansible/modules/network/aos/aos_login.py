@@ -18,7 +18,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -37,7 +37,7 @@ description:
     ansible facts with the variable I(aos_session)
     This module is not idempotent and do not support check mode.
 requirements:
-  - "aos-pyez >= 0.6.0"
+  - "aos-pyez >= 0.6.1"
 options:
   server:
     description:
@@ -46,7 +46,7 @@ options:
   port:
     description:
       - Port number to use when connecting to the AOS server.
-    default: 8888
+    default: 443
   user:
     description:
       - Login username to use when connecting to the AOS server.
@@ -81,6 +81,7 @@ aos_session:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.aos import check_aos_version
 
 try:
     from apstra.aosom.session import Session
@@ -114,13 +115,16 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             server=dict(required=True),
-            port=dict(default='8888'),
+            port=dict(default='443', type="int"),
             user=dict(default='admin'),
             passwd=dict(default='admin', no_log=True)))
 
     if not HAS_AOS_PYEZ:
         module.fail_json(msg='aos-pyez is not installed.  Please see details '
                              'here: https://github.com/Apstra/aos-pyez')
+
+    # Check if aos-pyez is present and match the minimum version
+    check_aos_version(module, '0.6.1')
 
     aos_login(module)
 

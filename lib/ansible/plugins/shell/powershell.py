@@ -55,7 +55,8 @@ begin {
     # stream JSON including become_pw, ps_module_payload, bin_module_payload, become_payload, write_payload_path, preserve directives
     # exec runspace, capture output, cleanup, return module output
 
-    $json_raw = ""
+    # NB: do not adjust the following line- it is replaced when doing non-streamed module output
+    $json_raw = ''
 }
 process {
     $input_as_string = [string]$input
@@ -95,7 +96,7 @@ end {
     Write-Output $output
 }
 
-''' # end exec_wrapper
+'''  # end exec_wrapper
 
 leaf_exec = br'''
 Function Run($payload) {
@@ -111,6 +112,11 @@ Function Run($payload) {
     # redefine Write-Host to dump to output instead of failing- lots of scripts use it
     $ps.AddStatement().AddScript("Function Write-Host(`$msg){ Write-Output `$msg }") | Out-Null
 
+    ForEach ($env_kv in $payload.environment.GetEnumerator()) {
+        $escaped_env_set = "`$env:{0} = '{1}'" -f $env_kv.Key,$env_kv.Value.Replace("'","''")
+        $ps.AddStatement().AddScript($escaped_env_set) | Out-Null
+    }
+
     # dynamically create/load modules
     ForEach ($mod in $payload.powershell_modules.GetEnumerator()) {
         $decoded_module = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($mod.Value))
@@ -118,6 +124,9 @@ Function Run($payload) {
         $ps.AddCommand("Import-Module").AddParameters(@{WarningAction="SilentlyContinue"}) | Out-Null
         $ps.AddCommand("Out-Null") | Out-Null
     }
+
+    # force input encoding to preamble-free UTF8 so PS sub-processes (eg, Start-Job) don't blow up
+    $ps.AddStatement().AddScript("[Console]::InputEncoding = New-Object Text.UTF8Encoding `$false") | Out-Null
 
     $ps.AddStatement().AddScript($entrypoint) | Out-Null
 
@@ -132,11 +141,11 @@ Function Run($payload) {
         If(-not $exit_code) {
             $exit_code = 1
         }
+        # need to use this instead of Exit keyword to prevent runspace from crashing with dynamic modules
         $host.SetShouldExit($exit_code)
     }
 }
-''' # end leaf_exec
-
+'''  # end leaf_exec
 
 become_wrapper = br'''
 Set-StrictMode -Version 2
@@ -146,6 +155,7 @@ $helper_def = @"
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Text;
 using System.Threading;
 using System.Security;
 using System.Security.AccessControl;
@@ -154,7 +164,7 @@ using System.Runtime.InteropServices;
 
 namespace Ansible.Shell
 {
-    public class ProcessUtil
+    public class NativeProcessUtil
     {
         public static void GetProcessOutput(StreamReader stdoutStream, StreamReader stderrStream, out string stdout, out string stderr)
         {
@@ -163,7 +173,7 @@ namespace Ansible.Shell
 
             string so = null, se = null;
 
-            ThreadPool.QueueUserWorkItem((s)=>
+            ThreadPool.QueueUserWorkItem((s) =>
             {
                 so = stdoutStream.ReadToEnd();
                 sowait.Set();
@@ -175,11 +185,48 @@ namespace Ansible.Shell
                 sewait.Set();
             });
 
-            foreach(var wh in new WaitHandle[] { sowait, sewait })
+            foreach (var wh in new WaitHandle[] { sowait, sewait })
                 wh.WaitOne();
 
             stdout = so;
             stderr = se;
+        }
+
+        public static IntPtr GetElevatedToken(IntPtr hToken)
+        {
+            uint requestedLength;
+
+            IntPtr pTokenInfo = Marshal.AllocHGlobal(sizeof(int));
+
+            try
+            {
+                if(!GetTokenInformation(hToken, TOKEN_INFORMATION_CLASS.TokenElevationType, pTokenInfo, sizeof(int), out requestedLength))
+                    throw new Win32Exception("Unable to get TokenElevationType");
+
+                var tet = (TOKEN_ELEVATION_TYPE)Marshal.ReadInt32(pTokenInfo);
+
+                // we already have the best token we can get, just use it
+                if(tet != TOKEN_ELEVATION_TYPE.TokenElevationTypeLimited)
+                    return hToken;
+
+                GetTokenInformation(hToken, TOKEN_INFORMATION_CLASS.TokenLinkedToken, IntPtr.Zero, 0, out requestedLength);
+
+                IntPtr pLinkedToken = Marshal.AllocHGlobal((int)requestedLength);
+
+                if(!GetTokenInformation(hToken, TOKEN_INFORMATION_CLASS.TokenLinkedToken, pLinkedToken, requestedLength, out requestedLength))
+                    throw new Win32Exception("Unable to get linked token");
+
+                IntPtr linkedToken = Marshal.ReadIntPtr(pLinkedToken);
+
+                Marshal.FreeHGlobal(pLinkedToken);
+
+                return linkedToken;
+            }
+            finally
+            {
+                Marshal.FreeHGlobal(pTokenInfo);
+            }
+
         }
 
         // http://stackoverflow.com/a/30687230/139652
@@ -189,6 +236,27 @@ namespace Ansible.Shell
             GrantAccess(username, GetProcessWindowStation(), WindowStationAllAccess);
             const int DesktopRightsAllAccess = 0x000f01ff;
             GrantAccess(username, GetThreadDesktop(GetCurrentThreadId()), DesktopRightsAllAccess);
+        }
+
+        public static string SearchPath(string findThis)
+        {
+            StringBuilder sbOut = new StringBuilder(1024);
+            IntPtr filePartOut;
+
+            if (SearchPath(null, findThis, null, sbOut.Capacity, sbOut, out filePartOut) == 0)
+                throw new FileNotFoundException("Couldn't locate " + findThis + " on path");
+
+            return sbOut.ToString();
+        }
+
+        public static uint GetProcessExitCode(IntPtr processHandle)
+        {
+            new NativeWaitHandle(processHandle).WaitOne();
+            uint exitCode;
+            if (!GetExitCodeProcess(processHandle, out exitCode))
+                throw new Win32Exception("Error getting process exit code");
+
+            return exitCode;
         }
 
         private static void GrantAccess(string username, IntPtr handle, int accessMask)
@@ -202,6 +270,88 @@ namespace Ansible.Shell
             security.Persist(safeHandle, AccessControlSections.Access);
         }
 
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        public static extern uint SearchPath(
+            string lpPath,
+            string lpFileName,
+            string lpExtension,
+            int nBufferLength,
+            [MarshalAs (UnmanagedType.LPTStr)]
+            StringBuilder lpBuffer,
+            out IntPtr lpFilePart);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool GetExitCodeProcess(IntPtr hProcess, out uint lpExitCode);
+
+        [DllImport("kernel32.dll")]
+        public static extern bool CreatePipe(out IntPtr hReadPipe, out IntPtr hWritePipe, SECURITY_ATTRIBUTES lpPipeAttributes, uint nSize);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern IntPtr GetStdHandle(StandardHandleValues nStdHandle);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern bool SetHandleInformation(IntPtr hObject, HandleFlags dwMask, int dwFlags);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern bool CloseHandle(IntPtr hObject);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern bool InitializeProcThreadAttributeList(IntPtr lpAttributeList, int dwAttributeCount, int dwFlags, ref int lpSize);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern bool UpdateProcThreadAttribute(
+                IntPtr lpAttributeList,
+                uint dwFlags,
+                IntPtr Attribute,
+                IntPtr lpValue,
+                IntPtr cbSize,
+                IntPtr lpPreviousValue,
+                IntPtr lpReturnSize);
+
+        [DllImport("advapi32.dll", SetLastError = true)]
+        public static extern bool LogonUser(
+            string lpszUsername,
+            string lpszDomain,
+            string lpszPassword,
+            int dwLogonType,
+            int dwLogonProvider,
+            out IntPtr phToken);
+
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode, BestFitMapping = false)]
+        public static extern bool CreateProcess(
+            [MarshalAs(UnmanagedType.LPTStr)]
+            string lpApplicationName,
+            StringBuilder lpCommandLine,
+            IntPtr lpProcessAttributes,
+            IntPtr lpThreadAttributes,
+            bool bInheritHandles,
+            uint dwCreationFlags,
+            IntPtr lpEnvironment,
+            [MarshalAs(UnmanagedType.LPTStr)]
+            string lpCurrentDirectory,
+            STARTUPINFO lpStartupInfo,
+            out PROCESS_INFORMATION lpProcessInformation);
+
+        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        public static extern bool CreateProcessWithTokenW(
+            IntPtr hToken,
+            LOGON_FLAGS dwLogonFlags,
+            string lpApplicationName,
+            string lpCommandLine,
+            uint dwCreationFlags,
+            IntPtr lpEnvironment,
+            string lpCurrentDirectory,
+            STARTUPINFOEX lpStartupInfo,
+            out PROCESS_INFORMATION lpProcessInformation);
+
+        [DllImport("advapi32.dll", SetLastError=true)]
+        public static extern bool GetTokenInformation(
+            IntPtr TokenHandle,
+            TOKEN_INFORMATION_CLASS TokenInformationClass,
+            IntPtr TokenInformation,
+            uint TokenInformationLength,
+            out uint ReturnLength);
+
         [DllImport("user32.dll", SetLastError = true)]
         private static extern IntPtr GetProcessWindowStation();
 
@@ -214,7 +364,8 @@ namespace Ansible.Shell
         private class GenericAccessRule : AccessRule
         {
             public GenericAccessRule(IdentityReference identity, int accessMask, AccessControlType type) :
-                base(identity, accessMask, false, InheritanceFlags.None, PropagationFlags.None, type) { }
+                base(identity, accessMask, false, InheritanceFlags.None, PropagationFlags.None, type)
+            { }
         }
 
         private class GenericSecurity : NativeObjectSecurity
@@ -229,12 +380,14 @@ namespace Ansible.Shell
             public override Type AccessRightType { get { throw new NotImplementedException(); } }
 
             public override AccessRule AccessRuleFactory(System.Security.Principal.IdentityReference identityReference, int accessMask, bool isInherited,
-                InheritanceFlags inheritanceFlags, PropagationFlags propagationFlags, AccessControlType type) { throw new NotImplementedException(); }
+                InheritanceFlags inheritanceFlags, PropagationFlags propagationFlags, AccessControlType type)
+            { throw new NotImplementedException(); }
 
             public override Type AccessRuleType { get { return typeof(AccessRule); } }
 
             public override AuditRule AuditRuleFactory(System.Security.Principal.IdentityReference identityReference, int accessMask, bool isInherited,
-                InheritanceFlags inheritanceFlags, PropagationFlags propagationFlags, AuditFlags flags) { throw new NotImplementedException(); }
+                InheritanceFlags inheritanceFlags, PropagationFlags propagationFlags, AuditFlags flags)
+            { throw new NotImplementedException(); }
 
             public override Type AuditRuleType { get { return typeof(AuditRule); } }
         }
@@ -246,6 +399,168 @@ namespace Ansible.Shell
             protected override bool ReleaseHandle() { return true; }
         }
 
+
+    }
+
+    public class Win32Exception : System.ComponentModel.Win32Exception
+    {
+        private string _msg;
+
+        public Win32Exception(string message) : this(Marshal.GetLastWin32Error(), message) { }
+
+        public Win32Exception(int errorCode, string message) : base(errorCode)
+        {
+            _msg = String.Format("{0} ({1}, Win32ErrorCode {2})", message, base.Message, errorCode);
+        }
+
+        public override string Message { get { return _msg; } }
+        public static explicit operator Win32Exception(string message) { return new Win32Exception(message); }
+    }
+
+    class NativeWaitHandle : WaitHandle
+    {
+        public NativeWaitHandle(IntPtr handle)
+        {
+            this.Handle = handle;
+        }
+    }
+
+    [Flags]
+    public enum LOGON_FLAGS
+    {
+        LOGON_WITH_PROFILE = 0x00000001,
+        LOGON_NETCREDENTIALS_ONLY = 0x00000002
+    }
+
+    [Flags]
+    public enum CREATION_FLAGS
+    {
+        CREATE_SUSPENDED = 0x00000004,
+        CREATE_NEW_CONSOLE = 0x00000010,
+        CREATE_UNICODE_ENVIRONMENT = 0x000000400,
+        CREATE_BREAKAWAY_FROM_JOB = 0x01000000,
+        EXTENDED_STARTUPINFO_PRESENT = 0x00080000,
+    }
+
+    [Flags]
+    public enum StartupInfoFlags : uint
+    {
+        USESTDHANDLES = 0x00000100
+    }
+
+    public enum StandardHandleValues : int
+    {
+        STD_INPUT_HANDLE = -10,
+        STD_OUTPUT_HANDLE = -11,
+        STD_ERROR_HANDLE = -12
+    }
+
+    [Flags]
+    public enum HandleFlags : uint
+    {
+        None = 0,
+        INHERIT = 1
+    }
+
+    public enum TOKEN_INFORMATION_CLASS
+    {
+        TokenType = 8,
+        TokenImpersonationLevel = 9,
+        TokenElevationType = 18,
+        TokenLinkedToken = 19,
+    }
+
+    public enum TOKEN_ELEVATION_TYPE
+    {
+        TokenElevationTypeDefault = 1,
+        TokenElevationTypeFull,
+        TokenElevationTypeLimited
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public class PROFILEINFO {
+        public int dwSize;
+        public int dwFlags;
+        [MarshalAs(UnmanagedType.LPTStr)]
+        public String lpUserName;
+        [MarshalAs(UnmanagedType.LPTStr)]
+        public String lpProfilePath;
+        [MarshalAs(UnmanagedType.LPTStr)]
+        public String lpDefaultPath;
+        [MarshalAs(UnmanagedType.LPTStr)]
+        public String lpServerName;
+        [MarshalAs(UnmanagedType.LPTStr)]
+        public String lpPolicyPath;
+        public IntPtr hProfile;
+
+        public PROFILEINFO()
+        {
+            dwSize = Marshal.SizeOf(this);
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public class SECURITY_ATTRIBUTES
+    {
+        public int nLength;
+        public IntPtr lpSecurityDescriptor;
+        public bool bInheritHandle = false;
+
+        public SECURITY_ATTRIBUTES()
+        {
+            nLength = Marshal.SizeOf(this);
+        }
+    }
+
+
+    [StructLayout(LayoutKind.Sequential)]
+    public class STARTUPINFO
+    {
+        public Int32 cb;
+        public IntPtr lpReserved;
+        public IntPtr lpDesktop;
+        public IntPtr lpTitle;
+        public Int32 dwX;
+        public Int32 dwY;
+        public Int32 dwXSize;
+        public Int32 dwYSize;
+        public Int32 dwXCountChars;
+        public Int32 dwYCountChars;
+        public Int32 dwFillAttribute;
+        public Int32 dwFlags;
+        public Int16 wShowWindow;
+        public Int16 cbReserved2;
+        public IntPtr lpReserved2;
+        public IntPtr hStdInput;
+        public IntPtr hStdOutput;
+        public IntPtr hStdError;
+
+        public STARTUPINFO()
+        {
+            cb = Marshal.SizeOf(this);
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public class STARTUPINFOEX
+    {
+        public STARTUPINFO startupInfo;
+        public IntPtr lpAttributeList;
+
+        public STARTUPINFOEX()
+        {
+            startupInfo = new STARTUPINFO();
+            startupInfo.cb = Marshal.SizeOf(this);
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct PROCESS_INFORMATION
+    {
+        public IntPtr hProcess;
+        public IntPtr hThread;
+        public int dwProcessId;
+        public int dwThreadId;
     }
 }
 "@
@@ -287,7 +602,6 @@ $actions = $payload.actions
 $entrypoint = $payload.($actions[0])
 $payload.actions = $payload.actions[1..99]
 
-
 $entrypoint = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($entrypoint))
 
 # load the current action entrypoint as a module custom object with a Run method
@@ -307,6 +621,15 @@ Write-Output $output
 
 } # end exec_wrapper
 
+Function Dump-Error ($excep) {
+    $eo = @{failed=$true}
+
+    $eo.msg = $excep.Exception.Message
+    $eo.exception = $excep | Out-String
+    $host.SetShouldExit(1)
+
+    $eo | ConvertTo-Json -Depth 10
+}
 
 Function Run($payload) {
     # NB: action popping handled inside subprocess wrapper
@@ -314,7 +637,8 @@ Function Run($payload) {
     $username = $payload.become_user
     $password = $payload.become_password
 
-    Add-Type -TypeDefinition $helper_def -Debug:$false
+    # FUTURE: convert to SafeHandle so we can stop ignoring warnings?
+    Add-Type -TypeDefinition $helper_def -Debug:$false -IgnoreWarnings
 
     $exec_args = $null
 
@@ -323,27 +647,103 @@ Function Run($payload) {
     # NB: CreateProcessWithLogonW commandline maxes out at 1024 chars, must bootstrap via filesystem
     $temp = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), [System.IO.Path]::GetRandomFileName() + ".ps1")
     $exec_wrapper.ToString() | Set-Content -Path $temp
-
-    # TODO: grant target user permissions on tempfile/tempdir
+    # allow (potentially unprivileged) target user access to the tempfile (NB: this likely won't work if traverse checking is enabled)
+    $acl = Get-Acl $temp
+    $acl.AddAccessRule($(New-Object System.Security.AccessControl.FileSystemAccessRule($username, "FullControl", "Allow")))
+    Set-Acl $temp $acl | Out-Null
 
     Try {
-
-        # Base64 encode the command so we don't have to worry about the various levels of escaping
-        # $encoded_command = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($exec_wrapper.ToString()))
-
-        # force the input encoding to preamble-free UTF8 before we create the new process
-        [System.Console]::InputEncoding = $(New-Object System.Text.UTF8Encoding @($false))
-
         $exec_args = @("-noninteractive", $temp)
 
-        $proc = New-Object System.Diagnostics.Process
-        $psi = $proc.StartInfo
-        $psi.FileName = $exec_application
-        $psi.Arguments = $exec_args
-        $psi.RedirectStandardInput = $true
-        $psi.RedirectStandardOutput = $true
-        $psi.RedirectStandardError = $true
-        $psi.UseShellExecute = $false
+        # FUTURE: move these flags into C# enum?
+        # start process suspended + breakaway so we can record the watchdog pid without worrying about a completion race
+        Set-Variable CREATE_BREAKAWAY_FROM_JOB -Value ([uint32]0x01000000) -Option Constant
+        Set-Variable CREATE_SUSPENDED -Value ([uint32]0x00000004) -Option Constant
+        Set-Variable CREATE_UNICODE_ENVIRONMENT -Value ([uint32]0x000000400) -Option Constant
+        Set-Variable CREATE_NEW_CONSOLE -Value ([uint32]0x00000010) -Option Constant
+        Set-Variable EXTENDED_STARTUPINFO_PRESENT -Value ([uint32]0x00080000) -Option Constant
+
+        $pstartup_flags = $CREATE_BREAKAWAY_FROM_JOB -bor $CREATE_UNICODE_ENVIRONMENT -bor $CREATE_NEW_CONSOLE # -bor $EXTENDED_STARTUPINFO_PRESENT
+
+        $si = New-Object Ansible.Shell.STARTUPINFOEX
+
+        $pipesec = New-Object Ansible.Shell.SECURITY_ATTRIBUTES
+        $pipesec.bInheritHandle = $true
+        $stdout_read = $stdout_write = $stderr_read = $stderr_write = 0
+
+        If(-not [Ansible.Shell.NativeProcessUtil]::CreatePipe([ref]$stdout_read, [ref]$stdout_write, $pipesec, 0)) {
+            throw [Ansible.Shell.Win32Exception] "Stdout pipe setup failed"
+        }
+
+        If(-not [Ansible.Shell.NativeProcessUtil]::SetHandleInformation($stdout_read, [Ansible.Shell.HandleFlags]::INHERIT, 0)) {
+            throw [Ansible.Shell.Win32Exception] "Stdout handle setup failed"
+        }
+
+        If(-not [Ansible.Shell.NativeProcessUtil]::CreatePipe([ref]$stderr_read, [ref]$stderr_write, $pipesec, 0)) {
+            throw [Ansible.Shell.Win32Exception] "Stderr pipe setup failed"
+        }
+        If(-not [Ansible.Shell.NativeProcessUtil]::SetHandleInformation($stderr_read, [Ansible.Shell.HandleFlags]::INHERIT, 0)) {
+            throw [Ansible.Shell.Win32Exception] "Stderr handle setup failed"
+        }
+
+        # setup stdin redirection, we'll leave stdout/stderr as normal
+        $si.startupInfo.dwFlags = [Ansible.Shell.StartupInfoFlags]::USESTDHANDLES
+        $si.startupInfo.hStdOutput = $stdout_write #[Ansible.Shell.NativeProcessUtil]::GetStdHandle([Ansible.Shell.StandardHandleValues]::STD_OUTPUT_HANDLE)
+        $si.startupInfo.hStdError = $stderr_write #[Ansible.Shell.NativeProcessUtil]::GetStdHandle([Ansible.Shell.StandardHandleValues]::STD_ERROR_HANDLE)
+
+        $stdin_read = $stdin_write = 0
+
+        $pipesec = New-Object Ansible.Shell.SECURITY_ATTRIBUTES
+        $pipesec.bInheritHandle = $true
+
+        If(-not [Ansible.Shell.NativeProcessUtil]::CreatePipe([ref]$stdin_read, [ref]$stdin_write, $pipesec, 0)) {
+            throw [Ansible.Shell.Win32Exception] "Stdin pipe setup failed"
+        }
+        If(-not [Ansible.Shell.NativeProcessUtil]::SetHandleInformation($stdin_write, [Ansible.Shell.HandleFlags]::INHERIT, 0)) {
+            throw [Ansible.Shell.Win32Exception] "Stdin handle setup failed"
+        }
+        $si.startupInfo.hStdInput = $stdin_read
+
+        # create an attribute list with our explicit handle inheritance list to pass to CreateProcess
+        [int]$buf_sz = 0
+
+        # determine the buffer size necessary for our attribute list
+        If(-not [Ansible.Shell.NativeProcessUtil]::InitializeProcThreadAttributeList([IntPtr]::Zero, 1, 0, [ref]$buf_sz)) {
+            $last_err = [System.Runtime.InteropServices.Marshal]::GetLastWin32Error()
+            If($last_err -ne 122) { # ERROR_INSUFFICIENT_BUFFER
+                throw New-Object Ansible.Shell.Win32Exception $last_err, "Attribute list size query failed"
+            }
+        }
+
+        $si.lpAttributeList = [System.Runtime.InteropServices.Marshal]::AllocHGlobal($buf_sz)
+
+        # initialize the attribute list
+        If(-not [Ansible.Shell.NativeProcessUtil]::InitializeProcThreadAttributeList($si.lpAttributeList, 1, 0, [ref]$buf_sz)) {
+            throw [Ansible.Shell.Win32Exception] "Attribute list init failed"
+        }
+
+        $handles_to_inherit = [IntPtr[]]@($stdin_read,$stdout_write,$stderr_write)
+        $pinned_handles = [System.Runtime.InteropServices.GCHandle]::Alloc($handles_to_inherit, [System.Runtime.InteropServices.GCHandleType]::Pinned)
+
+        # update the attribute list with the handles we want to inherit
+        If(-not [Ansible.Shell.NativeProcessUtil]::UpdateProcThreadAttribute($si.lpAttributeList, 0, 0x20002, `
+            $pinned_handles.AddrOfPinnedObject(), [System.Runtime.InteropServices.Marshal]::SizeOf([type][IntPtr]) * $handles_to_inherit.Length, `
+            [System.IntPtr]::Zero, [System.IntPtr]::Zero)) {
+            throw [Ansible.Shell.Win32Exception] "Attribute list update failed"
+        }
+
+        # need to use a preamble-free version of UTF8Encoding
+        $utf8_encoding = New-Object System.Text.UTF8Encoding @($false)
+        $stdin_fs = New-Object System.IO.FileStream @($stdin_write, [System.IO.FileAccess]::Write, $true, 32768)
+        $stdin = New-Object System.IO.StreamWriter @($stdin_fs, $utf8_encoding, 32768)
+
+        $pi = New-Object Ansible.Shell.PROCESS_INFORMATION
+
+        # FUTURE: direct cmdline CreateProcess path lookup fails- this works but is sub-optimal
+        $exec_cmd = [Ansible.Shell.NativeProcessUtil]::SearchPath("powershell.exe")
+        $exec_args = New-Object System.Text.StringBuilder @("-NonInteractive -NoProfile -ExecutionPolicy Bypass $temp")
+
+        [Ansible.Shell.NativeProcessUtil]::GrantAccessToWindowStationAndDesktop($username)
 
         If($username.Contains("\")) {
             $sp = $username.Split(@([char]"\"), 2)
@@ -357,43 +757,63 @@ Function Run($payload) {
             $domain = "."
         }
 
-        $psi.Domain = $domain
-        $psi.Username = $username
-        $psi.Password = $($password | ConvertTo-SecureString -AsPlainText -Force)
+        [System.IntPtr]$hToken = [System.IntPtr]::Zero
 
-        [Ansible.Shell.ProcessUtil]::GrantAccessToWindowStationAndDesktop($username)
+        If(-not [Ansible.Shell.NativeProcessUtil]::LogonUser($username, $domain, $password, 2, 0, [ref]$hToken)) {
+            throw [Ansible.Shell.Win32Exception] "LogonUser failed"
+        }
 
-        Try {
-            $proc.Start() | Out-Null # will always return $true for non shell-exec cases
+        $hTokenElevated = [Ansible.Shell.NativeProcessUtil]::GetElevatedToken($hToken);
+
+        $launch_success = $false
+
+        foreach($ht in @($hTokenElevated, $hToken)) {
+            If([Ansible.Shell.NativeProcessUtil]::CreateProcessWithTokenW($ht, [Ansible.Shell.LOGON_FLAGS]::LOGON_WITH_PROFILE,
+              $exec_cmd, $exec_args, $pstartup_flags, [System.IntPtr]::Zero, $env:windir, $si, [ref]$pi)) {
+                $launch_success = $true
+                break
+            }
         }
-        Catch {
-            Write-Output $_.Exception.InnerException
-            return
+
+        If(-not $launch_success) {
+            throw [Ansible.Shell.Win32Exception] "Failed to create process with new token"
         }
+
+        $stdout_fs = New-Object System.IO.FileStream @($stdout_read, [System.IO.FileAccess]::Read, $true, 4096)
+        $stdout = New-Object System.IO.StreamReader @($stdout_fs, $utf8_encoding, $true, 4096)
+        $stderr_fs = New-Object System.IO.FileStream @($stderr_read, [System.IO.FileAccess]::Read, $true, 4096)
+        $stderr = New-Object System.IO.StreamReader @($stderr_fs, $utf8_encoding, $true, 4096)
+
+        # close local write ends of stdout/stderr pipes so the open handles won't prevent EOF
+        [Ansible.Shell.NativeProcessUtil]::CloseHandle($stdout_write)
+        [Ansible.Shell.NativeProcessUtil]::CloseHandle($stderr_write)
 
         $payload_string = $payload | ConvertTo-Json -Depth 99 -Compress
 
         # push the execution payload over stdin
-        $proc.StandardInput.WriteLine($payload_string)
-        $proc.StandardInput.Close()
+        $stdin.WriteLine($payload_string)
+        $stdin.Close()
 
-        $stdout = $stderr = [string] $null
+        $str_stdout = $str_stderr = ""
 
-        [Ansible.Shell.ProcessUtil]::GetProcessOutput($proc.StandardOutput, $proc.StandardError, [ref] $stdout, [ref] $stderr) | Out-Null
+        [Ansible.Shell.NativeProcessUtil]::GetProcessOutput($stdout, $stderr, [ref] $str_stdout, [ref] $str_stderr)
 
-        # TODO: decode CLIXML stderr output (and other streams?)
+        # FUTURE: decode CLIXML stderr output (and other streams?)
 
-        $proc.WaitForExit() | Out-Null
-
-        $rc = $proc.ExitCode
+        $rc = [Ansible.Shell.NativeProcessUtil]::GetProcessExitCode($pi.hProcess)
 
         If ($rc -eq 0) {
-            $stdout
-            $stderr
+            $str_stdout
+            $str_stderr
         }
         Else {
             Throw "failed, rc was $rc, stderr was $stderr, stdout was $stdout"
         }
+
+    }
+    Catch {
+        $excep = $_
+        Dump-Error $excep
     }
     Finally {
         Remove-Item $temp -ErrorAction SilentlyContinue
@@ -401,8 +821,7 @@ Function Run($payload) {
 
 }
 
-''' # end become_wrapper
-
+'''  # end become_wrapper
 
 async_wrapper = br'''
 Set-StrictMode -Version 2
@@ -803,7 +1222,7 @@ Function Run($payload) {
     return $result_json
 }
 
-''' # end async_wrapper
+'''  # end async_wrapper
 
 async_watchdog = br'''
 Set-StrictMode -Version 2
@@ -931,7 +1350,8 @@ Function Run($payload) {
     #$rs.Close() | Out-Null
 }
 
-''' # end async_watchdog
+'''  # end async_watchdog
+
 
 class ShellModule(object):
 
@@ -949,9 +1369,6 @@ class ShellModule(object):
     # env provider's limitations don't appear to be documented.
     safe_envkey = re.compile(r'^[\d\w_]{1,255}$')
 
-    # TODO: implement module transfer
-    # TODO: implement #Requires -Modules parser/locator
-    # TODO: add KEEP_REMOTE_FILES support + debug wrapper dump
     # TODO: add binary module support
 
     def assert_safe_env_key(self, key):
@@ -967,9 +1384,8 @@ class ShellModule(object):
         return to_text(value, errors='surrogate_or_strict')
 
     def env_prefix(self, **kwargs):
-        env = self.env.copy()
-        env.update(kwargs)
-        return ';'.join(["$env:%s='%s'" % (self.assert_safe_env_key(k), self.safe_env_value(k,v)) for k,v in env.items()])
+        # powershell/winrm env handling is handled in the exec wrapper
+        return ""
 
     def join_path(self, *args):
         parts = []
@@ -1069,12 +1485,12 @@ class ShellModule(object):
     def build_module_command(self, env_string, shebang, cmd, arg_path=None, rm_tmp=None):
         # pipelining bypass
         if cmd == '':
-            return ''
+            return '-'
 
         # non-pipelining
 
-        cmd_parts = shlex.split(to_bytes(cmd), posix=False)
-        cmd_parts = map(to_text, cmd_parts)
+        cmd_parts = shlex.split(cmd, posix=False)
+        cmd_parts = list(map(to_text, cmd_parts))
         if shebang and shebang.lower() == '#!powershell':
             if not self._unquote(cmd_parts[0]).lower().endswith('.ps1'):
                 cmd_parts[0] = '"%s.ps1"' % self._unquote(cmd_parts[0])
@@ -1152,21 +1568,31 @@ class ShellModule(object):
             subs.append(('$', '`$'))
         pattern = '|'.join('(%s)' % re.escape(p) for p, s in subs)
         substs = [s for p, s in subs]
-        replace = lambda m: substs[m.lastindex - 1]
+
+        def replace(m):
+            return substs[m.lastindex - 1]
+
         return re.sub(pattern, replace, value)
 
     def _encode_script(self, script, as_list=False, strict_mode=True, preserve_rc=True):
         '''Convert a PowerShell script to a single base64-encoded command.'''
         script = to_text(script)
-        if strict_mode:
-            script = u'Set-StrictMode -Version Latest\r\n%s' % script
-        # try to propagate exit code if present- won't work with begin/process/end-style scripts (ala put_file)
-        # NB: the exit code returned may be incorrect in the case of a successful command followed by an invalid command
-        if preserve_rc:
-            script = u'%s\r\nIf (-not $?) { If (Get-Variable LASTEXITCODE -ErrorAction SilentlyContinue) { exit $LASTEXITCODE } Else { exit 1 } }\r\n' % script
-        script = '\n'.join([x.strip() for x in script.splitlines() if x.strip()])
-        encoded_script = base64.b64encode(script.encode('utf-16-le'))
-        cmd_parts = _common_args + ['-EncodedCommand', encoded_script]
+
+        if script == u'-':
+            cmd_parts = _common_args + ['-']
+
+        else:
+            if strict_mode:
+                script = u'Set-StrictMode -Version Latest\r\n%s' % script
+            # try to propagate exit code if present- won't work with begin/process/end-style scripts (ala put_file)
+            # NB: the exit code returned may be incorrect in the case of a successful command followed by an invalid command
+            if preserve_rc:
+                script = u'%s\r\nIf (-not $?) { If (Get-Variable LASTEXITCODE -ErrorAction SilentlyContinue) { exit $LASTEXITCODE } Else { exit 1 } }\r\n'\
+                    % script
+            script = '\n'.join([x.strip() for x in script.splitlines() if x.strip()])
+            encoded_script = to_text(base64.b64encode(script.encode('utf-16-le')), 'utf-8')
+            cmd_parts = _common_args + ['-EncodedCommand', encoded_script]
+
         if as_list:
             return cmd_parts
         return ' '.join(cmd_parts)

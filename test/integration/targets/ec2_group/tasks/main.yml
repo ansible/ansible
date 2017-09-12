@@ -1,0 +1,679 @@
+---
+# A Note about ec2 environment variable name preference:
+#  - EC2_URL -> AWS_URL
+#  - EC2_ACCESS_KEY -> AWS_ACCESS_KEY_ID -> AWS_ACCESS_KEY
+#  - EC2_SECRET_KEY -> AWS_SECRET_ACCESS_KEY -> AWX_SECRET_KEY
+#  - EC2_REGION -> AWS_REGION
+#
+
+# - include: ../../setup_ec2/tasks/common.yml module_name: ec2_group
+
+- block:
+
+    # ============================================================
+    - name: test failure with no parameters
+      ec2_group:
+      register: result
+      ignore_errors: true
+
+    - name: assert failure with no parameters
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg == "one of the following is required: name,group_id"'
+
+    # ============================================================
+    - name: test failure with only name
+      ec2_group:
+        name: '{{ec2_group_name}}'
+      register: result
+      ignore_errors: true
+
+    - name: assert failure with only name
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg == "Must provide description when state is present."'
+
+    # ============================================================
+    - name: test failure with only description
+      ec2_group:
+        description: '{{ec2_group_description}}'
+      register: result
+      ignore_errors: true
+
+    - name: assert failure with only description
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg == "one of the following is required: name,group_id"'
+
+    # ============================================================
+    - name: test failure with empty description (AWS API requires non-empty string desc)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: ''
+        region: '{{ec2_region}}'
+      register: result
+      ignore_errors: true
+
+    - name: assert failure with empty description
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg == "Must provide description when state is present."'
+
+    # ============================================================
+    - name: test valid region parameter
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        region: '{{ec2_region}}'
+      register: result
+      ignore_errors: true
+
+    - name: assert valid region parameter
+      assert:
+        that:
+           - 'result.failed'
+           - '"Unable to locate credentials" in result.msg'
+
+    # ============================================================
+    - name: test environment variable EC2_REGION
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+      environment:
+        EC2_REGION: '{{ec2_region}}'
+      register: result
+      ignore_errors: true
+
+    - name: assert environment variable EC2_REGION
+      assert:
+        that:
+           - 'result.failed'
+           - '"Unable to locate credentials" in result.msg'
+
+    # ============================================================
+    - name: test invalid ec2_url parameter
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+      environment:
+        EC2_URL: bogus.example.com
+      register: result
+      ignore_errors: true
+
+    - name: assert invalid ec2_url parameter
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg.startswith("The AWS region must be specified as an environment variable or in the AWS credentials profile")'
+
+    # ============================================================
+    - name: test valid ec2_url parameter
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+      environment:
+        EC2_URL: '{{ec2_url}}'
+      register: result
+      ignore_errors: true
+
+    - name: assert valid ec2_url parameter
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg.startswith("The AWS region must be specified as an environment variable or in the AWS credentials profile")'
+
+    # ============================================================
+    - name: test credentials from environment
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+      environment:
+        EC2_REGION: '{{ec2_region}}'
+        EC2_ACCESS_KEY: bogus_access_key
+        EC2_SECRET_KEY: bogus_secret_key
+      register: result
+      ignore_errors: true
+
+    - name: assert ec2_group with valid ec2_url
+      assert:
+        that:
+           - 'result.failed'
+           - '"validate the provided access credentials" in result.msg'
+
+    # ============================================================
+    - name: test credential parameters
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: 'bogus_access_key'
+        ec2_secret_key: 'bogus_secret_key'
+      register: result
+      ignore_errors: true
+
+    - name: assert credential parameters
+      assert:
+        that:
+           - 'result.failed'
+           - '"validate the provided access credentials" in result.msg'
+
+    # ============================================================
+    - name: test state=absent
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        state: absent
+      register: result
+
+    # ============================================================
+    - name: test state=present (expected changed=true)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        state: present
+      register: result
+
+    - name: assert state=present (expected changed=true)
+      assert:
+        that:
+           - 'result.changed'
+           - 'result.group_id.startswith("sg-")'
+
+    # ============================================================
+    - name: test state=present different description raises error
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}CHANGED'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        state: present
+      ignore_errors: true
+      register: result
+
+    - name: assert matching group with non-matching description raises error
+      assert:
+        that:
+           - 'result.failed'
+           - '"Group description does not match existing group. ec2_group does not support this case." in result.msg'
+
+    # ============================================================
+    - name: test state=present (expected changed=false)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        state: present
+      register: result
+
+    - name: assert state=present (expected changed=false)
+      assert:
+        that:
+           - 'not result.changed'
+           - 'result.group_id.startswith("sg-")'
+
+    # ============================================================
+    - name: test state=present for ipv6 (expected changed=true)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        state: present
+        rules:
+        - proto: "tcp"
+          from_port: 8182
+          to_port: 8182
+          cidr_ipv6: "64:ff9b::/96"
+      register: result
+
+    - name: assert state=present (expected changed=true)
+      assert:
+        that:
+           - 'result.changed'
+           - 'result.group_id.startswith("sg-")'
+
+    # ============================================================
+    - name: test rules_egress state=present for ipv6 (expected changed=true)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        state: present
+        rules:
+        - proto: "tcp"
+          from_port: 8182
+          to_port: 8182
+          cidr_ipv6: "64:ff9b::/96"
+        rules_egress:
+        - proto: "tcp"
+          from_port: 8181
+          to_port: 8181
+          cidr_ipv6: "64:ff9b::/96"
+      register: result
+
+    - name: assert state=present (expected changed=true)
+      assert:
+        that:
+           - 'result.changed'
+           - 'result.group_id.startswith("sg-")'
+
+    # ============================================================
+    - name: test state=present for ipv4 (expected changed=true)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        state: present
+        rules:
+        - proto: "tcp"
+          from_port: 8182
+          to_port: 8182
+          cidr_ip: "1.1.1.1/32"
+      register: result
+
+    - name: assert state=present (expected changed=true)
+      assert:
+        that:
+        - 'result.changed'
+        - 'result.group_id.startswith("sg-")'
+
+    # ============================================================
+    - name: add same rule to the existing group  (expected changed=false)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        state: present
+        rules:
+        - proto: "tcp"
+          from_port: 8182
+          to_port: 8182
+          cidr_ip: "1.1.1.1/32"
+      register: result
+
+    - name: assert state=present (expected changed=false)
+      assert:
+        that:
+          - 'not result.changed'
+          - 'result.group_id.startswith("sg-")'
+
+    - name: add a rule that auto creates another security group
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        state: present
+        purge_rules: no
+        rules:
+        - proto: "tcp"
+          group_name: "{{ resource_prefix }} - Another security group"
+          group_desc: Another security group
+          ports: 7171
+      register: result
+
+    - name: check that there are now two rules
+      assert:
+        that:
+          - result.changed
+          - result.ip_permissions|length == 2
+          - result.ip_permissions[0].user_id_group_pairs or
+            result.ip_permissions[1].user_id_group_pairs
+
+    # ============================================================
+    - name: test ip rules convert port numbers from string to int (expected changed=true)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        state: present
+        rules:
+        - proto: "tcp"
+          from_port: "8183"
+          to_port: "8183"
+          cidr_ipv6: "64:ff9b::/96"
+        rules_egress:
+        - proto: "tcp"
+          from_port: "8184"
+          to_port: "8184"
+          cidr_ipv6: "64:ff9b::/96"
+      register: result
+
+    - name: assert state=present (expected changed=true)
+      assert:
+        that:
+           - 'result.changed'
+           - 'result.group_id.startswith("sg-")'
+
+    # ============================================================
+    - name: test group rules convert port numbers from string to int (expected changed=true)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        state: present
+        rules:
+        - proto: "tcp"
+          from_port: "8185"
+          to_port: "8185"
+          group_id: "{{result.group_id}}"
+        rules_egress:
+        - proto: "tcp"
+          from_port: "8186"
+          to_port: "8186"
+          cidr_ipv6: "64:ff9b::/96"
+          group_id: "{{result.group_id}}"
+      register: result
+
+    - name: assert state=present (expected changed=true)
+      assert:
+        that:
+           - 'result.changed'
+           - 'result.group_id.startswith("sg-")'
+
+
+    # ============================================================
+
+    - name: test adding a range of ports and ports given as strings (expected changed=true)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        state: present
+        # set purge_rules to false so we don't get a false positive from previously added rules
+        purge_rules: false
+        rules:
+        - proto: "tcp"
+          ports:
+            - 8183-8190
+            - '8192'
+          cidr_ip: 1.1.1.1/32
+      register: result
+
+    - name: assert state=present (expected changed=true)
+      assert:
+        that:
+          - 'result.changed'
+          - 'result.group_id.startswith("sg-")'
+
+    # ============================================================
+    - name: test state=absent (expected changed=true)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        state: absent
+      environment:
+        EC2_REGION: '{{ec2_region}}'
+        EC2_ACCESS_KEY: '{{ec2_access_key}}'
+        EC2_SECRET_KEY: '{{ec2_secret_key}}'
+        EC2_SECURITY_TOKEN: '{{security_token|default("")}}'
+      register: result
+
+    - name: assert state=absent (expected changed=true)
+      assert:
+        that:
+           - 'result.changed'
+           - 'not result.group_id'
+
+    - name: create a VPC
+      ec2_vpc_net:
+        name: "{{ resource_prefix }}-vpc"
+        state: present
+        cidr_block: "10.232.232.128/26"
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        tags:
+          Name: "{{ resource_prefix }}-vpc"
+          Description: "Created by ansible-test"
+      register: vpc_result
+
+    - name: create security group in the VPC
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        vpc_id: '{{ vpc_result.vpc.id }}'
+        state: present
+        rules:
+        - proto: "tcp"
+          from_port: 8182
+          to_port: 8182
+          cidr_ip: "1.1.1.1/32"
+      register: result
+
+    - name: assert state=present (expected changed=true)
+      assert:
+        that:
+          - 'result.changed'
+          - 'result.vpc_id == vpc_result.vpc.id'
+          - 'result.group_id.startswith("sg-")'
+
+    # ============================================================
+
+    - name: test adding tags (expected changed=true)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        vpc_id: '{{ vpc_result.vpc.id }}'
+        state: present
+        rules:
+        - proto: "tcp"
+          from_port: 8182
+          to_port: 8182
+          cidr_ip: "1.1.1.1/32"
+        tags:
+          tag1: test1
+          tag2: test2
+
+      register: result
+
+    - name: assert that tags were added (expected changed=true)
+      assert:
+        that:
+          - 'result.changed'
+          - 'result.tags == {"tag1": "test1", "tag2": "test2"}'
+
+    # ============================================================
+
+    - name: test that tags are present (expected changed=False)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        vpc_id: '{{ vpc_result.vpc.id }}'
+        state: present
+        purge_rules_egress: false
+        rules:
+        - proto: "tcp"
+          from_port: 8182
+          to_port: 8182
+          cidr_ip: "1.1.1.1/32"
+        tags:
+          tag1: test1
+          tag2: test2
+      register: result
+
+    - name: assert that tags were not changed (expected changed=False)
+      assert:
+        that:
+          - 'not result.changed'
+          - 'result.tags == {"tag1": "test1", "tag2": "test2"}'
+
+    # ============================================================
+
+    - name: test purging tags (expected changed=True)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        vpc_id: '{{ vpc_result.vpc.id }}'
+        state: present
+        rules:
+        - proto: "tcp"
+          from_port: 8182
+          to_port: 8182
+          cidr_ip: "1.1.1.1/32"
+        tags:
+          tag1: test1
+      register: result
+
+    - name: assert that tag2 was removed (expected changed=true)
+      assert:
+        that:
+          - 'result.changed'
+          - 'result.tags == {"tag1": "test1"}'
+
+    # ============================================================
+
+    - name: assert that tags are left as-is if not specified (expected changed=False)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        vpc_id: '{{ vpc_result.vpc.id }}'
+        state: present
+        rules:
+        - proto: "tcp"
+          from_port: 8182
+          to_port: 8182
+          cidr_ip: "1.1.1.1/32"
+      register: result
+
+    - name: assert that the tags stayed the same (expected changed=false)
+      assert:
+        that:
+          - 'not result.changed'
+          - 'result.tags == {"tag1": "test1"}'
+
+    # ============================================================
+
+    - name: test purging all tags (expected changed=True)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        vpc_id: '{{ vpc_result.vpc.id }}'
+        state: present
+        rules:
+        - proto: "tcp"
+          from_port: 8182
+          to_port: 8182
+          cidr_ip: "1.1.1.1/32"
+        tags: {}
+      register: result
+
+    - name: assert that tag1 was removed (expected changed=true)
+      assert:
+        that:
+          - 'result.changed'
+          - 'not result.tags'
+
+    # ============================================================
+
+    - name: test state=absent (expected changed=true)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        state: absent
+      environment:
+        EC2_REGION: '{{ec2_region}}'
+        EC2_ACCESS_KEY: '{{ec2_access_key}}'
+        EC2_SECRET_KEY: '{{ec2_secret_key}}'
+        EC2_SECURITY_TOKEN: '{{security_token|default("")}}'
+      register: result
+
+    - name: assert state=absent (expected changed=true)
+      assert:
+        that:
+           - 'result.changed'
+           - 'not result.group_id'
+
+  always:
+
+    # ============================================================
+    - name: tidy up security group
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        state: absent
+      environment:
+        EC2_REGION: '{{ec2_region}}'
+        EC2_ACCESS_KEY: '{{ec2_access_key}}'
+        EC2_SECRET_KEY: '{{ec2_secret_key}}'
+        EC2_SECURITY_TOKEN: '{{security_token|default("")}}'
+
+    - name: tidy up automatically created SG
+      ec2_group:
+        name: "{{ resource_prefix }} - Another security group"
+        state: absent
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+
+    - name: tidy up VPC
+      ec2_vpc_net:
+        name: "{{ resource_prefix }}-vpc"
+        state: absent
+        cidr_block: "10.232.232.128/26"
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'

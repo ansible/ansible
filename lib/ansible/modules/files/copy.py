@@ -1,35 +1,27 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: copy
 version_added: "historical"
-short_description: Copies files to remote locations.
+short_description: Copies files to remote locations
 description:
-     - The C(copy) module copies a file on the local box to remote locations. Use the M(fetch) module to copy files from remote locations to the local box. If you need variable interpolation in copied files, use the M(template) module.
+    - The C(copy) module copies a file from the local or remote machine to a location on the remote machine.
+      Use the M(fetch) module to copy files from remote locations to the local box.
+      If you need variable interpolation in copied files, use the M(template) module.
+    - For Windows targets, use the M(win_copy) module instead.
 options:
   src:
     description:
@@ -38,74 +30,73 @@ options:
         with "/", only inside contents of that directory are copied to destination.
         Otherwise, if it does not end with "/", the directory itself with all contents
         is copied. This behavior is similar to Rsync.
-    required: false
-    default: null
-    aliases: []
   content:
-    version_added: "1.1"
     description:
-      - When used instead of 'src', sets the contents of a file directly to the specified value.
-        This is for simple values, for anything complex or with formatting please switch to the template module.
-    required: false
-    default: null
+      - When used instead of I(src), sets the contents of a file directly to the specified value.
+        For anything advanced or with formatting also look at the template module.
+    version_added: "1.1"
   dest:
     description:
-      - Remote absolute path where the file should be copied to. If src is a directory,
-        this must be a directory too.
-    required: true
-    default: null
+      - 'Remote absolute path where the file should be copied to. If I(src) is a directory, this must be a directory too.
+        If I(dest) is a nonexistent path and if either I(dest) ends with "/" or I(src) is a directory, I(dest) is created.
+        If I(src) and I(dest) are files, the parent directory of I(dest) isn''t created: the task fails if it doesn''t already exist.'
+    required: yes
   backup:
     description:
       - Create a backup file including the timestamp information so you can get
         the original file back if you somehow clobbered it incorrectly.
+    type: bool
+    default: 'no'
     version_added: "0.7"
-    required: false
-    choices: [ "yes", "no" ]
-    default: "no"
   force:
     description:
       - the default is C(yes), which will replace the remote file when contents
         are different than the source. If C(no), the file will only be transferred
         if the destination does not exist.
-    version_added: "1.1"
-    required: false
-    choices: [ "yes", "no" ]
-    default: "yes"
+    type: bool
+    default: 'yes'
     aliases: [ "thirsty" ]
+    version_added: "1.1"
   directory_mode:
     description:
       - When doing a recursive copy set the mode for the directories. If this is not set we will use the system
         defaults. The mode is only set on directories which are newly created, and will not affect those that
         already existed.
-    required: false
     version_added: "1.5"
   remote_src:
     description:
-      - If False, it will search for src at originating/master machine, if True it will go to the remote/target machine for the src. Default is False.
-      - Currently remote_src does not support recursive copying.
-    choices: [ "True", "False" ]
-    required: false
-    default: "False"
+      - If C(no), it will search for I(src) at originating/master machine.
+      - If C(yes) it will go to the remote/target machine for the I(src). Default is C(no).
+      - Currently I(remote_src) does not support recursive copying.
+    type: bool
+    default: 'no'
     version_added: "2.0"
   follow:
-    required: false
-    default: "no"
-    choices: [ "yes", "no" ]
-    version_added: "1.8"
     description:
-      - 'This flag indicates that filesystem links, if they exist, should be followed.'
+      - This flag indicates that filesystem links in the destination, if they exist, should be followed.
+    type: bool
+    default: 'no'
+    version_added: "1.8"
+  local_follow:
+    description:
+      - This flag indicates that filesystem links in the source tree, if they exist, should be followed.
+    type: bool
+    default: 'yes'
+    version_added: "2.4"
 extends_documentation_fragment:
     - files
     - validate
+    - decrypt
 author:
     - "Ansible Core Team"
     - "Michael DeHaan"
 notes:
-   - The "copy" module recursively copy facility does not scale to lots (>hundreds) of files.
-     For alternative, see synchronize module, which is a wrapper around rsync.
+   - The M(copy) module recursively copy facility does not scale to lots (>hundreds) of files.
+     For alternative, see M(synchronize) module, which is a wrapper around C(rsync).
+   - For Windows targets, use the M(win_copy) module instead.
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 # Example from Ansible Playbooks
 - copy:
     src: /srv/myfiles/foo.conf
@@ -120,7 +111,7 @@ EXAMPLES = '''
     dest: /etc/foo.conf
     owner: foo
     group: foo
-    mode: "u=rw,g=r,o=r"
+    mode: u=rw,g=r,o=r
 
 # Another symbolic mode example, adding some permissions and removing others
 - copy:
@@ -128,7 +119,7 @@ EXAMPLES = '''
     dest: /etc/foo.conf
     owner: foo
     group: foo
-    mode: "u+rw,g-wx,o-rwx"
+    mode: u+rw,g-wx,o-rwx
 
 # Copy a new "ntp.conf file into place, backing up the original if it differs from the copied version
 - copy:
@@ -143,35 +134,57 @@ EXAMPLES = '''
 - copy:
     src: /mine/sudoers
     dest: /etc/sudoers
-    validate: 'visudo -cf %s'
+    validate: /usr/sbin/visudo -cf %s
+
+# Copy a "sudoers" file on the remote machine for editing
+- copy:
+    src: /etc/sudoers
+    dest: /etc/sudoers.edit
+    remote_src: yes
+    validate: /usr/sbin/visudo -cf %s
+
+# Create a CSV file from your complete inventory using an inline template
+- hosts: all
+  tasks:
+  - copy:
+      content: |
+        HOSTNAME;IPADDRESS;FQDN;OSNAME;OSVERSION;PROCESSOR;ARCHITECTURE;MEMORY;
+        {% for host in hostvars %}
+        {%   set vars = hostvars[host|string] %}
+        {{ vars.ansible_hostname }};{{ vars.remote_host }};{{ vars.ansible_fqdn }};{{ vars.ansible_distribution }};{{ vars.ansible_distribution_version }};{{ vars.ansible_processor[1] }};{{ vars.ansible_architecture }};{{ (vars.ansible_memtotal_mb/1024)|round|int }};  # NOQA
+        {% endfor %}
+      dest: /some/path/systems.csv
+      backup: yes
+    run_once: yes
+    delegate_to: localhost
 '''
 
-RETURN = '''
+RETURN = r'''
 dest:
     description: destination file/path
     returned: success
     type: string
-    sample: "/path/to/file.txt"
+    sample: /path/to/file.txt
 src:
     description: source file used for the copy on the target machine
     returned: changed
     type: string
-    sample: "/home/httpd/.ansible/tmp/ansible-tmp-1423796390.97-147729857856000/source"
+    sample: /home/httpd/.ansible/tmp/ansible-tmp-1423796390.97-147729857856000/source
 md5sum:
     description: md5 checksum of the file after running copy
     returned: when supported
     type: string
-    sample: "2a5aeecc61dc98c4d780b14b330e3282"
+    sample: 2a5aeecc61dc98c4d780b14b330e3282
 checksum:
     description: sha1 checksum of the file after running copy
     returned: success
     type: string
-    sample: "6e642bb8dd5c2e027bf21dd923337cbb4214f827"
+    sample: 6e642bb8dd5c2e027bf21dd923337cbb4214f827
 backup_file:
     description: name of backup file created
     returned: changed and if backup=yes
     type: string
-    sample: "/path/to/file.txt.2015-02-12@22:09~"
+    sample: /path/to/file.txt.2015-02-12@22:09~
 gid:
     description: group id of the file, after execution
     returned: success
@@ -181,12 +194,12 @@ group:
     description: group of the file, after execution
     returned: success
     type: string
-    sample: "httpd"
+    sample: httpd
 owner:
     description: owner of the file, after execution
     returned: success
     type: string
-    sample: "httpd"
+    sample: httpd
 uid:
     description: owner id of the file, after execution
     returned: success
@@ -196,7 +209,7 @@ mode:
     description: permissions of the target, after execution
     returned: success
     type: string
-    sample: "0644"
+    sample: 0644
 size:
     description: size of the target, after execution
     returned: success
@@ -206,7 +219,7 @@ state:
     description: state of the target, after execution
     returned: success
     type: string
-    sample: "file"
+    sample: file
 '''
 
 import os
@@ -216,7 +229,6 @@ import traceback
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils._text import to_bytes, to_native
 
 
@@ -252,16 +264,17 @@ def main():
 
     module = AnsibleModule(
         # not checking because of daisy chain to file module
-        argument_spec = dict(
-            src               = dict(required=False, type='path'),
-            original_basename = dict(required=False),  # used to handle 'dest is a directory' via template, a slight hack
-            content           = dict(required=False, no_log=True),
-            dest              = dict(required=True, type='path'),
-            backup            = dict(default=False, type='bool'),
-            force             = dict(default=True, aliases=['thirsty'], type='bool'),
-            validate          = dict(required=False, type='str'),
-            directory_mode    = dict(required=False),
-            remote_src        = dict(required=False, type='bool'),
+        argument_spec=dict(
+            src=dict(type='path'),
+            original_basename=dict(type='str'),  # used to handle 'dest is a directory' via template, a slight hack
+            content=dict(type='str', no_log=True),
+            dest=dict(type='path', required=True),
+            backup=dict(type='bool', default=False),
+            force=dict(type='bool', default=True, aliases=['thirsty']),
+            validate=dict(type='str'),
+            directory_mode=dict(type='raw'),
+            remote_src=dict(type='bool'),
+            local_follow=dict(type='bool'),
         ),
         add_file_common_args=True,
         supports_check_mode=True,
@@ -336,12 +349,12 @@ def main():
                 # the execute bit for the current user set, in
                 # which case the stat() call will raise an OSError
                 os.stat(os.path.dirname(b_dest))
-            except OSError:
-                e = get_exception()
+            except OSError as e:
                 if "permission denied" in to_native(e).lower():
                     module.fail_json(msg="Destination directory %s is not accessible" % (os.path.dirname(dest)))
             module.fail_json(msg="Destination directory %s does not exist" % (os.path.dirname(dest)))
-    if not os.access(os.path.dirname(b_dest), os.W_OK):
+
+    if not os.access(os.path.dirname(b_dest), os.W_OK) and not module.params['unsafe_writes']:
         module.fail_json(msg="Destination %s not writable" % (os.path.dirname(dest)))
 
     backup_file = None

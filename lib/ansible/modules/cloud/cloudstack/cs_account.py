@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
@@ -178,7 +178,12 @@ domain:
 '''
 
 # import cloudstack common
-from ansible.module_utils.cloudstack import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.cloudstack import (
+    AnsibleCloudStack,
+    cs_argument_spec,
+    cs_required_together
+)
 
 
 class AnsibleCloudStackAccount(AnsibleCloudStack):
@@ -190,8 +195,8 @@ class AnsibleCloudStackAccount(AnsibleCloudStack):
         }
         self.account = None
         self.account_types = {
-            'user':         0,
-            'root_admin':   1,
+            'user': 0,
+            'root_admin': 1,
             'domain_admin': 2,
         }
 
@@ -205,7 +210,7 @@ class AnsibleCloudStackAccount(AnsibleCloudStack):
                 'listall': True,
                 'domainid': self.get_domain(key='id'),
             }
-            accounts = self.cs.listAccounts(**args)
+            accounts = self.query_api('listAccounts', **args)
             if accounts:
                 account_name = self.module.params.get('name')
                 for a in accounts['account']:
@@ -228,9 +233,7 @@ class AnsibleCloudStackAccount(AnsibleCloudStack):
                 'domainid': self.get_domain(key='id')
             }
             if not self.module.check_mode:
-                res = self.cs.enableAccount(**args)
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                res = self.query_api('enableAccount', **args)
                 account = res['account']
         return account
 
@@ -259,10 +262,7 @@ class AnsibleCloudStackAccount(AnsibleCloudStack):
                 'lock': lock,
             }
             if not self.module.check_mode:
-                account = self.cs.disableAccount(**args)
-
-                if 'errortext' in account:
-                    self.module.fail_json(msg="Failed: '%s'" % account['errortext'])
+                account = self.query_api('disableAccount', **args)
 
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
@@ -297,9 +297,7 @@ class AnsibleCloudStackAccount(AnsibleCloudStack):
                 'timezone': self.module.params.get('timezone')
             }
             if not self.module.check_mode:
-                res = self.cs.createAccount(**args)
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                res = self.query_api('createAccount', **args)
                 account = res['account']
         return account
 
@@ -309,10 +307,7 @@ class AnsibleCloudStackAccount(AnsibleCloudStack):
             self.result['changed'] = True
 
             if not self.module.check_mode:
-                res = self.cs.deleteAccount(id=account['id'])
-
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                res = self.query_api('deleteAccount', id=account['id'])
 
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
@@ -336,14 +331,14 @@ def main():
         name=dict(required=True),
         state=dict(choices=['present', 'absent', 'enabled', 'disabled', 'locked', 'unlocked'], default='present'),
         account_type=dict(choices=['user', 'root_admin', 'domain_admin'], default='user'),
-        network_domain=dict(default=None),
+        network_domain=dict(),
         domain=dict(default='ROOT'),
-        email=dict(default=None),
-        first_name=dict(default=None),
-        last_name=dict(default=None),
-        username=dict(default=None),
-        password=dict(default=None, no_log=True),
-        timezone=dict(default=None),
+        email=dict(),
+        first_name=dict(),
+        last_name=dict(),
+        username=dict(),
+        password=dict(no_log=True),
+        timezone=dict(),
         poll_async=dict(type='bool', default=True),
     ))
 
@@ -353,34 +348,29 @@ def main():
         supports_check_mode=True
     )
 
-    try:
-        acs_acc = AnsibleCloudStackAccount(module)
+    acs_acc = AnsibleCloudStackAccount(module)
 
-        state = module.params.get('state')
+    state = module.params.get('state')
 
-        if state in ['absent']:
-            account = acs_acc.absent_account()
+    if state in ['absent']:
+        account = acs_acc.absent_account()
 
-        elif state in ['enabled', 'unlocked']:
-            account = acs_acc.enable_account()
+    elif state in ['enabled', 'unlocked']:
+        account = acs_acc.enable_account()
 
-        elif state in ['disabled']:
-            account = acs_acc.disable_account()
+    elif state in ['disabled']:
+        account = acs_acc.disable_account()
 
-        elif state in ['locked']:
-            account = acs_acc.lock_account()
+    elif state in ['locked']:
+        account = acs_acc.lock_account()
 
-        else:
-            account = acs_acc.present_account()
+    else:
+        account = acs_acc.present_account()
 
-        result = acs_acc.get_result(account)
-
-    except CloudStackException as e:
-        module.fail_json(msg='CloudStackException: %s' % str(e))
+    result = acs_acc.get_result(account)
 
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()

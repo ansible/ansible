@@ -1,27 +1,14 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-"""
-Ansible module to configure .deb packages.
-(c) 2014, Brian Coca <briancoca+ansible@gmail.com>
+# (c) 2014, Brian Coca <briancoca+ansible@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-This file is part of Ansible
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-Ansible is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
 
-Ansible is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-"""
-
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
@@ -103,6 +90,9 @@ EXAMPLES = '''
     name: tzdata
 '''
 
+from ansible.module_utils.basic import AnsibleModule
+
+
 def get_selections(module, pkg):
     cmd = [module.get_bin_path('debconf-show', True), pkg]
     rc, out, err = module.run_command(' '.join(cmd))
@@ -138,14 +128,15 @@ def set_selection(module, pkg, question, vtype, value, unseen):
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(required=True, aliases=['pkg'], type='str'),
-            question = dict(required=False, aliases=['setting', 'selection'], type='str'),
-            vtype = dict(required=False, type='str', choices=['string', 'password', 'boolean', 'select',  'multiselect', 'note', 'error', 'title', 'text', 'seen']),
-            value = dict(required=False, type='str', aliases=['answer']),
-            unseen = dict(required=False, type='bool'),
+        argument_spec=dict(
+            name=dict(required=True, aliases=['pkg'], type='str'),
+            question=dict(required=False, aliases=['setting', 'selection'], type='str'),
+            vtype=dict(required=False, type='str', choices=['string', 'password', 'boolean', 'select',  'multiselect', 'note', 'error', 'title',
+                                                            'text', 'seen']),
+            value=dict(required=False, type='str', aliases=['answer']),
+            unseen=dict(required=False, type='bool'),
         ),
-        required_together = ( ['question','vtype', 'value'],),
+        required_together=(['question','vtype', 'value'],),
         supports_check_mode=True,
     )
 
@@ -190,8 +181,6 @@ def main():
 
     module.exit_json(changed=changed, msg=msg, current=prev)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

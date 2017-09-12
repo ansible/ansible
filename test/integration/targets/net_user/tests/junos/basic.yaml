@@ -1,0 +1,120 @@
+---
+- debug: msg="START net_user junos/basic.yaml"
+
+- name: setup - remove user
+  net_user:
+    name: test_user
+    state: absent
+    provider: "{{ netconf }}"
+
+- name: Create user
+  net_user:
+    name: test_user
+    state: present
+    role: operator
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<name>test_user</name>' in config.xml"
+      - "'<class>operator</class>' in config.xml"
+
+- name: Create user again (idempotent)
+  net_user:
+    name: test_user
+    state: present
+    role: operator
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Delete user
+  net_user:
+    name: test_user
+    state: absent
+    role: operator
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<name>test_user</name>' not in config.xml"
+      - "'<full-name>test_user</full-name>' not in config.xml"
+
+- name: Delete user again (idempotent check)
+  net_user:
+    name: test_user
+    state: absent
+    role: operator
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Teardown list of users
+  net_user:
+    aggregate:
+      - {name: test_user1, state: absent}
+      - {name: test_user2, state: absent}
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Create list of users
+  net_user:
+    aggregate:
+      - {name: test_user1, role: operator, state: present}
+      - {name: test_user2, role: read-only, state: present}
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<name>test_user1</name>' in config.xml"
+      - "'<name>test_user2</name>' in config.xml"
+
+- name: Delete list of users
+  net_user:
+    aggregate:
+      - {name: test_user1, role: operator, state: absent}
+      - {name: test_user2, role: read-only, state: absent}
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<name>test_user1</name>' not in config.xml"
+      - "'<name>test_user2</name>' not in config.xml"

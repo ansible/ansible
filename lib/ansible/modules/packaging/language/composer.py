@@ -2,24 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2014, Dimitrios Tydeas Mengidis <tydeas.dr@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -50,12 +39,29 @@ options:
             - Composer arguments like required package, version and so on.
         required: false
         default: null
+    executable:
+        version_added: "2.4"
+        description:
+            - Path to PHP Executable on the remote host, if PHP is not in PATH
+        required: false
+        default: null
+        aliases: [ "php_path" ]
     working_dir:
         description:
-            - Directory of your project (see --working-dir).
-        required: true
+            - Directory of your project (see --working-dir). This is required when
+              the command is not run globally.
+            - Will be ignored if C(global_command=true).
+        required: false
         default: null
         aliases: [ "working-dir" ]
+    global_command:
+        version_added: "2.4"
+        description:
+            - Runs the specified command globally.
+        required: false
+        choices: [ true, false]
+        default: false
+        aliases: [ "global-command" ]
     prefer_source:
         description:
             - Forces installation from package sources when possible (see --prefer-source).
@@ -95,7 +101,7 @@ options:
         description:
             - Optimize autoloader during autoloader dump (see --optimize-autoloader).
             - Convert PSR-0/4 autoloading to classmap to get a faster autoloader.
-            - Recommended especially for production, but can take a bit of time to run so it is currently not done by default.
+            - Recommended especially for production, but can take a bit of time to run.
         required: false
         default: true
         choices: [ true, false]
@@ -133,9 +139,16 @@ EXAMPLES = '''
     arguments: package/package /path/to/project ~1.0
     working_dir: /path/to/project
     prefer_dist: yes
+
+# Installs package globally
+- composer:
+    command: require
+    global_command: yes
+    arguments: my/package
 '''
 
 import re
+
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -158,10 +171,17 @@ def get_available_options(module, command='install'):
     return command_help_json['definition']['options']
 
 
-def composer_command(module, command, arguments="", options=[]):
-    php_path = module.get_bin_path("php", True, ["/usr/local/bin"])
+def composer_command(module, command, arguments="", options=None, global_command=False):
+    if options is None:
+        options = []
+
+    if module.params['executable'] is None:
+        php_path = module.get_bin_path("php", True, ["/usr/local/bin"])
+    else:
+        php_path = module.params['executable']
+
     composer_path = module.get_bin_path("composer", True, ["/usr/local/bin"])
-    cmd = "%s %s %s %s %s" % (php_path, composer_path, command, " ".join(options), arguments)
+    cmd = "%s %s %s %s %s %s" % (php_path, composer_path, "global" if global_command else "", command, " ".join(options), arguments)
     return module.run_command(cmd)
 
 
@@ -170,7 +190,9 @@ def main():
         argument_spec=dict(
             command=dict(default="install", type="str", required=False),
             arguments=dict(default="", type="str", required=False),
-            working_dir=dict(type="path", aliases=["working-dir"], required=True),
+            executable=dict(type="path", required=False, aliases=["php_path"]),
+            working_dir=dict(type="path", aliases=["working-dir"]),
+            global_command=dict(default=False, type="bool", aliases=["global-command"]),
             prefer_source=dict(default=False, type="bool", aliases=["prefer-source"]),
             prefer_dist=dict(default=False, type="bool", aliases=["prefer-dist"]),
             no_dev=dict(default=True, type="bool", aliases=["no-dev"]),
@@ -179,6 +201,7 @@ def main():
             optimize_autoloader=dict(default=True, type="bool", aliases=["optimize-autoloader"]),
             ignore_platform_reqs=dict(default=False, type="bool", aliases=["ignore-platform-reqs"]),
         ),
+        required_if=[('global_command', False, ['working_dir'])],
         supports_check_mode=True
     )
 
@@ -188,6 +211,7 @@ def main():
         module.fail_json(msg="Use the 'arguments' param for passing arguments with the 'command'")
 
     arguments = module.params['arguments']
+    global_command = module.params['global_command']
     available_options = get_available_options(module=module, command=command)
 
     options = []
@@ -204,7 +228,8 @@ def main():
             option = "--%s" % option
             options.append(option)
 
-    options.extend(['--working-dir', "'%s'" % module.params['working_dir']])
+    if not global_command:
+        options.extend(['--working-dir', "'%s'" % module.params['working_dir']])
 
     option_params = {
         'prefer_source': 'prefer-source',
@@ -224,7 +249,7 @@ def main():
     if module.check_mode:
         options.append('--dry-run')
 
-    rc, out, err = composer_command(module, command, arguments, options)
+    rc, out, err = composer_command(module, command, arguments, options, global_command)
 
     if rc != 0:
         output = parse_out(err)

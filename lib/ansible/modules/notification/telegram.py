@@ -2,25 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2016, Artem Feofanov <artem.feofanov@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -42,6 +30,14 @@ options:
     description:
       - What message you wish to send.
     required: true
+  msg_format:
+    description:
+      - Message format. Formatting options `markdown` and `html` described in
+        Telegram API docs (https://core.telegram.org/bots/api#formatting-options).
+        If option `plain` set, message will not be formatted.
+    default: plain
+    choices: [ "plain", "markdown", "html" ]
+    version_added: "2.4"
   token:
     description:
       - Token identifying your telegram bot.
@@ -57,7 +53,7 @@ EXAMPLES = """
 
 - name: send a message to chat in playbook
   telegram:
-    token: 'bot9999999:XXXXXXXXXXXXXXXXXXXXXXX'
+    token: '9999999:XXXXXXXXXXXXXXXXXXXXXXX'
     chat_id: 000000
     msg: Ansible task finished
 """
@@ -69,25 +65,41 @@ msg:
   returned: success
   type: string
   sample: "Ansible task finished"
+telegram_error:
+  description: Error message gotten from Telegram API
+  returned: failure
+  type: string
+  sample: "Bad Request: message text is empty"
 """
 
-import urllib
+import json
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves.urllib.parse import quote
+from ansible.module_utils.urls import fetch_url
+
 
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-            token = dict(type='str',required=True,no_log=True),
-            chat_id = dict(type='str',required=True,no_log=True),
-            msg = dict(type='str',required=True)),
+        argument_spec=dict(
+            token=dict(type='str', required=True, no_log=True),
+            chat_id=dict(type='str', required=True, no_log=True),
+            msg_format=dict(type='str', required=False, default='plain',
+                            choices=['plain', 'markdown', 'html']),
+            msg=dict(type='str', required=True)),
         supports_check_mode=True
     )
 
-    token = urllib.quote(module.params.get('token'))
-    chat_id = urllib.quote(module.params.get('chat_id'))
-    msg = urllib.quote(module.params.get('msg'))
+    token = quote(module.params.get('token'))
+    chat_id = quote(module.params.get('chat_id'))
+    msg_format = quote(module.params.get('msg_format'))
+    msg = quote(module.params.get('msg'))
 
-    url = 'https://api.telegram.org/' + token + '/sendMessage?text=' + msg + '&chat_id=' + chat_id
+    url = 'https://api.telegram.org/bot' + token + \
+        '/sendMessage?text=' + msg + '&chat_id=' + chat_id
+    if msg_format in ('markdown', 'html'):
+        url += '&parse_mode=' + msg_format
 
     if module.check_mode:
         module.exit_json(changed=False)
@@ -96,11 +108,10 @@ def main():
     if info['status'] == 200:
         module.exit_json(changed=True)
     else:
-        module.fail_json(msg="failed to send message, return status=%s" % str(info['status']))
+        body = json.loads(info['body'])
+        module.fail_json(msg="failed to send message, return status=%s" % str(info['status']),
+                         telegram_error=body['description'])
 
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 if __name__ == '__main__':
     main()

@@ -18,7 +18,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -141,13 +141,15 @@ EXAMPLES = """
 """
 
 RETURN = """
-vrouterifcmd:
+command:
   description: The CLI command run on the target node(s).
-stdout/msg:
+  returned: always
+  type: str
+stdout:
   description: The set of responses from the vrouterif command.
   returned: on success
   type: list
-stderr/msg:
+stderr:
   description: The set of error responses from the vrouterif command.
   returned: on error
   type: str

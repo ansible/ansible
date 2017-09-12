@@ -1,20 +1,12 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -103,67 +95,83 @@ RETURN = '''
 snapshot_id:
     description: The ID of the snapshot. Each snapshot receives a unique identifier when it is created.
     type: string
+    returned: always
     sample: snap-01234567
 volume_id:
     description: The ID of the volume that was used to create the snapshot.
     type: string
+    returned: always
     sample: vol-01234567
 state:
     description: The snapshot state (completed, pending or error).
     type: string
+    returned: always
     sample: completed
 state_message:
-    description: Encrypted Amazon EBS snapshots are copied asynchronously. If a snapshot copy operation fails (for example, if the proper AWS Key Management Service (AWS KMS) permissions are not obtained) this field displays error state details to help you diagnose why the error occurred.
+    description: Encrypted Amazon EBS snapshots are copied asynchronously. If a snapshot copy operation fails (for example, if the proper
+                 AWS Key Management Service (AWS KMS) permissions are not obtained) this field displays error state details to help you diagnose why the
+                 error occurred.
     type: string
+    returned: always
     sample:
 start_time:
     description: The time stamp when the snapshot was initiated.
-    type: datetime
-    sample: 2015-02-12T02:14:02+00:00
+    type: string
+    returned: always
+    sample: "2015-02-12T02:14:02+00:00"
 progress:
     description: The progress of the snapshot, as a percentage.
     type: string
-    sample: 100%
+    returned: always
+    sample: "100%"
 owner_id:
     description: The AWS account ID of the EBS snapshot owner.
     type: string
-    sample: 099720109477
+    returned: always
+    sample: "099720109477"
 description:
     description: The description for the snapshot.
     type: string
-    sample: My important backup
+    returned: always
+    sample: "My important backup"
 volume_size:
     description: The size of the volume, in GiB.
-    type: integer
+    type: int
+    returned: always
     sample: 8
 owner_alias:
     description: The AWS account alias (for example, amazon, self) or AWS account ID that owns the snapshot.
     type: string
-    sample: 033440102211
+    returned: always
+    sample: "033440102211"
 tags:
     description: Any tags assigned to the snapshot.
     type: dict
+    returned: always
     sample: "{ 'my_tag_key': 'my_tag_value' }"
 encrypted:
     description: Indicates whether the snapshot is encrypted.
     type: boolean
-    sample: True
+    returned: always
+    sample: "True"
 kms_key_id:
     description: The full ARN of the AWS Key Management Service (AWS KMS) customer master key (CMK) that was used to \
     protect the volume encryption key for the parent volume.
     type: string
-    sample: 74c9742a-a1b2-45cb-b3fe-abcdef123456
+    returned: always
+    sample: "74c9742a-a1b2-45cb-b3fe-abcdef123456"
 data_encryption_key_id:
     description: The data encryption key identifier for the snapshot. This value is a unique identifier that \
     corresponds to the data encryption key that was used to encrypt the original volume or snapshot copy.
     type: string
+    returned: always
     sample: "arn:aws:kms:ap-southeast-2:012345678900:key/74c9742a-a1b2-45cb-b3fe-abcdef123456"
 
 '''
 
 try:
     import boto3
-    from botocore.exceptions import ClientError, NoCredentialsError
+    from botocore.exceptions import ClientError
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
@@ -194,7 +202,7 @@ def list_ec2_snapshots(connection, module):
     # Turn the boto3 result in to ansible friendly tag dictionary
     for snapshot in snaked_snapshots:
         if 'tags' in snapshot:
-            snapshot['tags'] = boto3_tag_list_to_ansible_dict(snapshot['tags'])
+            snapshot['tags'] = boto3_tag_list_to_ansible_dict(snapshot['tags'], 'key', 'value')
 
     module.exit_json(snapshots=snaked_snapshots)
 

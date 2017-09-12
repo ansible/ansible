@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -145,7 +145,7 @@ banner_text:
 inactivity_timeout:
     description: >
         The number of seconds before inactivity causes an SSH.
-        session to log out
+        session to log out.
     returned: changed
     type: int
     sample: "10"
@@ -156,12 +156,12 @@ log_level:
     sample: "debug"
 login:
     description: Specifies that the system accepts SSH communications or not.
-    return: changed
+    returned: changed
     type: bool
     sample: true
 port:
     description: Port that you want the SSH daemon to run on.
-    return: changed
+    returned: changed
     type: int
     sample: 22
 '''

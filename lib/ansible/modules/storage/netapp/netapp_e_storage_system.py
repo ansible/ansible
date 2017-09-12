@@ -1,23 +1,13 @@
 #!/usr/bin/python
 
 # (c) 2016, NetApp, Inc
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -62,7 +52,8 @@ options:
   array_wwn:
     required: false
     description:
-    - The WWN of the array to manage. Only necessary if in-band managing multiple arrays on the same agent host.  Mutually exclusive of controller_addresses parameter.
+    - The WWN of the array to manage. Only necessary if in-band managing multiple arrays on the same agent host.  Mutually exclusive of
+      controller_addresses parameter.
   array_password:
     required: false
     description:
@@ -98,8 +89,11 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-msg: Storage system removed.
-msg: Storage system added.
+msg:
+    description: State of request
+    type: string
+    returned: always
+    sample: 'Storage system removed.'
 '''
 import json
 from datetime import datetime as dt, timedelta
@@ -231,7 +225,9 @@ def main():
                 changed = True
             if array_detail['wwn'] != array_wwn and array_wwn is not None:
                 module.fail_json(
-                    msg='It seems you may have specified a bad WWN. The storage system ID you specified, %s, currently has the WWN of %s' % (ssid, array_detail['wwn']))
+                    msg='It seems you may have specified a bad WWN. The storage system ID you specified, %s, currently has the WWN of %s' %
+                        (ssid, array_detail['wwn'])
+                )
     elif rc == 404:
         if state == 'present':
             changed = True

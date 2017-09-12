@@ -1,24 +1,44 @@
 # -*- coding: utf-8 -*-
-# (C) 2015, 2016 Daniel Lobato <elobatocs@gmail.com>
-#     2016 Guido Günther <agx@sigxcpu.org>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2015, 2016 Daniel Lobato <elobatocs@gmail.com>
+# (c) 2016 Guido Günther <agx@sigxcpu.org>
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+DOCUMENTATION = '''
+    callback: foreman
+    type: notification
+    short_description: Sends events to Foreman
+    description:
+      - This callback will report facts and task events to Foreman https://theforeman.org/
+    version_added: "2.2"
+    requirements:
+      - whitelisting in configuration
+      - requests (python library)
+    options:
+      url:
+        description: URL to the Foreman server
+        env:
+          - name: FOREMAN_URL
+        required: True
+      ssl_cert:
+        description: X509 certificate to authenticate to Foreman if https is used
+        env:
+            - name: FOREMAN_SSL_CERT
+      ssl_key:
+        description: the corresponding private key
+        env:
+          - name: FOREMAN_SSL_KEY
+      verify_certs:
+        description:
+          - Toggle to decidewhether to verify the Foreman certificate.
+          - It can be set to '1' to verify SSL certificates using the installed CAs or to a path pointing to a CA bundle.
+          - Set to '0' to disable certificate checking.
+        env:
+          - name: FOREMAN_SSL_VERIFY
+'''
 
 import os
 from datetime import datetime
@@ -82,6 +102,13 @@ class CallbackModule(CallbackBase):
         else:
             self._disable_plugin('The `requests` python module is not installed.')
 
+        if self.FOREMAN_URL.startswith('https://'):
+            if not os.path.exists(self.FOREMAN_SSL_CERT[0]):
+                self._disable_plugin('FOREMAN_SSL_CERT %s not found.' % self.FOREMAN_SSL_CERT[0])
+
+            if not os.path.exists(self.FOREMAN_SSL_CERT[1]):
+                self._disable_plugin('FOREMAN_SSL_KEY %s not found.' % self.FOREMAN_SSL_CERT[1])
+
     def _disable_plugin(self, msg):
         self.disabled = True
         self._display.warning(msg + ' Disabling the Foreman callback plugin.')
@@ -94,7 +121,7 @@ class CallbackModule(CallbackBase):
             self._display.warning("SSL verification of %s disabled" %
                                   self.FOREMAN_URL)
             verify = False
-        else:  # Set ta a CA bundle:
+        else:  # Set to a CA bundle:
             verify = self.FOREMAN_SSL_VERIFY
         return verify
 
@@ -123,11 +150,17 @@ class CallbackModule(CallbackBase):
                 level = 'err'
             else:
                 level = 'notice' if 'changed' in msg and msg['changed'] else 'info'
-            logs.append({"log": {
-                'sources': {'source': source},
-                'messages': {'message': json.dumps(msg)},
-                'level':     level
-                }})
+            logs.append({
+                "log": {
+                    'sources': {
+                        'source': source
+                    },
+                    'messages': {
+                        'message': json.dumps(msg)
+                    },
+                    'level': level
+                }
+            })
         return logs
 
     def send_reports(self, stats):
@@ -154,8 +187,8 @@ class CallbackModule(CallbackBase):
                     "metrics": metrics,
                     "status": status,
                     "logs": log,
-                    }
                 }
+            }
             # To be changed to /api/v2/config_reports in 1.11.  Maybe we
             # could make a GET request to get the Foreman version & do
             # this automatically.
@@ -189,10 +222,8 @@ class CallbackModule(CallbackBase):
 
     def v2_runner_on_ok(self, result):
         res = result._result
-        try:
-            module = res['invocation']['module_name']
-        except KeyError:
-            module = None
+        module = result._task.action
+
         if module == 'setup':
             host = result._host.get_name()
             self.send_facts(host, res)

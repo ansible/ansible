@@ -1,0 +1,5 @@
+- hosts: buildah-container
+  connection: buildah
+  gather_facts: no
+  roles:
+    - { role: connection_buildah }

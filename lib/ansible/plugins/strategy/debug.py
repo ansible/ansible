@@ -1,13 +1,35 @@
-
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+DOCUMENTATION = '''
+    strategy: debug
+    short_description: Executes tasks in interactive debug session.
+    description:
+        - Task execution is 'linear' but controlled by an interactive debug session.
+    version_added: "2.1"
+    author: Kishin Yagami
+'''
 
 import cmd
 import pprint
 import sys
 
+from ansible.module_utils.six.moves import reduce
 from ansible.plugins.strategy.linear import StrategyModule as LinearStrategyModule
-from ansible.compat.six.moves import reduce
 
 try:
     from __main__ import display
@@ -55,9 +77,9 @@ class StrategyModule(LinearStrategyModule):
                 # rollback host state
                 self.curr_tqm.clear_failed_hosts()
                 iterator._host_states[self.curr_host.name] = prev_host_state
-                if reduce(lambda total, res : res.is_failed() or total, results, False):
+                if reduce(lambda total, res: res.is_failed() or total, results, False):
                     self._tqm._stats.failures[self.curr_host.name] -= 1
-                elif reduce(lambda total, res : res.is_unreachable() or total, results, False):
+                elif reduce(lambda total, res: res.is_unreachable() or total, results, False):
                     self._tqm._stats.dark[self.curr_host.name] -= 1
 
                 # redo
@@ -71,7 +93,7 @@ class StrategyModule(LinearStrategyModule):
         return results
 
     def _need_debug(self, results):
-        return reduce(lambda total, res : res.is_failed() or res.is_unreachable() or total, results, False)
+        return reduce(lambda total, res: res.is_failed() or res.is_unreachable() or total, results, False)
 
 
 class Debugger(cmd.Cmd):
@@ -154,6 +176,5 @@ class Debugger(cmd.Cmd):
     def default(self, line):
         try:
             self.execute(line)
-            display.display(pprint.pformat(result))
         except:
             pass

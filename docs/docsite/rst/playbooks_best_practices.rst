@@ -16,9 +16,8 @@ The following section shows one of many possible ways to organize playbook conte
 
 Your usage of Ansible should fit your needs, however, not ours, so feel free to modify this approach and organize as you see fit.
 
-One thing you will definitely want to do though, is use the "roles" organization feature, which is documented as part
-of the main playbooks page.  See :doc:`playbooks_roles`.  You absolutely should be using roles.  Roles are great.  Use roles.  Roles!
-Did we say that enough?  Roles are great.
+One crucial way to organize your playbook content is Ansible's "roles" organization feature, which is documented as part
+of the main playbooks page.  You should take the time to read and understand the roles documentation which is available here: :doc:`playbooks_reuse_roles`.  
 
 .. _directory_layout:
 
@@ -38,6 +37,7 @@ The top level of the directory would contain files and directories like so::
        hostname2              # ""
 
     library/                  # if any custom modules, put them here (optional)
+    module_utils/             # if any custom module_utils to support modules, put them here (optional)
     filter_plugins/           # if any custom filter plugins, put them here (optional)
 
     site.yml                  # master playbook
@@ -62,6 +62,7 @@ The top level of the directory would contain files and directories like so::
             meta/             #
                 main.yml      #  <-- role dependencies
             library/          # roles can also include custom modules
+            module_utils/     # roles can also include custom module_utils
             lookup_plugins/   # or other types of plugins, like lookup in this case
 
         webtier/              # same kind of structure as "common" was above, done for the webtier role
@@ -97,6 +98,7 @@ Alternatively you can put each inventory file with its ``group_vars``/``host_var
              stagehost2       # ""
 
     library/
+    module_utils/
     filter_plugins/
 
     site.yml
@@ -269,7 +271,7 @@ of each play::
     - name: restart ntpd
       service: name=ntpd state=restarted
 
-See :doc:`playbooks_roles` for more information.
+See :doc:`playbooks_reuse_roles` for more information.
 
 
 .. _organization_examples:
@@ -297,8 +299,8 @@ What about just my webservers in Boston?::
 
 What about just the first 10, and then the next 10?::
    
-    ansible-playbook -i production webservers.yml --limit boston[1-10]
-    ansible-playbook -i production webservers.yml --limit boston[11-20]
+    ansible-playbook -i production webservers.yml --limit boston[1:10]
+    ansible-playbook -i production webservers.yml --limit boston[11:20]
 
 And of course just basic ad-hoc stuff is also possible.::
 
@@ -367,7 +369,7 @@ We're somewhat repeating ourselves with this tip, but it's worth repeating. A sy
 This allows playbooks to target machines based on role, as well as to assign role specific variables
 using the group variable system.
 
-See :doc:`playbooks_roles`.
+See :doc:`playbooks_reuse_roles`.
 
 .. _os_variance:
 
@@ -422,7 +424,7 @@ This will pull in variables based on the OS name.
 Bundling Ansible Modules With Playbooks
 +++++++++++++++++++++++++++++++++++++++
 
-If a playbook has a "./library" directory relative to its YAML file, this directory can be used to add ansible modules that will
+If a playbook has a :file:`./library` directory relative to its YAML file, this directory can be used to add ansible modules that will
 automatically be in the ansible module path.  This is a great way to keep modules that go with a playbook together.  This is shown
 in the directory structure example at the start of this section.
 
@@ -471,7 +473,7 @@ Variables and Vaults
 
 For general maintenance, it is often easier to use ``grep``, or similar tools, to find variables in your Ansible setup. Since vaults obscure these variables, it is best to work with a layer of indirection. When running a playbook, Ansible finds the variables in the unencrypted file and all sensitive variables come from the encrypted file.
 
-A best practice approach for this is to start with a ``group_vars/`` subdirectory named after the group. Inside of this subdirectory, create two files named ``vars`` and ``vault``. Inside of the ``vars`` file, define all of the variables needed, including any sensitive ones. Next, copy all of the sensitive variables over to the ``vault`` file and prefix these variables with ``vault_``. You should adjust the variables in the ``vars`` file to point to the matching ``vault_`` variables and ensure that the ``vault`` file is vault encrypted.
+A best practice approach for this is to start with a ``group_vars/`` subdirectory named after the group. Inside of this subdirectory, create two files named ``vars`` and ``vault``. Inside of the ``vars`` file, define all of the variables needed, including any sensitive ones. Next, copy all of the sensitive variables over to the ``vault`` file and prefix these variables with ``vault_``. You should adjust the variables in the ``vars`` file to point to the matching ``vault_`` variables using jinja2 syntax, and ensure that the ``vault`` file is vault encrypted.
 
 This best practice has no limit on the amount of variable and vault files or their names.
 

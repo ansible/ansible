@@ -21,9 +21,13 @@
     state: directory
     mode: 0755
 
+- name: get yum releasever
+  shell: python -c 'import yum; yb = yum.YumBase(); print(yb.conf.yumvar["releasever"])' | tail -n 1
+  register: releasever
+
 - name: Populate directory
   copy:
-    content: "{{ ansible_distribution_major_version }}\n"
+    content: "{{ releasever.stdout }}\n"
     dest: "/{{ yumroot.stdout }}/etc/yum/vars/releasever"
 
 # This will drag in > 200 MB.

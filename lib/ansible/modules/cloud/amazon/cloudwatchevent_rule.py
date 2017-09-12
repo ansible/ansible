@@ -1,20 +1,12 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -71,14 +63,18 @@ options:
   targets:
     description:
       - "A dictionary array of targets to add to or update for the rule, in the
-        form C({ id: [string], arn: [string], input: [valid JSON string], input_path: [valid JSONPath string] }).
+        form C({ id: [string], arn: [string], role_arn: [string], input: [valid JSON string],
+        input_path: [valid JSONPath string], ecs_parameters: {task_definition_arn: [string], task_count: [int]}}).
         I(id) [required] is the unique target assignment ID. I(arn) (required)
-        is the Amazon Resource Name associated with the target. I(input)
+        is the Amazon Resource Name associated with the target. I(role_arn) (optional) is The Amazon Resource Name
+        of the IAM role to be used for this target when the rule is triggered. I(input)
         (optional) is a JSON object that will override the event data when
         passed to the target.  I(input_path) (optional) is a JSONPath string
         (e.g. C($.detail)) that specifies the part of the event data to be
         passed to the target. If neither I(input) nor I(input_path) is
-        specified, then the entire event is passed to the target in JSON form."
+        specified, then the entire event is passed to the target in JSON form.
+        I(task_definition_arn) [optional] is ecs task definition arn.
+        I(task_count) [optional] is ecs task count."
     required: false
 '''
 
@@ -117,7 +113,18 @@ targets:
     returned: success
     type: list
     sample: "[{ 'arn': 'arn:aws:lambda:us-east-1:123456789012:function:MyFunction', 'id': 'MyTargetId' }]"
-'''
+'''  # NOQA
+
+try:
+    import boto3.exception
+    import botocore.exceptions
+except ImportError:
+    # module_utils.ec2.HAS_BOTO3 will do the right thing
+    pass
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import (HAS_BOTO3, boto3_conn, camel_dict_to_snake_dict,
+                                      ec2_argument_spec, get_aws_connection_info)
 
 
 class CloudWatchEventRule(object):
@@ -231,6 +238,15 @@ class CloudWatchEventRule(object):
                 target_request['Input'] = target['input']
             if 'input_path' in target:
                 target_request['InputPath'] = target['input_path']
+            if 'role_arn' in target:
+                target_request['RoleArn'] = target['role_arn']
+            if 'ecs_parameters' in target:
+                target_request['EcsParameters'] = {}
+                ecs_parameters = target['ecs_parameters']
+                if 'task_definition_arn' in target['ecs_parameters']:
+                    target_request['EcsParameters']['TaskDefinitionArn'] = ecs_parameters['task_definition_arn']
+                if 'task_count' in target['ecs_parameters']:
+                    target_request['EcsParameters']['TaskCount'] = ecs_parameters['task_count']
             targets_request.append(target_request)
         return targets_request
 
@@ -405,11 +421,6 @@ def main():
         module.fail_json(msg="Invalid state '{0}' provided".format(state))
 
     module.exit_json(**cwe_rule_manager.fetch_aws_state())
-
-
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 
 if __name__ == '__main__':

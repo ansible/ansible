@@ -2,24 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2016, 2017 Jasper Lievisse Adriaanse <j@jasper.la>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -124,8 +113,9 @@ state:
     sample: 'present'
 '''
 
-from ansible.module_utils.basic import AnsibleModule
 import re
+
+from ansible.module_utils.basic import AnsibleModule
 
 # Shortcut for the imgadm(1M) command. While imgadm(1M) supports a
 # -E option to return any errors in JSON, the generated JSON does not play well
@@ -207,17 +197,17 @@ class Imgadm(object):
                 self.changed = True
         else:
             # Type is ignored by imgadm(1M) here
-            cmd += ' -d %s' % (source)
+            cmd += ' -d %s' % source
             (rc, stdout, stderr) = self.module.run_command(cmd)
 
             if rc != 0:
                 self.module.fail_json(msg='Failed to remove source: {0}'.format(self.errmsg(stderr)))
 
-            regex = 'Do not have image source "%s", no change' % (source)
+            regex = 'Do not have image source "%s", no change' % source
             if re.match(regex, stdout):
                 self.changed = False
 
-            regex = 'Deleted ".*" image source "%s"' % (source)
+            regex = 'Deleted ".*" image source "%s"' % source
             if re.match(regex, stdout):
                 self.changed = True
 

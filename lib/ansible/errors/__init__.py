@@ -19,13 +19,19 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.errors.yaml_strings import ( YAML_POSITION_DETAILS,
-        YAML_COMMON_UNQUOTED_VARIABLE_ERROR,
-        YAML_COMMON_DICT_ERROR,
-        YAML_COMMON_UNQUOTED_COLON_ERROR,
-        YAML_COMMON_PARTIALLY_QUOTED_LINE_ERROR,
-        YAML_COMMON_UNBALANCED_QUOTES_ERROR,
-        YAML_COMMON_LEADING_TAB_ERROR)
+from collections import Sequence
+import traceback
+import sys
+
+from ansible.errors.yaml_strings import (
+    YAML_COMMON_DICT_ERROR,
+    YAML_COMMON_LEADING_TAB_ERROR,
+    YAML_COMMON_PARTIALLY_QUOTED_LINE_ERROR,
+    YAML_COMMON_UNBALANCED_QUOTES_ERROR,
+    YAML_COMMON_UNQUOTED_COLON_ERROR,
+    YAML_COMMON_UNQUOTED_VARIABLE_ERROR,
+    YAML_POSITION_DETAILS,
+)
 from ansible.module_utils._text import to_native, to_text
 
 
@@ -44,7 +50,7 @@ class AnsibleError(Exception):
     which should be returned by the DataLoader() class.
     '''
 
-    def __init__(self, message="", obj=None, show_content=True, suppress_extended_error=False):
+    def __init__(self, message="", obj=None, show_content=True, suppress_extended_error=False, orig_exc=None):
         # we import this here to prevent an import loop problem,
         # since the objects code also imports ansible.errors
         from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject
@@ -59,6 +65,12 @@ class AnsibleError(Exception):
                 self.message = '%s' % to_native(message)
         else:
             self.message = '%s' % to_native(message)
+        if orig_exc:
+            self.orig_exc = orig_exc
+            self.message += '\nexception type: %s' % to_native(type(orig_exc))
+            self.message += '\nexception: %s' % to_native(orig_exc)
+
+        self.tb = ''.join(traceback.format_tb(sys.exc_info()[2]))
 
     def __str__(self):
         return self.message
@@ -107,9 +119,9 @@ class AnsibleError(Exception):
                 target_line = to_text(target_line)
                 prev_line = to_text(prev_line)
                 if target_line:
-                    stripped_line = target_line.replace(" ","")
-                    arrow_line    = (" " * (col_number-1)) + "^ here"
-                    #header_line   = ("=" * 73)
+                    stripped_line = target_line.replace(" ", "")
+                    arrow_line = (" " * (col_number - 1)) + "^ here"
+                    # header_line = ("=" * 73)
                     error_message += "\nThe offending line appears to be:\n\n%s\n%s\n%s\n" % (prev_line.rstrip(), target_line.rstrip(), arrow_line)
 
                     # TODO: There may be cases where there is a valid tab in a line that has other errors.
@@ -123,7 +135,11 @@ class AnsibleError(Exception):
                     elif ":{{" in stripped_line and "}}" in stripped_line:
                         error_message += YAML_COMMON_DICT_ERROR
                     # check for common unquoted colon mistakes
-                    elif len(target_line) and len(target_line) > 1 and len(target_line) > col_number and target_line[col_number] == ":" and target_line.count(':') > 1:
+                    elif (len(target_line) and
+                            len(target_line) > 1 and
+                            len(target_line) > col_number and
+                            target_line[col_number] == ":" and
+                            target_line.count(':') > 1):
                         error_message += YAML_COMMON_UNQUOTED_COLON_ERROR
                     # otherwise, check for some common quoting mistakes
                     else:
@@ -138,7 +154,11 @@ class AnsibleError(Exception):
                             elif middle.startswith('"') and not middle.endswith('"'):
                                 match = True
 
-                            if len(middle) > 0 and middle[0] in [ '"', "'" ] and middle[-1] in [ '"', "'" ] and target_line.count("'") > 2 or target_line.count('"') > 2:
+                            if (len(middle) > 0 and
+                                    middle[0] in ['"', "'"] and
+                                    middle[-1] in ['"', "'"] and
+                                    target_line.count("'") > 2 or
+                                    target_line.count('"') > 2):
                                 unbalanced = True
 
                             if match:
@@ -153,46 +173,85 @@ class AnsibleError(Exception):
 
         return error_message
 
+
 class AnsibleOptionsError(AnsibleError):
     ''' bad or incomplete options passed '''
     pass
+
 
 class AnsibleParserError(AnsibleError):
     ''' something was detected early that is wrong about a playbook or data file '''
     pass
 
+
 class AnsibleInternalError(AnsibleError):
     ''' internal safeguards tripped, something happened in the code that should never happen '''
     pass
+
 
 class AnsibleRuntimeError(AnsibleError):
     ''' ansible had a problem while running a playbook '''
     pass
 
+
 class AnsibleModuleError(AnsibleRuntimeError):
     ''' a module failed somehow '''
     pass
+
 
 class AnsibleConnectionFailure(AnsibleRuntimeError):
     ''' the transport / connection_plugin had a fatal error '''
     pass
 
+
 class AnsibleFilterError(AnsibleRuntimeError):
     ''' a templating failure '''
     pass
+
 
 class AnsibleLookupError(AnsibleRuntimeError):
     ''' a lookup failure '''
     pass
 
+
 class AnsibleCallbackError(AnsibleRuntimeError):
     ''' a callback failure '''
     pass
+
 
 class AnsibleUndefinedVariable(AnsibleRuntimeError):
     ''' a templating failure '''
     pass
 
+
 class AnsibleFileNotFound(AnsibleRuntimeError):
     ''' a file missing failure '''
+
+    def __init__(self, message="", obj=None, show_content=True, suppress_extended_error=False, orig_exc=None, paths=None, file_name=None):
+
+        self.file_name = file_name
+        self.paths = paths
+
+        if self.file_name:
+            if message:
+                message += "\n"
+            message += "Could not find or access '%s'" % to_text(self.file_name)
+
+        if self.paths and isinstance(self.paths, Sequence):
+            searched = to_text('\n\t'.join(self.paths))
+            if message:
+                message += "\n"
+            message += "Searched in:\n\t%s" % searched
+
+        super(AnsibleFileNotFound, self).__init__(message=message, obj=obj, show_content=show_content,
+                                                  suppress_extended_error=suppress_extended_error, orig_exc=orig_exc)
+
+
+class AnsibleActionSkip(AnsibleRuntimeError):
+    ''' an action runtime skip'''
+    pass
+
+
+class AnsibleActionFail(AnsibleRuntimeError):
+    ''' an action runtime failure'''
     pass

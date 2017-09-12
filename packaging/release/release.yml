@@ -33,7 +33,7 @@
   #  private: no
   - name: has_submodules
     prompt: "Does this branch have git submodules?"
-    default: "yes"
+    default: "no"
     private: no
   - name: is_final
     prompt: "Is this a final release (not a beta/rc)?"
@@ -44,6 +44,10 @@
     default: "no"
     private: no
   tasks:
+  - pause:
+      prompt: "Has the CHANGELOG and any other files been updated and are ready to go?"
+    when: is_final|bool
+
   - name: create a combined version string from the specified values
     set_fact: 
       new_version: "v{{ansible_release_version}}-{{ansible_release_string}}"

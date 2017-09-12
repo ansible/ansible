@@ -1,20 +1,13 @@
 #!/usr/bin/python
-# This file is part of Ansible
 #
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -89,9 +82,11 @@ EXAMPLES = '''
 '''
 
 
-import sys  # noqa
 import json
 import re
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url
 
 
 API_BASE = 'https://api.github.com'
@@ -108,7 +103,7 @@ class GitHubResponse(object):
     def links(self):
         links = {}
         if 'link' in self.info:
-            link_header = re.info['link']
+            link_header = self.info['link']
             matches = re.findall('<([^>]+)>; rel="([^"]+)"', link_header)
             for url, rel in matches:
                 links[rel] = url
@@ -137,12 +132,12 @@ class GitHubSession(object):
 
 def get_all_keys(session):
     url = API_BASE + '/user/keys'
+    result = []
     while url:
         r = session.request('GET', url)
-        for key in r.json():
-            yield key
-
+        result.extend(r.json())
         url = r.links().get('next')
+    return result
 
 
 def create_key(session, name, pubkey, check_mode):
@@ -181,11 +176,20 @@ def ensure_key_absent(session, name, check_mode):
             'deleted_keys': to_delete}
 
 
-def ensure_key_present(session, name, pubkey, force, check_mode):
-    matching_keys = [k for k in get_all_keys(session) if k['title'] == name]
+def ensure_key_present(module, session, name, pubkey, force, check_mode):
+    all_keys = get_all_keys(session)
+    matching_keys = [k for k in all_keys if k['title'] == name]
     deleted_keys = []
 
-    if matching_keys and force and matching_keys[0]['key'] != pubkey:
+    new_signature = pubkey.split(' ')[1]
+    for key in all_keys:
+        existing_signature = key['key'].split(' ')[1]
+        if new_signature == existing_signature and key['title'] != name:
+            module.fail_json(msg=(
+                "another key with the same content is already registered "
+                "under the name |{}|").format(key['title']))
+
+    if matching_keys and force and matching_keys[0]['key'].split(' ')[1] != new_signature:
         delete_keys(session, matching_keys, check_mode=check_mode)
         (deleted_keys, matching_keys) = (matching_keys, [])
 
@@ -226,23 +230,18 @@ def main():
         # Keys consist of a protocol, the key data, and an optional comment.
         if len(pubkey_parts) < 2:
             module.fail_json(msg='"pubkey" parameter has an invalid format')
-
-        # Strip out comment so we can compare to the keys GitHub returns.
-        pubkey = ' '.join(pubkey_parts[:2])
     elif state == 'present':
         module.fail_json(msg='"pubkey" is required when state=present')
 
     session = GitHubSession(module, token)
     if state == 'present':
-        result = ensure_key_present(session, name, pubkey, force=force,
+        result = ensure_key_present(module, session, name, pubkey, force=force,
                                     check_mode=module.check_mode)
     elif state == 'absent':
         result = ensure_key_absent(session, name, check_mode=module.check_mode)
 
     module.exit_json(**result)
 
-from ansible.module_utils.basic import *  # noqa
-from ansible.module_utils.urls import *  # noqa
 
 if __name__ == '__main__':
     main()

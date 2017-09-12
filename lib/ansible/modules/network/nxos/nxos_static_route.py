@@ -15,9 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = '''
@@ -27,47 +27,48 @@ extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Manages static route configuration
 description:
-    - Manages static route configuration
+  - Manages static route configuration
 author: Gabriele Gerbino (@GGabriele)
 notes:
-    - If no vrf is supplied, vrf is set to default.
-    - If C(state=absent), the route will be removed, regardless of the
-      non-required parameters.
+  - Tested against NXOSv 7.3.(0)D1(1) on VIRL
+  - If no vrf is supplied, vrf is set to default.
+  - If C(state=absent), the route will be removed, regardless of the
+    non-required parameters.
 options:
-    prefix:
-        description:
-            - Destination prefix of static route.
-        required: true
-    next_hop:
-        description:
-            - Next hop address or interface of static route.
-              If interface, it must be the fully-qualified interface name.
-        required: true
-    vrf:
-        description:
-            - VRF for static route.
-        required: false
-        default: default
-    tag:
-        description:
-            - Route tag value (numeric).
-        required: false
-        default: null
-    route_name:
-        description:
-            - Name of the route. Used with the name parameter on the CLI.
-        required: false
-        default: null
-    pref:
-        description:
-            - Preference or administrative difference of route (range 1-255).
-        required: false
-        default: null
-    state:
-        description:
-            - Manage the state of the resource.
-        required: true
-        choices: ['present','absent']
+  prefix:
+    description:
+      - Destination prefix of static route.
+    required: true
+  next_hop:
+    description:
+      - Next hop address or interface of static route.
+        If interface, it must be the fully-qualified interface name.
+    required: true
+  vrf:
+    description:
+      - VRF for static route.
+    required: false
+    default: default
+  tag:
+    description:
+      - Route tag value (numeric).
+    required: false
+    default: null
+  route_name:
+    description:
+      - Name of the route. Used with the name parameter on the CLI.
+    required: false
+    default: null
+  pref:
+    description:
+      - Preference or administrative difference of route (range 1-255).
+    required: false
+    default: null
+  state:
+    description:
+      - Manage the state of the resource.
+    required: true
+    choices: ['present','absent']
 '''
 
 EXAMPLES = '''
@@ -76,97 +77,65 @@ EXAMPLES = '''
     next_hop: "3.3.3.3"
     route_name: testing
     pref: 100
-    username: "{{ un }}"
-    password: "{{ pwd }}"
-    host: "{{ inventory_hostname }}"
 '''
 
 RETURN = '''
-proposed:
-    description: k/v pairs of parameters passed into module
-    returned: verbose mode
-    type: dict
-    sample: {"next_hop": "3.3.3.3", "pref": "100",
-            "prefix": "192.168.20.64/24", "route_name": "testing",
-            "vrf": "default"}
-existing:
-    description: k/v pairs of existing configuration
-    returned: verbose mode
-    type: dict
-    sample: {}
-end_state:
-    description: k/v pairs of configuration after module execution
-    returned: verbose mode
-    type: dict
-    sample: {"next_hop": "3.3.3.3", "pref": "100",
-            "prefix": "192.168.20.0/24", "route_name": "testing",
-            "tag": null}
-updates:
+commands:
     description: commands sent to the device
     returned: always
     type: list
     sample: ["ip route 192.168.20.0/24 3.3.3.3 name testing 100"]
-changed:
-    description: check to see if a change was made on the device
-    returned: always
-    type: boolean
-    sample: true
 '''
 import re
 
-from ansible.module_utils.nxos import get_config, load_config, run_commands
+from ansible.module_utils.nxos import get_config, load_config
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netcfg import CustomNetworkConfig
 
-def invoke(name, *args, **kwargs):
-    func = globals().get(name)
-    if func:
-        return func(*args, **kwargs)
 
+def reconcile_candidate(module, candidate, prefix):
+    netcfg = CustomNetworkConfig(indent=2, contents=get_config(module))
+    state = module.params['state']
 
-def state_present(module, candidate, prefix):
-    commands = list()
-    invoke('set_route', module, commands, prefix)
-    if commands:
-        if module.params['vrf'] == 'default':
-            candidate.add(commands, parents=[])
-        else:
-            candidate.add(commands, parents=['vrf context {0}'.format(module.params['vrf'])])
+    set_command = set_route_command(module, prefix)
+    remove_command = remove_route_command(module, prefix)
 
-
-def state_absent(module, candidate, prefix):
-    netcfg = get_config(module)
-    commands = list()
-    parents = 'vrf context {0}'.format(module.params['vrf'])
-    invoke('set_route', module, commands, prefix)
+    parents = []
+    commands = []
     if module.params['vrf'] == 'default':
-        config = netcfg.get_section(commands[0])
-        if config:
-            invoke('remove_route', module, commands, config, prefix)
-            candidate.add(commands, parents=[])
+        config = netcfg.get_section(set_command)
+        if config and state == 'absent':
+            commands = [remove_command]
+        elif not config and state == 'present':
+            commands = [set_command]
     else:
+        parents = ['vrf context {0}'.format(module.params['vrf'])]
         config = netcfg.get_section(parents)
-        splitted_config = config.split('\n')
-        splitted_config = map(str.strip, splitted_config)
-        if commands[0] in splitted_config:
-            invoke('remove_route', module, commands, config, prefix)
-            candidate.add(commands, parents=[parents])
+        if not isinstance(config, list):
+            config = config.split('\n')
+        config = [line.strip() for line in config]
+        if set_command in config and state == 'absent':
+            commands = [remove_command]
+        elif set_command not in config and state == 'present':
+            commands = [set_command]
+
+    if commands:
+        candidate.add(commands, parents=parents)
 
 
 def fix_prefix_to_regex(prefix):
-    prefix = prefix.replace('.', '\.').replace('/', '\/')
+    prefix = prefix.replace('.', r'\.').replace('/', r'\/')
     return prefix
 
 
 def get_existing(module, prefix, warnings):
     key_map = ['tag', 'pref', 'route_name', 'next_hop']
-    netcfg = get_config(module)
+    netcfg = CustomNetworkConfig(indent=2, contents=get_config(module))
     parents = 'vrf context {0}'.format(module.params['vrf'])
     prefix_to_regex = fix_prefix_to_regex(prefix)
 
-    route_regex = ('.*ip\sroute\s{0}\s(?P<next_hop>\S+)(\sname\s(?P<route_name>\S+))?'
-                   '(\stag\s(?P<tag>\d+))?(\s(?P<pref>\d+)).*'.format(prefix_to_regex))
+    route_regex = r'.*ip\sroute\s{0}\s(?P<next_hop>\S+)(\sname\s(?P<route_name>\S+))?(\stag\s(?P<tag>\d+))?(\s(?P<pref>\d+))?.*'.format(prefix_to_regex)
 
     if module.params['vrf'] == 'default':
         config = str(netcfg)
@@ -194,11 +163,11 @@ def get_existing(module, prefix, warnings):
     return group_route
 
 
-def remove_route(module, commands, config, prefix):
-    commands.append('no ip route {0} {1}'.format(prefix, module.params['next_hop']))
+def remove_route_command(module, prefix):
+    return 'no ip route {0} {1}'.format(prefix, module.params['next_hop'])
 
 
-def set_route(module, commands, prefix):
+def set_route_command(module, prefix):
     route_cmd = 'ip route {0} {1}'.format(prefix, module.params['next_hop'])
 
     if module.params['route_name']:
@@ -207,15 +176,15 @@ def set_route(module, commands, prefix):
         route_cmd += ' tag {0}'.format(module.params['tag'])
     if module.params['pref']:
         route_cmd += ' {0}'.format(module.params['pref'])
-    commands.append(route_cmd)
+
+    return route_cmd
 
 
 def get_dotted_mask(mask):
     bits = 0
-    for i in xrange(32-mask,32):
+    for i in range(32-mask, 32):
         bits |= (1 << i)
-    mask = ("%d.%d.%d.%d" % ((bits & 0xff000000) >> 24,
-           (bits & 0xff0000) >> 16, (bits & 0xff00) >> 8 , (bits & 0xff)))
+    mask = ("%d.%d.%d.%d" % ((bits & 0xff000000) >> 24, (bits & 0xff0000) >> 16, (bits & 0xff00) >> 8, (bits & 0xff)))
     return mask
 
 
@@ -275,53 +244,35 @@ def main():
         tag=dict(type='str'),
         route_name=dict(type='str'),
         pref=dict(type='str'),
-        state=dict(choices=['absent', 'present'],
-                   default='present'),
-        include_defaults=dict(default=True),
-
-        config=dict(),
-        save=dict(type='bool', default=False)
+        state=dict(choices=['absent', 'present'], default='present'),
     )
 
     argument_spec.update(nxos_argument_spec)
 
-    module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=True)
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        supports_check_mode=True,
+    )
 
     warnings = list()
     check_args(module, warnings)
+    result = dict(changed=False, warnings=warnings)
 
-    state = module.params['state']
+    prefix = normalize_prefix(module, module.params['prefix'])
 
-    result = dict(changed=False)
-    warnings = list()
-    prefix = invoke('normalize_prefix', module, module.params['prefix'])
+    candidate = CustomNetworkConfig(indent=3)
+    reconcile_candidate(module, candidate, prefix)
 
-    existing = invoke('get_existing', module, prefix, warnings)
-    end_state = existing
-
-    args = ['route_name', 'vrf', 'pref', 'tag', 'next_hop', 'prefix']
-    proposed = dict((k, v) for k, v in module.params.items() if v is not None and k in args)
-
-    if state == 'present' or (state == 'absent' and existing):
-        candidate = CustomNetworkConfig(indent=3)
-        invoke('state_%s' % state, module, candidate, prefix)
-
+    if candidate:
+        candidate = candidate.items_text()
         load_config(module, candidate)
+        result['commands'] = candidate
+        result['changed'] = True
     else:
-        result['updates'] = []
-
-    result['warnings'] = warnings
-
-    if module._verbosity > 0:
-        end_state = invoke('get_existing', module, prefix, warnings)
-        result['end_state'] = end_state
-        result['existing'] = existing
-        result['proposed'] = proposed
+        result['commands'] = []
 
     module.exit_json(**result)
 
 
 if __name__ == '__main__':
     main()
-

@@ -14,9 +14,20 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+DOCUMENTATION = """
+    author: Ansible Core Team
+    connection: accelerate
+    short_description: Temporary 0mq agent
+    description:
+        - This plugin uses one of the other ssh plugins to setup a temporary 0mq daemon on the target to execute subsequent tasks
+    deprecated:
+        why: paramiko and ssh + controlpersist perform the same or better without the problems of having an agent.
+        version: 2.5
+        alternative: paramiko and ssh with conrol persistence.
+"""
 
 import base64
 import json
@@ -44,7 +55,7 @@ except ImportError:
 # ((1400-8)/4)*3) = 1044
 # which leaves room for the TCP/IP header. We set this to a
 # multiple of the value to speed up file reads.
-CHUNK_SIZE=1044*20
+CHUNK_SIZE = 1044 * 20
 
 
 class Connection(ConnectionBase):
@@ -69,10 +80,11 @@ class Connection(ConnectionBase):
             tries = 3
             self.conn = socket.socket()
             self.conn.settimeout(C.ACCELERATE_CONNECT_TIMEOUT)
-            display.vvvv("attempting connection to %s via the accelerated port %d" % (self._play_context.remote_addr, self._play_context.accelerate_port), host=self._play_context.remote_addr)
+            display.vvvv("attempting connection to %s via the accelerated port %d" % (self._play_context.remote_addr, self._play_context.accelerate_port),
+                         host=self._play_context.remote_addr)
             while tries > 0:
                 try:
-                    self.conn.connect((self._play_context.remote_addr,self._play_context.accelerate_port))
+                    self.conn.connect((self._play_context.remote_addr, self._play_context.accelerate_port))
                     break
                 except socket.error:
                     display.vvvv("connection to %s failed, retrying..." % self._play_context.remote_addr, host=self._play_context.remote_addr)
@@ -80,7 +92,8 @@ class Connection(ConnectionBase):
                     tries -= 1
             if tries == 0:
                 display.vvv("Could not connect via the accelerated connection, exceeded # of tries", host=self._play_context.remote_addr)
-                raise AnsibleConnectionFailure("Failed to connect to %s on the accelerated port %s" % (self._play_context.remote_addr, self._play_context.accelerate_port))
+                raise AnsibleConnectionFailure("Failed to connect to %s on the accelerated port %s" % (self._play_context.remote_addr,
+                                                                                                       self._play_context.accelerate_port))
             elif wrong_user:
                 display.vvv("Restarting daemon with a different remote_user", host=self._play_context.remote_addr)
                 raise AnsibleError("The accelerated daemon was started on the remote with a different user")
@@ -105,11 +118,11 @@ class Connection(ConnectionBase):
         sock.close()
 
     def send_data(self, data):
-        packed_len = struct.pack('!Q',len(data))
+        packed_len = struct.pack('!Q', len(data))
         return self.conn.sendall(packed_len + data)
 
     def recv_data(self):
-        header_len = 8 # size of a packed unsigned long long
+        header_len = 8  # size of a packed unsigned long long
         data = b""
         try:
             display.vvvv("in recv_data(), waiting for the header", host=self._play_context.remote_addr)
@@ -120,7 +133,7 @@ class Connection(ConnectionBase):
                     return None
                 data += d
             display.vvvv("got the header, unpacking", host=self._play_context.remote_addr)
-            data_len = struct.unpack('!Q',data[:header_len])[0]
+            data_len = struct.unpack('!Q', data[:header_len])[0]
             data = data[header_len:]
             display.vvvv("data received so far (expecting %d): %d" % (data_len, len(data)), host=self._play_context.remote_addr)
             while len(data) < data_len:
@@ -225,7 +238,7 @@ class Connection(ConnectionBase):
         if not os.path.exists(in_path):
             raise AnsibleFileNotFound("file or module does not exist: %s" % in_path)
 
-        fd = file(in_path, 'rb')
+        fd = open(in_path, 'rb')
         fstat = os.stat(in_path)
         try:
             display.vvv("PUT file is %d bytes" % fstat.st_size, host=self._play_context.remote_addr)
@@ -250,7 +263,7 @@ class Connection(ConnectionBase):
                 response = keyczar_decrypt(self.key, response)
                 response = json.loads(response)
 
-                if response.get('failed',False):
+                if response.get('failed', False):
                     raise AnsibleError("failed to put the file in the requested location")
         finally:
             fd.close()
@@ -261,7 +274,7 @@ class Connection(ConnectionBase):
             response = keyczar_decrypt(self.key, response)
             response = json.loads(response)
 
-            if response.get('failed',False):
+            if response.get('failed', False):
                 raise AnsibleError("failed to put the file in the requested location")
 
     def fetch_file(self, in_path, out_path):

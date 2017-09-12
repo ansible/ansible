@@ -1,24 +1,14 @@
 #!/usr/bin/python
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -26,13 +16,15 @@ DOCUMENTATION = """
 module: iosxr_system
 version_added: "2.3"
 author: "Peter Sprygada (@privateip)"
-short_description: Manage the system attributes on Cisco IOS-XR devices
+short_description: Manage the system attributes on Cisco IOS XR devices
 description:
   - This module provides declarative management of node system attributes
-    on Cisco IOS-XR devices.  It provides an option to configure host system
+    on Cisco IOS XR devices.  It provides an option to configure host system
     parameters or remove those parameters from the device active
     configuration.
 extends_documentation_fragment: iosxr
+notes:
+  - Tested against IOS XR 6.1.2
 options:
   hostname:
     description:
@@ -243,7 +235,7 @@ def main():
 
     if commands:
         if not module.check_mode:
-            load_config(module, commands, commit=True)
+            load_config(module, commands, result['warnings'], commit=True)
         result['changed'] = True
 
     module.exit_json(**result)

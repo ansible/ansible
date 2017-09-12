@@ -1,25 +1,13 @@
 #!/usr/bin/python
-
 #
 # Copyright (c) 2015 CenturyLink
-#
-# This file is part of Ansible.
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -177,6 +165,7 @@ firewall_policy:
 
 __version__ = '${version}'
 
+import os
 import urlparse
 from time import sleep
 from distutils.version import LooseVersion
@@ -190,13 +179,14 @@ else:
 
 try:
     import clc as clc_sdk
-    from clc import CLCException
     from clc import APIFailedResponse
 except ImportError:
     CLC_FOUND = False
     clc_sdk = None
 else:
     CLC_FOUND = True
+
+from ansible.module_utils.basic import AnsibleModule
 
 
 class ClcFirewallPolicy:
@@ -236,11 +226,11 @@ class ClcFirewallPolicy:
             destination_account_alias=dict(default=None),
             firewall_policy_id=dict(default=None),
             ports=dict(default=None, type='list'),
-            source=dict(defualt=None, type='list'),
-            destination=dict(defualt=None, type='list'),
+            source=dict(default=None, type='list'),
+            destination=dict(default=None, type='list'),
             wait=dict(default=True),
             state=dict(default='present', choices=['present', 'absent']),
-            enabled=dict(defualt=True, choices=[True, False])
+            enabled=dict(default=True, choices=[True, False])
         )
         return argument_spec
 
@@ -597,6 +587,6 @@ def main():
     clc_firewall = ClcFirewallPolicy(module)
     clc_firewall.process_request()
 
-from ansible.module_utils.basic import *  # pylint: disable=W0614
+
 if __name__ == '__main__':
     main()

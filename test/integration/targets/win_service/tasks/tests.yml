@@ -1,0 +1,900 @@
+---
+- name: create new dummy test service
+  win_service:
+    name: "{{test_win_service_name}}"
+    path: "{{test_win_service_path}}"
+    display_name: "{{test_win_service_display_name}}"
+    description: "{{test_win_service_description}}"
+  register: win_service_added
+
+- name: check that creating a new service succeeds with a change
+  assert:
+    that:
+    - win_service_added|changed
+    - win_service_added.name == test_win_service_name
+    - win_service_added.can_pause_and_continue == False
+    - win_service_added.display_name == test_win_service_display_name
+    - win_service_added.description == test_win_service_description
+    - win_service_added.path == test_win_service_path
+    - win_service_added.state == 'stopped'
+    - win_service_added.start_mode == 'auto'
+    - win_service_added.username == 'LocalSystem'
+    - win_service_added.desktop_interact == False
+    - win_service_added.dependencies == []
+    - win_service_added.depended_by == []
+    - win_service_added.exists == True
+
+- name: test win_service module with short name
+  win_service:
+    name: "{{test_win_service_name}}"
+  register: win_service_name
+
+- name: check win_service result with short name
+  assert:
+    that:
+    - not win_service_name|changed
+    - win_service_name.name == test_win_service_name
+    - win_service_name.can_pause_and_continue == False
+    - win_service_name.display_name == test_win_service_display_name
+    - win_service_name.start_mode == 'auto'
+    - win_service_name.state == 'stopped'
+    - win_service_name.description == test_win_service_description
+    - win_service_name.exists == True
+    - win_service_name.path == test_win_service_path
+    - win_service_name.username == 'LocalSystem'
+    - win_service_name.desktop_interact == False
+    - win_service_name.dependencies == []
+    - win_service_name.depended_by == []
+
+- name: test win_service module with display name
+  win_service:
+    name: "{{test_win_service_display_name}}"
+  register: win_service_display_name
+
+- name: check win_service result with display name
+  assert:
+    that:
+    - not win_service_display_name|changed
+    - win_service_display_name.name == test_win_service_name
+    - win_service_display_name.can_pause_and_continue == False
+    - win_service_display_name.display_name == test_win_service_display_name
+    - win_service_display_name.start_mode == 'auto'
+    - win_service_display_name.state == 'stopped'
+    - win_service_display_name.description == test_win_service_description
+    - win_service_display_name.exists == True
+    - win_service_display_name.path == test_win_service_path
+    - win_service_display_name.username == 'LocalSystem'
+    - win_service_display_name.desktop_interact == False
+    - win_service_display_name.dependencies == []
+    - win_service_display_name.depended_by == []
+
+- name: test win_service module with invalid name
+  win_service:
+    name: iamnotaservice
+  register: win_service_invalid
+
+- name: check win_service result with invalid name
+  assert:
+    that:
+    - not win_service_invalid|changed
+    - win_service_invalid.exists == False
+
+- name: test win_service module with invalid name and absent state
+  win_service:
+    name: iamnotaservice
+    state: absent
+  register: win_service_invalid_with_absent
+
+- name: check win_service result with invalid name and absent state
+  assert:
+    that:
+    - not win_service_invalid_with_absent|changed
+    - win_service_invalid_with_absent.exists == False
+
+- name: test win_service module with invalid name and startup
+  win_service:
+    name: iamnotaservice
+    state: started
+  register: win_service_invalid_with_action
+  failed_when: win_service_invalid_with_action.msg != "Service \'iamnotaservice\' is not installed, need to set \'path\' to create a new service"
+
+- name: make sure the service is stopped and disabled for next tests
+  win_service:
+    name: "{{test_win_service_name}}"
+    state: stopped
+    start_mode: disabled
+  register: win_service_stopped_disabled
+
+- name: try to start the disabled service
+  win_service:
+    name: "{{test_win_service_name}}"
+    state: started
+  register: win_service_start_disabled
+  failed_when: "'Cannot start service ' + test_win_service_name + ' on computer' not in win_service_start_disabled.msg"
+
+- name: enable the service for manual startup
+  win_service:
+    name: "{{test_win_service_name}}"
+    start_mode: manual
+  register: win_service_manual_start_mode
+
+- name: check that enabling the service for manual startup succeeded
+  assert:
+    that:
+    - win_service_manual_start_mode|changed
+    - win_service_manual_start_mode.start_mode == 'manual'
+    - win_service_manual_start_mode.state == 'stopped'
+
+- name: enable the service for manual startup again
+  win_service:
+    name: "{{test_win_service_name}}"
+    start_mode: manual
+  register: win_service_manual_start_mode_again
+
+- name: check that enabling service for manual startup again didn't change anything
+  assert:
+    that:
+    - not win_service_manual_start_mode_again|changed
+    - win_service_manual_start_mode_again.start_mode == 'manual'
+    - win_service_manual_start_mode_again.state == 'stopped'
+
+- name: enable the service for delayed startup from non automatic
+  win_service:
+    name: "{{test_win_service_name}}"
+    start_mode: delayed
+  register: win_service_delayed_start_mode
+
+- name: check that that enabling the service for delayed startup succeeded
+  assert:
+    that:
+    - win_service_delayed_start_mode|changed
+    - win_service_delayed_start_mode.start_mode == 'delayed'
+    - win_service_delayed_start_mode.state == 'stopped'
+
+- name: enable the service for delayed startup from non automatic again
+  win_service:
+    name: "{{test_win_service_name}}"
+    start_mode: delayed
+  register: win_service_delayed_start_mode_again
+
+- name: check that enabling the service for delayed startup again no changes
+  assert:
+    that:
+    - not win_service_delayed_start_mode_again|changed
+    - win_service_delayed_start_mode_again.start_mode == 'delayed'
+    - win_service_delayed_start_mode_again.state == 'stopped'
+
+- name: enable the service for automatic startup
+  win_service:
+    name: "{{test_win_service_name}}"
+    start_mode: auto
+  register: win_service_auto_start_mode
+
+- name: check that enabling the service for auto startup succeeded
+  assert:
+    that:
+    - win_service_auto_start_mode|changed
+    - win_service_auto_start_mode.start_mode == 'auto'
+    - win_service_auto_start_mode.state == 'stopped'
+
+- name: enable the service for automatic startup again
+  win_service:
+    name: "{{test_win_service_name}}"
+    start_mode: auto
+  register: win_service_auto_start_mode_again
+
+- name: check that enabling the service for auto startup again no changes
+  assert:
+    that:
+    - not win_service_auto_start_mode_again|changed
+    - win_service_auto_start_mode_again.start_mode == 'auto'
+    - win_service_auto_start_mode_again.state == 'stopped'
+
+- name: enable the service for delayed startup from automatic
+  win_service:
+    name: "{{test_win_service_name}}"
+    start_mode: delayed
+  register: win_service_delayed_start_mode_from_auto
+
+- name: check that enabling the service for delayed startup from auto succeeded
+  assert:
+    that:
+    - win_service_delayed_start_mode_from_auto|changed
+    - win_service_delayed_start_mode_from_auto.start_mode == 'delayed'
+    - win_service_delayed_start_mode_from_auto.state == 'stopped'
+
+- name: enable the service for delayed startup from automatic again
+  win_service:
+    name: "{{test_win_service_name}}"
+    start_mode: delayed
+  register: win_service_delayed_start_mode_from_auto_again
+
+- name: check that enabling the service for delayed startup from auto succeeded again no change
+  assert:
+    that:
+    - not win_service_delayed_start_mode_from_auto_again|changed
+    - win_service_delayed_start_mode_from_auto_again.start_mode == 'delayed'
+    - win_service_delayed_start_mode_from_auto_again.state == 'stopped'
+
+- name: start the service
+  win_service:
+    name: "{{test_win_service_name}}"
+    state: started
+  register: win_service_start
+
+- name: check that starting the service succeeds with changes
+  assert:
+    that:
+    - win_service_start|changed
+    - win_service_start.state == 'running'
+
+- name: start the service again
+  win_service:
+    name: "{{test_win_service_name}}"
+    state: started
+  register: win_service_start_again
+
+- name: check that starting the service succeeds again with no changes
+  assert:
+    that:
+    - not win_service_start_again|changed
+    - win_service_start_again.state == 'running'
+
+- name: restart the service
+  win_service:
+    name: "{{test_win_service_name}}"
+    state: restarted
+  register: win_service_restart
+
+- name: check that restarting the service succeeds with changes
+  assert:
+    that:
+    - win_service_restart|changed
+    - win_service_restart.state =='running'
+
+- name: restart the service again
+  win_service:
+    name: "{{test_win_service_name}}"
+    state: restarted
+  register: win_service_restart_again
+
+- name: check that restarting the service again succeeds with changes
+  assert:
+    that:
+    - win_service_restart_again|changed
+    - win_service_restart_again.state =='running'
+
+- name: disable the service while running
+  win_service:
+    name: "{{test_win_service_name}}"
+    start_mode: disabled
+  register: win_service_disabled_while_running
+
+- name: check that disabling the service succeeds, service is still running
+  assert:
+    that:
+    - win_service_disabled_while_running|changed
+    - win_service_disabled_while_running.start_mode == 'disabled'
+    - win_service_disabled_while_running.state == 'running'
+
+- name: disable the service while running again
+  win_service:
+    name: "{{test_win_service_name}}"
+    start_mode: disabled
+  register: win_service_disabled_while_running_again
+
+- name: check that disabling the service again succeeds, service is still running but with no changes
+  assert:
+    that:
+    - not win_service_disabled_while_running_again|changed
+    - win_service_disabled_while_running_again.start_mode == 'disabled'
+    - win_service_disabled_while_running_again.state == 'running'
+
+- name: stop the service
+  win_service:
+    name: "{{test_win_service_name}}"
+    state: stopped
+  register: win_service_stopped
+
+- name: check that stopping the service succeeds with changes
+  assert:
+    that:
+    - win_service_stopped|changed
+    - win_service_stopped.state == 'stopped'
+
+- name: stop the service again
+  win_service:
+    name: "{{test_win_service_name}}"
+    state: stopped
+  register: win_service_stopped_again
+
+- name: check that stopping the service again succeeds with no changes
+  assert:
+    that:
+    - not win_service_stopped_again|changed
+    - win_service_stopped_again.state == 'stopped'
+
+- name: set username without password
+  win_service:
+    name: "{{test_win_service_name}}"
+    username: username
+  register: win_service_change_user_without_password
+  failed_when: win_service_change_user_without_password.msg != "The argument 'password' must be supplied with 'username'"
+
+- name: set password without username
+  win_service:
+    name: "{{test_win_service_name}}"
+    password: password
+  register: win_service_change_password_without_user
+  failed_when: win_service_change_password_without_user.msg != "The argument 'username' must be supplied with 'password'"
+
+- name: set service username to Network Service and desktop interact fail
+  win_service:
+    name: "{{test_win_service_name}}"
+    username: NT AUTHORITY\NetworkService
+    password: ""
+    desktop_interact: True
+  register: win_desktop_interact_not_local_system
+  failed_when: win_desktop_interact_not_local_system.msg != "Can only set 'desktop_interact' to true when 'username' equals 'LocalSystem'"
+
+- name: set service username to Network Service
+  win_service:
+    name: "{{test_win_service_name}}"
+    username: NT AUTHORITY\NetworkService
+    password: ""
+  register: win_service_change_password_network_service
+
+- name: check that the service user has been set to Network Service
+  assert:
+    that:
+    - win_service_change_password_network_service|changed
+    - win_service_change_password_network_service.username == 'NT AUTHORITY\\NetworkService'
+    - win_service_change_password_network_service.desktop_interact == False
+
+- name: set service username to Network Service again
+  win_service:
+    name: "{{test_win_service_name}}"
+    username: NT AUTHORITY\NetworkService
+    password: ""
+  register: win_service_change_password_network_service_again
+
+- name: check that the service user has been set to Network Service and nothing changed
+  assert:
+    that:
+    - not win_service_change_password_network_service_again|changed
+    - win_service_change_password_network_service_again.username == 'NT AUTHORITY\\NetworkService'
+    - win_service_change_password_network_service_again.desktop_interact == False
+
+- name: set service username to interact with desktop with existing user to fail
+  win_service:
+    name: "{{test_win_service_name}}"
+    desktop_interact: True
+  register: win_service_desktop_interact_current_user_fail
+  failed_when: win_service_desktop_interact_current_user_fail.msg != "Can only set desktop_interact to true when service is run with/or 'username' equals 'LocalSystem'"
+
+- name: set service username to Local Service
+  win_service:
+    name: "{{test_win_service_name}}"
+    username: NT AUTHORITY\LocalService
+    password: ""
+  register: win_service_change_password_local_service
+
+- name: check that the service user has been set to Local Service
+  assert:
+    that:
+    - win_service_change_password_local_service|changed
+    - win_service_change_password_local_service.username == 'NT AUTHORITY\\LocalService'
+    - win_service_change_password_local_service.desktop_interact == False
+
+- name: set service username to Local Service again
+  win_service:
+    name: "{{test_win_service_name}}"
+    username: NT AUTHORITY\LocalService
+    password: ""
+  register: win_service_change_password_local_service_again
+
+- name: check that the service user has been set to Local Service and nothing changed
+  assert:
+    that:
+    - not win_service_change_password_local_service_again|changed
+    - win_service_change_password_local_service_again.username == 'NT AUTHORITY\\LocalService'
+    - win_service_change_password_local_service_again.desktop_interact == False
+
+- name: set service username to Local System
+  win_service:
+    name: "{{test_win_service_name}}"
+    username: LocalSystem
+    password: ""
+  register: win_service_change_password_local_system
+
+- name: check that the service user has been set to Local System
+  assert:
+    that:
+    - win_service_change_password_local_system|changed
+    - win_service_change_password_local_system.username == 'LocalSystem'
+    - win_service_change_password_local_system.desktop_interact == False
+
+- name: set service username to Local System again
+  win_service:
+    name: "{{test_win_service_name}}"
+    username: LocalSystem
+    password: ""
+  register: win_service_change_password_local_system_again
+
+- name: check that the service user has been set to Local System and nothing changed
+  assert:
+    that:
+    - not win_service_change_password_local_system_again|changed
+    - win_service_change_password_local_system_again.username == 'LocalSystem'
+    - win_service_change_password_local_system_again.desktop_interact == False
+
+- name: set service username to Local System with desktop interaction
+  win_service:
+    name: "{{test_win_service_name}}"
+    username: LocalSystem
+    password: ""
+    desktop_interact: True
+  register: win_service_local_system_desktop
+
+- name: check that the service has been set to Local System with desktop interaction
+  assert:
+    that:
+    - win_service_local_system_desktop|changed
+    - win_service_local_system_desktop.username == 'LocalSystem'
+    - win_service_local_system_desktop.desktop_interact == True
+    
+- name: set service username to Local System with desktop interaction again
+  win_service:
+    name: "{{test_win_service_name}}"
+    username: LocalSystem
+    password: ""
+    desktop_interact: True
+  register: win_service_local_system_desktop_again
+
+- name: check that the service has been set to Local System with desktop interaction again
+  assert:
+    that:
+    - not win_service_local_system_desktop_again|changed
+    - win_service_local_system_desktop_again.username == 'LocalSystem'
+    - win_service_local_system_desktop_again.desktop_interact == True
+
+- name: set desktop interaction to disabled
+  win_service:
+    name: "{{test_win_service_name}}"
+    desktop_interact: False
+  register: win_service_desktop_disable
+
+- name: check that desktop interaction has been disabled
+  assert:
+    that:
+    - win_service_desktop_disable|changed
+    - win_service_desktop_disable.username == 'LocalSystem'
+    - win_service_desktop_disable.desktop_interact == False
+
+- name: set desktop interaction to disabled again
+  win_service:
+    name: "{{test_win_service_name}}"
+    desktop_interact: False
+  register: win_service_desktop_disable_again
+
+- name: check that desktop interaction has been disabled again
+  assert:
+    that:
+    - not win_service_desktop_disable_again|changed
+    - win_service_desktop_disable_again.username == 'LocalSystem'
+    - win_service_desktop_disable_again.desktop_interact == False
+
+- name: set desktop interaction to enabled with current user as LocalSystem
+  win_service:
+    name: "{{test_win_service_name}}"
+    desktop_interact: True
+  register: win_service_desktop_enable
+
+- name: check that desktop iteraction has been enabled
+  assert:
+    that:
+    - win_service_desktop_enable|changed
+    - win_service_desktop_enable.username == 'LocalSystem'
+    - win_service_desktop_enable.desktop_interact == True
+
+- name: set desktop interaction to enabled with current user as LocalSystem again
+  win_service:
+    name: "{{test_win_service_name}}"
+    desktop_interact: True
+  register: win_service_desktop_enable_again
+
+- name: check that desktop iteraction has been enabled again
+  assert:
+    that:
+    - not win_service_desktop_enable_again|changed
+    - win_service_desktop_enable_again.username == 'LocalSystem'
+    - win_service_desktop_enable_again.desktop_interact == True
+
+- name: set service username to current user
+  win_service:
+    name: "{{test_win_service_name}}"
+    username: ".\\{{ansible_user}}"
+    password: "{{ansible_password}}"
+  register: win_service_change_password_current_user
+
+- name: check that the service user has been set to current user
+  assert:
+    that:
+    - win_service_change_password_current_user|changed
+    - win_service_change_password_current_user.username == '.\\{{ansible_user}}'
+    - win_service_change_password_current_user.desktop_interact == False
+
+- name: set service username to current user again
+  win_service:
+    name: "{{test_win_service_name}}"
+    username: ".\\{{ansible_user}}"
+    password: "{{ansible_password}}"
+  register: win_service_change_password_current_user_again
+
+- name: check that the service user has been set to current user and nothing changed
+  assert:
+    that:
+    - not win_service_change_password_current_user_again|changed
+    - win_service_change_password_current_user_again.username == '.\\{{ansible_user}}'
+    - win_service_change_password_current_user_again.desktop_interact == False
+
+- name: set service display name
+  win_service:
+    name: "{{test_win_service_name}}"
+    display_name: Test Service New
+  register: win_service_display_name
+
+- name: check that the service display name has been changed
+  assert:
+    that:
+    - win_service_display_name|changed
+    - win_service_display_name.display_name == 'Test Service New'
+
+- name: set service display name again
+  win_service:
+    name: "{{test_win_service_name}}"
+    display_name: Test Service New
+  register: win_service_display_name_again
+
+- name: check that the service display name has been changed again
+  assert:
+    that:
+    - not win_service_display_name_again|changed
+    - win_service_display_name_again.display_name == 'Test Service New'
+
+- name: set service description
+  win_service:
+    name: "{{test_win_service_name}}"
+    description: New Description
+  register: win_service_description
+
+- name: check that the service description has been changed
+  assert:
+    that:
+    - win_service_description|changed
+    - win_service_description.description == 'New Description'
+
+- name: set service description again
+  win_service:
+    name: "{{test_win_service_name}}"
+    description: New Description
+  register: win_service_description_again
+
+- name: check that the service description has been changed again
+  assert:
+    that:
+    - not win_service_description_again|changed
+    - win_service_description_again.description == 'New Description'
+
+- name: set service path
+  win_service:
+    name: "{{test_win_service_name}}"
+    path: C:\temp\test.exe
+  register: win_service_path
+
+- name: check that the service path has been changed
+  assert:
+    that:
+    - win_service_path|changed
+    - win_service_path.path == 'C:\\temp\\test.exe'
+
+- name: set service path again
+  win_service:
+    name: "{{test_win_service_name}}"
+    path: C:\temp\test.exe
+  register: win_service_path_again
+
+- name: check that the service path has been changed again
+  assert:
+    that:
+    - not win_service_path_again|changed
+    - win_service_path_again.path == 'C:\\temp\\test.exe'
+
+- name: revert original service path back to normal
+  win_service:
+    name: "{{test_win_service_name}}"
+    path: "{{test_win_service_path}}"
+
+- name: create new second dependency parent service
+  win_service:
+    name: TestServiceParent2
+    display_name: Test Service Parent 2
+    path: "{{test_win_service_path}}"
+
+- name: create new dependency service
+  win_service:
+    name: TestServiceDependency
+    display_name: Test Service Dependency
+    path: "{{test_win_service_path}}"
+    dependencies: "{{test_win_service_name}}"
+  register: win_service_dependency_string
+
+- name: check that the service with a dependency has been created
+  assert:
+    that:
+    - win_service_dependency_string|changed
+    - win_service_dependency_string.dependencies == ['{{test_win_service_name}}']
+
+- name: create new dependencys service again
+  win_service:
+    name: TestServiceDependency
+    dependencies: "{{test_win_service_name}}"
+  register: win_service_dependency_string_again
+
+- name: check that the service with a dependency has been created again
+  assert:
+    that:
+    - not win_service_dependency_string_again|changed
+    - win_service_dependency_string_again.dependencies == ['{{test_win_service_name}}']
+
+- name: add another dependency to service
+  win_service:
+    name: TestServiceDependency
+    dependencies: ['TestServiceParent2']
+    dependency_action: add
+  register: win_service_dependency_add
+
+- name: check that the service with a dependency has been added
+  assert:
+    that:
+    - win_service_dependency_add|changed
+    - win_service_dependency_add.dependencies == ['{{test_win_service_name}}', 'TestServiceParent2']
+
+- name: add another dependency to service again
+  win_service:
+    name: TestServiceDependency
+    dependencies: ['TestServiceParent2']
+    dependency_action: add
+  register: win_service_dependency_add_again
+
+- name: check that the service with a dependency has been added again
+  assert:
+    that:
+    - not win_service_dependency_add_again|changed
+    - win_service_dependency_add_again.dependencies == ['{{test_win_service_name}}', 'TestServiceParent2']
+
+- name: remove another dependency to service
+  win_service:
+    name: TestServiceDependency
+    dependencies: ['TestServiceParent2']
+    dependency_action: remove
+  register: win_service_dependency_add
+
+- name: check that the service with a dependency has been remove
+  assert:
+    that:
+    - win_service_dependency_add|changed
+    - win_service_dependency_add.dependencies == ['{{test_win_service_name}}']
+
+- name: remove another dependency to service again
+  win_service:
+    name: TestServiceDependency
+    dependencies: ['TestServiceParent2']
+    dependency_action: remove
+  register: win_service_dependency_add_again
+
+- name: check that the service with a dependency has been removed again
+  assert:
+    that:
+    - not win_service_dependency_add_again|changed
+    - win_service_dependency_add_again.dependencies == ['{{test_win_service_name}}']
+
+- name: set dependency with a list
+  win_service:
+    name: TestServiceDependency
+    dependencies: ['{{test_win_service_name}}', 'TestServiceParent2']
+    dependency_action: set
+  register: win_service_dependency_set_list
+
+- name: check that the service with dependencies has been set
+  assert:
+    that:
+    - win_service_dependency_set_list|changed
+    - win_service_dependency_set_list.dependencies == ['{{test_win_service_name}}', 'TestServiceParent2']
+
+- name: make sure all services are stopped, set to LocalSystem and set to auto start before next test
+  win_service:
+    name: "{{item}}"
+    force_dependent_services: True
+    state: stopped
+    start_mode: auto
+    username: LocalSystem
+    password: ""
+  with_items:
+  - '{{test_win_service_name}}'
+  - TestServiceParent2
+  - TestServiceDependency
+
+- name: start up dependency service
+  win_service:
+    name: TestServiceDependency
+    state: started
+
+- name: wait 5 seconds for service to propagate service startup
+  pause:
+    seconds: 5
+
+- name: get stat of 1st parent service
+  win_service:
+    name: "{{test_win_service_name}}"
+  register: win_service_parent1_stat
+
+- name: get stat of 2nd parent service
+  win_service:
+    name: TestServiceParent2
+  register: win_service_parent2_stat
+
+- name: get stat of dependent service
+  win_service:
+    name: TestServiceDependency
+  register: win_service_dependent_stat
+
+- name: check that the dependency services started correctly and have the correct stats
+  assert:
+    that:
+    - win_service_parent1_stat.state == 'running'
+    - win_service_parent2_stat.state == 'running'
+    - win_service_dependent_stat.state == 'running'
+    - win_service_parent1_stat.depended_by == ['TestServiceDependency']
+    - win_service_parent2_stat.depended_by == ['TestServiceDependency']
+
+- name: fail to remove service with dependencies
+  win_service:
+    name: "{{test_win_service_name}}"
+    state: absent
+  register: win_service_removed_failed
+  failed_when: win_service_removed_failed.msg != "Cannot stop service 'Test Service New (TestService)' because it has dependent services. It can only be stopped if the Force flag is set."
+
+- name: remove the service while ignoring dependencies
+  win_service:
+    name: "{{test_win_service_name}}"
+    force_dependent_services: True
+    state: absent
+  register: win_service_removed
+
+- name: check that removing the service while ignoring dependencies succeeds with changes
+  assert:
+    that:
+    - win_service_removed|changed
+    - win_service_removed.exists == False
+    - win_service_removed.description is not defined
+    - win_service_removed.display_name is not defined
+    - win_service_removed.name is not defined
+    - win_service_removed.path is not defined
+    - win_service_removed.start_mode is not defined
+    - win_service_removed.state is not defined
+    - win_service_removed.username is not defined
+
+# only run these tests if TapiSrv is already stopped, don't want to impact an existing server
+- block:
+  - name: start the pausable service
+    win_service:
+      name: '{{test_win_service_pause_name}}'
+      state: started
+    register: stat_pausable_service
+
+  - name: assert get details on a pausable service
+    assert:
+      that:
+      - stat_pausable_service.can_pause_and_continue == True
+
+  - name: pause a service check
+    win_service:
+      name: '{{test_win_service_pause_name}}'
+      state: paused
+    register: win_service_paused_check
+    check_mode: yes
+
+  - name: assert pause a service check
+    assert:
+      that:
+      - win_service_paused_check|changed
+      - win_service_paused_check.state == 'running'
+
+  - name: pause a service
+    win_service:
+      name: '{{test_win_service_pause_name}}'
+      state: paused
+    register: win_service_paused
+
+  - name: assert pause a service
+    assert:
+      that:
+      - win_service_paused|changed
+      - win_service_paused.state == 'paused'
+
+  - name: pause a service again
+    win_service:
+      name: '{{test_win_service_pause_name}}'
+      state: paused
+    register: win_service_paused_again
+
+  - name: assert pause a service again
+    assert:
+      that:
+      - not win_service_paused_again|changed
+
+  - name: start a paused service check
+    win_service:
+      name: '{{test_win_service_pause_name}}'
+      state: started
+    register: start_paused_service_check
+    check_mode: yes
+
+  - name: assert start a paused service check
+    assert:
+      that:
+      - start_paused_service_check|changed
+      - start_paused_service_check.state == 'paused'
+
+  - name: start a paused service
+    win_service:
+      name: '{{test_win_service_pause_name}}'
+      state: started
+    register: start_paused_service
+
+  - name: assert start a paused service
+    assert:
+      that:
+      - start_paused_service|changed
+      - start_paused_service.state == 'running'
+
+  - name: pause service for next test
+    win_service:
+      name: '{{test_win_service_pause_name}}'
+      state: paused
+
+  - name: stop a paused service check
+    win_service:
+      name: '{{test_win_service_pause_name}}'
+      state: stopped
+      force_dependent_services: True
+    register: stop_paused_service_check
+    check_mode: yes
+
+  - name: assert stop a paused service check
+    assert:
+      that:
+      - stop_paused_service_check|changed
+      - stop_paused_service_check.state == 'paused'
+
+  - name: stop a paused service
+    win_service:
+      name: '{{test_win_service_pause_name}}'
+      state: stopped
+      force_dependent_services: True
+    register: stop_paused_service
+
+  - name: assert stop a paused service
+    assert:
+      that:
+      - stop_paused_service|changed
+      - stop_paused_service.state == 'stopped'
+
+  - name: fail to pause a stopped service check
+    win_service:
+      name: '{{test_win_service_pause_name}}'
+      state: paused
+    register: fail_pause_stopped_service
+    failed_when: "fail_pause_stopped_service.msg != 'failed to pause service ' + test_win_service_pause_name + ': The service does not support pausing'"
+  when: pause_service_details.state == 'stopped'

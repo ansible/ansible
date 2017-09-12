@@ -1,0 +1,133 @@
+---
+- name: set-up logging
+  vyos_logging:
+    dest: console
+    facility: all
+    level: info
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"set system syslog console facility all level info" in result.commands'
+
+- name: set-up logging again (idempotent)
+  vyos_logging:
+    dest: console
+    facility: all
+    level: info
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: file logging
+  vyos_logging:
+    dest: file
+    name: test
+    facility: all
+    level: notice
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"set system syslog file test facility all level notice" in result.commands'
+
+- name: file logging again (idempotent)
+  vyos_logging:
+    dest: file
+    name: test
+    facility: all
+    level: notice
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: delete logging
+  vyos_logging:
+    dest: file
+    name: test
+    facility: all
+    level: notice
+    state: absent
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"delete system syslog file test facility all level notice" in result.commands'
+
+- name: delete logging again (idempotent)
+  vyos_logging:
+    dest: file
+    name: test
+    facility: all
+    level: notice
+    state: absent
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Add logging collections
+  vyos_logging:
+    aggregate:
+      - { dest: file, name: test1, facility: all, level: info }
+      - { dest: file, name: test2, facility: news, level: debug }
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"set system syslog file test1 facility all level info" in result.commands'
+      - '"set system syslog file test2 facility news level debug" in result.commands'
+
+- name: Add and remove logging collections with overrides
+  vyos_logging:
+    aggregate:
+      - { dest: console, facility: all, level: info }
+      - { dest: file, name: test1, facility: all, level: info, state: absent }
+      - { dest: console, facility: daemon, level: warning }
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"delete system syslog file test1 facility all level info" in result.commands'
+      - '"set system syslog console facility daemon level warning" in result.commands'
+
+- name: Remove logging collections
+  vyos_logging:
+    aggregate:
+      - { dest: console, facility: all, level: info }
+      - { dest: console, facility: daemon, level: warning }
+      - { dest: file, name: test2, facility: news, level: debug }
+    state: absent
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"delete system syslog console facility all level info" in result.commands'
+      - '"delete system syslog console facility daemon level warning" in result.commands'
+      - '"delete system syslog file test2 facility news level debug" in result.commands'

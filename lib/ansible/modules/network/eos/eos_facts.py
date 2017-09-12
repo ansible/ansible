@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -34,6 +34,8 @@ description:
     module will always collect a base set of facts from the device
     and can enable or disable collection of additional facts.
 extends_documentation_fragment: eos
+notes:
+  - Tested against EOS 4.15
 options:
   gather_subset:
     description:
@@ -77,6 +79,7 @@ ansible_net_model:
 ansible_net_serialnum:
   description: The serial number of the remote device
   returned: always
+  type: str
 ansible_net_version:
   description: The operating system version running on the remote device
   returned: always
@@ -201,6 +204,10 @@ class Hardware(FactsBase):
 
     def populate_filesystems(self):
         data = self.responses[0]
+
+        if isinstance(data, dict):
+            data = data['messages'][0]
+
         fs = re.findall(r'^Directory of (.+)/', data, re.M)
         return dict(filesystems=fs)
 
@@ -370,7 +377,7 @@ def main():
         key = 'ansible_net_%s' % key
         ansible_facts[key] = value
 
-    module.exit_json(ansible_facts=ansible_facts)
+    module.exit_json(ansible_facts=ansible_facts, warnings=warnings)
 
 
 if __name__ == '__main__':

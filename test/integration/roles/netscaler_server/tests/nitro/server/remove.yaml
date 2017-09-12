@@ -1,0 +1,15 @@
+---
+
+- name: Remove basic server
+  delegate_to: localhost
+  register: result
+  check_mode: "{{ check_mode }}"
+  netscaler_server:
+    nitro_user: "{{nitro_user}}"
+    nitro_pass: "{{nitro_pass}}"
+    nsip: "{{nsip}}"
+
+    state: absent
+
+    name: test-server-1
+    ipaddress: 10.10.10.10

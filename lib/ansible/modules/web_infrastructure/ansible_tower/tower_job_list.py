@@ -1,22 +1,14 @@
 #!/usr/bin/python
-#coding: utf-8 -*-
+# coding: utf-8 -*-
 
 # (c) 2017, Wayne Witzel III <wayne@riotousliving.com>
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -66,7 +58,7 @@ count:
     description: Total count of objects return
     returned: success
     type: int
-    sampled: 51
+    sample: 51
 next:
     description: next page available for the listing
     returned: success
@@ -109,14 +101,14 @@ except ImportError:
 def main():
     argument_spec = tower_argument_spec()
     argument_spec.update(dict(
-        status = dict(choices=['pending', 'waiting', 'running', 'error', 'failed', 'canceled', 'successful']),
-        page = dict(type='int'),
-        all_pages = dict(type='bool', default=False),
-        query = dict(type='dict'),
+        status=dict(choices=['pending', 'waiting', 'running', 'error', 'failed', 'canceled', 'successful']),
+        page=dict(type='int'),
+        all_pages=dict(type='bool', default=False),
+        query=dict(type='dict'),
     ))
 
     module = AnsibleModule(
-        argument_spec = argument_spec,
+        argument_spec=argument_spec,
         supports_check_mode=True
     )
 
@@ -135,7 +127,7 @@ def main():
         tower_check_mode(module)
         try:
             job = tower_cli.get_resource('job')
-            params = {'status':status, 'page':page, 'all_pages': all_pages}
+            params = {'status': status, 'page': page, 'all_pages': all_pages}
             if query:
                 params['query'] = query.items()
             json_output = job.list(**params)

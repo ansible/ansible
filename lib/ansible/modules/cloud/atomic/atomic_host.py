@@ -1,27 +1,19 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public licenses
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
 
-DOCUMENTATION='''
+DOCUMENTATION = '''
 ---
 module: atomic_host
 short_description: Manage the atomic host platform
@@ -62,6 +54,12 @@ msg:
     type: string
     sample: 'Already on latest'
 '''
+import os
+import traceback
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+
 
 def core(module):
     revision = module.params['revision']
@@ -90,8 +88,8 @@ def core(module):
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            revision = dict(default='latest', required=False, aliases=["version"]),
+        argument_spec=dict(
+            revision=dict(default='latest', required=False, aliases=["version"]),
             ),
         )
 
@@ -102,10 +100,8 @@ def main():
     try:
         core(module)
     except Exception as e:
-        module.fail_json(msg=str(e))
+        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
 
-# import module snippets
-from ansible.module_utils.basic import *
 if __name__ == '__main__':
     main()

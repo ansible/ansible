@@ -24,16 +24,15 @@
 # INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
 
 import re
-import time
 import shlex
+import time
 
-from ansible.module_utils.basic import BOOLEANS_TRUE, BOOLEANS_FALSE
-from ansible.module_utils.basic import get_exception
+from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE, BOOLEANS_FALSE
 from ansible.module_utils.six import string_types, text_type
 from ansible.module_utils.six.moves import zip
+
 
 def to_list(val):
     if isinstance(val, (list, tuple)):
@@ -49,20 +48,23 @@ class FailedConditionsError(Exception):
         super(FailedConditionsError, self).__init__(msg)
         self.failed_conditions = failed_conditions
 
+
 class FailedConditionalError(Exception):
     def __init__(self, msg, failed_conditional):
         super(FailedConditionalError, self).__init__(msg)
         self.failed_conditional = failed_conditional
+
 
 class AddCommandError(Exception):
     def __init__(self, msg, command):
         super(AddCommandError, self).__init__(msg)
         self.command = command
 
+
 class AddConditionError(Exception):
     def __init__(self, msg, condition):
         super(AddConditionError, self).__init__(msg)
-        self.condition=condition
+        self.condition = condition
 
 
 class Cli(object):
@@ -105,6 +107,7 @@ class Cli(object):
 
         return responses
 
+
 class Command(object):
 
     def __init__(self, command, output=None, prompt=None, response=None,
@@ -121,6 +124,7 @@ class Command(object):
 
     def __str__(self):
         return self.command_string
+
 
 class CommandRunner(object):
 
@@ -159,8 +163,7 @@ class CommandRunner(object):
     def add_conditional(self, condition):
         try:
             self.conditionals.add(Conditional(condition))
-        except AttributeError:
-            exc = get_exception()
+        except AttributeError as exc:
             raise AddConditionError(msg=str(exc), condition=condition)
 
     def run(self):

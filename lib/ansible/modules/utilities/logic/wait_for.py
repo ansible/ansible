@@ -2,172 +2,183 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2012, Jeroen Hoekx <jeroen@hoekx.be>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: wait_for
-short_description: Waits for a condition before continuing.
+short_description: Waits for a condition before continuing
 description:
-     - You can wait for a set amount of time C(timeout), this is the default if nothing is specified.
-     - Waiting for a port to become available is useful for when services
-       are not immediately available after their init scripts return
-       which is true of certain Java application servers. It is also
-       useful when starting guests with the M(virt) module and
+     - You can wait for a set amount of time C(timeout), this is the default if nothing is specified or just C(timeout) is specified.
+       This does not produce an error.
+     - Waiting for a port to become available is useful for when services are not immediately available after their init scripts return
+       which is true of certain Java application servers. It is also useful when starting guests with the M(virt) module and
        needing to pause until they are ready.
      - This module can also be used to wait for a regex match a string to be present in a file.
      - In 1.6 and later, this module can also be used to wait for a file to be available or
        absent on the filesystem.
-     - In 1.8 and later, this module can also be used to wait for active
-       connections to be closed before continuing, useful if a node
+     - In 1.8 and later, this module can also be used to wait for active connections to be closed before continuing, useful if a node
        is being rotated out of a load balancer pool.
+     - This module is also supported for Windows targets.
 version_added: "0.7"
 options:
   host:
     description:
-      - A resolvable hostname or IP address to wait for
-    required: false
+      - A resolvable hostname or IP address to wait for.
     default: "127.0.0.1"
   timeout:
     description:
-      - maximum number of seconds to wait for
-    required: false
+      - Maximum number of seconds to wait for, when used with another condition it will force an error.
+      - When used without other conditions it is equivalent of just sleeping.
     default: 300
   connect_timeout:
     description:
-      - maximum number of seconds to wait for a connection to happen before closing and retrying
-    required: false
+      - Maximum number of seconds to wait for a connection to happen before closing and retrying.
     default: 5
   delay:
     description:
-      - number of seconds to wait before starting to poll
-    required: false
+      - Number of seconds to wait before starting to poll.
     default: 0
   port:
     description:
-      - port number to poll
-    required: false
-    default: null
+      - Port number to poll.
   active_connection_states:
     description:
-      - The list of tcp connection states which are counted as active connections
-    default: ['ESTABLISHED','SYN_SENT','SYN_RECV','FIN_WAIT1','FIN_WAIT2','TIME_WAIT']
+      - The list of TCP connection states which are counted as active connections.
+    default: [ ESTABLISHED, FIN_WAIT1, FIN_WAIT2, SYN_RECV, SYN_SENT, TIME_WAIT ]
     version_added: "2.3"
   state:
     description:
-      - either C(present), C(started), or C(stopped), C(absent), or C(drained)
-      - When checking a port C(started) will ensure the port is open, C(stopped) will check that it is closed, C(drained) will check for active connections
-      - When checking for a file or a search string C(present) or C(started) will ensure that the file or string is present before continuing, C(absent) will check that file is absent or removed
-    choices: [ "present", "started", "stopped", "absent", "drained" ]
-    required: False
-    default: "started"
+      - Either C(present), C(started), or C(stopped), C(absent), or C(drained).
+      - When checking a port C(started) will ensure the port is open, C(stopped) will check that it is closed, C(drained) will check for active connections.
+      - When checking for a file or a search string C(present) or C(started) will ensure that the file or string is present before continuing,
+        C(absent) will check that file is absent or removed.
+    choices: [ absent, drained, present, started, stopped ]
+    default: started
   path:
     version_added: "1.4"
-    required: false
-    default: null
     description:
-      - path to a file on the filesytem that must exist before continuing
+      - Path to a file on the filesystem that must exist before continuing.
   search_regex:
     version_added: "1.4"
-    required: false
-    default: null
     description:
-      - Can be used to match a string in either a file or a socket connection. Defaults to a multiline regex.
+      - Can be used to match a string in either a file or a socket connection.
+      - Defaults to a multiline regex.
   exclude_hosts:
     version_added: "1.8"
-    required: false
-    default: null
     description:
-      - list of hosts or IPs to ignore when looking for active TCP connections for C(drained) state
+      - List of hosts or IPs to ignore when looking for active TCP connections for C(drained) state.
   sleep:
     version_added: "2.3"
-    required: false
     default: 1
     description:
       - Number of seconds to sleep between checks, before 2.3 this was hardcoded to 1 second.
+  msg:
+    version_added: "2.4"
+    required: false
+    default: null
+    description:
+      - This overrides the normal error message from a failure to meet the required conditions.
 notes:
   - The ability to use search_regex with a port connection was added in 1.7.
-requirements: []
+  - This module is also supported for Windows targets.
+  - See also M(wait_for_connection)
 author:
-    - "Jeroen Hoekx (@jhoekx)"
-    - "John Jarvis (@jarv)"
-    - "Andrii Radyk (@AnderEnder)"
+    - Jeroen Hoekx (@jhoekx)
+    - John Jarvis (@jarv)
+    - Andrii Radyk (@AnderEnder)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
+- name: sleep for 300 seconds and continue with play
+  wait_for: timeout=300
+  delegate_to: localhost
 
-# wait 300 seconds for port 8000 to become open on the host, don't start checking for 10 seconds
-- wait_for:
+- name: Wait 300 seconds for port 8000 to become open on the host, don't start checking for 10 seconds
+  wait_for:
     port: 8000
     delay: 10
 
-# wait 300 seconds for port 8000 of any IP to close active connections, don't start checking for 10 seconds
-- wait_for:
+- name: Wait 300 seconds for port 8000 of any IP to close active connections, don't start checking for 10 seconds
+  wait_for:
     host: 0.0.0.0
     port: 8000
     delay: 10
     state: drained
 
-# wait 300 seconds for port 8000 of any IP to close active connections, ignoring connections for specified hosts
-- wait_for:
+- name: Wait 300 seconds for port 8000 of any IP to close active connections, ignoring connections for specified hosts
+  wait_for:
     host: 0.0.0.0
     port: 8000
     state: drained
     exclude_hosts: 10.2.1.2,10.2.1.3
 
-# wait until the file /tmp/foo is present before continuing
-- wait_for:
+- name: Wait until the file /tmp/foo is present before continuing
+  wait_for:
     path: /tmp/foo
 
-# wait until the string "completed" is in the file /tmp/foo before continuing
-- wait_for:
+- name: Wait until the string "completed" is in the file /tmp/foo before continuing
+  wait_for:
     path: /tmp/foo
     search_regex: completed
 
-# wait until the lock file is removed
-- wait_for:
+- name: Wait until the lock file is removed
+  wait_for:
     path: /var/lock/file.lock
     state: absent
 
-# wait until the process is finished and pid was destroyed
-- wait_for:
+- name: Wait until the process is finished and pid was destroyed
+  wait_for:
     path: /proc/3466/status
     state: absent
 
-# wait 300 seconds for port 22 to become open and contain "OpenSSH", don't assume the inventory_hostname is resolvable
-# and don't start checking for 10 seconds
-- local_action: wait_for port=22 host="{{ ansible_ssh_host | default(inventory_hostname) }}" search_regex=OpenSSH delay=10
+- name: Output customized message when failed
+  wait_for:
+    path: /tmp/foo
+    state: present
+    msg: Timeout to find file /tmp/foo
+
+# Don't assume the inventory_hostname is resolvable and delay 10 seconds at start
+- name: Wait 300 seconds for port 22 to become open and contain "OpenSSH"
+  wait_for:
+    port: 22
+    host: '{{ (ansible_ssh_host|default(ansible_host))|default(inventory_hostname) }}'
+    search_regex: OpenSSH
+    delay: 10
+  connection: local
+
+# Same as above but you normally have ansible_connection set in inventory, which overrides 'connection'
+- name: Wait 300 seconds for port 22 to become open and contain "OpenSSH"
+  wait_for:
+    port: 22
+    host: '{{ (ansible_ssh_host|default(ansible_host))|default(inventory_hostname) }}'
+    search_regex: OpenSSH
+    delay: 10
+  vars:
+    ansible_connection: local
 '''
 
 import binascii
 import datetime
 import math
+import os
 import re
 import select
 import socket
 import sys
 import time
 
+from ansible.module_utils.basic import AnsibleModule, load_platform_subclass
 from ansible.module_utils._text import to_native
+
 
 HAS_PSUTIL = False
 try:
@@ -224,14 +235,23 @@ class TCPConnectionInfo(object):
     def get_active_connections_count(self):
         active_connections = 0
         for p in psutil.process_iter():
-            connections = p.get_connections(kind='inet')
+            if hasattr(p, 'get_connections'):
+                connections = p.get_connections(kind='inet')
+            else:
+                connections = p.connections(kind='inet')
             for conn in connections:
                 if conn.status not in self.module.params['active_connection_states']:
                     continue
-                (local_ip, local_port) = conn.local_address
+                if hasattr(conn, 'local_address'):
+                    (local_ip, local_port) = conn.local_address
+                else:
+                    (local_ip, local_port) = conn.laddr
                 if self.port != local_port:
                     continue
-                (remote_ip, remote_port) = conn.remote_address
+                if hasattr(conn, 'remote_address'):
+                    (remote_ip, remote_port) = conn.remote_address
+                else:
+                    (remote_ip, remote_port) = conn.raddr
                 if (conn.family, remote_ip) in self.exclude_ips:
                     continue
                 if any((
@@ -294,7 +314,8 @@ class LinuxTCPConnectionInfo(TCPConnectionInfo):
                 tcp_connection = tcp_connection.strip().split()
                 if tcp_connection[self.local_address_field] == 'local_address':
                     continue
-                if tcp_connection[self.connection_state_field] not in [ get_connection_state_id(_connection_state) for _connection_state in self.module.params['active_connection_states'] ]:
+                if (tcp_connection[self.connection_state_field] not in
+                        [get_connection_state_id(_connection_state) for _connection_state in self.module.params['active_connection_states']]):
                     continue
                 (local_ip, local_port) = tcp_connection[self.local_address_field].split(':')
                 if self.port != local_port:
@@ -332,6 +353,7 @@ def _convert_host_to_ip(host):
             ips.append((socket.AF_INET6, "::ffff:" + ip))
     return ips
 
+
 def _convert_host_to_hex(host):
     """
     Convert the provided host to the format in /proc/net/tcp*
@@ -352,11 +374,12 @@ def _convert_host_to_hex(host):
             hexip_nf = binascii.b2a_hex(socket.inet_pton(family, ip))
             hexip_hf = ""
             for i in range(0, len(hexip_nf), 8):
-                ipgroup_nf = hexip_nf[i:i+8]
+                ipgroup_nf = hexip_nf[i:i + 8]
                 ipgroup_hf = socket.ntohl(int(ipgroup_nf, base=16))
                 hexip_hf = "%s%08X" % (hexip_hf, ipgroup_hf)
             ips.append((family, hexip_hf))
     return ips
+
 
 def _create_connection(host, port, connect_timeout):
     """
@@ -372,15 +395,17 @@ def _create_connection(host, port, connect_timeout):
         (family, _) = (_convert_host_to_ip(host))[0]
         connect_socket = socket.socket(family, socket.SOCK_STREAM)
         connect_socket.settimeout(connect_timeout)
-        connect_socket.connect( (host, port) )
+        connect_socket.connect((host, port))
     else:
-        connect_socket = socket.create_connection( (host, port), connect_timeout)
+        connect_socket = socket.create_connection((host, port), connect_timeout)
     return connect_socket
+
 
 def _timedelta_total_seconds(timedelta):
     return (
         timedelta.microseconds + 0.0 +
         (timedelta.seconds + timedelta.days * 24 * 3600) * 10 ** 6) / 10 ** 6
+
 
 def get_connection_state_id(state):
     connection_state_id = {
@@ -393,34 +418,36 @@ def get_connection_state_id(state):
     }
     return connection_state_id[state]
 
+
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-            host=dict(default='127.0.0.1'),
-            timeout=dict(default=300, type='int'),
-            connect_timeout=dict(default=5, type='int'),
-            delay=dict(default=0, type='int'),
-            port=dict(default=None, type='int'),
-            active_connection_states=dict(default=['ESTABLISHED','SYN_SENT','SYN_RECV','FIN_WAIT1','FIN_WAIT2','TIME_WAIT'], type='list'),
-            path=dict(default=None, type='path'),
-            search_regex=dict(default=None),
-            state=dict(default='started', choices=['started', 'stopped', 'present', 'absent', 'drained']),
-            exclude_hosts=dict(default=None, type='list'),
-            sleep=dict(default=1, type='int')
+        argument_spec=dict(
+            host=dict(type='str', default='127.0.0.1'),
+            timeout=dict(type='int', default=300),
+            connect_timeout=dict(type='int', default=5),
+            delay=dict(type='int', default=0),
+            port=dict(type='int'),
+            active_connection_states=dict(type='list', default=['ESTABLISHED', 'FIN_WAIT1', 'FIN_WAIT2', 'SYN_RECV', 'SYN_SENT', 'TIME_WAIT']),
+            path=dict(type='path'),
+            search_regex=dict(type='str'),
+            state=dict(type='str', default='started', choices=['absent', 'drained', 'present', 'started', 'stopped']),
+            exclude_hosts=dict(type='list'),
+            sleep=dict(type='int', default=1),
+            msg=dict(type='str'),
         ),
     )
 
-    params = module.params
+    host = module.params['host']
+    timeout = module.params['timeout']
+    connect_timeout = module.params['connect_timeout']
+    delay = module.params['delay']
+    port = module.params['port']
+    state = module.params['state']
+    path = module.params['path']
+    search_regex = module.params['search_regex']
+    msg = module.params['msg']
 
-    host = params['host']
-    timeout = params['timeout']
-    connect_timeout = params['connect_timeout']
-    delay = params['delay']
-    port = params['port']
-    state = params['state']
-    path = params['path']
-    search_regex = params['search_regex']
     if search_regex is not None:
         compiled_search_re = re.compile(search_regex, re.MULTILINE)
     else:
@@ -432,26 +459,26 @@ def main():
         module.fail_json(msg="state=stopped should only be used for checking a port in the wait_for module")
     if path and state == 'drained':
         module.fail_json(msg="state=drained should only be used for checking a port in the wait_for module")
-    if params['exclude_hosts'] is not None and state != 'drained':
+    if module.params['exclude_hosts'] is not None and state != 'drained':
         module.fail_json(msg="exclude_hosts should only be with state=drained")
-    for _connection_state in params['active_connection_states']:
+    for _connection_state in module.params['active_connection_states']:
         try:
             get_connection_state_id(_connection_state)
         except:
-            module.fail_json(msg="unknown active_connection_state ("+_connection_state+") defined")
+            module.fail_json(msg="unknown active_connection_state (%s) defined" % _connection_state)
 
-    start = datetime.datetime.now()
+    start = datetime.datetime.utcnow()
 
     if delay:
         time.sleep(delay)
 
     if not port and not path and state != 'drained':
         time.sleep(timeout)
-    elif state in [ 'stopped', 'absent' ]:
-        ### first wait for the stop condition
+    elif state in ['absent', 'stopped']:
+        # first wait for the stop condition
         end = start + datetime.timedelta(seconds=timeout)
 
-        while datetime.datetime.now() < end:
+        while datetime.datetime.utcnow() < end:
             if path:
                 try:
                     f = open(path)
@@ -466,27 +493,26 @@ def main():
                 except:
                     break
             # Conditions not yet met, wait and try again
-            time.sleep(params['sleep'])
+            time.sleep(module.params['sleep'])
         else:
-            elapsed = datetime.datetime.now() - start
+            elapsed = datetime.datetime.utcnow() - start
             if port:
-                module.fail_json(msg="Timeout when waiting for %s:%s to stop." % (host, port), elapsed=elapsed.seconds)
+                module.fail_json(msg=msg or "Timeout when waiting for %s:%s to stop." % (host, port), elapsed=elapsed.seconds)
             elif path:
-                module.fail_json(msg="Timeout when waiting for %s to be absent." % (path), elapsed=elapsed.seconds)
+                module.fail_json(msg=msg or "Timeout when waiting for %s to be absent." % (path), elapsed=elapsed.seconds)
 
     elif state in ['started', 'present']:
-        ### wait for start condition
+        # wait for start condition
         end = start + datetime.timedelta(seconds=timeout)
-        while datetime.datetime.now() < end:
+        while datetime.datetime.utcnow() < end:
             if path:
                 try:
                     os.stat(path)
-                except OSError:
-                    e = get_exception()
+                except OSError as e:
                     # If anything except file not present, throw an error
                     if e.errno != 2:
-                        elapsed = datetime.datetime.now() - start
-                        module.fail_json(msg="Failed to stat %s, %s" % (path, e.strerror), elapsed=elapsed.seconds)
+                        elapsed = datetime.datetime.utcnow() - start
+                        module.fail_json(msg=msg or "Failed to stat %s, %s" % (path, e.strerror), elapsed=elapsed.seconds)
                     # file doesn't exist yet, so continue
                 else:
                     # File exists.  Are there additional things to check?
@@ -504,7 +530,7 @@ def main():
                     except IOError:
                         pass
             elif port:
-                alt_connect_timeout = math.ceil(_timedelta_total_seconds(end - datetime.datetime.now()))
+                alt_connect_timeout = math.ceil(_timedelta_total_seconds(end - datetime.datetime.utcnow()))
                 try:
                     s = _create_connection(host, port, min(connect_timeout, alt_connect_timeout))
                 except:
@@ -515,8 +541,8 @@ def main():
                     if compiled_search_re:
                         data = ''
                         matched = False
-                        while datetime.datetime.now() < end:
-                            max_timeout = math.ceil(_timedelta_total_seconds(end - datetime.datetime.now()))
+                        while datetime.datetime.utcnow() < end:
+                            max_timeout = math.ceil(_timedelta_total_seconds(end - datetime.datetime.utcnow()))
                             (readable, w, e) = select.select([s], [], [], max_timeout)
                             if not readable:
                                 # No new data.  Probably means our timeout
@@ -544,42 +570,41 @@ def main():
                         break
 
             # Conditions not yet met, wait and try again
-            time.sleep(params['sleep'])
+            time.sleep(module.params['sleep'])
 
         else:   # while-else
             # Timeout expired
-            elapsed = datetime.datetime.now() - start
+            elapsed = datetime.datetime.utcnow() - start
             if port:
                 if search_regex:
-                    module.fail_json(msg="Timeout when waiting for search string %s in %s:%s" % (search_regex, host, port), elapsed=elapsed.seconds)
+                    module.fail_json(msg=msg or "Timeout when waiting for search string %s in %s:%s" % (search_regex, host, port), elapsed=elapsed.seconds)
                 else:
-                    module.fail_json(msg="Timeout when waiting for %s:%s" % (host, port), elapsed=elapsed.seconds)
+                    module.fail_json(msg=msg or "Timeout when waiting for %s:%s" % (host, port), elapsed=elapsed.seconds)
             elif path:
                 if search_regex:
-                    module.fail_json(msg="Timeout when waiting for search string %s in %s" % (search_regex, path), elapsed=elapsed.seconds)
+                    module.fail_json(msg=msg or "Timeout when waiting for search string %s in %s" % (search_regex, path), elapsed=elapsed.seconds)
                 else:
-                    module.fail_json(msg="Timeout when waiting for file %s" % (path), elapsed=elapsed.seconds)
+                    module.fail_json(msg=msg or "Timeout when waiting for file %s" % (path), elapsed=elapsed.seconds)
 
     elif state == 'drained':
-        ### wait until all active connections are gone
+        # wait until all active connections are gone
         end = start + datetime.timedelta(seconds=timeout)
         tcpconns = TCPConnectionInfo(module)
-        while datetime.datetime.now() < end:
+        while datetime.datetime.utcnow() < end:
             try:
                 if tcpconns.get_active_connections_count() == 0:
                     break
             except IOError:
                 pass
             # Conditions not yet met, wait and try again
-            time.sleep(params['sleep'])
+            time.sleep(module.params['sleep'])
         else:
-            elapsed = datetime.datetime.now() - start
-            module.fail_json(msg="Timeout when waiting for %s:%s to drain" % (host, port), elapsed=elapsed.seconds)
+            elapsed = datetime.datetime.utcnow() - start
+            module.fail_json(msg=msg or "Timeout when waiting for %s:%s to drain" % (host, port), elapsed=elapsed.seconds)
 
-    elapsed = datetime.datetime.now() - start
+    elapsed = datetime.datetime.utcnow() - start
     module.exit_json(state=state, port=port, search_regex=search_regex, path=path, elapsed=elapsed.seconds)
 
-# import module snippets
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()

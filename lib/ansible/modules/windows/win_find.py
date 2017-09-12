@@ -19,10 +19,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = r'''
 ---
@@ -32,19 +31,20 @@ short_description: return a list of files based on specific criteria
 description:
     - Return a list of files based on specified criteria.
     - Multiple criteria are AND'd together.
+    - For non-Windows targets, use the M(find) module instead.
 options:
     age:
         description:
             - Select files or folders whose age is equal to or greater than
-              the specified tim. Use a negative age to find files equal to or
-              less than the specified time. You can choose seconds, minues,
+              the specified time. Use a negative age to find files equal to or
+              less than the specified time. You can choose seconds, minutes,
               hours, days or weeks by specifying the first letter of an of
-              those words (e.g., "1w").
+              those words (e.g., "2s", "10d", 1w").
         required: false
     age_stamp:
         description:
             - Choose the file property against which we compare C(age). The
-              default attribute we compare with is last modification time.
+              default attribute we compare with is the last modification time.
         required: false
         default: mtime
         choices: ['atime', 'mtime', 'ctime']
@@ -114,6 +114,8 @@ options:
         required: false
         default: false
         choices: ['true', 'false']
+notes:
+    - For non-Windows targets, use the M(find) module instead.
 author: "Jordan Borean (@jborean93)"
 '''
 
@@ -228,13 +230,13 @@ examined:
     sample: 10
 matched:
     description: The number of files/folders that match the criteria
-    returns: always
+    returned: always
     type: int
     sample: 2
 files:
     description: Information on the files/folders that match the criteria returned as a list of dictionary elements for each file matched
     returned: success
-    type: dictionary
+    type: complex
     contains:
         attributes:
             description: attributes of the file at path in raw form
@@ -271,7 +273,7 @@ files:
             returned: success, path exists
             type: boolean
             sample: True
-        islink:
+        islnk:
             description: if the path is a symbolic link or junction or not
             returned: success, path exists
             type: boolean

@@ -1,0 +1,42 @@
+---
+- name: Make sure LLDP is not running before tests
+  vyos_config:
+    lines: delete service lldp
+
+- name: Enable LLDP service
+  net_lldp:
+    state: present
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"set service lldp" in result.commands'
+
+- name: Enable LLDP service again (idempotent)
+  net_lldp:
+    state: present
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Disable LLDP service
+  net_lldp:
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"delete service lldp" in result.commands'
+
+- name:
+  net_lldp:
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'

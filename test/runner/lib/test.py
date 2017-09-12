@@ -4,14 +4,14 @@ from __future__ import absolute_import, print_function
 
 import datetime
 import json
+import os
 
 from lib.util import (
     display,
-    EnvironmentConfig,
 )
 
-from lib.metadata import (
-    Metadata,
+from lib.config import (
+    TestConfig,
 )
 
 
@@ -53,37 +53,6 @@ def calculate_confidence(path, line, metadata):
 
     # changes were made to the same file and the line number is different
     return 50
-
-
-class TestConfig(EnvironmentConfig):
-    """Configuration common to all test commands."""
-    def __init__(self, args, command):
-        """
-        :type args: any
-        :type command: str
-        """
-        super(TestConfig, self).__init__(args, command)
-
-        self.coverage = args.coverage  # type: bool
-        self.include = args.include  # type: list [str]
-        self.exclude = args.exclude  # type: list [str]
-        self.require = args.require  # type: list [str]
-
-        self.changed = args.changed  # type: bool
-        self.tracked = args.tracked  # type: bool
-        self.untracked = args.untracked  # type: bool
-        self.committed = args.committed  # type: bool
-        self.staged = args.staged  # type: bool
-        self.unstaged = args.unstaged  # type: bool
-        self.changed_from = args.changed_from  # type: str
-        self.changed_path = args.changed_path  # type: list [str]
-
-        self.lint = args.lint if 'lint' in args else False  # type: bool
-        self.junit = args.junit if 'junit' in args else False  # type: bool
-        self.failure_ok = args.failure_ok if 'failure_ok' in args else False  # type: bool
-
-        self.metadata = Metadata.from_file(args.metadata) if args.metadata else Metadata()
-        self.metadata_path = None
 
 
 class TestResult(object):
@@ -192,14 +161,6 @@ class TestResult(object):
 
 class TestSuccess(TestResult):
     """Test success."""
-    def __init__(self, command, test, python_version=None):
-        """
-        :type command: str
-        :type test: str
-        :type python_version: str
-        """
-        super(TestSuccess, self).__init__(command, test, python_version)
-
     def write_junit(self, args):
         """
         :type args: TestConfig
@@ -211,14 +172,6 @@ class TestSuccess(TestResult):
 
 class TestSkipped(TestResult):
     """Test skipped."""
-    def __init__(self, command, test, python_version=None):
-        """
-        :type command: str
-        :type test: str
-        :type python_version: str
-        """
-        super(TestSkipped, self).__init__(command, test, python_version)
-
     def write_console(self):
         """Write results to console."""
         display.info('No tests applicable.', verbosity=1)
@@ -241,14 +194,16 @@ class TestFailure(TestResult):
         :type test: str
         :type python_version: str | None
         :type messages: list[TestMessage] | None
-        :type summary: str | None
+        :type summary: unicode | None
         """
         super(TestFailure, self).__init__(command, test, python_version)
 
         if messages:
             messages = sorted(messages, key=lambda m: m.sort_key)
+        else:
+            messages = []
 
-        self.messages = messages or []
+        self.messages = messages
         self.summary = summary
 
     def write(self, args):
@@ -306,7 +261,8 @@ class TestFailure(TestResult):
         """
         :type args: TestConfig
         """
-        message = self.format_title()
+        docs = self.find_docs()
+        message = self.format_title(help_link=docs)
         output = self.format_block()
 
         if self.messages:
@@ -316,6 +272,7 @@ class TestFailure(TestResult):
 
         bot_data = dict(
             verified=verified,
+            docs=docs,
             results=[
                 dict(
                     message=message,
@@ -355,8 +312,28 @@ class TestFailure(TestResult):
 
         return command
 
-    def format_title(self):
+    def find_docs(self):
         """
+        :rtype: str
+        """
+        testing_docs_url = 'https://docs.ansible.com/ansible/devel/dev_guide/testing'
+        testing_docs_dir = 'docs/docsite/rst/dev_guide/testing'
+
+        url = '%s/%s/' % (testing_docs_url, self.command)
+        path = os.path.join(testing_docs_dir, self.command)
+
+        if self.test:
+            url += '%s.html' % self.test
+            path = os.path.join(path, '%s.rst' % self.test)
+
+        if os.path.exists(path):
+            return url
+
+        return None
+
+    def format_title(self, help_link=None):
+        """
+        :type help_link: str | None
         :rtype: str
         """
         command = self.format_command()
@@ -366,7 +343,12 @@ class TestFailure(TestResult):
         else:
             reason = 'error' if len(self.messages) == 1 else 'errors'
 
-        title = 'The test `%s` failed with the following %s:' % (command, reason)
+        if help_link:
+            help_link_markup = ' [[?](%s)]' % help_link
+        else:
+            help_link_markup = ''
+
+        title = 'The test `%s`%s failed with the following %s:' % (command, help_link_markup, reason)
 
         return title
 
@@ -377,7 +359,7 @@ class TestFailure(TestResult):
         if self.summary:
             block = self.summary
         else:
-            block = '\n'.join(str(m) for m in self.messages)
+            block = '\n'.join(m.format() for m in self.messages)
 
         message = block.strip()
 

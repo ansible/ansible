@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/lesstahnorequal.yaml"
+- debug: msg="START cli/lessthanorequal.yaml"
 
 - name: test le operator
   nxos_command:
@@ -29,4 +29,4 @@
     that:
       - "result.changed == false"
 
-- debug: msg="END cli/lesstahnorequal.yaml"
+- debug: msg="END cli/lessthanorequal.yaml"

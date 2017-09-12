@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
@@ -35,8 +35,6 @@ options:
   filter:
     description:
       - Filter for a specific fact.
-    required: false
-    default: null
     choices:
       - cloudstack_service_offering
       - cloudstack_availability_zone
@@ -46,6 +44,11 @@ options:
       - cloudstack_local_ipv4
       - cloudstack_instance_id
       - cloudstack_user_data
+  meta_data_host:
+    description:
+      - Host or IP of the meta data API service.
+      - If not set, determination by parsing the dhcp lease file.
+    version_added: "2.4"
 requirements: [ 'yaml' ]
 '''
 
@@ -57,6 +60,12 @@ EXAMPLES = '''
 # Gather specific fact on instances
 - name: Gather cloudstack facts
   cs_facts: filter=cloudstack_instance_id
+
+# Gather specific fact on instances with a given meta_data_host
+- name: Gather cloudstack facts
+  cs_facts:
+    filter: cloudstack_instance_id
+    meta_data_host: 169.254.169.254
 '''
 
 RETURN = '''
@@ -104,36 +113,45 @@ cloudstack_user_data:
 '''
 
 import os
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.facts import ansible_collector, default_collectors
 
 try:
     import yaml
-    has_lib_yaml = True
+    HAS_LIB_YAML = True
 except ImportError:
-    has_lib_yaml = False
+    HAS_LIB_YAML = False
 
 CS_METADATA_BASE_URL = "http://%s/latest/meta-data"
 CS_USERDATA_BASE_URL = "http://%s/latest/user-data"
 
+
 class CloudStackFacts(object):
 
     def __init__(self):
-        self.facts = ansible_facts(module)
+        collector = ansible_collector.get_ansible_collector(all_collector_classes=default_collectors.collectors,
+                                                            filter_spec='default_ipv4',
+                                                            gather_subset=['!all', 'network'],
+                                                            gather_timeout=10)
+        self.facts = collector.collect(module)
+
         self.api_ip = None
         self.fact_paths = {
-            'cloudstack_service_offering':  'service-offering',
+            'cloudstack_service_offering': 'service-offering',
             'cloudstack_availability_zone': 'availability-zone',
-            'cloudstack_public_hostname':   'public-hostname',
-            'cloudstack_public_ipv4':       'public-ipv4',
-            'cloudstack_local_hostname':    'local-hostname',
-            'cloudstack_local_ipv4':        'local-ipv4',
-            'cloudstack_instance_id':       'instance-id'
+            'cloudstack_public_hostname': 'public-hostname',
+            'cloudstack_public_ipv4': 'public-ipv4',
+            'cloudstack_local_hostname': 'local-hostname',
+            'cloudstack_local_ipv4': 'local-ipv4',
+            'cloudstack_instance_id': 'instance-id'
         }
 
     def run(self):
         result = {}
         filter = module.params.get('filter')
         if not filter:
-            for key,path in self.fact_paths.items():
+            for key, path in self.fact_paths.items():
                 result[key] = self._fetch(CS_METADATA_BASE_URL + "/" + path)
             result['cloudstack_user_data'] = self._get_user_data_json()
         else:
@@ -143,14 +161,12 @@ class CloudStackFacts(object):
                 result[filter] = self._fetch(CS_METADATA_BASE_URL + "/" + self.fact_paths[filter])
         return result
 
-
     def _get_user_data_json(self):
         try:
             # this data come form users, we try what we can to parse it...
             return yaml.safe_load(self._fetch(CS_USERDATA_BASE_URL))
         except:
             return None
-
 
     def _fetch(self, path):
         api_ip = self._get_api_ip()
@@ -164,25 +180,25 @@ class CloudStackFacts(object):
             data = None
         return data
 
-
     def _get_dhcp_lease_file(self):
         """Return the path of the lease file."""
         default_iface = self.facts['default_ipv4']['interface']
         dhcp_lease_file_locations = [
-            '/var/lib/dhcp/dhclient.%s.leases' % default_iface, # debian / ubuntu
-            '/var/lib/dhclient/dhclient-%s.leases' % default_iface, # centos 6
-            '/var/lib/dhclient/dhclient--%s.lease' % default_iface, # centos 7
-            '/var/db/dhclient.leases.%s' % default_iface, # openbsd
+            '/var/lib/dhcp/dhclient.%s.leases' % default_iface,  # debian / ubuntu
+            '/var/lib/dhclient/dhclient-%s.leases' % default_iface,  # centos 6
+            '/var/lib/dhclient/dhclient--%s.lease' % default_iface,  # centos 7
+            '/var/db/dhclient.leases.%s' % default_iface,  # openbsd
         ]
         for file_path in dhcp_lease_file_locations:
             if os.path.exists(file_path):
                 return file_path
         module.fail_json(msg="Could not find dhclient leases file.")
 
-
     def _get_api_ip(self):
         """Return the IP of the DHCP server."""
-        if not self.api_ip:
+        if module.params.get('meta_data_host'):
+            return module.params.get('meta_data_host')
+        elif not self.api_ip:
             dhcp_lease_file = self._get_dhcp_lease_file()
             for line in open(dhcp_lease_file):
                 if 'dhcp-server-identifier' in line:
@@ -198,8 +214,8 @@ class CloudStackFacts(object):
 def main():
     global module
     module = AnsibleModule(
-        argument_spec = dict(
-            filter = dict(default=None, choices=[
+        argument_spec=dict(
+            filter=dict(default=None, choices=[
                 'cloudstack_service_offering',
                 'cloudstack_availability_zone',
                 'cloudstack_public_hostname',
@@ -209,19 +225,18 @@ def main():
                 'cloudstack_instance_id',
                 'cloudstack_user_data',
             ]),
+            meta_data_host=dict(),
         ),
-        supports_check_mode=False
+        supports_check_mode=True
     )
 
-    if not has_lib_yaml:
+    if not HAS_LIB_YAML:
         module.fail_json(msg="missing python library: yaml")
 
     cs_facts = CloudStackFacts().run()
     cs_facts_result = dict(changed=False, ansible_facts=cs_facts)
     module.exit_json(**cs_facts_result)
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
-from ansible.module_utils.facts import *
+
 if __name__ == '__main__':
     main()

@@ -1,0 +1,28 @@
+# GCE Labels Integration Tests.
+
+## Parameter checking tests ##
+# ============================================================
+- name: "test unknown resource_type"
+  gce_labels:
+    service_account_email: "{{ service_account_email }}"
+    pem_file: "{{ pem_file }}"
+    project_id: "{{ project_id }}"
+    resource_type: doggie
+    resource_location: Kansas
+    resource_name: Toto
+    labels:
+      environment: dev
+      experiment: kennedy
+  register: result
+  ignore_errors: true
+  labels:
+    - param-check
+
+- name: "assert failure when param: unknown resource_type"
+  assert:
+    that:
+       - 'result.failed'
+       - 'result.msg == "Unsupported resource_type: doggie"'
+
+
+# TODO(erjohnso): write more tests

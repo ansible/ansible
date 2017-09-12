@@ -5,32 +5,40 @@ ansible_python_interpreter=python
 
 [eos]
 #veos-dut-01
-veos01
+veos01 ansible_network_os=eos
 
 
 [nxos]
-nxos01
+nxos01 ansible_network_os=nxos
 
 [iosxr]
-iosxr01
+iosxr01 ansible_network_os=iosxr
 
 [ios]
-ios01
+ios01 ansible_network_os=ios
 #csr01
 
 [junos]
-vsrx01
+vsrx01 ansible_network_os=junos
 
 [cumulus]
 clvx01
 
 [vyos]
-vyos-dut-01
+vyos02 ansible_network_os=vyos
 
 [ops]
 ops01
 
 [asa]
 asa01
+
+[platform_agnostic:children]
+ios
+iosxr
+eos
+junos
+vyos
+nxos
 
 # vim: nospell filetype=dosini

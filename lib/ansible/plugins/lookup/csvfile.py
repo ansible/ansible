@@ -19,6 +19,7 @@ __metaclass__ = type
 
 import codecs
 import csv
+from collections import MutableSequence
 
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
@@ -38,6 +39,7 @@ class CSVRecoder:
     def next(self):
         return self.reader.next().encode("utf-8")
 
+
 class CSVReader:
     """
     A CSV reader which will iterate over lines in the CSV file "f",
@@ -54,6 +56,7 @@ class CSVReader:
 
     def __iter__(self):
         return self
+
 
 class LookupModule(LookupBase):
 
@@ -80,11 +83,11 @@ class LookupModule(LookupBase):
             key = params[0]
 
             paramvals = {
-                'col' : "1",          # column to return
-                'default' : None,
-                'delimiter' : "TAB",
-                'file' : 'ansible.csv',
-                'encoding' : 'utf-8',
+                'col': "1",          # column to return
+                'default': None,
+                'delimiter': "TAB",
+                'file': 'ansible.csv',
+                'encoding': 'utf-8',
             }
 
             # parameters specified?
@@ -102,7 +105,7 @@ class LookupModule(LookupBase):
             lookupfile = self.find_file_in_search_path(variables, 'files', paramvals['file'])
             var = self.read_csv(lookupfile, key, paramvals['delimiter'], paramvals['encoding'], paramvals['default'], paramvals['col'])
             if var is not None:
-                if type(var) is list:
+                if isinstance(var, MutableSequence):
                     for v in var:
                         ret.append(v)
                 else:

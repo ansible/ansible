@@ -1,0 +1,53 @@
+{# Note that not all EC2 API Actions allow a specific resource #}
+{# See http://docs.aws.amazon.com/AWSEC2/latest/APIReference/ec2-api-permissions.html#ec2-api-unsupported-resource-permissions #}
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowUnspecifiedEC2Resource",
+            "Effect": "Allow",
+            "Action": [
+                "ec2:AllocateAddress",
+                "ec2:AssociateAddress",
+                "ec2:AssociateRouteTable",
+                "ec2:AttachInternetGateway",
+                "ec2:CreateInternetGateway",
+                "ec2:CreateKeyPair",
+                "ec2:CreateNatGateway",
+                "ec2:CreateRouteTable",
+                "ec2:CreateSecurityGroup",
+                "ec2:CreateSubnet",
+                "ec2:CreateVpc",
+                "ec2:DeleteKeyPair",
+                "ec2:DeleteNatGateway",
+                "ec2:DeleteVpc",
+                "ec2:Describe*",
+                "ec2:DisassociateAddress",
+                "ec2:DisassociateRouteTable",
+                "ec2:ImportKeyPair",
+                "ec2:ModifyVpcAttribute",
+                "ec2:ReleaseAddress",
+                "ec2:ReplaceRouteTableAssociation"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "AllowSpecifiedEC2Resource",
+            "Effect": "Allow",
+            "Action": [
+                "ec2:AuthorizeSecurityGroupIngress",
+                "ec2:AuthorizeSecurityGroupEgress",
+                "ec2:CreateTags",
+                "ec2:DeleteRouteTable",
+                "ec2:DeleteSecurityGroup",
+                "ec2:RevokeSecurityGroupEgress",
+                "ec2:RevokeSecurityGroupIngress",
+                "ec2:RunInstances",
+                "ec2:TerminateInstances"
+            ],
+            "Resource": [
+                "arn:aws:ec2:{{aws_region}}:{{aws_account}}:*"
+            ]
+        }
+    ]
+}

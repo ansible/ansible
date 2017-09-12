@@ -1,22 +1,13 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+# Copyright: (c) 2012-2013, Timothy Appnel <tim@appnel.com>
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# (c) 2012-2013, Timothy Appnel <tim@appnel.com>
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
 
@@ -27,7 +18,10 @@ module: synchronize
 version_added: "1.4"
 short_description: A wrapper around rsync to make common tasks in your playbooks quick and easy.
 description:
-    - C(synchronize) is a wrapper around rsync to make common tasks in your playbooks quick and easy. It is run and originates on the local host where Ansible is being run. Of course, you could just use the C(command) action to call rsync yourself, but you also have to add a fair number of boilerplate options and host facts. C(synchronize) is not intended to provide access to the full power of rsync, but does make the most common invocations easier to implement. You `still` may need to call rsync directly via C(command) or C(shell) depending on your use case.
+    - C(synchronize) is a wrapper around rsync to make common tasks in your playbooks quick and easy. It is run and originates on the local host where
+      Ansible is being run. Of course, you could just use the C(command) action to call rsync yourself, but you also have to add a fair number of
+      boilerplate options and host facts. C(synchronize) is not intended to provide access to the full power of rsync, but does make the most common
+      invocations easier to implement. You `still` may need to call rsync directly via C(command) or C(shell) depending on your use case.
 options:
   src:
     description:
@@ -44,7 +38,8 @@ options:
     version_added: "1.5"
   mode:
     description:
-      - Specify the direction of the synchronization. In push mode the localhost or delegate is the source; In pull mode the remote host in context is the source.
+      - Specify the direction of the synchronization. In push mode the localhost or delegate is the source; In pull mode the remote host in context
+        is the source.
     required: false
     choices: [ 'push', 'pull' ]
     default: 'push'
@@ -56,7 +51,8 @@ options:
     required: false
   checksum:
     description:
-      - Skip based on checksum, rather than mod-time & size; Note that that "archive" option is still enabled by default - the "checksum" option will not disable it.
+      - Skip based on checksum, rather than mod-time & size; Note that that "archive" option is still enabled by default - the "checksum" option will
+        not disable it.
     choices: [ 'yes', 'no' ]
     default: 'no'
     required: false
@@ -171,13 +167,20 @@ options:
     version_added: "2.0"
 notes:
    - rsync must be installed on both the local and remote host.
-   - For the C(synchronize) module, the "local host" is the host `the synchronize task originates on`, and the "destination host" is the host `synchronize is connecting to`.
-   - The "local host" can be changed to a different host by using `delegate_to`.  This enables copying between two remote hosts or entirely on one remote machine.
-   - "The user and permissions for the synchronize `src` are those of the user running the Ansible task on the local host (or the remote_user for a delegate_to host when delegate_to is used)."
+   - For the C(synchronize) module, the "local host" is the host `the synchronize task originates on`, and the "destination host" is the host
+     `synchronize is connecting to`.
+   - The "local host" can be changed to a different host by using `delegate_to`.  This enables copying between two remote hosts or entirely on one
+     remote machine.
+   - >
+     The user and permissions for the synchronize `src` are those of the user running the Ansible task on the local host (or the remote_user for a
+     delegate_to host when delegate_to is used).
    - The user and permissions for the synchronize `dest` are those of the `remote_user` on the destination host or the `become_user` if `become=yes` is active.
    - In 2.0.0.0 a bug in the synchronize module made become occur on the "local host".  This was fixed in 2.0.1.
-   - Currently, synchronize is limited to elevating permissions via passwordless sudo.  This is because rsync itself is connecting to the remote machine and rsync doesn't give us a way to pass sudo credentials in.
-   - Currently there are only a few connection types which support synchronize (ssh, paramiko, local, and docker) because a sync strategy has been determined for those connection types.  Note that the connection for these must not need a password as rsync itself is making the connection and rsync does not provide us a way to pass a password to the connection.
+   - Currently, synchronize is limited to elevating permissions via passwordless sudo.  This is because rsync itself is connecting to the remote machine
+     and rsync doesn't give us a way to pass sudo credentials in.
+   - Currently there are only a few connection types which support synchronize (ssh, paramiko, local, and docker) because a sync strategy has been
+     determined for those connection types.  Note that the connection for these must not need a password as rsync itself is making the connection and
+     rsync does not provide us a way to pass a password to the connection.
    - Expect that dest=~/x will be ~<remote_user>/x even if using sudo.
    - Inspect the verbose output to validate the destination user/host/path
      are what was expected.
@@ -185,7 +188,8 @@ notes:
      C(.rsync-filter) files to the source directory.
    - rsync daemon must be up and running with correct permission when using
      rsync protocol in source or destination path.
-   - The C(synchronize) module forces `--delay-updates` to avoid leaving a destination in a broken in-between state if the underlying rsync process encounters an error. Those synchronizing large numbers of files that are willing to trade safety for performance should call rsync directly.
+   - The C(synchronize) module forces `--delay-updates` to avoid leaving a destination in a broken in-between state if the underlying rsync process
+     encounters an error. Those synchronizing large numbers of files that are willing to trade safety for performance should call rsync directly.
 
 author: "Timothy Appnel (@tima)"
 '''
@@ -297,6 +301,20 @@ EXAMPLES = '''
       - "--no-motd"
       - "--exclude=.git"
 '''
+
+
+import os
+
+# Python3 compat. six.moves.shlex_quote will be available once we're free to
+# upgrade beyond six-1.4 module-side.
+try:
+    from shlex import quote as shlex_quote
+except ImportError:
+    from pipes import quote as shlex_quote
+
+from ansible.module_utils.basic import AnsibleModule
+
+
 client_addr = None
 
 
@@ -320,6 +338,14 @@ def substitute_controller(path):
     return path
 
 
+def is_rsh_needed(source, dest):
+    if source.startswith('rsync://') or dest.startswith('rsync://'):
+        return False
+    if ':' in source or ':' in dest:
+        return True
+    return False
+
+
 def main():
     module = AnsibleModule(
         argument_spec = dict(
@@ -338,7 +364,7 @@ def main():
             dirs  = dict(default='no', type='bool'),
             recursive = dict(type='bool'),
             links = dict(type='bool'),
-            copy_links = dict(type='bool'),
+            copy_links = dict(default='no', type='bool'),
             perms = dict(type='bool'),
             times = dict(type='bool'),
             owner = dict(type='bool'),
@@ -356,13 +382,13 @@ def main():
 
     if module.params['_substitute_controller']:
         try:
-            source = '"' + substitute_controller(module.params['src']) + '"'
-            dest = '"' + substitute_controller(module.params['dest']) + '"'
+            source = substitute_controller(module.params['src'])
+            dest = substitute_controller(module.params['dest'])
         except ValueError:
             module.fail_json(msg='Could not determine controller hostname for rsync to send to')
     else:
-        source = '"' + module.params['src'] + '"'
-        dest = '"' + module.params['dest'] + '"'
+        source = module.params['src']
+        dest = module.params['dest']
     dest_port = module.params['dest_port']
     delete = module.params['delete']
     private_key = module.params['private_key']
@@ -390,90 +416,81 @@ def main():
     if '/' not in rsync:
         rsync = module.get_bin_path(rsync, required=True)
 
-    ssh = module.get_bin_path('ssh', required=True)
-
-    cmd = '%s --delay-updates -F' % rsync
+    cmd = [rsync, '--delay-updates', '-F']
     if compress:
-        cmd = cmd + ' --compress'
+        cmd.append('--compress')
     if rsync_timeout:
-        cmd = cmd + ' --timeout=%s' % rsync_timeout
+        cmd.append('--timeout=%s' % rsync_timeout)
     if module.check_mode:
-        cmd = cmd + ' --dry-run'
+        cmd.append('--dry-run')
     if delete:
-        cmd = cmd + ' --delete-after'
+        cmd.append('--delete-after')
     if existing_only:
-        cmd = cmd + ' --existing'
+        cmd.append('--existing')
     if checksum:
-        cmd = cmd + ' --checksum'
+        cmd.append('--checksum')
+    if copy_links:
+        cmd.append('--copy-links')
     if archive:
-        cmd = cmd + ' --archive'
+        cmd.append('--archive')
         if recursive is False:
-            cmd = cmd + ' --no-recursive'
+            cmd.append('--no-recursive')
         if links is False:
-            cmd = cmd + ' --no-links'
-        if copy_links is True:
-            cmd = cmd + ' --copy-links'
+            cmd.append('--no-links')
         if perms is False:
-            cmd = cmd + ' --no-perms'
+            cmd.append('--no-perms')
         if times is False:
-            cmd = cmd + ' --no-times'
+            cmd.append('--no-times')
         if owner is False:
-            cmd = cmd + ' --no-owner'
+            cmd.append('--no-owner')
         if group is False:
-            cmd = cmd + ' --no-group'
+            cmd.append('--no-group')
     else:
         if recursive is True:
-            cmd = cmd + ' --recursive'
+            cmd.append('--recursive')
         if links is True:
-            cmd = cmd + ' --links'
-        if copy_links is True:
-            cmd = cmd + ' --copy-links'
+            cmd.append('--links')
         if perms is True:
-            cmd = cmd + ' --perms'
+            cmd.append('--perms')
         if times is True:
-            cmd = cmd + ' --times'
+            cmd.append('--times')
         if owner is True:
-            cmd = cmd + ' --owner'
+            cmd.append('--owner')
         if group is True:
-            cmd = cmd + ' --group'
+            cmd.append('--group')
     if dirs:
-        cmd = cmd + ' --dirs'
-    if private_key is None:
-        private_key = ''
-    else:
-        private_key = '-i "%s"' % private_key
+        cmd.append('--dirs')
 
-    ssh_opts = '-S none'
-
-    if not verify_host:
-        ssh_opts = '%s -o StrictHostKeyChecking=no' % ssh_opts
-
-    if ssh_args:
-        ssh_opts = '%s %s' % (ssh_opts, ssh_args)
-
-    if source.startswith('"rsync://') and dest.startswith('"rsync://'):
+    if source.startswith('rsync://') and dest.startswith('rsync://'):
         module.fail_json(msg='either src or dest must be a localhost', rc=1)
 
-    if not source.startswith('"rsync://') and not dest.startswith('"rsync://'):
+    if is_rsh_needed(source, dest):
+        ssh_cmd = [module.get_bin_path('ssh', required=True), '-S', 'none']
+        if private_key is not None:
+            ssh_cmd.extend(['-i', os.path.expanduser(private_key) ])
         # If the user specified a port value
         # Note:  The action plugin takes care of setting this to a port from
         # inventory if the user didn't specify an explicit dest_port
         if dest_port is not None:
-            cmd += " --rsh 'ssh %s %s -o Port=%s'" % (private_key, ssh_opts, dest_port)
-        else:
-            cmd += " --rsh 'ssh %s %s'" % (private_key, ssh_opts)
+            ssh_cmd.extend(['-o', 'Port=%s' % dest_port])
+        if not verify_host:
+            ssh_cmd.extend(['-o', 'StrictHostKeyChecking=no', '-o', 'UserKnownHostsFile=/dev/null'])
+        ssh_cmd_str = ' '.join(shlex_quote(arg) for arg in ssh_cmd)
+        if ssh_args:
+            ssh_cmd_str += ' %s' % ssh_args
+        cmd.append('--rsh=%s' % ssh_cmd_str)
 
     if rsync_path:
-        cmd = cmd + " --rsync-path=%s" % (rsync_path)
+        cmd.append('--rsync-path=%s' % rsync_path)
 
     if rsync_opts:
-        cmd = cmd + " " +  " ".join(rsync_opts)
+        cmd.extend(rsync_opts)
 
     if partial:
-        cmd = cmd + " --partial"
+        cmd.append('--partial')
 
     changed_marker = '<<CHANGED>>'
-    cmd = cmd + " --out-format='" + changed_marker + "%i %n%L'"
+    cmd.append('--out-format=' + changed_marker + '%i %n%L')
 
     # expand the paths
     if '@' not in source:
@@ -481,15 +498,16 @@ def main():
     if '@' not in dest:
         dest = os.path.expanduser(dest)
 
-    cmd = ' '.join([cmd, source, dest])
-    cmdstr = cmd
+    cmd.append(source)
+    cmd.append(dest)
+    cmdstr = ' '.join(cmd)
     (rc, out, err) = module.run_command(cmd)
     if rc:
         return module.fail_json(msg=err, rc=rc, cmd=cmdstr)
     else:
         changed = changed_marker in out
-        out_clean=out.replace(changed_marker,'')
-        out_lines=out_clean.split('\n')
+        out_clean = out.replace(changed_marker, '')
+        out_lines = out_clean.split('\n')
         while '' in out_lines:
             out_lines.remove('')
         if module._diff:
@@ -501,8 +519,6 @@ def main():
             return module.exit_json(changed=changed, msg=out_clean,
                                     rc=rc, cmd=cmdstr, stdout_lines=out_lines)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

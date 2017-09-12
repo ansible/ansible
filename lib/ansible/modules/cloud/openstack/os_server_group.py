@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -50,7 +50,7 @@ options:
      required: false
    availability_zone:
      description:
-       - Ignored. Present for backwards compatability
+       - Ignored. Present for backwards compatibility
      required: false
 requirements:
     - "python >= 2.6"
@@ -93,11 +93,11 @@ name:
 policies:
     description: A list of one or more policy names of the server group.
     returned: success
-    type: list of strings
+    type: list
 members:
     description: A list of members in the server group.
     returned: success
-    type: list of strings
+    type: list
 metadata:
     description: Metadata key and value pairs.
     returned: success

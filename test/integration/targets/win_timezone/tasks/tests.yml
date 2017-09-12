@@ -1,0 +1,89 @@
+# NOTE: Set to a known starting value, store original
+- name: Change starting timezone to GMT
+  win_timezone:
+    timezone: GMT Standard Time
+  register: original
+
+# NOTE: We don't know if it changed, we don't care
+- name: Test GMT timezone
+  assert:
+    that:
+    - original.timezone == 'GMT Standard Time'
+
+- name: Change timezone to GMT+1
+  win_timezone:
+    timezone: Romance Standard Time
+  register: romance
+
+- name: Test GMT+1 timezone
+  assert:
+    that:
+    - romance|changed
+    - romance.previous_timezone == 'GMT Standard Time'
+    - romance.timezone == 'Romance Standard Time'
+  when: not in_check_mode
+
+- name: Test GMT+1 timezone
+  assert:
+    that:
+    - romance|changed
+    - romance.previous_timezone == original.timezone
+    - romance.timezone == 'Romance Standard Time'
+  when: in_check_mode
+
+- name: Change timezone to GMT+1 again
+  win_timezone:
+    timezone: Romance Standard Time
+  register: romance
+
+- name: Test GMT+1 timezone
+  assert:
+    that:
+    - not romance|changed
+    - romance.previous_timezone == 'Romance Standard Time'
+    - romance.timezone == 'Romance Standard Time'
+  when: not in_check_mode
+
+- name: Test GMT+1 timezone
+  assert:
+    that:
+    - romance|changed
+    - romance.previous_timezone == original.timezone
+    - romance.timezone == 'Romance Standard Time'
+  when: in_check_mode
+
+- name: Change timezone to GMT+6
+  win_timezone:
+    timezone: Central Standard Time
+  register: central
+
+- name: Test GMT-6 timezone
+  assert:
+    that:
+    - central|changed
+    - central.previous_timezone == 'Romance Standard Time'
+    - central.timezone == 'Central Standard Time'
+  when: not in_check_mode
+
+- name: Test GMT+1 timezone
+  assert:
+    that:
+    - central|changed
+    - central.previous_timezone == original.timezone
+    - central.timezone == 'Central Standard Time'
+  when: in_check_mode
+
+- name: Change timezone to GMT+666
+  win_timezone:
+    timezone: Dag's Standard Time
+  register: dag
+  ignore_errors: yes
+
+- name: Test GMT+666 timezone
+  assert:
+    that:
+    - dag|failed
+
+- name: Restore original timezone
+  win_timezone:
+    timezone: '{{ original.timezone }}'

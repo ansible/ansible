@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
@@ -156,14 +156,20 @@ def find_health_check(conn, wanted):
     """Searches for health checks that have the exact same set of immutable values"""
     for check in conn.get_list_health_checks().HealthChecks:
         config = check.HealthCheckConfig
-        if config.get('IPAddress') == wanted.ip_addr and config.get('FullyQualifiedDomainName') == wanted.fqdn and config.get('Type') == wanted.hc_type and config.get('RequestInterval') == str(wanted.request_interval):
+        if (
+            config.get('IPAddress') == wanted.ip_addr and
+            config.get('FullyQualifiedDomainName') == wanted.fqdn and
+            config.get('Type') == wanted.hc_type and
+            config.get('RequestInterval') == str(wanted.request_interval) and
+            config.get('Port') == str(wanted.port)
+        ):
             return check
     return None
 
 def to_health_check(config):
     return HealthCheck(
         config.get('IPAddress'),
-        config.get('Port'),
+        int(config.get('Port')),
         config.get('Type'),
         config.get('ResourcePath'),
         fqdn=config.get('FullyQualifiedDomainName'),
@@ -346,7 +352,7 @@ def main():
             changed = True
         else:
             diff = health_check_diff(existing_config, wanted_config)
-            if not diff:
+            if diff:
                 action = "update"
                 update_health_check(conn, existing_check.Id, int(existing_check.HealthCheckVersion), wanted_config)
                 changed = True

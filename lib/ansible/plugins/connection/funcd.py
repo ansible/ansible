@@ -1,28 +1,30 @@
 # Based on local.py (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 # Based on chroot.py (c) 2013, Maykel Moya <mmoya@speedyrails.com>
-# (c) 2013, Michael Scherer <misc@zarb.org>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2013, Michael Scherer <misc@zarb.org>
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# ---
-# The func transport permit to use ansible over func. For people who have already setup
-# func and that wish to play with ansible, this permit to move gradually to ansible
-# without having to redo completely the setup of the network.
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+DOCUMENTATION = """
+    author: Michael Scherer (@msherer) <misc@zarb.org>
+    connection: funcd
+    short_description: Use funcd to connect to target
+    description:
+        - This transport permits you to use Ansible over Func.
+        - For people who have already setup func and that wish to play with ansible,
+          this permit to move gradually to ansible without having to redo completely the setup of the network.
+    version_added: "1.1"
+    options:
+      remote_addr:
+        description:
+            - The path of the chroot you want to access.
+        default: inventory_hostname
+        vars:
+            - name: ansible_host
+            - name: ansible_func_host
+"""
 
 HAVE_FUNC = False
 try:
@@ -43,6 +45,7 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
+
 class Connection(object):
     ''' Func-based connections '''
 
@@ -60,8 +63,7 @@ class Connection(object):
         self.client = fc.Client(self.host)
         return self
 
-    def exec_command(self, cmd, become_user=None, sudoable=False,
-                     executable='/bin/sh', in_data=None):
+    def exec_command(self, cmd, become_user=None, sudoable=False, executable='/bin/sh', in_data=None):
         ''' run a command on the remote minion '''
 
         if in_data:
@@ -95,8 +97,7 @@ class Connection(object):
         # take a file directly
         tmpdir = tempfile.mkdtemp(prefix="func_ansible")
         self.client.local.getfile.get(in_path, tmpdir)
-        shutil.move(os.path.join(tmpdir, self.host, os.path.basename(in_path)),
-                    out_path)
+        shutil.move(os.path.join(tmpdir, self.host, os.path.basename(in_path)), out_path)
         shutil.rmtree(tmpdir)
 
     def close(self):

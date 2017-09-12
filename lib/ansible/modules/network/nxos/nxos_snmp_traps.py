@@ -17,9 +17,9 @@
 #
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = '''
@@ -33,6 +33,7 @@ description:
 author:
     - Jason Edelman (@jedelman8)
 notes:
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
     - This module works at the group level for traps.  If you need to only
       enable/disable 1 specific trap within a group, use the M(nxos_command)
       module.
@@ -80,6 +81,7 @@ proposed:
     sample: {"group": "lldp"}
 existing:
     description: k/v pairs of existing trap status
+    returned: always
     type: dict
     sample: {"lldp": [{"enabled": "No",
             "trap": "lldpRemTablesChange"}]}
@@ -105,7 +107,6 @@ changed:
 from ansible.module_utils.nxos import get_config, load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
 
 
 import re

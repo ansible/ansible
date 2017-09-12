@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -104,9 +104,11 @@ RETURN = '''
 state:
     type: string
     description: The asserted state of the repository (present, absent)
+    returned: always
 created:
     type: boolean
     description: If true, the repository was created
+    returned: always
 name:
     type: string
     description: The name of the repository
@@ -137,18 +139,6 @@ try:
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
-
-
-def boto_exception(err):
-    '''boto error message handler'''
-    if hasattr(err, 'error_message'):
-        error = err.error_message
-    elif hasattr(err, 'message'):
-        error = err.message
-    else:
-        error = '%s: %s' % (Exception, err)
-
-    return error
 
 
 def build_kwargs(registry_id):

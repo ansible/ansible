@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -86,10 +86,6 @@ EXAMPLES = """
 - name: remove configuration
   nxos_system:
     state: absent
-
-- name: configure DNS lookup sources
-  nxos_system:
-    lookup_source: Management1
 
 - name: configure name servers
   nxos_system:
@@ -251,8 +247,9 @@ def parse_name_servers(config, vrf_config):
             objects.append({'server': addr, 'vrf': None})
 
     for vrf, cfg in iteritems(vrf_config):
-        for item in re.findall('ip name-server (\S+)', cfg, re.M):
-            for addr in match.group(1).split(' '):
+        vrf_match = re.search('ip name-server (.+)', cfg, re.M)
+        if vrf_match:
+            for addr in vrf_match.group(1).split(' '):
                 objects.append({'server': addr, 'vrf': vrf})
 
     return objects
@@ -334,7 +331,7 @@ def main():
         name_servers=dict(type='list'),
 
         system_mtu=dict(type='int'),
-
+        lookup_source=dict(),
         state=dict(default='present', choices=['present', 'absent'])
     )
 

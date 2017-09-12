@@ -1,0 +1,43 @@
+---
+- name: check if -SmbShare cmdlets are available
+  win_command: powershell.exe "Get-Command -Name Get-SmbShare"
+  register: module_available
+  failed_when: False
+
+- name: check that module fails with helpful message on older hosts
+  win_share:
+    name: test
+  register: module_not_supported
+  when: module_available.rc == 1
+  failed_when: module_not_supported.msg != 'The current host does not support the -SmbShare cmdlets required by this module. Please run on Server 2012 or Windows 8 and later'
+  check_mode: yes
+
+# Run the actual tests
+- block:
+  # setup for tests
+  - name: create testing folder
+    win_file:
+      path: "{{test_win_share_path}}"
+      state: directory
+
+  - name: ensure testing folder isn't shared as a baseline
+    win_share:
+      name: "{{test_win_share_name}}"
+      state: absent
+
+  - name: run tests on hosts that support it
+    include_tasks: tests.yml
+    when: module_available.rc == 0
+
+  always:
+  # cleanup
+  - name: ensure testing folder isn't shared anymore
+    win_share:
+      name: "{{test_win_share_name}}"
+      state: absent
+
+  - name: remove testing folder
+    win_file:
+      path: "{{test_win_share_path}}"
+      state: absent
+  when: module_available.rc == 0

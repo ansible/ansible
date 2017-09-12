@@ -3,23 +3,13 @@
 
 # (c) 2012, Mark Theunissen <mark.theunissen@gmail.com>
 # Sponsored by Four Kitchens http://fourkitchens.com.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -114,8 +104,8 @@ EXAMPLES = '''
 
 import os
 import pipes
-import stat
 import subprocess
+import traceback
 
 try:
     import MySQLdb
@@ -124,20 +114,30 @@ except ImportError:
 else:
     mysqldb_found = True
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.database import mysql_quote_identifier
+from ansible.module_utils.mysql import mysql_connect, mysqldb_found
+from ansible.module_utils._text import to_native
+
+
 # ===========================================
 # MySQL module specific support methods.
 #
 
+
 def db_exists(cursor, db):
-    res = cursor.execute("SHOW DATABASES LIKE %s", (db.replace("_","\_"),))
+    res = cursor.execute("SHOW DATABASES LIKE %s", (db.replace("_", "\_"),))
     return bool(res)
+
 
 def db_delete(cursor, db):
     query = "DROP DATABASE %s" % mysql_quote_identifier(db, 'database')
     cursor.execute(query)
     return True
 
-def db_dump(module, host, user, password, db_name, target, all_databases, port, config_file, socket=None, ssl_cert=None, ssl_key=None, ssl_ca=None, single_transaction=None, quick=None):
+
+def db_dump(module, host, user, password, db_name, target, all_databases, port, config_file, socket=None, ssl_cert=None, ssl_key=None, ssl_ca=None,
+            single_transaction=None, quick=None):
     cmd = module.get_bin_path('mysqldump', True)
     # If defined, mysqldump demands --defaults-extra-file be the first option
     if config_file:
@@ -180,6 +180,7 @@ def db_dump(module, host, user, password, db_name, target, all_databases, port, 
 
     rc, stdout, stderr = module.run_command(cmd, use_unsafe_shell=True)
     return rc, stdout, stderr
+
 
 def db_import(module, host, user, password, db_name, target, all_databases, port, config_file, socket=None, ssl_cert=None, ssl_key=None, ssl_ca=None):
     if not os.path.exists(target):
@@ -233,6 +234,7 @@ def db_import(module, host, user, password, db_name, target, all_databases, port
         rc, stdout, stderr = module.run_command(cmd, use_unsafe_shell=True)
         return rc, stdout, stderr
 
+
 def db_create(cursor, db, encoding, collation):
     query_params = dict(enc=encoding, collate=collation)
     query = ['CREATE DATABASE %s' % mysql_quote_identifier(db, 'database')]
@@ -241,16 +243,17 @@ def db_create(cursor, db, encoding, collation):
     if collation:
         query.append("COLLATE %(collate)s")
     query = ' '.join(query)
-    res = cursor.execute(query, query_params)
+    cursor.execute(query, query_params)
     return True
 
 # ===========================================
 # Module execution.
 #
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
+        argument_spec=dict(
             login_user=dict(default=None),
             login_password=dict(default=None, no_log=True),
             login_host=dict(default="localhost"),
@@ -260,7 +263,7 @@ def main():
             encoding=dict(default=""),
             collation=dict(default=""),
             target=dict(default=None, type='path'),
-            state=dict(default="present", choices=["absent", "present","dump", "import"]),
+            state=dict(default="present", choices=["absent", "present", "dump", "import"]),
             ssl_cert=dict(default=None, type='path'),
             ssl_key=dict(default=None, type='path'),
             ssl_ca=dict(default=None, type='path'),
@@ -273,7 +276,7 @@ def main():
     )
 
     if not mysqldb_found:
-        module.fail_json(msg="the python mysqldb module is required")
+        module.fail_json(msg="The MySQL-python module is required.")
 
     db = module.params["name"]
     encoding = module.params["encoding"]
@@ -295,9 +298,9 @@ def main():
     single_transaction = module.params["single_transaction"]
     quick = module.params["quick"]
 
-    if state in ['dump','import']:
+    if state in ['dump', 'import']:
         if target is None:
-            module.fail_json(msg="with state=%s target is required" % (state))
+            module.fail_json(msg="with state=%s target is required" % state)
         if db == 'all':
             db = 'mysql'
             all_databases = True
@@ -309,12 +312,12 @@ def main():
     try:
         cursor = mysql_connect(module, login_user, login_password, config_file, ssl_cert, ssl_key, ssl_ca,
                                connect_timeout=connect_timeout)
-    except Exception:
-        e = get_exception()
+    except Exception as e:
         if os.path.exists(config_file):
-            module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or %s has the credentials. Exception message: %s" % (config_file, e))
+            module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or %s has the credentials. "
+                                 "Exception message: %s" % (config_file, to_native(e)))
         else:
-            module.fail_json(msg="unable to find %s. Exception message: %s" % (config_file, e))
+            module.fail_json(msg="unable to find %s. Exception message: %s" % (config_file, to_native(e)))
 
     changed = False
     if not os.path.exists(config_file):
@@ -326,9 +329,8 @@ def main():
             else:
                 try:
                     changed = db_delete(cursor, db)
-                except Exception:
-                    e = get_exception()
-                    module.fail_json(msg="error deleting database: " + str(e))
+                except Exception as e:
+                    module.fail_json(msg="error deleting database: %s" % to_native(e))
                 module.exit_json(changed=changed, db=db)
 
         elif state == "dump":
@@ -336,8 +338,9 @@ def main():
                 module.exit_json(changed=True, db=db)
             else:
                 rc, stdout, stderr = db_dump(module, login_host, login_user,
-                                            login_password, db, target, all_databases,
-                                            login_port, config_file, socket, ssl_cert, ssl_key, ssl_ca, single_transaction, quick)
+                                             login_password, db, target, all_databases,
+                                             login_port, config_file, socket, ssl_cert, ssl_key,
+                                             ssl_ca, single_transaction, quick)
                 if rc != 0:
                     module.fail_json(msg="%s" % stderr)
                 else:
@@ -348,8 +351,10 @@ def main():
                 module.exit_json(changed=True, db=db)
             else:
                 rc, stdout, stderr = db_import(module, login_host, login_user,
-                                            login_password, db, target, all_databases,
-                                            login_port, config_file, socket, ssl_cert, ssl_key, ssl_ca)
+                                               login_password, db, target,
+                                               all_databases,
+                                               login_port, config_file,
+                                               socket, ssl_cert, ssl_key, ssl_ca)
                 if rc != 0:
                     module.fail_json(msg="%s" % stderr)
                 else:
@@ -367,9 +372,9 @@ def main():
             else:
                 try:
                     changed = db_create(cursor, db, encoding, collation)
-                except Exception:
-                    e = get_exception()
-                    module.fail_json(msg="error creating database: " + str(e))
+                except Exception as e:
+                    module.fail_json(msg="error creating database: %s" % to_native(e),
+                                     exception=traceback.format_exc())
             module.exit_json(changed=changed, db=db)
 
         elif state == "import":
@@ -380,15 +385,15 @@ def main():
                     changed = db_create(cursor, db, encoding, collation)
                     if changed:
                         rc, stdout, stderr = db_import(module, login_host, login_user,
-                                                    login_password, db, target, all_databases,
-                                                    login_port, config_file, socket, ssl_cert, ssl_key, ssl_ca)
+                                                       login_password, db, target, all_databases,
+                                                       login_port, config_file, socket, ssl_cert, ssl_key, ssl_ca)
                         if rc != 0:
                             module.fail_json(msg="%s" % stderr)
                         else:
                             module.exit_json(changed=True, db=db, msg=stdout)
-                except Exception:
-                    e = get_exception()
-                    module.fail_json(msg="error creating database: " + str(e))
+                except Exception as e:
+                    module.fail_json(msg="error creating database: %s" % to_native(e),
+                                     exception=traceback.format_exc())
 
         elif state == "absent":
             if module.check_mode:
@@ -400,9 +405,6 @@ def main():
                 module.exit_json(changed=False, db=db)
             module.fail_json(msg="Cannot dump database %s - not found" % (db))
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.database import *
-from ansible.module_utils.mysql import *
+
 if __name__ == '__main__':
     main()

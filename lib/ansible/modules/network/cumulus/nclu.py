@@ -2,20 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2016-2017, Cumulus Networks <ce-ceng@cumulusnetworks.com>
-#
-# This file is part of Ansible
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -75,7 +68,7 @@ EXAMPLES = '''
   nclu:
     template: |
         {% for iface in range(1,49) %}
-        add int swp{{i}}
+        add int swp{{iface}}
         {% endfor %}
     commit: true
     description: "Ansible - add swps1-48"
@@ -101,6 +94,8 @@ msg:
     sample: "interface bond0 config updated"
 '''
 
+from ansible.module_utils.basic import AnsibleModule
+
 
 def command_helper(module, command, errmsg=None):
     """Run a command, catch any nclu errors"""
@@ -118,7 +113,7 @@ def check_pending(module):
     color1 = '\x1b[94m'
     if delimeter1 in pending:
         pending = pending.split(delimeter1)[0]
-        pending = pending.replace('\x1b[94m', '')
+        pending = pending.replace(color1, '')
     return pending.strip()
 
 
@@ -143,7 +138,7 @@ def run_nclu(module, command_list, command_string, commit, atomic, abort, descri
 
     # First, look at the staged commands.
     before = check_pending(module)
-    # Run all of the the net commands
+    # Run all of the net commands
     output_lines = []
     for line in commands:
         output_lines += [command_helper(module, line.strip(), "Failed on line %s"%line)]
@@ -193,7 +188,6 @@ def main(testing=False):
     elif testing:
         return {"changed": _changed, "msg": output}
 
-# import module snippets
-from ansible.module_utils.basic import AnsibleModule
+
 if __name__ == '__main__':
     main()

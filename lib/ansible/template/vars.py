@@ -19,15 +19,18 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.six import iteritems
+from collections import Mapping
+
 from jinja2.utils import missing
+
+from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native
 
 
 __all__ = ['AnsibleJ2Vars']
 
 
-class AnsibleJ2Vars:
+class AnsibleJ2Vars(Mapping):
     '''
     Helper class to template all variable content before jinja2 sees it. This is
     done by hijacking the variable storage that jinja2 uses, and overriding __contains__
@@ -46,8 +49,8 @@ class AnsibleJ2Vars:
 
         self._templar = templar
         self._globals = globals
-        self._extras  = extras
-        self._locals  = dict()
+        self._extras = extras
+        self._locals = dict()
         if isinstance(locals, dict):
             for key, val in iteritems(locals):
                 if val is not missing:
@@ -67,6 +70,16 @@ class AnsibleJ2Vars:
         if k in self._globals:
             return True
         return False
+
+    def __iter__(self):
+        keys = set()
+        keys.update(self._templar._available_variables, self._locals, self._globals, *self._extras)
+        return iter(keys)
+
+    def __len__(self):
+        keys = set()
+        keys.update(self._templar._available_variables, self._locals, self._globals, *self._extras)
+        return len(keys)
 
     def __getitem__(self, varname):
         if varname not in self._templar._available_variables:

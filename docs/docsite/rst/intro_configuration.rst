@@ -86,6 +86,20 @@ different locations::
 Most users will not need to use this feature.  See :doc:`dev_guide/developing_plugins` for more details.
 
 
+.. _allow_unsafe_lookups:
+
+allow_unsafe_lookups
+====================
+
+.. versionadded:: 2.2.3, 2.3.1
+
+When enabled, this option allows lookup plugins (whether used in variables as `{{lookup('foo')}}` or as a loop as `with_foo`) to return data that is **not** marked "unsafe". By default, such data is marked as unsafe to prevent the templating engine from evaluating any jinja2 templating language, as this could represent a security risk.
+
+This option is provided to allow for backwards-compatibility, however users should first consider adding `allow_unsafe=True` to any lookups which may be expected to contain data which may be run through the templating engine later. For example::
+
+    {{lookup('pipe', '/path/to/some/command', allow_unsafe=True)}}
+
+
 .. _allow_world_readable_tmpfiles:
 
 allow_world_readable_tmpfiles
@@ -388,6 +402,42 @@ is very very conservative::
 
     forks = 5
 
+.. _fact_caching:
+
+fact_caching
+============
+
+This option allows you to configure fact caching.  When a fact cache
+is enabled and there is valid data for a host, Ansible will use that rather than running an implicit ``setup`` job on a remote host.
+
+The value of this option should be the name of a cache plugin.
+Current versions of Ansible include ``redis`` and ``jsonfile``::
+
+    fact_caching = jsonfile
+
+.. _fact_caching_connection:
+
+fact_caching_connection
+=======================
+
+This option tells Ansible where to cache facts.  The value is plugin
+dependent.  For the ``jsonfile`` plugin, it should be a path to a
+local directory.  For the ``redis`` plugin, the value is a
+``host:port:database`` triplet::
+
+    fact_caching_connection = localhost:6379:0
+
+.. _fact_caching_timeout:
+
+fact_caching_timeout
+====================
+
+This option tells Ansible when to expire values from the cache.
+Setting this value to 0 effectively disables expiry, and a positive
+value is a TTL in seconds::
+
+    fact_caching_timeout = 86400
+
 .. _fact_path:
 
 fact_path
@@ -507,12 +557,12 @@ It used to be called hostfile in Ansible before 1.9
 inventory_ignore_extensions
 ===========================
 
-Coma-separated list of file extension patterns to ignore when Ansible inventory
+Comma-separated list of file extension patterns to ignore when Ansible inventory
 is a directory with multiple sources (static and dynamic)::
 
     inventory_ignore_extensions = ~, .orig, .bak, .ini, .cfg, .retry, .pyc, .pyo
 
-This option can be overridden by setting ``ANSIBLE_INVENTORY_IGNORE``
+This option can be overridden by setting :envvar:`ANSIBLE_INVENTORY_IGNORE`
 environment variable.
 
 .. _jinja2_extensions:
@@ -569,7 +619,7 @@ things gets stored in a temporary file until ansible exits and cleans up after
 itself.  The default location is a subdirectory of the user's home directory.
 If you'd like to change that, you can do so by altering this setting::
 
-    local_tmp = $HOME/.ansible/tmp
+    local_tmp = ~/.ansible/tmp
 
 Ansible will then choose a random directory name inside this location.
 
@@ -607,15 +657,16 @@ merge_multiple_cli_tags
 
 .. versionadded:: 2.3
 
-This allows changing how multiple --tags and --skip-tags arguments are handled
-on the command line.  In Ansible up to and including 2.3, specifying --tags
-more than once will only take the last value of --tags.  Setting this config
-value to True will mean that all of the --tags options will be merged
-together.  The same holds true for --skip-tags.
+This allows changing how multiple :option:`--tags` and :option:`--skip-tags`
+arguments are handled on the command line.  Specifying :option:`--tags` more
+than once merges all of the :option:`--tags` options together.  If you want
+the pre-2.4.x behaviour where only the last value of :option:`--tags` is used,
+then set this to False.  The same holds true for :option:`--skip-tags`.
 
 .. note:: The default value for this in 2.3 is False.  In 2.4, the
-    default value will be True.  After 2.4, the option is going away.
-    Multiple --tags and multiple --skip-tags will always be merged together.
+    default value is True.  After 2.8, the option will be removed.
+    Multiple :option:`--tags` and multiple :option:`--skip-tags` will always
+    be merged together.
 
 .. _module_lang:
 
@@ -747,7 +798,7 @@ Ansible works by transferring modules to your remote machines, running them, and
 cases, you may not wish to use the default location and would like to change the path.  You can do so by altering this
 setting::
 
-    remote_tmp = $HOME/.ansible/tmp
+    remote_tmp = ~/.ansible/tmp
 
 The default is to use a subdirectory of the user's home directory.  Ansible will then choose a random directory name
 inside this location.
@@ -771,7 +822,7 @@ restrict_facts_namespace
 .. versionadded:: 2.4
 
 This allows restricting facts in their own namespace (under ansible_facts) instead of pushing them into the main.
-False by default. Can also be set via the environment variable `ANSIBLE_RESTRICT_FACTS`. Using `ansible_system` as an example:
+False by default. Can also be set via the environment variable :envvar:`ANSIBLE_RESTRICT_FACTS`. Using `ansible_system` as an example:
 
 When False::
 
@@ -1105,7 +1156,16 @@ This is the base directory of the ControlPath sockets.
 It is the ``%(directory)s`` part of the ``control_path`` option.
 This defaults to::
 
-    control_path_dir=$HOME/.ansible/cp
+    control_path_dir=~/.ansible/cp
+
+.. _retries:
+
+retries
+=======
+
+Adds the option to retry failed ssh executions if the failure is encountered in ssh itself, not the remote command. This can be helpful if there are transient network issues. Enabled by setting retries to an integer greater than 1. Defaults to::
+
+    retries = 0
 
 .. _scp_if_ssh:
 

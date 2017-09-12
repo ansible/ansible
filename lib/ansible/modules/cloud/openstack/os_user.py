@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -55,6 +55,10 @@ options:
         - Email address for the user
      required: false
      default: None
+   description:
+     description:
+        - Description about the user
+     version_added: "2.4"
    default_project:
      description:
         - Project name or ID that the user should be associated with by default
@@ -77,7 +81,7 @@ options:
      default: present
    availability_zone:
      description:
-       - Ignored. Present for backwards compatability
+       - Ignored. Present for backwards compatibility
      required: false
 requirements:
     - "python >= 2.6"
@@ -118,7 +122,7 @@ RETURN = '''
 user:
     description: Dictionary describing the user.
     returned: On success when I(state) is 'present'
-    type: dictionary
+    type: complex
     contains:
         default_project_id:
             description: User default project ID. Only present with Keystone >= v3.
@@ -147,11 +151,14 @@ try:
     HAS_SHADE = True
 except ImportError:
     HAS_SHADE = False
+from distutils.version import StrictVersion
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
 
 
 def _needs_update(params_dict, user):
-    for k, v in params_dict.items():
-        if k not in ('password', 'update_password') and user[k] != v:
+    for k in params_dict:
+        if k not in ('password', 'update_password') and user[k] != params_dict[k]:
             return True
 
     # We don't get password back in the user object, so assume any supplied
@@ -161,6 +168,7 @@ def _needs_update(params_dict, user):
         return True
 
     return False
+
 
 def _get_domain_id(cloud, domain):
     try:
@@ -177,25 +185,26 @@ def _get_domain_id(cloud, domain):
 
     return domain_id
 
-def _get_default_project_id(cloud, default_project):
+
+def _get_default_project_id(cloud, default_project, module):
     project = cloud.get_project(default_project)
     if not project:
         module.fail_json(msg='Default project %s is not valid' % default_project)
 
     return project['id']
 
-def main():
 
+def main():
     argument_spec = openstack_full_argument_spec(
         name=dict(required=True),
         password=dict(required=False, default=None, no_log=True),
         email=dict(required=False, default=None),
         default_project=dict(required=False, default=None),
+        description=dict(type='str'),
         domain=dict(required=False, default=None),
         enabled=dict(default=True, type='bool'),
         state=dict(default='present', choices=['absent', 'present']),
-        update_password=dict(default='always', choices=['always',
-                                                        'on_create']),
+        update_password=dict(default='always', choices=['always', 'on_create']),
     )
 
     module_kwargs = openstack_module_kwargs()
@@ -214,6 +223,10 @@ def main():
     enabled = module.params['enabled']
     state = module.params['state']
     update_password = module.params['update_password']
+    description = module.params['description']
+
+    if description and StrictVersion(shade.__version__) < StrictVersion('1.13.0'):
+        module.fail_json(msg="To utilize description, the installed version of the shade library MUST be >=1.13.0")
 
     try:
         cloud = shade.openstack_cloud(**module.params)
@@ -227,23 +240,30 @@ def main():
         if state == 'present':
             if update_password in ('always', 'on_create'):
                 if not password:
-                    msg = ("update_password is %s but a password value is "
-                          "missing") % update_password
+                    msg = "update_password is %s but a password value is missing" % update_password
                     module.fail_json(msg=msg)
             default_project_id = None
             if default_project:
-                default_project_id = _get_default_project_id(cloud, default_project)
+                default_project_id = _get_default_project_id(cloud, default_project, module)
 
             if user is None:
-                user = cloud.create_user(
-                    name=name, password=password, email=email,
-                    default_project=default_project_id, domain_id=domain_id,
-                    enabled=enabled)
+                if description is not None:
+                    user = cloud.create_user(
+                        name=name, password=password, email=email,
+                        default_project=default_project_id, domain_id=domain_id,
+                        enabled=enabled, description=description)
+                else:
+                    user = cloud.create_user(
+                        name=name, password=password, email=email,
+                        default_project=default_project_id, domain_id=domain_id,
+                        enabled=enabled)
                 changed = True
             else:
                 params_dict = {'email': email, 'enabled': enabled,
                                'password': password,
                                'update_password': update_password}
+                if description is not None:
+                    params_dict['description'] = description
                 if domain_id is not None:
                     params_dict['domain_id'] = domain_id
                 if default_project_id is not None:
@@ -251,15 +271,27 @@ def main():
 
                 if _needs_update(params_dict, user):
                     if update_password == 'always':
-                        user = cloud.update_user(
-                            user['id'], password=password, email=email,
-                            default_project=default_project_id,
-                            domain_id=domain_id, enabled=enabled)
+                        if description is not None:
+                            user = cloud.update_user(
+                                user['id'], password=password, email=email,
+                                default_project=default_project_id,
+                                domain_id=domain_id, enabled=enabled, description=description)
+                        else:
+                            user = cloud.update_user(
+                                user['id'], password=password, email=email,
+                                default_project=default_project_id,
+                                domain_id=domain_id, enabled=enabled)
                     else:
-                        user = cloud.update_user(
-                            user['id'], email=email,
-                            default_project=default_project_id,
-                            domain_id=domain_id, enabled=enabled)
+                        if description is not None:
+                            user = cloud.update_user(
+                                user['id'], email=email,
+                                default_project=default_project_id,
+                                domain_id=domain_id, enabled=enabled, description=description)
+                        else:
+                            user = cloud.update_user(
+                                user['id'], email=email,
+                                default_project=default_project_id,
+                                domain_id=domain_id, enabled=enabled)
                     changed = True
                 else:
                     changed = False
@@ -267,17 +299,14 @@ def main():
 
         elif state == 'absent':
             if user is None:
-                changed=False
+                changed = False
             else:
                 cloud.delete_user(user['id'])
-                changed=True
+                changed = True
             module.exit_json(changed=changed)
 
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=str(e), extra_data=e.extra_data)
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.openstack import *
 
 
 if __name__ == '__main__':

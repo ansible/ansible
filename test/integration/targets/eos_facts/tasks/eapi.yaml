@@ -8,8 +8,21 @@
 - name: set test_items
   set_fact: test_items="{{ test_cases.files | map(attribute='path') | list }}"
 
+- name: enable eapi
+  eos_eapi:
+    http: yes
+    https: yes
+    local_http: no
+    enable_socket: yes
+    provider: "{{ cli }}"
+
 - name: run test case
   include: "{{ test_case_to_run }}"
   with_items: "{{ test_items }}"
   loop_control:
     loop_var: test_case_to_run
+
+- name: disable eapi
+  eos_eapi:
+    state: stopped
+    provider: "{{ cli }}"

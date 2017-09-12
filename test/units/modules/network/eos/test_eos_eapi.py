@@ -95,8 +95,7 @@ class TestEosEapiModule(TestEosModule):
 
     def test_eos_eapi_http_invalid(self):
         set_module_args(dict(http_port=80000))
-        commands = []
-        self.start_unconfigured(failed=True, commands=commands)
+        self.start_unconfigured(failed=True)
 
     def test_eos_eapi_https_enable(self):
         set_module_args(dict(https=True))
@@ -137,8 +136,7 @@ class TestEosEapiModule(TestEosModule):
 
     def test_eos_eapi_vrf_missing(self):
         set_module_args(dict(vrf='missing'))
-        commands = []
-        self.start_unconfigured(failed=True, commands=commands)
+        self.start_unconfigured(failed=True)
 
     def test_eos_eapi_state_absent(self):
         set_module_args(dict(state='stopped'))

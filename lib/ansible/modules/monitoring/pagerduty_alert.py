@@ -1,22 +1,13 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -56,15 +47,20 @@ options:
         required: true
     desc:
         description:
-            - For C(triggered) I(state) - Required. Short description of the problem that led to this trigger. This field (or a truncated version) will be used when generating phone calls, SMS messages and alert emails. It will also appear on the incidents tables in the PagerDuty UI. The maximum length is 1024 characters.
+            - For C(triggered) I(state) - Required. Short description of the problem that led to this trigger. This field (or a truncated version)
+              will be used when generating phone calls, SMS messages and alert emails. It will also appear on the incidents tables in the PagerDuty UI.
+              The maximum length is 1024 characters.
             - For C(acknowledged) or C(resolved) I(state) - Text that will appear in the incident's log associated with this event.
         required: false
         default: Created via Ansible
     incident_key:
         description:
             - Identifies the incident to which this I(state) should be applied.
-            - For C(triggered) I(state) - If there's no open (i.e. unresolved) incident with this key, a new one will be created. If there's already an open incident with a matching key, this event will be appended to that incident's log. The event key provides an easy way to "de-dup" problem reports.
-            - For C(acknowledged) or C(resolved) I(state) - This should be the incident_key you received back when the incident was first opened by a trigger event. Acknowledge events referencing resolved or nonexistent incidents will be discarded.
+            - For C(triggered) I(state) - If there's no open (i.e. unresolved) incident with this key, a new one will be created. If there's already an
+              open incident with a matching key, this event will be appended to that incident's log. The event key provides an easy way to "de-dup"
+              problem reports.
+            - For C(acknowledged) or C(resolved) I(state) - This should be the incident_key you received back when the incident was first opened by a
+              trigger event. Acknowledge events referencing resolved or nonexistent incidents will be discarded.
         required: false
     client:
         description:
@@ -111,6 +107,10 @@ EXAMPLES = '''
     incident_key: somekey
     desc: "some text for incident's log"
 '''
+import json
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url
 
 
 def check(module, name, state, service_key, api_key, incident_key=None):
@@ -210,9 +210,6 @@ def main():
 
     module.exit_json(result=out, changed=changed)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 
 if __name__ == '__main__':
     main()

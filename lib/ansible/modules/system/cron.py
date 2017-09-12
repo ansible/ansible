@@ -7,33 +7,15 @@
 # (c) 2015, Evan Kaufman <evan@digitalflophouse.com>
 # (c) 2015, Luca Berruti <nadirio@gmail.com>
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
-# Cron Plugin: The goal of this plugin is to provide an idempotent method for
-# setting up cron jobs on a host. The script will play well with other manually
-# entered crons. Each cron job entered will be preceded with a comment
-# describing the job so that it can be found later, which is required to be
-# present in order for this plugin to find/modify the job.
-#
-# This module is based on python-crontab by Martin Owens.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = """
@@ -69,6 +51,7 @@ options:
   job:
     description:
       - The command to execute or, if env is set, the value of environment variable.
+        The command should not contain line breaks.
         Required if state=present.
     required: false
     aliases: ['value']
@@ -84,6 +67,8 @@ options:
       - If specified, uses this file instead of an individual user's crontab.
         If this is a relative path, it is interpreted with respect to
         /etc/cron.d. (If it is absolute, it will typically be /etc/crontab).
+        Many linux distros expect (and some require) the filename portion to consist solely
+        of upper- and lower-case letters, digits, underscores, and hyphens.
         To use the C(cron_file) parameter you must specify the C(user) as well.
     required: false
     default: null
@@ -232,16 +217,22 @@ EXAMPLES = '''
 '''
 
 import os
-import pwd
-import re
-import tempfile
 import platform
 import pipes
+import pwd
+import re
+import sys
+import tempfile
+
+from ansible.module_utils.basic import AnsibleModule, get_platform
+
 
 CRONCMD = "/usr/bin/crontab"
 
+
 class CronTabError(Exception):
     pass
+
 
 class CronTab(object):
     """
@@ -463,7 +454,6 @@ class CronTab(object):
             else:
                 return "%s%s %s %s %s %s %s" % (disable_prefix,minute,hour,day,month,weekday,job)
 
-        return None
 
     def get_jobnames(self):
         jobnames = []
@@ -632,6 +622,13 @@ def main():
 
     changed      = False
     res_args     = dict()
+    warnings     = list()
+
+    if cron_file:
+        cron_file_basename = os.path.basename(cron_file)
+        if not re.search(r'^[A-Z0-9_-]+$', cron_file_basename, re.I):
+            warnings.append('Filename portion of cron_file ("%s") should consist' % cron_file_basename
+            + ' solely of upper- and lower-case letters, digits, underscores, and hyphens')
 
     # Ensure all files generated are only writable by the owning user.  Primarily relevant for the cron_file option.
     os.umask(int('022', 8))
@@ -655,6 +652,10 @@ def main():
     if (special_time or reboot) and \
        (True in [(x != '*') for x in [minute, hour, day, month, weekday]]):
         module.fail_json(msg="You must specify time and date fields or special time.")
+
+    # cannot support special_time on solaris
+    if (special_time or reboot) and get_platform() == 'SunOS':
+        module.fail_json(msg="Solaris does not support special_time=... or @reboot")
 
     if cron_file and do_install:
         if not user:
@@ -706,6 +707,11 @@ def main():
                 changed = True
     else:
         if do_install:
+            for char in ['\r', '\n']:
+                if char in job.strip('\r\n'):
+                    warnings.append('Job should not contain line breaks')
+                    break
+
             job = crontab.get_cron_job(minute, hour, day, month, weekday, job, special_time, disabled)
             old_job = crontab.find_job(name, job)
 
@@ -726,13 +732,14 @@ def main():
                 changed = True
 
     # no changes to env/job, but existing crontab needs a terminating newline
-    if not changed:
+    if not changed and not crontab.existing == '':
         if not (crontab.existing.endswith('\r') or crontab.existing.endswith('\n')):
             changed = True
 
     res_args = dict(
         jobs = crontab.get_jobnames(),
         envs = crontab.get_envnames(),
+        warnings = warnings,
         changed = changed
     )
 
@@ -752,12 +759,11 @@ def main():
             res_args['diff'] = diff
 
     # retain the backup only if crontab or cron file have changed
-    if backup:
+    if backup and not module.check_mode:
         if changed:
             res_args['backup_file'] = backup_file
         else:
-            if not module.check_mode:
-                os.unlink(backup_file)
+            os.unlink(backup_file)
 
     if cron_file:
         res_args['cron_file'] = cron_file
@@ -767,8 +773,6 @@ def main():
     # --- should never get here
     module.exit_json(msg="Unable to execute cron task.")
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

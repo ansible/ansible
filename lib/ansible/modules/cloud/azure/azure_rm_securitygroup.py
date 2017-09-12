@@ -3,25 +3,15 @@
 # Copyright (c) 2016 Matt Davis, <mdavis@ansible.com>
 #                    Chris Houseknecht, <house@redhat.com>
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
@@ -334,21 +324,22 @@ state:
         },
         "type": "Microsoft.Network/networkSecurityGroups"
     }
-'''
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.azure_rm_common import *
+'''  # NOQA
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.common import AzureHttpError
     from azure.mgmt.network.models import NetworkSecurityGroup, SecurityRule
-    from azure.mgmt.network.models.network_management_client_enums import (SecurityRuleAccess,
-                                                                           SecurityRuleDirection,
-                                                                           SecurityRuleProtocol)
+    from azure.mgmt.network.models import (
+        SecurityRuleAccess,
+        SecurityRuleDirection,
+        SecurityRuleProtocol
+    )
 except ImportError:
     # This is handled in azure_rm_common
     pass
+
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase
+from ansible.module_utils.six import integer_types
 
 
 def validate_rule(rule, rule_type=None):
@@ -366,8 +357,12 @@ def validate_rule(rule, rule_type=None):
     priority = rule.get('priority', None)
     if not priority:
         raise Exception("Rule priority is required.")
-    if not isinstance(priority, (int, long)):
-        raise Exception("Rule priority attribute must be an integer.")
+    if not isinstance(priority, integer_types):
+        try:
+            priority = int(priority)
+            rule['priority'] = priority
+        except:
+            raise Exception("Rule priority attribute must be an integer.")
     if rule_type != 'default' and (priority < 100 or priority > 4096):
         raise Exception("Rule priority must be between 100 and 4096")
 
@@ -416,12 +411,12 @@ def compare_rules(r, rule):
         if rule['protocol'] != r['protocol']:
             changed = True
             r['protocol'] = rule['protocol']
-        if rule['source_port_range'] != r['source_port_range']:
+        if str(rule['source_port_range']) != str(r['source_port_range']):
             changed = True
-            r['source_port_range'] = rule['source_port_range']
-        if rule['destination_port_range'] != r['destination_port_range']:
+            r['source_port_range'] = str(rule['source_port_range'])
+        if str(rule['destination_port_range']) != str(r['destination_port_range']):
             changed = True
-            r['destination_port_range'] = rule['destination_port_range']
+            r['destination_port_range'] = str(rule['destination_port_range'])
         if rule['access'] != r['access']:
             changed = True
             r['access'] = rule['access']
@@ -548,7 +543,7 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
 
     def exec_module(self, **kwargs):
 
-        for key in self.module_arg_spec.keys() + ['tags']:
+        for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
 
         changed = False
@@ -700,21 +695,22 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
                                                                                   self.name,
                                                                                   parameters)
             result = self.get_poller_result(poller)
-        except AzureHttpError as exc:
-            self.fail("Error creating/upating security group {0} - {1}".format(self.name, str(exc)))
+        except CloudError as exc:
+            self.fail("Error creating/updating security group {0} - {1}".format(self.name, str(exc)))
         return create_network_security_group_dict(result)
 
     def delete(self):
         try:
             poller = self.network_client.network_security_groups.delete(self.resource_group, self.name)
             result = self.get_poller_result(poller)
-        except AzureHttpError as exc:
+        except CloudError as exc:
             raise Exception("Error deleting security group {0} - {1}".format(self.name, str(exc)))
         return result
 
 
 def main():
     AzureRMSecurityGroup()
+
 
 if __name__ == '__main__':
     main()

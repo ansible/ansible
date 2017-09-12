@@ -1,24 +1,14 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2014, 2015 YAEGASHI Takeshi <yaegashi@debian.org>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2014, 2015 YAEGASHI Takeshi <yaegashi@debian.org>
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
 
@@ -71,7 +61,7 @@ options:
       - If specified, the block will be inserted after the last match of
         specified regular expression. A special value is available; C(EOF) for
         inserting the block at the end of the file.  If specified regular
-        expresion has no matches, C(EOF) will be used instead.
+        expression has no matches, C(EOF) will be used instead.
     choices: [ 'EOF', '*regex*' ]
   insertbefore:
     required: false
@@ -80,7 +70,7 @@ options:
       - If specified, the block will be inserted before the last match of
         specified regular expression. A special value is available; C(BOF) for
         inserting the block at the beginning of the file.  If specified regular
-        expresion has no matches, the block will be inserted at the end of the
+        expression has no matches, the block will be inserted at the end of the
         file.
     choices: [ 'BOF', '*regex*' ]
   create:
@@ -167,6 +157,7 @@ from ansible.module_utils.six import b
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_bytes
 
+
 def write_changes(module, contents, path):
 
     tmpfd, tmpfile = tempfile.mkstemp()
@@ -188,10 +179,10 @@ def write_changes(module, contents, path):
         module.atomic_move(tmpfile, path, unsafe_writes=module.params['unsafe_writes'])
 
 
-def check_file_attrs(module, changed, message):
+def check_file_attrs(module, changed, message, diff):
 
     file_args = module.load_file_common_arguments(module.params)
-    if module.set_file_attributes_if_different(file_args, False):
+    if module.set_file_attributes_if_different(file_args, False, diff=diff):
 
         if changed:
             message += " and "
@@ -241,6 +232,14 @@ def main():
         f.close()
         lines = original.splitlines()
 
+    diff = {'before': '',
+            'after': '',
+            'before_header': '%s (content)' % path,
+            'after_header': '%s (content)' % path}
+
+    if module._diff and original:
+        diff['before'] = original
+
     insertbefore = params['insertbefore']
     insertafter = params['insertafter']
     block = to_bytes(params['block'])
@@ -254,9 +253,9 @@ def main():
         insertafter = 'EOF'
 
     if insertafter not in (None, 'EOF'):
-        insertre = re.compile(insertafter)
+        insertre = re.compile(to_bytes(insertafter, errors='surrogate_or_strict'))
     elif insertbefore not in (None, 'BOF'):
-        insertre = re.compile(insertbefore)
+        insertre = re.compile(to_bytes(insertbefore, errors='surrogate_or_strict'))
     else:
         insertre = None
 
@@ -305,6 +304,10 @@ def main():
             result += b('\n')
     else:
         result = ''
+
+    if module._diff:
+        diff['after'] = result
+
     if original == result:
         msg = ''
         changed = False
@@ -324,10 +327,16 @@ def main():
         write_changes(module, result, path)
 
     if module.check_mode and not path_exists:
-        module.exit_json(changed=changed, msg=msg)
+        module.exit_json(changed=changed, msg=msg, diff=diff)
 
-    msg, changed = check_file_attrs(module, changed, msg)
-    module.exit_json(changed=changed, msg=msg)
+    attr_diff = {}
+    msg, changed = check_file_attrs(module, changed, msg, attr_diff)
+
+    attr_diff['before_header'] = '%s (file attributes)' % path
+    attr_diff['after_header'] = '%s (file attributes)' % path
+
+    difflist = [diff, attr_diff]
+    module.exit_json(changed=changed, msg=msg, diff=difflist)
 
 
 if __name__ == '__main__':

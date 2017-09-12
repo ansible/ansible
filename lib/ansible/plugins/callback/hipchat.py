@@ -1,26 +1,45 @@
 # (C) 2014, Matt Martz <matt@sivel.net>
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
-# Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = '''
+    callback: hipchat
+    type: notification
+    short_description: post task events to hipchat
+    description:
+      - The chatty part of ChatOps with a Hipchat server as a target
+      - This callback plugin sends status updates to a HipChat channel during playbook execution.
+    version_added: "1.6"
+    requirements:
+      - prettytable (python lib)
+    options:
+      token:
+        description: HipChat API token
+        required: True
+        env:
+          - name: HIPCHAT_TOKEN
+      room:
+        description: HipChat room to post in.
+        default: ansible
+        env:
+          - name: HIPCHAT_ROOM
+      from:
+        description:  Name to post as
+        default: ansible
+        env:
+          - name: HIPCHAT_FROM
+      notify:
+        description: Add notify flag to important messages
+        type: bool
+        default: True
+        env:
+          - name: HIPCHAT_NOTIFY
+'''
+
 import os
-import urllib
 
 try:
     import prettytable
@@ -29,6 +48,7 @@ except ImportError:
     HAS_PRETTYTABLE = False
 
 from ansible.plugins.callback import CallbackBase
+from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils.urls import open_url
 
 
@@ -58,7 +78,7 @@ class CallbackModule(CallbackBase):
         if not HAS_PRETTYTABLE:
             self.disabled = True
             self._display.warning('The `prettytable` python module is not installed. '
-                          'Disabling the HipChat callback plugin.')
+                                  'Disabling the HipChat callback plugin.')
 
         self.msg_uri = 'https://api.hipchat.com/v1/rooms/message'
         self.token = os.getenv('HIPCHAT_TOKEN')
@@ -69,8 +89,8 @@ class CallbackModule(CallbackBase):
         if self.token is None:
             self.disabled = True
             self._display.warning('HipChat token could not be loaded. The HipChat '
-                          'token can be provided using the `HIPCHAT_TOKEN` '
-                          'environment variable.')
+                                  'token can be provided using the `HIPCHAT_TOKEN` '
+                                  'environment variable.')
 
         self.printed_playbook = False
         self.playbook_name = None
@@ -89,7 +109,7 @@ class CallbackModule(CallbackBase):
 
         url = ('%s?auth_token=%s' % (self.msg_uri, self.token))
         try:
-            response = open_url(url, data=urllib.urlencode(params))
+            response = open_url(url, data=urlencode(params))
             return response.read()
         except:
             self._display.warning('Could not submit message to hipchat')

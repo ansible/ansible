@@ -1,26 +1,22 @@
 # (c) 2016, Dag Wieers <dag@wieers.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.plugins.callback.default import CallbackModule as CallbackModule_default
-from ansible.utils.color import colorize, hostcolor
+DOCUMENTATION = '''
+    callback: dense
+    type: stdout
+    short_description: minimal stdout output
+    description:
+      - When in verbose mode it will act the same as the default callback
+    version_added: "2.3"
+    requirements:
+      - set as stdout in configuation
+'''
+
+from collections import MutableMapping, MutableSequence
 
 HAS_OD = False
 try:
@@ -28,6 +24,10 @@ try:
     HAS_OD = True
 except ImportError:
     pass
+
+from ansible.module_utils.six import binary_type, text_type
+from ansible.plugins.callback.default import CallbackModule as CallbackModule_default
+from ansible.utils.color import colorize, hostcolor
 
 try:
     from __main__ import display
@@ -68,18 +68,18 @@ import sys
 
 
 # FIXME: Importing constants as C simply does not work, beats me :-/
-#from ansible import constants as C
+# from ansible import constants as C
 class C:
-    COLOR_HIGHLIGHT   = 'white'
-    COLOR_VERBOSE     = 'blue'
-    COLOR_WARN        = 'bright purple'
-    COLOR_ERROR       = 'red'
-    COLOR_DEBUG       = 'dark gray'
-    COLOR_DEPRECATE   = 'purple'
-    COLOR_SKIP        = 'cyan'
+    COLOR_HIGHLIGHT = 'white'
+    COLOR_VERBOSE = 'blue'
+    COLOR_WARN = 'bright purple'
+    COLOR_ERROR = 'red'
+    COLOR_DEBUG = 'dark gray'
+    COLOR_DEPRECATE = 'purple'
+    COLOR_SKIP = 'cyan'
     COLOR_UNREACHABLE = 'bright red'
-    COLOR_OK          = 'green'
-    COLOR_CHANGED     = 'yellow'
+    COLOR_OK = 'green'
+    COLOR_CHANGED = 'yellow'
 
 
 # Taken from Dstat
@@ -133,15 +133,16 @@ class vt100:
 
 
 colors = dict(
-    ok = vt100.darkgreen,
-    changed = vt100.darkyellow,
-    skipped = vt100.darkcyan,
-    ignored = vt100.cyanbg + vt100.red,
-    failed = vt100.darkred,
-    unreachable = vt100.red,
+    ok=vt100.darkgreen,
+    changed=vt100.darkyellow,
+    skipped=vt100.darkcyan,
+    ignored=vt100.cyanbg + vt100.red,
+    failed=vt100.darkred,
+    unreachable=vt100.red,
 )
 
-states = ( 'skipped', 'ok', 'changed', 'failed', 'unreachable' )
+states = ('skipped', 'ok', 'changed', 'failed', 'unreachable')
+
 
 class CallbackModule_dense(CallbackModule_default):
 
@@ -152,7 +153,6 @@ class CallbackModule_dense(CallbackModule_default):
     CALLBACK_VERSION = 2.0
     CALLBACK_TYPE = 'stdout'
     CALLBACK_NAME = 'dense'
-
 
     def __init__(self):
 
@@ -235,7 +235,7 @@ class CallbackModule_dense(CallbackModule_default):
 
         # Remove empty attributes (list, dict, str)
         for attr in result.copy():
-            if type(result[attr]) in (list, dict, basestring, unicode):
+            if isinstance(result[attr], (MutableSequence, MutableMapping, binary_type, text_type)):
                 if not result[attr]:
                     del(result[attr])
 

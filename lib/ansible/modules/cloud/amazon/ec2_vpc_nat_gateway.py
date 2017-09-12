@@ -1,20 +1,12 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -210,22 +202,19 @@ nat_gateway_addresses:
   ]
 '''
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn
-
 import datetime
 import random
-import re
 import time
-
-from dateutil.tz import tzutc
 
 try:
     import botocore
-    import boto3
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
+    pass  # caught by imported HAS_BOTO3
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import (ec2_argument_spec, get_aws_connection_info, boto3_conn,
+                                      camel_dict_to_snake_dict, HAS_BOTO3)
+
 
 DRY_RUN_GATEWAYS = [
     {
@@ -244,23 +233,6 @@ DRY_RUN_GATEWAYS = [
         "vpc_id": "vpc-12345678"
     }
 ]
-DRY_RUN_GATEWAY_UNCONVERTED = [
-    {
-        'VpcId': 'vpc-12345678',
-        'State': 'available',
-        'NatGatewayId': 'nat-123456789',
-        'SubnetId': 'subnet-123456789',
-        'NatGatewayAddresses': [
-            {
-                'PublicIp': '55.55.55.55',
-                'NetworkInterfaceId': 'eni-1234567',
-                'AllocationId': 'eipalloc-1234567',
-                'PrivateIp': '10.0.0.102'
-            }
-        ],
-        'CreateTime': datetime.datetime(2016, 3, 5, 5, 19, 20, 282000, tzinfo=tzutc())
-    }
-]
 
 DRY_RUN_ALLOCATION_UNCONVERTED = {
     'Addresses': [
@@ -273,45 +245,6 @@ DRY_RUN_ALLOCATION_UNCONVERTED = {
 }
 
 DRY_RUN_MSGS = 'DryRun Mode:'
-
-
-def convert_to_lower(data):
-    """Convert all uppercase keys in dict with lowercase_
-
-    Args:
-        data (dict): Dictionary with keys that have upper cases in them
-            Example.. FooBar == foo_bar
-            if a val is of type datetime.datetime, it will be converted to
-            the ISO 8601
-
-    Basic Usage:
-        >>> test = {'FooBar': []}
-        >>> test = convert_to_lower(test)
-        {
-            'foo_bar': []
-        }
-
-    Returns:
-        Dictionary
-    """
-    results = dict()
-    if isinstance(data, dict):
-        for key, val in data.items():
-            key = re.sub(r'(([A-Z]{1,3}){1})', r'_\1', key).lower()
-            if key[0] == '_':
-                key = key[1:]
-            if isinstance(val, datetime.datetime):
-                results[key] = val.isoformat()
-            elif isinstance(val, dict):
-                results[key] = convert_to_lower(val)
-            elif isinstance(val, list):
-                converted = list()
-                for item in val:
-                    converted.append(convert_to_lower(item))
-                results[key] = converted
-            else:
-                results[key] = val
-    return results
 
 
 def get_nat_gateways(client, subnet_id=None, nat_gateway_id=None,
@@ -378,7 +311,7 @@ def get_nat_gateways(client, subnet_id=None, nat_gateway_id=None,
             gateways = client.describe_nat_gateways(**params)['NatGateways']
             if gateways:
                 for gw in gateways:
-                    existing_gateways.append(convert_to_lower(gw))
+                    existing_gateways.append(camel_dict_to_snake_dict(gw))
             gateways_retrieved = True
         else:
             gateways_retrieved = True
@@ -747,22 +680,22 @@ def create(client, subnet_id, allocation_id, client_token=None,
 
     try:
         if not check_mode:
-            result = client.create_nat_gateway(**params)["NatGateway"]
+            result = camel_dict_to_snake_dict(client.create_nat_gateway(**params)["NatGateway"])
         else:
-            result = DRY_RUN_GATEWAY_UNCONVERTED[0]
-            result['CreateTime'] = datetime.datetime.utcnow()
-            result['NatGatewayAddresses'][0]['AllocationId'] = allocation_id
-            result['SubnetId'] = subnet_id
+            result = DRY_RUN_GATEWAYS[0]
+            result['create_time'] = datetime.datetime.utcnow()
+            result['nat_gateway_addresses'][0]['Allocation_id'] = allocation_id
+            result['subnet_id'] = subnet_id
 
         success = True
         changed = True
-        create_time = result['CreateTime'].replace(tzinfo=None)
+        create_time = result['create_time'].replace(tzinfo=None)
         if token_provided and (request_time > create_time):
             changed = False
         elif wait:
             success, err_msg, result = (
                 wait_for_status(
-                    client, wait_timeout, result['NatGatewayId'], 'available',
+                    client, wait_timeout, result['nat_gateway_id'], 'available',
                     check_mode=check_mode
                 )
             )
@@ -949,7 +882,7 @@ def remove(client, nat_gateway_id, wait=False, wait_timeout=0,
     changed = False
     err_msg = ""
     results = list()
-    states = ['pending', 'available' ]
+    states = ['pending', 'available']
     try:
         exist, _, gw = (
             get_nat_gateways(
@@ -1023,7 +956,9 @@ def main():
         supports_check_mode=True,
         mutually_exclusive=[
             ['allocation_id', 'eip_address']
-        ]
+        ],
+        required_if=[['state', 'absent', ['nat_gateway_id']],
+                     ['state', 'present', ['subnet_id']]]
     )
 
     # Validate Requirements
@@ -1059,9 +994,6 @@ def main():
     err_msg = ''
 
     if state == 'present':
-        if not subnet_id:
-            module.fail_json(msg='subnet_id is required for creation')
-
         success, changed, err_msg, results = (
             pre_create(
                 client, subnet_id, allocation_id, eip_address,
@@ -1070,16 +1002,12 @@ def main():
             )
         )
     else:
-        if not nat_gateway_id:
-            module.fail_json(msg='nat_gateway_id is required for removal')
-
-        else:
-            success, changed, err_msg, results = (
-                remove(
-                    client, nat_gateway_id, wait, wait_timeout, release_eip,
-                    check_mode=check_mode
-                )
+        success, changed, err_msg, results = (
+            remove(
+                client, nat_gateway_id, wait, wait_timeout, release_eip,
+                check_mode=check_mode
             )
+        )
 
     if not success:
         module.fail_json(

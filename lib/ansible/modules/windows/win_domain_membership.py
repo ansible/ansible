@@ -19,12 +19,12 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
 
 
-DOCUMENTATION='''
+DOCUMENTATION = '''
 module: win_domain_membership
 short_description: Manage domain/workgroup membership for a Windows host
 version_added: 2.3
@@ -45,6 +45,11 @@ options:
   hostname:
     description:
       - the desired hostname for the Windows host
+  domain_ou_path:
+    description:
+      - The desired OU path for adding the computer object.
+      - This is only used when adding the target host to a domain, if it is already a member then it is ignored.
+    version_added: "2.4"
   state:
     description:
       - whether the target host should be a member of a domain or workgroup
@@ -58,7 +63,7 @@ author:
     - Matt Davis (@nitzmahone)
 '''
 
-RETURN='''
+RETURN = '''
 reboot_required:
     description: True if changes were made that require a reboot.
     returned: always
@@ -66,7 +71,7 @@ reboot_required:
     sample: true
 '''
 
-EXAMPLES='''
+EXAMPLES = '''
 
 # host should be a member of domain ansible.vagrant; module will ensure the hostname is mydomainclient
 # and will use the passed credentials to join domain if necessary.
@@ -80,6 +85,7 @@ EXAMPLES='''
       hostname: mydomainclient
       domain_admin_user: testguy@ansible.vagrant
       domain_admin_password: password123!
+      domain_ou_path: "OU=Windows,OU=Servers,DC=ansible,DC=vagrant"
       state: domain
     register: domain_state
 

@@ -1,0 +1,106 @@
+- name: Remove VM
+  azure_rm_virtualmachine:
+    resource_group: "{{ resource_group }}"
+    name: testvm10
+    state: absent
+    vm_size: Standard_A0
+  register: output
+
+- name: Remove VM
+  azure_rm_virtualmachine:
+    resource_group: "{{ resource_group }}"
+    name: testvm20
+    state: absent
+    vm_size: Standard_A0
+  register: output
+
+- name: Create VM with defaults
+  azure_rm_virtualmachine:
+      resource_group: "{{ resource_group }}"
+      name: testvm10
+      vm_size: Standard_A0
+      admin_username: chouseknecht
+      admin_password: Password123
+      short_hostname: test10
+      os_type: Linux
+      open_ports:
+        - "22-23"
+      image:
+        offer: UbuntuServer
+        publisher: Canonical
+        sku: 16.04-LTS
+        version: latest
+  register: output
+
+- name: Add host
+  add_host:
+      groups: just_created
+      hostname: testvm10
+      ansible_host: "{{ azure_vm.properties.networkProfile.networkInterfaces[0].properties.ipConfigurations[0].properties.publicIPAddress.properties.ipAddress }}"
+      ansible_user: chouseknecht
+      ansible_ssh_pass: Password123
+
+- name: Create VM accessible via ssh keys only
+  azure_rm_virtualmachine:
+      resource_group: "{{ resource_group }}"
+      name: testvm20
+      short_hostname: testvm20
+      ssh_password_enabled: false
+      ssh_public_keys:
+        - path: /home/chouseknecht/.ssh/authorized_keys
+          key_data: "{{ lookup('env', 'HOME') }}/.ssh/id_rsa"
+      vm_size: Standard_A0
+      admin_username: chouseknecht
+      image:
+        offer: UbuntuServer
+        publisher: Canonical
+        sku: 16.04-LTS
+        version: latest
+  register: output
+
+- name: Should be idempotent
+  azure_rm_virtualmachine:
+      resource_group: "{{ resource_group }}"
+      name: testvm20
+      short_hostname: testvm20
+      ssh_password_enabled: false
+      ssh_public_keys:
+        - path: /home/chouseknecht/.ssh/authorized_keys
+          key_data: "{{ lookup('env', 'HOME') }}/.ssh/id_rsa"
+      vm_size: Standard_A0
+      admin_username: chouseknecht
+      image:
+        offer: UbuntuServer
+        publisher: Canonical
+        sku: 16.04-LTS
+        version: latest
+  register: output
+
+- assert:
+      that: not output.changed
+
+- name: Add host
+  add_host:
+      groups: just_created
+      hostname: testvm20
+      ansible_ssh_host: "{{ azure_vm.properties.networkProfile.networkInterfaces[0].properties.ipConfigurations[0].properties.publicIPAddress.properties.ipAddress }}"
+      ansible_ssh_user: chouseknecht
+
+- name: Power Off
+  azure_rm_virtualmachine:
+      resource_group: "{{ resource_group }}"
+      name: testvm10
+      started: no
+  register: output
+
+- assert:
+      that: "azure_vm.powerstate not in ['starting', 'running']"
+
+- name: Power On
+  azure_rm_virtualmachine:
+      resource_group: "{{ resource_group }}"
+      name: testvm10
+  register: output
+
+- assert:
+      that: "azure_vm.powerstate in ['starting', 'running']"

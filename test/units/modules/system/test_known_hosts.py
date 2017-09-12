@@ -36,11 +36,8 @@ class KnownHostsDiffTestCase(unittest.TestCase):
         self.assertEqual(diff, {
             'before_header': path,
             'after_header': path,
-            'before':
-                'two.example.com ssh-rsa BBBBetc\n',
-            'after':
-                'two.example.com ssh-rsa BBBBetc\n'
-                'one.example.com ssh-rsa AAAAetc\n',
+            'before': 'two.example.com ssh-rsa BBBBetc\n',
+            'after': 'two.example.com ssh-rsa BBBBetc\none.example.com ssh-rsa AAAAetc\n',
         })
 
     def test_no_change(self):
@@ -53,12 +50,8 @@ class KnownHostsDiffTestCase(unittest.TestCase):
         self.assertEqual(diff, {
             'before_header': path,
             'after_header': path,
-            'before':
-                'one.example.com ssh-rsa AAAAetc\n'
-                'two.example.com ssh-rsa BBBBetc\n',
-            'after':
-                'one.example.com ssh-rsa AAAAetc\n'
-                'two.example.com ssh-rsa BBBBetc\n',
+            'before': 'one.example.com ssh-rsa AAAAetc\ntwo.example.com ssh-rsa BBBBetc\n',
+            'after': 'one.example.com ssh-rsa AAAAetc\ntwo.example.com ssh-rsa BBBBetc\n',
         })
 
     def test_key_change(self):
@@ -71,12 +64,8 @@ class KnownHostsDiffTestCase(unittest.TestCase):
         self.assertEqual(diff, {
             'before_header': path,
             'after_header': path,
-            'before':
-                'one.example.com ssh-rsa AAAaetc\n'
-                'two.example.com ssh-rsa BBBBetc\n',
-            'after':
-                'two.example.com ssh-rsa BBBBetc\n'
-                'one.example.com ssh-rsa AAAAetc\n',
+            'before': 'one.example.com ssh-rsa AAAaetc\ntwo.example.com ssh-rsa BBBBetc\n',
+            'after': 'two.example.com ssh-rsa BBBBetc\none.example.com ssh-rsa AAAAetc\n',
         })
 
     def test_key_removal(self):
@@ -89,11 +78,8 @@ class KnownHostsDiffTestCase(unittest.TestCase):
         self.assertEqual(diff, {
             'before_header': path,
             'after_header': path,
-            'before':
-                'one.example.com ssh-rsa AAAAetc\n'
-                'two.example.com ssh-rsa BBBBetc\n',
-            'after':
-                'two.example.com ssh-rsa BBBBetc\n',
+            'before': 'one.example.com ssh-rsa AAAAetc\ntwo.example.com ssh-rsa BBBBetc\n',
+            'after': 'two.example.com ssh-rsa BBBBetc\n',
         })
 
     def test_key_removal_no_change(self):
@@ -105,8 +91,6 @@ class KnownHostsDiffTestCase(unittest.TestCase):
         self.assertEqual(diff, {
             'before_header': path,
             'after_header': path,
-            'before':
-                'two.example.com ssh-rsa BBBBetc\n',
-            'after':
-                'two.example.com ssh-rsa BBBBetc\n',
+            'before': 'two.example.com ssh-rsa BBBBetc\n',
+            'after': 'two.example.com ssh-rsa BBBBetc\n',
         })

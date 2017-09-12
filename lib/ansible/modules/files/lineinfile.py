@@ -1,25 +1,15 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2012, Daniel Hokka Zakrisson <daniel@hozac.com>
-# (c) 2014, Ahti Kitsik <ak@ahtik.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2012, Daniel Hokka Zakrisson <daniel@hozac.com>
+# Copyright: (c) 2014, Ahti Kitsik <ak@ahtik.com>
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
 
@@ -55,7 +45,7 @@ options:
     description:
       - The regular expression to look for in every line of the file. For
         C(state=present), the pattern to replace if found; only the last line
-        found will be replaced. For C(state=absent), the pattern of the line
+        found will be replaced. For C(state=absent), the pattern of the line(s)
         to remove.  Uses Python regular expressions; see
         U(http://docs.python.org/2/library/re.html).
   state:
@@ -184,7 +174,7 @@ EXAMPLES = r"""
     state: present
     regexp: '^%ADMIN ALL='
     line: '%ADMIN ALL=(ALL) NOPASSWD: ALL'
-    validate: 'visudo -cf %s'
+    validate: '/usr/sbin/visudo -cf %s'
 """
 
 import re
@@ -216,8 +206,8 @@ def write_changes(module, b_lines, dest):
                                  'rc:%s error:%s' % (rc, err))
     if valid:
         module.atomic_move(tmpfile,
-                to_native(os.path.realpath(to_bytes(dest, errors='surrogate_or_strict')), errors='surrogate_or_strict'),
-            unsafe_writes=module.params['unsafe_writes'])
+                           to_native(os.path.realpath(to_bytes(dest, errors='surrogate_or_strict')), errors='surrogate_or_strict'),
+                           unsafe_writes=module.params['unsafe_writes'])
 
 
 def check_file_attrs(module, changed, message, diff):
@@ -379,6 +369,7 @@ def absent(module, dest, regexp, line, backup):
     found = []
 
     b_line = to_bytes(line, errors='surrogate_or_strict')
+
     def matcher(b_cur_line):
         if regexp is not None:
             match_found = bre_c.search(b_cur_line)

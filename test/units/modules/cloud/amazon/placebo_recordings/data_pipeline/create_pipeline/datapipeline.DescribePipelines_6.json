@@ -1,0 +1,21 @@
+{
+    "status_code": 400,
+    "data": {
+        "Error": {
+            "Message": "Pipeline with id: df-09359422DAX2M66ZHFVF does not exist",
+            "Code": "PipelineDeletedException"
+        },
+        "ResponseMetadata": {
+            "RequestId": "aeac4532-68c9-11e7-b9c1-53eb374c7a33",
+            "HTTPHeaders": {
+                "date": "Fri, 14 Jul 2017 19:21:47 GMT",
+                "x-amzn-requestid": "aeac4532-68c9-11e7-b9c1-53eb374c7a33",
+                "content-length": "106",
+                "cneonction": "close",
+                "content-type": "application/x-amz-json-1.1"
+            },
+            "RetryAttempts": 0,
+            "HTTPStatusCode": 400
+        }
+    }
+}

@@ -25,13 +25,14 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-from ansible.module_utils.basic import env_fallback
+from ansible.module_utils._text import to_text
+from ansible.module_utils.basic import env_fallback, return_values
 from ansible.module_utils.network_common import to_list
 from ansible.module_utils.connection import exec_command
 
 _DEVICE_CONFIGS = {}
 
-vyos_argument_spec = {
+vyos_provider_spec = {
     'host': dict(),
     'port': dict(type='int'),
 
@@ -40,15 +41,26 @@ vyos_argument_spec = {
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
 
     'timeout': dict(type='int'),
-    'provider': dict(type='dict', no_log=True),
 }
+vyos_argument_spec = {
+    'provider': dict(type='dict', options=vyos_provider_spec),
+}
+vyos_argument_spec.update(vyos_provider_spec)
+
+
+def get_argspec():
+    return vyos_argument_spec
+
 
 def check_args(module, warnings):
-    provider = module.params['provider'] or {}
     for key in vyos_argument_spec:
-        if key != 'provider' and module.params[key]:
-            warnings.append('argument %s has been deprecated and will be '
-                    'removed in a future version' % key)
+        if module._name == 'vyos_user':
+            if key not in ['password', 'provider'] and module.params[key]:
+                warnings.append('argument %s has been deprecated and will be in a future version' % key)
+        else:
+            if key != 'provider' and module.params[key]:
+                warnings.append('argument %s has been deprecated and will be removed in a future version' % key)
+
 
 def get_config(module, target='commands'):
     cmd = ' '.join(['show configuration', target])
@@ -58,24 +70,26 @@ def get_config(module, target='commands'):
     except KeyError:
         rc, out, err = exec_command(module, cmd)
         if rc != 0:
-            module.fail_json(msg='unable to retrieve current config', stderr=err)
-        cfg = str(out).strip()
+            module.fail_json(msg='unable to retrieve current config', stderr=to_text(err, errors='surrogate_or_strict'))
+        cfg = to_text(out, errors='surrogate_or_strict').strip()
         _DEVICE_CONFIGS[cmd] = cfg
         return cfg
+
 
 def run_commands(module, commands, check_rc=True):
     responses = list()
     for cmd in to_list(commands):
         rc, out, err = exec_command(module, cmd)
         if check_rc and rc != 0:
-            module.fail_json(msg=err, rc=rc)
-        responses.append(out)
+            module.fail_json(msg=to_text(err, errors='surrogate_or_strict'), rc=rc)
+        responses.append(to_text(out, errors='surrogate_or_strict'))
     return responses
+
 
 def load_config(module, commands, commit=False, comment=None):
     rc, out, err = exec_command(module, 'configure')
     if rc != 0:
-        module.fail_json(msg='unable to enter configuration mode', output=err)
+        module.fail_json(msg='unable to enter configuration mode', output=to_text(err, errors='surrogate_or_strict'))
 
     for cmd in to_list(commands):
         rc, out, err = exec_command(module, cmd)
@@ -87,15 +101,20 @@ def load_config(module, commands, commit=False, comment=None):
     diff = None
     if module._diff:
         rc, out, err = exec_command(module, 'compare')
+        out = to_text(out, errors='surrogate_or_strict')
         if not out.startswith('No changes'):
             rc, out, err = exec_command(module, 'show')
-            diff = str(out).strip()
+            diff = to_text(out, errors='surrogate_or_strict').strip()
 
     if commit:
         cmd = 'commit'
         if comment:
             cmd += ' comment "%s"' % comment
-        exec_command(module, cmd)
+        rc, out, err = exec_command(module, cmd)
+        if rc != 0:
+            # discard any changes in case of failure
+            exec_command(module, 'exit discard')
+            module.fail_json(msg='commit failed: %s' % err)
 
     if not commit:
         exec_command(module, 'exit discard')

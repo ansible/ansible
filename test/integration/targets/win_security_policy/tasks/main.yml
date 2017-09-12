@@ -1,0 +1,41 @@
+---
+- name: get current entry for audit
+  test_win_security_policy:
+    section: Event Audit
+    key: AuditSystemEvents
+  register: before_value_audit
+
+- name: get current entry for guest
+  test_win_security_policy:
+    section: System Access
+    key: NewGuestName
+  register: before_value_guest
+
+- block:
+  - name: set AuditSystemEvents entry before tests
+    win_security_policy:
+      section: Event Audit
+      key: AuditSystemEvents
+      value: 0
+
+  - name: set NewGuestName entry before tests
+    win_security_policy:
+      section: System Access
+      key: NewGuestName
+      value: Guest
+  
+  - name: run tests
+    include_tasks: tests.yml
+
+  always:
+  - name: reset entries for AuditSystemEvents
+    win_security_policy:
+      section: Event Audit
+      key: AuditSystemEvents
+      value: "{{before_value_audit.value}}"
+
+  - name: reset entries for NewGuestName
+    win_security_policy:
+      section: System Access
+      key: NewGuestName
+      value: "{{before_value_guest.value}}"

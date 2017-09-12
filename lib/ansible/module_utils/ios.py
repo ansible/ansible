@@ -25,13 +25,14 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-from ansible.module_utils.basic import env_fallback
+from ansible.module_utils._text import to_text
+from ansible.module_utils.basic import env_fallback, return_values
 from ansible.module_utils.network_common import to_list, ComplexList
 from ansible.module_utils.connection import exec_command
 
 _DEVICE_CONFIGS = {}
 
-ios_argument_spec = {
+ios_provider_spec = {
     'host': dict(),
     'port': dict(type='int'),
     'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
@@ -40,15 +41,41 @@ ios_argument_spec = {
     'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
     'auth_pass': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS']), no_log=True),
     'timeout': dict(type='int'),
-    'provider': dict(type='dict', no_log=True),
 }
+ios_argument_spec = {
+    'provider': dict(type='dict', options=ios_provider_spec),
+}
+ios_argument_spec.update(ios_provider_spec)
+
+
+def get_argspec():
+    return ios_argument_spec
+
 
 def check_args(module, warnings):
-    provider = module.params['provider'] or {}
     for key in ios_argument_spec:
-        if key not in ['provider', 'authorize'] and module.params[key]:
-            warnings.append('argument %s has been deprecated and will be '
-                    'removed in a future version' % key)
+        if module._name == 'ios_user':
+            if key not in ['password', 'provider', 'authorize'] and module.params[key]:
+                warnings.append('argument %s has been deprecated and will be in a future version' % key)
+        else:
+            if key not in ['provider', 'authorize'] and module.params[key]:
+                warnings.append('argument %s has been deprecated and will be removed in a future version' % key)
+
+
+def get_defaults_flag(module):
+    rc, out, err = exec_command(module, 'show running-config ?')
+    out = to_text(out, errors='surrogate_then_replace')
+
+    commands = set()
+    for line in out.splitlines():
+        if line.strip():
+            commands.add(line.strip().split()[0])
+
+    if 'all' in commands:
+        return ['all']
+    else:
+        return ['full']
+
 
 def get_config(module, flags=[]):
     cmd = 'show running-config '
@@ -60,10 +87,11 @@ def get_config(module, flags=[]):
     except KeyError:
         rc, out, err = exec_command(module, cmd)
         if rc != 0:
-            module.fail_json(msg='unable to retrieve current config', stderr=err)
-        cfg = str(out).strip()
+            module.fail_json(msg='unable to retrieve current config', stderr=to_text(err, errors='surrogate_then_replace'))
+        cfg = to_text(out, errors='surrogate_then_replace').strip()
         _DEVICE_CONFIGS[cmd] = cfg
         return cfg
+
 
 def to_commands(module, commands):
     spec = {
@@ -82,21 +110,22 @@ def run_commands(module, commands, check_rc=True):
         cmd = module.jsonify(cmd)
         rc, out, err = exec_command(module, cmd)
         if check_rc and rc != 0:
-            module.fail_json(msg=err, rc=rc)
-        responses.append(out)
+            module.fail_json(msg=to_text(err, errors='surrogate_then_replace'), rc=rc)
+        responses.append(to_text(out, errors='surrogate_then_replace'))
     return responses
+
 
 def load_config(module, commands):
 
     rc, out, err = exec_command(module, 'configure terminal')
     if rc != 0:
-        module.fail_json(msg='unable to enter configuration mode', err=err)
+        module.fail_json(msg='unable to enter configuration mode', err=to_text(out, errors='surrogate_then_replace'))
 
     for command in to_list(commands):
         if command == 'end':
             continue
         rc, out, err = exec_command(module, command)
         if rc != 0:
-            module.fail_json(msg=err, command=command, rc=rc)
+            module.fail_json(msg=to_text(err, errors='surrogate_then_replace'), command=command, rc=rc)
 
     exec_command(module, 'end')

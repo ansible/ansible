@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = '''
@@ -33,6 +33,7 @@ author:
     - Jason Edelman (@jedelman8)
     - Gabriele Gerbino (@GGabriele)
 notes:
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
     - When C(state=default), supported params will be reset to a default state.
       These include C(version), C(startup_query_interval),
       C(startup_query_count), C(robustness), C(querier_timeout), C(query_mrt),
@@ -183,6 +184,7 @@ proposed:
     sample: {"asn": "65535", "router_id": "1.1.1.1", "vrf": "test"}
 existing:
     description: k/v pairs of existing BGP configuration
+    returned: always
     type: dict
     sample: {"asn": "65535", "bestpath_always_compare_med": false,
             "bestpath_aspath_multipath_relax": false,
@@ -237,20 +239,22 @@ changed:
 from ansible.module_utils.nxos import get_config, load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
 
 import re
 
 def execute_show_command(command, module, command_type='cli_show'):
-    if module.params['transport'] == 'cli':
-        command += ' | json'
-        cmds = [command]
-        body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
-        cmds = [command]
-        body = run_commands(module, cmds)
+    if command_type == 'cli_show_ascii':
+        cmds = [{
+            'command': command,
+            'output': 'text',
+        }]
+    else:
+        cmds = [{
+            'command': command,
+            'output': 'json',
+        }]
 
-    return body
+    return run_commands(module, cmds)
 
 
 def get_interface_mode(interface, intf_type, module):
@@ -695,4 +699,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

@@ -5,10 +5,13 @@ testhost2 ansible_ssh_host=127.0.0.1 ansible_connection=local
 testhost3 ansible_ssh_host=127.0.0.3
 testhost4 ansible_ssh_host=127.0.0.4
 # For testing fact gathering
-facthost[0:9] ansible_host=1270.0.0.1 ansible_connection=local
+facthost[0:20] ansible_host=127.0.0.1 ansible_connection=local
 
 [binary_modules]
 testhost_binary_modules ansible_host=127.0.0.1 ansible_connection=local
+
+[local_group]
+kube-pippin.knf.local
 
 # the following inline declarations are accompanied
 # by (preferred) group_vars/ and host_vars/ variables
@@ -46,4 +49,7 @@ grandparent_var=2000
 overridden_in_parent=2000
 
 [amazon]
+localhost ansible_ssh_host=127.0.0.1 ansible_connection=local
+
+[azure]
 localhost ansible_ssh_host=127.0.0.1 ansible_connection=local

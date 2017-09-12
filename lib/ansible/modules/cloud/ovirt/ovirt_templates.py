@@ -19,7 +19,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -27,20 +27,26 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: ovirt_templates
-short_description: Module to manage virtual machine templates in oVirt
+short_description: Module to manage virtual machine templates in oVirt/RHV
 version_added: "2.3"
 author: "Ondra Machacek (@machacekondra)"
 description:
-    - "Module to manage virtual machine templates in oVirt."
+    - "Module to manage virtual machine templates in oVirt/RHV."
 options:
     name:
         description:
-            - "Name of the the template to manage."
-        required: true
+            - "Name of the template to manage."
+    id:
+        description:
+            - "ID of the template to be registered."
+        version_added: "2.4"
     state:
         description:
-            - "Should the template be present/absent/exported/imported"
-        choices: ['present', 'absent', 'exported', 'imported']
+            - "Should the template be present/absent/exported/imported/registered.
+               When C(state) is I(registered) and the unregistered template's name
+               belongs to an already registered in engine template in the same DC
+               then we fail to register the unregistered template."
+        choices: ['present', 'absent', 'exported', 'imported', 'registered']
         default: present
     vm:
         description:
@@ -54,6 +60,10 @@ options:
     cluster:
         description:
             - "Name of the cluster, where template should be created/imported."
+    allow_partial_import:
+        description:
+            - "Boolean indication whether to allow partial registration of a template when C(state) is registered."
+        version_added: "2.4"
     exclusive:
         description:
             - "When C(state) is I(exported) this parameter indicates if the existing templates with the
@@ -69,9 +79,17 @@ options:
         description:
             - "When C(state) is I(imported) and C(image_provider) is used this parameter specifies the name of disk
                to be imported as template."
+        aliases: ['glance_image_disk_name']
+    template_image_disk_name:
+        description:
+            - "When C(state) is I(imported) and C(image_provider) is used this parameter specifies the new name for imported disk,
+               if omitted then I(image_disk) name is used by default.
+               This parameter is used only in case of importing disk image from Glance domain."
+        version_added: "2.4"
     storage_domain:
         description:
-            - "When C(state) is I(imported) this parameter specifies the name of the destination data storage domain."
+            - "When C(state) is I(imported) this parameter specifies the name of the destination data storage domain.
+               When C(state) is I(registered) this parameter specifies the name of the data storage domain of the unregistered template."
     clone_permissions:
         description:
             - "If I(True) then the permissions of the VM (only the direct ones, not the inherited ones)
@@ -105,6 +123,38 @@ EXAMPLES = '''
 - ovirt_templates:
     state: absent
     name: mytemplate
+
+# Register template
+- ovirt_templates:
+  state: registered
+  storage_domain: mystorage
+  cluster: mycluster
+  name: mytemplate
+
+# Register template using id
+- ovirt_templates:
+  state: registered
+  storage_domain: mystorage
+  cluster: mycluster
+  id: 1111-1111-1111-1111
+
+# Register template, allowing partial import
+- ovirt_templates:
+  state: registered
+  storage_domain: mystorage
+  allow_partial_import: "True"
+  cluster: mycluster
+  id: 1111-1111-1111-1111
+
+# Import image from Glance s a template
+- ovirt_templates:
+    state: imported
+    name: mytemplate
+    image_disk: "centos7"
+    template_image_disk_name: centos7_from_glance
+    image_provider: "glance_domain"
+    storage_domain: mystorage
+    cluster: mycluster
 '''
 
 RETURN = '''
@@ -114,9 +164,10 @@ id:
     type: str
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 template:
-    description: "Dictionary of all the template attributes. Template attributes can be found on your oVirt instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/template."
+    description: "Dictionary of all the template attributes. Template attributes can be found on your oVirt/RHV instance
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/template."
     returned: On success if template is found.
+    type: dict
 '''
 
 import time
@@ -135,6 +186,7 @@ from ansible.module_utils.ovirt import (
     equal,
     get_dict_of_struct,
     get_link_name,
+    get_id_by_name,
     ovirt_full_argument_spec,
     search_by_attributes,
     search_by_name,
@@ -186,28 +238,18 @@ class TemplatesModule(BaseModule):
         self._service = self._connection.system_service().templates_service()
 
 
-def wait_for_import(module, templates_service):
-    if module.params['wait']:
-        start = time.time()
-        timeout = module.params['timeout']
-        poll_interval = module.params['poll_interval']
-        while time.time() < start + timeout:
-            template = search_by_name(templates_service, module.params['name'])
-            if template:
-                return template
-            time.sleep(poll_interval)
-
-
 def main():
     argument_spec = ovirt_full_argument_spec(
         state=dict(
-            choices=['present', 'absent', 'exported', 'imported'],
+            choices=['present', 'absent', 'exported', 'imported', 'registered'],
             default='present',
         ),
-        name=dict(default=None, required=True),
+        id=dict(default=None),
+        name=dict(default=None),
         vm=dict(default=None),
         description=dict(default=None),
         cluster=dict(default=None),
+        allow_partial_import=dict(default=None, type='bool'),
         cpu_profile=dict(default=None),
         disks=dict(default=[], type='list'),
         clone_permissions=dict(type='bool'),
@@ -215,11 +257,13 @@ def main():
         storage_domain=dict(default=None),
         exclusive=dict(type='bool'),
         image_provider=dict(default=None),
-        image_disk=dict(default=None),
+        image_disk=dict(default=None, aliases=['glance_image_disk_name']),
+        template_image_disk_name=dict(default=None),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
+        required_one_of=[['id', 'name']],
     )
     check_sdk(module)
 
@@ -266,7 +310,7 @@ def main():
                 if module.params['image_provider']:
                     kwargs.update(
                         disk=otypes.Disk(
-                            name=module.params['image_disk']
+                            name=module.params['template_image_disk_name'] or module.params['image_disk']
                         ),
                         template=otypes.Template(
                             name=module.params['name'],
@@ -297,13 +341,53 @@ def main():
                     ) if module.params['cluster'] else None,
                     **kwargs
                 )
-                template = wait_for_import(module, templates_service)
+                template = templates_module.wait_for_import()
                 ret = {
                     'changed': True,
                     'id': template.id,
                     'template': get_dict_of_struct(template),
                 }
+        elif state == 'registered':
+            storage_domains_service = connection.system_service().storage_domains_service()
+            # Find the storage domain with unregistered template:
+            sd_id = get_id_by_name(storage_domains_service, module.params['storage_domain'])
+            storage_domain_service = storage_domains_service.storage_domain_service(sd_id)
+            templates_service = storage_domain_service.templates_service()
 
+            # Find the unregistered Template we want to register:
+            templates = templates_service.list(unregistered=True)
+            template = next(
+                (t for t in templates if (t.id == module.params['id'] or t.name == module.params['name'])),
+                None
+            )
+            changed = False
+            if template is None:
+                template = templates_module.search_entity()
+                if template is None:
+                    raise ValueError(
+                        "Template '%s(%s)' wasn't found." % (module.params['name'], module.params['id'])
+                    )
+            else:
+                # Register the template into the system:
+                changed = True
+                template_service = templates_service.template_service(template.id)
+                template_service.register(
+                    allow_partial_import=module.params['allow_partial_import'],
+                    cluster=otypes.Cluster(
+                        name=module.params['cluster']
+                    ) if module.params['cluster'] else None
+                )
+
+                if module.params['wait']:
+                    template = templates_module.wait_for_import()
+                else:
+                    # Fetch template to initialize return.
+                    template = template_service.get()
+            ret = {
+                'changed': changed,
+                'id': template.id,
+                'template': get_dict_of_struct(template)
+            }
         module.exit_json(**ret)
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())

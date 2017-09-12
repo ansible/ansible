@@ -2,24 +2,14 @@
 # -*- coding: utf-8 -*-
 
 # Ansible module to manage Big Monitoring Fabric service chains
-# (c) 2016, Ted Elhourani <ted@bigswitch.com>,
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2016, Ted Elhourani <ted@bigswitch.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -55,7 +45,7 @@ options:
     choices: [true, false]
   access_token:
     description:
-     - Bigmon access token. If this isn't set the the environment variable C(BIGSWITCH_ACCESS_TOKEN) is used.
+     - Bigmon access token. If this isn't set, the environment variable C(BIGSWITCH_ACCESS_TOKEN) is used.
 '''
 
 
@@ -69,33 +59,21 @@ EXAMPLES = '''
 '''
 
 
-RETURN = '''
-{
-    "changed": true,
-    "invocation": {
-        "module_args": {
-            "access_token": null,
-            "controller": "192.168.86.221",
-            "name": "MyChain",
-            "state": "present",
-            "validate_certs": false
-        },
-        "module_name": "bigmon_chain"
-    }
-}
-'''
+RETURN = ''' # '''
 
 import os
+import traceback
+
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.bigswitch_utils import Rest, Response
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.bigswitch_utils import Rest
+from ansible.module_utils._text import to_native
+
 
 def chain(module):
     try:
         access_token = module.params['access_token'] or os.environ['BIGSWITCH_ACCESS_TOKEN']
-    except KeyError:
-        e = get_exception()
-        module.fail_json(msg='Unable to load %s' % e.message )
+    except KeyError as e:
+        module.fail_json(msg='Unable to load %s' % e.message, exception=traceback.format_exc())
 
     name = module.params['name']
     state = module.params['state']
@@ -150,9 +128,9 @@ def main():
 
     try:
         chain(module)
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg=str(e))
+    except Exception as e:
+        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
+
 
 if __name__ == '__main__':
     main()

@@ -5,7 +5,10 @@
 - { include: iosxr.yaml }
 - { include: nxos.yaml }
 - { include: junos.yaml }
+- { include: vyos.yaml }
 - { include: ops.yaml }
+- { include: ovs.yaml }
 - { include: dellos10.yaml }
 - { include: dellos9.yaml }
 - { include: dellos6.yaml }
+- { include: nuage.yaml }

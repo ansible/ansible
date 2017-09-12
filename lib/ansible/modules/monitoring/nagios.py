@@ -7,15 +7,13 @@
 # func-nagios - Schedule downtime and enables/disable notifications
 # Copyright 2011, Red Hat, Inc.
 # Tim Bielawa <tbielawa@redhat.com>
-#
-# This software may be freely redistributed under the terms of the GNU
-# general public license version 2 or any later version.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program. If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -26,9 +24,13 @@ module: nagios
 short_description: Perform common tasks in Nagios related to downtime and notifications.
 description:
   - "The C(nagios) module has two basic functions: scheduling downtime and toggling alerts for services or hosts."
-  - All actions require the I(host) parameter to be given explicitly. In playbooks you can use the C({{inventory_hostname}}) variable to refer to the host the playbook is currently running on.
+  - All actions require the I(host) parameter to be given explicitly. In playbooks you can use the C({{inventory_hostname}}) variable to refer
+    to the host the playbook is currently running on.
   - You can specify multiple services at once by separating them with commas, .e.g., C(services=httpd,nfs,puppet).
-  - When specifying what service to handle there is a special service value, I(host), which will handle alerts/downtime for the I(host itself), e.g., C(service=host). This keyword may not be given with other services at the same time. I(Setting alerts/downtime for a host does not affect alerts/downtime for any of the services running on it.) To schedule downtime for all services on particular host use keyword "all", e.g., C(service=all).
+  - When specifying what service to handle there is a special service value, I(host), which will handle alerts/downtime for the I(host itself),
+    e.g., C(service=host). This keyword may not be given with other services at the same time.
+    I(Setting alerts/downtime for a host does not affect alerts/downtime for any of the services running on it.) To schedule downtime for all
+    services on particular host use keyword "all", e.g., C(service=all).
   - When using the C(nagios) module you will need to specify your Nagios server using the C(delegate_to) parameter.
 version_added: "0.7"
 options:

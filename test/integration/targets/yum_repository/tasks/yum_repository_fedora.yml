@@ -1,0 +1,143 @@
+---
+- name: ensure libbdplus is uninstalled to begin with
+  dnf:
+    name: libbdplus
+    state: absent
+
+- name: disable rpmfusion
+  yum_repository:
+    name: rpmfusion-free
+    state: absent
+
+- name: disable rpmfusion (Idempotant)
+  yum_repository:
+    name: rpmfusion-free
+    state: absent
+  register: fusion_remove
+
+- name: check return values
+  assert:
+    that:
+      - "fusion_remove.repo == 'rpmfusion-free'"
+      - "fusion_remove.state == 'absent'"
+
+- name: check Idempotant
+  assert:
+    that: not fusion_remove.changed
+
+- name: install libbdplus, which should fail
+  dnf:
+    name: libbdplus
+    state: present
+  ignore_errors: yes
+  register: lib_result
+
+- name: check that install failed
+  assert:
+    that:
+      - lib_result.failed
+      - "lib_result.msg=='No package libbdplus available.'"
+
+- name: re-add rpmfusion
+  yum_repository:
+    name: rpmfusion-free
+    description: RPM Fusion for Fedora 25 - Free
+    baseurl: http://download1.rpmfusion.org/free/fedora/releases/{{ ansible_distribution_major_version }}/Everything/{{ ansible_architecture }}/os/
+    state: present
+  register: fusion_add
+
+- name: check return values
+  assert:
+    that:
+      - "fusion_add.repo == 'rpmfusion-free'"
+      - "fusion_add.state == 'present'"
+
+- name: get repolist
+  shell: dnf repolist
+  register: repolist
+
+- name: ensure rpm fusion was added
+  assert:
+    that:
+      - "'rpmfusion-free' in repolist.stdout"
+      - fusion_add.changed
+
+- name: install libbdplus
+  dnf:
+    name: libbdplus
+    state: present
+  register: lib_result
+
+- name: check that libbdplus was successfully installed
+  assert:
+    that:
+      - lib_result.changed
+
+- name: remove libbdplus
+  dnf:
+    name: libbdplus
+    state: absent
+
+- name: change configuration of rpmfusion repo
+  yum_repository:
+    name: rpmfusion-free
+    description: New description
+    baseurl: http://download1.rpmfusion.org/free/fedora/releases/{{ ansible_distribution_major_version }}/Everything/{{ ansible_architecture }}/os/
+    async: no
+    enablegroups: no
+    file: fusion2
+    exclude:
+      - libbdplus
+    ip_resolve: 4
+    keepalive: no
+  register: fusion_add
+
+- set_fact:
+    repofile: "{{ lookup('file', '/etc/yum.repos.d/fusion2.repo') }}"
+
+- name: check that options are correctly getting written to the repo file
+  assert:
+    that:
+      - "'async = 0' in repofile"
+      - "'name = New description' in repofile"
+      - "'enablegroups = 0' in repofile"
+      - "\"exclude = ['libbdplus']\" in repofile"
+      - "'ip_resolve = 4' in repofile"
+      - "'keepalive = 0' in repofile"
+
+- name: check new config doesn't change (Idempotant)
+  yum_repository:
+    name: rpmfusion-free
+    description: New description
+    baseurl: http://download1.rpmfusion.org/free/fedora/releases/{{ ansible_distribution_major_version }}/Everything/{{ ansible_architecture }}/os/
+    async: no
+    enablegroups: no
+    file: fusion2
+    exclude:
+      - libbdplus
+    ip_resolve: 4
+    keepalive: no
+  register: fusion_add
+
+- name: check Idempotant
+  assert:
+    that: not fusion_add.changed
+
+- name: re-add rpmfusion
+  yum_repository:
+    name: rpmfusion-free
+    description: RPM Fusion for Fedora 25 - Free
+    baseurl: http://download1.rpmfusion.org/free/fedora/releases/{{ ansible_distribution_major_version }}/Everything/{{ ansible_architecture }}/os/
+    state: present
+
+- name: re-add rpmfusion
+  yum_repository:
+    name: rpmfusion-free
+    description: RPM Fusion for Fedora 25 - Free
+    baseurl: http://download1.rpmfusion.org/free/fedora/releases/{{ ansible_distribution_major_version }}/Everything/{{ ansible_architecture }}/os/
+    state: present
+  register: fusion_add
+
+- name: check Idempotant
+  assert:
+    that: not fusion_add.changed

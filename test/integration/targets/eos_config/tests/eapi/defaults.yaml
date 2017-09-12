@@ -7,7 +7,7 @@
       - no description
       - shutdown
     parents:
-      - interface Ethernet5
+      - interface Ethernet2
     match: none
     provider: "{{ eapi }}"
 

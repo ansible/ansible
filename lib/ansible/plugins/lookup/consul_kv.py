@@ -44,10 +44,17 @@ recurse: if true, will retrieve all the values that have the given key as prefix
 index: if the key has a value with the specified index then this is returned
        allowing access to historical values.
 token: acl token to allow access to restricted values.
+host: the target to connect to, must be a resolvable address. defaults to localhost
+port: the port of the target host to connect to. defaults to 8500
 
 By default this will lookup keys via the consul agent running on http://localhost:8500
 this can be changed by setting the env variable 'ANSIBLE_CONSUL_URL' to point to the url
-of the kv store you'd like to use.
+of the kv store you'd like to use or by specifying the parameters above.
+
+This is an example of retrieving a KV from a remote cluster on non default port
+
+- debug:
+    msg: "{{ lookup('consul_kv', 'my/key', host='10.10.10.10', port='2000')
 
 '''
 
@@ -73,26 +80,24 @@ except ImportError as e:
 
 class LookupModule(LookupBase):
 
-    def __init__(self, loader=None, templar=None, **kwargs):
-
-        super(LookupModule, self).__init__(loader, templar, **kwargs)
-
-        self.agent_url = 'http://localhost:8500'
-        if os.getenv('ANSIBLE_CONSUL_URL') is not None:
-            self.agent_url = os.environ['ANSIBLE_CONSUL_URL']
-
     def run(self, terms, variables=None, **kwargs):
 
         if not HAS_CONSUL:
             raise AnsibleError('python-consul is required for consul_kv lookup. see http://python-consul.readthedocs.org/en/latest/#installation')
 
-        u = urlparse(self.agent_url)
-        consul_api = consul.Consul(host=u.hostname, port=u.port)
-
         values = []
         try:
             for term in terms:
                 params = self.parse_params(term)
+                try:
+                    url = os.environ['ANSIBLE_CONSUL_URL']
+                    u = urlparse(url)
+                    consul_api = consul.Consul(host=u.hostname, port=u.port)
+                except KeyError:
+                    port = kwargs.get('port', '8500')
+                    host = kwargs.get('host', 'localhost')
+                    consul_api = consul.Consul(host=host, port=port)
+
                 results = consul_api.kv.get(params['key'],
                                             token=params['token'],
                                             index=params['index'],
@@ -125,7 +130,7 @@ class LookupModule(LookupBase):
             for param in params[1:]:
                 if param and len(param) > 0:
                     name, value = param.split('=')
-                    assert name in paramvals, "% not a valid consul lookup parameter" % name
+                    assert name in paramvals, "%s not a valid consul lookup parameter" % name
                     paramvals[name] = value
         except (ValueError, AssertionError) as e:
             raise AnsibleError(e)

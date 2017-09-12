@@ -26,28 +26,40 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-from ansible.module_utils.basic import env_fallback
+from ansible.module_utils._text import to_text
+from ansible.module_utils.basic import env_fallback, return_values
 from ansible.module_utils.network_common import to_list, ComplexList
 from ansible.module_utils.connection import exec_command
 
 _DEVICE_CONFIGS = {}
 
-iosxr_argument_spec = {
+iosxr_provider_spec = {
     'host': dict(),
     'port': dict(type='int'),
     'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
     'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
     'timeout': dict(type='int'),
-    'provider': dict(type='dict', no_log=True)
 }
+iosxr_argument_spec = {
+    'provider': dict(type='dict', options=iosxr_provider_spec)
+}
+iosxr_argument_spec.update(iosxr_provider_spec)
+
+
+def get_argspec():
+    return iosxr_argument_spec
+
 
 def check_args(module, warnings):
-    provider = module.params['provider'] or {}
     for key in iosxr_argument_spec:
-        if key != 'provider' and module.params[key]:
-            warnings.append('argument %s has been deprecated and will be '
-                    'removed in a future version' % key)
+        if module._name == 'iosxr_user':
+            if key not in ['password', 'provider'] and module.params[key]:
+                warnings.append('argument %s has been deprecated and will be in a future version' % key)
+        else:
+            if key != 'provider' and module.params[key]:
+                warnings.append('argument %s has been deprecated and will be removed in a future version' % key)
+
 
 def get_config(module, flags=[]):
     cmd = 'show running-config '
@@ -59,8 +71,8 @@ def get_config(module, flags=[]):
     except KeyError:
         rc, out, err = exec_command(module, cmd)
         if rc != 0:
-            module.fail_json(msg='unable to retrieve current config', stderr=err)
-        cfg = str(out).strip()
+            module.fail_json(msg='unable to retrieve current config', stderr=to_text(err, errors='surrogate_or_strict'))
+        cfg = to_text(out, errors='surrogate_or_strict').strip()
         _DEVICE_CONFIGS[cmd] = cfg
         return cfg
 
@@ -79,17 +91,22 @@ def run_commands(module, commands, check_rc=True):
     responses = list()
     commands = to_commands(module, to_list(commands))
     for cmd in to_list(commands):
+        cmd = module.jsonify(cmd)
         rc, out, err = exec_command(module, cmd)
         if check_rc and rc != 0:
-            module.fail_json(msg=err, rc=rc)
-        responses.append(out)
+            module.fail_json(msg=to_text(err, errors='surrogate_or_strict'), rc=rc)
+        responses.append(to_text(out, errors='surrogate_or_strict'))
     return responses
 
-def load_config(module, commands, commit=False, replace=False, comment=None):
 
-    rc, out, err = exec_command(module, 'configure terminal')
+def load_config(module, commands, warnings, commit=False, replace=False, comment=None, admin=False):
+    cmd = 'configure terminal'
+    if admin:
+        cmd = 'admin ' + cmd
+
+    rc, out, err = exec_command(module, cmd)
     if rc != 0:
-        module.fail_json(msg='unable to enter configuration mode', err=err)
+        module.fail_json(msg='unable to enter configuration mode', err=to_text(err, errors='surrogate_or_strict'))
 
     failed = False
     for command in to_list(commands):
@@ -103,16 +120,26 @@ def load_config(module, commands, commit=False, replace=False, comment=None):
 
     if failed:
         exec_command(module, 'abort')
-        module.fail_json(msg=err, commands=commands, rc=rc)
+        module.fail_json(msg=to_text(err, errors='surrogate_or_strict'), commands=commands, rc=rc)
 
     rc, diff, err = exec_command(module, 'show commit changes diff')
+    if rc != 0:
+        # If we failed, maybe we are in an old version so
+        # we run show configuration instead
+        rc, diff, err = exec_command(module, 'show configuration')
+        if module._diff:
+            warnings.append('device platform does not support config diff')
+
     if commit:
         cmd = 'commit'
         if comment:
             cmd += ' comment {0}'.format(comment)
     else:
         cmd = 'abort'
-        diff = None
-    exec_command(module, cmd)
 
-    return diff
+    rc, out, err = exec_command(module, cmd)
+    if rc != 0:
+        exec_command(module, 'abort')
+        module.fail_json(msg=err, commands=commands, rc=rc)
+
+    return to_text(diff, errors='surrogate_or_strict')

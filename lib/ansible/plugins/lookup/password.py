@@ -21,15 +21,12 @@ __metaclass__ = type
 
 import os
 import string
-import random
 
-from ansible import constants as C
-from ansible.compat.six import text_type
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.parsing.splitter import parse_kv
 from ansible.plugins.lookup import LookupBase
-from ansible.utils.encrypt import do_encrypt
+from ansible.utils.encrypt import do_encrypt, random_password
 from ansible.utils.path import makedirs_safe
 
 
@@ -131,31 +128,9 @@ def _gen_candidate_chars(characters):
         # getattr from string expands things like "ascii_letters" and "digits"
         # into a set of characters.
         chars.append(to_text(getattr(string, to_native(chars_spec), chars_spec),
-                            errors='strict'))
+                     errors='strict'))
     chars = u''.join(chars).replace(u'"', u'').replace(u"'", u'')
     return chars
-
-
-def _random_password(length=DEFAULT_LENGTH, chars=C.DEFAULT_PASSWORD_CHARS):
-    '''Return a random password string of length containing only chars
-
-    :kwarg length: The number of characters in the new password.  Defaults to 20.
-    :kwarg chars: The characters to choose from.  The default is all ascii
-        letters, ascii digits, and these symbols ``.,:-_``
-
-    .. note: this was moved from the old ansible utils code, as nothing
-        else appeared to use it.
-    '''
-    assert isinstance(chars, text_type), '%s (%s) is not a text_type' % (chars, type(chars))
-
-    random_generator = random.SystemRandom()
-
-    password = []
-    while len(password) < length:
-        new_char = random_generator.choice(chars)
-        password.append(new_char)
-
-    return u''.join(password)
 
 
 def _random_salt():
@@ -164,7 +139,7 @@ def _random_salt():
     # Note passlib salt values must be pure ascii so we can't let the user
     # configure this
     salt_chars = _gen_candidate_chars(['ascii_letters', 'digits', './'])
-    return _random_password(length=8, chars=salt_chars)
+    return random_password(length=8, chars=salt_chars)
 
 
 def _parse_content(content):
@@ -234,7 +209,7 @@ class LookupModule(LookupBase):
             content = _read_password_file(b_path)
 
             if content is None or b_path == to_bytes('/dev/null'):
-                plaintext_password = _random_password(params['length'], chars)
+                plaintext_password = random_password(params['length'], chars)
                 salt = None
                 changed = True
             else:

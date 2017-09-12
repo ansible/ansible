@@ -1,0 +1,54 @@
+# Usage: ansible-playbook setup-iam.yml -e iam_group=ansible_test -vv
+#
+# Creates IAM policies and associates them with iam_group. This group
+# can then be associated with an appropriate user
+#
+# You can pass -e profile=boto_profile_name if you have a profile that
+# you can use, otherwise use normal AWS methods (env variables, instance
+# profile, etc)
+#
+# If you want to use a region other than us-east-1 (and only us-east-2
+# works with ansible-test), pass -e region=us-east-2
+#
+# Requires 2.4 for iam_managed_policy and iam_group
+
+- hosts: localhost
+  connection: local
+  gather_facts: no
+  vars:
+    aws_region: "{{ region|default('us-east-1') }}"
+
+  tasks:
+    - name: Check that required variables are set
+      fail:
+        msg: "You must set the iam_group variable"
+      when: iam_group is not defined
+
+    - name: Get aws account ID
+      command: aws sts get-caller-identity --output text --query 'Account' "{{ '--profile=' ~ profile if profile else '' }}"
+      changed_when: False
+      register: aws_account_command
+
+    - name: Set aws_account_fact
+      set_fact:
+        aws_account: "{{ aws_account_command.stdout }}"
+
+
+    - name: Ensure Managed IAM policies exist
+      iam_managed_policy:
+        policy_name: "AnsibleTest{{ item|basename|regex_replace('-.*', '')|upper }}Policy"
+        policy: "{{ lookup('template', item) }}"
+        state: present
+        profile: "{{ profile|default(omit) }}"
+      with_fileglob: "testing_policies/*"
+      register: iam_managed_policies
+
+    - debug:
+        msg: "{{ iam_managed_policies | json_query('results[].policy.policy_name') }}"
+
+    - name: Ensure IAM group exists and attach managed policies
+      iam_group:
+        name: "{{ iam_group }}"
+        state: present
+        managed_policy: "{{ iam_managed_policies | json_query('results[].policy.policy_name') }}"
+        profile: "{{ profile|default(omit) }}"

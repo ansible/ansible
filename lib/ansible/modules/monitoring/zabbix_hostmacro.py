@@ -2,24 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2013-2014, Epic Games, Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -102,9 +91,6 @@ EXAMPLES = '''
     state: present
 '''
 
-import logging
-import copy
-
 try:
     from zabbix_api import ZabbixAPI, ZabbixAPISubClass
 
@@ -117,6 +103,8 @@ try:
     HAS_ZABBIX_API = True
 except ImportError:
     HAS_ZABBIX_API = False
+
+from ansible.module_utils.basic import AnsibleModule
 
 
 class HostMacro(object):
@@ -199,7 +187,7 @@ def main():
     )
 
     if not HAS_ZABBIX_API:
-        module.fail_json(msg="Missing requried zabbix-api module (check docs or install with: pip install zabbix-api)")
+        module.fail_json(msg="Missing required zabbix-api module (check docs or install with: pip install zabbix-api)")
 
     server_url = module.params['server_url']
     login_user = module.params['login_user']
@@ -222,8 +210,6 @@ def main():
 
     host_macro_class_obj = HostMacro(module, zbx)
 
-    changed = False
-
     if host_name:
         host_id = host_macro_class_obj.get_host_id(host_name)
         host_macro_obj = host_macro_class_obj.get_host_macro(macro_name, host_id)
@@ -242,7 +228,6 @@ def main():
             # update host macro
             host_macro_class_obj.update_host_macro(host_macro_obj, macro_name, macro_value)
 
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

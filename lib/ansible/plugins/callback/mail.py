@@ -1,135 +1,141 @@
 # -*- coding: utf-8 -*-
-# Copyright 2012 Dag Wieers <dag@wieers.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2012, Dag Wieers <dag@wieers.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = '''
+    callback: mail
+    type: notification
+    short_description: Sends failure events via email
+    description:
+      - This callback will report failures via email
+    version_added: "2.3"
+    requirements:
+      - whitelisting in configuration
+      - logstash (python library)
+    options:
+      mta:
+        description: Mail Transfer Agent, server that accepts SMTP
+        env:
+          - name: SMTPHOST
+        default: localhost
+    note:
+      - "TODO: expand configuration options now that plugins can leverage Ansible's configuration"
+'''
+
+import json
 import os
 import smtplib
-import json
 
-from ansible.compat.six import string_types
+from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_bytes
 from ansible.plugins.callback import CallbackBase
 
 
-def mail(subject='Ansible error mail', sender=None, to=None, cc=None, bcc=None, body=None, smtphost=None):
-
-    if sender is None:
-        sender='<root>'
-    if to is None:
-        to='root'
-    if smtphost is None:
-        smtphost=os.getenv('SMTPHOST', 'localhost')
-
-    if body is None:
-        body = subject
-
-    smtp = smtplib.SMTP(smtphost)
-
-    b_sender = to_bytes(sender)
-    b_to = to_bytes(to)
-    b_cc = to_bytes(cc)
-    b_bcc = to_bytes(bcc)
-    b_subject = to_bytes(subject)
-    b_body = to_bytes(body)
-
-    b_content = b'From: %s\n' % b_sender
-    b_content += b'To: %s\n' % b_to
-    if cc:
-        b_content += b'Cc: %s\n' % b_cc
-    b_content += b'Subject: %s\n\n' % b_subject
-    b_content += b_body
-
-    b_addresses = b_to.split(b',')
-    if cc:
-        b_addresses += b_cc.split(b',')
-    if bcc:
-        b_addresses += b_bcc.split(b',')
-
-    for b_address in b_addresses:
-        smtp.sendmail(b_sender, b_address, b_content)
-
-    smtp.quit()
-
-
 class CallbackModule(CallbackBase):
-    """
-    This Ansible callback plugin mails errors to interested parties.
-    """
+    ''' This Ansible callback plugin mails errors to interested parties. '''
     CALLBACK_VERSION = 2.0
     CALLBACK_TYPE = 'notification'
     CALLBACK_NAME = 'mail'
     CALLBACK_NEEDS_WHITELIST = True
 
-    def v2_runner_on_failed(self, res, ignore_errors=False):
+    def mail(self, subject='Ansible error mail', sender=None, to=None, cc=None, bcc=None, body=None, smtphost=None):
+        if smtphost is None:
+            smtphost = os.getenv('SMTPHOST', 'localhost')
+        if sender is None:
+            sender = '<root>'
+        if to is None:
+            to = 'root'
+        if body is None:
+            body = subject
 
-        host = res._host.get_name()
+        smtp = smtplib.SMTP(smtphost)
 
+        b_sender = to_bytes(sender)
+        b_to = to_bytes(to)
+        b_cc = to_bytes(cc)
+        b_bcc = to_bytes(bcc)
+        b_subject = to_bytes(subject)
+        b_body = to_bytes(body)
+
+        b_content = b'From: %s\n' % b_sender
+        b_content += b'To: %s\n' % b_to
+        if cc:
+            b_content += b'Cc: %s\n' % b_cc
+        b_content += b'Subject: %s\n\n' % b_subject
+        b_content += b_body
+
+        b_addresses = b_to.split(b',')
+        if cc:
+            b_addresses += b_cc.split(b',')
+        if bcc:
+            b_addresses += b_bcc.split(b',')
+
+        for b_address in b_addresses:
+            smtp.sendmail(b_sender, b_address, b_content)
+
+        smtp.quit()
+
+    def subject_msg(self, multiline, failtype, linenr):
+        return '%s: %s' % (failtype, multiline.strip('\r\n').splitlines()[linenr])
+
+    def body_blob(self, multiline, texttype):
+        ''' Turn some text output in a well-indented block for sending in a mail body '''
+        blob = 'with the following %s:\n\n' % texttype
+        for line in multiline.strip('\r\n').splitlines():
+            blob += '\t%s\n' % line
+        return blob + '\n'
+
+    def mail_result(self, result, failtype):
+        host = result._host.get_name()
+
+        sender = '"Ansible: %s" <root>' % host
+        subject = '%s: %s' % (failtype, result._task.name or result._task.action)
+
+        body = ''
+        body += 'Playbook: %s\n' % os.path.basename(self.playbook._file_name)
+        if result._task.name:
+            body += 'Task: %s\n' % result._task.name
+        body += 'Module: %s\n' % result._task.action
+        body += 'Host: %s\n' % host
+        body += '\n'
+
+        body += 'The following task failed:\n\n'
+        if 'invocation' in result._result:
+            body += '\t%s: %s\n\n' % (result._task.action, json.dumps(result._result['invocation']['module_args']))
+        elif result._task.name:
+            body += '\t%s (%s)\n\n' % (result._task.name, result._task.action)
+        else:
+            body += '\t%s\n\n' % result._task.action
+
+        if result._result.get('stdout'):
+            subject = self.subject_msg(result._result['stdout'], failtype, -1)
+            body += self.body_blob(result._result['stdout'], 'standard output')
+        if result._result.get('stderr'):
+            subject = self.subject_msg(result._result['stderr'], failtype, -1)
+            body += self.body_blob(result._result['stderr'], 'error output')
+        if result._result.get('msg'):
+            subject = self.subject_msg(result._result['msg'], failtype, 0)
+            body += self.body_blob(result._result['msg'], 'message')
+
+        body += 'A complete dump of the error:\n\n'
+        body += '\t%s: %s' % (failtype, json.dumps(result._result))
+
+        self.mail(sender=sender, subject=subject, body=body)
+
+    def v2_playbook_on_start(self, playbook):
+        self.playbook = playbook
+
+    def v2_runner_on_failed(self, result, ignore_errors=False):
         if ignore_errors:
             return
-        sender = '"Ansible: %s" <root>' % host
-        attach = res._task.action
-        if 'invocation' in res._result:
-            attach = "%s:  %s" % (res._result['invocation']['module_name'], json.dumps(res._result['invocation']['module_args']))
 
-        subject = 'Failed: %s' % attach
-        body = 'The following task failed for host ' + host + ':\n\n%s\n\n' % attach
-
-        if 'stdout' in res._result and res._result['stdout']:
-            subject = res._result['stdout'].strip('\r\n').split('\n')[-1]
-            body += 'with the following output in standard output:\n\n' + res._result['stdout'] + '\n\n'
-        if 'stderr' in res._result and res._result['stderr']:
-            subject = res._result['stderr'].strip('\r\n').split('\n')[-1]
-            body += 'with the following output in standard error:\n\n' + res._result['stderr'] + '\n\n'
-        if 'msg' in res._result and res._result['msg']:
-            subject = res._result['msg'].strip('\r\n').split('\n')[0]
-            body += 'with the following message:\n\n' + res._result['msg'] + '\n\n'
-        body += 'A complete dump of the error:\n\n' + self._dump_results(res._result)
-        mail(sender=sender, subject=subject, body=body)
+        self.mail_result(result, 'Failed')
 
     def v2_runner_on_unreachable(self, result):
-
-        host = result._host.get_name()
-        res = result._result
-
-        sender = '"Ansible: %s" <root>' % host
-        if isinstance(res, string_types):
-            subject = 'Unreachable: %s' % res.strip('\r\n').split('\n')[-1]
-            body = 'An error occurred for host ' + host + ' with the following message:\n\n' + res
-        else:
-            subject = 'Unreachable: %s' % res['msg'].strip('\r\n').split('\n')[0]
-            body = 'An error occurred for host ' + host + ' with the following message:\n\n' + \
-                   res['msg'] + '\n\nA complete dump of the error:\n\n' + str(res)
-        mail(sender=sender, subject=subject, body=body)
+        self.mail_result(result, 'Unreachable')
 
     def v2_runner_on_async_failed(self, result):
-
-        host = result._host.get_name()
-        res = result._result
-
-        sender = '"Ansible: %s" <root>' % host
-        if isinstance(res, string_types):
-            subject = 'Async failure: %s' % res.strip('\r\n').split('\n')[-1]
-            body = 'An error occurred for host ' + host + ' with the following message:\n\n' + res
-        else:
-            subject = 'Async failure: %s' % res['msg'].strip('\r\n').split('\n')[0]
-            body = 'An error occurred for host ' + host + ' with the following message:\n\n' + \
-                   res['msg'] + '\n\nA complete dump of the error:\n\n' + str(res)
-        mail(sender=sender, subject=subject, body=body)
+        self.mail_result(result, 'Async failure')

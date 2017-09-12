@@ -21,15 +21,16 @@ __metaclass__ = type
 
 import itertools
 
-from ansible.compat.six import string_types
 from ansible.errors import AnsibleError
+from ansible.module_utils.six import string_types
 from ansible.playbook.attribute import FieldAttribute
 from ansible.template import Templar
+
 
 class Taggable:
 
     untagged = frozenset(['untagged'])
-    _tags = FieldAttribute(isa='list', default=[], listof=(string_types,int))
+    _tags = FieldAttribute(isa='list', default=[], listof=(string_types, int))
 
     def __init__(self):
         super(Taggable, self).__init__()
@@ -40,9 +41,9 @@ class Taggable:
         elif isinstance(ds, string_types):
             value = ds.split(',')
             if isinstance(value, list):
-                return [ x.strip() for x in value ]
+                return [x.strip() for x in value]
             else:
-                return [ ds ]
+                return [ds]
         else:
             raise AnsibleError('tags must be specified as a list', obj=ds)
 
@@ -72,7 +73,7 @@ class Taggable:
                 else:
                     tags = set([tags])
             else:
-                tags = set([i for i,_ in itertools.groupby(tags)])
+                tags = set([i for i, _ in itertools.groupby(tags)])
         else:
             # this makes isdisjoint work for untagged
             tags = self.untagged

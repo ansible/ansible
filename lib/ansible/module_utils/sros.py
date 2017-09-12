@@ -30,80 +30,75 @@
 #
 import re
 
-from ansible.module_utils.network import NetworkModule, NetworkError
-from ansible.module_utils.network import register_transport, to_list
-from ansible.module_utils.shell import CliBase
-from ansible.module_utils.netcli import Command
+from ansible.module_utils._text import to_text
+from ansible.module_utils.basic import env_fallback, return_values
+from ansible.module_utils.network import NetworkError
+from ansible.module_utils.network_common import to_list, ComplexList
+from ansible.module_utils.connection import exec_command
+
+_DEVICE_CONFIGS = {}
+
+sros_provider_spec = {
+    'host': dict(),
+    'port': dict(type='int'),
+    'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
+    'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
+    'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
+    'timeout': dict(type='int'),
+}
+sros_argument_spec = {
+    'provider': dict(type='dict', options=sros_provider_spec),
+}
+sros_argument_spec.update(sros_provider_spec)
 
 
-class Cli(CliBase):
-
-    NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
-
-    CLI_PROMPTS_RE = [
-        re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
-        re.compile(r"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
-    ]
-
-    CLI_ERRORS_RE = [
-        re.compile(r"^\r\nError:", re.M),
-    ]
-
-    def __init__(self):
-        super(Cli, self).__init__()
-        self._rollback_enabled = None
-
-    @property
-    def rollback_enabled(self):
-        if self._rollback_enabled is not None:
-            return self._rollback_enabled
-        resp = self.execute(['show system rollback'])
-        match = re.search(r'^Rollback Location\s+:\s(\S+)', resp[0], re.M)
-        self._rollback_enabled = match.group(1) != 'None'
-        return self._rollback_enabled
-
-    def connect(self, params, **kwargs):
-        super(Cli, self).connect(params, kickstart=False, **kwargs)
-        self.shell.send('environment no more')
-        self._connected = True
-
-    ### implementation of netcli.Cli ###
-
-    def run_commands(self, commands, **kwargs):
-        return self.execute(to_list(commands))
-
-    ### implementation of netcfg.Config ###
-
-    def configure(self, commands, **kwargs):
-        cmds = to_list(commands)
-        responses = self.execute(cmds)
-        self.execute(['exit all'])
-        return responses
-
-    def get_config(self, detail=False, **kwargs):
-        cmd = 'admin display-config'
-        if detail:
-            cmd += ' detail'
-        return self.execute(cmd)[0]
-
-    def load_config(self, commands):
-        if self.rollback_enabled:
-            self.execute(['admin rollback save'])
-
-        try:
-            self.configure(commands)
-        except NetworkError:
-            if self.rollback_enabled:
-                self.execute(['admin rollback revert latest-rb',
-                              'admin rollback delete latest-rb'])
-            raise
-
-        if self.rollback_enabled:
-            self.execute(['admin rollback delete latest-rb'])
-
-    def save_config(self):
-        self.execute(['admin save'])
-
-Cli = register_transport('cli', default=True)(Cli)
+def check_args(module, warnings):
+    for key in sros_argument_spec:
+        if key != 'provider' and module.params[key]:
+            warnings.append('argument %s has been deprecated and will be removed in a future version' % key)
 
 
+def get_config(module, flags=[]):
+    cmd = 'admin display-config '
+    cmd += ' '.join(flags)
+    cmd = cmd.strip()
+
+    try:
+        return _DEVICE_CONFIGS[cmd]
+    except KeyError:
+        rc, out, err = exec_command(module, cmd)
+        if rc != 0:
+            module.fail_json(msg='unable to retrieve current config', stderr=to_text(err, errors='surrogate_or_strict'))
+        cfg = to_text(out, errors='surrogate_or_strict').strip()
+        _DEVICE_CONFIGS[cmd] = cfg
+        return cfg
+
+
+def to_commands(module, commands):
+    spec = {
+        'command': dict(key=True),
+        'prompt': dict(),
+        'answer': dict()
+    }
+    transform = ComplexList(spec, module)
+    return transform(commands)
+
+
+def run_commands(module, commands, check_rc=True):
+    responses = list()
+    commands = to_commands(module, to_list(commands))
+    for cmd in commands:
+        cmd = module.jsonify(cmd)
+        rc, out, err = exec_command(module, cmd)
+        if check_rc and rc != 0:
+            module.fail_json(msg=to_text(err, errors='surrogate_or_strict'), rc=rc)
+        responses.append(to_text(out, errors='surrogate_or_strict'))
+    return responses
+
+
+def load_config(module, commands):
+    for command in to_list(commands):
+        rc, out, err = exec_command(module, command)
+        if rc != 0:
+            module.fail_json(msg=to_text(err, errors='surrogate_or_strict'), command=command, rc=rc)
+    exec_command(module, 'exit all')

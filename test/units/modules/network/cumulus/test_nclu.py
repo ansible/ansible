@@ -14,13 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import unittest
-from ansible.modules.network.cumulus import nclu
-
 import sys
 import time
-from ansible.module_utils.basic import *
+import unittest
 
+from ansible.module_utils.basic import *
+from ansible.modules.network.cumulus import nclu
 
 
 class FakeModule(object):
@@ -171,7 +170,6 @@ class TestNclu(unittest.TestCase):
         self.assertEqual(len(module.pending), 0)
         self.assertEqual(module.fail_code, {})
         self.assertEqual(changed, True)
-
 
     def test_command_atomic(self):
         module = FakeModule()

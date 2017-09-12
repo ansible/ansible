@@ -19,7 +19,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -27,15 +27,15 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: ovirt_networks
-short_description: Module to manage logical networks in oVirt
+short_description: Module to manage logical networks in oVirt/RHV
 version_added: "2.3"
 author: "Ondra Machacek (@machacekondra)"
 description:
-    - "Module to manage logical networks in oVirt"
+    - "Module to manage logical networks in oVirt/RHV"
 options:
     name:
         description:
-            - "Name of the the network to manage."
+            - "Name of the network to manage."
         required: true
     state:
         description:
@@ -98,9 +98,10 @@ id:
     type: str
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 network:
-    description: "Dictionary of all the network attributes. Network attributes can be found on your oVirt instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/network."
+    description: "Dictionary of all the network attributes. Network attributes can be found on your oVirt/RHV instance
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/network."
     returned: "On success if network is found."
+    type: dict
 '''
 
 import traceback
@@ -228,14 +229,12 @@ def main():
             service=networks_service,
         )
         state = module.params['state']
-        network = networks_module.search_entity(
-            search_params={
-                'name': module.params['name'],
-                'datacenter': module.params['data_center'],
-            },
-        )
+        search_params = {
+            'name': module.params['name'],
+            'datacenter': module.params['data_center'],
+        }
         if state == 'present':
-            ret = networks_module.create(entity=network)
+            ret = networks_module.create(search_params=search_params)
 
             # Update clusters networks:
             if module.params.get('clusters') is not None:
@@ -257,7 +256,7 @@ def main():
                         ret = cluster_networks_module.remove()
 
         elif state == 'absent':
-            ret = networks_module.remove(entity=network)
+            ret = networks_module.remove(search_params=search_params)
 
         module.exit_json(**ret)
     except Exception as e:

@@ -16,7 +16,7 @@
 # a 10-year valid certificate.
 #
 # Use option -ForceNewSSLCert if the system has been SysPreped and a new
-# SSL Certifcate must be forced on the WinRM Listener when re-running this
+# SSL Certificate must be forced on the WinRM Listener when re-running this
 # script. This is necessary when a new SID and CN name is created.
 #
 # Use option -SkipNetworkProfileCheck to skip the network profile check.
@@ -31,6 +31,7 @@
 # Updated by Chris Church <cchurch@ansible.com>
 # Updated by Michael Crilly <mike@autologic.cm>
 # Updated by Anton Ouzounov <Anton.Ouzounov@careerbuilder.com>
+# Updated by Nicolas Simond <contact@nicolas-simond.com>
 # Updated by Dag Wieërs <dag@wieers.com>
 # Updated by Jordan Borean <jborean93@gmail.com>
 #
@@ -40,13 +41,14 @@
 # Version 1.3 - 2016-04-04
 # Version 1.4 - 2017-01-05
 # Version 1.5 - 2017-02-09
+# Version 1.6 - 2017-04-18
 
 # Support -Verbose option
 [CmdletBinding()]
 
 Param (
     [string]$SubjectName = $env:COMPUTERNAME,
-    [int]$CertValidityDays = 365,
+    [int]$CertValidityDays = 1095,
     [switch]$SkipNetworkProfileCheck,
     $CreateSelfSignedCert = $true,
     [switch]$ForceNewSSLCert,
@@ -77,7 +79,7 @@ Function New-LegacySelfSignedCert
 {
     Param (
         [string]$SubjectName,
-        [int]$ValidDays = 365
+        [int]$ValidDays = 1095
     )
 
     $name = New-Object -COM "X509Enrollment.CX500DistinguishedName.1"
@@ -86,7 +88,7 @@ Function New-LegacySelfSignedCert
     $key = New-Object -COM "X509Enrollment.CX509PrivateKey.1"
     $key.ProviderName = "Microsoft RSA SChannel Cryptographic Provider"
     $key.KeySpec = 1
-    $key.Length = 1024
+    $key.Length = 4096
     $key.SecurityDescriptor = "D:PAI(A;;0xd01f01ff;;;SY)(A;;0xd01f01ff;;;BA)(A;;0x80120089;;;NS)"
     $key.MachineContext = 1
     $key.Create()
@@ -169,12 +171,12 @@ If (!(Get-Service "WinRM"))
 }
 ElseIf ((Get-Service "WinRM").Status -ne "Running")
 {
-    Write-Verbose "Starting WinRM service."
-    Start-Service -Name "WinRM" -ErrorAction Stop
-    Write-Log "Started WinRM service."
     Write-Verbose "Setting WinRM service to start automatically on boot."
     Set-Service -Name "WinRM" -StartupType Automatic
     Write-Log "Set WinRM service to start automatically on boot."
+    Write-Verbose "Starting WinRM service."
+    Start-Service -Name "WinRM" -ErrorAction Stop
+    Write-Log "Started WinRM service."
 
 }
 

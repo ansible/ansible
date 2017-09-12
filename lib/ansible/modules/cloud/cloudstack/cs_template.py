@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
@@ -164,7 +164,7 @@ options:
       - True if the template type is routing i.e., if template is used to deploy router.
       - Only considered if C(url) is used.
     required: false
-    default: false
+    default: null
   format:
     description:
       - The format for the template.
@@ -203,6 +203,14 @@ options:
       - Poll async jobs until job has finished.
     required: false
     default: true
+  tags:
+    description:
+      - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).
+      - "To delete all tags, set a empty list e.g. C(tags: [])."
+    required: false
+    default: null
+    aliases: [ 'tag' ]
+    version_added: "2.4"
 extends_documentation_fragment: cloudstack
 '''
 
@@ -482,6 +490,9 @@ class AnsibleCloudStackTemplate(AnsibleCloudStack):
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
                     template = self.poll_job(template, 'template')
+        if template:
+            template = self.ensure_tags(resource=template, resource_type='Template')
+
         return template
 
 
@@ -611,7 +622,7 @@ def main():
         is_featured = dict(type='bool', default=False),
         is_dynamically_scalable = dict(type='bool', default=False),
         is_extractable = dict(type='bool', default=False),
-        is_routing = dict(type='bool', default=False),
+        is_routing = dict(type='bool', default=None),
         checksum = dict(default=None),
         template_filter = dict(default='self', choices=['featured', 'self', 'selfexecutable', 'sharedexecutable', 'executable', 'community']),
         hypervisor = dict(choices=CS_HYPERVISORS, default=None),
@@ -630,6 +641,7 @@ def main():
         account = dict(default=None),
         project = dict(default=None),
         poll_async = dict(type='bool', default=True),
+        tags=dict(type='list', aliases=['tag'], default=None),
     ))
 
     module = AnsibleModule(

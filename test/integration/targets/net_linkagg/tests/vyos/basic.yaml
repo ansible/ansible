@@ -1,0 +1,185 @@
+---
+- name: Remove linkagg
+  net_linkagg:
+    name: bond0
+    state: absent
+
+- name: Create linkagg
+  net_linkagg:
+    name: bond0
+    members:
+      - eth1
+      - eth2
+    state: present
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"set interfaces bonding bond0 mode 802.3ad" in result.commands'
+      - '"set interfaces ethernet eth1 bond-group bond0" in result.commands'
+      - '"set interfaces ethernet eth2 bond-group bond0" in result.commands'
+
+- name: Create linkagg again (idempotent)
+  net_linkagg:
+    name: bond0
+    members:
+      - eth1
+      - eth2
+    state: present
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Add linkagg member
+  net_linkagg:
+    name: bond0
+    members:
+      - eth3
+    state: present
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"set interfaces ethernet eth3 bond-group bond0" in result.commands'
+
+- name: Add linkagg member again (idempotent)
+  net_linkagg:
+    name: bond0
+    members:
+      - eth3
+    state: present
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Disable linkagg
+  net_linkagg:
+    name: bond0
+    state: down
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"set interfaces bonding bond0 disable" in result.commands'
+
+- name: Disable linkagg again (idempotent)
+  net_linkagg:
+    name: bond0
+    state: down
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Enable linkagg
+  net_linkagg:
+    name: bond0
+    state: up
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"delete interfaces bonding bond0 disable" in result.commands[0]'
+
+- name: Enable linkagg again (idempotent)
+  net_linkagg:
+    name: bond0
+    state: up
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Remove linkagg
+  net_linkagg:
+    name: bond0
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"delete interfaces ethernet eth1 bond-group" in result.commands'
+      - '"delete interfaces ethernet eth2 bond-group" in result.commands'
+      - '"delete interfaces ethernet eth3 bond-group" in result.commands'
+      - '"delete interfaces bonding bond0" in result.commands'
+
+- name: Remove linkagg again (idempotent)
+  net_linkagg:
+    name: bond0
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Create collection of linkagg definitions
+  net_linkagg:
+    aggregate:
+        - { name: bond0, members: [eth1, eth2] }
+        - { name: bond1, members: [eth3, eth4] }
+    state: present
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"set interfaces bonding bond0 mode 802.3ad" in result.commands'
+      - '"set interfaces ethernet eth1 bond-group bond0" in result.commands'
+      - '"set interfaces ethernet eth2 bond-group bond0" in result.commands'
+      - '"set interfaces bonding bond1 mode 802.3ad" in result.commands'
+      - '"set interfaces ethernet eth3 bond-group bond1" in result.commands'
+      - '"set interfaces ethernet eth4 bond-group bond1" in result.commands'
+
+- name: Create collection of linkagg definitions again (idempotent)
+  net_linkagg:
+    aggregate:
+        - { name: bond0, members: [eth1, eth2] }
+        - { name: bond1, members: [eth3, eth4] }
+    state: present
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Remove collection of linkagg definitions
+  net_linkagg:
+    aggregate:
+      - { name: bond0 }
+      - { name: bond1 }
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"delete interfaces ethernet eth1 bond-group" in result.commands'
+      - '"delete interfaces ethernet eth2 bond-group" in result.commands'
+      - '"delete interfaces bonding bond0" in result.commands'
+      - '"delete interfaces ethernet eth1 bond-group" in result.commands'
+      - '"delete interfaces ethernet eth2 bond-group" in result.commands'
+      - '"delete interfaces bonding bond1" in result.commands'
+
+- name: Remove collection of linkagg definitions again (idempotent)
+  net_linkagg:
+    aggregate:
+      - { name: bond0 }
+      - { name: bond1 }
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'

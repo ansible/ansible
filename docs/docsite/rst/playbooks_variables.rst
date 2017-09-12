@@ -90,7 +90,7 @@ Variables defined from included files and roles
 
 It turns out we've already talked about variables in another place too.
 
-As described in :doc:`playbooks_roles`, variables can also be included in the playbook via include files, which may or may
+As described in :doc:`playbooks_reuse_roles`, variables can also be included in the playbook via include files, which may or may
 not be part of an "Ansible Role".  Usage of roles is preferred as it provides a nice organizational system.
 
 .. _about_jinja2:
@@ -123,6 +123,11 @@ it's more than that -- you can also read variables about other hosts.  We'll sho
    playbooks are pure machine-parseable YAML.  This is a rather important feature as it means it is possible to code-generate
    pieces of files, or to have other ecosystem tools read Ansible files.  Not everyone will need this but it can unlock
    possibilities.
+
+.. seealso::
+
+    :doc:`playbooks_templating`
+        More information about Jinja2 templating
 
 .. _jinja2_filters:
 
@@ -830,12 +835,12 @@ In 1.x, the precedence is as follows (with the last listed variables winning pri
 In 2.x, we have made the order of precedence more specific (with the last listed variables winning prioritization):
 
   * role defaults [1]_
-  * inventory INI or script group vars [2]_
+  * inventory file or script group vars [2]_
   * inventory group_vars/all
   * playbook group_vars/all
   * inventory group_vars/*
   * playbook group_vars/*
-  * inventory INI or script host vars [2]_
+  * inventory file or script host vars [2]_
   * inventory host_vars/*
   * playbook host_vars/*
   * host facts
@@ -862,6 +867,8 @@ Basically, anything that goes into "role defaults" (the defaults folder inside t
           If multiple groups have the same variable, the last one loaded wins.
           If you define a variable twice in a play's vars: section, the 2nd one wins.
 .. note:: the previous describes the default config `hash_behavior=replace`, switch to 'merge' to only partially overwrite.
+.. note:: Group loading follows parent/child relationships. Groups of the same 'patent/child' level are then merged following alphabetical order.
+          This last one can be superceeded by the user via `ansible_group_priority`, which defaults to 0 for all groups.
 
 
 Another important thing to consider (for all versions) is that connection variables override config, command line and play/role/task specific options and directives.  For example::
@@ -897,8 +904,8 @@ Variable Scopes
 Ansible has 3 main scopes:
 
  * Global: this is set by config, environment variables and the command line
- * Play: each play and contained structures, vars entries, include_vars, role defaults and vars.
- * Host: variables directly associated to a host, like inventory, facts or registered task outputs
+ * Play: each play and contained structures, vars entries (vars; vars_files; vars_prompt), role defaults and vars.
+ * Host: variables directly associated to a host, like inventory, include_vars, facts or registered task outputs
 
 .. _variable_examples:
 
@@ -941,7 +948,7 @@ roles aren't you?  Hint hint.
 
 Ok, so if you are writing a redistributable role with reasonable defaults, put those in the ``roles/x/defaults/main.yml`` file.  This means
 the role will bring along a default value but ANYTHING in Ansible will override it.  It's just a default.  That's why it says "defaults" :)
-See :doc:`playbooks_roles` for more info about this::
+See :doc:`playbooks_reuse_roles` for more info about this::
 
     ---
     # file: roles/x/defaults/main.yml
@@ -995,7 +1002,7 @@ can set variables in there and make use of them in other roles and elsewhere in 
         - { role: something, foo: 12 }
         - { role: something_else }
 
-.. note:: There are some protections in place to avoid the need to namespace variables.  
+.. note:: There are some protections in place to avoid the need to namespace variables.
           In the above, variables defined in common_settings are most definitely available to 'something' and 'something_else' tasks, but if
           "something's" guaranteed to have foo set at 12, even if somewhere deep in common settings it set foo to 20.
 
@@ -1024,7 +1031,7 @@ For information about advanced YAML syntax used to declare variables and have mo
        Jinja2 filters and their uses
    :doc:`playbooks_loops`
        Looping in playbooks
-   :doc:`playbooks_roles`
+   :doc:`playbooks_reuse_roles`
        Playbook organization by roles
    :doc:`playbooks_best_practices`
        Best practices in playbooks

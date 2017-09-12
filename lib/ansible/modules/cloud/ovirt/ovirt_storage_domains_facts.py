@@ -19,7 +19,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -27,18 +27,18 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: ovirt_storage_domains_facts
-short_description: Retrieve facts about one or more oVirt storage domains
+short_description: Retrieve facts about one or more oVirt/RHV storage domains
 author: "Ondra Machacek (@machacekondra)"
 version_added: "2.3"
 description:
-    - "Retrieve facts about one or more oVirt storage domains."
+    - "Retrieve facts about one or more oVirt/RHV storage domains."
 notes:
     - "This module creates a new top-level C(ovirt_storage_domains) fact, which
        contains a list of storage domains."
 options:
     pattern:
       description:
-        - "Search term which is accepted by oVirt search backend."
+        - "Search term which is accepted by oVirt/RHV search backend."
         - "For example to search storage domain X from datacenter Y use following pattern:
            name=X and datacenter=Y"
 extends_documentation_fragment: ovirt_facts
@@ -59,7 +59,7 @@ EXAMPLES = '''
 RETURN = '''
 ovirt_storage_domains:
     description: "List of dictionaries describing the storage domains. Storage_domain attribues are mapped to dictionary keys,
-                  all storage domains attributes can be found at following url: https://ovirt.example.com/ovirt-engine/api/model#types/storage_domain."
+                  all storage domains attributes can be found at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/storage_domain."
     returned: On success.
     type: list
 '''

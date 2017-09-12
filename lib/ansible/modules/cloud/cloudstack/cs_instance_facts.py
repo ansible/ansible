@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
@@ -180,6 +180,11 @@ cloudstack_instance.instance_name:
   returned: success
   type: string
   sample: i-44-3992-VM
+cloudstack_instance.volumes:
+  description: List of dictionaries of the volumes attached to the instance.
+  returned: success
+  type: list
+  sample: '[ { name: "ROOT-1369", type: "ROOT", size: 10737418240 }, { name: "data01, type: "DATADISK", size: 10737418240 } ]'
 '''
 
 import base64
@@ -227,6 +232,20 @@ class AnsibleCloudStackInstanceFacts(AnsibleCloudStack):
                         break
         return self.instance
 
+    def get_volumes(self, instance):
+        volume_details = []
+        if instance:
+            args                = {}
+            args['account']     = instance.get('account')
+            args['domainid']    = instance.get('domainid')
+            args['projectid']   = instance.get('projectid')
+            args['virtualmachineid'] = instance['id']
+
+            volumes = self.cs.listVolumes(**args)
+            if volumes:
+                for vol in volumes['volume']:
+                    volume_details.append({'size': vol['size'], 'type': vol['type'], 'name': vol['name']})
+        return volume_details
 
     def run(self):
         instance = self.get_instance()
@@ -253,6 +272,9 @@ class AnsibleCloudStackInstanceFacts(AnsibleCloudStack):
                 for nic in instance['nic']:
                     if nic['isdefault'] and 'ipaddress' in nic:
                         self.result['default_ip'] = nic['ipaddress']
+            volumes = self.get_volumes(instance)
+            if volumes:
+                self.result['volumes'] = volumes
         return self.result
 
 
@@ -267,7 +289,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        supports_check_mode=False,
+        supports_check_mode=True,
     )
 
     cs_instance_facts = AnsibleCloudStackInstanceFacts(module=module).run()

@@ -1,0 +1,61 @@
+- name: Validate public key (test - privatekey modulus)
+  shell: 'openssl rsa -noout -modulus -in {{ output_dir }}/privatekey.pem | openssl md5'
+  register: privatekey_modulus
+
+- name: Validate public key (test - publickey modulus)
+  shell: 'openssl rsa -pubin -noout -modulus < {{ output_dir }}/publickey.pub  | openssl md5'
+  register: publickey_modulus
+
+- name: Validate public key (assert)
+  assert:
+    that:
+      - publickey_modulus.stdout == privatekey_modulus.stdout
+
+- name: Validate public key - OpenSSH format (test - privatekey's publickey)
+  shell: 'ssh-keygen -y -f {{ output_dir }}/privatekey.pem'
+  register: privatekey_publickey
+  when: cryptography_version.stdout|version_compare('1.4.0', '>=')
+
+- name: Validate public key - OpenSSH format  (test - publickey)
+  slurp:
+    src: '{{ output_dir }}/publickey-ssh.pub'
+  register: publickey
+  when: cryptography_version.stdout|version_compare('1.4.0', '>=')
+
+- name: Validate public key - OpenSSH format (assert)
+  assert:
+    that:
+      - privatekey_publickey.stdout == '{{ publickey.content|b64decode }}'
+  when: cryptography_version.stdout|version_compare('1.4.0', '>=')
+
+- name: Validate publickey2 (test - Ensure key has been removed)
+  stat:
+    path: '{{ output_dir }}/publickey2.pub'
+  register: publickey2
+
+- name: Validate publickey2 (assert - Ensure key has been removed)
+  assert:
+    that:
+      - publickey2.stat.exists == False
+
+
+- name: Validate publickey3 (test - privatekey modulus)
+  shell: 'openssl rsa -noout -modulus -in {{ output_dir }}/privatekey3.pem -passin pass:ansible | openssl md5'
+  register: privatekey3_modulus
+  when: openssl_version.stdout|version_compare('0.9.8zh', '>=')
+
+- name: Validate publickey3 (test - publickey modulus)
+  shell: 'openssl rsa -pubin -noout -modulus < {{ output_dir }}/publickey3.pub  | openssl md5'
+  register: publickey3_modulus
+  when: openssl_version.stdout|version_compare('0.9.8zh', '>=')
+
+- name: Validate publickey3 (assert)
+  assert:
+    that:
+      - publickey3_modulus.stdout == privatekey3_modulus.stdout
+  when: openssl_version.stdout|version_compare('0.9.8zh', '>=')
+
+- name: Validate publickey3 idempotence (assert)
+  assert:
+    that:
+      - not publickey3_idempotence|changed

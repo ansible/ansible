@@ -5,22 +5,13 @@
 # (c) 2013, Aaron Bull Schaefer <aaron@elasticdog.com>
 # (c) 2015, Indrajit Raychaudhuri <irc+code@indrajit.com>
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -96,7 +87,7 @@ RETURN = '''
 packages:
     description: a list of packages that have been changed
     returned: when upgrade is set to yes
-    type: list of strings
+    type: list
     sample: ['package', 'other-package']
 '''
 
@@ -143,10 +134,7 @@ EXAMPLES = '''
     force: yes
 '''
 
-import shlex
-import os
 import re
-import sys
 
 def get_version(pacman_output):
     """Take pacman -Qi or pacman -Si output and get the Version"""
@@ -157,7 +145,9 @@ def get_version(pacman_output):
     return None
 
 def query_package(module, pacman_path, name, state="present"):
-    """Query the package status in both the local system and the repository. Returns a boolean to indicate if the package is installed, a second boolean to indicate if the package is up-to-date and a third boolean to indicate whether online information were available"""
+    """Query the package status in both the local system and the repository. Returns a boolean to indicate if the package is installed, a second
+    boolean to indicate if the package is up-to-date and a third boolean to indicate whether online information were available
+    """
     if state == "present":
         lcmd = "%s -Qi %s" % (pacman_path, name)
         lrc, lstdout, lstderr = module.run_command(lcmd, check_rc=False)
@@ -209,9 +199,7 @@ def upgrade(module, pacman_path):
     }
 
     if rc == 0:
-        regex = re.compile('(\w+) ((?:\S+)-(?:\S+)) -> ((?:\S+)-(?:\S+))')
-        b = []
-        a = []
+        regex = re.compile('([\w-]+) ((?:\S+)-(?:\S+)) -> ((?:\S+)-(?:\S+))')
         for p in data:
             m = regex.search(p)
             packages.append(m.group(1))
@@ -256,15 +244,15 @@ def remove_packages(module, pacman_path, packages):
         cmd = "%s -%s %s --noconfirm --noprogressbar" % (pacman_path, args, package)
         rc, stdout, stderr = module.run_command(cmd, check_rc=False)
 
+        if rc != 0:
+            module.fail_json(msg="failed to remove %s" % (package))
+
         if module._diff:
             d = stdout.split('\n')[2].split(' ')[2:]
             for i, pkg in enumerate(d):
                 d[i] = re.sub('-[0-9].*$', '', d[i].split('/')[-1])
                 diff['before'] += "%s\n" % pkg
             data.append('\n'.join(d))
-
-        if rc != 0:
-            module.fail_json(msg="failed to remove %s" % (package))
 
         remove_c += 1
 
@@ -303,30 +291,32 @@ def install_packages(module, pacman_path, state, packages, package_files):
     if to_install_repos:
         cmd = "%s -S %s --noconfirm --noprogressbar --needed" % (pacman_path, " ".join(to_install_repos))
         rc, stdout, stderr = module.run_command(cmd, check_rc=False)
+
+        if rc != 0:
+            module.fail_json(msg="failed to install %s: %s" % (" ".join(to_install_repos), stderr))
+
         data = stdout.split('\n')[3].split(' ')[2:]
         data = [ i for i in data if i != '' ]
         for i, pkg in enumerate(data):
             data[i] = re.sub('-[0-9].*$', '', data[i].split('/')[-1])
             if module._diff:
                 diff['after'] += "%s\n" % pkg
-
-        if rc != 0:
-            module.fail_json(msg="failed to install %s: %s" % (" ".join(to_install_repos), stderr))
 
         install_c += len(to_install_repos)
 
     if to_install_files:
         cmd = "%s -U %s --noconfirm --noprogressbar --needed" % (pacman_path, " ".join(to_install_files))
         rc, stdout, stderr = module.run_command(cmd, check_rc=False)
+
+        if rc != 0:
+            module.fail_json(msg="failed to install %s: %s" % (" ".join(to_install_files), stderr))
+
         data = stdout.split('\n')[3].split(' ')[2:]
         data = [ i for i in data if i != '' ]
         for i, pkg in enumerate(data):
             data[i] = re.sub('-[0-9].*$', '', data[i].split('/')[-1])
             if module._diff:
                 diff['after'] += "%s\n" % pkg
-
-        if rc != 0:
-            module.fail_json(msg="failed to install %s: %s" % (" ".join(to_install_files), stderr))
 
         install_c += len(to_install_files)
 
@@ -374,17 +364,18 @@ def expand_package_groups(module, pacman_path, pkgs):
     expanded = []
 
     for pkg in pkgs:
-        cmd = "%s -Sgq %s" % (pacman_path, pkg)
-        rc, stdout, stderr = module.run_command(cmd, check_rc=False)
+        if pkg: # avoid empty strings
+            cmd = "%s -Sgq %s" % (pacman_path, pkg)
+            rc, stdout, stderr = module.run_command(cmd, check_rc=False)
 
-        if rc == 0:
-            # A group was found matching the name, so expand it
-            for name in stdout.split('\n'):
-                name = name.strip()
-                if name:
-                    expanded.append(name)
-        else:
-            expanded.append(pkg)
+            if rc == 0:
+                # A group was found matching the name, so expand it
+                for name in stdout.split('\n'):
+                    name = name.strip()
+                    if name:
+                        expanded.append(name)
+            else:
+                expanded.append(pkg)
 
     return expanded
 
@@ -428,7 +419,9 @@ def main():
 
         pkg_files = []
         for i, pkg in enumerate(pkgs):
-            if re.match(".*\.pkg\.tar(\.(gz|bz2|xz|lrz|lzo|Z))?$", pkg):
+            if not pkg: # avoid empty strings
+                continue
+            elif re.match(".*\.pkg\.tar(\.(gz|bz2|xz|lrz|lzo|Z))?$", pkg):
                 # The package given is a filename, extract the raw pkg name from
                 # it and store the filename
                 pkg_files.append(pkg)

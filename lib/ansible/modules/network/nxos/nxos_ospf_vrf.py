@@ -16,10 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
-
+                    'supported_by': 'network'}
 
 DOCUMENTATION = '''
 ---
@@ -28,90 +27,99 @@ extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Manages a VRF for an OSPF router.
 description:
-    - Manages a VRF for an OSPF router.
+  - Manages a VRF for an OSPF router.
 author: Gabriele Gerbino (@GGabriele)
 notes:
-    - Value I(default) restores params default value, if any.
-      Otherwise it removes the existing param configuration.
+  - Tested against NXOSv 7.3.(0)D1(1) on VIRL
+  - Value I(default) restores params default value, if any.
+    Otherwise it removes the existing param configuration.
 options:
-    vrf:
-        description:
-            - Name of the resource instance. Valid value is a string.
-              The name 'default' is a valid VRF representing the global OSPF.
-        required: false
-        default: default
-    ospf:
-        description:
-            - Name of the OSPF instance.
-        required: true
-        default: null
-    router_id:
-        description:
-            - Router Identifier (ID) of the OSPF router VRF instance.
-        required: false
-        default: null
-    default_metric:
-        description:
-            - Specify the default Metric value. Valid values are an integer
-              or the keyword 'default'.
-        required: false
-        default: null
-    log_adjacency:
-        description:
-            - Controls the level of log messages generated whenever a
-              neighbor changes state. Valid values are 'log', 'detail',
-              and 'default'.
-        required: false
-        choices: ['log','detail','default']
-        default: null
-    timer_throttle_lsa_start:
-        description:
-            - Specify the start interval for rate-limiting Link-State
-              Advertisement (LSA) generation. Valid values are an integer,
-              in milliseconds, or the keyword 'default'.
-        required: false
-        default: null
-    timer_throttle_lsa_hold:
-        description:
-            - Specify the hold interval for rate-limiting Link-State
-              Advertisement (LSA) generation. Valid values are an integer,
-              in milliseconds, or the keyword 'default'.
-        required: false
-        default: null
-    timer_throttle_lsa_max:
-        description:
-            - Specify the max interval for rate-limiting Link-State
-              Advertisement (LSA) generation. Valid values are an integer,
-              in milliseconds, or the keyword 'default'.
-        required: false
-        default: null
-    timer_throttle_spf_start:
-        description:
-            - Specify initial Shortest Path First (SPF) schedule delay.
-              Valid values are an integer, in milliseconds, or
-              the keyword 'default'.
-        required: false
-        default: null
-    timer_throttle_spf_hold:
-        description:
-            - Specify minimum hold time between Shortest Path First (SPF)
-              calculations. Valid values are an integer, in milliseconds,
-              or the keyword 'default'.
-        required: false
-        default: null
-    timer_throttle_spf_max:
-        description:
-            - Specify the maximum wait time between Shortest Path First (SPF)
-              calculations. Valid values are an integer, in milliseconds,
-              or the keyword 'default'.
-        required: false
-        default: null
-    auto_cost:
-        description:
-            - Specifies the reference bandwidth used to assign OSPF cost.
-              Valid values are an integer, in Mbps, or the keyword 'default'.
-        required: false
-        default: null
+  vrf:
+    description:
+      - Name of the resource instance. Valid value is a string.
+        The name 'default' is a valid VRF representing the global OSPF.
+    required: false
+    default: default
+  ospf:
+    description:
+      - Name of the OSPF instance.
+    required: true
+    default: null
+  router_id:
+    description:
+      - Router Identifier (ID) of the OSPF router VRF instance.
+    required: false
+    default: null
+  default_metric:
+    description:
+      - Specify the default Metric value. Valid values are an integer
+        or the keyword 'default'.
+    required: false
+    default: null
+  log_adjacency:
+    description:
+      - Controls the level of log messages generated whenever a
+        neighbor changes state. Valid values are 'log', 'detail',
+        and 'default'.
+    required: false
+    choices: ['log','detail','default']
+    default: null
+  timer_throttle_lsa_start:
+    description:
+      - Specify the start interval for rate-limiting Link-State
+        Advertisement (LSA) generation. Valid values are an integer,
+        in milliseconds, or the keyword 'default'.
+    required: false
+    default: null
+  timer_throttle_lsa_hold:
+    description:
+      - Specify the hold interval for rate-limiting Link-State
+        Advertisement (LSA) generation. Valid values are an integer,
+        in milliseconds, or the keyword 'default'.
+    required: false
+    default: null
+  timer_throttle_lsa_max:
+    description:
+      - Specify the max interval for rate-limiting Link-State
+        Advertisement (LSA) generation. Valid values are an integer,
+        in milliseconds, or the keyword 'default'.
+    required: false
+    default: null
+  timer_throttle_spf_start:
+    description:
+      - Specify initial Shortest Path First (SPF) schedule delay.
+        Valid values are an integer, in milliseconds, or
+        the keyword 'default'.
+    required: false
+    default: null
+  timer_throttle_spf_hold:
+    description:
+      - Specify minimum hold time between Shortest Path First (SPF)
+        calculations. Valid values are an integer, in milliseconds,
+        or the keyword 'default'.
+    required: false
+    default: null
+  timer_throttle_spf_max:
+    description:
+      - Specify the maximum wait time between Shortest Path First (SPF)
+        calculations. Valid values are an integer, in milliseconds,
+        or the keyword 'default'.
+    required: false
+    default: null
+  auto_cost:
+    description:
+      - Specifies the reference bandwidth used to assign OSPF cost.
+        Valid values are an integer, in Mbps, or the keyword 'default'.
+    required: false
+    default: null
+  passive_interface:
+    description:
+      - Setting to true will suppress routing update on interface.
+        Valid values are 'true' and 'false'.
+    version_added: "2.4"
+    required: false
+    choices: ['true','false']
+    default: null
 '''
 
 EXAMPLES = '''
@@ -125,64 +133,29 @@ EXAMPLES = '''
     timer_throttle_lsa_max: 3000
     vrf: test
     state: present
-    username: "{{ un }}"
-    password: "{{ pwd }}"
-    host: "{{ inventory_hostname }}"
 '''
 
 RETURN = '''
-proposed:
-    description: k/v pairs of parameters passed into module
-    returned: verbose mode
-    type: dict
-    sample: {"ospf": "1", "timer_throttle_lsa_hold": "1100",
-            "timer_throttle_lsa_max": "3000", "timer_throttle_lsa_start": "60",
-            "timer_throttle_spf_hold": "1000",
-            "timer_throttle_spf_max": "2000", "timer_throttle_spf_start": "50",
-            "vrf": "test"}
-existing:
-    description: k/v pairs of existing configuration
-    returned: verbose mode
-    type: dict
-    sample: {"auto_cost": "40000", "default_metric": "", "log_adjacency": "",
-            "ospf": "1", "router_id": "", "timer_throttle_lsa_hold": "5000",
-            "timer_throttle_lsa_max": "5000", "timer_throttle_lsa_start": "0",
-            "timer_throttle_spf_hold": "1000",
-            "timer_throttle_spf_max": "5000",
-            "timer_throttle_spf_start": "200", "vrf": "test"}
-end_state:
-    description: k/v pairs of configuration after module execution
-    returned: verbose mode
-    type: dict
-    sample: {"auto_cost": "40000", "default_metric": "", "log_adjacency": "",
-            "ospf": "1", "router_id": "", "timer_throttle_lsa_hold": "1100",
-            "timer_throttle_lsa_max": "3000", "timer_throttle_lsa_start": "60",
-            "timer_throttle_spf_hold": "1000",
-            "timer_throttle_spf_max": "2000", "timer_throttle_spf_start": "50",
-            "vrf": "test"}
-updates:
+commands:
     description: commands sent to the device
     returned: always
     type: list
     sample: ["router ospf 1", "vrf test", "timers throttle lsa 60 1100 3000",
-             "timers throttle spf 50 1000 2000"]
-changed:
-    description: check to see if a change was made on the device
-    returned: always
-    type: boolean
-    sample: true
+             "ospf 1", "timers throttle spf 50 1000 2000", "vrf test"]
 '''
 
 import re
-from ansible.module_utils.nxos import get_config, load_config, run_commands
+from ansible.module_utils.nxos import get_config, load_config
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netcfg import CustomNetworkConfig
 
-import re
 
-
+BOOL_PARAMS = [
+    'passive_interface'
+]
 PARAM_TO_COMMAND_KEYMAP = {
+    'vrf': 'vrf',
     'router_id': 'router-id',
     'default_metric': 'default-metric',
     'log_adjacency': 'log-adjacency-changes',
@@ -192,7 +165,8 @@ PARAM_TO_COMMAND_KEYMAP = {
     'timer_throttle_spf_max': 'timers throttle spf',
     'timer_throttle_spf_start': 'timers throttle spf',
     'timer_throttle_spf_hold': 'timers throttle spf',
-    'auto_cost': 'auto-cost reference-bandwidth'
+    'auto_cost': 'auto-cost reference-bandwidth',
+    'passive_interface': 'passive-interface default'
 }
 PARAM_TO_DEFAULT_KEYMAP = {
     'timer_throttle_lsa_start': '0',
@@ -205,24 +179,24 @@ PARAM_TO_DEFAULT_KEYMAP = {
 }
 
 
-def invoke(name, *args, **kwargs):
-    func = globals().get(name)
-    if func:
-        return func(*args, **kwargs)
-
-
 def get_value(arg, config, module):
-    REGEX = re.compile(r'(?:{0}\s)(?P<value>.*)$'.format(PARAM_TO_COMMAND_KEYMAP[arg]), re.M)
+    command = PARAM_TO_COMMAND_KEYMAP.get(arg)
+    command_re = re.compile(r'(?:{0}\s)(?P<value>.*)$'.format(command), re.M)
     value = ''
 
-    if PARAM_TO_COMMAND_KEYMAP[arg] in config:
+    if command in config:
         if arg == 'log_adjacency':
             if 'log-adjacency-changes detail' in config:
                 value = 'detail'
             else:
                 value = 'log'
+        elif arg == 'passive_interface':
+            if 'passive-interface default' in config:
+                value = True
+            else:
+                value = False
         else:
-            value_list = REGEX.search(config).group('value').split()
+            value_list = command_re.search(config).group('value').split()
             if 'hold' in arg:
                 value = value_list[1]
             elif 'max' in arg:
@@ -239,7 +213,7 @@ def get_value(arg, config, module):
 
 def get_existing(module, args):
     existing = {}
-    netcfg = get_config(module)
+    netcfg = CustomNetworkConfig(indent=2, contents=get_config(module))
     parents = ['router ospf {0}'.format(module.params['ospf'])]
 
     if module.params['vrf'] != 'default':
@@ -269,14 +243,10 @@ def get_existing(module, args):
 
 def apply_key_map(key_map, table):
     new_dict = {}
-    for key, value in table.items():
+    for key in table:
         new_key = key_map.get(key)
         if new_key:
-            value = table.get(key)
-            if value:
-                new_dict[new_key] = value
-            else:
-                new_dict[new_key] = value
+            new_dict[new_key] = table.get(key)
     return new_dict
 
 
@@ -290,7 +260,11 @@ def state_present(module, existing, proposed, candidate):
             commands.append(key)
 
         elif value is False:
-            commands.append('no {0}'.format(key))
+            if key == 'passive-interface default':
+                if existing_commands.get(key):
+                    commands.append('no {0}'.format(key))
+            else:
+                commands.append('no {0}'.format(key))
 
         elif value == 'default':
             if existing_commands.get(key):
@@ -330,7 +304,6 @@ def state_present(module, existing, proposed, candidate):
         parents = ['router ospf {0}'.format(module.params['ospf'])]
         if module.params['vrf'] != 'default':
             parents.append('vrf {0}'.format(module.params['vrf']))
-
         candidate.add(commands, parents=parents)
 
 
@@ -340,8 +313,10 @@ def state_absent(module, existing, proposed, candidate):
     if module.params['vrf'] == 'default':
         existing_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, existing)
         for key, value in existing_commands.items():
-            if value:
-                if key == 'timers throttle lsa':
+            if value and key != 'vrf':
+                if key == 'passive-interface default':
+                    command = 'no {0}'.format(key)
+                elif key == 'timers throttle lsa':
                     command = 'no {0} {1} {2} {3}'.format(
                         key,
                         existing['timer_throttle_lsa_start'],
@@ -361,7 +336,9 @@ def state_absent(module, existing, proposed, candidate):
                     commands.append(command)
     else:
         commands = ['no vrf {0}'.format(module.params['vrf'])]
-    candidate.add(commands, parents=parents)
+
+    if commands:
+        candidate.add(commands, parents=parents)
 
 
 def main():
@@ -370,8 +347,7 @@ def main():
         ospf=dict(required=True, type='str'),
         router_id=dict(required=False, type='str'),
         default_metric=dict(required=False, type='str'),
-        log_adjacency=dict(required=False, type='str',
-                               choices=['log', 'detail', 'default']),
+        log_adjacency=dict(required=False, type='str', choices=['log', 'detail', 'default']),
         timer_throttle_lsa_start=dict(required=False, type='str'),
         timer_throttle_lsa_hold=dict(required=False, type='str'),
         timer_throttle_lsa_max=dict(required=False, type='str'),
@@ -379,8 +355,8 @@ def main():
         timer_throttle_spf_hold=dict(required=False, type='str'),
         timer_throttle_spf_max=dict(required=False, type='str'),
         auto_cost=dict(required=False, type='str'),
-        state=dict(choices=['present', 'absent'], default='present',
-                       required=False),
+        passive_interface=dict(required=False, type='bool'),
+        state=dict(choices=['present', 'absent'], default='present', required=False),
         include_defaults=dict(default=True),
         config=dict(),
         save=dict(type='bool', default=False)
@@ -388,33 +364,17 @@ def main():
 
     argument_spec.update(nxos_argument_spec)
 
-    module = AnsibleModule(argument_spec=argument_spec,
-                        supports_check_mode=True)
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
     warnings = list()
     check_args(module, warnings)
-
+    result = dict(changed=False, warnings=warnings)
 
     state = module.params['state']
-    args =  [
-        'vrf',
-        'ospf',
-        'router_id',
-        'default_metric',
-        'log_adjacency',
-        'timer_throttle_lsa_start',
-        'timer_throttle_lsa_hold',
-        'timer_throttle_lsa_max',
-        'timer_throttle_spf_start',
-        'timer_throttle_spf_hold',
-        'timer_throttle_spf_max',
-        'auto_cost'
-    ]
-
-    existing = invoke('get_existing', module, args)
-    end_state = existing
+    args = PARAM_TO_COMMAND_KEYMAP.keys()
+    existing = get_existing(module, args)
     proposed_args = dict((k, v) for k, v in module.params.items()
-                    if v is not None and k in args)
+                         if v is not None and k in args)
 
     proposed = {}
     for key, value in proposed_args.items():
@@ -427,32 +387,25 @@ def main():
                 value = PARAM_TO_DEFAULT_KEYMAP.get(key)
                 if value is None:
                     value = 'default'
-            if existing.get(key) or (not existing.get(key) and value):
+            if existing.get(key) != value:
                 proposed[key] = value
 
-    result = {}
-    if state == 'present' or (state == 'absent' and existing):
-        candidate = CustomNetworkConfig(indent=3)
-        invoke('state_%s' % state, module, existing, proposed, candidate)
+    candidate = CustomNetworkConfig(indent=3)
+    if state == 'present':
+        state_present(module, existing, proposed, candidate)
+    if state == 'absent' and existing:
+        state_absent(module, existing, proposed, candidate)
 
-        try:
-            response = load_config(module, candidate)
-            result.update(response)
-        except ShellError:
-            exc = get_exception()
-            module.fail_json(msg=str(exc))
+    if candidate:
+        candidate = candidate.items_text()
+        load_config(module, candidate)
+        result['changed'] = True
+        result['commands'] = candidate
+
     else:
-        result['updates'] = []
-
-    if module._verbosity > 0:
-        end_state = invoke('get_existing', module, args)
-        result['end_state'] = end_state
-        result['existing'] = existing
-        result['proposed'] = proposed_args
-
+        result['commands'] = []
     module.exit_json(**result)
 
 
 if __name__ == '__main__':
     main()
-

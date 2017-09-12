@@ -2,24 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2015, Manuel Sousa <manuel.sousa@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -110,6 +99,14 @@ options:
             - Original routing key will be used if unset
         required: false
         default: None
+    max_priority:
+        description:
+            - Maximum number of priority levels for the queue to support.
+            - If not set, the queue will not support message priorities.
+            - Larger numbers indicate higher priority.
+        required: false
+        default: None
+        version_added: "2.4"
     arguments:
         description:
             - extra arguments for queue. If defined this argument is a key/value dictionary
@@ -130,146 +127,159 @@ EXAMPLES = '''
     login_host: remote.example.org
 '''
 
-import requests
-import urllib
 import json
+
+try:
+    import requests
+    HAS_REQUESTS = True
+except ImportError:
+    HAS_REQUESTS = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves.urllib import parse as urllib_parse
+
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            state = dict(default='present', choices=['present', 'absent'], type='str'),
-            name = dict(required=True, type='str'),
-            login_user = dict(default='guest', type='str'),
-            login_password = dict(default='guest', type='str', no_log=True),
-            login_host = dict(default='localhost', type='str'),
-            login_port = dict(default='15672', type='str'),
-            vhost = dict(default='/', type='str'),
-            durable = dict(default=True, type='bool'),
-            auto_delete = dict(default=False, type='bool'),
-            message_ttl = dict(default=None, type='int'),
-            auto_expires = dict(default=None, type='int'),
-            max_length = dict(default=None, type='int'),
-            dead_letter_exchange = dict(default=None, type='str'),
-            dead_letter_routing_key = dict(default=None, type='str'),
-            arguments = dict(default=dict(), type='dict')
+        argument_spec=dict(
+            state=dict(default='present', choices=['present', 'absent'], type='str'),
+            name=dict(required=True, type='str'),
+            login_user=dict(default='guest', type='str'),
+            login_password=dict(default='guest', type='str', no_log=True),
+            login_host=dict(default='localhost', type='str'),
+            login_port=dict(default='15672', type='str'),
+            vhost=dict(default='/', type='str'),
+            durable=dict(default=True, type='bool'),
+            auto_delete=dict(default=False, type='bool'),
+            message_ttl=dict(default=None, type='int'),
+            auto_expires=dict(default=None, type='int'),
+            max_length=dict(default=None, type='int'),
+            dead_letter_exchange=dict(default=None, type='str'),
+            dead_letter_routing_key=dict(default=None, type='str'),
+            arguments=dict(default=dict(), type='dict'),
+            max_priority=dict(default=None, type='int')
         ),
-        supports_check_mode = True
+        supports_check_mode=True
     )
 
     url = "http://%s:%s/api/queues/%s/%s" % (
         module.params['login_host'],
         module.params['login_port'],
-        urllib.quote(module.params['vhost'],''),
+        urllib_parse.quote(module.params['vhost'], ''),
         module.params['name']
     )
 
-    # Check if queue already exists
-    r = requests.get( url, auth=(module.params['login_user'],module.params['login_password']))
+    if not HAS_REQUESTS:
+        module.fail_json(msg="requests library is required for this module. To install, use `pip install requests`")
 
-    if r.status_code==200:
+    result = dict(changed=False, name=module.params['name'])
+
+    # Check if queue already exists
+    r = requests.get(url, auth=(module.params['login_user'], module.params['login_password']))
+
+    if r.status_code == 200:
         queue_exists = True
         response = r.json()
-    elif r.status_code==404:
+    elif r.status_code == 404:
         queue_exists = False
         response = r.text
     else:
         module.fail_json(
-            msg = "Invalid response from RESTAPI when trying to check if queue exists",
-            details = r.text
+            msg="Invalid response from RESTAPI when trying to check if queue exists",
+            details=r.text
         )
 
-    if module.params['state']=='present':
+    if module.params['state'] == 'present':
         change_required = not queue_exists
     else:
         change_required = queue_exists
 
     # Check if attributes change on existing queue
-    if not change_required and r.status_code==200 and module.params['state'] == 'present':
+    if not change_required and r.status_code == 200 and module.params['state'] == 'present':
         if not (
             response['durable'] == module.params['durable'] and
             response['auto_delete'] == module.params['auto_delete'] and
             (
-                ( 'x-message-ttl' in response['arguments'] and response['arguments']['x-message-ttl'] == module.params['message_ttl'] ) or
-                ( 'x-message-ttl' not in response['arguments'] and module.params['message_ttl'] is None )
+                ('x-message-ttl' in response['arguments'] and response['arguments']['x-message-ttl'] == module.params['message_ttl']) or
+                ('x-message-ttl' not in response['arguments'] and module.params['message_ttl'] is None)
             ) and
             (
-                ( 'x-expires' in response['arguments'] and response['arguments']['x-expires'] == module.params['auto_expires'] ) or
-                ( 'x-expires' not in response['arguments'] and module.params['auto_expires'] is None )
+                ('x-expires' in response['arguments'] and response['arguments']['x-expires'] == module.params['auto_expires']) or
+                ('x-expires' not in response['arguments'] and module.params['auto_expires'] is None)
             ) and
             (
-                ( 'x-max-length' in response['arguments'] and response['arguments']['x-max-length'] == module.params['max_length'] ) or
-                ( 'x-max-length' not in response['arguments'] and module.params['max_length'] is None )
+                ('x-max-length' in response['arguments'] and response['arguments']['x-max-length'] == module.params['max_length']) or
+                ('x-max-length' not in response['arguments'] and module.params['max_length'] is None)
             ) and
             (
-                ( 'x-dead-letter-exchange' in response['arguments'] and response['arguments']['x-dead-letter-exchange'] == module.params['dead_letter_exchange'] ) or
-                ( 'x-dead-letter-exchange' not in response['arguments'] and module.params['dead_letter_exchange'] is None )
+                ('x-dead-letter-exchange' in response['arguments'] and
+                 response['arguments']['x-dead-letter-exchange'] == module.params['dead_letter_exchange']) or
+                ('x-dead-letter-exchange' not in response['arguments'] and module.params['dead_letter_exchange'] is None)
             ) and
             (
-                ( 'x-dead-letter-routing-key' in response['arguments'] and response['arguments']['x-dead-letter-routing-key'] == module.params['dead_letter_routing_key'] ) or
-                ( 'x-dead-letter-routing-key' not in response['arguments'] and module.params['dead_letter_routing_key'] is None )
+                ('x-dead-letter-routing-key' in response['arguments'] and
+                 response['arguments']['x-dead-letter-routing-key'] == module.params['dead_letter_routing_key']) or
+                ('x-dead-letter-routing-key' not in response['arguments'] and module.params['dead_letter_routing_key'] is None)
+            ) and
+            (
+                ('x-max-priority' in response['arguments'] and
+                 response['arguments']['x-max-priority'] == module.params['max_priority']) or
+                ('x-max-priority' not in response['arguments'] and module.params['max_priority'] is None)
             )
         ):
             module.fail_json(
-                msg = "RabbitMQ RESTAPI doesn't support attribute changes for existing queues",
+                msg="RabbitMQ RESTAPI doesn't support attribute changes for existing queues",
             )
 
-
     # Copy parameters to arguments as used by RabbitMQ
-    for k,v in {
+    for k, v in {
         'message_ttl': 'x-message-ttl',
         'auto_expires': 'x-expires',
         'max_length': 'x-max-length',
         'dead_letter_exchange': 'x-dead-letter-exchange',
-        'dead_letter_routing_key': 'x-dead-letter-routing-key'
+        'dead_letter_routing_key': 'x-dead-letter-routing-key',
+        'max_priority': 'x-max-priority'
     }.items():
-        if module.params[k]:
+        if module.params[k] is not None:
             module.params['arguments'][v] = module.params[k]
 
     # Exit if check_mode
     if module.check_mode:
-        module.exit_json(
-            changed= change_required,
-            name = module.params['name'],
-            details = response,
-            arguments = module.params['arguments']
-        )
+        result['changed'] = change_required
+        result['details'] = response
+        result['arguments'] = module.params['arguments']
+        module.exit_json(**result)
 
     # Do changes
     if change_required:
         if module.params['state'] == 'present':
             r = requests.put(
                 url,
-                auth = (module.params['login_user'],module.params['login_password']),
-                headers = { "content-type": "application/json"},
-                data = json.dumps({
+                auth=(module.params['login_user'], module.params['login_password']),
+                headers={"content-type": "application/json"},
+                data=json.dumps({
                     "durable": module.params['durable'],
                     "auto_delete": module.params['auto_delete'],
                     "arguments": module.params['arguments']
-                    })
+                })
             )
         elif module.params['state'] == 'absent':
-            r = requests.delete( url, auth = (module.params['login_user'],module.params['login_password']))
+            r = requests.delete(url, auth=(module.params['login_user'], module.params['login_password']))
 
-        if r.status_code == 204:
-            module.exit_json(
-                changed = True,
-                name = module.params['name']
-            )
+        # RabbitMQ 3.6.7 changed this response code from 204 to 201
+        if r.status_code == 204 or r.status_code == 201:
+            result['changed'] = True
+            module.exit_json(**result)
         else:
             module.fail_json(
-                msg = "Error creating queue",
-                status = r.status_code,
-                details = r.text
+                msg="Error creating queue",
+                status=r.status_code,
+                details=r.text
             )
 
     else:
-        module.exit_json(
-            changed = False,
-            name = module.params['name']
-        )
-
-# import module snippets
-from ansible.module_utils.basic import *
+        result['changed'] = False
+        module.exit_json(**result)
 
 if __name__ == '__main__':
     main()

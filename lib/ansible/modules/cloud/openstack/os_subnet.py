@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -123,7 +123,7 @@ options:
      version_added: "2.1"
    availability_zone:
      description:
-       - Ignored. Present for backwards compatability
+       - Ignored. Present for backwards compatibility
      required: false
 requirements:
     - "python >= 2.6"
@@ -339,8 +339,7 @@ def main():
 
         if state == 'present':
             if not subnet:
-                subnet = cloud.create_subnet(
-                    network_name, cidr,
+                kwargs = dict(
                     ip_version=ip_version,
                     enable_dhcp=enable_dhcp,
                     subnet_name=subnet_name,
@@ -351,8 +350,10 @@ def main():
                     host_routes=host_routes,
                     ipv6_ra_mode=ipv6_ra_mode,
                     ipv6_address_mode=ipv6_a_mode,
-                    use_default_subnetpool=use_default_subnetpool,
                     tenant_id=project_id)
+                if use_default_subnetpool:
+                    kwargs['use_default_subnetpool'] = use_default_subnetpool
+                subnet = cloud.create_subnet(network_name, cidr, **kwargs)
                 changed = True
             else:
                 if _needs_update(subnet, module, cloud):

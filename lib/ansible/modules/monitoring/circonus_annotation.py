@@ -2,23 +2,13 @@
 # -*- coding: utf-8 -*-
 #
 # (c) 2014-2015, Epic Games, Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -32,9 +22,9 @@ description:
 author: "Nick Harring (@NickatEpic)"
 version_added: 2.0
 requirements:
-    - urllib3
-    - requests
-    - time
+    - requests (either >= 2.0.0 for Python 3, or >= 1.0.0 for Python 2)
+notes:
+    - Check mode isn’t supported.
 options:
     api_key:
         description:
@@ -54,16 +44,16 @@ options:
         required: true
     start:
         description:
-            - Unix timestamp of event start, defaults to now
-        required: false
+            - Unix timestamp of event start
+        default: I(now)
     stop:
         description:
-            - Unix timestamp of event end, defaults to now + duration
-        required: false
+            - Unix timestamp of event end
+        default: I(now) + I(duration)
     duration:
         description:
-            - Duration in seconds of annotation, defaults to 0
-        required: false
+            - Duration in seconds of annotation
+        default: 0
 '''
 EXAMPLES = '''
 # Create a simple annotation event with a source, defaults to start and end time of now
@@ -88,13 +78,89 @@ EXAMPLES = '''
     start_time: 1395940006
     end_time: 1395954407
 '''
+
+RETURN = '''
+annotation:
+    description: details about the created annotation
+    returned: success
+    type: complex
+    contains:
+        _cid:
+            description: annotation identifier
+            returned: success
+            type: string
+            sample: /annotation/100000
+        _created:
+            description: creation timestamp
+            returned: success
+            type: int
+            sample: 1502236928
+        _last_modified:
+            description: last modification timestamp
+            returned: success
+            type: int
+            sample: 1502236928
+        _last_modified_by:
+            description: last modified by
+            returned: success
+            type: string
+            sample: /user/1000
+        category:
+            description: category of the created annotation
+            returned: success
+            type: string
+            sample: alerts
+        title:
+            description: title of the created annotation
+            returned: success
+            type: string
+            sample: WARNING
+        description:
+            description: description of the created annotation
+            returned: success
+            type: string
+            sample: Host is down.
+        start:
+            description: timestamp, since annotation applies
+            returned: success
+            type: int
+            sample: Host is down.
+        stop:
+            description: timestamp, since annotation ends
+            returned: success
+            type: string
+            sample: Host is down.
+        rel_metrics:
+            description: Array of metrics related to this annotation, each metrics is a string.
+            returned: success
+            type: list
+            sample:
+                - 54321_kbps
+'''
 import json
 import time
+import traceback
+from distutils.version import LooseVersion
 
-import requests
+try:
+    import requests
+    HAS_REQUESTS = True
+except ImportError:
+    HAS_REQUESTS = False
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.six import PY3
+from ansible.module_utils._text import to_native
+
+
+def check_requests_dep(module):
+    """Check if an adequate requests version is available"""
+    if not HAS_REQUESTS:
+        module.fail_json(msg='requests is required for this module')
+    else:
+        required_version = '2.0.0' if PY3 else '1.0.0'
+        if LooseVersion(requests.__version__) < LooseVersion(required_version):
+            module.fail_json(msg="'requests' library version should be >= %s, found: %s." % (required_version, requests.__version__))
 
 
 def post_annotation(annotation, api_key):
@@ -102,7 +168,7 @@ def post_annotation(annotation, api_key):
     base_url = 'https://api.circonus.com/v2'
     anootate_post_endpoint = '/annotation'
     resp = requests.post(base_url + anootate_post_endpoint,
-            headers=build_headers(api_key), data=json.dumps(annotation))
+                         headers=build_headers(api_key), data=json.dumps(annotation))
     resp.raise_for_status()
     return resp
 
@@ -110,10 +176,7 @@ def post_annotation(annotation, api_key):
 def create_annotation(module):
     ''' Takes ansible module object '''
     annotation = {}
-    if module.params['duration'] is not None:
-        duration = module.params['duration']
-    else:
-        duration = 0
+    duration = module.params['duration']
     if module.params['start'] is not None:
         start = module.params['start']
     else:
@@ -121,9 +184,9 @@ def create_annotation(module):
     if module.params['stop'] is not None:
         stop = module.params['stop']
     else:
-        stop = int(time.time())+ duration
-    annotation['start'] = int(start)
-    annotation['stop'] = int(stop)
+        stop = int(time.time()) + duration
+    annotation['start'] = start
+    annotation['stop'] = stop
     annotation['category'] = module.params['category']
     annotation['description'] = module.params['description']
     annotation['title'] = module.params['title']
@@ -133,8 +196,8 @@ def create_annotation(module):
 def build_headers(api_token):
     '''Takes api token, returns headers with it included.'''
     headers = {'X-Circonus-App-Name': 'ansible',
-        'Host': 'api.circonus.com', 'X-Circonus-Auth-Token': api_token,
-        'Accept': 'application/json'}
+               'Host': 'api.circonus.com', 'X-Circonus-Auth-Token': api_token,
+               'Accept': 'application/json'}
     return headers
 
 
@@ -142,21 +205,23 @@ def main():
     '''Main function, dispatches logic'''
     module = AnsibleModule(
         argument_spec=dict(
-            start=dict(required=False, type='int'),
-            stop=dict(required=False, type='int'),
+            start=dict(type='int'),
+            stop=dict(type='int'),
             category=dict(required=True),
             title=dict(required=True),
             description=dict(required=True),
-            duration=dict(required=False, type='int'),
+            duration=dict(default=0, type='int'),
             api_key=dict(required=True, no_log=True)
-            )
         )
+    )
+
+    check_requests_dep(module)
+
     annotation = create_annotation(module)
     try:
         resp = post_annotation(annotation, module.params['api_key'])
-    except requests.exceptions.RequestException:
-        err_str = get_exception()
-        module.fail_json(msg='Request Failed', reason=err_str)
+    except requests.exceptions.RequestException as e:
+        module.fail_json(msg='Request Failed', reason=to_native(e), exception=traceback.format_exc())
     module.exit_json(changed=True, annotation=resp.json())
 
 

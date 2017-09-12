@@ -2,24 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2014, Nate Coraor <nate@bx.psu.edu>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -72,14 +61,11 @@ EXAMPLES = '''
     state: absent
 '''
 
+from ansible.module_utils.basic import AnsibleModule
+
 
 OPS = ( '=', '-', '+' )
 
-# ==============================================================
-
-import os
-import tempfile
-import re
 
 class CapabilitiesModule(object):
 
@@ -108,7 +94,7 @@ class CapabilitiesModule(object):
                 self.module.exit_json(changed=True, msg='capabilities changed')
             else:
                 # remove from current cap list if it's already set (but op/flags differ)
-                current = filter(lambda x: x[0] != self.capability_tup[0], current)
+                current = list(filter(lambda x: x[0] != self.capability_tup[0], current))
                 # add new cap with correct op/flags
                 current.append( self.capability_tup )
                 self.module.exit_json(changed=True, state=self.state, msg='capabilities changed', stdout=self.setcap(self.path, current))
@@ -191,9 +177,6 @@ def main():
 
     CapabilitiesModule(module)
 
-
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

@@ -1,0 +1,185 @@
+# We start with firewall turned off
+
+- name: Turn off Windows Firewall again
+  win_firewall:
+    profiles: [ Domain, Private, Public ]
+    state: disabled
+  register: firewall_off_again
+
+- name: Test firewall_off_again
+  assert:
+    that:
+    - not firewall_off_again|changed
+    - not firewall_off_again.Domain.enabled
+    - not firewall_off_again.Private.enabled
+    - not firewall_off_again.Public.enabled
+
+- name: Turn on Windows Firewall on Public
+  win_firewall:
+    profiles: [ Public ]
+    state: enabled
+  register: firewall_public_on
+
+- name: Test firewall_public_on
+  assert:
+    that:
+    - firewall_public_on|changed
+    - not firewall_public_on.Domain.enabled
+    - not firewall_public_on.Private.enabled
+    - firewall_public_on.Public.enabled
+
+
+- name: Turn on Windows Firewall on Public again
+  win_firewall:
+    profiles: [ Public ]
+    state: enabled
+  register: firewall_public_on_again
+
+- name: Test firewall_public_on_again (normal mode)
+  assert:
+    that:
+    - not firewall_public_on_again|changed
+    - not firewall_public_on_again.Domain.enabled
+    - not firewall_public_on_again.Private.enabled
+    - firewall_public_on_again.Public.enabled
+  when: not in_check_mode
+
+- name: Test firewall_public_on_again (check-mode)
+  assert:
+    that:
+    - firewall_public_on_again|changed
+    - not firewall_public_on_again.Domain.enabled
+    - not firewall_public_on_again.Private.enabled
+    - firewall_public_on_again.Public.enabled
+  when: in_check_mode
+
+
+# On purpose not a list
+- name: Turn on Windows Firewall on Domain
+  win_firewall:
+    profiles: Domain
+    state: enabled
+  register: firewall_domain_on
+
+- name: Test firewall_domain_on (normal mode)
+  assert:
+    that:
+    - firewall_domain_on|changed
+    - firewall_domain_on.Domain.enabled
+    - not firewall_domain_on.Private.enabled
+    - firewall_domain_on.Public.enabled
+  when: not in_check_mode
+
+- name: Test firewall_domain_on (check-mode)
+  assert:
+    that:
+    - firewall_domain_on|changed
+    - firewall_domain_on.Domain.enabled
+    - not firewall_domain_on.Private.enabled
+    - not firewall_domain_on.Public.enabled
+  when: in_check_mode
+
+
+- name: Turn on Windows Firewall on Domain again
+  win_firewall:
+    profiles: [ Domain ]
+    state: enabled
+  register: firewall_domain_on_again
+
+- name: Test firewall_domain_on_again (normal mode)
+  assert:
+    that:
+    - not firewall_domain_on_again|changed
+    - firewall_domain_on.Domain.enabled
+    - not firewall_domain_on.Private.enabled
+    - firewall_domain_on.Public.enabled
+  when: not in_check_mode
+
+- name: Test firewall_domain_on_again (check-mode)
+  assert:
+    that:
+    - firewall_domain_on_again|changed
+    - firewall_domain_on.Domain.enabled
+    - not firewall_domain_on.Private.enabled
+    - not firewall_domain_on.Public.enabled
+  when: in_check_mode
+
+
+- name: Turn on Windows Firewall
+  win_firewall:
+    profiles: [ Domain, Private, Public ]
+    state: enabled
+  register: firewall_on
+
+- name: Test firewall_on
+  assert:
+    that:
+    - firewall_on|changed
+    - firewall_on.Domain.enabled
+    - firewall_on.Private.enabled
+    - firewall_on.Public.enabled
+
+
+# On purpose no profiles added
+- name: Turn on Windows Firewall again
+  win_firewall:
+    state: enabled
+  register: firewall_on_again
+
+- name: Test firewall_on_again (normal mode)
+  assert:
+    that:
+    - not firewall_on_again|changed
+    - firewall_on_again.Domain.enabled
+    - firewall_on_again.Private.enabled
+    - firewall_on_again.Public.enabled
+  when: not in_check_mode
+
+- name: Test firewall_on_again (check-mode)
+  assert:
+    that:
+    - firewall_on_again|changed
+    - firewall_on_again.Domain.enabled
+    - firewall_on_again.Private.enabled
+    - firewall_on_again.Public.enabled
+  when: in_check_mode
+
+
+# On purpose no profiles added
+- name: Turn off Windows Firewall
+  win_firewall:
+    state: disabled
+  register: firewall_off2
+
+- name: Test firewall_off2 (normal mode)
+  assert:
+    that:
+    - firewall_off2|changed
+    - not firewall_off2.Domain.enabled
+    - not firewall_off2.Private.enabled
+    - not firewall_off2.Public.enabled
+  when: not in_check_mode
+
+- name: Test firewall_off2 (check-mode)
+  assert:
+    that:
+    - not firewall_off2|changed
+    - not firewall_off2.Domain.enabled
+    - not firewall_off2.Private.enabled
+    - not firewall_off2.Public.enabled
+  when: in_check_mode
+
+
+- name: Turn off Windows Firewall again
+  win_firewall:
+    profiles: [ Domain, Private, Public ]
+    state: disabled
+  register: firewall_off2_again
+
+- name: Test firewall_off2_again (normal mode)
+  assert:
+    that:
+    - not firewall_off2_again|changed
+    - not firewall_off2_again.Domain.enabled
+    - not firewall_off2_again.Private.enabled
+    - not firewall_off2_again.Public.enabled

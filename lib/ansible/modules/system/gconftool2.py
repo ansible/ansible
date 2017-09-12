@@ -1,23 +1,15 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # (c) 2016, Kenneth D. Evensen <kevensen@redhat.com>
+# (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
 #
-# This file is part of Ansible (sort of)
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -103,9 +95,7 @@ RETURN = '''
 ...
 '''
 
-from ansible.module_utils.basic import AnsibleModule, BOOLEANS_TRUE
-from ansible.module_utils.pycompat24 import get_exception
-import subprocess
+from ansible.module_utils.basic import AnsibleModule
 
 
 class GConf2Preference(object):
@@ -121,7 +111,8 @@ class GConf2Preference(object):
     def value_already_set(self):
         return False
 
-    def call(self, call_type):
+    def call(self, call_type, fail_onerr=True):
+        """ Helper function to perform gconftool-2 operations """
         config_source = ''
         direct = ''
         changed = False
@@ -137,34 +128,36 @@ class GConf2Preference(object):
             direct = "--direct"
 
         # Execute the call
+        cmd = "gconftool-2 "
         try:
             # If the call is "get", then we don't need as many parameters and
             # we can ignore some
             if call_type == 'get':
-                process = subprocess.Popen(["gconftool-2 --get " + self.key],
-                                           stdout=subprocess.PIPE,
-                                           stderr=subprocess.PIPE, shell=True)
+                cmd += "--get {0}".format(self.key)
             # Otherwise, we will use all relevant parameters
-            else:
-                process = subprocess.Popen(["gconftool-2 " + direct + " " +
-                                           config_source + " --type " +
-                                           self.value_type + " --" +
-                                           call_type + " " + self.key + " " +
-                                           self.value], stdout=subprocess.PIPE,
-                                           stderr=subprocess.PIPE, shell=True)
-            # In either case, we will capture the output
-            out = process.stdout.read()
-            err = process.stderr.read()
+            elif call_type == 'set':
+                cmd += "{0} {1} --type {2} --{3} {4} \"{5}\"".format(direct,
+                                                                     config_source,
+                                                                     self.value_type,
+                                                                     call_type,
+                                                                     self.key,
+                                                                     self.value)
+            elif call_type == 'unset':
+                cmd += "--unset {0}".format(self.key)
+
+            # Start external command
+            rc, out, err = self.ansible.run_command(cmd, use_unsafe_shell=True)
 
             if len(err) > 0:
-                self.ansible.fail_json(msg='gconftool-2 failed with error: %s'
-                                       % (str(err)))
+                if fail_onerr:
+                    self.ansible.fail_json(msg='gconftool-2 failed with '
+                                               'error: %s' % (str(err)))
             else:
                 changed = True
 
-        except OSError:
-            self.ansible.fail_json(msg='gconftool-2 failed with and exception')
-
+        except OSError as exception:
+            self.ansible.fail_json(msg='gconftool-2 failed with exception: '
+                                       '%s' % exception)
         return changed, out.rstrip()
 
 
@@ -174,25 +167,21 @@ def main():
         argument_spec=dict(
             key=dict(required=True, default=None, type='str'),
             value_type=dict(required=False,
-                                           choices=['int', 'bool',
-                                                    'float', 'string'],
-                                           type='str'),
-            value=dict(required=False, default=None,
-                                      type='str'),
-            state=dict(required=True, default=None,
-                                      choices=['present', 'get', 'absent'],
-                                      type='str'),
-            direct=dict(required=False,
-                                       default=False, type='bool'),
-            config_source=dict(required=False,
-                                              default=None, type='str')
+                            choices=['int', 'bool', 'float', 'string'],
+                            type='str'),
+            value=dict(required=False, default=None, type='str'),
+            state=dict(required=True,
+                       default=None,
+                       choices=['present', 'get', 'absent'],
+                       type='str'),
+            direct=dict(required=False, default=False, type='bool'),
+            config_source=dict(required=False, default=None, type='str')
             ),
         supports_check_mode=True
     )
 
     state_values = {"present": "set", "absent": "unset", "get": "get"}
 
-    direct = False
     # Assign module values to dictionary values
     key = module.params['key']
     value_type = module.params['value_type']
@@ -204,8 +193,7 @@ def main():
         value = module.params['value']
 
     state = state_values[module.params['state']]
-    if module.params['direct'] in BOOLEANS_TRUE:
-        direct = True
+    direct = module.params['direct']
     config_source = module.params['config_source']
 
     # Initialize some variables for later
@@ -230,13 +218,13 @@ def main():
     # Create a gconf2 preference
     gconf_pref = GConf2Preference(module, key, value_type,
                                   value, direct, config_source)
-    # Now we get the current value
-    _, current_value = gconf_pref.call("get")
+    # Now we get the current value, if not found don't fail
+    _, current_value = gconf_pref.call("get", fail_onerr=False)
 
     # Check if the current value equals the value we want to set.  If not, make
     # a change
     if current_value != value:
-        # If check mode, we know a change would have occured.
+        # If check mode, we know a change would have occurred.
         if module.check_mode:
             # So we will set the change to True
             change = True
@@ -250,11 +238,12 @@ def main():
     else:
         new_value = current_value
 
-    facts = {}
-    facts['gconftool2'] = {'changed': change, 'key': key,
-                           'value_type': value_type, 'new_value': new_value,
-                           'previous_value': current_value,
-                           'playbook_value': module.params['value']}
+    facts = dict(gconftool2={'changed': change,
+                             'key': key,
+                             'value_type': value_type,
+                             'new_value': new_value,
+                             'previous_value': current_value,
+                             'playbook_value': module.params['value']})
 
     module.exit_json(changed=change, ansible_facts=facts)
 

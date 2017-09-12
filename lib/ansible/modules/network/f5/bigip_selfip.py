@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -201,31 +201,22 @@ address:
     sample: "192.0.2.10"
 name:
     description: The name of the Self IP
-    returned:
-        - created
-        - changed
-        - deleted
+    returned: created, changed or deleted
     type: string
     sample: "self1"
 netmask:
     description: The netmask of the Self IP
-    returned:
-        - changed
-        - created
+    returned: created or changed
     type: string
     sample: "255.255.255.0"
 traffic_group:
     description: The traffic group that the Self IP is a member of
-    return:
-        - changed
-        - created
+    returned: changed or created
     type: string
     sample: "traffic-group-local-only"
 vlan:
     description: The VLAN set on the Self IP
-    return:
-        - changed
-        - created
+    returned: created or changed
     type: string
     sample: "vlan1"
 '''

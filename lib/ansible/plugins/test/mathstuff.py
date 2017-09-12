@@ -20,17 +20,21 @@ __metaclass__ = type
 
 import math
 
+
 def issubset(a, b):
     return set(a) <= set(b)
 
+
 def issuperset(a, b):
     return set(a) >= set(b)
+
 
 def isnotanumber(x):
     try:
         return math.isnan(x)
     except TypeError:
         return False
+
 
 class TestModule:
     ''' Ansible math jinja2 tests '''

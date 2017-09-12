@@ -22,8 +22,9 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+from stat import S_IRUSR, S_IWUSR
+
 import yaml
-from stat import *
 
 try:
     from __main__ import display
@@ -46,9 +47,9 @@ class GalaxyToken(object):
             display.vvv('Opened %s' % self.file)
             return open(self.file, 'r')
         # config.yml not found, create and chomd u+rw
-        f = open(self.file,'w')
+        f = open(self.file, 'w')
         f.close()
-        os.chmod(self.file,S_IRUSR|S_IWUSR) # owner has +rw
+        os.chmod(self.file, S_IRUSR | S_IWUSR)  # owner has +rw
         display.vvv('Created %s' % self.file)
         return open(self.file, 'r')
 
@@ -60,6 +61,5 @@ class GalaxyToken(object):
         return self.config.get('token', None)
 
     def save(self):
-        with open(self.file,'w') as f:
-            yaml.safe_dump(self.config,f,default_flow_style=False)
-
+        with open(self.file, 'w') as f:
+            yaml.safe_dump(self.config, f, default_flow_style=False)

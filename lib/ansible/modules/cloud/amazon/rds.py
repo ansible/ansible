@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
@@ -25,7 +25,9 @@ module: rds
 version_added: "1.3"
 short_description: create, delete, or modify an Amazon rds instance
 description:
-     - Creates, deletes, or modifies rds instances.  When creating an instance it can be either a new instance or a read-only replica of an existing instance. This module has a dependency on python-boto >= 2.5. The 'promote' command requires boto >= 2.18.0. Certain features such as tags rely on boto.rds2 (boto >= 2.26.0)
+     - Creates, deletes, or modifies rds instances.  When creating an instance it can be either a new instance or a read-only replica of an existing
+       instance. This module has a dependency on python-boto >= 2.5. The 'promote' command requires boto >= 2.18.0. Certain features such as tags rely
+       on boto.rds2 (boto >= 2.26.0)
 options:
   command:
     description:
@@ -48,7 +50,8 @@ options:
       - mariadb was added in version 2.2
     required: false
     default: null
-    choices: [ 'mariadb', 'MySQL', 'oracle-se1', 'oracle-se', 'oracle-ee', 'sqlserver-ee', 'sqlserver-se', 'sqlserver-ex', 'sqlserver-web', 'postgres', 'aurora']
+    choices: ['mariadb', 'MySQL', 'oracle-se1', 'oracle-se2', 'oracle-se', 'oracle-ee',
+              'sqlserver-ee', 'sqlserver-se', 'sqlserver-ex', 'sqlserver-web', 'postgres', 'aurora']
   size:
     description:
       - Size in gigabytes of the initial storage for the DB instance. Used only when command=create or command=modify.
@@ -56,7 +59,8 @@ options:
     default: null
   instance_type:
     description:
-      - The instance type of the database.  Must be specified when command=create. Optional when command=replicate, command=modify or command=restore. If not specified then the replica inherits the same instance type as the source instance.
+      - The instance type of the database.  Must be specified when command=create. Optional when command=replicate, command=modify or command=restore.
+        If not specified then the replica inherits the same instance type as the source instance.
     required: false
     default: null
   username:
@@ -81,12 +85,13 @@ options:
     default: null
   engine_version:
     description:
-      - Version number of the database engine to use. Used only when command=create. If not specified then the current Amazon RDS default engine version is used.
+      - Version number of the database engine to use. Used only when command=create. If not specified then the current Amazon RDS default engine version is used
     required: false
     default: null
   parameter_group:
     description:
-      - Name of the DB parameter group to associate with this instance.  If omitted then the RDS default DBParameterGroup will be used. Used only when command=create or command=modify.
+      - Name of the DB parameter group to associate with this instance.  If omitted then the RDS default DBParameterGroup will be used. Used only
+        when command=create or command=modify.
     required: false
     default: null
   license_model:
@@ -97,7 +102,8 @@ options:
     choices:  [ 'license-included', 'bring-your-own-license', 'general-public-license', 'postgresql-license' ]
   multi_zone:
     description:
-      - Specifies if this is a Multi-availability-zone deployment. Can not be used in conjunction with zone parameter. Used only when command=create or command=modify.
+      - Specifies if this is a Multi-availability-zone deployment. Can not be used in conjunction with zone parameter. Used only when command=create or
+        command=modify.
     choices: [ "yes", "no" ]
     required: false
     default: null
@@ -120,7 +126,7 @@ options:
     description:
       - Port number that the DB instance uses for connections. Used only when command=create or command=replicate.
       - Prior to 2.0 it always defaults to null and the API would use 3306, it had to be set to other DB default values when not using MySql.
-        Starting at 2.0 it automatically defaults to what is expected for each c(db_engine).
+        Starting at 2.0 it automatically defaults to what is expected for each C(db_engine).
     required: false
     default: 3306 for mysql, 1521 for Oracle, 1433 for SQL Server, 5432 for PostgreSQL.
   upgrade:
@@ -136,7 +142,9 @@ options:
     default: null
   maint_window:
     description:
-      - "Maintenance window in format of ddd:hh24:mi-ddd:hh24:mi.  (Example: Mon:22:00-Mon:23:15) If not specified then a random maintenance window is assigned. Used only when command=create or command=modify."
+      - >
+        Maintenance window in format of ddd:hh24:mi-ddd:hh24:mi.  (Example: Mon:22:00-Mon:23:15) If not specified then a random maintenance window is
+        assigned. Used only when command=create or command=modify.
     required: false
     default: null
   backup_window:
@@ -146,7 +154,9 @@ options:
     default: null
   backup_retention:
     description:
-      - "Number of days backups are retained.  Set to 0 to disable backups.  Default is 1 day.  Valid range: 0-35. Used only when command=create or command=modify."
+      - >
+        Number of days backups are retained.  Set to 0 to disable backups.  Default is 1 day.  Valid range: 0-35. Used only when command=create or
+        command=modify.
     required: false
     default: null
   zone:
@@ -162,7 +172,8 @@ options:
     default: null
   snapshot:
     description:
-      - Name of snapshot to take. When command=delete, if no snapshot name is provided then no snapshot is taken. If used with command=delete with no instance_name, the snapshot is deleted. Used with command=facts, command=delete or command=snapshot.
+      - Name of snapshot to take. When command=delete, if no snapshot name is provided then no snapshot is taken. If used with command=delete with
+        no instance_name, the snapshot is deleted. Used with command=facts, command=delete or command=snapshot.
     required: false
     default: null
   aws_secret_key:
@@ -178,7 +189,8 @@ options:
     aliases: [ 'ec2_access_key', 'access_key' ]
   wait:
     description:
-      - When command=create, replicate, modify or restore then wait for the database to enter the 'available' state.  When command=delete wait for the database to be terminated.
+      - When command=create, replicate, modify or restore then wait for the database to enter the 'available' state.  When command=delete wait for
+        the database to be terminated.
     required: false
     default: "no"
     choices: [ "yes", "no" ]
@@ -188,7 +200,8 @@ options:
     default: 300
   apply_immediately:
     description:
-      - Used only when command=modify.  If enabled, the modifications will be applied as soon as possible rather than waiting for the next preferred maintenance window.
+      - Used only when command=modify.  If enabled, the modifications will be applied as soon as possible rather than waiting for the next
+        preferred maintenance window.
     default: no
     choices: [ "yes", "no" ]
   force_failover:
@@ -311,6 +324,199 @@ EXAMPLES = '''
     msg: "The new db endpoint is {{ rds.instance.endpoint }}"
 '''
 
+RETURN = '''
+engine:
+    description: the name of the database engine
+    returned: when RDS instance exists
+    type: string
+    sample: "oracle-se"
+engine_version:
+    description: the version of the database engine
+    returned: when RDS instance exists
+    type: string
+    sample: "11.2.0.4.v6"
+license_model:
+    description: the license model information
+    returned: when RDS instance exists
+    type: string
+    sample: "bring-your-own-license"
+character_set_name:
+    description: the name of the character set that this instance is associated with
+    returned: when RDS instance exists
+    type: string
+    sample: "AL32UTF8"
+allocated_storage:
+    description: the allocated storage size in gigabytes (GB)
+    returned: when RDS instance exists
+    type: string
+    sample: "100"
+publicly_accessible:
+    description: the accessibility options for the DB instance
+    returned: when RDS instance exists
+    type: boolean
+    sample: "true"
+latest_restorable_time:
+    description: the latest time to which a database can be restored with point-in-time restore
+    returned: when RDS instance exists
+    type: string
+    sample: "1489707802.0"
+secondary_avaialbility_zone:
+    description: the name of the secondary AZ for a DB instance with multi-AZ support
+    returned: when RDS instance exists and is multy-AZ
+    type: string
+    sample: "eu-west-1b"
+backup_window:
+    description: the daily time range during which automated backups are created if automated backups are enabled
+    returned: when RDS instance exists and automated backups are enabled
+    type: string
+    sample: "03:00-03:30"
+auto_minor_version_upgrade:
+    description: indicates that minor engine upgrades will be applied automatically to the DB instance during the maintenance window
+    returned: when RDS instance exists
+    type: boolean
+    sample: "true"
+read_replica_source_dbinstance_identifier:
+    description: the identifier of the source DB instance if this RDS instance is a read replica
+    returned: when read replica RDS instance exists
+    type: string
+    sample: "null"
+db_name:
+    description: the name of the database to create when the DB instance is created
+    returned: when RDS instance exists
+    type: string
+    sample: "ASERTG"
+parameter_groups:
+    description: the list of DB parameter groups applied to this RDS instance
+    returned: when RDS instance exists and parameter groups are defined
+    type: complex
+    contains:
+        parameter_apply_status:
+            description: the status of parameter updates
+            returned: when RDS instance exists
+            type: string
+            sample: "in-sync"
+        parameter_group_name:
+            description: the name of the DP parameter group
+            returned: when RDS instance exists
+            type: string
+            sample: "testawsrpprodb01spfile-1ujg7nrs7sgyz"
+option_groups:
+    description: the list of option group memberships for this RDS instance
+    returned: when RDS instance exists
+    type: complex
+    contains:
+        option_group_name:
+            description: the option group name for this RDS instance
+            returned: when RDS instance exists
+            type: string
+            sample: "default:oracle-se-11-2"
+        status:
+            description: the status of the RDS instance's option group membership
+            returned: when RDS instance exists
+            type: string
+            sample: "in-sync"
+pending_modified_values:
+    description: a dictionary of changes to the RDS instance that are pending
+    returned: when RDS instance exists
+    type: complex
+    contains:
+        db_instance_class:
+            description: the new DB instance class for this RDS instance that will be applied or is in progress
+            returned: when RDS instance exists
+            type: string
+            sample: "null"
+        db_instance_identifier:
+            description: the new DB instance identifier this RDS instance that will be applied or is in progress
+            returned: when RDS instance exists
+            type: string
+            sample: "null"
+        allocated_storage:
+            description: the new allocated storage size for this RDS instance that will be applied or is in progress
+            returned: when RDS instance exists
+            type: string
+            sample: "null"
+        backup_retention_period:
+            description: the pending number of days for which automated backups are retained
+            returned: when RDS instance exists
+            type: string
+            sample: "null"
+        engine_version:
+            description: indicates the database engine version
+            returned: when RDS instance exists
+            type: string
+            sample: "null"
+        iops:
+            description: the new provisioned IOPS value for this RDS instance that will be applied or is being applied
+            returned: when RDS instance exists
+            type: string
+            sample: "null"
+        master_user_password:
+            description: the pending or in-progress change of the master credentials for this RDS instance
+            returned: when RDS instance exists
+            type: string
+            sample: "null"
+        multi_az:
+            description: indicates that the single-AZ RDS instance is to change to a multi-AZ deployment
+            returned: when RDS instance exists
+            type: string
+            sample: "null"
+        port:
+            description: specifies the pending port for this RDS instance
+            returned: when RDS instance exists
+            type: string
+            sample: "null"
+db_subnet_groups:
+    description: information on the subnet group associated with this RDS instance
+    returned: when RDS instance exists
+    type: complex
+    contains:
+        description:
+            description: the subnet group associated with the DB instance
+            returned: when RDS instance exists
+            type: string
+            sample: "Subnets for the UAT RDS SQL DB Instance"
+        name:
+            description: the name of the DB subnet group
+            returned: when RDS instance exists
+            type: string
+            sample: "samplesubnetgrouprds-j6paiqkxqp4z"
+        status:
+            description: the status of the DB subnet group
+            returned: when RDS instance exists
+            type: string
+            sample: "complete"
+        subnets:
+            description: the description of the DB subnet group
+            returned: when RDS instance exists
+            type: complex
+            contains:
+                availability_zone:
+                    description: subnet availability zone information
+                    returned: when RDS instance exists
+                    type: complex
+                    contains:
+                        name:
+                            description: avaialbility zone
+                            returned: when RDS instance exists
+                            type: string
+                            sample: "eu-west-1b"
+                        provisioned_iops_capable:
+                            description: whether provisioned iops are available in AZ subnet
+                            returned: when RDS instance exists
+                            type: boolean
+                            sample: "false"
+                identifier:
+                    description: the identifier of the subnet
+                    returned: when RDS instance exists
+                    type: string
+                    sample: "subnet-3fdba63e"
+                status:
+                    description: the status of the subnet
+                    returned: when RDS instance exists
+                    type: string
+                    sample: "active"
+'''
+
 import sys
 import time
 
@@ -328,7 +534,7 @@ try:
 except ImportError:
     has_rds2 = False
 
-DEFAULT_PORTS= {
+DEFAULT_PORTS = {
     'aurora': 3306,
     'mariadb': 3306,
     'mysql': 3306,
@@ -336,6 +542,7 @@ DEFAULT_PORTS= {
     'sqlserver': 1433,
     'postgres': 5432,
 }
+
 
 class RDSException(Exception):
     def __init__(self, exc):
@@ -353,7 +560,7 @@ class RDSException(Exception):
 class RDSConnection:
     def __init__(self, module, region, **aws_connect_params):
         try:
-            self.connection  = connect_to_aws(boto.rds, region, **aws_connect_params)
+            self.connection = connect_to_aws(boto.rds, region, **aws_connect_params)
         except boto.exception.BotoServerError as e:
             module.fail_json(msg=e.error_message)
 
@@ -370,11 +577,11 @@ class RDSConnection:
             return None
 
     def create_db_instance(self, instance_name, size, instance_class, db_engine,
-            username, password, **params):
+                           username, password, **params):
         params['engine'] = db_engine
         try:
             result = self.connection.create_dbinstance(instance_name, size, instance_class,
-                    username, password, **params)
+                                                       username, password, **params)
             return RDSDBInstance(result)
         except boto.exception.BotoServerError as e:
             raise RDSException(e)
@@ -439,14 +646,16 @@ class RDSConnection:
 class RDS2Connection:
     def __init__(self, module, region, **aws_connect_params):
         try:
-            self.connection  = connect_to_aws(boto.rds2, region, **aws_connect_params)
+            self.connection = connect_to_aws(boto.rds2, region, **aws_connect_params)
         except boto.exception.BotoServerError as e:
             module.fail_json(msg=e.error_message)
 
     def get_db_instance(self, instancename):
         try:
-            dbinstances = self.connection.describe_db_instances(db_instance_identifier=instancename)['DescribeDBInstancesResponse']['DescribeDBInstancesResult']['DBInstances']
-            result =  RDS2DBInstance(dbinstances[0])
+            dbinstances = self.connection.describe_db_instances(
+                db_instance_identifier=instancename
+            )['DescribeDBInstancesResponse']['DescribeDBInstancesResult']['DBInstances']
+            result = RDS2DBInstance(dbinstances[0])
             return result
         except boto.rds2.exceptions.DBInstanceNotFound as e:
             return None
@@ -455,24 +664,31 @@ class RDS2Connection:
 
     def get_db_snapshot(self, snapshotid):
         try:
-            snapshots = self.connection.describe_db_snapshots(db_snapshot_identifier=snapshotid, snapshot_type='manual')['DescribeDBSnapshotsResponse']['DescribeDBSnapshotsResult']['DBSnapshots']
+            snapshots = self.connection.describe_db_snapshots(
+                db_snapshot_identifier=snapshotid,
+                snapshot_type='manual'
+            )['DescribeDBSnapshotsResponse']['DescribeDBSnapshotsResult']['DBSnapshots']
             result = RDS2Snapshot(snapshots[0])
             return result
         except boto.rds2.exceptions.DBSnapshotNotFound as e:
             return None
 
     def create_db_instance(self, instance_name, size, instance_class, db_engine,
-            username, password, **params):
+                           username, password, **params):
         try:
-            result = self.connection.create_db_instance(instance_name, size, instance_class,
-                db_engine, username, password, **params)['CreateDBInstanceResponse']['CreateDBInstanceResult']['DBInstance']
+            result = self.connection.create_db_instance(instance_name, size, instance_class, db_engine, username, password,
+                                                        **params)['CreateDBInstanceResponse']['CreateDBInstanceResult']['DBInstance']
             return RDS2DBInstance(result)
         except boto.exception.BotoServerError as e:
             raise RDSException(e)
 
     def create_db_instance_read_replica(self, instance_name, source_instance, **params):
         try:
-            result = self.connection.create_db_instance_read_replica(instance_name, source_instance, **params)['CreateDBInstanceReadReplicaResponse']['CreateDBInstanceReadReplicaResult']['DBInstance']
+            result = self.connection.create_db_instance_read_replica(
+                instance_name,
+                source_instance,
+                **params
+            )['CreateDBInstanceReadReplicaResponse']['CreateDBInstanceReadReplicaResult']['DBInstance']
             return RDS2DBInstance(result)
         except boto.exception.BotoServerError as e:
             raise RDSException(e)
@@ -507,7 +723,11 @@ class RDS2Connection:
 
     def restore_db_instance_from_db_snapshot(self, instance_name, snapshot, instance_type, **params):
         try:
-            result = self.connection.restore_db_instance_from_db_snapshot(instance_name, snapshot, **params)['RestoreDBInstanceFromDBSnapshotResponse']['RestoreDBInstanceFromDBSnapshotResult']['DBInstance']
+            result = self.connection.restore_db_instance_from_db_snapshot(
+                instance_name,
+                snapshot,
+                **params
+            )['RestoreDBInstanceFromDBSnapshotResponse']['RestoreDBInstanceFromDBSnapshotResult']['DBInstance']
             return RDS2DBInstance(result)
         except boto.exception.BotoServerError as e:
             raise RDSException(e)
@@ -535,18 +755,18 @@ class RDSDBInstance:
 
     def get_data(self):
         d = {
-            'id'                 : self.name,
-            'create_time'        : self.instance.create_time,
-            'status'             : self.status,
-            'availability_zone'  : self.instance.availability_zone,
-            'backup_retention'   : self.instance.backup_retention_period,
-            'backup_window'      : self.instance.preferred_backup_window,
-            'maintenance_window' : self.instance.preferred_maintenance_window,
-            'multi_zone'         : self.instance.multi_az,
-            'instance_type'      : self.instance.instance_class,
-            'username'           : self.instance.master_username,
-            'iops'               : self.instance.iops
-            }
+            'id': self.name,
+            'create_time': self.instance.create_time,
+            'status': self.status,
+            'availability_zone': self.instance.availability_zone,
+            'backup_retention': self.instance.backup_retention_period,
+            'backup_window': self.instance.preferred_backup_window,
+            'maintenance_window': self.instance.preferred_maintenance_window,
+            'multi_zone': self.instance.multi_az,
+            'instance_type': self.instance.instance_class,
+            'username': self.instance.master_username,
+            'iops': self.instance.iops
+        }
 
         # Only assign an Endpoint if one is available
         if hasattr(self.instance, 'endpoint'):
@@ -560,15 +780,14 @@ class RDSDBInstance:
             d["endpoint"] = None
             d["port"] = None
             d["vpc_security_groups"] = None
-
+        if self.instance.DBName:
+            d['DBName'] = self.instance.DBName
         # ReadReplicaSourceDBInstanceIdentifier may or may not exist
         try:
             d["replication_source"] = self.instance.ReadReplicaSourceDBInstanceIdentifier
         except Exception as e:
             d["replication_source"] = None
         return d
-
-
 
 
 class RDS2DBInstance:
@@ -584,16 +803,69 @@ class RDS2DBInstance:
         d = {
             'id': self.name,
             'create_time': self.instance['InstanceCreateTime'],
+            'engine': self.instance['Engine'],
+            'engine_version': self.instance['EngineVersion'],
+            'license_model': self.instance['LicenseModel'],
+            'character_set_name': self.instance['CharacterSetName'],
+            'allocated_storage': self.instance['AllocatedStorage'],
+            'publicly_accessible': self.instance['PubliclyAccessible'],
+            'latest_restorable_time': self.instance['LatestRestorableTime'],
             'status': self.status,
             'availability_zone': self.instance['AvailabilityZone'],
+            'secondary_avaialbility_zone': self.instance['SecondaryAvailabilityZone'],
             'backup_retention': self.instance['BackupRetentionPeriod'],
+            'backup_window': self.instance['PreferredBackupWindow'],
             'maintenance_window': self.instance['PreferredMaintenanceWindow'],
+            'auto_minor_version_upgrade': self.instance['AutoMinorVersionUpgrade'],
+            'read_replica_source_dbinstance_identifier': self.instance['ReadReplicaSourceDBInstanceIdentifier'],
             'multi_zone': self.instance['MultiAZ'],
             'instance_type': self.instance['DBInstanceClass'],
             'username': self.instance['MasterUsername'],
+            'db_name': self.instance['DBName'],
             'iops': self.instance['Iops'],
             'replication_source': self.instance['ReadReplicaSourceDBInstanceIdentifier']
         }
+        if self.instance['DBParameterGroups'] is not None:
+            parameter_groups = []
+            for x in self.instance['DBParameterGroups']:
+                parameter_groups.append({'parameter_group_name': x['DBParameterGroupName'], 'parameter_apply_status': x['ParameterApplyStatus']})
+            d['parameter_groups'] = parameter_groups
+        if self.instance['OptionGroupMemberships'] is not None:
+            option_groups = []
+            for x in self.instance['OptionGroupMemberships']:
+                option_groups.append({'status': x['Status'], 'option_group_name': x['OptionGroupName']})
+            d['option_groups'] = option_groups
+        if self.instance['PendingModifiedValues'] is not None:
+            pdv = self.instance['PendingModifiedValues']
+            d['pending_modified_values'] = {
+                'multi_az': pdv['MultiAZ'],
+                'master_user_password': pdv['MasterUserPassword'],
+                'port': pdv['Port'],
+                'iops': pdv['Iops'],
+                'allocated_storage': pdv['AllocatedStorage'],
+                'engine_version': pdv['EngineVersion'],
+                'backup_retention_period': pdv['BackupRetentionPeriod'],
+                'db_instance_class': pdv['DBInstanceClass'],
+                'db_instance_identifier': pdv['DBInstanceIdentifier']
+            }
+        if self.instance["DBSubnetGroup"] is not None:
+            dsg = self.instance["DBSubnetGroup"]
+            db_subnet_groups = {}
+            db_subnet_groups['vpc_id'] = dsg['VpcId']
+            db_subnet_groups['name'] = dsg['DBSubnetGroupName']
+            db_subnet_groups['status'] = dsg['SubnetGroupStatus'].lower()
+            db_subnet_groups['description'] = dsg['DBSubnetGroupDescription']
+            db_subnet_groups['subnets'] = []
+            for x in dsg["Subnets"]:
+                db_subnet_groups['subnets'].append({
+                    'status': x['SubnetStatus'].lower(),
+                    'identifier': x['SubnetIdentifier'],
+                    'availability_zone': {
+                        'name': x['SubnetAvailabilityZone']['Name'],
+                        'provisioned_iops_capable': x['SubnetAvailabilityZone']['ProvisionedIopsCapable']
+                    }
+                })
+            d['db_subnet_groups'] = db_subnet_groups
         if self.instance["VpcSecurityGroups"] is not None:
             d['vpc_security_groups'] = ','.join(x['VpcSecurityGroupId'] for x in self.instance['VpcSecurityGroups'])
         if "Endpoint" in self.instance and self.instance["Endpoint"] is not None:
@@ -602,7 +874,8 @@ class RDS2DBInstance:
         else:
             d['endpoint'] = None
             d['port'] = None
-
+        if self.instance["DBName"]:
+            d['DBName'] = self.instance['DBName']
         return d
 
 
@@ -614,12 +887,12 @@ class RDSSnapshot:
 
     def get_data(self):
         d = {
-            'id'                 : self.name,
-            'create_time'        : self.snapshot.snapshot_create_time,
-            'status'             : self.status,
-            'availability_zone'  : self.snapshot.availability_zone,
-            'instance_id'        : self.snapshot.instance_id,
-            'instance_created'   : self.snapshot.instance_create_time,
+            'id': self.name,
+            'create_time': self.snapshot.snapshot_create_time,
+            'status': self.status,
+            'availability_zone': self.snapshot.availability_zone,
+            'instance_id': self.snapshot.instance_id,
+            'instance_created': self.snapshot.instance_create_time,
         }
         # needs boto >= 2.21.0
         if hasattr(self.snapshot, 'snapshot_type'):
@@ -640,14 +913,14 @@ class RDS2Snapshot:
 
     def get_data(self):
         d = {
-            'id'                 : self.name,
-            'create_time'        : self.snapshot['SnapshotCreateTime'],
-            'status'             : self.status,
-            'availability_zone'  : self.snapshot['AvailabilityZone'],
-            'instance_id'        : self.snapshot['DBInstanceIdentifier'],
-            'instance_created'   : self.snapshot['InstanceCreateTime'],
-            'snapshot_type'      : self.snapshot['SnapshotType'],
-            'iops'               : self.snapshot['Iops'],
+            'id': self.name,
+            'create_time': self.snapshot['SnapshotCreateTime'],
+            'status': self.status,
+            'availability_zone': self.snapshot['AvailabilityZone'],
+            'instance_id': self.snapshot['DBInstanceIdentifier'],
+            'instance_created': self.snapshot['InstanceCreateTime'],
+            'snapshot_type': self.snapshot['SnapshotType'],
+            'iops': self.snapshot['Iops'],
         }
         return d
 
@@ -677,7 +950,7 @@ def await_resource(conn, resource, status, module):
         # Some RDS resources take much longer than others to be ready. Check
         # less aggressively for slow ones to avoid throttling.
         if time.time() > start_time + 90:
-          check_interval = 20
+            check_interval = 20
     return resource
 
 
@@ -687,7 +960,7 @@ def create_db_instance(module, conn):
     valid_vars = ['backup_retention', 'backup_window',
                   'character_set_name', 'db_name', 'engine_version',
                   'instance_type', 'iops', 'license_model', 'maint_window',
-                  'multi_zone', 'option_group', 'parameter_group','port',
+                  'multi_zone', 'option_group', 'parameter_group', 'port',
                   'subnet', 'upgrade', 'zone']
     if module.params.get('subnet'):
         valid_vars.append('vpc_security_groups')
@@ -704,8 +977,8 @@ def create_db_instance(module, conn):
     else:
         try:
             result = conn.create_db_instance(instance_name, module.params.get('size'),
-                    module.params.get('instance_type'), module.params.get('db_engine'),
-                module.params.get('username'), module.params.get('password'), **params)
+                                             module.params.get('instance_type'), module.params.get('db_engine'),
+                                             module.params.get('username'), module.params.get('password'), **params)
             changed = True
         except RDSException as e:
             module.fail_json(msg="Failed to create instance: %s" % e.message)
@@ -1043,39 +1316,40 @@ def validate_parameters(required_vars, valid_vars, module):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        command           = dict(choices=['create', 'replicate', 'delete', 'facts', 'modify', 'promote', 'snapshot', 'reboot', 'restore'], required=True),
-        instance_name     = dict(required=False),
-        source_instance   = dict(required=False),
-        db_engine         = dict(choices=['mariadb', 'MySQL', 'oracle-se1', 'oracle-se', 'oracle-ee', 'sqlserver-ee', 'sqlserver-se', 'sqlserver-ex', 'sqlserver-web', 'postgres', 'aurora'], required=False),
-        size              = dict(required=False),
-        instance_type     = dict(aliases=['type'], required=False),
-        username          = dict(required=False),
-        password          = dict(no_log=True, required=False),
-        db_name           = dict(required=False),
-        engine_version    = dict(required=False),
-        parameter_group   = dict(required=False),
-        license_model     = dict(choices=['license-included', 'bring-your-own-license', 'general-public-license', 'postgresql-license'], required=False),
-        multi_zone        = dict(type='bool', default=False),
-        iops              = dict(required=False),
-        security_groups   = dict(required=False),
-        vpc_security_groups = dict(type='list', required=False),
-        port              = dict(required=False),
-        upgrade           = dict(type='bool', default=False),
-        option_group      = dict(required=False),
-        maint_window      = dict(required=False),
-        backup_window     = dict(required=False),
-        backup_retention  = dict(required=False),
-        zone              = dict(aliases=['aws_zone', 'ec2_zone'], required=False),
-        subnet            = dict(required=False),
-        wait              = dict(type='bool', default=False),
-        wait_timeout      = dict(type='int', default=300),
-        snapshot          = dict(required=False),
-        apply_immediately = dict(type='bool', default=False),
-        new_instance_name = dict(required=False),
-        tags              = dict(type='dict', required=False),
-        publicly_accessible = dict(required=False),
-        character_set_name = dict(required=False),
-        force_failover    = dict(type='bool', required=False, default=False)
+        command=dict(choices=['create', 'replicate', 'delete', 'facts', 'modify', 'promote', 'snapshot', 'reboot', 'restore'], required=True),
+        instance_name=dict(required=False),
+        source_instance=dict(required=False),
+        db_engine=dict(choices=['mariadb', 'MySQL', 'oracle-se1', 'oracle-se2', 'oracle-se', 'oracle-ee', 'sqlserver-ee', 'sqlserver-se', 'sqlserver-ex',
+                                'sqlserver-web', 'postgres', 'aurora'], required=False),
+        size=dict(required=False),
+        instance_type=dict(aliases=['type'], required=False),
+        username=dict(required=False),
+        password=dict(no_log=True, required=False),
+        db_name=dict(required=False),
+        engine_version=dict(required=False),
+        parameter_group=dict(required=False),
+        license_model=dict(choices=['license-included', 'bring-your-own-license', 'general-public-license', 'postgresql-license'], required=False),
+        multi_zone=dict(type='bool', required=False),
+        iops=dict(required=False),
+        security_groups=dict(required=False),
+        vpc_security_groups=dict(type='list', required=False),
+        port=dict(required=False, type='int'),
+        upgrade=dict(type='bool', default=False),
+        option_group=dict(required=False),
+        maint_window=dict(required=False),
+        backup_window=dict(required=False),
+        backup_retention=dict(required=False),
+        zone=dict(aliases=['aws_zone', 'ec2_zone'], required=False),
+        subnet=dict(required=False),
+        wait=dict(type='bool', default=False),
+        wait_timeout=dict(type='int', default=300),
+        snapshot=dict(required=False),
+        apply_immediately=dict(type='bool', default=False),
+        new_instance_name=dict(required=False),
+        tags=dict(type='dict', required=False),
+        publicly_accessible=dict(required=False),
+        character_set_name=dict(required=False),
+        force_failover=dict(type='bool', required=False, default=False)
     )
     )
 

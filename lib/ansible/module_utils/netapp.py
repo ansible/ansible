@@ -22,10 +22,11 @@ try:
 except ImportError:
     import simplejson as json
 
+from ansible.module_utils.api import basic_auth_argument_spec
 from ansible.module_utils.six.moves.urllib.error import HTTPError
-
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.api import basic_auth_argument_spec
 from ansible.module_utils.urls import open_url
+from ansible.module_utils.api import basic_auth_argument_spec
 
 HAS_NETAPP_LIB = False
 try:
@@ -123,7 +124,7 @@ def eseries_host_argument_spec():
         api_password=dict(type='str', required=True, no_log=True),
         api_url=dict(type='str', required=True),
         ssid=dict(type='str', required=True),
-        validate_certs=dict(required=False, default=True),
+        validate_certs=dict(type='bool', required=False, default=True),
     ))
     return argument_spec
 
@@ -144,8 +145,7 @@ def request(url, data=None, headers=None, method='GET', use_proxy=True,
                      force=force, last_mod_time=last_mod_time, timeout=timeout, validate_certs=validate_certs,
                      url_username=url_username, url_password=url_password, http_agent=http_agent,
                      force_basic_auth=force_basic_auth)
-    except HTTPError:
-        err = get_exception()
+    except HTTPError as err:
         r = err.fp
 
     try:

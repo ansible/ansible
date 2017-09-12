@@ -3,16 +3,17 @@ import sys
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock
-from ansible.compat.six.moves import builtins
 
-from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves import builtins
+from ansible.module_utils._text import to_native
 from units.mock.procenv import swap_stdin_and_argv
 
 
 import pprint
 
 realimport = builtins.__import__
+
 
 class TestPostgres(unittest.TestCase):
     def clear_modules(self, mods):
@@ -72,4 +73,3 @@ class TestPostgres(unittest.TestCase):
         with self.assertRaises(mod.module_utils.postgres.LibraryError) as context:
             mod.module_utils.postgres.ensure_libs(sslrootcert='yes')
         self.assertIn('psycopg2 must be at least 2.4.3 in order to use', to_native(context.exception))
-

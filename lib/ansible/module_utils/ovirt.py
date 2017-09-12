@@ -26,9 +26,9 @@ import time
 from abc import ABCMeta, abstractmethod
 from datetime import datetime
 from distutils.version import LooseVersion
-from enum import Enum
 
 try:
+    from enum import Enum  # enum is a ovirtsdk4 requirement
     import ovirtsdk4 as sdk
     import ovirtsdk4.version as sdk_version
     HAS_SDK = LooseVersion(sdk_version.VERSION) >= LooseVersion('4.0.0')
@@ -143,6 +143,7 @@ def create_connection(auth):
         insecure=auth.get('insecure', False),
         token=auth.get('token', None),
         kerberos=auth.get('kerberos', None),
+        headers=auth.get('headers', None),
     )
 
 
@@ -504,7 +505,6 @@ class BaseModule(object):
                 after[k] = update[k]
         return after
 
-
     def create(
         self,
         entity=None,
@@ -551,7 +551,7 @@ class BaseModule(object):
                     )
                     self.post_update(entity)
 
-                # Update diffs only if user specified --diff paramter,
+                # Update diffs only if user specified --diff parameter,
                 # so we don't useless overload API:
                 if self._module._diff:
                     before = get_dict_of_struct(
@@ -579,9 +579,14 @@ class BaseModule(object):
         # Wait for the entity to be created and to be in the defined state:
         entity_service = self._service.service(entity.id)
 
-        state_condition = lambda entity: entity
+        def state_condition(entity):
+            return entity
+
         if result_state:
-            state_condition = lambda entity: entity and entity.status == result_state
+
+            def state_condition(entity):
+                return entity and entity.status == result_state
+
         wait(
             service=entity_service,
             condition=state_condition,
@@ -741,6 +746,17 @@ class BaseModule(object):
             'diff': self._diff,
         }
 
+    def wait_for_import(self):
+        if self._module.params['wait']:
+            start = time.time()
+            timeout = self._module.params['timeout']
+            poll_interval = self._module.params['poll_interval']
+            while time.time() < start + timeout:
+                entity = self.search_entity()
+                if entity:
+                    return entity
+                time.sleep(poll_interval)
+
     def search_entity(self, search_params=None):
         """
         Always first try to search by `ID`, if ID isn't specified,
@@ -750,10 +766,10 @@ class BaseModule(object):
         entity = None
 
         if 'id' in self._module.params and self._module.params['id'] is not None:
-            entity = search_by_attributes(self._service, id=self._module.params['id'])
+            entity = get_entity(self._service.service(self._module.params['id']))
         elif search_params is not None:
             entity = search_by_attributes(self._service, **search_params)
-        elif 'name' in self._module.params and self._module.params['name'] is not None:
+        elif self._module.params.get('name') is not None:
             entity = search_by_attributes(self._service, name=self._module.params['name'])
 
         return entity

@@ -18,16 +18,17 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.six import iteritems, string_types
-from ansible.constants import mk_boolean as boolean
+from ansible.module_utils.six import iteritems, string_types
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.vars import isidentifier
+
 
 class ActionModule(ActionBase):
 
     TRANSFERS_FILES = False
 
-    #TODO: document this in non-empty set_stats.py module
+    # TODO: document this in non-empty set_stats.py module
     def run(self, tmp=None, task_vars=None):
         if task_vars is None:
             task_vars = dict()
@@ -52,7 +53,7 @@ class ActionModule(ActionBase):
                 val = self._task.args.get(opt, None)
                 if val is not None:
                     if not isinstance(val, bool):
-                        stats[opt] = boolean(self._templar.template(val))
+                        stats[opt] = boolean(self._templar.template(val), strict=False)
                     else:
                         stats[opt] = val
 
@@ -62,7 +63,8 @@ class ActionModule(ActionBase):
 
                 if not isidentifier(k):
                     result['failed'] = True
-                    result['msg'] = "The variable name '%s' is not valid. Variables must start with a letter or underscore character, and contain only letters, numbers and underscores." % k
+                    result['msg'] = ("The variable name '%s' is not valid. Variables must start with a letter or underscore character, and contain only "
+                                     "letters, numbers and underscores." % k)
                     return result
 
                 stats['data'][k] = self._templar.template(v)

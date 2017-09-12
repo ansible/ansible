@@ -1,23 +1,13 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # (c) 2016, Brian Coca <bcoca@ansible.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
@@ -32,7 +22,7 @@ description:
     - Controls systemd services on remote hosts.
 options:
     name:
-        required: true
+        required: false
         description:
             - Name of the service. When using in a chroot environment you always need to specify the full name i.e. (crond.service).
         aliases: ['unit', 'service']
@@ -78,40 +68,44 @@ options:
               Enqueued job will continue without Ansible blocking on its completion.
         version_added: "2.3"
 notes:
-    - One option other than name is required.
+    - Since 2.4, one of the following options is required 'state', 'enabled', 'masked', 'daemon_reload', and all except 'daemon_reload' also require 'name'.
+    - Before 2.4 you always required 'name'.
 requirements:
     - A system managed by systemd
 '''
 
 EXAMPLES = '''
-# Example action to start service httpd, if not running
-- systemd: state=started name=httpd
+- name: Make sure a service is running
+  systemd: state=started name=httpd
 
-# Example action to stop service cron on debian, if running
-- systemd: name=cron state=stopped
+- name: stop service cron on debian, if running
+  systemd: name=cron state=stopped
 
-# Example action to restart service cron on centos, in all cases, also issue daemon-reload to pick up config changes
-- systemd:
+- name: restart service cron on centos, in all cases, also issue daemon-reload to pick up config changes
+  systemd:
     state: restarted
     daemon_reload: yes
     name: crond
 
-# Example action to reload service httpd, in all cases
-- systemd:
+- name: reload service httpd, in all cases
+  systemd:
     name: httpd
     state: reloaded
 
-# Example action to enable service httpd and ensure it is not masked
-- systemd:
+- name: enable service httpd and ensure it is not masked
+  systemd:
     name: httpd
     enabled: yes
     masked: no
 
-# Example action to enable a timer for dnf-automatic
-- systemd:
+- name: enable a timer for dnf-automatic
+  systemd:
     name: dnf-automatic.timer
     state: started
     enabled: True
+
+- name: just force systemd to reread configs (2.4 and above)
+  systemd: daemon_reload=yes
 '''
 
 RETURN = '''
@@ -119,7 +113,7 @@ status:
     description: A dictionary with the key=value pairs returned from `systemctl show`
     returned: success
     type: complex
-    sample: {
+    contains: {
             "ActiveEnterTimestamp": "Sun 2016-05-15 18:28:49 EDT",
             "ActiveEnterTimestampMonotonic": "8135942",
             "ActiveExitTimestampMonotonic": "0",
@@ -242,7 +236,7 @@ status:
             "WatchdogTimestampMonotonic": "0",
             "WatchdogUSec": "0",
         }
-'''
+'''  # NOQA
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.service import sysv_exists, sysv_is_enabled, fail_if_missing
@@ -252,6 +246,43 @@ from ansible.module_utils._text import to_native
 def is_running_service(service_status):
     return service_status['ActiveState'] in set(['active', 'activating'])
 
+def request_was_ignored(out):
+    return '=' not in out and 'ignoring request' in out
+
+def parse_systemctl_show(lines):
+    # The output of 'systemctl show' can contain values that span multiple lines. At first glance it
+    # appears that such values are always surrounded by {}, so the previous version of this code
+    # assumed that any value starting with { was a multi-line value; it would then consume lines
+    # until it saw a line that ended with }. However, it is possible to have a single-line value
+    # that starts with { but does not end with } (this could happen in the value for Description=,
+    # for example), and the previous version of this code would then consume all remaining lines as
+    # part of that value. Cryptically, this would lead to Ansible reporting that the service file
+    # couldn't be found.
+    #
+    # To avoid this issue, the following code only accepts multi-line values for keys whose names
+    # start with Exec (e.g., ExecStart=), since these are the only keys whose values are known to
+    # span multiple lines.
+    parsed = {}
+    multival = []
+    k = None
+    for line in lines:
+        if k is None:
+            if '=' in line:
+                k, v = line.split('=', 1)
+                if k.startswith('Exec') and v.lstrip().startswith('{'):
+                    if not v.rstrip().endswith('}'):
+                        multival.append(v)
+                        continue
+                parsed[k] = v.strip()
+                k = None
+        else:
+            multival.append(line)
+            if line.rstrip().endswith('}'):
+                parsed[k] = '\n'.join(multival).strip()
+                multival = []
+                k = None
+    return parsed
+
 
 # ===========================================
 # Main control flow
@@ -260,7 +291,7 @@ def main():
     # initialize
     module = AnsibleModule(
         argument_spec = dict(
-            name = dict(required=True, type='str', aliases=['unit', 'service']),
+            name = dict(aliases=['unit', 'service']),
             state = dict(choices=[ 'started', 'stopped', 'restarted', 'reloaded'], type='str'),
             enabled = dict(type='bool'),
             masked = dict(type='bool'),
@@ -286,153 +317,139 @@ def main():
         'status': {},
     }
 
+    for requires in ('state', 'enabled', 'masked'):
+        if module.params[requires] is not None and unit is None:
+            module.fail_json(msg="name is also required when specifying %s" % requires)
+
     # Run daemon-reload first, if requested
     if module.params['daemon_reload']:
         (rc, out, err) = module.run_command("%s daemon-reload" % (systemctl))
         if rc != 0:
             module.fail_json(msg='failure %d during daemon-reload: %s' % (rc, err))
 
-    found = False
-    is_initd = sysv_exists(unit)
-    is_systemd = False
+    if unit:
+        found = False
+        is_initd = sysv_exists(unit)
+        is_systemd = False
 
-    # check service data, cannot error out on rc as it changes across versions, assume not found
-    (rc, out, err) = module.run_command("%s show '%s'" % (systemctl, unit))
+        # check service data, cannot error out on rc as it changes across versions, assume not found
+        (rc, out, err) = module.run_command("%s show '%s'" % (systemctl, unit))
 
-    if out.find('ignoring request') != -1:
-        # fallback list-unit-files as show does not work on some systems (chroot)
-        # not used as primary as it skips some services (like those using init.d) and requires .service/etc notation
-        (rc, out, err) = module.run_command("%s list-unit-files '%s'" % (systemctl, unit))
-        if rc == 0:
-            is_systemd = True
+        if request_was_ignored(out) or request_was_ignored(err):
+            # fallback list-unit-files as show does not work on some systems (chroot)
+            # not used as primary as it skips some services (like those using init.d) and requires .service/etc notation
+            (rc, out, err) = module.run_command("%s list-unit-files '%s'" % (systemctl, unit))
+            if rc == 0:
+                is_systemd = True
 
-    elif rc == 0:
-        # load return of systemctl show into dictionary for easy access and return
-        multival = []
-        if out:
-            k = None
-            for line in to_native(out).split('\n'): # systemd can have multiline values delimited with {}
-                if line.strip():
-                    if k is None:
-                        if '=' in line:
-                            k,v = line.split('=', 1)
-                            if v.lstrip().startswith('{'):
-                                if not v.rstrip().endswith('}'):
-                                    multival.append(line)
-                                    continue
-                            result['status'][k] = v.strip()
-                            k = None
-                    else:
-                        if line.rstrip().endswith('}'):
-                            result['status'][k] = '\n'.join(multival).strip()
-                            multival = []
-                            k = None
-                        else:
-                            multival.append(line)
+        elif rc == 0:
+            # load return of systemctl show into dictionary for easy access and return
+            if out:
+                result['status'] = parse_systemctl_show(to_native(out).split('\n'))
 
-            is_systemd = 'LoadState' in result['status'] and result['status']['LoadState'] != 'not-found'
+                is_systemd = 'LoadState' in result['status'] and result['status']['LoadState'] != 'not-found'
 
-            # Check for loading error
-            if is_systemd and 'LoadError' in result['status']:
-                module.fail_json(msg="Error loading unit file '%s': %s" % (unit, result['status']['LoadError']))
-    else:
-        # Check for systemctl command
-        module.run_command(systemctl, check_rc=True)
-
-    # Does service exist?
-    found = is_systemd or is_initd
-    if is_initd and not is_systemd:
-        module.warn('The service (%s) is actually an init script but the system is managed by systemd' % unit)
-
-    # mask/unmask the service, if requested, can operate on services before they are installed
-    if module.params['masked'] is not None:
-        # state is not masked unless systemd affirms otherwise
-        masked = ('LoadState' in result['status'] and result['status']['LoadState'] == 'masked')
-
-        if masked != module.params['masked']:
-            result['changed'] = True
-            if module.params['masked']:
-                action = 'mask'
-            else:
-                action = 'unmask'
-
-            if not module.check_mode:
-                (rc, out, err) = module.run_command("%s %s '%s'" % (systemctl, action, unit))
-                if rc != 0:
-                    # some versions of system CAN mask/unmask non existing services, we only fail on missing if they don't
-                    fail_if_missing(module, found, unit, msg='host')
-
-
-    # Enable/disable service startup at boot if requested
-    if module.params['enabled'] is not None:
-
-        if module.params['enabled']:
-            action = 'enable'
+                # Check for loading error
+                if is_systemd and 'LoadError' in result['status']:
+                    module.fail_json(msg="Error loading unit file '%s': %s" % (unit, result['status']['LoadError']))
         else:
-            action = 'disable'
+            # Check for systemctl command
+            module.run_command(systemctl, check_rc=True)
 
-        fail_if_missing(module, found, unit, msg='host')
+        # Does service exist?
+        found = is_systemd or is_initd
+        if is_initd and not is_systemd:
+            module.warn('The service (%s) is actually an init script but the system is managed by systemd' % unit)
 
-        # do we need to enable the service?
-        enabled = False
-        (rc, out, err) = module.run_command("%s is-enabled '%s'" % (systemctl, unit))
+        # mask/unmask the service, if requested, can operate on services before they are installed
+        if module.params['masked'] is not None:
+            # state is not masked unless systemd affirms otherwise
+            masked = ('LoadState' in result['status'] and result['status']['LoadState'] == 'masked')
 
-        # check systemctl result or if it is a init script
-        if rc == 0:
-            enabled = True
-        elif rc == 1:
-            # if not a user service and both init script and unit file exist stdout should have enabled/disabled, otherwise use rc entries
-            if not module.params['user'] and \
-               is_initd and \
-               (not out.strip().endswith('disabled') or sysv_is_enabled(unit)):
-
-                enabled = True
-
-        # default to current state
-        result['enabled'] = enabled
-
-        # Change enable/disable if needed
-        if enabled != module.params['enabled']:
-            result['changed'] = True
-            if not module.check_mode:
-                (rc, out, err) = module.run_command("%s %s '%s'" % (systemctl, action, unit))
-                if rc != 0:
-                    module.fail_json(msg="Unable to %s service %s: %s" % (action, unit, out + err))
-
-            result['enabled'] = not enabled
-
-    # set service state if requested
-    if module.params['state'] is not None:
-        fail_if_missing(module, found, unit, msg="host")
-
-        # default to desired state
-        result['state'] = module.params['state']
-
-        # What is current service state?
-        if 'ActiveState' in result['status']:
-            action = None
-            if module.params['state'] == 'started':
-                if not is_running_service(result['status']):
-                    action = 'start'
-            elif module.params['state'] == 'stopped':
-                if is_running_service(result['status']):
-                    action = 'stop'
-            else:
-                if not is_running_service(result['status']):
-                    action = 'start'
+            if masked != module.params['masked']:
+                result['changed'] = True
+                if module.params['masked']:
+                    action = 'mask'
                 else:
-                    action = module.params['state'][:-2] # remove 'ed' from restarted/reloaded
-                result['state'] = 'started'
+                    action = 'unmask'
 
-            if action:
+                if not module.check_mode:
+                    (rc, out, err) = module.run_command("%s %s '%s'" % (systemctl, action, unit))
+                    if rc != 0:
+                        # some versions of system CAN mask/unmask non existing services, we only fail on missing if they don't
+                        fail_if_missing(module, found, unit, msg='host')
+
+
+        # Enable/disable service startup at boot if requested
+        if module.params['enabled'] is not None:
+
+            if module.params['enabled']:
+                action = 'enable'
+            else:
+                action = 'disable'
+
+            fail_if_missing(module, found, unit, msg='host')
+
+            # do we need to enable the service?
+            enabled = False
+            (rc, out, err) = module.run_command("%s is-enabled '%s'" % (systemctl, unit))
+
+            # check systemctl result or if it is a init script
+            if rc == 0:
+                enabled = True
+            elif rc == 1:
+                # if not a user service and both init script and unit file exist stdout should have enabled/disabled, otherwise use rc entries
+                if not module.params['user'] and \
+                   is_initd and \
+                   (not out.strip().endswith('disabled') or sysv_is_enabled(unit)):
+
+                    enabled = True
+
+            # default to current state
+            result['enabled'] = enabled
+
+            # Change enable/disable if needed
+            if enabled != module.params['enabled']:
                 result['changed'] = True
                 if not module.check_mode:
                     (rc, out, err) = module.run_command("%s %s '%s'" % (systemctl, action, unit))
                     if rc != 0:
-                        module.fail_json(msg="Unable to %s service %s: %s" % (action, unit, err))
-        else:
-            # this should not happen?
-            module.fail_json(msg="Service is in unknown state", status=result['status'])
+                        module.fail_json(msg="Unable to %s service %s: %s" % (action, unit, out + err))
+
+                result['enabled'] = not enabled
+
+        # set service state if requested
+        if module.params['state'] is not None:
+            fail_if_missing(module, found, unit, msg="host")
+
+            # default to desired state
+            result['state'] = module.params['state']
+
+            # What is current service state?
+            if 'ActiveState' in result['status']:
+                action = None
+                if module.params['state'] == 'started':
+                    if not is_running_service(result['status']):
+                        action = 'start'
+                elif module.params['state'] == 'stopped':
+                    if is_running_service(result['status']):
+                        action = 'stop'
+                else:
+                    if not is_running_service(result['status']):
+                        action = 'start'
+                    else:
+                        action = module.params['state'][:-2] # remove 'ed' from restarted/reloaded
+                    result['state'] = 'started'
+
+                if action:
+                    result['changed'] = True
+                    if not module.check_mode:
+                        (rc, out, err) = module.run_command("%s %s '%s'" % (systemctl, action, unit))
+                        if rc != 0:
+                            module.fail_json(msg="Unable to %s service %s: %s" % (action, unit, err))
+            else:
+                # this should not happen?
+                module.fail_json(msg="Service is in unknown state", status=result['status'])
 
 
     module.exit_json(**result)

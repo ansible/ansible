@@ -2,20 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2016, Cumulus Networks <ce-ceng@cumulusnetworks.com>
-#
-# This file is part of Ansible
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['deprecated'],
                     'supported_by': 'community'}
 
@@ -25,7 +18,7 @@ DOCUMENTATION = '''
 module: cl_license
 version_added: "2.1"
 author: "Cumulus Networks (@CumulusNetworks)"
-short_description: Install Cumulus Linux license
+short_description: Install licenses fo Cumulus Linux
 deprecated: Deprecated in 2.3.
 description:
     - Installs a Cumulus Linux license. The module reports no change of status
@@ -107,7 +100,11 @@ msg:
     sample: "interface bond0 config updated"
 '''
 
+from ansible.module_utils.basic import AnsibleModule
+
+
 CL_LICENSE_PATH='/usr/cumulus/bin/cl-license'
+
 
 def install_license(module):
     # license is not installed, install it
@@ -121,8 +118,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             src=dict(required=True, type='str'),
-            force=dict(type='bool', choices=BOOLEANS,
-                default=False)
+            force=dict(type='bool', default=False)
         ),
     )
 
@@ -141,10 +137,6 @@ def main():
         module.changed = True
     module.exit_json(changed=module.changed, msg=module.msg)
 
-
-# import module snippets
-from ansible.module_utils.basic import *
-# from ansible.module_utils.urls import *
 
 if __name__ == '__main__':
     main()

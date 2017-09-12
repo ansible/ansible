@@ -1,0 +1,86 @@
+# Test code for the vmware_cluster module.
+# (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+- name: make sure pyvmomi is installed
+  pip:
+    name: pyvmomi
+    state: latest
+
+- name: store the vcenter container ip
+  set_fact:
+    vcsim: "{{ lookup('env', 'vcenter_host') }}"
+
+- debug: var=vcsim
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
+
+- name: kill vcsim
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/killall' }}"
+
+- name: start vcsim
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/spawn?cluster=2' }}"
+  register: vcsim_instance
+
+- debug: var=vcsim_instance
+
+- name: Wait for vcsim server to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
+
+- name: get a list of Datacenter from vcsim
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=DC' }}"
+  register: datacenters
+
+- name: get a datacenter
+  set_fact: dc1="{{ datacenters['json'][0] | basename }}"
+
+- debug: var=dc1
+
+# Testcase 0001: Add Cluster
+- name: add cluster
+  vmware_cluster:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    datacenter_name: "{{ dc1 }}"
+    cluster_name: test_cluster_0001
+    state: present
+  register: cluster_result_0001
+
+- name: get a list of clusters from vcsim after adding cluster
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=CCR' }}"
+  register: new_ccr_list
+
+- set_fact: new_cluster="{% for ccr in new_ccr_list['json'] %} {{ True if (ccr | basename) == 'test_cluster_0001' else False }} {% endfor %}"
+
+- name: ensure cluster is present
+  assert:
+    that:
+        - "{{ cluster_result_0001.changed == true }}"
+        - "{{ 'True' in new_cluster }}"

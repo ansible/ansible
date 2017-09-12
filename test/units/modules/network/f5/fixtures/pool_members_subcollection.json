@@ -1,0 +1,21 @@
+[
+    {
+      "kind": "tm:ltm:pool:members:membersstate",
+      "name": "1.1.1.1:80",
+      "partition": "Common",
+      "fullPath": "/Common/1.1.1.1:80",
+      "generation": 1,
+      "selfLink": "https://localhost/mgmt/tm/ltm/pool/~Common~test_pool/members/~Common~1.1.1.1:80?ver=11.5.4",
+      "address": "1.1.1.1",
+      "connectionLimit": 0,
+      "dynamicRatio": 1,
+      "inheritProfile": "enabled",
+      "logging": "disabled",
+      "monitor": "default",
+      "priorityGroup": 0,
+      "rateLimit": "disabled",
+      "ratio": 1,
+      "session": "user-disabled",
+      "state": "up"
+    }
+  ]

@@ -96,9 +96,10 @@ Function Nssm-Remove
 
     if (Service-Exists -name $name)
     {
-        $cmd = "stop ""$name"""
-        $results = Nssm-Invoke $cmd
-
+        if ((Get-Service -Name $name).Status -ne "Stopped") {
+            $cmd = "stop ""$name"""
+            $results = Nssm-Invoke $cmd
+        }
         $cmd = "remove ""$name"" confirm"
         $results = Nssm-Invoke $cmd
 
@@ -135,7 +136,7 @@ Function Nssm-Install
 
     if (!(Service-Exists -name $name))
     {
-        $results = Nssm-Invoke "install ""$name"" $application"
+        $results = Nssm-Invoke "install ""$name"" ""$application"""
 
         if ($LastExitCode -ne 0)
         {
@@ -159,7 +160,7 @@ Function Nssm-Install
 
         if ($results -cnotlike $application)
         {
-            $cmd = "set ""$name"" Application $application"
+            $cmd = "set ""$name"" Application ""$application"""
 
             $results = Nssm-Invoke $cmd
 
@@ -179,7 +180,7 @@ Function Nssm-Install
      if ($result.changed)
      {
         $applicationPath = (Get-Item $application).DirectoryName
-        $cmd = "nssm set ""$name"" AppDirectory $applicationPath"
+        $cmd = "nssm set ""$name"" AppDirectory ""$applicationPath"""
 
         $results = invoke-expression $cmd
 
@@ -428,7 +429,7 @@ Function Nssm-Update-Credentials
             }
 
             If ($results -ne $fullUser) {
-                $cmd = "set ""$name"" ObjectName $fullUser $password"
+                $cmd = "set ""$name"" ObjectName $fullUser '$password'"
                 $results = Nssm-Invoke $cmd
 
                 if ($LastExitCode -ne 0)

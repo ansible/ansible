@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = '''
@@ -33,6 +33,7 @@ author:
     - Jason Edelman (@jedelman8)
     - Gabriele Gerbino (@GGabriele)
 notes:
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
     - VRF needs to be added globally with M(nxos_vrf) before
       adding a VRF to an interface.
     - Remove a VRF from an interface will still remove
@@ -61,64 +62,39 @@ EXAMPLES = '''
   nxos_vrf_interface:
     vrf: ntc
     interface: Ethernet1/1
-    host: 68.170.147.165
     state: present
 
 - name: Ensure ntc VRF does not exist on Eth1/1
   nxos_vrf_interface:
     vrf: ntc
     interface: Ethernet1/1
-    host: 68.170.147.165
     state: absent
 '''
 
 RETURN = '''
-proposed:
-    description: k/v pairs of parameters passed into module
-    returned: always
-    type: dict
-    sample: {"interface": "loopback16", "vrf": "ntc"}
-existing:
-    description: k/v pairs of existing vrf on the interface
-    type: dict
-    sample: {"interface": "loopback16", "vrf": ""}
-end_state:
-    description: k/v pairs of vrf after module execution
-    returned: always
-    type: dict
-    sample: {"interface": "loopback16", "vrf": "ntc"}
-updates:
+commands:
     description: commands sent to the device
     returned: always
     type: list
     sample: ["interface loopback16", "vrf member ntc"]
-changed:
-    description: check to see if a change was made on the device
-    returned: always
-    type: boolean
-    sample: true
 '''
 import re
 
-from ansible.module_utils.nxos import get_config, load_config, run_commands
+from ansible.module_utils.nxos import load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
 
 
-WARNINGS = []
-
-def execute_show_command(command, module, command_type='cli_show'):
-    if module.params['transport'] == 'cli':
-        if 'show run' not in command:
-            command += ' | json'
-        cmds = [command]
-        body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
-        cmds = [command]
-        body = run_commands(module, cmds)
-
-    return body
+def execute_show_command(command, module):
+    if 'show run' not in command:
+        output = 'json'
+    else:
+        output = 'text'
+    cmds = [{
+        'command': command,
+        'output': output,
+    }]
+    return run_commands(module, cmds)[0]
 
 
 def get_interface_type(interface):
@@ -144,7 +120,7 @@ def get_interface_mode(interface, intf_type, module):
     mode = 'unknown'
 
     if intf_type in ['ethernet', 'portchannel']:
-        body = execute_show_command(command, module)[0]
+        body = execute_show_command(command, module)
         interface_table = body['TABLE_interface']['ROW_interface']
         mode = str(interface_table.get('eth_mode', 'layer3'))
         if mode == 'access' or mode == 'trunk':
@@ -157,7 +133,7 @@ def get_interface_mode(interface, intf_type, module):
 def get_vrf_list(module):
     command = 'show vrf all'
     vrf_list = []
-    body = execute_show_command(command, module)[0]
+    body = execute_show_command(command, module)
 
     try:
         vrf_table = body['TABLE_vrf']['ROW_vrf']
@@ -173,12 +149,12 @@ def get_vrf_list(module):
 def get_interface_info(interface, module):
     if not interface.startswith('loopback'):
         interface = interface.capitalize()
+
     command = 'show run | section interface.{0}'.format(interface)
     vrf_regex = ".*vrf\s+member\s+(?P<vrf>\S+).*"
 
     try:
-        body = execute_show_command(command, module,
-                                    command_type='cli_show_ascii')[0]
+        body = execute_show_command(command, module)
         match_vrf = re.match(vrf_regex, body, re.DOTALL)
         group_vrf = match_vrf.groupdict()
         vrf = group_vrf["vrf"]
@@ -192,8 +168,7 @@ def is_default(interface, module):
     command = 'show run interface {0}'.format(interface)
 
     try:
-        body = execute_show_command(command, module,
-                                    command_type='cli_show_ascii')[0]
+        body = execute_show_command(command, module)
         raw_list = body.split('\n')
         if raw_list[-1].startswith('interface'):
             return True
@@ -208,21 +183,16 @@ def main():
     argument_spec = dict(
         vrf=dict(required=True),
         interface=dict(type='str', required=True),
-        state=dict(default='present', choices=['present', 'absent'],
-                       required=False),
-        include_defaults=dict(default=False),
-        config=dict(),
-        save=dict(type='bool', default=False)
+        state=dict(default='present', choices=['present', 'absent'], required=False),
     )
 
     argument_spec.update(nxos_argument_spec)
 
-    module = AnsibleModule(argument_spec=argument_spec,
-                                supports_check_mode=True)
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
     warnings = list()
     check_args(module, warnings)
-
+    results = {'changed': False, 'commands': [], 'warnings': warnings}
 
     vrf = module.params['vrf']
     interface = module.params['interface'].lower()
@@ -230,7 +200,7 @@ def main():
 
     current_vrfs = get_vrf_list(module)
     if vrf not in current_vrfs:
-        WARNINGS.append("The VRF is not present/active on the device. "
+        warnings.append("The VRF is not present/active on the device. "
                         "Use nxos_vrf to fix this.")
 
     intf_type = get_interface_type(interface)
@@ -253,7 +223,9 @@ def main():
     changed = False
     end_state = existing
 
-    if vrf != existing['vrf'] and state == 'absent':
+    if not existing['vrf']:
+        pass
+    elif vrf != existing['vrf'] and state == 'absent':
         module.fail_json(msg='The VRF you are trying to remove '
                              'from the interface does not exist '
                              'on that interface.',
@@ -286,19 +258,11 @@ def main():
             if 'configure' in commands:
                 commands.pop(0)
 
-    results = {}
-    results['proposed'] = proposed
-    results['existing'] = existing
-    results['end_state'] = end_state
-    results['updates'] = commands
+    results['commands'] = commands
     results['changed'] = changed
-
-    if WARNINGS:
-        results['warnings'] = WARNINGS
 
     module.exit_json(**results)
 
 
 if __name__ == '__main__':
     main()
-

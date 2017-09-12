@@ -24,10 +24,12 @@ Zabbix Server external inventory script.
 ========================================
 
 Returns hosts and hostgroups from Zabbix Server.
+If you want to run with --limit against a host group with space in the
+name, use asterisk. For example --limit="Linux*servers".
 
 Configuration is read from `zabbix.ini`.
 
-Tested with Zabbix Server 2.0.6.
+Tested with Zabbix Server 2.0.6 and 3.2.3.
 """
 
 from __future__ import print_function
@@ -35,7 +37,10 @@ from __future__ import print_function
 import os
 import sys
 import argparse
-import ConfigParser
+try:
+    import ConfigParser as configparser
+except ImportError:
+    import configparser
 
 try:
     from zabbix_api import ZabbixAPI
@@ -49,10 +54,11 @@ try:
 except:
     import simplejson as json
 
+
 class ZabbixInventory(object):
 
     def read_settings(self):
-        config = ConfigParser.SafeConfigParser()
+        config = configparser.SafeConfigParser()
         conf_path = './zabbix.ini'
         if not os.path.exists(conf_path):
             conf_path = os.path.dirname(os.path.realpath(__file__)) + '/zabbix.ini'
@@ -96,10 +102,13 @@ class ZabbixInventory(object):
             for group in host['groups']:
                 groupname = group['name']
 
-                if not groupname in data:
+                if groupname not in data:
                     data[groupname] = self.hoststub()
 
                 data[groupname]['hosts'].append(hostname)
+
+        # Prevents Ansible from calling this script for each server with --host
+        data['_meta'] = {'hostvars': self.meta}
 
         return data
 
@@ -109,6 +118,7 @@ class ZabbixInventory(object):
         self.zabbix_server = None
         self.zabbix_username = None
         self.zabbix_password = None
+        self.meta = {}
 
         self.read_settings()
         self.read_cli()

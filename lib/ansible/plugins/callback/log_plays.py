@@ -1,27 +1,27 @@
 # (C) 2012, Michael DeHaan, <michael.dehaan@gmail.com>
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
-# Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+DOCUMENTATION = '''
+    callback: log_plays
+    type: notification
+    short_description: write playbook output to log file
+    version_added: historical
+    description:
+      - This callback writes playbook output to a file per host in the `/var/log/ansible/hosts` directory
+      - "TODO: make this configurable"
+    requirements:
+     - Whitelist in configuration
+     - A writeable /var/log/ansible/hosts directory by the user executing Ansbile on the controller
+'''
 
 import os
 import time
 import json
+from collections import MutableMapping
 
 from ansible.module_utils._text import to_bytes
 from ansible.plugins.callback import CallbackBase
@@ -43,8 +43,8 @@ class CallbackModule(CallbackBase):
     CALLBACK_NAME = 'log_plays'
     CALLBACK_NEEDS_WHITELIST = True
 
-    TIME_FORMAT="%b %d %Y %H:%M:%S"
-    MSG_FORMAT="%(now)s - %(category)s - %(data)s\n\n"
+    TIME_FORMAT = "%b %d %Y %H:%M:%S"
+    MSG_FORMAT = "%(now)s - %(category)s - %(data)s\n\n"
 
     def __init__(self):
 
@@ -54,7 +54,7 @@ class CallbackModule(CallbackBase):
             os.makedirs("/var/log/ansible/hosts")
 
     def log(self, host, category, data):
-        if type(data) == dict:
+        if isinstance(data, MutableMapping):
             if '_ansible_verbose_override' in data:
                 # avoid logging extraneous data
                 data = 'omitted'

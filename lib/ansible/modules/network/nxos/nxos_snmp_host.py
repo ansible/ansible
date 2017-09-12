@@ -17,9 +17,9 @@
 #
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = '''
@@ -34,6 +34,7 @@ author:
     - Jason Edelman (@jedelman8)
     - Gabriele Gerbino (@GGabriele)
 notes:
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
     - C(state=absent) removes the host configuration if it is configured.
 options:
     snmp_host:
@@ -106,6 +107,7 @@ proposed:
             "snmp_type": "trap", "version": "v2c", "vrf_filter": "one_more_vrf"}
 existing:
     description: k/v pairs of existing snmp host
+    returned: always
     type: dict
     sample: {"community": "TESTING", "snmp_type": "trap",
             "udp": "162", "v3": "noauth", "version": "v2c",
@@ -114,7 +116,7 @@ existing:
 end_state:
     description: k/v pairs of switchport after module execution
     returned: always
-    type: dict or null
+    type: dict
     sample: {"community": "TESTING", "snmp_type": "trap",
             "udp": "162", "v3": "noauth", "version": "v2c",
             "vrf": "test_vrf", "vrf_filter": ["test_vrf",
@@ -135,7 +137,6 @@ changed:
 from ansible.module_utils.nxos import get_config, load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
 
 
 import re

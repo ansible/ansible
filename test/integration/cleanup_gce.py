@@ -4,24 +4,30 @@ Find and delete GCE resources matching the provided --match string.  Unless
 Please use caution, you can easily delete your *ENTIRE* GCE infrastructure.
 '''
 
+import optparse
 import os
 import re
 import sys
-import optparse
 import yaml
 
 try:
-    from libcloud.compute.types import Provider
+    from libcloud.common.google import (
+        GoogleBaseError,
+        QuotaExceededError,
+        ResourceExistsError,
+        ResourceInUseError,
+        ResourceNotFoundError,
+    )
     from libcloud.compute.providers import get_driver
-    from libcloud.common.google import GoogleBaseError, QuotaExceededError, \
-            ResourceExistsError, ResourceInUseError, ResourceNotFoundError
+    from libcloud.compute.types import Provider
     _ = Provider.GCE
 except ImportError:
-    print("failed=True " + \
-        "msg='libcloud with GCE support (0.13.3+) required for this module'")
+    print("failed=True msg='libcloud with GCE support (0.13.3+) required for this module'")
     sys.exit(1)
 
 import gce_credentials
+
+from ansible.module_utils.six.moves import input
 
 
 def delete_gce_resources(get_func, attr, opts):
@@ -30,26 +36,34 @@ def delete_gce_resources(get_func, attr, opts):
         if re.search(opts.match_re, val, re.IGNORECASE):
             prompt_and_delete(item, "Delete matching %s? [y/n]: " % (item,), opts.assumeyes)
 
+
 def prompt_and_delete(item, prompt, assumeyes):
     if not assumeyes:
-        assumeyes = raw_input(prompt).lower() == 'y'
+        assumeyes = input(prompt).lower() == 'y'
     assert hasattr(item, 'destroy'), "Class <%s> has no delete attribute" % item.__class__
     if assumeyes:
         item.destroy()
-        print ("Deleted %s" % item)
+        print("Deleted %s" % item)
+
 
 def parse_args():
-    parser = optparse.OptionParser(usage="%s [options]" % (sys.argv[0],),
-                description=__doc__)
+    parser = optparse.OptionParser(
+        usage="%s [options]" % sys.argv[0],
+        description=__doc__
+    )
     gce_credentials.add_credentials_options(parser)
-    parser.add_option("--yes", "-y",
+    parser.add_option(
+        "--yes", "-y",
         action="store_true", dest="assumeyes",
         default=False,
-        help="Don't prompt for confirmation")
-    parser.add_option("--match",
+        help="Don't prompt for confirmation"
+    )
+    parser.add_option(
+        "--match",
         action="store", dest="match_re",
         default="^ansible-testing-",
-        help="Regular expression used to find GCE resources (default: %default)")
+        help="Regular expression used to find GCE resources (default: %default)"
+    )
 
     (opts, args) = parser.parse_args()
     gce_credentials.check_required(opts, parser)
@@ -65,6 +79,7 @@ if __name__ == '__main__':
     try:
         # Delete matching instances
         delete_gce_resources(gce.list_nodes, 'name', opts)
+
         # Delete matching snapshots
         def get_snapshots():
             for volume in gce.list_volumes():

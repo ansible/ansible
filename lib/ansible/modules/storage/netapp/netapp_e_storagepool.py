@@ -1,23 +1,13 @@
 #!/usr/bin/python
 
 # (c) 2016, NetApp, Inc
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -409,7 +399,7 @@ class NetAppESeriesStoragePool(object):
         if raid_level in [None, 'raid0']:
             return disk_size_bytes * disk_count
         if raid_level == 'raid1':
-            return (disk_size_bytes * disk_count) / 2
+            return (disk_size_bytes * disk_count) // 2
         if raid_level in ['raid3', 'raid5']:
             return (disk_size_bytes * disk_count) - disk_size_bytes
         if raid_level in ['raid6', 'raidDiskPool']:
@@ -487,7 +477,8 @@ class NetAppESeriesStoragePool(object):
         # # TODO: this arg appears to be ignored, uncomment if it isn't
         # #if self.criteria_disk_min_size_gb:
         # #    drives_req['driveCapacityMin'] = self.criteria_disk_min_size_gb * 1024
-        # (rc,drives_resp) = request(self.api_url + "/storage-systems/%s/drives" % (self.ssid), data=json.dumps(drives_req), headers=self.post_headers, method='POST', url_username=self.api_usr, url_password=self.api_pwd, validate_certs=self.validate_certs)
+        # (rc,drives_resp) = request(self.api_url + "/storage-systems/%s/drives" % (self.ssid), data=json.dumps(drives_req), headers=self.post_headers,
+        #                            method='POST', url_username=self.api_usr, url_password=self.api_pwd, validate_certs=self.validate_certs)
         #
         # if rc == 204:
         #     self.module.fail_json(msg='Cannot find disks to match requested criteria for storage pool')
@@ -622,8 +613,7 @@ class NetAppESeriesStoragePool(object):
 
     @property
     def reserved_drive_count_differs(self):
-        if int(self.pool_detail['volumeGroupData']['diskPoolData'][
-            'reconstructionReservedDriveCount']) != self.reserve_drive_count:
+        if int(self.pool_detail['volumeGroupData']['diskPoolData']['reconstructionReservedDriveCount']) != self.reserve_drive_count:
             return True
         return False
 

@@ -2,26 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # Copyright 2017, Dag Wieers <dag@wieers.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = r'''
 ---
@@ -55,26 +40,38 @@ options:
   chdir:
     description:
     - Run the command from this (remote) directory.
+  nobanner:
+    description:
+    - Do not display the startup banner and copyright message.
+    - This only works for specific versions of the PsExec binary.
+    type: bool
+    default: 'no'
+    version_added: '2.4'
   noprofile:
     description:
     - Run the command without loading the account's profile.
-    default: False
+    type: bool
+    default: 'no'
   elevated:
     description:
     - Run the command with elevated privileges.
-    default: False
+    type: bool
+    default: 'no'
   interactive:
     description:
     - Run the program so that it interacts with the desktop on the remote system.
-    default: False
+    type: bool
+    default: 'no'
   limited:
     description:
     - Run the command as limited user (strips the Administrators group and allows only privileges assigned to the Users group).
-    default: False
+    type: bool
+    default: 'no'
   system:
     description:
     - Run the remote command in the System account.
-    default: False
+    type: bool
+    default: 'no'
   priority:
     description:
     - Used to run the command at a different priority.
@@ -92,24 +89,30 @@ options:
     description:
     - Wait for the application to terminate.
     - Only use for non-interactive applications.
-    default: True
-requirements: [ psexec ]
-author: Dag Wieers (@dagwieers)
+    type: bool
+    default: 'yes'
+notes:
+- More information related to Microsoft PsExec is available from
+  U(https://technet.microsoft.com/en-us/sysinternals/bb897553.aspx)
+requirements:
+- Microsoft PsExec
+author:
+- Dag Wieers (@dagwieers)
 '''
 
 EXAMPLES = r'''
-# Test the PsExec connection to the local system (target node) with your user
-- win_psexec:
+- name: Test the PsExec connection to the local system (target node) with your user
+  win_psexec:
     command: whoami.exe
 
-# Run regedit.exe locally (on target node) as SYSTEM and interactively
-- win_psexec:
+- name: Run regedit.exe locally (on target node) as SYSTEM and interactively
+  win_psexec:
     command: regedit.exe
     interactive: yes
     system: yes
 
-# Run the setup.exe installer on multiple servers using the Domain Administrator
-- win_psexec:
+- name: Run the setup.exe installer on multiple servers using the Domain Administrator
+  win_psexec:
     command: E:\setup.exe /i /IACCEPTEULA
     hostnames:
     - remote_server1
@@ -118,8 +121,8 @@ EXAMPLES = r'''
     password: some_password
     priority: high
 
-# Run PsExec from custom location C:\Program Files\sysinternals\
-- win_psexec:
+- name: Run PsExec from custom location C:\Program Files\sysinternals\
+  win_psexec:
     command: netsh advfirewall set allprofiles state off
     executable: C:\Program Files\sysinternals\psexec.exe
     hostnames: [ remote_server ]
@@ -132,7 +135,7 @@ cmd:
     description: The complete command line used by the module, including PsExec call and additional options.
     returned: always
     type: string
-    sample: psexec.exe \\remote_server -u DOMAIN\Administrator -p some_password E:\setup.exe
+    sample: psexec.exe -nobanner \\remote_server -u "DOMAIN\Administrator" -p "some_password" -accepteula E:\setup.exe
 rc:
     description: The return code for the command
     returned: always

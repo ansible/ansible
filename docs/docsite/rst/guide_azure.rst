@@ -7,14 +7,19 @@ and orchestrate infrastructure on the Microsoft Azure Cloud.
 Requirements
 ------------
 
-Using the Azure Resource Manager modules requires having `Azure Python SDK <https://github.com/Azure/azure-sdk-for-python>`_
-installed on the host running Ansible. You will need to have == v2.0.0RC5 installed. The simplest way to install the
-SDK is via pip:
+Using the Azure Resource Manager modules requires having specific Azure SDK modules
+installed on the host running Ansible.
 
 .. code-block:: bash
 
-    $ pip install "azure==2.0.0rc5"
+    $ pip install ansible[azure]
 
+If you are running Ansible from source, you can install the dependencies from the
+root directory of the Ansible repo.
+
+.. code-block:: bash
+
+    $ pip install .[azure]
 
 Authenticating with Azure
 -------------------------
@@ -114,6 +119,14 @@ Or, pass the following parameters for Active Directory username/password:
 * subscription_id
 
 
+Other Cloud Environments
+------------------------
+
+To use an Azure Cloud other than the default public cloud (eg, Azure China Cloud, Azure US Government Cloud, Azure Stack),
+pass the "cloud_environment" argument to modules, configure it in a credential profile, or set the "AZURE_CLOUD_ENVIRONMENT"
+environment variable. The value is either a cloud name as defined by the Azure Python SDK (eg, "AzureChinaCloud",
+"AzureUSGovernment"; defaults to "AzureCloud") or an Azure metadata discovery URL (for Azure Stack).
+
 Creating Virtual Machines
 -------------------------
 
@@ -156,7 +169,7 @@ azure_rm_virtualmachine module at the end:
         name: publicip001
 
     - name: Create security group that allows SSH
-        azure_rm_securitygroup:
+      azure_rm_securitygroup:
         resource_group: Testing
         name: secgroup001
         rules:

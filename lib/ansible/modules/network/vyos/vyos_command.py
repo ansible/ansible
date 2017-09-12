@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -86,6 +86,7 @@ options:
     default: 1
 
 notes:
+  - Tested against VYOS 1.1.7
   - Running C(show system boot-messages all) will cause the module to hang since
     VyOS is using a custom pager setting to display the output of that command.
 """
@@ -112,7 +113,7 @@ tasks:
 RETURN = """
 stdout:
   description: The set of responses from the commands
-  returned: always
+  returned: always apart from low level errors (such as action plugin)
   type: list
   sample: ['...', '...']
 stdout_lines:
@@ -121,7 +122,7 @@ stdout_lines:
   type: list
   sample: [['...', '...'], ['...'], ['...']]
 failed_conditions:
-  description: The conditionals that have failed
+  description: The list of conditionals that have failed
   returned: failed
   type: list
   sample: ['...', '...']
@@ -155,14 +156,16 @@ def parse_commands(module, warnings):
         answer=dict(),
     ), module)
     commands = command(module.params['commands'])
+    items = []
 
-    for index, cmd in enumerate(commands):
-        if module.check_mode and not cmd['command'].startswith('show'):
+    for item in commands:
+        if module.check_mode and not item['command'].startswith('show'):
             warnings.append('only show commands are supported when using '
-                            'check mode, not executing `%s`' % cmd['command'])
-        commands[index] = module.jsonify(cmd)
+                            'check mode, not executing `%s`' % item['command'])
+        else:
+            items.append(module.jsonify(item))
 
-    return commands
+    return items
 
 
 def main():

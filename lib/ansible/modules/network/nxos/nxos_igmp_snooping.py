@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = '''
@@ -33,6 +33,7 @@ author:
     - Jason Edelman (@jedelman8)
     - Gabriele Gerbino (@GGabriele)
 notes:
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
     - When C(state=default), params will be reset to a default state.
     - C(group_timeout) also accepts I(never) as an input.
 options:
@@ -78,9 +79,6 @@ EXAMPLES = '''
 # ensure igmp snooping params supported in this module are in there default state
 - nxos_igmp_snooping:
     state: default
-    host:  inventory_hostname }}
-    username:  un }}
-    password:  pwd }}
 
 # ensure following igmp snooping params are in the desired state
 - nxos_igmp_snooping:
@@ -90,31 +88,10 @@ EXAMPLES = '''
    optimize_mcast_flood: false
    report_supp: true
    v3_report_supp: true
-   host: "{{ inventory_hostname }}"
-   username: "{{ un }}"
-   password: "{{ pwd }}"
 '''
 
 RETURN = '''
-proposed:
-    description: k/v pairs of parameters passed into module
-    returned: always
-    type: dict
-    sample: {"group_timeout": "50", "link_local_grp_supp": true,
-            "report_supp": false, "snooping": false, "v3_report_supp": false}
-existing:
-    description:
-        - k/v pairs of existing configuration
-    type: dict
-    sample: {"group_timeout": "never", "link_local_grp_supp": false,
-            "report_supp": true, "snooping": true, "v3_report_supp": true}
-end_state:
-    description: k/v pairs of configuration after module execution
-    returned: always
-    type: dict
-    sample: {"group_timeout": "50", "link_local_grp_supp": true,
-            "report_supp": false, "snooping": false, "v3_report_supp": false}
-updates:
+commands:
     description: command sent to the device
     returned: always
     type: list
@@ -123,32 +100,23 @@ updates:
              "no ip igmp snooping report-suppression",
              "no ip igmp snooping v3-report-suppression",
              "no ip igmp snooping"]
-changed:
-    description: check to see if a change was made on the device
-    returned: always
-    type: boolean
-    sample: true
 '''
+
+
+import re
 
 from ansible.module_utils.nxos import get_config, load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
-
-import re
 
 
-def execute_show_command(command, module, command_type='cli_show'):
-    if module.params['transport'] == 'cli':
-        if 'show run' not in command:
-            command += ' | json'
-        cmds = [command]
-        body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
-        cmds = [command]
-        body = run_commands(module, cmds)
+def execute_show_command(command, module):
+    command = {
+        'command': command,
+        'output': 'text',
+    }
 
-    return body
+    return run_commands(module, [command])
 
 
 def flatten_list(command_lists):
@@ -184,8 +152,7 @@ def get_snooping(config):
 def get_igmp_snooping(module):
     command = 'show run all | include igmp.snooping'
     existing = {}
-    body = execute_show_command(
-        command, module, command_type='cli_show_ascii')[0]
+    body = execute_show_command(command, module)[0]
 
     if body:
         split_body = body.splitlines()
@@ -272,12 +239,11 @@ def main():
 
     argument_spec.update(nxos_argument_spec)
 
-    module = AnsibleModule(argument_spec=argument_spec,
-                                supports_check_mode=True)
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
     warnings = list()
     check_args(module, warnings)
-
+    results = {'changed': False, 'commands': [], 'warnings': warnings}
 
     snooping = module.params['snooping']
     link_local_grp_supp = module.params['link_local_grp_supp']
@@ -295,7 +261,6 @@ def main():
 
     existing = get_igmp_snooping(module)
     end_state = existing
-    changed = False
 
     commands = []
     if state == 'present':
@@ -317,23 +282,13 @@ def main():
                 commands.append(command)
 
     cmds = flatten_list(commands)
-    results = {}
     if cmds:
-        if module.check_mode:
-            module.exit_json(changed=True, commands=cmds)
-        else:
-            changed = True
+        results['changed'] = True
+        if not module.check_mode:
             load_config(module, cmds)
-            end_state = get_igmp_snooping(module)
-            if 'configure' in cmds:
-                cmds.pop(0)
-
-    results['proposed'] = proposed
-    results['existing'] = existing
-    results['updates'] = cmds
-    results['changed'] = changed
-    results['warnings'] = warnings
-    results['end_state'] = end_state
+        if 'configure' in cmds:
+            cmds.pop(0)
+        results['commands'] = cmds
 
     module.exit_json(**results)
 

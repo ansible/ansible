@@ -17,13 +17,19 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-
+import multiprocessing
 import os
 import stat
 import tempfile
-import multiprocessing
 import time
 import warnings
+import random
+
+from ansible import constants as C
+from ansible.errors import AnsibleError
+from ansible.module_utils.six import text_type
+from ansible.module_utils._text import to_text, to_bytes
+
 
 PASSLIB_AVAILABLE = False
 try:
@@ -38,7 +44,7 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
-KEYCZAR_AVAILABLE=False
+KEYCZAR_AVAILABLE = False
 try:
     try:
         # some versions of pycrypto may not have this?
@@ -53,21 +59,17 @@ try:
             from keyczar.keys import AesKey
         except PowmInsecureWarning:
             display.system_warning(
-                "The version of gmp you have installed has a known issue regarding " + \
-                "timing vulnerabilities when used with pycrypto. " + \
+                "The version of gmp you have installed has a known issue regarding "
+                "timing vulnerabilities when used with pycrypto. "
                 "If possible, you should update it (i.e. yum update gmp)."
             )
             warnings.resetwarnings()
             warnings.simplefilter("ignore")
             import keyczar.errors as key_errors
             from keyczar.keys import AesKey
-        KEYCZAR_AVAILABLE=True
+        KEYCZAR_AVAILABLE = True
 except ImportError:
     pass
-
-from ansible import constants as C
-from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_text, to_bytes
 
 __all__ = ['do_encrypt']
 
@@ -100,6 +102,7 @@ def do_encrypt(result, encrypt, salt_size=None, salt=None):
     # impact calling code.
     return to_text(result, errors='strict')
 
+
 def key_for_hostname(hostname):
     # fireball mode is an implementation of ansible firing up zeromq via SSH
     # to use no persistent daemons or key management
@@ -122,16 +125,18 @@ def key_for_hostname(hostname):
         raise AnsibleError('ACCELERATE_KEYS_DIR is not a directory.')
 
     if stat.S_IMODE(os.stat(key_path).st_mode) != int(C.ACCELERATE_KEYS_DIR_PERMS, 8):
-        raise AnsibleError('Incorrect permissions on the private key directory. Use `chmod 0%o %s` to correct this issue, and make sure any of the keys files contained within that directory are set to 0%o' % (int(C.ACCELERATE_KEYS_DIR_PERMS, 8), C.ACCELERATE_KEYS_DIR, int(C.ACCELERATE_KEYS_FILE_PERMS, 8)))
+        raise AnsibleError('Incorrect permissions on the private key directory. Use `chmod 0%o %s` to correct this issue, and make sure any of the keys files '
+                           'contained within that directory are set to 0%o' % (int(C.ACCELERATE_KEYS_DIR_PERMS, 8), C.ACCELERATE_KEYS_DIR,
+                                                                               int(C.ACCELERATE_KEYS_FILE_PERMS, 8)))
 
     key_path = os.path.join(key_path, hostname)
 
     # use new AES keys every 2 hours, which means fireball must not allow running for longer either
-    if not os.path.exists(key_path) or (time.time() - os.path.getmtime(key_path) > 60*60*2):
+    if not os.path.exists(key_path) or (time.time() - os.path.getmtime(key_path) > 60 * 60 * 2):
         # avoid race with multiple forks trying to create key
         # but limit when locking is needed to creation only
         with(_LOCK):
-            if not os.path.exists(key_path) or (time.time() - os.path.getmtime(key_path) > 60*60*2):
+            if not os.path.exists(key_path) or (time.time() - os.path.getmtime(key_path) > 60 * 60 * 2):
                 key = AesKey.Generate()
                 # use temp file to ensure file only appears once it has
                 # desired contents and permissions
@@ -143,14 +148,17 @@ def key_for_hostname(hostname):
                 return key
 
     if stat.S_IMODE(os.stat(key_path).st_mode) != int(C.ACCELERATE_KEYS_FILE_PERMS, 8):
-        raise AnsibleError('Incorrect permissions on the key file for this host. Use `chmod 0%o %s` to correct this issue.' % (int(C.ACCELERATE_KEYS_FILE_PERMS, 8), key_path))
+        raise AnsibleError('Incorrect permissions on the key file for this host. Use `chmod 0%o %s` to '
+                           'correct this issue.' % (int(C.ACCELERATE_KEYS_FILE_PERMS, 8), key_path))
     fh = open(key_path)
     key = AesKey.Read(fh.read())
     fh.close()
     return key
 
+
 def keyczar_encrypt(key, msg):
     return key.Encrypt(msg.encode('utf-8'))
+
 
 def keyczar_decrypt(key, msg):
     try:
@@ -158,3 +166,18 @@ def keyczar_decrypt(key, msg):
     except key_errors.InvalidSignatureError:
         raise AnsibleError("decryption failed")
 
+
+DEFAULT_PASSWORD_LENGTH = 20
+
+
+def random_password(length=DEFAULT_PASSWORD_LENGTH, chars=C.DEFAULT_PASSWORD_CHARS):
+    '''Return a random password string of length containing only chars
+
+    :kwarg length: The number of characters in the new password.  Defaults to 20.
+    :kwarg chars: The characters to choose from.  The default is all ascii
+        letters, ascii digits, and these symbols ``.,:-_``
+    '''
+    assert isinstance(chars, text_type), '%s (%s) is not a text_type' % (chars, type(chars))
+
+    random_generator = random.SystemRandom()
+    return u''.join(random_generator.choice(chars) for dummy in range(length))

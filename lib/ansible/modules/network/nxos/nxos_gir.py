@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = '''
@@ -32,6 +32,7 @@ description:
 author:
     - Gabriele Gerbino (@GGabriele)
 notes:
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
     - C(state) has effect only in combination with
       C(system_mode_maintenance_timeout) or
       C(system_mode_maintenance_on_reload_reset_reason).
@@ -166,7 +167,6 @@ import re
 from ansible.module_utils.nxos import get_config, load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
 
 def execute_show_command(command, module, command_type='cli_show_ascii'):
     cmds = [command]
@@ -222,11 +222,11 @@ def get_commands(module, state, mode):
     elif module.params['system_mode_maintenance_timeout']:
         timeout = get_maintenance_timeout(module)
         if (state == 'present' and
-            timeout != module.params['system_mode_maintenance_timeout']):
+                timeout != module.params['system_mode_maintenance_timeout']):
             commands.append('system mode maintenance timeout {0}'.format(
                             module.params['system_mode_maintenance_timeout']))
         elif (state == 'absent' and
-              timeout == module.params['system_mode_maintenance_timeout']):
+                timeout == module.params['system_mode_maintenance_timeout']):
             commands.append('no system mode maintenance timeout {0}'.format(
                             module.params['system_mode_maintenance_timeout']))
 
@@ -236,9 +236,7 @@ def get_commands(module, state, mode):
     elif module.params['system_mode_maintenance_on_reload_reset_reason']:
         reset_reasons = get_reset_reasons(module)
         if (state == 'present' and
-            module.params[
-                'system_mode_maintenance_on_reload_reset_reason'].lower() not
-            in reset_reasons.lower()):
+                module.params['system_mode_maintenance_on_reload_reset_reason'].lower() not in reset_reasons.lower()):
             commands.append('system mode maintenance on-reload '
                             'reset-reason {0}'.format(
                                 module.params[

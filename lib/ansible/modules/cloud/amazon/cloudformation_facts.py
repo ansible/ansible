@@ -1,20 +1,12 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -33,8 +25,9 @@ author: Justin Menga (@jmenga)
 options:
     stack_name:
         description:
-          - The name or id of the CloudFormation stack
-        required: true
+          - The name or id of the CloudFormation stack. Gathers facts for all stacks by default.
+        required: false
+        default: null
     all_facts:
         description:
             - Get all stack information for the stack
@@ -112,17 +105,19 @@ stack_description:
     returned: always
     type: dict
 stack_outputs:
-    description: Dictionary of stack outputs keyed by the value of each output 'OutputKey' parameter and corresponding value of each output 'OutputValue' parameter
+    description: Dictionary of stack outputs keyed by the value of each output 'OutputKey' parameter and corresponding value of each
+                 output 'OutputValue' parameter
     returned: always
     type: dict
 stack_parameters:
-    description: Dictionary of stack parameters keyed by the value of each parameter 'ParameterKey' parameter and corresponding value of each parameter 'ParameterValue' parameter
+    description: Dictionary of stack parameters keyed by the value of each parameter 'ParameterKey' parameter and corresponding value of
+                 each parameter 'ParameterValue' parameter
     returned: always
     type: dict
 stack_events:
     description: All stack events for the stack
     returned: only if all_facts or stack_events is true
-    type: list of events
+    type: list
 stack_policy:
     description: Describes the stack policy for the stack
     returned: only if all_facts or stack_policy is true
@@ -134,12 +129,17 @@ stack_template:
 stack_resource_list:
     description: Describes stack resources for the stack
     returned: only if all_facts or stack_resourses is true
-    type: list of resources
+    type: list
 stack_resources:
-    description: Dictionary of stack resources keyed by the value of each resource 'LogicalResourceId' parameter and corresponding value of each resource 'PhysicalResourceId' parameter
+    description: Dictionary of stack resources keyed by the value of each resource 'LogicalResourceId' parameter and corresponding value of each
+                 resource 'PhysicalResourceId' parameter
     returned: only if all_facts or stack_resourses is true
     type: dict
 '''
+
+import json
+import traceback
+from functools import partial
 
 try:
     import boto3
@@ -148,11 +148,10 @@ try:
 except ImportError:
     HAS_BOTO3 = False
 
-from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec
 from ansible.module_utils.basic import AnsibleModule
-from functools import partial
-import json
-import traceback
+from ansible.module_utils.ec2 import (get_aws_connection_info, ec2_argument_spec, boto3_conn,
+                                      camel_dict_to_snake_dict, AWSRetry, boto3_tag_list_to_ansible_dict)
+
 
 class CloudFormationServiceManager:
     """Handles CloudFormation Services"""
@@ -165,20 +164,27 @@ class CloudFormationServiceManager:
             self.client = boto3_conn(module, conn_type='client',
                                      resource='cloudformation', region=region,
                                      endpoint=ec2_url, **aws_connect_kwargs)
+            backoff_wrapper = AWSRetry.jittered_backoff(retries=10, delay=3, max_delay=30)
+            self.client.describe_stacks = backoff_wrapper(self.client.describe_stacks)
+            self.client.list_stack_resources = backoff_wrapper(self.client.list_stack_resources)
+            self.client.describe_stack_events = backoff_wrapper(self.client.describe_stack_events)
+            self.client.get_stack_policy = backoff_wrapper(self.client.get_stack_policy)
+            self.client.get_template = backoff_wrapper(self.client.get_template)
         except botocore.exceptions.NoRegionError:
             self.module.fail_json(msg="Region must be specified as a parameter, in AWS_DEFAULT_REGION environment variable or in boto configuration file")
         except Exception as e:
             self.module.fail_json(msg="Can't establish connection - " + str(e), exception=traceback.format_exc())
 
-    def describe_stack(self, stack_name):
+    def describe_stacks(self, stack_name=None):
         try:
-            func = partial(self.client.describe_stacks,StackName=stack_name)
+            kwargs = {'StackName': stack_name} if stack_name else {}
+            func = partial(self.client.describe_stacks, **kwargs)
             response = self.paginated_response(func, 'Stacks')
             if response:
-                return response[0]
-            self.module.fail_json(msg="Error describing stack - an empty response was returned")
+                return response
+            self.module.fail_json(msg="Error describing stack(s) - an empty response was returned")
         except Exception as e:
-            self.module.fail_json(msg="Error describing stack - " + str(e), exception=traceback.format_exc())
+            self.module.fail_json(msg="Error describing stack(s) - " + str(e), exception=traceback.format_exc())
 
     def list_stack_resources(self, stack_name):
         try:
@@ -236,7 +242,7 @@ def to_dict(items, key, value):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        stack_name=dict(required=True, type='str' ),
+        stack_name=dict(),
         all_facts=dict(required=False, default=False, type='bool'),
         stack_policy=dict(required=False, default=False, type='bool'),
         stack_events=dict(required=False, default=False, type='bool'),
@@ -249,43 +255,40 @@ def main():
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 is required.')
 
-    # Describe the stack
     service_mgr = CloudFormationServiceManager(module)
-    stack_name = module.params.get('stack_name')
-    result = {
-        'ansible_facts': { 'cloudformation': { stack_name:{} } }
-    }
-    facts = result['ansible_facts']['cloudformation'][stack_name]
-    facts['stack_description'] = service_mgr.describe_stack(stack_name)
 
-    # Create stack output and stack parameter dictionaries
-    if facts['stack_description']:
-        facts['stack_outputs'] = to_dict(facts['stack_description'].get('Outputs'), 'OutputKey', 'OutputValue')
-        facts['stack_parameters'] = to_dict(facts['stack_description'].get('Parameters'), 'ParameterKey', 'ParameterValue')
+    result = {'ansible_facts': {'cloudformation': {}}}
 
-    # normalize stack description API output
-    facts['stack_description'] = camel_dict_to_snake_dict(facts['stack_description'])
-    # camel2snake doesn't handle NotificationARNs properly, so let's fix that
-    facts['stack_description']['notification_arns'] = facts['stack_description'].pop('notification_ar_ns', [])
+    for stack_description in service_mgr.describe_stacks(module.params.get('stack_name')):
+        facts = {'stack_description': stack_description}
+        stack_name = stack_description.get('StackName')
 
-    # Create optional stack outputs
-    all_facts = module.params.get('all_facts')
-    if all_facts or module.params.get('stack_resources'):
-        facts['stack_resource_list'] = service_mgr.list_stack_resources(stack_name)
-        facts['stack_resources'] = to_dict(facts.get('stack_resource_list'), 'LogicalResourceId', 'PhysicalResourceId')
-    if all_facts or module.params.get('stack_template'):
-        facts['stack_template'] = service_mgr.get_template(stack_name)
-    if all_facts or module.params.get('stack_policy'):
-        facts['stack_policy'] = service_mgr.get_stack_policy(stack_name)
-    if all_facts or module.params.get('stack_events'):
-        facts['stack_events'] = service_mgr.describe_stack_events(stack_name)
+        # Create stack output and stack parameter dictionaries
+        if facts['stack_description']:
+            facts['stack_outputs'] = to_dict(facts['stack_description'].get('Outputs'), 'OutputKey', 'OutputValue')
+            facts['stack_parameters'] = to_dict(facts['stack_description'].get('Parameters'), 'ParameterKey', 'ParameterValue')
+            facts['stack_tags'] = boto3_tag_list_to_ansible_dict(facts['stack_description'].get('Tags'))
+
+        # normalize stack description API output
+        facts['stack_description'] = camel_dict_to_snake_dict(facts['stack_description'])
+
+        # Create optional stack outputs
+        all_facts = module.params.get('all_facts')
+        if all_facts or module.params.get('stack_resources'):
+            facts['stack_resource_list'] = service_mgr.list_stack_resources(stack_name)
+            facts['stack_resources'] = to_dict(facts.get('stack_resource_list'), 'LogicalResourceId', 'PhysicalResourceId')
+        if all_facts or module.params.get('stack_template'):
+            facts['stack_template'] = service_mgr.get_template(stack_name)
+        if all_facts or module.params.get('stack_policy'):
+            facts['stack_policy'] = service_mgr.get_stack_policy(stack_name)
+        if all_facts or module.params.get('stack_events'):
+            facts['stack_events'] = service_mgr.describe_stack_events(stack_name)
+
+        result['ansible_facts']['cloudformation'][stack_name] = facts
 
     result['changed'] = False
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

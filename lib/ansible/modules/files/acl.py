@@ -1,21 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
@@ -55,7 +46,8 @@ options:
     default: no
     choices: [ 'yes', 'no' ]
     description:
-      - if the target is a directory, setting this to yes will make it the default acl for entities created inside the directory. It causes an error if path is a file.
+      - if the target is a directory, setting this to yes will make it the default acl for entities created inside the directory. It causes an error if
+        path is a file.
 
   entity:
     version_added: "1.5"
@@ -82,7 +74,9 @@ options:
     required: false
     default: null
     description:
-      - DEPRECATED. The acl to set or remove.  This must always be quoted in the form of '<etype>:<qualifier>:<perms>'.  The qualifier may be empty for some types, but the type and perms are always required. '-' can be used as placeholder when you do not care about permissions. This is now superseded by entity, type and permissions fields.
+      - DEPRECATED. The acl to set or remove.  This must always be quoted in the form of '<etype>:<qualifier>:<perms>'.  The qualifier may be empty for
+        some types, but the type and perms are always required. '-' can be used as placeholder when you do not care about permissions. This is now
+        superseded by entity, type and permissions fields.
 
   recursive:
     version_added: "2.0"
@@ -146,9 +140,9 @@ acl:
 '''
 
 import os
-
-# import module snippets
 from ansible.module_utils.basic import AnsibleModule, get_platform
+from ansible.module_utils.pycompat24 import get_exception
+
 
 def split_entry(entry):
     ''' splits entry and ensures normalized return'''
@@ -215,7 +209,7 @@ def build_command(module, mode, path, follow, default, recursive, entry=''):
             cmd.append('-h')
 
     if default:
-        if(mode == 'rm'):
+        if mode == 'rm':
             cmd.insert(1, '-k')
         else:  # mode == 'set' or mode == 'get'
             cmd.insert(1, '-d')

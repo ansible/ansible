@@ -23,7 +23,7 @@ The following  checklist items are important guidelines for people who want to c
 
 * The shebang must always be ``#!/usr/bin/python``.  This allows ``ansible_python_interpreter`` to work
 * Modules must be written to support Python 2.6. If this is not possible, required minimum Python version and rationale should be explained in the requirements section in ``DOCUMENTATION``.  In Ansible-2.3 the minimum requirement for modules was Python-2.4.
-* Modules must be written to use proper Python-3 syntax.  At some point in the future we'll come up with rules for running on Python-3 but we're not there yet.  See :doc:`developing_modules_python3` for help on how to do this.
+* Modules must be written to use proper Python-3 syntax.  At some point in the future we'll come up with rules for running on Python-3 but we're not there yet.  See :doc:`developing_python3` for help on how to do this.
 * Modules must have a metadata section.  For the vast majority of new modules,
   the metadata should look exactly like this:
 
@@ -31,9 +31,9 @@ The following  checklist items are important guidelines for people who want to c
 
     ANSIBLE_METADATA = {'status': ['preview'],
                         'supported_by': 'community',
-                        'metadata_version': '1.0'}
+                        'metadata_version': '1.1'}
 
-The complete module metadata specification is here: https://docs.ansible.com/ansible/dev_guide/developing_modules_documenting.html#ansible-metadata-block
+The complete module metadata specification is here: `Ansible metadata block <https://docs.ansible.com/ansible/dev_guide/developing_modules_documenting.html#ansible-metadata-block>`_
 
 * Documentation: Make sure it exists
     * Module documentation should briefly and accurately define what each module and option does, and how it works with others in the underlying system. Documentation should be written for broad audience--readable both by experts and non-experts. This documentation is not meant to teach a total novice, but it also should not be reserved for the Illuminati (hard balance).
@@ -76,7 +76,7 @@ The complete module metadata specification is here: https://docs.ansible.com/ans
     * Avoid catchall exceptions, they are not very useful unless the underlying API gives very good error messages pertaining the attempted action.
 * Module-dependent guidelines: Additional module guidelines may exist for certain families of modules.
     * Be sure to check out the modules themselves for additional information.
-        * Amazon: https://github.com/ansible/ansible/blob/devel/lib/ansible/modules/cloud/amazon/GUIDELINES.md
+        * `Amazon <https://github.com/ansible/ansible/blob/devel/lib/ansible/modules/cloud/amazon/GUIDELINES.md>`_
     * Modules should make use of the "extends_documentation_fragment" to ensure documentation available. For example, the AWS module should include::
 
         extends_documentation_fragment:
@@ -108,7 +108,7 @@ The complete module metadata specification is here: https://docs.ansible.com/ans
         main()
 
 * Try to normalize parameters with other modules, you can have aliases for when user is more familiar with underlying API name for the option
-* Being pep8 compliant is nice, but not a requirement. Specifically, the 80 column limit now hinders readability more that it improves it
+* Being `PEP 8 <https://www.python.org/dev/peps/pep-0008/>`_ compliant is a requirement. See :doc:`testing_pep8` for more information.
 * Avoid '`action`/`command`', they are imperative and not declarative, there are other ways to express the same thing
 * Do not add `list` or `info` state options to an existing module - create a new `_facts` module.
 * If you are asking 'how can I have a module execute other modules' ... you want to write a role
@@ -136,78 +136,9 @@ The complete module metadata specification is here: https://docs.ansible.com/ans
 
 Windows modules checklist
 =========================
-* Favour native powershell and .net ways of doing things over calls to COM libraries or calls to native executables which may or may not be present in all versions of Windows
-* modules are in powershell (.ps1 files) but the docs reside in same name python file (.py)
-* look at ansible/lib/ansible/module_utils/powershell.ps1 for common code, avoid duplication
-* Ansible uses strictmode version 2.0 so be sure to test with that enabled
 
-All powershell modules must start:
+For a checklist and details on how to write Windows modules please see :doc:`developing_modules_general_windows`
 
-
-.. code-block:: powershell
-
-    #!powershell
-
-    <GPL header>
-
-    # WANT_JSON
-    # POWERSHELL_COMMON
-
-To parse all arguments into a variable modules generally use:
-
-.. code-block:: powershell
-
-    $params = Parse-Args $args
-
-Arguments
----------
-
-* Try and use state present and state absent like other modules
-* You need to check that all your mandatory args are present. You can do this using the builtin Get-AnsibleParam function.
-* Required arguments:
-
-.. code-block:: powershell
-
-        $package =  Get-AnsibleParam -obj $params -name name -failifempty $true
-
-Required arguments with name validation:
-
-.. code-block:: powershell
-
-        $state = Get-AnsibleParam -obj $params -name "State" -ValidateSet "Present","Absent" -resultobj $resultobj -failifempty $true
-
-Optional arguments with name validation
----------------------------------------
-
-.. code-block:: powershell
-
-        $state = Get-AnsibleParam -obj $params -name "State" -default "Present" -ValidateSet "Present","Absent"
-
-* If the "FailIfEmpty" is true, the resultobj parameter is used to specify the object returned to fail-json. You can also override the default message
-  using $emptyattributefailmessage (for missing required attributes) and $ValidateSetErrorMessage (for attribute validation errors)
-* Look at existing modules for more examples of argument checking.
-
-Results
--------
-* The result object should always contain an attribute called changed set to either $true or $false
-* Create your result object like this
-
-.. code-block:: powershell
-
-        $result = New-Object psobject @{
-        changed = $false
-        other_result_attribute = $some_value
-        };
-
-        If all is well, exit with a
-        Exit-Json $result
-
-* Ensure anything you return, including errors can be converted to json.
-* Be aware that because exception messages could contain almost anything.
-* ConvertTo-Json will fail if it encounters a trailing \ in a string.
-* If all is not well use Fail-Json to exit.
-
-* Have you tested for powershell 3.0 and 4.0 compliance?
 
 Deprecating and making module aliases
 ======================================

@@ -1,24 +1,16 @@
 #!/usr/bin/python
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# -*- coding: utf-8 -*-
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+# (c) 2017, Ansible by Red Hat, inc
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -54,6 +46,8 @@ options:
     required: false
     default: present
     choices: ['present', 'absent']
+notes:
+  - Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
 """
 
 EXAMPLES = """
@@ -76,9 +70,10 @@ commands:
 """
 import re
 
-from ansible.module_utils.junos import junos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import exec_command
+from ansible.module_utils.junos import junos_argument_spec, check_args
+from ansible.module_utils.junos import commit_configuration, discard_changes
 from ansible.module_utils.network_common import to_list
 from ansible.module_utils.six import iteritems
 
@@ -89,26 +84,23 @@ def map_obj_to_commands(updates, module):
     want, have = updates
     commands = list()
 
-    if want['state'] == 'present' and have['state'] == 'absent':
-        commands.append(
-            'set system services netconf ssh port %s' % want['netconf_port']
-        )
-
-    elif want['state'] == 'absent' and have['state'] == 'present':
-        commands.append('delete system services netconf')
-
-    elif want['state'] == 'present':
-        if want['netconf_port'] != have.get('netconf_port'):
+    if want['state'] == 'absent':
+        if have['state'] == 'present':
+            commands.append('delete system services netconf')
+    else:
+        if have['state'] == 'absent' or want['netconf_port'] != have.get('netconf_port'):
             commands.append(
                 'set system services netconf ssh port %s' % want['netconf_port']
             )
 
     return commands
 
+
 def parse_port(config):
     match = re.search(r'port (\d+)', config)
     if match:
         return int(match.group(1))
+
 
 def map_config_to_obj(module):
     cmd = 'show configuration system services netconf'
@@ -118,7 +110,7 @@ def map_config_to_obj(module):
     config = str(out).strip()
 
     obj = {'state': 'absent'}
-    if config:
+    if 'ssh' in config:
         obj.update({
             'state': 'present',
             'netconf_port': parse_port(config)
@@ -130,6 +122,7 @@ def validate_netconf_port(value, module):
     if not 1 <= value <= 65535:
         module.fail_json(msg='netconf_port must be between 1 and 65535')
 
+
 def map_params_to_obj(module):
     obj = {
         'netconf_port': module.params['netconf_port'],
@@ -139,10 +132,11 @@ def map_params_to_obj(module):
     for key, value in iteritems(obj):
         # validate the param value (if validator func exists)
         validator = globals().get('validate_%s' % key)
-        if all((value, validator)):
+        if callable(validator):
             validator(value, module)
 
     return obj
+
 
 def load_config(module, config, commit=False):
 
@@ -156,13 +150,15 @@ def load_config(module, config, commit=False):
     exec_command(module, 'top')
     rc, diff, err = exec_command(module, 'show | compare')
 
-    if commit:
-        exec_command(module, 'commit and-quit')
-    else:
-        for cmd in ['rollback 0', 'exit']:
-            exec_command(module, cmd)
+    if diff:
+        if commit:
+            exec_command(module, 'commit and-quit')
+        else:
+            for cmd in ['rollback 0', 'exit']:
+                exec_command(module, cmd)
 
     return str(diff).strip()
+
 
 def main():
     """main entry point for module execution
