@@ -1,0 +1,16 @@
+---
+
+# In this task list, the 0th item is the Active unit and the 1st item is the
+# standby unit.
+
+- include: setup.yaml
+  when: ansible_play_batch[0] == inventory_hostname
+
+- include: test-device-to-group.yaml
+  when: ansible_play_batch[0] == inventory_hostname
+
+- include: test-pull-recent-device.yaml
+  when: ansible_play_batch[1] == inventory_hostname
+
+- include: teardown.yaml
+  when: ansible_play_batch[0] == inventory_hostname

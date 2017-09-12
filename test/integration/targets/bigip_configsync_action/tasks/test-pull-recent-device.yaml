@@ -1,0 +1,48 @@
+---
+
+- name: Create another pool - First device
+  bigip_pool:
+      server: "{{ hostvars['bigip1']['ansible_host'] }}"
+      lb_method: "round_robin"
+      name: "cs2.pool"
+      state: "present"
+  register: result
+
+- name: Assert Create another pool - First device
+  assert:
+      that:
+          - result|changed
+
+- name: Sync configuration from most recent - Second device
+  bigip_configsync_actions:
+      device_group: "{{ device_group }}"
+      sync_most_recent_to_device: yes
+  register: result
+
+- name: Assert Sync configuration from most recent - Second device
+  assert:
+      that:
+          - result|changed
+
+- name: Sync configuration from most recent - Second device - Idempotent check
+  bigip_configsync_actions:
+      device_group: "{{ device_group }}"
+      sync_most_recent_to_device: yes
+  register: result
+
+- name: Assert Sync configuration from most recent - Second device - Idempotent check
+  assert:
+      that:
+          - not result|changed
+
+- name: Create another pool again - Second device - ensure it was created in previous sync
+  bigip_pool:
+      lb_method: "round_robin"
+      name: "cs2.pool"
+      state: "present"
+  register: result
+
+- name: Assert Create another pool again - Second device - ensure it was deleted in previous sync
+  assert:
+      that:
+          - not result|changed
