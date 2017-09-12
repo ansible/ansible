@@ -20,7 +20,9 @@ short_description: Create/delete a DNS record in DigitalOcean
 description:
      - Create/delete a DNS record in DigitalOcean.
 version_added: "1.6"
-author: "Michael Gregson (@mgregson)"
+author:
+  - "Michael Gregson (@mgregson)"
+  - "Spencer McIntyre (@zeroSteiner)"
 options:
   state:
     description:
@@ -39,7 +41,17 @@ options:
      - String, this is the name of the droplet - must be formatted by hostname rules, or the name of a SSH key, or the name of a domain.
   ip:
     description:
-     - The IP address to point a domain at.
+     - The IP address to point a domain or record at.
+  type:
+    description:
+      - The type of operation, None (default) to create or remove a domain otherwise the type of record to create or remove.
+    default: None
+    choices: ['A', 'AAAA', 'CAA', 'CNAME', 'MX', 'NS', 'SRV', 'TXT']
+    version_added: "2.4.1"
+  data:
+    description:
+      - The data to use when creating or removing a record. When the record is being removed, this string is treated as a regular expression.
+    version_added: "2.4.1"
 
 notes:
   - Two environment variables can be used, DO_API_KEY and DO_API_TOKEN. They both refer to the v2 token.
@@ -77,6 +89,13 @@ EXAMPLES = '''
     name: "{{ test_droplet.droplet.name }}.my.domain"
     ip: "{{ test_droplet.droplet.ip_address }}"
 
+# Remove an existing SPF record for a domain
+
+- digital_ocean_domain:
+    state: absent
+    name: "my.domain"
+    data: "v\\=spf1\\ .*"
+    type: txt
 '''
 
 import os
