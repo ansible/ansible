@@ -448,7 +448,7 @@ class Base(with_metaclass(BaseMeta, object)):
                         msg= "The task includes an option with an undefined variable. The error was: %s" % (to_native(e))
                     else:
                         msg= "The field '%s' has an invalid value, which includes an undefined variable. The error was: %s" % (name, to_native(e))
-                    raise AnsibleParserError(msg, obj=self.get_ds(), orig_exc=e)
+                    raise AnsibleParserError(msg, obj=self.get_ds())
 
         self._finalized = True
 
