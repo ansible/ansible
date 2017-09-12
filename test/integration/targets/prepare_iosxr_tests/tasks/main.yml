@@ -3,8 +3,6 @@
 - name: Ensure we have loopback 888 for testing
   iosxr_config:
     src: config.j2
-    provider: "{{ cli }}"
-
 
 # Some AWS hostnames can be longer than those allowed by the system we are testing
 # Truncate the hostname

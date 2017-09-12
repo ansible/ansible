@@ -3,7 +3,6 @@
   iosxr_banner:
     banner: login
     state: absent
-    provider: "{{ cli }}"
 
 - name: Set login
   iosxr_banner:
@@ -13,7 +12,6 @@
       that has a multiline
       string
     state: present
-    provider: "{{ cli }}"
   register: result
 
 - debug:
@@ -33,7 +31,6 @@
       that has a multiline
       string
     state: present
-    provider: "{{ cli }}"
   register: result
 
 - assert:
