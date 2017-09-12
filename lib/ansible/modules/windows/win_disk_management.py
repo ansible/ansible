@@ -26,7 +26,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: win_disk_management
-version_added: '2.4'
+version_added: '2.5'
 short_description: A Windows disk management module
 description:
    - With the module you can select a disk on the computer and manage it (e.g. initializing, partitioning, formatting).
