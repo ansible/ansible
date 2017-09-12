@@ -66,9 +66,9 @@ INTERNAL NOTE: TBD - Simplist case that shows the solution. We can build out the
        description: public interface configuration
        enabled: yes
        aggregate:
-         - GigabitEthernet0/2
-         - GigabitEthernet0/3
-         - GigabitEthernet0/4
+         - { name: GigabitEthernet0/2 }
+         - { name: GigabitEthernet0/3 }
+         - { name: GigabitEthernet0/4 }
 
        # Intended state
        state: connected
@@ -315,6 +315,7 @@ Content
 
   * Marker in in text, colour & link to this page in web?
   * Module examples should have ``# Declared configuration`` and ``# Intended state``
+  * Care needed with `state:` `state: present` vs `state: up`
 
 * *configuration* vs *state* vs *physical*?
 * ``delay:``
