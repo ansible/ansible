@@ -42,7 +42,7 @@ except ImportError:
 
 import yaml
 from jinja2 import Environment, FileSystemLoader
-from six import iteritems
+from six import iteritems, string_types
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes
@@ -77,6 +77,9 @@ DEPRECATED = b" (D)"
 
 def rst_ify(text):
     ''' convert symbols like I(this is in italics) to valid restructured text '''
+
+    print('text: %s' % text)
+    print('type(text): %s' % type(text))
 
     try:
         t = _ITALIC.sub(r'*' + r"\1" + r"*", text)
@@ -156,6 +159,7 @@ def get_module_info(module_dir, limit_to_modules=None, verbose=False):
             least one key, '_modules' which contains a list of module names in
             that category.  Any other keys in the dict are subcategories with
             the same structure.
+
     '''
 
     categories = dict()
@@ -289,12 +293,10 @@ def jinja2_environment(template_dir, typ, plugin_type):
         templates['category_list'] = env.get_template('%s_by_category.rst.j2' % plugin_type)
         templates['support_list'] = env.get_template('%s_by_support.rst.j2' % plugin_type)
         templates['list_of_CATEGORY_modules'] = env.get_template('list_of_CATEGORY_%s.rst.j2' % plugin_type)
-        # trim trailing s off of plugin_type
-        outputname = '%s_' + '%s.rst' % plugin_type[:-1]
     else:
         raise Exception("unknown module format type: %s" % typ)
 
-    return templates, outputname
+    return templates
 
 
 def too_old(added):
@@ -319,7 +321,7 @@ def process_modules(module_map, templates, outputname,
 
         fname = module_map[module]['path']
 
-        pprint.pprint(('process_modules module_info: ', module_map[module]))
+        # pprint.pprint(('process_modules module_info: ', module_map[module]))
 
         module_categories = module_map[module].get('categories', [])
 
@@ -342,6 +344,7 @@ def process_modules(module_map, templates, outputname,
         doc['version_added'] = doc.get('version_added', '')
 
         doc['plugin_type'] = plugin_type
+
         if module_map[module]['deprecated'] and 'deprecated' not in doc:
             print("*** ERROR: DEPRECATED MODULE MISSING 'deprecated' DOCUMENTATION: %s, %s ***\n" % (fname, module))
 
@@ -401,12 +404,16 @@ def process_modules(module_map, templates, outputname,
         doc['now_date'] = datetime.date.today().strftime('%Y-%m-%d')
         doc['ansible_version'] = ansible_version
 
+        # check the 'deprecated' field in doc. We expect a dict potentially with 'why', 'version', and 'alternative' fields
+        doc
+
         # examples = module_map[module]['examples']
         # print('\n\n%s: type of examples: %s\n' % (module, type(examples)))
         # if examples and not isinstance(examples, (str, unicode, list)):
         #    raise TypeError('module %s examples is wrong type (%s): %s' % (module, type(examples), examples))
 
-        if isinstance(module_map[module]['examples'], (str, unicode)):
+        # use 'examples' for 'plainexamples' if 'examples' is a string
+        if isinstance(module_map[module]['examples'], string_types):
             doc['plainexamples'] = module_map[module]['examples']  # plain text
         else:
             doc['plainexamples'] = ''
@@ -424,14 +431,13 @@ def process_modules(module_map, templates, outputname,
             doc['returndocs'] = None
 
         doc['author'] = doc.get('author', ['UNKNOWN'])
-        if isinstance(doc['author'], (str, unicode)):
+        if isinstance(doc['author'], string_types):
             doc['author'] = [doc['author']]
 
         # print('about to template')
         # pprint.pprint(doc)
         text = templates['plugin'].render(doc)
 
-        print('\n\nplugin_type=%s' % plugin_type)
         # plugins get namespace dirs but modules do not
         if plugin_type == 'plugins':
             for module_category in module_categories:
@@ -557,8 +563,14 @@ def main():
     validate_options(options)
 
     plugin_type = options.plugin_type
-    templates, outputname = jinja2_environment(options.template_dir, options.type,
-                                               plugin_type)
+    templates = jinja2_environment(options.template_dir, options.type,
+                                   plugin_type)
+
+    # for plugins, just use the short name 'ssh.rst' vs 'ssh_module.rst'
+    outputname = '%s.rst'
+    # trim trailing s off of plugin_type for plugin_type=='modules'. ie 'copy_module.rst'
+    if plugin_type == 'modules':
+        outputname = '%s_' + '%s.rst' % plugin_type[:-1]
 
     # Convert passed-in limit_to_modules to None or list of modules.
     if options.limit_to_modules is not None:
@@ -574,9 +586,7 @@ def main():
     # pprint.pprint(dict(mod_info))
     # Transform the data
     if options.type == 'rst':
-        for record in mod_info.values():
-            # print('record\n')
-            # pprint.pprint(record)
+        for key, record in mod_info.items():
             if record.get('doc', None):
                 record['doc']['short_description'] = rst_ify(record['doc']['short_description'])
 
@@ -591,7 +601,6 @@ def main():
 
     # Render all the categories for modules
     category_list_name_template = 'list_of_%s_' + '%s.rst' % plugin_type
-    # print('ctlp: %s' % category_list_name_template)
     process_categories(mod_info, categories, templates, options.output_dir,
                        category_list_name_template, plugin_type)
 
