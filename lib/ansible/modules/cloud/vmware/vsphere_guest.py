@@ -112,6 +112,12 @@ options:
       - A key, value list of nics, their types and what network to put them on.
     required: false
     default: null
+  vm_boot_options:
+    description:
+      - A key value pair of boot options. Includes ['boot_delay', 'boot_order', 'boot_order_disk', 'boot_order_ethernet', 'enter_bios_setup'].
+        'boot_order' either uses the value 'bios' to restore to BIOS control or an array containing ['floppy', 'cdrom', 'disk', 'ethernet'].
+        'disk' and 'ethernet' require the presence of 'boot_order_disk' and 'boot_order_ethernet' and they should contain the device keys.
+    version_added: 2.5
   vm_extra_config:
     description:
       - A key, value pair of any extra values you want set or changed in the vmx file of the VM. Useful to set advanced options on the VM.
@@ -165,6 +171,18 @@ EXAMPLES = '''
       mem.hotadd:  yes
       notes: This is a test VM
       folder: MyFolder
+    vm_boot_options:
+      boot_delay: 10000
+      enter_bios_setup: yes
+      boot_order:
+        - cdrom
+        - disk
+        - floppy
+        - ethernet
+      boot_order_disk:
+        - 2000
+      boot_order_ethernet:
+        - 4000
     vm_disk:
       disk1:
         size_gb: 10
@@ -655,7 +673,8 @@ def vmdisk_id(vm, current_datastore_name):
     return id_list
 
 
-def deploy_template(vsphere_client, guest, resource_pool, template_src, esxi, module, cluster_name, snapshot_to_clone, power_on_after_clone, vm_extra_config):
+def deploy_template(vsphere_client, guest, resource_pool, template_src, esxi, module, cluster_name, snapshot_to_clone, power_on_after_clone, vm_extra_config,
+                    vm_boot_options):
     vmTemplate = vsphere_client.get_vm_by_name(template_src)
     vmTarget = None
 
@@ -845,7 +864,8 @@ def update_disks(vsphere_client, vm, module, vm_disk, changes):
     return changed, changes
 
 
-def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name, guest, vm_extra_config, vm_hardware, vm_disk, vm_nic, state, force):
+def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name, guest, vm_extra_config, vm_boot_options, vm_hardware, vm_disk, vm_nic, state,
+                   force):
     spec = None
     changed = False
     changes = {}
@@ -874,6 +894,40 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
             extra_config.append(ec)
         spec.set_element_extraConfig(extra_config)
         changes["extra_config"] = vm_extra_config
+
+    # Change boot options
+    if vm_boot_options:
+        spec = spec_singleton(spec, request, vm)
+        boot_options = VI.ns0.VirtualMachineBootOptions_Def('boot_options').pyclass()
+        if 'boot_delay' in vm_boot_options:
+            boot_options.set_element_bootDelay(int(vm_boot_options['boot_delay']))
+        if 'enter_bios_setup' in vm_boot_options:
+            boot_options.set_element_enterBIOSSetup(bool(vm_boot_options['enter_bios_setup']))
+        if 'boot_order' in vm_boot_options:
+            if vm_boot_options['boot_order'] == 'bios':
+                boot_options.set_element_bootOrder([0])
+            else:
+                boot_order = []
+                for v in vm_boot_options['boot_order']:
+                    if v == 'cdrom':
+                        cdrom = VI.ns0.VirtualMachineBootOptionsBootableCdromDevice_Def("cdrom").pyclass()
+                        boot_order.append(cdrom)
+                    if v == 'floppy':
+                        floppy = VI.ns0.VirtualMachineBootOptionsBootableFloppyDevice_Def("floppy").pyclass()
+                        boot_order.append(floppy)
+                    if v == 'disk':
+                        for d in vm_boot_options['boot_order_disk']:
+                            disk = VI.ns0.VirtualMachineBootOptionsBootableDiskDevice_Def("disk").pyclass()
+                            disk.set_element_deviceKey(d)
+                            boot_order.append(disk)
+                    if v == 'ethernet':
+                        for d in vm_boot_options['boot_order_ethernet']:
+                            ethernet = VI.ns0.VirtualMachineBootOptionsBootableEthernetDevice_Def("ethernet").pyclass()
+                            ethernet.set_element_deviceKey(d)
+                            boot_order.append(ethernet)
+                boot_options.set_element_bootOrder(boot_order)
+        spec.set_element_bootOptions(boot_options)
+        changes["boot_options"] = vm_boot_options
 
     # Change Memory
     if 'memory_mb' in vm_hardware:
@@ -1211,7 +1265,8 @@ def _get_folderid_for_path(vsphere_client, datacenter, path):
     return folder['id'] if folder else None
 
 
-def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, vm_extra_config, vm_hardware, vm_disk, vm_nic, vm_hw_version, state):
+def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, vm_extra_config, vm_boot_options, vm_hardware, vm_disk, vm_nic, vm_hw_version,
+              state):
 
     datacenter = esxi['datacenter']
     esxi_hostname = esxi['hostname']
@@ -1343,6 +1398,36 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
     config.set_element_memoryMB(int(vm_hardware['memory_mb']))
     config.set_element_numCPUs(int(vm_hardware['num_cpus']))
     config.set_element_guestId(vm_hardware['osid'])
+    if vm_boot_options:
+        boot_options = config.new_bootOptions()
+        if 'boot_delay' in vm_boot_options:
+            boot_options.set_element_bootDelay(int(vm_boot_options['boot_delay']))
+        if 'enter_bios_setup' in vm_boot_options:
+            boot_options.set_element_enterBIOSSetup(bool(vm_boot_options['enter_bios_setup']))
+        if 'boot_order' in vm_boot_options:
+            if vm_boot_options['boot_order'] == 'bios':
+                boot_options.set_element_bootOrder([0])
+            else:
+                boot_order = []
+                for v in vm_boot_options['boot_order']:
+                    if v == 'cdrom':
+                        cdrom = VI.ns0.VirtualMachineBootOptionsBootableCdromDevice_Def("cdrom").pyclass()
+                        boot_order.append(cdrom)
+                    if v == 'floppy':
+                        floppy = VI.ns0.VirtualMachineBootOptionsBootableFloppyDevice_Def("floppy").pyclass()
+                        boot_order.append(floppy)
+                    if v == 'disk':
+                        for d in vm_boot_options['boot_order_disk']:
+                            disk = VI.ns0.VirtualMachineBootOptionsBootableDiskDevice_Def("disk").pyclass()
+                            disk.set_element_deviceKey(d)
+                            boot_order.append(disk)
+                    if v == 'ethernet':
+                        for d in vm_boot_options['boot_order_ethernet']:
+                            ethernet = VI.ns0.VirtualMachineBootOptionsBootableEthernetDevice_Def("ethernet").pyclass()
+                            ethernet.set_element_deviceKey(d)
+                            boot_order.append(ethernet)
+                boot_options.set_element_bootOrder(boot_order)
+        config.set_element_bootOptions(boot_options)
     devices = []
 
     # Attach all the hardware we want to the VM spec.
@@ -1741,6 +1826,7 @@ def main():
             vm_nic=dict(required=False, type='dict', default={}),
             vm_hardware=dict(required=False, type='dict', default={}),
             vm_extra_config=dict(required=False, type='dict', default={}),
+            vm_boot_options=dict(required=False, type='dict', default={}),
             vm_hw_version=dict(required=False, default=None, type='str'),
             resource_pool=dict(required=False, default=None, type='str'),
             cluster=dict(required=False, default=None, type='str'),
@@ -1780,6 +1866,7 @@ def main():
     vm_nic = module.params['vm_nic']
     vm_hardware = module.params['vm_hardware']
     vm_extra_config = module.params['vm_extra_config']
+    vm_boot_options = module.params['vm_boot_options']
     vm_hw_version = module.params['vm_hw_version']
     esxi = module.params['esxi']
     resource_pool = module.params['resource_pool']
@@ -1853,6 +1940,7 @@ def main():
                 cluster_name=cluster,
                 guest=guest,
                 vm_extra_config=vm_extra_config,
+                vm_boot_options=vm_boot_options,
                 vm_hardware=vm_hardware,
                 vm_disk=vm_disk,
                 vm_nic=vm_nic,
@@ -1887,7 +1975,8 @@ def main():
                 cluster_name=cluster,
                 snapshot_to_clone=snapshot_to_clone,
                 power_on_after_clone=power_on_after_clone,
-                vm_extra_config=vm_extra_config
+                vm_extra_config=vm_extra_config,
+                vm_boot_options=vm_boot_options
             )
 
         if state in ['restarted', 'reconfigured']:
@@ -1920,6 +2009,7 @@ def main():
                 cluster_name=cluster,
                 guest=guest,
                 vm_extra_config=vm_extra_config,
+                vm_boot_options=vm_boot_options,
                 vm_hardware=vm_hardware,
                 vm_disk=vm_disk,
                 vm_nic=vm_nic,
