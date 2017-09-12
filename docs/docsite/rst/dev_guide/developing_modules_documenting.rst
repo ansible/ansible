@@ -223,6 +223,8 @@ The following fields can be used and are all required unless specified otherwise
     * If `required` is false/missing, `default` may be specified (assumed 'null' if missing).
     * Ensure that the default parameter in the docs matches the default parameter in the code.
     * The default option must not be listed as part of the description.
+    * If the option is a boolean value, you can use any of the boolean values recognized by Ansible:
+      (true/false, yes/no, etc).  Choose the one that reads better in the context of the option.
   :choices:
     List of option values. Should be absent if empty.
   :type:
