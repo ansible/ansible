@@ -33,7 +33,7 @@ options:
   subnet_ids:
     description:
       - A list of subnet IDs to gather facts for.
-    version_added: "2.4"
+    version_added: "2.5"
   filters:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
@@ -78,7 +78,7 @@ EXAMPLES = '''
   register: subnet_facts
 
 - set_fact:
-    subnet_ids: "{{ subnet_facts.results|map(attribute='subnets.0.id')|list }}"
+    subnet_ids: "{{ subnet_facts.subnets|map(attribute='id')|list }}"
 '''
 
 RETURN = '''
@@ -169,12 +169,23 @@ from ansible.module_utils.ec2 import (
 )
 
 try:
-    from botocore.exceptions import ClientError, NoCredentialsError
+    import botocore
 except ImportError:
     pass  # caught by imported HAS_BOTO3
 
 
-@AWSRetry.backoff()
+@AWSRetry.exponential_backoff()
+def describe_subnets_with_backoff(connection, subnet_ids, filters):
+    """
+    Describe Subnets with AWSRetry backoff throttling support.
+
+    connection  : boto3 client connection object
+    subnet_ids  : list of subnet ids for which to gather facts
+    filters     : additional filters to apply to request
+    """
+    return connection.describe_subnets(SubnetIds=subnet_ids, Filters=filters)
+
+
 def describe_subnets(connection, module):
     """
     Describe Subnets.
@@ -186,13 +197,17 @@ def describe_subnets(connection, module):
     filters = ansible_dict_to_boto3_filter_list(module.params.get('filters'))
     subnet_ids = module.params.get('subnet_ids')
 
+    if subnet_ids is None:
+        # Set subnet_ids to empty list if it is None
+        subnet_ids = []
+
     # init empty list for return vars
     subnet_info = list()
 
     # Get the basic VPC info
     try:
-        response = connection.describe_subnets(SubnetIds=subnet_ids, Filters=filters)
-    except ClientError as e:
+        response = describe_subnets_with_backoff(connection, subnet_ids, filters)
+    except botocore.exceptions.ClientError as e:
         module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     for subnet in response['Subnets']:
@@ -218,10 +233,11 @@ def main():
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 is required for this module')
 
+    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
+
     try:
-        region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
         connection = boto3_conn(module, conn_type='client', resource='ec2', **aws_connect_params)
-    except (ClientError, NoCredentialsError) as e:
+    except (botocore.exceptions.NoCredentialsError, botocore.exceptions.ProfileNotFound) as e:
         module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     describe_subnets(connection, module)
