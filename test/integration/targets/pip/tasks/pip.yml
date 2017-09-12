@@ -166,3 +166,22 @@
   assert:
     that:
       - "not q_check_mode.changed"
+
+# Any package which is higher than standard lib reports changed state
+- name: ensure tarsnapper package is not installed (precondition setup)
+  pip: name=tarsnapper state=absent
+
+- name: check for tarsnapper package
+  pip: name=tarsnapper state=present
+
+- name: check for tarsnapper package
+  pip: name=tarsnapper state=present
+  register: tarsnapper_result
+
+- name: make sure tarsnapper package doesn't report changed
+  assert:
+    that:
+      - "not tarsnapper_result.changed"
+
+- name: Cleanup
+  pip: name=tarsnapper state=absent
