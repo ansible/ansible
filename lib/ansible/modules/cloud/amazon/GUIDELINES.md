@@ -272,6 +272,43 @@ except ClientError as e:
                          **camel_dict_to_snake_dict(e.response))
 ```
 
+### API throttling and pagination
+
+For methods that return a lot of results, boto3 often provides
+[paginators](http://boto3.readthedocs.io/en/latest/guide/paginators.html). If the method
+you're calling has `NextToken` or `Marker` parameters, you should probably
+check whether a paginator exists (the top of each boto3 service reference page has a link
+to Paginators, if the service has any). To use paginators, obtain a paginator object,
+call `paginator.paginate` with the appropriate arguments and then call `build_full_result`.
+
+Any time that you are calling the AWS API a lot, you may experience API throttling,
+and there is an `AWSRetry` decorator that can be used to ensure backoff. Because
+exception handling could interfere with the retry working properly (as AWSRetry needs to
+catch throttling exceptions to work correctly), you'd need to provide a backoff function
+and then put exception handling around the backoff function.
+
+You can use `exponential_backoff` or `jittered_backoff` strategies - see
+the [cloud module_utils](/tree/devel/lib/ansible/module_utils/cloud.py)
+and [AWS Architecture blog](https://www.awsarchitectureblog.com/2015/03/backoff.html)
+for more details.
+
+The combination of these two approaches is then
+
+```
+@AWSRetry.exponential_backoff(tries=5, delay=5)
+def describe_some_resource_with_backoff(client, **kwargs):
+     paginator = client.get_paginator('describe_some_resource')
+     return paginator.paginate(**kwargs).build_full_result()['SomeResource']
+
+
+def describe_some_resource(client, module):
+    filters = ansible_dict_to_boto3_filter_list(module.params['filters'])
+    try:
+        return describe_some_resource_with_backoff(client, Filters=filters)
+    except botocore.exceptions.ClientError as e:
+        module.fail_json_aws(e, msg="Could not describe some resource")
+```
+
 ### Returning Values
 
 When you make a call using boto3, you will probably get back some useful information that you
