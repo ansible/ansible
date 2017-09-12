@@ -7,5 +7,4 @@ This section explores particular Ansible Networking functionality and use cases 
 .. toctree::
    :maxdepth: 1
 
-   network_aggregate_resources
    network_declarative_intent
