@@ -381,9 +381,11 @@ class Rhsm(RegistrationBase):
         if server_hostname:
             args.extend(['--serverurl', server_hostname])
 
+        if org_id:
+            args.extend(['--org', org_id])
+
         if activationkey:
             args.extend(['--activationkey', activationkey])
-            args.extend(['--org', org_id])
         else:
             if autosubscribe:
                 args.append('--autosubscribe')
@@ -701,9 +703,17 @@ def main():
                                        required=False,
                                        no_log=True),
         ),
-        required_together=[['username', 'password'], ['activationkey', 'org_id'],
-                           ['server_proxy_hostname', 'server_proxy_port'], ['server_proxy_user', 'server_proxy_password']],
-        mutually_exclusive=[['username', 'activationkey'], ['pool', 'pool_ids']],
+        required_together=[['username', 'password'],
+                           ['server_proxy_hostname', 'server_proxy_port'],
+                           ['server_proxy_user', 'server_proxy_password']],
+
+        mutually_exclusive=[['activationkey', 'username'],
+                            ['activationkey', 'consumer_id'],
+                            ['activationkey', 'environment'],
+                            ['activationkey', 'autosubscribe'],
+                            ['force', 'consumer_id'],
+                            ['pool', 'pool_ids']],
+
         required_if=[['state', 'present', ['username', 'activationkey'], True]],
     )
 
@@ -717,6 +727,8 @@ def main():
     autosubscribe = module.params['autosubscribe']
     activationkey = module.params['activationkey']
     org_id = module.params['org_id']
+    if activationkey and not org_id:
+        module.fail_json(msg='org_id is required when using activationkey')
     environment = module.params['environment']
     pool = module.params['pool']
     pool_ids = {}
