@@ -674,7 +674,7 @@ def get_reservations(module, ec2, tags=None, state=None, zone=None):
                 pass
 
         # if not a string type, convert and make sure it's a text string
-        if not isinstance(tags, string_types):
+        if isinstance(tags, int):
             tags = to_text(tags)
 
         # if string, we only care that a tag of that name exists
