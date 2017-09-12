@@ -217,7 +217,7 @@ EXAMPLES = '''
         XUsdmRaWiF+l4s6Dcd56SuRp5SGNa2+vP9Of/FX5
         -----END CERTIFICATE-----
     manageiq_connection:
-      url: 'https://127.0.0.1'
+      url: 'https://127.0.0.1:80'
       username: 'admin'
       password: 'password'
       verify_ssl: true
