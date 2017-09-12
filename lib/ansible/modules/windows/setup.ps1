@@ -36,6 +36,25 @@ Function Get-CustomFacts {
   }
 }
 
+Function Get-MachineSid {
+    # The Machine SID is stored in HKLM:\SECURITY\SAM\Domains\Account and is
+    # only accessible by the Local System account. This method get's the local
+    # admin account (ends with -500) and lops it off to get the machine sid.
+
+    Add-Type -AssemblyName System.DirectoryServices.AccountManagement
+    $principal_context = New-Object -TypeName System.DirectoryServices.AccountManagement.PrincipalContext([System.DirectoryServices.AccountManagement.ContextType]::Machine)
+    $user_principal = New-Object -TypeName System.DirectoryServices.AccountManagement.UserPrincipal($principal_context)
+    $searcher = New-Object -TypeName System.DirectoryServices.AccountManagement.PrincipalSearcher($user_principal)
+    $users = $searcher.FindAll() | Where-Object { $_.Sid -like "*-500" }
+    
+    $machine_sid = $null
+    if ($users -ne $null) {
+        $administrator_sid = $users.Sid.Value
+        $machine_sid = $administrator_sid.Substring(0, $administrator_sid.Length - 4)
+    }
+    return $machine_sid
+}
+
 $result = @{
     ansible_facts = @{ }
     changed = $false
@@ -147,7 +166,7 @@ $ansible_facts = @{
     ansible_ip_addresses = $ips
     ansible_kernel = $osversion.Version.ToString()
     ansible_lastboot = $win32_os.lastbootuptime.ToString("u")
-    ansible_machine_id = $user.User.AccountDomainSid.Value
+    ansible_machine_id = Get-MachineSid
     ansible_nodename = ($ip_props.HostName + "." + $ip_props.DomainName)
     ansible_os_family = "Windows"
     ansible_os_name = ($win32_os.Name.Split('|')[0]).Trim()
