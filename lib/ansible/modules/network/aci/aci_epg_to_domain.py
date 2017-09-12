@@ -95,6 +95,10 @@ options:
     description:
     - Name of an existing tenant.
     aliases: [ tenant_name ]
+  vm_provider:
+    description:
+    - The VM platform for VMM Domains.
+    choices: [ microsoft, openstack, vmware ]
 extends_documentation_fragment: aci
 '''
 
@@ -105,7 +109,7 @@ RETURN = r''' # '''
 from ansible.module_utils.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
-VM_PROVIDER_MAPPING = dict(vmware="uni/vmmp-VMware/dom-")
+VM_PROVIDER_MAPPING = dict(microsoft="uni/vmmp-Microsoft/dom-", openstack="uni/vmmp-OpenStack/dom-", vmware="uni/vmmp-VMware/dom-")
 
 
 def main():
@@ -124,7 +128,7 @@ def main():
         resolution_immediacy=dict(type='str', choices=['immediate', 'lazy', 'pre-provision']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         tenant=dict(type='str', aliases=['tenant_name']),
-        vm_provider=dict(type='str', choices=['vmware']),  # TODO: Find out OVS and Hyper-V options
+        vm_provider=dict(type='str', choices=['microsoft', 'openstack', 'vmware']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
     )
 
