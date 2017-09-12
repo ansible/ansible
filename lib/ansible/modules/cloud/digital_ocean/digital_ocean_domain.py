@@ -81,7 +81,6 @@ EXAMPLES = '''
 
 import os
 import re
-import string
 import traceback
 
 try:
@@ -94,7 +93,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 
 record_types = ['A', 'AAAA', 'CAA', 'CNAME', 'MX', 'NS', 'SRV', 'TXT']
-record_types.extend(map(string.lower, record_types))
+record_types.extend([rt.lower() for rt in record_types])
 
 
 class JsonfyMixIn(object):
@@ -180,6 +179,34 @@ class Domain(JsonfyMixIn):
         return False
 
 
+def get_key_or_die(module, k):
+    v = module.params[k]
+    if v is None:
+        module.fail_json(msg='Unable to load %s' % k)
+    return v
+
+
+def get_record_info_or_die(module):
+    record_name = '@'
+    record_domain = get_key_or_die(module, "name").strip()
+    json_domains = Domain.manager.all_domains()
+    domain_find = lambda name: next((Domain(jd) for jd in json_domains if jd['name'] == name), False)
+
+    if record_domain.startswith('@.'):
+        record_domain = record_domain[2:]
+        domain = domain_find(name=record_domain)
+    else:
+        domain = domain_find(name=record_domain)
+        if not domain and '.' in record_domain:
+            record_name, record_domain = record_domain.split('.', 1)
+            domain = domain_find(name=record_domain)
+            record_name = record_name.lower()
+
+    if not domain:
+        module.fail_json(msg='Unable to find domain ' + record_domain)
+    return record_name, record_domain, domain
+
+
 def core(module):
     try:
         api_token = module.params['api_token'] or os.environ['DO_API_TOKEN'] or os.environ['DO_API_KEY']
@@ -201,11 +228,6 @@ def core(module):
         elif state in 'absent':
             record_absent(module)
 
-def get_key_or_die(module, k):
-    v = module.params[k]
-    if v is None:
-        module.fail_json(msg='Unable to load %s' % k)
-    return v
 
 def domain_absent(module):
     domain = None
@@ -220,6 +242,7 @@ def domain_absent(module):
 
     event_json = domain.destroy()
     module.exit_json(changed=True, event=event_json)
+
 
 def domain_present(module):
     domain = Domain.find(id=module.params["id"])
@@ -244,13 +267,9 @@ def domain_present(module):
 
     module.exit_json(changed=False, domain=domain.to_json())
 
-def record_absent(module):
-    record_name, record_domain = get_key_or_die(module, "name").split('.', 1)
-    record_name = record_name.lower()
-    domain = Domain.find(name=record_domain)
-    if not domain:
-        module.fail_json(msg='Unable to find domain ' + record_domain)
 
+def record_absent(module):
+    record_name, record_domain, domain = get_record_info_or_die(module)
     record_data = None
     if "ip" in module.params:
         record_data = module.params["ip"]
@@ -273,13 +292,9 @@ def record_absent(module):
 
     module.exit_json(changed=False, domain=domain.to_json())
 
-def record_present(module):
-    record_name, record_domain = get_key_or_die(module, "name").split('.', 1)
-    record_name = record_name.lower()
-    domain = Domain.find(name=record_domain)
-    if not domain:
-        module.fail_json(msg='Unable to find domain ' + record_domain)
 
+def record_present(module):
+    record_name, record_domain, domain = get_record_info_or_die(module)
     record_data = None
     if "ip" in module.params:
         record_data = module.params["ip"]
