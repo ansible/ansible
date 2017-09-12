@@ -188,7 +188,7 @@ class Hardware(FactsBase):
         data = reply.find('.//route-engine-information')
         for obj in data:
             slot = self.get_text(obj, 'slot')
-            routing_engines.update(slot:{})
+            routing_engines.update( { slot:{} } )
             routing_engines[slot].update('mastership_state': self.get_text(obj,'mastership-state'))
             routing_engines[slot].update('mastership_priority': self.get_text(obj,'mastership-priority'))
             routing_engines[slot].update('status': self.get_text(obj,'status'))
