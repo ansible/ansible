@@ -4,13 +4,12 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-__metaclass__ = type
 
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -94,10 +93,11 @@ from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.module_utils._text import to_native
 from ansible.module_utils.urls import open_url
 
-
 HEADERS = {
     "Content-Type": "application/json",
-    "Accept": "application/json"
+    "Accept": "application/json",
+    "x-netapp-password-validate-method": "none"
+
 }
 
 
@@ -193,21 +193,26 @@ def set_password(module, ssid, api_url, user, pwd, current_password=None, new_pa
         rc, data = request(url, method='POST', data=post_body, headers=HEADERS, url_username=user, url_password=pwd,
                            ignore_errors=True)
     except Exception as e:
-        module.fail_json(msg="Failed to set system password. Id [%s].  Error [%s]" % (ssid, to_native(e)), exception=traceback.format_exc())
+        module.fail_json(msg="Failed to set system password. Id [%s].  Error [%s]" % (ssid, to_native(e)),
+                         exception=traceback.format_exc())
 
     if rc == 422:
         post_body = json.dumps(dict(currentAdminPassword='', adminPassword=set_admin, newPassword=new_password))
         try:
             rc, data = request(url, method='POST', data=post_body, headers=HEADERS, url_username=user, url_password=pwd)
         except:
+            # TODO(lorenp): Resolve ignored rc, data
             module.fail_json(msg="Wrong or no admin password supplied. Please update your playbook and try again")
 
-    update_data = update_storage_system_pwd(module, ssid, new_password, api_url, user, pwd)
+    if int(rc) >= 300:
+        module.fail_json(msg="Failed to set system password. Id [%s] Code [%s].  Error [%s]" % (ssid, rc, data))
 
-    if int(rc) == 204:
+    rc, update_data = update_storage_system_pwd(module, ssid, new_password, api_url, user, pwd)
+
+    if int(rc) < 300:
         return update_data
     else:
-        module.fail_json(msg="%s:%s" % (rc, data))
+        module.fail_json(msg="%s:%s" % (rc, update_data))
 
 
 def main():
@@ -251,11 +256,12 @@ def main():
     if len(new_password) > 30:
         module.fail_json(msg="Passwords must not be greater than 30 characters in length")
 
-    success = set_password(module, ssid, api_url, user, pwd, current_password=current_password,
-                           new_password=new_password,
-                           set_admin=set_admin)
+    result = set_password(module, ssid, api_url, user, pwd, current_password=current_password,
+                          new_password=new_password, set_admin=set_admin)
 
-    module.exit_json(changed=True, msg="Password Updated Successfully", **success)
+    module.exit_json(changed=True, msg="Password Updated Successfully",
+                     password_set=result['passwordSet'],
+                     password_status=result['passwordStatus'])
 
 
 if __name__ == '__main__':
