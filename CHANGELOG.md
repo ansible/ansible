@@ -49,14 +49,15 @@ Ansible Changes By Release
   its content is now also available directly in the resulting output, like other modules.
 
 #### Deprecated Modules (to be removed in 2.8):
-* ec2_facts: replaced by ec2_metadata_facts
+* azure: use M(azure_rm_virtualmachine) instead
 * cs_nic: replaced by cs_instance_nic_secondaryip, also see new module cs_instance_nic for managing nics
-* panos_address: use M(panos_object) instead
-* panos_service: use M(panos_object) instead
-* panos_security_policy: use M(panos_security_rule) instead
-* panos_nat_policy: use M(panos_nat_rule) instead
-* s3: replaced by aws_s3
+* ec2_facts: replaced by ec2_metadata_facts
 * ec2_remote_facts: replaced by 
+* panos_address: use M(panos_object) instead
+* panos_nat_policy: use M(panos_nat_rule) instead
+* panos_security_policy: use M(panos_security_rule) instead
+* panos_service: use M(panos_object) instead
+* s3: replaced by aws_s3
 * win_msi: use M(win_package) instead
 
 #### Removed Modules (previouslly deprecated):
@@ -65,8 +66,8 @@ Ansible Changes By Release
 * iosxr_template: use iosxr_config instead
 * junos_template: use junos_config instead
 * nxos_template: use nxos_config instead
-* ops_template: use ops_config instead
 * openswitch
+* ops_template: use ops_config instead
 
 
 ### Minor Changes
