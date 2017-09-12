@@ -472,6 +472,7 @@ class AzureInventory(object):
         self.group_by_security_group = True
         self.group_by_tag = True
         self.include_powerstate = True
+        self.include_private_ip = False
 
         self._inventory = dict(
             _meta=dict(
@@ -646,11 +647,15 @@ class AzureInventory(object):
                     for ip_config in network_interface.ip_configurations:
                         host_vars['private_ip'] = ip_config.private_ip_address
                         host_vars['private_ip_alloc_method'] = ip_config.private_ip_allocation_method
+                        if self.include_private_ip:
+                            host_vars['ansible_host'] = ip_config.private_ip_address
                         if ip_config.public_ip_address:
                             public_ip_reference = self._parse_ref_id(ip_config.public_ip_address.id)
                             public_ip_address = self._network_client.public_ip_addresses.get(
                                 public_ip_reference['resourceGroups'],
                                 public_ip_reference['publicIPAddresses'])
+                            if not self.include_private_ip:
+                                host_vars['ansible_host'] = public_ip_address.ip_address
                             host_vars['ansible_host'] = public_ip_address.ip_address
                             host_vars['public_ip'] = public_ip_address.ip_address
                             host_vars['public_ip_name'] = public_ip_address.name
