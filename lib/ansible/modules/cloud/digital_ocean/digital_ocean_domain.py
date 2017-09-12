@@ -80,6 +80,7 @@ EXAMPLES = '''
 '''
 
 import os
+import re
 import string
 import traceback
 
@@ -250,6 +251,12 @@ def record_absent(module):
     if not domain:
         module.fail_json(msg='Unable to find domain ' + record_domain)
 
+    record_data = None
+    if "ip" in module.params:
+        record_data = module.params["ip"]
+    if not record_data:
+        record_data = get_key_or_die(module, "data")
+
     record_type = module.params["type"].upper()
     records = domain.records()
     for record in records:
@@ -257,10 +264,12 @@ def record_absent(module):
             continue
         if record.type != record_type:
             continue
+        if re.match(record_data, record.data) is None:
+            continue
         record.destroy()
         module.exit_json(changed=True, domain=domain.to_json(), record=record.to_json())
 
-    module.exit_json(changed=False, domain=domain.to_json(), record=record.to_json())
+    module.exit_json(changed=False, domain=domain.to_json())
 
 def record_present(module):
     record_name, record_domain = get_key_or_die(module, "name").split('.', 1)
@@ -276,18 +285,6 @@ def record_present(module):
         record_data = get_key_or_die(module, "data")
 
     record_type = module.params["type"].upper()
-    records = domain.records()
-    for record in records:
-        if record.name.lower() != record_name:
-            continue
-        if record.type != record_type:
-            continue
-        if record.data == record_data:
-            module.exit_json(changed=False, domain=domain.to_json(), record=record.to_json())
-
-        record.destroy()
-        break
-
     record = domain.add_record(record_type, record_data, record_name)
     module.exit_json(changed=True, domain=domain.to_json(), record=record.to_json())
 
@@ -305,6 +302,7 @@ def main():
         ),
         required_one_of=(
             ['id', 'name'],
+            ['ip', 'data'],
         ),
     )
     if not HAS_DOPY:
