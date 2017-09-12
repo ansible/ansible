@@ -27,6 +27,7 @@ description:
   - Works with the ec2_lc module to manage Launch Configurations
 version_added: "1.6"
 author: "Gareth Rushgrove (@garethr)"
+requirements: [ "boto3", "botocore" ]
 options:
   state:
     description:
