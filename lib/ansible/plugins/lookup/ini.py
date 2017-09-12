@@ -1,22 +1,65 @@
 # (c) 2015, Yannig Perre <yannig.perre(at)gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+    lookup: ini
+    author: Yannig Perre <yannig.perre(at)gmail.com>
+    version_added: "2.0"
+    short_description: read data from a ini file
+    description:
+      - "The ini lookup reads the contents of a file in INI format (key1=value1).
+        This plugin retrieve the value on the right side after the equal sign (‘=’) of a given section ([section])."
+      - "You can also read a property file which - in this case - does not contain section."
+    options:
+      _terms:
+        description: they key(s) too look up
+        required: True
+    type:
+      description: ini Type of the file. 'properties' refers to the Java properties files.
+      default: 'ini'
+      choices: ['ini', 'properties']
+    file:
+      description: Name of the file to load
+      default: ansible.ini
+    section:
+      default: global
+      description: section where to lookup for key.
+    re:
+      default: False
+      type: boolean
+      description:  Flag to indicate if the key supplied is a regexp.
+    encoding:
+      default: utf-8
+      description:  Text encoding to use.
+    default:
+      description: return value if the key is not in the ini file
+      default: ''
+"""
+
+EXAMPLES = """
+- debug: msg="User in integration is {{ lookup('ini', 'user section=integration file=users.ini') }}"
+
+- debug: msg="User in production  is {{ lookup('ini', 'user section=production  file=users.ini') }}"
+
+- debug: msg="user.name is {{ lookup('ini', 'user.name type=properties file=user.properties') }}"
+
+- debug:
+    msg: "{{ item }}"
+  with_ini:
+    - value[1-2]
+    - section: section1
+    - file: "lookup.ini"
+    - re: true
+"""
+
+RETURN = """
+_raw:
+  description:
+    - value(s) of the key(s) in the ini file
+"""
 import os
 import re
 from collections import MutableSequence

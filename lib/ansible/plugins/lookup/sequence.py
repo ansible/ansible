@@ -1,21 +1,69 @@
 # (c) 2013, Jayson Vantuyl <jayson@aggressive.ly>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2012-17 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+DOCUMENTATION = """
+    lookup: sequence
+    author: Jayson Vantuyl <jayson@aggressive.ly>
+    version_added: "1.0"
+    short_description: generate a list based on a number sequence
+    description:
+      - generates a sequence of items. You can specify a start value, an end value, an optional “stride” value that specifies the number of steps to increment the sequence, and an optional printf-style format string.
+
+      - 'Arguments can be specified as key=value pair strings or as a shortcut form of the arguments string is also accepted: [start-]end[/stride][:format].'
+      - 'Numerical values can be specified in decimal, hexadecimal (0x3f8) or octal (0600).'
+      - Starting at version 1.9.2, negative strides are allowed.
+    options:
+      start:
+        description: number at which to start the sequence
+        default: 0
+        type: number
+      end:
+        description: number at which to end the sequence, dont use this with count
+        type: number
+        default: 0
+      count:
+        description: number of elements in the sequence, this is not to be used with end
+        type: number
+        default: 0
+      stride:
+        description: increments between sequence numbers, the default is 1 unless the end is less than the start, then it is -1.
+        type: number
+      format:
+        description: return a string with the generated number formated in
+"""
+
+EXAMPLES= """
+- name: create some test users
+  user:
+    name: "{{ item }}"
+    state: present
+    groups: "evens"
+  with_sequence: start=0 end=32 format=testuser%02x
+
+- name: create a series of directories with even numbers for some reason
+  file:
+    dest: "/var/stuff/{{ item }}"
+    state: directory
+  with_sequence: start=4 end=16 stride=2
+
+- name: a simpler way to use the sequence plugin create 4 groups
+  group:
+    name: "group{{ item }}"
+    state: present
+  with_sequence: count=4
+
+- name: the final countdown
+  debug: msg={{item}} seconds to detonation
+  with_sequence: end=0 start=10
+"""
+
+RETURN= """
+  _list:
+    description: generated sequence of numbers or strings
+"""
 
 from re import compile as re_compile, IGNORECASE
 

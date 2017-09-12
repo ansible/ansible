@@ -1,21 +1,33 @@
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# (c) 2012-17 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+DOCUMENTATION = """
+    lookup: template
+    author: Michael DeHaan <michael.dehaan@gmail.com>
+    version_added: "0.9"
+    short_description: retrieve contents of file after templating with Jinja2
+    description:
+      - this is mostly a noop, to be used as a with_list loop when you dont want the content transformed in any way.
+    options:
+      _terms:
+        description: list of files to template
+"""
+
+EXAMPLES= """
+- name: show templating results
+  debug: msg="{{ lookup('template', './some_template.j2') }}
+"""
+
+RETURN= """
+_raw:
+   description: file(s) content after templating
+"""
 
 import os
 

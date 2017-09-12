@@ -1,21 +1,101 @@
 # (c) 2015, Jan-Piet Mens <jpmens(at)gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+DOCUMENTATION = """
+    lookup: dig
+    author: Jan-Piet Mens (@jpmens) <jpmens(at)gmail.com>
+    version_added: "1.9"
+    short_description: use 'dig' to query DNS
+    requirements:
+      - dig (CLI utility)
+    description: test
+    lola:
+#      - The dig lookup runs queries against DNS servers to retrieve DNS records for a specific name (FQDN - fully qualified domain name).
+#        It is possible to lookup any DNS record in this manner.
+#      - There is a couple of different syntaxes that can be used to specify what record should be retrieved, and for which name.
+#         It is also possible to explicitly specify the DNS server(s) to use for lookups.
+#      - In its simplest form, the dig lookup plugin can be used to retrieve an IPv4 address (DNS A record) associated with FQDN
+#      - In addition to (default) A record, it is also possible to specify a different record type that should be queried.
+#        This can be done by either passing-in additional parameter of format qtype=TYPE to the dig lookup, or by appending /TYPE to the FQDN being queried.
+#      - If multiple values are associated with the requested record, the results will be returned as a comma-separated list.
+#        In such cases you may want to pass option wantlist=True to the plugin, which will result in the record values being returned as a list
+#        over which you can iterate later on.
+#      - By default, the lookup will rely on system-wide configured DNS servers for performing the query.
+#        It is also possible to explicitly specify DNS servers to query using the @DNS_SERVER_1,DNS_SERVER_2,...,DNS_SERVER_N notation.
+#        This needs to be passed-in as an additional parameter to the lookup
+    options:
+      _terms:
+        description: domain(s) to query
+      qtype:
+        description: record type to query
+        default: 'A'
+        choices: [A, ALL, AAAA, CNAME, DNAME, DLV, DNSKEY, DS, HINFO, LOC, MX, NAPTR, NS, NSEC3PARAM, PTR, RP, RRSIG, SOA, SPF, SRV, SSHFP, TLSA, TXT]
+      flat:
+        description: If 0 each record is returned as a dictionary, otherwise a string
+        default: 1
+    notes:
+      - ALL is not a record per-se, merely the listed fields are available for any record results you retrieve in the form of a dictionary.
+      - While the 'dig' lookup plugin supports anything which dnspython supports out of the box, only a subset can be converted into a dictionary.
+      - If you need to obtain the AAAA record (IPv6 address), you must specify the record type explicitly.
+        Syntax for specifying the record type is shown in the examples below.
+      - The trailing dot in most of the examples listed is purely optional, but is specified for completeness/correctness sake.
+"""
+
+EXAMPLES = """
+- name: Simple A record (IPV4 address) lookup for example.com
+  debug: msg="{{ lookup('dig', 'example.com.')}}"
+
+- name: "The TXT record for example.org."
+  debug: msg="{{ lookup('dig', 'example.org.', 'qtype=TXT') }}"
+
+- name: "The TXT record for example.org, alternative syntax."
+  debug: msg="{{ lookup('dig', 'example.org./TXT') }}"
+
+- name: use in a loop
+  debug: msg="MX record for gmail.com {{ item }}"
+  with_items: "{{ lookup('dig', 'gmail.com./MX', wantlist=True) }}"
+
+- debug: msg="Reverse DNS for 192.0.2.5 is {{ lookup('dig', '192.0.2.5/PTR') }}"
+- debug: msg="Reverse DNS for 192.0.2.5 is {{ lookup('dig', '5.2.0.192.in-addr.arpa./PTR') }}"
+- debug: msg="Reverse DNS for 192.0.2.5 is {{ lookup('dig', '5.2.0.192.in-addr.arpa.', 'qtype=PTR') }}"
+- debug: msg="Querying 198.51.100.23 for IPv4 address for example.com. produces {{ lookup('dig', 'example.com', '@198.51.100.23') }}"
+
+- debug: msg="XMPP service for gmail.com. is available at {{ item.target }} on port {{ item.port }}"
+  with_items: "{{ lookup('dig', '_xmpp-server._tcp.gmail.com./SRV', 'flat=0', wantlist=True) }}"
+"""
+
+RETURN = """
+  _list:
+    description:
+      - list of composed strings or dictonaries with key and value
+        If a dictionary, fields shows the keys returned depending on query type
+    fields:
+       ALL: owner, ttl, type
+       A: address
+       AAAA: address
+       CNAME: target
+       DNAME: target
+       DLV: algorithm, digest_type, key_tag, digest
+       DNSKEY: flags, algorithm, protocol, key
+       DS: algorithm, digest_type, key_tag, digest
+       HINFO:  cpu, os
+       LOC: latitude, longitude, altitude, size, horizontal_precision, vertical_precision
+       MX: preference, exchange
+       NAPTR: order, preference, flags, service, regexp, replacement
+       NS: target
+       NSEC3PARAM: algorithm, flags, iterations, salt
+       PTR: target
+       RP: mbox, txt
+       SOA: mname, rname, serial, refresh, retry, expire, minimum
+       SPF: strings
+       SRV: priority, weight, port, target
+       SSHFP: algorithm, fp_type, fingerprint
+       TLSA: usage, selector, mtype, cert
+       TXT: strings
+"""
 
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase

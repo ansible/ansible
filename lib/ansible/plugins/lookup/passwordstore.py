@@ -1,21 +1,81 @@
 # (c) 2017, Patrick Deelman <patrick@patrickdeelman.nl>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+
+DOCUMENTATION = """
+    lookup: passwordstore
+    version_added: "2.3"
+    author:
+      - Patrick Deelman <patrick@patrickdeelman.nl>
+    short_description: manage passwords with passwordstore.org's pass utility
+    description:
+      - Enables Ansible to retrieve, create or update passwords from the passwordstore.org pass utility.
+        It also retrieves YAML style keys stored as multilines in the passwordfile.
+    options:
+      _terms:
+        descriptoin: query key
+        required: True
+      passwordstore:
+        description: location of the password store
+        default: '~/.password-store'
+      directory:
+        description: directory of the password store
+        default: null
+        env:
+          - name: PASSWORD_STORE_DIR
+      create:
+        description: flag to create the password
+        type: boolean
+        default: False
+      overwrite:
+        description: flag to overwrite the password
+        type: boolean
+        default: False
+      returnall:
+        description: flag to return all the contents of the password store
+        type: boolean
+        default: False
+      subkey:
+        description: subkey to return
+        default: password
+      userpass:
+        description: user password
+      length:
+        description: password length
+        type: integer
+        default: 16
+"""
+EXAMPLES = """
+# Debug is used for examples, BAD IDEA to show passwords on screen
+- name: Basic lookup. Fails if example/test doesn’t exist
+  debug: msg="{{ lookup('passwordstore', 'example/test')}}"
+
+- name: Create pass with random 16 character password. If password exists just give the password
+  debug: var=mypassword
+  vars:
+    mypassword: "{{ lookup('passwordstore', 'example/test create=true')}}"
+
+- name: Different size password
+  debug: msg="{{ lookup('passwordstore', 'example/test create=true length=42')}}"
+
+- name: Create password and overwrite the password if it exists. As a bonus, this module includes the old password inside the pass file
+  debug: msg="{{ lookup('passwordstore', 'example/test create=true overwrite=true')}}"
+
+- name: Return the value for user in the KV pair user, username
+  debug: msg="{{ lookup('passwordstore', 'example/test subkey=user')}}"
+
+- name: Return the entire password file content
+  set_fact: passfilecontent="{{ lookup('passwordstore', 'example/test returnall=true')}}"
+"""
+
+RETURN = """
+_raw:
+  description:
+    - a password
+"""
 
 import os
 import subprocess
