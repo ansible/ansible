@@ -65,7 +65,7 @@ options:
         default: "package"
         version_added: "2.0"
     extra_args_precommand:
-        version_added: "2.4"
+        version_added: "2.5"
         required: false
         description:
           - Add additional  global target options to C(zypper)  .
@@ -170,7 +170,7 @@ EXAMPLES = '''
     name: /tmp/nginx-1.8.0-1.sles12.ngx.x86_64.rpm
     state: installed
     disable_gpg_check: yes
-    extra_args_precommand: --root  /tmp/hello 
+    extra_args_precommand: --root /tmp/folder
 # Perform a dist-upgrade with additional arguments
 - zypper:
     name: '*'
