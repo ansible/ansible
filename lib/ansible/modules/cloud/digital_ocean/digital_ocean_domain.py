@@ -254,7 +254,9 @@ def record_absent(module):
     record_data = None
     if "ip" in module.params:
         record_data = module.params["ip"]
-    if not record_data:
+    if record_data:
+        record_data = re.escape(record_data)
+    else:
         record_data = get_key_or_die(module, "data")
 
     record_type = module.params["type"].upper()
