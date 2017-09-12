@@ -5,7 +5,6 @@
   iosxr_interface:
     name: GigabitEthernet0/0/0/2
     state: absent
-    provider: "{{ cli }}"
   register: result
 
 
@@ -14,7 +13,6 @@
     name: GigabitEthernet0/0/0/2
     description: test-interface-initial
     state: present
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -27,7 +25,6 @@
     name: GigabitEthernet0/0/0/2
     description: test-interface-initial
     state: present
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -42,7 +39,6 @@
     duplex: half
     mtu: 512
     state: present
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -61,7 +57,6 @@
     duplex: full
     mtu: 256
     state: present
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -80,7 +75,6 @@
     duplex: full
     mtu: 256
     state: present
-    provider: "{{ cli }}"
   register: result
 - assert:
     that:
@@ -90,7 +84,6 @@
   iosxr_interface:
     name: GigabitEthernet0/0/0/2
     enabled: False
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -102,7 +95,6 @@
   iosxr_interface:
     name: GigabitEthernet0/0/0/2
     enabled: True
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -115,7 +107,6 @@
     name: GigabitEthernet0/0/0/3
     description: test-interface-initial
     state: present
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -138,7 +129,6 @@
     speed: 100
     duplex: full
     state: present
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -162,7 +152,6 @@
     speed: 100
     duplex: full
     state: present
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -176,7 +165,6 @@
     - name: GigabitEthernet0/0/0/2
     enabled: False
     state: present
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -192,7 +180,6 @@
     - name: GigabitEthernet0/0/0/2
     enabled: True
     state: present
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -207,7 +194,6 @@
     - name: GigabitEthernet0/0/0/4
     - name: GigabitEthernet0/0/0/5
     description: test-interface-initial
-    provider: "{{ cli }}"
   register: result
 
 - name: Create interface aggregate
@@ -218,7 +204,6 @@
     - name: GigabitEthernet0/0/0/5
       description: test_interface_2
     state: present
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -233,7 +218,6 @@
     - name: GigabitEthernet0/0/0/4
     - name: GigabitEthernet0/0/0/5
     state: absent
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -248,7 +232,6 @@
     - name: GigabitEthernet0/0/0/4
     - name: GigabitEthernet0/0/0/5
     state: absent
-    provider: "{{ cli }}"
   register: result
 
 - assert:

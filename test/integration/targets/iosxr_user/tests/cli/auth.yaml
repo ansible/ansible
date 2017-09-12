@@ -4,7 +4,6 @@
     iosxr_user:
       name: auth_user
       state: present
-      provider: "{{ cli }}"
       configured_password: pass123
 
   - name: test login
@@ -31,5 +30,4 @@
     iosxr_user:
       name: auth_user
       state: absent
-      provider: "{{ cli }}"
     register: result
