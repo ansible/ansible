@@ -423,7 +423,7 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         if module_opts:
             parser.add_option('-M', '--module-path', dest='module_path', default=None,
-                              help="prepend coloon separated path(s) to module library (default=%s)" % C.DEFAULT_MODULE_PATH,
+                              help="prepend colon-separated path(s) to module library (default=%s)" % C.DEFAULT_MODULE_PATH,
                               action="callback", callback=CLI.unfrack_paths, type='str')
         if runtask_opts:
             parser.add_option('-e', '--extra-vars', dest="extra_vars", action="append",
