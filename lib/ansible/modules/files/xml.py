@@ -639,8 +639,10 @@ def child_to_element(module, child, in_type):
         module.fail_json(msg="Invalid child input type: %s. Type must be either xml or yaml." % in_type)
 
 
-def children_to_nodes(module=None, children=[], type='yaml'):
+def children_to_nodes(module=None, children=None, type='yaml'):
     """turn a str/hash/list of str&hash into a list of elements"""
+    children = [] if children is None else children
+
     return [child_to_element(module, child, type) for child in children]
 
 

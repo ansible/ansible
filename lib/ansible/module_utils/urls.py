@@ -670,10 +670,12 @@ class SSLValidationHandler(urllib_request.BaseHandler):
             to_add_path = None
         return (tmp_path, to_add_path, paths_checked)
 
-    def validate_proxy_response(self, response, valid_codes=[200]):
+    def validate_proxy_response(self, response, valid_codes=None):
         '''
         make sure we get back a valid code from the proxy
         '''
+        valid_codes = [200] if valid_codes is None else valid_codes
+
         try:
             (http_version, resp_code, msg) = re.match(r'(HTTP/\d\.\d) (\d\d\d) (.*)', response).groups()
             if int(resp_code) not in valid_codes:

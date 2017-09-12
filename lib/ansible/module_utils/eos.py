@@ -136,9 +136,11 @@ class Cli:
             out = to_text(out, errors='surrogate_then_replace')
         return out.endswith('#')
 
-    def get_config(self, flags=[]):
+    def get_config(self, flags=None):
         """Retrieves the current config from the device or cache
         """
+        flags = [] if flags is None else flags
+
         cmd = 'show running-config '
         cmd += ' '.join(flags)
         cmd = cmd.strip()
@@ -363,9 +365,11 @@ class Eapi:
 
         return responses
 
-    def get_config(self, flags=[]):
+    def get_config(self, flags=None):
         """Retrieves the current config from the device or cache
         """
+        flags = [] if flags is None else flags
+
         cmd = 'show running-config '
         cmd += ' '.join(flags)
         cmd = cmd.strip()
@@ -457,7 +461,9 @@ def to_command(module, commands):
     return transform(to_list(commands))
 
 
-def get_config(module, flags=[]):
+def get_config(module, flags=None):
+    flags = None if flags is None else flags
+
     conn = get_connection(module)
     return conn.get_config(flags)
 

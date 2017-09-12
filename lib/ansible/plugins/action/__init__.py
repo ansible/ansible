@@ -166,7 +166,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         return (module_style, module_shebang, module_data, module_path)
 
-    def _compute_environment_string(self, raw_environment_out=dict()):
+    def _compute_environment_string(self, raw_environment_out=None):
         '''
         Builds the environment string to be used when executing the remote task.
         '''
