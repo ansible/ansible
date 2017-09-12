@@ -276,6 +276,7 @@ def get_pim_interface(module, interface):
         if 'not running' not in body[0]:
             body = execute_show_command(command, module)
 
+    # Some nxos platforms have the TABLE_vrf/ROW_vrf key and some don't
     try:
         get_data = body[0]['TABLE_vrf']['ROW_vrf']['TABLE_iod']['ROW_iod']
     except (KeyError, AttributeError, TypeError, IndexError):
