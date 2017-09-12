@@ -203,7 +203,9 @@ class LocalSocketThread(Thread):
     server = None
     terminated = False
 
-    def __init__(self, group=None, target=None, name=None, args=(), kwargs={}, Verbose=None):
+    def __init__(self, group=None, target=None, name=None, args=(), kwargs=None, Verbose=None):
+        kwargs = {} if kwargs is None else kwargs
+
         self.server = kwargs.get('server')
         Thread.__init__(self, group, target, name, args, kwargs, Verbose)
 
@@ -281,7 +283,9 @@ class LocalSocketThread(Thread):
 
 
 class ThreadWithReturnValue(Thread):
-    def __init__(self, group=None, target=None, name=None, args=(), kwargs={}, Verbose=None):
+    def __init__(self, group=None, target=None, name=None, args=(), kwargs=None, Verbose=None):
+        kwargs = {} if kwargs is None else kwargs
+
         Thread.__init__(self, group, target, name, args, kwargs, Verbose)
         self._return = None
 

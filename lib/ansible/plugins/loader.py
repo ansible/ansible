@@ -42,7 +42,8 @@ class PluginLoader:
     The first match is used.
     '''
 
-    def __init__(self, class_name, package, config, subdir, aliases={}, required_base_class=None):
+    def __init__(self, class_name, package, config, subdir, aliases=None, required_base_class=None):
+        aliases = {} if aliases is None else aliases
 
         self.class_name = class_name
         self.base_class = required_base_class

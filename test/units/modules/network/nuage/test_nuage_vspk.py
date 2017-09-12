@@ -42,8 +42,10 @@ class TestNuageVSPKModule(TestNuageModule):
 
         self.patches = []
 
-        def enterprises_get(self, filter=None, order_by=None, group_by=[], page=None, page_size=None, query_parameters=None, commit=True, async=False,
+        def enterprises_get(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True, async=False,
                             callback=None):
+            group_by = [] if group_by is None else group_by
+
             if 'unknown' in filter:
                 return []
 
@@ -56,7 +58,9 @@ class TestNuageVSPKModule(TestNuageModule):
         self.enterprises_get_mock.start()
         self.patches.append(self.enterprises_get_mock)
 
-        def enterprises_get_first(self, filter=None, order_by=None, group_by=[], query_parameters=None, commit=False, async=False, callback=None):
+        def enterprises_get_first(self, filter=None, order_by=None, group_by=None, query_parameters=None, commit=False, async=False, callback=None):
+            group_by = [] if group_by is None else group_by
+
             if filter == 'name == "test-enterprise-create"' or 'unknown' in filter:
                 return None
             return vsdk.NUEnterprise(id='enterprise-id', name='test-enterprise')
@@ -128,8 +132,10 @@ class TestNuageVSPKModule(TestNuageModule):
         self.user_save_mock.start()
         self.patches.append(self.user_save_mock)
 
-        def groups_get(self, filter=None, order_by=None, group_by=[], page=None, page_size=None, query_parameters=None, commit=True, async=False,
+        def groups_get(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True, async=False,
                        callback=None):
+            group_by = [] if group_by is None else group_by
+
             return []
 
         self.groups_get_mock = patch('vspk.v5_0.fetchers.NUGroupsFetcher.get', new=groups_get)
@@ -411,7 +417,9 @@ class TestNuageVSPKModule(TestNuageModule):
             'state': 'present'
         })
 
-        def users_get(self, filter=None, order_by=None, group_by=[], page=None, page_size=None, query_parameters=None, commit=True, async=False, callback=None):
+        def users_get(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True, async=False, callback=None):
+            group_by = [] if group_by is None else group_by
+
             return [vsdk.NUUser(id='user-id'), vsdk.NUUser(id='user-id-2')]
 
         with self.assertRaises(AnsibleExitJson) as exc:
@@ -431,7 +439,9 @@ class TestNuageVSPKModule(TestNuageModule):
             'state': 'present'
         })
 
-        def users_get(self, filter=None, order_by=None, group_by=[], page=None, page_size=None, query_parameters=None, commit=True, async=False, callback=None):
+        def users_get(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True, async=False, callback=None):
+            group_by = [] if group_by is None else group_by
+
             return []
 
         with self.assertRaises(AnsibleExitJson) as exc:
@@ -488,7 +498,9 @@ class TestNuageVSPKModule(TestNuageModule):
             ]
         })
 
-        def users_get(self, filter=None, order_by=None, group_by=[], page=None, page_size=None, query_parameters=None, commit=True, async=False, callback=None):
+        def users_get(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True, async=False, callback=None):
+            group_by = [] if group_by is None else group_by
+
             return []
 
         with self.assertRaises(AnsibleExitJson) as exc:
@@ -523,7 +535,9 @@ class TestNuageVSPKModule(TestNuageModule):
             ]
         })
 
-        def users_get(self, filter=None, order_by=None, group_by=[], page=None, page_size=None, query_parameters=None, commit=True, async=False, callback=None):
+        def users_get(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True, async=False, callback=None):
+            group_by = [] if group_by is None else group_by
+
             return []
 
         with self.assertRaises(AnsibleExitJson) as exc:
@@ -560,7 +574,9 @@ class TestNuageVSPKModule(TestNuageModule):
             'state': 'absent'
         })
 
-        def users_get(self, filter=None, order_by=None, group_by=[], page=None, page_size=None, query_parameters=None, commit=True, async=False, callback=None):
+        def users_get(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True, async=False, callback=None):
+            group_by = [] if group_by is None else group_by
+
             return [vsdk.NUUser(id='user-id')]
 
         with self.assertRaises(AnsibleExitJson) as exc:
@@ -636,8 +652,10 @@ class TestNuageVSPKModule(TestNuageModule):
             'command': 'find'
         })
 
-        def enterprises_failed_get(self, filter=None, order_by=None, group_by=[], page=None, page_size=None, query_parameters=None, commit=True, async=False,
+        def enterprises_failed_get(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True, async=False,
                                    callback=None):
+            group_by = [] if group_by is None else group_by
+
             raise BambouHTTPError(MockNuageConnection(status_code='404', reason='Not Found', errors={'description': 'Entity not found'}))
 
         with self.assertRaises(AnsibleFailJson) as exc:
@@ -675,8 +693,10 @@ class TestNuageVSPKModule(TestNuageModule):
             'state': 'absent'
         })
 
-        def enterprises_failed_get_first(self, filter=None, order_by=None, group_by=[], page=None, page_size=None, query_parameters=None, commit=True,
+        def enterprises_failed_get_first(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True,
                                          async=False, callback=None):
+            group_by = [] if group_by is None else group_by
+
             raise BambouHTTPError(MockNuageConnection(status_code='404', reason='Not Found', errors={'description': 'Entity not found'}))
 
         with self.assertRaises(AnsibleExitJson) as exc:
@@ -714,7 +734,9 @@ class TestNuageVSPKModule(TestNuageModule):
             'state': 'present'
         })
 
-        def users_get(self, filter=None, order_by=None, group_by=[], page=None, page_size=None, query_parameters=None, commit=True, async=False, callback=None):
+        def users_get(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True, async=False, callback=None):
+            group_by = [] if group_by is None else group_by
+
             return []
 
         def group_assign(self, objects, nurest_object_type, async=False, callback=None, commit=True):
@@ -739,7 +761,9 @@ class TestNuageVSPKModule(TestNuageModule):
             'state': 'absent'
         })
 
-        def users_get(self, filter=None, order_by=None, group_by=[], page=None, page_size=None, query_parameters=None, commit=True, async=False, callback=None):
+        def users_get(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True, async=False, callback=None):
+            group_by = [] if group_by is None else group_by
+
             return [vsdk.NUUser(id='user-id'), vsdk.NUUser(id='user-id-2')]
 
         def group_assign(self, objects, nurest_object_type, async=False, callback=None, commit=True):
@@ -956,8 +980,10 @@ class TestNuageVSPKModule(TestNuageModule):
             'state': 'present'
         })
 
-        def users_get_first(self, filter=None, order_by=None, group_by=[], page=None, page_size=None, query_parameters=None, commit=True, async=False,
+        def users_get_first(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True, async=False,
                             callback=None):
+            group_by = [] if group_by is None else group_by
+
             return None
 
         with self.assertRaises(AnsibleFailJson) as exc:
@@ -1105,8 +1131,10 @@ class TestNuageVSPKModule(TestNuageModule):
             ]
         })
 
-        def users_get_first(self, filter=None, order_by=None, group_by=[], page=None, page_size=None, query_parameters=None, commit=True, async=False,
+        def users_get_first(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True, async=False,
                             callback=None):
+            group_by = [] if group_by is None else group_by
+
             return None
 
         with self.assertRaises(AnsibleFailJson) as exc:
