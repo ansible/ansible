@@ -17,7 +17,6 @@ broad-except
 cell-var-from-loop
 consider-iterating-dictionary
 consider-using-enumerate
-dangerous-default-value
 deprecated-lambda
 deprecated-method
 deprecated-module

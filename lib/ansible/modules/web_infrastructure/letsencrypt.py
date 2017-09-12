@@ -407,13 +407,15 @@ class ACMEAccount(object):
 
         return result, info
 
-    def _new_reg(self, contact=[]):
+    def _new_reg(self, contact=None):
         '''
         Registers a new ACME account. Returns True if the account was
         created and False if it already existed (e.g. it was not newly
         created)
         https://tools.ietf.org/html/draft-ietf-acme-acme-02#section-6.3
         '''
+        contact = [] if contact is None else contact
+
         if self.uri is not None:
             return True
 

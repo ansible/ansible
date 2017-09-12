@@ -117,7 +117,9 @@ def run_commands(module, commands, check_rc=True):
     return responses
 
 
-def get_config(module, flags=[]):
+def get_config(module, flags=None):
+    flags = [] if flags is None else flags
+
     passwords = module.params['passwords']
     if passwords:
         cmd = 'more system:running-config'

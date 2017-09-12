@@ -220,7 +220,9 @@ class Templar:
     The main class for templating, with the main entry-point of template().
     '''
 
-    def __init__(self, loader, shared_loader_obj=None, variables=dict()):
+    def __init__(self, loader, shared_loader_obj=None, variables=None):
+        variables = {} if variables is None else variables
+
         self._loader = loader
         self._filters = None
         self._tests = None
@@ -390,12 +392,13 @@ class Templar:
         self._cached_result = {}
 
     def template(self, variable, convert_bare=False, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None,
-                 convert_data=True, static_vars=[''], cache=True, bare_deprecated=True, disable_lookups=False):
+                 convert_data=True, static_vars=None, cache=True, bare_deprecated=True, disable_lookups=False):
         '''
         Templates (possibly recursively) any given data as input. If convert_bare is
         set to True, the given data will be wrapped as a jinja2 variable ('{{foo}}')
         before being sent through the template engine.
         '''
+        static_vars = [''] if static_vars is None else static_vars
 
         # Don't template unsafe variables, just return them.
         if hasattr(variable, '__UNSAFE__'):

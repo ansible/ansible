@@ -95,8 +95,9 @@ class ModuleArgsParser:
     Args may also be munged for certain shell command parameters.
     """
 
-    # FIXME: mutable default arg
-    def __init__(self, task_ds=dict()):
+    def __init__(self, task_ds=None):
+        task_ds = {} if task_ds is None else task_ds
+
         assert isinstance(task_ds, dict), "the type of 'task_ds' should be a dict, but is a %s" % type(task_ds)
         self._task_ds = task_ds
 
@@ -129,10 +130,12 @@ class ModuleArgsParser:
 
         return (action, args)
 
-    def _normalize_parameters(self, thing, action=None, additional_args=dict()):
+    def _normalize_parameters(self, thing, action=None, additional_args=None):
         '''
         arguments can be fuzzy.  Deal with all the forms.
         '''
+
+        additional_args = {} if additional_args is None else additional_args
 
         # final args are the ones we'll eventually return, so first update
         # them with any additional args specified, which have lower priority

@@ -76,7 +76,9 @@ def check_args(module, warnings):
             module.params[key] = ARGS_DEFAULT_VALUE[key]
 
 
-def get_config(module, flags=[]):
+def get_config(module, flags=None):
+    flags = [] if flags is None else flags
+
     cmd = 'show run-config commands '
     cmd += ' '.join(flags)
     cmd = cmd.strip()

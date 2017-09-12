@@ -84,7 +84,11 @@ def setup_mod_conn(placeboify, params):
     return m, conn
 
 
-def make_params(cgw, vgw, tags={}, filters={}, routes=[]):
+def make_params(cgw, vgw, tags=None, filters=None, routes=None):
+    tags = {} if tags is None else tags
+    filters = {} if filters is None else filters
+    routes = [] if routes is None else routes
+
     return {'customer_gateway_id': cgw,
             'static_only': True,
             'vpn_gateway_id': vgw,

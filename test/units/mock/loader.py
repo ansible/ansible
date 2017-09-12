@@ -28,7 +28,8 @@ from ansible.module_utils._text import to_bytes
 
 class DictDataLoader(DataLoader):
 
-    def __init__(self, file_mapping=dict()):
+    def __init__(self, file_mapping=None):
+        file_mapping = {} if file_mapping is None else file_mapping
         assert type(file_mapping) == dict
 
         super(DictDataLoader, self).__init__()

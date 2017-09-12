@@ -116,9 +116,11 @@ class Cli:
             command = self._module.jsonify(command)
         return exec_command(self._module, command)
 
-    def get_config(self, flags=[]):
+    def get_config(self, flags=None):
         """Retrieves the current config from the device or cache
         """
+        flags = [] if flags is None else []
+
         cmd = 'show running-config '
         cmd += ' '.join(flags)
         cmd = cmd.strip()
@@ -299,9 +301,11 @@ class Nxapi:
 
             return result
 
-    def get_config(self, flags=[]):
+    def get_config(self, flags=None):
         """Retrieves the current config from the device or cache
         """
+        flags = [] if flags is None else flags
+
         cmd = 'show running-config '
         cmd += ' '.join(flags)
         cmd = cmd.strip()
@@ -385,7 +389,9 @@ def to_command(module, commands):
     return commands
 
 
-def get_config(module, flags=[]):
+def get_config(module, flags=None):
+    flags = [] if flags is None else flags
+
     conn = get_connection(module)
     return conn.get_config(flags)
 
