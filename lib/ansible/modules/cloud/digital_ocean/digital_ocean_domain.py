@@ -47,11 +47,11 @@ options:
       - The type of operation, None (default) to create or remove a domain otherwise the type of record to create or remove.
     default: None
     choices: ['A', 'AAAA', 'CAA', 'CNAME', 'MX', 'NS', 'SRV', 'TXT']
-    version_added: "2.4.1"
+    version_added: "2.5"
   data:
     description:
       - The data to use when creating or removing a record. When the record is being removed, this string is treated as a regular expression.
-    version_added: "2.4.1"
+    version_added: "2.5"
 
 notes:
   - Two environment variables can be used, DO_API_KEY and DO_API_TOKEN. They both refer to the v2 token.
@@ -93,8 +93,8 @@ EXAMPLES = '''
 
 - digital_ocean_domain:
     state: absent
-    name: "my.domain"
-    data: "v\\=spf1\\ .*"
+    name: my.domain
+    data: v\=spf1\ .*
     type: txt
 '''
 
@@ -209,7 +209,8 @@ def get_record_info_or_die(module):
     record_name = '@'
     record_domain = get_key_or_die(module, "name").strip()
     json_domains = Domain.manager.all_domains()
-    domain_find = lambda name: next((Domain(jd) for jd in json_domains if jd['name'] == name), False)
+    def domain_find(name):
+        return next((Domain(jd) for jd in json_domains if jd['name'] == name), False)
 
     if record_domain.startswith('@.'):
         record_domain = record_domain[2:]
