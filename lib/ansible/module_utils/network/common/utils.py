@@ -508,7 +508,7 @@ def to_subnet(addr, mask, dotted_notation=False):
 
 
 def to_ipv6_network(addr):
-    """ IPv6 addresses are eight groupings. The first three (48 bits) is the network address. """
+    """ IPv6 addresses are eight groupings. The first three groupings (48 bits) comprise the network address. """
 
     # Split by :: to identify omitted zeros
     ipv6_prefix = addr.split('::')[0]
