@@ -209,6 +209,7 @@ def get_record_info_or_die(module):
     record_name = '@'
     record_domain = get_key_or_die(module, "name").strip()
     json_domains = Domain.manager.all_domains()
+
     def domain_find(name):
         return next((Domain(jd) for jd in json_domains if jd['name'] == name), False)
 
