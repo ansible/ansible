@@ -166,3 +166,20 @@
   assert:
     that:
       - "not q_check_mode.changed"
+
+# ansible#23204
+- name: ensure is a fresh virtualenv
+  file:
+    state: absent
+    name: "{{ output_dir }}/pipenv"
+
+- name: install pip throught pip into fresh virtualenv
+  pip:
+    name: pip
+    virtualenv: "{{ output_dir }}/pipenv"
+  register: pip_install_venv
+
+- name: make sure pip in fresh virtualenv report changed
+  assert:
+    that:
+      - "pip_install_venv.changed"

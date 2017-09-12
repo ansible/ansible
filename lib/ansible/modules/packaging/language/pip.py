@@ -425,9 +425,10 @@ def main():
         out = ''
 
         env = module.params['virtualenv']
-
+        venv_created = False
         if env:
             if not os.path.exists(os.path.join(env, 'bin', 'activate')):
+                venv_created = True
                 if module.check_mode:
                     module.exit_json(changed=True)
 
@@ -565,6 +566,8 @@ def main():
             else:
                 _, out_freeze_after, _ = _get_packages(module, pip, chdir)
                 changed = out_freeze_before != out_freeze_after
+
+        changed = changed or venv_created
 
         module.exit_json(changed=changed, cmd=cmd, name=name, version=version,
                          state=state, requirements=requirements, virtualenv=env,
