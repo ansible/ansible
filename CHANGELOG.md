@@ -45,7 +45,8 @@ Ansible Changes By Release
 * Better message for invalid keywords/options in task due to undefined expressions
 * Fixed check mode for enable on Solaris for service module
 * Fix cloudtrail module to allow AWS profiles other than the default
-* Fix an encoding issue with secret (password) vars_prompts 
+* Fix an encoding issue with secret (password) vars_prompts
+* Fix for Windows become to show the stdout and stderr strings on a failure 
 
 <a id="2.3.2"></a>
 
