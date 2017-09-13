@@ -4,7 +4,6 @@
 - name: get output for single command
   vyos_command:
     commands: show version
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -18,7 +17,6 @@
     commands:
       - show version
       - show interfaces
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -35,7 +33,6 @@
       - show hardware cpu detail
       - show hardware mem
       - show license
-    provider: "{{ cli }}"
   register: result
 
 - assert:

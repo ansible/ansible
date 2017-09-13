@@ -12,14 +12,12 @@
     name: eth1
     enabled: True
     state: present
-    provider: "{{ cli }}"
   register: result
 
 - name: Check intent arguments
   vyos_interface:
     name: eth1
     state: up
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -31,7 +29,6 @@
     name: eth0
     neighbors:
     - port: eth0
-    provider: "{{ cli }}"
   when: "'virtio_net' not in lsmod_out.stdout[0]"
   register: result
 
@@ -44,7 +41,6 @@
   vyos_interface:
     name: eth1
     state: down
-    provider: "{{ cli }}"
   ignore_errors: yes
   register: result
 
@@ -59,7 +55,6 @@
     neighbors:
     - port: dummy_port
       host: dummy_host
-    provider: "{{ cli }}"
   ignore_errors: yes
   when: "'virtio_net' not in lsmod_out.stdout[0]"
   register: result
@@ -76,7 +71,6 @@
     name: eth1
     enabled: False
     state: down
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -88,7 +82,6 @@
     name: eth1
     enabled: False
     state: up
-    provider: "{{ cli }}"
   ignore_errors: yes
   register: result
 
@@ -103,7 +96,6 @@
     - name: eth1
       enabled: True
       state: up
-    provider: "{{ cli }}"
   ignore_errors: yes
   register: result
 
@@ -117,7 +109,6 @@
     - name: eth0
       neighbors:
       - port: eth0
-    provider: "{{ cli }}"
   when: "'virtio_net' not in lsmod_out.stdout[0]"
   register: result
 
@@ -134,7 +125,6 @@
       - port: eth0
       - port: dummy_port
         host: dummy_host
-    provider: "{{ cli }}"
   ignore_errors: yes
   when: "'virtio_net' not in lsmod_out.stdout[0]"
   register: result
