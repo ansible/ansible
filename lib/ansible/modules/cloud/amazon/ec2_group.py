@@ -693,7 +693,7 @@ def main():
                 # amazon sometimes takes a couple seconds to update the security group so wait till it exists
                 while True:
                     group = get_security_groups_with_backoff(client, GroupIds=[group['GroupId']])['SecurityGroups'][0]
-                    if vpc_id and not group.get('IpPermissionsEgress'):
+                    if group.get('VpcId') and not group.get('IpPermissionsEgress'):
                         pass
                     else:
                         break
