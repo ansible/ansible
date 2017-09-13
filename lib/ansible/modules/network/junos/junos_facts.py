@@ -220,7 +220,7 @@ class Hardware(FactsBase):
             self.facts['has_2RE'] = False
 
         reply = self.rpc('get-chassis-inventory')
-        data = reply.find('.//get-chassis-inventory/chassis-module')
+        data = reply.find('.//chassis-inventory/chassis-module')
 
         modules = list()
         for obj in data:
