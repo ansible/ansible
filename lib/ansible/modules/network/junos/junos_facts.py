@@ -82,7 +82,7 @@ from ansible.module_utils.junos import get_configuration
 from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.netconf import send_request
 from ansible.module_utils.six import iteritems
-from ansible.utils.display import Display
+
 
 try:
     from lxml.etree import Element, SubElement, tostring
@@ -139,7 +139,6 @@ class Default(FactsBase):
 
         reply = self.rpc('get-chassis-inventory')
         data = reply.find('.//chassis-inventory/chassis')
-        Display.vvvv("Data: {}".format(data))
         self.facts['serialnum'] = self.get_text(data, 'serial-number')
 
 
@@ -162,7 +161,7 @@ class Config(FactsBase):
             config = self.get_text(reply, 'configuration-set')
 
         self.facts['config'] = config
-            
+
 
 class Hardware(FactsBase):
 
@@ -186,33 +185,16 @@ class Hardware(FactsBase):
 
         reply = self.rpc('get-route-engine-information')
         data = reply.find('.//route-engine-information')
-        
+
         routing_engines = dict()
         for obj in data:
             slot = self.get_text(obj, 'slot')
             routing_engines.update( { slot:{} } )
             routing_engines[slot].update({'slot': slot})
-            routing_engines[slot].update({'mastership_state': self.get_text(obj, 'mastership-state')})
-            routing_engines[slot].update({'mastership_priority': self.get_text(obj, 'mastership-priority')})
-            routing_engines[slot].update({'status': self.get_text(obj,'status')})
-            routing_engines[slot].update({'temperature': self.get_text(obj,'temperature')})
-            routing_engines[slot].update({'cpu_temperature': self.get_text(obj,'cpu-temperature')})
-            routing_engines[slot].update({'memory_dram_size': self.get_text(obj,'memory-dram-size')})
-            routing_engines[slot].update({'memory_installed_size': self.get_text(obj,'memory-installed-size')})
-            routing_engines[slot].update({'memory_buffer_utilization': self.get_text(obj,'memory-buffer-utilization')})
-            routing_engines[slot].update({'cpu_user': self.get_text(obj,'cpu-user')})
-            routing_engines[slot].update({'cpu_background': self.get_text(obj,'cpu-background')})
-            routing_engines[slot].update({'cpu_system': self.get_text(obj,'cpu-system')})
-            routing_engines[slot].update({'cpu_nterrupt': self.get_text(obj,'cpu-interrupt')})
-            routing_engines[slot].update({'cpu_idle': self.get_text(obj,'cpu-idle')})
-            routing_engines[slot].update({'model': self.get_text(obj,'model')})
-            routing_engines[slot].update({'serial_number': self.get_text(obj,'serial-number')})
-            routing_engines[slot].update({'start_time': self.get_text(obj,'up-time')})
-            routing_engines[slot].update({'up_time': self.get_text(obj,'last-reboot-reason')})
-            routing_engines[slot].update({'load_average_one': self.get_text(obj,'load-average-one')})
-            routing_engines[slot].update({'load_average_five': self.get_text(obj,'load-average-five')})
-            routing_engines[slot].update({'load_average_fifteen': self.get_text(obj,'load-average-fifteen')})
-        
+            for child in obj:
+                if child.text != "\n":
+                    routing_engines[slot].update({child.tag.replace("-","_"): child.text})
+
         self.facts['routing_engines'] = routing_engines
 
         if len(data) > 1:
@@ -221,21 +203,17 @@ class Hardware(FactsBase):
             self.facts['has_2RE'] = False
 
         reply = self.rpc('get-chassis-inventory')
-        data = reply.find('.//chassis-inventory/chassis')
+        data = reply.findall('.//chassis-module')
 
         modules = list()
         for obj in data:
             mod = dict()
-            mod.update({'name': self.get_text(obj, 'name')})
-            mod.update({'version': self.get_text(obj, 'version')})
-            mod.update({'partnumber': self.get_text(obj, 'part-number')})
-            mod.update({'serial_number': self.get_text(obj, 'serial-number')})
-            mod.update({'description': self.get_text(obj, 'description')})
-            mod.update({'model_number': self.get_text(obj, 'model-number')})
+            for child in obj:
+                if child.text != "\n":
+                    mod.update({child.tag.replace("-","_"): child.text})
             modules.append(mod)
 
         self.facts['modules'] = modules
-
 
 class Interfaces(FactsBase):
 
