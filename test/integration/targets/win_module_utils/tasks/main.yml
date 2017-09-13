@@ -47,3 +47,27 @@
 - assert:
     that:
     - sid_test.data == 'success'
+
+- name: create testing folder for argv binary
+  win_file:
+    path: C:\ansible testing
+    state: directory
+
+- name: download binary the outputs argv to stdout
+  win_get_url:
+    url: https://s3.amazonaws.com/ansible-ci-files/test/integration/roles/test_win_module_utils/PrintArgv.exe
+    dest: C:\ansible testing\PrintArgv.exe
+
+- name: call module with CommandUtil tests
+  command_util_test:
+    exe: C:\ansible testing\PrintArgv.exe
+  register: command_util
+
+- assert:
+    that:
+    - command_util.data == 'success'
+
+- name: remove testing folder
+  win_file:
+    path: C:\ansible testing
+    state: absent
