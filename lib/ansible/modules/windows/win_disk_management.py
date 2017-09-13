@@ -79,7 +79,7 @@ options:
         - If a number is defined the module will try to select the disk with this defined number
         - If no number is defined the module will select the first disk found on the target
         - If multiple disks were found with defined option values (because no number option value was defined)
-        - the module will select the first found disk
+        - the module will select the first disk found on the target
       required: false
   partition_style_set:
       description:
