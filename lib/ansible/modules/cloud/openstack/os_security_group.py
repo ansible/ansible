@@ -119,7 +119,7 @@ def main():
         cloud = shade.openstack_cloud(**module.params)
         project_id = cloud.current_project_id
         tenant_filter = "[? tenant_id == \'%s\']" % project_id
-        secgroup = cloud.get_security_group(name, filters = tenant_filter)
+        secgroup = cloud.get_security_group(name, filters=tenant_filter)
 
         if module.check_mode:
             module.exit_json(changed=_system_state_change(module, secgroup))
