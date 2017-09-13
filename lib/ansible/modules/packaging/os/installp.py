@@ -140,7 +140,7 @@ def install(module, installp_cmd, packages, repository_path, package_action,
 
     for package in packages:
 
-        rc, install_out, err = module.run_command('%s -a %s -X %s -d %s %s'% (
+        rc, install_out, err = module.run_command('%s -a %s -X %s -d %s %s' % (
             installp_cmd,
             package_actions_param[package_action],
             accept_license_param[accept_license],
