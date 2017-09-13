@@ -20,9 +20,9 @@ author:
 description:
   - This module allows management of resources in an OpenShift cluster. The
     inventory host can be any host with network connectivity to the OpenShift
-    cluster; the default port being 8443/TCP. 
+    cluster; the default port being 8443/TCP.
   - This module relies on a token to authenticate to OpenShift. This can either
-    be a user or a service account. 
+    be a user or a service account.
 module: oc
 options:
   host:
