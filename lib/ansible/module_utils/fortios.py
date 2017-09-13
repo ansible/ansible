@@ -31,6 +31,7 @@ import time
 import traceback
 
 from ansible.module_utils._text import to_native
+from ansible.module_utils.basic import env_fallback
 
 
 # check for pyFG lib
@@ -45,8 +46,8 @@ fortios_argument_spec = dict(
     file_mode=dict(type='bool', default=False),
     config_file=dict(type='path'),
     host=dict(),
-    username=dict(),
-    password=dict(type='str', no_log=True),
+    username=dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
+    password=dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
     timeout=dict(type='int', default=60),
     vdom=dict(type='str'),
     backup=dict(type='bool', default=False),
