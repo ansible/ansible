@@ -226,11 +226,11 @@ class Hardware(FactsBase):
         for obj in data:
             mod = dict()
             mod.update({'name': self.get_text(obj, 'name')})
-            mod.update({'verison': self.get_text(obj, 'verison')})
-            mod.update({'part_number': self.get_text(obj, 'part_number')})
-            mod.update({'serial_number': self.get_text(obj, 'serial_number')})
+            mod.update({'version': self.get_text(obj, 'version')})
+            mod.update({'partnumber': self.get_text(obj, 'part-number')})
+            mod.update({'serial_number': self.get_text(obj, 'serial-number')})
             mod.update({'description': self.get_text(obj, 'description')})
-            mod.update({'model_number': self.get_text(obj, 'model_number')})
+            mod.update({'model_number': self.get_text(obj, 'model-number')})
             modules.append(mod)
 
         self.facts['modules'] = modules
