@@ -210,7 +210,7 @@ class Hardware(FactsBase):
             mod = dict()
             for child in obj:
                 if child.text != "\n":
-                    mod.update({child.tag.replace("-","_"): child.text})
+                    mod.update({child.tag.replace("-", "_"): child.text})
             modules.append(mod)
 
         self.facts['modules'] = modules
