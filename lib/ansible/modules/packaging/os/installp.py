@@ -25,27 +25,28 @@ version_added: "2.5"
 options:
     name:
         description:
-            - name of package to install/remove
+            - Name of package to install/remove. To operate on several packages
+              this can accept a comma separated.
         required: true
     repository_path:
         description:
-            - path with AIX packages (required to install)
+            - Path with AIX packages (required to install).
         required: no
     state:
         description:
-            - state of the package
+            - State of the package.
         choices: [ 'present', 'absent' ]
         required: false
         default: present
     accept_license:
         description:
-            - accept license for package
+            - Accept license for package.
         choices: [ 'yes', 'no' ]
         required: false
         default: no
     package_action:
         description:
-            - action for package
+            - Action for package.
         choices: [ 'preview', 'install' ]
         required: false
         default: preview
@@ -76,12 +77,11 @@ EXAMPLES = '''
     package_license: yes
     state: present
 
-# Install bos.sysmgt.nim.master and commit
+# Install bos.sysmgt.nim.master and bos.sysmgt.nim.spot
 - installp:
-    name: bos.sysmgt.nim.master
+    name: bos.sysmgt.nim.master, bos.sysmgt.nim.spot
     repository_path: /repository/AIX71/installp/base
     package_license: yes
-    package_commit: yes
     state: present
 
 # Remove packages foo and bar
@@ -92,7 +92,7 @@ EXAMPLES = '''
 
 RETURN = '''
 changed:
-    description: Return changed for installp actions as true or false
+    description: Return changed for installp actions as true or false.
     returned: always
     type: boolean
     version_added: 2.5
@@ -173,22 +173,21 @@ def main():
                                 choices=["preview", "install"]),
         ))
 
-    packages = module.params
-
-    pkgs = packages["name"].split(",")
+    installp_params = module.params
+    pkgs = installp_params["name"].split(",")
 
     installp_cmd = module.get_bin_path('installp', True)
 
-    if packages["state"] == "present":
-        if packages["repository_path"] is None:
+    if installp_params["state"] == "present":
+        if installp_params["repository_path"] is None:
             module.fail_json(msg="repository_path is required to install "
                                  "package")
 
-        install(module, installp_cmd, pkgs, packages["repository_path"],
-                packages["package_action"], packages["accept_license"])
+        install(module, installp_cmd, pkgs, installp_params["repository_path"],
+                installp_params["package_action"], installp_params["accept_license"])
 
-    elif packages["state"] == "absent":
-        remove(module, installp_cmd, pkgs, packages["package_action"])
+    elif installp_params["state"] == "absent":
+        remove(module, installp_cmd, pkgs, installp_params["package_action"])
 
 
 if __name__ == '__main__':
