@@ -1,11 +1,14 @@
-- name: Generate privatekey
-  openssl_privatekey:
-    path: '{{ output_dir }}/privatekey.pem'
+- block:
+    - name: Generate privatekey
+      openssl_privatekey:
+        path: '{{ output_dir }}/privatekey.pem'
 
-- name: Generate CSR
-  openssl_csr:
-    path: '{{ output_dir }}/csr.csr'
-    privatekey_path: '{{ output_dir }}/privatekey.pem'
-    commonName: 'www.ansible.com'
+    - name: Generate CSR
+      openssl_csr:
+        path: '{{ output_dir }}/csr.csr'
+        privatekey_path: '{{ output_dir }}/privatekey.pem'
+        commonName: 'www.ansible.com'
 
-- import_tasks: ../tests/validate.yml
+    - import_tasks: ../tests/validate.yml
+
+  when: pyopenssl_version.stdout|version_compare('0.15', '>=')
