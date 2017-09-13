@@ -5,32 +5,32 @@
             <mastership-state>master</mastership-state>
             <mastership-priority>master (default)</mastership-priority>
             <status>OK</status>
-            <temperature junos:celsius="30">30 degrees C / 86 degrees F</temperature>
-            <cpu-temperature junos:celsius="27">27 degrees C / 80 degrees F</cpu-temperature>
+            <temperature>30 degrees C / 86 degrees F</temperature>
+            <cpu-temperature>27 degrees C / 80 degrees F</cpu-temperature>
             <memory-dram-size>16349 MB</memory-dram-size>
             <memory-installed-size>(16384 MB installed)</memory-installed-size>
             <memory-buffer-utilization>16</memory-buffer-utilization>
-            <cpu-user>2</cpu-user>
+            <cpu-user>3</cpu-user>
             <cpu-background>0</cpu-background>
-            <cpu-system>6</cpu-system>
-            <cpu-interrupt>0</cpu-interrupt>
+            <cpu-system>5</cpu-system>
+            <cpu-interrupt>1</cpu-interrupt>
             <cpu-idle>92</cpu-idle>
             <model>RE-S-EX9200-1800X4</model>
             <serial-number>9016006732</serial-number>
-            <start-time junos:seconds="1493321103">2017-04-27 12:25:03 PDT</start-time>
-            <up-time junos:seconds="12013235">139 days, 1 hour, 35 seconds</up-time>
+            <start-time>2017-04-27 12:25:03 PDT</start-time>
+            <up-time>139 days, 3 hours, 12 minutes, 35 seconds</up-time>
             <last-reboot-reason>Router rebooted after a normal shutdown.</last-reboot-reason>
-            <load-average-one>0.04</load-average-one>
-            <load-average-five>0.05</load-average-five>
-            <load-average-fifteen>0.01</load-average-fifteen>
+            <load-average-one>0.03</load-average-one>
+            <load-average-five>0.06</load-average-five>
+            <load-average-fifteen>0.02</load-average-fifteen>
         </route-engine>
         <route-engine>
             <slot>1</slot>
             <mastership-state>backup</mastership-state>
             <mastership-priority>backup (default)</mastership-priority>
             <status>OK</status>
-            <temperature junos:celsius="31">31 degrees C / 87 degrees F</temperature>
-            <cpu-temperature junos:celsius="28">28 degrees C / 82 degrees F</cpu-temperature>
+            <temperature>30 degrees C / 86 degrees F</temperature>
+            <cpu-temperature>27 degrees C / 80 degrees F</cpu-temperature>
             <memory-dram-size>16349 MB</memory-dram-size>
             <memory-installed-size>(16384 MB installed)</memory-installed-size>
             <memory-buffer-utilization>10</memory-buffer-utilization>
@@ -41,8 +41,8 @@
             <cpu-idle>100</cpu-idle>
             <model>RE-S-EX9200-1800X4</model>
             <serial-number>9009153453</serial-number>
-            <start-time junos:seconds="1505323499">2017-09-13 10:24:59 PDT</start-time>
-            <up-time junos:seconds="10828">3 hours, 28 seconds</up-time>
+            <start-time>2017-09-13 10:24:59 PDT</start-time>
+            <up-time>5 hours, 12 minutes, 36 seconds</up-time>
             <last-reboot-reason>Router rebooted after a normal shutdown.</last-reboot-reason>
             <load-average-one>0.00</load-average-one>
             <load-average-five>0.00</load-average-five>
