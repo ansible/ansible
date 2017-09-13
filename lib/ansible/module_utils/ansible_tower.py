@@ -62,7 +62,7 @@ def tower_auth_config(module):
         if password:
             auth_config['password'] = password
         verify_ssl = module.params.get('tower_verify_ssl')
-        if verify_ssl:
+        if verify_ssl != None:
             auth_config['verify_ssl'] = verify_ssl
         return auth_config
 
