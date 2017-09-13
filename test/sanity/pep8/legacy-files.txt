@@ -309,10 +309,6 @@ lib/ansible/modules/network/nxos/nxos_overlay_global.py
 lib/ansible/modules/network/nxos/nxos_ping.py
 lib/ansible/modules/network/nxos/nxos_smu.py
 lib/ansible/modules/network/nxos/nxos_snapshot.py
-lib/ansible/modules/network/nxos/nxos_snmp_contact.py
-lib/ansible/modules/network/nxos/nxos_snmp_host.py
-lib/ansible/modules/network/nxos/nxos_snmp_traps.py
-lib/ansible/modules/network/nxos/nxos_snmp_user.py
 lib/ansible/modules/network/nxos/nxos_static_route.py
 lib/ansible/modules/network/nxos/nxos_system.py
 lib/ansible/modules/network/nxos/nxos_udld.py
