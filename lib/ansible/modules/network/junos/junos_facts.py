@@ -189,11 +189,11 @@ class Hardware(FactsBase):
         routing_engines = dict()
         for obj in data:
             slot = self.get_text(obj, 'slot')
-            routing_engines.update( { slot:{} } )
+            routing_engines.update({slot: {}})
             routing_engines[slot].update({'slot': slot})
             for child in obj:
                 if child.text != "\n":
-                    routing_engines[slot].update({child.tag.replace("-","_"): child.text})
+                    routing_engines[slot].update({child.tag.replace("-", "_"): child.text})
 
         self.facts['routing_engines'] = routing_engines
 
@@ -214,6 +214,7 @@ class Hardware(FactsBase):
             modules.append(mod)
 
         self.facts['modules'] = modules
+
 
 class Interfaces(FactsBase):
 
