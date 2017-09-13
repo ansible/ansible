@@ -322,7 +322,7 @@ def get_igmp_interface(module, interface):
         'ConfiguredStartupQueryInterval': 'startup_query_interval',
         'StartupQueryCount': 'startup_query_count',
         'RobustnessVariable': 'robustness',
-        'QuerierTimeout': 'querier_timeout',
+        'ConfiguredQuerierTimeout': 'querier_timeout',
         'ConfiguredMaxResponseTime': 'query_mrt',
         'ConfiguredQueryInterval': 'query_interval',
         'LastMemberMTR': 'last_member_qrt',
@@ -342,9 +342,9 @@ def get_igmp_interface(module, interface):
             igmp['report_llg'] = False
 
         immediate_leave = str(resource['ImmediateLeave'])  # returns en or dis
-        if immediate_leave == 'en':
+        if immediate_leave == 'en' or immediate_leave == 'true':
             igmp['immediate_leave'] = True
-        elif immediate_leave == 'dis':
+        elif immediate_leave == 'dis' or immediate_leave == 'false':
             igmp['immediate_leave'] = False
 
     # the  next block of code is used to retrieve anything with:
