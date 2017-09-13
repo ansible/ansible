@@ -807,7 +807,7 @@ Function Run($payload) {
             $str_stderr
         }
         Else {
-            Throw "failed, rc was $rc, stderr was $stderr, stdout was $stdout"
+            Throw "failed, rc was $rc, stderr was $str_stderr, stdout was $str_stdout"
         }
 
     }
