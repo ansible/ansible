@@ -4,13 +4,11 @@
 - name: setup
   vyos_config:
     lines: set system host-name {{ inventory_hostname_short }}
-    provider: "{{ cli }}"
     match: none
 
 - name: configure hostaname and save
   vyos_config:
     lines: set system host-name foo
-    provider: "{{ cli }}"
     save: true
   register: result
 
@@ -22,7 +20,6 @@
 - name: configure hostaname and don't save
   vyos_config:
     lines: set system host-name bar
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -33,7 +30,6 @@
 - name: save config
   vyos_config:
     save: true
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -43,7 +39,6 @@
 - name: save config again
   vyos_config:
     save: true
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -53,7 +48,6 @@
 - name: teardown
   vyos_config:
     lines: set system host-name {{ inventory_hostname_short }}
-    provider: "{{ cli }}"
     match: none
     save: true
 

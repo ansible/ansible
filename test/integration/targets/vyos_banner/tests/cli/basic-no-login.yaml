@@ -6,13 +6,11 @@
       Junk pre-login banner
       over multiple lines
     state: present
-    provider: "{{ cli }}"
 
 - name: remove pre-login
   vyos_banner:
     banner: pre-login
     state: absent
-    provider: "{{ cli }}"
   register: result
 
 - debug:
@@ -27,7 +25,6 @@
   vyos_banner:
     banner: pre-login
     state: absent
-    provider: "{{ cli }}"
   register: result
 
 - assert:
