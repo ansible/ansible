@@ -555,11 +555,11 @@ class AssertOnlyCertificate(Certificate):
                 for extension_idx in range(0, self.cert.get_extension_count()):
                     extension = self.cert.get_extension(extension_idx)
                     if extension.get_short_name() == 'subjectAltName':
-                        l_subjectAltName = [altname.replace('IP', 'IP Address') for altname in self.subjectAltName]
-                        if (not self.subjectAltName_strict and not all(x in str(extension).split(', ') for x in l_subjectAltName)) or \
-                           (self.subjectAltName_strict and not set(l_subjectAltName) == set(str(extension).split(', '))):
+                        l_altnames = [altname.replace('IP Address', 'IP') for altname in str(extension).split(', ')]
+                        if (not self.subjectAltName_strict and not all(x in l_altnames for x in self.subjectAltName)) or \
+                           (self.subjectAltName_strict and not set(self.subjectAltName) == set(l_altnames)):
                             self.message.append(
-                                'Invalid subjectAltName component (got %s, expected all of %s to be present)' % (str(extension).split(', '), l_subjectAltName)
+                                'Invalid subjectAltName component (got %s, expected all of %s to be present)' % (l_altnames, self.subjectAltName)
                             )
 
         def _validate_notBefore():
