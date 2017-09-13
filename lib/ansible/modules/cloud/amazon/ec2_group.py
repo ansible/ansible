@@ -56,6 +56,7 @@ options:
         This allows idempotent loopback additions (e.g. allow group to access itself).
         Rule sources list support was added in version 2.4. This allows to define multiple sources per
         source type as well as multiple source types per rule. Prior to 2.4 an individual source is allowed.
+        In version 2.5 individual rule `description` support was added.
     required: false
   rules_egress:
     description:
@@ -124,6 +125,7 @@ EXAMPLES = '''
         from_port: 80
         to_port: 80
         cidr_ip: 0.0.0.0/0
+        description: allow incoming HTTP traffic # requires botocore >= 1.7.2
       - proto: tcp
         from_port: 22
         to_port: 22
@@ -273,6 +275,7 @@ from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 from ansible.module_utils.ec2 import HAS_BOTO3
 from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_tag_list, compare_aws_tags
 from ansible.module_utils.ec2 import AWSRetry
+from distutils.version import StrictVersion
 import traceback
 
 try:
@@ -315,10 +318,21 @@ def add_rules_to_lookup(ipPermissions, group_id, prefix, dict):
             dict[make_rule_key(prefix, rule, group_id, ipv6Grants.get('CidrIpv6'))] = (rule, ipv6Grants)
 
 
+def rule_description_needs_update(module, rule_id, groupRules, rule):
+    minimum_botocore_version = '1.7.2'
+    if StrictVersion(botocore.__version__) < StrictVersion(minimum_botocore_version):
+        if 'description' in rule:
+            module.fail_json(msg='Found botocore in version %s, but >= %s is required for rule descriptions' %
+                                 (botocore.__version__, minimum_botocore_version))
+        return False
+    _rule, grant = groupRules[rule_id]
+    return grant.get('Description', '') != rule.get('description', '')
+
+
 def validate_rule(module, rule):
     VALID_PARAMS = ('cidr_ip', 'cidr_ipv6',
                     'group_id', 'group_name', 'group_desc',
-                    'proto', 'from_port', 'to_port')
+                    'proto', 'from_port', 'to_port', 'description')
     if not isinstance(rule, dict):
         module.fail_json(msg='Invalid rule parameter type [%s].' % type(rule))
     for k in rule:
@@ -487,6 +501,22 @@ def authorize_ip(type, changed, client, group, groupRules,
     for thisip in ip:
         rule_id = make_rule_key(type, rule, group['GroupId'], thisip)
         if rule_id in groupRules:
+            if rule_description_needs_update(module, rule_id, groupRules, rule):
+                if not module.check_mode:
+                    ip_permission = serialize_ip_grant(rule, thisip, ethertype)
+                    if ip_permission:
+                        try:
+                            if type == "in":
+                                client.update_security_group_rule_descriptions_ingress(GroupId=group['GroupId'],
+                                                                                       IpPermissions=[ip_permission])
+                            elif type == "out":
+                                client.update_security_group_rule_descriptions_egress(GroupId=group['GroupId'],
+                                                                                      IpPermissions=[ip_permission])
+                        except botocore.exceptions.ClientError as e:
+                            module.fail_json(msg="Unable to update description %s for ip %s security group '%s' - %s" %
+                                                 (type, thisip, group['GroupName'], e),
+                                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                changed = True
             del groupRules[rule_id]
         else:
             if not module.check_mode:
@@ -508,10 +538,13 @@ def authorize_ip(type, changed, client, group, groupRules,
 
 
 def serialize_group_grant(group_id, rule):
+    grant = {'GroupId': group_id}
+    if 'description' in rule:
+        grant['Description'] = rule['description']
     permission = {'IpProtocol': rule['proto'],
                   'FromPort': rule['from_port'],
                   'ToPort': rule['to_port'],
-                  'UserIdGroupPairs': [{'GroupId': group_id}]}
+                  'UserIdGroupPairs': [grant]}
 
     return fix_port_and_protocol(permission)
 
@@ -545,10 +578,15 @@ def serialize_ip_grant(rule, thisip, ethertype):
     permission = {'IpProtocol': rule['proto'],
                   'FromPort': rule['from_port'],
                   'ToPort': rule['to_port']}
+    grant = {}
+    if 'description' in rule:
+        grant['Description'] = rule['description']
     if ethertype == "ipv4":
-        permission['IpRanges'] = [{'CidrIp': thisip}]
+        grant['CidrIp'] = thisip
+        permission['IpRanges'] = [grant]
     elif ethertype == "ipv6":
-        permission['Ipv6Ranges'] = [{'CidrIpv6': thisip}]
+        grant['CidrIpv6'] = thisip
+        permission['Ipv6Ranges'] = [grant]
 
     return fix_port_and_protocol(permission)
 
@@ -736,6 +774,22 @@ def main():
                 if group_id:
                     rule_id = make_rule_key('in', rule, group['GroupId'], group_id)
                     if rule_id in groupRules:
+                        if rule_description_needs_update(module, rule_id, groupRules, rule):
+                            if not module.check_mode:
+                                ip_permission = serialize_group_grant(group_id, rule)
+                                if ip_permission:
+                                    ips = ip_permission
+                                    if vpc_id:
+                                        [useridpair.update({'VpcId': vpc_id}) for useridpair in
+                                         ip_permission.get('UserIdGroupPairs')]
+                                    try:
+                                        client.update_security_group_rule_descriptions_ingress(GroupId=group['GroupId'], IpPermissions=[ips])
+                                    except botocore.exceptions.ClientError as e:
+                                        module.fail_json(
+                                            msg="Unable to update description ingress for group %s security group '%s' - %s" %
+                                                (group_id, group['GroupName'], e),
+                                            exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                            changed = True
                         del groupRules[rule_id]
                     else:
                         if not module.check_mode:
@@ -801,6 +855,22 @@ def main():
                 if group_id:
                     rule_id = make_rule_key('out', rule, group['GroupId'], group_id)
                     if rule_id in groupRules:
+                        if rule_description_needs_update(module, rule_id, groupRules, rule):
+                            if not module.check_mode:
+                                ip_permission = serialize_group_grant(group_id, rule)
+                                if ip_permission:
+                                    ips = ip_permission
+                                    if vpc_id:
+                                        [useridpair.update({'VpcId': vpc_id}) for useridpair in
+                                         ip_permission.get('UserIdGroupPairs')]
+                                    try:
+                                        client.update_security_group_rule_descriptions_egress(GroupId=group['GroupId'], IpPermissions=[ips])
+                                    except botocore.exceptions.ClientError as e:
+                                        module.fail_json(
+                                            msg="Unable to update description egress for group %s security group '%s' - %s" %
+                                                (group_id, group['GroupName'], e),
+                                            exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                            changed = True
                         del groupRules[rule_id]
                     else:
                         if not module.check_mode:
