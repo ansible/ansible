@@ -79,62 +79,31 @@ EXAMPLES = '''
     group: network-operator
     auth: md5
     pwd: test_password
-    host: "{{ inventory_hostname }}"
-    username: "{{ un }}"
-    password: "{{ pwd }}"
 '''
 
 RETURN = '''
-proposed:
-    description: k/v pairs of parameters passed into module
-    returned: always
-    type: dict
-    sample: {"authentication": "md5", "group": "network-operator",
-            "pwd": "test_password", "user": "ntc"}
-existing:
-    description:
-        - k/v pairs of existing configuration
-    returned: always
-    type: dict
-    sample: {"authentication": "no", "encrypt": "none",
-             "group": ["network-operator"], "user": "ntc"}
-end_state:
-    description: k/v pairs configuration vtp after module execution
-    returned: always
-    type: dict
-    sample: {"authentication": "md5", "encrypt": "none",
-             "group": ["network-operator"], "user": "ntc"}
-updates:
-    description: command sent to the device
+commands:
+    description: commands sent to the device
     returned: always
     type: list
     sample: ["snmp-server user ntc network-operator auth md5 test_password"]
-changed:
-    description: check to see if a change was made on the device
-    returned: always
-    type: boolean
-    sample: true
 '''
-from ansible.module_utils.nxos import get_config, load_config, run_commands
+
+
+from ansible.module_utils.nxos import load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
 
-import re
-import re
+def execute_show_command(command, module, text=False):
+    command = {
+        'command': command,
+        'output': 'json',
+    }
+    if text:
+        command['output'] = 'text'
 
-
-def execute_show_command(command, module, command_type='cli_show', text=False):
-    if module.params['transport'] == 'cli':
-        if 'show run' not in command and text is False:
-            command += ' | json'
-        cmds = [command]
-        body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
-        cmds = [command]
-        body = run_commands(module, cmds)
-
-    return body
+    return run_commands(module, command)
 
 
 def flatten_list(command_lists):
@@ -148,19 +117,17 @@ def flatten_list(command_lists):
 
 
 def get_snmp_groups(module):
-    command = 'show snmp group'
-    body = execute_show_command(command, module)
-    g_list = []
+    data = execute_show_command('show snmp group', module)[0]
+    group_list = []
 
     try:
-        group_table = body[0]['TABLE_role']['ROW_role']
-        for each in group_table:
-            g_list.append(each['role_name'])
+        group_table = data['TABLE_role']['ROW_role']
+        for group in group_table:
+            group_list.append(group['role_name'])
+    except (KeyError, AttributeError):
+        return group_list
 
-    except (KeyError, AttributeError, IndexError):
-        return g_list
-
-    return g_list
+    return group_list
 
 
 def get_snmp_user(user, module):
@@ -171,7 +138,6 @@ def get_snmp_user(user, module):
         body = execute_show_command(command, module)
 
     resource = {}
-    group_list = []
     try:
         resource_table = body[0]['TABLE_snmp_users']['ROW_snmp_users']
         resource['user'] = str(resource_table['user'])
@@ -250,13 +216,13 @@ def main():
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
-                                required_together=[['authentication', 'pwd'],
-                                                  ['encrypt', 'privacy']],
-                                supports_check_mode=True)
+                           required_together=[['authentication', 'pwd'],
+                                              ['encrypt', 'privacy']],
+                           supports_check_mode=True)
 
     warnings = list()
     check_args(module, warnings)
-
+    results = {'changed': False, 'commands': [], 'warnings': warnings}
 
     user = module.params['user']
     group = module.params['group']
@@ -275,18 +241,14 @@ def main():
         module.fail_json(msg='group not configured yet on switch.')
 
     existing = get_snmp_user(user, module)
-    end_state = existing
 
-    store = existing.get('group', None)
     if existing:
         if group not in existing['group']:
             existing['group'] = None
         else:
             existing['group'] = group
 
-    changed = False
     commands = []
-    proposed = {}
 
     if state == 'absent' and existing:
         commands.append(remove_snmp_user(user))
@@ -312,8 +274,7 @@ def main():
             elif encrypt:
                 proposed['encrypt'] = 'aes-128'
 
-            delta = dict(
-                set(proposed.items()).difference(existing.items()))
+            delta = dict(set(proposed.items()).difference(existing.items()))
 
             if delta.get('pwd'):
                 delta['authentication'] = authentication
@@ -325,29 +286,17 @@ def main():
             commands.append(command)
 
     cmds = flatten_list(commands)
-    results = {}
     if cmds:
-        if module.check_mode:
-            module.exit_json(changed=True, commands=cmds)
-        else:
-            changed = True
+        results['changed'] = True
+        if not module.check_mode:
             load_config(module, cmds)
-            end_state = get_snmp_user(user, module)
-            if 'configure' in cmds:
-                cmds.pop(0)
 
-    if store:
-        existing['group'] = store
-
-    results['proposed'] = proposed
-    results['existing'] = existing
-    results['updates'] = cmds
-    results['changed'] = changed
-    results['warnings'] = warnings
-    results['end_state'] = end_state
+        if 'configure' in cmds:
+            cmds.pop(0)
+        results['commands'] = cmds
 
     module.exit_json(**results)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

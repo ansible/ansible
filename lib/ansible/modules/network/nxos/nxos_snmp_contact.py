@@ -66,7 +66,7 @@ commands:
 
 import re
 
-from ansible.module_utils.nxos import get_config, load_config, run_commands
+from ansible.module_utils.nxos import load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
@@ -77,7 +77,7 @@ def execute_show_command(command, module):
         'output': 'text',
     }
 
-    return run_commands(module, [command])
+    return run_commands(module, command)
 
 
 def flatten_list(command_lists):
@@ -92,17 +92,12 @@ def flatten_list(command_lists):
 
 def get_snmp_contact(module):
     contact = {}
-    contact_regex = '.*snmp-server\scontact\s(?P<contact>\S+).*'
-    command = 'show run snmp'
+    contact_regex = r'^\s*snmp-server\scontact\s(?P<contact>.+)$'
 
-    body = execute_show_command(command, module)[0]
-
-    try:
-        match_contact = re.match(contact_regex, body, re.DOTALL)
-        group_contact = match_contact.groupdict()
-        contact['contact'] = group_contact["contact"]
-    except AttributeError:
-        contact = {}
+    body = execute_show_command('show run snmp', module)[0]
+    match_contact = re.search(contact_regex, body, re.M)
+    if match_contact:
+        contact['contact'] = match_contact.group("contact")
 
     return contact
 
@@ -110,25 +105,21 @@ def get_snmp_contact(module):
 def main():
     argument_spec = dict(
         contact=dict(required=True, type='str'),
-        state=dict(choices=['absent', 'present'],
-                       default='present')
+        state=dict(choices=['absent', 'present'], default='present'),
     )
 
     argument_spec.update(nxos_argument_spec)
 
-    module = AnsibleModule(argument_spec=argument_spec,
-                                supports_check_mode=True)
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
     warnings = list()
     check_args(module, warnings)
     results = {'changed': False, 'commands': [], 'warnings': warnings}
 
-
     contact = module.params['contact']
     state = module.params['state']
 
     existing = get_snmp_contact(module)
-    proposed = dict(contact=contact)
     commands = []
 
     if state == 'absent':
@@ -140,11 +131,12 @@ def main():
 
     cmds = flatten_list(commands)
     if cmds:
+        results['changed'] = True
         if not module.check_mode:
             load_config(module, cmds)
+
         if 'configure' in cmds:
             cmds.pop(0)
-        results['changed'] = True
         results['commands'] = cmds
 
     module.exit_json(**results)
