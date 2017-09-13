@@ -13,6 +13,7 @@
     before: no ip access-list extended test
     after: exit
     match: none
+    provider: "{{ cli }}"
 
 - name: configure sub level command using exact match
   ios_config:
@@ -25,6 +26,7 @@
     before: no ip access-list extended test
     after: exit
     match: exact
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -46,6 +48,7 @@
       - permit ip host 4.4.4.4 any log
     parents: ip access-list extended test
     match: exact
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -57,5 +60,6 @@
     lines:
       - no ip access-list extended test
     match: none
+    provider: "{{ cli }}"
 
 - debug: msg="END cli/sublevel_exact.yaml"
