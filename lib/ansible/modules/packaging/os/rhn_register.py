@@ -86,7 +86,7 @@ options:
             - If true, the registered node will not upload its installed packages information to Satellite server
         required: false
         default: false
-        version_added: "2.4"
+        version_added: "2.5"
 '''
 
 EXAMPLES = '''
