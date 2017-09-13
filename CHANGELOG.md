@@ -122,6 +122,8 @@ Ansible Changes By Release
   https://github.com/ansible/ansible/pull/31812
 * Fix label assignment in ovirt_host_networks
   (https://github.com/ansible/ansible/pull/31973)
+* Fix fencing and kuma usage in ovirt_cluster module
+  (https://github.com/ansible/ansible/pull/32190)
 
 <a id="2.4.1"></a>
 
