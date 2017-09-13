@@ -46,7 +46,7 @@ from ansible.module_utils._text import to_text
 ########################################
 # OUTPUT OF LAST RESORT
 class LastResort(object):
-    def display(self, msg):
+    def display(self, msg, log_only=None):
         print(msg, file=sys.stderr)
 
     def error(self, msg, wrap_text=None):

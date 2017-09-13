@@ -139,7 +139,6 @@ class Etcd:
                 value = "ENOENT"
         except:
             raise
-            pass
 
         return value
 
