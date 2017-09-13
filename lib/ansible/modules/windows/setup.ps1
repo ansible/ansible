@@ -141,6 +141,14 @@ Foreach ($ip in $netcfg.IPAddress) {
     }
 }
 
+$hotfixes = @{}
+foreach ($hotfix in Get-Hotfix) {
+   $hotfixid = $hotfix | select -ExpandProperty hotfixid
+   $caption = $hotfix | select -ExpandProperty caption
+   $hotfixes.Add($hotfixid, $caption)
+}
+
+
 $env_vars = @{ }
 foreach ($item in Get-ChildItem Env:) {
     $name = $item | select -ExpandProperty Name
@@ -168,6 +176,7 @@ $ansible_facts = @{
     ansible_machine_id = Get-MachineSid
     ansible_nodename = ($ip_props.HostName + "." + $ip_props.DomainName)
     ansible_os_family = "Windows"
+    ansible_os_hotfix = $hotfixes
     ansible_os_name = ($win32_os.Name.Split('|')[0]).Trim()
     ansible_owner_contact = ([string] $win32_cs.PrimaryOwnerContact)
     ansible_owner_name = ([string] $win32_cs.PrimaryOwnerName)
