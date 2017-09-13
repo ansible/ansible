@@ -92,6 +92,7 @@ Modules
 
 Major changes in popular modules are detailed here
 
+* The ``win_shell`` and ``win_command`` modules now properly preserve quoted arguments in the command-line. Tasks that attempted to work around the issue by adding extra quotes/escaping may need to be reworked to remove the superfluous escaping. See https://github.com/ansible/ansible/issues/23019 for additional detail.
 
 Modules removed
 ---------------
