@@ -124,7 +124,7 @@ options:
       - Flag used to wait for active status before returning
     required: false
     default: true
-  wait_timeout:
+  wait_time:
     description:
       - time in seconds before wait returns
     required: false
