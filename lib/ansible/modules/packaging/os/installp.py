@@ -26,7 +26,7 @@ options:
     name:
         description:
             - Name of package to install/remove. To operate on several packages
-              this can accept a comma separated.
+              this can accept a comma separated
         required: true
     repository_path:
         description:
@@ -140,15 +140,14 @@ def install(module, installp_cmd, packages, repository_path, package_action,
 
     for package in packages:
 
-        rc, install_out, err = module.run_command('%s -a %s -X %s -d %s %s'
-                                                  % (installp_cmd,
-                                                     package_actions_param[
-                                                         package_action],
-                                                     accept_license_param[
-                                                         accept_license],
-                                                     repository_path,
-                                                     package
-                                                     ))
+        rc, install_out, err = module.run_command('%s -a %s -X %s -d %s %s'% (
+            installp_cmd,
+            package_actions_param[package_action],
+            accept_license_param[accept_license],
+            repository_path,
+            package
+        ))
+
         if rc != 0:
             module.fail_json(msg="Failed to install the package %s" % package,
                              rc=rc, err=err)
@@ -165,7 +164,7 @@ def install(module, installp_cmd, packages, repository_path, package_action,
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(aliases=["pkg"], required=True),
+            name=dict(aliases=['pkg'], type='list'),
             repository_path=dict(type='str', default=None),
             accept_license=dict(type='bool', default='no'),
             state=dict(default="present", choices=["present", "absent"]),
@@ -174,7 +173,6 @@ def main():
         ))
 
     installp_params = module.params
-    pkgs = installp_params["name"].split(",")
 
     installp_cmd = module.get_bin_path('installp', True)
 
@@ -183,11 +181,20 @@ def main():
             module.fail_json(msg="repository_path is required to install "
                                  "package")
 
-        install(module, installp_cmd, pkgs, installp_params["repository_path"],
-                installp_params["package_action"], installp_params["accept_license"])
+        install(module,
+                installp_cmd,
+                installp_params["name"],
+                installp_params["repository_path"],
+                installp_params["package_action"],
+                installp_params["accept_license"]
+                )
 
     elif installp_params["state"] == "absent":
-        remove(module, installp_cmd, pkgs, installp_params["package_action"])
+        remove(module,
+               installp_cmd,
+               installp_params["name"],
+               installp_params["package_action"]
+               )
 
 
 if __name__ == '__main__':
