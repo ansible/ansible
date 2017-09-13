@@ -33,6 +33,30 @@
     that:
       - result.changed == false
 
+- name: Disable lookup_source
+  ios_system:
+    lookup_enabled: False
+    provider: "{{ cli }}"
+    authorize: yes
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - "'no ip domain lookup' in result.commands"
+
+- name: Disable lookup_source
+  ios_system:
+    lookup_enabled: True
+    provider: "{{ cli }}"
+    authorize: yes
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - "'ip domain lookup' in result.commands"
+
 #- name: change to vrf
 #  ios_system:
 #    lookup_source:
