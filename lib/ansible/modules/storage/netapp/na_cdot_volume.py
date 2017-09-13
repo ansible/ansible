@@ -69,6 +69,7 @@ options:
     - Name of the export policy to use.
     required: false
     default: None
+    version_added: '2.5'
 
   vserver:
     description:
@@ -322,9 +323,7 @@ class NetAppCDOTVolume(object):
                                   exception=traceback.format_exc())
     def change_export(self):
         """
-        Change export policy of Volume.
-
-       
+        Change export policy of the volume.
         """
 
         volume_change = netapp_utils.zapi.NaElement('volume-modify-iter')
@@ -342,7 +341,7 @@ class NetAppCDOTVolume(object):
         query.add_child_elem(volume_attributes)
 
         attributes = netapp_utils.zapi.NaElement('attributes')
-        attributes.add_child_elem(change_attributes) 
+        attributes.add_child_elem(change_attributes)
 
         volume_change.add_child_elem(query)
         volume_change.add_child_elem(attributes)
