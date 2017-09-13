@@ -275,7 +275,7 @@ class Display:
             prompt_string = to_text(prompt_string)
 
         if private:
-            return getpass.getpass(msg)
+            return getpass.getpass(prompt_string)
         else:
             return input(prompt_string)
 
