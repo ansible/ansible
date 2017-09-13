@@ -61,9 +61,8 @@ options:
 EXAMPLES = '''
 - nxos_file_copy:
     local_file: "./test_file.txt"
-    username: "{{ un }}"
-    password: "{{ pwd }}"
-    host: "{{ inventory_hostname }}"
+    remote_file: "test_file.txt"
+    provider: "{{ cli }}"
 '''
 
 RETURN = '''
@@ -144,9 +143,11 @@ def transfer_file(module, dest):
     if not enough_space(module):
         module.fail_json(msg='Could not transfer file. Not enough space on device.')
 
-    hostname = module.params['host']
-    username = module.params['username']
-    password = module.params['password']
+    provider = module.params['provider']
+
+    hostname = module.params.get('host') or provider.get('host')
+    username = module.params.get('username') or provider.get('username')
+    password = module.params.get('password') or provider.get('password')
 
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
