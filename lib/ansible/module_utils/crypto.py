@@ -109,6 +109,12 @@ keyUsageLong = {
 }
 
 extendedKeyUsageLong = {
+    "anyExtendedKeyUsage": "Any Extended Key Usage",
+    "ipsecEndSystem": "IPSec End System",
+    "ipsecTunnel": "IPSec Tunnel",
+    "ipsecUser": "IPSec User",
+    "msSGC": "Microsoft Server Gated Crypto",
+    "nsSGC": "Netscape Server Gated Crypto",
     "serverAuth": "TLS Web Server Authentication",
     "clientAuth": "TLS Web Client Authentication",
     "codeSigning": "Code Signing",
