@@ -324,7 +324,7 @@ def process_modules(module_map, templates, outputname,
 
         # crash if module is missing documentation and not explicitly hidden from docs index
         if module_map[module]['doc'] is None:
-            print("*** ERROR: MODULE MISSING DOCUMENTATION: %s, %s ***\n" % (fname, module))
+            print("%s: ERROR: MODULE MISSING DOCUMENTATION" % (fname,))
             _doc = {'module': module,
                     'version_added': '2.4',
                     'filename': fname}
@@ -343,7 +343,17 @@ def process_modules(module_map, templates, outputname,
         doc['plugin_type'] = plugin_type
 
         if module_map[module]['deprecated'] and 'deprecated' not in doc:
-            print("*** ERROR: DEPRECATED MODULE MISSING 'deprecated' DOCUMENTATION: %s, %s ***\n" % (fname, module))
+            print("%s: WARNING: MODULE MISSING DEPRECATION DOCUMENTATION: %s" % (fname, 'deprecated'))
+
+        required_fields = ('short_description',)
+        for field in required_fields:
+            if field not in doc:
+                print("%s: WARNING: MODULE MISSING field '%s'" % (fname, field))
+
+        not_nullable_fields = ('short_description',)
+        for field in not_nullable_fields:
+            if field in doc and doc[field] in (None, ''):
+                print("%s: WARNING: MODULE field '%s' DOCUMENTATION is null/empty value=%s" % (fname, field, doc[field]))
 
         if 'version_added' not in doc:
             pprint.pprint(doc)
@@ -402,8 +412,6 @@ def process_modules(module_map, templates, outputname,
         doc['ansible_version'] = ansible_version
 
         # check the 'deprecated' field in doc. We expect a dict potentially with 'why', 'version', and 'alternative' fields
-        doc
-
         # examples = module_map[module]['examples']
         # print('\n\n%s: type of examples: %s\n' % (module, type(examples)))
         # if examples and not isinstance(examples, (str, unicode, list)):
@@ -587,8 +595,13 @@ def main():
     # Transform the data
     if options.type == 'rst':
         for key, record in mod_info.items():
+            # pprint.pprint(('record', record))
             if record.get('doc', None):
-                record['doc']['short_description'] = rst_ify(record['doc']['short_description'])
+                short_desc = record['doc']['short_description']
+                if short_desc is None:
+                    print('WARNING: short_description for %s is None' % key)
+                    short_desc = ''
+                record['doc']['short_description'] = rst_ify(short_desc)
 
     # Write master category list
     category_list_text = templates['category_list'].render(categories=sorted(categories.keys()))
