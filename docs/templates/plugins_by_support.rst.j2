@@ -6,7 +6,7 @@ Plugins Maintained by the @{ maintainers }@
 .. toctree:: :maxdepth: 1
 
 {% for module in modules | sort %}
-  @{ module }@{% if module_info[module]['deprecated'] %} **(D)**{% endif %} - @{ module_info[module]['doc']['short_description'] }@ <@{ module }@_module>
+  @{ module }@{% if module_info[module]['deprecated'] %} **(D)**{% endif %} - @{ module_info[module]['doc']['short_description'] }@ <plugins/@{ module_info[module]['primary_category'] }@/@{ module }@>
 {% endfor %}
 
 .. note::
