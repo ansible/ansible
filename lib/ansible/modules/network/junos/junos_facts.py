@@ -82,6 +82,7 @@ from ansible.module_utils.junos import get_configuration
 from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.netconf import send_request
 from ansible.module_utils.six import iteritems
+from ansible.utils.display import Display
 
 try:
     from lxml.etree import Element, SubElement, tostring
@@ -138,7 +139,7 @@ class Default(FactsBase):
 
         reply = self.rpc('get-chassis-inventory')
         data = reply.find('.//chassis-inventory/chassis')
-
+        Display.vvvv("Data: {}".format(data))
         self.facts['serialnum'] = self.get_text(data, 'serial-number')
 
 
