@@ -448,8 +448,8 @@ def main():
                         if rc != 0:
                             module.fail_json(msg="Unable to %s service %s: %s" % (action, unit, err))
             else:
-                # this should not happen?
-                module.fail_json(msg="Service is in unknown state", status=result['status'])
+                # this can happen when we're running in a chroot, in which case systemd supports only enable/disable operations
+                module.warn('Service is in unknown state')
 
 
     module.exit_json(**result)
