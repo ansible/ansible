@@ -103,7 +103,7 @@ class HttpClient(object):
                 break
             except SubprocessError as ex:
                 if ex.status in retry_on_status and attempts < max_attempts:
-                    display.warning(ex.message)
+                    display.warning(u'%s' % ex)
                     time.sleep(sleep_seconds)
                     continue
 
