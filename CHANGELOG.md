@@ -30,7 +30,7 @@ Ansible Changes By Release
   - Inventory plugins can use the cache plugin (i.e. virtualbox) and is affected by `meta: refresh_inventory`
   - Group variable precedence is now configurable via new 'precedence' option in ansible.cfg (needs docs)
   - Improved warnings and error messages across the board
-* Configuration has been changed from a hardcoded into the constants module to dynamically loaded from yaml definitions
+* Configuration has been changed from a hardcoded listing in the constants module to dynamically loaded from yaml definitions
   - Also added an ansible-config CLI to allow for listing config options and dumping current config (including origin)
   - TODO: build upon this to add many features detailed in ansible-config proposal https://github.com/ansible/proposals/issues/35
 * Windows modules now support the use of multiple shared module_utils files in the form of Powershell modules (.psm1), via `#Requires -Module Ansible.ModuleUtils.Whatever.psm1`
@@ -52,14 +52,15 @@ Ansible Changes By Release
   its content is now also available directly in the resulting output, like other modules.
 
 #### Deprecated Modules (to be removed in 2.8):
-* ec2_facts: replaced by ec2_metadata_facts
+* azure: use M(azure_rm_virtualmachine) instead
 * cs_nic: replaced by cs_instance_nic_secondaryip, also see new module cs_instance_nic for managing nics
+* ec2_facts: replaced by ec2_metadata_facts
+* ec2_remote_facts: replaced by 
 * panos_address: use M(panos_object) instead
-* panos_service: use M(panos_object) instead
-* panos_security_policy: use M(panos_security_rule) instead
 * panos_nat_policy: use M(panos_nat_rule) instead
+* panos_security_policy: use M(panos_security_rule) instead
+* panos_service: use M(panos_object) instead
 * s3: replaced by aws_s3
-* ec2_remote_facts: replaced by
 * win_msi: use M(win_package) instead
 
 #### Removed Modules (previouslly deprecated):
@@ -68,8 +69,8 @@ Ansible Changes By Release
 * iosxr_template: use iosxr_config instead
 * junos_template: use junos_config instead
 * nxos_template: use nxos_config instead
-* ops_template: use ops_config instead
 * openswitch
+* ops_template: use ops_config instead
 
 
 ### Minor Changes
@@ -131,6 +132,9 @@ Ansible Changes By Release
     - extensions of files to ignore when using inventory directory
 	- patterns of flies to ignore when using inventory directory
 	- option to toggle failed inventory source parsing between an error or a warning
+* More fixes for Python 3 across the code base.
+* win_shell and win_command modules now properly preserve quoted arguments passed on the command-line. Tasks that attempted to work around the issue by adding extra quotes/escaping may need to be reworked. See https://github.com/ansible/ansible/issues/23019 for additional detail.
+
 
 #### New Callbacks:
 - full_skip
