@@ -641,7 +641,16 @@ def main():
         groupName = sg['GroupName']
         if groupName in groups:
             # Prioritise groups from the current VPC
-            if sg['VpcId'] == vpc_id:
+            # even if current VPC is EC2-Classic
+            if groups[groupName].get('VpcId') == vpc_id:
+                # Group saved already matches current VPC, change nothing
+                pass
+            elif vpc_id is None and groups[groupName].get('VpcId') is None:
+                # We're in EC2 classic, and the group already saved is as well
+                # No VPC groups can be used alongside EC2 classic groups
+                pass
+            else:
+                # the current SG stored has no direct match, so we can replace it
                 groups[groupName] = sg
         else:
             groups[groupName] = sg
