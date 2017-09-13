@@ -78,9 +78,6 @@ DEPRECATED = b" (D)"
 def rst_ify(text):
     ''' convert symbols like I(this is in italics) to valid restructured text '''
 
-    print('text: %s' % text)
-    print('type(text): %s' % type(text))
-
     try:
         t = _ITALIC.sub(r'*' + r"\1" + r"*", text)
         t = _BOLD.sub(r'**' + r"\1" + r"**", t)
@@ -341,7 +338,7 @@ def process_modules(module_map, templates, outputname,
 
         # add some defaults for plugins that dont have most of the info
         doc['module'] = doc.get('module', module)
-        doc['version_added'] = doc.get('version_added', '')
+        doc['version_added'] = doc.get('version_added', 'historical')
 
         doc['plugin_type'] = plugin_type
 
@@ -350,7 +347,7 @@ def process_modules(module_map, templates, outputname,
 
         if 'version_added' not in doc:
             pprint.pprint(doc)
-            sys.exit("*** ERROR: missing version_added in: %s ***\n" % module)
+            # sys.exit("*** ERROR: missing version_added in: %s ***\n" % module)
 
         #
         # The present template gets everything from doc so we spend most of this
@@ -450,6 +447,9 @@ def process_modules(module_map, templates, outputname,
 def process_categories(mod_info, categories, templates,
                        output_dir, output_name, plugin_type):
     for category in sorted(categories.keys()):
+        if (plugin_type, category) == ('plugins', ''):
+            print('skipping unknown cat: %s' % category)
+            continue
         module_map = categories[category]
         category_filename = output_name % category
 
