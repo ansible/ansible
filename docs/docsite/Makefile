@@ -20,9 +20,13 @@ all: docs
 
 docs: clean htmldocs
 
-htmldocs: testing keywords modules staticmin cli config
+generate_rst: testing keywords modules staticmin cli config
 
+htmldocs: generate_rst
 	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx html
+
+singlehtmldocs: generate_rst
+	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx singlehtml
 
 webdocs: docs
 
