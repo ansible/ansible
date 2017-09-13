@@ -312,7 +312,9 @@ def main():
 
     try:
         cloud = shade.openstack_cloud(**module.params)
-        secgroup = cloud.get_security_group(security_group)
+        project_id = cloud.current_project_id
+        tenant_filter = "[? tenant_id == \'%s\']" % project_id
+        secgroup = cloud.get_security_group(security_group, filters=tenant_filter)
 
         if remote_group:
             remotegroup = cloud.get_security_group(remote_group)
