@@ -130,6 +130,8 @@ Ansible Changes By Release
 	- patterns of flies to ignore when using inventory directory
 	- option to toggle failed inventory source parsing between an error or a warning
 * More fixes for Python 3 across the code base.
+* win_shell and win_command modules now properly preserve quoted arguments passed on the command-line. Tasks that attempted to work around the issue by adding extra quotes/escaping may need to be reworked. See https://github.com/ansible/ansible/issues/23019 for additional detail.
+
 
 #### New Callbacks:
 - full_skip
