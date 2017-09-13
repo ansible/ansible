@@ -318,7 +318,7 @@ def add_rules_to_lookup(ipPermissions, group_id, prefix, dict):
 def validate_rule(module, rule):
     VALID_PARAMS = ('cidr_ip', 'cidr_ipv6',
                     'group_id', 'group_name', 'group_desc',
-                    'proto', 'from_port', 'to_port')
+                    'proto', 'from_port', 'to_port', 'rule_desc')
     if not isinstance(rule, dict):
         module.fail_json(msg='Invalid rule parameter type [%s].' % type(rule))
     for k in rule:
@@ -489,12 +489,32 @@ def rules_expand_sources(rules):
             for rule in rule_expand_sources(rule_complex)]
 
 
+def update_rules_description(module, client, rule_type, group_id, ip_permissions):
+    try:
+        if rule_type == "in":
+            client.update_security_group_rule_descriptions_ingress(GroupId=group_id, IpPermissions=[ip_permissions])
+        if rule_type == "out":
+            client.update_security_group_rule_descriptions_egress(GroupId=group_id, IpPermissions=[ip_permissions])
+    except botocore.exception.ClientError as e:
+        module.fail_json(
+            msg="Unable to update rule description for group %s: %s" %
+                (group_id, e),
+            exceptin=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+
+
 def authorize_ip(type, changed, client, group, groupRules,
                  ip, ip_permission, module, rule, ethertype):
     # If rule already exists, don't later delete it
     for thisip in ip:
         rule_id = make_rule_key(type, rule, group['GroupId'], thisip)
         if rule_id in groupRules:
+            desired_rule_desc = rule.get('rule_desc', '')
+            current_rule = groupRules[rule_id][0].get('IpRanges') or groupRules[rule_id][0].get('Ipv6Ranges')
+            if desired_rule_desc != current_rule[0].get('Description', ''):
+                if not module.check_mode:
+                    ip_permission = serialize_ip_grant(rule, thisip, ethertype)
+                    update_rules_description(module, client, type, group['GroupId'], ip_permission)
+                changed = True
             del groupRules[rule_id]
         else:
             if not module.check_mode:
@@ -519,7 +539,7 @@ def serialize_group_grant(group_id, rule):
     permission = {'IpProtocol': rule['proto'],
                   'FromPort': rule['from_port'],
                   'ToPort': rule['to_port'],
-                  'UserIdGroupPairs': [{'GroupId': group_id}]}
+                  'UserIdGroupPairs': [{'GroupId': group_id, 'Description': rule.get('rule_desc', '')}]}
 
     return fix_port_and_protocol(permission)
 
@@ -554,9 +574,9 @@ def serialize_ip_grant(rule, thisip, ethertype):
                   'FromPort': rule['from_port'],
                   'ToPort': rule['to_port']}
     if ethertype == "ipv4":
-        permission['IpRanges'] = [{'CidrIp': thisip}]
+        permission['IpRanges'] = [{'CidrIp': thisip, 'Description': rule.get('rule_desc', '')}]
     elif ethertype == "ipv6":
-        permission['Ipv6Ranges'] = [{'CidrIpv6': thisip}]
+        permission['Ipv6Ranges'] = [{'CidrIpv6': thisip, 'Description': rule.get('rule_desc', '')}]
 
     return fix_port_and_protocol(permission)
 
@@ -751,6 +771,11 @@ def main():
                 if group_id:
                     rule_id = make_rule_key('in', rule, group['GroupId'], group_id)
                     if rule_id in groupRules:
+                        if rule.get('rule_desc', '') != groupRules[rule_id][0]['UserIdGroupPairs'][0]['Description']:
+                            if not module.check_mode:
+                                ip_permission = serialize_group_grant(group_id, rule)
+                                update_rules_description(module, client, 'in', group['GroupId'], ip_permission)
+                            changed = True
                         del groupRules[rule_id]
                     else:
                         if not module.check_mode:
@@ -816,6 +841,11 @@ def main():
                 if group_id:
                     rule_id = make_rule_key('out', rule, group['GroupId'], group_id)
                     if rule_id in groupRules:
+                        if rule.get('rule_desc', '') != groupRules[rule_id][0]['UserIdGroupPairs'][0]['Description']:
+                            if not module.check_mode:
+                                ip_permission = serialize_group_grant(group_id, rule)
+                                update_rules_description(module, client, 'in', group['GroupId'], ip_permission)
+                            changed = True
                         del groupRules[rule_id]
                     else:
                         if not module.check_mode:
