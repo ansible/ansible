@@ -30,7 +30,7 @@ param(
 
 $DiskSize = $DiskSize *1GB
 
-if($Number -ne $null){
+if($Number -is [int]){
         Get-Disk | Where-Object {($_.PartitionStyle -eq $PartitionStyle) -and ($_.OperationalStatus -eq $OperationalStatus) -and ($_.IsReadOnly -eq $ReadOnly) -and ($_.Number -eq $Number) -and ($_.Size -eq $DiskSize)}
 }
 else{
