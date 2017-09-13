@@ -108,7 +108,6 @@ namespace Ansible
 
     public class CommandUtil
     {
-        private static UInt32 CREATE_BREAKAWAY_FROM_JOB = 0x01000000;
         private static UInt32 CREATE_UNICODE_ENVIRONMENT = 0x000000400;
         private static UInt32 CREATE_NEW_CONSOLE = 0x00000010;
         private static UInt32 EXTENDED_STARTUPINFO_PRESENT = 0x00080000;
@@ -213,7 +212,7 @@ namespace Ansible
 
         public static Tuple<string, string, uint> RunCommand(string lpApplicationName, string lpCommandLine, string lpCurrentDirectory, string stdinInput, string environmentBlock)
         {
-            UInt32 startup_flags = CREATE_BREAKAWAY_FROM_JOB | CREATE_UNICODE_ENVIRONMENT | CREATE_NEW_CONSOLE | EXTENDED_STARTUPINFO_PRESENT;
+            UInt32 startup_flags = CREATE_UNICODE_ENVIRONMENT | CREATE_NEW_CONSOLE | EXTENDED_STARTUPINFO_PRESENT;
             STARTUPINFOEX si = new STARTUPINFOEX();
             si.startupInfo.dwFlags = (int)StartupInfoFlags.USESTDHANDLES;
 
