@@ -385,9 +385,17 @@ def get_target_from_rule(module, client, rule, name, group, groups, vpc_id):
             group_id = group['GroupId']
             groups[group_id] = group
             groups[group_name] = group
-        elif group_name in groups:
+        elif group_name in groups and group.get('VpcId') and groups[group_name].get('VpcId'):
+            # both are VPC groups, this is ok
+            group_id = groups[group_name]['GroupId']
+        elif group_name in groups and not (group.get('VpcId') or groups[group_name].get('VpcId')):
+            # both are EC2 classic, this is ok
             group_id = groups[group_name]['GroupId']
         else:
+            # if we got here, either the target group does not exist, or there
+            # is a mix of EC2 classic + VPC groups. Mixing of EC2 classic + VPC
+            # is bad, so we have to create a new SG because no compatible group
+            # exists
             if not rule.get('group_desc', '').strip():
                 module.fail_json(msg="group %s will be automatically created by rule %s and "
                                      "no description was provided" % (group_name, rule))
