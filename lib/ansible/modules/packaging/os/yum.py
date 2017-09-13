@@ -748,7 +748,7 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, i
         elif '://' in spec:
             # download package so that we can check if it's already installed
             package = fetch_rpm_from_url(spec, module=module)
-            envra = local_envra(package)
+            envra = local_envra(module, package)
             if is_installed(module, repoq, envra, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot):
                 # if it's there, skip it
                 continue
