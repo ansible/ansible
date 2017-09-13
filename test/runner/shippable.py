@@ -7,6 +7,7 @@ from __future__ import absolute_import, print_function
 # noinspection PyCompatibility
 import argparse
 import errno
+import json
 import os
 import sys
 
@@ -43,6 +44,9 @@ def main():
         client = HttpClient(args)
         response = client.get('https://api.shippable.com/jobs?runIds=%s' % run_id)
         jobs = response.json()
+
+        if not isinstance(jobs, list):
+            raise ApplicationError(json.dumps(jobs, indent=4, sort_keys=True))
 
         if len(jobs) == 1:
             raise ApplicationError('Shippable run %s has only one job. Did you use the "Rebuild with SSH" option?' % run_id)
