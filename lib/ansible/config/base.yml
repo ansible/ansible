@@ -4,11 +4,11 @@
 ACCELERATE_CONNECT_TIMEOUT:
   default: 1.0
   description:
-    - This setting controls the timeout for the socket connect call, and should be kept relatively low.
+    - "This setting controls the timeout for the socket connect call, and should be kept relatively low.
       The connection to the accelerate_port will be attempted 3 times before Ansible will fall back to ssh or paramiko
-      (depending on your default connection setting) to try and start the accelerate daemon remotely.
-    - Note, this value can be set to less than one second, however it is probably not a good idea to do so
-      unless you’re on a very fast and reliable LAN. If you’re connecting to systems over the internet, it may be necessary to increase this timeout.
+      (depending on your default connection setting) to try and start the accelerate daemon remotely."
+    - "Note, this value can be set to less than one second, however it is probably not a good idea to do so
+      unless you are on a very fast and reliable LAN. If you are connecting to systems over the internet, it may be necessary to increase this timeout."
   env: [{name: ACCELERATE_CONNECT_TIMEOUT }]
   ini:
   - {key: accelerate_connect_timeout, section: accelerate}
@@ -22,7 +22,7 @@ ACCELERATE_DAEMON_TIMEOUT:
   default: 30
   description:
     - This setting controls the timeout for the accelerated daemon, as measured in minutes. The default daemon timeout is 30 minutes.
-    - Prior to 1.6, the timeout was hard-coded from the time of the daemon’s launch.
+    - "Prior to 1.6, the timeout was hard-coded from the time of the daemon's launch."
     - For version 1.6+, the timeout is now based on the last activity to the daemon and is configurable via this option.
   env: [{name: ACCELERATE_DAEMON_TIMEOUT}]
   ini:
@@ -158,8 +158,8 @@ ANSIBLE_PIPELINING:
     - Pipelining, if supported by the connection plugin, reduces the number of network operations required to execute a module on the remote server,
       by executing many Ansible modules without actual file transfer.
     - This can result in a very significant performance improvement when enabled.
-    - However this conflicts with privilege escalation (become). For example, when using “sudo:” operations you must first
-      disable ‘requiretty’ in /etc/sudoers on all managed hosts, which is why it is disabled by default.
+    - "However this conflicts with privilege escalation (become). For example, when using 'sudo:' operations you must first
+      disable 'requiretty' in /etc/sudoers on all managed hosts, which is why it is disabled by default."
   env: [{name: ANSIBLE_PIPELINING}]
   ini:
   - {key: pipelining, section: connection}
@@ -217,7 +217,7 @@ ANSIBLE_SSH_PIPELINING:
     - Pipelining reduces the number of SSH operations required to execute a module on the remote server,
       by executing many Ansible modules without actual file transfer.
     - This can result in a very significant performance improvement when enabled.
-    - However this conflicts with privilege escalation (become). For example, when using “sudo:” operations you must first disable ‘requiretty’ in /etc/sudoers on all managed hosts, which is why it is disabled by default.
+    - "However this conflicts with privilege escalation (become). For example, when using 'sudo:' operations you must first disable 'requiretty' in /etc/sudoers on all managed hosts, which is why it is disabled by default."
   env: [{name: ANSIBLE_SSH_PIPELINING}]
   ini:
   - {key: pipelining, section: ssh_connection}
@@ -406,8 +406,8 @@ DEFAULT_ALLOW_UNSAFE_LOOKUPS:
   name: Allow unsafe lookups
   default: False
   description:
-    - When enabled, this option allows lookup plugins (whether used in variables as ``{{lookup(‘foo’)}}`` or as a loop as with_foo)
-      to return data that is not marked “unsafe”.
+    - "When enabled, this option allows lookup plugins (whether used in variables as ``{{lookup('foo')}}`` or as a loop as with_foo)
+      to return data that is not marked 'unsafe'."
     - By default, such data is marked as unsafe to prevent the templating engine from evaluating any jinja2 templating language,
       as this could represent a security risk.  This option is provided to allow for backwards-compatibility,
       however users should first consider adding allow_unsafe=True to any lookups which may be expected to contain data which may be run
@@ -489,7 +489,7 @@ DEFAULT_BECOME_METHOD:
 DEFAULT_BECOME_EXE:
   name: Choose 'become' executable
   default: ~
-  description: 'executable to use for privilege escalation, otherwise Ansible will depend on PATh'
+  description: 'executable to use for privilege escalation, otherwise Ansible will depend on PATH'
   env: [{name: ANSIBLE_BECOME_EXE}]
   ini:
   - {key: become_exe, section: privilege_escalation}
@@ -538,8 +538,8 @@ DEFAULT_CALLBACK_WHITELIST:
   name: Callback Whitelist
   default: []
   description:
-    - List of whitelisted callbacks, not all callbacks need whitelisting,
-      but many of those shipped with Ansible do as we don't want them activated by default.
+    - "List of whitelisted callbacks, not all callbacks need whitelisting,
+      but many of those shipped with Ansible do as we don't want them activated by default."
   env: [{name: ANSIBLE_CALLBACK_WHITELIST}]
   ini:
   - {key: callback_whitelist, section: defaults}
@@ -566,8 +566,8 @@ DEFAULT_EXECUTABLE:
   name: Target shell executable
   default: /bin/sh
   description:
-    - This indicates the command to use to spawn a shell under for Ansible's execution needs on a target.
-      Users may need to change this in rare instances when shell usage is constrained, but in most cases it may be left as is.
+    - "This indicates the command to use to spawn a shell under for Ansible's execution needs on a target.
+      Users may need to change this in rare instances when shell usage is constrained, but in most cases it may be left as is."
   env: [{name: ANSIBLE_EXECUTABLE}]
   ini:
   - {key: executable, section: defaults}
@@ -575,9 +575,9 @@ DEFAULT_FACT_PATH:
   name: local fact path
   default: ~
   description:
-    - This option allows you to globally configure a custom path for 'local_facts' for the implied M(setup) task when using fact gathering.
+    - "This option allows you to globally configure a custom path for 'local_facts' for the implied M(setup) task when using fact gathering."
     - "If not set, it will fallback to the default from the M(setup) module: ``/etc/ansible/facts.d``."
-    - This does **not ** affect  user defined tasks that use the M(setup) module.
+    - "This does **not** affect  user defined tasks that use the M(setup) module."
   env: [{name: ANSIBLE_FACT_PATH}]
   ini:
   - {key: fact_path, section: defaults}
@@ -616,11 +616,11 @@ DEFAULT_GATHERING:
   default: 'implicit'
   description:
     - This setting controls the default policy of fact gathering (facts discovered about remote systems).
-    - "When ‘implicit’ (the default), the cache plugin will be ignored and facts will be gathered per play unless ‘gather_facts: False’ is set."
-    - When ‘explicit’ the inverse is true, facts will not be gathered unless directly requested in the play.
-    - The ‘smart’ value means each new host that has no facts discovered will be scanned,
-      but if the same host is addressed in multiple plays it will not be contacted again in the playbook run.
-    - This option can be useful for those wishing to save fact gathering time. Both ‘smart’ and ‘explicit’ will use the cache plugin.
+    - "When 'implicit' (the default), the cache plugin will be ignored and facts will be gathered per play unless 'gather_facts: False' is set."
+    - "When 'explicit' the inverse is true, facts will not be gathered unless directly requested in the play."
+    - "The 'smart' value means each new host that has no facts discovered will be scanned,
+      but if the same host is addressed in multiple plays it will not be contacted again in the playbook run."
+    - "This option can be useful for those wishing to save fact gathering time. Both 'smart' and 'explicit' will use the cache plugin."
   env: [{name: ANSIBLE_GATHERING}]
   ini:
     - key: gathering
@@ -633,7 +633,7 @@ DEFAULT_GATHER_SUBSET:
   description:
       - Set the `gather_subset` option for the M(setup) task in the implicit fact gathering.
         See the module documentation for specifics.
-      - It does **not** apply to user defined M(setup) tasks.
+      - "It does **not** apply to user defined M(setup) tasks."
   env: [{name: ANSIBLE_GATHER_SUBSET}]
   ini:
     - key: gather_subset
@@ -644,7 +644,7 @@ DEFAULT_GATHER_TIMEOUT:
   default: 10
   description:
     - Set the timeout in seconds for the implicit fact gathering.
-    - It does **not** apply to user defined M(setup) tasks.
+    - "It does **not** apply to user defined M(setup) tasks."
   env: [{name: ANSIBLE_GATHER_TIMEOUT}]
   ini:
   - {key: gather_timeout, section: defaults}
@@ -654,7 +654,7 @@ DEFAULT_HANDLER_INCLUDES_STATIC:
   name: Make handler M(include) static
   default: False
   description:
-    - Since 2.0 M(include) can be 'dynamic', this setting (if True) forces that if the include appears in a ``handlers`` section to be 'static'.
+    - "Since 2.0 M(include) can be 'dynamic', this setting (if True) forces that if the include appears in a ``handlers`` section to be 'static'."
   env: [{name: ANSIBLE_HANDLER_INCLUDES_STATIC}]
   ini:
   - {key: handler_includes_static, section: defaults}
@@ -667,15 +667,15 @@ DEFAULT_HASH_BEHAVIOUR:
   name: Hash merge behaviour
   default: replace
   type: string
-  choices: [‘replace’, ‘merge’]
+  choices: ["replace", "merge"]
   description:
     - This setting controls how variables merge in Ansible.
       By default Ansible will override variables in specific precedence orders, as described in Variables.
       When a variable of higher precedence wins, it will replace the other value.
-    - Some users prefer that variables that are hashes (aka ‘dictionaries’ in Python terms) are merged.
-      This setting is called ‘merge’. This is not the default behavior and it does not affect variables whose values are scalars
+    - "Some users prefer that variables that are hashes (aka 'dictionaries' in Python terms) are merged.
+      This setting is called 'merge'. This is not the default behavior and it does not affect variables whose values are scalars
       (integers, strings) or arrays.  We generally recommend not using this setting unless you think you have an absolute need for it,
-      and playbooks in the official examples repos do not use this setting
+      and playbooks in the official examples repos do not use this setting"
     - In version 2.0 a ``combine`` filter was added to allow doing this for a particular variable (described in Filters).
   env: [{name: ANSIBLE_HASH_BEHAVIOUR}]
   ini:
@@ -716,7 +716,7 @@ DEFAULT_INTERNAL_POLL_INTERVAL:
       Lower values improve performance with large playbooks at the expense of extra CPU load.
       Higher values are more suitable for Ansible usage in automation scenarios,
       when UI responsiveness is not required but CPU usage might be a concern.
-    - The default corresponds to the value hardcoded in Ansible ≤ 2.1
+    - "The default corresponds to the value hardcoded in Ansible <= 2.1"
 DEFAULT_INVENTORY_PLUGIN_PATH:
   name: Inventory Plugins Path
   default: ~/.ansible/plugins/inventory:/usr/share/ansible/plugins/inventory
@@ -730,7 +730,7 @@ DEFAULT_JINJA2_EXTENSIONS:
   default: []
   description:
     - This is a developer-specific feature that allows enabling additional Jinja2 extensions.
-    - See the Jinja2 documentation for details. If you do not know what these do, you probably don’t need to change this setting :)
+    - "See the Jinja2 documentation for details. If you do not know what these do, you probably don't need to change this setting :)"
   env: [{name: ANSIBLE_JINJA2_EXTENSIONS}]
   ini:
   - {key: jinja2_extensions, section: defaults}
@@ -747,8 +747,8 @@ DEFAULT_LIBVIRT_LXC_NOSECLABEL:
   name: No security label on Lxc
   default: False
   description:
-    - This setting causes libvirt to connect to lxc containers by passing –noseclabel to virsh.
-      This is necessary when running on systems which do not have SELinux.
+    - "This setting causes libvirt to connect to lxc containers by passing --noseclabel to virsh.
+      This is necessary when running on systems which do not have SELinux."
   env: [{name: LIBVIRT_LXC_NOSECLABEL}]
   ini:
   - {key: libvirt_lxc_noseclabel, section: selinux}
@@ -828,7 +828,7 @@ DEFAULT_MODULE_LANG:
 DEFAULT_MODULE_NAME:
   name: Default adhoc module
   default: command
-  description: Module to use with the ``ansible`` AdHoc command, if none is specified via ``-m``.
+  description: "Module to use with the ``ansible`` AdHoc command, if none is specified via ``-m``."
   env: []
   ini:
   - {key: module_name, section: defaults}
@@ -861,7 +861,7 @@ DEFAULT_MODULE_UTILS_PATH:
 DEFAULT_NO_LOG:
   name: No log
   default: False
-  description: Toggle Ansible's display and logging of task details, mainly used to avoid security disclosures.
+  description: "Toggle Ansible's display and logging of task details, mainly used to avoid security disclosures."
   env: [{name: ANSIBLE_NO_LOG}]
   ini:
   - {key: no_log, section: defaults}
@@ -939,7 +939,7 @@ DEFAULT_REMOTE_USER:
   default:
   description:
     - Sets the login user for the target machines
-    - When blank it uses the connection plugin's default, normally the user currently executing Ansible.
+    - "When blank it uses the connection plugin's default, normally the user currently executing Ansible."
   env: [{name: ANSIBLE_REMOTE_USER}]
   ini:
   - {key: remote_user, section: defaults}
@@ -987,7 +987,7 @@ DEFAULT_SQUASH_ACTIONS:
   name: Squashable actions
   default: apk, apt, dnf, homebrew, openbsd_pkg, pacman, pkgng, yum, zypper
   description:
-    - Ansible can optimise actions that call modules that support list parameters when using with_ looping.
+    - Ansible can optimise actions that call modules that support list parameters when using ``with_`` looping.
       Instead of calling the module once for each item, the module is called once with the full list.
     - The default value for this setting is only for certain package managers, but it can be used for any module
     - Currently, this is only supported for modules that have a name or pkg parameter, and only when the item is the only thing being passed to the parameter.
@@ -1166,7 +1166,7 @@ DEFAULT_UNDEFINED_VAR_BEHAVIOR:
   version_added: "1.3"
   description:
     - When True, this causes ansible templating to fail steps that reference variable names that are likely typoed.
-    - Otherwise, any ‘{{ template_expression }}’ that contains undefined variables will be rendered in a template or ansible action line exactly as written.
+    - "Otherwise, any '{{ template_expression }}' that contains undefined variables will be rendered in a template or ansible action line exactly as written."
   env: [{name: ANSIBLE_ERROR_ON_UNDEFINED_VARS}]
   ini:
   - {key: error_on_undefined_vars, section: defaults}
@@ -1260,13 +1260,13 @@ DISPLAY_ARGS_TO_STDOUT:
   description:
     - "Normally ``ansible-playbook`` will print a header for each task that is run.
       These headers will contain the name: field from the task if you specified one.
-      If you didn’t then ``ansible-playbook`` uses the task’s action to help you tell which task is presently running.
+      If you didn't then ``ansible-playbook`` uses the task's action to help you tell which task is presently running.
       Sometimes you run many of the same action and so you want more information about the task to differentiate it from others of the same action.
-      If you set this variable to True in the config then ``ansible-playbook`` will also include the task’s arguments in the header."
-    - This setting defaults to False because there is a chance that you have sensitive values in your parameters and
-      you do not want those to be printed.
-    - "If you set this to True you should be sure that you have secured your environment’s stdout
-      (no one can shoulder surf your screen and you aren’t saving stdout to an insecure file) or
+      If you set this variable to True in the config then ``ansible-playbook`` will also include the task's arguments in the header."
+    - "This setting defaults to False because there is a chance that you have sensitive values in your parameters and
+      you do not want those to be printed."
+    - "If you set this to True you should be sure that you have secured your environment's stdout
+      (no one can shoulder surf your screen and you aren't saving stdout to an insecure file) or
       made sure that all of your playbooks explicitly added the ``no_log: True`` parameter to tasks which have sensistive values
       See How do I keep secret data in my playbook? for more information."
   env: [{name: ANSIBLE_DISPLAY_ARGS_TO_STDOUT}]
@@ -1310,7 +1310,7 @@ GALAXY_ROLE_SKELETON:
   type: path
 GALAXY_ROLE_SKELETON_IGNORE:
   name: Galaxy skeleton ignore
-  default: [^.git$, ^.*/.git_keep$]
+  default: ["^.git$", "^.*/.git_keep$"]
   description: patterns of files to ignore inside a galaxy role skeleton directory
   env: [{name: ANSIBLE_GALAXY_ROLE_SKELETON_IGNORE}]
   ini:
@@ -1386,9 +1386,9 @@ MERGE_MULTIPLE_CLI_TAGS:
   name: Merge 'tags' options
   default: True
   description:
-    - "This allows changing how multiple –tags and –skip-tags arguments are handled on the command line.
-      In Ansible up to and including 2.3, specifying –tags more than once will only take the last value of –tags."
-    - "Setting this config value to True will mean that all of the –tags options will be merged together. The same holds true for –skip-tags."
+    - "This allows changing how multiple --tags and --skip-tags arguments are handled on the command line.
+      In Ansible up to and including 2.3, specifying --tags more than once will only take the last value of --tags."
+    - "Setting this config value to True will mean that all of the --tags options will be merged together. The same holds true for --skip-tags."
   env: [{name: ANSIBLE_MERGE_MULTIPLE_CLI_TAGS}]
   ini:
     - {key: merge_multiple_cli_tags, section: defaults}
