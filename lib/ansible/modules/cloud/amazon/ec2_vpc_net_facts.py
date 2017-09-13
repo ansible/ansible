@@ -154,12 +154,12 @@ except ImportError:
 
 
 @AWSRetry.exponential_backoff()
-def describe_vpc_attribute_with_backoff(connection, vpc_id, vpc_attribute):
+def describe_vpc_attr_with_backoff(connection, vpc_id, vpc_attribute):
     """
     Describe VPC Attributes with AWSRetry backoff throttling support.
 
     connection  : boto3 client connection object
-    vpc_id      : The VPC ID to pull attribute value from 
+    vpc_id      : The VPC ID to pull attribute value from
     vpc_attribute     : The VPC attribute to get the value from - valid options = enableDnsSupport or enableDnsHostnames
     """
 
@@ -206,12 +206,12 @@ def describe_vpcs(connection, module):
     for vpc in response['Vpcs']:
         # We have to make two separate calls per VPC to get these attributes.
         try:
-            dns_support = describe_vpc_attribute_with_backoff(connection, vpc['VpcId'], 'enableDnsSupport')
+            dns_support = describe_vpc_attr_with_backoff(connection, vpc['VpcId'], 'enableDnsSupport')
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
         try:
-            dns_hostnames = describe_vpc_attribute_with_backoff(connection, vpc['VpcId'], 'enableDnsHostnames')
+            dns_hostnames = describe_vpc_attr_with_backoff(connection, vpc['VpcId'], 'enableDnsHostnames')
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
