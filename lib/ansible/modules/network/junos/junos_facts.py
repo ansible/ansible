@@ -183,15 +183,16 @@ class Hardware(FactsBase):
             filesystems.append(self.get_text(obj, 'filesystem-name'))
         self.facts['filesystems'] = filesystems
 
-        routing_engines = dict()
         reply = self.rpc('get-route-engine-information')
         data = reply.find('.//route-engine-information')
+        
+        routing_engines = dict()
         for obj in data:
             slot = self.get_text(obj, 'slot')
             routing_engines.update( { slot:{} } )
             routing_engines[slot].update({'slot': slot})
-            routing_engines[slot].update({'mastership_state': self.get_text(obj,'mastership-state')})
-            routing_engines[slot].update({'mastership_priority': self.get_text(obj,'mastership-priority')})
+            routing_engines[slot].update({'mastership_state': self.get_text(obj, 'mastership-state')})
+            routing_engines[slot].update({'mastership_priority': self.get_text(obj, 'mastership-priority')})
             routing_engines[slot].update({'status': self.get_text(obj,'status')})
             routing_engines[slot].update({'temperature': self.get_text(obj,'temperature')})
             routing_engines[slot].update({'cpu_temperature': self.get_text(obj,'cpu-temperature')})
@@ -210,13 +211,30 @@ class Hardware(FactsBase):
             routing_engines[slot].update({'load_average_one': self.get_text(obj,'load-average-one')})
             routing_engines[slot].update({'load_average_five': self.get_text(obj,'load-average-five')})
             routing_engines[slot].update({'load_average_fifteen': self.get_text(obj,'load-average-fifteen')})
+        
         self.facts['routing_engines'] = routing_engines
-
 
         if len(data) > 1:
             self.facts['has_2RE'] = True
         else:
             self.facts['has_2RE'] = False
+
+        reply = self.rpc('get-chassis-inventory')
+        data = reply.find('get-chassis-inventory/chassis-module')
+
+        modules = list()
+        for obj in data:
+            mod = dict()
+            mod.update({'name': self.get_text(obj, 'name')})
+            mod.update({'verison': self.get_text(obj, 'verison')})
+            mod.update({'part_number': self.get_text(obj, 'part_number')})
+            mod.update({'serial_number': self.get_text(obj, 'serial_number')})
+            mod.update({'description': self.get_text(obj, 'description')})
+            mod.update({'model_number': self.get_text(obj, 'model_number')})
+            modules.append(mod)
+
+        self.facts['modules'] = modules
+
 
 class Interfaces(FactsBase):
 
