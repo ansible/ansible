@@ -589,6 +589,7 @@ class Connection(ConnectionBase):
                 # Make sure stdin is a proper pty to avoid tcgetattr errors
                 master, slave = pty.openpty()
                 if PY3 and self._play_context.password:
+                    # pylint: disable=unexpected-keyword-arg
                     p = subprocess.Popen(cmd, stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE, pass_fds=self.sshpass_pipe)
                 else:
                     p = subprocess.Popen(cmd, stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -599,6 +600,7 @@ class Connection(ConnectionBase):
 
         if not p:
             if PY3 and self._play_context.password:
+                # pylint: disable=unexpected-keyword-arg
                 p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, pass_fds=self.sshpass_pipe)
             else:
                 p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)

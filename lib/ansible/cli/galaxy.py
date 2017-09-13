@@ -643,7 +643,6 @@ class GalaxyCLI(CLI):
 
         if len(self.args) < 4:
             raise AnsibleError("Missing one or more arguments. Expecting: source github_user github_repo secret")
-            return 0
 
         secret = self.args.pop()
         github_repo = self.args.pop()

@@ -41,7 +41,7 @@ class InventoryModule(BaseInventoryPlugin):
         self._hosts = set()
 
     def verify_file(self, path):
-        ''' Verify if file is usable by this plugin, base does minimal accesability check '''
+        ''' Verify if file is usable by this plugin, base does minimal accessibility check '''
 
         valid = super(InventoryModule, self).verify_file(path)
 

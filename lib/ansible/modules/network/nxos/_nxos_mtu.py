@@ -125,15 +125,17 @@ from ansible.module_utils.nxos import load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
-def execute_show_command(command, module, command_type='cli_show'):
-    if module.params['transport'] == 'cli':
-        if 'show run' not in command:
-            command += ' | json'
-        cmds = [command]
-        body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
-        cmds = [command]
-        body = run_commands(module, cmds)
+def execute_show_command(command, module):
+    if 'show run' not in command:
+        output = 'json'
+    else:
+        output = 'text'
+    cmds = [{
+        'command': command,
+        'output': output,
+    }]
+
+    body = run_commands(module, cmds)
     return body
 
 
@@ -169,7 +171,7 @@ def get_system_mtu(module):
     command = 'show run all | inc jumbomtu'
     sysmtu = ''
 
-    body = execute_show_command(command, module, command_type='cli_show_ascii')
+    body = execute_show_command(command, module)
 
     if body:
         sysmtu = str(body[0].split(' ')[-1])
@@ -237,8 +239,7 @@ def is_default(interface, module):
     command = 'show run interface {0}'.format(interface)
 
     try:
-        body = execute_show_command(
-            command, module, command_type='cli_show_ascii')[0]
+        body = execute_show_command(command, module)[0]
         if body == 'DNE':
             return 'DNE'
         else:
@@ -380,4 +381,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
