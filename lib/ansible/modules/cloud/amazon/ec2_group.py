@@ -511,7 +511,7 @@ def update_rules_description(module, client, rule_type, group_id, ip_permissions
             client.update_security_group_rule_descriptions_ingress(GroupId=group_id, IpPermissions=[ip_permissions])
         if rule_type == "out":
             client.update_security_group_rule_descriptions_egress(GroupId=group_id, IpPermissions=[ip_permissions])
-    except botocore.exception.ClientError as e:
+    except botocore.exceptions.ClientError as e:
         module.fail_json(
             msg="Unable to update rule description for group %s: %s" %
                 (group_id, e),
@@ -552,10 +552,11 @@ def authorize_ip(type, changed, client, group, groupRules,
 
 
 def serialize_group_grant(group_id, rule):
+    rule_description = rule.get('rule_desc') or ''
     permission = {'IpProtocol': rule['proto'],
                   'FromPort': rule['from_port'],
                   'ToPort': rule['to_port'],
-                  'UserIdGroupPairs': [{'GroupId': group_id, 'Description': rule.get('rule_desc', '')}]}
+                  'UserIdGroupPairs': [{'GroupId': group_id, 'Description': rule_description}]}
 
     return fix_port_and_protocol(permission)
 
@@ -589,10 +590,11 @@ def serialize_ip_grant(rule, thisip, ethertype):
     permission = {'IpProtocol': rule['proto'],
                   'FromPort': rule['from_port'],
                   'ToPort': rule['to_port']}
+    rule_description = rule.get('rule_desc') or ''
     if ethertype == "ipv4":
-        permission['IpRanges'] = [{'CidrIp': thisip, 'Description': rule.get('rule_desc', '')}]
+        permission['IpRanges'] = [{'CidrIp': thisip, 'Description': rule_description}]
     elif ethertype == "ipv6":
-        permission['Ipv6Ranges'] = [{'CidrIpv6': thisip, 'Description': rule.get('rule_desc', '')}]
+        permission['Ipv6Ranges'] = [{'CidrIpv6': thisip, 'Description': rule_description}]
 
     return fix_port_and_protocol(permission)
 
