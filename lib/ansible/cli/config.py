@@ -109,6 +109,7 @@ class ConfigCLI(CLI):
         '''
         raise AnsibleError("Option not implemented yet")
 
+        # pylint: disable=unreachable
         if self.options.setting is None:
             raise AnsibleOptionsError("update option requries a setting to update")
 
@@ -141,6 +142,8 @@ class ConfigCLI(CLI):
         Opens ansible.cfg in the default EDITOR
         '''
         raise AnsibleError("Option not implemented yet")
+
+        # pylint: disable=unreachable
         try:
             editor = shlex.split(os.environ.get('EDITOR','vi'))
             editor.append(self.config_file)

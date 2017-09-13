@@ -167,4 +167,3 @@ from ansible.module_utils.basic import *
 from ansible.module_utils.openstack import *
 if __name__ == '__main__':
     main()
-

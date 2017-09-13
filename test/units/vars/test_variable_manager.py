@@ -104,6 +104,7 @@ class TestVariableManager(unittest.TestCase):
         # FIXME: BCS make this work
         return
 
+        # pylint: disable=unreachable
         fake_loader = DictDataLoader({})
 
         mock_task = MagicMock()
@@ -134,6 +135,8 @@ class TestVariableManager(unittest.TestCase):
     def test_variable_manager_precedence(self):
         # FIXME: this needs to be redone as dataloader is not the automatic source of data anymore
         return
+
+        # pylint: disable=unreachable
         '''
         Tests complex variations and combinations of get_vars() with different
         objects to modify the context under which variables are merged.

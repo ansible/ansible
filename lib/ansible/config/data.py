@@ -42,4 +42,3 @@ class ConfigData(object):
             if plugin.name not in self._plugins[plugin.type]:
                 self._plugins[plugin.type][plugin.name] = {}
             self._plugins[plugin.type][plugin.name][setting.name] = setting
-

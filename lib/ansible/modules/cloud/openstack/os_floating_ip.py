@@ -218,7 +218,7 @@ def main():
                     module.fail_json(msg="server {server} already has a "
                                          "floating-ip on requested "
                                          "interface but it doesn't match "
-                                         "requested network {network: {fip}"
+                                         "requested network {network}: {fip}"
                                      .format(server=server_name_or_id,
                                              network=network,
                                              fip=remove_values(f_ip,

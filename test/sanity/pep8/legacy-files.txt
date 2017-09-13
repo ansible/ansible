@@ -114,7 +114,6 @@ lib/ansible/modules/cloud/misc/virt_pool.py
 lib/ansible/modules/cloud/misc/xenserver_facts.py
 lib/ansible/modules/cloud/openstack/os_group.py
 lib/ansible/modules/cloud/openstack/os_image.py
-lib/ansible/modules/cloud/openstack/os_image_facts.py
 lib/ansible/modules/cloud/openstack/os_ironic.py
 lib/ansible/modules/cloud/openstack/os_keypair.py
 lib/ansible/modules/cloud/openstack/os_keystone_domain.py
@@ -310,7 +309,6 @@ lib/ansible/modules/network/nxos/nxos_overlay_global.py
 lib/ansible/modules/network/nxos/nxos_ping.py
 lib/ansible/modules/network/nxos/nxos_smu.py
 lib/ansible/modules/network/nxos/nxos_snapshot.py
-lib/ansible/modules/network/nxos/nxos_snmp_community.py
 lib/ansible/modules/network/nxos/nxos_snmp_contact.py
 lib/ansible/modules/network/nxos/nxos_snmp_host.py
 lib/ansible/modules/network/nxos/nxos_snmp_traps.py
@@ -410,7 +408,6 @@ lib/ansible/modules/storage/netapp/na_cdot_qtree.py
 lib/ansible/modules/storage/netapp/na_cdot_volume.py
 lib/ansible/modules/storage/netapp/netapp_e_amg.py
 lib/ansible/modules/storage/netapp/netapp_e_storagepool.py
-lib/ansible/modules/storage/netapp/sf_account_manager.py
 lib/ansible/modules/storage/netapp/sf_snapshot_schedule_manager.py
 lib/ansible/modules/storage/netapp/sf_volume_access_group_manager.py
 lib/ansible/modules/storage/netapp/sf_volume_manager.py

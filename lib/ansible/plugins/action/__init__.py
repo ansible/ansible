@@ -532,7 +532,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             elif 'json' in errormsg or 'simplejson' in errormsg:
                 x = "5"  # json or simplejson modules needed
         finally:
-            return x
+            return x  # pylint: disable=lost-exception
 
     def _remote_expand_user(self, path, sudoable=True):
         ''' takes a remote path and performs tilde expansion on the remote host '''
