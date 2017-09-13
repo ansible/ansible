@@ -159,7 +159,7 @@ class Cli:
             responses.append(out)
         return responses
 
-    def load_config(self, config):
+    def load_config(self, config, return_error=False):
         """Sends configuration commands to the remote device
         """
 
@@ -238,7 +238,7 @@ class Nxapi:
 
         return dict(ins_api=msg)
 
-    def send_request(self, commands, output='text', check_status=True):
+    def send_request(self, commands, output='text', check_status=True, return_error=False):
         # only 10 show commands can be encoded in each request
         # messages sent to the remote device
         if output != 'config':
@@ -289,7 +289,10 @@ class Nxapi:
                 output = response['ins_api']['outputs']['output']
                 for item in to_list(output):
                     if check_status and item['code'] != '200':
-                        self._error(output=output, **item)
+                        if return_error:
+                            result.append(item)
+                        else:
+                            self._error(output=output, **item)
                     elif 'body' in item:
                         result.append(item['body'])
                     # else:
@@ -341,12 +344,15 @@ class Nxapi:
 
         return responses
 
-    def load_config(self, commands):
+    def load_config(self, commands, return_error=False):
         """Sends the ordered set of commands to the device
         """
         commands = to_list(commands)
-        self.send_request(commands, output='config')
-        return []
+        msg = self.send_request(commands, output='config', check_status=True, return_error=return_error)
+        if return_error:
+            return msg
+        else:
+            return []
 
 
 def is_json(cmd):
@@ -395,6 +401,6 @@ def run_commands(module, commands, check_rc=True):
     return conn.run_commands(to_command(module, commands), check_rc)
 
 
-def load_config(module, config):
+def load_config(module, config, return_error=False):
     conn = get_connection(module)
-    return conn.load_config(config)
+    return conn.load_config(config, return_error=return_error)
