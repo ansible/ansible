@@ -385,9 +385,17 @@ def get_target_from_rule(module, client, rule, name, group, groups, vpc_id):
             group_id = group['GroupId']
             groups[group_id] = group
             groups[group_name] = group
-        elif group_name in groups:
+        elif group_name in groups and group.get('VpcId') and groups[group_name].get('VpcId'):
+            # both are VPC groups, this is ok
+            group_id = groups[group_name]['GroupId']
+        elif group_name in groups and not (group.get('VpcId') or groups[group_name].get('VpcId')):
+            # both are EC2 classic, this is ok
             group_id = groups[group_name]['GroupId']
         else:
+            # if we got here, either the target group does not exist, or there
+            # is a mix of EC2 classic + VPC groups. Mixing of EC2 classic + VPC
+            # is bad, so we have to create a new SG because no compatible group
+            # exists
             if not rule.get('group_desc', '').strip():
                 module.fail_json(msg="group %s will be automatically created by rule %s and "
                                      "no description was provided" % (group_name, rule))
@@ -633,17 +641,24 @@ def main():
         groupName = sg['GroupName']
         if groupName in groups:
             # Prioritise groups from the current VPC
-            if vpc_id is None or sg['VpcId'] == vpc_id:
+            # even if current VPC is EC2-Classic
+            if groups[groupName].get('VpcId') == vpc_id:
+                # Group saved already matches current VPC, change nothing
+                pass
+            elif vpc_id is None and groups[groupName].get('VpcId') is None:
+                # We're in EC2 classic, and the group already saved is as well
+                # No VPC groups can be used alongside EC2 classic groups
+                pass
+            else:
+                # the current SG stored has no direct match, so we can replace it
                 groups[groupName] = sg
         else:
             groups[groupName] = sg
 
-        if group_id:
-            if sg['GroupId'] == group_id:
-                group = sg
-        else:
-            if groupName == name and (vpc_id is None or sg['VpcId'] == vpc_id):
-                group = sg
+        if group_id and sg['GroupId'] == group_id:
+            group = sg
+        elif groupName == name and (vpc_id is None or sg['VpcId'] == vpc_id):
+            group = sg
 
     # Ensure requested group is absent
     if state == 'absent':
@@ -685,7 +700,7 @@ def main():
                 # amazon sometimes takes a couple seconds to update the security group so wait till it exists
                 while True:
                     group = get_security_groups_with_backoff(client, GroupIds=[group['GroupId']])['SecurityGroups'][0]
-                    if not group['IpPermissionsEgress']:
+                    if group.get('VpcId') and not group.get('IpPermissionsEgress'):
                         pass
                     else:
                         break
@@ -831,8 +846,8 @@ def main():
                     # If rule already exists, don't later delete it
                     changed, ip_permission = authorize_ip("out", changed, client, group, groupRules, ipv6,
                                                           ip_permission, module, rule, "ipv6")
-        else:
-            # when no egress rules are specified,
+        elif vpc_id is not None:
+            # when no egress rules are specified and we're in a VPC,
             # we add in a default allow all out rule, which was the
             # default behavior before egress rules were added
             default_egress_rule = 'out--1-None-None-' + group['GroupId'] + '-0.0.0.0/0'
@@ -856,7 +871,7 @@ def main():
                 del groupRules[default_egress_rule]
 
         # Finally, remove anything left in the groupRules -- these will be defunct rules
-        if purge_rules_egress:
+        if purge_rules_egress and vpc_id is not None:
             for (rule, grant) in groupRules.values():
                 # we shouldn't be revoking 0.0.0.0 egress
                 if grant != '0.0.0.0/0':
