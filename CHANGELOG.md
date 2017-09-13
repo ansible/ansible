@@ -55,7 +55,7 @@ Ansible Changes By Release
 * azure: use M(azure_rm_virtualmachine) instead
 * cs_nic: replaced by cs_instance_nic_secondaryip, also see new module cs_instance_nic for managing nics
 * ec2_facts: replaced by ec2_metadata_facts
-* ec2_remote_facts: replaced by 
+* ec2_remote_facts: replaced by ec2_instance_facts
 * panos_address: use M(panos_object) instead
 * panos_nat_policy: use M(panos_nat_rule) instead
 * panos_security_policy: use M(panos_security_rule) instead
