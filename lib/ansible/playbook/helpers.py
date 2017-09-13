@@ -279,6 +279,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     else:
                         task_list.extend(included_blocks)
                 else:
+                    t.is_static = False
                     task_list.append(t)
 
             elif 'include_role' in task_ds or 'import_role' in task_ds:
@@ -319,6 +320,9 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     display.debug('Determined that if include_role static is %s' % str(is_static))
 
                 if is_static:
+                    # we set a flag to indicate this include was static
+                    ir.statically_loaded = True
+
                     # uses compiled list from object
                     blocks, _ = ir.get_block_list(variable_manager=variable_manager, loader=loader)
                     t = task_list.extend(blocks)
