@@ -895,7 +895,7 @@ class ContainerManager(DockerBaseClass):
 
                     # build the image
                     try:
-                        new_image_id = service.build(pull=True, no_cache=self.nocache)
+                        new_image_id = service.build(pull=self.pull, no_cache=self.nocache)
                     except Exception as exc:
                         self.client.fail("Error: build failed with %s" % str(exc))
 
