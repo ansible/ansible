@@ -655,12 +655,10 @@ def main():
         else:
             groups[groupName] = sg
 
-        if group_id:
-            if sg['GroupId'] == group_id:
-                group = sg
-        else:
-            if groupName == name and sg.get('VpcId') == vpc_id:
-                group = sg
+        if group_id and sg['GroupId'] == group_id:
+            group = sg
+        elif groupName == name and (vpc_id is None or sg['VpcId'] == vpc_id):
+            group = sg
 
     # Ensure requested group is absent
     if state == 'absent':
