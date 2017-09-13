@@ -45,12 +45,13 @@
         - command: sh running-config bgp
           output: text
       provider: "{{ nxapi }}"
+      timeout: 120
     register: result
 
   - assert:
       that:
         - "result.failed == false"
-        - "'65535' in result.stdout[0]"
+        - "'65535' in result.stdout[0]|to_json"
 
   - name: "Run an invalid command - should fail"
     nxos_command:
