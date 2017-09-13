@@ -642,7 +642,7 @@ def main():
             if sg['GroupId'] == group_id:
                 group = sg
         else:
-            if groupName == name and sg['VpcId'] == vpc_id:
+            if groupName == name and sg.get('VpcId') == vpc_id:
                 group = sg
 
     # Ensure requested group is absent
@@ -685,7 +685,7 @@ def main():
                 # amazon sometimes takes a couple seconds to update the security group so wait till it exists
                 while True:
                     group = get_security_groups_with_backoff(client, GroupIds=[group['GroupId']])['SecurityGroups'][0]
-                    if not group['IpPermissionsEgress']:
+                    if vpc_id and not group.get('IpPermissionsEgress'):
                         pass
                     else:
                         break
