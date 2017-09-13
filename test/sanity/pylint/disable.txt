@@ -6,7 +6,6 @@ arguments-differ
 assignment-from-no-return
 attribute-defined-outside-init
 bad-continuation
-bad-format-string
 bad-indentation
 bad-mcs-classmethod-argument
 bad-open-mode
@@ -20,7 +19,6 @@ consider-using-enumerate
 deprecated-lambda
 deprecated-method
 deprecated-module
-duplicate-key
 eval-used
 exec-used
 expression-not-assigned
@@ -38,7 +36,6 @@ line-too-long
 locally-disabled
 logging-format-interpolation
 logging-not-lazy
-lost-exception
 method-hidden
 misplaced-comparison-constant
 missing-docstring
@@ -80,9 +77,7 @@ too-many-nested-blocks
 too-many-public-methods
 too-many-return-statements
 too-many-statements
-trailing-newlines
 undefined-loop-variable
-unexpected-keyword-arg
 ungrouped-imports
 unidiomatic-typecheck
 unnecessary-lambda
@@ -97,8 +92,6 @@ unused-variable
 unused-wildcard-import
 used-before-assignment
 useless-else-on-loop
-useless-suppression
-using-constant-test
 wildcard-import
 wrong-import-order
 wrong-import-position
