@@ -162,9 +162,6 @@ def main():
     query_results = []
     rowcount = 0
 
-    # To use defaults values, keyword arguments must be absent, so
-    # check which values are empty and don't include in the **kw
-    # dictionary
     params_map = {
         "login_host": "host",
         "login_user": "user",
@@ -175,8 +172,14 @@ def main():
         "ssl_rootcert": "sslrootcert"
     }
 
+    # To use defaults values, keyword arguments must be absent, so
+    # check which values are empty and don't include in the **kw
+    # dictionary
     kw = dict((params_map[k], v) for (k, v) in iteritems(module.params)
               if k in params_map and v != '' and v is not None)
+
+    if module.params.get('login_unix_socket'):
+        kw["host"] = module.params.get('login_unix_socket')
 
     try:
         pgutils.ensure_libs(sslrootcert=module.params.get('ssl_rootcert'))
