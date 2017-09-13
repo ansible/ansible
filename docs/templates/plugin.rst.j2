@@ -10,8 +10,8 @@
 @{ title }@
 @{ '+' * title_len }@
 
-{% if version_added is defined -%}
-.. versionadded:: @{ version_added }@
+{% if version_added is defined and version_added != '' -%}
+.. versionadded:: @{ version_added | default('') }@
 
 
 {% endif %}
@@ -203,7 +203,7 @@ Examples
 Return Values
 -------------
 
-Common return values are documented here :doc:`common_return_values`, the following are the fields unique to this module:
+Common return values are documented here :ref:`common_return_values`, the following are the fields unique to this module:
 
 .. raw:: html
 
