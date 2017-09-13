@@ -1,6 +1,16 @@
 Ansible Changes By Release
 ==========================
 
+<a id="2.4.1"></a>
+
+## 2.4.1 "Dancing Dats" - TBD
+
+### Bugfixes
+
+* Update openssl\* module documentation to show openssl-0.16 is the minimum version
+* Fix openssl_certificate's csr handling.
+* Python-3 fixes
+  * Fix openssl_certificate parameter assertion on Python3
 
 <a id="2.4"></a>
 
