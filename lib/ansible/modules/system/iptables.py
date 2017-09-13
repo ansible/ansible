@@ -114,6 +114,7 @@ options:
       - If the filter type is 'in' or 'out', an interface name C(device) is
         required.
     default: {}
+    version_added: "2.5"
   match:
     description:
       - Specifies a match to use, that is, an extension module that tests for
