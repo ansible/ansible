@@ -629,6 +629,147 @@
 
     # ============================================================
 
+    - name: test adding a rule and egress rule descriptions (expected changed=true)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        vpc_id: '{{ vpc_result.vpc.id }}'
+        # purge the other rules so assertions work for the subsequent tests for rule descriptions
+        purge_rules_egress: true
+        purge_rules: true
+        state: present
+        rules:
+        - proto: "tcp"
+          ports:
+          - 8281
+          cidr_ipv6: 1001:d00::/24
+          rule_desc: ipv6 rule desc 1
+        rules_egress:
+        - proto: "tcp"
+          ports:
+          - 8282
+          cidr_ip: 2.2.2.2/32
+          rule_desc: egress rule desc 1
+      register: result
+
+    - name: assert that rule descriptions are created (expected changed=true)
+      assert:
+        that:
+          - 'result.changed'
+          - 'result.ip_permissions[0].ipv6_ranges[0].description == "ipv6 rule desc 1"'
+          - 'result.ip_permissions_egress[0].ip_ranges[0].description == "egress rule desc 1"'
+
+    # ============================================================
+
+    - name: test modifying rule and egress rule descriptions (expected changed=true)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        vpc_id: '{{ vpc_result.vpc.id }}'
+        purge_rules_egress: false
+        purge_rules: false
+        state: present
+        rules:
+        - proto: "tcp"
+          ports:
+          - 8281
+          cidr_ipv6: 1001:d00::/24
+          rule_desc: ipv6 rule desc 2
+        rules_egress:
+        - proto: "tcp"
+          ports:
+          - 8282
+          cidr_ip: 2.2.2.2/32
+          rule_desc: egress rule desc 2
+      register: result
+
+    - name: assert that rule descriptions were modified (expected changed=true)
+      assert:
+        that:
+          - 'result.changed'
+          - 'result.ip_permissions[0].ipv6_ranges[0].description == "ipv6 rule desc 2"'
+          - 'result.ip_permissions_egress[0].ip_ranges[0].description == "egress rule desc 2"'
+
+    # ============================================================
+
+    - name: test that keeping the same rule descriptions (expected changed=false)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        vpc_id: '{{ vpc_result.vpc.id }}'
+        purge_rules_egress: false
+        purge_rules: false
+        state: present
+        rules:
+        - proto: "tcp"
+          ports:
+          - 8281
+          cidr_ipv6: 1001:d00::/24
+          rule_desc: ipv6 rule desc 2
+        rules_egress:
+        - proto: "tcp"
+          ports:
+          - 8282
+          cidr_ip: 2.2.2.2/32
+          rule_desc: egress rule desc 2
+      register: result
+
+    - name: assert that rule descriptions stayed the same (expected changed=false)
+      assert:
+        that:
+          - 'not result.changed'
+          - 'result.ip_permissions[0].ipv6_ranges[0].description == "ipv6 rule desc 2"'
+          - 'result.ip_permissions_egress[0].ip_ranges[0].description == "egress rule desc 2"'
+
+    # ============================================================
+
+    - name: test removing rule descriptions (expected changed=true)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        vpc_id: '{{ vpc_result.vpc.id }}'
+        purge_rules_egress: false
+        purge_rules: false
+        state: present
+        rules:
+        - proto: "tcp"
+          ports:
+          - 8281
+          cidr_ipv6: 1001:d00::/24
+          rule_desc:
+        rules_egress:
+        - proto: "tcp"
+          ports:
+          - 8282
+          cidr_ip: 2.2.2.2/32
+          rule_desc:
+      register: result
+
+    - name: assert that rule descriptions were removed (expected changed=true)
+      assert:
+        that:
+          - 'result.changed'
+          - 'not result.ip_permissions[0].ipv6_ranges[0].description'
+          - 'not result.ip_permissions_egress[0].ip_ranges[0].description'
+
+    # ============================================================
+
     - name: test state=absent (expected changed=true)
       ec2_group:
         name: '{{ec2_group_name}}'
