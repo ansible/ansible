@@ -1,0 +1,40 @@
+---
+- name: "Get default vdc id"
+  nxos_command:
+    commands: ['show vdc current-vdc | json']
+    provider: "{{ connection }}"
+  register: vdcout
+
+- set_fact: vdcid="{{ vdcout.stdout_lines[0].name }}"
+
+- name: "Configure VDC setting limit-resource module-type f3"
+  nxos_config:
+    commands:
+      - "terminal dont-ask ; vdc {{ vdcid }} ;  limit-resource module-type f3"
+    match: none
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- name: Previous command is asynchronous and can take a while.  Allow time for it to complete
+  pause:
+    seconds: 45
+
+- name: "Configure VDC setting allocate interface unallocated-interfaces"
+  nxos_config: &allocate
+    commands:
+      - "terminal dont-ask ; vdc {{ vdcid }} ; allocate interface unallocated-interfaces"
+    match: none
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- name: Previous command is asynchronous and can take a while.  Allow time for it to complete
+  pause:
+    seconds: 45
+
+- name: "Configure Additional N7K requiste features"
+  nxos_config:
+    commands:
+      - feature-set fabric
+      - feature fabric forwarding
+    match: none
+    provider: "{{ connection }}"

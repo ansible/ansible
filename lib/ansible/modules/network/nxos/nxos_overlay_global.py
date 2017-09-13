@@ -95,24 +95,23 @@ def get_commands(module, existing, proposed, candidate):
     proposed_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, proposed)
     existing_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, existing)
 
-    for key, value in proposed_commands.items():
-        if value == 'default':
-            existing_value = existing_commands.get(key)
-            if existing_value:
-                commands.append('no {0} {1}'.format(key, existing_value))
-        else:
-            if 'anycast-gateway-mac' in key:
-                value = normalize_mac(value, module)
-                existing_value = existing_commands.get(key)
-                if existing_value and value != existing_value:
-                    command = '{0} {1}'.format(key, value)
-                    commands.append(command)
-
+    for key, proposed in proposed_commands.items():
+        existing_value = existing_commands.get(key)
+        if proposed == 'default' and existing_value:
+            commands.append('no {0} {1}'.format(key, existing_value))
+        elif 'anycast-gateway-mac' in key and proposed != 'default':
+            proposed = normalize_mac(proposed, module)
+            existing_value = normalize_mac(existing_value, module)
+            if proposed != existing_value:
+                command = '{0} {1}'.format(key, proposed)
+                commands.append(command)
     if commands:
         candidate.add(commands, parents=[])
 
 
 def normalize_mac(proposed_mac, module):
+    if proposed_mac is None:
+        return ''
     try:
         if '-' in proposed_mac:
             splitted_mac = proposed_mac.split('-')

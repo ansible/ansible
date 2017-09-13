@@ -48,6 +48,15 @@
 - set_fact: nxos_int2="{{ intdataraw[2].interface }}"
 - set_fact: nxos_int3="{{ intdataraw[3].interface }}"
 
+# Get image version information for this device
+- name: "Gather image version info"
+  nxos_command:
+    commands: ['sh version | json']
+    provider: "{{ cli }}"
+  register: nxos_version_output
+
+- set_fact: image_version="{{ nxos_version_output.stdout[0]['kickstart_ver_str'] }}"
+
 # Get platform information for this device
 #
 # Usage in integration test playbook:
@@ -62,6 +71,7 @@
   register: nxos_inventory_output
 
 - set_fact: platform="{{ nxos_inventory_output.stdout_lines[0]['TABLE_inv']['ROW_inv'][0]['productid'].split('-')[0] }}"
+- set_fact: chassis_type="{{ nxos_inventory_output.stdout_lines[0]['TABLE_inv']['ROW_inv'][0]['productid'].split('-')[1] }}"
 
 # Check if platform is fretta
 - set_fact: fretta={% for row in nxos_inventory_output.stdout_lines[0]['TABLE_inv']['ROW_inv'] if 'FM-R' in row['productid'] %}"true"{% endfor %}
@@ -74,3 +84,34 @@
 # Check if platform is titanium
 - set_fact: titanium={% for row in nxos_inventory_output.stdout_lines[0]['TABLE_inv']['ROW_inv'] if 'NX-OSv' in row['desc']%}"true"{% endfor %}
   when: platform | match("N7K")
+
+# Set platform to N35 for N3k-35xx
+- set_fact: platform="N35"
+  when: (chassis_type | search("C35"))
+
+# Set platform to N35NG for N3k-35xx running image version
+# 7.0(3)I7 or later. NG(Next Gen)
+- set_fact: platform="N35NG"
+  when: (chassis_type | search("C35")) and image_version | search("7.0\(3\)I7")
+
+# Create matrix of simple keys based on platform
+# and image version for use within test playbooks.
+- set_fact: imagetag=""
+- set_fact: imagetag="I2"
+  when: image_version | search("7.0\(3\)I2")
+- set_fact: imagetag="I3"
+  when: image_version | search("7.0\(3\)I3")
+- set_fact: imagetag="I4"
+  when: image_version | search("7.0\(3\)I4")
+- set_fact: imagetag="I5"
+  when: image_version | search("7.0\(3\)I5")
+- set_fact: imagetag="I6"
+  when: image_version | search("7.0\(3\)I6")
+- set_fact: imagetag="I7"
+  when: image_version | search("7.0\(3\)I7")
+- set_fact: imagetag="F1"
+  when: image_version | search("7.0\(3\)F1")
+- set_fact: imagetag="F2"
+  when: image_version | search("7.0\(3\)F2")
+- set_fact: imagetag="F3"
+  when: image_version | search("7.0\(3\)F3")
