@@ -218,7 +218,7 @@ class LinuxHardware(Hardware):
             elif key == '# processors':
                 cpu_facts['processor_cores'] = int(data[1].strip())
             elif key == 'ncpus active':
-                i = int(data[1].strip())                
+                i = int(data[1].strip())
 
         # Skip for platforms without vendor_id/model_name in cpuinfo (e.g ppc64le)
         if vendor_id_occurrence > 0:
