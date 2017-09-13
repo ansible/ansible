@@ -26,7 +26,7 @@ Although it's tempting to get straight into coding, there are a few things to be
 * Shared code can be placed into ``lib/ansible/module_utils/``
 * Shared documentation (for example describing common arguments) can be placed in ``lib/ansible/utils/module_docs_fragments/``.
 * With great power comes great responsibility: Ansible module maintainers have a duty to help keep modules up to date. As with all successful community projects, module maintainers should keep a watchful eye for reported issues and contributions.
-* Although not required, unit and/or integration tests are strongly recommended. Unit tests are especially valuable when external resources (such as cloud or network devices) are required. For more information see :doc:`testing` and the `Testing Working Group <https://github.com/ansible/community/blob/master/meetings/README.md>`_.
+* Although not required, unit and/or integration tests are strongly recommended. Unit tests are especially valuable when external resources (such as cloud or network devices) are required. For more information see :doc:`dev_guide/testing` and the `Testing Working Group <https://github.com/ansible/community/blob/master/meetings/README.md>`_.
   * Starting with Ansible 2.4 all :doc:`../list_of_network_modules` MUST have unit tests.
 
 
