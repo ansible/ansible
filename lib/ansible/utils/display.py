@@ -35,7 +35,7 @@ from termios import TIOCGWINSZ
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils._text import to_bytes, to_text, to_native
 from ansible.utils.color import stringc
 
 
@@ -297,6 +297,7 @@ class Display:
             else:
                 msg = 'input for %s: ' % varname
 
+            msg = to_native(msg)
             if confirm:
                 while True:
                     result = do_prompt(msg, private)
