@@ -56,12 +56,14 @@ options:
         This allows idempotent loopback additions (e.g. allow group to access itself).
         Rule sources list support was added in version 2.4. This allows to define multiple sources per
         source type as well as multiple source types per rule. Prior to 2.4 an individual source is allowed.
+        In version 2.5 support for rule descriptions was added.
     required: false
   rules_egress:
     description:
       - List of firewall outbound rules to enforce in this group (see example). If none are supplied,
         a default all-out rule is assumed. If an empty list is supplied, no outbound rules will be enabled.
-        Rule Egress sources list support was added in version 2.4.
+        Rule Egress sources list support was added in version 2.4. In version 2.5 support for rule descriptions
+        was added.
     required: false
     version_added: "1.6"
   state:
@@ -111,6 +113,20 @@ notes:
 '''
 
 EXAMPLES = '''
+- name: example using security group rule descriptions
+  ec2_group:
+    name: "{{ name }}"
+    description: sg with rule descriptions
+    vpc_id: vpc-xxxxxxxx
+    profile: "{{ aws_profile }}"
+    region: us-east-1
+    rules:
+      - proto: tcp
+        ports:
+        - 80
+        cidr_ip: 0.0.0.0/0
+        rule_desc: allow all on port 80
+
 - name: example ec2 group
   ec2_group:
     name: example
