@@ -4,6 +4,18 @@
   become_method: su
   user:
     name: "{{ become_test_user }}"
+  when: ansible_distribution != "MacOSX"
+
+
+- name: Create test user (become_method=su)
+  become: True
+  become_user: root
+  become_method: su
+  user:
+    name: "{{ become_test_user }}"
+    # explicitly set user shell since the default shell on OS X is /usr/bin/false
+    shell: /bin/bash
+  when: ansible_distribution == "MacOSX"
 
 - name: test becoming user (become_method=su)
   shell: whoami
