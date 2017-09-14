@@ -355,7 +355,7 @@ def main():
         elif payload and isinstance(payload, str) and HAS_YAML:
             try:
                 # Validate YAML/JSON string
-                payload = json.dumps(yaml.load(payload))
+                payload = json.dumps(yaml.safe_load(payload))
             except Exception as e:
                 module.fail_json(msg='Failed to parse provided JSON/YAML content: %s' % to_text(e), exception=to_text(e), payload=payload)
     elif rest_type == 'xml' and HAS_LXML_ETREE:
