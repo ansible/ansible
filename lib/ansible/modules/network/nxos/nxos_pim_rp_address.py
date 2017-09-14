@@ -99,7 +99,7 @@ def get_existing(module, args):
         values = line.split()
         if values[0] != address:
             continue
-        existing['rp_address'] = values[0]
+
         existing['bidir'] = existing.get('bidir') or 'bidir' in line
         if len(values) > 2:
             value = values[2]
@@ -135,7 +135,12 @@ def state_absent(module, existing, candidate):
     address = module.params['rp_address']
 
     command = 'no ip pim rp-address {0}'.format(address)
-    candidate.add(build_command(existing, command), parents=[])
+    if existing.get('group_list'):
+        commands = build_command(existing, command)
+    else:
+        commands = [command]
+
+    candidate.add(commands, parents=[])
 
 
 def main():
@@ -158,6 +163,7 @@ def main():
     warnings = list()
     check_args(module, warnings)
     result = {'changed': False, 'commands': [], 'warnings': warnings}
+
     state = module.params['state']
 
     args = [
@@ -167,29 +173,21 @@ def main():
         'route_map',
         'bidir'
     ]
+
     existing = get_existing(module, args)
     proposed_args = dict((k, v) for k, v in module.params.items()
                          if v is not None and k in args)
-    proposed = {}
-    if not existing:
-        proposed = proposed_args
-    else:
-        if proposed_args.get('rp_address') == existing.get('rp_address'):
-            for param in ['group_list', 'prefix_list', 'route_map']:
-                if param in existing and param not in proposed_args:
-                    module.fail_json(msg='Delete static {0} config for RP {1}'.format(param,
-                                                                                      existing.get('rp_address')))
-                    break
-        else:
-            for key, value in proposed_args.items():
-                if key != 'rp_address':
-                    if str(value).lower() == 'true':
-                        value = True
-                    elif str(value).lower() == 'false':
-                        value = False
 
-                    if existing.get(key) != value:
-                        proposed[key] = value
+    proposed = {}
+    for key, value in proposed_args.items():
+        if key != 'rp_address':
+            if str(value).lower() == 'true':
+                value = True
+            elif str(value).lower() == 'false':
+                value = False
+
+            if existing.get(key) != value:
+                proposed[key] = value
 
     candidate = CustomNetworkConfig(indent=3)
     if state == 'present' and (proposed or not existing):
