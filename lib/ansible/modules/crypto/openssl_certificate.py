@@ -455,8 +455,10 @@ class AssertOnlyCertificate(Certificate):
     def __init__(self, module):
         super(AssertOnlyCertificate, self).__init__(module)
         self.signature_algorithms = module.params['signature_algorithms']
-        self.subject = module.params['subject']
-        self.issuer = module.params['issuer']
+        self.subject = crypto_utils.parse_name_field(module.params['subject'])
+        self.subject_strict = False
+        self.issuer = crypto_utils.parse_name_field(module.params['issuer'])
+        self.issuer_strict = False
         self.has_expired = module.params['has_expired']
         self.version = module.params['version']
         self.keyUsage = module.params['keyUsage']
@@ -503,20 +505,24 @@ class AssertOnlyCertificate(Certificate):
 
         def _validate_subject():
             if self.subject:
-                cert_subject = self.cert.get_subject().get_components()
-                diff = [item for item in crypto_utils.parse_name_field(self.subject) if item not in cert_subject]
-                if diff:
+                subject = [(OpenSSL._util.lib.OBJ_txt2nid(sub[0]), sub[1]) for sub in self.subject]
+                current_subject = self.cert.get_subject().get_components()
+                if (not self.subject_strict and not all(x in current_subject for x in subject)) or \
+                   (self.subject_strict and not set(subject) == set(current_subject)):
+                    diff = [item for item in self.subject if item not in current_subject]
                     self.message.append(
-                        'Invalid subject component (got %s, expected all of %s to be present)' % (cert_subject, self.subject.items())
+                        'Invalid subject component (got %s, expected all of %s to be present)' % (current_subject, self.subject)
                     )
 
         def _validate_issuer():
             if self.issuer:
-                cert_issuer = self.cert.get_issuer().get_components()
-                diff = [item for item in crypto_utils.parse_name_field(self.issuer) if item not in cert_issuer]
-                if diff:
+                issuer = [(OpenSSL._util.lib.OBJ_txt2nid(iss[0]), iss[1]) for iss in self.issuer]
+                current_issuer = self.cert.get_issuer().get_components()
+                if (not self.issuer_strict and not all(x in current_issuer for x in issuer)) or \
+                   (self.issuer_strict and not set(issuer) == set(current_issuer)):
+                    diff = [item for item in self.issuer if item not in current_issuer]
                     self.message.append(
-                        'Invalid issuer component (got %s, expected all of %s to be present)' % (cert_issuer, self.issuer.items())
+                        'Invalid issuer component (got %s, expected all of %s to be present)' % (current_issuer, self.issuer)
                     )
 
         def _validate_has_expired():

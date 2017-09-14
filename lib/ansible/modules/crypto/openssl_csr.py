@@ -358,10 +358,10 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
         self.privatekey = crypto_utils.load_privatekey(self.privatekey_path, self.privatekey_passphrase)
 
         def _check_subject(csr):
-            subject = csr.get_subject()
-            for entry in self.subject:
-                if getattr(subject, entry[0], None) != entry[1]:
-                    return False
+            subject = [(OpenSSL._util.lib.OBJ_txt2nid(sub[0]), sub[1]) for sub in self.subject]
+            current_subject = csr.get_subject()
+            if not set(subject) == set(current_subject):
+                return False
 
             return True
 
