@@ -203,7 +203,7 @@ class LinuxNetwork(Network):
                             })
 
                         # add this secondary IP to the main device
-                        if secondary:
+                        if secondary and iface != device:
                             if "ipv4_secondaries" not in interfaces[device]:
                                 interfaces[device]["ipv4_secondaries"] = []
                             interfaces[device]["ipv4_secondaries"].append({
