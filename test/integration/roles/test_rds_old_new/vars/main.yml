@@ -1,0 +1,2 @@
+rds_master_db_user: db_user
+rds_db_master_password: "{{ lookup('password', '/dev/null chars=ascii_letters,digits') }}"

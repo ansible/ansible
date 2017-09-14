@@ -1,0 +1,136 @@
+---
+# tasks file for test_rds
+
+- name: set instance name to use
+  set_fact:
+  args:
+    #instance_name: "rds-{{ random_string }}"
+    instance_name: rds-yunrxdbj
+
+# important in case we restart the tests after a fail.
+- name: ensure instance we are going to create is not present so create test is valid
+  rds_instance:
+    instance_name: "{{ instance_name }}"
+    wait: yes
+    state: absent
+
+- name: ensure non-existent instance is not present
+  rds_instance:
+    instance_name: "rds-XYZ-{{ random_string }}"
+    state: absent
+
+- name: ensure non-existent snapshot is not present
+  rds_snapshot:
+    snapshot: "snapshot-XYZ-{{ random_string }}"
+    state: absent
+
+- name: create rds instance
+  rds_instance:
+    instance_name: "{{ instance_name }}"
+    wait_timeout: 1200
+    wait: yes
+    size: 5
+    instance_type: db.t2.micro
+    db_engine: postgres
+    username: hello
+    password: "world123$$"
+  register: rds_instance
+
+- name: show instance details
+  debug:
+    var: rds_instance
+
+- name: get instance facts
+  rds_instance_facts:
+    instance_name: "{{ instance_name }}"
+
+- name: snapshot instance
+  rds_snapshot:
+    instance_name: "{{ instance_name }}"
+    snapshot: "{{ instance_name }}-snapshot"
+    wait_timeout: 1200
+    wait: yes
+
+- name: get snapshot facts
+  rds_snapshot_facts:
+    instance_name: "{{ instance_name }}"
+
+- name: delete snapshot
+  rds_snapshot:
+    snapshot: "{{ instance_name }}-snapshot"
+    state: absent
+
+- name: get instance facts again to debug
+  rds_instance_facts:
+    instance_name: "{{ instance_name }}"
+
+- name: modify rds instance
+  rds_instance:
+    instance_name: "{{ instance_name }}"
+    wait: yes
+    size: 5
+    instance_type: db.t2.micro
+    db_engine: postgres
+    username: hello
+    port: 3307
+    apply_immediately: yes
+    wait: yes
+  register: rds_instance_modify
+
+- name: check modify instance changed
+  assert:
+    that: rds_instance_modify|changed
+
+- name: don't modify rds instance
+  rds_instance:
+    instance_name: "{{ instance_name }}"
+    wait: yes
+    size: 5
+    instance_type: db.t2.micro
+    db_engine: postgres
+    username: hello
+    port: 3307
+    apply_immediately: yes
+    wait: yes
+  register: rds_instance_no_modify
+
+- name: check non modify worked
+  assert:
+    that: not rds_instance_no_modify|changed
+
+- name: create rds replica
+  rds_instance:
+    instance_name: "{{ instance_name }}-replica"
+    source_instance: "{{ instance_name }}"
+    wait: yes
+
+# #NOT YET WORKING - bombs out with "No modifications were requested"
+# - name: promote rds replica
+#   rds_instance:
+#     instance_name: "{{ instance_name }}-replica"
+#     wait: yes
+
+- name: delete rds instance
+  rds_instance:
+    instance_name: "{{ instance_name }}"
+    state: absent
+    snapshot: "{{ instance_name }}-snapshot"
+    wait: yes
+
+- name: delete replica
+  rds_instance:
+    instance_name: "{{ instance_name }}-replica"
+    state: absent
+    wait: yes
+
+- name: restore from snapshot
+  rds_instance:
+    instance_name: "{{ instance_name }}-restore"
+    snapshot: "{{ instance_name }}-snapshot"
+    wait: yes
+
+- name: delete restored instance
+  rds_instance:
+    instance_name: "{{ instance_name }}-restore"
+    state: absent
+    wait: yes
