@@ -531,9 +531,10 @@ class AssertOnlyCertificate(Certificate):
                 for extension_idx in range(0, self.cert.get_extension_count()):
                     extension = self.cert.get_extension(extension_idx)
                     if extension.get_short_name() == 'keyUsage':
-                        keyUsage = [crypto_utils.keyUsageLong.get(keyUsage, keyUsage) for keyUsage in self.keyUsage]
-                        if (not self.keyUsage_strict and not all(x in str(extension).split(', ') for x in keyUsage)) or \
-                           (self.keyUsage_strict and not set(keyUsage) == set(str(extension).split(', '))):
+                        keyUsage = [OpenSSL._util.lib.OBJ_txt2nid(keyUsage) for keyUsage in self.keyUsage]
+                        current_ku = [OpenSSL._util.lib.OBJ_txt2nid(usage.strip()) for usage in str(extension).split(',')]
+                        if (not self.keyUsage_strict and not all(x in current_ku for x in keyUsage)) or \
+                           (self.keyUsage_strict and not set(keyUsage) == set(current_ku)):
                             self.message.append(
                                 'Invalid keyUsage component (got %s, expected all of %s to be present)' % (str(extension).split(', '), keyUsage)
                             )
@@ -543,9 +544,10 @@ class AssertOnlyCertificate(Certificate):
                 for extension_idx in range(0, self.cert.get_extension_count()):
                     extension = self.cert.get_extension(extension_idx)
                     if extension.get_short_name() == 'extendedKeyUsage':
-                        extKeyUsage = [crypto_utils.extendedKeyUsageLong.get(keyUsage, keyUsage) for keyUsage in self.extendedKeyUsage]
-                        if (not self.extendedKeyUsage_strict and not all(x in str(extension).split(', ') for x in extKeyUsage)) or \
-                           (self.extendedKeyUsage_strict and not set(extKeyUsage) == set(str(extension).split(', '))):
+                        extKeyUsage = [OpenSSL._util.lib.OBJ_txt2nid(keyUsage) for keyUsage in self.extendedKeyUsage]
+                        current_xku = [OpenSSL._util.lib.OBJ_txt2nid(usage.strip()) for usage in str(extension).split(',')]
+                        if (not self.extendedKeyUsage_strict and not all(x in current_xku for x in extKeyUsage)) or \
+                           (self.extendedKeyUsage_strict and not set(extKeyUsage) == set(current_xku)):
                             self.message.append(
                                 'Invalid extendedKeyUsage component (got %s, expected all of %s to be present)' % (str(extension).split(', '), extKeyUsage)
                             )
