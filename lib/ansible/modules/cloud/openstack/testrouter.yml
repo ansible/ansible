@@ -1,0 +1,150 @@
+- hosts: localhost
+  tasks:
+  - name: Create router  no interfaces 
+    os_router:
+     cloud: mycloud
+     endpoint_type: internal
+     state: present
+     name: free
+
+  - name: update free  router  to attache net1 by ip.5 
+    os_router:
+     cloud: mycloud
+     endpoint_type: internal
+     state: present
+     name: free
+     interfaces:
+        - net: net1
+          subnet: sub-net1
+          portip: 50.1.1.5
+
+  - name: delete  free  router   
+    os_router:
+     cloud: mycloud
+     endpoint_type: internal
+     state: absent
+     name: free
+     interfaces:
+        - net: net1
+          subnet: sub-net1
+          portip: 50.1.1.5
+
+  - name: Create r3-1 router  using subnet name sub-net3 
+    os_router:
+     cloud: mycloud
+     endpoint_type: internal
+     state: present
+     name: r3-1
+     interfaces:
+        - net: net3
+          subnet: sub-net3
+
+  - name: Create r3-2 second  router on the  same sub-net3 using 2nd port.3
+    os_router:
+     cloud: mycloud
+     endpoint_type: internal
+     state: present
+     name: r3-2
+     interfaces:
+        - net: net3
+          subnet: sub-net3
+          portip: 30.1.1.3
+
+  - name: update r3-1 to attach to  sub-net1 using subnet name 
+    os_router:
+     cloud: mycloud
+     endpoint_type: internal
+     state: present
+     name: r3-1
+     interfaces:
+        - net: net1
+          subnet: sub-net1
+        - net: net3
+          subnet: sub-net3
+
+  - name: update r3-1 to attach to  sub-net2 using port ip.2 , attaching three interfaces
+    os_router:
+     cloud: mycloud
+     endpoint_type: internal
+     state: present
+     name: r3-1
+     interfaces:
+        - net: net1
+          subnet: sub-net1
+        - net: net2
+          subnet: sub-net2
+          portip: 60.1.1.2
+        - net: net3
+          subnet: sub-net3
+
+  - name: update r3-2 to attach to  sub-net2 using subnet name 
+    os_router:
+     cloud: mycloud
+     endpoint_type: internal
+     state: present
+     name: r3-2
+     interfaces:
+        - net: net3
+          subnet: sub-net3
+          portip: 30.1.1.3
+        - net: net2
+          subnet: sub-net2
+
+  - name: detach net3 from r3-1 
+    os_router:
+     cloud: mycloud
+     endpoint_type: internal
+     state: present
+     name: r3-1
+     interfaces:
+        - net: net1
+          subnet: sub-net1
+        - net: net2
+          subnet: sub-net2
+          portip: 60.1.1.2
+
+  - name: detach net2 from r3-1 
+    os_router:
+     cloud: mycloud
+     endpoint_type: internal
+     state: present
+     name: r3-1
+     interfaces:
+        - net: net1
+          subnet: sub-net1
+
+  - name: detach net1 from r3-1, this is not working when interace has no value 
+    os_router:
+     cloud: mycloud
+     endpoint_type: internal
+     state: present
+     name: r3-1
+     interfaces:
+
+  - name: delete router r3-1 
+    os_router:
+     cloud: mycloud
+     endpoint_type: internal
+     state: absent
+     name: r3-1
+
+  - name: update r3-2 to attach to  sub-net2 using subnet name 
+    os_router:
+     cloud: mycloud
+     endpoint_type: internal
+     state: present
+     name: r3-2
+     interfaces:
+        - net: net3
+          subnet: sub-net3
+        - net: net2
+          subnet: sub-net2
+  
+  - name: delete  r3-2 with all the interface 
+    os_router:
+     cloud: mycloud
+     endpoint_type: internal
+     state: absent
+     name: r3-2
+
+    
