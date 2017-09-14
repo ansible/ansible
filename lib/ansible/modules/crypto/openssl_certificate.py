@@ -109,11 +109,13 @@ options:
 
     issuer:
         description:
-            - Key/value pairs that must be present in the issuer name field of the certificate
+            - Key/value pairs that must be present in the issuer name field of the certificate.
+              If you need to specify more than one value with the same key, use a list as value.
 
     subject:
         description:
-            - Key/value pairs that must be present in the subject name field of the certificate
+            - Key/value pairs that must be present in the subject name field of the certificate.
+              If you need to specify more than one value with the same key, use a list as value.
 
     has_expired:
         default: False
@@ -501,7 +503,7 @@ class AssertOnlyCertificate(Certificate):
 
         def _validate_subject():
             if self.subject:
-                cert_subject = self.cert.get_subject().get_components()
+                cert_subject = crypto_utils.parse_name_field(self.cert.get_subject())
                 diff = [item for item in self.subject.items() if item not in cert_subject]
                 if diff:
                     self.message.append(
@@ -510,7 +512,7 @@ class AssertOnlyCertificate(Certificate):
 
         def _validate_issuer():
             if self.issuer:
-                cert_issuer = self.cert.get_issuer().get_components()
+                cert_issuer = crypto_utils.parse_name_field(self.cert.get_issuer())
                 diff = [item for item in self.issuer.items() if item not in cert_issuer]
                 if diff:
                     self.message.append(
