@@ -235,21 +235,6 @@ class AnsibleCloudStackVolume(AnsibleCloudStack):
         }
         self.volume = None
 
-    #TODO implement in cloudstack utils
-    def get_disk_offering(self, key=None):
-        disk_offering = self.module.params.get('disk_offering')
-        if not disk_offering:
-            return None
-
-        # Do not add domain filter for disk offering listing.
-        disk_offerings = self.cs.listDiskOfferings()
-        if disk_offerings:
-            for d in disk_offerings['diskoffering']:
-                if disk_offering in [d['displaytext'], d['name'], d['id']]:
-                    return self._get_by_key(key, d)
-        self.module.fail_json(msg="Disk offering '%s' not found" % disk_offering)
-
-
     def get_volume(self):
         if not self.volume:
             args = {
