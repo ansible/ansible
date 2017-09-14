@@ -312,9 +312,9 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
             req = crypto.X509Req()
             req.set_version(self.version - 1)
             subject = req.get_subject()
-            for (key, value) in self.subject.items():
-                if value is not None:
-                    setattr(subject, key, value)
+            for entry in self.subject:
+                if entry[1] is not None:
+                    setattr(subject, entry[0], entry[1])
 
             altnames = ', '.join(self.subjectAltName)
             extensions = [crypto.X509Extension(b"subjectAltName", self.subjectAltName_critical, altnames.encode('ascii'))]
