@@ -206,6 +206,8 @@ class StrategyModule(StrategyBase):
         moving on to the next task
         '''
 
+        last_step_choice = None
+
         # iteratate over each task, while there is one left to run
         result = self._tqm.RUN_OK
         work_to_do = True
@@ -270,14 +272,6 @@ class StrategyModule(StrategyBase):
                         if (task.any_errors_fatal or run_once) and not task.ignore_errors:
                             any_errors_fatal = True
                     else:
-                        # handle step if needed, skip meta actions as they are used internally
-                        if self._step and choose_step:
-                            if self._take_step(task):
-                                choose_step = False
-                            else:
-                                skip_rest = True
-                                break
-
                         display.debug("getting variables")
                         task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=task)
                         self.add_tqm_variables(task_vars, play=iterator._play)
@@ -305,6 +299,16 @@ class StrategyModule(StrategyBase):
                             task.name = saved_name
                             callback_sent = True
                             display.debug("sending task start callback")
+
+                        if self._step and choose_step:
+                            if self._take_step(task, last_choice=last_step_choice):
+                                last_step_choice = True
+                                choose_step = False
+                            else:
+                                last_step_choice = False
+                                skip_rest = True
+                                del task_vars
+                                break
 
                         self._blocked_hosts[host.get_name()] = True
                         self._queue_task(host, task, task_vars, play_context)
