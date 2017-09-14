@@ -374,10 +374,3 @@ class ConfigManager(object):
             # set the constant
             self.data.update_setting(Setting(config, value, origin, defs[config].get('type', 'string')))
 
-        # FIXME: find better way to do this by passing back to where display is available
-        if self.UNABLE:
-            sys.stderr.write("Unable to set correct type for:\n\t%s\n" % '\n\t'.join(self.UNABLE))
-        if self.DEPRECATED:
-            for k, reason in self.DEPRECATED:
-                sys.stderr.write("[DEPRECATED] %(k)s: %(why)s. It will be removed in %(version)s. As alternative use one of [%(alternatives)s]\n"
-                                 % dict(k=k, **reason))

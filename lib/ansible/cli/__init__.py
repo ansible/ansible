@@ -168,7 +168,7 @@ class CLI(with_metaclass(ABCMeta, object)):
         else:
             display.v(u"No config file found; using defaults")
 
-        # warn about deprecated options
+        # warn about deprecated config options
         for deprecated in C.config.DEPRECATED:
             name = deprecated[0]
             why = deprecated[1]['why']
@@ -178,6 +178,10 @@ class CLI(with_metaclass(ABCMeta, object)):
                 alt = ''
             ver = deprecated[1]['version']
             display.deprecated("%s option, %s %s" % (name, why, alt), version=ver)
+
+        # warn about typing issues with configuration entries
+        for unable in  C.config.UNABLE:
+            display.warning("Unable to set correct type for configuration entry: %s" % unable)
 
     @staticmethod
     def split_vault_id(vault_id):
