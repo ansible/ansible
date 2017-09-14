@@ -64,7 +64,7 @@ class AnsibleFailJson(Exception):
 
 class TestEosModule(unittest.TestCase):
 
-    def execute_module(self, failed=False, changed=False, commands=None, sort=True, defaults=False, transport='cli'):
+    def execute_module(self, failed=False, changed=False, commands=None, inputs=None, sort=True, defaults=False, transport='cli'):
 
         self.load_fixtures(commands, transport=transport)
 
@@ -76,10 +76,25 @@ class TestEosModule(unittest.TestCase):
             self.assertEqual(result['changed'], changed, result)
 
         if commands is not None:
-            if sort:
-                self.assertEqual(sorted(commands), sorted(result['commands']), result['commands'])
+            if transport == 'eapi':
+                cmd = []
+                value = []
+                for item in result['commands']:
+                    cmd.append(item['cmd'])
+                    if 'input' in item:
+                        value.append(item['input'])
+                if sort:
+                    self.assertEqual(sorted(commands), sorted(cmd), cmd)
+                else:
+                    self.assertEqual(commands, cmd, cmd)
+                if inputs:
+                    self.assertEqual(inputs, value, value)
             else:
-                self.assertEqual(commands, result['commands'], result['commands'])
+                if sort:
+                    self.assertEqual(sorted(commands), sorted(result['commands']), result['commands'])
+                else:
+                    self.assertEqual(commands, result['commands'], result['commands'])
+
 
         return result
 
