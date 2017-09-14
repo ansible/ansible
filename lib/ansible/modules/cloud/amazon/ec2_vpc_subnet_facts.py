@@ -215,7 +215,7 @@ def describe_subnets(connection, module):
         subnet['id'] = subnet['SubnetId']
         subnet_info.append(camel_dict_to_snake_dict(subnet))
         # convert tag list to ansible dict
-        subnet_info[-1]['tags'] = boto3_tag_list_to_ansible_dict(subnet['Tags'])
+        subnet_info[-1]['tags'] = boto3_tag_list_to_ansible_dict(subnet.get('Tags', []))
 
     module.exit_json(subnets=subnet_info)
 
