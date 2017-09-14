@@ -23,22 +23,11 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-
-
 import time
-from enum import Enum
 
 
-class OneAndOneResources(Enum):
-    firewall_policy = 1
-    load_balancer = 2
-    monitoring_policy = 3
-    private_network = 4
-    public_ip = 5
-    role = 6
-    server = 7
-    user = 8
-    vpn = 9
+class OneAndOneResources:
+    firewall_policy, load_balancer, monitoring_policy, private_network, public_ip, role, server, user, vpn = range(9)
 
 
 def get_resource(oneandone_conn, resource_type, resource_id):

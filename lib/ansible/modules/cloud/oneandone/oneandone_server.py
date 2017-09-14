@@ -14,7 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -26,7 +29,7 @@ short_description: Create, destroy, start, stop, and reboot a 1&1 Host server.
 description:
      - Create, destroy, update, start, stop, and reboot a 1&1 Host server.
        When the server is created it can optionally wait for it to be 'running' before returning.
-version_added: "2.4"
+version_added: "2.5"
 options:
   state:
     description:
@@ -209,6 +212,7 @@ machines:
 
 import os
 import time
+from ansible.module_utils.six.moves import xrange
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.oneandone import (
     get_datacenter,
