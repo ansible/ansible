@@ -1,0 +1,102 @@
+---
+- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_pim_interface sanity test"
+
+- name: "Disable feature PIM"
+  nxos_feature: &disable_feature
+    feature: pim
+    state: disabled
+    provider: "{{ connection }}"
+
+- name: "Enable feature PIM"
+  nxos_feature:
+    feature: pim
+    state: enabled
+    provider: "{{ connection }}"
+
+- set_fact: testint="{{ nxos_int1 }}"
+
+- name: "Setup: Put interface {{ testint }} into a default state"
+  nxos_config:
+    lines:
+      - "default interface {{ testint }}"
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- name: "Ensure {{testint}} is layer3"
+  nxos_interface:
+    interface: "{{ testint }}"
+    mode: layer3
+    description: 'Configured by Ansible - Layer3'
+    admin_state: 'up'
+    state: present
+    provider: "{{ connection }}"
+
+- name: Configure nxos_pim_interface state absent
+  nxos_pim_interface:
+    interface: "{{ testint }}"
+    state: absent
+    provider: "{{ connection }}"
+
+- block:
+  - name: configure pim interface
+    nxos_pim_interface: &config
+      interface: "{{ testint }}"
+      dr_prio: 10
+      hello_interval: 40
+      border: 'false'
+      neighbor_policy: 'ansible_policy'
+      neighbor_type: 'prefix'
+      state: present
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: Check idempotence
+    nxos_pim_interface: *config
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: configure gp policy and type
+    nxos_pim_interface: &configjp
+      interface: "{{ testint }}"
+      jp_policy_in: JPIN
+      jp_policy_out: JPOUT
+      jp_type_in: routemap
+      jp_type_out: routemap
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: Check idempotence
+    nxos_pim_interface: *configjp
+    register: result
+
+  - assert: *false
+
+  - name: configure state default
+    nxos_pim_interface: &configdefault
+      interface: "{{ testint }}"
+      state: default
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: Check idempotence
+    nxos_pim_interface: *configdefault
+    register: result
+
+  - assert: *false
+
+  always:
+  - name: "Disable feature PIM"
+    nxos_feature: *disable_feature
+
+- debug: msg="END TRANSPORT:{{ connection.transport }} nxos_pim_interface sanity test"

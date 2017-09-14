@@ -353,6 +353,13 @@
       rescue:
         - set_fact: test_failed=true
 
+    - block:
+      - include_role:
+          name: nxos_pim_interface
+        when: "limit_to in ['*', 'nxos_pim_interface']"
+      rescue:
+        - set_fact: test_failed=true
+
 ###########
     - debug: var=failed_modules
       when: test_failed
