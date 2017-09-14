@@ -65,6 +65,7 @@ class ForemanInventory(object):
         self.facts = dict()   # Facts of each host
         self.hostgroups = dict()  # host groups
         self.hostcollections = dict()  # host collections
+        self.configgroups = dict()  # config groups
         self.session = None   # Requests session
         self.config_paths = [
             "/etc/ansible/foreman.ini",
@@ -113,6 +114,11 @@ class ForemanInventory(object):
         except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
             self.want_hostcollections = False
 
+        try:
+            self.want_configgroups = config.getboolean('ansible', 'want_configgroups')
+        except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
+            self.want_configgroups = False
+
         # Do we want parameters to be interpreted if possible as JSON? (no by default)
         try:
             self.rich_params = config.getboolean('ansible', 'rich_params')
@@ -135,6 +141,7 @@ class ForemanInventory(object):
         self.cache_path_params = cache_path + "/%s.params" % script
         self.cache_path_facts = cache_path + "/%s.facts" % script
         self.cache_path_hostcollections = cache_path + "/%s.hostcollections" % script
+        self.cache_path_configgroups = cache_path + "/%s.configgroups" % script
         try:
             self.cache_max_age = config.getint('cache', 'max_age')
         except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
@@ -256,6 +263,7 @@ class ForemanInventory(object):
         self.write_to_cache(self.params, self.cache_path_params)
         self.write_to_cache(self.facts, self.cache_path_facts)
         self.write_to_cache(self.hostcollections, self.cache_path_hostcollections)
+        self.write_to_cache(self.configgroups, self.cache_path_configgroups)
 
     def to_safe(self, word):
         '''Converts 'bad' characters in a string to underscores
@@ -325,6 +333,20 @@ class ForemanInventory(object):
                         self.inventory[safe_key].append(dns_name)
 
                 self.hostcollections[dns_name] = hostcollections
+
+            if self.want_configgroups:
+                configgroups = host_data.get('config_groups')
+                if configgroups:
+                    # Create Ansible groups for config groups
+                    for configgroup in configgroups:
+                        safe_key = self.to_safe('%sconfiggroup_%s' % (self.group_prefix, configgroup['name'].lower()))
+                        self.inventory[safe_key].append(dns_name)
+                else:
+                    # Create Ansible group for items not in a config group
+                    safe_key = self.to_safe('%sconfiggroup_%s' % (self.group_prefix, 'ungrouped'))
+                    self.inventory[safe_key].append(dns_name)
+
+                self.configgroups[dns_name] = configgroups
 
             self.cache[dns_name] = host
             self.params[dns_name] = params
