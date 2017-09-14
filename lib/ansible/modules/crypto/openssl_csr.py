@@ -23,7 +23,7 @@ description:
     - "This module allows one to (re)generate OpenSSL certificate signing requests.
        It uses the pyOpenSSL python library to interact with openssl. This module supports
        the subjectAltName as well as the keyUsage and extendedKeyUsage extensions.
-       Note: At least one of common_name or subject_alt_name must be specified."
+       Note: At least one of subject, common_name or subject_alt_name must be specified."
 requirements:
     - "python-pyOpenSSL >= 0.15"
 options:
@@ -464,7 +464,7 @@ def main():
         ),
         add_file_common_args=True,
         supports_check_mode=True,
-        required_one_of=[['commonName', 'subjectAltName']],
+        required_one_of=[['commonName', 'subjectAltName', 'subject']],
     )
 
     if not pyopenssl_found:

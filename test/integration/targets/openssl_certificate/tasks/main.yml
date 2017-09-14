@@ -43,14 +43,16 @@
 
     - name: Generate CSR2
       openssl_csr:
-        C: US
-        ST: California
-        L: Los Angeles
-        O: ACME Inc.
-        OU: Roadrunner pest control
+        subject:
+          CN: 'www.example.com'
+          C: US
+          ST: California
+          L: Los Angeles
+          O: ACME Inc.
+          OU: Roadrunner pest control
+          OU: Pyrotechnics
         path: '{{ output_dir }}/csr2.csr'
         privatekey_path: '{{ output_dir }}/privatekey2.pem'
-        CN: 'www.example.com'
         keyUsage:
           - digitalSignature
         extendedKeyUsage:
@@ -82,6 +84,7 @@
           L: Los Angeles
           O: ACME Inc.
           OU: Roadrunner pest control
+          OU: Pyrotechnics
         keyUsage:
           - digitalSignature
         extendedKeyUsage:
