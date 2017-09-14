@@ -208,7 +208,8 @@ def state_present(module, existing, proposed, candidate):
                 commands.append('{0} {1}'.format(key, peer))
 
         elif key == 'mcast-group' and value != existing_commands.get(key):
-            commands.append('no {0}'.format(key))
+            if existing_commands.get(key):
+                commands.append('no {0}'.format(key))
             commands.append('{0} {1}'.format(key, value))
 
         elif value is True:
@@ -230,23 +231,27 @@ def state_present(module, existing, proposed, candidate):
             command = '{0} {1}'.format(key, value.lower())
             commands.append(command)
 
-    if commands:
-        vni_command = 'member vni {0}'.format(module.params['vni'])
-        ingress_replication_command = 'ingress-replication protocol static'
-        interface_command = 'interface {0}'.format(module.params['interface'])
+    interface_command = 'interface {0}'.format(module.params['interface'])
+    vni_command = 'member vni {0}'.format(module.params['vni'])
+    if module.params['assoc_vrf']:
+        vni_command += ' associate-vrf'
 
+    parents = [interface_command, vni_command]
+    if vni_command in commands:
+        commands.remove(vni_command)
+
+    if commands:
+        ingress_replication_command = 'ingress-replication protocol static'
         if ingress_replication_command in commands:
+            commands.remove(ingress_replication_command)
+            parents.append(ingress_replication_command)
+
             static_level_cmds = [cmd for cmd in commands if 'peer' in cmd]
-            parents = [interface_command, vni_command, ingress_replication_command]
-            candidate.add(static_level_cmds, parents=parents)
             commands = [cmd for cmd in commands if 'peer' not in cmd]
 
-        if vni_command in commands:
-            parents = [interface_command]
-            commands.remove(vni_command)
-            if module.params['assoc_vrf'] is None:
-                parents.append(vni_command)
-            candidate.add(commands, parents=parents)
+            candidate.add(static_level_cmds, parents=parents)
+
+        candidate.add(commands, parents=parents)
 
 
 def state_absent(module, existing, proposed, candidate):
