@@ -511,7 +511,7 @@ files:
   $modules/packaging/os/pkgng.py:
     ignored: bleader
     maintainers: JoergFiedler
-  $modules/packaging/os/pkgutil.py: dermute
+  $modules/packaging/os/pkgutil.py: dermute scathatheworm
   $modules/packaging/os/portage.py:
     ignored: sayap
     maintainers: wltjr
