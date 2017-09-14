@@ -82,7 +82,7 @@
           - sha256WithRSAEncryption
           - sha256WithECDSAEncryption
         subject:
-          CN: www.example.com
+          commonName: www.example.com
           C: US
           ST: California
           L: Los Angeles
