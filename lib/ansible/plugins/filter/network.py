@@ -78,7 +78,7 @@ def parse_cli(output, tmpl):
     except ImportError as exc:
         raise AnsibleError(str(exc))
 
-    spec = yaml.load(open(tmpl).read())
+    spec = yaml.safe_load(open(tmpl).read())
     obj = {}
 
     for name, attrs in iteritems(spec['keys']):
