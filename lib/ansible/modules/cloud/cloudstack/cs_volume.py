@@ -109,8 +109,8 @@ extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-# Create volume within project, zone with specified storage options
-- local_action:
+- name: create volume within project and zone with specified storage options
+  local_action:
     module: cs_volume
     name: web-vm-1-volume
     project: Integration
@@ -118,8 +118,8 @@ EXAMPLES = '''
     disk_offering: PerfPlus Storage
     size: 20
 
-# Create/attach volume to instance
-- local_action:
+- name: create/attach volume to instance
+  local_action:
     module: cs_volume
     name: web-vm-1-volume
     disk_offering: PerfPlus Storage
@@ -127,14 +127,14 @@ EXAMPLES = '''
     vm: web-vm-1
     state: attached
 
-# Detach volume
-- local_action:
+- name: detach volume
+  local_action:
     module: cs_volume
     name: web-vm-1-volume
     state: detached
 
-# Remove volume
-- local_action:
+- name: remove volume
+  local_action:
     module: cs_volume
     name: web-vm-1-volume
     state: absent
