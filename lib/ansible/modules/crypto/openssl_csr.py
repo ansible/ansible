@@ -65,7 +65,8 @@ options:
         required: false
         description:
             - Key/value pairs that will be present in the subject name field of the certificate signing request.
-              If you need to specify more than one value with the same key, use a list as value.
+            - If you need to specify more than one value with the same key, use a list as value.
+        version_added: '2.5'
     country_name:
         required: false
         aliases: [ 'C', 'countryName' ]
@@ -222,7 +223,7 @@ subject:
     description: A list of the subject tuples attached to the CSR
     returned: changed or success
     type: list
-    sample: [('CN', 'www.ansible.com'), ('O', 'Ansible')]
+    sample: `[ ('CN', 'www.ansible.com'), ('O', 'Ansible') ]`
 subjectAltName:
     description: The alternative names this CSR is valid for
     returned: changed or success
