@@ -70,6 +70,12 @@ options:
     required: false
     default: present
     choices: [ "present", "absent", "latest" ]
+  extra_args:
+    description:
+      - Extra arguments passed to npm
+    required: false
+    default: null
+    version_added: "2.5"
 requirements:
     - npm installed in bin path (recommended /usr/local/bin)
 '''
@@ -116,6 +122,12 @@ EXAMPLES = '''
     path: /app/location
     executable: /opt/nvm/v0.10.1/bin/npm
     state: present
+
+- name: Install packages based on package.json forcing npm to fetch remote resources even if a local copy exists on disk.
+  npm:
+    path: /app/location
+    state: present
+    extra_args: "--force"
 '''
 
 import os
@@ -144,6 +156,7 @@ class Npm(object):
         self.production = kwargs['production']
         self.ignore_scripts = kwargs['ignore_scripts']
         self.state = kwargs['state']
+        self.extra_args = kwargs['extra_args']
 
         if kwargs['executable']:
             self.executable = kwargs['executable'].split(' ')
@@ -170,6 +183,8 @@ class Npm(object):
             if self.registry:
                 cmd.append('--registry')
                 cmd.append(self.registry)
+            if self.extra_args:
+                cmd.append(self.extra_args)
 
             # If path is specified, cd into that path and run the command.
             cwd = None
@@ -238,6 +253,7 @@ def main():
         registry=dict(default=None),
         state=dict(default='present', choices=['present', 'absent', 'latest']),
         ignore_scripts=dict(default=False, type='bool'),
+        extra_args=dict(type='str'),
     )
     arg_spec['global'] = dict(default='no', type='bool')
     module = AnsibleModule(
@@ -254,6 +270,7 @@ def main():
     registry = module.params['registry']
     state = module.params['state']
     ignore_scripts = module.params['ignore_scripts']
+    extra_args = module.params['extra_args']
 
     if not path and not glbl:
         module.fail_json(msg='path must be specified when not using global')
@@ -261,7 +278,7 @@ def main():
         module.fail_json(msg='uninstalling a package is only available for named packages')
 
     npm = Npm(module, name=name, path=path, version=version, glbl=glbl, production=production,
-              executable=executable, registry=registry, ignore_scripts=ignore_scripts, state=state)
+              executable=executable, registry=registry, ignore_scripts=ignore_scripts, state=state, extra_args=extra_args)
 
     changed = False
     if state == 'present':
