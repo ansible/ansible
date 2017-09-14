@@ -112,7 +112,8 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import string_types
 from ansible.module_utils.urls import open_url
 from ansible.module_utils.vmware import (HAS_PYVMOMI, connect_to_api, find_datacenter_by_name, find_datastore_by_name,
-                                         gather_vm_facts, get_all_objs, vmware_argument_spec, wait_for_task)
+                                         find_network_by_name, find_resource_pool_by_name, gather_vm_facts,
+                                         vmware_argument_spec, wait_for_task, wait_for_vm_ip)
 try:
     from ansible.module_utils.vmware import vim
     from pyVmomi import vmodl
@@ -127,41 +128,6 @@ def path_exists(value):
     if not os.path.exists(value):
         raise ValueError('%s is not a valid path' % value)
     return value
-
-
-def find_resource_pool_by_name(content, resource_pool_name):
-
-    resource_pools = get_all_objs(content, [vim.ResourcePool])
-    for resource_pool in resource_pools:
-        if resource_pool.name == resource_pool_name:
-            return resource_pool
-
-    return None
-
-
-def find_network_by_name(content, network_name):
-
-    networks = get_all_objs(content, [vim.Network])
-    for network in networks:
-        if network.name == network_name:
-            return network
-
-    return None
-
-
-def wait_for_vm_ip(content, vm, poll=100, sleep=5):
-    ips = None
-    facts = {}
-    thispoll = 0
-    while not ips and thispoll <= poll:
-        facts = gather_vm_facts(content, vm)
-        if facts['ipv4'] or facts['ipv6']:
-            ips = True
-        else:
-            time.sleep(sleep)
-            thispoll += 1
-
-    return facts
 
 
 class ProgressReader(io.FileIO):
