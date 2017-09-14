@@ -95,7 +95,6 @@ class TestEosModule(unittest.TestCase):
                 else:
                     self.assertEqual(commands, result['commands'], result['commands'])
 
-
         return result
 
     def failed(self):
