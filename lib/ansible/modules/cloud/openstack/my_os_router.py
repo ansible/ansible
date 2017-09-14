@@ -427,12 +427,12 @@ def main():
                     cloud.add_router_interface(router, subnet_id=internal_subnet_id)
                 changed = True
                 # add interface by port id as well
-                #for internal_port_id in internal_portids:
-                #    cloud.add_router_interface(router, port_id=internal_port_id)
-                #changed = True
+                for internal_port_id in internal_portids:
+                    cloud.add_router_interface(router, port_id=internal_port_id)
+                changed = True
             else:
                 if _needs_update(cloud, module, router, net, internal_ids, internal_portips, internal_portids):
-                    module.fail_json(msg='bhujay reached  to update router section with subnet ids %s and ports= %s ' %(internal_ids,internal_portids))
+                    #module.fail_json(msg='bhujay reached  to update router section with subnet ids %s and ports= %s ' %(internal_ids,internal_portids))
                     kwargs = _build_kwargs(cloud, module, router, net)
                     updated_router = cloud.update_router(**kwargs)
                    # module.fail_json(msg='bhujay reached  updated router = %s ' % updated_router)
