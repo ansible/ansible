@@ -193,7 +193,18 @@ class StrategyModule(StrategyBase):
                 for included_file in included_files:
                     display.debug("collecting new blocks for %s" % included_file)
                     try:
-                        new_blocks = self._load_included_file(included_file, iterator=iterator)
+                        if included_file._is_role:
+                            new_ir = included_file._task.copy()
+                            new_ir.vars.update(included_file._args)
+
+                            new_blocks, handler_blocks = new_ir.get_block_list(
+                                play=iterator._play,
+                                variable_manager=self._variable_manager,
+                                loader=self._loader,
+                            )
+                            self._tqm.update_handler_list([handler for handler_block in handler_blocks for handler in handler_block.block])
+                        else:
+                            new_blocks = self._load_included_file(included_file, iterator=iterator)
                     except AnsibleError as e:
                         for host in included_file._hosts:
                             iterator.mark_host_failed(host)
