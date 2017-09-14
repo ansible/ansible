@@ -92,7 +92,9 @@ session_name:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.eos import load_config, run_commands
 from ansible.module_utils.eos import eos_argument_spec, check_args
+from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text
+
 
 def map_obj_to_commands(updates, module):
     commands = list()
@@ -106,7 +108,7 @@ def map_obj_to_commands(updates, module):
             commands.append({'cmd': 'no banner %s' % module.params['banner']})
 
     elif state == 'present':
-        if isinstance(have['text'], str):
+        if isinstance(have['text'], string_types):
             if want['text'] != have['text']:
                 commands.append('banner %s' % module.params['banner'])
                 commands.extend(want['text'].strip().split('\n'))
@@ -121,7 +123,6 @@ def map_obj_to_commands(updates, module):
                 # key/values for the banner
                 commands.append({'cmd': 'banner %s' % module.params['banner'],
                                  'input': want['text'].strip('\n')})
-
 
     return commands
 
@@ -139,7 +140,7 @@ def map_config_to_obj(module):
             else:
                 banner_response_key = 'motd'
             if isinstance(output[0], dict) and banner_response_key in output[0].keys():
-                obj['text'] = output[0][banner_response_key].strip('\n')
+                obj['text'] = output[0]
         obj['state'] = 'present'
     return obj
 
