@@ -134,8 +134,8 @@ def get_snmp_groups(module):
     return group_list
 
 
-def get_snmp_community(module, find_filter=None):
-    command = 'show run snmp all | grep {0}'.format(module.params['community'])
+def get_snmp_community(module, name):
+    command = 'show run snmp all | grep {0}'.format(name)
     data = execute_show_command(command, module)[0]
     community_dict = {}
 
