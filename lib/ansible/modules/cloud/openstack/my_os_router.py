@@ -434,7 +434,7 @@ def main():
                 #changed = True
             else:
                 if _needs_update(cloud, module, router, net, internal_ids, internal_portips, internal_portids):
-                    #module.fail_json(msg='bhujay reached  to update router section with subnet ids %s and ports= %s ' %(internal_ids,internal_portids))
+                    module.fail_json(msg='bhujay reached  to update router section with subnet ids %s and ports= %s ' %(internal_ids,internal_portids))
                     kwargs = _build_kwargs(cloud, module, router, net)
                     updated_router = cloud.update_router(**kwargs)
                    # module.fail_json(msg='bhujay reached  updated router = %s ' % updated_router)
@@ -443,7 +443,6 @@ def main():
                     # updating the router.
                     if not updated_router:
                         changed = False
-
                     # On a router update, if any internal interfaces were supplied,
                     # just detach all existing internal interfaces and attach the new.
                    # elif (not  internal_ids) or (not internal_portids):
@@ -453,27 +452,31 @@ def main():
                    #     for port in ports:
                    #         cloud.remove_router_interface(router, port_id=port['id'])
                    #     changed = True
-
-
-                    elif internal_ids:
-                        module.fail_json(msg='bhujay when  subnet id  was returned by validate function')
-                        router = updated_router
-                        ports = _router_internal_interfaces(cloud, router)
-                        for port in ports:
-                            cloud.remove_router_interface(router, port_id=port['id'])
-                        for internal_subnet_id in internal_ids:
-                            cloud.add_router_interface(router, subnet_id=internal_subnet_id)
-                        changed = True
-
-                    elif internal_portids:
+                   # if internal_ids:
+                        #module.fail_json(msg='bhujay when  subnet id  was returned by validate function %s' %internal_ids)
+                   #     router = updated_router
+                   #     ports = _router_internal_interfaces(cloud, router)
+                   #     for port in ports:
+                   #         cloud.remove_router_interface(router, port_id=port['id'])
+                   #     for internal_subnet_id in internal_ids:
+                   #         cloud.add_router_interface(router, subnet_id=internal_subnet_id)
+                   #         #module.fail_json(msg='bhujay when  subnet id  was returned by validate function %s' %internal_ids)
+                   #     changed = True
+                    if internal_portids or internal_ids:
                         #module.fail_json(msg='bhujay when  port id   was returned by validate function ports= %s' % internal_portids)
                         router = updated_router
                         ports = _router_internal_interfaces(cloud, router)
                         for port in ports:
                             cloud.remove_router_interface(router, port_id=port['id'])
-                        for internal_port_id in internal_portids:
-                            cloud.add_router_interface(router, port_id=internal_port_id)
-                        changed = True
+                        if internal_portids: 
+                            external_ids, internal_ids, internal_portips, internal_portids = _validate_subnets(module, cloud)
+                            for internal_port_id in internal_portids:
+                                cloud.add_router_interface(router, port_id=internal_port_id)
+                            changed = True
+                        if internal_ids: 
+                            for internal_subnet_id in internal_ids:
+                                cloud.add_router_interface(router, subnet_id=internal_subnet_id)
+                            changed = True
 
             module.exit_json(changed=changed,
                              router=router,
