@@ -52,6 +52,7 @@ class ActionModule(_ActionModule):
         pc = copy.deepcopy(self._play_context)
         pc.connection = 'network_cli'
         pc.network_os = 'dellos9'
+        pc.remote_addr = provider['host'] or self._play_context.remote_addr
         pc.port = int(provider['port'] or self._play_context.port or 22)
         pc.remote_user = provider['username'] or self._play_context.connection_user
         pc.password = provider['password'] or self._play_context.password
