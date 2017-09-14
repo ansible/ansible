@@ -443,7 +443,7 @@ value is a TTL in seconds::
 fact_path
 =========
 
-This option allows you to globally configure a custom path for :ref:`_local_facts`:: for the implied `setup` task when using implied fact gathering.
+This option allows you to globally configure a custom path for :ref:`local_facts` for the implied `setup` task when using implied fact gathering.
 
   fact_path = /home/centos/ansible_facts.d
 
@@ -657,15 +657,15 @@ merge_multiple_cli_tags
 
 .. versionadded:: 2.3
 
-This allows changing how multiple :option:`--tags` and :option:`--skip-tags`
-arguments are handled on the command line.  Specifying :option:`--tags` more
-than once merges all of the :option:`--tags` options together.  If you want
-the pre-2.4.x behaviour where only the last value of :option:`--tags` is used,
-then set this to False.  The same holds true for :option:`--skip-tags`.
+This allows changing how multiple :option:`--tags <ansible-playbook --tags>` and :option:`--skip-tags <ansible-playbook --skip-tags>`
+arguments are handled on the command line.  Specifying :option:`--tags <ansible-playbook --tags>` more
+than once merges all of the :option:`--tags <ansible-playbook --tags>` options together.  If you want
+the pre-2.4.x behaviour where only the last value of :option:`--tags <ansible-playbook --tags>` is used,
+then set this to False.  The same holds true for :option:`--skip-tags <ansible-playbook --skip-tags>`.
 
 .. note:: The default value for this in 2.3 is False.  In 2.4, the
     default value is True.  After 2.8, the option will be removed.
-    Multiple :option:`--tags` and multiple :option:`--skip-tags` will always
+    Multiple :option:`--tags <ansible-playbook --tags>` and multiple :option:`--skip-tags <ansible-playbook --skip-tags>` will always
     be merged together.
 
 .. _module_lang:
@@ -812,26 +812,6 @@ This is the default username ansible will connect as for /usr/bin/ansible-playbo
 always default to the current user if this is not defined::
 
     remote_user = root
-
-
-.. _restrict_facts_namespace:
-
-restrict_facts_namespace
-========================
-
-.. versionadded:: 2.4
-
-This allows restricting facts in their own namespace (under ansible_facts) instead of pushing them into the main.
-False by default. Can also be set via the environment variable :envvar:`ANSIBLE_RESTRICT_FACTS`. Using `ansible_system` as an example:
-
-When False::
-
-    - debug: var=ansible_system
-
-
-When True::
-
-    - debug: var=ansible_facts.ansible_system
 
 
 .. _retry_files_enabled:
@@ -1025,7 +1005,7 @@ As of 1.7 this file can also be a script. If you are using a script instead of a
 Privilege Escalation Settings
 -----------------------------
 
-Ansible can use existing privilege escalation systems to allow a user to execute tasks as another. As of 1.9 ‘become’ supersedes the old sudo/su, while still being backwards compatible.  Settings live under the [privilege_escalation] header.
+Ansible can use existing privilege escalation systems to allow a user to execute tasks as another. As of 1.9 'become' supersedes the old sudo/su, while still being backwards compatible.  Settings live under the [privilege_escalation] header.
 
 .. _become:
 

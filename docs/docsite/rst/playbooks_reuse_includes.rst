@@ -69,7 +69,7 @@ Variables can also be passed to include files using an alternative syntax, which
         - "{{ lookup('file', 'keys/one.pub') }}"
         - "{{ lookup('file', 'keys/two.pub') }}"
 
-Using either syntax, variables passed in can then be used in the included files. These variables will only be available to tasks within the included file. See :doc:`variable_precedence` for more details on variable inheritance and precedence.
+Using either syntax, variables passed in can then be used in the included files. These variables will only be available to tasks within the included file. See :ref:`variable_precedence` for more details on variable inheritance and precedence.
 
 Task include statements can be used at arbitrary depth.
 

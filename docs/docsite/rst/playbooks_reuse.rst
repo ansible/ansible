@@ -13,6 +13,8 @@ Includes and imports (added in 2.4) allow users to break up large playbooks into
 
 Roles allow more than just tasks to be packaged together and can include variables, handlers, or even modules and other plugins. Unlike includes and imports, roles can also be uploaded and shared via Ansible Galaxy.
 
+.. _dynamic_vs_static:
+
 Dynamic vs. Static
 ``````````````````
 

@@ -19,7 +19,7 @@ The vault feature can encrypt any structured data file used by Ansible.  This ca
 Ansible tasks, handlers, and so on are also data so these can be encrypted with vault as well. To hide the names of variables that you're using, you can encrypt the task files in their entirety. However, that might be a little too much and could annoy your coworkers :)
 
 The vault feature can also encrypt arbitrary files, even binary files.  If a vault-encrypted file is
-given as the :ref:`src <src>` argument to the :ref:`copy <copy>`, :ref:`template <template>`,
+given as the 'src' argument to the :ref:`copy <copy>`, :ref:`template <template>`,
 :ref:`unarchive <unarchive>`, :ref:`script <script>` or :ref:`assemble <assemble>` modules, the file will be placed at the destination on the target host decrypted (assuming a valid vault password is supplied when running the play).
 
 As of version 2.3, Ansible also supports encrypting single values inside a YAML file, using the `!vault` tag to let YAML and Ansible know it uses special processing. This feature is covered in more details below.
@@ -277,13 +277,6 @@ To specify a vault password in a text file 'dev-password', use the :option:`--va
 There is a config option (:ref:`DEFAULT_VAULT_PASSWORD_FILE`) to specify a vault password file to use
 without requiring the :option:`--vault-password-file <ansible-playbook --vault-password-file>` cli option.
 
-via config
-  :ref:`ANSIBLE_VAULT_PASSWORD_FILE`
-
-  :ref:`ANSIBLE_VAULT_IDENTITY_LIST`
-
-via env
-   TODO
 
 Multiple vault passwords
 ^^^^^^^^^^^^^^^^^^^^^^^^
