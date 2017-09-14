@@ -179,7 +179,7 @@ please observe the following guidelines:
 - Use a 4-space indent, not  tabs.
 - We do not enforce 80 column lines; up to 160 columns are acceptable.
 - We do not accept 'style only' pull requests unless the code is nearly unreadable.
-- We are "PEP8ish", but not strictly compliant, see :doc:`testing_pep8` for more information.
+- We are not strictly compliant with PEP8. See :doc:`dev_guide/testing_pep8` for more information.
 
 You can also contribute by testing and revising other requests, especially if it is one you are interested
 in using. Please keep your comments clear and to the point, courteous and constructive, tickets are not a

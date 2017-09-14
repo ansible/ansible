@@ -30,7 +30,6 @@ To get started, select one of the following topics.
    developing_core
    developing_python3
    developing_api
-   developing_test_pr
    developing_rebasing
    testing
    repomerge

@@ -34,7 +34,7 @@ If you believe you have found a bug in a module and are already running the late
 
 Should you have a question rather than a bug report, inquiries are welcome on the `ansible-project Google group <https://groups.google.com/forum/#%21forum/ansible-project>`_ or on Ansible’s “#ansible” channel, located on irc.freenode.net.
 
-For development-oriented topics, use the `ansible-devel Google group <https://groups.google.com/forum/#%21forum/ansible-devel>`_ or Ansible’s #ansible and #ansible-devel channels, located on irc.freenode.net. You should also read :doc:`Community Information & Contributing <community>`, :doc:`Testing Ansible <testing>`, and :doc:`Developing Modules <developing_modules>`.
+For development-oriented topics, use the `ansible-devel Google group <https://groups.google.com/forum/#%21forum/ansible-devel>`_ or Ansible’s #ansible and #ansible-devel channels, located on irc.freenode.net. You should also read :doc:`Community Information & Contributing <community>`, :doc:`Testing Ansible <dev_guide/testing>`, and :doc:`Developing Modules <dev_guide/developing_modules>`.
 
 The modules are hosted on GitHub in a subdirectory of the `Ansible <https://github.com/ansible/ansible/tree/devel/lib/ansible/modules>`_ repo.
 
