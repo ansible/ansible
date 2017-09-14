@@ -22,7 +22,7 @@ description:
    - >
     Query results may be assigned to a variable for later reuse during ansible
     runtime.
-version_added: "2.4"
+version_added: "2.5"
 options:
     db:
         description:
