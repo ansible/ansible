@@ -455,9 +455,15 @@ class AssertOnlyCertificate(Certificate):
     def __init__(self, module):
         super(AssertOnlyCertificate, self).__init__(module)
         self.signature_algorithms = module.params['signature_algorithms']
-        self.subject = crypto_utils.parse_name_field(module.params['subject'])
+        if module.params['subject']:
+            self.subject = crypto_utils.parse_name_field(module.params['subject'])
+        else:
+            self.subject = []
         self.subject_strict = False
-        self.issuer = crypto_utils.parse_name_field(module.params['issuer'])
+        if module.params['issuer']:
+            self.issuer = crypto_utils.parse_name_field(module.params['issuer'])
+        else:
+            self.issuer = []
         self.issuer_strict = False
         self.has_expired = module.params['has_expired']
         self.version = module.params['version']
