@@ -526,7 +526,7 @@ def authorize_ip(type, changed, client, group, groupRules,
         if rule_id in groupRules:
             desired_rule_desc = rule.get('rule_desc', '')
             current_rule = groupRules[rule_id][0].get('IpRanges') or groupRules[rule_id][0].get('Ipv6Ranges')
-            if desired_rule_desc != current_rule[0].get('Description', ''):
+            if desired_rule_desc != current_rule[0].get('Description', '') and HAS_RULE_DESCRIPTION:
                 if not module.check_mode:
                     ip_permission = serialize_ip_grant(rule, thisip, ethertype)
                     update_rules_description(module, client, type, group['GroupId'], ip_permission)
@@ -556,7 +556,10 @@ def serialize_group_grant(group_id, rule):
     permission = {'IpProtocol': rule['proto'],
                   'FromPort': rule['from_port'],
                   'ToPort': rule['to_port'],
-                  'UserIdGroupPairs': [{'GroupId': group_id, 'Description': rule_description}]}
+                  'UserIdGroupPairs': [{'GroupId': group_id}]}
+
+    if HAS_RULE_DESCRIPTION:
+        permission['UserIdGroupPairs'][0]['Description'] = rule_description
 
     return fix_port_and_protocol(permission)
 
@@ -592,9 +595,13 @@ def serialize_ip_grant(rule, thisip, ethertype):
                   'ToPort': rule['to_port']}
     rule_description = rule.get('rule_desc') or ''
     if ethertype == "ipv4":
-        permission['IpRanges'] = [{'CidrIp': thisip, 'Description': rule_description}]
+        permission['IpRanges'] = [{'CidrIp': thisip}]
+        if HAS_RULE_DESCRIPTION:
+            permission['IpRanges'][0]['Description'] = rule_description
     elif ethertype == "ipv6":
-        permission['Ipv6Ranges'] = [{'CidrIpv6': thisip, 'Description': rule_description}]
+        permission['Ipv6Ranges'] = [{'CidrIpv6': thisip}]
+        if HAS_RULE_DESCRIPTION:
+            permission['Ipv6Ranges'][0]['Description'] = rule_description
 
     return fix_port_and_protocol(permission)
 
@@ -660,6 +667,16 @@ def main():
                              "environment variable or in the AWS credentials "
                              "profile.")
     client = boto3_conn(module, conn_type='client', resource='ec2', endpoint=ec2_url, region=region, **aws_connect_params)
+
+    global HAS_RULE_DESCRIPTION
+    if hasattr(client, "update_security_group_rule_descriptions_egress"):
+        HAS_RULE_DESCRIPTION = True
+    else:
+        HAS_RULE_DESCRIPTION = False
+        all_rules = rules if rules else [] + rules_egress if rules_egress else []
+        if any(rule.get('rule_desc') for rule in all_rules):
+            module.warn("USING RULE DESCRIPTIONS REQUIRES BOTOCORE VERSION >= 1.7.2.")
+
     group = None
     groups = dict()
     security_groups = []
@@ -789,7 +806,7 @@ def main():
                 if group_id:
                     rule_id = make_rule_key('in', rule, group['GroupId'], group_id)
                     if rule_id in groupRules:
-                        if rule.get('rule_desc', '') != groupRules[rule_id][0]['UserIdGroupPairs'][0]['Description']:
+                        if rule.get('rule_desc', '') != groupRules[rule_id][0]['UserIdGroupPairs'][0].get('Description') and HAS_RULE_DESCRIPTION:
                             if not module.check_mode:
                                 ip_permission = serialize_group_grant(group_id, rule)
                                 update_rules_description(module, client, 'in', group['GroupId'], ip_permission)
@@ -859,7 +876,7 @@ def main():
                 if group_id:
                     rule_id = make_rule_key('out', rule, group['GroupId'], group_id)
                     if rule_id in groupRules:
-                        if rule.get('rule_desc', '') != groupRules[rule_id][0]['UserIdGroupPairs'][0]['Description']:
+                        if rule.get('rule_desc', '') != groupRules[rule_id][0]['UserIdGroupPairs'][0].get('Description') and HAS_RULE_DESCRIPTION:
                             if not module.check_mode:
                                 ip_permission = serialize_group_grant(group_id, rule)
                                 update_rules_description(module, client, 'in', group['GroupId'], ip_permission)
