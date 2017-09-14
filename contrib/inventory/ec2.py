@@ -623,6 +623,36 @@ class Ec2Inventory(object):
                 error = "Error connecting to %s backend.\n%s" % (backend, e.message)
             self.fail_with_error(error, 'getting EC2 instances')
 
+    def tags_match_filters(self, tags):
+        ''' return True if given tags match configured filters '''
+        if not self.ec2_instance_filters:
+            return True
+        match = self.stack_filters
+        for filter_name, filter_value in self.ec2_instance_filters.items():
+            if filter_name[:4] != 'tag:':
+                continue
+            filter_name = filter_name[4:]
+            if filter_name not in tags:
+                if self.stack_filters:
+                    match = False
+                    break
+                continue
+            if isinstance(filter_value, list):
+                if self.stack_filters and tags[filter_name] not in filter_value:
+                    match = False
+                    break
+                if not self.stack_filters and tags[filter_name] in filter_value:
+                    match = True
+                    break
+            if isinstance(filter_value, six.string_types):
+                if self.stack_filters and tags[filter_name] != filter_value:
+                    match = False
+                    break
+                if not self.stack_filters and tags[filter_name] == filter_value:
+                    match = True
+                    break
+        return match
+
     def get_rds_instances_by_region(self, region):
         ''' Makes an AWS API call to the list of RDS instances in a particular
         region '''
@@ -648,8 +678,8 @@ class Ec2Inventory(object):
                         instance.tags = {}
                         for tag in tags:
                             instance.tags[tag['Key']] = tag['Value']
-
-                        self.add_rds_instance(instance, region)
+                        if self.tags_match_filters(instance.tags):
+                            self.add_rds_instance(instance, region)
                     if not marker:
                         break
         except boto.exception.BotoServerError as e:
