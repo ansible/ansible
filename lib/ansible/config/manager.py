@@ -373,4 +373,3 @@ class ConfigManager(object):
 
             # set the constant
             self.data.update_setting(Setting(config, value, origin, defs[config].get('type', 'string')))
-
