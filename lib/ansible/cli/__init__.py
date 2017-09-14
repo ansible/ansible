@@ -52,12 +52,46 @@ except ImportError:
     display = Display()
 
 
+def _version(prog, module_path=None):
+    ''' return ansible version '''
+
+    module_path = module_path or []
+
+    # prepend cli paths to configured path
+    if C.DEFAULT_MODULE_PATH:
+        module_path.extend(C.DEFAULT_MODULE_PATH)
+
+    result = "{0} {1}".format(prog, __version__)
+
+    gitinfo = CLI._gitinfo()
+    if gitinfo:
+        result = result + " {0}".format(gitinfo)
+
+    result += "\n  config file = %s" % C.CONFIG_FILE
+
+    if module_path is None:
+        cpath = "Default w/o overrides"
+    else:
+        cpath = module_path
+
+    result = result + "\n  configured module search path = %s" % cpath
+    result = result + "\n  ansible python module location = %s" % ':'.join(ansible.__path__)
+    result = result + "\n  executable location = %s" % sys.argv[0]
+    result = result + "\n  python version = %s" % ''.join(sys.version.splitlines())
+
+    return result
+
+
 class SortedOptParser(optparse.OptionParser):
     '''Optparser which sorts the options by opt before outputting --help'''
 
     def format_help(self, formatter=None, epilog=None):
         self.option_list.sort(key=operator.methodcaller('get_opt_string'))
         return optparse.OptionParser.format_help(self, formatter=None)
+
+    def get_version(self):
+        # if args have been parsed, update module path based on cli options
+        return _version(self.get_prog_name(), module_path=self.values.module_path)
 
 
 # Note: Inherit from SortedOptParser so that we get our format_help method
@@ -417,7 +451,7 @@ class CLI(with_metaclass(ABCMeta, object)):
         ''' create an options parser for most ansible scripts '''
 
         # base opts
-        parser = SortedOptParser(usage, version=CLI.version("%prog"), description=desc, epilog=epilog)
+        parser = SortedOptParser(usage, version=True, description=desc, epilog=epilog)
         parser.add_option('-v', '--verbose', dest='verbosity', default=C.DEFAULT_VERBOSITY, action="count",
                           help="verbose mode (-vvv for more, -vvvv to enable connection debugging)")
 
@@ -626,27 +660,15 @@ class CLI(with_metaclass(ABCMeta, object)):
     @staticmethod
     def version(prog):
         ''' return ansible version '''
-        result = "{0} {1}".format(prog, __version__)
-        gitinfo = CLI._gitinfo()
-        if gitinfo:
-            result = result + " {0}".format(gitinfo)
-        result += "\n  config file = %s" % C.CONFIG_FILE
-        if C.DEFAULT_MODULE_PATH is None:
-            cpath = "Default w/o overrides"
-        else:
-            cpath = C.DEFAULT_MODULE_PATH
-        result = result + "\n  configured module search path = %s" % cpath
-        result = result + "\n  ansible python module location = %s" % ':'.join(ansible.__path__)
-        result = result + "\n  executable location = %s" % sys.argv[0]
-        result = result + "\n  python version = %s" % ''.join(sys.version.splitlines())
-        return result
+        # for API compat
+        return _version(prog)
 
     @staticmethod
     def version_info(gitinfo=False):
         ''' return full ansible version info '''
         if gitinfo:
             # expensive call, user with care
-            ansible_version_string = CLI.version('')
+            ansible_version_string = _version('')
         else:
             ansible_version_string = __version__
         ansible_version = ansible_version_string.split()[0]
