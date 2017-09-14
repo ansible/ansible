@@ -257,7 +257,7 @@ class AnsibleF5Client(object):
         self.check_mode = self.module.check_mode
         self._connect_params = self._get_connect_params()
 
-        if self.module.params['transport'] != 'cli':
+        if 'transport' not in self.module.params or self.module.params['transport'] != 'cli':
             try:
                 self.api = self._get_mgmt_root(
                     f5_product_name, **self._connect_params
