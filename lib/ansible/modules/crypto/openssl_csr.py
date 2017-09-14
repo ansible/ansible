@@ -223,7 +223,7 @@ subject:
     description: A list of the subject tuples attached to the CSR
     returned: changed or success
     type: list
-    sample: `[ ('CN', 'www.ansible.com'), ('O', 'Ansible') ]`
+    sample: "[('CN', 'www.ansible.com'), ('O', 'Ansible')]"
 subjectAltName:
     description: The alternative names this CSR is valid for
     returned: changed or success
