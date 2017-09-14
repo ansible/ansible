@@ -53,7 +53,7 @@ eos_provider_spec = {
     'validate_certs': dict(type='bool'),
     'timeout': dict(type='int'),
 
-    'transport': dict(choices=['cli', 'eapi'])
+    'transport': dict(default='cli', choices=['cli', 'eapi'])
 }
 eos_argument_spec = {
     'provider': dict(type='dict', options=eos_provider_spec),
@@ -79,7 +79,7 @@ def check_args(module, warnings):
                     module.params[key]):
                 warnings.append('argument %s has been deprecated and will be removed in a future version' % key)
         else:
-            if key not in ['provider', 'authorize'] and module.params[key]:
+            if key not in ['provider', 'transport', 'authorize'] and module.params[key]:
                 warnings.append('argument %s has been deprecated and will be removed in a future version' % key)
 
     # set argument's default value if not provided in input

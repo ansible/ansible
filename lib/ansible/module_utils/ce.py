@@ -61,7 +61,7 @@ ce_provider_spec = {
     'use_ssl': dict(type='bool'),
     'validate_certs': dict(type='bool'),
     'timeout': dict(type='int'),
-    'transport': dict(choices=['cli']),
+    'transport': dict(default='cli', choices=['cli']),
 }
 ce_argument_spec = {
     'provider': dict(type='dict', options=ce_provider_spec),
