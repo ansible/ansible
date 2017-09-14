@@ -127,7 +127,7 @@
   assert:
     that:
       - win_get_url_result_invalid_dest|failed
-      - win_get_url_result_invalid_dest.msg is search('invalid path')
+      - win_get_url_result_invalid_dest.msg is search('does not exist, or is not visible to the current user')
 
 - name: Check you get a helpful message if the parent folder of the dest doesn't exist
   win_get_url:
