@@ -5,14 +5,12 @@
   nxos_feature:
     feature: bgp
     state: disabled
-    provider: "{{ cli }}"
 
 - block:
   - name: "Run show running-config bgp - should fail"
     nxos_command:
       commands:
         - sh running-config bgp
-      provider: "{{ cli }}"
     ignore_errors: yes
     register: result
 
@@ -25,14 +23,12 @@
     nxos_feature:
       feature: bgp
       state: enabled
-      provider: "{{ cli }}"
 
   - name: "Configure BGP defaults"
     nxos_bgp: &configure_default
       asn: 65535
       router_id: 1.1.1.1
       state: present
-      provider: "{{ cli }}"
     register: result
 
   - assert: &true
@@ -43,7 +39,6 @@
     nxos_command:
       commands:
         - sh running-config bgp
-      provider: "{{ cli }}"
     register: result
 
   - assert:
@@ -55,7 +50,6 @@
     nxos_command:
       commands:
         - show interface bief
-      provider: "{{ cli }}"
     ignore_errors: yes
     register: result
 
@@ -69,6 +63,5 @@
     nxos_feature:
       feature: bgp
       state: disabled
-      provider: "{{ cli }}"
 
   - debug: msg="END TRANSPORT:CLI nxos_command sanity test"

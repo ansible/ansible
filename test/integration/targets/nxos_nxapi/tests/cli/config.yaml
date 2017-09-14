@@ -6,20 +6,17 @@
   nxos_config:
     lines: no feature nxapi
     match: none
-    provider: "{{ cli }}"
   connection: local
 
 - name: Get running-config
   nxos_command:
     commands: show running-config
-    provider: "{{ cli }}"
   register: config
   connection: local
 
 - name: Set config
   nxos_nxapi:
     config: "{{ config.stdout[0] }}"
-    provider: "{{ cli }}"
   register: config
   connection: local
 
@@ -40,14 +37,12 @@
 - name: Get running-config again
   nxos_command:
     commands: show running-config
-    provider: "{{ cli }}"
   register: runningconfig
   connection: local
 
 - name: Set config
   nxos_nxapi:
     config: "{{ runningconfig.stdout[0] }}"
-    provider: "{{ cli }}"
   register: config
   connection: local
 
@@ -65,7 +60,6 @@
 - name: Set config - FIXME, shouldn't need this
   nxos_nxapi:
     config: "{{ runningconfig.stdout[0] }}"
-    provider: "{{ cli }}"
   register: config
   connection: local
 
