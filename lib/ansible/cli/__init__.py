@@ -180,7 +180,7 @@ class CLI(with_metaclass(ABCMeta, object)):
             display.deprecated("%s option, %s %s" % (name, why, alt), version=ver)
 
         # warn about typing issues with configuration entries
-        for unable in  C.config.UNABLE:
+        for unable in C.config.UNABLE:
             display.warning("Unable to set correct type for configuration entry: %s" % unable)
 
     @staticmethod
