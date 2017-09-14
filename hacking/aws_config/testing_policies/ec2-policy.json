@@ -51,7 +51,9 @@
                 "ec2:RevokeSecurityGroupEgress",
                 "ec2:RevokeSecurityGroupIngress",
                 "ec2:RunInstances",
-                "ec2:TerminateInstances"
+                "ec2:TerminateInstances",
+                "ec2:UpdateSecurityGroupRuleDescriptionsIngress",
+                "ec2:UpdateSecurityGroupRuleDescriptionsEgress"
             ],
             "Resource": [
                 "arn:aws:ec2:{{aws_region}}::image/*",
