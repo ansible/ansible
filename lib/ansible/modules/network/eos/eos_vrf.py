@@ -51,8 +51,13 @@ options:
     description: List of VRFs definitions
   purge:
     description:
-      - Purge VRFs not defined in the aggregates parameter.
+      - Purge VRFs not defined in the I(aggregate) parameter.
     default: no
+  delay:
+    description:
+      - Time in seconds to wait before checking for the operational state on remote
+        device. This wait is applicable for operational state arguments.
+    default: 10
   state:
     description:
       - State of the VRF configuration.

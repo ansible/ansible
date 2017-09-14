@@ -36,7 +36,7 @@ options:
     description: List of VLANs definitions.
   purge:
     description:
-      - Purge VLANs not defined in the aggregates parameter.
+      - Purge VLANs not defined in the I(aggregate) parameter.
     default: no
   state:
     description:
