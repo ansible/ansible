@@ -107,9 +107,14 @@ Deprecation notices
 The following modules will be removed in Ansible 2.8. Please update update your playbooks accordingly.
 
 * :ref:`fixme <fixme>`
+* :ref:`win_msi <win_msi>` use :ref:`win_package <win_package>` instead
 
 Noteworthy module changes
 -------------------------
+
+* The ``win_get_url`` module has the dictionary win_get_url in its results deprecated, its content is now also available directly in the resulting output, like other modules. This dictionary will be removed in Ansible 2.8.
+* The ``win_unzip`` module no longer includes the dictionary win_unzup in its results, the contents is now directly in the resulting output, like other modules.
+
 
 Plugins
 =======
