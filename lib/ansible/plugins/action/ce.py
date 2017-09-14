@@ -100,6 +100,8 @@ class ActionModule(_ActionModule):
                     provider[key] = self._task.args[key]
                 elif 'fallback' in value:
                     provider[key] = self._fallback(value['fallback'])
+                elif 'default' in value:
+                    provider[key] = value['default']
                 elif key not in provider:
                     provider[key] = None
         return provider

@@ -51,7 +51,7 @@ nxos_provider_spec = {
     'validate_certs': dict(type='bool'),
     'timeout': dict(type='int'),
 
-    'transport': dict(choices=['cli', 'nxapi'])
+    'transport': dict(default='cli', choices=['cli', 'nxapi'])
 }
 nxos_argument_spec = {
     'provider': dict(type='dict', options=nxos_provider_spec),
