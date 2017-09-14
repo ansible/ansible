@@ -19,7 +19,7 @@ python_versions=(
 # shellcheck disable=SC2086
 ansible-test windows-integration "${target}" --explain ${CHANGED:+"$CHANGED"} 2>&1 | { grep ' windows-integration: .* (targeted)$' || true; } > /tmp/windows.txt
 
-if [ -s /tmp/windows.txt ]; then
+if [ -s /tmp/windows.txt ] || [ "${CHANGED:+$CHANGED}" == "" ]; then
     echo "Detected changes requiring integration tests specific to Windows:"
     cat /tmp/windows.txt
 
