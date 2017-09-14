@@ -101,7 +101,7 @@ def parse_name_field(input_dict):
 
     result = []
     for key in input_dict:
-        if isinstance(input_dict[key], basestring):
+        if isinstance(input_dict[key], list):
             for entry in input_dict[key]:
                 result.append((key, entry))
         else:
