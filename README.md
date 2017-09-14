@@ -9,9 +9,7 @@ Ansible is a radically simple IT automation system.  It handles configuration-ma
 
 Read the documentation and more at https://ansible.com/
 
-Many users run straight from the development branch (it's generally fine to do so), but you might also wish to consume [a release](http://releases.ansible.com/ansible/).
-
-You can find instructions [here](https://docs.ansible.com/ansible/intro_installation.html) for a variety of platforms.
+You can find installation instructions [here](https://docs.ansible.com/ansible/intro_installation.html) for a variety of platforms. Most users should probably install a released version of Ansible from `pip`, a package manager or our [release repository](https://releases.ansible.com/ansible/). [Officially supported](https://www.ansible.com/ansible-engine) builds of Ansible are also available. Some power users also run directly from the development branch. While significant efforts are made to ensure that `devel` is reasonably stable, you're much more likely to encounter breaking changes when running Ansible this way.
 
 Design Principles
 =================
