@@ -241,25 +241,23 @@ def _needs_update(cloud, module, router, network, internal_subnet_ids, internal_
                     existing_subnet_ids.append(fixed_ip['subnet_id'])
                     existing_internal_port_ips.append(fixed_ip['ip_address'])
 
-        x=set(existing_internal_port_ids)
-        z=set(internal_port_ids)
-        #module.fail_json(msg='bhujay hyyere subnet ... supplied =  % s  and existing = % s ' % (internal_subnet_ids, existing_subnet_ids))
-        #module.fail_json(msg='bhujay hyyere ... supplied =  % s  and existing = % s ' % (z, x))
+        for p_id in internal_port_ids:
+             p = cloud.get_port(name_or_id=p_id)
+             if 'fixed_ips' in p:
+                for fip in p['fixed_ips']:
+                    internal_subnet_ids.append(fip['subnet_id'])
+
         if set(internal_subnet_ids) != set(existing_subnet_ids):
               #module.fail_json(msg='bhujay hyyere subnet ... supplied =  % s  and existing = % s ' % (internal_subnet_ids, existing_subnet_ids))
               return True
-        #if set(internal_port_ips) != set(existing_internal_port_ips):
-        if set(internal_port_ids) != set(existing_internal_port_ids):
-               #module.fail_json(msg='bhujay hyyere . port ids.. supplied =  % s  and existing = % s ' % (z, x))
-               return True
-
+#        if set(internal_port_ids) != set(existing_internal_port_ids):
+  #             return True
 
     return False
 
 
 def _system_state_change(cloud, module, router, network, internal_ids, internal_portips, internal_portids):
     """Check if the system state would be changed."""
-
     #module.fail_json(msg='system state chage ...bhujay here % s' % internal_portids)
     state = module.params['state']
     if state == 'absent' and router:
