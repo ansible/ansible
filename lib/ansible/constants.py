@@ -45,10 +45,8 @@ def get_config(parser, section, key, env_var, default_value, value_type=None, ex
             pass
     if value is None:
         value = default_value
-    try:
-        value = config.ensure_type(value, value_type)
-    except:
-        pass
+
+    value = ensure_type(value, value_type)
 
     return value
 
