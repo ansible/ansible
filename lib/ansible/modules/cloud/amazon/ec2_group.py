@@ -526,7 +526,7 @@ def authorize_ip(type, changed, client, group, groupRules,
         if rule_id in groupRules:
             desired_rule_desc = rule.get('rule_desc', '')
             current_rule = groupRules[rule_id][0].get('IpRanges') or groupRules[rule_id][0].get('Ipv6Ranges')
-            if desired_rule_desc != current_rule[0].get('Description', '') and HAS_RULE_DESCRIPTION:
+            if HAS_RULE_DESCRIPTION and desired_rule_desc != current_rule[0].get('Description', ''):
                 if not module.check_mode:
                     ip_permission = serialize_ip_grant(rule, thisip, ethertype)
                     update_rules_description(module, client, type, group['GroupId'], ip_permission)
@@ -806,7 +806,7 @@ def main():
                 if group_id:
                     rule_id = make_rule_key('in', rule, group['GroupId'], group_id)
                     if rule_id in groupRules:
-                        if rule.get('rule_desc', '') != groupRules[rule_id][0]['UserIdGroupPairs'][0].get('Description') and HAS_RULE_DESCRIPTION:
+                        if HAS_RULE_DESCRIPTION and rule.get('rule_desc', '') != groupRules[rule_id][0]['UserIdGroupPairs'][0].get('Description', ''):
                             if not module.check_mode:
                                 ip_permission = serialize_group_grant(group_id, rule)
                                 update_rules_description(module, client, 'in', group['GroupId'], ip_permission)
@@ -876,7 +876,7 @@ def main():
                 if group_id:
                     rule_id = make_rule_key('out', rule, group['GroupId'], group_id)
                     if rule_id in groupRules:
-                        if rule.get('rule_desc', '') != groupRules[rule_id][0]['UserIdGroupPairs'][0].get('Description') and HAS_RULE_DESCRIPTION:
+                        if HAS_RULE_DESCRIPTION and rule.get('rule_desc', '') != groupRules[rule_id][0]['UserIdGroupPairs'][0].get('Description', ''):
                             if not module.check_mode:
                                 ip_permission = serialize_group_grant(group_id, rule)
                                 update_rules_description(module, client, 'in', group['GroupId'], ip_permission)
