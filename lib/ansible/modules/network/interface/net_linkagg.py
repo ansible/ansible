@@ -48,7 +48,7 @@ options:
     description: List of link aggregation definitions.
   purge:
     description:
-      - Purge link aggregation groups not defined in the aggregates parameter.
+      - Purge link aggregation groups not defined in the I(aggregate) parameter.
     default: no
   state:
     description:

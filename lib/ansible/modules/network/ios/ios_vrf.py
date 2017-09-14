@@ -69,6 +69,7 @@ options:
       - Time in seconds to wait before checking for the operational state on remote
         device.
     version_added: "2.4"
+    default: 10
   purge:
     description:
       - Instructs the module to consider the
