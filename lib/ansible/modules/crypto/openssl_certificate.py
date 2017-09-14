@@ -503,8 +503,8 @@ class AssertOnlyCertificate(Certificate):
 
         def _validate_subject():
             if self.subject:
-                cert_subject = crypto_utils.parse_name_field(self.cert.get_subject())
-                diff = [item for item in self.subject.items() if item not in cert_subject]
+                cert_subject = self.cert.get_subject().get_components()
+                diff = [item for item in crypto_utils.parse_name_field(self.subject) if item not in cert_subject]
                 if diff:
                     self.message.append(
                         'Invalid subject component (got %s, expected all of %s to be present)' % (cert_subject, self.subject.items())
@@ -512,8 +512,8 @@ class AssertOnlyCertificate(Certificate):
 
         def _validate_issuer():
             if self.issuer:
-                cert_issuer = crypto_utils.parse_name_field(self.cert.get_issuer())
-                diff = [item for item in self.issuer.items() if item not in cert_issuer]
+                cert_issuer = self.cert.get_issuer().get_components()
+                diff = [item for item in crypto_utils.parse_name_field(self.issuer) if item not in cert_issuer]
                 if diff:
                     self.message.append(
                         'Invalid issuer component (got %s, expected all of %s to be present)' % (cert_issuer, self.issuer.items())
