@@ -19,7 +19,7 @@ python_versions=(
 # shellcheck disable=SC2086
 ansible-test windows-integration "${target}" --explain ${CHANGED:+"$CHANGED"} 2>&1 | { grep ' windows-integration: .* (targeted)$' || true; } > /tmp/windows.txt
 
-if [ -s /tmp/windows.txt ]; then
+if [ -s /tmp/windows.txt ] || [ "${CHANGED:+$CHANGED}" == "" ]; then
     echo "Detected changes requiring integration tests specific to Windows:"
     cat /tmp/windows.txt
 
@@ -62,10 +62,8 @@ for version in "${python_versions[@]}"; do
                 changed_all_target="none"
             fi
         else
-            # only run smoketest tests for group1
-            if [ "${target}" != "windows/ci/group1/" ]; then continue; fi
-            # without change detection enabled run only smoketest tests
-            ci="windows/ci/smoketest/"
+            # without change detection enabled run entire test group
+            ci="${target}"
         fi
     else
         # only run minimal tests for group1
