@@ -96,34 +96,6 @@ def load_certificate_request(path):
         raise OpenSSLObjectError(exc)
 
 
-keyUsageLong = {
-    "digitalSignature": "Digital Signature",
-    "nonRepudiation": "Non Repudiation",
-    "keyEncipherment": "Key Encipherment",
-    "dataEncipherment": "Data Encipherment",
-    "keyAgreement": "Key Agreement",
-    "keyCertSign": "Certificate Sign",
-    "cRLSign": "CRL Sign",
-    "encipherOnly": "Encipher Only",
-    "decipherOnly": "Decipher Only",
-}
-
-extendedKeyUsageLong = {
-    "anyExtendedKeyUsage": "Any Extended Key Usage",
-    "ipsecEndSystem": "IPSec End System",
-    "ipsecTunnel": "IPSec Tunnel",
-    "ipsecUser": "IPSec User",
-    "msSGC": "Microsoft Server Gated Crypto",
-    "nsSGC": "Netscape Server Gated Crypto",
-    "serverAuth": "TLS Web Server Authentication",
-    "clientAuth": "TLS Web Client Authentication",
-    "codeSigning": "Code Signing",
-    "emailProtection": "E-mail Protection",
-    "timeStamping": "Time Stamping",
-    "OCSPSigning": "OCSP Signing",
-}
-
-
 @six.add_metaclass(abc.ABCMeta)
 class OpenSSLObject(object):
 

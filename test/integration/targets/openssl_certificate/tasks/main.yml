@@ -51,6 +51,11 @@
         path: '{{ output_dir }}/csr2.csr'
         privatekey_path: '{{ output_dir }}/privatekey2.pem'
         CN: 'www.example.com'
+        keyUsage:
+          - digitalSignature
+        extendedKeyUsage:
+          - ipsecUser
+          - biometricInfo
 
     - name: Generate selfsigned certificate2
       openssl_certificate:
@@ -77,6 +82,11 @@
           L: Los Angeles
           O: ACME Inc.
           OU: Roadrunner pest control
+        keyUsage:
+          - digitalSignature
+        extendedKeyUsage:
+          - ipsecUser
+          - biometricInfo
 
     - import_tasks: ../tests/validate.yml
 

@@ -227,9 +227,10 @@ import os
 
 from ansible.module_utils import crypto as crypto_utils
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_bytes
 
 try:
+    import OpenSSL
     from OpenSSL import crypto
 except ImportError:
     pyopenssl_found = False
@@ -348,22 +349,22 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
 
             return True
 
-        def _check_keyUsage_(extensions, extName, expected, critical, long):
+        def _check_keyUsage_(extensions, extName, expected, critical):
             usages_ext = [ext for ext in extensions if ext.get_short_name() == extName]
             if (not usages_ext and expected) or (usages_ext and not expected):
                 return False
             elif not usages_ext and not expected:
                 return True
             else:
-                current = [usage.strip() for usage in str(usages_ext[0]).split(',')]
-                expected = [long[usage] if usage in long else usage for usage in expected]
+                current = [OpenSSL._util.lib.OBJ_txt2nid(to_bytes(usage.strip())) for usage in str(usages_ext[0]).split(',')]
+                expected = [OpenSSL._util.lib.OBJ_txt2nid(to_bytes(usage)) for usage in expected]
                 return set(current) == set(expected) and usages_ext[0].get_critical() == critical
 
         def _check_keyUsage(extensions):
-            return _check_keyUsage_(extensions, b'keyUsage', self.keyUsage, self.keyUsage_critical, crypto_utils.keyUsageLong)
+            return _check_keyUsage_(extensions, b'keyUsage', self.keyUsage, self.keyUsage_critical)
 
         def _check_extenededKeyUsage(extensions):
-            return _check_keyUsage_(extensions, b'extendedKeyUsage', self.extendedKeyUsage, self.extendedKeyUsage_critical, crypto_utils.extendedKeyUsageLong)
+            return _check_keyUsage_(extensions, b'extendedKeyUsage', self.extendedKeyUsage, self.extendedKeyUsage_critical)
 
         def _check_extensions(csr):
             extensions = csr.get_extensions()
