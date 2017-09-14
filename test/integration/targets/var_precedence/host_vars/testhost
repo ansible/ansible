@@ -1,0 +1,2 @@
+# Var precedence testing
+defaults_file_var_role3: "overridden from inventory"

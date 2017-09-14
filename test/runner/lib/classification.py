@@ -375,6 +375,9 @@ class PathMapper(object):
         if path.startswith('test/results/'):
             return minimal
 
+        if path.startswith('test/legacy/'):
+            return minimal
+
         if path.startswith('test/integration/roles/'):
             return minimal
 
@@ -404,6 +407,9 @@ class PathMapper(object):
             if dirname == 'test/integration':
                 if self.prefixes.get(name) == 'network' and ext == '.yaml':
                     return minimal  # network integration test playbooks are not used by ansible-test
+
+                if filename == 'network-all.yaml':
+                    return minimal  # network integration test playbook not used by ansible-test
 
                 if filename == 'platform_agnostic.yaml':
                     return minimal  # network integration test playbook not used by ansible-test
