@@ -49,7 +49,7 @@ options:
             - The passphrase for the privatekey.
     version:
         required: false
-        default: 3
+        default: 1
         description:
             - Version of the certificate signing request
     force:
@@ -283,7 +283,7 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
 
         if not self.check(module, perms_required=False) or self.force:
             req = crypto.X509Req()
-            req.set_version(self.version)
+            req.set_version(self.version - 1)
             subject = req.get_subject()
             for (key, value) in self.subject.items():
                 if value is not None:
@@ -405,7 +405,7 @@ def main():
             digest=dict(default='sha256', type='str'),
             privatekey_path=dict(require=True, type='path'),
             privatekey_passphrase=dict(type='str', no_log=True),
-            version=dict(default='3', type='int'),
+            version=dict(default='1', type='int'),
             force=dict(default=False, type='bool'),
             path=dict(required=True, type='path'),
             countryName=dict(aliases=['C', 'country_name'], type='str'),
