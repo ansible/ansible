@@ -61,6 +61,11 @@ options:
         required: true
         description:
             - Name of the folder in which the generated OpenSSL certificate signing request will be written
+    subject:
+        required: false
+        description:
+            - Key/value pairs that will be present in the subject name field of the certificate signing request.
+              If you need to specify more than one value with the same key, use a list as value.
     country_name:
         required: false
         aliases: [ 'C', 'countryName' ]
@@ -214,10 +219,10 @@ filename:
     type: string
     sample: /etc/ssl/csr/www.ansible.com.csr
 subject:
-    description: A dictionnary of the subject attached to the CSR
+    description: A list of the subject tuples attached to the CSR
     returned: changed or success
     type: list
-    sample: {'CN': 'www.ansible.com', 'O': 'Ansible'}
+    sample: [('CN', 'www.ansible.com'), ('O', 'Ansible')]
 subjectAltName:
     description: The alternative names this CSR is valid for
     returned: changed or success
@@ -283,20 +288,21 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
         self.request = None
         self.privatekey = None
 
-        self.subject = {
-            'C': module.params['countryName'],
-            'ST': module.params['stateOrProvinceName'],
-            'L': module.params['localityName'],
-            'O': module.params['organizationName'],
-            'OU': module.params['organizationalUnitName'],
-            'CN': module.params['commonName'],
-            'emailAddress': module.params['emailAddress'],
-        }
+        self.subject = [
+            ('C', module.params['countryName']),
+            ('ST', module.params['stateOrProvinceName']),
+            ('L', module.params['localityName']),
+            ('O', module.params['organizationName']),
+            ('OU', module.params['organizationalUnitName']),
+            ('CN', module.params['commonName']),
+            ('emailAddress', module.params['emailAddress']),
+        ]
+
+        self.subject = self.subject + crypto_utils.parse_name_field(module.params['subject'])
+        self.subject = [(k, v) for k, v in self.subject.items() if v]
 
         if not self.subjectAltName:
-            self.subjectAltName = ['DNS:%s' % self.subject['CN']]
-
-        self.subject = dict((k, v) for k, v in self.subject.items() if v)
+            self.subjectAltName = ['DNS:%s' % module.params['commonName']]
 
     def generate(self, module):
         '''Generate the certificate signing request.'''
@@ -351,8 +357,8 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
 
         def _check_subject(csr):
             subject = csr.get_subject()
-            for (key, value) in self.subject.items():
-                if getattr(subject, key, None) != value:
+            for entry in self.subject:
+                if getattr(subject, entry[0], None) != entry[1]:
                     return False
 
             return True
@@ -437,6 +443,7 @@ def main():
             version=dict(default='1', type='int'),
             force=dict(default=False, type='bool'),
             path=dict(required=True, type='path'),
+            subject=dict(type='dict'),
             countryName=dict(aliases=['C', 'country_name'], type='str'),
             stateOrProvinceName=dict(aliases=['ST', 'state_or_province_name'], type='str'),
             localityName=dict(aliases=['L', 'locality_name'], type='str'),
