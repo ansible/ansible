@@ -312,8 +312,14 @@ class StrategyModule(StrategyBase):
                             display.debug("generating all_blocks data for role")
                             new_ir = hr._task.copy()
                             new_ir.vars.update(include_result.get('include_variables', dict()))
+
+                            executor_variables = include_result.get('include_executor_variables', dict())
+                            vars_item = {}
                             if loop_var and loop_var in include_result:
-                                new_ir.vars[loop_var] = include_result[loop_var]
+                                vars_item[loop_var] = include_result[loop_var]
+                            vars_item.update(executor_variables)
+                            templar = Templar(loader=self._loader, variables=vars_item)
+                            new_ir._role_name = templar.template(new_ir._role_name)
 
                             blocks, handler_blocks = new_ir.get_block_list(play=iterator._play, variable_manager=self._variable_manager, loader=self._loader)
                             all_role_blocks.extend(blocks)
