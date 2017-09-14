@@ -57,6 +57,12 @@ options:
       - Interface link status.
     default: auto
     choices: ['full', 'half', 'auto']
+  delay:
+    description:
+      - Time in seconds to wait before checking for the operational state on remote
+        device. This wait is applicable for operational state argument which are
+        I(state) with values C(up)/C(down) and I(neighbors).
+    default: 10
   neighbors:
     description:
       - Check the operational state of given interface C(name) for LLDP neighbor.
