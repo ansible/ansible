@@ -115,7 +115,7 @@ class Cli:
     def get_config(self, flags=None):
         """Retrieves the current config from the device or cache
         """
-        flags = [] if flags is None else []
+        flags = [] if flags is None else flags
 
         cmd = 'show running-config '
         cmd += ' '.join(flags)
