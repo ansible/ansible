@@ -167,7 +167,7 @@ def main():
         "login_user": "user",
         "login_password": "password",
         "port": "port",
-        "db": "database",
+        "db": "dbname",
         "ssl_mode": "sslmode",
         "ssl_rootcert": "sslrootcert"
     }
