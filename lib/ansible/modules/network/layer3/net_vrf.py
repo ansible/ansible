@@ -33,7 +33,7 @@ options:
     description: List of VRFs definitions
   purge:
     description:
-      - Purge VRFs not defined in the aggregates parameter.
+      - Purge VRFs not defined in the I(aggregate) parameter.
     default: no
   state:
     description:

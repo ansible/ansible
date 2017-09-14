@@ -50,7 +50,7 @@ options:
       - Admin distance of the static route.
     default: 1
   aggregate:
-    description: List of static route definitions
+    description: List of static route definitions.
   state:
     description:
       - State of the static route configuration.
