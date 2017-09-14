@@ -1,0 +1,38 @@
+---
+- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_snmp_community sanity test"
+
+- name: Setup - Remove snmp_community if configured
+  nxos_snmp_community: &remove
+    community: TESTING7
+    group: network-operator
+    state: absent 
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- block:
+
+  - name: Configure snmp_community 
+    nxos_snmp_community: &config
+      community: TESTING7
+      group: network-operator
+      state: present
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: Idempotence Check
+    nxos_snmp_community: *config
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  always:
+  - name: Cleanup
+    nxos_snmp_community: *remove
+
+  - debug: msg="END TRANSPORT:{{ connection.transport }} nxos_snmp_community sanity test"

@@ -79,20 +79,24 @@ commands:
     sample: ["snmp-server community TESTING7 group network-operator"]
 '''
 
-
+import re
 from ansible.module_utils.nxos import load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
 
 def execute_show_command(command, module):
-    command = {
+    if 'show run' not in command:
+        output = 'json'
+    else:
+        output = 'text'
+    cmds = [{
         'command': command,
-        'output': 'json',
-    }
+        'output': output,
+    }]
 
-    return run_commands(module, command)
-
+    body = run_commands(module, cmds)
+    return body
 
 def apply_key_map(key_map, table):
     new_dict = {}
@@ -131,38 +135,33 @@ def get_snmp_groups(module):
 
 
 def get_snmp_community(module, find_filter=None):
-    data = execute_show_command('show snmp community', module)[0]
-
+    command = 'show run snmp all | grep {0}'.format(module.params['community'])
+    data = execute_show_command(command, module)[0]
     community_dict = {}
 
-    community_map = {
-        'grouporaccess': 'group',
-        'aclfilter': 'acl'
-    }
-
-    try:
-        community_table = data['TABLE_snmp_community']['ROW_snmp_community']
-        for each in community_table:
-            community = apply_key_map(community_map, each)
-            key = each['community_name']
-            community_dict[key] = community
-    except (KeyError, AttributeError, TypeError):
+    if not data:
         return community_dict
 
-    if find_filter:
-        find = community_dict.get(find_filter, None)
-
-    if find_filter is None or find is None:
-        return {}
+    community_re = r'snmp-server community (\S+)'
+    mo = re.search(community_re, data)
+    if mo:
+        community_name = mo.group(1)
     else:
-        fix_find = {}
-        for (key, value) in find.items():
-            if isinstance(value, str):
-                fix_find[key] = value.strip()
-            else:
-                fix_find[key] = value
-        return fix_find
+        return community_dict
 
+    community_dict['group'] = None
+    group_re = r'snmp-server community {0} group (\S+)'.format(community_name)
+    mo = re.search(group_re, data)
+    if mo:
+        community_dict['group'] = mo.group(1)
+
+    community_dict['acl'] = None
+    acl_re = r'snmp-server community {0} use-acl (\S+)'.format(community_name)
+    mo = re.search(acl_re, data)
+    if mo:
+        community_dict['acl'] = mo.group(1)
+
+    return community_dict
 
 def config_snmp_community(delta, community):
     CMDS = {
