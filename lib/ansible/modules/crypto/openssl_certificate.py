@@ -512,7 +512,7 @@ class AssertOnlyCertificate(Certificate):
         def _validate_subject():
             if self.subject:
                 subject = [(OpenSSL._util.lib.OBJ_txt2nid(sub[0]), sub[1]) for sub in self.subject]
-                current_subject = self.cert.get_subject().get_components()
+                current_subject = [(OpenSSL._util.lib.OBJ_txt2nid(sub[0]), sub[1]) for sub in self.cert.get_subject().get_components()]
                 if (not self.subject_strict and not all(x in current_subject for x in subject)) or \
                    (self.subject_strict and not set(subject) == set(current_subject)):
                     diff = [item for item in self.subject if item not in current_subject]
@@ -523,7 +523,7 @@ class AssertOnlyCertificate(Certificate):
         def _validate_issuer():
             if self.issuer:
                 issuer = [(OpenSSL._util.lib.OBJ_txt2nid(iss[0]), iss[1]) for iss in self.issuer]
-                current_issuer = self.cert.get_issuer().get_components()
+                current_issuer = [(OpenSSL._util.lib.OBJ_txt2nid(iss[0]), iss[1]) for iss in self.cert.get_issuer().get_components()]
                 if (not self.issuer_strict and not all(x in current_issuer for x in issuer)) or \
                    (self.issuer_strict and not set(issuer) == set(current_issuer)):
                     diff = [item for item in self.issuer if item not in current_issuer]

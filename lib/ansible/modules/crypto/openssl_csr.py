@@ -359,7 +359,7 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
 
         def _check_subject(csr):
             subject = [(OpenSSL._util.lib.OBJ_txt2nid(sub[0]), sub[1]) for sub in self.subject]
-            current_subject = csr.get_subject()
+            current_subject = [(OpenSSL._util.lib.OBJ_txt2nid(sub[0]), sub[1]) for sub in csr.get_subject()]
             if not set(subject) == set(current_subject):
                 return False
 
