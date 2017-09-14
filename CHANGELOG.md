@@ -47,6 +47,7 @@ Ansible Changes By Release
 * Fix cloudtrail module to allow AWS profiles other than the default
 * Fix an encoding issue with secret (password) vars_prompts
 * Fix for Windows become to show the stdout and stderr strings on a failure 
+* Fix the issue SSL verification can not be disabled for Tower modules
 
 <a id="2.3.2"></a>
 
