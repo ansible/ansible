@@ -23,7 +23,7 @@
       provider: "{{ connection }}"
     register: result
 
-  - assert:
+  - assert: &true
       that:
         - "result.changed == true"
 
@@ -31,15 +31,26 @@
     nxos_pim_rp_address: *configgl
     register: result
 
-  - assert:
+  - assert: &false
       that:
         - "result.changed == false"
 
-  - name: "Disable feature PIM"
-    nxos_feature: *disable_feature
+  - name: Remove rp_address + group_list
+    nxos_pim_rp_address: &removegl
+      rp_address: "10.1.1.20"
+      group_list: "224.0.0.0/8"
+      bidir: true
+      state: absent
+      provider: "{{ connection }}"
+    register: result
 
-  - name: "Enable feature PIM"
-    nxos_feature: *enable_feature
+  - assert: *true
+
+  - name: Check idempotence
+    nxos_pim_rp_address: *removegl
+    register: result
+  
+  - assert: *false
 
   - name: Configure rp_address + prefix_list 
     nxos_pim_rp_address: &configpl
@@ -50,23 +61,30 @@
       provider: "{{ connection }}"
     register: result
 
-  - assert:
-      that:
-        - "result.changed == true"
+  - assert: *true
 
   - name: Check idempotence rp_address + prefix_list
     nxos_pim_rp_address: *configpl
     register: result
 
-  - assert:
-      that:
-        - "result.changed == false"
+  - assert: *false
 
-  - name: "Disable feature PIM"
-    nxos_feature: *disable_feature
+  - name: Remove rp_address + prefix_list
+    nxos_pim_rp_address: &removepl
+      rp_address: "10.1.1.20"
+      prefix_list: "pim_prefix_list"
+      bidir: true
+      state: absent
+      provider: "{{ connection }}"
+    register: result
 
-  - name: "Enable feature PIM"
-    nxos_feature: *enable_feature
+  - assert: *true
+
+  - name: Check idempotence
+    nxos_pim_rp_address: *removepl
+    register: result
+  
+  - assert: *false
 
   - name: Configure rp_address + route_map 
     nxos_pim_rp_address: &configrm
@@ -77,23 +95,33 @@
       provider: "{{ connection }}"
     register: result
 
-  - assert:
-      that:
-        - "result.changed == true"
+  - assert: *true
 
   - name: Check idempotence rp_address + route_map
     nxos_pim_rp_address: *configrm
     register: result
 
-  - assert:
-      that:
-        - "result.changed == false"
+  - assert: *false
+
+  - name: Remove rp_address + route_map
+    nxos_pim_rp_address: &removerm
+      rp_address: "10.1.1.20"
+      route_map: "pim_routemap"
+      bidir: true
+      state: absent
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: Check idempotence
+    nxos_pim_rp_address: *removerm
+    register: result
+  
+  - assert: *false
+
   always:
     - name: "Disable feature PIM"
-      nxos_feature:
-        feature: pim
-        state: disabled
-        provider: "{{ connection }}"
-
+      nxos_feature: *disable_feature
 
 - debug: msg="END {{ connection.transport }} nxos_pim_rp_address sanity"
