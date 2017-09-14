@@ -591,8 +591,8 @@ class PyVmomiHelper(object):
                 else:
                     result['changed'] = True
 
-        # need to get new metadata if changed
-        if result['changed']:
+        # need to get new metadata if not failed
+        if not result['failed']:
             newvm = self.getvm(uuid=vm.config.uuid)
             facts = self.gather_facts(newvm)
             result['instance'] = facts
@@ -1488,11 +1488,7 @@ def main():
             result = pyv.reconfigure_vm()
         elif module.params['state'] in ['poweredon', 'poweredoff', 'restarted', 'suspended', 'shutdownguest', 'rebootguest']:
             # set powerstate
-            tmp_result = pyv.set_powerstate(vm, module.params['state'], module.params['force'])
-            if tmp_result['changed']:
-                result["changed"] = True
-            if not tmp_result["failed"]:
-                result["failed"] = False
+            result = pyv.set_powerstate(vm, module.params['state'], module.params['force'])
         else:
             # This should not happen
             assert False
