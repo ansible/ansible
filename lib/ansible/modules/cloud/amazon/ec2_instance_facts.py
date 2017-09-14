@@ -500,8 +500,11 @@ def list_ec2_instances(connection, module):
 
     # Turn the boto3 result in to ansible friendly tag dictionary
     for instance in snaked_instances:
-        if 'tags' in instance:
-            instance['tags'] = boto3_tag_list_to_ansible_dict(instance['tags'])
+        if 'tags' in instance and len(instance['tags']) > 0:
+            if 'key' in instance['tags'][0]:
+                instance['tags'] = boto3_tag_list_to_ansible_dict(instance['tags'], 'key', 'value')
+            else:
+                instance['tags'] = boto3_tag_list_to_ansible_dict(instance['tags'])
 
     module.exit_json(instances=snaked_instances)
 
