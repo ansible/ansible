@@ -154,7 +154,7 @@ def load_options_vars(options, version):
               }
 
     for attr in ('check', 'diff', 'forks', 'inventory', 'skip_tags', 'subset', 'tags'):
-        opt = options.get(attr, None)
+        opt = getattr(options, attr, None)
         if opt is not None:
             options_vars['ansible_%s' % aliases.get(attr, attr)] = opt
 
