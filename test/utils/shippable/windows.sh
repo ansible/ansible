@@ -62,10 +62,8 @@ for version in "${python_versions[@]}"; do
                 changed_all_target="none"
             fi
         else
-            # only run smoketest tests for group1
-            if [ "${target}" != "windows/ci/group1/" ]; then continue; fi
-            # without change detection enabled run only smoketest tests
-            ci="windows/ci/smoketest/"
+            # without change detection enabled run entire test group
+            ci="${target}"
         fi
     else
         # only run minimal tests for group1
