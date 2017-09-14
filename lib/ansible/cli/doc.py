@@ -417,7 +417,12 @@ class DocCLI(CLI):
         text.append("%s\n" % textwrap.fill(CLI.tty_ify(desc), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
 
         if 'deprecated' in doc and doc['deprecated'] is not None and len(doc['deprecated']) > 0:
-            text.append("DEPRECATED: \n%s\n" % doc.pop('deprecated'))
+            text.append("DEPRECATED: \n")
+            if isinstance(doc['deprecated'], dict):
+                text.append("\tReason: %(why)s\n\tScheduled removal: Ansible %(version)s\n\tAlternatives: %(alternative)s" % doc.pop('deprecated'))
+            else:
+                text.append("%s" % doc.pop('deprecated'))
+            text.append("\n")
 
         try:
             support_block = self.get_support_block(doc)

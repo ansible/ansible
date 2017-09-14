@@ -16,12 +16,13 @@ DOCUMENTATION = '''
 ---
 author:
     - "Ansible Core Team (@ansible)"
-module: include_role
-short_description: Load and execute a role
+module: import_role
+short_description: Import a role into a play
 description:
-     - Loads and executes a role as a task, this frees roles from the `role:` directive and allows them to be treated more as tasks.
-     - This module is also supported for Windows targets.
-version_added: "2.2"
+     - Mostly like the `roles:` keyword this action loads a role, but it allows you to control when the tasks run in between other playbook tasks.
+     - Most keyworkds, loops and conditionals will not be applied to this action, but to the imported tasks instead.
+       If you want the opposite behaviour, use M(import_role) instead.
+version_added: "2.4"
 options:
   name:
     description:
@@ -53,40 +54,38 @@ options:
     default: None
 notes:
     - Handlers are made available to the whole play.
-    - Before 2.4, as with C(include), this task could be static or dynamic, If static it implied that it won't need templating nor loops nor conditionals
-      and will show included tasks in the --list options.
-      Ansible would try to autodetect what is needed, but you can set `static` to `yes` or `no` at task level to control this.
-    - After 2.4, you can use M(import_role) for 'static' behaviour and this action for 'dynamic' one.
 '''
 
 EXAMPLES = """
-- include_role:
-    name: myrole
+- hosts: all
+  tasks:
+    - import_role:
+       name: myrole
 
-- name: Run tasks/other.yml instead of 'main'
-  include_role:
-    name: myrole
-    tasks_from: other
+    - name: Run tasks/other.yml instead of 'main'
+      import_role:
+        name: myrole
+        tasks_from: other
 
-- name: Pass variables to role
-  include_role:
-    name: myrole
-  vars:
-    rolevar1: 'value from task'
+    - name: Pass variables to role
+      import_role:
+        name: myrole
+      vars:
+        rolevar1: 'value from task'
 
-- name: Use role in loop
-  include_role:
-    name: myrole
-  with_items:
-    - '{{ roleinput1 }}'
-    - '{{ roleinput2 }}'
-  loop_control:
-    loop_var: roleinputvar
+    - name: Apply loop to each task in role
+      import_role:
+        name: myrole
+      with_items:
+        - '{{ roleinput1 }}'
+        - '{{ roleinput2 }}'
+      loop_control:
+        loop_var: roleinputvar
 
-- name: conditional role
-  include_role:
-    name: myrole
-  when: not idontwanttorun
+    - name: Apply condition to each task in role
+      import_role:
+        name: myrole
+      when: not idontwanttorun
 """
 
 RETURN = """
