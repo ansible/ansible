@@ -298,7 +298,8 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
             ('emailAddress', module.params['emailAddress']),
         ]
 
-        self.subject = self.subject + crypto_utils.parse_name_field(module.params['subject'])
+        if module.params['subject']:
+            self.subject = self.subject + crypto_utils.parse_name_field(module.params['subject'])
         self.subject = [(entry[0], entry[1]) for entry in self.subject if entry[1]]
 
         if not self.subjectAltName:
