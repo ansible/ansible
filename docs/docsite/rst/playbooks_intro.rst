@@ -458,7 +458,7 @@ Let's run a playbook using a parallelism level of 10::
 
     ansible-playbook playbook.yml -f 10
 
-.. _ansible-pull:
+.. _playbook_ansible-pull:
 
 Ansible-Pull
 ````````````
