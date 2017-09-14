@@ -657,11 +657,21 @@
       register: result
 
     - name: assert that rule descriptions are created (expected changed=true)
+      # Only assert this if rule description is defined as the botocore version may < 1.7.2.
+      # It's still helpful to have these tests run on older versions since it verifies backwards
+      # compatibility with this feature.
       assert:
         that:
           - 'result.changed'
           - 'result.ip_permissions[0].ipv6_ranges[0].description == "ipv6 rule desc 1"'
           - 'result.ip_permissions_egress[0].ip_ranges[0].description == "egress rule desc 1"'
+      when: result.ip_permissions_egress[0].ip_ranges[0].description is defined
+
+    - name: if an older version of botocore is installed changes should still have changed due to purged rules (expected changed=true)
+      assert:
+        that:
+          - 'result.changed'
+      when: result.ip_permissions_egress[0].ip_ranges[0].description is undefined
 
     # ============================================================
 
@@ -692,11 +702,21 @@
       register: result
 
     - name: assert that rule descriptions were modified (expected changed=true)
+      # Only assert this if rule description is defined as the botocore version may < 1.7.2.
+      # It's still helpful to have these tests run on older versions since it verifies backwards
+      # compatibility with this feature.
       assert:
         that:
           - 'result.changed'
           - 'result.ip_permissions[0].ipv6_ranges[0].description == "ipv6 rule desc 2"'
           - 'result.ip_permissions_egress[0].ip_ranges[0].description == "egress rule desc 2"'
+      when: result.ip_permissions_egress[0].ip_ranges[0].description is defined
+
+    - name: if an older version of botocore is installed everything should stay the same (expected changed=false)
+      assert:
+        that:
+          - 'not result.changed'
+      when: result.ip_permissions_egress[0].ip_ranges[0].description is undefined
 
     # ============================================================
 
@@ -727,11 +747,21 @@
       register: result
 
     - name: assert that rule descriptions stayed the same (expected changed=false)
+      # Only assert this if rule description is defined as the botocore version may < 1.7.2.
+      # It's still helpful to have these tests run on older versions since it verifies backwards
+      # compatibility with this feature.
       assert:
         that:
           - 'not result.changed'
           - 'result.ip_permissions[0].ipv6_ranges[0].description == "ipv6 rule desc 2"'
           - 'result.ip_permissions_egress[0].ip_ranges[0].description == "egress rule desc 2"'
+      when: result.ip_permissions_egress[0].ip_ranges[0].description is defined
+
+    - name: if an older version of botocore is installed everything should stay the same (expected changed=false)
+      assert:
+        that:
+          - 'not result.changed'
+      when: result.ip_permissions_egress[0].ip_ranges[0].description is undefined
 
     # ============================================================
 
@@ -762,11 +792,21 @@
       register: result
 
     - name: assert that rule descriptions were removed (expected changed=true)
+      # Only assert this if rule description is defined as the botocore version may < 1.7.2.
+      # It's still helpful to have these tests run on older versions since it verifies backwards
+      # compatibility with this feature.
       assert:
         that:
           - 'result.changed'
           - 'not result.ip_permissions[0].ipv6_ranges[0].description'
           - 'not result.ip_permissions_egress[0].ip_ranges[0].description'
+      when: result.ip_permissions_egress[0].ip_ranges[0].description is defined
+
+    - name: if an older version of botocore is installed everything should stay the same (expected changed=false)
+      assert:
+        that:
+          - 'not result.changed'
+      when: result.ip_permissions_egress[0].ip_ranges[0].description is undefined
 
     # ============================================================
 
