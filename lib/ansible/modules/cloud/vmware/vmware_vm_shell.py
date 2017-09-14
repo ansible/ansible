@@ -125,6 +125,9 @@ EXAMPLES = '''
 
 '''
 
+import re
+import time
+
 try:
     from pyVmomi import vim, vmodl
     HAS_PYVMOMI = True
@@ -141,9 +144,35 @@ def execute_command(content, vm, vm_username, vm_password, program_path, args=""
 
     creds = vim.vm.guest.NamePasswordAuthentication(username=vm_username, password=vm_password)
     cmdspec = vim.vm.guest.ProcessManager.ProgramSpec(arguments=args, envVariables=env, programPath=program_path, workingDirectory=cwd)
-    cmdpid = content.guestOperationsManager.processManager.StartProgramInGuest(vm=vm, auth=creds, spec=cmdspec)
 
-    return cmdpid
+    pm = content.guestOperationsManager.processManager
+    cmdpid = pm.StartProgramInGuest(vm=vm, auth=creds, spec=cmdspec)
+
+    if cmdpid > 0:
+        exitcode = pm.ListProcessesInGuest(vm=vm, auth=creds, pids=[cmdpid]).pop().exitCode
+
+        # If its not a numeric result code, it says None on submit
+        while (re.match('[^0-9]+', str(exitcode))):
+            time.sleep(5)
+            exitcode = pm.ListProcessesInGuest(vm=vm, auth=creds, pids=[cmdpid]).pop().exitCode
+
+            if (exitcode == 0):
+                msg = "Program %d completed with success" % cmdpid
+                break
+            # Look for non-zero code to fail
+            elif (re.match('[1-9]+', str(exitcode))):
+                msg = "ERROR: Program %d completed with failute.\n" % cmdpid
+                msg += "  tip: Try running this on guest %r to debug.\n" % vm.summary.guest.ipAddress
+                msg += "       Or you can enable debug mode of the program\n"
+                msg += "       and redirect the output to a temporary file.\n"
+                msg += "ERROR: More info on process:\n"
+                msg += str(pm.ListProcessesInGuest(vm=vm, auth=creds, pids=[cmdpid]))
+                break
+    else:
+        exitcode = -1
+        msg = "No command executed!"
+
+    return exitcode, msg
 
 
 def main():
@@ -195,10 +224,13 @@ def main():
         if not vm:
             module.fail_json(msg='VM not found')
 
-        msg = execute_command(content, vm, p['vm_username'], p['vm_password'],
-                              p['vm_shell'], p['vm_shell_args'], p['vm_shell_env'], p['vm_shell_cwd'])
+        (exitcode, msg) = execute_command(content, vm, p['vm_username'], p['vm_password'],
+                                            p['vm_shell'], p['vm_shell_args'], p['vm_shell_env'], p['vm_shell_cwd'])
 
-        module.exit_json(changed=True, uuid=vm.summary.config.uuid, msg=msg)
+        if exitcode != 0:
+            module.fail_json(changed=False, msg=msg)
+        else:
+            module.exit_json(changed=True, uuid=vm.summary.config.uuid, msg=msg)
     except vmodl.RuntimeFault as runtime_fault:
         module.fail_json(changed=False, msg=runtime_fault.msg)
     except vmodl.MethodFault as method_fault:
