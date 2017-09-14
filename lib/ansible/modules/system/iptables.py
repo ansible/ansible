@@ -121,6 +121,10 @@ options:
         below).  If this option is omitted in a rule (and the goto parameter
         is not used), then matching the rule will have no effect on the
         packet's fate, but the counters on the rule will be incremented.
+  log_prefix:
+    description:
+      - Specifies a log text for the rule. Only make sense with a LOG jump.
+    version_added: "2.5"
   goto:
     description:
       - This specifies that the processing should continue in a user specified
@@ -377,6 +381,7 @@ def construct_rule(params):
     append_param(rule, params['match'], '-m', True)
     append_tcp_flags(rule, params['tcp_flags'], '--tcp-flags')
     append_param(rule, params['jump'], '-j', False)
+    append_param(rule, params['log_prefix'], '--log-prefix', False)
     append_param(rule, params['to_destination'], '--to-destination', False)
     append_param(rule, params['to_source'], '--to-source', False)
     append_param(rule, params['goto'], '-g', False)
@@ -486,6 +491,7 @@ def main():
             match=dict(type='list', default=[]),
             tcp_flags=dict(type='dict', default={}),
             jump=dict(type='str'),
+            log_prefix=dict(type='str'),
             goto=dict(type='str'),
             in_interface=dict(type='str'),
             out_interface=dict(type='str'),
