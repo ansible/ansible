@@ -698,7 +698,7 @@ DEFAULT_HOST_LIST:
       deprecated:
         why: The key is misleading as it can also be a list of hosts, a directory or a list of paths
         version: "2.8"
-        alternatives: inventory
+        alternatives: "[defaults]\ninventory=/path/to/file|dir"
     - key: inventory
       section: defaults
   type: pathlist
