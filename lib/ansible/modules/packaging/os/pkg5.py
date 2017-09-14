@@ -154,12 +154,13 @@ def ensure(module, state, packages, params):
                 '-q', '--'
             ] + to_modify
         )
-        response['pkg_rc'] = rc
+        response['rc'] = rc
         response['results'].append(out)
         response['msg'] += err
         response['changed'] = True
         if rc == 4:
             response['changed'] = False
+            response['failed'] = False
         elif rc != 0:
             module.fail_json(**response)
 
