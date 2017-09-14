@@ -147,7 +147,7 @@ commands:
             "ip pim neighbor-policy test"]
 '''
 
-
+import re
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.nxos import get_config, load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
@@ -246,6 +246,29 @@ def get_interface_mode(interface, intf_type, module):
     return mode
 
 
+def get_jp_policy_out(module, interface):
+    '''
+    This is a workaround for an nxos structured output problem.
+    The 'show ip pim interface' command does not display jp_policy_out
+    information properly for all supported nxos platforms when using
+    structured output.  This method uses the show running information to
+    mitigate the problem.
+    '''
+    command = 'sh run interface {0} all | grep \"jp.*out\"'.format(interface)
+    name = None
+    try:
+        body = execute_show_command(command, module, text=True)[0]
+    except IndexError:
+        return name
+
+    if body:
+        mo = re.search(r'ip pim jp-policy\s+(\S+)\s+out', body)
+        if mo:
+            name = mo.group(1)
+
+    return name
+
+
 def get_pim_interface(module, interface):
     pim_interface = {}
     command = 'show ip pim interface {0}'.format(interface)
@@ -255,50 +278,47 @@ def get_pim_interface(module, interface):
         if 'not running' not in body[0]:
             body = execute_show_command(command, module)
 
+    # Some nxos platforms have the TABLE_vrf/ROW_vrf key and some don't
     try:
         get_data = body[0]['TABLE_vrf']['ROW_vrf']['TABLE_iod']['ROW_iod']
+    except (KeyError, AttributeError, TypeError, IndexError):
+        try:
+            get_data = body[0]['TABLE_iod']['ROW_iod']
+        except (KeyError, AttributeError, TypeError, IndexError):
+            return pim_interface
 
-        if isinstance(get_data.get('dr-priority'), list):
-            pim_interface['dr_prio'] = get_data.get('dr-priority')[0]
-        else:
-            pim_interface['dr_prio'] = str(get_data.get('dr-priority'))
+    if isinstance(get_data.get('dr-priority'), list):
+        pim_interface['dr_prio'] = get_data.get('dr-priority')[0]
+    else:
+        pim_interface['dr_prio'] = str(get_data.get('dr-priority'))
 
-        hello_interval = get_data.get('hello-interval-sec')
-        if hello_interval:
-            hello_interval_msec = int(get_data.get('hello-interval-sec')) * 1000
+    hello_interval = get_data.get('hello-interval-sec')
+    if hello_interval:
+        hello_interval_msec = int(get_data.get('hello-interval-sec')) * 1000
         pim_interface['hello_interval'] = str(hello_interval_msec)
 
-        border = get_data.get('is-border')
-        if border == 'true':
-            pim_interface['border'] = True
-        elif border == 'false':
-            pim_interface['border'] = False
+    border = get_data.get('is-border')
+    if border == 'true':
+        pim_interface['border'] = True
+    elif border == 'false':
+        pim_interface['border'] = False
 
-        isauth = get_data.get('isauth-config')
-        if isauth == 'true':
-            pim_interface['isauth'] = True
-        elif isauth == 'false':
-            pim_interface['isauth'] = False
+    isauth = get_data.get('isauth-config')
+    if isauth == 'true':
+        pim_interface['isauth'] = True
+    elif isauth == 'false':
+        pim_interface['isauth'] = False
 
-        pim_interface['neighbor_policy'] = get_data.get('nbr-policy-name')
-        if pim_interface['neighbor_policy'] == 'none configured':
-            pim_interface['neighbor_policy'] = None
+    pim_interface['neighbor_policy'] = get_data.get('nbr-policy-name')
+    if pim_interface['neighbor_policy'] == 'none configured':
+        pim_interface['neighbor_policy'] = None
 
-        jp_in_policy = get_data.get('jp-in-policy-name')
-        pim_interface['jp_policy_in'] = jp_in_policy
-        if jp_in_policy == 'none configured':
-            pim_interface['jp_policy_in'] = None
+    jp_in_policy = get_data.get('jp-in-policy-name')
+    pim_interface['jp_policy_in'] = jp_in_policy
+    if jp_in_policy == 'none configured':
+        pim_interface['jp_policy_in'] = None
 
-        if isinstance(get_data.get('jp-out-policy-name'), string_types):
-            pim_interface['jp_policy_out'] = get_data.get('jp-out-policy-name')
-        else:
-            pim_interface['jp_policy_out'] = get_data.get('jp-out-policy-name')[0]
-
-        if pim_interface['jp_policy_out'] == 'none configured':
-            pim_interface['jp_policy_out'] = None
-
-    except (KeyError, AttributeError, TypeError, IndexError):
-        return {}
+    pim_interface['jp_policy_out'] = get_jp_policy_out(module, interface)
 
     body = get_config(module, flags=['interface {0}'.format(interface)])
 
