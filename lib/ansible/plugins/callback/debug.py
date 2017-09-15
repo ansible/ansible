@@ -11,6 +11,8 @@ DOCUMENTATION = '''
     description:
       - Use this callback to sort though extensive debug output
     version_added: "2.4"
+    extends_documentation_fragment:
+      - default_callback
     requirements:
       - set as stdout in configuration
 '''

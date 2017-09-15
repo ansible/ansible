@@ -12,27 +12,8 @@ DOCUMENTATION = '''
     version_added: historical
     description:
         - This is the default output callback for ansible-playbook.
-    options:
-      show_skipped_hosts:
-        name: Show skipped hosts
-        description: "Toggle to control displaying skipped task/host results in a task"
-        default: True
-        env:
-          - name: DISPLAY_SKIPPED_HOSTS
-        ini:
-          - key: display_skipped_hosts
-            section: defaults
-        type: boolean
-      show_custom_stats:
-        name: Show custom stats
-        description: 'This adds the custom stats set via the set_stats plugin to the play recap'
-        default: False
-        env:
-          - name: ANSIBLE_SHOW_CUSTOM_STATS
-        ini:
-          - key: show_custom_stats
-            section: defaults
-        type: bool
+    extends_documentation_fragment:
+      - default_callback
     requirements:
       - set as stdout in configuration
 '''
@@ -118,9 +99,8 @@ class CallbackModule(CallbackBase):
             self._display.display(msg, color=color)
 
     def v2_runner_on_skipped(self, result):
-        if self._plugin_options['show_skipped_hosts']:
+        if self._plugin_options.get('show_skipped_hosts', C.DISPLAY_SKIPPED_HOSTS):  # fallback on constants for inherited plugins missing docs
 
-            delegated_vars = result._result.get('_ansible_delegated_vars', None)
             self._clean_results(result._result, result._task.action)
 
             if self._play.strategy == 'free' and self._last_task_banner != result._task._uuid:
@@ -247,7 +227,7 @@ class CallbackModule(CallbackBase):
         self._display.display(msg + " (item=%s) => %s" % (self._get_item(result._result), self._dump_results(result._result)), color=C.COLOR_ERROR)
 
     def v2_runner_item_on_skipped(self, result):
-        if self._plugin_options['show_skipped_hosts']:
+        if self._plugin_options.get('show_skipped_hosts', C.DISPLAY_SKIPPED_HOSTS):  # fallback on constants for inherited plugins missing docs
             self._clean_results(result._result, result._task.action)
             msg = "skipping: [%s] => (item=%s) " % (result._host.get_name(), self._get_item(result._result))
             if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
@@ -286,7 +266,7 @@ class CallbackModule(CallbackBase):
         self._display.display("", screen_only=True)
 
         # print custom stats
-        if self._plugin_options['show_custom_stats'] and stats.custom:
+        if self._plugin_options.get('show_custom_stats', C.SHOW_CUSTOM_STATS) and stats.custom:  # fallback on constants for inherited plugins missing docs
             self._display.banner("CUSTOM STATS: ")
             # per host
             # TODO: come up with 'pretty format'
@@ -307,11 +287,12 @@ class CallbackModule(CallbackBase):
             self._display.banner("PLAYBOOK: %s" % basename(playbook._file_name))
 
         if self._display.verbosity > 3:
-            if self._plugin_options is not None:
-                for option in dir(self._plugin_options):
+            # show CLI options
+            if self._options is not None:
+                for option in dir(self._options):
                     if option.startswith('_') or option in ['read_file', 'ensure_value', 'read_module']:
                         continue
-                    val = getattr(self._plugin_options, option)
+                    val = getattr(self._options, option)
                     if val:
                         self._display.vvvv('%s: %s' % (option, val))
 
