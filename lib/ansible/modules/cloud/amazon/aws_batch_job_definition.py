@@ -14,21 +14,21 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = '''
 ---
-module: batch_job_definition
+module: aws_batch_job_definition
 short_description: Manage AWS Batch Job Definitions
 description:
     - This module allows the management of AWS Batch Job Definitions.
       It is idempotent and supports "Check" mode.  Use module M(batch_compute_environment) to manage the compute
       environment, M(batch_job_queue) to manage job queues, M(batch_job_definition) to manage job definitions.
 
-version_added: "2.4"
+version_added: "2.5"
 
 author: Jon Meran (@jonmer85)
 options:
@@ -210,15 +210,32 @@ EXAMPLES = '''
 
 RETURN = '''
 ---
-batch_job_definition_action:
-    description: describes what action was taken
-    returned: success
-    type: string
+output:
+  description: "returns what action was taken, whether something was changed, invocation and response"
+  returned: always
+  sample:
+    batch_job_definition_action: none
+    changed: false
+    response:
+      job_definition_arn: "arn:aws:batch:...."
+      job_definition_name: <name>
+      status: INACTIVE
+      type: container
+  type: dict
 '''
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn, HAS_BOTO3
-from botocore.exceptions import ClientError, ParamValidationError, MissingParametersError
+from ansible.module_utils.ec2 import snake_dict_to_camel_dict
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict
+
+try:
+    from botocore.exceptions import ClientError, ParamValidationError, MissingParametersError
+
+    HAS_BOTOCORE = True
+except ImportError:
+    HAS_BOTOCORE = False
+
 
 # ---------------------------------------------------------------------------------------------------
 #
@@ -274,7 +291,8 @@ class AWSConnection:
 
 def cc(key):
     """
-    Changes python key into Camel case equivalent. For example, 'compute_environment_name' becomes 'computeEnvironmentName'.
+    Changes python key into Camel case equivalent. For example, 'compute_environment_name' becomes
+    'computeEnvironmentName'.
 
     :param key:
     :return:
@@ -291,14 +309,8 @@ def set_api_params(module, module_params):
     :param module_params:
     :return:
     """
-
-    api_params = dict()
-
-    for param in module_params:
-        module_param = module.params.get(param, None)
-        if module_param is not None:
-            api_params[cc(param)] = module_param
-    return api_params
+    api_params = dict((k, v) for k, v in dict(module.params).items() if k in module_params and v is not None)
+    return snake_dict_to_camel_dict(api_params)
 
 
 def validate_params(module, aws):
@@ -364,7 +376,7 @@ def create_job_definition(module, aws):
 
 
 def get_retry_strategy_params():
-    return ('attempts',)
+    return 'attempts',
 
 
 def get_container_property_params():
@@ -373,7 +385,7 @@ def get_container_property_params():
 
 
 def get_base_params():
-    return ('job_definition_name', 'type', 'parameters')
+    return 'job_definition_name', 'type', 'parameters'
 
 
 def get_compute_environment_order_list(module):
@@ -395,12 +407,9 @@ def remove_job_definition(module, aws):
     client = aws.client('batch')
     changed = False
 
-    # set API parameters
-    api_params = {'jobDefinition': module.params['job_definition_name']}
-
     try:
         if not module.check_mode:
-            client.delete_job_definition(**api_params)
+            client.deregister_job_definition(jobDefinition=module.params['job_definition_arn'])
         changed = True
     except (ClientError, ParamValidationError, MissingParametersError) as e:
         module.fail_json(msg='Error removing job definition: {0}'.format(e))
@@ -408,7 +417,6 @@ def remove_job_definition(module, aws):
 
 
 def job_definition_equal(module, current_definition):
-
     equal = True
 
     for param in get_base_params():
@@ -430,12 +438,12 @@ def job_definition_equal(module, current_definition):
 
 
 def manage_state(module, aws):
-
     changed = False
     current_state = 'absent'
     state = module.params['state']
     job_definition_name = module.params['job_definition_name']
     action_taken = 'none'
+    response = None
 
     check_mode = module.check_mode
 
@@ -464,7 +472,7 @@ def manage_state(module, aws):
             # remove the Job definition
             changed = remove_job_definition(module, aws)
             action_taken = 'deregistered'
-    return dict(changed=changed, ansible_facts=dict(batch_job_definition_action=action_taken), response=response)
+    return dict(changed=changed, batch_job_definition_action=action_taken, response=response)
 
 
 # ---------------------------------------------------------------------------------------------------
@@ -485,6 +493,7 @@ def main():
         dict(
             state=dict(required=False, default='present', choices=['present', 'absent']),
             job_definition_name=dict(required=True, default=None),
+            job_definition_arn=dict(),
             type=dict(required=True, default=None),
             parameters=dict(type='dict', default=None),
             image=dict(required=True, default=None),
@@ -500,18 +509,20 @@ def main():
             ulimits=dict(type='list', default=[]),
             user=dict(default=None),
             attempts=dict(type='int', default=None),
+            region=dict(required=True)
         )
     )
 
     module = AnsibleModule(
-        argument_spec=argument_spec,
-        supports_check_mode=True,
-        required_together=[]
+        argument_spec=argument_spec
     )
 
     # validate dependencies
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 is required for this module.')
+
+    if not HAS_BOTOCORE:
+        module.fail_json(msg='botocore is required for this module.')
 
     aws = AWSConnection(module, ['batch'])
 
@@ -519,7 +530,7 @@ def main():
 
     results = manage_state(module, aws)
 
-    module.exit_json(**results)
+    module.exit_json(**camel_dict_to_snake_dict(results))
 
 
 if __name__ == '__main__':
