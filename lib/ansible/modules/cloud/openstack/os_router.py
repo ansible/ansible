@@ -108,9 +108,13 @@ EXAMPLES = '''
     network: ext_network1
     external_fixed_ips:
       - subnet: public-subnet
-        ip: 172.24.4.2
+        portip: 172.24.4.2
     interfaces:
-      - private-subnet
+      - net: private-net
+        subnet: private-subnet
+      - net: project-net
+        subnet: project-subnet
+        portip: 10.0.0.10
 
 # Create another router with two internal subnet interface. one with  user defined port 
 # ip and and another  with default gateway.  
@@ -268,6 +272,7 @@ def _needs_update(cloud, module, router, network, internal_subnet_ids,internal_p
     if module.params['interfaces']:
         existing_subnet_ids = []
         for port in _router_internal_interfaces(cloud, router):
+            existing_internal_port_ids.append(port.id)
             if 'fixed_ips' in port:
                 for fixed_ip in port['fixed_ips']:
                     existing_subnet_ids.append(fixed_ip['subnet_id'])
@@ -284,9 +289,6 @@ def _needs_update(cloud, module, router, network, internal_subnet_ids,internal_p
         if set(internal_subnet_ids) != set(existing_subnet_ids):
             internal_subnet_ids = []
             return True
-        if set(internal_port_ips) != set(existing_internal_port_ips):
-            return True
-
     return False
 
 
@@ -391,7 +393,7 @@ def main():
     module = AnsibleModule(argument_spec,
                            supports_check_mode=True,
                            **module_kwargs)
-    module.fail_json(msg='Bhujay ....here')
+   
 
     if not HAS_SHADE:
         module.fail_json(msg='shade is required for this module')
@@ -461,12 +463,11 @@ def main():
                     # As of now  by making another call to validate_subnet solves the problem 
                     kwargs = _build_kwargs(cloud, module, router, net)
                     updated_router = cloud.update_router(**kwargs)
-
+                                       
                     # Protect against update_router() not actually
                     # updating the router.
                     if not updated_router:
                         changed = False
-
                     # On a router update, if any internal interfaces were supplied,
                     # just detach all existing internal interfaces and attach the new.
                     if internal_portids or subnet_internal_ids:              
@@ -504,7 +505,7 @@ def main():
 
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
-        #module.fail_json(msg='are we here bhujay ..')
+        
 
 
 if __name__ == '__main__':
