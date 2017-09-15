@@ -13,7 +13,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-
 DOCUMENTATION = '''
 ---
 module: infoblox
@@ -1551,24 +1550,15 @@ def _are_records_equivalent(a_record_1, a_record_2):
     return a_record_1 == a_record_2
 
 
-def _is_int(s):
-    if s is None or s == '':
-        return None
-    try:
-        return int(s)
-#    except ValueError:
-#        self.module.fail_json(
-#            msg="TTL must be an int or be able to convert into an int.")
-
 # ---------------------------------------------------------------------------
 # MAIN
 # ---------------------------------------------------------------------------
 
 
 def main():
-    """
+    '''
     Ansible module to manage infoblox opeartion by using rest api
-    """
+    '''
     module = AnsibleModule(
         argument_spec=dict(
             server=dict(required=True),
@@ -1665,8 +1655,8 @@ def main():
     srv_attr = module.params["srv_attr"]
     delegate_to = module.params["delegate_to"]
     fqdn = module.params["fqdn"]
-    ttl = _is_int(module.params["ttl"])
-    cidr = _is_int(module.params["cidr"])
+    ttl = isinstance(module.params["ttl"])
+    cidr = isinstance(module.params["cidr"])
 
     infoblox = Infoblox(module, server, username, password,
                         api_version, dns_view, net_view)
