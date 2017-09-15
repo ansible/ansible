@@ -39,7 +39,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-instance:
+ansible_facts:
   description: system info about the host machine
   returned: always
   type: dict
