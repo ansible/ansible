@@ -1,0 +1,4 @@
+---
+- set_fact: connection="{{ cli }}"
+
+- import_tasks: "{{ role_path }}/tests/common/sanity.yaml"

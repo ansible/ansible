@@ -360,6 +360,12 @@
       rescue:
         - set_fact: test_failed=true
 
+    - block:
+      - include_role:
+          name: nxos_snmp_community
+        when: "limit_to in ['*', 'nxos_snmp_community']"
+      rescue:
+        - set_fact: test_failed=true
 ###########
     - debug: var=failed_modules
       when: test_failed
