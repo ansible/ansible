@@ -7,7 +7,7 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -18,7 +18,7 @@ author: "Joan Miquel Luque (@xoanmi)"
 short_description: Manage Infoblox via Web API
 description:
   - Manage Infoblox IPAM and DNS via Web API
-version_added: "2.4"
+version_added: "2.5"
 requirements:
   - "requests >= 2.9.1"
 options:
@@ -171,8 +171,6 @@ _WEIGHT_PROPERTY = "weight"
 _TARGET_PROPERTY = "target"
 _MAC_PROPERTY = "mac"
 _CANONICAL_PROPERTY = "canonical"
-_IPV4_ADDRS_PROPERTY = "ipv4addrs"
-_IPV6_ADDRS_PROPERTY = "ipv6addrs"
 _FQDN_PROPERTY = "fqdn"
 _FORWARD_TO_PROPERTY = "forward_to"
 _NETWORK_PROPERTY = "network"
@@ -209,8 +207,7 @@ class Infoblox(object):
                            _VIEW_PROPERTY, _IPV4_ADDRESS_PROPERTY, _IPV6_ADDRESS_PROPERTY,
                            _ID_PROPERTY, _PTRDNAME_PROPERTY, _EXT_ATTR_PROPERTY, _TXT_PROPERTY,
                            _PORT_PROPERTY, _PRIORITY_PROPERTY, _WEIGHT_PROPERTY, _TARGET_PROPERTY,
-                           _MAC_PROPERTY, _CANONICAL_PROPERTY, _IPV4_ADDRS_PROPERTY,
-                           _IPV6_ADDRS_PROPERTY, _FQDN_PROPERTY, _FORWARD_TO_PROPERTY,
+                           _MAC_PROPERTY, _CANONICAL_PROPERTY, _FQDN_PROPERTY, _FORWARD_TO_PROPERTY,
                            _NETWORK_PROPERTY, _NETWORK_VIEW_PROPERTY, _DELEGATE_TO_PROPERTY]
 
     def invoke(self, method, tail, ok_codes=(200,), **params):
@@ -355,7 +352,7 @@ class Infoblox(object):
                 msg="Container was not found.")
         params = {"_function": "next_available_network",
                   "cidr": cidr, "num": 1}
-        #raise Exception([network_ref, params])
+        # raise Exception([network_ref, params])
         return self.invoke("post", network_ref, ok_codes=(200,), params=params)
 
     # ---------------------------------------------------------------------------
@@ -371,7 +368,7 @@ class Infoblox(object):
         if extattrs is not None:
             extattrs = self.add_attr(extattrs)
 
-        model = {_IPV4_ADDRESS_PROPERTY: "func:nextavailableip:" + network, _MAC_PROPERTY: mac,
+        model = {_IPV4_ADDRESS_PROPERTY: "func:nextavailableip:" + network, _MAC_PROPERTY: mac_addr,
                  _COMMENT_PROPERTY: comment, _EXT_ATTR_PROPERTY: extattrs}
         model = self._make_model(model)
         return self.invoke("post", "fixedaddress?_return_fields=ipv4addr", ok_codes=(200, 201, 400), json=model)
@@ -486,7 +483,7 @@ class Infoblox(object):
         """
         Delete cname object
         """
-        object_ref, _ = self.get_cname_object(current_cname)
+        object_ref, _ = self.get_cname_object(cname)
         return self.delete_object(object_ref)
 
     # ---------------------------------------------------------------------------
@@ -579,7 +576,7 @@ class Infoblox(object):
 
         if not object_ref:
             msg = "IP {} and ptrdname {} pair was not found.".format(
-                current_ip, current_name)
+                current_address, current_name)
             self.module.fail_json(msg=msg)
 
         if object_ref is None:
@@ -696,7 +693,7 @@ class Infoblox(object):
 
         if object_ref is None:
             self.module.fail_json(msg="IP {} and ptrdname {} pair was not found.".format(
-                current_ip, current_name))
+                current_address, current_name))
 
         if extattrs is not None:
             extattrs = self.add_attr(extattrs)
@@ -1039,7 +1036,7 @@ class Infoblox(object):
         else:
             raise Exception("Function options missing!")
 
-        model = {_NAME_PROPERTY: host, _IPV4_ADDRS_PROPERTY: [{_IPV4_ADDRESS_PROPERTY: address}],
+        model = {_NAME_PROPERTY: host, _IPV4_ADDRESS_PROPERTY: [{_IPV4_ADDRESS_PROPERTY: address}],
                  _VIEW_PROPERTY: self.dns_view,
                  _USE_TTL_PROPERTY: ttl is not None, _TTL_PROPERTY: ttl,
                  _COMMENT_PROPERTY: comment, _EXT_ATTR_PROPERTY: extattrs}
@@ -1076,7 +1073,7 @@ class Infoblox(object):
 
         if object_ref is None:
             self.module.exit_json(msg="IP {} and ptrdname {} pair was not found.".format(
-                current_ip, current_name))
+                current_address, current_name))
         if extattrs is not None:
             extattrs = self.add_attr(extattrs)
 
@@ -1123,12 +1120,12 @@ class Infoblox(object):
         if extattrs is not None:
             extattrs = self.add_attr(extattrs)
 
-        model = {_NAME_PROPERTY: host, _IPV6ADDRS_PROPERTY: [{"ipv6addr": address}],
+        model = {_NAME_PROPERTY: host, _IPV6_ADDRESS_PROPERTY: [{"ipv6addr": address}],
                  _VIEW_PROPERTY: self.dns_view,
                  _USE_TTL_PROPERTY: ttl is not None, _TTL_PROPERTY: ttl,
                  _COMMENT_PROPERTY: comment, _EXT_ATTR_PROPERTY: extattrs}
         model = self._make_model(model)
-        return self.invoke("post", "record:host?_return_fields=ipv6addrs", ok_codes=(200, 201, 400), json=payload)
+        return self.invoke("post", "record:host?_return_fields=ipv6addrs", ok_codes=(200, 201, 400), json=model)
 
     # ---------------------------------------------------------------------------
     # get_auth_zone()
@@ -1194,7 +1191,7 @@ class Infoblox(object):
 
         if object_ref is None:
             self.module.fail_json(
-                msg="Name {} was not found.".format(current_name))
+                msg="Name {} was not found.".format(current_fqdn))
         if extattrs is not None:
             extattrs = self.add_attr(extattrs)
 
@@ -1481,6 +1478,49 @@ class Infoblox(object):
                     msg="A dict was sent with more then one key/val pair. Please use {key:val } only .")
         return attr
 
+def _create_ptr_record_model(name, address, view, comment, ttl=None, ext_attr=None):
+    """
+    Creates a JSON model of an A record with the given properties, using the same keys as used by the WAPI.
+    :param name: the domain name
+    :param address: the IP address of the record
+    :param view: the DNS view
+    :param comment: an associated comment
+    :param ttl: the TTL in seconds or `None` if the TTL is to be inherited
+    :return: the created model
+    """
+    model = {
+        _PTRDNAME_PROPERTY: name,
+        _IPV4_ADDRESS_PROPERTY: address,
+        _COMMENT_PROPERTY: comment,
+        _VIEW_PROPERTY: view,
+        _USE_TTL_PROPERTY: ttl is not None
+    }
+    if ttl is not None:
+        model[_TTL_PROPERTY] = int(ttl)
+    if ext_attr is not None:
+        model[_EXT_ATTR_PROPERTY] = ext_attr
+    return model
+
+def _create_a_record_model(name, address, view, comment, ttl=None):
+    """
+    Creates a JSON model of an A record with the given properties, using the same keys as used by the WAPI.
+    :param name: the domain name
+    :param address: the IP address of the record
+    :param view: the DNS view
+    :param comment: an associated comment
+    :param ttl: the TTL in seconds or `None` if the TTL is to be inherited
+    :return: the created model
+    """
+    model = {
+        _NAME_PROPERTY: name,
+        _IPV4_ADDRESS_PROPERTY: address,
+        _COMMENT_PROPERTY: comment,
+        _VIEW_PROPERTY: view,
+        _USE_TTL_PROPERTY: ttl is not None
+    }
+    if ttl is not None:
+        model[_TTL_PROPERTY] = int(ttl)
+    return model
 
 def _are_records_equivalent(a_record_1, a_record_2):
     """
@@ -1510,9 +1550,9 @@ def _is_int(s):
         return None
     try:
         return int(s)
-    except ValueError:
-        self.module.fail_json(
-            msg="TTL must be an int or be able to convert into an int.")
+#    except ValueError:
+#        self.module.fail_json(
+#            msg="TTL must be an int or be able to convert into an int.")
 
 # ---------------------------------------------------------------------------
 # MAIN
@@ -1576,11 +1616,11 @@ def main():
         #    ["network", "address"],
         #    ["addresses", "address"],
         #    ["host", "cname"]
-        #],
+        # ],
         # required_together=[
         #    ["attr_name", "attr_value"],
         # ["object_ref","name"]
-        #],
+        # ],
         supports_check_mode=True,
     )
 
