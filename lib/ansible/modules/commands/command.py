@@ -144,7 +144,7 @@ def main():
         module.warn("As of Ansible 2.4, the parameter 'executable' is no longer supported with the 'command' module. Not using '%s'." % executable)
         executable = None
 
-    if args.strip() == '':
+    if not args or args.strip() == '':
         module.fail_json(rc=256, msg="no command given")
 
     if chdir:
