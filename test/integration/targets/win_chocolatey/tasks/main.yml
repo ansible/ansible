@@ -16,46 +16,46 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-- name: install sysinternals
+- name: install chocolatey-core.extension
   win_chocolatey:
-    name: sysinternals
+    name: chocolatey-core.extension
     state: present
   register: install
 
-- name: verify install sysinternals
+- name: verify install chocolatey-core.extension
   assert:
     that:
     - 'install.changed == true'
 
-- name: install sysinternals again
+- name: install chocolatey-core.extension again
   win_chocolatey:
-    name: sysinternals
+    name: chocolatey-core.extension
     state: present
   register: install_again
 
-- name: verify install sysinternals again
+- name: verify install chocolatey-core.extension again
   assert:
     that:
     - 'install_again.changed == false'
 
-- name: remove sysinternals
+- name: remove chocolatey-core.extension
   win_chocolatey:
-    name: sysinternals
+    name: chocolatey-core.extension
     state: absent
   register: remove
 
-- name: verify remove sysinternals
+- name: verify remove chocolatey-core.extension
   assert:
     that:
     - 'remove.changed == true'
 
-- name: remove sysinternals again
+- name: remove chocolatey-core.extension again
   win_chocolatey:
-    name: sysinternals
+    name: chocolatey-core.extension
     state: absent
   register: remove_again
 
-- name: verify remove sysinternals again
+- name: verify remove chocolatey-core.extension again
   assert:
     that:
     - 'remove_again.changed == false'
