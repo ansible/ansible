@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': 1.0,
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -27,7 +27,7 @@ description:
       It is idempotent and supports "Check" mode.  Use module M(batch_compute_environment) to manage the compute
       environment, M(batch_job_queue) to manage job queues, M(batch_job_definition) to manage job definitions.
 
-version_added: "2.4"
+version_added: "2.5"
 
 author: Jon Meran (@jonmer85)
 options:
@@ -237,10 +237,16 @@ output:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn, HAS_BOTO3
-from botocore.exceptions import ClientError, ParamValidationError, MissingParametersError
 from ansible.module_utils.ec2 import snake_dict_to_camel_dict
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
-import re
+
+try:
+    from botocore.exceptions import ClientError, ParamValidationError, MissingParametersError
+    import re
+
+    HAS_BOTOCORE = True
+except ImportError:
+    HAS_BOTOCORE = False
 
 
 # ---------------------------------------------------------------------------------------------------
@@ -452,8 +458,7 @@ def manage_state(module, aws):
                 compute_resources['minvCpus'] = minv_cpus
             if maxv_cpus is not None and current_compute_environment['computeResources']['maxvCpus'] != maxv_cpus:
                 compute_resources['maxvCpus'] = maxv_cpus
-            if desiredv_cpus is not None and current_compute_environment['computeResources'][
-                'desiredvCpus'] != desiredv_cpus:
+            if desiredv_cpus is not None and current_compute_environment['computeResources']['desiredvCpus'] != desiredv_cpus:
                 compute_resources['desiredvCpus'] = desiredv_cpus
             if len(compute_resources) > 0:
                 compute_kwargs['computeResources'] = compute_resources
@@ -530,6 +535,9 @@ def main():
     # validate dependencies
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 is required for this module.')
+
+    if not HAS_BOTOCORE:
+        module.fail_json(msg='re and botocore is required for this module.')
 
     aws = AWSConnection(module, ['batch'])
 
