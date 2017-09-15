@@ -82,7 +82,6 @@ lib/ansible/modules/cloud/cloudstack/cs_securitygroup.py
 lib/ansible/modules/cloud/cloudstack/cs_securitygroup_rule.py
 lib/ansible/modules/cloud/cloudstack/cs_snapshot_policy.py
 lib/ansible/modules/cloud/cloudstack/cs_template.py
-lib/ansible/modules/cloud/cloudstack/cs_volume.py
 lib/ansible/modules/cloud/docker/_docker.py
 lib/ansible/modules/cloud/docker/docker_container.py
 lib/ansible/modules/cloud/docker/docker_image.py
