@@ -71,7 +71,14 @@ options:
      default: None
    interfaces:
      description:
-        - List of subnets to attach to the router internal interface.
+        - The router interface  parameters that need to be attached with 
+          the router.Each is a dictionary with the network name or ID(net),
+          subnet name or ID (subnet) and the IP of port (portip) from the
+          network. If no portip  is specified,the default gateway port ip
+          for the subnet will be automatically assigned to port.Assigning 
+          a portip is often  required when a multiple router need to be 
+          connected to a single subnet for which the default gateway has
+          been already used.
      required: false
      default: None
    availability_zone:
@@ -104,9 +111,13 @@ EXAMPLES = '''
     network: ext_network1
     external_fixed_ips:
       - subnet: public-subnet
-        ip: 172.24.4.2
+        portip: 172.24.4.2
     interfaces:
-      - private-subnet
+      - net: private-net
+        subnet: private-subnet
+      - net: project-net
+        subnet: project-subnet
+        portip: 10.0.0.10
 
 # Update existing router1 external gateway to include the IPv6 subnet.
 # Note that since 'interfaces' is not provided, any existing internal
@@ -248,17 +259,12 @@ def _needs_update(cloud, module, router, network, internal_subnet_ids, internal_
                     internal_subnet_ids.append(fip['subnet_id'])
 
         if set(internal_subnet_ids) != set(existing_subnet_ids):
-              #module.fail_json(msg='bhujay hyyere subnet ... supplied =  % s  and existing = % s ' % (internal_subnet_ids, existing_subnet_ids))
-              return True
-#        if set(internal_port_ids) != set(existing_internal_port_ids):
-  #             return True
-
+                return True
     return False
 
 
 def _system_state_change(cloud, module, router, network, internal_ids, internal_portips, internal_portids):
-    """Check if the system state would be changed."""
-    #module.fail_json(msg='system state chage ...bhujay here % s' % internal_portids)
+    """Check if the system state would be changed."""   
     state = module.params['state']
     if state == 'absent' and router:
         return True
@@ -302,9 +308,8 @@ def _validate_subnets(module, cloud):
     internal_port_ips = []
     internal_port_ids = []
     existing_port_ips = []
-    existing_port_ids = []
-    existings_ports = []
-    existing_port_attrib = {}
+    existing_port_ids = []    
+    
     if module.params['external_fixed_ips']:
         for iface in module.params['external_fixed_ips']:
             subnet = cloud.get_subnet(iface['subnet'])
@@ -325,14 +330,12 @@ def _validate_subnets(module, cloud):
             elif not iface['portip']:
                 module.fail_json(msg='put an ip in portip or  remove it from list to assign default port to router') 
             else:
-                 for existing_port in cloud.list_ports(filters={'network_id':net.id}):
-                    #existing_port_attrib['p_id'] = existing_port.id
+                 for existing_port in cloud.list_ports(filters={'network_id':net.id}):                    
                     for fixed_ip in existing_port['fixed_ips']:
                         if iface['portip'] == fixed_ip['ip_address']:
                           internal_port_ids.append(existing_port.id)
                           existing_port_ips.append(fixed_ip['ip_address'])
-                        #existing_port_attrib['p_ip'] = existing_port.id
-
+                        
                  if iface['portip'] in   existing_port_ips:
                     internal_port_ips.append(iface['portip'])
                  else:
@@ -340,16 +343,7 @@ def _validate_subnets(module, cloud):
                     if p:
                         internal_port_ips.append(iface['portip'])
                         internal_port_ids.append(p.id)
-                    #module.fail_json(msg='port with ip  %s not found' % iface['portip'])
- 
-                           # module.fail_json(msg='port with ip  %s not found' %  fixed_ip['ip_address'])
-                           # module.fail_json(msg= existing_port_ips)
-
-    #module.fail_json(msg= existing_port_ips)
-    #module.fail_json(msg=internal_port_ips)
-    #module.fail_json(msg=internal_port_ids)
-   # module.fail_json(msg=internal_subnet_ids)
-                           
+                                               
     return external_subnet_ids, internal_subnet_ids , internal_port_ips, internal_port_ids
 
 
@@ -369,7 +363,7 @@ def main():
     module = AnsibleModule(argument_spec,
                            supports_check_mode=True,
                            **module_kwargs)
-   # module.fail_json(msg='Bhujay ....here')
+   
 
     if not HAS_SHADE:
         module.fail_json(msg='shade is required for this module')
@@ -409,7 +403,7 @@ def main():
         # Validate and cache the subnet IDs so we can avoid duplicate checks
         # and expensive API calls.
         external_ids, internal_ids, internal_portips, internal_portids = _validate_subnets(module, cloud)
-        #module.fail_json(msg='bhujay hyyere ... % s' % internal_portids)
+        
         if module.check_mode:
             module.exit_json(
                 changed=_system_state_change(cloud, module, router, net, internal_ids, internal_portips, internal_portids)
@@ -431,37 +425,18 @@ def main():
                     cloud.add_router_interface(router, port_id=internal_port_id)
                 changed = True
             else:
-                if _needs_update(cloud, module, router, net, internal_ids, internal_portips, internal_portids):
-                    #module.fail_json(msg='bhujay reached  to update router section with subnet ids %s and ports= %s ' %(internal_ids,internal_portids))
+                if _needs_update(cloud, module, router, net, internal_ids, internal_portips, internal_portids):                    
                     kwargs = _build_kwargs(cloud, module, router, net)
                     updated_router = cloud.update_router(**kwargs)
-                   # module.fail_json(msg='bhujay reached  updated router = %s ' % updated_router)
-
+                                       
                     # Protect against update_router() not actually
                     # updating the router.
                     if not updated_router:
                         changed = False
                     # On a router update, if any internal interfaces were supplied,
                     # just detach all existing internal interfaces and attach the new.
-                   # elif (not  internal_ids) or (not internal_portids):
-                   #     module.fail_json(msg='bhujay when no subnet id ir portid was returned by validate function')
-                   #     router = updated_router
-                   #     ports = _router_internal_interfaces(cloud, router)
-                   #     for port in ports:
-                   #         cloud.remove_router_interface(router, port_id=port['id'])
-                   #     changed = True
-                   # if internal_ids:
-                        #module.fail_json(msg='bhujay when  subnet id  was returned by validate function %s' %internal_ids)
-                   #     router = updated_router
-                   #     ports = _router_internal_interfaces(cloud, router)
-                   #     for port in ports:
-                   #         cloud.remove_router_interface(router, port_id=port['id'])
-                   #     for internal_subnet_id in internal_ids:
-                   #         cloud.add_router_interface(router, subnet_id=internal_subnet_id)
-                   #         #module.fail_json(msg='bhujay when  subnet id  was returned by validate function %s' %internal_ids)
-                   #     changed = True
-                    if internal_portids or internal_ids:
-                        #module.fail_json(msg='bhujay when  port id   was returned by validate function ports= %s' % internal_portids)
+                   
+                    if internal_portids or internal_ids:                       
                         router = updated_router
                         ports = _router_internal_interfaces(cloud, router)
                         for port in ports:
@@ -495,7 +470,7 @@ def main():
 
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
-        #module.fail_json(msg='are we here bhujay ..')
+        
 
 
 # this is magic, see lib/ansible/module_common.py
