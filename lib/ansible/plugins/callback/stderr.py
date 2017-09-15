@@ -13,6 +13,8 @@ DOCUMENTATION = '''
       - set as main display callback
     short_description: Splits output, sending failed tasks to stderr
     version_added: "2.4"
+    extends_documentation_fragment:
+      - default_callback
     description:
         - This is the stderr callback plugin, it behaves like the default callback plugin but sends error output to stderr.
         - Also it does not output skipped host/task/item status

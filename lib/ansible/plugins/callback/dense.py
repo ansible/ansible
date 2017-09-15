@@ -9,6 +9,8 @@ DOCUMENTATION = '''
     callback: dense
     type: stdout
     short_description: minimal stdout output
+    extends_documentation_fragment:
+      - default_callback
     description:
       - When in verbose mode it will act the same as the default callback
     version_added: "2.3"

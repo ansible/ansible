@@ -13,6 +13,8 @@ DOCUMENTATION = '''
       - set as main display callback
     short_description: Ansible screen output that ignores skipped status
     version_added: "2.0"
+    extends_documentation_fragment:
+      - default_callback
     description:
         - This callback does the same as the default except it does not output skipped host/task/item status
 '''

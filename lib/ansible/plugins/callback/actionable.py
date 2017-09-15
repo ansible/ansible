@@ -14,6 +14,8 @@ DOCUMENTATION = '''
       - Use this callback when you dont care about OK nor Skipped.
       - This callback suppreses any non Failed or Changed status.
     version_added: "2.1"
+    extends_documentation_fragment:
+      - default_callback
     requirements:
       - set as stdout callback in configuration
 '''

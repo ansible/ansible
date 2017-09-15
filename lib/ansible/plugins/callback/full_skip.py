@@ -13,6 +13,8 @@ DOCUMENTATION = '''
     description:
       - Use this plugin when you dont care about any output for tasks that were completly skipped
     version_added: "2.4"
+    extends_documentation_fragment:
+      - default_callback
     requirements:
       - set as stdout in configuation
 '''
