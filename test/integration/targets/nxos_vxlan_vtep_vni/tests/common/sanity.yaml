@@ -2,6 +2,10 @@
 - debug: msg="START TRANSPORT:{{ connection.transport }} nxos_vxlan_vtep_vni sanity test"
 
 - block:
+  - name: "Apply N7K specific setup config"
+    include: targets/nxos_vxlan_vtep/tasks/platform/n7k/setup.yaml
+    when: platform | match('N7K')
+
   - name: "Enable feature nv overlay"
     nxos_config: 
       commands:
@@ -72,42 +76,49 @@
       host_reachability: False
       provider: "{{ connection }}"
 
-  - name: configure vxlan_vtep_vni peer-list
-    nxos_vxlan_vtep_vni: &conf3
-      interface: nve1
-      vni: 8000
-      peer_list: 
-        - 1.1.1.1
-        - 2.2.2.2
-        - 3.3.3.3
-        - 4.4.4.4
-      ingress_replication: static
-      provider: "{{ connection }}"
-    register: result
+  - block:
+    - name: configure vxlan_vtep_vni peer-list
+      nxos_vxlan_vtep_vni: &conf3
+        interface: nve1
+        vni: 8000
+        peer_list: 
+          - 1.1.1.1
+          - 2.2.2.2
+          - 3.3.3.3
+          - 4.4.4.4
+        ingress_replication: static
+        provider: "{{ connection }}"
+      register: result
+  
+    - assert: *true
 
-  - assert: *true
+    - name: "Conf 3 Idempotence"
+      nxos_vxlan_vtep_vni: *conf3
+      register: result
+  
+    - assert: *false
 
-  - name: "Conf 3 Idempotence"
-    nxos_vxlan_vtep_vni: *conf3
-    register: result
+    - name: remove vxlan_vtep_vni
+      nxos_vxlan_vtep_vni: *remove
+      register: result
 
-  - assert: *false
+    - assert: *true
 
-  - name: remove vxlan_vtep_vni
-    nxos_vxlan_vtep_vni: *remove
-    register: result
+    - name: "remove Idempotence"
+      nxos_vxlan_vtep_vni: *remove
+      register: result
 
-  - assert: *true
+    - assert: *false
 
-  - name: "remove Idempotence"
-    nxos_vxlan_vtep_vni: *remove
-    register: result
+    when: (platform | search('N9K'))
 
-  - assert: *false
-
-  when: (platform | search('N9K'))
+  when: (platform | search("N7K|N9K"))
 
   always:
+  - name: "Apply N7K specific cleanup config"
+    include: targets/nxos_vxlan_vtep/tasks/platform/n7k/cleanup.yaml
+    when: platform | match('N7K')
+
   - name: remove vxlan_vtep
     nxos_vxlan_vtep:
       interface: nve1
