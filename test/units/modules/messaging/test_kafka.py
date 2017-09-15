@@ -47,7 +47,6 @@ class TestKafka(unittest.TestCase):
         set_module_args({
             'topic': 'jambon',
             'zookeeper': 'carotte.localhost:2181',
-            'describe': True,
         })
 
         with patch.object(basic.AnsibleModule, 'run_command') as mock_run_command:
@@ -60,4 +59,4 @@ class TestKafka(unittest.TestCase):
             self.assertFalse(result.exception.args[0]['changed'])
 
         self.assertEqual(mock_run_command.call_count, 1)
-        self.assertEqual(mock_run_command.call_args[0][0][0], '/usr/bin/kafka-configs')
+        self.assertEqual(mock_run_command.call_args[0][0][0], '/usr/bin/kafka-topics')
