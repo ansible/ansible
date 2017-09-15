@@ -298,10 +298,10 @@ else:
 
 def package_split(pkgspec):
     parts = pkgspec.split('=', 1)
+    version = None
     if len(parts) > 1:
-        return parts[0], parts[1]
-    else:
-        return parts[0], None
+        version = parts[1]
+    return parts[0], version
 
 
 def package_versions(pkgname, pkg, pkg_cache):
@@ -443,7 +443,7 @@ def expand_pkgspec_from_fnmatches(m, pkgspec, cache):
 
                 matches = fnmatch.filter(pkg_name_cache, pkgname_pattern)
 
-                if len(matches) == 0:
+                if not matches:
                     m.fail_json(msg="No package(s) matching '%s' available" % str(pkgname_pattern))
                 else:
                     new_pkgspec.extend(matches)
@@ -503,7 +503,7 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
             pkg_list.append("'%s'" % package)
     packages = ' '.join(pkg_list)
 
-    if len(packages) != 0:
+    if packages:
         if force:
             force_yes = '--force-yes'
         else:
@@ -546,10 +546,12 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
             diff = parse_diff(out)
         else:
             diff = {}
+        status = True
+        data = dict(changed=True, stdout=out, stderr=err, diff=diff)
         if rc:
-            return (False, dict(msg="'%s' failed: %s" % (cmd, err), stdout=out, stderr=err, rc=rc))
-        else:
-            return (True, dict(changed=True, stdout=out, stderr=err, diff=diff))
+            status = False
+            data = dict(msg="'%s' failed: %s" % (cmd, err), stdout=out, stderr=err, rc=rc)
+        return (status, data)
     else:
         return (True, dict(changed=False))
 
@@ -603,7 +605,7 @@ def install_deb(m, debs, cache, force, install_recommends, allow_unauthenticated
 
     # install the deps through apt
     retvals = {}
-    if len(deps_to_install) > 0:
+    if deps_to_install:
         (success, retvals) = install(m=m, pkgspec=deps_to_install, cache=cache,
                                      install_recommends=install_recommends,
                                      dpkg_options=expand_dpkg_options(dpkg_options))
@@ -611,7 +613,7 @@ def install_deb(m, debs, cache, force, install_recommends, allow_unauthenticated
             m.fail_json(**retvals)
         changed = retvals.get('changed', False)
 
-    if len(pkgs_to_install) > 0:
+    if pkgs_to_install:
         options = ' '.join(["--%s"% x for x in dpkg_options.split(",")])
         if m.check_mode:
             options += " --simulate"
@@ -654,7 +656,7 @@ def remove(m, pkgspec, cache, purge=False, force=False,
             pkg_list.append("'%s'" % package)
     packages = ' '.join(pkg_list)
 
-    if len(packages) == 0:
+    if not packages:
         m.exit_json(changed=False)
     else:
         if force:
@@ -811,12 +813,12 @@ def get_cache_mtime():
     Stat the apt cache file and if no cache file is found return 0
     :returns: ``int``
     """
+    cache_time = 0
     if os.path.exists(APT_UPDATE_SUCCESS_STAMP_PATH):
-        return os.stat(APT_UPDATE_SUCCESS_STAMP_PATH).st_mtime
+        cache_time = os.stat(APT_UPDATE_SUCCESS_STAMP_PATH).st_mtime
     elif os.path.exists(APT_LISTS_PATH):
-        return os.stat(APT_LISTS_PATH).st_mtime
-    else:
-        return 0
+        cache_time = os.stat(APT_LISTS_PATH).st_mtime
+    return cache_time
 
 
 def get_updated_cache_time():
