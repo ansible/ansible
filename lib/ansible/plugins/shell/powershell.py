@@ -153,365 +153,28 @@ $ErrorActionPreference = "Stop"
 
 $helper_def = @"
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Text;
-using System.Threading;
-using System.Security;
+using System.Runtime.InteropServices;
 using System.Security.AccessControl;
 using System.Security.Principal;
-using System.Runtime.InteropServices;
+using System.Text;
+using System.Threading;
 
-namespace Ansible.Shell
+namespace Ansible
 {
-    public class NativeProcessUtil
-    {
-        public static void GetProcessOutput(StreamReader stdoutStream, StreamReader stderrStream, out string stdout, out string stderr)
-        {
-            var sowait = new EventWaitHandle(false, EventResetMode.ManualReset);
-            var sewait = new EventWaitHandle(false, EventResetMode.ManualReset);
-
-            string so = null, se = null;
-
-            ThreadPool.QueueUserWorkItem((s) =>
-            {
-                so = stdoutStream.ReadToEnd();
-                sowait.Set();
-            });
-
-            ThreadPool.QueueUserWorkItem((s) =>
-            {
-                se = stderrStream.ReadToEnd();
-                sewait.Set();
-            });
-
-            foreach (var wh in new WaitHandle[] { sowait, sewait })
-                wh.WaitOne();
-
-            stdout = so;
-            stderr = se;
-        }
-
-        public static IntPtr GetElevatedToken(IntPtr hToken)
-        {
-            uint requestedLength;
-
-            IntPtr pTokenInfo = Marshal.AllocHGlobal(sizeof(int));
-
-            try
-            {
-                if(!GetTokenInformation(hToken, TOKEN_INFORMATION_CLASS.TokenElevationType, pTokenInfo, sizeof(int), out requestedLength))
-                    throw new Win32Exception("Unable to get TokenElevationType");
-
-                var tet = (TOKEN_ELEVATION_TYPE)Marshal.ReadInt32(pTokenInfo);
-
-                // we already have the best token we can get, just use it
-                if(tet != TOKEN_ELEVATION_TYPE.TokenElevationTypeLimited)
-                    return hToken;
-
-                GetTokenInformation(hToken, TOKEN_INFORMATION_CLASS.TokenLinkedToken, IntPtr.Zero, 0, out requestedLength);
-
-                IntPtr pLinkedToken = Marshal.AllocHGlobal((int)requestedLength);
-
-                if(!GetTokenInformation(hToken, TOKEN_INFORMATION_CLASS.TokenLinkedToken, pLinkedToken, requestedLength, out requestedLength))
-                    throw new Win32Exception("Unable to get linked token");
-
-                IntPtr linkedToken = Marshal.ReadIntPtr(pLinkedToken);
-
-                Marshal.FreeHGlobal(pLinkedToken);
-
-                return linkedToken;
-            }
-            finally
-            {
-                Marshal.FreeHGlobal(pTokenInfo);
-            }
-
-        }
-
-        // http://stackoverflow.com/a/30687230/139652
-        public static void GrantAccessToWindowStationAndDesktop(string username)
-        {
-            const int WindowStationAllAccess = 0x000f037f;
-            GrantAccess(username, GetProcessWindowStation(), WindowStationAllAccess);
-            const int DesktopRightsAllAccess = 0x000f01ff;
-            GrantAccess(username, GetThreadDesktop(GetCurrentThreadId()), DesktopRightsAllAccess);
-        }
-
-        public static string SearchPath(string findThis)
-        {
-            StringBuilder sbOut = new StringBuilder(1024);
-            IntPtr filePartOut;
-
-            if (SearchPath(null, findThis, null, sbOut.Capacity, sbOut, out filePartOut) == 0)
-                throw new FileNotFoundException("Couldn't locate " + findThis + " on path");
-
-            return sbOut.ToString();
-        }
-
-        public static uint GetProcessExitCode(IntPtr processHandle)
-        {
-            new NativeWaitHandle(processHandle).WaitOne();
-            uint exitCode;
-            if (!GetExitCodeProcess(processHandle, out exitCode))
-                throw new Win32Exception("Error getting process exit code");
-
-            return exitCode;
-        }
-
-        private static void GrantAccess(string username, IntPtr handle, int accessMask)
-        {
-            SafeHandle safeHandle = new NoopSafeHandle(handle);
-            GenericSecurity security =
-                new GenericSecurity(false, ResourceType.WindowObject, safeHandle, AccessControlSections.Access);
-
-            security.AddAccessRule(
-                new GenericAccessRule(new NTAccount(username), accessMask, AccessControlType.Allow));
-            security.Persist(safeHandle, AccessControlSections.Access);
-        }
-
-        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-        public static extern uint SearchPath(
-            string lpPath,
-            string lpFileName,
-            string lpExtension,
-            int nBufferLength,
-            [MarshalAs (UnmanagedType.LPTStr)]
-            StringBuilder lpBuffer,
-            out IntPtr lpFilePart);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        private static extern bool GetExitCodeProcess(IntPtr hProcess, out uint lpExitCode);
-
-        [DllImport("kernel32.dll")]
-        public static extern bool CreatePipe(out IntPtr hReadPipe, out IntPtr hWritePipe, SECURITY_ATTRIBUTES lpPipeAttributes, uint nSize);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern IntPtr GetStdHandle(StandardHandleValues nStdHandle);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern bool SetHandleInformation(IntPtr hObject, HandleFlags dwMask, int dwFlags);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern bool CloseHandle(IntPtr hObject);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern bool InitializeProcThreadAttributeList(IntPtr lpAttributeList, int dwAttributeCount, int dwFlags, ref int lpSize);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern bool UpdateProcThreadAttribute(
-                IntPtr lpAttributeList,
-                uint dwFlags,
-                IntPtr Attribute,
-                IntPtr lpValue,
-                IntPtr cbSize,
-                IntPtr lpPreviousValue,
-                IntPtr lpReturnSize);
-
-        [DllImport("advapi32.dll", SetLastError = true)]
-        public static extern bool LogonUser(
-            string lpszUsername,
-            string lpszDomain,
-            string lpszPassword,
-            int dwLogonType,
-            int dwLogonProvider,
-            out IntPtr phToken);
-
-        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode, BestFitMapping = false)]
-        public static extern bool CreateProcess(
-            [MarshalAs(UnmanagedType.LPTStr)]
-            string lpApplicationName,
-            StringBuilder lpCommandLine,
-            IntPtr lpProcessAttributes,
-            IntPtr lpThreadAttributes,
-            bool bInheritHandles,
-            uint dwCreationFlags,
-            IntPtr lpEnvironment,
-            [MarshalAs(UnmanagedType.LPTStr)]
-            string lpCurrentDirectory,
-            STARTUPINFO lpStartupInfo,
-            out PROCESS_INFORMATION lpProcessInformation);
-
-        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-        public static extern bool CreateProcessWithTokenW(
-            IntPtr hToken,
-            LOGON_FLAGS dwLogonFlags,
-            string lpApplicationName,
-            string lpCommandLine,
-            uint dwCreationFlags,
-            IntPtr lpEnvironment,
-            string lpCurrentDirectory,
-            STARTUPINFOEX lpStartupInfo,
-            out PROCESS_INFORMATION lpProcessInformation);
-
-        [DllImport("advapi32.dll", SetLastError=true)]
-        public static extern bool GetTokenInformation(
-            IntPtr TokenHandle,
-            TOKEN_INFORMATION_CLASS TokenInformationClass,
-            IntPtr TokenInformation,
-            uint TokenInformationLength,
-            out uint ReturnLength);
-
-        [DllImport("user32.dll", SetLastError = true)]
-        private static extern IntPtr GetProcessWindowStation();
-
-        [DllImport("user32.dll", SetLastError = true)]
-        private static extern IntPtr GetThreadDesktop(int dwThreadId);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        private static extern int GetCurrentThreadId();
-
-        private class GenericAccessRule : AccessRule
-        {
-            public GenericAccessRule(IdentityReference identity, int accessMask, AccessControlType type) :
-                base(identity, accessMask, false, InheritanceFlags.None, PropagationFlags.None, type)
-            { }
-        }
-
-        private class GenericSecurity : NativeObjectSecurity
-        {
-            public GenericSecurity(bool isContainer, ResourceType resType, SafeHandle objectHandle, AccessControlSections sectionsRequested)
-                : base(isContainer, resType, objectHandle, sectionsRequested) { }
-
-            public new void Persist(SafeHandle handle, AccessControlSections includeSections) { base.Persist(handle, includeSections); }
-
-            public new void AddAccessRule(AccessRule rule) { base.AddAccessRule(rule); }
-
-            public override Type AccessRightType { get { throw new NotImplementedException(); } }
-
-            public override AccessRule AccessRuleFactory(System.Security.Principal.IdentityReference identityReference, int accessMask, bool isInherited,
-                InheritanceFlags inheritanceFlags, PropagationFlags propagationFlags, AccessControlType type)
-            { throw new NotImplementedException(); }
-
-            public override Type AccessRuleType { get { return typeof(AccessRule); } }
-
-            public override AuditRule AuditRuleFactory(System.Security.Principal.IdentityReference identityReference, int accessMask, bool isInherited,
-                InheritanceFlags inheritanceFlags, PropagationFlags propagationFlags, AuditFlags flags)
-            { throw new NotImplementedException(); }
-
-            public override Type AuditRuleType { get { return typeof(AuditRule); } }
-        }
-
-        private class NoopSafeHandle : SafeHandle
-        {
-            public NoopSafeHandle(IntPtr handle) : base(handle, false) { }
-            public override bool IsInvalid { get { return false; } }
-            protected override bool ReleaseHandle() { return true; }
-        }
-
-
-    }
-
-    public class Win32Exception : System.ComponentModel.Win32Exception
-    {
-        private string _msg;
-
-        public Win32Exception(string message) : this(Marshal.GetLastWin32Error(), message) { }
-
-        public Win32Exception(int errorCode, string message) : base(errorCode)
-        {
-            _msg = String.Format("{0} ({1}, Win32ErrorCode {2})", message, base.Message, errorCode);
-        }
-
-        public override string Message { get { return _msg; } }
-        public static explicit operator Win32Exception(string message) { return new Win32Exception(message); }
-    }
-
-    class NativeWaitHandle : WaitHandle
-    {
-        public NativeWaitHandle(IntPtr handle)
-        {
-            this.Handle = handle;
-        }
-    }
-
-    [Flags]
-    public enum LOGON_FLAGS
-    {
-        LOGON_WITH_PROFILE = 0x00000001,
-        LOGON_NETCREDENTIALS_ONLY = 0x00000002
-    }
-
-    [Flags]
-    public enum CREATION_FLAGS
-    {
-        CREATE_SUSPENDED = 0x00000004,
-        CREATE_NEW_CONSOLE = 0x00000010,
-        CREATE_UNICODE_ENVIRONMENT = 0x000000400,
-        CREATE_BREAKAWAY_FROM_JOB = 0x01000000,
-        EXTENDED_STARTUPINFO_PRESENT = 0x00080000,
-    }
-
-    [Flags]
-    public enum StartupInfoFlags : uint
-    {
-        USESTDHANDLES = 0x00000100
-    }
-
-    public enum StandardHandleValues : int
-    {
-        STD_INPUT_HANDLE = -10,
-        STD_OUTPUT_HANDLE = -11,
-        STD_ERROR_HANDLE = -12
-    }
-
-    [Flags]
-    public enum HandleFlags : uint
-    {
-        None = 0,
-        INHERIT = 1
-    }
-
-    public enum TOKEN_INFORMATION_CLASS
-    {
-        TokenType = 8,
-        TokenImpersonationLevel = 9,
-        TokenElevationType = 18,
-        TokenLinkedToken = 19,
-    }
-
-    public enum TOKEN_ELEVATION_TYPE
-    {
-        TokenElevationTypeDefault = 1,
-        TokenElevationTypeFull,
-        TokenElevationTypeLimited
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    public class PROFILEINFO {
-        public int dwSize;
-        public int dwFlags;
-        [MarshalAs(UnmanagedType.LPTStr)]
-        public String lpUserName;
-        [MarshalAs(UnmanagedType.LPTStr)]
-        public String lpProfilePath;
-        [MarshalAs(UnmanagedType.LPTStr)]
-        public String lpDefaultPath;
-        [MarshalAs(UnmanagedType.LPTStr)]
-        public String lpServerName;
-        [MarshalAs(UnmanagedType.LPTStr)]
-        public String lpPolicyPath;
-        public IntPtr hProfile;
-
-        public PROFILEINFO()
-        {
-            dwSize = Marshal.SizeOf(this);
-        }
-    }
-
     [StructLayout(LayoutKind.Sequential)]
     public class SECURITY_ATTRIBUTES
     {
         public int nLength;
         public IntPtr lpSecurityDescriptor;
         public bool bInheritHandle = false;
-
         public SECURITY_ATTRIBUTES()
         {
             nLength = Marshal.SizeOf(this);
         }
     }
-
 
     [StructLayout(LayoutKind.Sequential)]
     public class STARTUPINFO
@@ -534,7 +197,6 @@ namespace Ansible.Shell
         public IntPtr hStdInput;
         public IntPtr hStdOutput;
         public IntPtr hStdError;
-
         public STARTUPINFO()
         {
             cb = Marshal.SizeOf(this);
@@ -546,7 +208,6 @@ namespace Ansible.Shell
     {
         public STARTUPINFO startupInfo;
         public IntPtr lpAttributeList;
-
         public STARTUPINFOEX()
         {
             startupInfo = new STARTUPINFO();
@@ -562,63 +223,733 @@ namespace Ansible.Shell
         public int dwProcessId;
         public int dwThreadId;
     }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct SID_AND_ATTRIBUTES
+    {
+        public IntPtr Sid;
+        public int Attributes;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct TOKEN_PRIVILEGES
+    {
+        public UInt32 PrivilegeCount;
+        public LUID Luid;
+        public UInt32 Attributes;
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    public struct LUID_AND_ATTRIBUTES
+    {
+        public LUID Luid;
+        public UInt32 Attributes;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct LUID
+    {
+        uint LowPart;
+        uint HighPart;
+    }
+
+    public struct TOKEN_USER
+    {
+        public SID_AND_ATTRIBUTES User;
+    }
+
+    public struct CommandResult
+    {
+        public string stdout;
+        public string stderr;
+        public uint rc;
+    }
+
+    [Flags]
+    public enum StartupInfoFlags : uint
+    {
+        USESTDHANDLES = 0x00000100
+    }
+
+    [Flags]
+    public enum CreationFlags : uint
+    {
+        CREATE_DEFAULT_ERROR_MODE = 0x04000000,
+        CREATE_NEW_CONSOLE = 0x00000010,
+        CREATE_NEW_PROCESS_GROUP = 0x00000200,
+        CREATE_SEPARATE_WOW_VDM = 0x00000800,
+        CREATE_SUSPENDED = 0x00000004,
+        CREATE_UNICODE_ENVIRONMENT = 0x00000400,
+        EXTENDED_STARTUPINFO_PRESENT = 0x00080000
+    }
+
+    public enum HandleFlags : uint
+    {
+        None = 0,
+        INHERIT = 1
+    }
+
+    [Flags]
+    public enum LogonFlags
+    {
+        LOGON_WITH_PROFILE = 0x00000001,
+        LOGON_NETCREDENTIALS_ONLY = 0x00000002
+    }
+
+    public enum LogonType
+    {
+        LOGON32_LOGON_INTERACTIVE = 2,
+        LOGON32_LOGON_NETWORK = 3,
+        LOGON32_LOGON_BATCH = 4,
+        LOGON32_LOGON_SERVICE = 5,
+        LOGON32_LOGON_UNLOCK = 7,
+        LOGON32_LOGON_NETWORK_CLEARTEXT = 8,
+        LOGON32_LOGON_NEW_CREDENTIALS = 9
+    }
+
+    public enum LogonProvider
+    {
+        LOGON32_PROVIDER_DEFAULT = 0,
+        LOGON32_PROVIDER_WINNT35 = 1,
+        LOGON32_PROVIDER_WINNT40 = 2,
+        LOGON32_PROVIDER_WINNT50 = 3
+    }
+
+    public enum TokenInformationClass
+    {
+        TokenUser = 1,
+        TokenType = 8,
+        TokenImpersonationLevel = 9,
+        TokenElevationType = 18,
+        TokenLinkedToken = 19,
+    }
+
+    public enum TokenElevationType
+    {
+        TokenElevationTypeDefault = 1,
+        TokenElevationTypeFull,
+        TokenElevationTypeLimited
+    }
+
+    [Flags]
+    public enum ProcessAccessFlags : uint
+    {
+        PROCESS_ALL_ACCESS = 0x001F0FFF,
+        PROCESS_TERMINATE = 0x00000001,
+        PROCESS_CREATE_THREAD = 0x00000002,
+        PROCESS_VM_OPERATION = 0x00000008,
+        PROCESS_VM_READ = 0x00000010,
+        PROCESS_VM_WRITE = 0x00000020,
+        PROCESS_DUP_HANDLE = 0x00000040,
+        PROCESS_CREATE_PROCESS = 0x000000080,
+        PROCESS_SET_QUOTA = 0x00000100,
+        PROCESS_SET_INFORMATION = 0x00000200,
+        PROCESS_QUERY_INFORMATION = 0x00000400,
+        PROCESS_SUSPEND_RESUME = 0x00000800,
+        PROCESS_QUERY_LIMITED_INFORMATION = 0x00001000,
+        SYNCHRONIZE = 0x00100000
+    }
+
+    public enum SECURITY_IMPERSONATION_LEVEL
+    {
+        SecurityAnoynmous,
+        SecurityIdentification,
+        SecurityImpersonation,
+        SecurityDelegation
+    }
+
+    public enum TOKEN_TYPE
+    {
+        TokenPrimary = 1,
+        TokenImpersonation
+    }
+
+    class NativeWaitHandle : WaitHandle
+    {
+        public NativeWaitHandle(IntPtr handle)
+        {
+            this.Handle = handle;
+        }
+    }
+
+    public class Win32Exception : System.ComponentModel.Win32Exception
+    {
+        private string _msg;
+        public Win32Exception(string message) : this(Marshal.GetLastWin32Error(), message) { }
+        public Win32Exception(int errorCode, string message) : base(errorCode)
+        {
+            _msg = String.Format("{0} ({1}, Win32ErrorCode {2})", message, base.Message, errorCode);
+        }
+        public override string Message { get { return _msg; } }
+        public static explicit operator Win32Exception(string message) { return new Win32Exception(message); }
+    }
+
+    public class BecomeUtil
+    {
+        [DllImport("advapi32.dll", SetLastError = true)]
+        private static extern bool LogonUser(
+            string lpszUsername,
+            string lpszDomain,
+            string lpszPassword,
+            LogonType dwLogonType,
+            LogonProvider dwLogonProvider,
+            out IntPtr phToken);
+
+        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        private static extern bool CreateProcessWithTokenW(
+            IntPtr hToken,
+            LogonFlags dwLogonFlags,
+            [MarshalAs(UnmanagedType.LPTStr)]
+            string lpApplicationName,
+            StringBuilder lpCommandLine,
+            CreationFlags dwCreationFlags,
+            IntPtr lpEnvironment,
+            [MarshalAs(UnmanagedType.LPTStr)]
+            string lpCurrentDirectory,
+            STARTUPINFOEX lpStartupInfo,
+            out PROCESS_INFORMATION lpProcessInformation);
+
+        [DllImport("kernel32.dll")]
+        private static extern bool CreatePipe(
+            out IntPtr hReadPipe,
+            out IntPtr hWritePipe,
+            SECURITY_ATTRIBUTES lpPipeAttributes,
+            uint nSize);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool SetHandleInformation(
+            IntPtr hObject,
+            HandleFlags dwMask,
+            int dwFlags);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool GetExitCodeProcess(
+            IntPtr hProcess,
+            out uint lpExitCode);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool CloseHandle(
+            IntPtr hObject);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern IntPtr GetProcessWindowStation();
+
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern IntPtr GetThreadDesktop(int dwThreadId);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern int GetCurrentThreadId();
+
+        [DllImport("advapi32.dll", SetLastError = true)]
+        private static extern bool GetTokenInformation(
+            IntPtr TokenHandle,
+            TokenInformationClass TokenInformationClass,
+            IntPtr TokenInformation,
+            uint TokenInformationLength,
+            out uint ReturnLength);
+
+        [DllImport("psapi.dll", SetLastError = true)]
+        private static extern bool EnumProcesses(
+            [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.U4)]
+                [In][Out] IntPtr[] processIds,
+            uint cb,
+            [MarshalAs(UnmanagedType.U4)]
+                out uint pBytesReturned);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern IntPtr OpenProcess(
+            ProcessAccessFlags processAccess,
+            bool bInheritHandle,
+            IntPtr processId);
+
+        [DllImport("advapi32.dll", SetLastError = true)]
+        private static extern bool OpenProcessToken(
+            IntPtr ProcessHandle,
+            TokenAccessLevels DesiredAccess,
+            out IntPtr TokenHandle);
+
+        [DllImport("advapi32.dll", SetLastError = true)]
+        private static extern bool ConvertSidToStringSidW(
+            IntPtr pSID,
+            [MarshalAs(UnmanagedType.LPTStr)]
+            out string StringSid);
+
+        [DllImport("advapi32", SetLastError = true)]
+        private static extern bool DuplicateTokenEx(
+            IntPtr hExistingToken,
+            TokenAccessLevels dwDesiredAccess,
+            IntPtr lpTokenAttributes,
+            SECURITY_IMPERSONATION_LEVEL ImpersonationLevel,
+            TOKEN_TYPE TokenType,
+            out IntPtr phNewToken);
+
+        [DllImport("advapi32.dll", SetLastError = true)]
+        private static extern bool LookupPrivilegeValue(
+            string lpSystemName,
+            string lpName,
+            out LUID lpLuid);
+
+        [DllImport("advapi32.dll", SetLastError = true)]
+        private static extern bool AdjustTokenPrivileges(
+            IntPtr TokenHandle,
+            [MarshalAs(UnmanagedType.Bool)]
+                bool DisableAllPrivileges,
+            ref TOKEN_PRIVILEGES NewState,
+            uint BufferLength,
+            IntPtr PreviousState,
+            IntPtr ReturnLength);
+
+        public static CommandResult RunAsUser(string username, string password, string lpCommandLine, string lpCurrentDirectory, string stdinInput)
+        {
+            SecurityIdentifier account = GetBecomeSid(username);
+
+            CreationFlags startup_flags = CreationFlags.CREATE_UNICODE_ENVIRONMENT;
+
+            STARTUPINFOEX si = new STARTUPINFOEX();
+            si.startupInfo.dwFlags = (int)StartupInfoFlags.USESTDHANDLES;
+
+            SECURITY_ATTRIBUTES pipesec = new SECURITY_ATTRIBUTES();
+            pipesec.bInheritHandle = true;
+
+            // Create the stdout, stderr and stdin pipes used in the process and add to the startupInfo
+            IntPtr stdout_read, stdout_write, stderr_read, stderr_write, stdin_read, stdin_write = IntPtr.Zero;
+            if (!CreatePipe(out stdout_read, out stdout_write, pipesec, 0))
+                throw new Win32Exception("STDOUT pipe setup failed");
+            if (!SetHandleInformation(stdout_read, HandleFlags.INHERIT, 0))
+                throw new Win32Exception("STDOUT pipe handle setup failed");
+
+            if (!CreatePipe(out stderr_read, out stderr_write, pipesec, 0))
+                throw new Win32Exception("STDERR pipe setup failed");
+            if (!SetHandleInformation(stderr_read, HandleFlags.INHERIT, 0))
+                throw new Win32Exception("STDERR pipe handle setup failed");
+
+            if (!CreatePipe(out stdin_read, out stdin_write, pipesec, 0))
+                throw new Win32Exception("STDIN pipe setup failed");
+            if (!SetHandleInformation(stdin_write, HandleFlags.INHERIT, 0))
+                throw new Win32Exception("STDIN pipe handle setup failed");
+
+            si.startupInfo.hStdOutput = stdout_write;
+            si.startupInfo.hStdError = stderr_write;
+            si.startupInfo.hStdInput = stdin_read;
+
+            // Setup the stdin buffer
+            UTF8Encoding utf8_encoding = new UTF8Encoding(false);
+            FileStream stdin_fs = new FileStream(stdin_write, FileAccess.Write, true, 32768);
+            StreamWriter stdin = new StreamWriter(stdin_fs, utf8_encoding, 32768);
+
+            // Create the environment block if set
+            IntPtr lpEnvironment = IntPtr.Zero;
+
+            PROCESS_INFORMATION pi = new PROCESS_INFORMATION();
+
+            // Get the user tokens to try running processes with
+            List<IntPtr> tokens = GetUserTokens(account, username, password);
+
+            bool launch_success = false;
+            foreach (IntPtr token in tokens)
+            {
+                if (CreateProcessWithTokenW(
+                    token,
+                    LogonFlags.LOGON_WITH_PROFILE,
+                    null,
+                    new StringBuilder(lpCommandLine),
+                    startup_flags,
+                    lpEnvironment,
+                    lpCurrentDirectory,
+                    si,
+                    out pi))
+                {
+                    launch_success = true;
+                    break;
+                }
+            }
+
+            if (!launch_success)
+                throw new Win32Exception("Failed to start become process");
+
+            // Setup the output buffers and get stdout/stderr
+            FileStream stdout_fs = new FileStream(stdout_read, FileAccess.Read, true, 4096);
+            StreamReader stdout = new StreamReader(stdout_fs, utf8_encoding, true, 4096);
+            CloseHandle(stdout_write);
+
+            FileStream stderr_fs = new FileStream(stderr_read, FileAccess.Read, true, 4096);
+            StreamReader stderr = new StreamReader(stderr_fs, utf8_encoding, true, 4096);
+            CloseHandle(stderr_write);
+
+            stdin.WriteLine(stdinInput);
+            stdin.Close();
+
+            string stdout_str, stderr_str = null;
+            GetProcessOutput(stdout, stderr, out stdout_str, out stderr_str);
+            uint rc = GetProcessExitCode(pi.hProcess);
+
+            CommandResult result = new CommandResult();
+            result.stdout = stdout_str;
+            result.stderr = stderr_str;
+            result.rc = rc;
+
+            return result;
+        }
+
+        private static SecurityIdentifier GetBecomeSid(string username)
+        {
+            NTAccount account = new NTAccount(username);
+            try
+            {
+                SecurityIdentifier security_identifier = (SecurityIdentifier)account.Translate(typeof(SecurityIdentifier));
+                return security_identifier;
+            }
+            catch (IdentityNotMappedException ex)
+            {
+                throw new Exception(String.Format("Unable to find become user {0}: {1}", username, ex.Message));
+            }
+        }
+
+        private static List<IntPtr> GetUserTokens(SecurityIdentifier account, string username, string password)
+        {
+            List<IntPtr> tokens = new List<IntPtr>();
+            List<String> service_sids = new List<String>()
+            {
+                "S-1-5-18", // NT AUTHORITY\SYSTEM
+                "S-1-5-19", // NT AUTHORITY\LocalService
+                "S-1-5-20"  // NT AUTHORITY\NetworkService
+            };
+
+            GrantAccessToWindowStationAndDesktop(account);
+            string account_sid = account.ToString();
+
+            if (service_sids.Contains(account_sid))
+            {
+                // We are trying to become to a service account
+                IntPtr hToken = GetUserHandle(account_sid);
+                if (hToken == IntPtr.Zero)
+                    throw new Exception("Failed to get service user token");
+
+                IntPtr hTokenDup = IntPtr.Zero;
+                try
+                {
+                    if (!DuplicateTokenEx(hToken, TokenAccessLevels.MaximumAllowed, IntPtr.Zero, SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation, TOKEN_TYPE.TokenPrimary, out hTokenDup))
+                        throw new Win32Exception("Failed to duplicate service user token");
+                }
+                finally
+                {
+                    CloseHandle(hToken);
+                }
+
+                tokens.Add(hTokenDup);
+            }
+            else
+            {
+                // We are trying to become a local or domain account
+                string domain = null;
+                if (username.Contains(@"\"))
+                {
+                    var user_split = username.Split(Convert.ToChar(@"\"));
+                    domain = user_split[0];
+                    username = user_split[1];
+                }
+                else if (username.Contains("@"))
+                {
+                    domain = null;
+                }
+                else
+                {
+                    domain = ".";
+                }
+
+                // Logon and get the token
+                IntPtr hToken = IntPtr.Zero;
+                if (!LogonUser(
+                    username,
+                    domain,
+                    password,
+                    LogonType.LOGON32_LOGON_INTERACTIVE,
+                    LogonProvider.LOGON32_PROVIDER_DEFAULT,
+                    out hToken))
+                {
+                    throw new Win32Exception("LogonUser failed");
+                }
+
+                // Get the elevate token
+                IntPtr hTokenElevated = GetElevatedToken(hToken);
+
+                tokens.Add(hTokenElevated);
+                tokens.Add(hToken);
+            }
+
+            return tokens;
+        }
+
+        private static IntPtr GetUserHandle(string user_sid)
+        {
+            uint array_byte_size = 1024 * sizeof(uint);
+            IntPtr[] pids = new IntPtr[1024];
+            uint bytes_copied;
+
+            if (!EnumProcesses(pids, array_byte_size, out bytes_copied))
+            {
+                throw new Win32Exception("Failed to enumerate processes");
+            }
+            // TODO: Handle if bytes_copied is larger than the array size and rerun EnumProcesses with larger array
+            uint num_processes = bytes_copied / sizeof(uint);
+
+            // Enable the SeDebugPrivilege to help below - Doesn't help
+            // EnablePrivilege("SeDebugPrivilege");
+
+            for (uint i = 0; i < num_processes; i++)
+            {
+                IntPtr hProcess = OpenProcess(ProcessAccessFlags.PROCESS_QUERY_INFORMATION, false, pids[i]);
+                if (hProcess != IntPtr.Zero)
+                {
+                    IntPtr hToken = IntPtr.Zero;
+                    // According to CreateProcessWithTokenW we require a token with
+                    //  TOKEN_QUERY, TOKEN_DUPLICATE and TOKEN_ASSIGN_PRIMARY
+                    // Also add in TOKEN_IMPERSONATE so we can get an impersontated token
+                    TokenAccessLevels desired_access = TokenAccessLevels.Query |
+                        TokenAccessLevels.Duplicate |
+                        TokenAccessLevels.AssignPrimary |
+                        TokenAccessLevels.Impersonate;
+
+                    // TODO: Find out why I can't see processes from Network Service and Local Service
+                    if (OpenProcessToken(hProcess, desired_access, out hToken))
+                    {
+                        string sid = GetTokenUserSID(hToken);
+                        if (sid == user_sid)
+                        {
+                            CloseHandle(hProcess);
+                            return hToken;
+                        }
+                    }
+
+                    CloseHandle(hToken);
+                }
+                CloseHandle(hProcess);
+            }
+
+            return IntPtr.Zero;
+        }
+
+        private static string GetTokenUserSID(IntPtr hToken)
+        {
+            uint token_length;
+            string sid;
+
+            if (!GetTokenInformation(hToken, TokenInformationClass.TokenUser, IntPtr.Zero, 0, out token_length))
+            {
+                int last_err = Marshal.GetLastWin32Error();
+                if (last_err != 122) // ERROR_INSUFFICIENT_BUFFER
+                    throw new Win32Exception(last_err, "Failed to get TokenUser length");
+            }                
+
+            IntPtr token_information = Marshal.AllocHGlobal((int)token_length);
+            try
+            {
+                if (!GetTokenInformation(hToken, TokenInformationClass.TokenUser, token_information, token_length, out token_length))
+                    throw new Win32Exception("Failed to get TokenUser information");
+
+                TOKEN_USER token_user = (TOKEN_USER)Marshal.PtrToStructure(token_information, typeof(TOKEN_USER));
+
+                if (!ConvertSidToStringSidW(token_user.User.Sid, out sid))
+                    throw new Win32Exception("Failed to get user SID");
+            }
+            finally
+            {
+                Marshal.FreeHGlobal(token_information);
+            }
+
+            return sid;
+        }
+
+        private static void EnablePrivilege(string privilege_name)
+        {
+            Process current_process = Process.GetCurrentProcess();
+            IntPtr hToken = IntPtr.Zero;
+            if (!OpenProcessToken(current_process.Handle, TokenAccessLevels.AdjustPrivileges, out hToken))
+                throw new Win32Exception("Failed to open current process token");
+
+            TOKEN_PRIVILEGES token_privileges = new TOKEN_PRIVILEGES();
+            if (!LookupPrivilegeValue(null, privilege_name, out token_privileges.Luid))
+                throw new Win32Exception("Failed to lookup privilege value");
+
+            token_privileges.Attributes = 0x00000002; // SE_PRIVILEGE_ENABLED
+
+            if (!AdjustTokenPrivileges(hToken, false, ref token_privileges, 0, IntPtr.Zero, IntPtr.Zero))
+                throw new Win32Exception(String.Format("Failed to enable {0} for user", privilege_name));
+        }
+
+        private static void GetProcessOutput(StreamReader stdoutStream, StreamReader stderrStream, out string stdout, out string stderr)
+        {
+            var sowait = new EventWaitHandle(false, EventResetMode.ManualReset);
+            var sewait = new EventWaitHandle(false, EventResetMode.ManualReset);
+            string so = null, se = null;
+            ThreadPool.QueueUserWorkItem((s) =>
+            {
+                so = stdoutStream.ReadToEnd();
+                sowait.Set();
+            });
+            ThreadPool.QueueUserWorkItem((s) =>
+            {
+                se = stderrStream.ReadToEnd();
+                sewait.Set();
+            });
+            foreach (var wh in new WaitHandle[] { sowait, sewait })
+                wh.WaitOne();
+            stdout = so;
+            stderr = se;
+        }
+
+        private static uint GetProcessExitCode(IntPtr processHandle)
+        {
+            new NativeWaitHandle(processHandle).WaitOne();
+            uint exitCode;
+            if (!GetExitCodeProcess(processHandle, out exitCode))
+                throw new Win32Exception("Error getting process exit code");
+            return exitCode;
+        }
+
+        private static IntPtr GetElevatedToken(IntPtr hToken)
+        {
+            uint requestedLength;
+
+            IntPtr pTokenInfo = Marshal.AllocHGlobal(sizeof(int));
+
+            try
+            {
+                if (!GetTokenInformation(hToken, TokenInformationClass.TokenElevationType, pTokenInfo, sizeof(int), out requestedLength))
+                    throw new Win32Exception("Unable to get TokenElevationType");
+
+                var tet = (TokenElevationType)Marshal.ReadInt32(pTokenInfo);
+
+                // we already have the best token we can get, just use it
+                if (tet != TokenElevationType.TokenElevationTypeLimited)
+                    return hToken;
+
+                GetTokenInformation(hToken, TokenInformationClass.TokenLinkedToken, IntPtr.Zero, 0, out requestedLength);
+
+                IntPtr pLinkedToken = Marshal.AllocHGlobal((int)requestedLength);
+
+                if (!GetTokenInformation(hToken, TokenInformationClass.TokenLinkedToken, pLinkedToken, requestedLength, out requestedLength))
+                    throw new Win32Exception("Unable to get linked token");
+
+                IntPtr linkedToken = Marshal.ReadIntPtr(pLinkedToken);
+
+                Marshal.FreeHGlobal(pLinkedToken);
+
+                return linkedToken;
+            }
+            finally
+            {
+                Marshal.FreeHGlobal(pTokenInfo);
+            }
+        }
+
+        private static void GrantAccessToWindowStationAndDesktop(SecurityIdentifier account)
+        {
+            const int WindowStationAllAccess = 0x000f037f;
+            GrantAccess(account, GetProcessWindowStation(), WindowStationAllAccess);
+            const int DesktopRightsAllAccess = 0x000f01ff;
+            GrantAccess(account, GetThreadDesktop(GetCurrentThreadId()), DesktopRightsAllAccess);
+        }
+
+        private static void GrantAccess(SecurityIdentifier account, IntPtr handle, int accessMask)
+        {
+            SafeHandle safeHandle = new NoopSafeHandle(handle);
+            GenericSecurity security =
+                new GenericSecurity(false, ResourceType.WindowObject, safeHandle, AccessControlSections.Access);
+            security.AddAccessRule(
+                new GenericAccessRule(account, accessMask, AccessControlType.Allow));
+            security.Persist(safeHandle, AccessControlSections.Access);
+        }
+
+        private class GenericSecurity : NativeObjectSecurity
+        {
+            public GenericSecurity(bool isContainer, ResourceType resType, SafeHandle objectHandle, AccessControlSections sectionsRequested)
+                : base(isContainer, resType, objectHandle, sectionsRequested) { }
+            public new void Persist(SafeHandle handle, AccessControlSections includeSections) { base.Persist(handle, includeSections); }
+            public new void AddAccessRule(AccessRule rule) { base.AddAccessRule(rule); }
+            public override Type AccessRightType { get { throw new NotImplementedException(); } }
+            public override AccessRule AccessRuleFactory(System.Security.Principal.IdentityReference identityReference, int accessMask, bool isInherited,
+                InheritanceFlags inheritanceFlags, PropagationFlags propagationFlags, AccessControlType type)
+            { throw new NotImplementedException(); }
+            public override Type AccessRuleType { get { return typeof(AccessRule); } }
+            public override AuditRule AuditRuleFactory(System.Security.Principal.IdentityReference identityReference, int accessMask, bool isInherited,
+                InheritanceFlags inheritanceFlags, PropagationFlags propagationFlags, AuditFlags flags)
+            { throw new NotImplementedException(); }
+            public override Type AuditRuleType { get { return typeof(AuditRule); } }
+        }
+
+
+        private class NoopSafeHandle : SafeHandle
+        {
+            public NoopSafeHandle(IntPtr handle) : base(handle, false) { }
+            public override bool IsInvalid { get { return false; } }
+            protected override bool ReleaseHandle() { return true; }
+        }
+
+        private class GenericAccessRule : AccessRule
+        {
+            public GenericAccessRule(IdentityReference identity, int accessMask, AccessControlType type) :
+                base(identity, accessMask, false, InheritanceFlags.None, PropagationFlags.None, type)
+            { }
+        }
+    }
 }
 "@
 
 $exec_wrapper = {
-#Requires -Version 3.0
-$DebugPreference = "Continue"
-$ErrorActionPreference = "Stop"
-Set-StrictMode -Version 2
+    #Requires -Version 3.0
+    Set-StrictMode -Version 2
+    $DebugPreference = "Continue"
+    $ErrorActionPreference = "Stop"
 
-function ConvertTo-HashtableFromPsCustomObject ($myPsObject){
-    $output = @{};
-    $myPsObject | Get-Member -MemberType *Property | % {
-        $val = $myPsObject.($_.name);
-        If ($val -is [psobject]) {
-            $val = ConvertTo-HashtableFromPsCustomObject $val
+    Function ConvertTo-HashtableFromPsCustomObject($myPsObject) {
+        $output = @{}
+        $myPsObject | Get-Member -MemberType *Property | % {
+            $val = $myPsObject.($_.name)
+            if ($val -is [psobject]) {
+                $val = ConvertTo-HashtableFromPsCustomObject -myPsObject $val
+            }
+            $output.($_.name) = $val
         }
-        $output.($_.name) = $val
+        return $output
     }
-    return $output;
-}
-# stream JSON including become_pw, ps_module_payload, bin_module_payload, become_payload, write_payload_path, preserve directives
-# exec runspace, capture output, cleanup, return module output
 
-$json_raw = [System.Console]::In.ReadToEnd()
+    # stream JSON including become_pw, ps_module_payload, bin_module_payload, become_payload, write_payload_path, preserve directives
+    # exec runspace, capture output, cleanup, return module output
 
-If (-not $json_raw) {
-    Write-Error "no input given" -Category InvalidArgument
-}
+    $json_raw = [System.Console]::In.ReadToEnd()
 
-$payload = ConvertTo-HashtableFromPsCustomObject (ConvertFrom-Json $json_raw)
+    If (-not $json_raw) {
+        Write-Error "no input given" -Category InvalidArgument
+    }
 
-# TODO: handle binary modules
-# TODO: handle persistence
+    $payload = ConvertTo-HashtableFromPsCustomObject -myPsObject (ConvertFrom-Json $json_raw)
 
-$actions = $payload.actions
+    # TODO: handle binary modules
+    # TODO: handle persistence
 
-# pop 0th action as entrypoint
-$entrypoint = $payload.($actions[0])
-$payload.actions = $payload.actions[1..99]
+    $actions = $payload.actions
 
-$entrypoint = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($entrypoint))
+    # pop 0th action as entrypoint
+    $entrypoint = $payload.($actions[0])
+    $payload.actions = $payload.actions[1..99]
 
-# load the current action entrypoint as a module custom object with a Run method
-$entrypoint = New-Module -ScriptBlock ([scriptblock]::Create($entrypoint)) -AsCustomObject
+    $entrypoint = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($entrypoint))
 
-Set-Variable -Scope global -Name complex_args -Value $payload["module_args"] | Out-Null
+    # load the current action entrypoint as a module custom object with a Run method
+    $entrypoint = New-Module -ScriptBlock ([scriptblock]::Create($entrypoint)) -AsCustomObject
 
-# dynamically create/load modules
-ForEach ($mod in $payload.powershell_modules.GetEnumerator()) {
-    $decoded_module = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($mod.Value))
-    New-Module -ScriptBlock ([scriptblock]::Create($decoded_module)) -Name $mod.Key | Import-Module -WarningAction SilentlyContinue | Out-Null
-}
+    Set-Variable -Scope global -Name complex_args -Value $payload["module_args"] | Out-Null
 
-$output = $entrypoint.Run($payload)
+    # dynamically create/load modules
+    ForEach ($mod in $payload.powershell_modules.GetEnumerator()) {
+        $decoded_module = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($mod.Value))
+        New-Module -ScriptBlock ([scriptblock]::Create($decoded_module)) -Name $mod.Key | Import-Module -WarningAction SilentlyContinue | Out-Null
+    }
 
-Write-Output $output
+    $output = $entrypoint.Run($payload)
 
+    Write-Output $output
 } # end exec_wrapper
 
 Function Dump-Error ($excep) {
@@ -640,11 +971,7 @@ Function Run($payload) {
     # FUTURE: convert to SafeHandle so we can stop ignoring warnings?
     Add-Type -TypeDefinition $helper_def -Debug:$false -IgnoreWarnings
 
-    $exec_args = $null
-
-    $exec_application = "powershell"
-
-    # NB: CreateProcessWithLogonW commandline maxes out at 1024 chars, must bootstrap via filesystem
+    # NB: CreateProcessWithTokenW commandline maxes out at 1024 chars, must bootstrap via filesystem
     $temp = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), [System.IO.Path]::GetRandomFileName() + ".ps1")
     $exec_wrapper.ToString() | Set-Content -Path $temp
     # allow (potentially unprivileged) target user access to the tempfile (NB: this likely won't work if traverse checking is enabled)
@@ -653,148 +980,10 @@ Function Run($payload) {
     Set-Acl $temp $acl | Out-Null
 
     Try {
-        $exec_args = @("-noninteractive", $temp)
-
-        # FUTURE: move these flags into C# enum?
-        # start process suspended + breakaway so we can record the watchdog pid without worrying about a completion race
-        Set-Variable CREATE_BREAKAWAY_FROM_JOB -Value ([uint32]0x01000000) -Option Constant
-        Set-Variable CREATE_SUSPENDED -Value ([uint32]0x00000004) -Option Constant
-        Set-Variable CREATE_UNICODE_ENVIRONMENT -Value ([uint32]0x000000400) -Option Constant
-        Set-Variable CREATE_NEW_CONSOLE -Value ([uint32]0x00000010) -Option Constant
-        Set-Variable EXTENDED_STARTUPINFO_PRESENT -Value ([uint32]0x00080000) -Option Constant
-
-        $pstartup_flags = $CREATE_BREAKAWAY_FROM_JOB -bor $CREATE_UNICODE_ENVIRONMENT -bor $CREATE_NEW_CONSOLE # -bor $EXTENDED_STARTUPINFO_PRESENT
-
-        $si = New-Object Ansible.Shell.STARTUPINFOEX
-
-        $pipesec = New-Object Ansible.Shell.SECURITY_ATTRIBUTES
-        $pipesec.bInheritHandle = $true
-        $stdout_read = $stdout_write = $stderr_read = $stderr_write = 0
-
-        If(-not [Ansible.Shell.NativeProcessUtil]::CreatePipe([ref]$stdout_read, [ref]$stdout_write, $pipesec, 0)) {
-            throw [Ansible.Shell.Win32Exception] "Stdout pipe setup failed"
-        }
-
-        If(-not [Ansible.Shell.NativeProcessUtil]::SetHandleInformation($stdout_read, [Ansible.Shell.HandleFlags]::INHERIT, 0)) {
-            throw [Ansible.Shell.Win32Exception] "Stdout handle setup failed"
-        }
-
-        If(-not [Ansible.Shell.NativeProcessUtil]::CreatePipe([ref]$stderr_read, [ref]$stderr_write, $pipesec, 0)) {
-            throw [Ansible.Shell.Win32Exception] "Stderr pipe setup failed"
-        }
-        If(-not [Ansible.Shell.NativeProcessUtil]::SetHandleInformation($stderr_read, [Ansible.Shell.HandleFlags]::INHERIT, 0)) {
-            throw [Ansible.Shell.Win32Exception] "Stderr handle setup failed"
-        }
-
-        # setup stdin redirection, we'll leave stdout/stderr as normal
-        $si.startupInfo.dwFlags = [Ansible.Shell.StartupInfoFlags]::USESTDHANDLES
-        $si.startupInfo.hStdOutput = $stdout_write #[Ansible.Shell.NativeProcessUtil]::GetStdHandle([Ansible.Shell.StandardHandleValues]::STD_OUTPUT_HANDLE)
-        $si.startupInfo.hStdError = $stderr_write #[Ansible.Shell.NativeProcessUtil]::GetStdHandle([Ansible.Shell.StandardHandleValues]::STD_ERROR_HANDLE)
-
-        $stdin_read = $stdin_write = 0
-
-        $pipesec = New-Object Ansible.Shell.SECURITY_ATTRIBUTES
-        $pipesec.bInheritHandle = $true
-
-        If(-not [Ansible.Shell.NativeProcessUtil]::CreatePipe([ref]$stdin_read, [ref]$stdin_write, $pipesec, 0)) {
-            throw [Ansible.Shell.Win32Exception] "Stdin pipe setup failed"
-        }
-        If(-not [Ansible.Shell.NativeProcessUtil]::SetHandleInformation($stdin_write, [Ansible.Shell.HandleFlags]::INHERIT, 0)) {
-            throw [Ansible.Shell.Win32Exception] "Stdin handle setup failed"
-        }
-        $si.startupInfo.hStdInput = $stdin_read
-
-        # create an attribute list with our explicit handle inheritance list to pass to CreateProcess
-        [int]$buf_sz = 0
-
-        # determine the buffer size necessary for our attribute list
-        If(-not [Ansible.Shell.NativeProcessUtil]::InitializeProcThreadAttributeList([IntPtr]::Zero, 1, 0, [ref]$buf_sz)) {
-            $last_err = [System.Runtime.InteropServices.Marshal]::GetLastWin32Error()
-            If($last_err -ne 122) { # ERROR_INSUFFICIENT_BUFFER
-                throw New-Object Ansible.Shell.Win32Exception $last_err, "Attribute list size query failed"
-            }
-        }
-
-        $si.lpAttributeList = [System.Runtime.InteropServices.Marshal]::AllocHGlobal($buf_sz)
-
-        # initialize the attribute list
-        If(-not [Ansible.Shell.NativeProcessUtil]::InitializeProcThreadAttributeList($si.lpAttributeList, 1, 0, [ref]$buf_sz)) {
-            throw [Ansible.Shell.Win32Exception] "Attribute list init failed"
-        }
-
-        $handles_to_inherit = [IntPtr[]]@($stdin_read,$stdout_write,$stderr_write)
-        $pinned_handles = [System.Runtime.InteropServices.GCHandle]::Alloc($handles_to_inherit, [System.Runtime.InteropServices.GCHandleType]::Pinned)
-
-        # update the attribute list with the handles we want to inherit
-        If(-not [Ansible.Shell.NativeProcessUtil]::UpdateProcThreadAttribute($si.lpAttributeList, 0, 0x20002, `
-            $pinned_handles.AddrOfPinnedObject(), [System.Runtime.InteropServices.Marshal]::SizeOf([type][IntPtr]) * $handles_to_inherit.Length, `
-            [System.IntPtr]::Zero, [System.IntPtr]::Zero)) {
-            throw [Ansible.Shell.Win32Exception] "Attribute list update failed"
-        }
-
-        # need to use a preamble-free version of UTF8Encoding
-        $utf8_encoding = New-Object System.Text.UTF8Encoding @($false)
-        $stdin_fs = New-Object System.IO.FileStream @($stdin_write, [System.IO.FileAccess]::Write, $true, 32768)
-        $stdin = New-Object System.IO.StreamWriter @($stdin_fs, $utf8_encoding, 32768)
-
-        $pi = New-Object Ansible.Shell.PROCESS_INFORMATION
-
-        # FUTURE: direct cmdline CreateProcess path lookup fails- this works but is sub-optimal
-        $exec_cmd = [Ansible.Shell.NativeProcessUtil]::SearchPath("powershell.exe")
-        $exec_args = New-Object System.Text.StringBuilder @("-NonInteractive -NoProfile -ExecutionPolicy Bypass $temp")
-
-        [Ansible.Shell.NativeProcessUtil]::GrantAccessToWindowStationAndDesktop($username)
-
-        If($username.Contains("\")) {
-            $sp = $username.Split(@([char]"\"), 2)
-            $domain = $sp[0]
-            $username = $sp[1]
-        }
-        ElseIf ($username.Contains("@")) {
-            $domain = $null
-        }
-        Else {
-            $domain = "."
-        }
-
-        [System.IntPtr]$hToken = [System.IntPtr]::Zero
-
-        If(-not [Ansible.Shell.NativeProcessUtil]::LogonUser($username, $domain, $password, 2, 0, [ref]$hToken)) {
-            throw [Ansible.Shell.Win32Exception] "LogonUser failed"
-        }
-
-        $hTokenElevated = [Ansible.Shell.NativeProcessUtil]::GetElevatedToken($hToken);
-
-        $launch_success = $false
-
-        foreach($ht in @($hTokenElevated, $hToken)) {
-            If([Ansible.Shell.NativeProcessUtil]::CreateProcessWithTokenW($ht, [Ansible.Shell.LOGON_FLAGS]::LOGON_WITH_PROFILE,
-              $exec_cmd, $exec_args, $pstartup_flags, [System.IntPtr]::Zero, $env:windir, $si, [ref]$pi)) {
-                $launch_success = $true
-                break
-            }
-        }
-
-        If(-not $launch_success) {
-            throw [Ansible.Shell.Win32Exception] "Failed to create process with new token"
-        }
-
-        $stdout_fs = New-Object System.IO.FileStream @($stdout_read, [System.IO.FileAccess]::Read, $true, 4096)
-        $stdout = New-Object System.IO.StreamReader @($stdout_fs, $utf8_encoding, $true, 4096)
-        $stderr_fs = New-Object System.IO.FileStream @($stderr_read, [System.IO.FileAccess]::Read, $true, 4096)
-        $stderr = New-Object System.IO.StreamReader @($stderr_fs, $utf8_encoding, $true, 4096)
-
-        # close local write ends of stdout/stderr pipes so the open handles won't prevent EOF
-        [Ansible.Shell.NativeProcessUtil]::CloseHandle($stdout_write)
-        [Ansible.Shell.NativeProcessUtil]::CloseHandle($stderr_write)
-
         $payload_string = $payload | ConvertTo-Json -Depth 99 -Compress
 
-        # push the execution payload over stdin
-        $stdin.WriteLine($payload_string)
-        $stdin.Close()
-
-        $str_stdout = $str_stderr = ""
+        $lp_command_line = New-Object System.Text.StringBuilder @("powershell.exe -NonInteractive -NoProfile -ExecutionPolicy Bypass -File $temp")
+        $lp_current_directory = "$env:SystemRoot"
 
         [Ansible.Shell.NativeProcessUtil]::GetProcessOutput($stdout, $stderr, [ref] $str_stdout, [ref] $str_stderr)
 
@@ -807,14 +996,12 @@ Function Run($payload) {
     Catch {
         $excep = $_
         Dump-Error $excep
-    }
-    Finally {
+    } Finally {
         Remove-Item $temp -ErrorAction SilentlyContinue
     }
     $host.SetShouldExit($rc)
 }
-
-'''  # end become_wrapper
+'''
 
 async_wrapper = br'''
 Set-StrictMode -Version 2

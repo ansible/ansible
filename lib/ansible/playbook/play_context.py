@@ -588,9 +588,6 @@ class PlayContext(Base):
                 if not self.become_user:
                     raise AnsibleError(("The 'runas' become method requires a username "
                                         "(specify with the '--become-user' CLI arg, the 'become_user' keyword, or the 'ansible_become_user' variable)"))
-                if not self.become_pass:
-                    raise AnsibleError(("The 'runas' become method requires a password "
-                                       "(specify with the '-K' CLI arg or the 'ansible_become_password' variable)"))
                 becomecmd = cmd
 
             elif self.become_method == 'doas':
