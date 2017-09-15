@@ -57,18 +57,18 @@ nxos_argument_spec = {
     'provider': dict(type='dict', options=nxos_provider_spec),
 }
 nxos_top_spec = {
-    'host': dict(removed_in_version=2.3),
-    'port': dict(removed_in_version=2.3, type='int'),
+    'host': dict(removed_in_version=2.9),
+    'port': dict(removed_in_version=2.9, type='int'),
 
-    'username': dict(removed_in_version=2.3),
-    'password': dict(removed_in_version=2.3, no_log=True),
-    'ssh_keyfile': dict(removed_in_version=2.3),
+    'username': dict(removed_in_version=2.9),
+    'password': dict(removed_in_version=2.9, no_log=True),
+    'ssh_keyfile': dict(removed_in_version=2.9),
 
-    'use_ssl': dict(removed_in_version=2.3, type='bool'),
-    'validate_certs': dict(removed_in_version=2.3, type='bool'),
-    'timeout': dict(removed_in_version=2.3, type='int'),
+    'use_ssl': dict(removed_in_version=2.9, type='bool'),
+    'validate_certs': dict(removed_in_version=2.9, type='bool'),
+    'timeout': dict(removed_in_version=2.9, type='int'),
 
-    'transport': dict(default='cli', choices=['cli', 'nxapi'])
+    'transport': dict(removed_in_version=2.9, default='cli', choices=['cli', 'nxapi'])
 }
 nxos_argument_spec.update(nxos_top_spec)
 
