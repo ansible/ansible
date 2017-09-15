@@ -165,30 +165,42 @@ tasks:
 '''
 
 RETURN = '''
-output:
-  description: the data returned by get_function in boto3
-  returned: success
-  type: dict
-  sample:
-    'code':
+code:
+    description: the lambda function location returned by get_function in boto3
+    returned: success
+    type: dict
+    sample:
       {
-        'location': 'an S3 URL',
+        'location': 'a presigned S3 URL',
         'repository_type': 'S3',
       }
-    'configuration':
+configuration:
+    description: the lambda function metadata returned by get_function in boto3
+    returned: success
+    type: dict
+    sample:
       {
-        'function_name': 'string',
-        'function_arn': 'string',
-        'runtime': 'nodejs',
-        'role': 'string',
-        'handler': 'string',
+        'code_sha256': 'SHA256 hash',
         'code_size': 123,
-        'description': 'string',
-        'timeout': 123,
-        'memory_size': 123,
-        'last_modified': 'string',
-        'code_sha256': 'string',
-        'version': 'string',
+        'description': 'My function',
+        'environment': {
+          'variables': {
+            'key': 'value'
+          }
+        },
+        'function_arn': 'arn:aws:lambda:us-east-1:123456789012:function:myFunction:1',
+        'function_name': 'myFunction',
+        'handler': 'index.handler',
+        'last_modified': '2017-08-01T00:00:00.000+0000',
+        'memory_size': 128,
+        'role': 'arn:aws:iam::123456789012:role/lambda_basic_execution',
+        'runtime': 'nodejs6.10',
+        'timeout': 3,
+        'version': '1',
+        'vpc_config': {
+          'security_group_ids': [],
+          'subnet_ids': []
+        }
       }
 '''
 
