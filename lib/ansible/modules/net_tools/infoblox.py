@@ -7,11 +7,14 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = """
+
+
+DOCUMENTATION = '''
 ---
 module: infoblox
 author: "Joan Miquel Luque (@xoanmi)"
@@ -114,9 +117,9 @@ options:
       - DNS time-to-live
     required: False
     default: None
-"""
+'''
 
-EXAMPLES = """
+EXAMPLES = '''
 ---
 - hosts: localhost
   connection: local
@@ -135,9 +138,9 @@ EXAMPLES = """
       - test01.local
       - test02.local
     register: infoblox
-"""
+'''
 
-RETURN = """
+RETURN = '''
 hostname:
   description: Hostname of the object
   returned: success
@@ -148,7 +151,7 @@ result:
   returned: success
   type: list
   sample: [['...', '...'], ['...'], ['...']]
-"""
+'''
 
 from ansible.module_utils.basic import AnsibleModule
 from copy import copy
@@ -1478,6 +1481,7 @@ class Infoblox(object):
                     msg="A dict was sent with more then one key/val pair. Please use {key:val } only .")
         return attr
 
+
 def _create_ptr_record_model(name, address, view, comment, ttl=None, ext_attr=None):
     """
     Creates a JSON model of an A record with the given properties, using the same keys as used by the WAPI.
@@ -1501,6 +1505,7 @@ def _create_ptr_record_model(name, address, view, comment, ttl=None, ext_attr=No
         model[_EXT_ATTR_PROPERTY] = ext_attr
     return model
 
+
 def _create_a_record_model(name, address, view, comment, ttl=None):
     """
     Creates a JSON model of an A record with the given properties, using the same keys as used by the WAPI.
@@ -1521,6 +1526,7 @@ def _create_a_record_model(name, address, view, comment, ttl=None):
     if ttl is not None:
         model[_TTL_PROPERTY] = int(ttl)
     return model
+
 
 def _are_records_equivalent(a_record_1, a_record_2):
     """
