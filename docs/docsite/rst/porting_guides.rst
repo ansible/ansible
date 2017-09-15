@@ -10,3 +10,4 @@ This section lists porting guides that can help you playbooks, plugins and other
 * :ref:`Ansible 1.x to 2.0 porting guide <porting_2.0_guide>`
 * :ref:`Ansible 2.2 to 2.3 porting guide <porting_2.3_guide>`
 * :ref:`Ansible 2.3 to 2.4 porting guide <porting_2.4_guide>`
+* :ref:`Ansible 2.4 to 2.5 porting guide <porting_2.5_guide>`
