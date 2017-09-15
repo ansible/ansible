@@ -918,7 +918,7 @@ class Infoblox(object):
 
         txts = self.get_txt_record(current_name)
         if current_txt:
-            for index, current_txt in entxts:
+            for index, current_txt in txts:
                 if current_txt.get('name') == current_name and current_txt.get('txt') == current_txt:
                     my_entry = index
         else:
@@ -1807,7 +1807,7 @@ def main():
         if not address and not addresses:
             module.fail_json(msg="Must specify `address` xor `addresses`")
         if address:
-            addresses = {address}
+            addresses = (address)
             del address
         addresses = set(addresses)
 
