@@ -168,6 +168,7 @@ class InventoryManager(object):
         return self._inventory.get_groups_dict()
 
     def reconcile_inventory(self):
+        self.clear_caches()
         return self._inventory.reconcile_inventory()
 
     def get_host(self, hostname):
