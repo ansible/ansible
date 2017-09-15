@@ -150,8 +150,7 @@ def load_options_vars(options, version):
                'diff': 'diff_mode',
                'inventory': 'inventory_sources',
                'subset': 'limit',
-               'tags': 'run_tags',
-              }
+               'tags': 'run_tags'}
 
     for attr in ('check', 'diff', 'forks', 'inventory', 'skip_tags', 'subset', 'tags'):
         opt = getattr(options, attr, None)
