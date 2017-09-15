@@ -66,12 +66,18 @@ class CsCloudProvider(CloudProvider):
         if os.path.isfile(self.config_static_path):
             return
 
-        docker = find_executable('docker')
+        docker = find_executable('docker', required=False)
 
         if docker:
             return
 
-        super(CsCloudProvider, self).filter(targets, exclude)
+        skip = 'cloud/%s/' % self.platform
+        skipped = [target.name for target in targets if skip in target.aliases]
+
+        if skipped:
+            exclude.append(skip)
+            display.warning('Excluding tests marked "%s" which require the "docker" command or config (see "%s"): %s'
+                            % (skip.rstrip('/'), self.config_template_path, ', '.join(skipped)))
 
     def setup(self):
         """Setup the cloud resource before delegation and register a cleanup callback."""
