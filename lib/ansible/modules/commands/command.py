@@ -187,11 +187,6 @@ def main():
     endd = datetime.datetime.now()
     delta = endd - startd
 
-    if out is None:
-        out = b''
-    if err is None:
-        err = b''
-
     result = dict(
         cmd=args,
         stdout=out.rstrip(b"\r\n"),
