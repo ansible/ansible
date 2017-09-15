@@ -698,7 +698,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         args['account']             = self.get_account(key='name')
         args['domainid']            = self.get_domain(key='id')
         args['projectid']           = self.get_project(key='id')
-        args['diskofferingid']      = self.get_disk_offering_id()
+        args['diskofferingid']      = self.get_disk_offering(key='id')
         args['networkids']          = networkids
         args['iptonetworklist']     = self.get_iptonetwork_mappings()
         args['userdata']            = self.get_user_data()
