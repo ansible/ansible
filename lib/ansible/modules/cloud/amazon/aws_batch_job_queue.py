@@ -221,7 +221,7 @@ def get_current_job_queue(module, connection):
             jobQueues=[module.params['job_queue_name']]
         )
         return environments['jobQueues'][0] if len(environments['jobQueues']) > 0 else None
-    except botocore.exceptions.ClientError:
+    except ClientError:
         return None
 
 
