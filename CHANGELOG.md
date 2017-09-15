@@ -48,6 +48,8 @@ Ansible Changes By Release
 * Fix an encoding issue with secret (password) vars_prompts
 * Fix for Windows become to show the stdout and stderr strings on a failure 
 * Fix the issue SSL verification can not be disabled for Tower modules
+* Use safe_load instead on load to read a yaml document
+
 
 <a id="2.3.2"></a>
 
