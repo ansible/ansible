@@ -27,7 +27,7 @@ options:
         default: list
         choices: ['list', 'describe', 'alter', 'create', 'delete']
         description:
-            - Specifies the action we want to perform.
+            - Specifies the action you want to perform.
     topic:
         description:
             - The topic to be create, alter or describe (single).
@@ -38,7 +38,8 @@ options:
     zookeeper:
         required: True
         description:
-            - The connection string for the zookeeper connection.
+            - The connection string for the ZooKeeper connection.
+              Multiple connection strings are allowed.
     replication_factor:
         description:
             -  The replication factor for each partition in the topic being created.
@@ -46,12 +47,8 @@ options:
         description:
             - The number of partitions for the topic being created or altered.
     executable:
-        default: '/usr/bin/kafka-topics'
         description:
-            - Kafka executable path.
-    jaas_auth_file:
-        description:
-            - JAAS authentification path file.
+            - Kafka executable path if not in your current PATH or if it name differs.
 '''
 
 EXAMPLES = '''
@@ -77,8 +74,23 @@ kafka_topics:
     compression.type: 'gzip'
   partitions: 2
   replication_factor: 1
-  executable: '/opt/kafka/kafka_2.11-0.10.1.1/bin/kafka-topics.sh'
-  jaas_auth_file: '/opt/kafka/sec/jaas-kafka.conf'
+  zookeeper:
+    - zookeeper1.foo.bar:2181
+    - zookeeper2.foo.bar:2181
+
+# If you have JAAS authentification,
+# use environment variable
+name: 'Create topic foobar'
+environment:
+  KAFKA_OPTS: '-Djava.security.auth.login.config=/etc/kafka/jaas.conf'
+kafka_topics:
+  action: 'create'
+  topic: 'foobar'
+  config:
+    cleanup.policy: 'delete'
+    compression.type: 'gzip'
+  partitions: 2
+  replication_factor: 1
   zookeeper:
     - zookeeper1.foo.bar:2181
     - zookeeper2.foo.bar:2181
@@ -96,7 +108,6 @@ kafka_topics:
   action: 'alter'
   topic: 'foobar'
   partitions: 3
-  jaas_auth_file: '/opt/kafka/sec/jaas-kafka.conf'
   zookeeper:
     - zookeeper1.foo.bar:2181
     - zookeeper2.foo.bar:2181
@@ -105,7 +116,6 @@ name: 'delete topic foobar'
 kafka_topics:
   action: 'delete'
   topic: 'foobar'
-  jaas_auth_file: '/opt/kafka/sec/jaas-kafka.conf'
   zookeeper:
     - zookeeper1.foo.bar:2181
     - zookeeper2.foo.bar:2181
@@ -114,27 +124,21 @@ kafka_topics:
 RETURN = '''
 stdout:
   description: Output from stdout of kafka-topics command after execution of given command.
-  returned: success
+  returned: success or changed
   type: string
   sample: "Created topic raclette"
 
-stdout_lines:
-  description: kafka-topics command execution return value
-  returned: always
-  type: list
-  sample: ["Created topic raclette"]
-
 stderr:
-  description: kafka-topics command execution return value
+  description: kafka-topics command execution stderr.
   returned: failed
   type: string
   sample: "[2017-07-11 14:46:04,092] ERROR org.apache.kafka.common.errors.InvalidTopicException: topic name [foobar] is illegal"
 
-rc:
-  description: kafka-topics command execution return value
+failed:
+  description: kafka-topics command execution return bool.
   returned: always
-  type: int
-  sample: 0
+  type: bool
+  sample: False
 '''
 
 import re
@@ -152,63 +156,42 @@ class KafkaTopics(object):
 
     def __init__(self, module):
 
-        self.config = module.params['config']
+        if module.params['config']:
+            self.config = ''.join(' --config %s=%r' % (key, value) for (key, value)
+                                  in module.params['config'].items())
+        else:
+            self.config = ''
+
         self.partitions = module.params['partitions']
         self.replication_factor = module.params['replication_factor']
         self.topic = module.params['topic']
         self.zookeeper = ','.join(module.params['zookeeper'])
+        self.action = module.params['action']
 
-        self.executable = module.params['executable']
-
-        self.jaas_auth_file = None
-        if module.params['jaas_auth_file']:
-            self.jaas_auth_file = module.params['jaas_auth_file']
-            self.kafka_env_opts = '-Djava.security.auth.login.config=' + \
-                self.jaas_auth_file
+        self.executable = module.params['executable'] or module.get_bin_path('kafka-topics', True)
 
         self.module = module
 
     def get(self):
-        ''' List kafka topics. '''
+        ''' List or Describe kafka topics. '''
 
         if self.topic:
-            # list supports multiple topics
-            topics = ','.join(self.topic)
-            cmd = '%s --list --zookeeper %s --topic %s' % (self.executable,
-                                                           self.zookeeper,
-                                                           topics)
+            cmd = '%s --%s --zookeeper %s --topic %s' % (self.executable,
+                                                         self.action,
+                                                         self.zookeeper,
+                                                         ','.join(self.topic))
         else:
-            cmd = "%s --list --zookeeper %s" % (self.executable,
-                                                self.zookeeper)
+            cmd = "%s --%s --zookeeper %s" % (self.executable,
+                                              self.action,
+                                              self.zookeeper)
 
-        try:
-            return self.module.run_command(cmd)
-
-        except KafkaError as exc:
-            self.module.fail_json(msg=to_native(exc))
-
-    def describe(self):
-        ''' Describe kafka topics. '''
-
-        if self.topic:
-            # describe supports multiple topics
-            cmd = '%s --describe --zookeeper %s --topic %s' % (self.executable,
-                                                               self.zookeeper,
-                                                               ','.join(self.topic))
-        else:
-            cmd = '%s --describe --zookeeper %s' % (self.executable,
-                                                    self.zookeeper)
-
-        try:
-            return self.module.run_command(cmd)
-
-        except KafkaError as exc:
-            self.module.fail_json(msg=to_native(exc))
+        return self.module.run_command(cmd)
 
     def alter(self):
         ''' alter kafka topics. '''
 
-        cmd_get_partitions = self.describe()
+        self.action = 'describe'
+        cmd_get_partitions = self.get()
         # For a specific topic, we want the PartitionCount value.
         get_partitions = (cmd_get_partitions[1]
                           .splitlines()[0]
@@ -217,51 +200,40 @@ class KafkaTopics(object):
                           )
         # alter supports only 1 topic
         if len(self.topic) > 1:
-                msg = 'alter action supports only 1 topic'
-                return self.module.fail_json(msg)
+            msg = 'alter action supports only 1 topic, %s provided' % (len(self.topic))
+            return self.module.fail_json(msg)
         else:
             cmd = ('%s --alter --if-exists --zookeeper %s '
                    '--partitions %s --topic %s') % (self.executable,
                                                     self.zookeeper,
                                                     self.partitions,
-                                                    ''.join(self.topic))
+                                                    self.topic[0])
 
-        try:
-            env = ''
-            if self.jaas_auth_file:
-                env = {'KAFKA_OPTS': self.kafka_env_opts}
-
-            if int(get_partitions) < int(self.partitions):
-                return self.module.run_command(cmd, environ_update=env)
-            else:
-                err_msg = """
-                The number of partitions for a topic can only be increased.
-                """
-                return self.module.fail_json(msg=to_native(err_msg))
-
-        except KafkaError as exc:
-            self.module.fail_json(msg=to_native(exc))
+        if int(get_partitions) < int(self.partitions):
+            return self.module.run_command(cmd)
+        else:
+            err_msg = """
+            The number of partitions for a topic can only be increased.
+            """
+            return self.module.fail_json(msg=to_native(err_msg))
 
     def create(self):
         ''' Create new kafka topic. '''
 
         # create action supports only 1 topic
         if len(self.topic) > 1:
-                msg = 'alter action supports only 1 topic'
+                msg = 'create action supports only 1 topic, %s provided' % (len(self.topic))
                 return self.module.fail_json(msg)
         else:
             if self.config:
-                config = ' --config '.join(
-                    "%s=%r" % (key, value) for (key, value) in self.config.items())
-
                 cmd = ('%s --create --if-not-exists --zookeeper %s '
                        '--replication-factor %s --partitions %s '
-                       '--topic %s --config %s') % (self.executable,
-                                                    self.zookeeper,
-                                                    self.replication_factor,
-                                                    self.partitions,
-                                                    ''.join(self.topic),
-                                                    config)
+                       '--topic %s %s') % (self.executable,
+                                           self.zookeeper,
+                                           self.replication_factor,
+                                           self.partitions,
+                                           ''.join(self.topic),
+                                           self.config)
 
             else:
                 cmd = ('%s --create --if-not-exists --zookeeper %s '
@@ -272,38 +244,22 @@ class KafkaTopics(object):
                                         self.partitions,
                                         ''.join(self.topic))
 
-        try:
-            env = ''
-            if self.jaas_auth_file:
-                env = {'KAFKA_OPTS': self.kafka_env_opts}
-
-            return self.module.run_command(cmd, environ_update=env)
-
-        except KafkaError as exc:
-            self.module.fail_json(msg=to_native(exc))
+        return self.module.run_command(cmd)
 
     def delete(self):
         ''' Delete a kafka topic. '''
 
-        # create action supports only 1 topic
+        # delete action supports only 1 topic
         if len(self.topic) > 1:
-                msg = 'alter action supports only 1 topic'
-                return self.module.fail_json(msg)
+            msg = 'delete action supports only 1 topic, %s provided' % (len(self.topic))
+            return self.module.fail_json(msg)
         else:
             cmd = ('%s --delete --zookeeper %s '
                    '--topic %s --if-exists') % (self.executable,
                                                 self.zookeeper,
-                                                ''.join(self.topic))
+                                                self.topic[0])
 
-        try:
-            env = ''
-            if self.jaas_auth_file:
-                env = {'KAFKA_OPTS': self.kafka_env_opts}
-
-            return self.module.run_command(cmd, environ_update=env)
-
-        except KafkaError as exc:
-            self.module.fail_json(msg=to_native(exc))
+        return self.module.run_command(cmd)
 
 
 def main():
@@ -319,7 +275,6 @@ def main():
         partitions=dict(type='int'),
         executable=dict(default='/usr/bin/kafka-topics',
                         type='path'),
-        jaas_auth_file=dict(type='path'),
     )
 
     required_if = [
@@ -333,47 +288,46 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         required_if=required_if,
-        supports_check_mode=True,
+        supports_check_mode=False,
     )
 
     changed = False
+    failed = False
 
-    if not os.path.isfile(module.params['executable']):
-        module.fail_json(msg='%s not found.' % (module.params['executable']))
-
-    if module.params['jaas_auth_file']:
-        if not os.path.isfile(module.params['jaas_auth_file']):
-            module.fail_json(msg='%s not found.' % (module.params['jaas_auth_file']))
+    if module.params['executable']:
+        if not os.path.isfile(module.params['executable']):
+            module.fail_json(msg='%s not found.' % (module.params['executable']))
 
     try:
         kt = KafkaTopics(module)
 
         action = module.params['action']
-        if not module.check_mode:
-            if module.params['action'] == 'list':
-                (rc, out, err) = kt.get()
-            elif module.params['action'] == 'describe':
-                (rc, out, err) = kt.describe()
-            elif module.params['action'] == 'alter':
-                (rc, out, err) = kt.alter()
-                if re.search('Adding partitions succeeded!', out):
-                    changed = True
-            elif module.params['action'] == 'create':
-                (rc, out, err) = kt.create()
-                if re.search('^Created topic', out):
-                    changed = True
-            elif module.params['action'] == 'delete':
-                (rc, out, err) = kt.delete()
-                if re.search('^Topic [a-zA-Z0-9_\-]+ is marked for deletion.', out):
-                    changed = True
+        if module.params['action'] == 'list' or module.params['action'] == 'describe':
+            (rc, out, err) = kt.get()
+        elif module.params['action'] == 'alter':
+            (rc, out, err) = kt.alter()
+            if re.search('Adding partitions succeeded!', out):
+                changed = True
+        elif module.params['action'] == 'create':
+            (rc, out, err) = kt.create()
+            if re.search('^Created topic', out):
+                changed = True
+            if not out:
+                out = 'Nothing has changed.'
+        elif module.params['action'] == 'delete':
+            (rc, out, err) = kt.delete()
+            if re.search('^Topic [a-zA-Z0-9_\-]+ is marked for deletion.', out):
+                changed = True
 
-            result = {
-                'stdout': out,
-                'stdout_lines': out.splitlines(),
-                'stderr': err,
-                'rc': rc,
-                'changed': changed,
-            }
+        if rc != 0:
+            failed = True
+
+        result = {
+            'stdout': out,
+            'stderr': err,
+            'failed': failed,
+            'changed': changed,
+        }
 
     except KafkaError as exc:
         module.fail_json(msg=to_native(exc))
