@@ -9,79 +9,81 @@ from __future__ import absolute_import, division, print_function
 
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.1',
+    'status': ['preview'],
+    'supported_by': 'community'
+}
 
 DOCUMENTATION = '''
 ---
-author: "Kairo Araujo (@kairoaraujo)"
+author: Kairo Araujo (@kairoaraujo)
 module: aix_lvg
-short_description: Configure LVM volume groups for AIX
+short_description: Configure LVM volume groups for AIX.
 description:
   - This module creates, removes or resize volume groups on AIX LVM.
-version_added: 2.5
+version_added: "2.5"
 options:
   vg:
     description:
-    - Volume Group name
+      - Volume group name.
     required: true
   pvs:
     description:
-    - List of comma-separated devices to use as physical devices in this volume
-      group. Required when creating or extending ('present' state) the volume
-      group. If not informed reducing ('absent' state) the volume group will be
-      removed.
+      - List of comma-separated devices to use as physical devices in this
+        volume group. Required when creating or extending (C(present) state)
+        the volume group. If not informed reducing (C(absent) state) the volume
+        group will be removed.
     required: false
   pp_size:
     description:
-    - Size of the physical partition in megabytes.
+      - Size of the physical partition in megabytes.
     choices: [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
     default: 32
     required: false
   vg_type:
     description:
-    - Volume Group type.
-    choices: ["normal", "big", "scalable"]
+      - Volume group type.
+    choices: [normal, big, scalable]
     default: normal
     required: false
   state:
     description:
-    - Control if the volume group exists.
-    choices: [ "present", "absent" ]
+      - Control if the volume group exists.
+    choices: [ present, absent ]
     default: present
     required: false
   force:
     description:
-    - Forces volume group creation
-    choices: ['yes', 'no']
-    default: no
+      - Forces volume group creation.
+    choices: ["yes", "no"]
+    default: "no"
 notes:
-  - AIX will permit remove VG only if all LV/Filesystems aren't busy
-  - module does not modify PP size for already present volume group
+  - AIX will permit remove VG only if all LV/Filesystems aren't busy.
+  - Module does not modify PP size for already present volume group.
 '''
 
 EXAMPLES = '''
-# Create a volume group datavg
-aix_lvg:
+- name: Create a volume group datavg
+  aix_lvg:
     vg: datavg
     pp_size: 128
-    vg_type: 'scalable'
+    vg_type: scalable
     state: present
 
-# Removing a volume group datavg
-aix_lvg:
+- name: Removing a volume group datavg
+  aix_lvg:
     vg: datavg
     state: absent
 
-# Extending rootvg
-aix_lvg:
+- name: Extending rootvg
+  aix_lvg:
     vg: rootvg
     pvs: hdisk1
     state: present
 
-# Reducing rootvg
-aix_lvg:
+- name: Reducing rootvg
+  aix_lvg:
     vg: rootvg
     pvs: hdisk1
     state: absent
@@ -89,10 +91,10 @@ aix_lvg:
 
 RETURN = '''
 changed:
-    description: Return changed for aix_lvg actions as true or false.
-    returned: always
-    type: boolean
-    version_added: 2.5
+  description: Return changed for aix_lvg actions as true or false.
+  returned: always
+  type: boolean
+  version_added: 2.5
 msg:
     description: Return message regarding the action.
     returned: always
@@ -119,8 +121,8 @@ force_mode = {
 
 def _validate_pv(module, pvname):
     """
-    function to validate if the Physical Volume is not already in use by
-    another Volume Group or Oracle ASM
+    Function to validate if the physical volume (PV) is not already in use by
+    another volume group or Oracle ASM
 
     :param module: Ansible module argument spec
     :param pvname: Physical Volume name
@@ -216,11 +218,11 @@ def reduce_vg(module, vg, pvs):
         for line in current_pvs.splitlines()[2:]:
                 pvs_to_remove.append(line.split()[0])
 
-        reduce_msg = ("Volume group %s removed" % vg)
+        reduce_msg = "Volume group %s removed" % vg
 
     else:
         pvs_to_remove = pvs
-        reduce_msg = ("PV(s) %s removed from Volume Group %s" %
+        reduce_msg = ("PV(s) %s removed from Volume group %s" %
                       (' '.join(pvs_to_remove), vg))
 
     if len(pvs_to_remove) > 0:
@@ -241,12 +243,12 @@ def main():
         argument_spec=dict(
             vg=dict(required=True),
             pvs=dict(type="list", default=None),
-            pp_size=dict(choices=["1", "2", "4", "8", "16", "32", "64", "128",
-                                  "256", "512", "1024"], default="32"),
+            pp_size=dict(type="int", choices=[1, 2, 4, 8, 16, 32, 64, 128, 256,
+                                              512, 1024], default=32),
             vg_type=dict(choices=["normal", "big", "scalable"],
                          default="normal"),
             state=dict(choices=["absent", "present"], default="present"),
-            force=dict(type=bool, default=False)
+            force=dict(type="bool", default=False)
         ),
         supports_check_mode=True,
     )
