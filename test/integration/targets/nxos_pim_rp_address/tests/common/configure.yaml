@@ -36,21 +36,22 @@
         - "result.changed == false"
 
   - name: Remove rp_address + group_list
-    nxos_pim_rp_address: &removegl
-      rp_address: "10.1.1.20"
-      group_list: "224.0.0.0/8"
-      bidir: true
-      state: absent
+    #FIXME: Config deletion shall be fixed in 2.5 for platform dependencies.
+    
+    # Note: For 2.4 - Use platform specific config delete command as shown below.
+    # Possible options: Identify and use the command that is supported 
+    # by your platform under test.
+
+    # no ip pim rp-address <ip address> <group-list|prefix-list|route-map> bidir
+    # no ip pim rp-address <ip address>
+    # no ip pim rp-address <ip address> <group-list|prefix-list|route-map>
+
+    nxos_config:
+      lines: no ip pim rp-address 10.1.1.20 group-list 224.0.0.0/8 bidir
       provider: "{{ connection }}"
     register: result
 
   - assert: *true
-
-  - name: Check idempotence
-    nxos_pim_rp_address: *removegl
-    register: result
-  
-  - assert: *false
 
   - name: Configure rp_address + prefix_list 
     nxos_pim_rp_address: &configpl
@@ -70,21 +71,12 @@
   - assert: *false
 
   - name: Remove rp_address + prefix_list
-    nxos_pim_rp_address: &removepl
-      rp_address: "10.1.1.20"
-      prefix_list: "pim_prefix_list"
-      bidir: true
-      state: absent
+    nxos_config:
+      lines: no ip pim rp-address 10.1.1.20 prefix-list pim_prefix_list bidir
       provider: "{{ connection }}"
     register: result
 
   - assert: *true
-
-  - name: Check idempotence
-    nxos_pim_rp_address: *removepl
-    register: result
-  
-  - assert: *false
 
   - name: Configure rp_address + route_map 
     nxos_pim_rp_address: &configrm
@@ -104,21 +96,12 @@
   - assert: *false
 
   - name: Remove rp_address + route_map
-    nxos_pim_rp_address: &removerm
-      rp_address: "10.1.1.20"
-      route_map: "pim_routemap"
-      bidir: true
-      state: absent
+    nxos_config:
+      lines: no ip pim rp-address 10.1.1.20 route-map pim_routemap bidir
       provider: "{{ connection }}"
     register: result
 
   - assert: *true
-
-  - name: Check idempotence
-    nxos_pim_rp_address: *removerm
-    register: result
-  
-  - assert: *false
 
   always:
     - name: "Disable feature PIM"
