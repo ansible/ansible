@@ -107,6 +107,22 @@
   assert:
     that: "{{_human_bytes_test.failed}}"
 
+
+- block:
+    - name: Get corresponding mountpoint from a given path
+      set_fact:
+        mount_test: "{{'/tmp/test'|getmountfrompath(ansible_mounts)}}"
+
+    - name: Give information about mount_test value
+      debug:
+        var: mount_test
+
+    - name: check size available greater than 0
+      assert:
+        that: mount_test.size_available > 0
+      when: mount_test.size_available is defined
+  when: ansible_mounts is defined
+
 - name: Test extract
   assert:
     that:
