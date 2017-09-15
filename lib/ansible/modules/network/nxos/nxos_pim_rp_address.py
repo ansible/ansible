@@ -33,7 +33,7 @@ description:
 author: Gabriele Gerbino (@GGabriele)
 notes:
   - Tested against NXOSv 7.3.(0)D1(1) on VIRL
-  - C(state=absent) remove the whole rp-address configuration, if existing.
+  - C(state=absent) is currently not supported on all platforms.
 options:
   rp_address:
     description:
