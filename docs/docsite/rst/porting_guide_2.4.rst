@@ -71,7 +71,7 @@ Deprecated
 Inventory argument
 -------------------------
 
-Use of --inventory-file is now deprecated. Use -inventory or -i.
+Use of ``--inventory-file`` is now deprecated. Use ``--inventory`` or ``-i``.
 
 
 Use of multiple tags
@@ -140,11 +140,14 @@ There have been a number of changes to how Networking Modules operate.
 
 Playbooks should still use ``connection: local``.
 
-FIXME Add link to network doc with all the details for Platform Agnostic Modules
+Persistent Connection
+---------------------
 
-In 2.4 we introduced the concept of Declarative Intent Modules. Declarative intent modules are designed to provide playbook designers a set of network modules that perform declarative configuration tasks on network devices.  This includes the ability to declaratively describe a configuration set.  In addition, declarative intent modules will also provide a means for declaratively expressing the intended ephemeral state of configuration resources.
+The configuration variables ``connection_retries`` and ``connect_interval`` which were added in Ansible 2.3 are now deprecated. For Ansible 2.4 and later use ``connection_retry_timeout``.
 
-FIXME Add link to network doc with all the details for Declarative Intent Modules
+To control timeouts use ``command_timeout`` rather than the previous top level ``timeout`` variable under ``[default]``
+
+See :ref:`Ansible Network debug guide <network_debug_troubleshooting>` for more information.
 
 The following changes apply to:
 
