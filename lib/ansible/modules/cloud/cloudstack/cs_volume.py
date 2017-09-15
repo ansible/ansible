@@ -64,6 +64,7 @@ options:
       - Max iops
   min_iops:
     description:
+      - Min iops
   project:
     description:
       - Name of the project the volume to be deployed in.
