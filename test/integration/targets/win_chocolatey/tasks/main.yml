@@ -20,42 +20,42 @@
   win_chocolatey:
     name: sysinternals
     state: present
-  register: install_sysinternals
+  register: install
 
 - name: verify install sysinternals
   assert:
     that:
-    - 'install_sysinternals.changed == true'
+    - 'install.changed == true'
 
 - name: install sysinternals again
   win_chocolatey:
     name: sysinternals
     state: present
-  register: install_sysinternals_again
+  register: install_again
 
 - name: verify install sysinternals again
   assert:
     that:
-    - 'install_sysinternals_again.changed == false'
+    - 'install_again.changed == false'
 
 - name: remove sysinternals
   win_chocolatey:
     name: sysinternals
     state: absent
-  register: remove_sysinternals
+  register: remove
 
 - name: verify remove sysinternals
   assert:
     that:
-    - 'remove_sysinternals.changed == true'
+    - 'remove.changed == true'
 
 - name: remove sysinternals again
   win_chocolatey:
     name: sysinternals
     state: absent
-  register: remove_sysinternals_again
+  register: remove_again
 
 - name: verify remove sysinternals again
   assert:
     that:
-    - 'remove_sysinternals_again.changed == false'
+    - 'remove_again.changed == false'
