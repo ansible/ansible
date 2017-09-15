@@ -56,10 +56,12 @@ options:
     description:
     - RunAs User category the rule applies to.
     choices: ['all']
+    version_added: "2.5"
   runasgroupcategory:
     description:
       - RunAs Group category the rule applies to.
     choices: ['all']
+    version_added: "2.5"
   user:
     description:
     - List of users assigned to the rule.
