@@ -247,7 +247,6 @@ class Infoblox(object):
                 return_model[model] = model_dict.get(model)
         return return_model
 
-
     # ---------------------------------------------------------------------------
     # get_network()
     # ---------------------------------------------------------------------------
@@ -259,30 +258,37 @@ class Infoblox(object):
             - 192.168.1.0/24
         """
         if not network and not filters:
-            self.module.fail_json(msg="You must specify the option 'network' or 'filters'.")
+            self.module.fail_json(
+                msg="You must specify the option 'network' or 'filters'.")
         elif not network and not filters:
-            self.module.fail_json(msg="Specify either 'network' or 'filter', but not both.")
+            self.module.fail_json(
+                msg="Specify either 'network' or 'filter', but not both.")
         elif network:
-            params = {_NETWORK_PROPERTY: network, _NETWORK_VIEW_PROPERTY: self.net_view}
+            params = {_NETWORK_PROPERTY: network,
+                      _NETWORK_VIEW_PROPERTY: self.net_view}
             return self.invoke("get", "network", params=params)
         elif filters:
             list_of_filters = ['network?']
             if not isinstance(filters, list):
-                self.module.fail_json(msg="Specify a list of dicts with keys of 'filter' and 'value'")
+                self.module.fail_json(
+                    msg="Specify a list of dicts with keys of 'filter' and 'value'")
             for current_filter in filters:
                 if not isinstance(current_filter, dict):
-                    self.module.fail_json(msg="Please ensure each element is a dict with 'filter' and 'value' as keys")
+                    self.module.fail_json(
+                        msg="Please ensure each element is a dict with 'filter' and 'value' as keys")
                 elif not current_filter.get('filter') or not current_filter.get('value'):
-                    self.module.fail_json(msg="Please ensure each element is a dict with 'filter' and 'value' as keys")
-                list_of_filters.append(current_filter.get('filter') + '=' + current_filter.get('value'))
+                    self.module.fail_json(
+                        msg="Please ensure each element is a dict with 'filter' and 'value' as keys")
+                list_of_filters.append(current_filter.get(
+                    'filter') + '=' + current_filter.get('value'))
                 list_of_filters.append('&')
             list_of_filters.pop()
             out_filter = "".join(list_of_filters)
-            params = {_NETWORK_PROPERTY: network, _NETWORK_VIEW_PROPERTY: self.net_view}
+            params = {_NETWORK_PROPERTY: network,
+                      _NETWORK_VIEW_PROPERTY: self.net_view}
             return self.invoke("get", out_filter, params=params)
         else:
             self.module.fail_json(msg="Unknown get_network issue.")
-            
 
     # ---------------------------------------------------------------------------
     # get_range()
@@ -315,7 +321,8 @@ class Infoblox(object):
         if not network:
 
             self.module.fail_json(msg="You must specify the option 'network'.")
-        params = {_NETWORK_PROPERTY: network, _NETWORK_VIEW_PROPERTY: self.net_view}
+        params = {_NETWORK_PROPERTY: network,
+                  _NETWORK_VIEW_PROPERTY: self.net_view}
         return self.invoke("get", "ipv6network", params=params)
 
     # ---------------------------------------------------------------------------
@@ -346,7 +353,8 @@ class Infoblox(object):
         if not network_ref:
             self.module.exit_json(
                 msg="Container was not found.")
-        params = {"_function": "next_available_network", "cidr": cidr, "num": 1 }
+        params = {"_function": "next_available_network",
+                  "cidr": cidr, "num": 1}
         #raise Exception([network_ref, params])
         return self.invoke("post", network_ref, ok_codes=(200,), params=params)
 
@@ -426,7 +434,8 @@ class Infoblox(object):
         if object_ref:
             if current_canonical != canonical:
                 msg = 'Canonical name is {} and {} is not the same ' \
-                      'please use update_cname_record'.format(current_canonical, canonical)
+                      'please use update_cname_record'.format(
+                          current_canonical, canonical)
                 self.module.fail_json(msg=msg)
             self.module.exit_json(msg='CNAME Exists')
 
@@ -447,7 +456,8 @@ class Infoblox(object):
         if not isinstance(current, dict):
             self.module.fail_json(msg="The 'current' check is not a dict")
         elif not current.get('cname'):
-            self.module.fail_json(msg="The 'current' dict must contain a 'cname' key")
+            self.module.fail_json(
+                msg="The 'current' dict must contain a 'cname' key")
         else:
             current_cname = current.get('cname')
 
@@ -489,7 +499,8 @@ class Infoblox(object):
         for a_record in a_records:
             if a_record.get(_IPV4_ADDRESS_PROPERTY) == address:
                 key_out = a_record.get('_ref')
-                object_ref = key_out.split(':')[0] + ':' + key_out.split(':')[1]
+                object_ref = key_out.split(
+                    ':')[0] + ':' + key_out.split(':')[1]
                 break
         return object_ref
 
@@ -546,7 +557,8 @@ class Infoblox(object):
         if not isinstance(current, dict):
             self.module.fail_json(msg="The 'current' check is not a dict")
         elif not current.get('name') or not current.get('address'):
-            self.module.fail_json(msg="The 'current' dict must contain a 'name' and 'address' key")
+            self.module.fail_json(
+                msg="The 'current' dict must contain a 'name' and 'address' key")
         else:
             current_name = current.get('name')
             current_address = current.get('address')
@@ -561,15 +573,18 @@ class Infoblox(object):
         for a_record in a_records:
             if a_record.get('name') == current_name:
                 key_out = a_record.get('_ref')
-                object_ref = key_out.split(':')[0] + ':' + key_out.split(':')[1]
+                object_ref = key_out.split(
+                    ':')[0] + ':' + key_out.split(':')[1]
                 break
 
         if not object_ref:
-            msg = "IP {} and ptrdname {} pair was not found.".format(current_ip, current_name)
+            msg = "IP {} and ptrdname {} pair was not found.".format(
+                current_ip, current_name)
             self.module.fail_json(msg=msg)
 
         if object_ref is None:
-            self.module.fail_json(msg="Name {} was not found.".format(current_name))
+            self.module.fail_json(
+                msg="Name {} was not found.".format(current_name))
         if extattrs is not None:
             extattrs = self.add_attr(extattrs)
 
@@ -602,7 +617,8 @@ class Infoblox(object):
         for ptr in ptrs:
             if ptr.get('ptrdname') == name:
                 key_out = ptr.get('_ref')
-                object_ref = key_out.split(':')[0] + ':' + key_out.split(':')[1]
+                object_ref = key_out.split(
+                    ':')[0] + ':' + key_out.split(':')[1]
                 break
         return object_ref
 
@@ -656,9 +672,11 @@ class Infoblox(object):
         Update alias for a ptr record
         """
         if not isinstance(current, dict):
-            self.module.fail_json(msg="The 'current' check is not a dict{}".format(current))
+            self.module.fail_json(
+                msg="The 'current' check is not a dict{}".format(current))
         elif not current.get('name') or not current.get('address'):
-            self.module.fail_json(msg="The 'current' dict must contain a 'address' and 'name' key")
+            self.module.fail_json(
+                msg="The 'current' dict must contain a 'address' and 'name' key")
         else:
             current_name = current.get('name')
             current_address = current.get('address')
@@ -672,11 +690,13 @@ class Infoblox(object):
         for current_ptr in ptrs:
             if current_ptr.get('ptrdname') == current_name:
                 key_out = current_ptr.get('_ref')
-                object_ref = key_out.split(':')[0] + ':' + key_out.split(':')[1]
+                object_ref = key_out.split(
+                    ':')[0] + ':' + key_out.split(':')[1]
                 break
 
         if object_ref is None:
-            self.module.fail_json(msg="IP {} and ptrdname {} pair was not found.".format(current_ip, current_name))
+            self.module.fail_json(msg="IP {} and ptrdname {} pair was not found.".format(
+                current_ip, current_name))
 
         if extattrs is not None:
             extattrs = self.add_attr(extattrs)
@@ -742,7 +762,8 @@ class Infoblox(object):
             self.module.fail_json(msg="The variable 'srv_attr' is not a dict")
         for attr in ['port', 'priority', 'dns_target', 'weight']:
             if not srv_attr.get(attr):
-                self.module.fail_json(msg="The 'srv_attr' dict must contain a '{}' key".format(attr))
+                self.module.fail_json(
+                    msg="The 'srv_attr' dict must contain a '{}' key".format(attr))
 
         object_ref = self.get_srv_object(name)
         if object_ref:
@@ -788,11 +809,13 @@ class Infoblox(object):
         for srv in srvs:
             if srv.get('name') == current_name:
                 key_out = srv.get('_ref')
-                object_ref = key_out.split(':')[0] + ':' + key_out.split(':')[1]
+                object_ref = key_out.split(
+                    ':')[0] + ':' + key_out.split(':')[1]
                 break
 
         if object_ref is None:
-            self.module.fail_json(msg="Name {} was not found.".format(current_name))
+            self.module.fail_json(
+                msg="Name {} was not found.".format(current_name))
 
         if extattrs is not None:
             extattrs = self.add_attr(extattrs)
@@ -873,7 +896,8 @@ class Infoblox(object):
         if not isinstance(current, dict):
             self.module.fail_json(msg="The 'current' check is not a dict")
         elif not current.get('name'):
-            self.module.fail_json(msg="The 'current' dict must contain a 'name' key")
+            self.module.fail_json(
+                msg="The 'current' dict must contain a 'name' key")
         else:
             current_name = current.get('name')
 
@@ -983,7 +1007,8 @@ class Infoblox(object):
         for host in hosts:
             if host.get(_IPV4_ADDRESS_PROPERTY) == address:
                 key_out = host.get('_ref')
-                object_ref = key_out.split(':')[0] + ':' + key_out.split(':')[1]
+                object_ref = key_out.split(
+                    ':')[0] + ':' + key_out.split(':')[1]
                 break
         return object_ref
 
@@ -1009,7 +1034,8 @@ class Infoblox(object):
                 self.module.exit_json(msg='A record Exists')
             object_ref = self.get_host_by_name(host)
             if object_ref:
-                self.module.fail_json(msg='HOST record already exists, please use update')
+                self.module.fail_json(
+                    msg='HOST record already exists, please use update')
         else:
             raise Exception("Function options missing!")
 
@@ -1030,7 +1056,8 @@ class Infoblox(object):
         if not isinstance(current, dict):
             self.module.fail_json(msg="The 'current' check is not a dict")
         elif not current.get('host') or not current.get('address'):
-            self.module.fail_json(msg="The 'current' dict must contain a 'host' and 'address' key")
+            self.module.fail_json(
+                msg="The 'current' dict must contain a 'host' and 'address' key")
         else:
             current_name = current.get('host')
             current_address = current.get('address')
@@ -1284,11 +1311,13 @@ class Infoblox(object):
 
         for delegate in delegate_to:
             if not isinstance(delegate, dict):
-                self.module.fail_json(msg="Each element of delegate_to must be a dict, {} is not.".format(delegate))
+                self.module.fail_json(
+                    msg="Each element of delegate_to must be a dict, {} is not.".format(delegate))
             if delegate.get('name') and delegate.get('address'):
                 pass
             else:
-                msg = "Each element of delegate_to must have a 'name' and 'address' key, which is the only supported method {} ".format(delegate)
+                msg = "Each element of delegate_to must have a 'name' and 'address' key, which is the only supported method {} ".format(
+                    delegate)
                 msg = str(delegate)
                 self.module.fail_json(msg=msg)
 
@@ -1311,7 +1340,8 @@ class Infoblox(object):
         https://ipam.illinois.edu/wapidoc/objects/record.ptr.html
         """
         if not network:
-            self.module.fail_json(msg="You must specify the option 'name' and 'address'.")
+            self.module.fail_json(
+                msg="You must specify the option 'name' and 'address'.")
         if extattrs is not None:
             extattrs = self.add_attr(extattrs)
 
@@ -1350,7 +1380,8 @@ class Infoblox(object):
         https://ipam.illinois.edu/wapidoc/objects/record.ptr.html
         """
         if not network:
-            self.module.fail_json(msg="You must specify the option 'name' and 'address'.")
+            self.module.fail_json(
+                msg="You must specify the option 'name' and 'address'.")
         if extattrs is not None:
             extattrs = self.add_attr(extattrs)
 
@@ -1380,7 +1411,8 @@ class Infoblox(object):
                 break
 
         if object_ref is None:
-            self.module.fail_json(msg="Name {} was not found.".format(current_network))
+            self.module.fail_json(
+                msg="Name {} was not found.".format(current_network))
         if extattrs is not None:
             extattrs = self.add_attr(extattrs)
 
@@ -1420,7 +1452,8 @@ class Infoblox(object):
         Update the extra attribute value
         """
         if not object_ref:
-            self.module.fail_json(msg="You must specify the option 'object_ref''.")
+            self.module.fail_json(
+                msg="You must specify the option 'object_ref''.")
         payload = {"extattrs": {attr_name: {"value": attr_value}}}
         return self.invoke("put", object_ref, json=payload)
 
@@ -1439,11 +1472,13 @@ class Infoblox(object):
         attr = {}
         for item in out_attributes:
             if isinstance(item, dict) and len(item.keys()) > 1:
-                self.module.fail_json(msg="A dict was sent with more then one key/val pair. Please use {key:val } only .")
+                self.module.fail_json(
+                    msg="A dict was sent with more then one key/val pair. Please use {key:val } only .")
             elif len(item.keys()) == 1 and len(item.values()) == 1:
                 attr[item.keys()[0]] = {'value': item.values()[0]}
             else:
-                self.module.fail_json(msg="A dict was sent with more then one key/val pair. Please use {key:val } only .")
+                self.module.fail_json(
+                    msg="A dict was sent with more then one key/val pair. Please use {key:val } only .")
         return attr
 
 
@@ -1476,7 +1511,8 @@ def _is_int(s):
     try:
         return int(s)
     except ValueError:
-        self.module.fail_json(msg="TTL must be an int or be able to convert into an int.")
+        self.module.fail_json(
+            msg="TTL must be an int or be able to convert into an int.")
 
 # ---------------------------------------------------------------------------
 # MAIN
@@ -1536,14 +1572,14 @@ def main():
             extattrs=dict(required=False, default=None, type='raw'),
             ttl=dict(required=False)
         ),
-        #mutually_exclusive=[
+        # mutually_exclusive=[
         #    ["network", "address"],
         #    ["addresses", "address"],
         #    ["host", "cname"]
         #],
-        #required_together=[
+        # required_together=[
         #    ["attr_name", "attr_value"],
-            # ["object_ref","name"]
+        # ["object_ref","name"]
         #],
         supports_check_mode=True,
     )
@@ -1600,10 +1636,11 @@ def main():
             result = infoblox.get_network(None, filters)
             if isinstance(result, list):
                 module.exit_json(result=result)
-            #elif result == []:
+            # elif result == []:
             #    module.exit_json(result=result)
             else:
-                module.exit_json(msg="There was an issue with get_network filters")
+                module.exit_json(
+                    msg="There was an issue with get_network filters")
         else:
             raise Exception(
                 "You must specify the option 'network' or 'address'.")
@@ -1637,7 +1674,7 @@ def main():
             result = infoblox.get_range(start_addr, end_addr)
         else:
             module.exit_json(msg="You must specify the option 'network'.")
-        #return result
+        # return result
         if result:
             network_ref = result[0]["_ref"]
             result = infoblox.get_next_available_ip(network_ref)
@@ -1792,10 +1829,12 @@ def main():
             raise Exception("No network or range start/end address specified")
         if network_ref:
             network_ref = network_ref[0]["_ref"]  # Break ref out of dict
-            result = infoblox.create_host_record(host, address, network_ref, comment, ttl, extattrs)
+            result = infoblox.create_host_record(
+                host, address, network_ref, comment, ttl, extattrs)
         elif address:
             # Fix for when network or range is not needed
-            result = infoblox.create_host_record(host, address, None, comment, ttl, extattrs)
+            result = infoblox.create_host_record(
+                host, address, None, comment, ttl, extattrs)
         else:
             raise Exception("No network/range found for specified parameters")
         if result:
@@ -1897,13 +1936,15 @@ def main():
         else:
             raise Exception()
     elif action == "create_ptr_record":
-        result = infoblox.create_ptr_record(name, address, comment, ttl, extattrs)
+        result = infoblox.create_ptr_record(
+            name, address, comment, ttl, extattrs)
         if result:
             module.exit_json(changed=True, result=result)
         else:
             raise Exception()
     elif action == "update_ptr_record":
-        result = infoblox.update_ptr_record(name, address, current, comment, ttl, extattrs)
+        result = infoblox.update_ptr_record(
+            name, address, current, comment, ttl, extattrs)
         if result:
             module.exit_json(changed=True, result=result)
         else:
@@ -1915,7 +1956,8 @@ def main():
         else:
             raise Exception()
     elif action == "update_cname_record":
-        result = infoblox.update_cname_record(cname, canonical, current, comment, ttl, extattrs)
+        result = infoblox.update_cname_record(
+            cname, canonical, current, comment, ttl, extattrs)
         if result:
             module.exit_json(changed=True, result=result)
         else:
@@ -1933,13 +1975,15 @@ def main():
         else:
             raise Exception()
     elif action == "create_a_record":
-        result = infoblox.create_a_record(name, address, comment, ttl, extattrs)
+        result = infoblox.create_a_record(
+            name, address, comment, ttl, extattrs)
         if result:
             module.exit_json(changed=True, result=result)
         else:
             raise Exception()
     elif action == "update_a_record":
-        result = infoblox.update_a_record(name, address, current, comment, ttl, extattrs)
+        result = infoblox.update_a_record(
+            name, address, current, comment, ttl, extattrs)
         if result:
             module.exit_json(changed=True, result=result)
         else:
@@ -1951,13 +1995,15 @@ def main():
         else:
             raise Exception()
     elif action == "create_srv_record":
-        result = infoblox.create_srv_record(name, srv_attr, comment, ttl, extattrs)
+        result = infoblox.create_srv_record(
+            name, srv_attr, comment, ttl, extattrs)
         if result:
             module.exit_json(changed=True, result=result)
         else:
             raise Exception()
     elif action == "update_srv_record":
-        result = infoblox.update_srv_record(name, srv_attr, current, comment, ttl, extattrs)
+        result = infoblox.update_srv_record(
+            name, srv_attr, current, comment, ttl, extattrs)
         if result:
             module.exit_json(changed=True, result=result)
         else:
@@ -1981,13 +2027,15 @@ def main():
         else:
             raise Exception()
     elif action == "update_txt_record":
-        result = infoblox.update_txt_record(name, txt, current, comment, ttl, extattrs)
+        result = infoblox.update_txt_record(
+            name, txt, current, comment, ttl, extattrs)
         if result:
             module.exit_json(changed=True, result=result)
         else:
             raise Exception()
     elif action == "update_host_record":
-        result = infoblox.update_host_record(host, address, current, comment, ttl, extattrs)
+        result = infoblox.update_host_record(
+            host, address, current, comment, ttl, extattrs)
         if result:
             module.exit_json(changed=True, result=result)
         else:
@@ -2005,13 +2053,15 @@ def main():
         else:
             raise Exception()
     elif action == "create_network_container":
-        result = infoblox.create_network_container(network, comment, ttl, extattrs)
+        result = infoblox.create_network_container(
+            network, comment, ttl, extattrs)
         if result:
             module.exit_json(changed=True, result=result)
         else:
             raise Exception()
     elif action == "update_network_container":
-        result = infoblox.update_network_container(network, comment, ttl, extattrs)
+        result = infoblox.update_network_container(
+            network, comment, ttl, extattrs)
         if result:
             module.exit_json(changed=True, result=result)
         else:
@@ -2041,13 +2091,15 @@ def main():
         else:
             raise Exception()
     elif action == "create_forward_zone":
-        result = infoblox.create_forward_zone(fqdn, name, address, comment, ttl, extattrs)
+        result = infoblox.create_forward_zone(
+            fqdn, name, address, comment, ttl, extattrs)
         if result:
             module.exit_json(changed=True, result=result)
         else:
             raise Exception()
     elif action == "update_forward_zone":
-        result = infoblox.update_forward_zone(fqdn, name, address, comment, ttl, extattrs)
+        result = infoblox.update_forward_zone(
+            fqdn, name, address, comment, ttl, extattrs)
         if result:
             module.exit_json(changed=True, result=result)
         else:
@@ -2059,7 +2111,8 @@ def main():
         else:
             raise Exception()
     elif action == "create_delegated_zone":
-        result = infoblox.create_delegated_zone(fqdn, delegate_to, comment, ttl, extattrs)
+        result = infoblox.create_delegated_zone(
+            fqdn, delegate_to, comment, ttl, extattrs)
         if result:
             module.exit_json(changed=True, result=result)
         else:
