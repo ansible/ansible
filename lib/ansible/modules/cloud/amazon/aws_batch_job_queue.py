@@ -14,21 +14,20 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = '''
 ---
-module: batch_job_queue
+module: aws_batch_job_queue
 short_description: Manage AWS Batch Job Queues
 description:
     - This module allows the management of AWS Batch Job Queues.
       It is idempotent and supports "Check" mode.  Use module M(batch_compute_environment) to manage the compute
       environment, M(batch_job_queue) to manage job queues, M(batch_job_definition) to manage job definitions.
 
-version_added: "2.4"
+version_added: "2.5"
 
 author: Jon Meran (@jonmer85)
 options:
@@ -98,15 +97,34 @@ EXAMPLES = '''
 
 RETURN = '''
 ---
-batch_job_queue_action:
-    description: describes what action was taken
-    returned: success
-    type: string
+output:
+  description: "returns what action was taken, whether something was changed, invocation and response"
+  returned: always
+  sample:
+    batch_job_queue_action: updated
+    changed: false
+    response:
+      job_queue_arn: "arn:aws:batch:...."
+      job_queue_name: <name>
+      priority: 1
+      state: DISABLED
+      status: UPDATING
+      status_reason: "JobQueue Healthy"
+  type: dict
 '''
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn, HAS_BOTO3
-from botocore.exceptions import ClientError, ParamValidationError, MissingParametersError
+from ansible.module_utils.ec2 import snake_dict_to_camel_dict
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict
+
+try:
+    from botocore.exceptions import ClientError, ParamValidationError, MissingParametersError
+    import re
+
+    HAS_BOTOCORE = True
+except ImportError:
+    HAS_BOTOCORE = False
 
 
 # ---------------------------------------------------------------------------------------------------
@@ -176,14 +194,8 @@ def set_api_params(module, module_params):
     :param module_params:
     :return:
     """
-
-    api_params = dict()
-
-    for param in module_params:
-        module_param = module.params.get(param, None)
-        if module_param is not None:
-            api_params[cc(param)] = module_param
-    return api_params
+    api_params = dict((k, v) for k, v in dict(module.params).items() if k in module_params and v is not None)
+    return snake_dict_to_camel_dict(api_params)
 
 
 def validate_params(module, aws):
@@ -264,7 +276,7 @@ def remove_job_queue(module, aws):
     changed = False
 
     # set API parameters
-    api_params = {'job_queue': module.params['job_queue_name']}
+    api_params = {'jobQueue': module.params['job_queue_name']}
 
     try:
         if not module.check_mode:
@@ -276,7 +288,6 @@ def remove_job_queue(module, aws):
 
 
 def manage_state(module, aws):
-
     changed = False
     current_state = 'absent'
     state = module.params['state']
@@ -284,6 +295,7 @@ def manage_state(module, aws):
     job_queue_name = module.params['job_queue_name']
     priority = module.params['priority']
     action_taken = 'none'
+    response = None
 
     check_mode = module.check_mode
 
@@ -334,7 +346,7 @@ def manage_state(module, aws):
             # remove the Job Queue
             changed = remove_job_queue(module, aws)
             action_taken = 'deleted'
-    return dict(changed=changed, ansible_facts=dict(batch_job_queue_action=action_taken), response=response)
+    return dict(changed=changed, batch_job_queue_action=action_taken, response=response)
 
 
 # ---------------------------------------------------------------------------------------------------
@@ -347,29 +359,31 @@ def main():
     """
     Main entry point.
 
-    :return dict: ansible facts
+    :return dict: changed, batch_job_queue_action, response
     """
 
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
             state=dict(required=False, default='present', choices=['present', 'absent']),
-            job_queue_name=dict(required=True, default=None),
+            job_queue_name=dict(required=True),
             job_queue_state=dict(required=False, default='ENABLED', choices=['ENABLED', 'DISABLED']),
-            priority=dict(type='int', required=True, default=None),
-            compute_environment_order=dict(type='list', required=True, default=None)
+            priority=dict(type='int', required=True),
+            compute_environment_order=dict(type='list', required=True),
+            region=dict(required=True)
         )
     )
 
     module = AnsibleModule(
-        argument_spec=argument_spec,
-        supports_check_mode=True,
-        required_together=[]
+        argument_spec=argument_spec
     )
 
     # validate dependencies
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 is required for this module.')
+
+    if not HAS_BOTOCORE:
+        module.fail_json(msg='botocore and re is required for this module.')
 
     aws = AWSConnection(module, ['batch'])
 
@@ -377,7 +391,7 @@ def main():
 
     results = manage_state(module, aws)
 
-    module.exit_json(**results)
+    module.exit_json(**camel_dict_to_snake_dict(results))
 
 
 if __name__ == '__main__':
