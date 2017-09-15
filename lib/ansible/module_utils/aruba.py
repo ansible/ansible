@@ -45,12 +45,12 @@ aruba_argument_spec = {
 }
 
 aruba_top_spec = {
-    'host': dict(removed_in_version=2.3),
-    'port': dict(removed_in_version=2.3, type='int'),
-    'username': dict(removed_in_version=2.3),
-    'password': dict(removed_in_version=2.3, no_log=True),
-    'ssh_keyfile': dict(removed_in_version=2.3, type='path'),
-    'timeout': dict(removed_in_version=2.3, type='int'),
+    'host': dict(removed_in_version=2.9),
+    'port': dict(removed_in_version=2.9, type='int'),
+    'username': dict(removed_in_version=2.9),
+    'password': dict(removed_in_version=2.9, no_log=True),
+    'ssh_keyfile': dict(removed_in_version=2.9, type='path'),
+    'timeout': dict(removed_in_version=2.9, type='int'),
 }
 
 aruba_argument_spec.update(aruba_top_spec)

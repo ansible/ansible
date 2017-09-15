@@ -61,20 +61,20 @@ ce_provider_spec = {
     'use_ssl': dict(type='bool'),
     'validate_certs': dict(type='bool'),
     'timeout': dict(type='int'),
-    'transport': dict(choices=['cli']),
+    'transport': dict(default='cli', choices=['cli']),
 }
 ce_argument_spec = {
     'provider': dict(type='dict', options=ce_provider_spec),
 }
 ce_top_spec = {
-    'host': dict(removed_in_version=2.3),
-    'port': dict(removed_in_version=2.3, type='int'),
-    'username': dict(removed_in_version=2.3),
-    'password': dict(removed_in_version=2.3, no_log=True),
-    'use_ssl': dict(removed_in_version=2.3, type='bool'),
-    'validate_certs': dict(removed_in_version=2.3, type='bool'),
-    'timeout': dict(removed_in_version=2.3, type='int'),
-    'transport': dict(choices=['cli']),
+    'host': dict(removed_in_version=2.9),
+    'port': dict(removed_in_version=2.9, type='int'),
+    'username': dict(removed_in_version=2.9),
+    'password': dict(removed_in_version=2.9, no_log=True),
+    'use_ssl': dict(removed_in_version=2.9, type='bool'),
+    'validate_certs': dict(removed_in_version=2.9, type='bool'),
+    'timeout': dict(removed_in_version=2.9, type='int'),
+    'transport': dict(removed_in_version=2.9, choices=['cli']),
 }
 ce_argument_spec.update(ce_top_spec)
 
