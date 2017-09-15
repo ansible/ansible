@@ -36,7 +36,7 @@
       - "'warnings' not in become"
 
 - name: use command to execute tar
-  command: tar -h
+  command: tar --help
   register: tar
 
 - name: assert tar warning was reported
