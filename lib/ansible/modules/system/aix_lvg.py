@@ -263,7 +263,7 @@ def main():
     if state == 'present':
 
         if not pvs:
-            module.fail_json(msg="pvs is required to state 'present' ")
+            module.fail_json(msg="pvs is required to state 'present'")
 
         else:
             create_extend_vg(module, vg, pvs, pp_size, vg_type, force)
