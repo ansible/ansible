@@ -11,7 +11,7 @@ def set_module_args(args):
     args = json.dumps({'ANSIBLE_MODULE_ARGS': args})
     basic._ANSIBLE_ARGS = to_bytes(args)
 
-    
+
 class AnsibleExitJson(Exception):
     pass
 
@@ -29,10 +29,10 @@ def exit_json(*args, **kwargs):
 def fail_json(*args, **kwargs):
     kwargs['failed'] = True
     raise AnsibleFailJson(kwargs)
-    
+
 
 class TestKafka(unittest.TestCase):
-    
+
     def setUp(self):
         self.mock_exit_fail = patch.multiple(basic.AnsibleModule,
                                              exit_json=exit_json,
@@ -51,7 +51,10 @@ class TestKafka(unittest.TestCase):
 
         with patch.object(basic.AnsibleModule, 'run_command') as mock_run_command:
             stdout = "__consumer_offsets\\\\njambon\\\\nfromage\\\\ntartiflette\\\\n"
-            stderr = "[2017-09-15 15:33:35,307] ERROR org.apache.kafka.common.errors.InvalidTopicException: topic name tes@@#(23 is illegal, contains a character other than ASCII alphanumerics, '.', '_' and '-'\\\\n (kafka.admin.TopicCommand$)\\\\n"
+            stderr = "[2017-09-15 15:33:35,307] " + \
+                "ERROR org.apache.kafka.common.errors.InvalidTopicException: " + \
+                "topic name tes@@#(23 is illegal, contains a character other " + \
+                "than ASCII alphanumerics, '.', '_' and '-'\\\\n (kafka.admin.TopicCommand$)\\\\n"
             mock_run_command.return_value = 0, stdout, stderr  # successful execution
 
             with self.assertRaises(AnsibleExitJson) as result:
