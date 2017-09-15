@@ -16,6 +16,69 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+- name: use command to execute sudo
+  command: sudo -h
+  register: become
+
+- name: assert become warning was reported
+  assert:
+    that:
+      - "become.warnings | length() == 1"
+      - "'Consider using' in become.warnings[0]"
+
+- name: use command to execute sudo without warnings
+  command: sudo -h warn=no
+  register: become
+
+- name: assert become warning was not reported
+  assert:
+    that:
+      - "'warnings' not in become"
+
+- name: use command to execute tar
+  command: tar -h
+  register: tar
+
+- name: assert tar warning was reported
+  assert:
+    that:
+      - "tar.warnings | length() == 1"
+      - "'Consider using unarchive module rather than running tar' in tar.warnings[0]"
+
+- name: use command to execute chown
+  command: chown -h
+  register: chown
+  ignore_errors: true
+
+- name: assert chown warning was reported
+  assert:
+    that:
+      - "chown.warnings | length() == 1"
+      - "'Consider using file module with owner rather than running chown' in chown.warnings[0]"
+
+- name: use command with unsupported executable arg
+  command: ls /dev/null executable=/bogus
+  register: executable
+
+- name: assert executable warning was reported
+  assert:
+    that:
+      - "executable.stdout == '/dev/null'"
+      - "executable.warnings | length() == 1"
+      - "'no longer supported' in executable.warnings[0]"
+
+- name: use command with no command
+  command: chdir=/
+  register: no_command
+  ignore_errors: true
+
+- name: assert executable fails with no command
+  assert:
+    that:
+      - "no_command.failed == true"
+      - "no_command.msg == 'no command given'"
+      - "no_command.rc == 256"
+
 - set_fact: output_dir_test={{output_dir}}/test_command_shell
 
 - name: make sure our testing sub-directory does not exist
