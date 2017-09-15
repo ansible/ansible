@@ -92,7 +92,7 @@ Modules
 
 Major changes in popular modules are detailed here
 
-* The ``win_shell`` and ``win_command`` modules now properly preserve quoted arguments in the command-line. Tasks that attempted to work around the issue by adding extra quotes/escaping may need to be reworked to remove the superfluous escaping. See https://github.com/ansible/ansible/issues/23019 for additional detail.
+* The :ref:`win_shell <win_shell>` and :ref:`win_command <win_command>` modules now properly preserve quoted arguments in the command-line. Tasks that attempted to work around the issue by adding extra quotes/escaping may need to be reworked to remove the superfluous escaping. See `Issue 23019 <https://github.com/ansible/ansible/issues/23019>`_ for additional detail.
 
 Modules removed
 ---------------
@@ -106,14 +106,14 @@ Deprecation notices
 
 The following modules will be removed in Ansible 2.8. Please update update your playbooks accordingly.
 
-* :ref:`fixme <fixme>`
-* :ref:`win_msi <win_msi>` use :ref:`win_package <win_package>` instead
+* :ref:`azure <azure>`, use :ref:`azure_rm_virtualmachine <azure_rm_virtualmachine>`, which uses the new Resource Manager SDK.
+* :ref:`win_msi <win_msi>`, use :ref:`win_package <win_package>` instead
 
 Noteworthy module changes
 -------------------------
 
-* The ``win_get_url`` module has the dictionary win_get_url in its results deprecated, its content is now also available directly in the resulting output, like other modules. This dictionary will be removed in Ansible 2.8.
-* The ``win_unzip`` module no longer includes the dictionary win_unzup in its results; the contents are now included directly in the resulting output, like other modules.
+* The :ref:`win_get_url <win_get_url>`  module has the dictionary ``win_get_url`` in its results deprecated, its content is now also available directly in the resulting output, like other modules. This dictionary will be removed in Ansible 2.8.
+* The :ref:`win_unzip <win_unzip>` module no longer includes the dictionary ``win_unzip`` in its results; the contents are now included directly in the resulting output, like other modules.
 
 
 Plugins
@@ -139,36 +139,6 @@ Networking
 There have been a number of changes to how Networking Modules operate.
 
 Playbooks should still use ``connection: local``.
-
-In 2.4 we've introduced the concept of Minimum Viable Platform Agnostic Modules. These modules are implemented as an abstraction such that they can be used to target multiple network operating systems. These include modules for interface, layer2, layer3, protocol, routing, and system. As an example:
-
-.. code-block:: yaml
-    
-       - name: run show version on remote devices
-         net_command:
-           commands: show version
-       - name: run show version and check to see if output contains Network vendor name
-         net_command:
-           commands: show version
-           wait_for: result[0] contains Network vendor name
-       - name: run multiple commands on remote nodes
-         net_command:
-           commands:
-             - show version
-             - show interfaces
-       - name: run multiple commands and evaluate the output
-         net_command:
-           commands:
-             - show version
-             - show interfaces
-           wait_for:
-             - result[0] contains Network vendor name
-             - result[1] contains Loopback0
-       - name: run commands and specify the output format
-         net_command:
-           commands:
-             - command: show version
-               output: json
 
 FIXME Add link to network doc with all the details for Platform Agnostic Modules
 
