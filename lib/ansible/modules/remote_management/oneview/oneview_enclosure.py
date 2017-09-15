@@ -283,18 +283,18 @@ class EnclosureModule(OneViewModuleBase):
     MSG_BAY_NOT_FOUND = 'Bay not found.'
     MSG_MANAGER_BAY_UID_ALREADY_OFF = 'The UID for the Synergy Frame Link Module is already Off.'
     MSG_MANAGER_BAY_UID_OFF = 'UID for the Synergy Frame Link Module set to Off successfully.'
-    MSG_MANAGER_BAY_POWER_STATE_E_FUSED = 'E-Fuse the Synergy Frame Link Module bay in the path.'
-    MSG_MANAGER_BAY_POWER_STATE_RESET = 'Reset the Synergy Frame Link Module bay in the path.'
-    MSG_APPLIANCE_BAY_POWER_STATE_E_FUSED = 'E-Fuse the appliance bay in the path.'
-    MSG_DEVICE_BAY_POWER_STATE_E_FUSED = 'E-Fuse the device bay in the path.'
-    MSG_DEVICE_BAY_POWER_STATE_RESET = 'Reset the device bay in the path.'
+    MSG_MANAGER_BAY_POWER_STATE_E_FUSED = 'E-Fused the Synergy Frame Link Module bay in the path.'
+    MSG_MANAGER_BAY_POWER_STATE_RESET = 'Reset complete for Synergy Frame Link Module bay in the path.'
+    MSG_APPLIANCE_BAY_POWER_STATE_E_FUSED = 'E-Fused the appliance bay in the path.'
+    MSG_DEVICE_BAY_POWER_STATE_E_FUSED = 'E-Fused the device bay in the path.'
+    MSG_DEVICE_BAY_POWER_STATE_RESET = 'Reset complete for device bay in the path.'
     MSG_INTERCONNECT_BAY_POWER_STATE_E_FUSE = 'E-Fuse the IC bay in the path.'
     MSG_MANAGER_BAY_ROLE_ACTIVE = 'Set the active Synergy Frame Link Module.'
-    MSG_DEVICE_BAY_IPV4_SETTING_REMOVED = 'Release IPv4 address in the device bay.'
-    MSG_INTERCONNECT_BAY_IPV4_SETTING_REMOVED = 'Release IPv4 address in the interconnect bay'
+    MSG_DEVICE_BAY_IPV4_SETTING_REMOVED = 'Released IPv4 address in the device bay.'
+    MSG_INTERCONNECT_BAY_IPV4_SETTING_REMOVED = 'Released IPv4 address in the interconnect bay'
     MSG_SUPPORT_DATA_COLLECTION_STATE_SET = 'Support data collection state set.'
     MSG_SUPPORT_DATA_COLLECTION_STATE_ALREADY_SET = \
-        'The support data collection state is already set with the desired value.'
+        'The support data collection state is already set to the desired value.'
     argument_spec = dict(
         state=dict(
             type='str',
