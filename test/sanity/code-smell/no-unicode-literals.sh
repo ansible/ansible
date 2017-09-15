@@ -3,6 +3,7 @@
 UNICODE_LITERALS_USERS=$(grep -r unicode_literals . \
     --exclude-dir .git \
     --exclude-dir .tox \
+    --exclude SOURCES.txt \
     --exclude no-unicode-literals.sh \
     --exclude no-unicode-literals.rst |
     grep -v ./test/results \
