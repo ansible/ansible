@@ -207,7 +207,6 @@ EXAMPLES = '''
 import itertools
 import re
 import traceback
-from distutils.version import StrictVersion
 from hashlib import md5
 
 try:
@@ -225,7 +224,7 @@ from ansible.module_utils.six import iteritems
 
 
 FLAGS = ('SUPERUSER', 'CREATEROLE', 'CREATEUSER', 'CREATEDB', 'INHERIT', 'LOGIN', 'REPLICATION')
-FLAGS_BY_VERSION = {'BYPASSRLS': '9.5.0'}
+FLAGS_BY_VERSION = {'BYPASSRLS': 90500}
 
 VALID_PRIVS = dict(table=frozenset(('SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE', 'REFERENCES', 'TRIGGER', 'ALL')),
                    database=frozenset(
@@ -687,33 +686,17 @@ def parse_privs(privs, db):
     return o_privs
 
 
-def get_pg_server_version(cursor):
-    """
-    Queries Postgres for its server version.
-
-    server_version should be just the server version itself:
-
-    postgres=# SHOW SERVER_VERSION;
-    server_version
-    ----------------
-     9.6.2
-    (1 row)
-    """
-    cursor.execute("SHOW SERVER_VERSION")
-    return cursor.fetchone()['server_version']
-
-
 def get_valid_flags_by_version(cursor):
     """
     Some role attributes were introduced after certain versions. We want to
     compile a list of valid flags against the current Postgres version.
     """
-    current_version = StrictVersion(get_pg_server_version(cursor))
+    current_version = cursor.connection.server_version
 
     return [
         flag
         for flag, version_introduced in FLAGS_BY_VERSION.items()
-        if current_version >= StrictVersion(version_introduced)
+        if current_version >= version_introduced
     ]
 
 
