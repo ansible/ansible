@@ -63,5 +63,40 @@ No notable changes.
 Networking
 ==========
 
-No notable changes.
+
+Change in deprecation notice of top-level connection arguments
+--------------------------------------------------------------
+.. code-block:: yaml
+
+    - name: example of using top-level options for connection properties
+      ios_command:
+        commands: show version
+        host: "{{ inventory_hostname }}"
+        username: cisco
+        password: cisco
+        authorize: yes
+        auth_pass: cisco
+
+**OLD** In Ansible 2.4:
+
+Will result in:
+
+.. code-block:: yaml
+
+   [WARNING]: argument username has been deprecated and will be removed in a future version
+   [WARNING]: argument host has been deprecated and will be removed in a future version
+   [WARNING]: argument password has been deprecated and will be removed in a future version
+
+
+**NEW** In Ansible 2.5:
+
+
+.. code-block:: yaml
+
+   [DEPRECATION WARNING]: Param 'username' is deprecated. See the module docs for more information. This feature will be removed in version
+   2.9. Deprecation warnings can be disabled by setting deprecation_warnings=False in ansible.cfg.
+   [DEPRECATION WARNING]: Param 'password' is deprecated. See the module docs for more information. This feature will be removed in version
+   2.9. Deprecation warnings can be disabled by setting deprecation_warnings=False in ansible.cfg.
+   [DEPRECATION WARNING]: Param 'host' is deprecated. See the module docs for more information. This feature will be removed in version 2.9.
+   Deprecation warnings can be disabled by setting deprecation_warnings=False in ansible.cfg.
 
