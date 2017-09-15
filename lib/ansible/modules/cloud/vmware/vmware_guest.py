@@ -537,7 +537,9 @@ class PyVmomiHelper(object):
             self.params['folder'] = '/%(folder)s' % self.params
         self.params['folder'] = self.params['folder'].rstrip('/')
 
-        dcpath = compile_folder_path_for_object(datacenter) + '/'
+        dcpath = compile_folder_path_for_object(datacenter)
+        if not dcpath.endswith('/'):
+            dcpath = dcpath + '/'
 
         # Check for full path first in case it was already supplied
         if (self.params['folder'].startswith(dcpath + self.params['datacenter'] + '/vm')):
