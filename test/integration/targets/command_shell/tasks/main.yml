@@ -206,8 +206,6 @@
       this line is the last line
   register: command_result6
 
-- debug: var=command_result6
-
 - name: assert the multiline input was passed correctly
   assert:
     that:
@@ -285,8 +283,6 @@
     | cut -f1 -d ' '
     echo "this is a second line"
   register: shell_result5
-
-- debug: var=shell_result5
 
 - name: assert the multiline shell command ran as expected
   assert:
