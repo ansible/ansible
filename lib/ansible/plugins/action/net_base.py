@@ -21,6 +21,7 @@ import sys
 import copy
 
 from ansible import constants as C
+from ansible.errors import AnsibleError
 from ansible.plugins.action import ActionBase
 from ansible.module_utils.network_common import load_provider
 
@@ -138,21 +139,17 @@ class ActionModule(ActionBase):
         return socket_path
 
     def _get_network_os(self, task_vars):
-        if ('network_os' in self._task.args and self._task.args['network_os']):
+        if 'network_os' in self._task.args and self._task.args['network_os']:
             display.vvvv('Getting network OS from task argument')
             network_os = self._task.args['network_os']
-        elif (self._play_context.network_os):
+        elif self._play_context.network_os:
             display.vvvv('Getting network OS from inventory')
             network_os = self._play_context.network_os
-        elif ('network_os' in task_vars['ansible_facts'] and
-                task_vars['ansible_facts']['network_os']):
+        elif 'network_os' in task_vars.get('ansible_facts', {}) and task_vars['ansible_facts']['network_os']:
             display.vvvv('Getting network OS from fact')
             network_os = task_vars['ansible_facts']['network_os']
         else:
-            # this will be replaced by the call to get_capabilities() on the
-            # connection
-            display.vvvv('Getting network OS from net discovery')
-            network_os = None
+            raise AnsibleError('ansible_network_os must be specified on this host to use platform agnostic modules')
 
         return network_os
 
