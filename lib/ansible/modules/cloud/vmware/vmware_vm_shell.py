@@ -225,7 +225,7 @@ def main():
             module.fail_json(msg='VM not found')
 
         (exitcode, msg) = execute_command(content, vm, p['vm_username'], p['vm_password'],
-                                            p['vm_shell'], p['vm_shell_args'], p['vm_shell_env'], p['vm_shell_cwd'])
+                                        p['vm_shell'], p['vm_shell_args'], p['vm_shell_env'], p['vm_shell_cwd'])
 
         if exitcode != 0:
             module.fail_json(changed=False, msg=msg)
