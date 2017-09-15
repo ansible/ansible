@@ -1,2 +1,4 @@
 ---
 # defaults file for test_ec2_ami
+ec2_ami_name: '{{resource_prefix}}'
+ec2_ami_description: 'Created by ansible integration tests'
