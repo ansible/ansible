@@ -3159,10 +3159,13 @@ def waitForDeviceResponse(command, prompt, timeout, obj):
             if(gotit != -1):
                 flag = True
         except:
-            if prompt != "(yes/no)?":
-                retVal = retVal + "\n Error-101"
-            else:
+            # debugOutput(prompt)
+            if prompt == "(yes/no)?":
                 retVal = retVal
+            elif prompt == "Password:":
+                retVal = retVal
+            else:
+                retVal = retVal + "\n Error-101"
             flag = True
     return retVal
 # EOM
