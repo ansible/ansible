@@ -90,58 +90,63 @@ EXAMPLES = '''
 
 '''
 RETURN = '''
-path:
-    description: the path to the role
-    type: string
-    returned: always
-    sample: /
-role_name:
-    description: the friendly name that identifies the role
-    type: string
-    returned: always
-    sample: myrole
-role_id:
-    description: the stable and unique string identifying the role
-    type: string
-    returned: always
-    sample: ABCDEFF4EZ4ABCDEFV4ZC
-arn:
-    description: the Amazon Resource Name (ARN) specifying the role
-    type: string
-    returned: always
-    sample: "arn:aws:iam::1234567890:role/mynewrole"
-create_date:
-    description: the date and time, in ISO 8601 date-time format, when the role was created
-    type: string
-    returned: always
-    sample: "2016-08-14T04:36:28+00:00"
-assume_role_policy_document:
-    description: the policy that grants an entity permission to assume the role
-    type: string
-    returned: always
-    sample: {
-                'statement': [
-                    {
-                        'action': 'sts:AssumeRole',
-                        'effect': 'Allow',
-                        'principal': {
-                            'service': 'ec2.amazonaws.com'
-                        },
-                        'sid': ''
+iam_role:
+    description: dictionary containing the IAM Role data
+    returned: success
+    type: complex
+    contains:
+        path:
+            description: the path to the role
+            type: string
+            returned: always
+            sample: /
+        role_name:
+            description: the friendly name that identifies the role
+            type: string
+            returned: always
+            sample: myrole
+        role_id:
+            description: the stable and unique string identifying the role
+            type: string
+            returned: always
+            sample: ABCDEFF4EZ4ABCDEFV4ZC
+        arn:
+            description: the Amazon Resource Name (ARN) specifying the role
+            type: string
+            returned: always
+            sample: "arn:aws:iam::1234567890:role/mynewrole"
+        create_date:
+            description: the date and time, in ISO 8601 date-time format, when the role was created
+            type: string
+            returned: always
+            sample: "2016-08-14T04:36:28+00:00"
+        assume_role_policy_document:
+            description: the policy that grants an entity permission to assume the role
+            type: string
+            returned: always
+            sample: {
+                        'statement': [
+                            {
+                                'action': 'sts:AssumeRole',
+                                'effect': 'Allow',
+                                'principal': {
+                                    'service': 'ec2.amazonaws.com'
+                                },
+                                'sid': ''
+                            }
+                        ],
+                        'version': '2012-10-17'
                     }
-                ],
-                'version': '2012-10-17'
-            }
-attached_policies:
-    description: a list of dicts containing the name and ARN of the managed IAM policies attached to the role
-    type: list
-    returned: always
-    sample: [
-        {
-            'policy_arn': 'arn:aws:iam::aws:policy/PowerUserAccess',
-            'policy_name': 'PowerUserAccess'
-        }
-    ]
+        attached_policies:
+            description: a list of dicts containing the name and ARN of the managed IAM policies attached to the role
+            type: list
+            returned: always
+            sample: [
+                {
+                    'policy_arn': 'arn:aws:iam::aws:policy/PowerUserAccess',
+                    'policy_name': 'PowerUserAccess'
+                }
+            ]
 '''
 
 from ansible.module_utils.basic import AnsibleModule
