@@ -98,17 +98,6 @@ def execute_show_command(command, module):
     body = run_commands(module, cmds)
     return body
 
-def apply_key_map(key_map, table):
-    new_dict = {}
-    for key, value in table.items():
-        new_key = key_map.get(key)
-        if new_key:
-            if value:
-                new_dict[new_key] = str(value)
-            else:
-                new_dict[new_key] = value
-    return new_dict
-
 
 def flatten_list(command_lists):
     flat_command_list = []
@@ -162,6 +151,7 @@ def get_snmp_community(module, name):
         community_dict['acl'] = mo.group(1)
 
     return community_dict
+
 
 def config_snmp_community(delta, community):
     CMDS = {
