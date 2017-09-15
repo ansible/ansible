@@ -40,6 +40,9 @@ EXAMPLES = '''
 
 RETURN = '''
 instance:
+  description: system info about the host machine
+  returned: always
+  type: dict
 '''
 
 from ansible.module_utils.basic import AnsibleModule, bytes_to_human
