@@ -19,7 +19,8 @@ author:
 module: include
 short_description: include a play or task list.
 deprecated:
-    The include action was too confusing, dealing with both plays and tasks, being both dynamic and static.  This module will be removed in version 2.8.  As alternatives use include_tasks, import_plays, import_tasks.
+    The include action was too confusing, dealing with both plays and tasks, being both dynamic and static.  This module will be removed in version 2.8.
+    As alternatives use include_tasks, import_plays, import_tasks.
 description:
      - Includes a file with a list of plays or tasks to be executed in the current playbook.
      - Files with a list of plays can only be included at the top level, lists of tasks can only be included where tasks normally run (in play).
