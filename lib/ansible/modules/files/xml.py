@@ -546,6 +546,8 @@ def set_target_inner(module, tree, xpath, namespaces, attribute, value):
             changed = check_or_make_target(module, tree, xpath, namespaces)
     except Exception as e:
         missing_namespace = ""
+        # NOTE: This checks only the namespaces defined in root element!
+        # TODO: Implement a more robust check to check for child namespaces' existance
         if len(tree.getroot().nsmap) > 0 and ":" not in xpath:
             missing_namespace = "XML document has namespace(s) defined, but no namespace prefix(es) used in xpath!\n"
         module.fail_json(msg="%sXpath %s causes a failure: %s\n  -- tree is %s" %
