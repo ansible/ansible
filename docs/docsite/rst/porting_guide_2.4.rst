@@ -44,11 +44,6 @@ Will result in:
 
    - name: foo
 
-ansible_facts namespacing
--------------------------
-
-FIXME:
-
 Inventory plugins
 -----------------
 
