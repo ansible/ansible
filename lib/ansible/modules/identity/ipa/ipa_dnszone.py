@@ -56,7 +56,7 @@ options:
     - This should only set to C(no) used on personally controlled sites using self-signed certificates.
     required: false
     default: true
-version_added: "2.4"
+version_added: "2.5"
 '''
 
 EXAMPLES = '''
