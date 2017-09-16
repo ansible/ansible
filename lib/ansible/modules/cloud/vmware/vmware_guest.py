@@ -301,8 +301,8 @@ instance:
     sample: None
 '''
 
-import time
 import posixpath
+import time
 
 HAS_PYVMOMI = False
 try:
