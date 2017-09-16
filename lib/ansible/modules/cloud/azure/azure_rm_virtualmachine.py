@@ -71,8 +71,7 @@ options:
     vm_size:
         description:
             - A valid Azure VM size value. For example, 'Standard_D4'. The list of choices varies depending on the
-              subscription and location. Check your subscription for available choices.
-        required: true
+              subscription and location. Check your subscription for available choices. Required when creating a VM.
     admin_username:
         description:
             - Admin username used to access the host after it is created. Required when creating a VM.
@@ -582,7 +581,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             state=dict(choices=['present', 'absent'], default='present', type='str'),
             location=dict(type='str'),
             short_hostname=dict(type='str'),
-            vm_size=dict(type='str', required=True),
+            vm_size=dict(type='str'),
             admin_username=dict(type='str'),
             admin_password=dict(type='str', no_log=True),
             ssh_password_enabled=dict(type='bool', default=True),
@@ -761,7 +760,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     changed = True
                     vm_dict['properties']['osProfile']['computerName'] = self.short_hostname
 
-                if self.started and vm_dict['powerstate'] != 'running':
+                if self.started and vm_dict['powerstate'] not in ['starting', 'running'] and self.allocated:
                     self.log("CHANGED: virtual machine {0} not running and requested state 'running'".format(self.name))
                     changed = True
                     powerstate_change = 'poweron'
@@ -770,7 +769,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                              .format(self.name, vm_dict['powerstate']))
                     changed = True
                     powerstate_change = 'restarted'
-                elif self.state == 'present' and not self.allocated and vm_dict['powerstate'] != 'deallocated':
+                elif self.state == 'present' and not self.allocated and vm_dict['powerstate'] not in ['deallocated', 'deallocating']:
                     self.log("CHANGED: virtual machine {0} {1} and requested state 'deallocated'"
                              .format(self.name, vm_dict['powerstate']))
                     changed = True
@@ -802,6 +801,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
         if changed:
             if self.state == 'present':
+                default_storage_account = None
                 if not vm:
                     # Create the VM
                     self.log("Create virtual machine {0}".format(self.name))
@@ -835,6 +835,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                             self._cloud_environment.suffixes.storage_endpoint,
                             self.storage_container_name,
                             self.storage_blob_name)
+                        default_storage_account = storage_account  # store for use by data disks if necessary
 
                     if not self.short_hostname:
                         self.short_hostname = self.name
@@ -904,18 +905,22 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                     count += 1
 
                                 if data_disk.get('storage_account_name'):
-                                    self.get_storage_account(data_disk['storage_account_name'])
-                                    data_disk_storage_account.name = data_disk['storage_account_name']
+                                    data_disk_storage_account = self.get_storage_account(data_disk['storage_account_name'])
                                 else:
-                                    data_disk_storage_account = self.create_default_storage_account()
-                                    self.log("data disk storage account:")
-                                    self.log(self.serialize_obj(data_disk_storage_account, 'StorageAccount'), pretty_print=True)
+                                    if(not default_storage_account):
+                                        data_disk_storage_account = self.create_default_storage_account()
+                                        self.log("data disk storage account:")
+                                        self.log(self.serialize_obj(data_disk_storage_account, 'StorageAccount'), pretty_print=True)
+                                        default_storage_account = data_disk_storage_account  # store for use by future data disks if necessary
+                                    else:
+                                        data_disk_storage_account = default_storage_account
 
                                 if not data_disk.get('storage_container_name'):
                                     data_disk['storage_container_name'] = 'vhds'
 
-                                data_disk_requested_vhd_uri = 'https://{0}.blob.core.windows.net/{1}/{2}'.format(
+                                data_disk_requested_vhd_uri = 'https://{0}.blob.{1}/{2}/{3}'.format(
                                     data_disk_storage_account.name,
+                                    self._cloud_environment.suffixes.storage_endpoint,
                                     data_disk['storage_container_name'],
                                     data_disk['storage_blob_name']
                                 )
@@ -1182,20 +1187,31 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
     def delete_vm(self, vm):
         vhd_uris = []
+        managed_disk_ids = []
         nic_names = []
         pip_names = []
 
         if self.remove_on_absent.intersection(set(['all','virtual_storage'])):
             # store the attached vhd info so we can nuke it after the VM is gone
-            self.log('Storing VHD URI for deletion')
-            vhd_uris.append(vm.storage_profile.os_disk.vhd.uri)
+            if(vm.storage_profile.os_disk.managed_disk):
+                self.log('Storing managed disk ID for deletion')
+                managed_disk_ids.append(vm.storage_profile.os_disk.managed_disk.id)
+            elif(vm.storage_profile.os_disk.vhd):
+                self.log('Storing VHD URI for deletion')
+                vhd_uris.append(vm.storage_profile.os_disk.vhd.uri)
 
             data_disks = vm.storage_profile.data_disks
             for data_disk in data_disks:
-                vhd_uris.append(data_disk.vhd.uri)
+                if(data_disk.vhd):
+                    vhd_uris.append(data_disk.vhd.uri)
+                elif(data_disk.managed_disk):
+                    managed_disk_ids.append(data_disk.managed_disk.id)
 
+            # FUTURE enable diff mode, move these there...
             self.log("VHD URIs to delete: {0}".format(', '.join(vhd_uris)))
             self.results['deleted_vhd_uris'] = vhd_uris
+            self.log("Managed disk IDs to delete: {0}".format(', '.join(managed_disk_ids)))
+            self.results['deleted_managed_disk_ids'] = managed_disk_ids
 
         if self.remove_on_absent.intersection(set(['all','network_interfaces'])):
             # store the attached nic info so we can nuke them after the VM is gone
@@ -1228,8 +1244,10 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         # TODO: parallelize nic, vhd, and public ip deletions with begin_deleting
         # TODO: best-effort to keep deleting other linked resources if we encounter an error
         if self.remove_on_absent.intersection(set(['all','virtual_storage'])):
-            self.log('Deleting virtual storage')
+            self.log('Deleting VHDs')
             self.delete_vm_storage(vhd_uris)
+            self.log('Deleting managed disks')
+            self.delete_managed_disks(managed_disk_ids)
 
         if self.remove_on_absent.intersection(set(['all','network_interfaces'])):
             self.log('Deleting network interfaces')
@@ -1270,7 +1288,16 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         # Delete returns nada. If we get here, assume that all is well.
         return True
 
+    def delete_managed_disks(self, managed_disk_ids):
+        for mdi in managed_disk_ids:
+            try:
+                poller = self.rm_client.resources.delete_by_id(mdi, '2017-03-30')
+                self.get_poller_result(poller)
+            except Exception as exc:
+                self.fail("Error deleting managed disk {0} - {1}".format(mdi, str(exc)))
+
     def delete_vm_storage(self, vhd_uris):
+        # FUTURE: figure out a cloud_env indepdendent way to delete these
         for uri in vhd_uris:
             self.log("Extracting info from blob uri '{0}'".format(uri))
             try:
@@ -1354,7 +1381,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         valid_name = False
 
         # Attempt to find a valid storage account name
-        storage_account_name_base = self.name[:20].lower()
+        storage_account_name_base = re.sub('[^a-zA-Z0-9]', '', self.name[:20].lower())
         for i in range(0, 5):
             rand = random.randrange(1000, 9999)
             storage_account_name = storage_account_name_base + str(rand)
@@ -1392,8 +1419,11 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.log("Checking storage account name availability for {0}".format(name))
         try:
             response = self.storage_client.storage_accounts.check_name_availability(name)
+            if response.reason == 'AccountNameInvalid':
+                raise Exception("Invalid default storage account name: {0}".format(name))
         except Exception as exc:
             self.fail("Error checking storage account name availability for {0} - {1}".format(name, str(exc)))
+
         return response.name_available
 
     def create_default_nic(self):
