@@ -258,6 +258,7 @@ class TestNetboxUtils(object):
     ])
     def test_reduce_path(self, source_dict, key_path):
         """
+        Test reduce_path function.
         """
         reduced_path = netbox.reduce_path(source_dict, key_path)
         assert reduced_path == "c_value"
@@ -268,6 +269,7 @@ class TestNetboxUtils(object):
     ])
     def test_get_value_by_path_key_exists(self, source_dict, key_path):
         """
+        Test get value by path with exists key.
         """
         reduced_path = netbox.get_value_by_path(source_dict, key_path)
         assert reduced_path == "c_value"
@@ -278,6 +280,7 @@ class TestNetboxUtils(object):
     ])
     def test_get_value_by_path_key_not_exists(self, source_dict, key_path):
         """
+        Test get value by path with non-exists key.
         """
         with pytest.raises(SystemExit) as key_not_exists:
             netbox.get_value_by_path(source_dict, key_path)
@@ -290,6 +293,7 @@ class TestNetboxUtils(object):
     ])
     def test_get_value_by_path_key_not_exists_ignore_error(self, source_dict, key_path, ignore_key_error):
         """
+        Test get value by path with exists key and not ignore error.
         """
         reduced_path = netbox.get_value_by_path(source_dict, key_path, ignore_key_error)
         assert reduced_path is None
@@ -297,8 +301,9 @@ class TestNetboxUtils(object):
     @pytest.mark.parametrize("yaml_file", [
         netbox_config_file.name
     ])
-    def test_open_yaml_file(self, yaml_file):
+    def test_open_yaml_file_exists(self, yaml_file):
         """
+        Test open exists yaml file.
         """
         config_output = netbox.open_yaml_file(yaml_file)
         assert config_output["netbox"]
@@ -313,6 +318,7 @@ class TestNetboxUtils(object):
     ])
     def test_open_yaml_file_not_exists(self, yaml_file):
         """
+        Test open non-exists yaml file.
         """
         with pytest.raises(SystemExit) as file_not_exists:
             netbox.open_yaml_file(yaml_file)
@@ -331,6 +337,7 @@ class TestNetboxAsInventory(object):
     ])
     def test_empty_config_dict(self, args, config):
         """
+        Test if Netbox config file is empty.
         """
         with pytest.raises(SystemExit) as empty_config_error:
             netbox.NetboxAsInventory(args, config)
@@ -354,6 +361,7 @@ class TestNetboxAsInventory(object):
     ])
     def test_get_hosts_list_none_url_value(self, api_url):
         """
+        Test if Netbox URL is invalid.
         """
         netbox_json_response()
         with pytest.raises(SystemExit) as none_url_error:
@@ -366,6 +374,7 @@ class TestNetboxAsInventory(object):
     ])
     def test_get_hosts_list_single_host(self, api_url, host_name):
         """
+        Test Netbox single host output.
         """
         netbox_json_response(single_host=True)
         host_data = netbox_inventory_single.get_hosts_list(
@@ -404,6 +413,7 @@ class TestNetboxAsInventory(object):
     ])
     def test_add_host_to_inventory_with_wrong_category(self, groups_categories, inventory_dict, host_data):
         """
+        Test adding host to inventory with wrong category.
         """
         with pytest.raises(KeyError) as wrong_category_error:
             netbox_inventory.add_host_to_inventory(groups_categories, inventory_dict, host_data)
@@ -419,6 +429,7 @@ class TestNetboxAsInventory(object):
     ])
     def test_add_host_to_inventory_with_no_group(self, groups_categories, inventory_dict, host_data):
         """
+        Test adding host to inventory with no group.
         """
         netbox_inventory.add_host_to_inventory(groups_categories, inventory_dict, host_data)
         assert "fake_host" in inventory_dict["no_group"]
@@ -430,6 +441,7 @@ class TestNetboxAsInventory(object):
     ])
     def test_add_host_to_inventory_with_wrong_group(self, groups_categories, inventory_dict, host_data):
         """
+        Test add host to inventory with wrong group.
         """
         with pytest.raises(SystemExit) as no_group_error:
             netbox_inventory.add_host_to_inventory(groups_categories, inventory_dict, host_data)
