@@ -3,6 +3,7 @@
 
 $process_util = @"
 using System;
+using System.Collections;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -210,7 +211,14 @@ namespace Ansible
             return sbOut.ToString();
         }
 
-        public static Tuple<string, string, uint> RunCommand(string lpApplicationName, string lpCommandLine, string lpCurrentDirectory, string stdinInput, string environmentBlock)
+        public class CommandResult
+        {
+            public string StandardOut { get; internal set; }
+            public string StandardError { get; internal set; }
+            public uint ExitCode { get; internal set; }
+        }
+
+        public static CommandResult RunCommand(string lpApplicationName, string lpCommandLine, string lpCurrentDirectory, string stdinInput, IDictionary environment)
         {
             UInt32 startup_flags = CREATE_UNICODE_ENVIRONMENT | CREATE_NEW_CONSOLE | EXTENDED_STARTUPINFO_PRESENT;
             STARTUPINFOEX si = new STARTUPINFOEX();
@@ -277,11 +285,21 @@ namespace Ansible
             // string here, we need to convert it
             if (lpCurrentDirectory == "")
                 lpCurrentDirectory = null;
-            
+
+            StringBuilder environmentString = null;
+
+            if(environment != null && environment.Count > 0)
+            {
+                environmentString = new StringBuilder();
+                foreach (DictionaryEntry kv in environment)
+                    environmentString.AppendFormat("{0}={1}\0", kv.Key, kv.Value);
+                environmentString.Append('\0');
+            }
+
             // Create the environment block if set
             IntPtr lpEnvironment = IntPtr.Zero;
-            if (environmentBlock != "")
-                lpEnvironment = Marshal.StringToHGlobalUni(environmentBlock);
+            if (environmentString != null)
+                lpEnvironment = Marshal.StringToHGlobalUni(environmentString.ToString());
 
             // Create new process and run
             StringBuilder argument_string = new StringBuilder(lpCommandLine);
@@ -316,7 +334,12 @@ namespace Ansible
             GetProcessOutput(stdout, stderr, out stdout_str, out stderr_str);
             uint rc = GetProcessExitCode(pi.hProcess);
 
-            return Tuple.Create(stdout_str, stderr_str, rc);
+            return new CommandResult
+            {
+                StandardOut = stdout_str,
+                StandardError = stderr_str,
+                ExitCode = rc
+            };
         }
 
         private static void GetProcessOutput(StreamReader stdoutStream, StreamReader stderrStream, out string stdout, out string stderr)
@@ -361,7 +384,7 @@ Function Load-CommandUtils {
     #   [Ansible.CommandUtil]::RunCommand(string lpApplicationName, string lpCommandLine, string lpCurrentDirectory, string stdinInput, string environmentBlock)
     #
     # there are also numerous P/Invoke methods that can be called if you are feeling adventurous
-    Add-Type -TypeDefinition $process_util -IgnoreWarnings
+    Add-Type -TypeDefinition $process_util -IgnoreWarnings -Debug:$false
 }
 
 Function Get-ExecutablePath($executable, $directory) {
@@ -412,29 +435,14 @@ Function Run-Command {
     $arguments = [Ansible.CommandUtil]::ParseCommandLine($command)
     $executable = Get-ExecutablePath -executable $arguments[0] -directory $working_directory
 
-    # set the extra environment variables
-    $environment_string = $null
-    if ($environment.Count -gt 0) {
-        $environment_string = ""
-    }
-    foreach ($environment_entry in $environment.GetEnumerator()){
-        $environment_key = $environment_entry.Name
-        $environment_value = $environment_entry.Value
-        $environment_string += "$environment_key=$environment_value`0"
-    }
-    if ($environment_string) {
-        $environment_string += "`0"
-    }
-
     # run the command and get the results
-    $command_result = [Ansible.CommandUtil]::RunCommand($executable, $command, $working_directory, $stdin, $environment_string)
+    $command_result = [Ansible.CommandUtil]::RunCommand($executable, $command, $working_directory, $stdin, $environment)
 
-    # RunCommand returns a tuple, we will convert to a hashtable
     return ,@{
         executable = $executable
-        stdout = $command_result.Item1
-        stderr = $command_result.Item2
-        rc = $command_result.Item3
+        stdout = $command_result.StandardOut
+        stderr = $command_result.StandardError
+        rc = $command_result.ExitCode
     }
 }
 
