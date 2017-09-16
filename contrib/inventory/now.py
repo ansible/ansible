@@ -14,6 +14,25 @@
 # or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
+'''
+ServiceNow Inventory Script
+=======================
+Retrieve information about machines from a ServiceNow CMDB
+This script will attempt to read configuration from an INI file with the same
+base filename if present, or `now.ini` if not.  It is possible to create
+symlinks to the inventory script to support multiple configurations, e.g.:
+* `now.py` (this script)
+* `now.ini` (default configuration, will be read by `now.py`)
+The path to an INI file may also be specified via the `NOW_INI` environment
+variable, in which case the filename matching rules above will not apply.
+Host and authentication parameters may be specified via the `SN_INSTANCE`,
+`SN_USERNAME` and `SN_PASSWORD` environment variables; these options will
+take precedence over options present in the INI file.  An INI file is not
+required if these options are specified using environment variables.
+
+For additional usage details see: https://github.com/ServiceNowITOM/ansible-sn-inventory
+'''
+
 import os, sys, requests, base64, json, re, configparser, time
 from cookielib import LWPCookieJar
 
