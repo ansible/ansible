@@ -1,4 +1,27 @@
 ---
+- name: Download PSTools
+  win_get_url:
+    url: https://download.sysinternals.com/files/PSTools.zip
+    dest: C:\Windows\Temp\PSTools.zip
+    force: no
+
+- name: Create sysinternals directory
+  win_file:
+    path: C:\Windows\Temp\sysinternals
+    state: directory
+
+- name: Unzip PSTools
+  win_unzip:
+    src: C:\Windows\Temp\PSTools.zip
+    dest: C:\Windows\Temp\sysinternals
+
+- name: Add sysinternals to PATH
+  win_path:
+    name: PATH
+    elements: C:\Windows\Temp\sysinternals
+    scope: machine
+    state: present
+
 - name: ensure test folder is deleted for clean slate
   win_file:
     path: '{{test_win_wait_for_path}}'
@@ -92,9 +115,10 @@
     state: touch
 
 - name: run async task to remove file after a timeout
-  win_command: powershell /c Start-Sleep -Seconds 5; Remove-Item -Path '{{test_win_wait_for_path}}\test.txt' -Force
-  async: 30
-  poll: 0
+  win_psexec:
+    command: powershell /c Start-Sleep -Seconds 5; Remove-Item -Path '{{test_win_wait_for_path}}\test.txt' -Force
+    wait: no
+    system: yes
 
 - name: wait for file to not exist - existing file
   win_wait_for:
@@ -108,9 +132,10 @@
     - wait_remove_existing_file.attempts > 1
 
 - name: run async task to create file after a timeout
-  win_command: powershell /c Start-Sleep -Seconds 5; New-Item -Path '{{test_win_wait_for_path}}\test.txt' -Type File
-  async: 30
-  poll: 0
+  win_psexec:
+    command: powershell /c Start-Sleep -Seconds 5; New-Item -Path '{{test_win_wait_for_path}}\test.txt' -Type File
+    wait: no
+    system: yes
 
 - name: wait for file to exist - non existing file
   win_wait_for:
@@ -150,9 +175,10 @@
     - fail_timeout_file_absent.elapsed > 5
 
 - name: run async task to populate file contents
-  win_command: powershell /c Start-Sleep -Seconds 5; Set-Content -Path '{{test_win_wait_for_path}}\test.txt' -Value 'hello world`r`nfile contents`r`nEnd line'
-  async: 30
-  poll: 0
+  win_psexec:
+    command: powershell /c Start-Sleep -Seconds 5; Set-Content -Path '{{test_win_wait_for_path}}\test.txt' -Value 'hello world`r`nfile contents`r`nEnd line'
+    wait: no
+    system: yes
 
 - name: wait for file contents to match regex - empty file
   win_wait_for:
@@ -179,9 +205,10 @@
     - wait_regex_match_existing.attempts == 1
 
 - name: run async task to clear file contents
-  win_command: powershell /c Start-Sleep -Seconds 5; Set-Content -Path '{{test_win_wait_for_path}}\test.txt' -Value 'hello world`r`nother contents for file`r`nEnd line'
-  async: 30
-  poll: 0
+  win_psexec:
+    command: powershell /c Start-Sleep -Seconds 5; Set-Content -Path '{{test_win_wait_for_path}}\test.txt' -Value 'hello world`r`nother contents for file`r`nEnd line'
+    wait: no
+    system: yes
 
 - name: wait for file content to not match regex
   win_wait_for:
@@ -241,9 +268,10 @@
     - fail_timeout_port_online.elapsed > 5
 
 - name: run async task to start web server
-  win_command: powershell /c Start-Sleep -Seconds 5; {{test_win_wait_for_path}}\http-server.ps1
-  async: 30
-  poll: 0
+  win_psexec:
+    command: powershell /c Start-Sleep -Seconds 5; {{test_win_wait_for_path}}\http-server.ps1
+    wait: no
+    system: yes
 
 - name: wait for port to come online
   win_wait_for:
