@@ -91,7 +91,7 @@ options:
 extends_documentation_fragment:
     - azure
 
-author: 
+author:
     - "Obezimnaka Boms (@ozboms)"
     - "Matt Davis (@nitzmahone)"
 '''
@@ -139,7 +139,7 @@ EXAMPLES = '''
     time_to_live: 7200
     record_type: SRV
     state: present
-    records: 
+    records:
     - entry: sip.testing.com
       preference: 10
       priority: 20
@@ -152,7 +152,7 @@ EXAMPLES = '''
     relative_name: 192.168.100.101.in-addr.arpa
     zone_name: testing.com
     record_type: PTR
-    records: 
+    records:
     - entry: servera.testing.com
 
 - name: create TXT record in a new record set
@@ -161,7 +161,7 @@ EXAMPLES = '''
     relative_name: mail.testing.com
     zone_name: testing.com
     record_type: TXT
-    records: 
+    records:
     - entry: 'v=spf1 a -all'
 
 '''
@@ -188,39 +188,39 @@ base_record = dict(
 )
 
 RECORD_ARGSPECS = dict(
-    A = dict(
+    A=dict(
         ipv4_address=dict(type='str', required=True, aliases=['entry'])
     ),
-    AAAA = dict(
+    AAAA=dict(
         ipv6_address=dict(type='str', required=True, aliases=['entry'])
     ),
-    CNAME = dict(
+    CNAME=dict(
         cname=dict(type='str', required=True, aliases=['entry'])
     ),
     MX=dict(
         preference=dict(type='int', required=True),
         exchange=dict(type='str', required=True, aliases=['entry'])
     ),
-    NS = dict(
+    NS=dict(
         nsdname=dict(type='str', required=True, aliases=['entry'])
     ),
-    PTR = dict(
+    PTR=dict(
         ptrdname=dict(type='str', required=True, aliases=['entry'])
     ),
-    SRV = dict(
+    SRV=dict(
         priority=dict(type='int', required=True),
         port=dict(type='int', required=True),
         weight=dict(type='int', required=True),
         target=dict(type='str', required=True, aliases=['entry'])
     ),
-    TXT = dict(
+    TXT=dict(
         value=dict(type='str', required=True, aliases=['entry'])
     ),
     # FUTURE: ensure all record types are supported (see https://github.com/Azure/azure-sdk-for-python/tree/master/azure-mgmt-dns/azure/mgmt/dns/models)
 )
 
 RECORDSET_VALUE_MAP = dict(
-    A=dict(attrname='arecord', classobj=ARecord, is_list=True),
+    A=dict(attrname='arecords', classobj=ARecord, is_list=True),
     AAAA=dict(attrname='aaaa_records', classobj=AaaaRecord, is_list=True),
     CNAME=dict(attrname='cname_record', classobj=CnameRecord, is_list=False),
     MX=dict(attrname='mx_records', classobj=MxRecord, is_list=True),
@@ -230,6 +230,7 @@ RECORDSET_VALUE_MAP = dict(
     TXT=dict(attrname='txt_records', classobj=TxtRecord, is_list=True),
     # FUTURE: add missing record types from https://github.com/Azure/azure-sdk-for-python/blob/master/azure-mgmt-dns/azure/mgmt/dns/models/record_set.py
 )
+
 
 class AzureRMRecordSet(AzureRMModuleBase):
 
@@ -243,7 +244,7 @@ class AzureRMRecordSet(AzureRMModuleBase):
             relative_name=dict(type='str', required=True),
             zone_name=dict(type='str', required=True),
             record_type=dict(choices=RECORD_ARGSPECS.keys(), required=True, type='str'),
-            record_mode=dict(choices=['append','purge'], default='purge'),
+            record_mode=dict(choices=['append', 'purge'], default='purge'),
             state=dict(choices=['present', 'absent'], default='present', type='str'),
             time_to_live=dict(type='int', default=3600),
             records=dict(type='list', elements='dict')
@@ -373,6 +374,7 @@ class AzureRMRecordSet(AzureRMModuleBase):
         # non-append mode; any difference in the sets is a change
         return input_set != server_set
 
+
 # Quick 'n dirty hash impl suitable for monkeypatching onto SDK model objects (so we can use set comparisons)
 def gethash(self):
     if not getattr(self, '_cachedhash', None):
@@ -380,6 +382,7 @@ def gethash(self):
         valuetuple = tuple([getattr(self, x, None) for x in spec.args if x != 'self'])
         self._cachedhash = hash(valuetuple)
     return self._cachedhash
+
 
 def main():
     AzureRMRecordSet()
