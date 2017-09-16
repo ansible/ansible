@@ -9,7 +9,7 @@ This section discusses the behavioral changes between Ansible 2.3 and Ansible 2.
 It is intended to assist in updating your playbooks, plugins and other parts of your Ansible infrastructure so they will work with this version of Ansible.
 
 
-We suggest you read this page along with `Ansible Changelog <https://github.com/ansible/ansible/blob/devel/CHANGELOG.md#2.4>`_ to understand what updates you may need to make.
+We suggest you read this page along with `Ansible Changelog <https://github.com/ansible/ansible/blob/stable-2.4/CHANGELOG.md#2.4>`_ to understand what updates you may need to make.
 
 This document is part of a collection on porting. The complete list of porting guides can be found at :ref:`porting guides <porting_guides>`.
 
@@ -22,37 +22,6 @@ Ansible will not support Python 2.4 nor 2.5 on the target hosts anymore. Going f
 
 Playbook
 ========
-
-`import_` and `include_` split
-------------------------------
-
-
-**OLD** In Ansible 2.3:
-
-.. code-block:: yaml
-
-    - name: old foo
-
-Will result in:
-
-.. code-block:: yaml
-
-   [WARNING]: deprecation message 1
-   [WARNING]: deprecation message 2
-   [WARNING]: deprecation message 3
-
-
-**NEW** In Ansible 2.4:
-
-
-.. code-block:: yaml
-
-   - name: foo
-
-Inventory plugins
------------------
-
-FIXME: starting migration from hardcoded inventory + inventory scripts. scripts will still work via script plugin but efforts will now concentrate on plugins
 
 Multiple inventory
 ------------------
@@ -87,6 +56,8 @@ In 2.5, multiple ``--tags`` options will be merged with no way to go back to the
 Other caveats
 -------------
 
+No major changes in this version.
+
 Modules
 =======
 
@@ -119,19 +90,12 @@ Noteworthy module changes
 Plugins
 =======
 
-var plugin changes
-------------------
-
-FIXME: bcoca to add details
-
+No major changes in this version.
 
 Porting custom scripts
 ======================
 
-Inventory script now obsolete
------------------------------
-
-FIXME: inventory scripts are becoming obsolete, in favor of inventory plugins
+No major changes in this version.
 
 Networking
 ==========
@@ -149,6 +113,3 @@ To control timeouts use ``command_timeout`` rather than the previous top level `
 
 See :ref:`Ansible Network debug guide <network_debug_troubleshooting>` for more information.
 
-The following changes apply to:
-
-* FIXME List modules that have been ported to new framework in 2.4 - Link back to 2.3 porting guide
