@@ -23,6 +23,37 @@ Ansible will not support Python 2.4 nor 2.5 on the target hosts anymore. Going f
 Playbook
 ========
 
+`import_` and `include_` split
+------------------------------
+
+
+**OLD** In Ansible 2.3:
+
+.. code-block:: yaml
+
+    - name: old foo
+
+Will result in:
+
+.. code-block:: yaml
+
+   [WARNING]: deprecation message 1
+   [WARNING]: deprecation message 2
+   [WARNING]: deprecation message 3
+
+
+**NEW** In Ansible 2.4:
+
+
+.. code-block:: yaml
+
+   - name: foo
+
+Inventory plugins
+-----------------
+
+FIXME: starting migration from hardcoded inventory + inventory scripts. scripts will still work via script plugin but efforts will now concentrate on plugins
+
 Multiple inventory
 ------------------
 
@@ -90,12 +121,19 @@ Noteworthy module changes
 Plugins
 =======
 
-No major changes in this version.
+var plugin changes
+------------------
+
+FIXME: bcoca to add details
+
 
 Porting custom scripts
 ======================
 
-No major changes in this version.
+Inventory script now obsolete
+-----------------------------
+
+FIXME: inventory scripts are becoming obsolete, in favor of inventory plugins
 
 Networking
 ==========
