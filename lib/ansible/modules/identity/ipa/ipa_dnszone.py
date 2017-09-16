@@ -36,7 +36,7 @@ options:
   ipa_host:
     description: IP or hostname of IPA server
     required: false
-    default: ipa.example.com
+    default: localhost
   ipa_user:
     description: Administrative account used on IPA server
     required: false
@@ -70,7 +70,7 @@ EXAMPLES = '''
 # Ensure that dns zone is removed
 - ipa_dnszone:
     zone_name: example.com
-    ipa_host: ipa.example.com
+    ipa_host: localhost
     ipa_user: admin
     ipa_pass: topsecret
     state: absent
@@ -145,7 +145,7 @@ def main():
             ),
             ipa_host=dict(
                 type='str',
-                default='ipa.example.com'
+                default='localhost'
             ),
             state=dict(
                 type='str',
