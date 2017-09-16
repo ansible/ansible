@@ -16,20 +16,20 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-- name: define host-specific output_dir
+- name: define host-specific host_output_dir
   set_fact:
-    output_dir: "{{ output_dir }}/{{ inventory_hostname }}"
+    host_output_dir: "{{ output_dir }}/{{ inventory_hostname }}"
 
 - name: clean out the test directory
-  local_action: file name={{ output_dir|mandatory }} state=absent
+  local_action: file name={{ host_output_dir|mandatory }} state=absent
   run_once: true
 
 - name: create the test directory
-  local_action: file name={{ output_dir }} state=directory
+  local_action: file name={{ host_output_dir }} state=directory
   run_once: true
 
 - name: fetch a small file
-  fetch: src="C:/Windows/win.ini" dest={{ output_dir }}
+  fetch: src="C:/Windows/win.ini" dest={{ host_output_dir }}
   register: fetch_small
 
 - name: check fetch small result
@@ -49,7 +49,7 @@
       - "fetch_small_stat.stat.md5 == fetch_small.md5sum"
 
 - name: fetch the same small file
-  fetch: src="C:/Windows/win.ini" dest={{ output_dir }}
+  fetch: src="C:/Windows/win.ini" dest={{ host_output_dir }}
   register: fetch_small_again
 
 - name: check fetch small result again
@@ -58,7 +58,7 @@
       - "not fetch_small_again.changed"
 
 - name: fetch a small file to flat namespace
-  fetch: src="C:/Windows/win.ini" dest="{{ output_dir }}/" flat=yes
+  fetch: src="C:/Windows/win.ini" dest="{{ host_output_dir }}/" flat=yes
   register: fetch_flat
 
 - name: check fetch flat result
@@ -67,10 +67,10 @@
       - "fetch_flat.changed"
 
 - name: check file created by fetch flat
-  local_action: stat path="{{ output_dir }}/win.ini"
+  local_action: stat path="{{ host_output_dir }}/win.ini"
   register: fetch_flat_stat
 
-- name: verify fetched file exists locally in output_dir
+- name: verify fetched file exists locally in host_output_dir
   assert:
     that:
       - "fetch_flat_stat.stat.exists"
@@ -78,7 +78,7 @@
       - "fetch_flat_stat.stat.md5 == fetch_flat.md5sum"
 
 #- name: fetch a small file to flat directory (without trailing slash)
-#  fetch: src="C:/Windows/win.ini" dest="{{ output_dir }}" flat=yes
+#  fetch: src="C:/Windows/win.ini" dest="{{ host_output_dir }}" flat=yes
 #  register: fetch_flat_dir
 
 #- name: check fetch flat to directory result
@@ -87,7 +87,7 @@
 #      - "not fetch_flat_dir|changed"
 
 - name: fetch a large binary file
-  fetch: src="C:/Windows/explorer.exe" dest={{ output_dir }}
+  fetch: src="C:/Windows/explorer.exe" dest={{ host_output_dir }}
   register: fetch_large
 
 - name: check fetch large binary file result
@@ -107,7 +107,7 @@
       - "fetch_large_stat.stat.md5 == fetch_large.md5sum"
 
 - name: fetch a large binary file again
-  fetch: src="C:/Windows/explorer.exe" dest={{ output_dir }}
+  fetch: src="C:/Windows/explorer.exe" dest={{ host_output_dir }}
   register: fetch_large_again
 
 - name: check fetch large binary file result again
@@ -116,7 +116,7 @@
       - "not fetch_large_again.changed"
 
 - name: fetch a small file using backslashes in src path
-  fetch: src="C:\\Windows\\system.ini" dest={{ output_dir }}
+  fetch: src="C:\\Windows\\system.ini" dest={{ host_output_dir }}
   register: fetch_small_bs
 
 - name: check fetch small result with backslashes
@@ -136,7 +136,7 @@
       - "fetch_small_bs_stat.stat.md5 == fetch_small_bs.md5sum"
 
 - name: attempt to fetch a non-existent file - do not fail on missing
-  fetch: src="C:/this_file_should_not_exist.txt" dest={{ output_dir }}
+  fetch: src="C:/this_file_should_not_exist.txt" dest={{ host_output_dir }}
   register: fetch_missing_nofail
 
 - name: check fetch missing no fail result
@@ -147,7 +147,7 @@
       - "not fetch_missing_nofail|changed"
 
 - name: attempt to fetch a non-existent file - fail on missing
-  fetch: src="~/this_file_should_not_exist.txt" dest={{ output_dir }} fail_on_missing=yes
+  fetch: src="~/this_file_should_not_exist.txt" dest={{ host_output_dir }} fail_on_missing=yes
   register: fetch_missing
   ignore_errors: true
 
@@ -159,7 +159,7 @@
       - "not fetch_missing|changed"
 
 - name: attempt to fetch a directory
-  fetch: src="C:\\Windows" dest={{ output_dir }}
+  fetch: src="C:\\Windows" dest={{ host_output_dir }}
   register: fetch_dir
   ignore_errors: true
 

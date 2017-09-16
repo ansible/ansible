@@ -24,6 +24,7 @@
 - name: Run whoami
   win_psexec:
     command: whoami.exe
+    nobanner: true
   register: whoami
 
 - name: Test whoami
@@ -38,6 +39,7 @@
   win_psexec:
     command: whoami.exe
     system: yes
+    nobanner: true
   register: whoami_as_system
 
 - name: Test whoami as SYSTEM
