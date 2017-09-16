@@ -1,22 +1,9 @@
 #!/usr/bin/python
 #
 # Copyright (c) 2017 Obezimnaka Boms, <t-ozboms@microsoft.com>
+# Copyright (c) 2017 Ansible Project
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
@@ -31,27 +18,27 @@ module: azure_rm_dnsrecordset
 
 version_added: "2.4"
 
-short_description: Create, delete and update record sets and records.
+short_description: Create, delete and update DNS record sets and records.
 
 description:
-    - Creates, deletes, and updates records sets and their records.
+    - Creates, deletes, and updates DNS records sets and records within an existing Azure DNS Zone.
 
 options:
     resource_group:
         description:
-            - name of resource group.
-        required: true
-    relative_name:
-        description:
-            - relative name of the record set.
+            - name of resource group
         required: true
     zone_name:
         description:
-            - name of the zone in which to create or delete the record set
+            - name of the existing DNS zone in which to manage the record set
+        required: true
+    relative_name:
+        description:
+            - relative name of the record set
         required: true
     record_type:
         description:
-            - the type of record set or record to create or delete
+            - the type of record set to create or delete
         choices:
             - A
             - AAAA
@@ -62,18 +49,17 @@ options:
             - TXT
             - PTR
         required: true
-    record_set_state:
+    record_mode:
+        description:
+            - whether existing record values not sent to the module should be purged
+        default: purge
+        choices:
+            - append
+            - purge
+    state:
         description:
             - Assert the state of the record set. Use 'present' to create or update and
               'absent' to delete.
-        default: present
-        choices:
-            - absent
-            - present
-    record_state:
-        description:
-            - Assert the state of the records. Use 'present' to create or update. Update will append the new records.
-              Use 'absent' to delete a specific record or set of records.
         default: present
         choices:
             - absent
@@ -84,49 +70,45 @@ options:
         default: 3600
     records:
         description:
-            - specific records to be created or deleted depending on the type of record (set)
-        aliases:
-            - ipv4_address
-            - ipv6_address
-            - cname
-            - exchange
-            - nsdname
-            - ptrdname
-            - value
-            - target
-    preference:
-        description:
-            - used for creating an MX record set/records
-    priority:
-        description:
-            - used for creating an SRV record set/records
-    weight:
-        description:
-            - used for creating an SRV record set/records
-    port:
-        description:
-            - used for creating an SRV record set/records
+            - list of records to be created depending on the type of record (set)
+        suboptions:
+            preference:
+                description:
+                    - used for creating an MX record set/records
+            priority:
+                description:
+                   - used for creating an SRV record set/records
+            weight:
+                description:
+                    - used for creating an SRV record set/records
+            port:
+                description:
+                    - used for creating an SRV record set/records
+            entry:
+                description:
+                    - primary data value for all record types.
 
 extends_documentation_fragment:
     - azure
 
-author: "Obezimnaka Boms (@ozboms)"
+author:
+    - "Obezimnaka Boms (@ozboms)"
+    - "Matt Davis (@nitzmahone)"
 '''
 
 EXAMPLES = '''
 
-- name: create new "A" record set with multiple records
+- name: ensure an "A" record set with multiple records
   azure_rm_dnsrecordset:
     resource_group: Testing
     relative_name: www
     zone_name: testing.com
     record_type: A
-    record_set_state: present
-    record_state: present
+    state: present
     records:
-      - 192.168.100.101
-      - 192.168.100.102
-      - 192.168.100.103
+      - entry: 192.168.100.101
+      - entry: 192.168.100.102
+      - entry: 192.168.100.103
 
 - name: delete a record set
   azure_rm_dnsrecordset:
@@ -134,103 +116,64 @@ EXAMPLES = '''
     record_type: A
     relative_name: www
     zone_name: testing.com
-    record_set_state: absent
+    state: absent
 
 - name: create multiple "A" record sets with multiple records
   azure_rm_dnsrecordset:
     resource_group: Testing
     zone_name: testing.com
-    record_set_state: present
-    record_state: present
+    state: present
     relative_name: "{{ item.name }}"
     record_type: "{{ item.type }}"
     records: "{{ item.records }}"
   with_items:
-    - { name: 'servera', type: 'A', records: ['10.10.10.20', '10.10.10.21'] }
-    - { name: 'serverb', type: 'A', records: ['10.10.10.30', '10.10.10.31'] }
-    - { name: 'serverc', type: 'A', records: ['10.10.10.40', '10.10.10.41'] }
+    - { name: 'servera', type: 'A', records: [ { entry: '10.10.10.20' }, { entry: '10.10.10.21' }] }
+    - { name: 'serverb', type: 'A', records: [ { entry: '10.10.10.30' }, { entry: '10.10.10.41' }] }
+    - { name: 'serverc', type: 'A', records: [ { entry: '10.10.10.40' }, { entry: '10.10.10.41' }] }
 
 - name: create SRV records in a new record set
   azure_rm_dnsrecordset:
-    resource_group: 'Testing'
-    relative_name: '_sip._tcp.testing.com'
-    zone_name: 'testing.com'
-    record_type: 'SRV'
-    record_set_state: 'present'
-    records: 'sip.testing.com'
-    preference: 10
-    record_state: 'present'
+    resource_group: Testing
+    relative_name: _sip._tcp.testing.com
+    zone_name: testing.com
     time_to_live: 7200
-    priority: 20
-    weight: 10
-    port: 5060
+    record_type: SRV
+    state: present
+    records:
+    - entry: sip.testing.com
+      preference: 10
+      priority: 20
+      weight: 10
+      port: 5060
 
 - name: create PTR record in a new record set
   azure_rm_dnsrecordset:
-    resource_group: 'Testing'
-    relative_name: '192.168.100.101.in-addr.arpa'
-    zone_name: 'testing.com'
-    record_type: 'PTR'
-    record_set_state: 'present'
-    records: 'servera.testing.com'
-    record_state: 'present'
+    resource_group: Testing
+    relative_name: 192.168.100.101.in-addr.arpa
+    zone_name: testing.com
+    record_type: PTR
+    records:
+    - entry: servera.testing.com
 
 - name: create TXT record in a new record set
   azure_rm_dnsrecordset:
-    resource_group: 'Testing'
-    relative_name: 'mail.testing.com'
-    zone_name: 'testing.com'
-    record_type: 'TXT'
-    record_set_state: 'present'
-    records: 'v=spf1 a -all'
-    record_state: 'present'
+    resource_group: Testing
+    relative_name: mail.testing.com
+    zone_name: testing.com
+    record_type: TXT
+    records:
+    - entry: 'v=spf1 a -all'
 
 '''
 
 RETURN = '''
-state:
-    description: Current state of the record set.
-    returned: always
-    type: dict
-    sample: {
-        "aaaa_records": [],
-        "arecords": [
-            {
-                "ipv4_address": "1.2.3.4"
-            },
-            {
-                "ipv4_address": "2.4.5.6"
-            },
-            {
-                "ipv4_address": "7.8.3.9"
-            },
-            {
-                "ipv4_address": "10.3.2.8"
-            }
-        ],
-        "cname_record": null,
-        "full_list": [
-            "1.2.3.4",
-            "2.4.5.6",
-            "7.8.3.9",
-            "10.3.2.8"
-        ],
-        "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/dnszones/recordzone.com/A/server_a",
-        "mx_records": [],
-        "name": "server_a",
-        "ns_records": [],
-        "port_list": [],
-        "pref_list": [],
-        "prior_list": [],
-        "ptr_records": [],
-        "srv_records": [],
-        "ttl": 12900,
-        "txt_records": [],
-        "type": "Microsoft.Network/dnszones/A",
-        "weight_list": []
-    }
 '''
 
+import inspect
+import sys
+
+from ansible.module_utils.basic import _load_params
+from ansible.module_utils.six import iteritems
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
@@ -240,59 +183,101 @@ except ImportError:
     # This is handled in azure_rm_common
     pass
 
+base_record = dict(
+    entry=dict(type='str', required=True)
+)
+
+RECORD_ARGSPECS = dict(
+    A=dict(
+        ipv4_address=dict(type='str', required=True, aliases=['entry'])
+    ),
+    AAAA=dict(
+        ipv6_address=dict(type='str', required=True, aliases=['entry'])
+    ),
+    CNAME=dict(
+        cname=dict(type='str', required=True, aliases=['entry'])
+    ),
+    MX=dict(
+        preference=dict(type='int', required=True),
+        exchange=dict(type='str', required=True, aliases=['entry'])
+    ),
+    NS=dict(
+        nsdname=dict(type='str', required=True, aliases=['entry'])
+    ),
+    PTR=dict(
+        ptrdname=dict(type='str', required=True, aliases=['entry'])
+    ),
+    SRV=dict(
+        priority=dict(type='int', required=True),
+        port=dict(type='int', required=True),
+        weight=dict(type='int', required=True),
+        target=dict(type='str', required=True, aliases=['entry'])
+    ),
+    TXT=dict(
+        value=dict(type='str', required=True, aliases=['entry'])
+    ),
+    # FUTURE: ensure all record types are supported (see https://github.com/Azure/azure-sdk-for-python/tree/master/azure-mgmt-dns/azure/mgmt/dns/models)
+)
+
+RECORDSET_VALUE_MAP = dict(
+    A=dict(attrname='arecords', classobj=ARecord, is_list=True),
+    AAAA=dict(attrname='aaaa_records', classobj=AaaaRecord, is_list=True),
+    CNAME=dict(attrname='cname_record', classobj=CnameRecord, is_list=False),
+    MX=dict(attrname='mx_records', classobj=MxRecord, is_list=True),
+    NS=dict(attrname='ns_records', classobj=NsRecord, is_list=True),
+    PTR=dict(attrname='ptr_records', classobj=PtrRecord, is_list=True),
+    SRV=dict(attrname='srv_records', classobj=SrvRecord, is_list=True),
+    TXT=dict(attrname='txt_records', classobj=TxtRecord, is_list=True),
+    # FUTURE: add missing record types from https://github.com/Azure/azure-sdk-for-python/blob/master/azure-mgmt-dns/azure/mgmt/dns/models/record_set.py
+)
+
 
 class AzureRMRecordSet(AzureRMModuleBase):
 
     def __init__(self):
 
-        # define user inputs into argument
+        # we're doing two-pass arg validation, sample and store the args internally to allow this
+        _load_params()
+
         self.module_arg_spec = dict(
             resource_group=dict(type='str', required=True),
             relative_name=dict(type='str', required=True),
             zone_name=dict(type='str', required=True),
-            record_type=dict(choices=['A', 'AAAA', 'CNAME', 'MX', 'NS', 'SRV', 'TXT', 'PTR'], required=True, type='str'),
-            record_set_state=dict(choices=['present', 'absent'], default='present', type='str'),
-            record_state=dict(choices=['present', 'absent'], default='absent', type='str'),
-            time_to_live=dict(type='str', default='3600'),
-            records=dict(type='list', aliases=['ipv4_address', 'ipv6_address', 'cname', 'exchange', 'nsdname', 'ptrdname', 'value', 'target']),
-            preference=dict(type='list'),
-            priority=dict(type='list'),
-            weight=dict(type='list'),
-            port=dict(type='list')
+            record_type=dict(choices=RECORD_ARGSPECS.keys(), required=True, type='str'),
+            record_mode=dict(choices=['append', 'purge'], default='purge'),
+            state=dict(choices=['present', 'absent'], default='present', type='str'),
+            time_to_live=dict(type='int', default=3600),
+            records=dict(type='list', elements='dict')
         )
 
-        # store the results of the module operation
+        required_if = [
+            ('state', 'present', ['records'])
+        ]
+
         self.results = dict(
-            changed=False,
-            record_set_state=dict()
+            changed=False
         )
 
-        self.resource_group = None
-        self.relative_name = None
-        self.zone_name = None
-        self.record_type = None
-        self.record_set_state = None
-        self.record_state = None
-        self.time_to_live = None
-        self.records = None
-        self.preference = None
-        self.priority = None
-        self.weight = None
-        self.port = None
-        # self.tags = None
+        # first-pass arg validation so we can get the record type- skip exec_module
+        super(AzureRMRecordSet, self).__init__(self.module_arg_spec, required_if=required_if, supports_check_mode=True, skip_exec=True)
 
-        super(AzureRMRecordSet, self).__init__(self.module_arg_spec,
-                                               supports_check_mode=True)
+        # look up the right subspec and metadata
+        record_subspec = RECORD_ARGSPECS.get(self.module.params['record_type'])
+        self.record_type_metadata = RECORDSET_VALUE_MAP.get(self.module.params['record_type'])
+
+        # patch the right record shape onto the argspec
+        self.module_arg_spec['records']['options'] = record_subspec
+
+        # monkeypatch __hash__ on SDK model objects so we can safely use them in sets
+        for rvm in RECORDSET_VALUE_MAP.values():
+            rvm['classobj'].__hash__ = gethash
+
+        # rerun validation and actually run the module this time
+        super(AzureRMRecordSet, self).__init__(self.module_arg_spec, required_if=required_if, supports_check_mode=True)
 
     def exec_module(self, **kwargs):
-
-        # create a new variable in case the 'try' doesn't find a record set
-        curr_record = None
-        record_set = None
         for key in self.module_arg_spec.keys():
             setattr(self, key, kwargs[key])
-
-        self.results['check_mode'] = self.check_mode
 
         # get resource group and zone
         resource_group = self.get_resource_group(self.resource_group)
@@ -300,134 +285,67 @@ class AzureRMRecordSet(AzureRMModuleBase):
         if not zone:
             self.fail('The zone {0} does not exist in the resource group {1}'.format(self.zone_name, self.resource_group))
 
-        changed = False
-        results = dict()
         try:
             self.log('Fetching Record Set {0}'.format(self.relative_name))
             record_set = self.dns_client.record_sets.get(self.resource_group, self.zone_name, self.relative_name, self.record_type)
+        except CloudError as ce:
+            record_set = None
+            # FUTURE: fail on anything other than ResourceNotFound
 
-            # set object into a dictionary
-            results = record_set_to_dict(record_set)
-            # to create a new record set, self.state == present
-            if self.record_set_state == 'present':
-                if self.record_state == 'present':
-                    for each in self.records:
-                        # loop through the current records you want to add
-                        # if at least one is not in the record set you got, then we want changed = True
-                        if each not in results['full_list']:
-                            changed = True
-                            break
+        # FUTURE: implement diff mode
 
-                elif self.record_state == 'absent':
-                    # if the state == absent, then we want to delete the records which are given to us if they are in there
-                    for each_rec in self.records:
-                        # loop through current records
-                        # if at least one is in there, we make changed = True
-                        if each_rec in results['full_list']:
-                            changed = True
-                            break
+        if self.state == 'present':
+            # convert the input records to SDK objects
+            self.input_sdk_records = self.create_sdk_records(self.records)
 
-                # update_tags, results['tags'] = self.update_tags(results['tags'])
-                # if update_tags:
-                #    changed = True
-
-            elif self.record_set_state == 'absent':
+            if not record_set:
                 changed = True
-
-        except CloudError:
-            # the record set does not exist
-            if self.record_set_state == 'present':
-                changed = True
-                if self.record_set_state == 'absent':
-                    self.fail("You cannot delete records {0} to the record set {1} you are creating ".format(self.records, self.relative_name))
             else:
-                # you can't delete what is not there
-                changed = False
+                # and use it to get the type-specific records
+                server_records = getattr(record_set, self.record_type_metadata['attrname'])
 
-        self.results['changed'] = changed
-        self.results['record_set_state'] = results
+                # compare the input records to the server records
+                changed = self.records_changed(self.input_sdk_records, server_records)
 
-        # return the results if your only gathering information and not changing anything
+                # also check top-level recordset properties
+                changed |= record_set.ttl != self.time_to_live
+
+                # FUTURE: add metadata/tag check on recordset
+
+            self.results['changed'] |= changed
+
+        elif self.state == 'absent':
+            if record_set:
+                self.results['changed'] = True
+
         if self.check_mode:
             return self.results
-        if changed:
-            # either create a new record set, or update the one we have
-            if self.record_set_state == 'present':
-                if not record_set:
-                    self.log('Creating record set {0} of type {1}'.format(self.relative_name, self.record_type))
 
-                    # function creates a record_set based on the record type
-                    curr_record = create_current_record(self)
-                    record_set = turn_to_input(self, curr_record)
+        if self.results['changed']:
+            if self.state == 'present':
+                record_set_args = dict(
+                    type=self.record_type,
+                    ttl=self.time_to_live
+                )
+
+                if not self.record_type_metadata['is_list']:
+                    records_to_create_or_update = self.input_sdk_records[0]
+                elif self.record_mode == 'append' and record_set:  # append mode, merge with existing values before update
+                    records_to_create_or_update = set(self.input_sdk_records).union(set(server_records))
                 else:
-                    # update record set
-                    if self.record_state == 'present':
-                        # create new lists from the results of the given record set we got from azure
-                        mergedlist = results['full_list']
-                        preference_lst = results['pref_list']
-                        priority_lst = results['prior_list']
-                        weight_lst = results['weight_list']
-                        port_lst = results['port_list']
-                        # loop through records to add if they are not already in the list we pulled down, then add them in and their components
-                        for i in range(len(self.records)):
-                            if self.records[i] not in mergedlist:
-                                mergedlist.append(self.records[i])
-                                if self.record_type == 'MX':
-                                    preference_lst.append(self.preference[i])
-                                elif self.record_type == 'SRV':
-                                    priority_lst.append(self.priority[i])
-                                    weight_lst.append(self.weight[i])
-                                    port_lst.append(self.port[i])
-                        # set self dicitionaries to updated lists and use those to create a new record set list to be passed into the turn_to_input function
-                        self.preference = preference_lst
-                        self.records = mergedlist
-                        self.priority = priority_lst
-                        self.weight = weight_lst
-                        self.port = port_lst
-                        # self.tags = results['tags']
-                        curr_record = create_current_record(self)
-                        record_set = turn_to_input(self, curr_record)
-                    elif self.record_state == 'absent':
-                        # we loop through the contents of the results and if one of them matches a record in curr_record, remove it from results
-                        mergedlist = []
-                        preference_lst = []
-                        priority_lst = []
-                        weight_lst = []
-                        port_lst = []
-                        # loop through records and if they are not in the input by the user, then we can add them to the final list to be used
-                        for i in range(len(results['full_list'])):
-                            if results['full_list'][i] not in self.records:
-                                mergedlist.append(results['full_list'][i])
-                                if self.record_type == 'MX':
-                                    preference_lst.append(results['pref_list'][i])
-                                elif self.record_type == 'SRV':
-                                    priority_lst.append(results['prior_list'][i])
-                                    weight_lst.append(results['weight_list'][i])
-                                    port_lst.append(results['port_list'][i])
-                        self.preference = preference_lst
-                        self.records = mergedlist
-                        self.priority = priority_lst
-                        self.weight = weight_lst
-                        self.port = port_lst
-                        curr_record = create_current_record(self)
-                        record_set = turn_to_input(self, curr_record)
+                    records_to_create_or_update = self.input_sdk_records
 
-                self.results['record_set_state'] = self.create_or_update_record_set(record_set)
-            elif self.record_set_state == 'absent':
+                record_set_args[self.record_type_metadata['attrname']] = records_to_create_or_update
+
+                record_set = RecordSet(**record_set_args)
+
+                rsout = self.dns_client.record_sets.create_or_update(self.resource_group, self.zone_name, self.relative_name, self.record_type, record_set)
+
+            elif self.state == 'absent':
                 # delete record set
                 self.delete_record_set()
-                # the delete does not actually return anything. if no exception, then we'll assume
-                # it worked.
-                self.results['record_set_state']['status'] = 'Deleted'
-        return self.results
 
-    def create_or_update_record_set(self, record_set):
-        try:
-            # create or update the new record set object we created
-            new_record_set = self.dns_client.record_sets.create_or_update(self.resource_group, self.zone_name, self.relative_name, self.record_type, record_set)
-        except Exception as exc:
-            self.fail("Error creating or updating record set {0} - {1}".format(self.relative_name, str(exc)))
-        return record_set_to_dict(new_record_set)
+        return self.results
 
     def delete_record_set(self):
         try:
@@ -437,188 +355,33 @@ class AzureRMRecordSet(AzureRMModuleBase):
             self.fail("Error deleting record set {0} - {1}".format(self.relative_name, str(exc)))
         return None
 
+    def create_sdk_records(self, input_records):
+        record_sdk_class = self.record_type_metadata['classobj']
+        record_argspec = inspect.getargspec(record_sdk_class.__init__)
+        return [record_sdk_class(**dict([(k, v) for k, v in iteritems(x) if k in record_argspec.args])) for x in input_records]
 
-def record_set_to_dict(RecordSet):
-    # turn RecordSet object into a dictionary to be used later
-    # create a new list variable to use any record type as a parameter (full_list)
-    result = dict(
-        id=RecordSet.id,
-        name=RecordSet.name,
-        type=RecordSet.type,
-        ttl=RecordSet.ttl,
-        metadata=RecordSet.metadata,
-        full_list=[],
-        pref_list=[],
-        prior_list=[],
-        weight_list=[],
-        port_list=[],
-        arecords=[],
-        aaaa_records=[],
-        ptr_records=[],
-        mx_records=[],
-        ns_records=[],
-        txt_records=[],
-        srv_records=[],
-        cname_record=None
-    )
-    if RecordSet.arecords:
-        for _ in RecordSet.arecords:
-            result['arecords'].append(dict(
-                ipv4_address=_.ipv4_address))
-            result['full_list'].append(_.ipv4_address)
+    def records_changed(self, input_records, server_records):
+        # ensure we're always comparing a list, even for the single-valued types
+        if not isinstance(server_records, list):
+            server_records = [server_records]
 
-    elif RecordSet.aaaa_records:
-        for _ in RecordSet.aaaa_records:
-            result['aaaa_records'].append(dict(
-                ipv6_address=_.ipv6_address))
-            result['full_list'].append(_.ipv6_address)
+        input_set = set(input_records)
+        server_set = set(server_records)
 
-    elif RecordSet.ptr_records:
-        for _ in RecordSet.ptr_records:
-            result['ptr_records'].append(dict(
-                ptrdname=_.ptrdname))
-            result['full_list'].append(_.ptrdname)
+        if self.record_mode == 'append':  # only a difference if the server set is missing something from the input set
+            return len(input_set.difference(server_set)) > 0
 
-    elif RecordSet.mx_records:
-        for _ in RecordSet.mx_records:
-            result['mx_records'].append(dict(
-                preference=_.preference,
-                exchange=_.exchange
-            ))
-            result['pref_list'].append(_.preference)
-            result['full_list'].append(_.exchange)
-
-    elif RecordSet.ns_records:
-        for _ in RecordSet.ns_records:
-            result['ns_records'].append(dict(
-                nsdname=_.nsdname))
-            result['full_list'].append(_.nsdname)
-
-    elif RecordSet.txt_records:
-        for _ in RecordSet.txt_records:
-            result['txt_records'].append(dict(
-                value=_.value))
-            result['full_list'].append(_.value)
-
-    elif RecordSet.srv_records:
-        for _ in RecordSet.srv_records:
-            result['srv_records'].append(dict(
-                priority=_.priority,
-                weight=_.weight,
-                port=_.port,
-                target=_.target
-            ))
-            result['full_list'].append(_.target)
-            result['prior_list'].append(_.priority)
-            result['weight_list'].append(_.weight)
-            result['port_list'].append(_.port)
-
-    elif RecordSet.cname_record:
-        result['cname_record'] = dict(
-            cname=RecordSet.cname_record.cname)
-        result['full_list'].append(RecordSet.cname_record.cname)
-
-    return result
+        # non-append mode; any difference in the sets is a change
+        return input_set != server_set
 
 
-def create_current_record(self):
-    # takes in a list of str records, the record type and returns a list of the specific record type
-    retrn_lst = []
-
-    if self.record_type == 'A':
-        if len(self.records) == 0:
-            return retrn_lst
-        for each_record in self.records:
-            # we want to append to the final list the object type ARecord where the parameter is a str called each_record representing the user input
-            retrn_lst.append(ARecord(ipv4_address=each_record))
-        return retrn_lst
-
-    elif self.record_type == 'AAAA':
-        if len(self.records) == 0:
-            return retrn_lst
-        for each_record_1 in self.records:
-            retrn_lst.append(AaaaRecord(ipv6_address=each_record_1))
-        return retrn_lst
-
-    elif self.record_type == 'MX':
-        if len(self.records) == 0:
-            return retrn_lst
-        if len(self.records) != len(self.preference):
-            self.fail('You must have an exchange for each preference or vice versa')
-        # if type matches to 'MX', loop through records/exchange and preference, using the same indices to create the object
-        for i in range(len(self.records)):
-            retrn_lst.append(MxRecord(preference=int(self.preference[i]), exchange=self.records[i]))
-        return retrn_lst
-
-    elif self.record_type == 'NS':
-        if len(self.records) == 0:
-            return retrn_lst
-        for each_record_2 in self.records:
-            retrn_lst.append(NsRecord(nsdname=each_record_2))
-        return retrn_lst
-
-    elif self.record_type == 'TXT':
-        if len(self.records) == 0:
-            return retrn_lst
-        for each_record_3 in self.records:
-            retrn_lst.append(TxtRecord(value=each_record_3))
-        return retrn_lst
-
-    elif self.record_type == 'PTR':
-        if len(self.records) == 0:
-            return retrn_lst
-        for each_record_4 in self.records:
-            retrn_lst.append(PtrRecord(ptrdname=each_record_4))
-        return retrn_lst
-
-    elif self.record_type == 'SRV':
-        if len(self.records) == 0:
-            return retrn_lst
-        count = len(self.records)
-        if count != len(self.priority) or count != len(self.port) or count != len(self.weight):
-            self.fail('You must have a weight, a port and a priority for each target')
-        for i in range(len(self.records)):
-            retrn_lst.append(SrvRecord(priority=int(self.priority[i]), weight=int(self.weight[i]), port=int(self.port[i]), target=self.records[i]))
-        return retrn_lst
-
-    elif self.record_type == 'CNAME':
-        if len(self.records) > 1:
-            self.fail('You cannot have more than one record in a single CNAME record set')
-        elif len(self.records) == 0:
-            return retrn_lst
-        curr = CnameRecord(cname=self.records[0])
-        return curr
-    return retrn_lst
-
-
-def turn_to_input(self, curr_record):
-    val = turn_to_long(self.time_to_live)
-
-    if self.record_type == 'A':
-        x = RecordSet(arecords=curr_record, type=self.record_type, ttl=val)
-    elif self.record_type == 'AAAA':
-        x = RecordSet(aaaa_records=curr_record, type=self.record_type, ttl=val)
-    elif self.record_type == 'CNAME':
-        x = RecordSet(cname_record=curr_record, type=self.record_type, ttl=val)
-    elif self.record_type == 'MX':
-        x = RecordSet(mx_records=curr_record, type=self.record_type, ttl=val)
-    elif self.record_type == 'NS':
-        x = RecordSet(ns_records=curr_record, type=self.record_type, ttl=val)
-    elif self.record_type == 'SRV':
-        x = RecordSet(srv_records=curr_record, type=self.record_type, ttl=val)
-    elif self.record_type == 'TXT':
-        x = RecordSet(txt_records=curr_record, type=self.record_type, ttl=val)
-    elif self.record_type == 'PTR':
-        x = RecordSet(ptr_records=curr_record, type=self.record_type, ttl=val)
-    return x
-
-
-def turn_to_long(value):
-    try:
-        output = long(value)
-    except NameError:
-        output = int(value)
-    return output
+# Quick 'n dirty hash impl suitable for monkeypatching onto SDK model objects (so we can use set comparisons)
+def gethash(self):
+    if not getattr(self, '_cachedhash', None):
+        spec = inspect.getargspec(self.__init__)
+        valuetuple = tuple([getattr(self, x, None) for x in spec.args if x != 'self'])
+        self._cachedhash = hash(valuetuple)
+    return self._cachedhash
 
 
 def main():
