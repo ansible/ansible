@@ -302,6 +302,7 @@ instance:
 '''
 
 import time
+import posixpath
 
 HAS_PYVMOMI = False
 try:
@@ -532,24 +533,21 @@ class PyVmomiHelper(object):
         return datacenter
 
     def get_folder_path(self, datacenter):
-        # Prepend / if it was missing from the folder path, also strip trailing slashes
-        if not self.params['folder'].startswith('/'):
-            self.params['folder'] = '/%(folder)s' % self.params
-        self.params['folder'] = self.params['folder'].rstrip('/')
+        # Ensure we have a starting slash and no trailing slash
+        self.params['folder'] = posixpath.join('/', self.params['folder']).rstrip('/')
 
-        dcpath = compile_folder_path_for_object(datacenter)
-        if not dcpath.endswith('/'):
-            dcpath = dcpath + '/'
+        toppath = compile_folder_path_for_object(datacenter)
+        dcpath = posixpath.join(toppath, self.params['datacenter'])
 
         # Check for full path first in case it was already supplied
-        if (self.params['folder'].startswith(dcpath + self.params['datacenter'] + '/vm')):
+        if (self.params['folder'].startswith(dcpath + '/vm/') or self.params['folder'] == dcpath + '/vm'):
             fullpath = self.params['folder']
         elif (self.params['folder'].startswith('/vm/') or self.params['folder'] == '/vm'):
-            fullpath = "%s%s%s" % (dcpath, self.params['datacenter'], self.params['folder'])
+            fullpath = "%s%s" % (dcpath, self.params['folder'])
         elif (self.params['folder'].startswith('/')):
-            fullpath = "%s%s/vm%s" % (dcpath, self.params['datacenter'], self.params['folder'])
+            fullpath = "%s/vm%s" % (dcpath, self.params['folder'])
         else:
-            fullpath = "%s%s/vm/%s" % (dcpath, self.params['datacenter'], self.params['folder'])
+            fullpath = "%s/vm/%s" % (dcpath, self.params['folder'])
 
         return fullpath
 
