@@ -154,7 +154,6 @@ $ErrorActionPreference = "Stop"
 $helper_def = @"
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Security.AccessControl;
@@ -231,38 +230,9 @@ namespace Ansible
         public int Attributes;
     }
 
-    [StructLayout(LayoutKind.Sequential)]
-    public struct TOKEN_PRIVILEGES
-    {
-        public UInt32 PrivilegeCount;
-        public LUID Luid;
-        public UInt32 Attributes;
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
-    public struct LUID_AND_ATTRIBUTES
-    {
-        public LUID Luid;
-        public UInt32 Attributes;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    public struct LUID
-    {
-        uint LowPart;
-        uint HighPart;
-    }
-
     public struct TOKEN_USER
     {
         public SID_AND_ATTRIBUTES User;
-    }
-
-    public struct CommandResult
-    {
-        public string stdout;
-        public string stderr;
-        public uint rc;
     }
 
     [Flags]
@@ -384,6 +354,13 @@ namespace Ansible
         public static explicit operator Win32Exception(string message) { return new Win32Exception(message); }
     }
 
+    public class CommandResult
+    {
+        public string StandardOut { get; internal set; }
+        public string StandardError { get; internal set; }
+        public uint ExitCode { get; internal set; }
+    }
+
     public class BecomeUtil
     {
         [DllImport("advapi32.dll", SetLastError = true)]
@@ -484,20 +461,11 @@ namespace Ansible
             out IntPtr phNewToken);
 
         [DllImport("advapi32.dll", SetLastError = true)]
-        private static extern bool LookupPrivilegeValue(
-            string lpSystemName,
-            string lpName,
-            out LUID lpLuid);
+        public static extern bool ImpersonateLoggedOnUser(
+            IntPtr hToken);
 
         [DllImport("advapi32.dll", SetLastError = true)]
-        private static extern bool AdjustTokenPrivileges(
-            IntPtr TokenHandle,
-            [MarshalAs(UnmanagedType.Bool)]
-                bool DisableAllPrivileges,
-            ref TOKEN_PRIVILEGES NewState,
-            uint BufferLength,
-            IntPtr PreviousState,
-            IntPtr ReturnLength);
+        public static extern bool RevertToSelf();
 
         public static CommandResult RunAsUser(string username, string password, string lpCommandLine, string lpCurrentDirectory, string stdinInput)
         {
@@ -584,9 +552,9 @@ namespace Ansible
             uint rc = GetProcessExitCode(pi.hProcess);
 
             CommandResult result = new CommandResult();
-            result.stdout = stdout_str;
-            result.stderr = stderr_str;
-            result.rc = rc;
+            result.StandardOut = stdout_str;
+            result.StandardError = stderr_str;
+            result.ExitCode = rc;
 
             return result;
         }
@@ -621,29 +589,54 @@ namespace Ansible
             if (service_sids.Contains(account_sid))
             {
                 // We are trying to become to a service account
-                IntPtr hToken = GetUserHandle(account_sid);
+                IntPtr hToken = GetUserHandle();
                 if (hToken == IntPtr.Zero)
-                    throw new Exception("Failed to get service user token");
+                    throw new Exception("Failed to get token for NT AUTHORITY\\SYSTEM");
 
                 IntPtr hTokenDup = IntPtr.Zero;
                 try
                 {
-                    if (!DuplicateTokenEx(hToken,
-                        TokenAccessLevels.MaximumAllowed,
-                        IntPtr.Zero,
-                        SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation,
-                        TOKEN_TYPE.TokenPrimary,
-                        out hTokenDup))
-                    {
-                        throw new Win32Exception("Failed to duplicate service user token");
-                    }
+                    if (!DuplicateTokenEx(hToken, TokenAccessLevels.MaximumAllowed, IntPtr.Zero, SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation, TOKEN_TYPE.TokenPrimary, out hTokenDup))
+                        throw new Win32Exception("Failed to duplicate the SYSTEM account token");
                 }
                 finally
                 {
                     CloseHandle(hToken);
                 }
 
-                tokens.Add(hTokenDup);
+                string lpszDomain = "NT AUTHORITY";
+                string lpszUsername = null;
+                switch (account_sid)
+                {
+                    case "S-1-5-18":
+                        tokens.Add(hTokenDup);
+                        return tokens;
+                    case "S-1-5-19":
+                        lpszUsername = "LocalService";
+                        break;
+                    case "S-1-5-20":
+                        lpszUsername = "NetworkService";
+                        break;
+                }
+
+                if (!ImpersonateLoggedOnUser(hTokenDup))
+                    throw new Win32Exception("Failed to impersonate as SYSTEM account");
+
+                IntPtr newToken = IntPtr.Zero;
+                if (!LogonUser(
+                    lpszUsername,
+                    lpszDomain,
+                    null,
+                    LogonType.LOGON32_LOGON_SERVICE,
+                    LogonProvider.LOGON32_PROVIDER_DEFAULT,
+                    out newToken))
+                {
+                    throw new Win32Exception("LogonUser failed");
+                }
+
+                RevertToSelf();
+                tokens.Add(newToken);
+                return tokens;
             }
             else
             {
@@ -656,13 +649,9 @@ namespace Ansible
                     username = user_split[1];
                 }
                 else if (username.Contains("@"))
-                {
                     domain = null;
-                }
                 else
-                {
                     domain = ".";
-                }
 
                 // Logon and get the token
                 IntPtr hToken = IntPtr.Zero;
@@ -682,12 +671,12 @@ namespace Ansible
 
                 tokens.Add(hTokenElevated);
                 tokens.Add(hToken);
-            }
 
-            return tokens;
+                return tokens;
+            }
         }
 
-        private static IntPtr GetUserHandle(string user_sid)
+        private static IntPtr GetUserHandle()
         {
             uint array_byte_size = 1024 * sizeof(uint);
             IntPtr[] pids = new IntPtr[1024];
@@ -699,9 +688,6 @@ namespace Ansible
             }
             // TODO: Handle if bytes_copied is larger than the array size and rerun EnumProcesses with larger array
             uint num_processes = bytes_copied / sizeof(uint);
-
-            // Enable the SeDebugPrivilege to help below - Doesn't help
-            // EnablePrivilege("SeDebugPrivilege");
 
             for (uint i = 0; i < num_processes; i++)
             {
@@ -721,7 +707,7 @@ namespace Ansible
                     if (OpenProcessToken(hProcess, desired_access, out hToken))
                     {
                         string sid = GetTokenUserSID(hToken);
-                        if (sid == user_sid)
+                        if (sid == "S-1-5-18")
                         {
                             CloseHandle(hProcess);
                             return hToken;
@@ -746,7 +732,7 @@ namespace Ansible
                 int last_err = Marshal.GetLastWin32Error();
                 if (last_err != 122) // ERROR_INSUFFICIENT_BUFFER
                     throw new Win32Exception(last_err, "Failed to get TokenUser length");
-            }
+            }                
 
             IntPtr token_information = Marshal.AllocHGlobal((int)token_length);
             try
@@ -765,23 +751,6 @@ namespace Ansible
             }
 
             return sid;
-        }
-
-        private static void EnablePrivilege(string privilege_name)
-        {
-            Process current_process = Process.GetCurrentProcess();
-            IntPtr hToken = IntPtr.Zero;
-            if (!OpenProcessToken(current_process.Handle, TokenAccessLevels.AdjustPrivileges, out hToken))
-                throw new Win32Exception("Failed to open current process token");
-
-            TOKEN_PRIVILEGES token_privileges = new TOKEN_PRIVILEGES();
-            if (!LookupPrivilegeValue(null, privilege_name, out token_privileges.Luid))
-                throw new Win32Exception("Failed to lookup privilege value");
-
-            token_privileges.Attributes = 0x00000002; // SE_PRIVILEGE_ENABLED
-
-            if (!AdjustTokenPrivileges(hToken, false, ref token_privileges, 0, IntPtr.Zero, IntPtr.Zero))
-                throw new Win32Exception(String.Format("Failed to enable {0} for user", privilege_name));
         }
 
         private static void GetProcessOutput(StreamReader stdoutStream, StreamReader stderrStream, out string stdout, out string stderr)
@@ -992,15 +961,14 @@ Function Run($payload) {
         $lp_command_line = New-Object System.Text.StringBuilder @("powershell.exe -NonInteractive -NoProfile -ExecutionPolicy Bypass -File $temp")
         $lp_current_directory = "$env:SystemRoot"
 
-        [Ansible.Shell.NativeProcessUtil]::GetProcessOutput($stdout, $stderr, [ref] $str_stdout, [ref] $str_stderr)
-
-        # FUTURE: decode CLIXML stderr output (and other streams?)
-
-        $rc = [Ansible.Shell.NativeProcessUtil]::GetProcessExitCode($pi.hProcess)
-        [Console]::Out.WriteLine($str_stdout.Trim())
-        [Console]::Error.WriteLine($str_stderr.Trim())
-    }
-    Catch {
+        $result = [Ansible.BecomeUtil]::RunAsUser($username, $password, $lp_command_line, $lp_current_directory, $payload_string)
+        $stdout = $result.StandardOut
+        $stderr = $result.StandardError
+        $rc = $result.ExitCode
+        
+        [Console]::Out.WriteLine($stdout.Trim())
+        [Console]::Error.WriteLine($stderr.Trim())
+    } Catch {
         $excep = $_
         Dump-Error $excep
     } Finally {

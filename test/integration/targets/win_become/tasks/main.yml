@@ -87,7 +87,30 @@
       that:
       - whoami_out.stdout_lines[0] == "nt authority\\system"
 
-# FUTURE: test NETWORK SERVICE and LOCAL SERVICE once they are working
+  - name: test become with NetworkService account
+    win_command: whoami
+    become: yes
+    become_method: runas
+    become_user: NetworkService
+    register: whoami_out
+  
+  - name: verify output
+    assert:
+      that:
+      - whoami_out.stdout_lines[0] == "nt authority\\network service"
+
+  - name: test become with LocalService account
+    win_command: whoami
+    become: yes
+    become_method: runas
+    become_user: LocalService
+    register: whoami_out
+  
+  - name: verify output
+    assert:
+      that:
+      - whoami_out.stdout_lines[0] == "nt authority\\local service"
+
 # FUTURE: test raw + script become behavior once they're running under the exec wrapper again
 # FUTURE: add standalone playbook tests to include password prompting and play become keywords
 
