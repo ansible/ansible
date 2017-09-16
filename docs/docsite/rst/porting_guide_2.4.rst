@@ -15,6 +15,11 @@ This document is part of a collection on porting. The complete list of porting g
 
 .. contents:: Topics
 
+Python version
+==============
+
+Ansible will not support Python 2.4 nor 2.5 on the target hosts anymore. Going forward, Python 2.6+ will be required on targets, as already is the case on the controller.
+
 Playbook
 ========
 
@@ -43,11 +48,6 @@ Will result in:
 .. code-block:: yaml
 
    - name: foo
-
-ansible_facts namespacing
--------------------------
-
-FIXME:
 
 Inventory plugins
 -----------------
