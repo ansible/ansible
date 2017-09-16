@@ -12,6 +12,7 @@ lib/ansible/modules/cloud/amazon/ec2_win_password.py
 lib/ansible/modules/cloud/amazon/iam_cert_facts.py
 lib/ansible/modules/cloud/amazon/s3_sync.py
 lib/ansible/modules/cloud/azure/azure.py
+lib/ansible/modules/cloud/azure/azure_rm_dnsrecordset.py
 lib/ansible/modules/cloud/centurylink/clc_firewall_policy.py
 lib/ansible/modules/cloud/cloudstack/cs_account.py
 lib/ansible/modules/cloud/cloudstack/cs_affinitygroup.py

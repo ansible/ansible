@@ -149,7 +149,7 @@ class AzureRMModuleBase(object):
     def __init__(self, derived_arg_spec, bypass_checks=False, no_log=False,
                  check_invalid_arguments=True, mutually_exclusive=None, required_together=None,
                  required_one_of=None, add_file_common_args=False, supports_check_mode=False,
-                 required_if=None, supports_tags=True, facts_module=False):
+                 required_if=None, supports_tags=True, facts_module=False, skip_exec=False):
 
         merged_arg_spec = dict()
         merged_arg_spec.update(AZURE_COMMON_ARGS)
@@ -252,8 +252,9 @@ class AzureRMModuleBase(object):
         if self.module.params.get('tags'):
             self.validate_tags(self.module.params['tags'])
 
-        res = self.exec_module(**self.module.params)
-        self.module.exit_json(**res)
+        if not skip_exec:
+            res = self.exec_module(**self.module.params)
+            self.module.exit_json(**res)
 
     def check_client_version(self, client_name, client_version, expected_version):
         # Ensure Azure modules are at least 2.0.0rc5.
