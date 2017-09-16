@@ -596,8 +596,16 @@ namespace Ansible
                 IntPtr hTokenDup = IntPtr.Zero;
                 try
                 {
-                    if (!DuplicateTokenEx(hToken, TokenAccessLevels.MaximumAllowed, IntPtr.Zero, SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation, TOKEN_TYPE.TokenPrimary, out hTokenDup))
+                    if (!DuplicateTokenEx(
+                        hToken,
+                        TokenAccessLevels.MaximumAllowed,
+                        IntPtr.Zero,
+                        SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation,
+                        TOKEN_TYPE.TokenPrimary,
+                        out hTokenDup))
+                    {
                         throw new Win32Exception("Failed to duplicate the SYSTEM account token");
+                    }
                 }
                 finally
                 {
@@ -732,7 +740,7 @@ namespace Ansible
                 int last_err = Marshal.GetLastWin32Error();
                 if (last_err != 122) // ERROR_INSUFFICIENT_BUFFER
                     throw new Win32Exception(last_err, "Failed to get TokenUser length");
-            }                
+            }
 
             IntPtr token_information = Marshal.AllocHGlobal((int)token_length);
             try
@@ -853,7 +861,6 @@ namespace Ansible
             { throw new NotImplementedException(); }
             public override Type AuditRuleType { get { return typeof(AuditRule); } }
         }
-
 
         private class NoopSafeHandle : SafeHandle
         {
