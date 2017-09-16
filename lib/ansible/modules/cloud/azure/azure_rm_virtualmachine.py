@@ -904,7 +904,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                     count += 1
 
                                 if data_disk.get('storage_account_name'):
-                                    self.get_storage_account(data_disk['storage_account_name'])
+                                    data_disk_storage_account = self.get_storage_account(data_disk['storage_account_name'])
                                     data_disk_storage_account.name = data_disk['storage_account_name']
                                 else:
                                     data_disk_storage_account = self.create_default_storage_account()
