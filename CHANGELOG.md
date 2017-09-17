@@ -157,7 +157,12 @@ Ansible Changes By Release
 #### New Inventory scripts:
 - lxd
 
-#### New: Tests
+#### New Lookups:
+- cyberarkpassword
+- filetree
+- hiera
+
+#### New Tests:
 - any : true if any element is true
 - all: true if all elements are true
 
