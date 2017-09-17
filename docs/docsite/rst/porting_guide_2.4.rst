@@ -105,6 +105,7 @@ Noteworthy module changes
 
 * The :ref:`win_get_url <win_get_url>`  module has the dictionary ``win_get_url`` in its results deprecated, its content is now also available directly in the resulting output, like other modules. This dictionary will be removed in Ansible 2.8.
 * The :ref:`win_unzip <win_unzip>` module no longer includes the dictionary ``win_unzip`` in its results; the contents are now included directly in the resulting output, like other modules.
+* The :ref:`win_package <win_package>` module return values ``exit_code`` and ``restart_required`` have been deprecated in favour of ``rc`` and ``reboot_required`` respectively. The deprecated return values will be removed in Ansible 2.6.
 
 
 Plugins
