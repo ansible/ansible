@@ -216,7 +216,7 @@ variables from the file "group_vars/ec2_tag_class_webserver" automatically.
 Top Level Playbooks Are Separated By Role
 `````````````````````````````````````````
 
-In site.yml, we import a playbook that defines our entire infrastructure.  This is very short example, because it's just importing
+In site.yml, we import a playbook that defines our entire infrastructure.  This is a very short example, because it's just importing
 some other playbooks::
 
     ---
