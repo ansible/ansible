@@ -247,16 +247,21 @@ def main(args):
 
     # SN_GROUPS
     groups = os.environ.get("SN_GROUPS", [])
+    try:
+        basestring
+    except NameError:
+        basestring = str
+
     if not groups and config.has_option('config', 'groups'):
         groups = config.get('config', 'groups')
-    if isinstance(groups, str):
+    if isinstance(groups, basestring):
         groups = groups.split(',')
 
     # SN_FIELDS
     fields = os.environ.get("SN_FIELDS", [])
     if not fields and config.has_option('config', 'fields'):
         fields = config.get('config', 'fields')
-    if isinstance(fields, str):
+    if isinstance(fields, basestring):
         fields = fields.split(',')
 
     inventory = NowInventory(
