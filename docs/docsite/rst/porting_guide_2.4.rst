@@ -78,21 +78,21 @@ Noteworthy module changes
 Plugins
 =======
 
-A new way to configure and document plugins has been introduced, this does not require changes to existing setups but developers might want to start adapting to the new infrastructure now. More details should be available in the developer documentation for each plugin type.
+A new way to configure and document plugins has been introduced.  This does not require changes to existing setups   but developers might want to start adapting to the new infrastructure now. More details should be available in the   developer documentation for each plugin type.
 
 Vars plugin changes
 -------------------
 
-Many changes under the hood, but both users and developers should not need to change anything to keep current setups working. They might WANT to chagne to take advantage of the way they work now.
+There have been many changes to the implementation of vars plugins, but both users and developers should not need to change anything to keep current setups working. Developers might WANT to change their plugins take advantage of new  features.
 
-The most notable difference to users is that they now get invoked on demand vs at inventory build time, this should make them more efficient for large inventories, specially when using a subset of the hosts.
+The most notable difference to users is that vars plugins now get invoked on demand instead of at inventory build    time.  This should make them more efficient for large inventories, especially when using a subset of the hosts.
 
 Inventory plugins
 -----------------
 
-Developers might wan tto start migrating from hardcoded inventory + inventory scripts. to the new Inventory Plugins. The scripts will still work via script plugin but efforts will now concentrate on plugins.
+Developers might want to start migrating from hardcoded inventory with dynamic inventory scripts to the new          Inventory Plugins. The scripts will still work via the ``script`` inventory plugin but efforts will now concentrate  on writing plugins rather than enhancing existing scripts.
 
-Both users and developers might want to look into the new plugins as we hope they alleviate the need for many hacks and workarounds.
+Both users and developers might want to look into the new plugins as we hope they alleviate the need for many of the hacks and workarounds found i nthe dynamic inventory scripts.
 
 
 Networking
@@ -115,6 +115,6 @@ See :ref:`Ansible Network debug guide <network_debug_troubleshooting>` for more 
 Configuration API
 =================
 
-The configuration system has had some major changes, but users should be unaffected, developers that were poking directly into the previous API might need to revisit their usage, some backward compatiblity methods were kept (mostly `get_config`) for known plugins/scripts, but these are deprecated.
+The configuration system has had some major changes, but users should be unaffected.  Developers that were poking    directly into the previous API might need to revisit their usage as some methods (for example, ``get_config``) were  kept for backwards compatibility but will warn users that the function has been deprecated.
 
-The new configuration has been designed to minimize the need of code changes in core for new plugins, the plugins themselves should just need to document their settings and the configuration system will provide what they need. This is still a work in progress, currently only 'callbcak' and 'connection' plugins support this, more details will be added to the specific plugin developer guides.
+The new configuration has been designed to minimize the need for code changes in core for new plugins.  The plugins  should just need to document their settings and the configuration system will use the documentation to provide what  they need. This is still a work in progress, currently only 'callback' and 'connection' plugins support this.  More  details will be added to the specific plugin developer guides.
