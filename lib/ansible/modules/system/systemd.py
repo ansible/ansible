@@ -238,6 +238,14 @@ status:
         }
 '''  # NOQA
 
+import os
+
+# python 2/3 compat
+try:
+    OSFileNotFoundError = FileNotFoundError
+except NameError:
+    OSFileNotFoundError = OSError
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.service import sysv_exists, sysv_is_enabled, fail_if_missing
 from ansible.module_utils._text import to_native
@@ -283,6 +291,13 @@ def parse_systemctl_show(lines):
                 k = None
     return parsed
 
+def is_running_in_chroot():
+    try:
+        s1 = os.stat('/')
+        s2 = os.stat('/proc/1/root')
+        return s1.st_dev != s2.st_dev or s1.st_ino != s2.st_ino
+    except OSFileNotFoundError:
+        return True
 
 # ===========================================
 # Main control flow
@@ -448,8 +463,11 @@ def main():
                         if rc != 0:
                             module.fail_json(msg="Unable to %s service %s: %s" % (action, unit, err))
             else:
-                # this can happen when we're running in a chroot, in which case systemd supports only enable/disable operations
-                module.warn('Service is in unknown state')
+                # ActiveState couldn't be determined. Expected when running in a chroot, in which case systemctl supports only enable/disable operations
+                if is_running_in_chroot():
+                    module.warn("Running in chroot. Ignoring service state being unknown")
+                else:
+                    module.fail_json(msg="Service is in unknown state", status=result['status'])
 
 
     module.exit_json(**result)
