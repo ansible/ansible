@@ -44,6 +44,12 @@ options:
         - The Id of the image
      required: false
      default: None
+   checksum:
+     version_added: "2.5"
+     description:
+        - The checksum of the image
+     required: false
+     default: None
    disk_format:
      description:
         - The format of the disk that is getting uploaded
@@ -138,6 +144,7 @@ def main():
     argument_spec = openstack_full_argument_spec(
         name              = dict(required=True),
         id                = dict(default=None),
+        checksum          = dict(default=None),
         disk_format       = dict(default='qcow2', choices=['ami', 'ari', 'aki', 'vhd', 'vmdk', 'raw', 'qcow2', 'vdi', 'iso', 'vhdx', 'ploop']),
         container_format  = dict(default='bare', choices=['ami', 'aki', 'ari', 'bare', 'ovf', 'ova', 'docker']),
         owner             = dict(default=None),
@@ -160,7 +167,10 @@ def main():
         cloud = shade.openstack_cloud(**module.params)
 
         changed = False
-        image = cloud.get_image(name_or_id=module.params['name'])
+        if module.params['checksum']:
+            image = cloud.get_image(name_or_id=None,filters={'checksum': module.params['checksum']})
+        else:
+            image = cloud.get_image(name_or_id=module.params['name'])
 
         if module.params['state'] == 'present':
             if not image:
