@@ -743,7 +743,7 @@ Ansible by default sets the loop variable `item` for each loop, which causes the
 As of Ansible 2.1, the `loop_control` option can be used to specify the name of the variable to be used for the loop::
 
     # main.yml
-    - include: inner.yml
+    - include_tasks: inner.yml
       with_items:
         - 1
         - 2
@@ -807,7 +807,7 @@ Because `loop_control` is not available in Ansible 2.0, when using an include wi
 for `item`::
 
     # main.yml
-    - include: inner.yml
+    - include_tasks: inner.yml
       with_items:
         - 1
         - 2

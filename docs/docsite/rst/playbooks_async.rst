@@ -94,7 +94,7 @@ of tasks running concurrently, you can do it this way::
           - 4
           - 5
         durations: "{{ item }}"
-      include: execute_batch.yml
+      include_tasks: execute_batch.yml
       with_items:
         - "{{ sleep_durations | batch(2) | list }}"
 

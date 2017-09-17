@@ -154,13 +154,13 @@ there will be accessible to future tasks::
 
 .. _when_roles_and_includes:
 
-Applying 'when' to roles and includes
-`````````````````````````````````````
+Applying 'when' to roles, imports, and includes
+```````````````````````````````````````````````
 
 Note that if you have several tasks that all share the same conditional statement, you can affix the conditional
 to a task include statement as below.  All the tasks get evaluated, but the conditional is applied to each and every task::
 
-    - include: tasks/sometasks.yml
+    - import_tasks: tasks/sometasks.yml
       when: "'reticulating splines' in output"
 
 .. note:: In versions prior to 2.0 this worked with task includes but not playbook includes.  2.0 allows it to work with both.
@@ -173,6 +173,24 @@ Or with a role::
 
 You will note a lot of 'skipped' output by default in Ansible when using this approach on systems that don't match the criteria.
 Read up on the 'group_by' module in the :doc:`modules` docs for a more streamlined way to accomplish the same thing.
+
+When used with `include_*` tasks instead of imports, the conditional is applied _only_ to the include task itself and not any other
+tasks within the included file(s). A common situation where this distinction is important is as follows::
+
+    # include a file to define a variable when it is not already defined
+
+    # main.yml
+    - include_tasks: other_tasks.yml
+      when: x is not defined
+
+    # other_tasks.yml
+    - set_fact:
+        x: foo
+    - debug:
+        var: x
+
+In the above example, if ``import_tasks`` had been used instead both included tasks would have also been skipped. With ``include_tasks``
+instead, the tasks are executed as expected because the conditional is not applied to them.
 
 .. _conditional_imports:
 
