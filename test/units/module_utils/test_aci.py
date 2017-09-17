@@ -22,6 +22,8 @@ import sys
 
 from ansible.compat.tests import unittest
 from ansible.module_utils.aci import aci_response_json, aci_response_xml
+from ansible.module_utils.six import PY2, PY3
+from ansible.module_utils._text import to_native
 
 from nose.plugins.skip import SkipTest
 
@@ -201,7 +203,7 @@ class AciRest(unittest.TestCase):
     def test_empty_response(self):
         self.maxDiffi = None
 
-        if sys.version_info < (3, 0):
+        if PY2:
             expected_json_result = {
                 'error_code': -1,
                 'error_text': "Unable to parse output as JSON, see 'raw' output. No JSON object could be decoded",
@@ -231,18 +233,24 @@ class AciRest(unittest.TestCase):
                 'raw': '',
             }
 
-        elif sys.version_info < (3, 0):
+        elif etree.LXML_VERSION < (4, 0, 0, 0):
+            error_text = to_native(u"Unable to parse output as XML, see 'raw' output. None (line 0)", errors='surrogate_or_strict')
             expected_xml_result = {
                 'error_code': -1,
-                'error_text': "Unable to parse output as XML, see 'raw' output. None (line 0)",
+                'error_text': error_text,
                 'raw': '',
             }
 
         else:
+            if PY3:
+                error_text = u"Unable to parse output as XML, see 'raw' output. Document is empty, line 1, column 1 (<string>, line 1)"
+            else:
+                error_text = "Unable to parse output as XML, see 'raw' output. Document is empty, line 1, column 1 (line 1)"
+
             expected_xml_result = {
-                u'error_code': -1,
-                u'error_text': u"Unable to parse output as XML, see 'raw' output. None (line 0)",
-                u'raw': u'',
+                'error_code': -1,
+                'error_text': error_text,
+                'raw': '',
             }
 
         xml_response = ''
