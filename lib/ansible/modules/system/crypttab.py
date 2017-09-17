@@ -194,7 +194,7 @@ class Crypttab(object):
     def __str__(self):
         lines = []
         for line in self._lines:
-            lines.append(str(line))
+            lines.append(str(line).splitlines()[0])
         crypttab = '\n'.join(lines)
         if len(crypttab) == 0:
             crypttab += '\n'
