@@ -141,15 +141,40 @@ Ansible Changes By Release
 - profile_roles
 - stderr
 
+#### New Connection plugins:
+- buildah
+- saltstack
+
 #### New Filters:
+- ipaddr filter gained several new suboptions
+  - first_usable
+  - ip/prefix
+  - ip_netmask
+  - last_usable
+  - next_usable
+  - network_id
+  - network/prefix
+  - network_netmask
+  - network_wildcard
+  - previous_usable
+  - range_usable
+  - size_usable
+  - wildcard
+- next_nth_usable
+- network_in_network
+- network_in_usable
+- previous_nth_usable
 - parse_cli
 - parse_cli_textfsm
+- strftime
+- urlsplit
 
 #### New Inventory Plugins:
 - advanced_host_list
 - constructed
 - host_list
 - ini
+- openstack
 - script
 - virtualbox
 - yaml
@@ -158,8 +183,8 @@ Ansible Changes By Release
 - lxd
 
 #### New Lookups:
+- chef_databag
 - cyberarkpassword
-- filetree
 - hiera
 
 #### New Tests:
