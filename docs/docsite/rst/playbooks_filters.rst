@@ -80,7 +80,7 @@ As of Ansible 1.8, it is possible to use the default filter to omit module param
 
     - name: touch files with an optional mode
       file: dest={{item.path}} state=touch mode={{item.mode|default(omit)}}
-      with_items:
+      loop:
         - path: /tmp/foo
         - path: /tmp/bar
         - path: /tmp/baz
@@ -234,7 +234,7 @@ JSON Query Filter
 
 .. versionadded:: 2.2
 
-Sometimes you end up with a complex data structure in JSON format and you need to extract only a small set of data within it. The **json_query** filter lets you query a complex JSON structure and iterate over it using a with_items structure.
+Sometimes you end up with a complex data structure in JSON format and you need to extract only a small set of data within it. The **json_query** filter lets you query a complex JSON structure and iterate over it using a loop structure.
 
 .. note:: This filter is built upon **jmespath**, and you can use the same syntax. For examples, see `jmespath examples <http://jmespath.org/examples.html>`_.
 
@@ -268,19 +268,19 @@ To extract all clusters from this structure, you can use the following query::
 
     - name: "Display all cluster names"
       debug: var=item
-      with_items: "{{domain_definition|json_query('domain.cluster[*].name')}}"
+      loop: "{{domain_definition|json_query('domain.cluster[*].name')}}"
 
 Same thing for all server names::
 
     - name: "Display all server names"
       debug: var=item
-      with_items: "{{domain_definition|json_query('domain.server[*].name')}}"
+      loop: "{{domain_definition|json_query('domain.server[*].name')}}"
 
 This example shows ports from cluster1::
 
     - name: "Display all server names from cluster1"
       debug: var=item
-      with_items: "{{domain_definition|json_query(server_name_cluster1_query)}}"
+      loop: "{{domain_definition|json_query(server_name_cluster1_query)}}"
       vars:
         server_name_cluster1_query: "domain.server[?cluster=='cluster1'].port"
 
@@ -291,7 +291,7 @@ Or, alternatively::
     - name: "Display all server names from cluster1"
       debug:
         var: item
-      with_items: "{{domain_definition|json_query('domain.server[?cluster=`cluster1`].port')}}"
+      loop: "{{domain_definition|json_query('domain.server[?cluster=`cluster1`].port')}}"
 
 .. note:: Here, quoting literals using backticks avoids escaping quotes and maintains readability.
 
@@ -299,7 +299,7 @@ In this example, we get a hash map with all ports and names of a cluster::
 
     - name: "Display all server ports and names from cluster1"
       debug: var=item
-      with_items: "{{domain_definition|json_query(server_name_cluster1_query)}}"
+      loop: "{{domain_definition|json_query(server_name_cluster1_query)}}"
       vars:
         server_name_cluster1_query: "domain.server[?cluster=='cluster2'].{name: name, port: port}"
 
