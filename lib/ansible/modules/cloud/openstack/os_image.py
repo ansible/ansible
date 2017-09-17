@@ -45,7 +45,7 @@ options:
      required: false
      default: None
    checksum:
-     version_added: "2.4"
+     version_added: "2.5"
      description:
         - The checksum of the image
      required: false
