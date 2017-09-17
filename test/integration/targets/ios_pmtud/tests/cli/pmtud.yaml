@@ -1,0 +1,25 @@
+---
+- debug: msg="START cli/pmtud.yaml"
+
+- name: expected successful pmtud
+  ios_pmtud: &valid_ip
+    dest: '8.8.8.8'
+  register: test1
+  
+- name: expected unknown error (unreachable dest IP)
+  ios_pmtud: &invalid_ip
+    dest: '1.1.1.1'
+  register: test2
+
+- name: expected MTU too low
+  ios_pmtud: &valid_ip
+    dest: '8.8.8.8'
+    max_size: 9999
+    max_range: 2
+  register: test3
+
+- name: assert
+  assert:
+    that:
+    - test1.failed == false
+    - test2.failed == test3.failed == true
