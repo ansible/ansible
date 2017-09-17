@@ -32,12 +32,19 @@ required if these options are specified using environment variables.
 For additional usage details see: https://github.com/ServiceNowITOM/ansible-sn-inventory
 '''
 
-import os, sys, requests, base64, json, re, configparser, time
+import os
+import sys
+import requests
+import base64
+import json
+import re
+import configparser
+import time
 from cookielib import LWPCookieJar
 
 
 class NowInventory(object):
-    def __init__(self, hostname, username, password, fields=[], groups=[]):
+    def __init__(self, hostname, username, password, fields=None, groups=None):
         self.hostname = hostname
 
         # requests session
@@ -57,6 +64,12 @@ class NowInventory(object):
         except IOError:
             pass
         self.session.cookies = self.cookies
+
+        if fields is None:
+            fields = []
+
+        if groups is None:
+            groups = []
 
         # extra fields (table columns)
         self.fields = fields
@@ -124,9 +137,9 @@ class NowInventory(object):
 
     def add_group(self, target, group):
         ''' Transform group names:
-			1. lower()
-			2. non-alphanumerical characters to '_'
-		'''
+                        1. lower()
+                        2. non-alphanumerical characters to '_'
+        '''
 
         group = group.lower()
         group = re.sub('\W', '_', group)
@@ -140,7 +153,7 @@ class NowInventory(object):
         return
 
     def add_var(self, target, key, val):
-        if not target in self.inventory['_meta']['hostvars']:
+        if target not in self.inventory['_meta']['hostvars']:
             self.inventory['_meta']['hostvars'][target] = {}
 
         self.inventory['_meta']['hostvars'][target]["sn_" + key] = val
@@ -157,8 +170,8 @@ class NowInventory(object):
 
         columns = list(
             set(base_fields + base_groups + self.fields + self.groups))
-        path = '/api/now/table/' + table + options + "&sysparm_fields=" + ','.join(
-            columns)
+        path = '/api/now/table/' + table + options + \
+            "&sysparm_fields=" + ','.join(columns)
 
         # Default, mandatory group 'sys_class_name'
         groups = list(set(base_groups + self.groups))
@@ -167,12 +180,12 @@ class NowInventory(object):
 
         for record in content['result']:
             ''' Ansible host target selection order:
-				1. ip_address
-				2. fqdn
-				3. host_name
+                        1. ip_address
+                        2. fqdn
+                        3. host_name
 
-				TODO: environment variable configuration flags to modify selection order
-			'''
+                        TODO: environment variable configuration flags to modify selection order
+                        '''
             target = None
             selection = ['host_name', 'fqdn', 'ip_address']
 
@@ -181,7 +194,7 @@ class NowInventory(object):
                     target = record[k]
 
             # Skip if no target available
-            if target == None:
+            if target is None:
                 continue
 
             # hostvars
@@ -218,7 +231,8 @@ def main(args):
             config.read(config_file)
             break
 
-# Read authentication information from environment variables (if set), otherwise from INI file.
+# Read authentication information from environment variables (if set),
+# otherwise from INI file.
     instance = os.environ.get('SN_INSTANCE')
     if not instance and config.has_option('auth', 'instance'):
         instance = config.get('auth', 'instance')
@@ -252,7 +266,8 @@ def main(args):
         fields=fields,
         groups=groups)
     inventory.generate()
-    print inventory.json()
+    print(inventory.json())
+
 
 if __name__ == "__main__":
     main(sys.argv)
