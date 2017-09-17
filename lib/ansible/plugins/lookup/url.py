@@ -26,14 +26,14 @@ DOCUMENTATION = """
         default: True
 """
 
-EXAMPLES= """
+EXAMPLES = """
 - name: url lookup splits lines by default
   debug: msg="{{item}}"
   with_url:
     - 'https://github.com/gremlin.keys'
 """
 
-RETURN= """
+RETURN = """
   _list:
     description: list of list of lines or content of url(s)
 """

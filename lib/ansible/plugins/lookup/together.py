@@ -7,7 +7,7 @@ __metaclass__ = type
 DOCUMENTATION = """
     lookup: toghether
     author:  Bradley Young <young.bradley@gmail.com>
-    version_added: 
+    version_added: '1.3'
     short_description: merges lists into syncronized list
     description:
       - Creates a list with the iterated elements of the supplied lists
@@ -20,7 +20,7 @@ DOCUMENTATION = """
         required: True
 """
 
-EXAMPLES= """
+EXAMPLES = """
 - name: item.0 returns from the 'a' list, item.1 returns from the '1' list
   debug:
     msg: "{{ item.0 }} and {{ item.1 }}"
@@ -29,7 +29,7 @@ EXAMPLES= """
     - [1, 2, 3, 4]
 """
 
-RETURN= """
+RETURN = """
   _list:
     description: syncronized list
 """

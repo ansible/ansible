@@ -14,7 +14,7 @@ DOCUMENTATION = """
       - this is mostly a noop, to be used as a with_list loop when you dont want the content transformed in any way.
 """
 
-EXAMPLES= """
+EXAMPLES = """
 - name: unlike with_items you will get 3 items from this loop, the 2nd one being a list
   debug: var=item
   with_list:
@@ -23,7 +23,7 @@ EXAMPLES= """
     - 4
 """
 
-RETURN= """
+RETURN = """
   _list:
     description: basically the same as you fed in
 """
@@ -34,4 +34,3 @@ class LookupModule(LookupBase):
 
     def run(self, terms, **kwargs):
         return terms
-

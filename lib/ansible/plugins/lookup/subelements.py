@@ -22,7 +22,7 @@ DOCUMENTATION = """
             If False, the plugin will yield an error and complain about the missing subkey.
 """
 
-EXAMPLES= """
+EXAMPLES = """
 - name: show var structure as it is needed for example to make sense
   hosts: all
   vars:
@@ -77,7 +77,7 @@ EXAMPLES= """
       with_list: "{{lookup('subelements', users, 'groups', 'skip_missing=True')}}"
 """
 
-RETURN= """
+RETURN = """
 _list:
   description: list of subelements extracted
 """

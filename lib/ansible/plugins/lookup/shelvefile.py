@@ -22,12 +22,12 @@ DOCUMENTATION = """
             required: True
 """
 
-EXAMPLES= """
+EXAMPLES = """
 - name: retrieve a string value corresponding to a key inside a Python shelve file
   debug: msg="{{ lookup('shelvefile', 'file=path_to_some_shelve_file.db key=key_to_retrieve') }}
 """
 
-RETURN= """
+RETURN = """
 _list:
   description: value(s) of key(s) in shelve file(s)
 """

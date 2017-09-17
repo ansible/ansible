@@ -19,12 +19,12 @@ DOCUMENTATION = """
         description: list of files to template
 """
 
-EXAMPLES= """
+EXAMPLES = """
 - name: show templating results
   debug: msg="{{ lookup('template', './some_template.j2') }}
 """
 
-RETURN= """
+RETURN = """
 _raw:
    description: file(s) content after templating
 """
