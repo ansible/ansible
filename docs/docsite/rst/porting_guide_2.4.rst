@@ -26,10 +26,9 @@ Deprecated
 Specifying Inventory sources
 -----------------------------
 
-Use of ``--inventory-file`` is now deprecated. Use ``--inventory`` or ``-i``.
-As well as the ini configuration key `hostfile` and the environment variable `ANSIBLE_HOSTS`,
-instead use `inventory` and `ANSIBLE_INVENTORY`, which have been available for a while now.
-
+Use of ``--inventory-file`` on the command line is now deprecated. Use ``--inventory`` or ``-i``.
+The associated ini configuration key, ``hostfile``, and environment variable, :envvar:`ANSIBLE_HOSTS`,
+are also deprecated.  Replace them with the configuration key ``inventory`` and environment variable :envvar:        `ANSIBLE_INVENTORY`.
 
 Use of multiple tags
 --------------------
