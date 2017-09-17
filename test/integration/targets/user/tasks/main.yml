@@ -58,7 +58,7 @@
   user:
       name: "{{ user_names.stdout_lines|random }}"
       state: present
-      createhome: no
+      create_home: no
   with_sequence: start=1 end=5
   register: user_test1
 - debug: var=user_test1
