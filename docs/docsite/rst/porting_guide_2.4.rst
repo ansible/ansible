@@ -20,28 +20,15 @@ Python version
 
 Ansible will not support Python 2.4 nor 2.5 on the target hosts anymore. Going forward, Python 2.6+ will be required on targets, as already is the case on the controller.
 
-Playbook
-========
-
-Multiple inventory
-------------------
-
-**NEW** In Ansible 2.4:
-
-
-.. code-block:: shell
-
-   ansible-playbook -i /path/to/inventory1, /some/other/path/inventory2
-
-
 Deprecated
 ==========
 
-Inventory argument
--------------------------
+Specifying Inventory sources
+-----------------------------
 
-Use of ``--inventory-file`` is now deprecated. Use ``--inventory`` or ``-i``.
-
+Use of ``--inventory-file`` on the command line is now deprecated. Use ``--inventory`` or ``-i``.
+The associated ini configuration key, ``hostfile``, and environment variable, :envvar:`ANSIBLE_HOSTS`,
+are also deprecated.  Replace them with the configuration key ``inventory`` and environment variable :envvar:        `ANSIBLE_INVENTORY`.
 
 Use of multiple tags
 --------------------
@@ -85,17 +72,28 @@ Noteworthy module changes
 
 * The :ref:`win_get_url <win_get_url>`  module has the dictionary ``win_get_url`` in its results deprecated, its content is now also available directly in the resulting output, like other modules. This dictionary will be removed in Ansible 2.8.
 * The :ref:`win_unzip <win_unzip>` module no longer includes the dictionary ``win_unzip`` in its results; the contents are now included directly in the resulting output, like other modules.
+* The :ref:`win_package <win_package>` module return values ``exit_code`` and ``restart_required`` have been deprecated in favour of ``rc`` and ``reboot_required`` respectively. The deprecated return values will be removed in Ansible 2.6.
 
 
 Plugins
 =======
 
-No major changes in this version.
+A new way to configure and document plugins has been introduced.  This does not require changes to existing setups but developers should start adapting to the new infrastructure now. More details will be available in the developer documentation for each plugin type.
 
-Porting custom scripts
-======================
+Vars plugin changes
+-------------------
 
-No major changes in this version.
+There have been many changes to the implementation of vars plugins, but both users and developers should not need to change anything to keep current setups working. Developers should consider changing their plugins take advantage of new features.
+
+The most notable difference to users is that vars plugins now get invoked on demand instead of at inventory build time.  This should make them more efficient for large inventories, especially when using a subset of the hosts.
+
+Inventory plugins
+-----------------
+
+Developers should start migrating from hardcoded inventory with dynamic inventory scripts to the new Inventory Plugins. The scripts will still work via the ``script`` inventory plugin but Ansible development efforts will now concentrate on writing plugins rather than enhancing existing scripts.
+
+Both users and developers should look into the new plugins because they are intended to alleviate the need for many of the hacks and workarounds found in the dynamic inventory scripts.
+
 
 Networking
 ==========
@@ -113,3 +111,10 @@ To control timeouts use ``command_timeout`` rather than the previous top level `
 
 See :ref:`Ansible Network debug guide <network_debug_troubleshooting>` for more information.
 
+
+Configuration API
+=================
+
+The configuration system has had some major changes, but users should be unaffected.  Developers that were working directly with the previous API should revisit their usage as some methods (for example, ``get_config``) were  kept for backwards compatibility but will warn users that the function has been deprecated.
+
+The new configuration has been designed to minimize the need for code changes in core for new plugins.  The plugins just need to document their settings and the configuration system will use the documentation to provide what they need. This is still a work in progress; currently only 'callback' and 'connection' plugins support this.  More  details will be added to the specific plugin developer guides.
