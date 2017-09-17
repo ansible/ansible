@@ -24,10 +24,15 @@ description:
   - This module creates, removes or resize volume groups on AIX LVM.
 version_added: "2.5"
 options:
-  vg:
+  force:
     description:
-      - Volume group name.
-    required: true
+      - Forces volume group creation.
+    choices: ["yes", "no"]
+    default: "no"
+  pp_size:
+    description:
+      - Size of the physical partition in megabytes.
+    required: false
   pvs:
     description:
       - List of comma-separated devices to use as physical devices in this
@@ -35,28 +40,23 @@ options:
         the volume group. If not informed reducing (C(absent) state) the volume
         group will be removed.
     required: false
-  pp_size:
+  state:
     description:
-      - Size of the physical partition in megabytes.
+      - Control if the volume group exists and volume group AIX state varyonvg
+        C(varyon) or varyoffvg C(varyoff).
+    choices: [present, absent, varyon, varyoff]
+    default: present
     required: false
+  vg:
+    description:
+      - Volume group name.
+    required: true
   vg_type:
     description:
       - Volume group type.
     choices: [normal, big, scalable]
     default: normal
     required: false
-  state:
-    description:
-      - Control if the volume group exists and volume group AIX state varyonvg
-        C(varyon) or varyoffvg C(varyoff).
-    choices: [ present, absent, varyon, varyoff ]
-    default: present
-    required: false
-  force:
-    description:
-      - Forces volume group creation.
-    choices: ["yes", "no"]
-    default: "no"
 notes:
   - AIX will permit remove VG only if all LV/Filesystems aren't busy.
   - Module does not modify PP size for already present volume group.
@@ -134,17 +134,17 @@ def _validate_pv(module, vg, pvs):
             msg="Failed executing lspv command.", rc=rc, err=err)
 
     for pv in pvs:
-        # get pv list
+        # Get pv list
         lspv_list = {}
         for line in current_lspv.splitlines():
             pv_data = line.split()
             lspv_list[pv_data[0]] = pv_data[2]
 
-        # check if pv exists and is free
+        # Check if pv exists and is free
         if pv in lspv_list.keys():
             if lspv_list[pv] == 'None':
-                # disk None, looks free
-                # check if PV is not already in use by Oracle ASM
+                # Disk None, looks free
+                # Check if PV is not already in use by Oracle ASM
                 lquerypv_cmd = module.get_bin_path("lquerypv", True)
                 rc, current_lquerypv, err = module.run_command(
                     "%s -h /dev/%s 20 10" % (lquerypv_cmd, pv))
@@ -161,15 +161,17 @@ def _validate_pv(module, vg, pvs):
                 msg = "Physical volume %s is ok to be used." % pv
                 return True, msg
 
-            # check if PV is already in use for the same vg
+            # Check if PV is already in use for the same vg
             elif vg == lspv_list[pv]:
-                msg = ("Physical volume %s is already used by volume group %s."
-                       % (pv, lspv_list[pv]))
+                msg = (
+                    "Physical volume %s is already used by volume group %s."
+                    % (pv, lspv_list[pv]))
                 return False, msg
             else:
                 module.fail_json(
-                    msg="Physical volume %s is in use by another volume group "
-                        "%s." % (pv, lspv_list[pv]))
+                    msg=(
+                        "Physical volume %s is in use by another volume group "
+                        "%s." % (pv, lspv_list[pv])))
 
         else:
             module.fail_json(msg="Physical volume %s doesn't exist." % pv)
@@ -205,57 +207,71 @@ def _validate_vg(module, vg):
 
 
 def create_extend_vg(module, vg, pvs, pp_size, vg_type, force, vg_validation):
-    """ creates or extend a volume group"""
+    """ Creates or extend a volume group"""
 
-    # validate if PV are not already in use
+    # Validate if PV are not already in use
     pv_state, msg = _validate_pv(module, vg, pvs)
     if not pv_state:
         module.exit_json(changed=False, msg=msg)
 
     vg_state, msg = vg_validation
     if vg_state is False:
-        # volume group is varyoff
+        # Volume group is varyoff
         module.exit_json(
             changed=False, msg=msg)
-    elif vg_state is True:
-        # volume group extension
-        extendvg_cmd = module.get_bin_path("extendvg", True)
-        rc, _, err = module.run_command(
-            "%s %s %s" % (extendvg_cmd, vg, " ".join(pvs)))
-        if rc == 0:
-            module.exit_json(
-                changed=True, msg="Volume group %s extended." % vg)
-        else:
-            module.exit_json(
-                changed=False, msg="Extending volume group %s has failed." % vg,
-                rc=rc, err=err)
-    elif vg_state is None:
-        # volume group creation
-        mkvg_cmd = module.get_bin_path("mkvg", True)
-        rc, _, err = module.run_command(
-            "%s %s %s %s -y %s %s" % (
-                mkvg_cmd, vg_opt[vg_type], pp_size, force_opt[force],
-                vg, ' '.join(pvs)))
 
-        if rc == 0:
-            module.exit_json(changed=True, msg="Volume group %s created." % vg)
-        else:
-            module.exit_json(
-                changed=False, msg="Creating volume group %s failed." % vg,
-                rc=rc, err=err)
+    elif vg_state is True:
+        # Volume group extension
+        changed = True
+
+        if not module.check_mode:
+            extendvg_cmd = module.get_bin_path("extendvg", True)
+            rc, _, err = module.run_command(
+                "%s %s %s" % (extendvg_cmd, vg, " ".join(pvs)))
+            if rc == 0:
+                module.exit_json(
+                    changed=True, msg="Volume group %s extended." % vg)
+            else:
+                module.exit_json(
+                    changed=False,
+                    msg="Extending volume group %s has failed." % vg,
+                    rc=rc, err=err)
+
+        return changed
+
+    elif vg_state is None:
+        # Volume group creation
+
+        changed = True
+        if not module.check_mode:
+            mkvg_cmd = module.get_bin_path("mkvg", True)
+            rc, _, err = module.run_command(
+                "%s %s %s %s -y %s %s" % (
+                    mkvg_cmd, vg_opt[vg_type], pp_size, force_opt[force],
+                    vg, ' '.join(pvs)))
+
+            if rc == 0:
+                module.exit_json(
+                    changed=True, msg="Volume group %s created." % vg)
+            else:
+                module.exit_json(
+                    changed=False, msg="Creating volume group %s failed." % vg,
+                    rc=rc, err=err)
+
+        return changed
 
 
 def reduce_vg(module, vg, pvs, vg_validation):
-
     vg_state, msg = vg_validation
 
     if vg_state is False:
         module.exit_json(
             changed=False, msg=msg)
 
+    # Define pvs_to_remove (list of physical volumes to be removed).
     if pvs is None:
-        # Remove VG if pvs are note informed
-        # Remark: AIX will permit remove only if the VG has not LVs
+        # Remove VG if pvs are note informed.
+        # Remark: AIX will permit remove only if the VG has not LVs.
         lsvg_cmd = module.get_bin_path("lsvg", True)
         rc, current_pvs, err = module.run_command("%s -p %s" % (lsvg_cmd, vg))
         if rc != 0:
@@ -272,20 +288,25 @@ def reduce_vg(module, vg, pvs, vg_validation):
             "Physical volume(s) %s removed from Volume group %s." % (
                 " ".join(pvs_to_remove), vg))
 
+    # Reduce volume group.
     if len(pvs_to_remove) > 0:
-        reducevg_cmd = module.get_bin_path("reducevg", True)
-        rc, _, err = module.run_command(
-            "%s -df %s %s" % (reducevg_cmd, vg, " ".join(pvs_to_remove)))
+        changed = True
 
-        if rc == 0:
-            module.exit_json(changed=True, msg=reduce_msg)
-        else:
-            module.exit_json(
-                changed=False, msg="Unable to remove %s." % vg, rc=rc, err=err)
+        if module.check_mode:
+            reducevg_cmd = module.get_bin_path("reducevg", True)
+            rc, _, err = module.run_command(
+                "%s -df %s %s" % (reducevg_cmd, vg, " ".join(pvs_to_remove)))
+
+            if rc == 0:
+                module.exit_json(changed=True, msg=reduce_msg)
+            else:
+                module.fail_json(
+                    msg="Unable to remove %s." % vg, rc=rc, err=err)
+
+        return changed
 
 
 def state_vg(module, vg, state, vg_validation):
-
     vg_state, msg = vg_validation
 
     if vg_state is None:
@@ -293,28 +314,41 @@ def state_vg(module, vg, state, vg_validation):
 
     if state == 'varyon':
         if vg_state is False:
-            varyonvg_cmd = module.get_bin_path("varyonvg", True)
-            rc, varyonvg_out, err = module.run_command(
-                "%s %s" % (varyonvg_cmd, vg))
-            if rc != 0:
-                module.exit_json(changed=False, rc=rc, err=err)
-            else:
-                module.exit_json(
-                    changed=True, msg="Varyon volume group %s completed" % vg)
+            changed = True
+
+            if not module.check_mode:
+                varyonvg_cmd = module.get_bin_path("varyonvg", True)
+                rc, varyonvg_out, err = module.run_command(
+                    "%s %s" % (varyonvg_cmd, vg))
+                if rc != 0:
+                    module.fail_json(msg="Varyonvg failed.", rc=rc, err=err)
+                else:
+                    module.exit_json(
+                        changed=True,
+                        msg="Varyon volume group %s completed." % vg)
+
+            return changed
+
         else:
             module.exit_json(
                 changed=False, msg=msg)
 
     elif state == 'varyoff':
         if vg_state is True:
-            varyonvg_cmd = module.get_bin_path("varyoffvg", True)
-            rc, varyonvg_out, err = module.run_command(
-                "%s %s" % (varyonvg_cmd, vg))
-            if rc != 0:
-                module.exit_json(changed=False, msg=err)
-            else:
-                module.exit_json(
-                    changed=True, msg="Varyoff volume group %s completed" % vg)
+            changed = True
+
+            if not module.check_mode:
+                varyonvg_cmd = module.get_bin_path("varyoffvg", True)
+                rc, varyonvg_out, err = module.run_command(
+                    "%s %s" % (varyonvg_cmd, vg))
+                if rc != 0:
+                    module.fail_json(msg="Varyoffvg failed.", rc=rc, err=err)
+                else:
+                    module.exit_json(
+                        changed=True,
+                        msg="Varyoff volume group %s completed." % vg)
+
+            return changed
 
         else:
             module.exit_json(
@@ -324,22 +358,24 @@ def state_vg(module, vg, state, vg_validation):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            vg=dict(required=True),
-            pvs=dict(type="list", default=None),
+            force=dict(type="bool", default=False),
             pp_size=dict(type="int", default=None),
-            vg_type=dict(choices=["normal", "big", "scalable"],
-                         default="normal"),
+            pvs=dict(type="list", default=None),
             state=dict(choices=["absent", "present", "varyon", "varyoff"],
                        default="present"),
-            force=dict(type="bool", default=False)
-        ))
+            vg=dict(required=True),
+            vg_type=dict(choices=["normal", "big", "scalable"],
+                         default="normal"),
+        ),
+        supports_check_mode=True,
+    )
 
-    vg = module.params["vg"]
-    state = module.params["state"]
-    pp_size = module.params["pp_size"]
-    vg_type = module.params["vg_type"]
-    pvs = module.params["pvs"]
     force = module.params["force"]
+    pp_size = module.params["pp_size"]
+    pvs = module.params["pvs"]
+    state = module.params["state"]
+    vg = module.params["vg"]
+    vg_type = module.params["vg_type"]
 
     if pp_size is None:
         pp_size = ""
@@ -360,6 +396,9 @@ def main():
 
     elif state == 'varyon' or 'varyoff':
         state_vg(module, vg, state, vg_validation)
+
+    module.exit_json(changed=True, state=state)
+
 
 if __name__ == '__main__':
     main()
