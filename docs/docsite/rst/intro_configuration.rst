@@ -1172,7 +1172,7 @@ first disable 'requiretty' in /etc/sudoers on all managed hosts.
 
 By default, this option is disabled to preserve compatibility with
 sudoers configurations that have requiretty (the default on many distros), but is highly
-recommended if you can enable it, eliminating the need for :doc:`playbooks_acceleration`::
+recommended if you can enable it.
 
     pipelining = False
 
@@ -1188,76 +1188,6 @@ This is the location of the ssh binary. It defaults to ``ssh`` which will use th
   ssh_executable="/usr/local/bin/ssh"
 
 This option is usually not required, it might be useful when access to system ssh is restricted, or when using ssh wrappers to connect to remote hosts. 
-
-.. _accelerate_settings:
-
-Accelerated Mode Settings
--------------------------
-
-Under the [accelerate] header, the following settings are tunable for :doc:`playbooks_acceleration`.  Acceleration is
-a useful performance feature to use if you cannot enable :ref:`pipelining` in your environment, but is probably
-not needed if you can.
-
-.. _accelerate_port:
-
-accelerate_port
-===============
-
-.. versionadded:: 1.3
-
-This is the port to use for accelerated mode::
-
-    accelerate_port = 5099
-
-.. _accelerate_timeout:
-
-accelerate_timeout
-==================
-
-.. versionadded:: 1.4
-
-This setting controls the timeout for receiving data from a client. If no data is received during this time, the socket connection will be closed. A keepalive packet is sent back to the controller every 15 seconds, so this timeout should not be set lower than 15 (by default, the timeout is 30 seconds)::
-
-    accelerate_timeout = 30
-
-.. _accelerate_connect_timeout:
-
-accelerate_connect_timeout
-==========================
-
-.. versionadded:: 1.4
-
-This setting controls the timeout for the socket connect call, and should be kept relatively low. The connection to the `accelerate_port` will be attempted 3 times before Ansible will fall back to ssh or paramiko (depending on your default connection setting) to try and start the accelerate daemon remotely. The default setting is 1.0 seconds::
-
-    accelerate_connect_timeout = 1.0
-
-Note, this value can be set to less than one second, however it is probably not a good idea to do so unless you're on a very fast and reliable LAN. If you're connecting to systems over the internet, it may be necessary to increase this timeout.
-
-.. _accelerate_daemon_timeout:
-
-accelerate_daemon_timeout
-=========================
-
-.. versionadded:: 1.6
-
-This setting controls the timeout for the accelerated daemon, as measured in minutes. The default daemon timeout is 30 minutes::
-
-    accelerate_daemon_timeout = 30
-
-Note, prior to 1.6, the timeout was hard-coded from the time of the daemon's launch. For version 1.6+, the timeout is now based on the last activity to the daemon and is configurable via this option.
-
-.. _accelerate_multi_key:
-
-accelerate_multi_key
-====================
-
-.. versionadded:: 1.6
-
-If enabled, this setting allows multiple private keys to be uploaded to the daemon. Any clients connecting to the daemon must also enable this option::
-
-    accelerate_multi_key = yes
-
-New clients first connect to the target node over SSH to upload the key, which is done via a local socket file, so they must have the same access as the user that launched the daemon originally.
 
 .. _selinux_settings:
 
