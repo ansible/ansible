@@ -138,12 +138,12 @@ While all items listed here will show a deprecation warning message, they still 
 
 * Specifying variables at the top level of a task include statement is no longer supported. For example::
 
-    - include: foo.yml
+    - include_tasks: foo.yml
         a: 1
 
 Should now be::
 
-    - include: foo.yml
+    - include_tasks: foo.yml
       vars:
         a: 1
 
@@ -152,11 +152,11 @@ Should now be::
 * Tags (or any directive) should no longer be specified with other parameters in a task include. Instead, they should be specified as an option on the task.
   For example::
 
-    - include: foo.yml tags=a,b,c
+    - include_tasks: foo.yml tags=a,b,c
 
   Should be::
 
-    - include: foo.yml
+    - include_tasks: foo.yml
       tags: [a, b, c]
 
 * The first_available_file option on tasks has been deprecated. Users should use the with_first_found option or lookup (‘first_found’, …) plugin.

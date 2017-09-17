@@ -152,7 +152,7 @@ Content of the *requirements.yml* file:
     # from galaxy
     - src: yatesr.timezone
 
-    - include: <path_to_requirements>/webserver.yml
+    - import_tasks: <path_to_requirements>/webserver.yml
 
 
 Content of the *webserver.yml* file:
