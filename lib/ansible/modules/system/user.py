@@ -247,7 +247,6 @@ EXAMPLES = '''
 import os
 import pwd
 import grp
-import platform
 import socket
 import time
 import shutil
@@ -385,9 +384,12 @@ class User(object):
             # errors from useradd trying to create a group when
             # USERGROUPS_ENAB is set in /etc/login.defs.
             if os.path.exists('/etc/redhat-release'):
-                dist = platform.dist()
-                major_release = int(dist[1].split('.')[0])
-                if major_release <= 5:
+                major_release = None
+                with open('/etc/redhat-release', 'r') as f:
+                    firstline = f.readline()
+                    os_release = firstline.split()[7]
+                    major_release = int(os_release.split('.')[0])
+                if major_release and major_release <= 5:
                     cmd.append('-n')
                 else:
                     cmd.append('-N')
