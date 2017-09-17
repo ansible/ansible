@@ -20,38 +20,6 @@ Python version
 
 Ansible will not support Python 2.4 nor 2.5 on the target hosts anymore. Going forward, Python 2.6+ will be required on targets, as already is the case on the controller.
 
-Playbook
-========
-
-`import_` and `include_` split
-------------------------------
-
-
-**OLD** In Ansible 2.3:
-
-.. code-block:: yaml
-
-    - name: old foo
-
-Will result in:
-
-.. code-block:: yaml
-
-   [WARNING]: deprecation message 1
-   [WARNING]: deprecation message 2
-   [WARNING]: deprecation message 3
-
-
-**NEW** In Ansible 2.4:
-
-
-.. code-block:: yaml
-
-   - name: foo
-
-
-
-
 Deprecated
 ==========
 
