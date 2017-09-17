@@ -1,10 +1,28 @@
 Ansible Changes By Release
 ==========================
 
+<a id="2.5"></a>
+
+## 2.5 "TBD" - ACTIVE DEVELOPMENT
+
+### Major Changes
+* Removed the previouslly deprecated 'accelerate' mode and all associated keywords and code.
+
+### Deprecations
+* previouslly deprecated 'hostfile' config settings have been 're-deprecated' as previouslly code did not warn about deprecated configuration settings.
+
+#### Deprecated Modules (to be removed in 2.9):
+
+#### Removed Modules (previouslly deprecated):
+* accelerate
+
+### Minor Changes
+* added a few new magic vars corresponding to configuration/command line options:
+  ansible_diff_mode, ansible_inventory_sources, ansible_limit, ansible_run_tags , ansible_forks and ansible_skip_tags
 
 <a id="2.4"></a>
 
-## 2.4 "Dancing Days" - ACTIVE DEVELOPMENT
+## 2.4 "Dancing Days" - RELEASE CANDIDATE
 
 ### Major Changes
 
