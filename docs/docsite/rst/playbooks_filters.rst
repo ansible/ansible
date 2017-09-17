@@ -345,7 +345,9 @@ how to parse the CLI output.
 
 The spec file should be valid formatted YAML.  It defines how to parse the CLI
 output and return JSON data.  Below is an example of a valid spec file that
-will parse the output from the ``show vlan`` command.::
+will parse the output from the ``show vlan`` command.:
+
+.. code-block:: yaml
 
     ---
     vars:
@@ -368,7 +370,9 @@ with the parsed VLAN information.
 
 The same command could be parsed into a hash by using the key and values
 directives.  Here is an example of how to parse the output into a hash
-value using the same ``show vlan`` command.::
+value using the same ``show vlan`` command.:
+
+.. code-block:: yaml
 
     ---
     vars:
@@ -390,7 +394,9 @@ value using the same ``show vlan`` command.::
 
 Another common use case for parsing CLI commands is to break a large command
 into blocks that can parsed.  This can be done using the ``start_block`` and
-``end_block`` directives to break the command into blocks that can be parsed.::
+``end_block`` directives to break the command into blocks that can be parsed.:
+
+.. code-block:: yaml+jinja
 
     ---
     vars:

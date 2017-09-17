@@ -185,7 +185,7 @@ Indicates that the remote host you are trying to connect to can not be reached
 
 For example:
 
-.. code-block:: yaml
+.. code-block:: none
 
    2017-04-04 11:39:48,147 p=15299 u=fred |  control socket path is /home/fred/.ansible/pc/ca5960d27a
    2017-04-04 11:39:48,147 p=15299 u=fred |  current working directory is /home/fred/git/ansible-inc/stable-2.3/test/integration
@@ -214,7 +214,7 @@ Occurs if the credentials (username, passwords, or ssh keys) passed to ``ansible
 
 For example:
 
-.. code-block:: yaml
+.. code-block:: none
 
    <ios01> ESTABLISH CONNECTION FOR USER: cisco on PORT 22 TO ios01
    <ios01> Authentication failed.
@@ -224,7 +224,7 @@ Suggestions to resolve:
 
 If you are specifying credentials via ``password:`` (either directly or via ``provider:``) or the environment variable :envvar:`ANSIBLE_NET_PASSWORD` it is possible that ``paramiko`` (the Python SSH library that Ansible uses) is using ssh keys, and therefore the credentials you are specifying are being ignored. To find out if this is the case, disable "look for keys". This can be done like this:
 
-.. code-block:: yaml
+.. code-block:: bash
 
    export ANSIBLE_PARAMIKO_LOOK_FOR_KEYS=False
 
@@ -245,7 +245,7 @@ When using persistent connections with Paramiko, the connection runs in a backgr
 
 For example:
 
-.. code-block:: yaml
+.. code-block:: none
 
    2017-04-04 12:06:03,486 p=17981 u=fred |  using connection plugin network_cli
    2017-04-04 12:06:04,680 p=17981 u=fred |  connecting to host veos01 returned an error
@@ -292,7 +292,7 @@ Error: "No authentication methods available"
 
 For example:
 
-.. code-block:: yaml
+.. code-block:: none
 
    2017-04-04 12:19:05,670 p=18591 u=fred |  creating new control socket for host veos01:None as user admin
    2017-04-04 12:19:05,670 p=18591 u=fred |  control socket path is /home/fred/.ansible/pc/ca5960d27a
@@ -331,14 +331,14 @@ Persistent connection idle timeout:
 
 For example:
 
-.. code-block:: yaml
+.. code-block:: none
 
    2017-04-04 12:19:05,670 p=18591 u=fred |  persistent connection idle timeout triggered, timeout value is 30 secs
 
 Suggestions to resolve:
 
 Increase value of presistent connection idle timeout.
-.. code-block:: yaml
+.. code-block:: shell
 
    export ANSIBLE_PERSISTENT_CONNECT_TIMEOUT=60
 
@@ -352,7 +352,7 @@ To make this a permanent change, add the following to your ``ansible.cfg`` file:
 Command timeout:
 For example:
 
-.. code-block:: yaml
+.. code-block:: none
 
    2017-04-04 12:19:05,670 p=18591 u=fred |  command timeout triggered, timeout value is 10 secs
 
@@ -362,7 +362,7 @@ Options 1:
 Increase value of command timeout in configuration file or by setting environment variable.
 Note: This value should be less than persistent connection idle timeout ie. connect_timeout
 
-.. code-block:: yaml
+.. code-block:: shell
 
    export ANSIBLE_PERSISTENT_COMMAND_TIMEOUT=30
 
@@ -385,7 +385,7 @@ For example:
 
 Suggestions to resolve:
 
-.. code-block:: yaml
+.. code-block:: yaml+jinja
 
     - name: save running-config
       ios_command:
@@ -403,7 +403,7 @@ Note: This value should be less than persistent connection idle timeout ie. conn
 Persistent socket connect timeout:
 For example:
 
-.. code-block:: yaml
+.. code-block:: none
 
    2017-04-04 12:19:35,708 p=18591 u=fred |  connect retry timeout expired, unable to connect to control socket
    2017-04-04 12:19:35,709 p=18591 u=fred |  persistent_connect_retry_timeout is 15 secs
@@ -415,7 +415,7 @@ Note: This value should be greater than SSH timeout ie. timeout value under defa
 section in configuration file and less than the value of the persistent
 connection idle timeout (connect_timeout)
 
-.. code-block:: yaml
+.. code-block:: shell
 
    export ANSIBLE_PERSISTENT_CONNECT_RETRY_TIMEOUT=30
 
@@ -442,7 +442,7 @@ Network modules require that the connection is set to ``local``.  Any other
 connection setting will cause the playbook to fail.  Ansible will now detect
 this condition and return an error message:
 
-.. code-block:: yaml
+.. code-block:: none
 
     fatal: [nxos01]: FAILED! => {
         "changed": false,
@@ -467,7 +467,7 @@ This occurs when you attempt to run a task that requires privileged mode in a us
 
 For example:
 
-.. code-block:: yaml
+.. code-block:: none
 
   TASK [ios_system : configure name_servers] *****************************************************************************
   task path:
@@ -495,7 +495,7 @@ If the user requires a password to go into privileged mode, this can be specifie
 
 Add `authorize: yes` to the task. For example:
 
-.. code-block:: yaml
+.. code-block:: yaml+jinja
 
   - name: configure hostname
     ios_system:
@@ -529,7 +529,7 @@ Add `authorize: yes` to the task. For example:
 
    This information is available when :ref:`DEFAULT_LOG_PATH` is set see (FIXMELINKTOSECTION):
 
-   .. code-block:: yaml
+   .. code-block:: none
 
      less $ANSIBLE_LOG_PATH
      2017-03-10 15:32:06,173 p=19677 u=fred |  connect retry timeout expired, unable to connect to control socket
@@ -540,6 +540,6 @@ Add `authorize: yes` to the task. For example:
 
    Do stuff For example:
 
-   .. code-block:: yaml
+   .. code-block:: none
 
    	Example stuff

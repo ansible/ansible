@@ -43,7 +43,7 @@ The `ansible_distribution_release` and `ansible_distribution_version` facts on O
 **OLD** In Ansible 2.2 (and earlier)
 
 
-.. code-block:: yaml
+.. code-block:: none
 
     "ansible_distribution": "OpenBSD"
     "ansible_distribution_release": "6.0",
@@ -52,7 +52,7 @@ The `ansible_distribution_release` and `ansible_distribution_version` facts on O
 **NEW** In Ansible 2.3:
 
 
-.. code-block:: yaml
+.. code-block:: none
 
     "ansible_distribution": "OpenBSD",
     "ansible_distribution_release": "release",
@@ -189,7 +189,7 @@ Deprecation of top-level connection arguments
 
 Will result in:
 
-.. code-block:: yaml
+.. code-block:: none
 
    [WARNING]: argument username has been deprecated and will be removed in a future version
    [WARNING]: argument host has been deprecated and will be removed in a future version

@@ -13,7 +13,9 @@ operations that might be subject to timeout.
 
 To launch a task asynchronously, specify its maximum runtime
 and how frequently you would like to poll for status.  The default
-poll value is 10 seconds if you do not specify a value for `poll`::
+poll value is 10 seconds if you do not specify a value for `poll`:
+
+.. code-block:: yaml+jinja
 
     ---
 
@@ -33,9 +35,9 @@ poll value is 10 seconds if you do not specify a value for `poll`::
    default.
 
 Alternatively, if you do not need to wait on the task to complete, you may
-"fire and forget" by specifying a poll value of 0::
+"fire and forget" by specifying a poll value of 0:
 
-    ---
+.. code-block:: yaml+jinja
 
     - hosts: all
       remote_user: root
@@ -56,35 +58,35 @@ Alternatively, if you do not need to wait on the task to complete, you may
    Using a higher value for ``--forks`` will result in kicking off asynchronous
    tasks even faster.  This also increases the efficiency of polling.
 
-If you would like to perform a variation of the "fire and forget" where you 
-"fire and forget, check on it later" you can perform a task similar to the 
-following::
+If you would like to perform a variation of the "fire and forget" where you
+"fire and forget, check on it later" you can perform a task similar to the
+following:
 
-      --- 
-      # Requires ansible 1.8+
-      - name: 'YUM - fire and forget task'
-        yum: name=docker-io state=installed
-        async: 1000
-        poll: 0
-        register: yum_sleeper
+.. code-block:: yaml+jinja
 
-      - name: 'YUM - check on fire and forget task'
-        async_status: jid={{ yum_sleeper.ansible_job_id }}
-        register: job_result
-        until: job_result.finished
-        retries: 30
+    # Requires ansible 1.8+
+    - name: 'YUM - fire and forget task'
+      yum: name=docker-io state=installed
+      async: 1000
+      poll: 0
+      register: yum_sleeper
+
+    - name: 'YUM - check on fire and forget task'
+      async_status: jid={{ yum_sleeper.ansible_job_id }}
+      register: job_result
+      until: job_result.finished
+      retries: 30
 
 .. note::
-   If the value of ``async:`` is not high enough, this will cause the 
+   If the value of ``async:`` is not high enough, this will cause the
    "check on it later" task to fail because the temporary status file that
-   the ``async_status:`` is looking for will not have been written or no longer exist 
+   the ``async_status:`` is looking for will not have been written or no longer exist
 
 If you would like to run multiple asynchronous tasks while limiting the amount
-of tasks running concurrently, you can do it this way::
+of tasks running concurrently, you can do it this way:
 
-    #####################
-    # main.yml
-    #####################
+.. code-block:: yaml+jinja
+
     - name: Run items asynchronously in batch of two items
       vars:
         sleep_durations:
@@ -95,12 +97,8 @@ of tasks running concurrently, you can do it this way::
           - 5
         durations: "{{ item }}"
       include: execute_batch.yml
-      with_items:
-        - "{{ sleep_durations | batch(2) | list }}"
+      with_items: "{{ sleep_durations|batch(2)|list }}"
 
-    #####################
-    # execute_batch.yml
-    #####################
     - name: Async sleeping for batched_items
       command: sleep {{ async_item }}
       async: 45
@@ -119,6 +117,7 @@ of tasks running concurrently, you can do it this way::
       register: async_poll_results
       until: async_poll_results.finished
       retries: 30
+
 
 .. seealso::
 
