@@ -359,7 +359,7 @@ a variable called ``vhost`` in the ``vars`` section, you could do this::
 Those same variables are usable in templates, which we'll get to later.
 
 Now in a very basic playbook all the tasks will be listed directly in that play, though it will usually
-make more sense to break up tasks using the ``include:`` directive.  We'll show that a bit later.
+make more sense to break up tasks as described in :doc:`playbooks_reuse`.
 
 .. _action_shorthand:
 
