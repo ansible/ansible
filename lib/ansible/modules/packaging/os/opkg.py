@@ -120,8 +120,8 @@ def is_installed(module, package, state="present"):
     """ Returns whether a package is installed or not. """
     present = False
     if state != "present":
-        command = get_opkg_path(module)
         return present
+    command = get_opkg_path(module)
     rc, _, _ = module.run_command("%s list-installed | grep -q \"^%s \"" % (
         pipes.quote(command),
         pipes.quote(package)),
