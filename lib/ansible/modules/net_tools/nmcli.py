@@ -564,6 +564,7 @@ class Nmcli(object):
         self.stp=module.params['stp']
         self.priority=module.params['priority']
         self.mode=module.params['mode']
+        self.primary=module.params['primary']
         self.miimon=module.params['miimon']
         self.downdelay=module.params['downdelay']
         self.updelay=module.params['updelay']
@@ -828,6 +829,9 @@ class Nmcli(object):
         if self.autoconnect is not None:
             cmd.append('autoconnect')
             cmd.append(self.bool_to_string(self.autoconnect))
+        if self.primary is not None:
+            cmd.append('primary')
+            cmd.append(self.primary)
         if self.miimon is not None:
             cmd.append('miimon')
             cmd.append(self.miimon)
@@ -1084,43 +1088,44 @@ def main():
     # Parsing argument file
     module=AnsibleModule(
         argument_spec=dict(
-            autoconnect=dict(required=False, default=None, type='bool'),
+            autoconnect=dict(default=None, type='bool'),
             state=dict(required=True, choices=['present', 'absent'], type='str'),
             conn_name=dict(required=True, type='str'),
-            master=dict(required=False, default=None, type='str'),
-            ifname=dict(required=False, default=None, type='str'),
-            type=dict(required=False, default=None, choices=['ethernet', 'team', 'team-slave', 'bond', 'bond-slave', 'bridge', 'vlan'], type='str'),
-            ip4=dict(required=False, default=None, type='str'),
-            gw4=dict(required=False, default=None, type='str'),
-            dns4=dict(required=False, default=None, type='list'),
-            ip6=dict(required=False, default=None, type='str'),
-            gw6=dict(required=False, default=None, type='str'),
-            dns6=dict(required=False, default=None, type='str'),
+            master=dict(default=None, type='str'),
+            ifname=dict(default=None, type='str'),
+            type=dict(default=None, choices=['ethernet', 'team', 'team-slave', 'bond', 'bond-slave', 'bridge', 'vlan'], type='str'),
+            ip4=dict(default=None, type='str'),
+            gw4=dict(default=None, type='str'),
+            dns4=dict(default=None, type='list'),
+            ip6=dict(default=None, type='str'),
+            gw6=dict(default=None, type='str'),
+            dns6=dict(default=None, type='str'),
             # Bond Specific vars
-            mode=dict(require=False, default="balance-rr", type='str', choices=["balance-rr", "active-backup", "balance-xor", "broadcast", "802.3ad",
-                                                                                "balance-tlb", "balance-alb"]),
-            miimon=dict(required=False, default=None, type='str'),
-            downdelay=dict(required=False, default=None, type='str'),
-            updelay=dict(required=False, default=None, type='str'),
-            arp_interval=dict(required=False, default=None, type='str'),
-            arp_ip_target=dict(required=False, default=None, type='str'),
+            mode=dict(default='balance-rr', type='str', choices=['balance-rr', 'active-backup', 'balance-xor', 'broadcast', '802.3ad',
+                                                                                'balance-tlb', 'balance-alb']),
+            primary=dict(default=None, type='str'),
+            miimon=dict(default=None, type='str'),
+            downdelay=dict(default=None, type='str'),
+            updelay=dict(default=None, type='str'),
+            arp_interval=dict(default=None, type='str'),
+            arp_ip_target=dict(default=None, type='str'),
             # general usage
-            mtu=dict(required=False, default=None, type='str'),
-            mac=dict(required=False, default=None, type='str'),
+            mtu=dict(default='1500', type='str'),
+            mac=dict(default=None, type='str'),
             # bridge specific vars
-            stp=dict(required=False, default=True, type='bool'),
-            priority=dict(required=False, default="128", type='str'),
-            slavepriority=dict(required=False, default="32", type='str'),
-            forwarddelay=dict(required=False, default="15", type='str'),
-            hellotime=dict(required=False, default="2", type='str'),
-            maxage=dict(required=False, default="20", type='str'),
-            ageingtime=dict(required=False, default="300", type='str'),
+            stp=dict(default=True, type='bool'),
+            priority=dict(default='128', type='str'),
+            slavepriority=dict(default='32', type='str'),
+            forwarddelay=dict(default='15', type='str'),
+            hellotime=dict(default='2', type='str'),
+            maxage=dict(default='20', type='str'),
+            ageingtime=dict(default='300', type='str'),
             # vlan specific vars
-            vlanid=dict(required=False, default=None, type='str'),
-            vlandev=dict(required=False, default=None, type='str'),
-            flags=dict(required=False, default=None, type='str'),
-            ingress=dict(required=False, default=None, type='str'),
-            egress=dict(required=False, default=None, type='str'),
+            vlanid=dict(default=None, type='str'),
+            vlandev=dict(default=None, type='str'),
+            flags=dict(default=None, type='str'),
+            ingress=dict(default=None, type='str'),
+            egress=dict(default=None, type='str'),
         ),
         supports_check_mode=True
     )
