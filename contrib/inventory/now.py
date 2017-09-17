@@ -249,14 +249,14 @@ def main(args):
     groups = os.environ.get("SN_GROUPS", [])
     if not groups and config.has_option('config', 'groups'):
         groups = config.get('config', 'groups')
-    if isinstance(groups, basestring):
+    if isinstance(groups, str):
         groups = groups.split(',')
 
     # SN_FIELDS
     fields = os.environ.get("SN_FIELDS", [])
     if not fields and config.has_option('config', 'fields'):
         fields = config.get('config', 'fields')
-    if isinstance(fields, basestring):
+    if isinstance(fields, str):
         fields = fields.split(',')
 
     inventory = NowInventory(
