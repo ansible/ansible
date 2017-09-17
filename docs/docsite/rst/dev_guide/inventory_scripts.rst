@@ -6,10 +6,11 @@ Developing Dynamic Inventory Sources
 
 As described in :doc:`../intro_dynamic_inventory`, Ansible can pull inventory information from dynamic sources, including cloud sources.
 
-How do we write a new one?
+Before inventory plugins we used to create a script or program that can print JSON in the right format when fed the proper arguments.
+These are known as 'inventory scripts', which can be written in  any language, unlke inventory plugins, which are only Python.
 
-Simple!  We just create a script or program that can print JSON in the right format when fed the proper arguments.
-You can do this in any language.
+They are now executed via the `script` inventory plugin, which is kept for backwards compatibility,
+in most cases you should be writing inventory plugins instead.
 
 .. _inventory_script_conventions:
 
