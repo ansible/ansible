@@ -175,7 +175,7 @@ In case you have to specify more arguments you can use the following syntax::
           to: "{{ mail_recipient }}"
           body: "{{ mail_body }}"
         run_once: True
-          
+
 The `ansible_host` variable (`ansible_ssh_host` in 1.x or specific to ssh/paramiko plugins) reflects the host a task is delegated to.
 
 .. _delegate_facts:
@@ -195,7 +195,7 @@ In 2.0, the directive `delegate_facts` may be set to `True` to assign the task's
           setup:
           delegate_to: "{{item}}"
           delegate_facts: True
-          with_items: "{{groups['dbservers']}}"
+          loop: "{{groups['dbservers']}}"
 
 The above will gather facts for the machines in the dbservers group and assign the facts to those machines and not to app_servers.
 This way you can lookup `hostvars['dbhost1']['default_ipv4']['address']` even though dbservers were not part of the play, or left out by using `--limit`.

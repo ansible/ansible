@@ -189,20 +189,20 @@ class TaskExecutor:
 
         templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=self._job_vars)
         items = None
-        if self._task.loop:
-            if self._task.loop in self._shared_loader_obj.lookup_loader:
+        if self._task.loop_with:
+            if self._task.loop_with in self._shared_loader_obj.lookup_loader:
                 fail = True
-                if self._task.loop == 'first_found':
+                if self._task.loop_with == 'first_found':
                     # first_found loops are special. If the item is undefined then we want to fall through to the next value rather than failing.
                     fail = False
 
-                loop_terms = listify_lookup_plugin_terms(terms=self._task.loop_args, templar=templar, loader=self._loader, fail_on_undefined=fail,
+                loop_terms = listify_lookup_plugin_terms(terms=self._task.loop, templar=templar, loader=self._loader, fail_on_undefined=fail,
                                                          convert_bare=False)
                 if not fail:
                     loop_terms = [t for t in loop_terms if not templar._contains_vars(t)]
 
                 # get lookup
-                mylookup = self._shared_loader_obj.lookup_loader.get(self._task.loop, loader=self._loader, templar=templar)
+                mylookup = self._shared_loader_obj.lookup_loader.get(self._task.loop_with, loader=self._loader, templar=templar)
 
                 # give lookup task 'context' for subdir (mostly needed for first_found)
                 for subdir in ['template', 'var', 'file']:  # TODO: move this to constants?
@@ -213,7 +213,12 @@ class TaskExecutor:
                 # run lookup
                 items = mylookup.run(terms=loop_terms, variables=self._job_vars, wantlist=True)
             else:
-                raise AnsibleError("Unexpected failure in finding the lookup named '%s' in the available lookup plugins" % self._task.loop)
+                raise AnsibleError("Unexpected failure in finding the lookup named '%s' in the available lookup plugins" % self._task.loop_with)
+
+        elif self._task.loop:
+            items = templar.template(self._task.loop)
+            if not isinstance(items, list):
+                raise AnsibleError("Invalid data passed to 'loop' it requires a list, got this instead: %s" % items)
 
         # now we restore any old job variables that may have been modified,
         # and delete them if they were in the play context vars but not in
@@ -264,7 +269,10 @@ class TaskExecutor:
                             u" to something else to avoid variable collisions and unexpected behavior." % loop_var)
 
         ran_once = False
-        items = self._squash_items(items, loop_var, task_vars)
+        if self._task.loop_with:
+            # Only squash with 'with_:' not with the 'loop:', 'magic' squashing can be removed once with_ loops are
+            items = self._squash_items(items, loop_var, task_vars)
+
         for item in items:
             task_vars[loop_var] = item
 

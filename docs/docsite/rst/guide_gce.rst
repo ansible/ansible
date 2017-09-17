@@ -213,11 +213,11 @@ A playbook would looks like this:
 
        - name: Wait for SSH to come up
          wait_for: host={{ item.public_ip }} port=22 delay=10 timeout=60
-         with_items: "{{ gce.instance_data }}"
+         loop: "{{ gce.instance_data }}"
 
        - name: Add host to groupname
          add_host: hostname={{ item.public_ip }} groupname=new_instances
-         with_items: "{{ gce.instance_data }}"
+         loop: "{{ gce.instance_data }}"
 
    - name: Manage new instances
      hosts: new_instances

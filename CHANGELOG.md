@@ -7,8 +7,12 @@ Ansible Changes By Release
 
 ### Major Changes
 * Removed the previously deprecated 'accelerate' mode and all associated keywords and code.
+* Removed the previouslly deprecated 'accelerate' mode and all associated keywords and code.
+* New simpler and more intuitive 'loop' keyword for task loops
 
 ### Deprecations
+* previouslly deprecated 'hostfile' config settings have been 're-deprecated' as previouslly code did not warn about deprecated configuration settings.
+* The ``with_<lookup>`` loops are deprecated in favor of the new ``loop`` keyword
 
 #### Deprecated Modules (to be removed in 2.9):
 

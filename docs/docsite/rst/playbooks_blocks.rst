@@ -16,7 +16,7 @@ by the tasks enclosed by a block. i.e. a `when` will be applied to the tasks, no
       - name: Install Apache
         block:
           - yum: name={{ item }} state=installed
-            with_items:
+            loop:
               - httpd
               - memcached
           - template: src=templates/src.j2 dest=/etc/foo.conf

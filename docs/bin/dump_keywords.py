@@ -49,14 +49,15 @@ for aclass in class_list:
 
     # loop is really with_ for users
     if name == 'Task':
-        oblist[name]['with_<lookup_plugin>'] = 'with_ is how loops are defined, it can use any available lookup plugin to generate the item list'
+        oblist[name]['with_<lookup_plugin>'] = 'DEPRECATED: use ``loop`` instead, with_ used to be how loops were defined, '
+        'it can use any available lookup plugin to generate the item list'
 
     # local_action is implicit with action
     if 'action' in oblist[name]:
         oblist[name]['local_action'] = 'Same as action but also implies ``delegate_to: localhost``'
 
     # remove unusable (used to be private?)
-    for nouse in ('loop', 'loop_args'):
+    for nouse in ('loop_args'):
         if nouse in oblist[name]:
             del oblist[name][nouse]
 
