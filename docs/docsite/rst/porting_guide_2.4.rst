@@ -49,29 +49,18 @@ Will result in:
 
    - name: foo
 
-Inventory plugins
------------------
 
-FIXME: starting migration from hardcoded inventory + inventory scripts. scripts will still work via script plugin but efforts will now concentrate on plugins
-
-Multiple inventory
-------------------
-
-**NEW** In Ansible 2.4:
-
-
-.. code-block:: shell
-
-   ansible-playbook -i /path/to/inventory1, /some/other/path/inventory2
 
 
 Deprecated
 ==========
 
-Inventory argument
--------------------------
+Specifying Inventory sources
+-----------------------------
 
 Use of ``--inventory-file`` is now deprecated. Use ``--inventory`` or ``-i``.
+As well as the ini configuration key `hostfile` and the environment variable `ANSIBLE_HOSTS`,
+instead use `inventory` and `ANSIBLE_INVENTORY`, which have been available for a while now.
 
 
 Use of multiple tags
@@ -121,19 +110,22 @@ Noteworthy module changes
 Plugins
 =======
 
-var plugin changes
-------------------
+A new way to configure and document plugins has been introduced, this does not require changes to existing setups but developers might want to start adapting to the new infrastructure now. More details should be available in the developer documentation for each plugin type.
 
-FIXME: bcoca to add details
+Vars plugin changes
+-------------------
 
+Many changes under the hood, but both users and developers should not need to change anything to keep current setups working. They might WANT to chagne to take advantage of the way they work now.
 
-Porting custom scripts
-======================
+The most notable difference to users is that they now get invoked on demand vs at inventory build time, this should make them more efficient for large inventories, specially when using a subset of the hosts.
 
-Inventory script now obsolete
------------------------------
+Inventory plugins
+-----------------
 
-FIXME: inventory scripts are becoming obsolete, in favor of inventory plugins
+Developers might wan tto start migrating from hardcoded inventory + inventory scripts. to the new Inventory Plugins. The scripts will still work via script plugin but efforts will now concentrate on plugins.
+
+Both users and developers might want to look into the new plugins as we hope they alleviate the need for many hacks and workarounds.
+
 
 Networking
 ==========
@@ -151,3 +143,10 @@ To control timeouts use ``command_timeout`` rather than the previous top level `
 
 See :ref:`Ansible Network debug guide <network_debug_troubleshooting>` for more information.
 
+
+Configuration API
+=================
+
+The configuration system has had some major changes, but users should be unaffected, developers that were poking directly into the previous API might need to revisit their usage, some backward compatiblity methods were kept (mostly `get_config`) for known plugins/scripts, but these are deprecated.
+
+The new configuration has been designed to minimize the need of code changes in core for new plugins, the plugins themselves should just need to document their settings and the configuration system will provide what they need. This is still a work in progress, currently only 'callbcak' and 'connection' plugins support this, more details will be added to the specific plugin developer guides.
