@@ -19,7 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import base64
 import time
 import traceback
 
@@ -32,7 +31,6 @@ from ansible.playbook.conditional import Conditional
 from ansible.playbook.task import Task
 from ansible.plugins.connection import ConnectionBase
 from ansible.template import Templar
-from ansible.utils.encrypt import key_for_hostname
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.unsafe_proxy import UnsafeProxy, wrap_var
 
@@ -737,42 +735,6 @@ class TaskExecutor:
             raise AnsibleError("the connection plugin '%s' was not found" % conn_type)
 
         self._play_context.set_options_from_plugin(connection)
-
-        if self._play_context.accelerate:
-            # accelerate is deprecated as of 2.1...
-            display.deprecated('Accelerated mode is deprecated. Consider using SSH with ControlPersist and pipelining enabled instead', version='2.6')
-            # launch the accelerated daemon here
-            ssh_connection = connection
-            handler = self._shared_loader_obj.action_loader.get(
-                'normal',
-                task=self._task,
-                connection=ssh_connection,
-                play_context=self._play_context,
-                loader=self._loader,
-                templar=templar,
-                shared_loader_obj=self._shared_loader_obj,
-            )
-
-            key = key_for_hostname(self._play_context.remote_addr)
-            accelerate_args = dict(
-                password=base64.b64encode(key.__str__()),
-                port=self._play_context.accelerate_port,
-                minutes=C.ACCELERATE_DAEMON_TIMEOUT,
-                ipv6=self._play_context.accelerate_ipv6,
-                debug=self._play_context.verbosity,
-            )
-
-            connection = self._shared_loader_obj.connection_loader.get('accelerate', self._play_context, self._new_stdin)
-            if not connection:
-                raise AnsibleError("the connection plugin '%s' was not found" % conn_type)
-
-            try:
-                connection._connect()
-            except AnsibleConnectionFailure:
-                display.debug('connection failed, fallback to accelerate')
-                res = handler._execute_module(module_name='accelerate', module_args=accelerate_args, task_vars=variables, delete_remote_tmp=False)
-                display.debug(res)
-                connection._connect()
 
         return connection
 
