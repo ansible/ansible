@@ -17,7 +17,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 # Make sure we start fresh
 
-# Need unzup for unarchive module, and zip for archive creation.
+# Need unzip for unarchive module, and zip for archive creation.
 - name: Ensure zip and unzip is present to create test archive (yum)
   yum: name=zip,unzip state=latest
   when: ansible_pkg_mgr  ==  'yum'
@@ -475,13 +475,13 @@
     path: "{{ output_dir }}/test-unarchive-tar-gz"
     state: directory
 
-- name: Create a symlink to the detination dir
+- name: Create a symlink to the destination dir
   file:
     path: "{{ output_dir }}/link-to-unarchive-dir"
     src: "{{ output_dir }}/test-unarchive-tar-gz"
     state: "link"
 
-- name: test that unarchive works when dest is a symlink to a dir
+- name: Test that unarchive works when dest is a symlink to a dir
   unarchive:
     src: "{{ output_dir }}/test-unarchive.tar.gz"
     dest: "{{ output_dir | expanduser }}/link-to-unarchive-dir"
@@ -500,7 +500,7 @@
       - "unarchive_11.changed == true"
       - "unarchive11_stat0.stat.exists == true"
 
-- name: remove our tar.gz unarchive destination
+- name: Remove our tar.gz unarchive destination
   file: path={{ output_dir }}/test-unarchive-tar-gz state=absent
 
 
@@ -515,7 +515,7 @@
     src: "{{ output_dir }}/test-unarchive-tar-gz"
     state: "link"
 
-- name: test that unarchive fails when dest is a link to a file
+- name: Test that unarchive fails when dest is a link to a file
   unarchive:
     src: "{{ output_dir }}/test-unarchive.tar.gz"
     dest: "{{ output_dir | expanduser }}/link-to-unarchive-file"
@@ -531,3 +531,62 @@
 
 - name: remove our tar.gz unarchive destination
   file: path={{ output_dir }}/test-unarchive-tar-gz state=absent
+
+
+- name: Create files
+  file:
+    path: "{{ output_dir }}/{{ item }}"
+    state: touch
+  with_items:
+    - file1
+    - file2
+
+- name: Create a symlink to the file
+  file:
+    path: "{{ output_dir }}/link1"
+    src: "{{ output_dir }}/file1"
+    state: link
+
+- name: Create archive of symlink
+  shell: tar czvf link1.tar.gz link1 chdir={{ output_dir }}
+
+- name: Change target of symlink
+  file:
+    path: "{{ output_dir }}/link1"
+    src: "{{ output_dir }}/file2"
+    state: link
+
+- name: Unarchive when symlink differs
+  unarchive:
+    src: "{{ output_dir }}/link1.tar.gz"
+    dest: "{{ output_dir | expanduser }}"
+    remote_src: yes
+  register: unarchive_13
+
+- name: Assert that unarchive was performed
+  assert:
+    that:
+      - "unarchive_13.changed == true"
+
+- name: Unarchive when symlink is the same
+  unarchive:
+    src: "{{ output_dir }}/link1.tar.gz"
+    dest: "{{ output_dir | expanduser }}"
+    remote_src: yes
+  register: unarchive_13
+
+- name: Assert that unarchive was not performed
+  assert:
+    that:
+      - "unarchive_13.changed == false"
+
+
+- name: Remove files
+  file:
+    path: "{{ output_dir }}/{{ item }}"
+    state: absent
+  with_items:
+    - file1
+    - file2
+    - link1
+    - link1.tar.gz

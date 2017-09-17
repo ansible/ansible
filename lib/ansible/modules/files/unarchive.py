@@ -148,6 +148,7 @@ OWNER_DIFF_RE = re.compile(r': Uid differs$')
 GROUP_DIFF_RE = re.compile(r': Gid differs$')
 MODE_DIFF_RE = re.compile(r': Mode differs$')
 MOD_TIME_DIFF_RE = re.compile(r': Mod time differs$')
+SYMLINK_DIFF_RE = re.compile(r': Symlink differs$')
 # NEWER_DIFF_RE = re.compile(r' is newer or same age.$')
 EMPTY_FILE_RE = re.compile(r': : Warning: Cannot stat: No such file or directory$')
 MISSING_FILE_RE = re.compile(r': Warning: Cannot stat: No such file or directory$')
@@ -687,6 +688,8 @@ class TgzArchive(object):
             if not self.file_args['mode'] and MODE_DIFF_RE.search(line):
                 out += line + '\n'
             if MOD_TIME_DIFF_RE.search(line):
+                out += line + '\n'
+            if SYMLINK_DIFF_RE.search(line):
                 out += line + '\n'
             if MISSING_FILE_RE.search(line):
                 out += line + '\n'
