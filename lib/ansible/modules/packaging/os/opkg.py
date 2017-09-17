@@ -7,13 +7,11 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-__metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -63,137 +61,169 @@ requirements:
     - opkg
     - python
 '''
+
 EXAMPLES = '''
 - opkg:
     name: foo
     state: present
-
 - opkg:
     name: foo
     state: present
     update_cache: yes
-
 - opkg:
     name: foo
     state: absent
-
 - opkg:
     name: foo,bar
     state: absent
-
 - opkg:
     name: foo
     state: present
     force: overwrite
 '''
 
+
 import pipes
+from ansible.module_utils.basic import *
+__metaclass__ = type
 
-def update_package_db(module, opkg_path):
+
+STATES = ["present", "installed", "absent", "removed"]
+
+FORCE = [
+    "",
+    "depends",
+    "maintainer",
+    "reinstall",
+    "overwrite",
+    "downgrade",
+    "space",
+    "postinstall",
+    "remove",
+    "checksum",
+    "removal-of-dependent-packages"
+]
+
+
+def get_opkg_path(module):
+    return module.get_bin_path('opkg', True, ['/bin'])
+
+
+def update_package_db(module):
     """ Updates packages list. """
-
-    rc, out, err = module.run_command("%s update" % opkg_path)
-
+    rc, out, err = module.run_command("%s update" % get_opkg_path(module))
     if rc != 0:
         module.fail_json(msg="could not update package db")
 
 
-def query_package(module, opkg_path, name, state="present"):
+def is_installed(module, package, state="present"):
     """ Returns whether a package is installed or not. """
+    present = False
+    if state != "present":
+        return present
+    rc, _, _ = module.run_command("%s list-installed | grep -q \"^%s \"" % (
+        pipes.quote(get_opkg_path(module)),
+        pipes.quote(package)),
+        use_unsafe_shell=True
+    )
+    if rc == 0:
+        present = True
+    return present
 
-    if state == "present":
 
-        rc, out, err = module.run_command("%s list-installed | grep -q \"^%s \"" % (pipes.quote(opkg_path), pipes.quote(name)), use_unsafe_shell=True)
-        if rc == 0:
-            return True
+def query_package(module, package, state="present"):
+    """
+    Just a deprecated function who wrappe is_installed
+    deprecated for bad namming semantic
+    """
+    return is_installed(module, package, state)
 
-        return False
+
+def opkg(module, package, force, action='install'):
+    return module.run_command("{opkg} {action} {force} {package}".format(
+        opkg=get_opkg_path(module),
+        action=action,
+        force=force,
+        package=package)
+    )
 
 
-def remove_packages(module, opkg_path, packages):
+def remove_packages(module, packages):
     """ Uninstalls one or more packages if installed. """
-
+    msg = "package(s) already absent"
+    changed = False
     p = module.params
     force = p["force"]
     if force:
         force = "--force-%s" % force
 
-    remove_c = 0
-    # Using a for loop in case of error, we can report the package that failed
+    removed = []
     for package in packages:
-        # Query the package first, to see if we even need to remove
-        if not query_package(module, opkg_path, package):
+        if not is_installed(module, package):
             continue
+        rc, out, err = opkg(module=module, action='remove', package=package, force=force)
+        if not is_installed(module, package):
+            removed.append(package)
+            continue
+        module.fail_json(msg="failed to remove %s: %s" % (package, out))
 
-        rc, out, err = module.run_command("%s remove %s %s" % (opkg_path, force, package))
-
-        if query_package(module, opkg_path, package):
-            module.fail_json(msg="failed to remove %s: %s" % (package, out))
-
-        remove_c += 1
-
-    if remove_c > 0:
-
-        module.exit_json(changed=True, msg="removed %s package(s)" % remove_c)
-
-    module.exit_json(changed=False, msg="package(s) already absent")
+    if removed:
+        changed = True
+        msg = "removed {} package(s)\n{}".format(len(removed), ",".join(removed))
+    module.exit_json(changed=changed, msg=msg)
 
 
-def install_packages(module, opkg_path, packages):
+def install_packages(module, packages):
     """ Installs one or more packages if not already installed. """
-
+    changed = False
+    msg = "package(s) already present"
     p = module.params
     force = p["force"]
     if force:
         force = "--force-%s" % force
 
-    install_c = 0
-
+    installed = []
     for package in packages:
-        if query_package(module, opkg_path, package):
+        if is_installed(module, package):
             continue
+        rc, out, err = opkg(module=module, action='install', package=package, force=force)
+        if is_installed(module, package):
+            installed.append(package)
+            continue
+        module.fail_json(msg="failed to install %s: %s" % (package, out))
 
-        rc, out, err = module.run_command("%s install %s %s" % (opkg_path, force, package))
+    if installed:
+        changed = True
+        msg = "installed {} package(s)\n{}".format(len(installed), ",".join(installed))
+    module.exit_json(changed=changed, msg=msg)
 
-        if not query_package(module, opkg_path, package):
-            module.fail_json(msg="failed to install %s: %s" % (package, out))
 
-        install_c += 1
-
-    if install_c > 0:
-        module.exit_json(changed=True, msg="installed %s package(s)" % (install_c))
-
-    module.exit_json(changed=False, msg="package(s) already present")
+def handle_package(state, module, pkgs):
+    available_state = {
+        "present": install_packages,
+        "installed": install_packages,
+        "absent": remove_packages,
+        "removed": remove_packages,
+    }
+    available_state[state](module, get_opkg_path(module), pkgs)
 
 
 def main():
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(aliases=["pkg"], required=True),
-            state=dict(default="present", choices=["present", "installed", "absent", "removed"]),
-            force=dict(default="", choices=["", "depends", "maintainer", "reinstall", "overwrite", "downgrade", "space", "postinstall", "remove",
-                                            "checksum", "removal-of-dependent-packages"]),
+            state=dict(default="present", choices=STATES),
+            force=dict(default="", choices=FORCE),
             update_cache=dict(default="no", aliases=["update-cache"], type='bool')
         )
     )
-
-    opkg_path = module.get_bin_path('opkg', True, ['/bin'])
-
     p = module.params
-
-    if p["update_cache"]:
-        update_package_db(module, opkg_path)
-
     pkgs = p["name"].split(",")
 
-    if p["state"] in ["present", "installed"]:
-        install_packages(module, opkg_path, pkgs)
+    if p["update_cache"]:
+        update_package_db(module, get_opkg_path(module))
+    handle_package(p["state"], module,  pkgs)
 
-    elif p["state"] in ["absent", "removed"]:
-        remove_packages(module, opkg_path, pkgs)
-
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()
