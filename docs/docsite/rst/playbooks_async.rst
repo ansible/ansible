@@ -95,7 +95,7 @@ of tasks running concurrently, you can do it this way::
           - 5
         durations: "{{ item }}"
       include_tasks: execute_batch.yml
-      with_items:
+      loop:
         - "{{ sleep_durations | batch(2) | list }}"
 
     #####################
@@ -105,7 +105,7 @@ of tasks running concurrently, you can do it this way::
       command: sleep {{ async_item }}
       async: 45
       poll: 0
-      with_items: "{{ durations }}"
+      loop: "{{ durations }}"
       loop_control:
         loop_var: "async_item"
       register: async_results
@@ -113,7 +113,7 @@ of tasks running concurrently, you can do it this way::
     - name: Check sync status
       async_status:
         jid: "{{ async_result_item.ansible_job_id }}"
-      with_items: "{{ async_results.results }}"
+      loop: "{{ async_results.results }}"
       loop_control:
         loop_var: "async_result_item"
       register: async_poll_results

@@ -125,7 +125,7 @@ Or by looping over a regions list if you want to do the task in every region:
         name: my-ssh-key
         public_key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
         api_region: "{{ item }}"
-        with_items:
+        loop:
           - exoscale
           - exmaple_cloud_one
           - exmaple_cloud_two
@@ -255,7 +255,7 @@ Now to the fun part. We create a playbook to create our infrastructure we call i
             ip_address: "{{ public_ip }}"
             port: "{{ item.port }}"
             cidr: "{{ item.cidr | default('0.0.0.0/0') }}"
-          with_items: "{{ cs_firewall }}"
+          loop: "{{ cs_firewall }}"
           when: public_ip is defined
 
         - name: ensure static NATs
@@ -326,7 +326,7 @@ The playbook looks like the following:
       - name: ensure security groups exist
         cs_securitygroup:
           name: "{{ item }}"
-        with_items:
+        loop:
           - default
           - web
 
@@ -335,7 +335,7 @@ The playbook looks like the following:
           security_group: default
           start_port: "{{ item }}"
           end_port: "{{ item }}"
-        with_items:
+        loop:
           - 22
 
       - name: add inbound TCP rules to security group web
@@ -343,7 +343,7 @@ The playbook looks like the following:
           security_group: web
           start_port: "{{ item }}"
           end_port: "{{ item }}"
-        with_items:
+        loop:
           - 80
           - 443
 

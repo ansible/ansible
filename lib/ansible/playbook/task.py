@@ -75,8 +75,7 @@ class Task(Base, Conditional, Taggable, Become):
     _delegate_to = FieldAttribute(isa='string')
     _delegate_facts = FieldAttribute(isa='bool', default=False)
     _failed_when = FieldAttribute(isa='list', default=[])
-    _loop = FieldAttribute(isa='string', private=True, inherit=False)
-    _loop_args = FieldAttribute(isa='list', private=True, inherit=False)
+    _loop = FieldAttribute()
     _loop_control = FieldAttribute(isa='class', class_type=LoopControl, inherit=False)
     _name = FieldAttribute(isa='string', default='')
     _notify = FieldAttribute(isa='list')
@@ -84,6 +83,9 @@ class Task(Base, Conditional, Taggable, Become):
     _register = FieldAttribute(isa='string')
     _retries = FieldAttribute(isa='int', default=3)
     _until = FieldAttribute(isa='list', default=[])
+
+    # deprecated, used to be loop and loop_args but loop has been repurposed
+    _loop_with = FieldAttribute(isa='string', private=True, inherit=False)
 
     def __init__(self, block=None, role=None, task_include=None):
         ''' constructors a task, without the Task.load classmethod, it will be pretty blank '''
@@ -145,16 +147,17 @@ class Task(Base, Conditional, Taggable, Become):
         else:
             return "TASK: %s" % self.get_name()
 
-    def _preprocess_loop(self, ds, new_ds, k, v):
+    def _preprocess_with_loop(self, ds, new_ds, k, v):
         ''' take a lookup plugin name and store it correctly '''
 
         loop_name = k.replace("with_", "")
-        if new_ds.get('loop') is not None:
+        if new_ds.get('loop') is not None or new_ds.get('loop_with') is not None:
             raise AnsibleError("duplicate loop in task: %s" % loop_name, obj=ds)
         if v is None:
             raise AnsibleError("you must specify a value when using %s" % k, obj=ds)
-        new_ds['loop'] = loop_name
-        new_ds['loop_args'] = v
+        new_ds['loop_with'] = loop_name
+        new_ds['loop'] = v
+        display.deprecated("with_ type loops are being phased out, use the 'loop' keyword instead", version="2.9")
 
     def preprocess_data(self, ds):
         '''
@@ -210,7 +213,7 @@ class Task(Base, Conditional, Taggable, Become):
                 continue
             elif k.replace("with_", "") in lookup_loader:
                 # transform into loop property
-                self._preprocess_loop(ds, new_ds, k, v)
+                self._preprocess_with_loop(ds, new_ds, k, v)
             else:
                 # pre-2.0 syntax allowed variables for include statements at the top level of the task,
                 # so we move those into the 'vars' dictionary here, and show a deprecation message
@@ -248,9 +251,9 @@ class Task(Base, Conditional, Taggable, Become):
 
         super(Task, self).post_validate(templar)
 
-    def _post_validate_loop_args(self, attr, value, templar):
+    def _post_validate_loop(self, attr, value, templar):
         '''
-        Override post validation for the loop args field, which is templated
+        Override post validation for the loop field, which is templated
         specially in the TaskExecutor class when evaluating loops.
         '''
         return value

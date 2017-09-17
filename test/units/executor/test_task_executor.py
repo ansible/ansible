@@ -106,8 +106,8 @@ class TestTaskExecutor(unittest.TestCase):
         mock_host = MagicMock()
 
         mock_task = MagicMock()
-        mock_task.loop = 'items'
-        mock_task.loop_args = ['a', 'b', 'c']
+        mock_task.loop_with = 'items'
+        mock_task.loop = ['a', 'b', 'c']
 
         mock_play_context = MagicMock()
 
