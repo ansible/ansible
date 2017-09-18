@@ -77,7 +77,6 @@ undefined-loop-variable
 ungrouped-imports
 unidiomatic-typecheck
 unnecessary-lambda
-unnecessary-pass
 unneeded-not
 unsubscriptable-object
 unsupported-membership-test

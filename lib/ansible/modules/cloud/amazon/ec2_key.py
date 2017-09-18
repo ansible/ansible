@@ -219,7 +219,6 @@ def main():
                                 module.fail_json(msg="timed out while waiting for the key to be re-created")
 
                     changed = True
-            pass
 
         # if the key doesn't exist, create it now
         else:

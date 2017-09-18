@@ -286,7 +286,6 @@ class ModuleManager(object):
             if status in ['Changes Pending']:
                 details = self._get_details_from_resource(resource)
                 self._validate_pending_status(details)
-                pass
             elif status in ['Awaiting Initial Sync', 'Not All Devices Synced']:
                 pass
             elif status == 'In Sync':
