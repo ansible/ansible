@@ -321,7 +321,6 @@ from ansible.module_utils.ec2 import ec2_connect, ec2_argument_spec, ansible_dic
 
 import time
 import traceback
-import boto3
 from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec, ec2_connect, boto3_conn, camel_dict_to_snake_dict, HAS_BOTO3
 from ansible.module_utils.basic import AnsibleModule
 
@@ -678,6 +677,11 @@ def main():
             update_image(module, connection, module.params.get('image_id'), resource)
         if not module.params.get('instance_id') and not module.params.get('device_mapping'):
             module.fail_json(msg="The parameters instance_id or device_mapping (register from EBS snapshot) are required for a new image.")
+<<<<<<< HEAD
+=======
+        if not module.params.get('name'):
+            module.fail_json(msg="The name parameter is required for a new image.")
+>>>>>>> added resource connection correctly
         create_image(module, connection, resource)
 
 
