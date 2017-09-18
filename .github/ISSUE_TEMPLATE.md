@@ -20,8 +20,11 @@ Also test if the latest release, and master branch are affected too.
 
 ##### CONFIGURATION
 <!---
-Mention any settings you have changed/added/removed in ansible.cfg
+If using Ansible 2.4 or above, paste the results of "ansible-config dump --only-changed"
+
+Otherwise, mention any settings you have changed/added/removed in ansible.cfg
 (or using the ANSIBLE_* environment variables).
+
 -->
 
 ##### OS / ENVIRONMENT
