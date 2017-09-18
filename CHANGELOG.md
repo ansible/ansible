@@ -49,6 +49,7 @@ Ansible Changes By Release
 * Fix for Windows become to show the stdout and stderr strings on a failure 
 * Fix the issue SSL verification can not be disabled for Tower modules
 * Use safe_load instead on load to read a yaml document
+* Fix for win_file to respect check mode when deleting directories
 
 
 <a id="2.3.2"></a>
