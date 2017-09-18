@@ -314,9 +314,9 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text
-from ansible.module_utils.vmware import (connect_to_api, find_obj, gather_vm_facts, get_all_objs,
-                                         compile_folder_path_for_object, serialize_spec, find_vm_by_id,
-                                         vmware_argument_spec)
+from ansible.module_utils.vmware import (find_obj, gather_vm_facts, get_all_objs,
+                                         compile_folder_path_for_object, serialize_spec,
+                                         vmware_argument_spec, set_vm_power_state, PyVmomi)
 
 
 class PyVmomiDeviceHelper(object):
@@ -496,111 +496,14 @@ class PyVmomiCache(object):
         return datacenter
 
 
-class PyVmomiHelper(object):
+class PyVmomiHelper(PyVmomi):
     def __init__(self, module):
-        if not HAS_PYVMOMI:
-            module.fail_json(msg='pyvmomi module required')
-
-        self.module = module
+        super(PyVmomiHelper, self).__init__(module)
         self.device_helper = PyVmomiDeviceHelper(self.module)
-        self.params = module.params
-        self.si = None
-        self.content = connect_to_api(self.module)
         self.configspec = None
         self.change_detected = False
         self.customspec = None
-        self.current_vm_obj = None
         self.cache = PyVmomiCache(self.content, dc_name=self.params['datacenter'])
-
-    def getvm(self, name=None, uuid=None, folder=None):
-        vm = None
-        match_first = False
-        if uuid:
-            vm = find_vm_by_id(self.content, vm_id=uuid, vm_id_type="uuid")
-        elif folder and name:
-            if self.params['name_match'] == 'first':
-                match_first = True
-            vm = find_vm_by_id(self.content, vm_id=name, vm_id_type="inventory_path", folder=folder, match_first=match_first)
-        if vm:
-            self.current_vm_obj = vm
-
-        return vm
-
-    def set_powerstate(self, vm, state, force):
-        """
-        Set the power status for a VM determined by the current and
-        requested states. force is forceful
-        """
-        facts = self.gather_facts(vm)
-        expected_state = state.replace('_', '').lower()
-        current_state = facts['hw_power_status'].lower()
-        result = dict(
-            changed=False,
-            failed=False,
-        )
-
-        # Need Force
-        if not force and current_state not in ['poweredon', 'poweredoff']:
-            result['failed'] = True
-            result['msg'] = "VM is in %s power state. Force is required!" % current_state
-            return result
-
-        # State is not already true
-        if current_state != expected_state:
-            task = None
-            try:
-                if expected_state == 'poweredoff':
-                    task = vm.PowerOff()
-
-                elif expected_state == 'poweredon':
-                    task = vm.PowerOn()
-
-                elif expected_state == 'restarted':
-                    if current_state in ('poweredon', 'poweringon', 'resetting', 'poweredoff'):
-                        task = vm.Reset()
-                    else:
-                        result['failed'] = True
-                        result['msg'] = "Cannot restart VM in the current state %s" % current_state
-
-                elif expected_state == 'suspended':
-                    if current_state in ('poweredon', 'poweringon'):
-                        task = vm.Suspend()
-                    else:
-                        result['failed'] = True
-                        result['msg'] = 'Cannot suspend VM in the current state %s' % current_state
-
-                elif expected_state in ['shutdownguest', 'rebootguest']:
-                    if current_state == 'poweredon' and vm.guest.toolsRunningStatus == 'guestToolsRunning':
-                        if expected_state == 'shutdownguest':
-                            task = vm.ShutdownGuest()
-                        else:
-                            task = vm.RebootGuest()
-                        # Set result['changed'] immediately because
-                        # shutdown and reboot return None.
-                        result['changed'] = True
-                    else:
-                        result['failed'] = True
-                        result['msg'] = "VM %s must be in poweredon state & tools should be installed for guest shutdown/reboot" % vm.name
-
-            except Exception as e:
-                result['failed'] = True
-                result['msg'] = to_text(e)
-
-            if task:
-                self.wait_for_task(task)
-                if task.info.state == 'error':
-                    result['failed'] = True
-                    result['msg'] = str(task.info.error.msg)
-                else:
-                    result['changed'] = True
-
-        # need to get new metadata if changed
-        if result['changed']:
-            newvm = self.getvm(uuid=vm.config.uuid)
-            facts = self.gather_facts(newvm)
-            result['instance'] = facts
-
-        return result
 
     def gather_facts(self, vm):
         return gather_vm_facts(self.content, vm)
@@ -1336,7 +1239,7 @@ class PyVmomiHelper(object):
             self.customize_customvalues(vm_obj=vm)
 
             if self.params['wait_for_ip_address'] or self.params['state'] in ['poweredon', 'restarted']:
-                self.set_powerstate(vm, 'poweredon', force=False)
+                set_vm_power_state(self.content, vm, 'poweredon', force=False)
 
                 if self.params['wait_for_ip_address']:
                     self.wait_for_vm_ip(vm)
@@ -1422,7 +1325,7 @@ class PyVmomiHelper(object):
         facts = {}
         thispoll = 0
         while not ips and thispoll <= poll:
-            newvm = self.getvm(uuid=vm.config.uuid)
+            newvm = self.get_vm()
             facts = self.gather_facts(newvm)
             if facts['ipv4'] or facts['ipv6']:
                 ips = True
@@ -1477,7 +1380,7 @@ def main():
     pyv = PyVmomiHelper(module)
 
     # Check if the VM exists before continuing
-    vm = pyv.getvm(name=module.params['name'], folder=module.params['folder'], uuid=module.params['uuid'])
+    vm = pyv.get_vm()
 
     # VM already exists
     if vm:
@@ -1485,13 +1388,13 @@ def main():
             # destroy it
             if module.params['force']:
                 # has to be poweredoff first
-                pyv.set_powerstate(vm, 'poweredoff', module.params['force'])
+                set_vm_power_state(pyv.content, vm, 'poweredoff', module.params['force'])
             result = pyv.remove_vm(vm)
         elif module.params['state'] == 'present':
             result = pyv.reconfigure_vm()
         elif module.params['state'] in ['poweredon', 'poweredoff', 'restarted', 'suspended', 'shutdownguest', 'rebootguest']:
             # set powerstate
-            tmp_result = pyv.set_powerstate(vm, module.params['state'], module.params['force'])
+            tmp_result = set_vm_power_state(pyv.content, vm, module.params['state'], module.params['force'])
             if tmp_result['changed']:
                 result["changed"] = True
             if not tmp_result["failed"]:

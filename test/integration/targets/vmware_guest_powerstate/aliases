@@ -1,0 +1,4 @@
+posix/ci/cloud/group1/vcenter
+cloud/vcenter
+skip/python3
+destructive
