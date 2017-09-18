@@ -74,7 +74,8 @@ class TestCliBuildVaultIds(unittest.TestCase):
                                       vault_password_files=['yet-another-password-file',
                                                             'one-more-password-file'],
                                       ask_vault_pass=True,
-                                      create_new_password=True)
+                                      create_new_password=True,
+                                      auto_prompt=False)
         self.assertEqual(set(res), set(['blip@prompt', 'baz@prompt_ask_vault_pass',
                                         'default@prompt_ask_vault_pass',
                                         'some-password-file', 'qux@another-password-file',
@@ -92,7 +93,7 @@ class TestCliSetupVaultSecrets(unittest.TestCase):
         self.tty_patcher.stop()
 
     def test(self):
-        res = cli.CLI.setup_vault_secrets(None, None)
+        res = cli.CLI.setup_vault_secrets(None, None, auto_prompt=False)
         self.assertIsInstance(res, list)
 
     @patch('ansible.cli.get_file_vault_secret')
