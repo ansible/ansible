@@ -249,7 +249,8 @@ def main():
     else:
         configobjs = candidate.items
     if module.params['backup']:
-        result['__backup__'] = get_config(module)
+        if not module.check_mode:
+            result['__backup__'] = get_config(module)
 
     commands = list()
 
