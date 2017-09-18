@@ -31,26 +31,72 @@ def fail_json(*args, **kwargs):
     raise AnsibleFailJson(kwargs)
 
 
+def get_bin_path(self, arg, required=False, opt_dirs=[]):
+    if arg.endswith('kafka-topics'):
+        return '/usr/bin/kafka-topics'
+    else:
+        if required:
+            fail_json(msg='%r not found !' % arg)
+
+
 class TestKafka(unittest.TestCase):
 
     def setUp(self):
-        self.mock_exit_fail = patch.multiple(basic.AnsibleModule,
+        self.mock_module_helper = patch.multiple(basic.AnsibleModule,
                                              exit_json=exit_json,
-                                             fail_json=fail_json)
-        self.mock_exit_fail.start()
-        self.addCleanup(self.mock_exit_fail.stop)
+                                             fail_json=fail_json,
+                                             get_bin_path=get_bin_path)
+        self.mock_module_helper.start()
+        self.addCleanup(self.mock_module_helper.stop)
 
     def tearDown(self):
         pass
 
-    def test_kafka_topics(self):
+    def test_kafka_topics_list_specific(self):
         set_module_args({
+            'executable': None,
             'topic': 'jambon',
             'zookeeper': 'carotte.localhost:2181',
         })
 
         with patch.object(basic.AnsibleModule, 'run_command') as mock_run_command:
-            stdout = "__consumer_offsets\\\\njambon\\\\nfromage\\\\ntartiflette\\\\n"
+            stdout = "jambon\\\\n"
+            stderr = ""
+            mock_run_command.return_value = 0, stdout, stderr  # successful execution
+
+            with self.assertRaises(AnsibleExitJson) as result:
+                kafka_topics.main()
+            self.assertFalse(result.exception.args[0]['changed'])
+
+        mock_run_command.assert_called_once_with('/usr/bin/kafka-topics --list --zookeeper carotte.localhost:2181 --topic jambon')
+
+    def test_kafka_topics_list_all(self):
+        set_module_args({
+            'executable': None,
+            'zookeeper': 'carotte.localhost:2181',
+        })
+
+        with patch.object(basic.AnsibleModule, 'run_command') as mock_run_command:
+            stdout = "__consumer_offsets\\\\njambon\\\\nfromage\\\\n"
+            stderr = ""
+            mock_run_command.return_value = 0, stdout, stderr  # successful execution
+
+            with self.assertRaises(AnsibleExitJson) as result:
+                kafka_topics.main()
+            self.assertFalse(result.exception.args[0]['changed'])
+
+        mock_run_command.assert_called_once_with('/usr/bin/kafka-topics --list --zookeeper carotte.localhost:2181')
+
+    def test_kafka_topics_create(self):
+        set_module_args({
+            'executable': None,
+            'topic': 'jambon',
+            'action': 'create',
+            'zookeeper': 'carotte.localhost:2181',
+        })
+
+        with patch.object(basic.AnsibleModule, 'run_command') as mock_run_command:
+            stdout = "Created topic \\\"test-GDE\\\".\\\\n"
             stderr = "[2017-09-15 15:33:35,307] " + \
                 "ERROR org.apache.kafka.common.errors.InvalidTopicException: " + \
                 "topic name tes@@#(23 is illegal, contains a character other " + \
@@ -61,5 +107,80 @@ class TestKafka(unittest.TestCase):
                 kafka_topics.main()
             self.assertFalse(result.exception.args[0]['changed'])
 
-        self.assertEqual(mock_run_command.call_count, 1)
-        self.assertEqual(mock_run_command.call_args[0][0][0], '/usr/bin/kafka-topics')
+    def test_kafka_topics_delete(self):
+        set_module_args({
+            'executable': None,
+            'topic': 'jambon',
+            'action': 'delete',
+            'zookeeper': 'carotte.localhost:2181',
+        })
+
+        with patch.object(basic.AnsibleModule, 'run_command') as mock_run_command:
+            stdout = "Topic test-GDE is marked for deletion.\\\\n" + \
+                "Note: This will have no impact if " + \
+                "delete.topic.enable is not set to true.\\\\n"
+            stderr = ""
+            mock_run_command.return_value = 0, stdout, stderr  # successful execution
+
+            with self.assertRaises(AnsibleExitJson) as result:
+                kafka_topics.main()
+            self.assertFalse(result.exception.args[0]['changed'])
+        mock_run_command.assert_called_once_with('/usr/bin/kafka-topics --delete --zookeeper carotte.localhost:2181 --topic jambon --if-exists')
+
+    def test_kafka_topics_describe_specific(self):
+        set_module_args({
+            'executable': None,
+            'topic': 'jambon',
+            'action': 'describe',
+            'zookeeper': 'carotte.localhost:2181',
+        })
+
+        with patch.object(basic.AnsibleModule, 'run_command') as mock_run_command:
+            stdout = "Topic:jambon\\\\tPartitionCount:2\\\\t" + \
+                "ReplicationFactor:1\\\\t" + \
+                "Configs:compression.type=gzip,cleanup.policy=delete\\\\n\\\\t" + \
+                "Topic: jambon\\\\tPartition: 0\\\\tLeader: 2\\\\t" + \
+                "Replicas: 2\\\\tIsr: 2\\\\n\\\\t" + \
+                "Topic: jambon\\\\tPartition: 1\\\\tLeader: 3\\\\tReplicas: 3\\\\tIsr: 3\\\\n"
+            stderr = ""
+            mock_run_command.return_value = 0, stdout, stderr  # successful execution
+
+            with self.assertRaises(AnsibleExitJson) as result:
+                kafka_topics.main()
+            self.assertFalse(result.exception.args[0]['changed'])
+
+        mock_run_command.assert_called_once_with('/usr/bin/kafka-topics --describe --zookeeper carotte.localhost:2181 --topic jambon')
+
+    def test_kafka_topics_describe_all(self):
+        set_module_args({
+            'executable': None,
+            'action': 'describe',
+            'zookeeper': 'carotte.localhost:2181',
+        })
+
+        with patch.object(basic.AnsibleModule, 'run_command') as mock_run_command:
+            stdout = "Topic:__consumer_offsets\\\\tPartitionCount:2\\\\t" + \
+                "ReplicationFactor:1\\\\t" + \
+                "Configs:\\\\t" + \
+                "Topic: __consumer_offsets\\\\tPartition: 0\\\\tLeader: 2\\\\t" + \
+                "Replicas: 2\\\\tIsr: 2\\\\n\\\\tTopic: __consumer_offsets\\\\t" + \
+                "Partition: 1\\\\tLeader: 3\\\\tReplicas: 3\\\\tIsr: 3\\\\n"
+                "ReplicationFactor:1\\\\t" + \
+                "Topic:jambon\\\\tPartitionCount:2\\\\t" + \
+                "Configs:compression.type=gzip,cleanup.policy=delete\\\\n\\\\t" + \
+                "Topic: jambon\\\\tPartition: 0\\\\tLeader: 2\\\\t" + \
+                "Replicas: 2\\\\tIsr: 2\\\\n\\\\t" + \
+                "Topic: jambon\\\\tPartition: 1\\\\tLeader: 3\\\\tReplicas: 3\\\\tIsr: 3\\\\n"
+                "Topic:fromage\\\\tPartitionCount:2\\\\t" + \
+                "Configs:compression.type=gzip\\\\n\\\\t" + \
+                "Topic: fromage\\\\tPartition: 0\\\\tLeader: 2\\\\t" + \
+                "Replicas: 2\\\\tIsr: 2\\\\n\\\\t" + \
+                "Topic: fromage\\\\tPartition: 1\\\\tLeader: 3\\\\tReplicas: 3\\\\tIsr: 3\\\\n"
+            stderr = ""
+            mock_run_command.return_value = 0, stdout, stderr  # successful execution
+
+            with self.assertRaises(AnsibleExitJson) as result:
+                kafka_topics.main()
+            self.assertFalse(result.exception.args[0]['changed'])
+
+        mock_run_command.assert_called_once_with('/usr/bin/kafka-topics --describe --zookeeper carotte.localhost:2181')

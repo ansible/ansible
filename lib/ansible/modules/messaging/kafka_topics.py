@@ -21,7 +21,7 @@ short_description: Deal with kafka topics.
 description:
     - "Alter/Create/Delete kafka topics"
 requirements:
-    - "kafka-topics"
+    - "kafka-topics >= 2.11-0.10"
 options:
     action:
         default: list
@@ -46,6 +46,9 @@ options:
     partitions:
         description:
             - The number of partitions for the topic being created or altered.
+    disable_rack_aware:
+        description:
+            -  Disable rack aware replica assignment.
     executable:
         description:
             - Kafka executable path if not in your current PATH or if it name differs.
@@ -144,7 +147,7 @@ failed:
 import re
 import os
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, is_executable
 from ansible.module_utils._text import to_native
 
 
@@ -166,23 +169,23 @@ class KafkaTopics(object):
         self.replication_factor = module.params['replication_factor']
         self.topic = module.params['topic']
         self.zookeeper = ','.join(module.params['zookeeper'])
-        self.action = module.params['action']
+        self.disable_rack_aware = module.params['disable_rack_aware']
 
         self.executable = module.params['executable'] or module.get_bin_path('kafka-topics', True)
 
         self.module = module
 
-    def get(self):
+    def get(self, action):
         ''' List or Describe kafka topics. '''
 
         if self.topic:
             cmd = '%s --%s --zookeeper %s --topic %s' % (self.executable,
-                                                         self.action,
+                                                         action,
                                                          self.zookeeper,
                                                          ','.join(self.topic))
         else:
             cmd = "%s --%s --zookeeper %s" % (self.executable,
-                                              self.action,
+                                              action,
                                               self.zookeeper)
 
         return self.module.run_command(cmd)
@@ -190,8 +193,7 @@ class KafkaTopics(object):
     def alter(self):
         ''' alter kafka topics. '''
 
-        self.action = 'describe'
-        cmd_get_partitions = self.get()
+        cmd_get_partitions = self.get('describe')
         # For a specific topic, we want the PartitionCount value.
         get_partitions = (cmd_get_partitions[1]
                           .splitlines()[0]
@@ -203,11 +205,19 @@ class KafkaTopics(object):
             msg = 'alter action supports only 1 topic, %s provided' % (len(self.topic))
             return self.module.fail_json(msg)
         else:
-            cmd = ('%s --alter --if-exists --zookeeper %s '
-                   '--partitions %s --topic %s') % (self.executable,
-                                                    self.zookeeper,
-                                                    self.partitions,
-                                                    self.topic[0])
+            if self.disable_rack_aware:
+                cmd = ('%s --alter --if-exists --zookeeper %s '
+                       '--partitions %s --disable_rack_aware '
+                       '--topic %s') % (self.executable,
+                                        self.zookeeper,
+                                        self.partitions,
+                                        self.topic[0])
+            else:
+                cmd = ('%s --alter --if-exists --zookeeper %s '
+                       '--partitions %s --topic %s') % (self.executable,
+                                                        self.zookeeper,
+                                                        self.partitions,
+                                                        self.topic[0])
 
         if int(get_partitions) < int(self.partitions):
             return self.module.run_command(cmd)
@@ -226,23 +236,44 @@ class KafkaTopics(object):
                 return self.module.fail_json(msg)
         else:
             if self.config:
-                cmd = ('%s --create --if-not-exists --zookeeper %s '
-                       '--replication-factor %s --partitions %s '
-                       '--topic %s %s') % (self.executable,
-                                           self.zookeeper,
-                                           self.replication_factor,
-                                           self.partitions,
-                                           ''.join(self.topic),
-                                           self.config)
+                if self.disable_rack_aware:
+                    cmd = ('%s --create --if-not-exists --zookeeper %s '
+                           '--replication-factor %s --partitions %s '
+                           '--disable_rack_aware '
+                           '--topic %s %s') % (self.executable,
+                                               self.zookeeper,
+                                               self.replication_factor,
+                                               self.partitions,
+                                               ''.join(self.topic),
+                                               self.config)
+                else:
+                    cmd = ('%s --create --if-not-exists --zookeeper %s '
+                           '--replication-factor %s --partitions %s '
+                           '--topic %s %s') % (self.executable,
+                                               self.zookeeper,
+                                               self.replication_factor,
+                                               self.partitions,
+                                               ''.join(self.topic),
+                                               self.config)
 
             else:
-                cmd = ('%s --create --if-not-exists --zookeeper %s '
-                       '--replication-factor %s --partitions %s '
-                       '--topic %s') % (self.executable,
-                                        self.zookeeper,
-                                        self.replication_factor,
-                                        self.partitions,
-                                        ''.join(self.topic))
+                if self.disable_rack_aware:
+                    cmd = ('%s --create --if-not-exists --zookeeper %s '
+                           '--replication-factor %s --partitions %s '
+                           '--disable_rack_aware '
+                           '--topic %s') % (self.executable,
+                                            self.zookeeper,
+                                            self.replication_factor,
+                                            self.partitions,
+                                            ''.join(self.topic))
+                else:
+                    cmd = ('%s --create --if-not-exists --zookeeper %s '
+                           '--replication-factor %s --partitions %s '
+                           '--topic %s') % (self.executable,
+                                            self.zookeeper,
+                                            self.replication_factor,
+                                            self.partitions,
+                                            ''.join(self.topic))
 
         return self.module.run_command(cmd)
 
@@ -273,14 +304,15 @@ def main():
         zookeeper=dict(required=True, type='list'),
         replication_factor=dict(type='int'),
         partitions=dict(type='int'),
-        executable=dict(default='/usr/bin/kafka-topics',
-                        type='path'),
+        disable_rack_aware=dict(default=False, type='bool'),
+
+        executable=dict(type='path'),
     )
 
     required_if = [
-        ['action', 'alter', ['topic', 'partitions']],
+        ['action', 'alter', ['topic', 'partitions', 'disable_rack_aware']],
         ['action', 'create',
-         ['topic', 'replication_factor', 'partitions']
+         ['topic', 'replication_factor', 'partitions', 'disable_rack_aware']
          ],
         ['action', 'delete', ['topic']],
     ]
@@ -288,7 +320,6 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         required_if=required_if,
-        supports_check_mode=False,
     )
 
     changed = False
@@ -297,13 +328,15 @@ def main():
     if module.params['executable']:
         if not os.path.isfile(module.params['executable']):
             module.fail_json(msg='%s not found.' % (module.params['executable']))
+        if not is_executable(module.params['executable']):
+            module.fail_json(msg='%s not executable.' % (module.params['executable']))
 
     try:
         kt = KafkaTopics(module)
 
         action = module.params['action']
         if module.params['action'] == 'list' or module.params['action'] == 'describe':
-            (rc, out, err) = kt.get()
+            (rc, out, err) = kt.get(module.params['action'])
         elif module.params['action'] == 'alter':
             (rc, out, err) = kt.alter()
             if re.search('Adding partitions succeeded!', out):
