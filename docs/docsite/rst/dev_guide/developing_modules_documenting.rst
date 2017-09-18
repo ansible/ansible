@@ -109,11 +109,11 @@ Structure
 Fields
 ^^^^^^
 
-:metadata_version: An “X.Y” formatted string. X and Y are integers which
+:metadata_version: An "X.Y" formatted string. X and Y are integers which
    define the metadata format version. Modules shipped with Ansible are
    tied to an Ansible release, so we will only ship with a single version
-   of the metadata. We’ll increment Y if we add fields or legal values
-   to an existing field. We’ll increment X if we remove fields or values
+   of the metadata. We'll increment Y if we add fields or legal values
+   to an existing field. We'll increment X if we remove fields or values
    or change the type or meaning of a field.
    Current metadata_version is "1.1"
 :supported_by: This field records who supports the module.
@@ -130,13 +130,13 @@ Fields
    `Modules Support <http://docs.ansible.com/ansible/modules_support.html>`_.
 
 :status: This field records information about the module that is
-   important to the end user. It’s a list of strings. The default value
-   is a single element list [“preview”]. The following strings are valid
+   important to the end user. It's a list of strings. The default value
+   is a single element list ["preview"]. The following strings are valid
    statuses and have the following meanings:
 
-   :stableinterface: This means that the module’s parameters are
+   :stableinterface: This means that the module's parameters are
       stable. Every effort will be made not to remove parameters or change
-      their meaning. It is not a rating of the module’s code quality.
+      their meaning. It is not a rating of the module's code quality.
    :preview: This module is a tech preview. This means it may be
       unstable, the parameters may change, or it may require libraries or
       web services that are themselves subject to incompatible changes.
