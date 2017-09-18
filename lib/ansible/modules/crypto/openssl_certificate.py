@@ -537,34 +537,34 @@ class AssertOnlyCertificate(Certificate):
             if self.keyUsage:
                 for extension_idx in range(0, self.cert.get_extension_count()):
                     extension = self.cert.get_extension(extension_idx)
-                    if extension.get_short_name() == 'keyUsage':
+                    if extension.get_short_name() == b'keyUsage':
                         keyUsage = [OpenSSL._util.lib.OBJ_txt2nid(keyUsage) for keyUsage in self.keyUsage]
-                        current_ku = [OpenSSL._util.lib.OBJ_txt2nid(usage.strip()) for usage in str(extension).split(',')]
+                        current_ku = [OpenSSL._util.lib.OBJ_txt2nid(to_bytes(usage.strip())) for usage in str(extension).split(',')]
                         if (not self.keyUsage_strict and not all(x in current_ku for x in keyUsage)) or \
                            (self.keyUsage_strict and not set(keyUsage) == set(current_ku)):
                             self.message.append(
-                                'Invalid keyUsage component (got %s, expected all of %s to be present)' % (str(extension).split(', '), keyUsage)
+                                'Invalid keyUsage component (got %s, expected all of %s to be present)' % (str(extension).split(', '), self.keyUsage)
                             )
 
         def _validate_extendedKeyUsage():
             if self.extendedKeyUsage:
                 for extension_idx in range(0, self.cert.get_extension_count()):
                     extension = self.cert.get_extension(extension_idx)
-                    if extension.get_short_name() == 'extendedKeyUsage':
+                    if extension.get_short_name() == b'extendedKeyUsage':
                         extKeyUsage = [OpenSSL._util.lib.OBJ_txt2nid(keyUsage) for keyUsage in self.extendedKeyUsage]
-                        current_xku = [OpenSSL._util.lib.OBJ_txt2nid(usage.strip()) for usage in str(extension).split(',')]
+                        current_xku = [OpenSSL._util.lib.OBJ_txt2nid(to_bytes(usage.strip())) for usage in str(extension).split(',')]
                         if (not self.extendedKeyUsage_strict and not all(x in current_xku for x in extKeyUsage)) or \
                            (self.extendedKeyUsage_strict and not set(extKeyUsage) == set(current_xku)):
                             self.message.append(
-                                'Invalid extendedKeyUsage component (got %s, expected all of %s to be present)' % (str(extension).split(', '), extKeyUsage)
+                                'Invalid extendedKeyUsage component (got %s, expected all of %s to be present)' % (str(extension).split(', '), self.extendedKeyUsage)
                             )
 
         def _validate_subjectAltName():
             if self.subjectAltName:
                 for extension_idx in range(0, self.cert.get_extension_count()):
                     extension = self.cert.get_extension(extension_idx)
-                    if extension.get_short_name() == 'subjectAltName':
-                        l_altnames = [altname.replace('IP Address', 'IP') for altname in str(extension).split(', ')]
+                    if extension.get_short_name() == b'subjectAltName':
+                        l_altnames = [to_bytes(altname.replace('IP Address', 'IP')) for altname in str(extension).split(', ')]
                         if (not self.subjectAltName_strict and not all(x in l_altnames for x in self.subjectAltName)) or \
                            (self.subjectAltName_strict and not set(self.subjectAltName) == set(l_altnames)):
                             self.message.append(
