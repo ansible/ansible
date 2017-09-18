@@ -51,7 +51,6 @@ old-style-class
 pointless-statement
 pointless-string-statement
 protected-access
-raising-bad-type
 redefined-builtin
 redefined-outer-name
 redefined-variable-type
