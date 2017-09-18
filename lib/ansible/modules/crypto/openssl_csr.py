@@ -318,8 +318,9 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
             subject = req.get_subject()
             for entry in self.subject:
                 if entry[1] is not None:
-                    nid = OpenSSL._util.lib.OBJ_txt2nid(entry[0])
-                    OpenSSL._util.lib.X509_NAME_add_entry_by_NID(subject._name, nid, OpenSSL._util.lib.MBSTRING_UTF8, entry[1], -1, -1, 0)
+                    # Workaround for https://github.com/pyca/pyopenssl/issues/165
+                    nid = OpenSSL._util.lib.OBJ_txt2nid(to_bytes(entry[0]))
+                    OpenSSL._util.lib.X509_NAME_add_entry_by_NID(subject._name, nid, OpenSSL._util.lib.MBSTRING_UTF8, to_bytes(entry[1]), -1, -1, 0)
 
             altnames = ', '.join(self.subjectAltName)
             extensions = [crypto.X509Extension(b"subjectAltName", self.subjectAltName_critical, altnames.encode('ascii'))]
@@ -362,8 +363,8 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
         self.privatekey = crypto_utils.load_privatekey(self.privatekey_path, self.privatekey_passphrase)
 
         def _check_subject(csr):
-            subject = [(OpenSSL._util.lib.OBJ_txt2nid(sub[0]), sub[1]) for sub in self.subject]
-            current_subject = [(OpenSSL._util.lib.OBJ_txt2nid(sub[0]), sub[1]) for sub in csr.get_subject().get_components()]
+            subject = [(OpenSSL._util.lib.OBJ_txt2nid(to_bytes(sub[0])), to_bytes(sub[1])) for sub in self.subject]
+            current_subject = [(OpenSSL._util.lib.OBJ_txt2nid(to_bytes(sub[0])), to_bytes(sub[1])) for sub in csr.get_subject().get_components()]
             if not set(subject) == set(current_subject):
                 return False
 
