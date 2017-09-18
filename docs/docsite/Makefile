@@ -51,7 +51,8 @@ clean:
 	-rm rst/*_maintained.rst
 	-rm rst/playbooks_directives.rst
 	-rm rst/playbooks_keywords.rst
-#	-rm rst/cli/ansible*.rst
+	-rm rst/ansible-*.rst
+	-rm rst/ansible.rst
 
 .PHONEY: docs clean
 
