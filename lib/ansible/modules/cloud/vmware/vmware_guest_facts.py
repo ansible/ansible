@@ -48,11 +48,11 @@ options:
             - This is required if name is supplied.
             - The 'root' virtual machine folder is always '<name_of_datacenter>/vm'
             - ESX/ESXi's datacenter name is 'ha-datacenter'
-            - 'Examples:'
-            - '   folder: folder2' would search 'ha-datacenter/vm/folder2' on ESX
-            - '   folder: level1/level2/level3'
-            - '   folder: /DC2/vm/testfolder' would exactly search within that path
-            -                                 although "datacenter" might contain something else.
+            - Examples:
+            - "   'folder: folder2' would search 'ha-datacenter/vm/folder2' on ESX"
+            - "   'folder: level1/level2/level3'"
+            - "   'folder: /DC2/vm/testfolder' would exactly search within that path"
+            - "                                although 'datacenter' might contain something else."
    datacenter:
         description:
             - Destination datacenter for the deploy operation
