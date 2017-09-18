@@ -481,7 +481,7 @@ def process_categories(mod_info, categories, templates,
         write_data(text, output_dir, category_filename)
 
 
-def process_support_levels(mod_info, templates, output_dir):
+def process_support_levels(mod_info, templates, output_dir, plugin_type):
     supported_by = {'Ansible Core Team': {'slug': 'core_supported',
                                           'modules': [],
                                           'output': 'core_maintained.rst',
@@ -525,6 +525,9 @@ These modules are currently shipped with Ansible, but will most likely be shippe
                                           """},
                     }
 
+    # only gen support pages for modules for now, need to split and namespace templates and generated docs
+    if plugin_type == 'plugins':
+        return
     # Separate the modules by support_level
     for module, info in mod_info.items():
         if not info.get('metadata', None):
@@ -618,7 +621,7 @@ def main():
                        category_list_name_template, plugin_type)
 
     # Render all the categories for modules
-    process_support_levels(mod_info, templates, options.output_dir)
+    process_support_levels(mod_info, templates, options.output_dir, plugin_type)
 
 
 if __name__ == '__main__':
