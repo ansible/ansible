@@ -34,7 +34,6 @@ invalid-name
 line-too-long
 locally-disabled
 logging-format-interpolation
-logging-not-lazy
 method-hidden
 misplaced-comparison-constant
 missing-docstring

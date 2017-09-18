@@ -390,7 +390,7 @@ class NetAppESeriesStoragePool(object):
                     msg="Failed to get storage pools. Array id [%s].  Error[%s]. State[%s]. RC[%s]." %
                         (self.ssid, str(err), self.state, rc))
 
-        self.debug("searching for storage pool '%s'" % storage_pool_name)
+        self.debug("searching for storage pool '%s'", storage_pool_name)
 
         pool_detail = next(select(lambda a: a['name'] == storage_pool_name, resp), None)
 
@@ -514,7 +514,7 @@ class NetAppESeriesStoragePool(object):
         return needs_migration
 
     def migrate_raid_level(self):
-        self.debug("migrating storage pool to raid level '%s'..." % self.raid_level)
+        self.debug("migrating storage pool to raid level '%s'...", self.raid_level)
         sp_raid_migrate_req = dict(
             raidLevel=self.raid_level
         )
@@ -637,7 +637,7 @@ class NetAppESeriesStoragePool(object):
     def expand_storage_pool(self):
         drives_to_add = self.get_expansion_candidate_drives()
 
-        self.debug("adding %s drives to storage pool..." % len(drives_to_add))
+        self.debug("adding %s drives to storage pool...", len(drives_to_add))
         sp_expand_req = dict(
             drives=drives_to_add
         )
@@ -723,8 +723,8 @@ class NetAppESeriesStoragePool(object):
 
                 if self.needs_raid_level_migration:
                     self.debug(
-                        "CHANGED: raid level migration required; storage pool uses '%s', requested is '%s'" % (
-                            self.pool_detail['raidLevel'], self.raid_level))
+                        "CHANGED: raid level migration required; storage pool uses '%s', requested is '%s'",
+                        self.pool_detail['raidLevel'], self.raid_level)
                     changed = True
 
                     # if self.reserved_drive_count_differs:
@@ -813,7 +813,7 @@ def main():
         sp.apply()
     except Exception:
         e = get_exception()
-        sp.debug("Exception in apply(): \n%s" % format_exc(e))
+        sp.debug("Exception in apply(): \n%s", format_exc(e))
         raise
 
 
