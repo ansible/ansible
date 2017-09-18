@@ -25,6 +25,10 @@ options:
     description:
      - DigitalOcean OAuth token.
     required: true
+  timeout:
+    description:
+    - The timeout in seconds used for polling DigitalOcean's API.
+    default: 30
 
 notes:
   - Version 2 of DigitalOcean API is used.
