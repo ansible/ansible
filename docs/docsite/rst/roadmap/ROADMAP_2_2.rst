@@ -19,7 +19,7 @@ Extras split from Core
 ----------------------
 Lead by Jason M and Jimi-c (Targeting 2.2, could move into 2.3).
 
-Targeted towards the 2.2 release or shortly after, we are planning on splitting Extras out of the “Ansible Core” project.  That means that modules that are shipped with Ansible by default are **only** the modules in ansibl-modules-core.  Ansible extras will become a separate project, managed by the community standard.  Over the next few months we’re going to have a lot of work to do on getting all of the modules in the right places for this to work.
+Targeted towards the 2.2 release or shortly after, we are planning on splitting Extras out of the "Ansible Core" project.  That means that modules that are shipped with Ansible by default are **only** the modules in ansibl-modules-core.  Ansible extras will become a separate project, managed by the community standard.  Over the next few months we're going to have a lot of work to do on getting all of the modules in the right places for this to work.
 
 - Create proposal (Jason or Jimi)
 - Review modules for correct location (extras v core)
@@ -40,7 +40,7 @@ AWS
 ---
 Lead by Ryan Brown
 
-- Pagination for all AWS modules (generic pagination exists, but isn’t used everywhere) (bumped to 2.3)
+- Pagination for all AWS modules (generic pagination exists, but isn't used everywhere) (bumped to 2.3)
 - Refactoring ec2.py to be more digestible (bumped to 2.3)
 - Fix inconsistencies with different authentication methods (STS, environment creds, ~/.aws/credentials) (done)
 - AWS Lambda modules (lambda_execute done, others pending)
@@ -85,7 +85,7 @@ Lead by Matt D
 
 - Feature parity
 
-  - PS module API (mirror Python module API where appropriate). Note: We don’t necessarily like the current python module API (AnsibleModule is a huge class with many unrelated utility functions.  Maybe we should redesign both at the same time?) (bumped to 2.3+ due to "moving target" uncertainty)
+  - PS module API (mirror Python module API where appropriate). Note: We don't necessarily like the current python module API (AnsibleModule is a huge class with many unrelated utility functions.  Maybe we should redesign both at the same time?) (bumped to 2.3+ due to "moving target" uncertainty)
   - Environment keyword support (done)
   - win_shell/win_command (done)
   - Async support (done)
@@ -117,7 +117,7 @@ Lead by Nate C, Peter S
 
 Role revamp
 -----------
-- Implement ‘role revamp’ proposal to give users more control on role/task execution (Brian)
+- Implement 'role revamp' proposal to give users more control on role/task execution (Brian)
 
   - **https://github.com/ansible/proposals/blob/master/roles_revamp.md**
 
@@ -125,13 +125,13 @@ Vault
 -----
 Lead by Jtanner, Adrian
 
-- *Extend ‘transparent vault file usage’ to other action plugins other than 'copy'(https://github.com/ansible/ansible/issues/7298)*
+- *Extend 'transparent vault file usage' to other action plugins other than 'copy'(https://github.com/ansible/ansible/issues/7298)*
   **done:** https://github.com/ansible/ansible/pull/16957
-- Add ‘per variable’ vault support (!vault YAML directive, existing PR already) https://github.com/ansible/ansible/issues/13287 https://github.com/ansible/ansible/issues/14721
+- Add 'per variable' vault support (!vault YAML directive, existing PR already) https://github.com/ansible/ansible/issues/13287 https://github.com/ansible/ansible/issues/14721
 - Add vault/unvault filters https://github.com/ansible/ansible/issues/12087 (deferred to 2.3)
 - Add vault support to lookups (likely deferred to 2.3 or until lookup plugins are revamped)
 - Allow for multiple vault secrets https://github.com/ansible/ansible/issues/13243
-- Config option to turn ‘unvaulting’ failures into warnings https://github.com/ansible/ansible/issues/13244
+- Config option to turn 'unvaulting' failures into warnings https://github.com/ansible/ansible/issues/13244
 
 Python3
 -------
@@ -139,7 +139,7 @@ Lead by Toshio
 
 A note here from Jason M: Getting to complete, tested Python 3 is both
 a critical task and one that has so much work and so many moving parts
-that we don’t expect this to be complete by the 2.2 release.  Toshio will
+that we don't expect this to be complete by the 2.2 release.  Toshio will
 lead this overall effort.
 
 - Motivation:
@@ -173,7 +173,7 @@ lead this overall effort.
     - Update: copy of the six library (v1.4.1 for python2.4 compat) and unicode helpers are here (ansible.module_utils._text.{to_bytes,to_text,to_native})
   - A few basic modules ported to python3
 
-    - Stat module best example module since it’s essential.
+    - Stat module best example module since it's essential.
     - Update:
 
       - A handful of modules like stat have been line-by-line ported.  They should work reliably with few python3-specific bugs.  All but three integration tests pass which means that most essential modules are working to some extent on Python3.
@@ -186,7 +186,7 @@ lead this overall effort.
     - lib/ansible/* and all modules now compile under Python-3.5
 
   - Side work to do:
-    - Figure out best ways to run unit-tests on modules.  Start unit-testing modules.  This is going to become important so we don’t regress python3 or python2.4 support in modules  (Going to largely punt on this for 2.2.  Matt Clay is working on building us a testing foundation for the first half of 2.2 development so we’ll re-evaluate towards the middle of the dev cycle).
+    - Figure out best ways to run unit-tests on modules.  Start unit-testing modules.  This is going to become important so we don't regress python3 or python2.4 support in modules  (Going to largely punt on this for 2.2.  Matt Clay is working on building us a testing foundation for the first half of 2.2 development so we'll re-evaluate towards the middle of the dev cycle).
     - More unit tests of module_utils
     - More integration tests.  Currently integration tests are the best way to test ansible modules so we have to rely on those.
 
@@ -202,7 +202,7 @@ Infrastructure Buildout and Changes
 -----------------------------------
 Lead by Matt Clay
 
-Another note from Jason M: A lot of this work is to ease the burden of CI, CI performance, increase our testing coverage and all of that sort of thing.  It’s not necessarily feature work, but it’s \*\*critical\*\* to growing our product and our ability to get community changes in more securely and quickly.
+Another note from Jason M: A lot of this work is to ease the burden of CI, CI performance, increase our testing coverage and all of that sort of thing.  It's not necessarily feature work, but it's \*\*critical\*\* to growing our product and our ability to get community changes in more securely and quickly.
 
 - **CI Performance**
   Reduce time spent waiting on CI for PRs. Combination of optimizing existing Travis setup and offloading work to other services. Will be impacted by available budget.

@@ -33,7 +33,7 @@ module: cnos_factory
 author: "Dave Kasberg (@dkasberg)"
 short_description: Reset the switch's startup configuration to default (factory) on devices running Lenovo CNOS
 description:
-    - This module allows you to reset a switch’s startup configuration. The method provides a way to reset the
+    - This module allows you to reset a switch's startup configuration. The method provides a way to reset the
      startup configuration to its factory settings. This is helpful when you want to move the switch to another
      topology as a new network device.
      This module uses SSH to manage network device configuration.
