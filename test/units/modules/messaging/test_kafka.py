@@ -43,9 +43,9 @@ class TestKafka(unittest.TestCase):
 
     def setUp(self):
         self.mock_module_helper = patch.multiple(basic.AnsibleModule,
-                                             exit_json=exit_json,
-                                             fail_json=fail_json,
-                                             get_bin_path=get_bin_path)
+                                                 exit_json=exit_json,
+                                                 fail_json=fail_json,
+                                                 get_bin_path=get_bin_path)
         self.mock_module_helper.start()
         self.addCleanup(self.mock_module_helper.stop)
 
@@ -164,13 +164,13 @@ class TestKafka(unittest.TestCase):
                 "Configs:\\\\t" + \
                 "Topic: __consumer_offsets\\\\tPartition: 0\\\\tLeader: 2\\\\t" + \
                 "Replicas: 2\\\\tIsr: 2\\\\n\\\\tTopic: __consumer_offsets\\\\t" + \
-                "Partition: 1\\\\tLeader: 3\\\\tReplicas: 3\\\\tIsr: 3\\\\n"
+                "Partition: 1\\\\tLeader: 3\\\\tReplicas: 3\\\\tIsr: 3\\\\n" + \
                 "ReplicationFactor:1\\\\t" + \
                 "Topic:jambon\\\\tPartitionCount:2\\\\t" + \
                 "Configs:compression.type=gzip,cleanup.policy=delete\\\\n\\\\t" + \
                 "Topic: jambon\\\\tPartition: 0\\\\tLeader: 2\\\\t" + \
                 "Replicas: 2\\\\tIsr: 2\\\\n\\\\t" + \
-                "Topic: jambon\\\\tPartition: 1\\\\tLeader: 3\\\\tReplicas: 3\\\\tIsr: 3\\\\n"
+                "Topic: jambon\\\\tPartition: 1\\\\tLeader: 3\\\\tReplicas: 3\\\\tIsr: 3\\\\n" + \
                 "Topic:fromage\\\\tPartitionCount:2\\\\t" + \
                 "Configs:compression.type=gzip\\\\n\\\\t" + \
                 "Topic: fromage\\\\tPartition: 0\\\\tLeader: 2\\\\t" + \
