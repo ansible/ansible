@@ -677,11 +677,6 @@ def main():
             update_image(module, connection, module.params.get('image_id'), resource)
         if not module.params.get('instance_id') and not module.params.get('device_mapping'):
             module.fail_json(msg="The parameters instance_id or device_mapping (register from EBS snapshot) are required for a new image.")
-<<<<<<< HEAD
-=======
-        if not module.params.get('name'):
-            module.fail_json(msg="The name parameter is required for a new image.")
->>>>>>> added resource connection correctly
         create_image(module, connection, resource)
 
 
