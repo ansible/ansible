@@ -196,15 +196,15 @@ def db_import(module, host, user, password, db_name, target, all_databases, port
         cmd.append("--password=%s" % pipes.quote(password))
     if socket is not None:
         cmd.append("--socket=%s" % pipes.quote(socket))
+    else:
+        cmd.append("--host=%s" % pipes.quote(host))
+        cmd.append("--port=%i" % port)
     if ssl_cert is not None:
         cmd.append("--ssl-cert=%s" % pipes.quote(ssl_cert))
     if ssl_key is not None:
         cmd.append("--ssl-key=%s" % pipes.quote(ssl_key))
     if ssl_cert is not None:
         cmd.append("--ssl-ca=%s" % pipes.quote(ssl_ca))
-    else:
-        cmd.append("--host=%s" % pipes.quote(host))
-        cmd.append("--port=%i" % port)
     if not all_databases:
         cmd.append("-D")
         cmd.append(pipes.quote(db_name))
