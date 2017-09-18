@@ -8,7 +8,6 @@ attribute-defined-outside-init
 bad-continuation
 bad-indentation
 bad-mcs-classmethod-argument
-bad-open-mode
 bad-whitespace
 bare-except
 blacklisted-name
