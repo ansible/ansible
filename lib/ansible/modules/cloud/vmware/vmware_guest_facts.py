@@ -43,22 +43,16 @@ options:
             - This is required if name is not supplied.
    folder:
         description:
-            - Destination folder, absolute or relative path to find an existing guest.
+            - Destination folder, either absolute path or a relative path to the 'root'
+            - folder within a datacenter to find an existing guest.
             - This is required if name is supplied.
-            - The folder should include the datacenter. ESX's datacenter is ha-datacenter
+            - The 'root' virtual machine folder is always '<name_of_datacenter>/vm'
+            - ESX/ESXi's datacenter name is 'ha-datacenter'
             - 'Examples:'
-            - '   folder: /ha-datacenter/vm'
-            - '   folder: ha-datacenter/vm'
-            - '   folder: /datacenter1/vm'
-            - '   folder: datacenter1/vm'
-            - '   folder: /datacenter1/vm/folder1'
-            - '   folder: datacenter1/vm/folder1'
-            - '   folder: /folder1/datacenter1/vm'
-            - '   folder: folder1/datacenter1/vm'
-            - '   folder: /folder1/datacenter1/vm/folder2'
-            - '   folder: vm/folder2'
-            - '   folder: folder2'
-        default: /vm
+            - '   folder: folder2' would search 'ha-datacenter/vm/folder2' on ESX
+            - '   folder: level1/level2/level3'
+            - '   folder: /DC2/vm/testfolder' would exactly search within that path
+            -                                 although "datacenter" might contain something else.
    datacenter:
         description:
             - Destination datacenter for the deploy operation
@@ -130,15 +124,23 @@ def main():
         name=dict(type='str'),
         name_match=dict(type='str', choices=['first', 'last'], default='first'),
         uuid=dict(type='str'),
-        folder=dict(type='str', default='/vm'),
+        folder=dict(type='str'),
         datacenter=dict(type='str', required=True),
     )
     module = AnsibleModule(argument_spec=argument_spec,
                            required_one_of=[['name', 'uuid']])
 
-    # FindByInventoryPath() does not require an absolute path
-    # so we should leave the input folder path unmodified
-    module.params['folder'] = module.params['folder'].rstrip('/')
+    # build the search path. If a "folder" is given AND is an
+    # absolute path, pretend the user knows what he/she does
+    # and use that path. Else, prepend the "folder" path
+    # with "/<name_of_datacenter>/vm"
+    if module.params['folder']:
+        if module.params['folder'].startswith('/'):
+            pass
+        else:
+            module.params['folder'] = '/' + module.params['datacenter'] + '/vm/' + module.params['folder']
+    else:
+        module.params['folder'] = '/' + module.params['datacenter'] + '/vm'
 
     pyv = PyVmomiHelper(module)
     # Check if the VM exists before continuing
