@@ -201,7 +201,9 @@ Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj = @{}, $fail
 
     # If $value -eq $null, the parameter was unspecified by the user (deliberately or not)
     # Please leave $null-values intact, modules need to know if a parameter was specified
-    if ($value -ne $null) {
+    # When $value is already an array, we cannot rely on the null check, as an empty list
+    # is seen as null in the check below
+    if ($value -ne $null -or $value -is [array]) {
         if ($type -eq "path") {
             # Expand environment variables on path-type
             $value = Expand-Environment($value)
