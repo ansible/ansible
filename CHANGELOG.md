@@ -11,6 +11,7 @@ Ansible Changes By Release
 * Fix openssl_certificate's csr handling.
 * Python-3 fixes
   * Fix openssl_certificate parameter assertion on Python3
+* Fix for win_file to respect check mode when deleting directories
 
 <a id="2.4"></a>
 
