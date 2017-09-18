@@ -56,7 +56,7 @@ Inventory
 
 Facts
 -----
-- Configurable list of ‘fact modules’ for ``gather_facts`` **(done)**
+- Configurable list of 'fact modules' for ``gather_facts`` **(done)**
 - Fact gathering policy finer grained **(done)**
 - Make ``setup.py``/``facts`` more pluggable **(done)**
 - Improve testing of ``setup.py``/``facts.py`` **(done)**
@@ -104,8 +104,8 @@ Globalize Callbacks
 -------------------
 **(pushed out to future release)**
 - Make send_callback available to other code that cannot use it.
-- Would allow for ‘full formatting’ of output (see JSON callback)
-- Fixes static ‘include’ display problem
+- Would allow for 'full formatting' of output (see JSON callback)
+- Fixes static 'include' display problem
 
 Plugins
 -------
@@ -128,13 +128,13 @@ Runtime Check on Modules for Blacklisting
 
 Disambiguate Includes
 ---------------------
-- Create import_x for ‘static includes’ (import_task, import_play, import_role)
+- Create import_x for 'static includes' (import_task, import_play, import_role)
 
-  - Any directives are applied to the ‘imported’ tasks
+  - Any directives are applied to the 'imported' tasks
 
-- Create include_x for ‘dynamic includes’ (include_task, include_role)
+- Create include_x for 'dynamic includes' (include_task, include_role)
 
-  - Any directives apply to the ‘include’  itself
+  - Any directives apply to the 'include'  itself
 
 Windows
 -------

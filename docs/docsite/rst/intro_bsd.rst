@@ -27,7 +27,7 @@ Bootstrapping BSD
 As mentioned above, you can bootstrap Ansible with the ``raw`` module and remotely install Python on targets. The following example installs Python 2.7 which includes the json library required for full functionality of Ansible.
 On your control machine you can simply execute the following for most versions of FreeBSD::
 
-    ansible -m raw -a “pkg install -y python27” mybsdhost1
+    ansible -m raw -a "pkg install -y python27" mybsdhost1
 
 Once this is done you can now use other Ansible modules apart from the ``raw`` module.
 

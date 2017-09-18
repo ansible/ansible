@@ -32,9 +32,9 @@ Issue Reporting
 
 If you believe you have found a bug in a module and are already running the latest stable or development version of Ansible, first look at the `issue tracker in the Ansible repo <https://github.com/ansible/ansible/issues>`_ to see if an issue has already been filed. If not, please file one.
 
-Should you have a question rather than a bug report, inquiries are welcome on the `ansible-project Google group <https://groups.google.com/forum/#%21forum/ansible-project>`_ or on Ansible’s “#ansible” channel, located on irc.freenode.net.
+Should you have a question rather than a bug report, inquiries are welcome on the `ansible-project Google group <https://groups.google.com/forum/#%21forum/ansible-project>`_ or on Ansible's "#ansible" channel, located on irc.freenode.net.
 
-For development-oriented topics, use the `ansible-devel Google group <https://groups.google.com/forum/#%21forum/ansible-devel>`_ or Ansible’s #ansible and #ansible-devel channels, located on irc.freenode.net. You should also read :doc:`Community Information & Contributing <community>`, :doc:`Testing Ansible <dev_guide/testing>`, and :doc:`Developing Modules <dev_guide/developing_modules>`.
+For development-oriented topics, use the `ansible-devel Google group <https://groups.google.com/forum/#%21forum/ansible-devel>`_ or Ansible's #ansible and #ansible-devel channels, located on irc.freenode.net. You should also read :doc:`Community Information & Contributing <community>`, :doc:`Testing Ansible <dev_guide/testing>`, and :doc:`Developing Modules <dev_guide/developing_modules>`.
 
 The modules are hosted on GitHub in a subdirectory of the `Ansible <https://github.com/ansible/ansible/tree/devel/lib/ansible/modules>`_ repo.
 
