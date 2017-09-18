@@ -20,8 +20,8 @@ module: import_role
 short_description: Import a role into a play
 description:
      - Mostly like the `roles:` keyword this action loads a role, but it allows you to control when the tasks run in between other playbook tasks.
-     - Most keyworkds, loops and conditionals will not be applied to this action, but to the imported tasks instead.
-       If you want the opposite behaviour, use M(import_role) instead.
+     - Most keywords, loops and conditionals will not be applied to this action, but to the imported tasks instead.
+       If you want the opposite behaviour, use M(include_role) instead.
 version_added: "2.4"
 options:
   name:
