@@ -186,7 +186,7 @@ clean:
 	rm -rf logs/
 	rm -rf .cache/
 	rm -f test/units/.coverage*
-	rm -f test/results/*/*
+	rm -rf test/results/*/*
 	find test/ -type f -name '*.retry' -delete
 	@echo "Cleaning up RPM building stuff"
 	rm -rf MANIFEST rpm-build
