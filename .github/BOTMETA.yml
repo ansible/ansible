@@ -56,7 +56,7 @@ files:
   $modules/cloud/amazon/ec2_ami.py: Constantin07 gunzy83 scicoin-project willthames
   $modules/cloud/amazon/ec2_ami_copy.py: amir343
   $modules/cloud/amazon/ec2_ami_find.py: tombamford
-  $modules/cloud/amazon/ec2_asg.py: $team_ansible garethr
+  $modules/cloud/amazon/ec2_asg.py: $team_ansible garethr s-hertel ryansb
   $modules/cloud/amazon/ec2_asg_facts.py: wimnat
   $modules/cloud/amazon/ec2_customer_gateway.py: MichaelBaydoun michaelbaydoun
   $modules/cloud/amazon/ec2_eip.py: rickmendes
