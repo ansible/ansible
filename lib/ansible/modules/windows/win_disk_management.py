@@ -39,7 +39,7 @@ description:
    - The modul will set the disk to online and writeable (read-only eq. false) if it's not the state of the disk already.
    - If the disk was initilaized already the modul will try to convert the partition style of the disk to the selected partition style.
    - The module will stop and start the service "ShellHWService" again in order to avoid disk management GUI messages.
-   - If the module fails with an error and the operational status was set from "Offline" to "Online" before, the module will set the disk to 
+   - If the module fails with an error and the operational status was set from "Offline" to "Online" before, the module will set the disk to
    - operational status "Offline" again.
 requirements:
     - Windows 8.1 / Windows 2012R2 (NT 6.3) or newer
