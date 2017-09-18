@@ -798,7 +798,7 @@ As of Ansible 1.3, extra vars can be loaded from a JSON file with the ``@`` synt
 Also as of Ansible 1.3, extra vars can be formatted as YAML, either on the command line
 or in a file as above.
 
-.. _variable_precedence:
+.. _ansible_variable_precedence:
 
 Variable Precedence: Where Should I Put A Variable?
 ````````````````````````````````````````````````````

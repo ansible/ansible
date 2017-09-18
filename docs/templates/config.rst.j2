@@ -6,8 +6,41 @@
 {{name}}
 {{ '=' * name_len }}
 
+Ansible supports a few ways of providing configuration variables, mainly through environment variables, command line switches and an ini file `ansible.cfg`.
+
+Starting at Ansible 2.4 the `ansible-config` utility allows users to see all the configuration settings available, their defaults, how to set them and
+where their current value comes from. See :doc:ansible-config for more information.
+
+
+The configuration file
+======================
+
+Changes can be made and used in a configuration file which will be searched for in the following order::
+
+ * ANSIBLE_CONFIG (environment variable if set)
+ * ansible.cfg (in the current directory)
+ * ~/.ansible.cfg (in the home directory)
+ * /etc/ansible/ansible.cfg
+
+Ansible will process the above list and use the first file found, all others are ignored.
+
+.. note:: Comments
+    The configuration file is one variant of an INI format.
+	Both the hash sign ("#") and semicolon (";") are allowed as
+    comment markers when the comment starts the line.
+    However, if the comment is inline with regular values,
+    only the semicolon is allowed to introduce the comment.
+	For instance::
+
+        # some basic default values...
+        inventory = /etc/ansible/hosts  ; This points to the file that lists your hosts
+
+
 Common Options
 ==============
+
+This is a copy of the options available from our release, your local install might have extra options due to additional plugins,
+you can use the command line utility mentioned above (`ansible-config`) to browse through those.
 
 {% if config_options %}
 

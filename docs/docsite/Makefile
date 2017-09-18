@@ -59,10 +59,11 @@ clean:
 	-rm rst/*_by_category.rst
 	-rm rst/*_module.rst
 	-rm rst/*_plugin.rst
-	-rm -rf rst/plugins/*
 	-rm rst/*_maintained.rst
 	-rm rst/playbooks_directives.rst
 	-rm rst/playbooks_keywords.rst
+	-rm rst/plugins/*/*.rst
+	-rm rst/config.rst
 	-rm rst/ansible-*.rst
 	-rm rst/ansible.rst
 

@@ -22,3 +22,4 @@ and adopt these only if they seem relevant or useful to your environment.
    playbooks_vault
    playbooks_startnstep
    playbooks_keywords
+   plugins
