@@ -97,6 +97,7 @@ dest:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ios import run_commands
 from ansible.module_utils.ios import ios_argument_spec, check_args
+import math
 
 
 def run_module():
@@ -128,6 +129,14 @@ def run_module():
 
     warnings = list()
     check_args(module, warnings)
+
+    # check if max_range is a power of 2
+    log_max_range = math.log(max_range) / math.log(2)
+    if math.floor(log_max_range) != log_max_range:
+        max_range = module_args['max_range']['default']
+        warnings.append('Max_range must be a power of 2 between 2 and 1024; '
+                        'ignoring value {0} and using default {1}.'
+                        ''.format(module.params['max_range'], max_range))
 
     if module.check_mode:
         return results
@@ -167,6 +176,7 @@ def run_module():
     if not results['mtu']:
         module.fail_json(msg='MTU too low, increase max_range.', **results)
 
+    results['warnings'] = warnings
     module.exit_json(**results)
 
 

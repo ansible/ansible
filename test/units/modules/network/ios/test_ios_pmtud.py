@@ -42,7 +42,27 @@ class TestIosPmtudModule(TestIosModule):
         set_module_args(dict(dest="8.8.8.8"))
         self.execute_module()
 
-    def test_ios_pmtud_expected_failure(self):
-        ''' Test path MTU discovery when destination should not be reachable '''
-        set_module_args(dict(dest="1.1.1.1"))
+    def test_ios_pmtud_expected_success2(self):
+        ''' Test path MTU discovery with a valid max_range '''
+        set_module_args(dict(dest="8.8.8.8", max_range=2))
+        self.execute_module()
+
+    def test_ios_pmtud_expected_success3(self):
+        ''' Test path MTU discovery with a valid max_range '''
+        set_module_args(dict(dest="8.8.8.8", max_range=512))
+        self.execute_module()
+
+    def test_ios_pmtud_expected_success4(self):
+        ''' Test path MTU discovery with a valid max_range '''
+        set_module_args(dict(dest="8.8.8.8", max_range=1024))
+        self.execute_module()
+
+    def test_ios_pmtud_expected_success5(self):
+        ''' Test path MTU discovery with invalid max_range '''
+        set_module_args(dict(dest="8.8.8.8", max_range=100))
+        self.execute_module()
+
+    def test_ios_pmtud_expected_success6(self):
+        ''' Test path MTU discovery with invalid max_range '''
+        set_module_args(dict(dest="8.8.8.8", max_range=1042))
         self.execute_module()
