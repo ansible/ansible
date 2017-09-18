@@ -63,7 +63,6 @@ signature-differs
 simplifiable-if-statement
 super-init-not-called
 superfluous-parens
-suppressed-message
 too-few-public-methods
 too-many-ancestors
 too-many-arguments
