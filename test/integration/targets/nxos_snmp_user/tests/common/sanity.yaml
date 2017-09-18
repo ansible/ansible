@@ -6,7 +6,7 @@
     user: ntc
     group: network-operator
     authentication: md5
-    pwd: Testing1%
+    pwd: N$tOpe%1
     privacy: HelloU$er1
     encrypt: true
     provider: "{{ connection }}"
