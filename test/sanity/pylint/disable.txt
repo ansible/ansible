@@ -76,7 +76,6 @@ too-many-statements
 undefined-loop-variable
 ungrouped-imports
 unidiomatic-typecheck
-unnecessary-lambda
 unneeded-not
 unsubscriptable-object
 unsupported-membership-test

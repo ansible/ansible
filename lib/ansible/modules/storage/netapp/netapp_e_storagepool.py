@@ -269,7 +269,7 @@ class NetAppESeriesStoragePool(object):
             min_total_capacity = min_total_capacity * self._size_unit_map[size_unit]
 
         # filter clearly invalid/unavailable drives first
-        drives = select(lambda d: self._is_valid_drive(d), drives)
+        drives = select(self._is_valid_drive, drives)
 
         if interface_type:
             drives = select(lambda d: d['phyDriveType'] == interface_type, drives)
