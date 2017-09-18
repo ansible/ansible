@@ -38,12 +38,6 @@ except ImportError:
 class ActionModule(_ActionModule):
 
     def run(self, tmp=None, task_vars=None):
-        if self._play_context.connection != 'local':
-            return dict(
-                failed=True,
-                msg='invalid connection specified, expected connection=local, got %s' % self._play_context.connection
-            )
-
         transport = self._task.args.get('transport', 'rest')
 
         display.vvvv('connection transport is %s' % transport, self._play_context.remote_addr)
