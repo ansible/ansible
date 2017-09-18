@@ -1,14 +1,17 @@
 - name: fail select and manage a specified disk because specified disk is not attached
   win_disk_management:
+    # select_disk_by
     size: '{{test_win_disk_management_size}}'
     partition_style_select: raw
     operational_status: offline
+    # set_disk_by
     drive_letter: '{{test_win_disk_management_letter}}'
   register: fail_not_attached
   failed_when: fail_not_attached.msg != 'No disk could be found and selected with the specified parameter options'
 
 - name: fail select and manage a specified disk because specified disk could not be found
   win_disk_management:
+    # select_disk_by
     size: 50
     partition_style_select: raw
     operational_status: offline
@@ -18,6 +21,7 @@
 # Use result of module (disk number)
 - name: fail select and manage a specified disk because specified disk is not attached, check results
   win_disk_management:
+    # select_disk_by
     size: 100
     partition_style_select: raw
     operational_status: offline
