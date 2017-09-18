@@ -104,10 +104,9 @@ class Timezone(object):
                 rc, stdout, stderr = module.run_command(timedatectl)
                 if rc == 0:
                     return super(Timezone, SystemdTimezone).__new__(SystemdTimezone)
-                elif any(module.get_bin_path(cmd) is not None for cmd in ('dpkg-reconfigure', 'tzdata-update')):
-                    return super(Timezone, NosystemdTimezone).__new__(NosystemdTimezone)
                 else:
-                    module.fail_json(msg='timedatectl command is unavailable in this environment:\n%s\n%s' % (stdout, stderr))
+                    module.warn('timedatectl command was found but not usable: %s. using other method.' % stderr)
+                    return super(Timezone, NosystemdTimezone).__new__(NosystemdTimezone)
             else:
                 return super(Timezone, NosystemdTimezone).__new__(NosystemdTimezone)
         elif re.match('^joyent_.*Z', platform.version()):
