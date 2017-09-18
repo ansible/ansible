@@ -50,7 +50,7 @@ DOCUMENTATION = """
 """
 EXAMPLES = """
 # Debug is used for examples, BAD IDEA to show passwords on screen
-- name: Basic lookup. Fails if example/test doesn’t exist
+- name: Basic lookup. Fails if example/test doesn't exist
   debug: msg="{{ lookup('passwordstore', 'example/test')}}"
 
 - name: Create pass with random 16 character password. If password exists just give the password

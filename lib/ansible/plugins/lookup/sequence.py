@@ -10,7 +10,7 @@ DOCUMENTATION = """
     version_added: "1.0"
     short_description: generate a list based on a number sequence
     description:
-      - generates a sequence of items. You can specify a start value, an end value, an optional “stride” value that specifies the number of steps
+      - generates a sequence of items. You can specify a start value, an end value, an optional "stride" value that specifies the number of steps
         to increment the sequence, and an optional printf-style format string.
       - 'Arguments can be specified as key=value pair strings or as a shortcut form of the arguments string is also accepted: [start-]end[/stride][:format].'
       - 'Numerical values can be specified in decimal, hexadecimal (0x3f8) or octal (0600).'

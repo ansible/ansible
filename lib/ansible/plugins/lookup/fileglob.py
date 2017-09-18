@@ -11,7 +11,7 @@ DOCUMENTATION = """
     short_description: list files matching a pattern
     description:
         - Matches all files in a single directory, non-recursively, that match a pattern.
-          It calls Python’s "glob" library.
+          It calls Python's "glob" library.
     options:
       _terms:
         description: path(s) of files to read

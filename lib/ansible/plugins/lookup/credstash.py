@@ -11,7 +11,7 @@ DOCUMENTATION = """
     requirements:
       - credstash (python library)
     description:
-      - Credstash is a small utility for managing secrets using AWS’s KMS and DynamoDB: https://github.com/fugue/credstash
+      - Credstash is a small utility for managing secrets using AWS's KMS and DynamoDB: https://github.com/fugue/credstash
     options:
       _terms:
         description: term or list of terms to lookup in the credit store

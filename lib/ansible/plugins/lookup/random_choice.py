@@ -10,8 +10,8 @@ DOCUMENTATION = """
     version_added: "1.1"
     short_description: return random element from list
     description:
-      - The ‘random_choice’ feature can be used to pick something at random. While it’s not a load balancer (there are modules for those),
-        it can somewhat be used as a poor man’s load balancer in a MacGyver like situation.
+      - The 'random_choice' feature can be used to pick something at random. While it's not a load balancer (there are modules for those),
+        it can somewhat be used as a poor man's load balancer in a MacGyver like situation.
       - At a more basic level, they can be used to add chaos and excitement to otherwise predictable automation environments.
 """
 

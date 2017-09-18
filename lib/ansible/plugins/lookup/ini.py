@@ -10,8 +10,8 @@ DOCUMENTATION = """
     version_added: "2.0"
     short_description: read data from a ini file
     description:
-      - "The ini lookup reads the contents of a file in INI format (key1=value1).
-        This plugin retrieve the value on the right side after the equal sign (‘=’) of a given section ([section])."
+      - "The ini lookup reads the contents of a file in INI format C(key1=value1).
+        This plugin retrieve the value on the right side after the equal sign C('=') of a given section C([section])."
       - "You can also read a property file which - in this case - does not contain section."
     options:
       _terms:

@@ -17,8 +17,8 @@ DOCUMENTATION = """
     description:
       -  generates a random plaintext password and stores it in a file at a given filepath.
       - 'If the file exists previously, it will retrieve its contents, behaving just like with_file.
-        Usage of variables like “{{ inventory_hostname }}” in the filepath can be used to set up random passwords per host
-        (which simplifies password management in ‘host_vars’ variables).'
+        Usage of variables like C("{{ inventory_hostname }}") in the filepath can be used to set up random passwords per host
+        (which simplifies password management in C('host_vars') variables).'
       - A special case is using /dev/null as a path. The password lookup will generate a new random password each time,
         but will not write it to /dev/null. This can be used when you need a password without storing it on the controller.
     options:
@@ -37,9 +37,9 @@ DOCUMENTATION = """
         version_added: "1.4"
         description:
           - Define comma separeted list of names that compose a custom character set in the generated passwords.
-          - 'By default generated passwords contain a random mix of upper and lowercase ASCII letters, the numbers 0-9 and punctuation (”. , : - _”).'
+          - 'By default generated passwords contain a random mix of upper and lowercase ASCII letters, the numbers 0-9 and punctuation (". , : - _").'
           - "They can be either parts of Python's string module attributes (ascii_letters,digits, etc) or are used literally ( :, -)."
-          - "To enter comma use two commas ‘,,’ somewhere - preferably at the end. Quotes and double quotes are not supported."
+          - "To enter comma use two commas ',,' somewhere - preferably at the end. Quotes and double quotes are not supported."
         type: string
       length:
         description: The length of the generated password.
@@ -47,14 +47,14 @@ DOCUMENTATION = """
         type: integer
     notes:
       - A great alternative to the password lookup plugin,
-        if you don’t need to generate random passwords on a per-host basis,
+        if you don't need to generate random passwords on a per-host basis,
         would be to use Using Vault in playbooks.
         Read the documentation there and consider using it first,
         it will be more desirable for most applications.
       - If the file already exists, no data will be written to it.
         If the file has contents, those contents will be read in as the password.
         Empty files cause the password to return as an empty string.
-      - 'As all lookups, this runs on the Ansible host as the user running the playbook, and “become” does not apply,
+      - 'As all lookups, this runs on the Ansible host as the user running the playbook, and "become" does not apply,
         the target file must be readable by the playbook user, or, if it does not exist,
         the playbook user must have sufficient privileges to create it.
         (So, for example, attempts to write into areas such as /etc will fail unless the entire playbook is being run as root).'
