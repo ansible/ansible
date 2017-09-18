@@ -83,7 +83,6 @@ unidiomatic-typecheck
 unnecessary-lambda
 unnecessary-pass
 unneeded-not
-unreachable
 unsubscriptable-object
 unsupported-membership-test
 unused-argument
