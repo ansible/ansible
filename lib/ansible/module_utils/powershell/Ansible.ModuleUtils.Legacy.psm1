@@ -240,10 +240,12 @@ Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj = @{}, $fail
             } else {
                 Fail-Json -obj $resultobj -message "Get-AnsibleParam: Parameter '$name' is not a YAML list."
             }
+            # , is not a typo, forces it to return as a list when it is empty or only has 1 entry
+            return ,$value
         }
     }
 
-    return ,$value
+    return $value
 }
 
 #Alias Get-attr-->Get-AnsibleParam for backwards compat. Only add when needed to ease debugging of scripts
