@@ -54,6 +54,32 @@ class TestCliBuildVaultIds(unittest.TestCase):
         res = cli.CLI.build_vault_ids([], create_new_password=True)
         self.assertEqual(res, ['default@prompt_ask_vault_pass'])
 
+    def test_create_new_password_no_vault_id_no_auto_prompt(self):
+        res = cli.CLI.build_vault_ids([], auto_prompt=False, create_new_password=True)
+        self.assertEqual(res, [])
+
+    def test_no_vault_id_no_auto_prompt(self):
+        # similate 'ansible-playbook site.yml' with out --ask-vault-pass, should not prompt
+        res = cli.CLI.build_vault_ids([], auto_prompt=False)
+        self.assertEqual(res, [])
+
+    def test_no_vault_ids_auto_prompt(self):
+        # create_new_password=False
+        # simulate 'ansible-vault edit encrypted.yml'
+        res = cli.CLI.build_vault_ids([], auto_prompt=True)
+        self.assertEqual(res, ['default@prompt_ask_vault_pass'])
+
+    def test_no_vault_ids_auto_prompt_ask_vault_pass(self):
+        # create_new_password=False
+        # simulate 'ansible-vault edit --ask-vault-pass encrypted.yml'
+        res = cli.CLI.build_vault_ids([], auto_prompt=True, ask_vault_pass=True)
+        self.assertEqual(res, ['default@prompt_ask_vault_pass'])
+
+    def test_create_new_password_auto_prompt(self):
+        # simulate 'ansible-vault encrypt somefile.yml'
+        res = cli.CLI.build_vault_ids([], auto_prompt=True, create_new_password=True)
+        self.assertEqual(res, ['default@prompt_ask_vault_pass'])
+
     def test_create_new_password_no_vault_id_ask_vault_pass(self):
         res = cli.CLI.build_vault_ids([], ask_vault_pass=True,
                                       create_new_password=True)
@@ -135,7 +161,6 @@ class TestCliSetupVaultSecrets(unittest.TestCase):
                                           vault_ids=['prompt1@prompt'],
                                           ask_vault_pass=True)
 
-        print('res: %s' % res)
         self.assertIsInstance(res, list)
         self.assertEqual(len(res), 0)
         matches = vault.match_secrets(res, ['prompt1'])
