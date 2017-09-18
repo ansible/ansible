@@ -56,7 +56,6 @@ raising-bad-type
 redefined-builtin
 redefined-outer-name
 redefined-variable-type
-redundant-unittest-assert
 reimported
 relative-import
 signature-differs
