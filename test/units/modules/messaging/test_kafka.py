@@ -107,7 +107,7 @@ class TestKafka(unittest.TestCase):
 
             with self.assertRaises(AnsibleExitJson) as result:
                 kafka_topics.main()
-            self.assertFalse(result.exception.args[0]['changed'])
+            self.assertTrue(result.exception.args[0]['changed'])
 
     def test_kafka_topics_delete(self):
         set_module_args({
@@ -126,7 +126,7 @@ class TestKafka(unittest.TestCase):
 
             with self.assertRaises(AnsibleExitJson) as result:
                 kafka_topics.main()
-            self.assertFalse(result.exception.args[0]['changed'])
+            self.assertTrue(result.exception.args[0]['changed'])
         mock_run_command.assert_called_once_with('/usr/bin/kafka-topics --delete --zookeeper carotte.localhost:2181 --topic jambon --if-exists')
 
     def test_kafka_topics_describe_specific(self):
