@@ -22,8 +22,7 @@ short_description: Generate OpenSSL Certificate Signing Request (CSR)
 description:
     - "This module allows one to (re)generate OpenSSL certificate signing requests.
        It uses the pyOpenSSL python library to interact with openssl. This module supports
-       the subjectAltName as well as the keyUsage and extendedKeyUsage extensions.
-       Note: At least one of subject, common_name or subject_alt_name must be specified."
+       the subjectAltName as well as the keyUsage and extendedKeyUsage extensions."
 requirements:
     - "python-pyOpenSSL >= 0.15"
 options:
@@ -322,8 +321,10 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
                     nid = OpenSSL._util.lib.OBJ_txt2nid(to_bytes(entry[0]))
                     OpenSSL._util.lib.X509_NAME_add_entry_by_NID(subject._name, nid, OpenSSL._util.lib.MBSTRING_UTF8, to_bytes(entry[1]), -1, -1, 0)
 
-            altnames = ', '.join(self.subjectAltName)
-            extensions = [crypto.X509Extension(b"subjectAltName", self.subjectAltName_critical, altnames.encode('ascii'))]
+            extensions = []
+            if self.subjectAltName:
+                altnames = ', '.join(self.subjectAltName)
+                extensions.append(crypto.X509Extension(b"subjectAltName", self.subjectAltName_critical, altnames.encode('ascii')))
 
             if self.keyUsage:
                 usages = ', '.join(self.keyUsage)
@@ -337,7 +338,8 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
                 usages = ', '.join(self.basicConstraints)
                 extensions.append(crypto.X509Extension(b"basicConstraints", self.basicConstraints_critical, usages.encode('ascii')))
 
-            req.add_extensions(extensions)
+            if extensions:
+                req.add_extensions(extensions)
 
             req.set_pubkey(self.privatekey)
             req.sign(self.privatekey, self.digest)
@@ -469,7 +471,6 @@ def main():
         ),
         add_file_common_args=True,
         supports_check_mode=True,
-        required_one_of=[['commonName', 'subjectAltName', 'subject']],
     )
 
     if not pyopenssl_found:
