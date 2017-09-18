@@ -304,7 +304,10 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
         self.subject = [(entry[0], entry[1]) for entry in self.subject if entry[1]]
 
         if not self.subjectAltName:
-            self.subjectAltName = ['DNS:%s' % module.params['commonName']]
+            for sub in self.subject:
+                if OpenSSL._util.lib.OBJ_txt2nid(sub[0]) == 13:  # 13 is the NID for "commonName"
+                    self.subjectAltName = ['DNS:%s' % sub[1]]
+                    break
 
     def generate(self, module):
         '''Generate the certificate signing request.'''
@@ -315,7 +318,8 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
             subject = req.get_subject()
             for entry in self.subject:
                 if entry[1] is not None:
-                    setattr(subject, entry[0], entry[1])
+                    nid = OpenSSL._util.lib.OBJ_txt2nid(entry[0])
+                    OpenSSL._util.lib.X509_NAME_add_entry_by_NID(subject._name, nid, OpenSSL._util.lib.MBSTRING_UTF8, entry[1], -1, -1, 0)
 
             altnames = ', '.join(self.subjectAltName)
             extensions = [crypto.X509Extension(b"subjectAltName", self.subjectAltName_critical, altnames.encode('ascii'))]
@@ -359,7 +363,7 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
 
         def _check_subject(csr):
             subject = [(OpenSSL._util.lib.OBJ_txt2nid(sub[0]), sub[1]) for sub in self.subject]
-            current_subject = [(OpenSSL._util.lib.OBJ_txt2nid(sub[0]), sub[1]) for sub in csr.get_subject()]
+            current_subject = [(OpenSSL._util.lib.OBJ_txt2nid(sub[0]), sub[1]) for sub in csr.get_subject().get_components()]
             if not set(subject) == set(current_subject):
                 return False
 
