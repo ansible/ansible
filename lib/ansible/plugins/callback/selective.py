@@ -41,18 +41,18 @@ import difflib
 from ansible import constants as C
 from ansible.plugins.callback import CallbackBase
 from ansible.module_utils._text import to_text
-
+from ansible.utils.color import codeCodes
 
 DONT_COLORIZE = False
 COLORS = {
     'normal': '\033[0m',
-    'ok': C.COLOR_OK,
+    'ok': '\033[{}m'.format(codeCodes[C.COLOR_OK]),
     'bold': '\033[1m',
     'not_so_bold': '\033[1m\033[34m',
-    'changed': C.COLOR_CHANGED,
-    'failed': C.COLOR_ERROR,
+    'changed': '\033[{}m'.format(codeCodes[C.COLOR_CHANGED]),
+    'failed': '\033[{}m'.format(codeCodes[C.COLOR_ERROR]),
     'endc': '\033[0m',
-    'skipped': C.COLOR_SKIP,
+    'skipped': '\033[{}m'.format(codeCodes[C.COLOR_SKIP]),
 }
 
 
