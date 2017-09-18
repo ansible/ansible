@@ -31,7 +31,7 @@ def fail_json(*args, **kwargs):
     raise AnsibleFailJson(kwargs)
 
 
-def get_bin_path(self, arg, required=False, opt_dirs=[]):
+def get_bin_path(self, arg, required=False):
     if arg.endswith('kafka-topics'):
         return '/usr/bin/kafka-topics'
     else:
@@ -92,11 +92,13 @@ class TestKafka(unittest.TestCase):
             'executable': None,
             'topic': 'jambon',
             'action': 'create',
+            'replication_factor': '1',
+            'partitions': '2',
             'zookeeper': 'carotte.localhost:2181',
         })
 
         with patch.object(basic.AnsibleModule, 'run_command') as mock_run_command:
-            stdout = "Created topic \\\"test-GDE\\\".\\\\n"
+            stdout = "Created topic \\\"jambon\\\".\\\\n"
             stderr = "[2017-09-15 15:33:35,307] " + \
                 "ERROR org.apache.kafka.common.errors.InvalidTopicException: " + \
                 "topic name tes@@#(23 is illegal, contains a character other " + \
@@ -116,7 +118,7 @@ class TestKafka(unittest.TestCase):
         })
 
         with patch.object(basic.AnsibleModule, 'run_command') as mock_run_command:
-            stdout = "Topic test-GDE is marked for deletion.\\\\n" + \
+            stdout = "Topic jambon is marked for deletion.\\\\n" + \
                 "Note: This will have no impact if " + \
                 "delete.topic.enable is not set to true.\\\\n"
             stderr = ""
