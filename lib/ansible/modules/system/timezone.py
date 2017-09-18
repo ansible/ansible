@@ -385,7 +385,7 @@ class NosystemdTimezone(Timezone):
             if self._allow_ioerror(err, key):
                 lines = []
             else:
-                self.abort('cannot read configuration file "%s" for %s' % (filename, key))
+                self.abort('tried to configure %s using a file "%s", but could not read it' % (key, filename))
         else:
             lines = file.readlines()
             file.close()
@@ -407,7 +407,7 @@ class NosystemdTimezone(Timezone):
         try:
             file = open(filename, 'w')
         except IOError:
-            self.abort('cannot write to "%s"' % filename)
+            self.abort('tried to configure %s using a file "%s", but could not write to it' % (key, filename))
         else:
             file.writelines(lines)
             file.close()
@@ -426,14 +426,14 @@ class NosystemdTimezone(Timezone):
             if self._allow_ioerror(err, key):
                 return None
             else:
-                self.abort('cannot read configuration file "%s" for %s' % (filename, key))
+                self.abort('tried to configure %s using a file "%s", but could not read it' % (key, filename))
         else:
             status = file.read()
             file.close()
             try:
                 value = self.regexps[key].search(status).group(1)
             except AttributeError:
-                self.abort('cannot find the valid value from configuration file "%s" for %s' % (filename, key))
+                self.abort('tried to configure %s using a file "%s", but could not find a valid value in it' % (key, filename))
             else:
                 if key == 'hwclock':
                     # For key='hwclock'; convert yes/no -> UTC/local
