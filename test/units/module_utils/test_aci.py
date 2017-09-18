@@ -204,18 +204,15 @@ class AciRest(unittest.TestCase):
         self.maxDiffi = None
 
         if PY2:
-            expected_json_result = {
-                'error_code': -1,
-                'error_text': "Unable to parse output as JSON, see 'raw' output. No JSON object could be decoded",
-                'raw': '',
-            }
-
+            error_text = "Unable to parse output as JSON, see 'raw' output. No JSON object could be decoded"
         else:
-            expected_json_result = {
-                u'error_code': -1,
-                u'error_text': u"Unable to parse output as JSON, see 'raw' output. Expecting value: line 1 column 1 (char 0)",
-                u'raw': u'',
-            }
+            error_text = "Unable to parse output as JSON, see 'raw' output. Expecting value: line 1 column 1 (char 0)"
+
+        expected_json_result = {
+            'error_code': -1,
+            'error_text': error_text,
+            'raw': '',
+        }
 
         json_response = ''
         json_result = dict()
@@ -227,31 +224,19 @@ class AciRest(unittest.TestCase):
             return
 
         elif etree.LXML_VERSION < (3, 3, 0, 0):
-            expected_xml_result = {
-                'error_code': -1,
-                'error_text': "Unable to parse output as XML, see 'raw' output. None",
-                'raw': '',
-            }
-
+            error_text = "Unable to parse output as XML, see 'raw' output. None",
         elif etree.LXML_VERSION < (4, 0, 0, 0):
             error_text = to_native(u"Unable to parse output as XML, see 'raw' output. None (line 0)", errors='surrogate_or_strict')
-            expected_xml_result = {
-                'error_code': -1,
-                'error_text': error_text,
-                'raw': '',
-            }
-
+        elif PY3:
+            error_text = "Unable to parse output as XML, see 'raw' output. Document is empty, line 1, column 1 (<string>, line 1)"
         else:
-            if PY3:
-                error_text = u"Unable to parse output as XML, see 'raw' output. Document is empty, line 1, column 1 (<string>, line 1)"
-            else:
-                error_text = "Unable to parse output as XML, see 'raw' output. Document is empty, line 1, column 1 (line 1)"
+            error_text = "Unable to parse output as XML, see 'raw' output. Document is empty, line 1, column 1 (line 1)"
 
-            expected_xml_result = {
-                'error_code': -1,
-                'error_text': error_text,
-                'raw': '',
-            }
+        expected_xml_result = {
+            'error_code': -1,
+            'error_text': error_text,
+            'raw': '',
+        }
 
         xml_response = ''
         xml_result = dict()
@@ -262,25 +247,17 @@ class AciRest(unittest.TestCase):
         self.maxDiff = None
 
         if sys.version_info < (2, 7):
-            expected_json_result = {
-                'error_code': -1,
-                'error_text': "Unable to parse output as JSON, see 'raw' output. Expecting object: line 1 column 8 (char 8)",
-                'raw': '{ "aaa":',
-            }
-
+            error_text = "Unable to parse output as JSON, see 'raw' output. Expecting object: line 1 column 8 (char 8)"
         elif sys.version_info < (3, 0):
-            expected_json_result = {
-                'error_code': -1,
-                'error_text': "Unable to parse output as JSON, see 'raw' output. No JSON object could be decoded",
-                'raw': '{ "aaa":',
-            }
-
+            error_text = "Unable to parse output as JSON, see 'raw' output. No JSON object could be decoded"
         else:
-            expected_json_result = {
-                u'error_code': -1,
-                u'error_text': u"Unable to parse output as JSON, see 'raw' output. Expecting value: line 1 column 9 (char 8)",
-                u'raw': u'{ "aaa":',
-            }
+            error_text = "Unable to parse output as JSON, see 'raw' output. Expecting value: line 1 column 9 (char 8)"
+
+        expected_json_result = {
+            'error_code': -1,
+            'error_text': error_text,
+            'raw': u'{ "aaa":',
+        }
 
         json_response = '{ "aaa":'
         json_result = dict()
@@ -292,25 +269,19 @@ class AciRest(unittest.TestCase):
             return
 
         elif etree.LXML_VERSION < (3, 3, 0, 0):
-            expected_xml_result = {
-                'error_code': -1,
-                'error_text': "Unable to parse output as XML, see 'raw' output. Couldn't find end of Start Tag aaa line 1, line 1, column 5",  # NOQA
-                'raw': '<aaa ',
-            }
+            error_text = "Unable to parse output as XML, see 'raw' output. Couldn't find end of Start Tag aaa line 1, line 1, column 5"  # NOQA
 
         elif sys.version_info < (3, 0):
-            expected_xml_result = {
-                'error_code': -1,
-                'error_text': u"Unable to parse output as XML, see 'raw' output. Couldn't find end of Start Tag aaa line 1, line 1, column 6 (line 1)",  # NOQA
-                'raw': u'<aaa ',
-            }
+            error_text = "Unable to parse output as XML, see 'raw' output. Couldn't find end of Start Tag aaa line 1, line 1, column 6 (line 1)"  # NOQA
 
         else:
-            expected_xml_result = {
-                u'error_code': -1,
-                u'error_text': u"Unable to parse output as XML, see 'raw' output. Couldn't find end of Start Tag aaa line 1, line 1, column 6 (<string>, line 1)",  # NOQA
-                u'raw': u'<aaa ',
-            }
+            error_text = "Unable to parse output as XML, see 'raw' output. Couldn't find end of Start Tag aaa line 1, line 1, column 6 (<string>, line 1)"  # NOQA
+
+        expected_xml_result = {
+            'error_code': -1,
+            'error_text': error_text,
+            'raw': u'<aaa ',
+        }
 
         xml_response = '<aaa '
         xml_result = dict()
