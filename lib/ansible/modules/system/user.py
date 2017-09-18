@@ -76,6 +76,9 @@ options:
         required: false
         description:
             - Optionally set the user's shell.
+            - On Mac OS X, before version 2.5, the default shell for non-system users was
+              /usr/bin/false. Since 2.5, the default shell for non-system users on
+              Mac OS X is /bin/bash.
     home:
         required: false
         description:
@@ -1762,6 +1765,11 @@ class DarwinUser(User):
                 if not os.path.exists(self.home):
                     os.makedirs(self.home)
                 self.chown_homedir(int(self.uid), int(self.group), self.home)
+
+        # dscl sets shell to /usr/bin/false when UserShell is not specified
+        # so set the shell to /bin/bash when the user is not a system user
+        if not self.system and self.shell is None:
+            self.shell = '/bin/bash'
 
         for field in self.fields:
             if field[0] in self.__dict__ and self.__dict__[field[0]]:
