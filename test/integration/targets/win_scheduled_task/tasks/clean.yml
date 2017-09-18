@@ -10,3 +10,7 @@
   - name: '{{test_scheduled_task_name}}'
   - name: '{{test_scheduled_task_name}}'
     path: '{{test_scheduled_task_path}}'
+
+- win_user:
+    name: '{{test_scheduled_task_user}}'
+    state: absent

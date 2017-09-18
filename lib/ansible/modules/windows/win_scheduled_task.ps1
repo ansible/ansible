@@ -166,7 +166,7 @@ Function Convert-SnakeToPascalCase($snake) {
     return $capitalised
 }
 
-Function Compare-Properties($parent_property, $map) {
+Function Compare-Properties($parent_property, $map, $enum_map=$null) {
     $changes = [System.Collections.ArrayList]@()
 
     # loop through the passed in map and compare values
@@ -180,6 +180,12 @@ Function Compare-Properties($parent_property, $map) {
             $existing_value = $parent_property.$property_name
             if ($existing_value -cne $new_value) {
                 $parent_property.$property_name = $new_value
+
+                if ($enum_map -ne $null -and $enum_map.ContainsKey($property_name)) {
+                    $enum = [type]$enum_map.$property_name
+                    $existing_value = [Enum]::ToObject($enum, $existing_value)
+                    $new_value = [Enum]::ToObject($enum, $new_value)
+                }
                 [void]$changes.Add("-$property_name=$existing_value`n+$property_name=$new_value")
             }
         }
@@ -403,8 +409,12 @@ Function Compare-Principal($task_definition, $task_definition_xml) {
         LogonType = $logon_type
         RunLevel = $run_level
     }
+    $enum_map = @{
+        LogonType = "TASK_LOGON_TYPE"
+        RunLevel = "TASK_RUN_LEVEL"
+    }
     $task_principal = $task_definition.Principal
-    $changes = Compare-Properties -parent_property $task_principal -map $principal_map
+    $changes = Compare-Properties -parent_property $task_principal -map $principal_map -enum_map $enum_map
 
     # Principal.UserId and GroupId only returns the username portion of the
     # username, skipping the domain or server name. This makes the
@@ -417,7 +427,7 @@ Function Compare-Principal($task_definition, $task_definition_xml) {
     }
     $principal_group_sid = $task_definition_xml.Task.Principals.Principal.GroupId
     if ($principal_group_sid -ne $null -and $principal_group_sid -notmatch "^S-\d-\d+(-\d+){1,14}(-\d+){0,1}$") {
-        $principal_group_sid = Convert-ToSID -sid $principal_group_sid
+        $principal_group_sid = Convert-ToSID -account_name $principal_group_sid
     }
     
     if ($username_sid -ne $null) {
@@ -482,6 +492,7 @@ Function Compare-Settings($task_definition) {
         Compatibility = $compatibility
         DeleteExpiredTaskAfter = $delete_expired_task_after
         DisallowStartIfOnBatteries = $disallow_start_if_on_batteries
+        ExecutionTimeLimit = $execution_time_limit
         Enabled = $enabled
         Hidden = $hidden
         # IdleSettings = $idle_settings # TODO: this takes in a COM object
@@ -601,11 +612,11 @@ Function Test-TaskExists($task_folder, $name) {
 # convert username and group to SID if set
 $username_sid = $null
 if ($username) {
-    $username_sid = Convert-ToSid -account_name $username
+    $username_sid = Convert-ToSID -account_name $username
 }
 $group_sid = $null
 if ($group) {
-    $group_sid = Convert-ToSid -account_name $group
+    $group_sid = Convert-ToSID -account_name $group
 }
 
 # Convert the older arguments to the newer format if required
@@ -1096,7 +1107,7 @@ if ($state -eq "absent") {
             $register_logon_type = $null
         }
         
-        if ($task_diff.Count -gt 0) {
+        if ($task_diff.Count -gt 0 -or $register_password -ne $null) {
             if ($check_mode) {
                 # Only validate the task in check mode
                 $task_creation_flags = [TASK_CREATION]::TASK_VALIDATE_ONLY

@@ -462,6 +462,16 @@ EXAMPLES = r'''
     - type: monthlydow
     username: SYSTEM
 
+- name: set logon type to password but don't force update the password
+  win_scheduled_task:
+    name: TriggerTask
+    path: \Custom
+    actions:
+    - path: cmd.exe
+    username: Administrator
+    password: password
+    update_password: no
+
 - name: disable a task that already exists
   win_scheduled_task:
     name: TaskToDisable
