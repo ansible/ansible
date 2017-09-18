@@ -1,2 +1,3 @@
 ---
 test_scheduled_task_name: Ansible Test
+test_scheduled_task_path: \Ansible Test Folder

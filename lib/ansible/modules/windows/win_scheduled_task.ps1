@@ -55,7 +55,7 @@ $multiple_instances = Get-AnsibleParam -obj $params -name "multiple_instances" -
 # TODO: support for  $network_settings, needs to be created as a COM object
 $priority = Get-AnsibleParam -obj $params -name "priority" -type "int" # https://msdn.microsoft.com/en-us/library/windows/desktop/aa383512(v=vs.85).aspx
 $restart_count = Get-AnsibleParam -obj $params -name "restart_count" -type "int"
-$restart_interval = Get-AnsibleParam -obj $params -name "time_interval" -type "str" # time string PT..
+$restart_interval = Get-AnsibleParam -obj $params -name "restart_interval" -type "str" # time string PT..
 $run_only_if_idle = Get-AnsibleParam -obj $params -name "run_only_if_idle" -type "bool"
 $run_only_if_network_available = Get-AnsibleParam -obj $params -name "run_only_if_network_available" -type "bool"
 $start_when_available = Get-AnsibleParam -obj $params -name "start_when_available" -type "bool"
@@ -136,322 +136,25 @@ public enum TASK_TRIGGER_TYPE2 // https://msdn.microsoft.com/en-us/library/windo
 }
 "@
 
-######################################
-### VALIDATION/BUILDING OF OPTIONS ###
-######################################
-
-# convert username and group to SID if set
-$username_sid = $null
-if ($username) {
-    $username_sid = Convert-ToSid -account_name $username
-}
-$group_sid = $null
-if ($group) {
-    $group_sid = Convert-ToSid -account_name $group
-}
-
-# Convert the older arguments to the newer format if required
-if ($old_executable -ne $null) {
-    Add-DeprecationWarning -obj $result -message "executable option is deprecated, please use the actions list option instead" -version 2.7
-    $new_action = @{ path = $old_executable }
-    
-    if ($old_arguments -ne $null) {
-        Add-DeprecationWarning -obj $result -message "arguments option is deprecated, please use the actions list option instead" -version 2.7
-        $new_action.arguments = $old_arguments
-    }
-    if ($actions -eq $null) {
-        $actions = @($new_action)
-    } else {
-        Add-Warning -obj $result -message "actions is already specified, ignoring the executable option"
-    }
-}
-
-# validate store_password and logon_type
-if ($logon_type -ne $null) {
-    $full_enum_name = "TASK_LOGON_$($logon_type.ToUpper())"
-    $logon_type = [TASK_LOGON_TYPE]::$full_enum_name
-    if ($store_password -ne $null) {
-        Add-Warning -obj $result -message "both store_password and logon_type have been defined, ignoring store_password"
-    }
-} else {
-    if ($store_password -ne $null) {
-        Add-DeprecationWarning -obj $result -message "store_password option is deprecated, please use logon_type: password instead" -version 2.7
-        if ($store_password -eq $true -and $password -ne $null) {
-            $logon_type = [TASK_LOGON_TYPE]::TASK_LOGON_PASSWORD
-        }
-    }
-}
-
-# now validate the logon_type option with the other parameters
-if ($username -ne $null -and $group -ne $null) {
-    Fail-Json -obj $result -message "username and group can not be set at the same time"
-}
-if ($logon_type -ne $null) {
-    if ($logon_type -eq [TASK_LOGON_TYPE]::TASK_LOGON_PASSWORD -and $password -eq $null) {
-        Fail-Json -obj $result -message "password must be set when logon_type=password"
-    }
-    if ($logon_type -eq [TASK_LOGON_TYPE]::TASK_LOGON_S4U -and $password -eq $null) {
-        Fail-Json -obj $result -message "password must be set when logon_type=s4u"
-    }
-
-    if ($logon_type -eq [TASK_LOGON_TYPE]::TASK_LOGON_GROUP -and $group -eq $null) {
-        Fail-Json -obj $result -message "group must be set when logon_type=group"
-    }
-
-    # SIDs == Local System, Local Service and Network Service
-    if ($logon_type -eq [TASK_LOGON_TYPE]::TASK_LOGON_SERVICE_ACCOUNT -and $username_sid -notin @("S-1-5-18", "S-1-5-19", "S-1-5-20")) {
-        Fail-Json -obj $result -message "username must be SYSTEM, LOCAL SERVICE or NETWORK SERVICE when logon_type=service_account"
-    }
-}
-
-# convert the run_level to enum value
-if ($run_level -ne $null) {
-    if ($run_level -eq "limited") {
-        $run_level = [TASK_RUN_LEVEL]::TASK_RUNLEVEL_LUA
-    } else {
-        $run_level = [TASK_RUN_LEVEL]::TASK_RUNLEVEL_HIGHEST
-    }
-}
-
-# manually add the only support action type for each action
-foreach ($action in $actions) {
-    $action.type = [TASK_ACTION_TYPE]::TASK_ACTION_EXEC
-}
-
-# convert deprecated trigger args to new format
-$deprecated_trigger = $null
-if ($old_frequency -ne $null) {
-    # once, daily, weekly
-    Add-DeprecationWarning -obj $result -message "" -version 2.7
-    if ($triggers.Count -eq 0) {
-        $deprecated_trigger = @{type = $null}
-        switch ($frequency) {
-            once { $deprecated_trigger.type = [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_TIME }
-            daily { $deprecated_trigger.type = [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_DAILY }
-            weekly { $deprecated_trigger.type = [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_WEEKLY }
-        }
-    } else {
-        Add-Warning -obj $result -message "the trigger list is already specified, ignoring the frequency option as it is deprecated"
-    }
-}
-if ($old_days_of_week -ne $null) {
-    Add-DeprecationWarning -obj $result -message "days_of_week is deprecated, use the triggers list with 'monthlydow' type" -version 2.7
-    if ($triggers.Count -eq 0) {
-        $deprecated_trigger.days_of_week = $old_days_of_week
-    } else {
-        Add-Warning -obj $result -message "the trigger list is already specified, ignoring the days_of_week option as it is deprecated"
-    }
-}
-if ($old_time -ne $null) {
-    Add-DeprecationWarning -obj $result -message "old_time is deprecated, use the triggers list to specify the 'start_boundary'" -version 2.7
-    if ($triggers.Count -eq 0) {
-        $deprecated_trigger.start_boundary = $old_time
-    } else {
-        Add-Warning -obj $result -message "the trigger list is already specified, ignoring the time option as it is deprecated"
-    }
-}
-if ($deprecated_trigger -ne $null) {
-    $triggers += $deprecated_trgger
-}
-
-# convert and validate the triggers
-foreach ($trigger in $triggers) {
-    $valid_trigger_types = @('event', 'time', 'daily', 'weekly', 'monthly', 'monthlydow', 'idle', 'registration', 'boot', 'logon', 'session_state_change')
-    if (-not $trigger.ContainsKey("type")) {
-        Fail-Json -obj $result -message "a trigger entry must contain a key 'type' with a value of '$($valid_trigger_types -join "', '")'"
-    }
-
-    $trigger_type = $trigger.type
-    if ($trigger_type -notin $valid_trigger_types) {
-        Fail-Json -obj $result -message "the specified trigger type '$trigger_type' is not valid, type must be a value of '$($valid_trigger_types -join "', '")'"
-    }
-
-    $full_enum_name = "TASK_TRIGGER_$($trigger_type.ToUpper())"
-    $trigger_type = [TASK_TRIGGER_TYPE2]::$full_enum_name
-    $trigger.type = $trigger_type
-
-    $date_properties = @('start_boundary', 'end_boundary')
-    foreach ($property_name in $date_properties) {
-        # validate the date is in the DateTime format
-        # yyyy-mm-ddThh:mm:ss
-        if ($trigger.ContainsKey($property_name)) {
-            $date_value = $trigger.$property_name
-            try {
-                $date = Get-Date -Date $date_value -Format s
-                # make sure we convert it to the full string format
-                $trigger.$property_name = $date.ToString()
-            } catch [System.Management.Automation.ParameterBindingException] {
-                Fail-Json -obj $result -message "trigger option '$property_name' must be in the format 'YYYY-MM-DDThh:mm:ss' format but was '$date_value'"
-            }
-        }
-    }
-
-    $time_properties = @('execution_time_limit', 'delay', 'random_delay')
-    foreach ($property_name in $time_properties) {
-        # validate the duration is in the Duration Data Type format
-        # PnYnMnDTnHnMnS
-        if ($trigger.ContainsKey($property_name)) {
-            $time_span = $trigger.$property_name
-            try {
-                [void][System.Xml.XmlConvert]::ToTimeSpan($time_span)
-            } catch [System.FormatException] {
-                Fail-Json -obj $result -message "trigger option '$property_name' must be in the XML duration format but was '$time_span'"
-            }
-        }
-    }
-
-    # convert out human readble text to the hex values for these properties
-    if ($trigger.ContainsKey("days_of_week")) {
-        $days = $trigger.days_of_week
-        if ($days -is [String]) {
-            $days = $days.Split(",").Trim()
-        } elseif ($days -isnot [Array]) {
-            $days = @($days)
-        }
-        
-        $day_value = 0
-        foreach ($day in $days) {
-            # https://msdn.microsoft.com/en-us/library/windows/desktop/aa382057(v=vs.85).aspx
-            switch ($day) {
-                sunday { $day_value = $day_value -bor 0x01 }
-                monday { $day_value = $day_value -bor 0x02 }
-                tuesday { $day_value = $day_value -bor 0x04 }
-                wednesday { $day_value = $day_value -bor 0x08 }
-                thursday { $day_value = $day_value -bor 0x10 }
-                friday { $day_value = $day_value -bor 0x20 }
-                saturday { $day_value = $day_value -bor 0x40 }
-                default { Fail-Json -obj $result -message "invalid day of week '$day', check the spelling matches the full day name" }
-            }
-        }
-        if ($day_value -eq 0) {
-            $day_value = $null
-        }
-
-        $trigger.days_of_week = $day_value
-    }
-    if ($trigger.ContainsKey("days_of_month")) {
-        $days = $trigger.days_of_month
-        if ($days -is [String]) {
-            $days = $days.Split(",").Trim()
-        } elseif ($days -isnot [Array]) {
-            $days = @($days)
-        }
-
-        $day_value = 0
-        foreach ($day in $days) {
-            # https://msdn.microsoft.com/en-us/library/windows/desktop/aa382063(v=vs.85).aspx
-            switch ($day) {
-                1 { $day_value = $day_value -bor 0x01 }
-                2 { $day_value = $day_value -bor 0x02 }
-                3 { $day_value = $day_value -bor 0x04 }
-                4 { $day_value = $day_value -bor 0x08 }
-                5 { $day_value = $day_value -bor 0x20 }
-                6 { $day_value = $day_value -bor 0x20 }
-                7 { $day_value = $day_value -bor 0x40 }
-                8 { $day_value = $day_value -bor 0x80 }
-                9 { $day_value = $day_value -bor 0x100 }
-                10 { $day_value = $day_value -bor 0x200 }
-                11 { $day_value = $day_value -bor 0x400 }
-                12 { $day_value = $day_value -bor 0x800 }
-                13 { $day_value = $day_value -bor 0x1000 }
-                14 { $day_value = $day_value -bor 0x2000 }
-                15 { $day_value = $day_value -bor 0x4000 }
-                16 { $day_value = $day_value -bor 0x8000 }
-                17 { $day_value = $day_value -bor 0x10000 }
-                18 { $day_value = $day_value -bor 0x20000 }
-                19 { $day_value = $day_value -bor 0x40000 }
-                20 { $day_value = $day_value -bor 0x80000 }
-                21 { $day_value = $day_value -bor 0x100000 }
-                22 { $day_value = $day_value -bor 0x200000 }
-                23 { $day_value = $day_value -bor 0x400000 }
-                24 { $day_value = $day_value -bor 0x800000 }
-                25 { $day_value = $day_value -bor 0x1000000 }
-                26 { $day_value = $day_value -bor 0x2000000 }
-                27 { $day_value = $day_value -bor 0x4000000 }
-                28 { $day_value = $day_value -bor 0x8000000 }
-                29 { $day_value = $day_value -bor 0x10000000 }
-                30 { $day_value = $day_value -bor 0x20000000 }
-                31 { $day_value = $day_value -bor 0x40000000 }
-                last { $day_value = $day_value -bor 0x80000000 }
-                default { Fail-Json -obj $result -message "invalid day of month '$day', please specify numbers from 1-31 or last" }
-            }
-        }
-        if ($day_value -eq 0) {
-            $day_value = $null
-        }
-        $trigger.days_of_week = $day_value
-    }
-    if ($trigger.ContainsKey("weeks_of_month")) {
-        $weeks = $trigger.weeks_of_month
-        if ($weeks -is [String]) {
-            $weeks = $weeks.Split(",").Trim()
-        } elseif ($weeks -isnot [Array]) {
-            $weeks = @($weeks)
-        }
-
-        $week_value = 0
-        foreach ($week in $weeks) {
-            # https://msdn.microsoft.com/en-us/library/windows/desktop/aa382061(v=vs.85).aspx
-            switch ($week) {
-                1 { $week_value = $week_value -bor 0x01 }
-                2 { $week_value = $week_value -bor 0x02 }
-                3 { $week_value = $week_value -bor 0x04 }
-                4 { $week_value = $week_value -bor 0x08 }
-                default { Fail-Json -obj $result -message "invalid week of month '$week', please specify weeks from 1-4" }
-            }
-
-        }
-        if ($week_value -eq 0) {
-            $week_value = $null
-        }
-        $trigger.weeks_of_month = $week_value
-    }
-    if ($trigger.ContainsKey("months_of_year")) {
-        $months = $trigger.months_of_year
-        if ($months -is [String]) {
-            $months = $months.Split(",").Trim()
-        } elseif ($months -isnot [Array]) {
-            $months = @($months)
-        }
-
-        $month_value = 0
-        foreach ($month in $months) {
-            # https://msdn.microsoft.com/en-us/library/windows/desktop/aa382064(v=vs.85).aspx
-            switch ($month) {
-                january { $month_value = $month_value -bor 0x01 }
-                february { $month_value = $month_value -bor 0x02 }
-                march { $month_value = $month_value -bor 0x04 }
-                april { $month_value = $month_value -bor 0x08 }
-                may { $month_value = $month_value -bor 0x10 }
-                june { $month_value = $month_value -bor 0x20 }
-                july { $month_value = $month_value -bor 0x40 }
-                august { $month_value = $month_value -bor 0x80 }
-                september { $month_value = $month_value -bor 0x100 }
-                october { $month_value = $month_value -bor 0x200 }
-                november { $month_value = $month_value -bor 0x400 }
-                december { $month_value = $month_value -bor 0x800 }
-                default { Fail-Json -obj $result -message "invalid month name '$month', please specify full month name" }
-            }
-        }
-        if ($month_value -eq 0) {
-            $month_value = $null
-        }
-        $trigger.months_of_year = $month_value
-    }
-}
-
-# add \ to start of path if it is not already there
-if (-not $path.StartsWith("\")) {
-    $path = "\$path"
-}
-# ensure path does not end with \ if more than 1 char
-if ($path.EndsWith("\") -and $path.Length -ne 1) {
-    $path = $path.Substring(0, $path.Length - 1)
-}
-
 ########################
 ### HELPER FUNCTIONS ###
 ########################
+Function ConvertTo-HashtableFromPsCustomObject($object) {
+    if ($object -is [Hashtable]) {
+        return ,$object
+    }
+
+    $hashtable = @{}
+    $object | Get-Member -MemberType *Property | % {
+        $value = $object.$($_.Name)
+        if ($value -is [PSObject]) {
+            $value = ConvertTo-HashtableFromPsCustomObject -object $value
+        }
+        $hashtable.$($_.Name) = $value
+    }
+
+    return ,$hashtable
+}
 
 Function Convert-SnakeToPascalCase($snake) {
     # very basic function to convert snake_case to PascalCase for use in COM
@@ -491,7 +194,8 @@ Function Compare-PropertyList {
         [string]$property_name, # human friendly name of the property object, e.g. action/trigger
         [Array]$new, # a list of new properties, passed in by Ansible
         [Array]$existing, # a list of existing properties from the COM object collection
-        [Hashtable]$map # metadata for the collection, see below for the structure
+        [Hashtable]$map, # metadata for the collection, see below for the structure
+        [string]$enum # the parent enum name for type value
     )
     <## map metadata structure
     {
@@ -504,8 +208,9 @@ Function Compare-PropertyList {
             }
         }
     }##>
-
     # used by both Actions and Triggers to compare the collections of that property
+
+    $enum = [type]$enum
     $changes = [System.Collections.ArrayList]@()
     $new_count = $new.Count
     $existing_count = $existing.Count
@@ -560,7 +265,7 @@ Function Compare-PropertyList {
             }
 
             [void]$changes.Add("+{`n  $($diff_list -join ",`n  ")`n+}")
-        } elseif ($existing_property.Type -ne $type) {
+        } elseif ([Enum]::ToObject($enum, $existing_property.Type) -ne $type) {
             # the types are different so we need to change
             $diff_list = [System.Collections.ArrayList]@()
 
@@ -628,10 +333,10 @@ Function Compare-PropertyList {
 
     # if there were any extra properties not in the new list, create diff str
     if ($existing_count -gt $new_count) {
-        for ($i = $new_count - 1; $i -lt $existing_count; $i++) {
+        for ($i = $new_count; $i -lt $existing_count; $i++) {
             $diff_list = [System.Collections.ArrayList]@()
             $existing_property = $existing[$i]
-            $existing_type = $existing_property.Type
+            $existing_type = [Enum]::ToObject($enum, $existing_property.Type)
 
             if ($map.ContainsKey($existing_type)) {
                 $property_map = $map.$existing_type
@@ -660,6 +365,10 @@ Function Compare-Actions($task_definition) {
     # actions for use in a diff string
     # ActionCollection - https://msdn.microsoft.com/en-us/library/windows/desktop/aa446804(v=vs.85).aspx
     # Action - https://msdn.microsoft.com/en-us/library/windows/desktop/aa446803(v=vs.85).aspx
+    if ($actions -eq $null) {
+        return ,[System.Collections.ArrayList]@()
+    }
+
     $task_actions = $task_definition.Actions
     $existing_count = $task_actions.Count
 
@@ -680,7 +389,7 @@ Function Compare-Actions($task_definition) {
             optional = @('arguments', 'working_directory')
         }
     }
-    $changes = Compare-PropertyList -collection $task_actions -property_name "action" -new $actions -existing $existing_actions -map $map
+    $changes = Compare-PropertyList -collection $task_actions -property_name "action" -new $actions -existing $existing_actions -map $map -enum TASK_ACTION_TYPE
 
     return ,$changes
 }
@@ -797,6 +506,10 @@ Function Compare-Triggers($task_definition) {
     # for use in a diff string
     # TriggerCollection - https://msdn.microsoft.com/en-us/library/windows/desktop/aa383875(v=vs.85).aspx
     # Trigger - https://msdn.microsoft.com/en-us/library/windows/desktop/aa383868(v=vs.85).aspx
+    if ($triggers -eq $null) {
+        return ,[System.Collections.ArrayList]@()
+    }
+
     $task_triggers = $task_definition.Triggers
     $existing_count = $task_triggers.Count
 
@@ -859,7 +572,7 @@ Function Compare-Triggers($task_definition) {
             optional = @('delay', 'enabled', 'end_boundary', 'execution_time_limit', 'state_change', 'user_id')
         }
     }
-    $changes = Compare-PropertyList -collection $task_triggers -property_name "trigger" -new $triggers -existing $existing_triggers -map $map
+    $changes = Compare-PropertyList -collection $task_triggers -property_name "trigger" -new $triggers -existing $existing_triggers -map $map -enum TASK_TRIGGER_TYPE2
 
     return ,$changes
 }
@@ -880,6 +593,330 @@ Function Test-TaskExists($task_folder, $name) {
     }
 
     return $task
+}
+
+######################################
+### VALIDATION/BUILDING OF OPTIONS ###
+######################################
+# convert username and group to SID if set
+$username_sid = $null
+if ($username) {
+    $username_sid = Convert-ToSid -account_name $username
+}
+$group_sid = $null
+if ($group) {
+    $group_sid = Convert-ToSid -account_name $group
+}
+
+# Convert the older arguments to the newer format if required
+if ($old_executable -ne $null) {
+    Add-DeprecationWarning -obj $result -message "executable option is deprecated, please use the actions list option instead" -version 2.7
+    $new_action = @{ path = $old_executable }
+    
+    if ($old_arguments -ne $null) {
+        Add-DeprecationWarning -obj $result -message "arguments option is deprecated, please use the actions list option instead" -version 2.7
+        $new_action.arguments = $old_arguments
+    }
+    if ($actions -eq $null) {
+        $actions = @($new_action)
+    } else {
+        Add-Warning -obj $result -message "actions is already specified, ignoring the executable option"
+    }
+}
+
+# validate store_password and logon_type
+if ($logon_type -ne $null) {
+    $full_enum_name = "TASK_LOGON_$($logon_type.ToUpper())"
+    $logon_type = [TASK_LOGON_TYPE]::$full_enum_name
+    if ($store_password -ne $null) {
+        Add-Warning -obj $result -message "both store_password and logon_type have been defined, ignoring store_password"
+    }
+} else {
+    if ($store_password -ne $null) {
+        Add-DeprecationWarning -obj $result -message "store_password option is deprecated, please use logon_type: password instead" -version 2.7
+        if ($store_password -eq $true -and $password -ne $null) {
+            $logon_type = [TASK_LOGON_TYPE]::TASK_LOGON_PASSWORD
+        }
+    }
+}
+
+# now validate the logon_type option with the other parameters
+if ($username -ne $null -and $group -ne $null) {
+    Fail-Json -obj $result -message "username and group can not be set at the same time"
+}
+if ($logon_type -ne $null) {
+    if ($logon_type -eq [TASK_LOGON_TYPE]::TASK_LOGON_PASSWORD -and $password -eq $null) {
+        Fail-Json -obj $result -message "password must be set when logon_type=password"
+    }
+    if ($logon_type -eq [TASK_LOGON_TYPE]::TASK_LOGON_S4U -and $password -eq $null) {
+        Fail-Json -obj $result -message "password must be set when logon_type=s4u"
+    }
+
+    if ($logon_type -eq [TASK_LOGON_TYPE]::TASK_LOGON_GROUP -and $group -eq $null) {
+        Fail-Json -obj $result -message "group must be set when logon_type=group"
+    }
+
+    # SIDs == Local System, Local Service and Network Service
+    if ($logon_type -eq [TASK_LOGON_TYPE]::TASK_LOGON_SERVICE_ACCOUNT -and $username_sid -notin @("S-1-5-18", "S-1-5-19", "S-1-5-20")) {
+        Fail-Json -obj $result -message "username must be SYSTEM, LOCAL SERVICE or NETWORK SERVICE when logon_type=service_account"
+    }
+}
+
+# convert the run_level to enum value
+if ($run_level -ne $null) {
+    if ($run_level -eq "limited") {
+        $run_level = [TASK_RUN_LEVEL]::TASK_RUNLEVEL_LUA
+    } else {
+        $run_level = [TASK_RUN_LEVEL]::TASK_RUNLEVEL_HIGHEST
+    }
+}
+
+# manually add the only support action type for each action - also convert PSCustomObject to Hashtable
+for ($i = 0; $i -lt $actions.Count; $i++) {
+    $action = ConvertTo-HashtableFromPsCustomObject -object $actions[$i]
+    $action.type = [TASK_ACTION_TYPE]::TASK_ACTION_EXEC
+    if (-not $action.ContainsKey("path")) {
+        Fail-Json -obj $result -message "action entry must contain the key 'path'"
+    }
+    $actions[$i] = $action
+}
+
+# convert deprecated trigger args to new format
+$deprecated_trigger = $null
+if ($old_frequency -ne $null) {
+    # once, daily, weekly
+    Add-DeprecationWarning -obj $result -message "" -version 2.7
+    if ($triggers.Count -eq 0) {
+        $deprecated_trigger = @{type = $null}
+        switch ($frequency) {
+            once { $deprecated_trigger.type = [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_TIME }
+            daily { $deprecated_trigger.type = [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_DAILY }
+            weekly { $deprecated_trigger.type = [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_WEEKLY }
+        }
+    } else {
+        Add-Warning -obj $result -message "the trigger list is already specified, ignoring the frequency option as it is deprecated"
+    }
+}
+if ($old_days_of_week -ne $null) {
+    Add-DeprecationWarning -obj $result -message "days_of_week is deprecated, use the triggers list with 'monthlydow' type" -version 2.7
+    if ($triggers.Count -eq 0) {
+        $deprecated_trigger.days_of_week = $old_days_of_week
+    } else {
+        Add-Warning -obj $result -message "the trigger list is already specified, ignoring the days_of_week option as it is deprecated"
+    }
+}
+if ($old_time -ne $null) {
+    Add-DeprecationWarning -obj $result -message "old_time is deprecated, use the triggers list to specify the 'start_boundary'" -version 2.7
+    if ($triggers.Count -eq 0) {
+        try {
+            $old_time_cast = [datetime]$old_time
+        } catch [System.InvalidCastException] {
+            Fail-Json -obj $result -message "failed to convert time '$old_time' to the DateTime format"
+        }
+        $deprecated_trigger.start_boundary = ($old_time_cast | Get-Date -Format s)
+    } else {
+        Add-Warning -obj $result -message "the trigger list is already specified, ignoring the time option as it is deprecated"
+    }
+}
+if ($deprecated_trigger -ne $null) {
+    $triggers += $deprecated_trgger
+}
+
+# convert and validate the triggers - and convert PSCustomObject to Hashtable
+for ($i = 0; $i -lt $triggers.Count; $i++) {
+    $trigger = ConvertTo-HashtableFromPsCustomObject -object $triggers[$i]
+    $valid_trigger_types = @('event', 'time', 'daily', 'weekly', 'monthly', 'monthlydow', 'idle', 'registration', 'boot', 'logon', 'session_state_change')
+    if (-not $trigger.ContainsKey("type")) {
+        Fail-Json -obj $result -message "a trigger entry must contain a key 'type' with a value of '$($valid_trigger_types -join "', '")'"
+    }
+
+    $trigger_type = $trigger.type
+    if ($trigger_type -notin $valid_trigger_types) {
+        Fail-Json -obj $result -message "the specified trigger type '$trigger_type' is not valid, type must be a value of '$($valid_trigger_types -join "', '")'"
+    }
+
+    $full_enum_name = "TASK_TRIGGER_$($trigger_type.ToUpper())"
+    $trigger_type = [TASK_TRIGGER_TYPE2]::$full_enum_name
+    $trigger.type = $trigger_type
+
+    $date_properties = @('start_boundary', 'end_boundary')
+    foreach ($property_name in $date_properties) {
+        # validate the date is in the DateTime format
+        # yyyy-mm-ddThh:mm:ss
+        if ($trigger.ContainsKey($property_name)) {
+            $date_value = $trigger.$property_name
+            try {
+                $date = Get-Date -Date $date_value -Format s
+                # make sure we convert it to the full string format
+                $trigger.$property_name = $date.ToString()
+            } catch [System.Management.Automation.ParameterBindingException] {
+                Fail-Json -obj $result -message "trigger option '$property_name' must be in the format 'YYYY-MM-DDThh:mm:ss' format but was '$date_value'"
+            }
+        }
+    }
+
+    $time_properties = @('execution_time_limit', 'delay', 'random_delay')
+    foreach ($property_name in $time_properties) {
+        # validate the duration is in the Duration Data Type format
+        # PnYnMnDTnHnMnS
+        if ($trigger.ContainsKey($property_name)) {
+            $time_span = $trigger.$property_name
+            try {
+                [void][System.Xml.XmlConvert]::ToTimeSpan($time_span)
+            } catch [System.FormatException] {
+                Fail-Json -obj $result -message "trigger option '$property_name' must be in the XML duration format but was '$time_span'"
+            }
+        }
+    }
+
+    # convert out human readble text to the hex values for these properties
+    if ($trigger.ContainsKey("days_of_week")) {
+        $days = $trigger.days_of_week
+        if ($days -is [String]) {
+            $days = $days.Split(",").Trim()
+        } elseif ($days -isnot [Array]) {
+            $days = @($days)
+        }
+        
+        $day_value = 0
+        foreach ($day in $days) {
+            # https://msdn.microsoft.com/en-us/library/windows/desktop/aa382057(v=vs.85).aspx
+            switch ($day) {
+                sunday { $day_value = $day_value -bor 0x01 }
+                monday { $day_value = $day_value -bor 0x02 }
+                tuesday { $day_value = $day_value -bor 0x04 }
+                wednesday { $day_value = $day_value -bor 0x08 }
+                thursday { $day_value = $day_value -bor 0x10 }
+                friday { $day_value = $day_value -bor 0x20 }
+                saturday { $day_value = $day_value -bor 0x40 }
+                default { Fail-Json -obj $result -message "invalid day of week '$day', check the spelling matches the full day name" }
+            }
+        }
+        if ($day_value -eq 0) {
+            $day_value = $null
+        }
+
+        $trigger.days_of_week = $day_value
+    }
+    if ($trigger.ContainsKey("days_of_month")) {
+        $days = $trigger.days_of_month
+        if ($days -is [String]) {
+            $days = $days.Split(",").Trim()
+        } elseif ($days -isnot [Array]) {
+            $days = @($days)
+        }
+
+        $day_value = 0
+        foreach ($day in $days) {
+            # https://msdn.microsoft.com/en-us/library/windows/desktop/aa382063(v=vs.85).aspx
+            switch ($day) {
+                1 { $day_value = $day_value -bor 0x01 }
+                2 { $day_value = $day_value -bor 0x02 }
+                3 { $day_value = $day_value -bor 0x04 }
+                4 { $day_value = $day_value -bor 0x08 }
+                5 { $day_value = $day_value -bor 0x10 }
+                6 { $day_value = $day_value -bor 0x20 }
+                7 { $day_value = $day_value -bor 0x40 }
+                8 { $day_value = $day_value -bor 0x80 }
+                9 { $day_value = $day_value -bor 0x100 }
+                10 { $day_value = $day_value -bor 0x200 }
+                11 { $day_value = $day_value -bor 0x400 }
+                12 { $day_value = $day_value -bor 0x800 }
+                13 { $day_value = $day_value -bor 0x1000 }
+                14 { $day_value = $day_value -bor 0x2000 }
+                15 { $day_value = $day_value -bor 0x4000 }
+                16 { $day_value = $day_value -bor 0x8000 }
+                17 { $day_value = $day_value -bor 0x10000 }
+                18 { $day_value = $day_value -bor 0x20000 }
+                19 { $day_value = $day_value -bor 0x40000 }
+                20 { $day_value = $day_value -bor 0x80000 }
+                21 { $day_value = $day_value -bor 0x100000 }
+                22 { $day_value = $day_value -bor 0x200000 }
+                23 { $day_value = $day_value -bor 0x400000 }
+                24 { $day_value = $day_value -bor 0x800000 }
+                25 { $day_value = $day_value -bor 0x1000000 }
+                26 { $day_value = $day_value -bor 0x2000000 }
+                27 { $day_value = $day_value -bor 0x4000000 }
+                28 { $day_value = $day_value -bor 0x8000000 }
+                29 { $day_value = $day_value -bor 0x10000000 }
+                30 { $day_value = $day_value -bor 0x20000000 }
+                31 { $day_value = $day_value -bor 0x40000000 }
+                last { $day_value = $day_value -bor 0x80000000 }
+                default { Fail-Json -obj $result -message "invalid day of month '$day', please specify numbers from 1-31 or last" }
+            }
+        }
+        if ($day_value -eq 0) {
+            $day_value = $null
+        }
+        $trigger.days_of_week = $day_value
+    }
+    if ($trigger.ContainsKey("weeks_of_month")) {
+        $weeks = $trigger.weeks_of_month
+        if ($weeks -is [String]) {
+            $weeks = $weeks.Split(",").Trim()
+        } elseif ($weeks -isnot [Array]) {
+            $weeks = @($weeks)
+        }
+
+        $week_value = 0
+        foreach ($week in $weeks) {
+            # https://msdn.microsoft.com/en-us/library/windows/desktop/aa382061(v=vs.85).aspx
+            switch ($week) {
+                1 { $week_value = $week_value -bor 0x01 }
+                2 { $week_value = $week_value -bor 0x02 }
+                3 { $week_value = $week_value -bor 0x04 }
+                4 { $week_value = $week_value -bor 0x08 }
+                default { Fail-Json -obj $result -message "invalid week of month '$week', please specify weeks from 1-4" }
+            }
+
+        }
+        if ($week_value -eq 0) {
+            $week_value = $null
+        }
+        $trigger.weeks_of_month = $week_value
+    }
+    if ($trigger.ContainsKey("months_of_year")) {
+        $months = $trigger.months_of_year
+        if ($months -is [String]) {
+            $months = $months.Split(",").Trim()
+        } elseif ($months -isnot [Array]) {
+            $months = @($months)
+        }
+
+        $month_value = 0
+        foreach ($month in $months) {
+            # https://msdn.microsoft.com/en-us/library/windows/desktop/aa382064(v=vs.85).aspx
+            switch ($month) {
+                january { $month_value = $month_value -bor 0x01 }
+                february { $month_value = $month_value -bor 0x02 }
+                march { $month_value = $month_value -bor 0x04 }
+                april { $month_value = $month_value -bor 0x08 }
+                may { $month_value = $month_value -bor 0x10 }
+                june { $month_value = $month_value -bor 0x20 }
+                july { $month_value = $month_value -bor 0x40 }
+                august { $month_value = $month_value -bor 0x80 }
+                september { $month_value = $month_value -bor 0x100 }
+                october { $month_value = $month_value -bor 0x200 }
+                november { $month_value = $month_value -bor 0x400 }
+                december { $month_value = $month_value -bor 0x800 }
+                default { Fail-Json -obj $result -message "invalid month name '$month', please specify full month name" }
+            }
+        }
+        if ($month_value -eq 0) {
+            $month_value = $null
+        }
+        $trigger.months_of_year = $month_value
+    }
+    $triggers[$i] = $trigger
+}
+
+# add \ to start of path if it is not already there
+if (-not $path.StartsWith("\")) {
+    $path = "\$path"
+}
+# ensure path does not end with \ if more than 1 char
+if ($path.EndsWith("\") -and $path.Length -ne 1) {
+    $path = $path.Substring(0, $path.Length - 1)
 }
 
 ########################
@@ -935,6 +972,7 @@ if ($state -eq "absent") {
     }
 } else {
     if ($task -eq $null) {
+        $create_diff_string = "+[Task]`n+$task_path`n`n"
         # to create a bare minimum task we need 1 action
         if ($actions -eq $null -or $actions.Count -eq 0) {
             Fail-Json -obj $result -message "cannot create a task with no actions, set at least one action with a path to an executable"
@@ -945,16 +983,21 @@ if ($state -eq "absent") {
 
         # Set Actions info
         # https://msdn.microsoft.com/en-us/library/windows/desktop/aa446803(v=vs.85).aspx
+        $create_diff_string += "[Actions]`n"
         $task_actions = $task_definition.Actions
         foreach ($action in $actions) {
+            $create_diff_string += "+{`n  +Type=$([TASK_ACTION_TYPE]::TASK_ACTION_EXEC),`n  +Path=$($action.path)`n"
             $task_action = $task_actions.Create([TASK_ACTION_TYPE]::TASK_ACTION_EXEC)
             $task_action.Path = $action.path
             if ($action.arguments -ne $null) {
+                $create_diff_string += "  +Arguments=$($action.arguments)`n"
                 $task_action.Arguments = $action.arguments
             }
             if ($action.working_directory -ne $null) {
+                $create_diff_string += "  +WorkingDirectory=$($action.working_directory)`n"
                 $task_action.WorkingDirectory = $action.working_directory
             }
+            $create_diff_string += "+}`n"
         }
 
         # Register the new task
@@ -985,7 +1028,7 @@ if ($state -eq "absent") {
             Fail-Json -obj $result -message "failed to register new task definition: $($_.Exception.Message)"
         }
         if ($diff) {
-            $result.diff.prepared = "+[Task]`n+$task_path`n"
+            $result.diff.prepared = $create_diff_string
         }
 
         $result.changed = $true
@@ -1072,11 +1115,11 @@ if ($state -eq "absent") {
             if ($diff) {
                 $changed_diff_text = $task_diff -join "`n"
                 if ($result.diff.prepared -ne $null) {
-                    $diff_text = "$($result.diff.prepared)$changed_diff_text"
+                    $diff_text = "$($result.diff.prepared)`n$changed_diff_text"
                 } else {
                     $diff_text = $changed_diff_text
                 }
-                $result.diff.prepared = $diff_text
+                $result.diff.prepared = $diff_text.Trim()
             }
         }
     }

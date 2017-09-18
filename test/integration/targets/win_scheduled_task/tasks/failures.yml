@@ -58,14 +58,66 @@
   register: fail_trigger_no_type
   failed_when: fail_trigger_no_type.msg != "a trigger entry must contain a key 'type' with a value of 'event', 'time', 'daily', 'weekly', 'monthly', 'monthlydow', 'idle', 'registration', 'boot', 'logon', 'session_state_change'"
 
-# trigger option with datetime but not in correct format
+- name: fail trigger with datetime in incorrect format
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    triggers:
+    - type: time
+      start_boundary: fake
+  register: fail_trigger_invalid_datetime
+  failed_when: fail_trigger_invalid_datetime.msg != "trigger option 'start_boundary' must be in the format 'YYYY-MM-DDThh:mm:ss' format but was 'fake'"
 
-# trigger option not in XML duration format
+- name: fail trigger with duration in incorrect format
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    triggers:
+    - type: boot
+      execution_time_limit: fake
+  register: fail_trigger_invalid_duration
+  failed_when: fail_trigger_invalid_duration.msg != "trigger option 'execution_time_limit' must be in the XML duration format but was 'fake'"
 
-# trigger option invalid day of the week
+- name: fail trigger option invalid day of the week
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    triggers:
+    - type: weekly
+      start_boundary: '2000-01-01T00:00:01'
+      days_of_week: fakeday
+  register: fail_trigger_invalid_day_of_week
+  failed_when: fail_trigger_invalid_day_of_week.msg != "invalid day of week 'fakeday', check the spelling matches the full day name"
 
-# trigger option invalid day of the month
+- name: fail trigger option invalid day of the month
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    triggers:
+    - type: monthly
+      start_boundary: '2000-01-01T00:00:01'
+      days_of_month: 35
+  register: fail_trigger_invalid_day_of_month
+  failed_when: fail_trigger_invalid_day_of_month.msg != "invalid day of month '35', please specify numbers from 1-31 or last"
 
-# trigger option invalid week of the month
+- name: fail trigger option invalid week of the month
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    triggers:
+    - type: monthlydow
+      start_boundary: '2000-01-01T00:00:01'
+      weeks_of_month: 5
+  register: fail_trigger_invalid_week_of_month
+  failed_when: fail_trigger_invalid_week_of_month.msg != "invalid week of month '5', please specify weeks from 1-4"
 
-# trigger option invalid month of the year
+- name: fail trigger option invalid month of the year
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    triggers:
+    - type: monthlydow
+      start_boundary: '2000-01-01T00:00:01'
+      months_of_year: fakemonth
+  register: fail_trigger_invalid_month_of_year
+  failed_when: fail_trigger_invalid_month_of_year.msg != "invalid month name 'fakemonth', please specify full month name"

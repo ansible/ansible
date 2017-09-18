@@ -5,6 +5,8 @@
     path: '{{item.path|default(omit)}}'
     state: absent
   with_items:
-  - name: Ansible Test
-  - name: Task
+  - name: Task # old tests
     path: \Path
+  - name: '{{test_scheduled_task_name}}'
+  - name: '{{test_scheduled_task_name}}'
+    path: '{{test_scheduled_task_path}}'

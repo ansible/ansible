@@ -3,16 +3,35 @@
   include_tasks: clean.yml
 
 - block:
+  # old tests, remove once new code is considered stable
   - name: Test in normal mode
-    include: tests.yml
+    include_tasks: tests.yml
     vars:
       in_check_mode: no
 
   - name: Test in check-mode
-    include: tests.yml
+    include_tasks: tests.yml
     vars:
       in_check_mode: yes
     check_mode: yes
+
+  - include_tasks: clean.yml
+
+  - name: Test failure scenarios
+    include: failures.yml
+
+  - name: Test normal scenarios
+    include_tasks: new_tests.yml
+
+  - include_tasks: clean.yml
+  
+  - name: Test principals
+    include_tasks: principals.yml
+
+  - include_tasks: clean.yml
+
+  - name: Test triggers
+    include_tasks: triggers.yml
   
   always:
   - name: remove test tasks after test
