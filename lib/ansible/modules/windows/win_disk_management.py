@@ -39,6 +39,8 @@ description:
    - The modul will set the disk to online and writeable (read-only eq. false) if it's not the state of the disk already.
    - If the disk was initilaized already the modul will try to convert the partition style of the disk to the selected partition style.
    - The module will stop and start the service "ShellHWService" again in order to avoid disk management GUI messages.
+   - If the module fails with an error and the operational status was set from "Offline" to "Online" before, the module will set the disk to 
+   - operational status "Offline" again.
 requirements:
     - Windows 8.1 / Windows 2012R2 (NT 6.3) or newer
 author:
@@ -141,11 +143,13 @@ options:
 EXAMPLES = r'''
 - name: Select a defined disk and manage it as specified
   win_disk_management:
+    # select_disk_by
     size: 100
     partition_style_select: raw
     operational_status: offline
     read_only: true
     number: 1
+    # set_disk_by
     partition_style_set: mbr
     drive_letter: e
     file_system: ntfs
@@ -155,10 +159,12 @@ EXAMPLES = r'''
     short_names: true
 - name: Select a defined disk and manage it as specified
   win_disk_management:
+    # select_disk_by
     size: 50
     partition_style_select: mbr
     operational_status: online
     read_only: false
+    # set_disk_by
     partition_style_set: gpt
     drive_letter: f
     file_system: refs
