@@ -28,34 +28,55 @@ DOCUMENTATION = r'''
 ---
 module: win_file
 version_added: "1.9.2"
-short_description: Creates, touches or removes files or directories.
+short_description: Creates, touches or removes files, directories or links
 description:
-     - Creates (empty) files, updates file modification stamps of existing files,
-       and can create or remove directories.
-     - Unlike M(file), does not modify ownership, permissions or manipulate links.
-     - For non-Windows targets, use the M(file) module instead.
+  - Sets attributes of files, symlinks, hard links, junction points and directory.
+  - Can create files, symlinks, hard links, junction points, directories and files.
+  - Unlike M(file), does not modify ownership or permissions.
 notes:
-    - For non-Windows targets, use the M(file) module instead.
-    - See also M(win_copy), M(win_template), M(copy), M(template), M(assemble)
-requirements: [ ]
+  - For non-Windows targets, use the M(file) module instead.
+  - See also M(win_copy), M(win_template), M(copy), M(template), M(assemble)
 author: "Jon Hawkesworth (@jhawkesworth)"
 options:
+  force:
+    description:
+      - This flag indicates whether to force the creation of a link in the
+        following cases.
+      - If state=C(link) and C(path) exists and is not a symbolic link, the
+        C(path) will be deleted and set as a new symbolic link.
+      - If state=C(junction) and C(path) exists and is not a junction point,
+        the C(path) will be deleted and set as a new junction point.
+      - If state=C(hard) and C(path) exists and is not a hard link of C(src),
+        the C(path) will be deleted and set as a new hard link.
+    type: bool
+    default: 'no'
+    version_added: "2.4"
   path:
     description:
-      - 'path to the file being managed.  Aliases: I(dest), I(name)'
+      - The path to the file being managed.
     required: true
     aliases: ['dest', 'name']
+  src:
+    description:
+      - The path of the file to link to (applies only to
+        I(state=link/junction/hard)).
+      - If I(state=junction) this needs to be a directory.
+      - If I(state=hard) this needs to be a file.
+    version_added: "2.4"
   state:
     description:
       - If C(directory), all immediate subdirectories will be created if they
         do not exist.
-        If C(file), the file will NOT be created if it does not exist, see the M(copy)
+      - If C(file), the file will NOT be created if it does not exist, see the M(copy)
         or M(template) module if you want that behavior.  If C(absent),
         directories will be recursively deleted, and files will be removed.
-        If C(touch), an empty file will be created if the C(path) does not
-        exist, while an existing file or directory will receive updated file access and
+      - If C(touch), an empty file will be created if the C(path) does not
+        exist, while an existing file or directory will receive updated
         modification times (similar to the way C(touch) works from the command line).
-    choices: [ file, directory, touch, absent ]
+      - If C(link) a symbolic link (soft link) will be created or changed. Added in 2.4.
+      - If C(junction) a junction point will be created or changed. Added in 2.4.
+      - If C(hard) a hard link will be created. Added in 2.4.
+    choices: [ file, directory, touch, absent, link, junction, hard ]
 '''
 
 EXAMPLES = r'''
@@ -78,4 +99,35 @@ EXAMPLES = r'''
   win_file:
     path: C:\Temp
     state: absent
+
+- name: Create a directory symbolic link
+  win_file:
+    path: C:\Temp\link
+    src: C:\LinkSource
+    state: link
+
+- name: Force C:\Temp\link to be a directory symbolic link
+  win_file:
+    force: True
+    path: C:\Temp\link
+    src: C:\LinkSource
+    state: link
+
+- name: Create a file symbolic link
+  win_file:
+    path: C:\Temp\file-link.txt
+    src: C:\Dev\file.txt
+    state: link
+
+- name: Create a junction point
+  win_file:
+    path: C:\Temp\junction-point
+    src: C:\Dev\junction-source
+    state: hard
+
+- name: Create a hard link
+  win_file:
+    path: C:\Temp\hard-link
+    src: C:\Dev\hard-source
+    state: hard
 '''
