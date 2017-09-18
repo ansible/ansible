@@ -57,7 +57,6 @@ redefined-outer-name
 redefined-variable-type
 reimported
 relative-import
-signature-differs
 simplifiable-if-statement
 super-init-not-called
 superfluous-parens

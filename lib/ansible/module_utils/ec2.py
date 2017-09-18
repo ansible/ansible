@@ -72,7 +72,7 @@ class AWSRetry(CloudRetry):
         return error.response['Error']['Code']
 
     @staticmethod
-    def found(response_code, catch_extra_error_codes):
+    def found(response_code, catch_extra_error_codes=None):
         # This list of failures is based on this API Reference
         # http://docs.aws.amazon.com/AWSEC2/latest/APIReference/errors-overview.html
         #
