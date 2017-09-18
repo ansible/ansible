@@ -321,6 +321,7 @@ from ansible.module_utils.ec2 import ec2_connect, ec2_argument_spec, ansible_dic
 
 import time
 import traceback
+import boto3
 from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec, ec2_connect, boto3_conn, camel_dict_to_snake_dict, HAS_BOTO3
 from ansible.module_utils.basic import AnsibleModule
 
