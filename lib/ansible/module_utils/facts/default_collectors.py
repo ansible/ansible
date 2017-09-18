@@ -23,6 +23,7 @@ from ansible.module_utils.facts.other.ohai import OhaiFactCollector
 
 from ansible.module_utils.facts.system.apparmor import ApparmorFactCollector
 from ansible.module_utils.facts.system.caps import SystemCapabilitiesFactCollector
+from ansible.module_utils.facts.system.chroot import ChrootFactCollector
 from ansible.module_utils.facts.system.cmdline import CmdLineFactCollector
 from ansible.module_utils.facts.system.distribution import DistributionFactCollector
 from ansible.module_utils.facts.system.date_time import DateTimeFactCollector
@@ -74,6 +75,7 @@ from ansible.module_utils.facts.virtual.sunos import SunOSVirtualCollector
 
 # TODO: make config driven
 collectors = [ApparmorFactCollector,
+              ChrootFactCollector,
               CmdLineFactCollector,
               DateTimeFactCollector,
               DistributionFactCollector,
