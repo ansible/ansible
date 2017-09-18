@@ -489,7 +489,7 @@ class AssertOnlyCertificate(Certificate):
                       'notAfter', 'valid_at', 'invalid_at']:
 
             attr = getattr(self, param)
-            if isinstance(attr, list):
+            if isinstance(attr, list) and attr:
                 if isinstance(attr[0], str):
                     setattr(self, param, [to_bytes(item) for item in attr])
                 elif isinstance(attr[0], tuple):
