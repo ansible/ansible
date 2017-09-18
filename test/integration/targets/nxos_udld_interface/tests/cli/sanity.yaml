@@ -11,6 +11,13 @@
       state: enabled
       provider: "{{ cli }}"
 
+  - name: "put the interface into default state"
+    nxos_config: 
+      commands:
+        - "default interface {{intname}}"
+      provider: "{{ cli }}"
+      match: none
+
   - name: ensure interface is configured to be in aggressive mode
     nxos_udld_interface: &conf1
       interface: "{{ intname }}"
