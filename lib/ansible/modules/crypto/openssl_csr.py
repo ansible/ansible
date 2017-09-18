@@ -305,7 +305,7 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
 
         if not self.subjectAltName:
             for sub in self.subject:
-                if OpenSSL._util.lib.OBJ_txt2nid(sub[0]) == 13:  # 13 is the NID for "commonName"
+                if OpenSSL._util.lib.OBJ_txt2nid(to_bytes(sub[0])) == 13:  # 13 is the NID for "commonName"
                     self.subjectAltName = ['DNS:%s' % sub[1]]
                     break
 
