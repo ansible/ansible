@@ -63,7 +63,7 @@ Ansible Changes By Release
 * s3: replaced by aws_s3
 * win_msi: use M(win_package) instead
 
-#### Removed Modules (previouslly deprecated):
+#### Removed Modules (previously deprecated):
 * eos_template: use eos_config instead
 * ios_template: use ios_config instead
 * iosxr_template: use iosxr_config instead
@@ -192,6 +192,12 @@ Ansible Changes By Release
 - all: true if all elements are true
 
 ### Module Notes
+- By mistake, an early version of elb_classic_lb, elb_instance, and elb_classic_lb_facts modules
+  were released and marked as stableinterface.  These will be marked as preview in 2.4.1 and their
+  parameters and return values may change in 2.5.0.  Part of this mistake included deprecating the
+  ec2_elb_lb, ec2_lb, and ec2_elb_facts modules prematurely.  These modules won't be deprecated
+  until the replacements above have a stableinterface and the erroneous deprecation will be fixed
+  in 2.4.1.
 - The docker_container module has gained a new option, `working_dir` which allows
   specifying the working directory for the command being run in the image.
 - The ec2_win_password module now requires the cryptography python module be installed to run
