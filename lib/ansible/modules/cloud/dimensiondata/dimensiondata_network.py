@@ -40,7 +40,7 @@ options:
     required: false
   service_plan:
     description:
-      - The service plan, either “ESSENTIALS” or “ADVANCED”.
+      - The service plan, either "ESSENTIALS" or "ADVANCED".
       - MCP 2.0 Only.
     choices: [ESSENTIALS, ADVANCED]
     default: ESSENTIALS

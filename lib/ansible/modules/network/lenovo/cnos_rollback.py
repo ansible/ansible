@@ -38,9 +38,9 @@ description:
      of a switch from a remote server. This is achieved by using startup or running configurations of the target
      device that were previously backed up to a remote server using FTP, SFTP, TFTP, or SCP.
      The first step is to create a directory from where the remote server can be reached. The next step is to
-     provide the full file path of the backup configuration’s location. Authentication details required by the
+     provide the full file path of the backup configuration's location. Authentication details required by the
      remote server must be provided as well.
-     By default, this method overwrites the switch’s configuration file with the newly downloaded file.
+     By default, this method overwrites the switch's configuration file with the newly downloaded file.
      This module uses SSH to manage network device configuration.
      The results of the operation will be placed in a directory named 'results'
      that must be created by the user in their local directory to where the playbook is run.

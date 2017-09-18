@@ -13,7 +13,7 @@ Also test if the latest release, and master branch are affected too.
 <!--- Name of the module/plugin/task/feature -->
 
 ##### ANSIBLE VERSION
-<!--- Paste verbatim output from “ansible --version” between quotes below -->
+<!--- Paste verbatim output from "ansible --version" between quotes below -->
 ```
 
 ```
@@ -30,7 +30,7 @@ Otherwise, mention any settings you have changed/added/removed in ansible.cfg
 ##### OS / ENVIRONMENT
 <!---
 Mention the OS you are running Ansible from, and the OS you are
-managing, or say “N/A” for anything that is not platform-specific.
+managing, or say "N/A" for anything that is not platform-specific.
 Also mention the specific version of what you are trying to control,
 e.g. if this is a network bug the version of firmware on the network device.
 -->

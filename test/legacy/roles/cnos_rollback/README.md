@@ -4,9 +4,9 @@
 
 This role is an example of using the *cnos_rollback.py* Lenovo module in the context of CNOS switch configuration.This module allows you to work with switch configurations. It provides a way to roll back configurations of a switch from a remote server. This is achieved by using startup or running configurations of the target device that were previously backed up to a remote server using FTP, SFTP, TFTP, or SCP.
 
-The first step is to create a directory from where the remote server can be reached. The next step is to provide the full file path of the backup configuration’s location. Authentication details required by the remote server must be provided as well.
+The first step is to create a directory from where the remote server can be reached. The next step is to provide the full file path of the backup configuration's location. Authentication details required by the remote server must be provided as well.
 
-By default, this method overwrites the switch’s configuration file with the newly downloaded file.
+By default, this method overwrites the switch's configuration file with the newly downloaded file.
 
 The results of the operation can be viewed in *results* directory.
 

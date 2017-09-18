@@ -39,7 +39,7 @@ description:
     The CNOS command is passed as an argument of the method.
     This module functions the same as the cnos_command module.
     The only exception is that the following inventory variable can be specified
-    [“condition = <flag string>”]
+    ["condition = <flag string>"]
     When this inventory variable is specified as the variable of a task, the command is executed for
     the network element that matches the flag string. Usually, commands are executed across a group
     of network devices. When there is a requirement to skip the execution of the command on one or

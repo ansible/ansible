@@ -4,7 +4,7 @@
 
 This role is an example of using the *cnos_image.py* Lenovo module in the context of CNOS switch configuration. This module allows you to work with switch firmware images. It provides a way to download a firmware image to a network device from a remote server using FTP, SFTP, TFTP, or SCP.
 
-The first step is to create a directory from where the remote server can be reached. The next step is to provide the full file path of the image’s location. Authentication details required by the remote server must be provided as well.
+The first step is to create a directory from where the remote server can be reached. The next step is to provide the full file path of the image's location. Authentication details required by the remote server must be provided as well.
 
 By default, this method makes the newly downloaded firmware image the active image, which will be used by the switch during the next restart.
 

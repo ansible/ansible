@@ -104,10 +104,10 @@ Installing the Control Machine
 Latest Release Via Yum
 ++++++++++++++++++++++
 
-.. note:: We’ve changed how the Ansible community packages are distributed. 
+.. note:: We've changed how the Ansible community packages are distributed.
   For users of RHEL/CentOS/Scientific Linux version 7, the Ansible community RPM
   package will transition from the EPEL repository to the Extras channel.  There will be no
-  change for version 6 of RHEL/CentOS/Scientific Linux since Extras is not a part of version 6.   
+  change for version 6 of RHEL/CentOS/Scientific Linux since Extras is not a part of version 6.
 
 RPMs for RHEL7 are available from `the Extras channel <https://access.redhat.com/solutions/912213>`_.
 
@@ -120,11 +120,11 @@ Ansible will also have RPMs/YUM-repo available at `<https://releases.ansible.com
 Ansible version 2.4 can manage earlier operating
 systems that contain Python 2.6 or higher.
 
-You can also build an RPM yourself.  From the root of a checkout or tarball, use the ``make rpm`` command to build an RPM you can distribute and install. 
+You can also build an RPM yourself.  From the root of a checkout or tarball, use the ``make rpm`` command to build an RPM you can distribute and install.
 
 .. code-block:: bash
 
-    $ git clone git://github.com/ansible/ansible.git 
+    $ git clone git://github.com/ansible/ansible.git
     $ cd ./ansible
     $ make rpm
     $ sudo rpm -Uvh ./rpm-build/ansible-*.noarch.rpm
