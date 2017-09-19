@@ -13,17 +13,19 @@ $name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $tru
 
 Function Get-PowerPlans {
 Param ($PlanName)
-    If (!$PlanName) {
-        Get-CimInstance -Name root\cimv2\power -Class win32_PowerPlan | Select ElementName,IsActive |
-        Foreach -begin { $ht=@{} } -process { $ht."$($_.ElementName)" = $_.IsActive } -end {$ht}
+    If (-not $PlanName) {
+        Get-CimInstance -Name root\cimv2\power -Class Win32_PowerPlan |
+        Select-Object -Property ElementName, IsActive |
+        ForEach-Object -Begin { $ht = @{} } -Process { $ht."$($_.ElementName)" = $_.IsActive } -End { $ht }
     }
     Else {
-        Get-CimInstance -Name root\cimv2\power -Class win32_PowerPlan -Filter "ElementName = '$PlanName'"
+        Get-CimInstance -Name root\cimv2\power -Class Win32_PowerPlan -Filter "ElementName = '$PlanName'"
     }
 }
 
 #fail if older than 2008r2...need to do it here before Get-PowerPlans function runs further down
-If ( (gcim Win32_OperatingSystem).version -lt 6.1)
+
+If ([System.Environment]::OSVersion.Version -lt '6.1')
 {
     $result = @{
         changed = $false
@@ -31,7 +33,7 @@ If ( (gcim Win32_OperatingSystem).version -lt 6.1)
         power_plan_enabled = $null
         all_available_plans = $null
     }
-    Fail-Json $result "The win_power_plan Ansible module is only available on Server 2008r2 (6.1) and newer"
+    Fail-Json $result "The win_power_plan Ansible module is only available on Server 2008R2 (6.1) and newer"
 }
 
 $result = @{
@@ -60,17 +62,17 @@ If ( $all_available_plans.item($name) )
 Else
 {
     Try {
-        $Null = Invoke-CimMethod -InputObject (Get-PowerPlans $name) -MethodName Activate -ea Stop -WhatIf:$check_mode
+        $Null = Invoke-CimMethod -InputObject (Get-PowerPlans $name) -MethodName Activate -ErrorAction Stop -WhatIf:$check_mode
     }
     Catch {
-        $result.power_plan_enabled = (Get-PowerPlans $name).isactive
+        $result.power_plan_enabled = (Get-PowerPlans $name).IsActive
         $result.all_available_plans = Get-PowerPlans
         Fail-Json $result "Failed to set the new plan: $($_.Exception.Message)"
     }
 
     #set success parameters and exit
     $result.changed = $true
-    $result.power_plan_enabled = (Get-PowerPlans $name).isactive
+    $result.power_plan_enabled = (Get-PowerPlans $name).IsActive
     $result.all_available_plans = Get-PowerPlans
     Exit-Json $result
 }
