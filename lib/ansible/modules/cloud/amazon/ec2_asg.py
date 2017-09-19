@@ -1416,6 +1416,8 @@ def main():
     replace_instances = module.params.get('replace_instances')
     replace_all_instances = module.params.get('replace_all_instances')
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
+    if not region:
+        module.fail_json(msg="Region must be provided")
     try:
         connection = boto3_conn(module,
                                 conn_type='client',
@@ -1423,9 +1425,9 @@ def main():
                                 region=region,
                                 endpoint=ec2_url,
                                 **aws_connect_params)
-    except (botocore.exceptions.NoCredentialsError, botocore.exceptions.ProfileNotFound) as e:
-        module.fail_json(msg="Can't authorize connection. Check your credentials and profile.",
-                         exceptions=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+    except (botocore.exceptions.PartialCredentialsError, botocore.exceptions.ProfileNotFound) as e:
+        module.fail_json(msg="Can't authorize connection. Check your credentials and profile: %s" % str(e),
+                         exception=traceback.format_exc())
     changed = create_changed = replace_changed = False
 
     if state == 'present':
