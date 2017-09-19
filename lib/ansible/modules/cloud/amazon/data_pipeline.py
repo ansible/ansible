@@ -200,8 +200,7 @@ def pipeline_id(client, name):
     for dp in pipelines['pipelineIdList']:
         if dp['name'] == name:
             return dp['id']
-    else:
-        raise DataPipelineNotFound
+    raise DataPipelineNotFound
 
 
 def pipeline_description(client, dp_id):
@@ -233,8 +232,7 @@ def pipeline_field(client, dp_id, field):
     for field_key in dp_description['pipelineDescriptionList'][0]['fields']:
         if field_key['key'] == field:
             return field_key['stringValue']
-    else:
-        raise KeyError("Field key {0} not found!".format(field))
+    raise KeyError("Field key {0} not found!".format(field))
 
 
 def run_with_timeout(timeout, func, *func_args, **func_kwargs):

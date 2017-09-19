@@ -301,7 +301,7 @@ class ConfigManager(object):
                     except Exception as e:
                         sys.stderr.write("Error while loading ini config %s: %s" % (cfile, to_native(e)))
                 elif ftype == 'yaml':
-                    pass  # FIXME: implement, also , break down key from defs (. notation???)
+                    # FIXME: implement, also , break down key from defs (. notation???)
                     origin = cfile
 
         '''

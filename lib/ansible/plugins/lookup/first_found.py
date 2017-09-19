@@ -185,9 +185,7 @@ class LookupModule(LookupBase):
             path = self.find_file_in_search_path(variables, subdir, fn, ignore_missing=True)
             if path is not None:
                 return [path]
-        else:
-            if skip:
-                return []
-            else:
-                raise AnsibleLookupError("No file was found when using with_first_found. Use the 'skip: true' option to allow this task to be skipped if no "
-                                         "files are found")
+        if skip:
+            return []
+        raise AnsibleLookupError("No file was found when using with_first_found. Use the 'skip: true' option to allow this task to be skipped if no "
+                                 "files are found")

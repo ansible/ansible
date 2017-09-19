@@ -87,6 +87,6 @@ class TestAnsibleModuleExitJson(unittest.TestCase):
         for i in self.unparsable_cases:
             self.assertRaises(
                 ValueError,
-                lambda data: _filter_non_json_lines(data),
+                _filter_non_json_lines,
                 data=i
             )

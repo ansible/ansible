@@ -106,7 +106,7 @@ class TestManager(unittest.TestCase):
                 params = NONE_PARAMS.copy()
                 del params['vdirect_ip']
                 vdirect_file.VdirectFile(params)
-                self.assertFalse("KeyError was not thrown for missing parameter")
+                self.fail("KeyError was not thrown for missing parameter")
             except KeyError:
                 assert True
 
@@ -134,7 +134,7 @@ class TestManager(unittest.TestCase):
             file = vdirect_file.VdirectFile(NONE_PARAMS)
             try:
                 file.upload("missing_file.vm")
-                self.assertFalse("IOException was not thrown for missing file")
+                self.fail("IOException was not thrown for missing file")
             except IOError:
                 assert True
 

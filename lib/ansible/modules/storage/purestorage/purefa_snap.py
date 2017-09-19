@@ -126,7 +126,6 @@ def get_snapshot(module, array):
         for s in array.get_volume(module.params['name'], snap='true'):
             if s['name'] == snapname:
                 return snapname
-                break
     except:
         return None
 

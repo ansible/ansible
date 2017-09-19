@@ -183,7 +183,6 @@ class BaseFileCacheModule(BaseCacheModule):
                 return False
             else:
                 display.warning("error in '%s' cache plugin while trying to stat %s : %s" % (self.plugin_name, cachefile, to_bytes(e)))
-                pass
 
     def delete(self, key):
         try:

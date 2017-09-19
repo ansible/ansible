@@ -413,7 +413,7 @@ class PluginLoader:
         for i in self._get_paths():
             all_matches.extend(glob.glob(os.path.join(i, "*.py")))
 
-        for path in sorted(all_matches, key=lambda match: os.path.basename(match)):
+        for path in sorted(all_matches, key=os.path.basename):
             name = os.path.basename(os.path.splitext(path)[0])
 
             if '__init__' in name:

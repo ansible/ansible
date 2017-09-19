@@ -8,7 +8,6 @@ attribute-defined-outside-init
 bad-continuation
 bad-indentation
 bad-mcs-classmethod-argument
-bad-open-mode
 bad-whitespace
 bare-except
 blacklisted-name
@@ -34,8 +33,6 @@ invalid-encoded-data
 invalid-name
 line-too-long
 locally-disabled
-logging-format-interpolation
-logging-not-lazy
 method-hidden
 misplaced-comparison-constant
 missing-docstring
@@ -52,18 +49,14 @@ old-style-class
 pointless-statement
 pointless-string-statement
 protected-access
-raising-bad-type
 redefined-builtin
 redefined-outer-name
 redefined-variable-type
-redundant-unittest-assert
 reimported
 relative-import
-signature-differs
 simplifiable-if-statement
 super-init-not-called
 superfluous-parens
-suppressed-message
 too-few-public-methods
 too-many-ancestors
 too-many-arguments
@@ -80,10 +73,7 @@ too-many-statements
 undefined-loop-variable
 ungrouped-imports
 unidiomatic-typecheck
-unnecessary-lambda
-unnecessary-pass
 unneeded-not
-unreachable
 unsubscriptable-object
 unsupported-membership-test
 unused-argument
@@ -91,7 +81,6 @@ unused-import
 unused-variable
 unused-wildcard-import
 used-before-assignment
-useless-else-on-loop
 wildcard-import
 wrong-import-order
 wrong-import-position

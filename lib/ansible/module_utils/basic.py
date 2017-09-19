@@ -729,8 +729,7 @@ def env_fallback(*args, **kwargs):
     for arg in args:
         if arg in os.environ:
             return os.environ[arg]
-    else:
-        raise AnsibleFallbackNotFound
+    raise AnsibleFallbackNotFound
 
 
 def _lenient_lowercase(lst):

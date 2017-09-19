@@ -467,7 +467,6 @@ class TestVaultEditor(unittest.TestCase):
         try:
             ve.decrypt_file(v11_file.name)
         except errors.AnsibleError:
-            raise
             error_hit = True
 
         # verify decrypted content
@@ -493,7 +492,6 @@ class TestVaultEditor(unittest.TestCase):
         try:
             ve.rekey_file(v10_file.name, vault.match_encrypt_secret(new_secrets)[1])
         except errors.AnsibleError:
-            raise
             error_hit = True
 
         # verify decrypted content
@@ -510,7 +508,6 @@ class TestVaultEditor(unittest.TestCase):
         try:
             dec_data = vl.decrypt(fdata)
         except errors.AnsibleError:
-            raise
             error_hit = True
 
         os.unlink(v10_file.name)

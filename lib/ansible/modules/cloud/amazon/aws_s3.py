@@ -434,13 +434,11 @@ def download_s3file(module, s3, bucket, obj, dest, retries, version=None):
             if x >= retries:
                 module.fail_json(msg="Failed while downloading %s." % obj, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
             # otherwise, try again, this may be a transient timeout.
-            pass
         except SSLError as e:  # will ClientError catch SSLError?
             # actually fail on last pass through the loop.
             if x >= retries:
                 module.fail_json(msg="s3 download failed: %s." % e, exception=traceback.format_exc())
             # otherwise, try again, this may be a transient timeout.
-            pass
 
 
 def download_s3str(module, s3, bucket, obj, version=None, validate=True):
