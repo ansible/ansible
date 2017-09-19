@@ -1097,7 +1097,7 @@ macros:
   team_nxos: GGabriele jedelman8 mikewiebe privateip rahushen rcarrillocruz trishnaguha
   team_openstack: emonty j2sol juliakreger rcarrillocruz shrews thingee dagnello
   team_openswitch: Qalthos gundalow privateip
-  team_rabbitmq: chrishoffman manuel-sousa romanek-adam hyperized
+  team_rabbitmq: chrishoffman manuel-sousa hyperized
   team_rhn: alikins barnabycourt flossware vritant
   team_tower: ghjm jlaska matburt wwitzel3
   team_vmware: dagwieers dav1x jctanner nerzhul akasurde
