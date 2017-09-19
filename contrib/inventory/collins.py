@@ -212,7 +212,7 @@ class CollinsInventory(object):
                 cur_page += 1
                 num_retries = 0
             except:
-                self.log.error("Error while communicating with Collins, retrying:\n%s" % traceback.format_exc())
+                self.log.error("Error while communicating with Collins, retrying:\n%s", traceback.format_exc())
                 num_retries += 1
         return assets
 
@@ -281,7 +281,7 @@ class CollinsInventory(object):
         try:
             server_assets = self.find_assets()
         except:
-            self.log.error("Error while locating assets from Collins:\n%s" % traceback.format_exc())
+            self.log.error("Error while locating assets from Collins:\n%s", traceback.format_exc())
             return False
 
         for asset in server_assets:
@@ -305,7 +305,7 @@ class CollinsInventory(object):
             if self.prefer_hostnames and self._asset_has_attribute(asset, 'HOSTNAME'):
                 asset_identifier = self._asset_get_attribute(asset, 'HOSTNAME')
             elif 'ADDRESSES' not in asset:
-                self.log.warning("No IP addresses found for asset '%s', skipping" % asset)
+                self.log.warning("No IP addresses found for asset '%s', skipping", asset)
                 continue
             elif len(asset['ADDRESSES']) < ip_index + 1:
                 self.log.warning(
