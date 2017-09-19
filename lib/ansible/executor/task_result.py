@@ -1,21 +1,7 @@
-# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
 
-# Make coding more python3-ish
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -73,7 +59,7 @@ class TaskResult:
         return self._check_key('unreachable')
 
     def _check_key(self, key):
-        '''get a specific key from the result or it's items'''
+        '''get a specific key from the result or its items'''
 
         if isinstance(self._result, dict) and key in self._result:
             return self._result.get(key, False)
