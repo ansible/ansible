@@ -33,7 +33,7 @@ If ([System.Environment]::OSVersion.Version -lt '6.1')
         power_plan_enabled = $null
         all_available_plans = $null
     }
-    Fail-Json $result "The win_power_plan Ansible module is only available on Server 2008R2 (6.1) and newer"
+    Fail-Json $result "The win_power_plan Ansible module is only available on Server 2008r2 (6.1) and newer"
 }
 
 $result = @{
