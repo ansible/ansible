@@ -95,8 +95,10 @@ nacl:
             type: list of list
 '''
 
+import traceback
+
 try:
-    from botocore.exceptions import ClientError, NoCredentialsError
+    from botocore.exceptions import ClientError, NoCredentialsError, ProfileNotFound
 except ImportError:
     pass  # caught by imported HAS_BOTO3
 
@@ -188,8 +190,11 @@ def main():
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
 
     if region:
-        connection = boto3_conn(module, conn_type='client', resource='ec2',
-                                region=region, endpoint=ec2_url, **aws_connect_params)
+        try:
+            connection = boto3_conn(module, conn_type='client', resource='ec2',
+                                    region=region, endpoint=ec2_url, **aws_connect_params)
+        except (NoCredentialsError, ProfileNotFound) as e:
+            module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
     else:
         module.fail_json(msg="region must be specified")
 
