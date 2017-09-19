@@ -166,6 +166,9 @@ def main():
         cloud = shade.operator_cloud(**module.params)
 
         service = cloud.get_service(service_name)
+        if service is None:
+            module.fail_json(msg='Service %s does not exist' % service_name)
+
         filters = dict(service_id=service.id, interface=interface)
         if region is not None:
             filters['region'] = region
