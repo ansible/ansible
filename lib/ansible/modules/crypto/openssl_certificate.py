@@ -556,7 +556,8 @@ class AssertOnlyCertificate(Certificate):
                         if (not self.extendedKeyUsage_strict and not all(x in current_xku for x in extKeyUsage)) or \
                            (self.extendedKeyUsage_strict and not set(extKeyUsage) == set(current_xku)):
                             self.message.append(
-                                'Invalid extendedKeyUsage component (got %s, expected all of %s to be present)' % (str(extension).split(', '), self.extendedKeyUsage)
+                                'Invalid extendedKeyUsage component (got %s, expected all of %s to be present)' % (str(extension).split(', '),
+                                                                                                                   self.extendedKeyUsage)
                             )
 
         def _validate_subjectAltName():
