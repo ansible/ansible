@@ -57,7 +57,7 @@ class TestKafka(unittest.TestCase):
     def test_kafka_configs_describe_one(self):
         set_module_args({
             'executable': None,
-			'entity_type': 'topics',
+            'entity_type': 'topics',
             'entity_name': 'georgette',
             'zookeeper': 'carotte.localhost:2181',
             'describe': True,
@@ -73,12 +73,15 @@ class TestKafka(unittest.TestCase):
                 kafka_configs.main()
             self.assertFalse(result.exception.args[0]['changed'])
 
-        mock_run_command.assert_called_once_with('/usr/bin/kafka-configs --describe --zookeeper carotte.localhost:2181 --entity-type topics --entity-name georgette')
+        mock_run_command.assert_called_once_with('/usr/bin/kafka-configs --describe '
+                                                 '--zookeeper carotte.localhost:2181 '
+                                                 '--entity-type topics '
+                                                 '--entity-name georgette')
 
     def test_kafka_configs_describe_all(self):
         set_module_args({
             'executable': None,
-			'entity_type': 'topics',
+            'entity_type': 'topics',
             'zookeeper': 'carotte.localhost:2181',
             'describe': True,
         })
@@ -96,12 +99,14 @@ class TestKafka(unittest.TestCase):
                 kafka_configs.main()
             self.assertFalse(result.exception.args[0]['changed'])
 
-        mock_run_command.assert_called_once_with('/usr/bin/kafka-configs --describe --zookeeper carotte.localhost:2181 --entity-type topics')
+        mock_run_command.assert_called_once_with('/usr/bin/kafka-configs --describe '
+                                                 '--zookeeper carotte.localhost:2181 '
+                                                 '--entity-type topics')
 
     def test_kafka_configs_add_config(self):
         set_module_args({
             'executable': None,
-			'entity_type': 'topics',
+            'entity_type': 'topics',
             'entity_name': 'georgette',
             'configs': {'cleanup.policy': 'delete', 'compression.type': 'gzip'},
             'zookeeper': 'carotte.localhost:2181',
@@ -116,17 +121,17 @@ class TestKafka(unittest.TestCase):
                 kafka_configs.main()
             self.assertTrue(result.exception.args[0]['changed'])
 
-        mock_run_command.assert_called_once_with('/usr/bin/kafka-configs --alter
-                                                 --zookeeper carotte.localhost:2181
-                                                 --entity-type topics
-                                                 --entity-name georgette
-                                                 --add-config cleanup.policy=delete,
-                                                 compression.type=gzip')
+        mock_run_command.assert_called_once_with('/usr/bin/kafka-configs --alter '
+                                                 '--zookeeper carotte.localhost:2181 '
+                                                 '--entity-type topics '
+                                                 '--entity-name georgette '
+                                                 '--add-config cleanup.policy=delete,'
+                                                 'compression.type=gzip')
 
     def test_kafka_configs_add_config_no_change(self):
         set_module_args({
             'executable': None,
-			'entity_type': 'topics',
+            'entity_type': 'topics',
             'entity_name': 'georgette',
             'configs': {'cleanup.policy': 'delete', 'compression.type': 'gzip'},
             'zookeeper': 'carotte.localhost:2181',
@@ -141,17 +146,17 @@ class TestKafka(unittest.TestCase):
                 kafka_configs.main()
             self.assertFalse(result.exception.args[0]['changed'])
 
-        mock_run_command.assert_called_once_with('/usr/bin/kafka-configs --alter
-                                                 --zookeeper carotte.localhost:2181
-                                                 --entity-type topics
-                                                 --entity-name georgette
-                                                 --add-config cleanup.policy=delete,
-                                                 compression.type=gzip')
+        mock_run_command.assert_called_once_with('/usr/bin/kafka-configs --alter '
+                                                 '--zookeeper carotte.localhost:2181 '
+                                                 '--entity-type topics '
+                                                 '--entity-name georgette '
+                                                 '--add-config cleanup.policy=delete,'
+                                                 'compression.type=gzip')
 
     def test_kafka_configs_del_config(self):
         set_module_args({
             'executable': None,
-			'entity_type': 'topics',
+            'entity_type': 'topics',
             'entity_name': 'georgette',
             'configs': {'cleanup.policy': 'delete', 'compression.type': 'gzip'},
             'zookeeper': 'carotte.localhost:2181',
@@ -166,19 +171,19 @@ class TestKafka(unittest.TestCase):
                 kafka_configs.main()
             self.assertTrue(result.exception.args[0]['changed'])
 
-        mock_run_command.assert_called_once_with('/usr/bin/kafka-configs --alter
-                                                 --zookeeper carotte.localhost:2181
-                                                 --entity-type topics
-                                                 --entity-name georgette
-                                                 --delete-config cleanup.policy=delete,
-                                                 compression.type=gzip')
+        mock_run_command.assert_called_once_with('/usr/bin/kafka-configs --alter '
+                                                 '--zookeeper carotte.localhost:2181 '
+                                                 '--entity-type topics '
+                                                 '--entity-name georgette '
+                                                 '--delete-config cleanup.policy=delete,'
+                                                 'compression.type=gzip')
 
     # Whether you have something to delete or not,
     # the kafka output is still the same: 'Updated config for [...]'
     def test_kafka_configs_del_config_no_change(self):
         set_module_args({
             'executable': None,
-			'entity_type': 'topics',
+            'entity_type': 'topics',
             'entity_name': 'georgette',
             'configs': {'cleanup.policy': 'delete', 'compression.type': 'gzip'},
             'zookeeper': 'carotte.localhost:2181',
@@ -193,9 +198,9 @@ class TestKafka(unittest.TestCase):
                 kafka_configs.main()
             self.assertFalse(result.exception.args[0]['changed'])
 
-        mock_run_command.assert_called_once_with('/usr/bin/kafka-configs --alter
-                                                 --zookeeper carotte.localhost:2181
-                                                 --entity-type topics
-                                                 --entity-name georgette
-                                                 --delete-config cleanup.policy=delete,
-                                                 compression.type=gzip')
+        mock_run_command.assert_called_once_with('/usr/bin/kafka-configs --alter '
+                                                 '--zookeeper carotte.localhost:2181 '
+                                                 '--entity-type topics '
+                                                 '--entity-name georgette '
+                                                 '--delete-config cleanup.policy=delete,'
+                                                 'compression.type=gzip')
