@@ -87,6 +87,9 @@ There have been many changes to the implementation of vars plugins, but both use
 
 The most notable difference to users is that vars plugins now get invoked on demand instead of at inventory build time.  This should make them more efficient for large inventories, especially when using a subset of the hosts.
 
+.. note:: This also creates a difference with group/host_vars when using them adjacent to playbooks. Before, the 'first' playbook loaded determined the variables; now the 'current' playbook does. We are looking to fix this soon, since 'all playbooks' in the path should be considered for variable loading.
+
+
 Inventory plugins
 -----------------
 
@@ -112,9 +115,16 @@ To control timeouts use ``command_timeout`` rather than the previous top level `
 See :ref:`Ansible Network debug guide <network_debug_troubleshooting>` for more information.
 
 
-Configuration API
-=================
+Configuration
+=============
 
-The configuration system has had some major changes, but users should be unaffected.  Developers that were working directly with the previous API should revisit their usage as some methods (for example, ``get_config``) were  kept for backwards compatibility but will warn users that the function has been deprecated.
+
+The configuration system has had some major changes. Users should be unaffected except for the following:
+
+ * All relative paths defined are relative to the `ansible.cfg` file itself. Previously they varied by setting. The new behavior should be more predictable.
+ * A new macro ``{{CWD}}`` is available for paths, which will make paths relative to the 'current working directory',
+   this is unsafe but some users really want to rely on this behaviour.
+
+Developers that were working directly with the previous API should revisit their usage as some methods (for example, ``get_config``) were  kept for backwards compatibility but will warn users that the function has been deprecated.
 
 The new configuration has been designed to minimize the need for code changes in core for new plugins.  The plugins just need to document their settings and the configuration system will use the documentation to provide what they need. This is still a work in progress; currently only 'callback' and 'connection' plugins support this.  More  details will be added to the specific plugin developer guides.
