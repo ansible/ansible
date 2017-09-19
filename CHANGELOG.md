@@ -14,6 +14,7 @@ Ansible Changes By Release
 * Fix for win_file to respect check mode when deleting directories
 * Fix for Ansible.ModuleUtils.Legacy.psm1 to return list params correctly
 * Fix for a proper logout in the module ovirt_vms
+* Fixed docs for 'password' lookup
 
 <a id="2.4"></a>
 
