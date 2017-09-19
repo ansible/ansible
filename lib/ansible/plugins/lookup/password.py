@@ -16,9 +16,9 @@ DOCUMENTATION = """
     short_description: retrieve or generate a random password, stored in a file
     description:
       -  generates a random plaintext password and stores it in a file at a given filepath.
-      - 'If the file exists previously, it will retrieve its contents, behaving just like with_file.
-        Usage of variables like C("{{ inventory_hostname }}") in the filepath can be used to set up random passwords per host
-        (which simplifies password management in C('host_vars') variables).'
+      - If the file exists previously, it will retrieve its contents, behaving just like with_file.
+      - 'Usage of variables like C("{{ inventory_hostname }}") in the filepath can be used to set up random passwords per host,
+        which simplifies password management in C("host_vars") variables.'
       - A special case is using /dev/null as a path. The password lookup will generate a new random password each time,
         but will not write it to /dev/null. This can be used when you need a password without storing it on the controller.
     options:
@@ -68,7 +68,7 @@ EXAMPLES = """
     priv: "{{ client }}_{{ tier }}_{{ role }}.*:ALL"
 
 - name: create a mysql user with a random password using only ascii letters
-   mysql_user: name={{ client }} password="{{ lookup('password', '/tmp/passwordfile chars=ascii_letters') }}" priv={{ client }}_{{ tier }}_{{ role }}.*:ALL
+   mysql_user: name={{ client }} password="{{ lookup('password', '/tmp/passwordfile chars=ascii_letters') }}" priv='{{ client }}_{{ tier }}_{{ role }}.*:ALL'
 
 - name: create a mysql user with a random password using only digits
   mysql_user:
