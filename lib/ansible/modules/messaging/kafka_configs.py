@@ -263,10 +263,10 @@ def main():
 
     if not module.get_bin_path('kafka-configs') and module.params['executable'] is None:
         module.fail_json(msg='Executable not provided.')
-    if module.params['executable'] is not None and not os.path.isfile(module.params['executable']):
-        module.fail_json(msg='%s not found.' % (module.params['executable']))
-    if not is_executable(module.params['executable']):
-        module.fail_json(msg='%s not executable.' % (module.params['executable']))
+    if module.params['executable'] is not None and \
+            (not os.path.isfile(module.params['executable']) or
+             not is_executable(module.params['executable'])):
+        module.fail_json(msg='%s not found or not executable.' % (module.params['executable']))
 
     try:
         kc = KafkaConfigs(module)
