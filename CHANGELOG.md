@@ -8,11 +8,12 @@ Ansible Changes By Release
 ### Bugfixes
 
 * Update openssl\* module documentation to show openssl-0.16 is the minimum version
-* Fix openssl_certificate's csr handling.
+* Fix openssl_certificate's csr handling
 * Python-3 fixes
   * Fix openssl_certificate parameter assertion on Python3
 * Fix for win_file to respect check mode when deleting directories
 * Fix for Ansible.ModuleUtils.Legacy.psm1 to return list params correctly
+* Fix for a proper logout in the module ovirt_vms
 
 <a id="2.4"></a>
 
