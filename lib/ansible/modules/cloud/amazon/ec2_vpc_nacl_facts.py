@@ -173,16 +173,16 @@ def nacl_entry_to_list(entry):
     else:
         elist.append(None)
 
-    if entry['protocol'] == '1':
-        elist = elist + [-1, -1]
-    else:
-        elist = elist + [None, None, None, None]
+    elist = elist + [None, None, None, None]
 
-    if 'icmp_type_code' in entry:
-        elist[4] = entry['icmp_type_code']['type']
-        elist[5] = entry['icmp_type_code']['code']
+    if entry['protocol'] in ('1', '58'):
+        elist[4] = entry.get('icmp_type_code', {}).get('type')
+        elist[5] = entry.get('icmp_type_code', {}).get('code')
 
-    if 'port_range' in entry:
+    if entry['protocol'] not in ('1', '6', '17', '58'):
+        elist[6] = 0
+        elist[7] = 65535
+    elif 'port_range' in entry:
         elist[6] = entry['port_range']['from']
         elist[7] = entry['port_range']['to']
 
