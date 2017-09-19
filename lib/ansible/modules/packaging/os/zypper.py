@@ -164,16 +164,13 @@ EXAMPLES = '''
     name: '*'
     state: latest
     type: patch
+
+# install rpm package in /tmp/folder using root option
 - zypper:
     name: /tmp/nginx-1.8.0-1.sles12.ngx.x86_64.rpm
     state: installed
     disable_gpg_check: yes
     extra_args_precommand: --root /tmp/folder
-# Perform a dist-upgrade with additional arguments
-- zypper:
-    name: '*'
-    state: dist-upgrade
-    extra_args: '--no-allow-vendor-change --allow-arch-change'
 
 # Perform a dist-upgrade with additional arguments
 - zypper:
