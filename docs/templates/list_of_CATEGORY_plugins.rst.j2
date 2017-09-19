@@ -9,7 +9,7 @@
 {% if category['_modules'] %}
 
 {% for module in category['_modules'] | sort %}
-  @{ module }@{% if module_info[module]['deprecated'] %} **(D)**{% endif%} - @{ module_info[module]['doc']['short_description'] }@ <@{ module }@_module>
+  @{ module }@{% if module_info[module]['deprecated'] %} **(D)**{% endif%}{% if module_info[module]['doc']['short_description'] %} - @{ module_info[module]['doc']['short_description'] }@{% endif %} <plugins/@{ module_info[module]['primary_category'] }@/@{ module }@>
 {% endfor %}
 {% endif %}
 
@@ -20,8 +20,7 @@
 .. toctree:: :maxdepth: 1
 
 {% for module in info['_modules'] | sort %}
-{#  :ref:`@{ module }@`{% if module_info[module]['deprecated'] %} **(D)**{% endif%} @{ module_info[module]['doc']['short_description'] }@ #}
-    @{ module }@{% if module_info[module]['deprecated'] %} **(D)**{% endif%} @{ module_info[module]['doc']['short_description'] }@ <@{ module }@_module>
+  :ref:`@{ module }@`{% if module_info[module]['deprecated'] %} **(D)**{% endif%} @{ module_info[module]['doc']['short_description'] }@
 {% endfor %}
 
 {% endfor %}

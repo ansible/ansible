@@ -3,8 +3,6 @@ Introduction To Ad-Hoc Commands
 
 .. contents:: Topics
 
-.. highlight:: bash
-
 The following examples show how to use `/usr/bin/ansible` for running
 ad hoc tasks. 
 
