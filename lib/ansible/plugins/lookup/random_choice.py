@@ -1,37 +1,41 @@
 # (c) 2013, Michael DeHaan <michael.dehaan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+    lookup: random_choice
+    author: Michael DeHaan <michael.dehaan@gmail.com>
+    version_added: "1.1"
+    short_description: return random element from list
+    description:
+      - The 'random_choice' feature can be used to pick something at random. While it's not a load balancer (there are modules for those),
+        it can somewhat be used as a poor man's load balancer in a MacGyver like situation.
+      - At a more basic level, they can be used to add chaos and excitement to otherwise predictable automation environments.
+"""
+
+EXAMPLES = """
+- name: Magic 8 ball for MUDs
+  debug:
+    msg: "{{ item }}"
+  with_random_choice:
+     - "go through the door"
+     - "drink from the goblet"
+     - "press the red button"
+     - "do nothing"
+"""
+
+RETURN = """
+  _raw:
+    description:
+      - random item
+"""
 import random
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native
 from ansible.plugins.lookup import LookupBase
-
-# useful for introducing chaos ... or just somewhat reasonably fair selection
-# amongst available mirrors
-#
-#    tasks:
-#        - debug: msg=$item
-#          with_random_choice:
-#             - one
-#             - two
-#             - three
 
 
 class LookupModule(LookupBase):
