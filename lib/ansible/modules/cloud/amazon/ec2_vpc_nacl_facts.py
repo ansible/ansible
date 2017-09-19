@@ -155,9 +155,16 @@ def nacl_entry_to_list(entry):
 
     elist = [entry['rule_number'],
              PROTOCOL_NAMES[entry['protocol']],
-             entry['rule_action'],
-             entry['cidr_block']
+             entry['rule_action']
              ]
+
+    if entry.get('cidr_block'):
+        elist.append(entry['cidr_block'])
+    elif entry.get('ipv6_cidr_block'):
+        elist.append(entry['ipv6_cidr_block'])
+    else:
+        elist.append(None)
+
     if entry['protocol'] == '1':
         elist = elist + [-1, -1]
     else:
