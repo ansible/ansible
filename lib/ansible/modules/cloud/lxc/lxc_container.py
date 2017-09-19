@@ -570,7 +570,7 @@ def create_script(command):
     """
 
     (fd, script_file) = tempfile.mkstemp(prefix='lxc-attach-script')
-    f = os.fdopen(fd, 'wb')
+    f = os.fdopen(fd, 'w')
     try:
         f.write(ATTACH_TEMPLATE % {'container_command': command})
         f.flush()
@@ -721,7 +721,7 @@ class LxcContainerManagement(object):
             return False
 
         container_config_file = self.container.config_file_name
-        with open(container_config_file, 'rb') as f:
+        with open(container_config_file, 'r') as f:
             container_config = f.readlines()
 
         # Note used ast literal_eval because AnsibleModule does not provide for
@@ -762,7 +762,7 @@ class LxcContainerManagement(object):
             if container_state != 'stopped':
                 self.container.stop()
 
-            with open(container_config_file, 'wb') as f:
+            with open(container_config_file, 'w') as f:
                 f.writelines(container_config)
 
             self.state_change = True
