@@ -123,8 +123,8 @@ def list_ec2_vpc_nacls(connection, module):
 
     try:
         nacls = connection.describe_network_acls(NetworkAclIds=nacl_ids, Filters=filters)
-    except (ClientError, NoCredentialsError) as e:
-        module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+    except ClientError as e:
+        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     # Turn the boto3 result in to ansible_friendly_snaked_names
     snaked_nacls = []
