@@ -33,7 +33,6 @@ invalid-encoded-data
 invalid-name
 line-too-long
 locally-disabled
-logging-format-interpolation
 method-hidden
 misplaced-comparison-constant
 missing-docstring
