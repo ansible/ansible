@@ -1,21 +1,51 @@
 # (c) 2013, Jan-Piet Mens <jpmens(at)gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+DOCUMENTATION = """
+    lookup: csvfile
+    author: Jan-Piet Mens (@jpmens) <jpmens(at)gmail.com>
+    version_added: "1.5"
+    short_description: read data from a TSV or CSV file
+    description:
+      - The csvfile lookup reads the contents of a file in CSV (comma-separated value) format.
+        The lookup looks for the row where the first column matches keyname, and returns the value in the second column, unless a different column is specified.
+    options:
+      col:
+        description:  column to return (0 index).
+        default: "1"
+      default:
+        description: what to return if the value is not found in the file.
+        default: ''
+      delimiter:
+        description: field separator in the file, for a tab you can specify "TAB" or "t".
+        default: TAB
+      file:
+        description: name of the CSV/TSV file to open.
+        default: ansible.csv
+      encoding:
+        description: Encoding (character set) of the used CSV file.
+        default: utf-8
+        version_added: "2.1"
+    notes:
+      - The default is for TSV files (tab delimeted) not CSV (comma delimted) ... yes the name is misleading.
+"""
+
+EXAMPLES = """
+- name:  Match 'Li' on the first column, return the second column (0 based index)
+  debug: msg="The atomic number of Lithium is {{ lookup('csvfile', 'Li file=elements.csv delimiter=,') }}"
+
+- name: msg="Match 'Li' on the first column, but return the 3rd column (columns start counting after the match)"
+  debug: msg="The atomic mass of Lithium is {{ lookup('csvfile', 'Li file=elements.csv delimiter=, col=2') }}"
+"""
+
+RETURN = """
+  _raw:
+    description:
+      - value(s) stored in file column
+"""
 
 import codecs
 import csv
