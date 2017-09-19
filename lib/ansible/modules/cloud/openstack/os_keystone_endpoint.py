@@ -37,7 +37,6 @@ options:
    region:
      description:
         - Region that the service belongs to. Note that I(region_name) is used for authentication.
-     required: true
    enabled:
      description:
         - Is the service enabled.
@@ -140,7 +139,7 @@ def main():
         service=dict(required=True),
         interface=dict(required=True, choices=['admin', 'public', 'internal']),
         url=dict(required=True),
-        region=dict(required=True),
+        region=dict(required=False, default=None),
         enabled=dict(default=True, type='bool'),
         state=dict(default='present', choices=['absent', 'present']),
     )
@@ -167,9 +166,10 @@ def main():
         cloud = shade.operator_cloud(**module.params)
 
         service = cloud.get_service(service_name)
-        endpoints = cloud.search_endpoints(filters=dict(region=region,
-                                                        service_id=service.id,
-                                                        interface=interface))
+        filters = dict(service_id=service.id, interface=interface)
+        if region is not None:
+            filters['region'] = region
+        endpoints = cloud.search_endpoints(filters=filters)
 
         if len(endpoints) > 1:
             module.fail_json(msg='Service %s, interface %s and region %s are '
