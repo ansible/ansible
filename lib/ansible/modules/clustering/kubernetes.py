@@ -246,6 +246,7 @@ USER_AGENT = "ansible-k8s-module/0.0.1"
 
 def decode_cert_data(module):
     return
+    # pylint: disable=unreachable
     d = module.params.get("certificate_authority_data")
     if d and not d.startswith("-----BEGIN"):
         module.params["certificate_authority_data"] = base64.b64decode(d)

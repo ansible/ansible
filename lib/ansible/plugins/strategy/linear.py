@@ -266,7 +266,6 @@ class StrategyModule(StrategyBase):
                                 # just ignore any errors during task name templating,
                                 # we don't care if it just shows the raw name
                                 display.debug("templating failed for some reason")
-                                pass
                             display.debug("here goes the callback...")
                             self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
                             task.name = saved_name

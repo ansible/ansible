@@ -430,18 +430,18 @@ class TaskExecutor:
         except AnsibleError:
             # loop error takes precedence
             if self._loop_eval_error is not None:
-                raise self._loop_eval_error
+                raise self._loop_eval_error  # pylint: disable=raising-bad-type
             # skip conditional exception in the case of includes as the vars needed might not be available except in the included tasks or due to tags
             if self._task.action not in ['include', 'include_tasks', 'include_role']:
                 raise
 
         # Not skipping, if we had loop error raised earlier we need to raise it now to halt the execution of this task
         if self._loop_eval_error is not None:
-            raise self._loop_eval_error
+            raise self._loop_eval_error  # pylint: disable=raising-bad-type
 
         # if we ran into an error while setting up the PlayContext, raise it now
         if context_validation_error is not None:
-            raise context_validation_error
+            raise context_validation_error  # pylint: disable=raising-bad-type
 
         # if this task is a TaskInclude, we just return now with a success code so the
         # main thread can expand the task list for the given host

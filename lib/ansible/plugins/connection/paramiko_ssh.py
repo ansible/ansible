@@ -502,7 +502,6 @@ class Connection(ConnectionBase):
                 # unable to save keys, including scenario when key was invalid
                 # and caught earlier
                 traceback.print_exc()
-                pass
             fcntl.lockf(KEY_LOCK, fcntl.LOCK_UN)
 
         self.ssh.close()

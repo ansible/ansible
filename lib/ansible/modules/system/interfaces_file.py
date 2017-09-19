@@ -306,7 +306,6 @@ def setInterfaceOption(module, lines, iface, option, raw_value, state):
         module.fail_json(msg="Error: unsupported state %s, has to be either present or absent" % state)
 
     return changed, lines
-    pass
 
 
 def addOptionAfterLine(option, value, iface, lines, last_line_dict, iface_options):
