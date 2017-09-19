@@ -111,8 +111,7 @@ def main():
             if parts != '':
                 return parts
 
-        else:
-            return ''
+        return ''
 
     def run_command(command):
         """Runs a monit command, and returns the new status."""

@@ -668,8 +668,7 @@ class LxcContainerManagement(object):
             build_command.append(
                 '%s %s' % (key, value)
             )
-        else:
-            return build_command
+        return build_command
 
     def _get_vars(self, variables):
         """Return a dict of all variables as found within the module.
@@ -689,8 +688,7 @@ class LxcContainerManagement(object):
             _var = self.module.params.get(k)
             if _var not in false_values:
                 return_dict[v] = _var
-        else:
-            return return_dict
+        return return_dict
 
     def _run_command(self, build_command, unsafe_shell=False):
         """Return information from running an Ansible Command.
@@ -975,16 +973,15 @@ class LxcContainerManagement(object):
                 time.sleep(1)
             else:
                 return True
-        else:
-            self.failure(
-                lxc_container=self._container_data(),
-                error='Failed to start container'
-                      ' [ %s ]' % self.container_name,
-                rc=1,
-                msg='The container [ %s ] failed to start. Check to lxc is'
-                    ' available and that the container is in a functional'
-                    ' state.' % self.container_name
-            )
+        self.failure(
+            lxc_container=self._container_data(),
+            error='Failed to start container'
+                  ' [ %s ]' % self.container_name,
+            rc=1,
+            msg='The container [ %s ] failed to start. Check to lxc is'
+                ' available and that the container is in a functional'
+                ' state.' % self.container_name
+        )
 
     def _check_archive(self):
         """Create a compressed archive of a container.

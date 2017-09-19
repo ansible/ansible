@@ -81,7 +81,6 @@ unused-import
 unused-variable
 unused-wildcard-import
 used-before-assignment
-useless-else-on-loop
 wildcard-import
 wrong-import-order
 wrong-import-position
