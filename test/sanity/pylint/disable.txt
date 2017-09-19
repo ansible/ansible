@@ -29,7 +29,6 @@ global-variable-not-assigned
 global-variable-undefined
 import-error
 import-self
-invalid-encoded-data
 invalid-name
 line-too-long
 locally-disabled
