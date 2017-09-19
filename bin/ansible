@@ -37,15 +37,12 @@ import shutil
 import sys
 import traceback
 
-import ansible.constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
-from ansible.utils.display import Display
 from ansible.module_utils._text import to_text
 
 
-########################################
-# OUTPUT OF LAST RESORT
 class LastResort(object):
+    # OUTPUT OF LAST RESORT
     def display(self, msg, log_only=None):
         print(msg, file=sys.stderr)
 
@@ -53,11 +50,17 @@ class LastResort(object):
         print(msg, file=sys.stderr)
 
 
-########################################
-
 if __name__ == '__main__':
 
     display = LastResort()
+
+    try:  # bad ANSIBLE_CONFIG or config options can force ugly stacktrace
+        import ansible.constants as C
+        from ansible.utils.display import Display
+    except AnsibleOptionsError as e:
+        display.error(to_text(e), wrap_text=False)
+        sys.exit(5)
+
     cli = None
     me = os.path.basename(sys.argv[0])
 
