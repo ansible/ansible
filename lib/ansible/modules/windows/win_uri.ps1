@@ -1,26 +1,13 @@
 #!powershell
-# This file is part of Ansible
-#
-# Copyright 2015, Corwin Brown <corwin@corwinbrown.com>
-# Copyright 2017, Dag Wieers <dag@wieers.com>
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# WANT_JSON
-# POWERSHELL_COMMON
+# Copyright: (c) 2015, Corwin Brown <corwin@corwinbrown.com>
+# Copyright: (c) 2017, Dag Wieers (@dagwieers) <dag@wieers.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+#Requires -Module Ansible.ModuleUtils.Legacy.psm1
 
 $ErrorActionPreference = "Stop"
+
 $safe_methods = @("GET", "HEAD")
 $content_keys = @("Content", "Images", "InputFields", "Links", "RawContent")
 
@@ -29,7 +16,7 @@ Function ConvertTo-SnakeCase($input_string) {
     return $snake_case.ToLower()
 }
 
-$params = Parse-Args $args -supports_check_mode $true
+$params = Parse-Args -arguments $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
 $url = Get-AnsibleParam -obj $params -name "url" -type "str" -failifempty $true
@@ -56,12 +43,12 @@ $client_cert = Get-AnsibleParam -obj $params -name "client_cert" -type "path"
 
 if ($creates -and (Test-Path -Path $creates)) {
     $result.skipped = $true
-    Exit-Json $result "The 'creates' file or directory ($creates) already exists."
+    Exit-Json -obj $result -message "The 'creates' file or directory ($creates) already exists."
 }
 
 if ($removes -and -not (Test-Path -Path $removes)) {
     $result.skipped = $true
-    Exit-Json $result "The 'removes' file or directory ($removes) does not exist."
+    Exit-Json -obj $result -message "The 'removes' file or directory ($removes) does not exist."
 }
 
 $result = @{
@@ -110,7 +97,7 @@ if ($client_cert) {
     Try {
         $webrequest_opts.Certificate = Get-PfxCertificate -FilePath $client_cert
     } Catch {
-        Fail-Json $result "Failed to read client certificate '$client_cert'"
+        Fail-Json -obj $result -message "Failed to read client certificate '$client_cert'"
     }
 }
 
@@ -127,6 +114,8 @@ if ($dest -and -not $check_mode) {
 
 if ($user -and $password) {
     $webrequest_opts.Credential = New-Object System.Management.Automation.PSCredential($user, $($password | ConvertTo-SecureString -AsPlainText -Force))
+} elif ($user -or $password) {
+    Add-Warning -obj $result -message "Both 'user' and 'password' parameters are required together, skipping authentication"
 }
 
 try {
@@ -137,7 +126,6 @@ try {
 
 # TODO: When writing to a file, this is not idempotent !
 # FIXME: Assume a change when we are writing to a file
-# FIXME: Implement diff-mode
 if ($dest) {
     $result.changed = $true
 }
@@ -151,7 +139,7 @@ ForEach ($prop in $response.psobject.properties) {
 }
 
 if ($status_code -notcontains $response.StatusCode) {
-    Fail-Json $result "Status code of request '$($response.StatusCode)' is not in list of valid status codes $status_code."
+    Fail-Json -obj $result -message "Status code of request '$($response.StatusCode)' is not in list of valid status codes $status_code."
 }
 
-Exit-Json $result
+Exit-Json -obj $result
