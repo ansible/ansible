@@ -956,13 +956,7 @@ try {
 
 # try and get the task at the path
 $task = Test-TaskExists -task_folder $task_folder -name $name
-
-$task_path = $null
-if ($path.EndsWith("`\")) {
-    $task_path = "$path$name"
-} else {
-    $task_path = "$path\$name"
-}
+$task_path = Join-Path -Path $path -ChildPath $name
 
 if ($state -eq "absent") {
     if ($task -ne $null) {

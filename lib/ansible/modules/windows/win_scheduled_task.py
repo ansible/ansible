@@ -106,6 +106,9 @@ options:
         description:
         - The start time for the task, even if the trigger meets the other
           start criteria, it won't start until this time is met.
+        - If you wish to run a task at 9am on a day you still need to specify
+          the date on which the trigger is activated, you can set any date even
+          ones in the past.
         - Required when C(type) is C(daily), C(monthlydow), C(monthly),
           C(time), C(weekly), (session_state_change).
         - Optional for the rest of the trigger types.
@@ -155,7 +158,9 @@ options:
         - Optional when C(type=monthlydow).
       days_of_month:
         description:
-        - The days of the month for the triggers.
+        - The days of the month from 1 to 31 for the triggers.
+        - If you wish to set the trigger for the last day of any month
+          use C(run_on_last_day_of_month).
         - Can be a list or comma separated string of day numbers.
         - Required when C(type=monthly).
       weeks_of_month:
