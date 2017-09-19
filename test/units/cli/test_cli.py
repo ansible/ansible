@@ -54,6 +54,32 @@ class TestCliBuildVaultIds(unittest.TestCase):
         res = cli.CLI.build_vault_ids([], create_new_password=True)
         self.assertEqual(res, ['default@prompt_ask_vault_pass'])
 
+    def test_create_new_password_no_vault_id_no_auto_prompt(self):
+        res = cli.CLI.build_vault_ids([], auto_prompt=False, create_new_password=True)
+        self.assertEqual(res, [])
+
+    def test_no_vault_id_no_auto_prompt(self):
+        # similate 'ansible-playbook site.yml' with out --ask-vault-pass, should not prompt
+        res = cli.CLI.build_vault_ids([], auto_prompt=False)
+        self.assertEqual(res, [])
+
+    def test_no_vault_ids_auto_prompt(self):
+        # create_new_password=False
+        # simulate 'ansible-vault edit encrypted.yml'
+        res = cli.CLI.build_vault_ids([], auto_prompt=True)
+        self.assertEqual(res, ['default@prompt_ask_vault_pass'])
+
+    def test_no_vault_ids_auto_prompt_ask_vault_pass(self):
+        # create_new_password=False
+        # simulate 'ansible-vault edit --ask-vault-pass encrypted.yml'
+        res = cli.CLI.build_vault_ids([], auto_prompt=True, ask_vault_pass=True)
+        self.assertEqual(res, ['default@prompt_ask_vault_pass'])
+
+    def test_create_new_password_auto_prompt(self):
+        # simulate 'ansible-vault encrypt somefile.yml'
+        res = cli.CLI.build_vault_ids([], auto_prompt=True, create_new_password=True)
+        self.assertEqual(res, ['default@prompt_ask_vault_pass'])
+
     def test_create_new_password_no_vault_id_ask_vault_pass(self):
         res = cli.CLI.build_vault_ids([], ask_vault_pass=True,
                                       create_new_password=True)
@@ -74,7 +100,8 @@ class TestCliBuildVaultIds(unittest.TestCase):
                                       vault_password_files=['yet-another-password-file',
                                                             'one-more-password-file'],
                                       ask_vault_pass=True,
-                                      create_new_password=True)
+                                      create_new_password=True,
+                                      auto_prompt=False)
         self.assertEqual(set(res), set(['blip@prompt', 'baz@prompt_ask_vault_pass',
                                         'default@prompt_ask_vault_pass',
                                         'some-password-file', 'qux@another-password-file',
@@ -92,7 +119,7 @@ class TestCliSetupVaultSecrets(unittest.TestCase):
         self.tty_patcher.stop()
 
     def test(self):
-        res = cli.CLI.setup_vault_secrets(None, None)
+        res = cli.CLI.setup_vault_secrets(None, None, auto_prompt=False)
         self.assertIsInstance(res, list)
 
     @patch('ansible.cli.get_file_vault_secret')
@@ -134,7 +161,6 @@ class TestCliSetupVaultSecrets(unittest.TestCase):
                                           vault_ids=['prompt1@prompt'],
                                           ask_vault_pass=True)
 
-        print('res: %s' % res)
         self.assertIsInstance(res, list)
         self.assertEqual(len(res), 0)
         matches = vault.match_secrets(res, ['prompt1'])

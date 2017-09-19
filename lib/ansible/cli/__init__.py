@@ -196,7 +196,8 @@ class CLI(with_metaclass(ABCMeta, object)):
 
     @staticmethod
     def build_vault_ids(vault_ids, vault_password_files=None,
-                        ask_vault_pass=None, create_new_password=None):
+                        ask_vault_pass=None, create_new_password=None,
+                        auto_prompt=True):
         vault_password_files = vault_password_files or []
         vault_ids = vault_ids or []
 
@@ -211,7 +212,7 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         # if an action needs an encrypt password (create_new_password=True) and we dont
         # have other secrets setup, then automatically add a password prompt as well.
-        if ask_vault_pass or (create_new_password and not vault_ids):
+        if ask_vault_pass or (auto_prompt and not vault_ids):
             id_slug = u'%s@%s' % (C.DEFAULT_VAULT_IDENTITY, u'prompt_ask_vault_pass')
             vault_ids.append(id_slug)
 
@@ -220,7 +221,8 @@ class CLI(with_metaclass(ABCMeta, object)):
     # TODO: remove the now unused args
     @staticmethod
     def setup_vault_secrets(loader, vault_ids, vault_password_files=None,
-                            ask_vault_pass=None, create_new_password=False):
+                            ask_vault_pass=None, create_new_password=False,
+                            auto_prompt=True):
         # list of tuples
         vault_secrets = []
 
@@ -250,7 +252,8 @@ class CLI(with_metaclass(ABCMeta, object)):
         vault_ids = CLI.build_vault_ids(vault_ids,
                                         vault_password_files,
                                         ask_vault_pass,
-                                        create_new_password)
+                                        create_new_password,
+                                        auto_prompt=auto_prompt)
 
         for vault_id_slug in vault_ids:
             vault_id_name, vault_id_value = CLI.split_vault_id(vault_id_slug)
@@ -777,7 +780,8 @@ class CLI(with_metaclass(ABCMeta, object)):
         vault_secrets = CLI.setup_vault_secrets(loader,
                                                 vault_ids=vault_ids,
                                                 vault_password_files=options.vault_password_files,
-                                                ask_vault_pass=options.ask_vault_pass)
+                                                ask_vault_pass=options.ask_vault_pass,
+                                                auto_prompt=False)
         loader.set_vault_secrets(vault_secrets)
 
         # create the inventory, and filter it based on the subset specified (if any)
