@@ -1,7 +1,6 @@
 abstract-method
 access-member-before-definition
 anomalous-backslash-in-string
-anomalous-unicode-escape-in-string
 arguments-differ
 assignment-from-no-return
 attribute-defined-outside-init
