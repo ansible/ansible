@@ -1339,7 +1339,7 @@ def main():
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
     finally:
-        connection.close(logout='token' not in module.params['auth'])
+        connection.close(logout=auth.get('token') is None)
 
 
 if __name__ == "__main__":
