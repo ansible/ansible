@@ -1,7 +1,6 @@
 abstract-method
 access-member-before-definition
 anomalous-backslash-in-string
-anomalous-unicode-escape-in-string
 arguments-differ
 assignment-from-no-return
 attribute-defined-outside-init
@@ -29,7 +28,6 @@ global-variable-not-assigned
 global-variable-undefined
 import-error
 import-self
-invalid-encoded-data
 invalid-name
 line-too-long
 locally-disabled
