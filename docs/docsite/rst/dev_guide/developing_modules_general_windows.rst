@@ -38,52 +38,17 @@ When creating a new module there are a few things to keep in mind:
 - Use the full cmdlet name instead of aliases, e.g. ``Remove-Item`` over ``rm``
 - Use named parameters with cmdlets, e.g. ``Remove-Item -Path C:\temp`` over ``Remove-Item C:\temp``
 
-A very basic powershell module template can be found found below:
+A very basic powershell module `win_environment <https://github.com/ansible/ansible/blob/devel/lib/ansible/modules/windows/win_environment.ps1>`_ is included below. It demonstrates how to implement check-mode and diff-support, and also shows a warning to the user when a specific condition is met.
 
-.. code-block:: powershell
+.. .. include:: ../../../../lib/ansible/modules/windows/win_environment.ps1
+..    :code: powershell
 
-    #!powershell
-    # This file is part of Ansible
+.. literalinclude:: ../../../../lib/ansible/modules/windows/win_environment.ps1
+   :language: powershell
 
-    # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+A slightly more advanced module is `win_uri <https://github.com/ansible/ansible/blob/devel/lib/ansible/modules/windows/win_uri.ps1>`_ which additionally shows how to use different parameter types (bool, str, int, list, dict, path) and a selection of choices for parameters, how to fail a module and how to handle exceptions.
 
-    #Requires -Module Ansible.ModuleUtils.Legacy.psm1
-
-    $ErrorActionPreference = 'Stop'
-
-    $params = Parse-Args -arguments $args -supports_check_mode $true
-    $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
-    $diff_mode = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool" -default $false
-
-    # these are your module parameters, there are various types which can be
-    # used to format your parameters. You can also set mandatory parameters
-    # with -failifempty, set defaults with -default and set choices with
-    # -validateset.
-    $string = Get-AnsibleParam -obj $params -name "string" -type "str" -failifempty $true
-    $bool = Get-AnsibleParam -obj $params -name "bool" -type "bool" -default $false
-    $int = Get-AnsibleParam -obj $params -name "int" -type "int"
-    $path = Get-AnsibleParam -obj $params -name "path" -type "path"
-    $list = Get-AnsibleParam -obj $params -name "list" -type "list"
-    $choices = Get-AnsibleParam -obj $params -name "choices" -type "str" -default "present" -validateset "absent","present"
-
-    $result = @{
-        changed = $false
-    }
-
-    if ($diff_mode) {
-        $result.diff = @{}
-    }
-
-    # code goes here
-
-    # you can add/set new result objects with
-    $result.changed = $true
-    $result.new_result = "Hi"
-
-    Exit-Json -obj $result
-
-
-When in doubt, look at some of the core modules and see how things have been
+When in doubt, look at some of the other core modules and see how things have been
 implemented there.
 
 Sometimes there are multiple ways that Windows offers to complete a task; this
