@@ -585,6 +585,10 @@ def main():
 
     if module.params.get('object'):
         obj = module.params['object']
+        # If there is a top level object, do nothing - if the object starts with /
+        # remove the leading character to maintain compatibility with Ansible versions < 2.4
+        if obj.startswith('/'):
+            obj = obj[1:]
 
     # Bucket deletion does not require obj.  Prevents ambiguity with delobj.
     if obj and mode == "delete":
