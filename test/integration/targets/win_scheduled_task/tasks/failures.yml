@@ -98,7 +98,7 @@
       start_boundary: '2000-01-01T00:00:01'
       days_of_month: 35
   register: fail_trigger_invalid_day_of_month
-  failed_when: fail_trigger_invalid_day_of_month.msg != "invalid day of month '35', please specify numbers from 1-31 or last"
+  failed_when: fail_trigger_invalid_day_of_month.msg != "invalid day of month '35', please specify numbers from 1-31"
 
 - name: fail trigger option invalid week of the month
   win_scheduled_task:

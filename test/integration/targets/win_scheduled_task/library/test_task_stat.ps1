@@ -10,6 +10,207 @@ $result = @{
     changed = $false
 }
 
+Add-Type -TypeDefinition @"
+public enum TASK_ACTION_TYPE
+{
+    TASK_ACTION_EXEC          = 0,
+    // The below are not supported and are only kept for documentation purposes
+    TASK_ACTION_COM_HANDLER   = 5,
+    TASK_ACTION_SEND_EMAIL    = 6,
+    TASK_ACTION_SHOW_MESSAGE  = 7
+}
+
+public enum TASK_LOGON_TYPE
+{
+    TASK_LOGON_NONE                           = 0,
+    TASK_LOGON_PASSWORD                       = 1,
+    TASK_LOGON_S4U                            = 2,
+    TASK_LOGON_INTERACTIVE_TOKEN              = 3,
+    TASK_LOGON_GROUP                          = 4,
+    TASK_LOGON_SERVICE_ACCOUNT                = 5,
+    TASK_LOGON_INTERACTIVE_TOKEN_OR_PASSWORD  = 6
+}
+
+public enum TASK_RUN_LEVEL
+{
+    TASK_RUNLEVEL_LUA      = 0,
+    TASK_RUNLEVEL_HIGHEST  = 1
+}
+
+public enum TASK_TRIGGER_TYPE2
+{
+    TASK_TRIGGER_EVENT                 = 0,
+    TASK_TRIGGER_TIME                  = 1,
+    TASK_TRIGGER_DAILY                 = 2,
+    TASK_TRIGGER_WEEKLY                = 3,
+    TASK_TRIGGER_MONTHLY               = 4,
+    TASK_TRIGGER_MONTHLYDOW            = 5,
+    TASK_TRIGGER_IDLE                  = 6,
+    TASK_TRIGGER_REGISTRATION          = 7,
+    TASK_TRIGGER_BOOT                  = 8,
+    TASK_TRIGGER_LOGON                 = 9,
+    TASK_TRIGGER_SESSION_STATE_CHANGE  = 11
+}
+"@
+
+Function Get-PropertyValue($task_property, $com, $property) {
+    $raw_value = $com.$property
+
+    if ($raw_value -eq $null) {
+        return $null
+    }
+
+    switch ($property) {
+        DaysOfWeek {
+            $value_list = @()
+            $map = @(
+                @{ day = "sunday"; bitwise = 0x01 }
+                @{ day = "monday"; bitwise = 0x02 }
+                @{ day = "tuesday"; bitwise = 0x04 }
+                @{ day = "wednesday"; bitwise = 0x08 }
+                @{ day = "thursday"; bitwise = 0x10 }
+                @{ day = "friday"; bitwise = 0x20 }
+                @{ day = "saturday"; bitwise = 0x40 }
+            )
+            foreach ($entry in $map) {
+                $day = $entry.day
+                $bitwise = $entry.bitwise
+                if ($raw_value -band $bitwise) {
+                    $value_list += $day
+                }
+            }
+
+            $value = $value_list -join ","
+            break
+        }
+        DaysOfMonth {
+            $value_list = @()
+            $map = @(
+                @{ day = "1"; bitwise = 0x01 }
+                @{ day = "2"; bitwise = 0x02 }
+                @{ day = "3"; bitwise = 0x04 }
+                @{ day = "4"; bitwise = 0x08 }
+                @{ day = "5"; bitwise = 0x10 }
+                @{ day = "6"; bitwise = 0x20 }
+                @{ day = "7"; bitwise = 0x40 }
+                @{ day = "8"; bitwise = 0x80 }
+                @{ day = "9"; bitwise = 0x100 }
+                @{ day = "10"; bitwise = 0x200 }
+                @{ day = "11"; bitwise = 0x400 }
+                @{ day = "12"; bitwise = 0x800 }
+                @{ day = "13"; bitwise = 0x1000 }
+                @{ day = "14"; bitwise = 0x2000 }
+                @{ day = "15"; bitwise = 0x4000 }
+                @{ day = "16"; bitwise = 0x8000 }
+                @{ day = "17"; bitwise = 0x10000 }
+                @{ day = "18"; bitwise = 0x20000 }
+                @{ day = "19"; bitwise = 0x40000 }
+                @{ day = "20"; bitwise = 0x80000 }
+                @{ day = "21"; bitwise = 0x100000 }
+                @{ day = "22"; bitwise = 0x200000 }
+                @{ day = "23"; bitwise = 0x400000 }
+                @{ day = "24"; bitwise = 0x800000 }
+                @{ day = "25"; bitwise = 0x1000000 }
+                @{ day = "26"; bitwise = 0x2000000 }
+                @{ day = "27"; bitwise = 0x4000000 }
+                @{ day = "28"; bitwise = 0x8000000 }
+                @{ day = "29"; bitwise = 0x10000000 }
+                @{ day = "30"; bitwise = 0x20000000 }
+                @{ day = "31"; bitwise = 0x40000000 }
+            )
+
+            foreach ($entry in $map) {
+                $day = $entry.day
+                $bitwise = $entry.bitwise
+                if ($raw_value -band $bitwise) {
+                    $value_list += $day
+                }
+            }
+
+            $value = $value_list -join ","
+            break
+        }
+        WeeksOfMonth {
+            $value_list = @()
+            $map = @(
+                @{ week = "1"; bitwise = 0x01 }
+                @{ week = "2"; bitwise = 0x02 }
+                @{ week = "3"; bitwise = 0x04 }
+                @{ week = "4"; bitwise = 0x04 }
+            )
+
+            foreach ($entry in $map) {
+                $week = $entry.week
+                $bitwise = $entry.bitwise
+                if ($raw_value -band $bitwise) {
+                    $value_list += $week
+                }
+            }
+
+            $value = $value_list -join ","
+            break
+        }
+        MonthsOfYear {
+            $value_list = @()
+            $map = @(
+                @{ month = "january"; bitwise = 0x01 }
+                @{ month = "february"; bitwise = 0x02 }
+                @{ month = "march"; bitwise = 0x04 }
+                @{ month = "april"; bitwise = 0x08 }
+                @{ month = "may"; bitwise = 0x10 }
+                @{ month = "june"; bitwise = 0x20 }
+                @{ month = "july"; bitwise = 0x40 }
+                @{ month = "august"; bitwise = 0x80 }
+                @{ month = "september"; bitwise = 0x100 }
+                @{ month = "october"; bitwise = 0x200 }
+                @{ month = "november"; bitwise = 0x400 }
+                @{ month = "december"; bitwise = 0x800 }
+            )
+
+            foreach ($entry in $map) {
+                $month = $entry.month
+                $bitwise = $entry.bitwise
+                if ($raw_value -band $bitwise) {
+                    $value_list += $month
+                }
+            }
+
+            $value = $value_list -join ","
+            break
+        }
+        Type {
+            if ($task_property -eq "actions") {
+                $value = [Enum]::ToObject([TASK_ACTION_TYPE], $raw_value).ToString()
+            } elseif ($task_property -eq "triggers") {
+                $value = [Enum]::ToObject([TASK_TRIGGER_TYPE2], $raw_value).ToString()
+            }
+            break
+        }
+        RunLevel {
+            $value = [Enum]::ToObject([TASK_RUN_LEVEL], $raw_value).ToString()
+            break
+        }
+        LogonType {
+            $value = [Enum]::ToObject([TASK_LOGON_TYPE], $raw_value).ToString()
+            break
+        }
+        UserId {
+            $sid = Convert-ToSID -account_name $raw_value
+            $value = Convert-FromSid -sid $sid
+        }
+        GroupId {
+            $sid = Convert-ToSID -account_name $raw_value
+            $value = Convert-FromSid -sid $sid
+        }
+        default {
+            $value = $raw_value
+            break
+        }
+    }
+
+    return ,$value
+}
+
 $service = New-Object -ComObject Schedule.Service
 $service.Connect()
 
@@ -51,15 +252,7 @@ if ($name -ne $null) {
             $result.task.$property = @{}
             $values = $task_definition.$property_name
             Get-Member -InputObject $values -MemberType Property | % {
-                # the UserId and GroupID property is represented differently on
-                # each Server OS version, convert to SID and back to get the
-                # same name for tests
-                $value = $values.$($_.Name)
-                if ($property_name -eq "principal" -and $_.Name -in @("UserId", "GroupId") -and $value -ne $null) {
-                    $sid = Convert-ToSID -account_name $value
-                    $value = Convert-FromSid -sid $sid
-                }
-                $result.task.$property.$($_.Name) = $value
+                $result.task.$property.$($_.Name) = (Get-PropertyValue -task_property $property -com $values -property $_.Name)
             }
         }
 
@@ -72,11 +265,11 @@ if ($name -ne $null) {
                 $item_info = @{}
 
                 Get-Member -InputObject $item -MemberType Property | % {
-                    $item_info.$($_.Name) = $item.$($_.Name)
+                    $item_info.$($_.Name) = (Get-PropertyValue -task_property $property -com $item -property $_.Name)
                 }
                 $result.task.$property += $item_info
             }
-        }
+        }    
     } else {
         $result.task_exists = $false
     }

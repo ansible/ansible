@@ -166,7 +166,7 @@ Function Convert-SnakeToPascalCase($snake) {
     return $capitalised
 }
 
-Function Compare-Properties($parent_property, $map, $enum_map=$null) {
+Function Compare-Properties($property_name, $parent_property, $map, $enum_map=$null) {
     $changes = [System.Collections.ArrayList]@()
 
     # loop through the passed in map and compare values
@@ -179,7 +179,11 @@ Function Compare-Properties($parent_property, $map, $enum_map=$null) {
             $property_name = $entry.Name
             $existing_value = $parent_property.$property_name
             if ($existing_value -cne $new_value) {
-                $parent_property.$property_name = $new_value
+                try {
+                    $parent_property.$property_name = $new_value
+                } catch {
+                    Fail-Json -obj $result -message "failed to set $property_name property '$property_name' to '$new_value': $($_.Exception.Message)"
+                }
 
                 if ($enum_map -ne $null -and $enum_map.ContainsKey($property_name)) {
                     $enum = [type]$enum_map.$property_name
@@ -252,7 +256,7 @@ Function Compare-PropertyList {
         foreach ($entry in $new_property.GetEnumerator()) {
             $key = $entry.Name
             if ($key -notin $total_args -and $key -ne "type") {
-                Add-Warning -obj $result -message "key '$key' for $($property_name) entry is not valid and will be ignored, valid keys are '$($total_args -join "', '")"
+                Add-Warning -obj $result -message "key '$key' for $($property_name) entry is not valid and will be ignored, valid keys are '$($total_args -join "', '")'"
             }
         }
 
@@ -270,7 +274,7 @@ Function Compare-PropertyList {
                 }
             }
 
-            [void]$changes.Add("+{`n  $($diff_list -join ",`n  ")`n+}")
+            [void]$changes.Add("+$property_name[$i] = {`n  +Type=$type`n  $($diff_list -join ",`n  ")`n+}")
         } elseif ([Enum]::ToObject($enum, $existing_property.Type) -ne $type) {
             # the types are different so we need to change
             $diff_list = [System.Collections.ArrayList]@()
@@ -303,7 +307,7 @@ Function Compare-PropertyList {
                 }
             }
 
-            [void]$changes.Add("{`n  $($diff_list -join ",`n  ")`n}")
+            [void]$changes.Add("$property_name[$i] = {`n  $($diff_list -join ",`n  ")`n}")
         } else {
             # compare the properties of existing and new
             $diff_list = [System.Collections.ArrayList]@()
@@ -322,7 +326,7 @@ Function Compare-PropertyList {
             }
 
             if ($diff_list.Count -gt 0) {
-                [void]$changes.Add("{`n  $($diff_list -join ",`n  ")`n}")
+                [void]$changes.Add("$property_name[$i] = {`n  $($diff_list -join ",`n  ")`n}")
             }
         }
 
@@ -332,7 +336,11 @@ Function Compare-PropertyList {
             $new_value = $new_property.$property_arg
             if ($new_value -ne $null) {
                 $com_name = Convert-SnakeToPascalCase -snake $property_arg
-                $new_object.$com_name = $new_value
+                try {
+                    $new_object.$com_name = $new_value
+                } catch {
+                    Fail-Json -obj $result -message "failed to set $property_name property '$com_name' to '$new_value': $($_.Exception.Message)"
+                }
             }
         }
     }
@@ -359,7 +367,7 @@ Function Compare-PropertyList {
                 [void]$diff_list.Add("-UNKNOWN TYPE $existing_type")
             }
 
-            [void]$changes.Add("-{`n  $($diff_list -join ",`n  ")`n-}")
+            [void]$changes.Add("-$property_name[$i] = {`n  $($diff_list -join ",`n  ")`n-}")
         }
     }
 
@@ -414,7 +422,7 @@ Function Compare-Principal($task_definition, $task_definition_xml) {
         RunLevel = "TASK_RUN_LEVEL"
     }
     $task_principal = $task_definition.Principal
-    $changes = Compare-Properties -parent_property $task_principal -map $principal_map -enum_map $enum_map
+    $changes = Compare-Properties -property_name "Principal" -parent_property $task_principal -map $principal_map -enum_map $enum_map
 
     # Principal.UserId and GroupId only returns the username portion of the
     # username, skipping the domain or server name. This makes the
@@ -477,7 +485,7 @@ Function Compare-RegistrationInfo($task_definition) {
         Source = $source
         Version = $version
     }
-    $changes = Compare-Properties -parent_property $task_definition.RegistrationInfo -map $reg_info_map
+    $changes = Compare-Properties -property_name "RegistrationInfo" -parent_property $task_definition.RegistrationInfo -map $reg_info_map
 
     return ,$changes
 }
@@ -507,7 +515,7 @@ Function Compare-Settings($task_definition) {
         StopIfGoingOnBatteries = $stop_if_going_on_batteries
         WakeToRun = $wake_to_run
     }
-    $changes = Compare-Properties -parent_property $task_definition.Settings -map $settings_map
+    $changes = Compare-Properties -property_name "Settings" -parent_property $task_definition.Settings -map $settings_map
 
     return ,$changes
 }
@@ -852,14 +860,13 @@ for ($i = 0; $i -lt $triggers.Count; $i++) {
                 29 { $day_value = $day_value -bor 0x10000000 }
                 30 { $day_value = $day_value -bor 0x20000000 }
                 31 { $day_value = $day_value -bor 0x40000000 }
-                last { $day_value = $day_value -bor 0x80000000 }
-                default { Fail-Json -obj $result -message "invalid day of month '$day', please specify numbers from 1-31 or last" }
+                default { Fail-Json -obj $result -message "invalid day of month '$day', please specify numbers from 1-31" }
             }
         }
         if ($day_value -eq 0) {
             $day_value = $null
         }
-        $trigger.days_of_week = $day_value
+        $trigger.days_of_month = $day_value
     }
     if ($trigger.ContainsKey("weeks_of_month")) {
         $weeks = $trigger.weeks_of_month
@@ -997,7 +1004,7 @@ if ($state -eq "absent") {
         $create_diff_string += "[Actions]`n"
         $task_actions = $task_definition.Actions
         foreach ($action in $actions) {
-            $create_diff_string += "+{`n  +Type=$([TASK_ACTION_TYPE]::TASK_ACTION_EXEC),`n  +Path=$($action.path)`n"
+            $create_diff_string += "+action[0] = {`n  +Type=$([TASK_ACTION_TYPE]::TASK_ACTION_EXEC),`n  +Path=$($action.path)`n"
             $task_action = $task_actions.Create([TASK_ACTION_TYPE]::TASK_ACTION_EXEC)
             $task_action.Path = $action.path
             if ($action.arguments -ne $null) {

@@ -56,8 +56,8 @@
     - task_with_password|changed
     - task_with_password_result.task_exists == True
     - task_with_password_result.task.principal.GroupId == None
-    - task_with_password_result.task.principal.LogonType == 1
-    - task_with_password_result.task.principal.RunLevel == 0
+    - task_with_password_result.task.principal.LogonType == "TASK_LOGON_PASSWORD"
+    - task_with_password_result.task.principal.RunLevel == "TASK_RUNLEVEL_LUA"
     - task_with_password_result.task.principal.UserId.endswith(test_scheduled_task_user)
 
 - name: task with password principal (idempotent)
@@ -119,8 +119,8 @@
     - task_with_s4u_check|changed
     - task_with_s4u_result_check.task_exists == True
     - task_with_s4u_result_check.task.principal.GroupId == None
-    - task_with_s4u_result_check.task.principal.LogonType == 1
-    - task_with_s4u_result_check.task.principal.RunLevel == 0
+    - task_with_s4u_result_check.task.principal.LogonType == "TASK_LOGON_PASSWORD"
+    - task_with_s4u_result_check.task.principal.RunLevel == "TASK_RUNLEVEL_LUA"
     - task_with_s4u_result_check.task.principal.UserId.endswith(test_scheduled_task_user)
 
 - name: task with s4u principal
@@ -147,8 +147,8 @@
     - task_with_s4u|changed
     - task_with_s4u_result.task_exists == True
     - task_with_s4u_result.task.principal.GroupId == None
-    - task_with_s4u_result.task.principal.LogonType == 2
-    - task_with_s4u_result.task.principal.RunLevel == 0
+    - task_with_s4u_result.task.principal.LogonType == "TASK_LOGON_S4U"
+    - task_with_s4u_result.task.principal.RunLevel == "TASK_RUNLEVEL_LUA"
     - task_with_s4u_result.task.principal.UserId.endswith(test_scheduled_task_user)
 
 - name: task with s4u principal (idempotent)
@@ -191,8 +191,8 @@
     - task_with_interactive_check|changed
     - task_with_interactive_result_check.task_exists == True
     - task_with_interactive_result_check.task.principal.GroupId == None
-    - task_with_interactive_result_check.task.principal.LogonType == 2
-    - task_with_interactive_result_check.task.principal.RunLevel == 0
+    - task_with_interactive_result_check.task.principal.LogonType == "TASK_LOGON_S4U"
+    - task_with_interactive_result_check.task.principal.RunLevel == "TASK_RUNLEVEL_LUA"
     - task_with_interactive_result_check.task.principal.UserId.endswith(test_scheduled_task_user)
 
 - name: task with interactive principal
@@ -217,8 +217,8 @@
     - task_with_interactive|changed
     - task_with_interactive_result.task_exists == True
     - task_with_interactive_result.task.principal.GroupId == None
-    - task_with_interactive_result.task.principal.LogonType == 3
-    - task_with_interactive_result.task.principal.RunLevel == 0
+    - task_with_interactive_result.task.principal.LogonType == "TASK_LOGON_INTERACTIVE_TOKEN"
+    - task_with_interactive_result.task.principal.RunLevel == "TASK_RUNLEVEL_LUA"
     - task_with_interactive_result.task.principal.UserId.endswith(test_scheduled_task_user)
 
 - name: task with interactive principal (idempotent)
@@ -259,8 +259,8 @@
     - task_with_group_check|changed
     - task_with_group_result_check.task_exists == True
     - task_with_group_result_check.task.principal.GroupId == None
-    - task_with_group_result_check.task.principal.LogonType == 3
-    - task_with_group_result_check.task.principal.RunLevel == 0
+    - task_with_group_result_check.task.principal.LogonType == "TASK_LOGON_INTERACTIVE_TOKEN"
+    - task_with_group_result_check.task.principal.RunLevel == "TASK_RUNLEVEL_LUA"
     - task_with_group_result_check.task.principal.UserId.endswith(test_scheduled_task_user)
 
 - name: task with group principal
@@ -285,8 +285,8 @@
     - task_with_group|changed
     - task_with_group_result.task_exists == True
     - task_with_group_result.task.principal.GroupId == "BUILTIN\\Administrators"
-    - task_with_group_result.task.principal.LogonType == 4
-    - task_with_group_result.task.principal.RunLevel == 0
+    - task_with_group_result.task.principal.LogonType == "TASK_LOGON_GROUP"
+    - task_with_group_result.task.principal.RunLevel == "TASK_RUNLEVEL_LUA"
     - task_with_group_result.task.principal.UserId == None
 
 - name: task with group principal (idempotent)
@@ -327,8 +327,8 @@
     - task_with_service_check|changed
     - task_with_service_result_check.task_exists == True
     - task_with_service_result_check.task.principal.GroupId == "BUILTIN\\Administrators"
-    - task_with_service_result_check.task.principal.LogonType == 4
-    - task_with_service_result_check.task.principal.RunLevel == 0
+    - task_with_service_result_check.task.principal.LogonType == "TASK_LOGON_GROUP"
+    - task_with_service_result_check.task.principal.RunLevel == "TASK_RUNLEVEL_LUA"
     - task_with_service_result_check.task.principal.UserId == None
 
 - name: task with service account principal
@@ -353,8 +353,8 @@
     - task_with_service|changed
     - task_with_service_result.task_exists == True
     - task_with_service_result.task.principal.GroupId == None
-    - task_with_service_result.task.principal.LogonType == 5
-    - task_with_service_result.task.principal.RunLevel == 0
+    - task_with_service_result.task.principal.LogonType == "TASK_LOGON_SERVICE_ACCOUNT"
+    - task_with_service_result.task.principal.RunLevel == "TASK_RUNLEVEL_LUA"
     - task_with_service_result.task.principal.UserId == "NT AUTHORITY\\SYSTEM"
 
 - name: task with service account principal (idempotent)
@@ -394,7 +394,7 @@
   assert:
     that:
     - task_with_highest_privilege_check|changed
-    - task_with_highest_privilege_result_check.task.principal.RunLevel == 0
+    - task_with_highest_privilege_result_check.task.principal.RunLevel == "TASK_RUNLEVEL_LUA"
 
 - name: task with highest privilege
   win_scheduled_task:
@@ -417,7 +417,7 @@
   assert:
     that:
     - task_with_highest_privilege|changed
-    - task_with_highest_privilege_result.task.principal.RunLevel == 1
+    - task_with_highest_privilege_result.task.principal.RunLevel == "TASK_RUNLEVEL_HIGHEST"
 
 - name: task with highest privilege (idempotent)
   win_scheduled_task:

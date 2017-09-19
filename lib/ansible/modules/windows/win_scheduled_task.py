@@ -156,7 +156,7 @@ options:
       days_of_month:
         description:
         - The days of the month for the triggers.
-        - Can be a list or comma separated string of day numbers or C(last).
+        - Can be a list or comma separated string of day numbers.
         - Required when C(type=monthly).
       weeks_of_month:
         description:
@@ -172,9 +172,15 @@ options:
         - Optional when C(type) is C(monthlydow), C(monthly).
       run_on_last_week_of_month:
         description:
+        - Boolean value that sets whether the task runs on the last week of the
+          month.
+        - Optional when C(type) is C(monthlydow).
+        type: bool
+      run_on_last_day_of_month:
+        description:
         - Boolean value that sets whether the task runs on the last day of the
           month.
-        - Optional when C(type) is C(monthlydow), C(monthly).
+        - Optional when C(type) is C(monthly).
         type: bool
       weeks_interval:
         description:
