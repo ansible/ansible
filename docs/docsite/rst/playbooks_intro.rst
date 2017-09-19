@@ -72,6 +72,7 @@ For starters, here's a playbook that contains just one play::
       handlers:
         - name: restart apache
           service: name=httpd state=restarted
+      ...
 
 When working with tasks that have really long parameters or modules that take 
 many parameters, you can break tasks items over multiple lines to improve the 
@@ -104,6 +105,7 @@ YAML dictionaries to supply the modules with their ``key=value`` arguments.::
           service:
             name: httpd
             state: restarted
+      ...
 
 Playbooks can contain multiple plays. You may have a playbook that targets first
 the web servers, and then the database servers. For example::
@@ -134,6 +136,7 @@ the web servers, and then the database servers. For example::
         service:
           name: postgresql
           state: started
+      ...
 
 You can use this method to switch between the host group you're targeting,
 the username logging into the remote servers, whether to sudo or not, and so
