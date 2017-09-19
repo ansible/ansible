@@ -118,6 +118,9 @@ def list_ec2_vpc_nacls(connection, module):
     nacl_ids = module.params.get("nacl_ids")
     filters = ansible_dict_to_boto3_filter_list(module.params.get("filters"))
 
+    if nacl_ids is None:
+        nacl_ids = []
+
     try:
         nacls = connection.describe_network_acls(NetworkAclIds=nacl_ids, Filters=filters)
     except (ClientError, NoCredentialsError) as e:
