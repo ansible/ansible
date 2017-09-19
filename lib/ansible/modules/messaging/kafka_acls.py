@@ -21,7 +21,7 @@ short_description: Add/Remove ACLs config.
 description:
     - 'Add/Remove ACLs config for a topic, producer, consummer or cluster'
 requirements:
-    - 'kafka-acls'
+    - 'kafka >= 2.11-0.10'
 options:
     action:
         required: True
@@ -70,22 +70,20 @@ options:
     topic:
         description:
             - Topic to which ACLs should be added or removed.
-    jaas_auth_file:
-        description:
-            - JAAS authentification path file.
     executable:
-        default: '/usr/bin/kafka-acls'
         description:
-            - Kafka executable path.
+            - Kafka executable path if not in your current PATH or if it name differs.
 '''
 
 EXAMPLES = '''
 name: 'add ACLs'
+# If you have JAAS authentification,
+# use environment variable
+environment:
+  KAFKA_OPTS: '-Djava.security.auth.login.config=/etc/kafka/jaas.conf'
 kafka_acls:
   action: 'add'
-  executable: '/home/foobar/kafka/bin/kafka-acls'
   authorizer_properties: 'zookeeper.connect=localhost:2181'
-  jaas_auth_file: 'jaas-kafka.conf'
   topic: 'croziflette'
   allow_principal:
     - 'User:bar'
@@ -98,7 +96,6 @@ kafka_acls:
 name: 'modify ACLs'
 kafka_acls:
   action: 'add'
-  jaas_auth_file: '/opt/kafka/sec/jaas-kafka.conf'
   authorizer_properties: 'zookeeper.connect=localhost:2181'
   topic: 'croziflette'
   deny_principal:
@@ -112,20 +109,17 @@ kafka_acls:
 name: 'list ACLs'
 kafka_acls:
   action: 'list'
-  jaas_auth_file: '/opt/kafka/sec/jaas-kafka.conf'
   authorizer_properties: 'zookeeper.connect=localhost:2181'
   topic: 'croziflette'
 
 name: 'list all ACLs'
 kafka_acls:
   action: 'list'
-  jaas_auth_file: '/opt/kafka/sec/jaas-kafka.conf'
   authorizer_properties: 'zookeeper.connect=localhost:2181'
 
 name: 'remove ACLs'
 kafka_acls:
   action: 'remove'
-  jaas_auth_file: '/opt/kafka/sec/jaas-kafka.conf'
   authorizer_properties: 'zookeeper.connect=localhost:2181'
   topic: 'croziflette'
   operation:
@@ -133,11 +127,29 @@ kafka_acls:
 '''
 
 RETURN = '''
+failed:
+  description: Command execution return bool.
+  returned: always
+  type: bool
+  sample: False
+
+stdout:
+  description: Output from stdout after execution
+  returned: success or changed
+  type: string
+  sample: "Adding ACLs for resource `Topic:flunk`: \\\\n \\\\tUser:albert has Allow permission for operations: Write from hosts: 127.0.0.1\\\\n"
+
+msg:
+  description: Output from stderr
+  returned: failed
+  type: string
+  sample: ""
 '''
 
+import re
 import os
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, is_executable
 from ansible.module_utils._text import to_native
 
 
@@ -162,12 +174,7 @@ class KafkaAcls(object):
         self.producer = module.params['producer']
         self.topic = module.params['topic']
 
-        self.executable = module.params['executable']
-        if module.params['jaas_auth_file']:
-            self.jaas_auth_file = module.params['jaas_auth_file']
-            self.kafka_env_opts = '-Djava.security.auth.login.config=' + \
-                self.jaas_auth_file
-
+        self.executable = module.params['executable'] or module.get_bin_path('kafka-acls', True)
         self.module = module
 
     def get(self):
@@ -185,15 +192,7 @@ class KafkaAcls(object):
 
         cmd = '%s --list %s' % (self.executable, mod_args_join)
 
-        try:
-            env = ''
-            if self.jaas_auth_file:
-                env = {'KAFKA_OPTS': self.kafka_env_opts}
-
-            return self.module.run_command(cmd, environ_update=env)
-
-        except KafkaError as exc:
-            self.module.fail_json(msg=to_native(exc))
+        return self.module.run_command(cmd)
 
     def addrem(self):
         ''' Add or Remove ACLs. '''
@@ -239,20 +238,13 @@ class KafkaAcls(object):
             cmd = '%s %s --%s %s' % (self.executable, mod_auth_join,
                                      self.action, mod_args_join)
 
-        try:
-            env = ''
-            if self.jaas_auth_file:
-                env = {'KAFKA_OPTS': self.kafka_env_opts}
-
-            return self.module.run_command(cmd, environ_update=env)
-
-        except KafkaError as exc:
-            self.module.fail_json(msg=to_native(exc))
+        return self.module.run_command(cmd)
 
 
 def main():
     argument_spec = dict(
-        action=dict(required=True, choices=['list', 'add', 'remove'],
+        action=dict(required=True,
+                    choices=['list', 'add', 'remove'],
                     type='str'),
         allow_host=dict(type='list'),
         allow_principal=dict(type='list'),
@@ -266,8 +258,7 @@ def main():
         operation=dict(type='list'),
         producer=dict(default=False, type='bool'),
         topic=dict(type='str'),
-        jaas_auth_file=dict(type='path'),
-        executable=dict(default='/usr/bin/kafka-acls', type='path'),
+        executable=dict(type='path'),
     )
 
     required_one_of = [
@@ -282,17 +273,18 @@ def main():
         argument_spec=argument_spec,
         required_one_of=required_one_of,
         mutually_exclusive=mutually_exclusive,
-        supports_check_mode=True,
     )
 
     changed = False
+    failed = False
+    result = {}
 
-    if not os.path.isfile(module.params['executable']):
-        module.fail_json(msg='%s not found.' % (module.params['executable']))
-
-    if module.params['jaas_auth_file']:
-        if not os.path.isfile(module.params['jaas_auth_file']):
-            module.fail_json(msg='%s not found.' % (module.params['jaas_auth_file']))
+    if not module.get_bin_path('kafka-acls') and module.params['executable'] is None:
+        module.fail_json(msg='Executable not provided.')
+    if module.params['executable'] is not None and \
+            (not os.path.isfile(module.params['executable']) or
+             not is_executable(module.params['executable'])):
+        module.fail_json(msg='%s not found or not executable.' % (module.params['executable']))
 
     try:
         ka = KafkaAcls(module)
@@ -311,14 +303,23 @@ def main():
                 if out_list_before != out_list_after:
                     changed = True
 
-            result = {
-                'stdout': out,
-                'stdout_lines': out.splitlines(),
-                'stderr': err,
-                'stderr_lines': err.splitlines(),
-                'rc': rc,
-                'changed': changed,
-            }
+        if re.search('^Error while executing ACL command:', out):
+            module.fail_json(msg=out)
+
+        result = {
+            'failed': failed,
+            'changed': changed,
+        }
+
+        if rc != 0:
+            failed = True
+        if out:
+            result['stdout'] = out
+        try:
+            if err:
+                result['msg'] = err
+        except NameError:
+            pass
 
     except KafkaError as exc:
         module.fail_json(msg=to_native(exc))
