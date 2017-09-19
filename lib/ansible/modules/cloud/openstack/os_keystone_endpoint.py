@@ -23,7 +23,7 @@ description:
 options:
    service:
      description:
-        - Name of the service.
+        - Name or id of the service.
      required: true
    interface:
      description:
@@ -155,7 +155,7 @@ def main():
         module.fail_json(msg="To utilize this module, the installed version of"
                              "the shade library MUST be >=1.11.0")
 
-    service_name = module.params['service']
+    service_name_or_id = module.params['service']
     interface = module.params['interface']
     url = module.params['url']
     region = module.params['region']
@@ -165,9 +165,9 @@ def main():
     try:
         cloud = shade.operator_cloud(**module.params)
 
-        service = cloud.get_service(service_name)
+        service = cloud.get_service(service_name_or_id)
         if service is None:
-            module.fail_json(msg='Service %s does not exist' % service_name)
+            module.fail_json(msg='Service %s does not exist' % service_name_or_id)
 
         filters = dict(service_id=service.id, interface=interface)
         if region is not None:
@@ -177,7 +177,7 @@ def main():
         if len(endpoints) > 1:
             module.fail_json(msg='Service %s, interface %s and region %s are '
                                  'not unique' %
-                                 (service_name, interface, region))
+                                 (service_name_or_id, interface, region))
         elif len(endpoints) == 1:
             endpoint = endpoints[0]
         else:
