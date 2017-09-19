@@ -408,7 +408,7 @@ Negative numbers are not supported.  This works as follows::
             state: present
           with_sequence: count=4
 
-.. _random_choice:
+.. _playbooks_loops_random_choice:
 
 Random Choices
 ``````````````
