@@ -58,13 +58,13 @@ options:
             - Use https instead of http to connect to InfluxDB, defaults to False
         required: false
         default: false
-        version_added: 2.4
+        version_added: 2.5
     validate_certs:
         description:
             - verify SSL certificates for HTTPS requests, defaults to True
         required: false
         default: true
-        version_added: 2.4
+        version_added: 2.5
 '''
 
 EXAMPLES = '''
