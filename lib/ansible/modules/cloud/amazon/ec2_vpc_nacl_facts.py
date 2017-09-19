@@ -153,10 +153,18 @@ def list_ec2_vpc_nacls(connection, module):
 
 def nacl_entry_to_list(entry):
 
-    elist = [entry['rule_number'],
-             PROTOCOL_NAMES[entry['protocol']],
-             entry['rule_action']
-             ]
+    # entry list format
+    # [ rule_num, protocol name or number, allow or deny, ipv4/6 cidr, icmp type, icmp code, port from, port to]
+    elist = []
+
+    elist.append(entry['rule_number'])
+
+    if entry.get('protocol') in PROTOCOL_NAMES:
+        elist.append(PROTOCOL_NAMES[entry['protocol']])
+    else:
+        elist.append(entry.get('protocol'))
+
+    elist.append(entry['rule_action'])
 
     if entry.get('cidr_block'):
         elist.append(entry['cidr_block'])
