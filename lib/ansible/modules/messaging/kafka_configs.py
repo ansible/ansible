@@ -21,13 +21,12 @@ short_description: Manage entity configs.
 description:
     - 'Add/Remove entity config for a topic, client, user or broker'
 requirements:
-    - 'kafka-configs'
+    - 'kafka >= 2.11-0.10'
 options:
     configs:
         description:
             - Key / Value (str) pairs of configs.
     describe:
-        default: False
         description:
             - List configs for the given entity.
     entity_default:
@@ -40,37 +39,31 @@ options:
         required: True
         description:
             - Type of entity.
-    jaas_auth_file:
-        description:
-            - JAAS authentification path file.
     executable:
-        default: '/usr/bin/kafka-configs'
         description:
-            - Kafka executable path.
-    pretty:
-        default: False
-        description:
-            - Print a dict of the output.
+            - Kafka executable path if not in your current PATH or if it name differs.
     zookeeper:
         required: True
         description:
             - The connection string for the zookeeper connection.
+              Multiple connection strings are allowed.
 '''
 
 EXAMPLES = '''
 name: 'list config'
 kafka_configs:
-  executable: '/opt/foobar/bin/kafka-configs.sh'
   entity_type: 'topics'
   describe: True
-  pretty: True
   zookeeper:
     - foo.baz.org:2181
     - bar.baz.org:2181
 
+# If you have JAAS authentification,
+# use environment variable
 name: 'Manage config'
+environment:
+  KAFKA_OPTS: '-Djava.security.auth.login.config=/etc/kafka/jaas.conf'
 kafka_configs:
-  jaas_auth_file: 'jaas-kafka.conf'
   entity_name: 'chocolatine'
   entity_type: 'topics'
   configs:
@@ -83,16 +76,18 @@ kafka_configs:
 '''
 
 RETURN = '''
-rc:
-  description: Command execution return value
-  returned: success
-  type: int
-  sample: 0
+failed:
+  description: Command execution return bool.
+  returned: always
+  type: bool
+  sample: False
+
 stdout:
   description: Output from stdout after execution
   returned: success or changed
   type: string
   sample: "Configs for topic 'wassingue' are cleanup.policy=delete,compression.type=gzip\\\\n"
+
 msg:
   description: Output from stderr
   returned: failed
@@ -103,7 +98,7 @@ msg:
 import re
 import os
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, is_executable
 from ansible.module_utils._text import to_native
 
 
@@ -115,42 +110,37 @@ class KafkaConfigs(object):
 
     def __init__(self, module):
 
+        entity = {
+            '--entity-default': module.params['entity_default'],
+            '--entity-name': module.params['entity_name'],
+            '--entity-type': module.params['entity_type'],
+        }
+        self.entity_join = ''.join(" %s %r" % (key, value) for key, value
+                                   in entity.items() if value)
+
+        self.msg = " entity: %s '%s'" % (module.params['entity_type'],
+                                         module.params['entity_name'])
+
         self.configs = module.params['configs']
-        self.ent_def = module.params['entity_default']
-        self.ent_name = module.params['entity_name']
-        self.ent_type = module.params['entity_type']
-        self.pretty = module.params['pretty']
         self.zookeeper = ','.join(module.params['zookeeper'])
 
-        self.executable = module.params['executable']
+        self.executable = module.params['executable'] or module.get_bin_path('kafka-configs', True)
 
         self.module = module
 
     def manage_configs(self):
         ''' Alter (add or remove configs) for the entity. '''
 
-        if self.module.params['jaas_auth_file']:
-            kafka_env_opts = '-Djava.security.auth.login.config=' + \
-                self.module.params['jaas_auth_file']
-
-        entity = {
-            '--entity-default': self.ent_def,
-            '--entity-name': self.ent_name,
-            '--entity-type': self.ent_type,
-        }
-        entity_join = ''.join(" %s %r" % (k, v) for k, v in entity.items() if v)
-
         changed = False
         rc = 0
-        msg = "Nothing to do for config entity: %s '%s'" % (self.ent_type,
-                                                            self.ent_name)
+        msg = "Nothing to do for config" + self.msg
 
         try:
 
             # we get the configs.
             cmd_desc = '%s --describe --zookeeper %s %s' % (self.executable,
                                                             self.zookeeper,
-                                                            entity_join)
+                                                            self.entity_join)
 
             (_, out, _) = self.module.run_command(cmd_desc)
 
@@ -195,39 +185,31 @@ class KafkaConfigs(object):
                 cmd_add = ('%s --alter --zookeeper %s %s '
                            '--add-config %s') % (self.executable,
                                                  self.zookeeper,
-                                                 entity_join,
+                                                 self.entity_join,
                                                  configs)
 
             if configs_to_del:
                 cmd_del = ('%s --alter --zookeeper %s %s '
                            '--delete-config %s') % (self.executable,
                                                     self.zookeeper,
-                                                    entity_join,
+                                                    self.entity_join,
                                                     ','.join(configs_to_del))
 
-            env = ''
             output = ()
 
-            if self.module.params['jaas_auth_file']:
-                env = {'KAFKA_OPTS': kafka_env_opts}
-
             if configs_to_add:
-                (_, out_add, _) = self.module.run_command(cmd_add,
-                                                          environ_update=env)
+                (_, out_add, _) = self.module.run_command(cmd_add)
                 if re.search('^Error while executing', out_add):
-                    self.module.fail_json(msg=out_add, rc=1)
+                    self.module.fail_json(msg=out_add)
 
                 changed = True
-                msg = "Updated config for entity: %s '%s'" % (self.ent_type,
-                                                              self.ent_name)
+                msg = "Updated config for" + self.msg
 
             if configs_to_del:
-                (_, out_del, _) = self.module.run_command(cmd_del,
-                                                          environ_update=env)
+                (_, out_del, _) = self.module.run_command(cmd_del)
 
                 changed = True
-                msg = "Updated config for entity: %s '%s'" % (self.ent_type,
-                                                              self.ent_name)
+                msg = "Updated config for" + self.msg
 
             return (rc, msg, changed)
 
@@ -237,37 +219,11 @@ class KafkaConfigs(object):
     def describe(self):
         ''' List configs for the given entity. '''
 
-        entity = {
-            '--entity-default': self.ent_def,
-            '--entity-name': self.ent_name,
-            '--entity-type': self.ent_type,
-        }
-        entity_join = ''.join(" %s %r" % (k, v) for k, v in entity.items() if v)
+        cmd = '%s --describe --zookeeper %s %s' % (self.executable,
+                                                   self.zookeeper,
+                                                   self.entity_join)
 
-        try:
-            cmd = '%s --describe --zookeeper %s %s' % (self.executable,
-                                                       self.zookeeper,
-                                                       entity_join)
-            if self.pretty:
-                (rc, out, err) = self.module.run_command(cmd)
-
-                formatted = {}
-
-                for line in out.splitlines():
-                    if 'are' not in line.split()[-1]:
-                        if len(line.split()[-1].split(',')) > 1:
-                            formatted[line.split()[3].strip('\'')] = line.split()[-1].split(',')
-                        else:
-                            formatted[line.split()[3].strip('\'')] = line.split()[-1]
-                    else:
-                        formatted[line.split()[3].strip('\'')] = 'null'
-
-                return (rc, formatted, err)
-
-            return self.module.run_command(cmd)
-
-        except KafkaError as exc:
-            self.module.fail_json(msg=to_native(exc))
+        return self.module.run_command(cmd)
 
 
 def main():
@@ -279,11 +235,7 @@ def main():
         entity_type=dict(required=True, type='str'),
         zookeeper=dict(required=True, type='list'),
 
-        jaas_auth_file=dict(type='path'),
-        executable=dict(default='/usr/bin/kafka-configs',
-                        type='path'),
-
-        pretty=dict(default=False, type='bool'),
+        executable=dict(type='path'),
     )
 
     required_if = [
@@ -303,41 +255,41 @@ def main():
         required_if=required_if,
         required_one_of=required_one_of,
         mutually_exclusive=mutually_exclusive,
-        supports_check_mode=True,
     )
 
-    jaas_auth_file = module.params['jaas_auth_file']
-
     changed = False
+    failed = False
+    result = {}
 
+    if module.params['executable'] is None:
+        module.fail_json(msg='Executable not provided.')
     if not os.path.isfile(module.params['executable']):
         module.fail_json(msg='%s not found.' % (module.params['executable']))
-
-    if module.params['jaas_auth_file']:
-        is_jaas_auth_file = os.path.isfile(jaas_auth_file)
-        if not is_jaas_auth_file:
-            module.fail_json(msg='%s not found.' % (jaas_auth_file))
+    if not is_executable(module.params['executable']):
+        module.fail_json(msg='%s not executable.' % (module.params['executable']))
 
     try:
         kc = KafkaConfigs(module)
 
-        if not module.check_mode:
-            if module.params['describe']:
-                (rc, out, err) = kc.describe()
-                result = {
-                    'stdout': to_native(out),
-                    'stderr_lines': err.splitlines(),
-                    'rc': rc,
-                    'changed': changed,
-                }
-            else:
-                (rc, out, changed) = kc.manage_configs()
-                result = {
-                    'stdout': out,
-                    'stdout_lines': out.splitlines(),
-                    'rc': rc,
-                    'changed': changed,
-                }
+        if module.params['describe']:
+            (rc, out, err) = kc.describe()
+        else:
+            (rc, out, changed) = kc.manage_configs()
+
+        result = {
+            'failed': failed,
+            'changed': changed,
+        }
+
+        if rc != 0:
+            failed = True
+        if out:
+            result['stdout'] = out
+        try:
+            if err:
+                result['msg'] = err
+        except NameError:
+            pass
 
     except KafkaError as exc:
         module.fail_json(msg=to_native(exc))
