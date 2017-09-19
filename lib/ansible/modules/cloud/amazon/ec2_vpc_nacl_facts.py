@@ -60,7 +60,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-nacl:
+nacls:
     description: Returns an array of complex objects as described below.
     returned: success
     type: complex
