@@ -204,7 +204,7 @@ class InventoryData(object):
         else:
             h = self.hosts[host]
 
-        if g and h not in g.get_hosts():
+        if g:
             g.add_host(h)
             self._groups_dict_cache = {}
             display.debug("Added host %s to group %s" % (host, group))
