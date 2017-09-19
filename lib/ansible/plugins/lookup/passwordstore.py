@@ -16,7 +16,7 @@ DOCUMENTATION = """
         It also retrieves YAML style keys stored as multilines in the passwordfile.
     options:
       _terms:
-        descriptoin: query key
+        description: query key
         required: True
       passwordstore:
         description: location of the password store
