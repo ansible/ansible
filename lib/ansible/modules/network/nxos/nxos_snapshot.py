@@ -404,7 +404,8 @@ def main():
                 compare_option = module.params['compare_option']
                 command = 'show snapshot compare {0} {1} {2}'.format(snapshot1, snapshot2, compare_option)
                 content = execute_show_command(command, module)[0]
-                write_on_file(content, comparison_results_file, module)
+                if content:
+                    write_on_file(content, comparison_results_file, module)
         else:
             if action_results:
                 load_config(module, action_results)
@@ -414,7 +415,8 @@ def main():
             if action == 'create' and module.params['path']:
                 command = 'show snapshot | include {}'.format(module.params['snapshot_name'])
                 content = execute_show_command(command, module)[0]
-                write_on_file(content, module.params['snapshot_name'], module)
+                if content:
+                    write_on_file(content, module.params['snapshot_name'], module)
 
     module.exit_json(**result)
 
