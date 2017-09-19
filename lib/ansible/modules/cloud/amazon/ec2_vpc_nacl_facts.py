@@ -86,13 +86,19 @@ nacls:
             returned: always
             type: list of string
         ingress:
-            description: A list of NACL ingress rules.
+            description:
+              - A list of NACL ingress rules with the following format.
+              - [rule no, protocol, allow/deny, v4 or v6 cidr, icmp_type, icmp_code, port from, port to]
             returned: always
             type: list of list
+            sample: [[100, 'tcp', 'allow', '0.0.0.0/0', null, null, 22, 22]]
         egress:
-            description: A list of NACL egress rules.
+            description:
+              - A list of NACL egress rules with the following format.
+              - [rule no, protocol, allow/deny, v4 or v6 cidr, icmp_type, icmp_code, port from, port to]
             returned: always
             type: list of list
+            sample: [[100, 'all', 'allow', '0.0.0.0/0', null, null, null, null]]
 '''
 
 import traceback
