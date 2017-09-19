@@ -12,6 +12,7 @@ Ansible Changes By Release
 * Python-3 fixes
   * Fix openssl_certificate parameter assertion on Python3
 * Fix for win_file to respect check mode when deleting directories
+* Fix for Ansible.ModuleUtils.Legacy.psm1 to return list params correctly
 
 <a id="2.4"></a>
 
