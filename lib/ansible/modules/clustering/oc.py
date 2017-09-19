@@ -18,14 +18,11 @@ DOCUMENTATION = """
 author:
   - "Kenneth D. Evensen (@kevensen)"
 description:
-      "This module allows management of resources in an OpenShift cluster. The
-      inventory host can be any host with network connectivity to the OpenShift
-      cluster; the default port being 8443/TCP. This module relies on a token
-      to authenticate to OpenShift. This can either be a user or a service
-      account. For example:
-
-      $ oc create serviceaccount ansible-sa
-      $ oadm policy add-cluster-role-to-user cluster-admin system:serviceaccount:default:ansible-sa"
+  - This module allows management of resources in an OpenShift cluster. The
+    inventory host can be any host with network connectivity to the OpenShift
+    cluster; the default port being 8443/TCP.
+  - This module relies on a token to authenticate to OpenShift. This can either
+    be a user or a service account.
 module: oc
 options:
   host:
