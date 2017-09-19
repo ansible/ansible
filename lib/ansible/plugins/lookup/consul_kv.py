@@ -1,64 +1,63 @@
 # (c) 2015, Steve Gargan <steve.gargan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-'''
-Lookup plugin to grab metadata from a consul key value store.
-============================================================
+DOCUMENTATION = """
+    lookup: cartesian
+    version_added: "1.9"
+    short_description: grab metadata from a consul key value store.
+    description:
+      - lookup metadata for a playbook from the key value store in a consul cluster.
+        Values can be easily set in the kv store with simple rest commands
+      - "curl -X PUT -d 'some-value' http://localhost:8500/v1/kv/ansible/somedata"
+    requirements:
+      - 'python-consul (python library http://python-consul.readthedocs.org/en/latest/#installation)'
+    options:
+      _raw:
+        description: key(s) to retrieve
+        type: list
+        required: True
+      recurse:
+        type: boolean
+        description: if true, will retrieve all the values that have the given key as prefix
+        default: False
+      index:
+        description: if the key has a value with the specified index then this is returned allowing access to historical values.
+      token:
+        description: acl token to allow access to restricted values.
+      host:
+        default: localhost
+        description:
+           - the target to connect to, must be a resolvable address.
+        env:
+          - name: ANSIBLE_CONSUL_URL
+      port:
+        description: the port of the target host to connect to.
+        default: 8500
+"""
 
-Plugin will lookup metadata for a playbook from the key value store in a
-consul cluster. Values can be easily set in the kv store with simple rest
-commands e.g.
+EXAMPLES = """
+  - debug: msg='key contains {{item}}'
+    with_consul_kv:
+      - 'key/to/retrieve'
 
-curl -X PUT -d 'some-value' http://localhost:8500/v1/kv/ansible/somedata
+  - name: Parameters can be provided after the key be more specific about what to retrieve
+    debug: msg='key contains {{item}}'
+    with_consul_kv:
+      - 'key/to recurse=true token=E6C060A9-26FB-407A-B83E-12DDAFCB4D98')}}'
 
-this can then be looked up in a playbook as follows
+  - name: retrieving a KV from a remote cluster on non default port
+    debug:
+      msg: "{{ lookup('consul_kv', 'my/key', host='10.10.10.10', port='2000')
+"""
 
-- debug: msg='key contains {{item}}'
-  with_consul_kv:
-    - 'key/to/retrieve'
-
-
-Parameters can be provided after the key be more specific about what to retrieve e.g.
-
-- debug: msg='key contains {{item}}'
-  with_consul_kv:
-    - 'key/to recurse=true token=E6C060A9-26FB-407A-B83E-12DDAFCB4D98')}}'
-
-recurse: if true, will retrieve all the values that have the given key as prefix
-index: if the key has a value with the specified index then this is returned
-       allowing access to historical values.
-token: acl token to allow access to restricted values.
-host: the target to connect to, must be a resolvable address. defaults to localhost
-port: the port of the target host to connect to. defaults to 8500
-
-By default this will lookup keys via the consul agent running on http://localhost:8500
-this can be changed by setting the env variable 'ANSIBLE_CONSUL_URL' to point to the url
-of the kv store you'd like to use or by specifying the parameters above.
-
-This is an example of retrieving a KV from a remote cluster on non default port
-
-- debug:
-    msg: "{{ lookup('consul_kv', 'my/key', host='10.10.10.10', port='2000')
-
-'''
-
-######################################################################
+RETURN = """
+  _raw:
+    description:
+      - value(s) stored in consul
+"""
 
 import os
 import sys

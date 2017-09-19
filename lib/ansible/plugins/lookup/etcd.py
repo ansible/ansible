@@ -27,7 +27,7 @@ DOCUMENTATION = '''
     description:
         - Retrieves data from an etcd server
     options:
-        _raw:
+        _terms:
             description:
                 - the list of keys to lookup on the etcd server
             type: list

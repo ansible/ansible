@@ -1,38 +1,42 @@
 # (c) 2016, Josh Bradley <jbradley(at)digitalocean.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
-
-"""
-
-USAGE: {{ lookup('chef_databag', 'name=data_bag_name item=data_bag_item') }}
-
-NOTES: This is a lookup plugin to provide access to chef data bags using the
-       pychef package. It interfaces with the chef server api using the same
-       methods to find a knife or chef-client config file to load parameters
-       from, starting from either the given base path or the current working
-       directory. The lookup order mirrors the one from Chef, all folders in
-       the base path are walked back looking for the following configuration
-       file in order : .chef/knife.rb, ~/.chef/knife.rb, /etc/chef/client.rb
-
-Requires: pychef package: https://pychef.readthedocs.io `pip install pychef`
-
-"""
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+DOCUMENTATION = """
+    lookup: chef_databag
+    version_added: "2.3"
+    short_description: fetches data from a Chef Databag
+    description:
+       - "This is a lookup plugin to provide access to chef data bags using the pychef package.
+         It interfaces with the chef server api using the same methods to find a knife or chef-client config file to load parameters from,
+         starting from either the given base path or the current working directory.
+         The lookup order mirrors the one from Chef, all folders in the base path are walked back looking for the following configuration
+         file in order : .chef/knife.rb, ~/.chef/knife.rb, /etc/chef/client.rb"
+    requirements:
+        - "pychef (python library https://pychef.readthedocs.io `pip install pychef`"
+    options:
+        name:
+          description:
+            - Name of the databag
+          required: True
+        item:
+          description:
+            - Item to fetch
+          required: True
+"""
+
+EXAMPLES = """
+    - debug
+        msg: {{ lookup('chef_databag', 'name=data_bag_name item=data_bag_item') }}
+"""
+
+RETURN = """
+  _raw:
+    description:
+      - The value from the databag
+"""
 
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase

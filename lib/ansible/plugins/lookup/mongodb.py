@@ -68,7 +68,7 @@ DOCUMENTATION = '''
     notes:
         - "Please check https://api.mongodb.org/python/current/api/pymongo/collection.html?highlight=find#pymongo.collection.Collection.find for more detais."
     requirements:
-        - pymongo >= 2.4
+        - pymongo >= 2.4 (python library)
 '''
 
 EXAMPLES = '''

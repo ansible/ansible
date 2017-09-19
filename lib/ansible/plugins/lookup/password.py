@@ -1,23 +1,93 @@
 # (c) 2012, Daniel Hokka Zakrisson <daniel@hozac.com>
 # (c) 2013, Javier Candeira <javier@candeira.com>
 # (c) 2013, Maykel Moya <mmoya@speedyrails.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+DOCUMENTATION = """
+    lookup: password
+    version_added: "1.1"
+    author:
+      - Daniel Hokka Zakrisson <daniel@hozac.com>
+      - Javier Candeira <javier@candeira.com>
+      - Maykel Moya <mmoya@speedyrails.com>
+    short_description: retrieve or generate a random password, stored in a file
+    description:
+      -  generates a random plaintext password and stores it in a file at a given filepath.
+      - 'If the file exists previously, it will retrieve its contents, behaving just like with_file.
+        Usage of variables like C("{{ inventory_hostname }}") in the filepath can be used to set up random passwords per host
+        (which simplifies password management in C('host_vars') variables).'
+      - A special case is using /dev/null as a path. The password lookup will generate a new random password each time,
+        but will not write it to /dev/null. This can be used when you need a password without storing it on the controller.
+    options:
+      _terms:
+         description:
+           - path to the file that stores/will store the passwords
+         required: True
+      encrypt:
+        description:
+           - Whether the user requests that this password is returned encrypted or in plain text.
+           - Note that the password is always stored as plain text.
+           - Encrypt also forces saving the salt value for idempotence.
+        type: boolean
+        default: True
+      chars:
+        version_added: "1.4"
+        description:
+          - Define comma separeted list of names that compose a custom character set in the generated passwords.
+          - 'By default generated passwords contain a random mix of upper and lowercase ASCII letters, the numbers 0-9 and punctuation (". , : - _").'
+          - "They can be either parts of Python's string module attributes (ascii_letters,digits, etc) or are used literally ( :, -)."
+          - "To enter comma use two commas ',,' somewhere - preferably at the end. Quotes and double quotes are not supported."
+        type: string
+      length:
+        description: The length of the generated password.
+        default: 20
+        type: integer
+    notes:
+      - A great alternative to the password lookup plugin,
+        if you don't need to generate random passwords on a per-host basis,
+        would be to use Using Vault in playbooks.
+        Read the documentation there and consider using it first,
+        it will be more desirable for most applications.
+      - If the file already exists, no data will be written to it.
+        If the file has contents, those contents will be read in as the password.
+        Empty files cause the password to return as an empty string.
+      - 'As all lookups, this runs on the Ansible host as the user running the playbook, and "become" does not apply,
+        the target file must be readable by the playbook user, or, if it does not exist,
+        the playbook user must have sufficient privileges to create it.
+        (So, for example, attempts to write into areas such as /etc will fail unless the entire playbook is being run as root).'
+"""
+
+EXAMPLES = """
+- name: create a mysql user with a random password
+  mysql_user:
+    name: "{{ client }}"
+    password: "{{ lookup('password', 'credentials/' + client + '/' + tier + '/' + role + '/mysqlpassword length=15') }}"
+    priv: "{{ client }}_{{ tier }}_{{ role }}.*:ALL"
+
+- name: create a mysql user with a random password using only ascii letters
+   mysql_user: name={{ client }} password="{{ lookup('password', '/tmp/passwordfile chars=ascii_letters') }}" priv={{ client }}_{{ tier }}_{{ role }}.*:ALL
+
+- name: create a mysql user with a random password using only digits
+  mysql_user:
+    name: "{{ client }}"
+    password: "{{ lookup('password', '/tmp/passwordfile chars=digits') }}"
+    priv: "{{ client }}_{{ tier }}_{{ role }}.*:ALL"
+
+- name: create a mysql user with a random password using many different char sets
+  mysql_user:
+    name: "{{ client }}"
+    password" "{{ lookup('password', '/tmp/passwordfile chars=ascii_letters,digits,hexdigits,punctuation') }}"
+    priv: "{{ client }}_{{ tier }}_{{ role }}.*:ALL"
+"""
+
+RETURN = """
+_raw:
+  description:
+    - a password
+"""
 
 import os
 import string
