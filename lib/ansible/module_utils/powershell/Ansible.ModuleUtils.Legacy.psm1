@@ -201,7 +201,9 @@ Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj = @{}, $fail
 
     # If $value -eq $null, the parameter was unspecified by the user (deliberately or not)
     # Please leave $null-values intact, modules need to know if a parameter was specified
-    if ($value -ne $null) {
+    # When $value is already an array, we cannot rely on the null check, as an empty list
+    # is seen as null in the check below
+    if ($value -ne $null -or $value -is [array]) {
         if ($type -eq "path") {
             # Expand environment variables on path-type
             $value = Expand-Environment($value)
@@ -240,6 +242,8 @@ Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj = @{}, $fail
             } else {
                 Fail-Json -obj $resultobj -message "Get-AnsibleParam: Parameter '$name' is not a YAML list."
             }
+            # , is not a typo, forces it to return as a list when it is empty or only has 1 entry
+            return ,$value
         }
     }
 
