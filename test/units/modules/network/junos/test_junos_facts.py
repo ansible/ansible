@@ -67,7 +67,6 @@ class TestJunosCommandModule(TestJunosModule):
         result = self.execute_module(format='xml')
         facts = result['ansible_facts']
 
-
         self.assertEqual(facts['ansible_net_hostname'], 'vsrx01')
         self.assertTrue('em0' in facts['ansible_net_interfaces'])
         self.assertEqual(facts['ansible_net_interfaces']['em0']['type'], 'Ethernet')
