@@ -46,13 +46,13 @@ from ansible.utils.color import codeCodes
 DONT_COLORIZE = False
 COLORS = {
     'normal': '\033[0m',
-    'ok': '\033[{}m'.format(codeCodes[C.COLOR_OK]),
+    'ok': '\033[{0}m'.format(codeCodes[C.COLOR_OK]),
     'bold': '\033[1m',
     'not_so_bold': '\033[1m\033[34m',
-    'changed': '\033[{}m'.format(codeCodes[C.COLOR_CHANGED]),
-    'failed': '\033[{}m'.format(codeCodes[C.COLOR_ERROR]),
+    'changed': '\033[{0}m'.format(codeCodes[C.COLOR_CHANGED]),
+    'failed': '\033[{0}m'.format(codeCodes[C.COLOR_ERROR]),
     'endc': '\033[0m',
-    'skipped': '\033[{}m'.format(codeCodes[C.COLOR_SKIP]),
+    'skipped': '\033[{0}m'.format(codeCodes[C.COLOR_SKIP]),
 }
 
 
@@ -145,19 +145,19 @@ class CallbackModule(CallbackBase):
             change_string = colorize('FAILED!!!', color)
         else:
             color = 'changed' if changed else 'ok'
-            change_string = colorize("changed={}".format(changed), color)
+            change_string = colorize("changed={0}".format(changed), color)
 
         msg = colorize(msg, color)
 
         line_length = 120
         spaces = ' ' * (40 - len(name) - indent_level)
-        line = "{}  * {}{}- {}".format(' ' * indent_level, name, spaces, change_string)
+        line = "{0}  * {1}{2}- {3}".format(' ' * indent_level, name, spaces, change_string)
 
         if len(msg) < 50:
-            line += ' -- {}'.format(msg)
-            print("{} {}---------".format(line, '-' * (line_length - len(line))))
+            line += ' -- {0}'.format(msg)
+            print("{0} {1}---------".format(line, '-' * (line_length - len(line))))
         else:
-            print("{} {}".format(line, '-' * (line_length - len(line))))
+            print("{0} {1}".format(line, '-' * (line_length - len(line))))
             print(self._indent_text(msg, indent_level + 4))
 
         if diff:
@@ -240,7 +240,7 @@ class CallbackModule(CallbackBase):
             else:
                 color = 'ok'
 
-            msg = '{}    : ok={}\tchanged={}\tfailed={}\tunreachable={}'.format(
+            msg = '{0}    : ok={1}\tchanged={2}\tfailed={3}\tunreachable={4}'.format(
                 host, s['ok'], s['changed'], s['failures'], s['unreachable'])
             print(colorize(msg, color))
 
@@ -253,17 +253,17 @@ class CallbackModule(CallbackBase):
             line_length = 120
             spaces = ' ' * (31 - len(result._host.name) - 4)
 
-            line = "  * {}{}- {}".format(colorize(result._host.name, 'not_so_bold'),
-                                         spaces,
-                                         colorize("skipped", 'skipped'),)
+            line = "  * {0}{1}- {2}".format(colorize(result._host.name, 'not_so_bold'),
+                                            spaces,
+                                            colorize("skipped", 'skipped'),)
 
             reason = result._result.get('skipped_reason', '') or \
                 result._result.get('skip_reason', '')
             if len(reason) < 50:
-                line += ' -- {}'.format(reason)
-                print("{} {}---------".format(line, '-' * (line_length - len(line))))
+                line += ' -- {0}'.format(reason)
+                print("{0} {1}---------".format(line, '-' * (line_length - len(line))))
             else:
-                print("{} {}".format(line, '-' * (line_length - len(line))))
+                print("{0} {1}".format(line, '-' * (line_length - len(line))))
                 print(self._indent_text(reason, 8))
                 print(reason)
 
