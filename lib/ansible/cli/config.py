@@ -174,7 +174,7 @@ class ConfigCLI(CLI):
                     color = 'green'
                 else:
                     color = 'yellow'
-                msg = "%s(%s) = %s" % (setting, defaults[setting].origin, defaults[setting].value)
+                msg = "%s(%s) = %s" % (setting, defaults[setting].origin.decode(sys.getfilesystemencoding()), defaults[setting].value)
             else:
                 color = 'green'
                 msg = "%s(%s) = %s" % (setting, 'default', defaults[setting].get('default'))

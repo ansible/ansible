@@ -21,6 +21,7 @@ __metaclass__ = type
 
 import fnmatch
 import os
+import sys
 import re
 import itertools
 
@@ -281,7 +282,7 @@ class InventoryManager(object):
                             display.vvv(fail['exc'].tb)
 
         if not parsed:
-            display.warning("Unable to parse %s as an inventory source" % to_native(source))
+            display.warning(u"Unable to parse %s as an inventory source" % to_native(source).decode(sys.getfilesystemencoding()))
 
         # clear up, jic
         self._inventory.current_source = None
