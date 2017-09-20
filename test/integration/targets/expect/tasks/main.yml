@@ -48,7 +48,7 @@
 
 - name: test creates option
   expect:
-    command: "echo"
+    command: "echo output"
     responses:
       foo: bar
     creates: "{{output_file}}"
@@ -58,6 +58,49 @@
   assert:
     that:
     - "creates_result.changed == false"
+    - "'skipped' in creates_result.stdout"
+
+- name: test creates option (missing)
+  expect:
+    command: "echo output"
+    responses:
+      foo: bar
+    creates: "{{output_file}}.does.not.exist"
+  register: creates_result
+
+- name: assert when missing creates is provided command is run
+  assert:
+    that:
+    - "creates_result.changed == true"
+    - "creates_result.stdout == 'output'"
+
+- name: test removes option
+  expect:
+    command: "echo output"
+    responses:
+      foo: bar
+    removes: "{{output_file}}"
+  register: removes_result
+
+- name: assert when removes is provided command is run
+  assert:
+    that:
+    - "removes_result.changed == true"
+    - "removes_result.stdout == 'output'"
+
+- name: test removes option (missing)
+  expect:
+    command: "echo output"
+    responses:
+      foo: bar
+    removes: "{{output_file}}.does.not.exist"
+  register: removes_result
+
+- name: assert when missing removes is provided command is not run
+  assert:
+    that:
+    - "removes_result.changed == false"
+    - "'skipped' in removes_result.stdout"
 
 - name: test chdir
   expect:
@@ -97,4 +140,66 @@
 - name: assert echo works
   assert:
     that:
-    - "'bar' in echo_result.stdout_lines"
+    - "echo_result.stdout_lines|length == 2"
+    - "echo_result.stdout_lines[0] == 'foobar'"
+    - "echo_result.stdout_lines[1] == 'bar'"
+
+- name: test response list
+  expect:
+    command: "{{ansible_python_interpreter}} {{test_command_file}} foo foo"
+    responses:
+      foo:
+      - bar
+      - baz
+  register: list_result
+
+- name: assert list response works
+  assert:
+    that:
+    - "list_result.stdout_lines|length == 2"
+    - "list_result.stdout_lines[0] == 'foobar'"
+    - "list_result.stdout_lines[1] == 'foobaz'"
+
+- name: test no remaining responses
+  expect:
+    command: "{{ansible_python_interpreter}} {{test_command_file}} foo foo"
+    responses:
+      foo:
+      - bar
+  register: list_result
+  ignore_errors: yes
+
+- name: assert no remaining responses
+  assert:
+    that:
+    - "list_result.failed"
+    - "'No remaining responses' in list_result.msg"
+
+- name: test no command
+  expect:
+    command: ""
+    responses:
+      foo: bar
+  register: no_command_result
+  ignore_errors: yes
+
+- name: assert no command
+  assert:
+    that:
+    - "no_command_result.failed"
+    - "no_command_result.msg == 'no command given'"
+    - "no_command_result.rc == 256"
+
+- name: test non-zero return code
+  expect:
+    command: "ls /does-not-exist"
+    responses:
+      foo: bar
+  register: non_zero_result
+  ignore_errors: yes
+
+- name: assert non-zero return code
+  assert:
+    that:
+    - "non_zero_result.failed"
+    - "non_zero_result.msg == 'non-zero return code'"
