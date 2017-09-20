@@ -31,6 +31,7 @@ Ansible Changes By Release
 * Change configuration of defaults to use standard jinja2 instead of custom
   eval() for using variables in the default field of config (https://github.com/ansible/ansible/pull/30650)
 
+* Fixed precedence and values for become flags and executable settings
 
 <a id="2.4"></a>
 

@@ -540,19 +540,13 @@ class PlayContext(Base):
                 command = success_cmd
 
             # set executable to use for the privilege escalation method, with various overrides
-            exe = self.become_method
-            for myexe in (getattr(self, '%s_exe' % self.become_method, None), self.become_exe):
-                if myexe:
-                    exe = myexe
-                    break
+            exe = self.become_exe or getattr(self, '%s_exe' % self.become_method, self.become_method)
 
             # set flags to use for the privilege escalation method, with various overrides
-            flags = ''
-            for myflag in (getattr(self, '%s_flags' % self.become_method, None), self.become_flags):
-                if myflag is not None:
-                    flags = myflag
-                    break
+            flags = self.become_flags or getattr(self, '%s_flags' % self.become_method, '')
 
+            print(exe)
+            print(flags)
             if self.become_method == 'sudo':
                 # If we have a password, we run sudo with a randomly-generated
                 # prompt set using -p. Otherwise we run it with default -n, which makes
