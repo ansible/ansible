@@ -38,29 +38,58 @@ Create a file called ``fetch-facts.yml`` containing the following:
 
 .. code-block:: yaml
 
-  ---
-  - name: "Download switch configuration"
-    hosts: switches
-    connection: local
-    gather_facts: no
-    vars:
-      ios_credentials:
-        username: cisco
-        password: secretpassword
-    tasks:
-      - name: Gather facts
-        ios_facts:
-          provider: "{{ ios_credentials }}"
-        register: result
+   ---
+   - name: "Download switch configuration"
+     hosts: switches
+     connection: local
+     gather_facts: no
 
-      - name: Display facts
-        debug:
-          msg: " {{ result }}"
+     vars:
+       ios_credentials:
+         username: cisco
+         password: cisco
+       vyos_credentials:
+         username: admin
+         password: admin
 
-      - name: Write to disk
-        copy:
-          content: "{{ result | to_nice_json }}"
-          dest: "/tmp/switch-config-{{inventory_hostname}}"
+     tasks:
+       - name: Gather facts (ios)
+         ios_facts:
+           provider: "{{ ios_credentials }}"
+         register: result_ios
+         when: "'ios' in group_names"
+
+       - name: Gather facts (vyos)
+         vyos_facts:
+           provider: "{{ vyos_credentials }}"
+         register: result_vyos
+         when: "'vyos' in group_names"
+
+       - name: Display some facts
+         debug:
+           msg: "The hostname is {{ ansible_net_hostname }} and the OS is {{ ansible_net_version }}"
+
+       - debug: var=hostvars['vyos01.example.net']
+
+       - name: Write to disk
+         copy:
+           content: |
+             IOS device info:
+               {% for host in groups['ios'] %}
+               Hostname: {{ hostvars[host].ansible_net_version }}
+               Version: {{ hostvars[host].ansible_net_version }}
+               Model: {{ hostvars[host].ansible_net_model }}
+               Serial: {{ hostvars[host].ansible_net_serialnum }}
+               {% endfor %}
+
+             VyOS device info:
+               {% for host in groups['vyos'] %}
+               Hostname: {{ hostvars[host].ansible_net_version }}
+               Version: {{ hostvars[host].ansible_net_version }}
+               Model: {{ hostvars[host].ansible_net_model }}
+               Serial: {{ hostvars[host].ansible_net_serialnum }}
+               {% endfor %}
+           dest: /tmp/switch-facts
 
 Run it
 ++++++
@@ -69,16 +98,32 @@ Run it
 
    ansible-playbook -i inventory fetch-facts.yml
    <snip>
-   ios01                      : ok=3    changed=1    unreachable=0    failed=0
-   ls /tmp/switch-config-*
-   /tmp/switch-config-ios01.example.net
-   less /tmp/switch-config-ios01.example.net
+   PLAY RECAP
+   ios01.example.net          : ok=3    changed=0    unreachable=0    failed=0
+   vyos01.example.net         : ok=3    changed=0    unreachable=0    failed=0
+
+   cat /tmp/switch-facts
 
 Details
 -------
 
+
+
+This is where we explain what the above is doing
+
 * FIXME Details about inventory
-* FIXME
+
+    * What do we need to link to in main docs: ``:children``, what else?
+    * Host groups
+      
+* FIXME Step though playbook
+
+  * Link to module docs for ios_facts, vyos_facts
+
+Troubleshooting
+---------------
+
+If you receive an error ``unable to open shell`` please follow the debug steps in :doc:`network_debug_troubleshooting`_.
 
 Fixme
 =====
@@ -89,4 +134,3 @@ Fixme
 * Add filename to code-blocks
 
 * Troubleshooting link to http://docs.ansible.com/ansible/latest/network_debug_troubleshooting.html#unable-to-open-shell
-* Duplicate for two platforms
