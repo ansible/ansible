@@ -523,7 +523,7 @@ files:
   $modules/packaging/os/swdepot.py: melodous
   $modules/packaging/os/swupd.py: albertomurillo
   $modules/packaging/os/urpmi.py: pmakowski
-  $modules/packaging/os/yum.py: $team_ansible berenddeschouwer verm666
+  $modules/packaging/os/yum.py: $team_ansible berenddeschouwer verm666 mkrizek
   $modules/packaging/os/yum_repository.py: jtyr
   $modules/packaging/os/zypper.py:
     ignored: dirtyharrycallahan
