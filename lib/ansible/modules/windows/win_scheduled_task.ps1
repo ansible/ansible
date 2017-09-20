@@ -630,32 +630,30 @@ if ($group) {
 # Convert the older arguments to the newer format if required
 if ($old_executable -ne $null) {
     Add-DeprecationWarning -obj $result -message "executable option is deprecated, please use the actions list option instead" -version 2.7
+    if ($actions -ne $null) {
+        Fail-Json -obj $result -message "actions and executable are mutually exclusive, use actions by itself instead"
+    }
+
     $new_action = @{ path = $old_executable }
-    
     if ($old_arguments -ne $null) {
         Add-DeprecationWarning -obj $result -message "arguments option is deprecated, please use the actions list option instead" -version 2.7
         $new_action.arguments = $old_arguments
     }
-    if ($actions -eq $null) {
-        $actions = @($new_action)
-    } else {
-        Add-Warning -obj $result -message "actions is already specified, ignoring the executable option"
-    }
+    $actions = @($new_action)
 }
 
 # validate store_password and logon_type
 if ($logon_type -ne $null) {
     $full_enum_name = "TASK_LOGON_$($logon_type.ToUpper())"
     $logon_type = [TASK_LOGON_TYPE]::$full_enum_name
-    if ($store_password -ne $null) {
-        Add-Warning -obj $result -message "both store_password and logon_type have been defined, ignoring store_password"
+}
+if ($store_password -ne $null) {
+    Add-DeprecationWarning -obj $result -message "store_password option is deprecated, please use logon_type: password instead" -version 2.7
+    if ($logon_type -ne $null) {
+        Fail-Json -obj $result -message "logon_type and store_password are mutually exclusive, use logon_type=password instead"
     }
-} else {
-    if ($store_password -ne $null) {
-        Add-DeprecationWarning -obj $result -message "store_password option is deprecated, please use logon_type: password instead" -version 2.7
-        if ($store_password -eq $true -and $password -ne $null) {
-            $logon_type = [TASK_LOGON_TYPE]::TASK_LOGON_PASSWORD
-        }
+    if ($store_password -eq $true -and $password -ne $null) {
+        $logon_type = [TASK_LOGON_TYPE]::TASK_LOGON_PASSWORD
     }
 }
 
