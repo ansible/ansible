@@ -13,7 +13,7 @@ $ErrorActionPreference = "Stop"
 
 $params = Parse-Args -arguments $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
-$diff = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool" -default $false
+$diff_mode = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool" -default $false
 
 $name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
 $path = Get-AnsibleParam -obj $params -name "path" -type "str" -default "\"
@@ -78,7 +78,7 @@ $result = @{
     changed = $false
 }
 
-if ($diff) {
+if ($diff_mode) {
     $result.diff = @{}
 }
 
@@ -965,7 +965,7 @@ if ($state -eq "absent") {
                 Fail-Json -obj $result -message "failed to delete task '$name' at path '$path': $($_.Exception.Message)"
             }
         }
-        if ($diff) {
+        if ($diff_mode) {
             $result.diff.prepared = "-[Task]`n-$task_path`n"
         }
         $result.changed = $true
@@ -1037,7 +1037,7 @@ if ($state -eq "absent") {
         } catch {
             Fail-Json -obj $result -message "failed to register new task definition: $($_.Exception.Message)"
         }
-        if ($diff) {
+        if ($diff_mode) {
             $result.diff.prepared = $create_diff_string
         }
 
@@ -1122,7 +1122,7 @@ if ($state -eq "absent") {
             
             $result.changed = $true
 
-            if ($diff) {
+            if ($diff_mode) {
                 $changed_diff_text = $task_diff -join "`n"
                 if ($result.diff.prepared -ne $null) {
                     $diff_text = "$($result.diff.prepared)`n$changed_diff_text"
