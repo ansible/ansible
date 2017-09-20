@@ -13,4 +13,4 @@
     action: delete_all
     provider: "{{ connection }}"
 
-- debug: msg="END TRANSPORT:{{ connection.transport }} nxos_rollback sanity test"
+- debug: msg="END TRANSPORT:{{ connection.transport }} nxos_snapshot sanity test"
