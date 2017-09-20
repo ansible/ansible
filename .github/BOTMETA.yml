@@ -342,16 +342,8 @@ files:
   $modules/files/xml.py:
     ignored: magnus919
     maintainers: tbielawa dagwieers sm4rk0 cmprescott
-  $modules/identity/ipa/ipa_dnsrecord.py: Nosmoht akasurde
-  $modules/identity/ipa/ipa_group.py: Nosmoht
-  $modules/identity/ipa/ipa_hbacrule.py: Nosmoht
-  $modules/identity/ipa/ipa_host.py: Nosmoht
-  $modules/identity/ipa/ipa_hostgroup.py: Nosmoht
-  $modules/identity/ipa/ipa_role.py: Nosmoht
-  $modules/identity/ipa/ipa_sudocmd.py: Nosmoht
-  $modules/identity/ipa/ipa_sudocmdgroup.py: Nosmoht
-  $modules/identity/ipa/ipa_sudorule.py: Nosmoht
-  $modules/identity/ipa/ipa_user.py: Nosmoht
+  $modules/identity/ipa/:
+    maintainers: $team_ipa
   $modules/identity/opendj/opendj_backendprop.py: dj-wasabi
   $modules/inventory/add_host.py: $team_ansible
   $modules/inventory/group_by.py: $team_ansible jhoekx
@@ -1108,3 +1100,4 @@ macros:
   team_tower: ghjm jlaska matburt wwitzel3
   team_vmware: dagwieers dav1x jctanner nerzhul akasurde
   team_windows: dagwieers jborean93 jhawkesworth
+  team_ipa: Nosmoht akasurde
