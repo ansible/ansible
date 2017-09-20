@@ -28,7 +28,6 @@ except ImportError:
     HAS_LIB = False
 
 
-
 def json_query(data, expr):
     '''Query data using jmespath query language ( http://jmespath.org ). Example:
     - debug: msg="{{ instance | json_query(tagged_instances[*].block_device_mapping.*.volume_id') }}"
