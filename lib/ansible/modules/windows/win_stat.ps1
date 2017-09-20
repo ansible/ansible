@@ -69,6 +69,21 @@ function Date_To_Timestamp($start_date, $end_date)
     }
 }
 
+Function Get-File($path) {
+    # Test-Path/Get-Item fails on files that are locked like C:\pagefile.sys
+    # Get-ChildItem -Path -Filter works fine without any performance
+    # degredations so use that instead
+    $directory = Split-Path -Path $path -Parent
+    $filename = Split-Path -Path $path -Leaf
+
+    $file = Get-ChildItem -Path $directory -Filter $filename -Force -ErrorAction SilentlyContinue
+    if ($file -is [Array] -and $file.Count -gt 1) {
+        Fail-Json -obj $result -message "found multiple files at path '$path', make sure no wildcards are set in the path"
+    }
+
+    return $file
+}
+
 $params = Parse-Args $args -supports_check_mode $true
 
 $path = Get-AnsibleParam -obj $params -name "path" -type "path" -failifempty $true -aliases "dest","name"
@@ -85,10 +100,11 @@ $result = @{
 
 # Backward compatibility
 if ($get_md5 -eq $true -and (Get-Member -inputobject $params -name "get_md5") ) {
-    Add-DeprecationWarning $result "The parameter 'get_md5' is being replaced with 'checksum_algorithm: md5'"
+    Add-DeprecationWarning -obj $result -message "The parameter 'get_md5' is being replaced with 'checksum_algorithm: md5'" -version 2.7
 }
 
-If (Test-Path -Path $path)
+$info = Get-File -path $path
+If ($info -ne $null)
 {
     $result.stat.exists = $true
 
@@ -97,9 +113,6 @@ If (Test-Path -Path $path)
     $result.stat.islnk = $false
     $result.stat.isreg = $false
     $result.stat.isshared = $false
-
-    # Need to use -Force so it picks up hidden files
-    $info = Get-Item -Force $path
 
     $epoch_date = Get-Date -Date "01/01/1970"
     $result.stat.creationtime = (Date_To_Timestamp $epoch_date $info.CreationTime)

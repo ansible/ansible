@@ -27,11 +27,29 @@ $result = @{
     cmd = $raw_command_line
 }
 
-If($creates -and $(Test-Path -Path $creates)) {
+Function Test-FilePath($path) {
+    # Test-Path/Get-Item fails on files that are locked like C:\pagefile.sys
+    # Get-ChildItem -Path -Filter works fine without any performance
+    # degredations so use that instead
+    $directory = Split-Path -Path $path -Parent
+    $filename = Split-Path -Path $path -Leaf
+
+    $file = Get-ChildItem -Path $directory -Filter $filename -Force -ErrorAction SilentlyContinue
+    if ($file -ne $null) {
+        if ($file -is [Array] -and $file.Count -gt 1) {
+            Fail-Json -obj $result -message "found multiple files at path '$path', make sure no wildcards are set in the path"
+        }
+        return $true
+    } else {
+        return $false
+    }
+}
+
+if ($creates -and $(Test-FilePath -path $creates)) {
     Exit-Json @{msg="skipped, since $creates exists";cmd=$raw_command_line;changed=$false;skipped=$true;rc=0}
 }
 
-If($removes -and -not $(Test-Path -Path $removes)) {
+if ($removes -and -not $(Test-FilePath -path $removes)) {
     Exit-Json @{msg="skipped, since $removes does not exist";cmd=$raw_command_line;changed=$false;skipped=$true;rc=0}
 }
 
