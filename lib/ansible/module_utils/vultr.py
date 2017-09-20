@@ -193,7 +193,7 @@ class Vultr(object):
 
         res = response.read()
         if not res:
-            return
+            return {}
 
         try:
             return self.module.from_json(to_text(res))
