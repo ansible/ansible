@@ -21,6 +21,7 @@ except ImportError:
 # Init.
 ###############################################################################
 
+#
 # Netbox config file.
 netbox_config = '''
 netbox:
@@ -69,7 +70,9 @@ netbox_config_file = mock_config(netbox_config)
 # Invalid yaml file.
 netbox_config_file_invalid = mock_config("invalid yaml syntax: ][")
 
-# Fake Netbox api output.
+
+#
+# Netbox api output.
 netbox_api_output = json.loads('''
 [
   {
@@ -173,30 +176,29 @@ netbox_api_output = json.loads('''
 ]
 ''')
 
-# Fake single host.
-fake_host = netbox_api_output[0]
-
 
 # Fake Netbox API response.
-def netbox_api_response(single_host=False):
-    if single_host:
-        json_payload = fake_host
-    else:
-        json_payload = netbox_api_output
-
+def netbox_api_response(json_payload):
     response = Response()
     response.status_code = 200
     response.json = MagicMock(return_value=json_payload)
     return MagicMock(return_value=response)
 
+# Fake single host.
+fake_host = netbox_api_output[0]
 
-# Fake args.
+# Fake API output.
+netbox_api_all_hosts = netbox_api_response(netbox_api_output)
+netbox_api_single_host = netbox_api_response(fake_host)
+
+
+#
+# Init Netbox class.
 class Args(object):
     config_file = netbox_config_file.name
     host = None
     list = True
 
-# Init Netbox class.
 netbox_inventory = netbox.NetboxAsInventory(Args, netbox_config_data)
 Args.list = False
 netbox_inventory_default_args = netbox.NetboxAsInventory(Args, netbox_config_data)
@@ -318,7 +320,7 @@ class TestNetboxAsInventory(object):
         """
         Test get hosts list from API and make sure it returns a list.
         """
-        with patch('requests.get', netbox_api_response()):
+        with patch('requests.get', netbox_api_all_hosts):
             hosts_list = netbox_inventory.get_hosts_list(api_url)
             assert isinstance(hosts_list, list)
 
@@ -329,7 +331,7 @@ class TestNetboxAsInventory(object):
         """
         Test if Netbox URL is invalid.
         """
-        with patch('requests.get', netbox_api_response()):
+        with patch('requests.get', netbox_api_all_hosts):
             with pytest.raises(SystemExit) as none_url_error:
                 netbox_inventory.get_hosts_list(api_url)
             assert none_url_error
@@ -342,7 +344,7 @@ class TestNetboxAsInventory(object):
         Test Netbox single host output.
         """
 
-        with patch('requests.get', netbox_api_response(single_host=True)):
+        with patch('requests.get', netbox_api_single_host):
             host_data = netbox_inventory_single.get_hosts_list(
                 api_url,
                 specific_host=host_name)
@@ -454,7 +456,7 @@ class TestNetboxAsInventory(object):
         """
         Test generateing final Ansible inventory before convert it to JSON.
         """
-        with patch('requests.get', netbox_api_response()):
+        with patch('requests.get', netbox_api_all_hosts):
             ansible_inventory = netbox_inventory.generate_inventory()
             assert "fake_host01" in ansible_inventory["_meta"]["hostvars"]
             assert isinstance(ansible_inventory["_meta"]["hostvars"]["fake_host02"], dict)
