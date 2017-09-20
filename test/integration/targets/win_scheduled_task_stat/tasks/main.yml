@@ -108,7 +108,6 @@
     - stat_task_present.registration_info.author == "Ansible Author"
     - stat_task_present.registration_info.date is defined
     - stat_task_present.registration_info.description == "Fake description"
-    - stat_task_present.registration_info.uri == test_scheduled_task_stat_path + "\\" + test_scheduled_task_stat_name
     - stat_task_present.settings.disallow_start_if_on_batteries == False
     - stat_task_present.settings.execution_time_limit == "PT23H"
     - stat_task_present.settings.restart_count == 3
