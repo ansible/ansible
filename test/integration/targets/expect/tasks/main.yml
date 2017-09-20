@@ -48,7 +48,7 @@
 
 - name: test creates option
   expect:
-    command: "echo output"
+    command: "{{ansible_python_interpreter}} {{test_command_file}}"
     responses:
       foo: bar
     creates: "{{output_file}}"
@@ -62,7 +62,7 @@
 
 - name: test creates option (missing)
   expect:
-    command: "echo output"
+    command: "{{ansible_python_interpreter}} {{test_command_file}}"
     responses:
       foo: bar
     creates: "{{output_file}}.does.not.exist"
@@ -72,11 +72,11 @@
   assert:
     that:
     - "creates_result.changed == true"
-    - "creates_result.stdout == 'output'"
+    - "creates_result.stdout == 'foobar'"
 
 - name: test removes option
   expect:
-    command: "echo output"
+    command: "{{ansible_python_interpreter}} {{test_command_file}}"
     responses:
       foo: bar
     removes: "{{output_file}}"
@@ -86,11 +86,11 @@
   assert:
     that:
     - "removes_result.changed == true"
-    - "removes_result.stdout == 'output'"
+    - "removes_result.stdout == 'foobar'"
 
 - name: test removes option (missing)
   expect:
-    command: "echo output"
+    command: "{{ansible_python_interpreter}} {{test_command_file}}"
     responses:
       foo: bar
     removes: "{{output_file}}.does.not.exist"
