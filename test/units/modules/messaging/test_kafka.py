@@ -57,6 +57,7 @@ class TestKafka(unittest.TestCase):
     def test_kafka_list(self):
         set_module_args({
             'executable': None,
+            'action': 'list',
             'topic': 'trololo',
             'authorizer_properties': 'zookeeper.connect=localhost',
         })
@@ -88,7 +89,7 @@ class TestKafka(unittest.TestCase):
             'action': 'add',
             'authorizer_properties': 'zookeeper.connect=localhost',
             'allow_host': ['127.0.0.1'],
-            'allow_principal': ['User:lsp'],
+            'allow_principal': ['User:tintin'],
             'operation': ['read', 'write'],
             'topic': 'trololo',
         })
