@@ -34,7 +34,7 @@ def fail_json(*args, **kwargs):
 def get_bin_path(self, arg, required=False):
     if arg.endswith('kafka-topics'):
         return '/usr/bin/kafka-topics'
-    elif arg.endswith('kafka-configs'):
+    elif arg.endswith('kafka-acls'):
         return '/usr/bin/kafka-acls'
     else:
         if required:
@@ -67,7 +67,7 @@ class TestKafka(unittest.TestCase):
             mock_run_command.return_value = 0, stdout, stderr  # successful execution
 
             with self.assertRaises(AnsibleExitJson) as result:
-                kafka_configs.main()
+                kafka_acls.main()
             self.assertFalse(result.exception.args[0]['changed'])
 
         mock_run_command.assert_called_once_with("/usr/bin/kafka-acls --list "
@@ -90,7 +90,7 @@ class TestKafka(unittest.TestCase):
             mock_run_command.return_value = 0, stdout, stderr  # successful execution
 
             with self.assertRaises(AnsibleExitJson) as result:
-                kafka_configs.main()
+                kafka_acls.main()
             self.assertTrue(result.exception.args[0]['changed'])
 
         mock_run_command.assert_called_once_with("/usr/bin/kafka-acls --add "
