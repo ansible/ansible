@@ -52,18 +52,22 @@ netbox:
         #    env: env
 '''
 
+
+# Mock config file.
+def mock_config(config_data):
+    config_file = tempfile.NamedTemporaryFile(delete=False, mode='a')
+    config_file.write(config_data)
+    config_file.close()
+    return config_file
+
 # Netbox config.
 netbox_config_data = yaml.safe_load(netbox_config)
 
-# Mock open Netbox config file.
-netbox_config_file = tempfile.NamedTemporaryFile(delete=False, mode='a')
-netbox_config_file.write(netbox_config)
-netbox_config_file.close()
+# Valid yaml file.
+netbox_config_file = mock_config(netbox_config)
 
 # Invalid yaml file.
-netbox_config_file_invalid = tempfile.NamedTemporaryFile(delete=False, mode='a')
-netbox_config_file_invalid.write("invalid yaml syntax: ][")
-netbox_config_file_invalid.close()
+netbox_config_file_invalid = mock_config("invalid yaml syntax: ][")
 
 # Fake Netbox api output.
 netbox_api_output = json.loads('''
