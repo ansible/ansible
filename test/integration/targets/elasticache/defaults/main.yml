@@ -1,0 +1,4 @@
+---
+# defaults file for test_elasticache
+elasticache_name: '{{resource_prefix}}'
+elasticache_description: 'Created by ansible integration tests'
