@@ -185,11 +185,52 @@
         dead_letter_arn:
       register: result
 
-    - name: assert lambda was updated as expected
+    - name: assert lambda remains as before
       assert:
         that:
            - 'not result|failed'
            - 'result.changed == False'
+
+
+
+    # ============================================================
+    - name: test putting an environment variable changes lambda
+      lambda:
+        name: "{{lambda_function_name}}"
+        runtime: "python2.7"
+        handler: "mini_lambda.handler"
+        role: "ansible_lambda_role"
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        zip_file: "{{zip_res.dest}}"
+        environment_variables:
+            EXTRA_MESSAGE: "I think you are great!!"
+      register: result
+
+    - name: assert lambda upload succeeded
+      assert:
+        that:
+           - 'not result|failed'
+           - 'result.changed == True'
+
+    - name: test lambda works
+      execute_lambda:
+        name: "{{lambda_function_name}}"
+        payload:
+          name: "Mr Ansible Tests"
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+      register: result
+
+    - name: assert lambda manages to respond as expected
+      assert:
+        that:
+           - 'not result|failed'
+           - 'result.result.output.message == "hello Mr Ansible Tests. I think you are great!!"'
 
     # ============================================================
     - name: test state=present triggering a network exception due to bad url
