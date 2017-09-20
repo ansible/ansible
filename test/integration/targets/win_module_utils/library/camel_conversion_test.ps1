@@ -51,7 +51,8 @@ foreach ($entry in $output_dict.GetEnumerator()) {
                     Assert-Equals -actual $inner_list_hash.Name -expected $inner_list_hash.Value
                 }
             } elseif ($inner_list -is [String]) {
-                Assert-Equals -actual $inner_list -expected "string_two"
+                # this is not a string key so we need to keep it the same
+                Assert-Equals -actual $inner_list -expected "stringTwo"
             } else {
                 Assert-Equals -actual $inner_list -expected 0
             }
