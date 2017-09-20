@@ -292,12 +292,14 @@ class ConfigManager(object):
             if ftype and defs[config].get(ftype):
                 if ftype == 'ini':
                     # load from ini config
-                    try:  # FIXME: generaelize _loop_entries to allow for files also
+                    try:  # FIXME: generaelize _loop_entries to allow for files also, most of this code is dupe
                         for ini_entry in defs[config]['ini']:
-                            value = get_ini_config_value(self._parser, ini_entry)
-                            origin = cfile
-                            if value is not None and 'deprecated' in ini_entry:
-                                self.DEPRECATED.append(('[%s]%s' % (ini_entry['section'], ini_entry['key']), ini_entry['deprecated']))
+                            temp_value = get_ini_config_value(self._parser, ini_entry)
+                            if temp_value is not None:
+                                value = temp_value
+                                origin = cfile
+                                if 'deprecated' in ini_entry:
+                                    self.DEPRECATED.append(('[%s]%s' % (ini_entry['section'], ini_entry['key']), ini_entry['deprecated']))
                     except Exception as e:
                         sys.stderr.write("Error while loading ini config %s: %s" % (cfile, to_native(e)))
                 elif ftype == 'yaml':
