@@ -1,0 +1,16 @@
+# cleans up each test to ensure a blank slate
+---
+- win_scheduled_task:
+    name: '{{item.name}}'
+    path: '{{item.path|default(omit)}}'
+    state: absent
+  with_items:
+  - name: Task # old tests
+    path: \Path
+  - name: '{{test_scheduled_task_name}}'
+  - name: '{{test_scheduled_task_name}}'
+    path: '{{test_scheduled_task_path}}'
+
+- win_user:
+    name: '{{test_scheduled_task_user}}'
+    state: absent
