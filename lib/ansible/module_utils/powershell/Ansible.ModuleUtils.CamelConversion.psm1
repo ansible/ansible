@@ -30,8 +30,6 @@ Function Convert-ListToSnakeCase($list) {
             $new_value = Convert-DictToSnakeCase -dict $value
         } elseif ($value -is [Array]) {
             $new_value = Convert-ListToSnakeCase -list $value
-        } elseif ($value -is [String]) {
-            $new_value = Convert-StringToSnakeCase -string $value
         } else {
             $new_value = $value
         }
@@ -55,8 +53,6 @@ Function Convert-DictToSnakeCase($dict) {
             $snake_dict.$snake_key = Convert-DictToSnakeCase -dict $value          
         } elseif ($value -is [Array]) {
             $snake_dict.$snake_key = Convert-ListToSnakeCase -list $value
-        } elseif ($value -is [String]) {
-            $snake_dict.$snake_key = Convert-StringToSnakeCase -string $value
         } else {
             $snake_dict.$snake_key = $value
         }
