@@ -344,7 +344,6 @@ lib/ansible/modules/notification/grove.py
 lib/ansible/modules/notification/hall.py
 lib/ansible/modules/notification/irc.py
 lib/ansible/modules/notification/jabber.py
-lib/ansible/modules/notification/mail.py
 lib/ansible/modules/notification/mattermost.py
 lib/ansible/modules/notification/mqtt.py
 lib/ansible/modules/notification/osx_say.py
