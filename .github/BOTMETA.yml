@@ -951,6 +951,8 @@ files:
   $module_utils/ordnance.py:
     maintainers: alexanderturner djh00t
     labels: networking
+  $module_utils/ovirt.py:
+    maintainers: joshainglis karmab machacekondra
   $module_utils/sros.py:
     maintainers: $team_networking
     labels: networking
