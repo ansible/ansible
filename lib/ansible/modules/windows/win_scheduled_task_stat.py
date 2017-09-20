@@ -306,30 +306,30 @@ triggers:
   type: list
   sample: [
       {
-          "delay": "PT15M", 
-          "enabled": true, 
-          "end_boundary": null, 
-          "execution_time_limit": null, 
-          "id": null, 
+          "delay": "PT15M",
+          "enabled": true,
+          "end_boundary": null,
+          "execution_time_limit": null,
+          "id": null,
           "repetition": {
               "repetition": false
-          }, 
-          "start_boundary": null, 
+          },
+          "start_boundary": null,
           "type": "TASK_TRIGGER_BOOT"
-      }, 
+      },
       {
-          "days_of_month": "5,15,30", 
-          "enabled": true, 
-          "end_boundary": null, 
-          "execution_time_limit": null, 
-          "id": null, 
-          "months_of_year": "june,december", 
-          "random_delay": null, 
+          "days_of_month": "5,15,30",
+          "enabled": true,
+          "end_boundary": null,
+          "execution_time_limit": null,
+          "id": null,
+          "months_of_year": "june,december",
+          "random_delay": null,
           "repetition": {
               "repetition": false
-          }, 
-          "run_on_last_day_of_month": true, 
-          "start_boundary": "2017-09-20T03:44:38", 
+          },
+          "run_on_last_day_of_month": true,
+          "start_boundary": "2017-09-20T03:44:38",
           "type": "TASK_TRIGGER_MONTHLY"
     }
   ]
