@@ -28,6 +28,7 @@ RPC_CLI_MAP = {
     'get-interface-information': 'show interfaces details',
     'get-system-memory-information': 'show system memory',
     'get-chassis-inventory': 'show chassis hardware',
+    'get-route-engine-information': 'show chassis routing-engine',
     'get-system-storage': 'show system storage'
 }
 
@@ -72,6 +73,9 @@ class TestJunosCommandModule(TestJunosModule):
         self.assertEqual(facts['ansible_net_memtotal_mb'], 983500)
         self.assertEqual(facts['ansible_net_filesystems'][0], '/dev/vtbd0s1a')
         self.assertTrue('ansible_net_config' not in facts)
+        self.assertEqual(facts['ansible_net_routing_engines']["0"]['model'], 'RE-S-EX9200-1800X4')
+        self.assertEqual(facts['ansible_net_modules'][0]['name'], 'Midplane')
+        self.assertTrue(facts['ansible_net_has_2RE'])
 
     def test_junos_get_facts_subset_config_set(self):
         self.get_config.return_value = load_fixture('get_configuration_rpc_reply.txt')
