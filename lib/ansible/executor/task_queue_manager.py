@@ -176,7 +176,11 @@ class TaskQueueManager:
                 raise AnsibleError("Invalid callback for stdout specified: %s" % self._stdout_callback)
             else:
                 self._stdout_callback = callback_loader.get(self._stdout_callback)
-                self._stdout_callback.set_options(C.config.get_plugin_options('callback', self._stdout_callback._load_name))
+                try:
+                    self._stdout_callback.set_options(C.config.get_plugin_options('callback', self._stdout_callback._load_name))
+                except AttributeError:
+                    display.deprecated("%s stdout callback, does not support setting 'options', it will work for now, "
+                                       " but this will be required in the future and should be updated.." % self._stdout_callback._load_name, version="2.9")
                 stdout_callback_loaded = True
         else:
             raise AnsibleError("callback must be an instance of CallbackBase or the name of a callback plugin")
@@ -200,7 +204,11 @@ class TaskQueueManager:
                     continue
 
             callback_obj = callback_plugin()
-            callback_obj .set_options(C.config.get_plugin_options('callback', callback_plugin._load_name))
+            try:
+                callback_obj .set_options(C.config.get_plugin_options('callback', callback_plugin._load_name))
+            except AttributeError:
+                    display.deprecated("%s callback, does not support setting 'options', it will work for now, "
+                                       " but this will be required in the future and should be updated.." % self._stdout_callback._load_name, version="2.9")
             self._callback_plugins.append(callback_obj)
 
         self._callbacks_loaded = True
