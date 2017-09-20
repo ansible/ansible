@@ -101,10 +101,12 @@ Callback plugins
 ----------------
 
 Users:
+
 * Callbacks are now using the new configuration system, users should not need to change anything as the old system still works,
   but you might see a deprecation notice if any callbacks used are not inheriting from the built in classes. Developers need to update them as stated below.
 
 Developers:
+
 * If your callback does not inherit from ``CallbackBase`` (directly or indirectly via another callback), it will still work, but issue a deprecation notice.
   To avoid this and ensure it always works in the future, either change it to inherit or implement the new options handling methods and properties.
   For the latter, you can look at ``CallbackBase`` itself and/or ``AnsiblePlugin`` for details.
