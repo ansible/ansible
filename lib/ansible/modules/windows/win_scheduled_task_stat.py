@@ -295,6 +295,37 @@ settings:
       returned: ''
       type: bool
       sample: False
+state:
+  description: Details on the state of the task
+  returned: name is specified and task exists
+  type: complex
+  contains:
+    last_run_time:
+      description: The time the registered task was last run.
+      returned: ''
+      type: str
+      sample: '2017-09-20T20:50:00'
+    last_task_result:
+      description: The results that were returned the last time the task was
+        run.
+      returned: ''
+      type: int
+      sample: 267009
+    next_run_time:
+      description: The time when the task is next scheduled to run.
+      returned: ''
+      type: str
+      sample: '2017-09-20T22:50:00'
+    number_of_missed_runs:
+      description: The number of times a task has missed a scheduled run.
+      returned: ''
+      type: int
+      sample: 1
+    status:
+      description: The status of the task, whether it is running, stopped, etc.
+      returned: ''
+      type: str
+      sample: TASK_STATE_RUNNING
 task_exists:
   description: Whether the task at the folder exists.
   returned: name is specified

@@ -42,6 +42,15 @@ public enum TASK_RUN_LEVEL
     TASK_RUNLEVEL_HIGHEST  = 1
 }
 
+public enum TASK_STATE
+{
+    TASK_STATE_UNKNOWN   = 0,
+    TASK_STATE_DISABLED  = 1,
+    TASK_STATE_QUEUED    = 2,
+    TASK_STATE_READY     = 3,
+    TASK_STATE_RUNNING   = 4
+}
+
 public enum TASK_TRIGGER_TYPE2
 {
     TASK_TRIGGER_EVENT                 = 0,
@@ -257,9 +266,19 @@ $result.folder_task_count = $folder_task_count
 
 if ($name -ne $null) {
     if ($task -ne $null) {
-        $task_definition = $task.Definition
         $result.task_exists = $true
 
+        # task state
+        $result.state = @{
+            last_run_time = (Get-Date $task.LastRunTime -Format s)
+            last_task_result = $task.LastTaskResult
+            next_run_time = (Get-Date $task.NextRunTime -Format s)
+            number_of_missed_runs = $task.NumberOfMissedRuns
+            status = [Enum]::ToObject([TASK_STATE], $task.State).ToString()
+        }
+
+        # task definition
+        $task_definition = $task.Definition
         $ignored_properties = @("XmlText")
         $properties = @("principal", "registration_info", "settings")
         $collection_properties = @("actions", "triggers")
