@@ -400,7 +400,7 @@ DEFAULT_BECOME_EXE:
   - {key: become_exe, section: privilege_escalation}
 DEFAULT_BECOME_FLAGS:
   name: Set 'become' executable options
-  default: ~
+  default: ''
   description: Flags to pass to the privilege escalation executable.
   env: [{name: ANSIBLE_BECOME_FLAGS}]
   ini:
@@ -1001,7 +1001,7 @@ DEFAULT_SU_EXE:
   - {key: su_exe, section: defaults}
 DEFAULT_SU_FLAGS:
   name: su flags
-  default: ~
+  default: ''
   deprecated:
     why: In favor of become which is a generic framework
     version: "2.8"
