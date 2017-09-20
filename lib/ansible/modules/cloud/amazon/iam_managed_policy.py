@@ -188,7 +188,7 @@ def get_or_create_policy_version(module, iam, policy, policy_document):
         version = iam.create_policy_version(PolicyArn=policy['Arn'], PolicyDocument=policy_document)['PolicyVersion']
         return version, True
     except botocore.exceptions.ClientError as e:
-        if e['Error']['Code'] == 'LimitExceeded':
+        if e.response['Error']['Code'] == 'LimitExceeded':
             delete_oldest_non_default_version(module, iam, policy)
             try:
                 version = iam.create_policy_version(PolicyArn=policy['Arn'], PolicyDocument=policy_document)['PolicyVersion']
