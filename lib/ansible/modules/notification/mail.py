@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright 2012 Dag Wieers <dag@wieers.com>
+# Copyright: (c) 2012, Dag Wieers (@dagwieers) <dag@wieers.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -12,182 +12,173 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
-author: "Dag Wieers (@dagwieers)"
+author:
+- Dag Wieers (@dagwieers)
 module: mail
 short_description: Send an email
 description:
-  - This module is useful for sending emails from playbooks.
-  - One may wonder why automate sending emails?  In complex environments
-    there are from time to time processes that cannot be automated, either
-    because you lack the authority to make it so, or because not everyone
-    agrees to a common approach.
-  - If you cannot automate a specific step, but the step is non-blocking,
-    sending out an email to the responsible party to make him perform his
-    part of the bargain is an elegant way to put the responsibility in
-    someone else's lap.
-  - Of course sending out a mail can be equally useful as a way to notify
-    one or more people in a team that a specific action has been
-    (successfully) taken.
-version_added: "0.8"
+- This module is useful for sending emails from playbooks.
+- One may wonder why automate sending emails?  In complex environments
+  there are from time to time processes that cannot be automated, either
+  because you lack the authority to make it so, or because not everyone
+  agrees to a common approach.
+- If you cannot automate a specific step, but the step is non-blocking,
+  sending out an email to the responsible party to make him perform his
+  part of the bargain is an elegant way to put the responsibility in
+  someone else's lap.
+- Of course sending out a mail can be equally useful as a way to notify
+  one or more people in a team that a specific action has been
+  (successfully) taken.
+version_added: '0.8'
 options:
   from:
     description:
-      - The email-address the mail is sent from. May contain address and phrase.
+    - The email-address the mail is sent from. May contain address and phrase.
     default: root
-    required: false
   to:
     description:
-      - The email-address(es) the mail is being sent to. This is
-        a comma-separated list, which may contain address and phrase portions.
+    - The email-address(es) the mail is being sent to.
+    - This is a list, which may contain address and phrase portions.
     default: root
-    required: false
   cc:
     description:
-      - The email-address(es) the mail is being copied to. This is
-        a comma-separated list, which may contain address and phrase portions.
-    required: false
+    - The email-address(es) the mail is being copied to.
+    - This is a list, which may contain address and phrase portions.
   bcc:
     description:
-      - The email-address(es) the mail is being 'blind' copied to. This is
-        a comma-separated list, which may contain address and phrase portions.
-    required: false
+    - The email-address(es) the mail is being 'blind' copied to.
+    - This is a list, which may contain address and phrase portions.
   subject:
     description:
-      - The subject of the email being sent.
+    - The subject of the email being sent.
     required: true
   body:
     description:
-      - The body of the email being sent.
+    - The body of the email being sent.
     default: $subject
-    required: false
   username:
     description:
-      - If SMTP requires username
-    default: null
-    required: false
-    version_added: "1.9"
+    - If SMTP requires username.
+    version_added: '1.9'
   password:
     description:
-      - If SMTP requires password
-    default: null
-    required: false
-    version_added: "1.9"
+    - If SMTP requires password.
+    version_added: '1.9'
   host:
     description:
-      - The mail server
-    default: 'localhost'
-    required: false
+    - The mail server.
+    default: localhost
   port:
     description:
-      - The mail server port.  This must be a valid integer between 1 and 65534
+    - The mail server port.
+    - This must be a valid integer between 1 and 65534
     default: 25
-    required: false
-    version_added: "1.0"
+    version_added: '1.0'
   attach:
     description:
-      - A space-separated list of pathnames of files to attach to the message.
-        Attached files will have their content-type set to C(application/octet-stream).
-    default: null
-    required: false
-    version_added: "1.0"
+    - A list of pathnames of files to attach to the message.
+    - Attached files will have their content-type set to C(application/octet-stream).
+    default: []
+    version_added: '1.0'
   headers:
     description:
-      - A vertical-bar-separated list of headers which should be added to the message.
-        Each individual header is specified as C(header=value) (see example below).
-    default: null
-    required: false
-    version_added: "1.0"
+    - A list of headers which should be added to the message.
+    - Each individual header is specified as C(header=value) (see example below).
+    default: []
+    version_added: '1.0'
   charset:
     description:
-      - The character set of email being sent
-    default: 'us-ascii'
-    required: false
+    - The character set of email being sent.
+    default: utf-8
   subtype:
     description:
-      - The minor mime type, can be either text or html. The major type is always text.
-    default: 'plain'
-    required: false
-    version_added: "2.0"
+    - The minor mime type, can be either C(plain) or C(html).
+    - The major type is always C(text).
+    choices: [ html, plain ]
+    default: plain
+    version_added: '2.0'
   secure:
     description:
-        - If C(always), the connection will only send email if the connection is Encrypted.
-          If the server doesn't accept the encrypted connection it will fail.
-        - If C(try), the connection will attempt to setup a secure SSL/TLS session, before trying to send.
-        - If C(never), the connection will not attempt to setup a secure SSL/TLS session, before sending
-        - If C(starttls), the connection will try to upgrade to a secure SSL/TLS connection, before sending.
-          If it is unable to do so it will fail.
-    choices: [ "always", "never", "try", "starttls"]
-    default: 'try'
-    required: false
-    version_added: "2.3"
+    - If C(always), the connection will only send email if the connection is Encrypted.
+      If the server doesn't accept the encrypted connection it will fail.
+    - If C(try), the connection will attempt to setup a secure SSL/TLS session, before trying to send.
+    - If C(never), the connection will not attempt to setup a secure SSL/TLS session, before sending
+    - If C(starttls), the connection will try to upgrade to a secure SSL/TLS connection, before sending.
+      If it is unable to do so it will fail.
+    choices: [ always, never, starttls, try ]
+    default: try
+    version_added: '2.3'
   timeout:
     description:
-      - Sets the Timeout in seconds for connection attempts
+    - Sets the timeout in seconds for connection attempts.
     default: 20
-    required: false
-    version_added: "2.3"
+    version_added: '2.3'
 '''
 
-EXAMPLES = '''
-# Example playbook sending mail to root
-- mail:
-    subject: 'System {{ ansible_hostname }} has been successfully provisioned.'
+EXAMPLES = r'''
+- name: Example playbook sending mail to root
+  mail:
+    subject: System {{ ansible_hostname }} has been successfully provisioned.
   delegate_to: localhost
 
-# Sending an e-mail using Gmail SMTP servers
-- mail:
+- name: Sending an e-mail using Gmail SMTP servers
+  mail:
     host: smtp.gmail.com
     port: 587
     username: username@gmail.com
     password: mysecret
     to: John Smith <john.smith@example.com>
     subject: Ansible-report
-    body: 'System {{ ansible_hostname }} has been successfully provisioned.'
+    body: System {{ ansible_hostname }} has been successfully provisioned.
   delegate_to: localhost
 
-# Send e-mail to a bunch of users, attaching files
-- mail:
+- name: Send e-mail to a bunch of users, attaching files
+  mail:
     host: 127.0.0.1
     port: 2025
     subject: Ansible-report
     body: Hello, this is an e-mail. I hope you like it ;-)
     from: jane@example.net (Jane Jolie)
-    to: John Doe <j.d@example.org>, Suzie Something <sue@example.com>
+    to:
+    - John Doe <j.d@example.org>
+    - Suzie Something <sue@example.com>
     cc: Charlie Root <root@localhost>
-    attach: /etc/group /tmp/pavatar2.png
-    headers: 'Reply-To=john@example.com|X-Special="Something or other"'
-    charset: utf8
+    attach:
+    - /etc/group
+    - /tmp/avatar2.png
+    headers:
+    - Reply-To=john@example.com
+    - X-Special="Something or other"
+    charset: us-ascii
   delegate_to: localhost
 
-# Sending an e-mail using the remote machine, not the Ansible controller node
-- mail:
+- name: Sending an e-mail using the remote machine, not the Ansible controller node
+  mail:
     host: localhost
     port: 25
     to: John Smith <john.smith@example.com>
     subject: Ansible-report
-    body: 'System {{ ansible_hostname }} has been successfully provisioned.'
+    body: System {{ ansible_hostname }} has been successfully provisioned.
 
-# Sending an e-mail using Legacy SSL to the remote machine
-- mail:
+- name: Sending an e-mail using Legacy SSL to the remote machine
+  mail:
     host: localhost
     port: 25
     to: John Smith <john.smith@example.com>
     subject: Ansible-report
-    body: 'System {{ ansible_hostname }} has been successfully provisioned.'
+    body: System {{ ansible_hostname }} has been successfully provisioned.
     secure: always
 
- # Sending an e-mail using StartTLS to the remote machine
-- mail:
+- name: Sending an e-mail using StartTLS to the remote machine
+  mail:
     host: localhost
     port: 25
     to: John Smith <john.smith@example.com>
     subject: Ansible-report
-    body: 'System {{ ansible_hostname }} has been successfully provisioned.'
+    body: System {{ ansible_hostname }} has been successfully provisioned.
     secure: starttls
-
 '''
 
 import os
@@ -208,24 +199,25 @@ from ansible.module_utils._text import to_native
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-            username = dict(default=None),
-            password = dict(default=None, no_log=True),
-            host = dict(default='localhost'),
-            port = dict(default=25, type='int'),
-            sender = dict(default='root', aliases=['from']),
-            to = dict(default='root', aliases=['recipients']),
-            cc = dict(default=None),
-            bcc = dict(default=None),
-            subject = dict(required=True, aliases=['msg']),
-            body = dict(default=None),
-            attach = dict(default=None),
-            headers = dict(default=None),
-            charset = dict(default='us-ascii'),
-            subtype = dict(default='plain'),
-            secure = dict(default='try', choices=['always', 'never', 'try', 'starttls'], type='str'),
-            timeout = dict(default=20, type='int')
-        )
+        argument_spec=dict(
+            username=dict(type='str'),
+            password=dict(type='str', no_log=True),
+            host=dict(type='str', default='localhost'),
+            port=dict(type='int', default=25),
+            sender=dict(type='str', default='root', aliases=['from']),
+            to=dict(type='list', default=['root'], aliases=['recipients']),
+            cc=dict(type='list', default=[]),
+            bcc=dict(type='list', default=[]),
+            subject=dict(type='str', required=True, aliases=['msg']),
+            body=dict(type='str'),
+            attach=dict(type='list', default=[]),
+            headers=dict(type='list', default=[]),
+            charset=dict(type='str', default='utf-8'),
+            subtype=dict(type='str', default='plain', choices=['html', 'plain']),
+            secure=dict(type='str', default='try', choices=['always', 'never', 'starttls', 'try']),
+            timeout=dict(type='int', default=20),
+        ),
+        required_together=[['password', 'username']],
     )
 
     username = module.params.get('username')
@@ -244,16 +236,17 @@ def main():
     subtype = module.params.get('subtype')
     secure = module.params.get('secure')
     timeout = module.params.get('timeout')
-    sender_phrase, sender_addr = parseaddr(sender)
-    secure_state = False
+
     code = 0
+    secure_state = False
+    sender_phrase, sender_addr = parseaddr(sender)
 
     if not body:
         body = subject
 
     smtp = smtplib.SMTP(timeout=timeout)
 
-    if secure in ('never', 'try', 'starttls'):
+    if secure in ('never', 'starttls', 'try'):
         try:
             code, smtpmessage = smtp.connect(host, port=port)
         except smtplib.SMTPException as e:
@@ -285,7 +278,7 @@ def main():
             module.fail_json(rc=1, msg='Helo failed for host %s:%s: %s' %
                              (host, port, to_native(e)), exception=traceback.format_exc())
 
-        if secure in ('try', 'starttls'):
+        if secure in ('starttls', 'try'):
             if smtp.has_extn('STARTTLS'):
                 try:
                     smtp.starttls()
@@ -310,80 +303,76 @@ def main():
         else:
             module.fail_json(rc=1, msg="No Authentication on the server at %s:%s" % (host, port))
 
-    msg = MIMEMultipart()
-    msg['Subject'] = Header(subject, charset)
-    msg['From'] = Header(formataddr((sender_phrase, sender_addr)), charset)
-    msg.preamble = "Multipart message"
-    msg.set_charset(charset)
+    if not secure_state and (username and password):
+        module.warn('Username and Password was sent without encryption')
 
-    if headers is not None:
-        for hdr in [x.strip() for x in headers.split('|')]:
+    msg = MIMEMultipart(_charset=charset)
+    msg['From'] = formataddr((sender_phrase, sender_addr))
+    msg['Subject'] = Header(subject, charset)
+    msg.preamble = "Multipart message"
+
+    for header in headers:
+        # NOTE: Backward compatible with old syntax using '|' as delimiter
+        for hdr in [x.strip() for x in header.split('|')]:
             try:
                 h_key, h_val = hdr.split('=')
                 h_val = to_native(Header(h_val, charset))
                 msg.add_header(h_key, h_val)
             except:
-                pass
+                module.warn("Skipping header '%s', unable to parse" % hdr)
 
     if 'X-Mailer' not in msg:
-        msg.add_header('X-Mailer', "Ansible")
+        msg.add_header('X-Mailer', 'Ansible mail module')
+
+    addr_list = []
+    for addr in [x.strip() for x in blindcopies]:
+        addr_list.append(parseaddr(addr)[1])    # address only, w/o phrase
 
     to_list = []
+    for addr in [x.strip() for x in recipients]:
+        to_list.append(formataddr(parseaddr(addr)))
+        addr_list.append(parseaddr(addr)[1])    # address only, w/o phrase
+    msg['To'] = ", ".join(to_list)
+
     cc_list = []
-    addr_list = []
-
-    if recipients is not None:
-        for addr in [x.strip() for x in recipients.split(',')]:
-            to_list.append( formataddr( parseaddr(addr)) )
-            addr_list.append( parseaddr(addr)[1] )    # address only, w/o phrase
-    if copies is not None:
-        for addr in [x.strip() for x in copies.split(',')]:
-            cc_list.append( formataddr( parseaddr(addr)) )
-            addr_list.append( parseaddr(addr)[1] )    # address only, w/o phrase
-    if blindcopies is not None:
-        for addr in [x.strip() for x in blindcopies.split(',')]:
-            addr_list.append( parseaddr(addr)[1] )
-
-    if len(to_list) > 0:
-        msg['To'] = ", ".join(to_list)
-    if len(cc_list) > 0:
-        msg['Cc'] = ", ".join(cc_list)
+    for addr in [x.strip() for x in copies]:
+        cc_list.append(formataddr(parseaddr(addr)))
+        addr_list.append(parseaddr(addr)[1])    # address only, w/o phrase
+    msg['Cc'] = ", ".join(cc_list)
 
     part = MIMEText(body + "\n\n", _subtype=subtype, _charset=charset)
     msg.attach(part)
 
-    if attach_files is not None:
-        for file in attach_files.split():
-            try:
-                fp = open(file, 'rb')
-
-                part = MIMEBase('application', 'octet-stream')
+    # NOTE: Backware compatibility with old syntax using space as delimiter is not retained
+    #       This breaks files with spaces in it :-(
+    for filename in attach_files:
+        try:
+            part = MIMEBase('application', 'octet-stream')
+            with open(filename, 'rb') as fp:
                 part.set_payload(fp.read())
-                fp.close()
-
-                encoders.encode_base64(part)
-
-                part.add_header('Content-disposition', 'attachment', filename=os.path.basename(file))
-                msg.attach(part)
-            except Exception as e:
-                module.fail_json(rc=1, msg="Failed to send mail: can't attach file %s: %s" %
-                                 (file, to_native(e)), exception=traceback.format_exc())
+            encoders.encode_base64(part)
+            part.add_header('Content-disposition', 'attachment', filename=os.path.basename(filename))
+            msg.attach(part)
+        except Exception as e:
+            module.fail_json(rc=1, msg="Failed to send mail: can't attach file %s: %s" %
+                             (filename, to_native(e)), exception=traceback.format_exc())
 
     composed = msg.as_string()
 
     try:
-        smtp.sendmail(sender_addr, set(addr_list), composed)
+        result = smtp.sendmail(sender_addr, set(addr_list), composed)
     except Exception as e:
-        module.fail_json(rc=1, msg='Failed to send mail to %s: %s' %
-                         (", ".join(addr_list), to_native(e)), exception=traceback.format_exc())
+        module.fail_json(rc=1, msg="Failed to send mail to '%s': %s" %
+                         (", ".join(set(addr_list)), to_native(e)), exception=traceback.format_exc())
 
     smtp.quit()
 
-    if not secure_state and (username and password):
-        module.exit_json(changed=False, msg='Username and Password was sent without encryption')
-    else:
-        module.exit_json(changed=False)
+    if result:
+        for key in result:
+            module.warn("Failed to send mail to '%s': %s %s" % (key, result[key][0], result[key][1]))
+        module.exit_json(msg='Failed to send mail to at least one recipient', result=result)
 
+    module.exit_json(msg='Mail sent successfully', result=result)
 
 if __name__ == '__main__':
     main()
