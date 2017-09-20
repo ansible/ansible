@@ -16,6 +16,7 @@ Ansible Changes By Release
 * Fix for a proper logout in the module ovirt_vms
 * Fixed docs for 'password' lookup
 * Corrected and added missing feature and porting docs for 2.4
+* Fix for Ansible.ModuleUtils.CamelConversion to handle empty lists and lists with one entry
 
 <a id="2.4"></a>
 
