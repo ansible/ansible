@@ -43,7 +43,6 @@
     restart_interval: PT15M
     actions:
     - path: cmd.exe
-      arguments: /c echo
     - path: C:\temp\some.exe
       arguments: --help
       working_directory: C:\temp
@@ -92,7 +91,6 @@
     that:
     - stat_task_present.task_exists == True
     - stat_task_present.actions|count == 2
-    - stat_task_present.actions[0].arguments == "/c echo"
     - stat_task_present.actions[0].path == "cmd.exe"
     - stat_task_present.actions[0].type == "TASK_ACTION_EXEC"
     - stat_task_present.actions[0].working_directory == None
@@ -112,6 +110,7 @@
     - stat_task_present.settings.execution_time_limit == "PT23H"
     - stat_task_present.settings.restart_count == 3
     - stat_task_present.settings.restart_interval == "PT15M"
+    - stat_task_present.state.status == "TASK_STATE_READY"
     - stat_task_present.triggers|count == 2
     - stat_task_present.triggers[0].delay == "PT15M"
     - stat_task_present.triggers[0].type == "TASK_TRIGGER_BOOT"
@@ -120,6 +119,29 @@
     - stat_task_present.triggers[1].run_on_last_day_of_month == True
     - stat_task_present.triggers[1].start_boundary == "2017-09-20T03:44:38"
     - stat_task_present.triggers[1].type == "TASK_TRIGGER_MONTHLY"
+
+- name: change principal to system account so it will run in the next step
+  win_scheduled_task:
+    name: '{{test_scheduled_task_stat_name}}'
+    path: '{{test_scheduled_task_stat_path}}'
+    username: SYSTEM
+
+- name: start the scheduled task
+  win_command: schtasks.exe /Run /TN "{{test_scheduled_task_stat_path}}\{{test_scheduled_task_stat_name}}"
+
+- name: get stat of running task
+  win_scheduled_task_stat:
+    path: '{{test_scheduled_task_stat_path}}'
+    name: '{{test_scheduled_task_stat_name}}'
+  register: stat_task_running
+
+- name: assert stat of running task
+  assert:
+    that:
+    - stat_task_running.state.status == "TASK_STATE_RUNNING"
+
+- name: stop the scheduled task
+  win_command: schtasks.exe /End /TN "{{test_scheduled_task_stat_path}}\{{test_scheduled_task_stat_name}}"
 
 - name: ensure task is delete after test
   win_scheduled_task:
