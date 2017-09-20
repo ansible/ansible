@@ -181,7 +181,9 @@ files:
   $modules/cloud/digital_ocean/digital_ocean_sshkey.py: alukovenko mgregson
   $modules/cloud/digital_ocean/digital_ocean_tag.py: kontrafiktion
   $modules/cloud/dimensiondata/dimensiondata_network.py: aimonb tintoy
-  $modules/cloud/docker/docker_container.py: ThomasSteinbach $team_ansible cove dusdanig jctanner kassiansun softzilla zfil
+  $modules/cloud/docker/docker_container.py:
+    ignored: ThomasSteinbach
+    maintainers: $team_ansible cove dusdanig jctanner kassiansun softzilla zfil
   $modules/cloud/docker/docker_image.py: $team_ansible jctanner softzilla
   $modules/cloud/docker/docker_image_facts.py: $team_ansible jctanner
   $modules/cloud/docker/docker_login.py: jctanner olsaki
