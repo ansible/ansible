@@ -335,8 +335,30 @@ Example::
         returned: when supported
         type: string
         sample: 2a5aeecc61dc98c4d780b14b330e3282
-    ...
+    '''
 
+    RETURN = '''
+    packages:
+        description: Information about package requirements
+        returned: On success
+        type: complex
+        contains:
+            missing:
+                description: Packages that are missing from the system
+                returned: success
+                type: list
+                sample:
+                    - libmysqlclient-dev
+                    - libxml2-dev
+            badversion:
+                description: Packages that are installed but at bad versions.
+                returned: success
+                type: list
+                sample:
+                    - package: libxml2-dev
+                      version: 2.9.4+dfsg1-2
+                      constraint: ">= 3.0"
+    '''
 
 .. note::
 
