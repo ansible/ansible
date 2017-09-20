@@ -97,6 +97,19 @@ Developers should start migrating from hardcoded inventory with dynamic inventor
 
 Both users and developers should look into the new plugins because they are intended to alleviate the need for many of the hacks and workarounds found in the dynamic inventory scripts.
 
+Callback plugins
+----------------
+
+Users:
+* Callbacks are now using the new configuration system, users should not need to change anything as the old system still works,
+  but you might see a deprecation notice if any callbacks used are not inheriting from the built in classes. Developers need to update them as stated below.
+
+Developers:
+* If your callback does not inherit from CallbackBase (directly or indirectly from another callback), you either need to inherit or
+  implement the new options handling methods and properties, you can look at ``CallbackBase`` itself and/or ``AnsiblePlugin`` for details.
+  Currently your callback will still work, but issue a deprecation notice.
+* As noted in the developer guide, any callbacks inheriting from other callbakcs might need to also be updated to contain the same documented options
+  as the parent or the options won't be available.
 
 Networking
 ==========
