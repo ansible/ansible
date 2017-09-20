@@ -10,22 +10,30 @@
                 "ec2:AllocateAddress",
                 "ec2:AssociateAddress",
                 "ec2:AssociateRouteTable",
+                "ec2:CreateImage",
                 "ec2:AttachInternetGateway",
                 "ec2:CreateInternetGateway",
                 "ec2:CreateKeyPair",
                 "ec2:CreateNatGateway",
                 "ec2:CreateRouteTable",
                 "ec2:CreateSecurityGroup",
+                "ec2:CreateSnapshot",
                 "ec2:CreateSubnet",
+                "ec2:CreateTags",
                 "ec2:CreateVpc",
                 "ec2:DeleteKeyPair",
                 "ec2:DeleteNatGateway",
+                "ec2:DeleteSnapshot",
+                "ec2:DeleteSubnet",
                 "ec2:DeleteVpc",
+                "ec2:DeregisterImage",
                 "ec2:Describe*",
                 "ec2:DisassociateAddress",
                 "ec2:DisassociateRouteTable",
                 "ec2:ImportKeyPair",
+                "ec2:ModifyImageAttribute",
                 "ec2:ModifyVpcAttribute",
+                "ec2:RegisterImage",
                 "ec2:ReleaseAddress",
                 "ec2:ReplaceRouteTableAssociation"
             ],
@@ -46,6 +54,7 @@
                 "ec2:TerminateInstances"
             ],
             "Resource": [
+                "arn:aws:ec2:{{aws_region}}::image/*",
                 "arn:aws:ec2:{{aws_region}}:{{aws_account}}:*"
             ]
         }
