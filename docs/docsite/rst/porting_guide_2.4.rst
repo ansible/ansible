@@ -136,9 +136,9 @@ Configuration
 
 The configuration system has had some major changes. Users should be unaffected except for the following:
 
- * All relative paths defined are relative to the `ansible.cfg` file itself. Previously they varied by setting. The new behavior should be more predictable.
- * A new macro ``{{CWD}}`` is available for paths, which will make paths relative to the 'current working directory',
-   this is unsafe but some users really want to rely on this behaviour.
+* All relative paths defined are relative to the `ansible.cfg` file itself. Previously they varied by setting. The new behavior should be more predictable.
+* A new macro ``{{CWD}}`` is available for paths, which will make paths relative to the 'current working directory',
+  this is unsafe but some users really want to rely on this behaviour.
 
 Developers that were working directly with the previous API should revisit their usage as some methods (for example, ``get_config``) were  kept for backwards compatibility but will warn users that the function has been deprecated.
 
