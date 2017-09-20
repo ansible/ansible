@@ -202,7 +202,7 @@ class Args(object):
 netbox_inventory = netbox.NetboxAsInventory(Args, netbox_config_data)
 Args.list = False
 netbox_inventory_default_args = netbox.NetboxAsInventory(Args, netbox_config_data)
-Args.host = "fake_host"
+Args.host = "fake_host01"
 netbox_inventory_single = netbox.NetboxAsInventory(Args, netbox_config_data)
 
 
@@ -485,7 +485,7 @@ class TestNetboxAsInventory(object):
 
     @pytest.mark.parametrize("inventory_dict", [
         {
-            "fake_host": {
+            "fake_host01": {
                 "ansible_ssh_host": "192.168.0.2",
                 "rack_name": "fake_rack01"
             }
@@ -498,7 +498,7 @@ class TestNetboxAsInventory(object):
         netbox_inventory_single.print_inventory_json(inventory_dict)
         function_stdout, function_stderr = capsys.readouterr()
         assert not function_stderr
-        assert json.loads(function_stdout) == inventory_dict["fake_host"]
+        assert json.loads(function_stdout) == inventory_dict["fake_host01"]
 
     @pytest.mark.parametrize("inventory_dict", [
         {
