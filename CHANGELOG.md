@@ -20,6 +20,7 @@ Ansible Changes By Release
 * Fix nxos terminal regex to parse username correctly.
 * Fix colors for selective callback
 * Fix for 'New password' prompt on 'ansible-vault edit' (https://github.com/ansible/ansible/issues/30491)
+* Fix for 'ansible-vault encrypt' with vault_password_file in config and --ask-vault-pass cli (https://github.com/ansible/ansible/pull/30514#pullrequestreview-63395903)
 
 <a id="2.4"></a>
 
