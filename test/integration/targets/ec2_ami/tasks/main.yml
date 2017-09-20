@@ -36,7 +36,7 @@
         ec2_access_key: '{{ ec2_access_key }}'
         ec2_secret_key: '{{ ec2_secret_key }}'
         security_token: '{{ security_token }}'
-        az: us-east-1a
+        az: '{{ ec2_region }}a'
         tags: '{{ ec2_ami_name }}_setup'
         vpc_id: '{{ setup_vpc.vpc.id }}'
         cidr: 10.0.0.0/24
@@ -66,8 +66,7 @@
         key_name: '{{ setup_key.key.name }}'
         instance_type: t2.micro
         state: present
-        # us-east-1 image for Amazon Linux AMI 2017.03.1 (HVM), SSD Volume Type
-        image: ami-4fffc834
+        image: '{{ ec2_ami_image[ec2_region] }}'
         wait: yes
         instance_tags:
           '{{ec2_ami_name}}_instance_setup': 'integration_tests'
@@ -113,6 +112,10 @@
           # FIXME: tags are not currently shown in the results
           #- "result.tags == '{Name: {{ ec2_ami_name }}_ami}'"
 
+    - name: set image id fact for deletion later
+      set_fact:
+        ec2_ami_image_id: "{{ result.image_id }}"
+
     # ============================================================
 
     - name: delete the image
@@ -123,6 +126,7 @@
         security_token: '{{security_token}}'
         instance_id: '{{ setup_instance.instance_ids[0] }}'
         state: absent
+        delete_snapshot: yes
         name: '{{ ec2_ami_name }}_ami'
         description: '{{ ec2_ami_description }}'
         image_id: '{{ result.image_id }}'
@@ -184,6 +188,11 @@
         that:
           - "result.changed"
           - "result.image_id.startswith('ami-')"
+
+    - name: set image id fact for deletion later
+      set_fact:
+        ec2_ami_image_id: "{{ result.image_id }}"
+        ec2_ami_snapshot: "{{ result.block_device_mapping['/dev/xvda'].snapshot_id }}"
 
     # ============================================================
 
@@ -315,7 +324,7 @@
 
     # ============================================================
 
-    - name: delete ami without deleting the snapshot
+    - name: delete ami without deleting the snapshot (default is not to delete)
       ec2_ami:
         ec2_region: '{{ec2_region}}'
         ec2_access_key: '{{ec2_access_key}}'
@@ -324,8 +333,7 @@
         instance_id: '{{ setup_instance.instance_ids[0] }}'
         state: absent
         name: '{{ ec2_ami_name }}_ami'
-        image_id: '{{ result.image_id }}'
-        delete_snapshot: false
+        image_id: '{{ ec2_ami_image_id }}'
         tags:
           Name: '{{ ec2_ami_name }}_ami'
         wait: yes
@@ -342,25 +350,65 @@
 #    - name: ensure the snapshot still exists
 #      ec2_snapshot_facts:
 #        snapshot_ids:
-#          - '{{ setup_snapshot.snapshot_id }}'
+#          - '{{ ec2_ami_snapshot }}'
 #        ec2_region: '{{ec2_region}}'
 #        ec2_access_key: '{{ec2_access_key}}'
 #        ec2_secret_key: '{{ec2_secret_key}}'
 #        security_token: '{{security_token}}'
 #      register: snapshot_result
-#
+
 #    - name: assert the snapshot wasn't deleted
 #      assert:
 #        that:
-#          - "snapshot_result.snapshot_id == {{ setup_snapshot.snapshot_id}}"
+#          - "snapshot_result.snapshots[0].snapshot_id == ec2_ami_snapshot"
+
+    - name: delete ami for a second time
+      ec2_ami:
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        instance_id: '{{ setup_instance.instance_ids[0] }}'
+        state: absent
+        name: '{{ ec2_ami_name }}_ami'
+        image_id: '{{ ec2_ami_image_id }}'
+        tags:
+          Name: '{{ ec2_ami_name }}_ami'
+        wait: yes
+      ignore_errors: true
+      register: result
+
+# FIXME: currently deleting an already deleted image fails
+# It should succeed, with changed: false
+#    - name: assert that image does not exist
+#      assert:
+#        that:
+#          - not result.changed
+#          - not result.failed
+
 
     # ============================================================
 
-- always:
+  always:
 
     # ============================================================
 
     # TEAR DOWN: snapshot, ec2 instance, ec2 key pair, security group, vpc
+    - name: Announce teardown start
+      debug:
+        msg: "***** TESTING COMPLETE. COMMENCE TEARDOWN *****"
+
+    - name: delete ami
+      ec2_ami:
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        state: absent
+        image_id: "{{ ec2_ami_image_id }}"
+        name: '{{ ec2_ami_name }}_ami'
+        wait: yes
+      ignore_errors: yes
 
     - name: remove setup snapshot of ec2 instance
       ec2_snapshot:
@@ -370,6 +418,7 @@
         security_token: '{{security_token}}'
         state: absent
         snapshot_id: '{{ setup_snapshot.snapshot_id }}'
+      ignore_errors: yes
 
     - name: remove setup ec2 instance
       ec2:
@@ -385,6 +434,7 @@
           '{{ec2_ami_name}}_instance_setup': 'integration_tests'
         group_id: '{{ setup_sg.group_id }}'
         vpc_subnet_id: '{{ setup_subnet.subnet.id }}'
+      ignore_errors: yes
 
     - name: remove setup keypair
       ec2_key:
@@ -394,6 +444,7 @@
         ec2_access_key: '{{ec2_access_key}}'
         ec2_secret_key: '{{ec2_secret_key}}'
         security_token: '{{security_token}}'
+      ignore_errors: yes
 
     - name: remove setup security group
       ec2_group:
@@ -405,6 +456,7 @@
         description: 'created by Ansible integration tests'
         state: absent
         vpc_id: '{{ setup_vpc.vpc.id }}'
+      ignore_errors: yes
 
     - name: remove setup subnet
       ec2_vpc_subnet:
@@ -419,6 +471,7 @@
         state: absent
         resource_tags:
           Name: '{{ ec2_ami_name }}_setup'
+      ignore_errors: yes
 
     - name: remove setup VPC
       ec2_vpc_net:
@@ -431,3 +484,4 @@
         name: '{{ ec2_ami_name }}_setup'
         resource_tags:
           Name: '{{ ec2_ami_name }}_setup'
+      ignore_errors: yes
