@@ -23,6 +23,7 @@ Ansible Changes By Release
 * Fix for 'ansible-vault encrypt' with vault_password_file in config and --ask-vault-pass cli (https://github.com/ansible/ansible/pull/30514#pullrequestreview-63395903)
 * updated porting guide with notes for callbacks and config
 * Added backwards compatiblity shim for callbacks that do not inherit from CallbackBase
+* Corrected issue with configuration and multiple ini entries being overwriten even when not set.
 
 <a id="2.4"></a>
 
