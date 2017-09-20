@@ -188,7 +188,7 @@ def main():
 
         if state == 'present':
             if endpoint is None:
-                result = cloud.create_endpoint(service_name_or_id=service.id,
+                result = cloud.create_endpoint(service_name_or_id=service,
                                                url=url, interface=interface,
                                                region=region, enabled=enabled)
                 endpoint = result[0]
