@@ -17,6 +17,7 @@ Ansible Changes By Release
 * Fixed docs for 'password' lookup
 * Corrected and added missing feature and porting docs for 2.4
 * Fix for Ansible.ModuleUtils.CamelConversion to handle empty lists and lists with one entry
+* Fix nxos terminal regex to parse username correctly.
 
 <a id="2.4"></a>
 
