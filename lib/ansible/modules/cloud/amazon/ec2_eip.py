@@ -403,14 +403,17 @@ def main():
         if device_id:
             address = find_address(ec2, public_ip, device_id, isinstance=is_instance)
         else:
-            address = False
+            address = find_address(ec2, public_ip, None)
 
         if state == 'present':
             if device_id:
                 result = ensure_present(ec2, module, domain, address, private_ip_address, device_id,
                                     reuse_existing_ip_allowed, module.check_mode, isinstance=is_instance)
             else:
-                address, changed = allocate_address(ec2, domain, reuse_existing_ip_allowed)
+                if address:
+                    changed = False
+                else:
+                    address, changed = allocate_address(ec2, domain, reuse_existing_ip_allowed)
                 result = {'changed': changed, 'public_ip': address.public_ip, 'allocation_id': address.allocation_id}
         else:
             if device_id:
@@ -422,7 +425,6 @@ def main():
                 else:
                     result = {'changed': disassociated['changed'], 'disassociated': disassociated, 'released': {'changed': False}}
             else:
-                address = find_address(ec2, public_ip, None)
                 released = release_address(ec2, address, module.check_mode)
                 result = {'changed': released['changed'], 'disassociated': {'changed': False}, 'released': released}
 
