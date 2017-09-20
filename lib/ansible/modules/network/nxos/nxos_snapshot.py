@@ -397,11 +397,26 @@ def main():
     if not module.check_mode:
         if action == 'compare':
             result['commands'] = []
+
+            if module.params['path'] and comparison_results_file:
+                snapshot1 = module.params['snapshot1']
+                snapshot2 = module.params['snapshot2']
+                compare_option = module.params['compare_option']
+                command = 'show snapshot compare {0} {1} {2}'.format(snapshot1, snapshot2, compare_option)
+                content = execute_show_command(command, module)[0]
+                if content:
+                    write_on_file(content, comparison_results_file, module)
         else:
             if action_results:
                 load_config(module, action_results)
                 result['commands'] = action_results
                 result['changed'] = True
+
+            if action == 'create' and module.params['path']:
+                command = 'show snapshot | include {}'.format(module.params['snapshot_name'])
+                content = execute_show_command(command, module)[0]
+                if content:
+                    write_on_file(content, module.params['snapshot_name'], module)
 
     module.exit_json(**result)
 
