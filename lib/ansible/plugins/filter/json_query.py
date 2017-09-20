@@ -19,6 +19,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.errors import AnsibleError, AnsibleFilterError
+import ast
 
 try:
     import jmespath
@@ -27,13 +28,17 @@ except ImportError:
     HAS_LIB = False
 
 
+
 def json_query(data, expr):
     '''Query data using jmespath query language ( http://jmespath.org ). Example:
     - debug: msg="{{ instance | json_query(tagged_instances[*].block_device_mapping.*.volume_id') }}"
     '''
+
     if not HAS_LIB:
         raise AnsibleError('You need to install "jmespath" prior to running '
                            'json_query filter')
+
+    data = ast.literal_eval(str(data))
 
     try:
         return jmespath.search(expr, data)
@@ -42,7 +47,6 @@ def json_query(data, expr):
     except Exception as e:
         # For older jmespath, we can get ValueError and TypeError without much info.
         raise AnsibleFilterError('Error in jmespath.search in json_query filter plugin:\n%s' % e)
-
 
 class FilterModule(object):
     ''' Query filter '''
