@@ -317,18 +317,9 @@ class ConfigManager(object):
         if value is None:
             value = defs[config].get('default')
             origin = 'default'
-            # FIXME: moved eval to constants as this does not have access to previous vars
-            if plugin_type is None and isinstance(value, string_types) and (value.startswith('eval(') and value.endswith(')')):
+            # skip typing as this is a temlated default that will be resolved later in constants, which has needed vars
+            if plugin_type is None and isinstance(value, string_types) and (value.startswith('{{') and value.endswith('}}')):
                 return value, origin
-            #default_value = defs[config].get('default')
-            #if plugin_type is None and isinstance(default_value, string_types) and (default_value.startswith('eval(') and default_value.endswith(')')):
-            #    try:
-            #        eval_string = default_value.replace('eval(', '', 1)[:-1]
-            #        value = eval(eval_string) # FIXME: safe eval?
-            #    except:
-            #        value = default_value
-            #else:
-            #    value = default_value
 
         # ensure correct type
         try:

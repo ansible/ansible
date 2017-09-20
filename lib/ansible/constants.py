@@ -7,6 +7,9 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os  # used to set lang and for backwards compat get_config
+
+from ast import literal_eval
+from jinja2 import Template
 from string import ascii_letters, digits
 
 from ansible.module_utils._text import to_text
@@ -57,7 +60,6 @@ def set_constant(name, value, export=vars()):
 
 
 ### CONSTANTS ### yes, actual ones
-BLACKLIST_EXTS = ('.pyc', '.pyo', '.swp', '.bak', '~', '.rpm', '.md', '.txt')
 BECOME_METHODS = ['sudo', 'su', 'pbrun', 'pfexec', 'doas', 'dzdo', 'ksu', 'runas', 'pmrun']
 BECOME_ERROR_STRINGS = {
     'sudo': 'Sorry, try again.',
@@ -79,7 +81,9 @@ BECOME_MISSING_STRINGS = {
     'ksu': 'No password given',
     'pmrun': ''
 }  # FIXME: deal with i18n
+BLACKLIST_EXTS = ('.pyc', '.pyo', '.swp', '.bak', '~', '.rpm', '.md', '.txt')
 BOOL_TRUE = BOOLEANS_TRUE
+CONTROLER_LANG = os.getenv('LANG', 'en_US.UTF-8')
 DEFAULT_BECOME_PASS = None
 DEFAULT_PASSWORD_CHARS = to_text(ascii_letters + digits + ".,:-_", errors='strict')  # characters included in auto-generated passwords
 DEFAULT_SUDO_PASS = None
@@ -105,13 +109,16 @@ for setting in config.data.get_settings():
     value = setting.value
     if setting.origin == 'default' and \
        isinstance(setting.value, string_types) and \
-       (setting.value.startswith('eval(') and setting.value.endswith(')')):
+       (setting.value.startswith('{{') and setting.value.endswith('}}')):
         try:
-            # FIXME: find better way to do in manager class and/or ensure types
-            eval_string = setting.value.replace('eval(', '', 1)[:-1]
-            value = ensure_type(eval(eval_string), setting.type)  # FIXME: safe eval?
+            t = Template(setting.value)
+            value = t.render(vars())
+            try:
+                value = literal_eval(value)
+            except ValueError:
+                pass  # not a python data structure
         except:
-            # FIXME: should we warn?
-            pass
+            pass # not templatable
+        value = ensure_type(value, setting.name)
 
-    set_constant(setting.name, value or setting.value)
+    set_constant(setting.name, value)
