@@ -62,7 +62,14 @@ class TestKafka(unittest.TestCase):
         })
 
         with patch.object(basic.AnsibleModule, 'run_command') as mock_run_command:
-            stdout = ""
+            stdout = "Current ACLs for resource `Topic:trololo`: \\\\n \\\\t" + \
+                "User:ANONYMOUS has Deny permission for operations: " + \
+                "Describe from hosts: 127.0.0.2\\\\n\\\\t" + \
+                "User:tintin has Allow permission for operations: " + \
+                "Write from hosts: 127.0.0.1\\\\n\\\\tUser:tintin has " + \
+                "Allow permission for operations: Read from hosts: " + \
+                "127.0.0.1\\\\n\\\\tUser:bachibouzouk has Deny permission " + \
+                "for operations: Describe from hosts: 127.0.0.2 \\\\n\\\\n"
             stderr = ""
             mock_run_command.return_value = 0, stdout, stderr  # successful execution
 
@@ -70,14 +77,16 @@ class TestKafka(unittest.TestCase):
                 kafka_acls.main()
             self.assertFalse(result.exception.args[0]['changed'])
 
-        mock_run_command.assert_called_once_with("/usr/bin/kafka-acls --list "
+        mock_run_command.assert_called_once_with("/usr/bin/kafka-acls "
                                                  "--authorizer-properties 'zookeeper.connect=localhost' "
+                                                 "--list "
                                                  "--topic 'trololo'")
 
     def test_kafka_acls_add(self):
         set_module_args({
             'executable': None,
-            'authorizer_propertiers': 'zookeeper.connect=localhost',
+            'action': 'add',
+            'authorizer_properties': 'zookeeper.connect=localhost',
             'allow_host': ['127.0.0.1'],
             'allow_principal': ['User:lsp'],
             'operation': ['read', 'write'],
@@ -85,7 +94,11 @@ class TestKafka(unittest.TestCase):
         })
 
         with patch.object(basic.AnsibleModule, 'run_command') as mock_run_command:
-            stdout = ""
+            stdout = "Adding ACLs for resource `Topic:trololo`: \\\\n \\\\t" + \
+                "User:tintin has Allow permission for operations: " + \
+                "Write from hosts: 127.0.0.1\\\\n\\\\tUser:tintin has " + \
+                "Allow permission for operations: Read from hosts: " + \
+                "127.0.0.1\\\\n\\\\n"
             stderr = ""
             mock_run_command.return_value = 0, stdout, stderr  # successful execution
 
@@ -93,9 +106,38 @@ class TestKafka(unittest.TestCase):
                 kafka_acls.main()
             self.assertTrue(result.exception.args[0]['changed'])
 
-        mock_run_command.assert_called_once_with("/usr/bin/kafka-acls --add "
-                                                 "--allow-host '127.0.0.1'",
-                                                 "--allow-principal 'User:lsp'",
-                                                 "--operation 'read,write'",
+        mock_run_command.assert_called_once_with("/usr/bin/kafka-acls "
                                                  "--authorizer-properties 'zookeeper.connect=localhost' "
+                                                 "--add"
+                                                 "--allow-host '127.0.0.1'"
+                                                 "--allow-principal 'User:tintin'"
+                                                 "--operation 'read,write'"
+                                                 "--topic 'trololo'")
+
+    def test_kafka_acls_delete(self):
+        set_module_args({
+            'executable': None,
+            'action': 'remove',
+            'authorizer_properties': 'zookeeper.connect=localhost',
+            'operation': ['read'],
+            'topic': 'trololo',
+        })
+
+        with patch.object(basic.AnsibleModule, 'run_command') as mock_run_command:
+            stdout = "Adding ACLs for resource `Topic:trololo`: \\\\n \\\\t" + \
+                "User:tintin has Allow permission for operations: " + \
+                "Write from hosts: 127.0.0.1\\\\n\\\\tUser:tintin has " + \
+                "Allow permission for operations: Read from hosts: " + \
+                "127.0.0.1\\\\n\\\\n"
+            stderr = ""
+            mock_run_command.return_value = 0, stdout, stderr  # successful execution
+
+            with self.assertRaises(AnsibleExitJson) as result:
+                kafka_acls.main()
+            self.assertTrue(result.exception.args[0]['changed'])
+
+        mock_run_command.assert_called_once_with("/usr/bin/kafka-acls "
+                                                 "--authorizer-properties 'zookeeper.connect=localhost' "
+                                                 "--force --remove"
+                                                 "--operation 'read'"
                                                  "--topic 'trololo'")
