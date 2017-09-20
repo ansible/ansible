@@ -105,10 +105,10 @@ Users:
   but you might see a deprecation notice if any callbacks used are not inheriting from the built in classes. Developers need to update them as stated below.
 
 Developers:
-* If your callback does not inherit from CallbackBase (directly or indirectly from another callback), you either need to inherit or
-  implement the new options handling methods and properties, you can look at ``CallbackBase`` itself and/or ``AnsiblePlugin`` for details.
-  Currently your callback will still work, but issue a deprecation notice.
-* As noted in the developer guide, any callbacks inheriting from other callbakcs might need to also be updated to contain the same documented options
+* If your callback does not inherit from ``CallbackBase`` (directly or indirectly via another callback), it will still work, but issue a deprecation notice.
+  To avoid this and ensure it always works in the future, either change it to inherit or implement the new options handling methods and properties.
+  For the latter, you can look at ``CallbackBase`` itself and/or ``AnsiblePlugin`` for details.
+* As noted in the developer guide, any callbacks inheriting from other callbacks might need to also be updated to contain the same documented options
   as the parent or the options won't be available.
 
 Networking
