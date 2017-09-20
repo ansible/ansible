@@ -115,6 +115,7 @@ vg_opt = {
     'scalable': '-S',
 }
 
+
 def _validate_pv(module, vg, pvs):
     """
     Function to validate if the physical volume (PV) is not already in use by
