@@ -19,6 +19,7 @@ Ansible Changes By Release
 * Fix for Ansible.ModuleUtils.CamelConversion to handle empty lists and lists with one entry
 * Fix nxos terminal regex to parse username correctly.
 * Fix colors for selective callback
+* Fix for 'New password' prompt on 'ansible-vault edit' (https://github.com/ansible/ansible/issues/30491)
 
 <a id="2.4"></a>
 
