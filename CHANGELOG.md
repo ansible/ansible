@@ -46,6 +46,7 @@ Ansible Changes By Release
 * Fix ansible_distribution fact for Arch linux (https://github.com/ansible/ansible/issues/30600)
 * remove print statements from play_context/become
 * Fix vault errors after 'ansible-vault edit' (https://github.com/ansible/ansible/issues/30575)
+* updated api doc example to match api changes
 
 <a id="2.4"></a>
 
