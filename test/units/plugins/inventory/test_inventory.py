@@ -21,9 +21,12 @@ __metaclass__ = type
 
 import string
 
+from ansible import constants as C
+from ansible.compat.tests import mock
 from ansible.compat.tests import unittest
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text
+from units.mock.path import mock_unfrackpath_noop
 
 from ansible.inventory.manager import InventoryManager, split_host_pattern
 
@@ -155,6 +158,28 @@ class IniInventory(unittest.TestCase):
                 self.assertIsInstance(variables['var%s' % i], string_types)
             else:
                 self.assertIsInstance(variables['var%s' % i], type(values[i]))
+
+    @mock.patch('ansible.inventory.manager.unfrackpath',
+        mock_unfrackpath_noop)
+    @mock.patch('os.path.exists')
+    @mock.patch('os.access')
+    def test_yaml_inventory(self, p_access, p_exist):
+        inventory_content = """
+---
+all:
+    hosts:
+        test1
+        test2
+"""
+        C.INVENTORY_ENABLED = ['yaml']
+        p_access.return_value = True
+        p_exist.return_value = True
+
+        fake_loader = DictDataLoader({"test.yaml": inventory_content})
+
+        im = InventoryManager(loader=fake_loader, sources=["test.yaml"])
+        self.assertTrue(im._inventory.hosts)
+
 
     def _get_inventory(self, inventory_content):
 
