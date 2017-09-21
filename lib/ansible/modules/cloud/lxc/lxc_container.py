@@ -723,7 +723,7 @@ class LxcContainerManagement(object):
 
         container_config_file = self.container.config_file_name
         with open(container_config_file, 'rb') as f:
-            container_config = [to_text(line, errors='surrogate_or_strict') for line in f.readlines()]
+            container_config = to_text(f.read(), errors='surrogate_or_strict').splitlines()
 
         # Note used ast literal_eval because AnsibleModule does not provide for
         # adequate dictionary parsing.
