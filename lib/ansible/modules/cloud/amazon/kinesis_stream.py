@@ -27,7 +27,7 @@ description:
     - Update the retention period of a Kinesis Stream.
     - Update Tags on a Kinesis Stream.
     - Enable/disable server side encryption on a Kinesis Stream.
-version_added: "2.2.1"
+version_added: "2.5"
 author: Allen Sanabria (@linuxdynasty)
 options:
   name:
