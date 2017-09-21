@@ -194,6 +194,7 @@ def get_specified_device_identifiers(module):
     else:
         return {'hostname': None, 'device_id': None}
 
+
 def parse_subnet_cidr(cidr):
     if "/" not in cidr:
         raise Exception("CIDR expression in wrong format, must be address/prefix_len")
@@ -248,7 +249,7 @@ def act_on_assignment(target_state, module, packet_conn):
         device = matching_devices[0]
     return_dict['device_id'] = device.id
     assignment_dicts = [i for i in device.ip_addresses
-            if i['address'] == address and i['cidr'] == prefixlen]
+                        if i['address'] == address and i['cidr'] == prefixlen]
     if len(assignment_dicts) > 1:
         raise Exception("IP address %s is assigned more than once for device %s"
                         % (specified_cidr, device.hostname))
