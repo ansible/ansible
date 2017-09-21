@@ -45,7 +45,8 @@ options:
     default: null
   list:
     description:
-      - Package name to run the equivalent of yum list <package> against.
+      - "Package name to run the equivalent of yum list <package> against. In addition to listing packages,
+        use can also list the following: C(installed), C(updates), C(available) and C(repos)."
     required: false
     default: null
   state:
