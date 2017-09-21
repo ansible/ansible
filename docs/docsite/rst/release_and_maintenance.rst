@@ -24,10 +24,10 @@ latest features and security fixes.
 Older unsupported versions of Ansible can contain unfixed security
 vulnerabilities (*CVE*).
 
-You can refer to the `porting guide`_ for tips on updating your Ansible
+You can refer to the `porting guides`_ for tips on updating your Ansible
 playbooks to run on newer versions.
 
-.. _porting guide: https://docs.ansible.com/ansible/porting_guide_2.0.html
+.. _porting guides: https://docs.ansible.com/ansible/porting_guides.html
 
 Release status
 ``````````````
