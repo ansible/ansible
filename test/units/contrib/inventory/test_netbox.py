@@ -2,12 +2,16 @@
 from __future__ import absolute_import
 
 import os
+import sys
 import json
 import yaml
 import pytest
 import tempfile
-from contrib.inventory import netbox
 from requests.models import Response
+
+# Import netbox script as a module.
+sys.path.append("contrib/inventory/")
+import netbox
 
 # Import Mock.
 try:
