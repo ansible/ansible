@@ -100,7 +100,7 @@ class CallbackModule(CallbackBase):
         # Add subject
         if self.itembody:
             subject = self.itemsubject
-        elif result._result.get('failed_when_result') == True:
+        elif result._result.get('failed_when_result') is True:
             subject = "Failed due to 'failed_when' condition"
         elif result._result.get('exception'):
             subject = self.subject_msg(result._result['exception'], failtype, -1)
@@ -134,7 +134,7 @@ class CallbackModule(CallbackBase):
         # Add item / message
         if self.itembody:
             body += self.itembody
-        elif result._result.get('failed_when_result') == True:
+        elif result._result.get('failed_when_result') is True:
             body += "due to the following condition:\n\n" + self.indent('failed_when:\n- ' + '\n- '.join(result._task.failed_when)) + '\n\n'
         elif result._result.get('msg'):
             body += self.body_blob(result._result['msg'], 'message')
