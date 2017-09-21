@@ -66,7 +66,7 @@ options:
         version_added: "2.5"
         required: false
         description:
-          - Add additional  global target options to C(zypper)  .
+          - Add additional  global target options to C(zypper) .
           - Options should be supplied in a single line as if given in the command line.
     disable_gpg_check:
         description:
@@ -168,7 +168,7 @@ EXAMPLES = '''
 # install rpm package in /tmp/folder using root option
 - zypper:
     name: /tmp/nginx-1.8.0-1.sles12.ngx.x86_64.rpm
-    state: installed
+    state: present
     disable_gpg_check: yes
     extra_args_precommand: --root /tmp/folder
 

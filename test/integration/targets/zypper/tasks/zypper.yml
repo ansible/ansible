@@ -208,23 +208,23 @@
     name: empty
     state: removed
 
-# test extra_args_precommand  in currrent case we install rpm package in local folder using root option 
+# test extra_args_precommand in currrent case we install rpm package in local folder using root option 
 
 - name: extract from rpm 
   zypper:
     name: "{{ output_dir | expanduser }}/zypper2/rpm-build/noarch/empty-1-0.noarch.rpm" 
     state: installed 
     disable_gpg_check: yes 
-    extra_args_precommand: --root  {{ output_dir | expanduser }}/testdir/
+    extra_args_precommand: --root {{ output_dir | expanduser }}/testdir/
  
-- name: capture result
-  shell: ls  {{ output_dir | expanduser }}/testdir
-  register: folder_list
+- name: check that dir var is exist
+  stat: path={{ output_dir | expanduser }}/testdir/var
+  register: stat_result
 
-- name: check that we extract rpm package
+- name: check that we extract rpm package in testdir folder and folder var is exist
   assert:
     that:
-     - "folder_list.stdout == 'var'" 
+     - "stat_result.stat.exists == true" 
        
 
 # test simultaneous remove and install using +- prefixes
