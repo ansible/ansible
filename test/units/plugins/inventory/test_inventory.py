@@ -20,6 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import string
+import textwrap
 
 from ansible import constants as C
 from ansible.compat.tests import mock
@@ -160,22 +161,18 @@ class IniInventory(unittest.TestCase):
                 self.assertIsInstance(variables['var%s' % i], type(values[i]))
 
     @mock.patch('ansible.inventory.manager.unfrackpath', mock_unfrackpath_noop)
-    @mock.patch('os.path.exists')
-    @mock.patch('os.access')
-    def test_yaml_inventory(self, p_access, p_exist):
-        inventory_content = """
----
-all:
-    hosts:
-        test1
-        test2
-"""
+    @mock.patch('os.path.exists', lambda x: True)
+    @mock.patch('os.access', lambda x,y: True)
+    def test_yaml_inventory(self):
+        inventory_content = {"test.yaml": textwrap.dedent("""\
+        ---
+        all:
+            hosts:
+                test1
+                test2
+        """)}
         C.INVENTORY_ENABLED = ['yaml']
-        p_access.return_value = True
-        p_exist.return_value = True
-
-        fake_loader = DictDataLoader({"test.yaml": inventory_content})
-
+        fake_loader = DictDataLoader(inventory_content)
         im = InventoryManager(loader=fake_loader, sources=["test.yaml"])
         self.assertTrue(im._inventory.hosts)
 
