@@ -17,81 +17,71 @@ DOCUMENTATION = """
 ---
 module: blockinfile
 author:
-    - 'YAEGASHI Takeshi (@yaegashi)'
+    - YAEGASHI Takeshi (@yaegashi)
 extends_documentation_fragment:
     - files
     - validate
-short_description: Insert/update/remove a text block
-                   surrounded by marker lines.
+short_description: Insert/update/remove a text block surrounded by marker lines
 version_added: '2.0'
 description:
   - This module will insert/update/remove a block of multi-line text
     surrounded by customizable marker lines.
 options:
   path:
-    aliases: [ dest, destfile, name ]
-    required: true
     description:
       - The file to modify.
       - Before 2.3 this option was only usable as I(dest), I(destfile) and I(name).
+    aliases: [ dest, destfile, name ]
+    required: true
   state:
-    required: false
-    choices: [ present, absent ]
-    default: present
     description:
       - Whether the block should be there or not.
+    choices: [ absent, present ]
+    default: present
   marker:
-    required: false
-    default: '# {mark} ANSIBLE MANAGED BLOCK'
     description:
       - The marker line template.
         "{mark}" will be replaced with "BEGIN" or "END".
+    default: '# {mark} ANSIBLE MANAGED BLOCK'
   block:
-    aliases: [ content ]
-    required: false
-    default: ''
     description:
       - The text to insert inside the marker lines.
         If it's missing or an empty string,
         the block will be removed as if C(state) were specified to C(absent).
+    aliases: [ content ]
+    default: ''
   insertafter:
-    required: false
-    default: EOF
     description:
       - If specified, the block will be inserted after the last match of
         specified regular expression. A special value is available; C(EOF) for
         inserting the block at the end of the file.  If specified regular
         expression has no matches, C(EOF) will be used instead.
-    choices: [ 'EOF', '*regex*' ]
+    default: EOF
+    choices: [ EOF, '*regex*' ]
   insertbefore:
-    required: false
-    default: None
     description:
       - If specified, the block will be inserted before the last match of
         specified regular expression. A special value is available; C(BOF) for
         inserting the block at the beginning of the file.  If specified regular
         expression has no matches, the block will be inserted at the end of the
         file.
-    choices: [ 'BOF', '*regex*' ]
+    choices: [ BOF, '*regex*' ]
   create:
-    required: false
-    default: 'no'
-    choices: [ 'yes', 'no' ]
     description:
       - Create a new file if it doesn't exist.
-  backup:
-    required: false
+    type: bool
     default: 'no'
-    choices: [ 'yes', 'no' ]
+  backup:
     description:
       - Create a backup file including the timestamp information so you can
         get the original file back if you somehow clobbered it incorrectly.
+    type: bool
+    default: 'no'
   follow:
-    required: false
-    default: "no"
-    choices: [ "yes", "no" ]
     description:
       - 'This flag indicates that filesystem links, if they exist, should be followed.'
+    type: bool
+    default: 'no'
     version_added: "2.1"
 notes:
   - This module supports check mode.
@@ -291,9 +281,9 @@ def main():
         else:
             n0 = len(lines)  # insertafter=EOF
     elif n0 < n1:
-        lines[n0:n1+1] = []
+        lines[n0:n1 + 1] = []
     else:
-        lines[n1:n0+1] = []
+        lines[n1:n0 + 1] = []
         n0 = n1
 
     lines[n0:n0] = blocklines
