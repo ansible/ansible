@@ -470,7 +470,7 @@ except ImportError as exc:
     DEFAULT_TIMEOUT = 10
 
 from ansible.module_utils.docker_common import AnsibleDockerClient, DockerBaseClass
-
+from ansible.module_utils._text import to_text
 
 AUTH_PARAM_MAPPING = {
     u'docker_host': u'--host',
@@ -520,7 +520,7 @@ def get_redirected_output(path_name):
     with open(path_name, 'r') as fd:
         for line in fd:
             # strip terminal format/color chars
-            new_line = re.sub(r'\x1b\[.+m', '', line.encode('ascii'))
+            new_line = re.sub(r'\x1b\[.+m', '', to_text(line))
             output.append(new_line)
     os.remove(path_name)
     return output
