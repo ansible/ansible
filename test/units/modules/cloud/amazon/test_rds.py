@@ -37,6 +37,7 @@ import time
 import datetime
 import copy
 import json
+import pdb
 boto3 = pytest.importorskip("boto3")
 boto = pytest.importorskip("boto")
 
@@ -371,10 +372,12 @@ def test_update_rds_tags_should_add_and_remove_appropriate_tags():
         "db_instance_identifier": "fakedb-too",
     }
     rds_client_double = MagicMock()
+
     mk_tag_fn = rds_client_double.add_tags_to_resource
     rm_tag_fn = rds_client_double.remove_tags_from_resource
     ls_tag_fn = rds_client_double.list_tags_for_resource
 
+    pdb.set_trace()
     ls_tag_fn.return_value = {'TagList': [{"Key": "oldtagb", "Value": "bvalue"},
                                           {"Key": "oldtagc", "Value": "cvalue"}, ]}
 
@@ -419,7 +422,8 @@ def test_update_rds_tags_should_delete_if_empty_tags():
     assert tag_update_return is True
 
 
-def test_update_rds_tags_should_not_act_if_no_tags():
+# in the case you don't want to change anything then you should not call update_tags
+def test_update_rds_tags_should_blank_if_called_with_no_tags():
     params = {
         "db_instance_identifier": "fakedb-too",
     }
@@ -441,8 +445,8 @@ def test_update_rds_tags_should_not_act_if_no_tags():
     tag_update_return = rds_i.update_rds_tags(module_double, rds_client_double, db_instance=my_instance)
 
     mk_tag_fn.assert_not_called()
-    rm_tag_fn.assert_not_called()
-    assert tag_update_return is False
+    rm_tag_fn.assert_called_with(ResourceName='arn:aws:rds:us-east-1:1234567890:db:fakedb', TagKeys=['oldtagb', 'oldtagc'])
+    assert tag_update_return is True
 
 
 def set_module_args(args):
@@ -456,10 +460,12 @@ def test_select_params_should_provide_needed_args_to_create_if_module_has_basics
         "db_instance_identifier": "fred",
         "db_instance_class": "t1-pretty-small-really",
         "engine": "postgres",
-        "allocated_storage": 5
+        "allocated_storage": 5,
+        "username": "jake",
+        "password": "letmeinletmein",
     })
     module = rds_i.setup_module_object()
     params = rds_i.select_parameters(module, rds_i.db_create_required_vars, rds_i.db_create_valid_vars)
     for i in needed_args:
         assert i in params, "{0} parameter missing".format(i)
-        assert len(params(i)) > 0, "{0} parameter lacks value".format(i)
+        assert len(params[i]) > 0, "{0} parameter lacks value".format(i)
