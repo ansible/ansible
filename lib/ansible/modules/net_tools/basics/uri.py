@@ -486,7 +486,7 @@ def main():
         u_content = to_text(content, encoding=content_encoding)
 
     if resp['status'] not in status_code:
-        uresp['msg'] = 'Status code was not %s: %s' % (status_code, uresp.get('msg', ''))
+        uresp['msg'] = 'Status code was %s and not %s: %s' % (resp['status'], status_code, uresp.get('msg', ''))
         module.fail_json(content=u_content, **uresp)
     elif return_content:
         module.exit_json(changed=changed, content=u_content, **uresp)
