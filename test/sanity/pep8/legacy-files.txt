@@ -200,7 +200,6 @@ lib/ansible/modules/database/vertica/vertica_user.py
 lib/ansible/modules/files/archive.py
 lib/ansible/modules/files/assemble.py
 lib/ansible/modules/files/blockinfile.py
-lib/ansible/modules/files/replace.py
 lib/ansible/modules/files/synchronize.py
 lib/ansible/modules/files/tempfile.py
 lib/ansible/modules/monitoring/bigpanda.py
