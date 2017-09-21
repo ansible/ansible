@@ -6,8 +6,16 @@ import json
 import yaml
 import pytest
 import tempfile
-import responses
 from netbox import netbox
+from requests.models import Response
+
+# Import Mock.
+try:
+    # Python 3.
+    from unittest.mock import patch, MagicMock
+except ImportError:
+    # Python 2.
+    from mock import patch, MagicMock
 
 #
 # Init.
@@ -44,11 +52,18 @@ netbox:
         #    env: env
 '''
 
+# Netbox config.
+netbox_config_data = yaml.safe_load(netbox_config)
+
 # Mock open Netbox config file.
 netbox_config_file = tempfile.NamedTemporaryFile(delete=False, mode='a')
 netbox_config_file.write(netbox_config)
 netbox_config_file.close()
-netbox_config_data = yaml.load(netbox_config)
+
+# Invalid yaml file.
+netbox_config_file_invalid = tempfile.NamedTemporaryFile(delete=False, mode='a')
+netbox_config_file_invalid.write("invalid yaml syntax: ][")
+netbox_config_file_invalid.close()
 
 # Fake Netbox api output.
 netbox_api_output = json.loads('''
@@ -56,7 +71,7 @@ netbox_api_output = json.loads('''
   {
     "id": 1,
     "name": "fake_host01",
-    "display_name": "Fake Host 01",
+    "display_name": "Fake Host",
     "device_type": {
       "id": 1,
       "manufacturer": {
@@ -155,72 +170,20 @@ netbox_api_output = json.loads('''
 ''')
 
 # Fake single host.
-fake_host = json.loads('''
-  {
-    "id": 1,
-    "name": "fake_host",
-    "display_name": "Fake Host",
-    "device_type": {
-      "id": 1,
-      "manufacturer": {
-        "id": 8,
-        "name": "Fake Manufacturer",
-        "slug": "fake_manufacturer"
-      },
-      "model": "all",
-      "slug": "all"
-    },
-    "device_role": {
-      "id": 8,
-      "name": "Fake Server",
-      "slug": "fake_server"
-    },
-    "tenant": null,
-    "platform": null,
-    "serial": "",
-    "asset_tag": "fake_tag",
-    "rack": {
-      "id": 1,
-      "name": "fake_rack01",
-      "facility_id": null,
-      "display_name": "Fake Rack01"
-    },
-    "position": null,
-    "face": null,
-    "parent_device": null,
-    "status": true,
-    "primary_ip": {
-      "id": 1,
-      "family": 4,
-      "address": "192.168.0.2/32"
-    },
-    "primary_ip4": {
-      "id": 1,
-      "family": 4,
-      "address": "192.168.0.2/32"
-    },
-    "primary_ip6": null,
-    "comments": "",
-    "custom_fields": {
-      "label": "Web",
-      "env": {
-        "id": 1,
-        "value": "Prod"
-      }
-    }
-  }
-''')
-
-# Common vars.
-netbox_api_output_json = json.dumps(netbox_api_output)
-fake_host_json = json.dumps(fake_host)
+fake_host = netbox_api_output[0]
 
 
-# Fake API response.
-def fake_json_response(url, json_payload, status):
-    responses.add(responses.GET, url,
-                  body=json_payload, status=status,
-                  content_type='application/json')
+# Fake Netbox API response.
+def netbox_api_response(single_host=False):
+    if single_host:
+        json_payload = fake_host
+    else:
+        json_payload = netbox_api_output
+
+    response = Response()
+    response.status_code = 200
+    response.json = MagicMock(return_value=json_payload)
+    return MagicMock(return_value=response)
 
 
 # Fake args.
@@ -235,15 +198,6 @@ Args.list = False
 netbox_inventory_default_args = netbox.NetboxAsInventory(Args, netbox_config_data)
 Args.host = "fake_host"
 netbox_inventory_single = netbox.NetboxAsInventory(Args, netbox_config_data)
-
-
-# Fake Netbox API response.
-def netbox_json_response(single_host=False):
-    if single_host:
-        json_payload = fake_host_json
-    else:
-        json_payload = netbox_api_output_json
-    fake_json_response(netbox_inventory.api_url, json_payload, 200)
 
 
 #
@@ -311,10 +265,6 @@ class TestNetboxUtils(object):
         assert config_output["netbox"]
         assert config_output["netbox"]["main"]["api_url"]
 
-    @staticmethod
-    def teardown_function():
-        os.unlink(netbox_config_file.name)
-
     @pytest.mark.parametrize("yaml_file", [
         "nonexists.yml"
     ])
@@ -326,9 +276,21 @@ class TestNetboxUtils(object):
             netbox.open_yaml_file(yaml_file)
         assert file_not_exists
 
-#    @classmethod
-#    def teardown_class(cls):
-#        os.unlink(netbox_config_file.name)
+    @pytest.mark.parametrize("yaml_file", [
+        netbox_config_file_invalid.name
+    ])
+    def test_open_yaml_file_invalid(self, yaml_file):
+        """
+        Test open invalid yaml file.
+        """
+        with pytest.raises(SystemExit) as invalid_yaml_syntax:
+            netbox.open_yaml_file(yaml_file)
+        assert invalid_yaml_syntax
+
+    @classmethod
+    def teardown_class(cls):
+        os.unlink(netbox_config_file.name)
+        os.unlink(netbox_config_file_invalid.name)
 
 
 # Test NetboxAsInventory class.
@@ -345,7 +307,6 @@ class TestNetboxAsInventory(object):
             netbox.NetboxAsInventory(args, config)
         assert empty_config_error
 
-    @responses.activate
     @pytest.mark.parametrize("api_url", [
         netbox_inventory.api_url
     ])
@@ -353,11 +314,10 @@ class TestNetboxAsInventory(object):
         """
         Test get hosts list from API and make sure it returns a list.
         """
-        netbox_json_response()
-        hosts_list = netbox_inventory.get_hosts_list(api_url)
-        assert isinstance(hosts_list, list)
+        with patch('requests.get', netbox_api_response()):
+            hosts_list = netbox_inventory.get_hosts_list(api_url)
+            assert isinstance(hosts_list, list)
 
-    @responses.activate
     @pytest.mark.parametrize("api_url", [
         None
     ])
@@ -365,12 +325,11 @@ class TestNetboxAsInventory(object):
         """
         Test if Netbox URL is invalid.
         """
-        netbox_json_response()
-        with pytest.raises(SystemExit) as none_url_error:
-            netbox_inventory.get_hosts_list(api_url)
-        assert none_url_error
+        with patch('requests.get', netbox_api_response()):
+            with pytest.raises(SystemExit) as none_url_error:
+                netbox_inventory.get_hosts_list(api_url)
+            assert none_url_error
 
-    @responses.activate
     @pytest.mark.parametrize("api_url, host_name", [
         (netbox_inventory_single.api_url, netbox_inventory_single.host)
     ])
@@ -378,11 +337,12 @@ class TestNetboxAsInventory(object):
         """
         Test Netbox single host output.
         """
-        netbox_json_response(single_host=True)
-        host_data = netbox_inventory_single.get_hosts_list(
-            api_url,
-            specific_host=host_name)
-        assert host_data["name"] == "fake_host"
+
+        with patch('requests.get', netbox_api_response(single_host=True)):
+            host_data = netbox_inventory_single.get_hosts_list(
+                api_url,
+                specific_host=host_name)
+            assert host_data["name"] == "fake_host01"
 
     @pytest.mark.parametrize("server_name, group_value, inventory_dict", [
         ("fake_server", "fake_group", {})
@@ -406,7 +366,7 @@ class TestNetboxAsInventory(object):
         netbox_inventory.add_host_to_inventory(groups_categories, inventory_dict, host_data)
         assert "hostvars" in inventory_dict["_meta"]
         assert "fake_rack01" in inventory_dict
-        assert "fake_host" in inventory_dict["fake_rack01"]
+        assert "fake_host01" in inventory_dict["fake_rack01"]
 
     @pytest.mark.parametrize("groups_categories, inventory_dict, host_data", [
         ({"arbitrary_category_name": []},
@@ -434,7 +394,7 @@ class TestNetboxAsInventory(object):
         Test adding host to inventory with no group.
         """
         netbox_inventory.add_host_to_inventory(groups_categories, inventory_dict, host_data)
-        assert "fake_host" in inventory_dict["no_group"]
+        assert "fake_host01" in inventory_dict["no_group"]
 
     @pytest.mark.parametrize("groups_categories, inventory_dict, host_data", [
         ({"default": ["arbitrary_group_name"]},
@@ -464,7 +424,7 @@ class TestNetboxAsInventory(object):
 
     @pytest.mark.parametrize("inventory_dict, host_name, host_vars", [
         ({"_meta": {"hostvars": {}}},
-         "fake_host",
+         "fake_host01",
          {"rack_name": "fake_rack01"})
     ])
     def test_update_host_meta_vars(self, inventory_dict, host_name, host_vars):
@@ -472,11 +432,11 @@ class TestNetboxAsInventory(object):
         Test update host vars in inventory dict.
         """
         netbox_inventory.update_host_meta_vars(inventory_dict, host_name, host_vars)
-        assert inventory_dict["_meta"]["hostvars"]["fake_host"]["rack_name"] == "fake_rack01"
+        assert inventory_dict["_meta"]["hostvars"]["fake_host01"]["rack_name"] == "fake_rack01"
 
     @pytest.mark.parametrize("inventory_dict, host_name, host_vars", [
         ({"_meta": {"hostvars": {}}},
-         "fake_host",
+         "fake_host01",
          {"rack_name": "fake_rack01"})
     ])
     def test_update_host_meta_vars_single_host(self, inventory_dict, host_name, host_vars):
@@ -484,17 +444,16 @@ class TestNetboxAsInventory(object):
         Test update host vars in inventory dict.
         """
         netbox_inventory_single.update_host_meta_vars(inventory_dict, host_name, host_vars)
-        assert inventory_dict["fake_host"]["rack_name"] == "fake_rack01"
+        assert inventory_dict["fake_host01"]["rack_name"] == "fake_rack01"
 
-    @responses.activate
     def test_generate_inventory(self):
         """
         Test generateing final Ansible inventory before convert it to JSON.
         """
-        netbox_json_response()
-        ansible_inventory = netbox_inventory.generate_inventory()
-        assert "fake_host01" in ansible_inventory["_meta"]["hostvars"]
-        assert isinstance(ansible_inventory["_meta"]["hostvars"]["fake_host02"], dict)
+        with patch('requests.get', netbox_api_response()):
+            ansible_inventory = netbox_inventory.generate_inventory()
+            assert "fake_host01" in ansible_inventory["_meta"]["hostvars"]
+            assert isinstance(ansible_inventory["_meta"]["hostvars"]["fake_host02"], dict)
 
     @pytest.mark.parametrize("inventory_dict", [
         {
