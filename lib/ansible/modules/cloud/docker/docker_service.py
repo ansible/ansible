@@ -511,8 +511,8 @@ def make_redirection_tempfiles():
 
 
 def cleanup_redirection_tempfiles(out_name, err_name):
-    get_redirected_output(out_name)
-    get_redirected_output(err_name)
+    for i in [out_name, err_name]:
+        os.remove(i)
 
 
 def get_redirected_output(path_name):
@@ -522,7 +522,6 @@ def get_redirected_output(path_name):
             # strip terminal format/color chars
             new_line = re.sub(r'\x1b\[.+m', '', line.encode('ascii'))
             output.append(new_line)
-    fd.close()
     os.remove(path_name)
     return output
 
