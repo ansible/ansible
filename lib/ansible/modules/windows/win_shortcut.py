@@ -1,29 +1,14 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2016, Dag Wieers <dag@wieers.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2016, Dag Wieers (@dagwieers) <dag@wieers.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: win_shortcut
 version_added: '2.3'
@@ -59,20 +44,18 @@ options:
   hotkey:
     description:
     - Key combination for the shortcut.
+    - This is a combination of one or more modifiers and a key.
+    - Possible modifiers are Alt, Ctrl, Shift, Ext.
+    - Possible keys are [A-Z] and [0-9].
   windowstyle:
     description:
     - Influences how the application is displayed when it is launched.
-    choices:
-    - maximized
-    - minimized
-    - normal
+    choices: [ maximized, minimized, normal ]
   state:
     description:
-    - When C(present), creates or updates the shortcut.  When C(absent),
-      removes the shortcut if it exists.
-    choices:
-    - absent
-    - present
+    - When C(present), creates or updates the shortcut.
+    - When C(absent), removes the shortcut if it exists.
+    choices: [ absent, present ]
     default: present
 author:
 - Dag Wieers (@dagwieers)
@@ -95,6 +78,7 @@ EXAMPLES = r'''
     dest: '%Public%\Desktop\Mozilla Firefox.lnk'
     icon: '%ProgramFiles\Mozilla Firefox\Firefox.exe,0'
     directory: '%ProgramFiles%\Mozilla Firefox'
+    hotkey: Ctrl+Alt+F
 
 - name: Create an application shortcut for an executable in PATH to your desktop
   win_shortcut:
@@ -108,6 +92,7 @@ EXAMPLES = r'''
     args: --new-window https://ansible.com/
     directory: '%ProgramFiles%\Google\Chrome\Application'
     icon: '%ProgramFiles%\Google\Chrome\Application\chrome.exe,0'
+    hotkey: Ctrl+Alt+A
 
 - name: Create a URL shortcut for the Ansible website
   win_shortcut:
@@ -115,5 +100,5 @@ EXAMPLES = r'''
     dest: '%Public%\Desktop\Ansible website.url'
 '''
 
-RETURN = '''
+RETURN = r'''
 '''
