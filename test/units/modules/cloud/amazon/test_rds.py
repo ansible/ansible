@@ -419,7 +419,7 @@ def test_update_rds_tags_should_delete_if_empty_tags():
     rm_tag_fn.assert_called_once()
 
     args = rm_tag_fn.call_args
-    assert args[1]["ResourceName"] =='arn:aws:rds:us-east-1:1234567890:db:fakedb' 
+    assert args[1]["ResourceName"] == 'arn:aws:rds:us-east-1:1234567890:db:fakedb'
     assert 'oldtagb' in args[1]["TagKeys"] and 'oldtagc' in args[1]["TagKeys"]
     assert len(args[1]["TagKeys"]) == 2
     assert tag_update_return is True
