@@ -178,18 +178,18 @@ netbox_api_output = json.loads('''
 
 
 # Fake Netbox API response.
-def netbox_api_response(json_payload):
+def mock_response(json_payload):
     response = Response()
     response.status_code = 200
     response.json = MagicMock(return_value=json_payload)
     return MagicMock(return_value=response)
 
-# Fake single host.
-fake_host = netbox_api_output[0]
-
 # Fake API output.
-netbox_api_all_hosts = netbox_api_response(netbox_api_output)
-netbox_api_single_host = netbox_api_response(fake_host)
+netbox_api_all_hosts = mock_response(netbox_api_output)
+netbox_api_single_host = mock_response(netbox_api_output[0])
+
+# Fake single host data.
+fake_host = netbox_api_output[0]
 
 
 #
