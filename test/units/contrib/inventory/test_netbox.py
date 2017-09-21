@@ -6,7 +6,6 @@ import sys
 import json
 import yaml
 import pytest
-import tempfile
 from requests.models import Response
 
 # Import netbox script as a module.
@@ -16,10 +15,12 @@ import netbox
 # Import Mock.
 try:
     # Python 3.
-    from unittest.mock import patch, MagicMock
+    from unittest.mock import patch, MagicMock, mock_open
+    builtin_open = "builtins.open"
 except ImportError:
     # Python 2.
-    from mock import patch, MagicMock
+    from mock import patch, MagicMock, mock_open
+    builtin_open = "__builtin__.open"
 
 #
 # Init.
@@ -57,22 +58,11 @@ netbox:
         #    env: env
 '''
 
-
-# Mock config file.
-def mock_config(config_data):
-    config_file = tempfile.NamedTemporaryFile(delete=False, mode='a')
-    config_file.write(config_data)
-    config_file.close()
-    return config_file
+# Yaml file with invalid syntax.
+netbox_config_invalid = "invalid yaml syntax: ]["
 
 # Netbox config.
 netbox_config_data = yaml.safe_load(netbox_config)
-
-# Valid yaml file.
-netbox_config_file = mock_config(netbox_config)
-
-# Invalid yaml file.
-netbox_config_file_invalid = mock_config("invalid yaml syntax: ][")
 
 
 #
@@ -199,7 +189,7 @@ fake_host = netbox_api_output[0]
 #
 # Init Netbox class.
 class Args(object):
-    config_file = netbox_config_file.name
+    config_file = "netbox.yml"
     host = None
     list = True
 
@@ -265,15 +255,16 @@ class TestNetboxUtils(object):
         assert reduced_path is None
 
     @pytest.mark.parametrize("yaml_file", [
-        netbox_config_file.name
+        "netbox.yml"
     ])
     def test_open_yaml_file_exists(self, yaml_file):
         """
         Test open exists yaml file.
         """
-        config_output = netbox.open_yaml_file(yaml_file)
-        assert config_output["netbox"]
-        assert config_output["netbox"]["main"]["api_url"]
+        with patch(builtin_open, new_callable=mock_open, read_data=netbox_config):
+            config_output = netbox.open_yaml_file(yaml_file)
+            assert config_output["netbox"]
+            assert config_output["netbox"]["main"]["api_url"]
 
     @pytest.mark.parametrize("yaml_file", [
         "nonexists.yml"
@@ -287,20 +278,16 @@ class TestNetboxUtils(object):
         assert file_not_exists
 
     @pytest.mark.parametrize("yaml_file", [
-        netbox_config_file_invalid.name
+        "netbox_invalid_syntax.yml"
     ])
     def test_open_yaml_file_invalid(self, yaml_file):
         """
         Test open invalid yaml file.
         """
         with pytest.raises(SystemExit) as invalid_yaml_syntax:
-            netbox.open_yaml_file(yaml_file)
+            with patch(builtin_open, new_callable=mock_open, read_data=netbox_config_invalid):
+                netbox.open_yaml_file(yaml_file)
         assert invalid_yaml_syntax
-
-    @classmethod
-    def teardown_class(cls):
-        os.unlink(netbox_config_file.name)
-        os.unlink(netbox_config_file_invalid.name)
 
 
 # Test NetboxAsInventory class.
