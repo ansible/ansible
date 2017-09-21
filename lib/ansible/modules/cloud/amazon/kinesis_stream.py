@@ -679,7 +679,7 @@ def stream_action(client, stream_name, shard_count=1, action='create',
 
 
 
-def stream_encryption_action(client, stream_name, action='start_encryption',encryption_type='BLAH',key_id='',
+def stream_encryption_action(client, stream_name, action='start_encryption',encryption_type='',key_id='',
                   timeout=300, check_mode=False):
     """Create, Encrypt or Delete an Amazon Kinesis Stream.
     Args:
