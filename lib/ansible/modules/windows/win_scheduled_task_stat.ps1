@@ -1,9 +1,14 @@
 #!powershell
+
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+#Requires -Module Ansible.ModuleUtils.CamelConversion
 #Requires -Module Ansible.ModuleUtils.Legacy
 #Requires -Module Ansible.ModuleUtils.SID
 
 $params = Parse-Args -arguments $args
-$path = Get-AnsibleParam -obj $params -name "path" -type "str" -failifempty $true
+$path = Get-AnsibleParam -obj $params -name "path" -type "str" -default "\"
 $name = Get-AnsibleParam -obj $params -name "name" -type "str"
 
 $result = @{
@@ -37,6 +42,15 @@ public enum TASK_RUN_LEVEL
     TASK_RUNLEVEL_HIGHEST  = 1
 }
 
+public enum TASK_STATE
+{
+    TASK_STATE_UNKNOWN   = 0,
+    TASK_STATE_DISABLED  = 1,
+    TASK_STATE_QUEUED    = 2,
+    TASK_STATE_READY     = 3,
+    TASK_STATE_RUNNING   = 4
+}
+
 public enum TASK_TRIGGER_TYPE2
 {
     TASK_TRIGGER_EVENT                 = 0,
@@ -58,6 +72,14 @@ Function Get-PropertyValue($task_property, $com, $property) {
 
     if ($raw_value -eq $null) {
         return $null
+    } elseif ($raw_value.GetType().Name -eq "__ComObject") {
+        $com_values = @{}
+        $properties = Get-Member -InputObject $raw_value -MemberType Property | % {
+            $com_value = Get-PropertyValue -task_property $property -com $raw_value -property $_.Name
+            $com_values.$property = $com_value
+        }
+
+        return ,$com_values
     }
 
     switch ($property) {
@@ -212,7 +234,11 @@ Function Get-PropertyValue($task_property, $com, $property) {
 }
 
 $service = New-Object -ComObject Schedule.Service
-$service.Connect()
+try {
+    $service.Connect()
+} catch {
+    Fail-Json -obj $result -message "failed to connect to the task scheduler service: $($_.Exception.Message)"
+}
 
 try {
     $task_folder = $service.GetFolder($path)
@@ -240,24 +266,36 @@ $result.folder_task_count = $folder_task_count
 
 if ($name -ne $null) {
     if ($task -ne $null) {
-        $task_definition = $task.Definition
         $result.task_exists = $true
-        $result.task = @{}
 
+        # task state
+        $result.state = @{
+            last_run_time = (Get-Date $task.LastRunTime -Format s)
+            last_task_result = $task.LastTaskResult
+            next_run_time = (Get-Date $task.NextRunTime -Format s)
+            number_of_missed_runs = $task.NumberOfMissedRuns
+            status = [Enum]::ToObject([TASK_STATE], $task.State).ToString()
+        }
+
+        # task definition
+        $task_definition = $task.Definition
+        $ignored_properties = @("XmlText")
         $properties = @("principal", "registration_info", "settings")
         $collection_properties = @("actions", "triggers")
 
         foreach ($property in $properties) {
             $property_name = $property -replace "_"
-            $result.task.$property = @{}
+            $result.$property = @{}
             $values = $task_definition.$property_name
             Get-Member -InputObject $values -MemberType Property | % {
-                $result.task.$property.$($_.Name) = (Get-PropertyValue -task_property $property -com $values -property $_.Name)
+                if ($_.Name -notin $ignored_properties) {
+                    $result.$property.$($_.Name) = (Get-PropertyValue -task_property $property -com $values -property $_.Name)
+                }
             }
         }
 
         foreach ($property in $collection_properties) {
-            $result.task.$property = @()
+            $result.$property = @()
             $collection = $task_definition.$property
             $collection_count = $collection.Count
             for ($i = 1; $i -le $collection_count; $i++) {
@@ -265,14 +303,18 @@ if ($name -ne $null) {
                 $item_info = @{}
 
                 Get-Member -InputObject $item -MemberType Property | % {
-                    $item_info.$($_.Name) = (Get-PropertyValue -task_property $property -com $item -property $_.Name)
+                    if ($_.Name -notin $ignored_properties) {
+                        $item_info.$($_.Name) = (Get-PropertyValue -task_property $property -com $item -property $_.Name)
+                    }
                 }
-                $result.task.$property += $item_info
+                $result.$property += $item_info
             }
         }    
     } else {
         $result.task_exists = $false
     }
 }
+
+$result = Convert-DictToSnakeCase -dict $result
 
 Exit-Json -obj $result

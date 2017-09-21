@@ -11,7 +11,7 @@
   check_mode: yes
 
 - name: get result of create boot trigger (check mode)
-  test_task_stat:
+  win_scheduled_task_stat:
     path: \
     name: '{{test_scheduled_task_name}}'
   register: trigger_boot_result_check
@@ -33,7 +33,7 @@
   register: trigger_boot
 
 - name: get result of create boot trigger
-  test_task_stat:
+  win_scheduled_task_stat:
     path: \
     name: '{{test_scheduled_task_name}}'
   register: trigger_boot_result
@@ -43,11 +43,11 @@
     that:
     - trigger_boot|changed
     - trigger_boot_result.task_exists == True
-    - trigger_boot_result.task.triggers|count == 1
-    - trigger_boot_result.task.triggers[0].Type == "TASK_TRIGGER_BOOT"
-    - trigger_boot_result.task.triggers[0].Enabled == True
-    - trigger_boot_result.task.triggers[0].StartBoundary == None
-    - trigger_boot_result.task.triggers[0].EndBoundary == None
+    - trigger_boot_result.triggers|count == 1
+    - trigger_boot_result.triggers[0].type == "TASK_TRIGGER_BOOT"
+    - trigger_boot_result.triggers[0].enabled == True
+    - trigger_boot_result.triggers[0].start_boundary == None
+    - trigger_boot_result.triggers[0].end_boundary == None
 
 - name: create boot trigger (idempotent)
   win_scheduled_task:
@@ -77,7 +77,7 @@
   check_mode: yes
 
 - name: get result of create daily trigger (check mode)
-  test_task_stat:
+  win_scheduled_task_stat:
     path: \
     name: '{{test_scheduled_task_name}}'
   register: trigger_daily_result_check
@@ -87,11 +87,11 @@
     that:
     - trigger_daily_check|changed
     - trigger_daily_result_check.task_exists == True
-    - trigger_daily_result_check.task.triggers|count == 1
-    - trigger_daily_result_check.task.triggers[0].Type == "TASK_TRIGGER_BOOT"
-    - trigger_daily_result_check.task.triggers[0].Enabled == True
-    - trigger_daily_result_check.task.triggers[0].StartBoundary == None
-    - trigger_daily_result_check.task.triggers[0].EndBoundary == None
+    - trigger_daily_result_check.triggers|count == 1
+    - trigger_daily_result_check.triggers[0].type == "TASK_TRIGGER_BOOT"
+    - trigger_daily_result_check.triggers[0].enabled == True
+    - trigger_daily_result_check.triggers[0].start_boundary == None
+    - trigger_daily_result_check.triggers[0].end_boundary == None
 
 - name: create daily trigger
   win_scheduled_task:
@@ -105,7 +105,7 @@
   register: trigger_daily
 
 - name: get result of create daily trigger
-  test_task_stat:
+  win_scheduled_task_stat:
     path: \
     name: '{{test_scheduled_task_name}}'
   register: trigger_daily_result
@@ -115,11 +115,11 @@
     that:
     - trigger_daily|changed
     - trigger_daily_result.task_exists == True
-    - trigger_daily_result.task.triggers|count == 1
-    - trigger_daily_result.task.triggers[0].Type == "TASK_TRIGGER_DAILY"
-    - trigger_daily_result.task.triggers[0].Enabled == True
-    - trigger_daily_result.task.triggers[0].StartBoundary == "2000-01-01T00:00:01"
-    - trigger_daily_result.task.triggers[0].EndBoundary == None
+    - trigger_daily_result.triggers|count == 1
+    - trigger_daily_result.triggers[0].type == "TASK_TRIGGER_DAILY"
+    - trigger_daily_result.triggers[0].enabled == True
+    - trigger_daily_result.triggers[0].start_boundary == "2000-01-01T00:00:01"
+    - trigger_daily_result.triggers[0].end_boundary == None
 
 - name: create daily trigger (idempotent)
   win_scheduled_task:
@@ -149,7 +149,7 @@
   check_mode: yes
 
 - name: get result of create logon trigger (check mode)
-  test_task_stat:
+  win_scheduled_task_stat:
     path: \
     name: '{{test_scheduled_task_name}}'
   register: trigger_logon_result_check
@@ -159,11 +159,11 @@
     that:
     - trigger_logon_check|changed
     - trigger_logon_result_check.task_exists == True
-    - trigger_logon_result_check.task.triggers|count == 1
-    - trigger_logon_result_check.task.triggers[0].Type == "TASK_TRIGGER_DAILY"
-    - trigger_logon_result_check.task.triggers[0].Enabled == True
-    - trigger_logon_result_check.task.triggers[0].StartBoundary == "2000-01-01T00:00:01"
-    - trigger_logon_result_check.task.triggers[0].EndBoundary == None
+    - trigger_logon_result_check.triggers|count == 1
+    - trigger_logon_result_check.triggers[0].type == "TASK_TRIGGER_DAILY"
+    - trigger_logon_result_check.triggers[0].enabled == True
+    - trigger_logon_result_check.triggers[0].start_boundary == "2000-01-01T00:00:01"
+    - trigger_logon_result_check.triggers[0].end_boundary == None
 
 - name: create logon trigger
   win_scheduled_task:
@@ -176,7 +176,7 @@
   register: trigger_logon
 
 - name: get result of create logon trigger
-  test_task_stat:
+  win_scheduled_task_stat:
     path: \
     name: '{{test_scheduled_task_name}}'
   register: trigger_logon_result
@@ -186,11 +186,11 @@
     that:
     - trigger_logon|changed
     - trigger_logon_result.task_exists == True
-    - trigger_logon_result.task.triggers|count == 1
-    - trigger_logon_result.task.triggers[0].Type == "TASK_TRIGGER_LOGON"
-    - trigger_logon_result.task.triggers[0].Enabled == True
-    - trigger_logon_result.task.triggers[0].StartBoundary == None
-    - trigger_logon_result.task.triggers[0].EndBoundary == None
+    - trigger_logon_result.triggers|count == 1
+    - trigger_logon_result.triggers[0].type == "TASK_TRIGGER_LOGON"
+    - trigger_logon_result.triggers[0].enabled == True
+    - trigger_logon_result.triggers[0].start_boundary == None
+    - trigger_logon_result.triggers[0].end_boundary == None
 
 - name: create logon trigger (idempotent)
   win_scheduled_task:
@@ -222,7 +222,7 @@
   check_mode: yes
 
 - name: get result of create monthly dow trigger (check mode)
-  test_task_stat:
+  win_scheduled_task_stat:
     path: \
     name: '{{test_scheduled_task_name}}'
   register: trigger_monthlydow_result_check
@@ -232,11 +232,11 @@
     that:
     - trigger_monthlydow_check|changed
     - trigger_monthlydow_result_check.task_exists == True
-    - trigger_monthlydow_result_check.task.triggers|count == 1
-    - trigger_monthlydow_result_check.task.triggers[0].Type == "TASK_TRIGGER_LOGON"
-    - trigger_monthlydow_result_check.task.triggers[0].Enabled == True
-    - trigger_monthlydow_result_check.task.triggers[0].StartBoundary == None
-    - trigger_monthlydow_result_check.task.triggers[0].EndBoundary == None
+    - trigger_monthlydow_result_check.triggers|count == 1
+    - trigger_monthlydow_result_check.triggers[0].type == "TASK_TRIGGER_LOGON"
+    - trigger_monthlydow_result_check.triggers[0].enabled == True
+    - trigger_monthlydow_result_check.triggers[0].start_boundary == None
+    - trigger_monthlydow_result_check.triggers[0].end_boundary == None
 
 - name: create monthly dow trigger
   win_scheduled_task:
@@ -252,7 +252,7 @@
   register: trigger_monthlydow
 
 - name: get result of create monthly dow trigger
-  test_task_stat:
+  win_scheduled_task_stat:
     path: \
     name: '{{test_scheduled_task_name}}'
   register: trigger_monthlydow_result
@@ -262,13 +262,13 @@
     that:
     - trigger_monthlydow|changed
     - trigger_monthlydow_result.task_exists == True
-    - trigger_monthlydow_result.task.triggers|count == 1
-    - trigger_monthlydow_result.task.triggers[0].Type == "TASK_TRIGGER_MONTHLYDOW"
-    - trigger_monthlydow_result.task.triggers[0].Enabled == True
-    - trigger_monthlydow_result.task.triggers[0].StartBoundary == "2000-01-01T00:00:01"
-    - trigger_monthlydow_result.task.triggers[0].EndBoundary == None
-    - trigger_monthlydow_result.task.triggers[0].WeeksOfMonth == "1,2"
-    - trigger_monthlydow_result.task.triggers[0].DaysOfWeek == "monday,wednesday"
+    - trigger_monthlydow_result.triggers|count == 1
+    - trigger_monthlydow_result.triggers[0].type == "TASK_TRIGGER_MONTHLYDOW"
+    - trigger_monthlydow_result.triggers[0].enabled == True
+    - trigger_monthlydow_result.triggers[0].start_boundary == "2000-01-01T00:00:01"
+    - trigger_monthlydow_result.triggers[0].end_boundary == None
+    - trigger_monthlydow_result.triggers[0].weeks_of_month == "1,2"
+    - trigger_monthlydow_result.triggers[0].days_of_week == "monday,wednesday"
 
 - name: create monthly dow trigger (idempotent)
   win_scheduled_task:
@@ -310,7 +310,7 @@
   check_mode: yes
 
 - name: get result of create task with multiple triggers (check mode)
-  test_task_stat:
+  win_scheduled_task_stat:
     path: \
     name: '{{test_scheduled_task_name}}'
   register: create_multiple_triggers_result_check
@@ -320,13 +320,13 @@
     that:
     - create_multiple_triggers_check|changed
     - create_multiple_triggers_result_check.task_exists == True
-    - create_multiple_triggers_result_check.task.triggers|count == 1
-    - create_multiple_triggers_result_check.task.triggers[0].Type == "TASK_TRIGGER_MONTHLYDOW"
-    - create_multiple_triggers_result_check.task.triggers[0].Enabled == True
-    - create_multiple_triggers_result_check.task.triggers[0].StartBoundary == "2000-01-01T00:00:01"
-    - create_multiple_triggers_result_check.task.triggers[0].EndBoundary == None
-    - create_multiple_triggers_result_check.task.triggers[0].WeeksOfMonth == "1,2"
-    - create_multiple_triggers_result_check.task.triggers[0].DaysOfWeek == "monday,wednesday"
+    - create_multiple_triggers_result_check.triggers|count == 1
+    - create_multiple_triggers_result_check.triggers[0].type == "TASK_TRIGGER_MONTHLYDOW"
+    - create_multiple_triggers_result_check.triggers[0].enabled == True
+    - create_multiple_triggers_result_check.triggers[0].start_boundary == "2000-01-01T00:00:01"
+    - create_multiple_triggers_result_check.triggers[0].end_boundary == None
+    - create_multiple_triggers_result_check.triggers[0].weeks_of_month == "1,2"
+    - create_multiple_triggers_result_check.triggers[0].days_of_week == "monday,wednesday"
 
 - name: create task with multiple triggers
   win_scheduled_task:
@@ -349,7 +349,7 @@
   register: create_multiple_triggers
 
 - name: get result of create task with multiple triggers
-  test_task_stat:
+  win_scheduled_task_stat:
     path: \
     name: '{{test_scheduled_task_name}}'
   register: create_multiple_triggers_result
@@ -359,19 +359,19 @@
     that:
     - create_multiple_triggers|changed
     - create_multiple_triggers_result.task_exists == True
-    - create_multiple_triggers_result.task.triggers|count == 2
-    - create_multiple_triggers_result.task.triggers[0].Type == "TASK_TRIGGER_MONTHLY"
-    - create_multiple_triggers_result.task.triggers[0].Enabled == True
-    - create_multiple_triggers_result.task.triggers[0].StartBoundary == "2000-01-01T00:00:01"
-    - create_multiple_triggers_result.task.triggers[0].EndBoundary == None
-    - create_multiple_triggers_result.task.triggers[0].DaysOfMonth == "1,5,10,15,20,25,30"
-    - create_multiple_triggers_result.task.triggers[0].MonthsOfYear == "march,may,july"
-    - create_multiple_triggers_result.task.triggers[0].RunOnLastDayOfMonth == True
-    - create_multiple_triggers_result.task.triggers[1].Type == "TASK_TRIGGER_TIME"
-    - create_multiple_triggers_result.task.triggers[1].Enabled == True
-    - create_multiple_triggers_result.task.triggers[1].StartBoundary == "2000-01-01T00:00:01"
-    - create_multiple_triggers_result.task.triggers[1].EndBoundary == None
-    - create_multiple_triggers_result.task.triggers[1].RandomDelay == "PT10M5S"
+    - create_multiple_triggers_result.triggers|count == 2
+    - create_multiple_triggers_result.triggers[0].type == "TASK_TRIGGER_MONTHLY"
+    - create_multiple_triggers_result.triggers[0].enabled == True
+    - create_multiple_triggers_result.triggers[0].start_boundary == "2000-01-01T00:00:01"
+    - create_multiple_triggers_result.triggers[0].end_boundary == None
+    - create_multiple_triggers_result.triggers[0].days_of_month == "1,5,10,15,20,25,30"
+    - create_multiple_triggers_result.triggers[0].months_of_year == "march,may,july"
+    - create_multiple_triggers_result.triggers[0].run_on_last_day_of_month == True
+    - create_multiple_triggers_result.triggers[1].type == "TASK_TRIGGER_TIME"
+    - create_multiple_triggers_result.triggers[1].enabled == True
+    - create_multiple_triggers_result.triggers[1].start_boundary == "2000-01-01T00:00:01"
+    - create_multiple_triggers_result.triggers[1].end_boundary == None
+    - create_multiple_triggers_result.triggers[1].random_delay == "PT10M5S"
 
 - name: create task with multiple triggers (idempotent)
   win_scheduled_task:
@@ -414,7 +414,7 @@
   check_mode: yes
 
 - name: get result of change task with multiple triggers (check mode)
-  test_task_stat:
+  win_scheduled_task_stat:
     path: \
     name: '{{test_scheduled_task_name}}'
   register: change_multiple_triggers_result_check
@@ -424,19 +424,19 @@
     that:
     - change_multiple_triggers_check|changed
     - change_multiple_triggers_result_check.task_exists == True
-    - change_multiple_triggers_result_check.task.triggers|count == 2
-    - change_multiple_triggers_result_check.task.triggers[0].Type == "TASK_TRIGGER_MONTHLY"
-    - change_multiple_triggers_result_check.task.triggers[0].Enabled == True
-    - change_multiple_triggers_result_check.task.triggers[0].StartBoundary == "2000-01-01T00:00:01"
-    - change_multiple_triggers_result_check.task.triggers[0].EndBoundary == None
-    - change_multiple_triggers_result_check.task.triggers[0].DaysOfMonth == "1,5,10,15,20,25,30"
-    - change_multiple_triggers_result_check.task.triggers[0].MonthsOfYear == "march,may,july"
-    - change_multiple_triggers_result_check.task.triggers[0].RunOnLastDayOfMonth == True
-    - change_multiple_triggers_result_check.task.triggers[1].Type == "TASK_TRIGGER_TIME"
-    - change_multiple_triggers_result_check.task.triggers[1].Enabled == True
-    - change_multiple_triggers_result_check.task.triggers[1].StartBoundary == "2000-01-01T00:00:01"
-    - change_multiple_triggers_result_check.task.triggers[1].EndBoundary == None
-    - change_multiple_triggers_result_check.task.triggers[1].RandomDelay == "PT10M5S"
+    - change_multiple_triggers_result_check.triggers|count == 2
+    - change_multiple_triggers_result_check.triggers[0].type == "TASK_TRIGGER_MONTHLY"
+    - change_multiple_triggers_result_check.triggers[0].enabled == True
+    - change_multiple_triggers_result_check.triggers[0].start_boundary == "2000-01-01T00:00:01"
+    - change_multiple_triggers_result_check.triggers[0].end_boundary == None
+    - change_multiple_triggers_result_check.triggers[0].days_of_month == "1,5,10,15,20,25,30"
+    - change_multiple_triggers_result_check.triggers[0].months_of_year == "march,may,july"
+    - change_multiple_triggers_result_check.triggers[0].run_on_last_day_of_month == True
+    - change_multiple_triggers_result_check.triggers[1].type == "TASK_TRIGGER_TIME"
+    - change_multiple_triggers_result_check.triggers[1].enabled == True
+    - change_multiple_triggers_result_check.triggers[1].start_boundary == "2000-01-01T00:00:01"
+    - change_multiple_triggers_result_check.triggers[1].end_boundary == None
+    - change_multiple_triggers_result_check.triggers[1].random_delay == "PT10M5S"
 
 - name: change task with multiple triggers
   win_scheduled_task:
@@ -453,7 +453,7 @@
   register: change_multiple_triggers
 
 - name: get result of change task with multiple triggers
-  test_task_stat:
+  win_scheduled_task_stat:
     path: \
     name: '{{test_scheduled_task_name}}'
   register: change_multiple_triggers_result
@@ -463,16 +463,16 @@
     that:
     - change_multiple_triggers|changed
     - change_multiple_triggers_result.task_exists == True
-    - change_multiple_triggers_result.task.triggers|count == 2
-    - change_multiple_triggers_result.task.triggers[0].Type == "TASK_TRIGGER_WEEKLY"
-    - change_multiple_triggers_result.task.triggers[0].Enabled == True
-    - change_multiple_triggers_result.task.triggers[0].StartBoundary == "2000-01-01T00:00:01"
-    - change_multiple_triggers_result.task.triggers[0].EndBoundary == None
-    - change_multiple_triggers_result.task.triggers[0].DaysOfWeek == "tuesday,friday"
-    - change_multiple_triggers_result.task.triggers[1].Type == "TASK_TRIGGER_REGISTRATION"
-    - change_multiple_triggers_result.task.triggers[1].Enabled == False
-    - change_multiple_triggers_result.task.triggers[1].StartBoundary == None
-    - change_multiple_triggers_result.task.triggers[1].EndBoundary == None
+    - change_multiple_triggers_result.triggers|count == 2
+    - change_multiple_triggers_result.triggers[0].type == "TASK_TRIGGER_WEEKLY"
+    - change_multiple_triggers_result.triggers[0].enabled == True
+    - change_multiple_triggers_result.triggers[0].start_boundary == "2000-01-01T00:00:01"
+    - change_multiple_triggers_result.triggers[0].end_boundary == None
+    - change_multiple_triggers_result.triggers[0].days_of_week == "tuesday,friday"
+    - change_multiple_triggers_result.triggers[1].type == "TASK_TRIGGER_REGISTRATION"
+    - change_multiple_triggers_result.triggers[1].enabled == False
+    - change_multiple_triggers_result.triggers[1].start_boundary == None
+    - change_multiple_triggers_result.triggers[1].end_boundary == None
 
 - name: change task with multiple triggers (idempotent)
   win_scheduled_task:
@@ -506,7 +506,7 @@
   check_mode: yes
 
 - name: get result of remove trigger from multiple triggers (check mode)
-  test_task_stat:
+  win_scheduled_task_stat:
     path: \
     name: '{{test_scheduled_task_name}}'
   register: remove_single_trigger_result_check
@@ -516,16 +516,16 @@
     that:
     - remove_single_trigger_check|changed
     - remove_single_trigger_result_check.task_exists == True
-    - remove_single_trigger_result_check.task.triggers|count == 2
-    - remove_single_trigger_result_check.task.triggers[0].Type == "TASK_TRIGGER_WEEKLY"
-    - remove_single_trigger_result_check.task.triggers[0].Enabled == True
-    - remove_single_trigger_result_check.task.triggers[0].StartBoundary == "2000-01-01T00:00:01"
-    - remove_single_trigger_result_check.task.triggers[0].EndBoundary == None
-    - remove_single_trigger_result_check.task.triggers[0].DaysOfWeek == "tuesday,friday"
-    - remove_single_trigger_result_check.task.triggers[1].Type == "TASK_TRIGGER_REGISTRATION"
-    - remove_single_trigger_result_check.task.triggers[1].Enabled == False
-    - remove_single_trigger_result_check.task.triggers[1].StartBoundary == None
-    - remove_single_trigger_result_check.task.triggers[1].EndBoundary == None
+    - remove_single_trigger_result_check.triggers|count == 2
+    - remove_single_trigger_result_check.triggers[0].type == "TASK_TRIGGER_WEEKLY"
+    - remove_single_trigger_result_check.triggers[0].enabled == True
+    - remove_single_trigger_result_check.triggers[0].start_boundary == "2000-01-01T00:00:01"
+    - remove_single_trigger_result_check.triggers[0].end_boundary == None
+    - remove_single_trigger_result_check.triggers[0].days_of_week == "tuesday,friday"
+    - remove_single_trigger_result_check.triggers[1].type == "TASK_TRIGGER_REGISTRATION"
+    - remove_single_trigger_result_check.triggers[1].enabled == False
+    - remove_single_trigger_result_check.triggers[1].start_boundary == None
+    - remove_single_trigger_result_check.triggers[1].end_boundary == None
 
 - name: remove trigger from multiple triggers
   win_scheduled_task:
@@ -539,7 +539,7 @@
   register: remove_single_trigger
 
 - name: get result of remove trigger from multiple triggers
-  test_task_stat:
+  win_scheduled_task_stat:
     path: \
     name: '{{test_scheduled_task_name}}'
   register: remove_single_trigger_result
@@ -549,11 +549,11 @@
     that:
     - remove_single_trigger|changed
     - remove_single_trigger_result.task_exists == True
-    - remove_single_trigger_result.task.triggers|count == 1
-    - remove_single_trigger_result.task.triggers[0].Type == "TASK_TRIGGER_REGISTRATION"
-    - remove_single_trigger_result.task.triggers[0].Enabled == False
-    - remove_single_trigger_result.task.triggers[0].StartBoundary == None
-    - remove_single_trigger_result.task.triggers[0].EndBoundary == None
+    - remove_single_trigger_result.triggers|count == 1
+    - remove_single_trigger_result.triggers[0].type == "TASK_TRIGGER_REGISTRATION"
+    - remove_single_trigger_result.triggers[0].enabled == False
+    - remove_single_trigger_result.triggers[0].start_boundary == None
+    - remove_single_trigger_result.triggers[0].end_boundary == None
 
 - name: remove trigger from multiple triggers (idempotent)
   win_scheduled_task:
@@ -582,7 +582,7 @@
   check_mode: yes
 
 - name: get result of remove all triggers (check mode)
-  test_task_stat:
+  win_scheduled_task_stat:
     path: \
     name: '{{test_scheduled_task_name}}'
   register: remove_triggers_result_check
@@ -592,11 +592,11 @@
     that:
     - remove_triggers_check|changed
     - remove_triggers_result_check.task_exists == True
-    - remove_triggers_result_check.task.triggers|count == 1
-    - remove_triggers_result_check.task.triggers[0].Type == "TASK_TRIGGER_REGISTRATION"
-    - remove_triggers_result_check.task.triggers[0].Enabled == False
-    - remove_triggers_result_check.task.triggers[0].StartBoundary == None
-    - remove_triggers_result_check.task.triggers[0].EndBoundary == None
+    - remove_triggers_result_check.triggers|count == 1
+    - remove_triggers_result_check.triggers[0].type == "TASK_TRIGGER_REGISTRATION"
+    - remove_triggers_result_check.triggers[0].enabled == False
+    - remove_triggers_result_check.triggers[0].start_boundary == None
+    - remove_triggers_result_check.triggers[0].end_boundary == None
 
 - name: remove all triggers
   win_scheduled_task:
@@ -608,7 +608,7 @@
   register: remove_triggers
 
 - name: get result of remove all triggers
-  test_task_stat:
+  win_scheduled_task_stat:
     path: \
     name: '{{test_scheduled_task_name}}'
   register: remove_triggers_result
@@ -618,7 +618,7 @@
     that:
     - remove_triggers|changed
     - remove_triggers_result.task_exists == True
-    - remove_triggers_result.task.triggers|count == 0
+    - remove_triggers_result.triggers|count == 0
 
 - name: remove all triggers (idempotent)
   win_scheduled_task:
