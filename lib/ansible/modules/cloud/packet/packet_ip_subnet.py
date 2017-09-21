@@ -26,14 +26,14 @@ ANSIBLE_METADATA = {'status': ['preview'],
 
 DOCUMENTATION = '''
 ---
-module: packet_ip_address
+module: packet_ip_subnet
 
-short_description: Assign/Unassign IP address from a hardware server.
+short_description: Assign IP subnet to a bare metal server.
 
 description:
-    - Assign or unassign IPv4 or IPv6 address to or from a device in the Packet host.
-    - IPv4 address must come from already reserved block.
-    - IPv6 address must come from publicly routable /56 block from your project.
+    - Assign or unassign IPv4 or IPv6 subnets to or from a device in the Packet host.
+    - IPv4 subnets must come from already reserved block.
+    - IPv6 subnets must come from publicly routable /56 block from your project.
     - See U(https://help.packet.net/technical/networking/how-do-i-configure-additional-elastic-ips-on-my-server) for more info on IP block reservation.
 
 version_added: 2.4
@@ -46,22 +46,22 @@ options:
       - Packet api token. You can also supply it in env var C(PACKET_API_TOKEN).
   hostname:
     description:
-      - A hostname of a device to/from which to assing/remove an IP address.
+      - A hostname of a device to/from which to assing/remove a subnet.
     required: False
   device_id:
     description:
-      - UUID of a device to/from which to assing/remove an IP address.
+      - UUID of a device to/from which to assing/remove a subnet.
     required: False
-  ip_address:
+  cidr:
     description:
-      - IPv4 or IPv6 address on which you want to act. It must come from a reserved block for your project in the Packet Host.
+      - IPv4 or IPv6 subnet which you want to manage. It must come from a reserved block for your project in the Packet Host.
     aliases: [name]
   state:
     description:
-      - Desired state of the IP address on the specified device.
-      - With state == C(present), you must specify either hostname or device_id. The ip_address will then be assigned to the specified device.
-      - With state == C(absent), you can specify either hostname or device_id. The ip_address will be removed from specified devices.
-      - If you leave both hostname and device_id empty, the ip_address will be removed from any device it's assigned to.
+      - Desired state of the IP subnet on the specified device.
+      - With state == C(present), you must specify either hostname or device_id. Subnet with given CIDR will then be assigned to the specified device.
+      - With state == C(absent), you can specify either hostname or device_id. The subnet will be removed from specified devices.
+      - If you leave both hostname and device_id empty, the subnet will be removed from any device it's assigned to.
     choices: [present, absent]
     default: 'present'
 
@@ -74,7 +74,7 @@ EXAMPLES = '''
 # All the examples assume that you have your Packet api token in env var PACKET_API_TOKEN.
 # You can also pass it to the auth_token parameter of the module instead.
 
-- name: create 1 device and assign an arbitrary public IPv4 to it
+- name: create 1 device and assign an arbitrary public IPv4 subnet to it
   hosts: localhost
   tasks:
 
@@ -88,19 +88,19 @@ EXAMPLES = '''
 
 # Pick an IPv4 address from a block allocated to your project.
 
-  - packet_ip_address:
+  - packet_ip_subnet:
       project_id: 89b497ee-5afc-420a-8fb5-56984898f4df
       hostname: myserver
-      ip_address: "147.75.201.78"
+      cidr: "147.75.201.78/32"
 
 # Release IP address 147.75.201.78
 
 - name: unassign IP address from any device in your project
   hosts: localhost
   tasks:
-  - packet_ip_address:
+  - packet_ip_subnet:
       project_id: 89b497ee-5afc-420a-8fb5-56984898f4df
-      ip_address: "147.75.201.78"
+      cidr: "147.75.201.78/32"
       state: absent
 '''
 
@@ -114,8 +114,8 @@ device_id:
   type: string
   description: UUID of the device associated with the specified IP address.
   returned: success
-ip_address:
-  description: Dict with data about the handled IP address.
+subnet:
+  description: Dict with data about the handled IP subnet.
   type: dictionary
   sample:
     address: 147.75.90.241
@@ -194,10 +194,23 @@ def get_specified_device_identifiers(module):
     else:
         return {'hostname': None, 'device_id': None}
 
+def parse_subnet_cidr(cidr):
+    if "/" not in cidr:
+        raise Exception("CIDR expression in wrong format, must be address/prefix_len")
+    addr, prefixlen = cidr.split("/")
+    try:
+        prefixlen = int(prefixlen)
+    except ValueError:
+        raise("Wrong prefix length in CIDR expression %s" % cidr)
+    return addr, prefixlen
+
 
 def act_on_assignment(target_state, module, packet_conn):
     return_dict = {'changed': False}
-    specified_address = module.params.get("ip_address")
+    subnet_address, subnet_prefix = module.params.get("cidr").split("/")
+
+    specified_cidr = module.params.get("cidr")
+    address, prefixlen = parse_subnet_cidr(specified_cidr)
     project_id = module.params.get('project_id')
     if not is_valid_uuid(project_id):
         raise Exception("Project ID %s does not seem to be valid" % project_id)
@@ -210,10 +223,10 @@ def act_on_assignment(target_state, module, packet_conn):
             # The special case to release the IP from any assignment
             for d in get_existing_devices(module, packet_conn):
                 for ia in d.ip_addresses:
-                    if ia['address'] == specified_address:
+                    if address == ia['address'] and prefixlen == ia['cidr']:
                         packet_conn.call_api(ia['href'], "DELETE")
                         return_dict['changed'] = True
-                        return_dict['ip_address'] = ia
+                        return_dict['subnet'] = ia
                         return_dict['device_id'] = d.id
                         return return_dict
         raise Exception("If you assign an address, you must specify either "
@@ -234,22 +247,22 @@ def act_on_assignment(target_state, module, packet_conn):
                 hn)
         device = matching_devices[0]
     return_dict['device_id'] = device.id
-    assignment_dicts = [
-        i for i in device.ip_addresses if i['address'] == specified_address]
+    assignment_dicts = [i for i in device.ip_addresses
+            if i['address'] == address and i['cidr'] == prefixlen]
     if len(assignment_dicts) > 1:
         raise Exception("IP address %s is assigned more than once for device %s"
-                        % (specified_address, device.hostname))
+                        % (specified_cidr, device.hostname))
     if target_state == "absent":
         if len(assignment_dicts) == 1:
             packet_conn.call_api(assignment_dicts[0]['href'], "DELETE")
-            return_dict['ip_address'] = assignment_dicts[0]
+            return_dict['subnet'] = assignment_dicts[0]
             return_dict['changed'] = True
     elif target_state == "present":
         if len(assignment_dicts) == 0:
             new_assignment = packet_conn.call_api("devices/%s/ips" %
-                                                  device.id, "POST", {"address": "%s" % specified_address})
+                                                  device.id, "POST", {"address": "%s" % specified_cidr})
             return_dict['changed'] = True
-            return_dict['ip_address'] = new_assignment
+            return_dict['subnet'] = new_assignment
     return return_dict
 
 
@@ -261,7 +274,7 @@ def main():
             device_id=dict(),
             hostname=dict(),
             project_id=dict(required=True),
-            ip_address=dict(required=True, aliases=['name']),
+            cidr=dict(required=True, aliases=['name']),
             state=dict(choices=ALLOWED_STATES, default='present'),
         ),
         mutually_exclusive=[('hostname', 'device_id')]
@@ -286,7 +299,7 @@ def main():
         module.exit_json(**act_on_assignment(state, module, packet_conn))
     except Exception as e:
         module.fail_json(
-            msg='failed to put ip_address to state %s, error: %s' %
+            msg='failed to put subnet to state %s, error: %s' %
             (state, str(e)))
 
 
