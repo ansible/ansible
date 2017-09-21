@@ -21,6 +21,8 @@ ifdef PLUGINS
 	PLUGIN_ARGS = -l $(PLUGINS)
 endif
 
+DOC_PLUGINS ?= cache callback connection invnetory lookup shell strategy vars
+
 assertrst:
 ifndef rst
 	$(error specify document or pattern with rst=somefile.rst)
@@ -83,7 +85,11 @@ modules: $(FORMATTER) ../templates/plugin.rst.j2
 	PYTHONPATH=../../lib $(FORMATTER) -t rst --template-dir=../templates --module-dir=../../lib/ansible/modules -o rst/ $(MODULE_ARGS)
 
 plugins: $(FORMATTER) ../templates/plugin.rst.j2
-	PYTHONPATH=../../lib $(FORMATTER) -t rst --plugin-type plugins --template-dir=../templates --module-dir=../../lib/ansible/plugins -o rst/ $(PLUGIN_ARGS)
+	@echo "looping over doc plugins"
+	for plugin in $(DOC_PLUGINS); \
+	do \
+		PYTHONPATH=../../lib $(FORMATTER) -t rst --plugin-type $$plugin --template-dir=../templates --module-dir=../../lib/ansible/plugins/$$plugin -o rst/ $(PLUGIN_ARGS); \
+	done
 
 testing:
 	$(TESTING_FORMATTER)
