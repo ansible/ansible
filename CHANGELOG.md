@@ -11,6 +11,8 @@ Ansible Changes By Release
 * Fix openssl_certificate's csr handling
 * Python-3 fixes
   * Fix openssl_certificate parameter assertion on Python3
+  * Fix for python3 and nonascii strings in inventory plugins (https://github.com/ansible/ansible/pull/30666)
+  * Fix missing urllib in iam_policy
 * Fix for win_file to respect check mode when deleting directories
 * Fix for Ansible.ModuleUtils.Legacy.psm1 to return list params correctly
 * Fix for a proper logout in the module ovirt_vms
@@ -25,6 +27,10 @@ Ansible Changes By Release
 * Added backwards compatiblity shim for callbacks that do not inherit from CallbackBase
 * Corrected issue with configuration and multiple ini entries being overwriten even when not set.
 * backported fix for doc generation (plugin_formatter)
+* Fix ec2_lc module for an unknown parameter name (https://github.com/ansible/ansible/pull/30573)
+* Change configuration of defaults to use standard jinja2 instead of custom
+  eval() for using variables in the default field of config (https://github.com/ansible/ansible/pull/30650)
+
 
 <a id="2.4"></a>
 
