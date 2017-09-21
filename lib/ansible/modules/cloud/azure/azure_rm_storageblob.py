@@ -45,6 +45,7 @@ options:
         choices:
             - block
             - page
+        version_added: "2.5"
     container:
         description:
             - Name of a blob container within the storage account.
