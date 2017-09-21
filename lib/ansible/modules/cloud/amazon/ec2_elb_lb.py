@@ -7,13 +7,13 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['stableinterface'],
                     'supported_by': 'certified'}
 
 
 DOCUMENTATION = """
 ---
-module: elb_classic_lb
+module: ec2_elb_lb
 description:
   - Returns information about the load balancer.
   - Will be marked changed when called only if state is changed.
@@ -170,7 +170,8 @@ EXAMPLES = """
 
 # Basic provisioning example (non-VPC)
 
-- elb_classic_lb:
+- local_action:
+    module: ec2_elb_lb
     name: "test-please-delete"
     state: present
     zones:
@@ -187,11 +188,11 @@ EXAMPLES = """
         instance_port: 80
         # ssl certificate required for https or ssl
         ssl_certificate_id: "arn:aws:iam::123456789012:server-certificate/company/servercerts/ProdServerCert"
-  delegate_to: localhost
 
 # Internal ELB example
 
-- elb_classic_lb:
+- local_action:
+    module: ec2_elb_lb
     name: "test-vpc"
     scheme: internal
     state: present
@@ -205,10 +206,10 @@ EXAMPLES = """
       - protocol: http # options are http, https, ssl, tcp
         load_balancer_port: 80
         instance_port: 80
-  delegate_to: localhost
 
 # Configure a health check and the access logs
-- elb_classic_lb:
+- local_action:
+    module: ec2_elb_lb
     name: "test-please-delete"
     state: present
     zones:
@@ -229,33 +230,33 @@ EXAMPLES = """
         interval: 5 # minutes (defaults to 60)
         s3_location: "my-bucket" # This value is required if access_logs is set
         s3_prefix: "logs"
-  delegate_to: localhost
 
 # Ensure ELB is gone
-- elb_classic_lb:
+- local_action:
+    module: ec2_elb_lb
     name: "test-please-delete"
     state: absent
-  delegate_to: localhost
 
 # Ensure ELB is gone and wait for check (for default timeout)
-- elb_classic_lb:
+- local_action:
+    module: ec2_elb_lb
     name: "test-please-delete"
     state: absent
     wait: yes
-  delegate_to: localhost
 
 # Ensure ELB is gone and wait for check with timeout value
-- elb_classic_lb:
+- local_action:
+    module: ec2_elb_lb
     name: "test-please-delete"
     state: absent
     wait: yes
     wait_timeout: 600
-  delegate_to: localhost
 
 # Normally, this module will purge any listeners that exist on the ELB
 # but aren't specified in the listeners parameter. If purge_listeners is
 # false it leaves them alone
-- elb_classic_lb:
+- local_action:
+    module: ec2_elb_lb
     name: "test-please-delete"
     state: present
     zones:
@@ -266,12 +267,12 @@ EXAMPLES = """
         load_balancer_port: 80
         instance_port: 80
     purge_listeners: no
-  delegate_to: localhost
 
 # Normally, this module will leave availability zones that are enabled
 # on the ELB alone. If purge_zones is true, then any extraneous zones
 # will be removed
-- elb_classic_lb:
+- local_action:
+    module: ec2_elb_lb
     name: "test-please-delete"
     state: present
     zones:
@@ -282,10 +283,10 @@ EXAMPLES = """
         load_balancer_port: 80
         instance_port: 80
     purge_zones: yes
-  delegate_to: localhost
 
 # Creates a ELB and assigns a list of subnets to it.
-- elb_classic_lb:
+- local_action:
+    module: ec2_elb_lb
     state: present
     name: 'New ELB'
     security_group_ids: 'sg-123456, sg-67890'
@@ -296,11 +297,11 @@ EXAMPLES = """
       - protocol: http
         load_balancer_port: 80
         instance_port: 80
-  delegate_to: localhost
 
 # Create an ELB with connection draining, increased idle timeout and cross availability
 # zone load balancing
-- elb_classic_lb:
+- local_action:
+    module: ec2_elb_lb
     name: "New ELB"
     state: present
     connection_draining_timeout: 60
@@ -314,10 +315,10 @@ EXAMPLES = """
       - protocol: http
         load_balancer_port: 80
         instance_port: 80
-  delegate_to: localhost
 
 # Create an ELB with load balancer stickiness enabled
-- elb_classic_lb:
+- local_action:
+    module: ec2_elb_lb
     name: "New ELB"
     state: present
     region: us-east-1
@@ -332,10 +333,10 @@ EXAMPLES = """
       type: loadbalancer
       enabled: yes
       expiration: 300
-  delegate_to: localhost
 
 # Create an ELB with application stickiness enabled
-- elb_classic_lb:
+- local_action:
+    module: ec2_elb_lb
     name: "New ELB"
     state: present
     region: us-east-1
@@ -350,10 +351,10 @@ EXAMPLES = """
       type: application
       enabled: yes
       cookie: SESSIONID
-  delegate_to: localhost
 
 # Create an ELB and add tags
-- elb_classic_lb:
+- local_action:
+    module: ec2_elb_lb
     name: "New ELB"
     state: present
     region: us-east-1
@@ -368,10 +369,10 @@ EXAMPLES = """
       Name: "New ELB"
       stack: "production"
       client: "Bob"
-  delegate_to: localhost
 
 # Delete all tags from an ELB
-- elb_classic_lb:
+- local_action:
+    module: ec2_elb_lb
     name: "New ELB"
     state: present
     region: us-east-1
@@ -383,7 +384,6 @@ EXAMPLES = """
         load_balancer_port: 80
         instance_port: 80
     tags: {}
-  delegate_to: localhost
 """
 
 import random

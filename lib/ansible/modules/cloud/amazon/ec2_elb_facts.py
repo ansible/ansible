@@ -20,7 +20,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: elb_classic_lb_facts
+module: ec2_elb_facts
 short_description: Gather facts about EC2 Elastic Load Balancers in AWS
 description:
     - Gather facts about EC2 Elastic Load Balancers in AWS
@@ -45,29 +45,35 @@ EXAMPLES = '''
 # Output format tries to match ec2_elb_lb module input parameters
 
 # Gather facts about all ELBs
-- elb_classic_lb_facts:
+- action:
+    module: ec2_elb_facts
   register: elb_facts
 
-- debug:
+- action:
+    module: debug
     msg: "{{ item.dns_name }}"
   with_items: "{{ elb_facts.elbs }}"
 
 # Gather facts about a particular ELB
-- elb_classic_lb_facts:
+- action:
+    module: ec2_elb_facts
     names: frontend-prod-elb
   register: elb_facts
 
-- debug:
+- action:
+    module: debug
     msg: "{{ elb_facts.elbs.0.dns_name }}"
 
 # Gather facts about a set of ELBs
-- elb_classic_lb_facts:
+- action:
+    module: ec2_elb_facts
     names:
     - frontend-prod-elb
     - backend-prod-elb
   register: elb_facts
 
-- debug:
+- action:
+    module: debug
     msg: "{{ item.dns_name }}"
   with_items: "{{ elb_facts.elbs }}"
 

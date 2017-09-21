@@ -7,13 +7,13 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['stableinterface'],
                     'supported_by': 'certified'}
 
 
 DOCUMENTATION = """
 ---
-module: elb_instance
+module: ec2_elb
 short_description: De-registers or registers instances from EC2 ELBs
 description:
   - This module de-registers or registers an AWS EC2 instance from the ELBs
@@ -77,19 +77,19 @@ pre_tasks:
   - name: Gathering ec2 facts
     action: ec2_facts
   - name: Instance De-register
-    elb_instance:
+    local_action:
+      module: ec2_elb
       instance_id: "{{ ansible_ec2_instance_id }}"
       state: absent
-    delegate_to: localhost
 roles:
   - myrole
 post_tasks:
   - name: Instance Register
-    elb_instance:
+    local_action:
+      module: ec2_elb
       instance_id: "{{ ansible_ec2_instance_id }}"
       ec2_elbs: "{{ item }}"
       state: present
-    delegate_to: localhost
     with_items: "{{ ec2_elbs }}"
 """
 
