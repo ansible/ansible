@@ -307,7 +307,7 @@ class AnsibleKinesisStreamFunctions(unittest.TestCase):
         client = boto3.client('kinesis', region_name=aws_region)
         success, changed, err_msg, results = (
             kinesis_stream.start_stream_encryption(
-                client, 'test', encryption_type='KMS', key_id='', wait=True,wait_timeout=60,  check_mode=True
+                client, 'test', encryption_type='KMS', key_id='', wait=True, wait_timeout=60, check_mode=True
             )
         )
         self.assertTrue(success)
@@ -318,7 +318,7 @@ class AnsibleKinesisStreamFunctions(unittest.TestCase):
         client = boto3.client('kinesis', region_name=aws_region)
         success, changed, err_msg, results = (
             kinesis_stream.stop_stream_encryption(
-                client, 'test', encryption_type='KMS', key_id='', wait=True,wait_timeout=60,  check_mode=True
+                client, 'test', encryption_type='KMS', key_id='', wait=True, wait_timeout=60, check_mode=True
             )
         )
         self.assertTrue(success)

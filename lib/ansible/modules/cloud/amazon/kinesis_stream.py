@@ -678,9 +678,8 @@ def stream_action(client, stream_name, shard_count=1, action='create',
     return success, err_msg
 
 
-
-def stream_encryption_action(client, stream_name, action='start_encryption',encryption_type='',key_id='',
-                  timeout=300, check_mode=False):
+def stream_encryption_action(client, stream_name, action='start_encryption', encryption_type='', key_id='',
+                             timeout=300, check_mode=False):
     """Create, Encrypt or Delete an Amazon Kinesis Stream.
     Args:
         client (botocore.client.EC2): Boto3 client.
@@ -775,16 +774,14 @@ def retention_action(client, stream_name, retention_period=24,
                 client.increase_stream_retention_period(**params)
                 success = True
                 err_msg = (
-                    'Retention Period increased successfully to {0}'
-                        .format(retention_period)
+                    'Retention Period increased successfully to {0}'.format(retention_period)
                 )
             elif action == 'decrease':
                 params['RetentionPeriodHours'] = retention_period
                 client.decrease_stream_retention_period(**params)
                 success = True
                 err_msg = (
-                    'Retention Period decreased successfully to {0}'
-                        .format(retention_period)
+                    'Retention Period decreased successfully to {0}'.format(retention_period)
                 )
             else:
                 err_msg = 'Invalid action {0}'.format(action)
@@ -1204,8 +1201,9 @@ def delete_stream(client, stream_name, wait=False, wait_timeout=300,
 
     return success, changed, err_msg, results
 
+
 def start_stream_encryption(client, stream_name, encryption_type='',key_id='',
-                            wait=False, wait_timeout=300,check_mode=False):
+                            wait=False, wait_timeout=300, check_mode=False):
     """Start encryption on an Amazon Kinesis Stream.
     Args:
         client (botocore.client.EC2): Boto3 client.
@@ -1238,7 +1236,6 @@ def start_stream_encryption(client, stream_name, encryption_type='',key_id='',
         'StreamName': stream_name
     }
 
-
     results = dict()
     stream_found, stream_msg, current_stream = (
         find_stream(client, stream_name, check_mode=check_mode)
@@ -1263,8 +1260,7 @@ def start_stream_encryption(client, stream_name, encryption_type='',key_id='',
                     return success, True, err_msg, results
             else:
                 err_msg = (
-                    'Kinesis Stream {0} is in the process of starting encryption.'
-                        .format(stream_name)
+                    'Kinesis Stream {0} is in the process of starting encryption.'.format(stream_name)
                 )
     else:
         success = True
@@ -1273,8 +1269,9 @@ def start_stream_encryption(client, stream_name, encryption_type='',key_id='',
 
     return success, changed, err_msg, results
 
+
 def stop_stream_encryption(client, stream_name, encryption_type='', key_id='',
-                            wait=True, wait_timeout=300,check_mode=False):
+                           wait=True, wait_timeout=300, check_mode=False):
     """Stop encryption on an Amazon Kinesis Stream.
     Args:
         client (botocore.client.EC2): Boto3 client.
@@ -1305,7 +1302,6 @@ def stop_stream_encryption(client, stream_name, encryption_type='', key_id='',
         'StreamName': stream_name
     }
 
-
     results = dict()
     stream_found, stream_msg, current_stream = (
         find_stream(client, stream_name, check_mode=check_mode)
@@ -1314,7 +1310,7 @@ def stop_stream_encryption(client, stream_name, encryption_type='', key_id='',
         if current_stream.get('EncryptionType') == 'KMS':
             success, err_msg = (
                 stream_encryption_action(
-                    client, stream_name, action='stop_encryption',key_id=key_id, encryption_type=encryption_type, check_mode=check_mode
+                    client, stream_name, action='stop_encryption', key_id=key_id, encryption_type=encryption_type, check_mode=check_mode
                 )
             )
         elif current_stream.get('EncryptionType') == 'NONE':
@@ -1334,8 +1330,7 @@ def stop_stream_encryption(client, stream_name, encryption_type='', key_id='',
                     return success, True, err_msg, results
             else:
                 err_msg = (
-                    'Stream {0} is in the process of stopping encryption.'
-                        .format(stream_name)
+                    'Stream {0} is in the process of stopping encryption.'.format(stream_name)
                 )
     else:
         success = True
