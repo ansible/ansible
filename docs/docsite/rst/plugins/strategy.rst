@@ -1,5 +1,6 @@
 .. contents:: Topics
 
+
 Strategy Plugins
 ----------------
 
