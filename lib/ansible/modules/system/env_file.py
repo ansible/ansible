@@ -36,19 +36,11 @@ options:
     state:
         type: bool
         required: true
-        choices: ["present", "absent", "reloaded"]
+        choices: ["present", "absent"]
         default: present
         description:
             - if present add environment variable
             - if absent delete environment variable
-            - if reloaded reload environment file (ignoring key and value)
-    reload:
-        type: bool
-        required: false
-        default: false
-        description:
-            - if true source/reload the environment file
-
     force:
         type: bool
         required: false
@@ -62,15 +54,10 @@ EXAMPLES = '''
     name: http_proxy
     value: 127.0.0.1
     state: present
-    reload: yes
 
 - env_file:
     key: ftp_proxy
     state: absent
-    reload: true
-
-- env_file:
-    state: reloaded
 
 '''
 
@@ -156,15 +143,7 @@ def is_key_present(module, name):
     return True if name in d else False
 
 
-def reload_environment(module):
-    try:
-        os.system("source {0}".format(ENVFILE))
-    except Exception:
-        module.fail_json(changed=False, msg="Failed to source {0}: {1}".format(ENVFILE, get_exception()))
-    module.exit_json(changed=True)
-
-
-def set_environment(module, name, value, reloaded, force):
+def set_environment(module, name, value, force):
     if not os.path.exists(ENVFILE):
         module.fail_json(changed=False, msg="OS may not be supported because {0} is not present".format(ENVFILE))
     if is_key_and_value_present(module, name, value, force):
@@ -186,16 +165,11 @@ def set_environment(module, name, value, reloaded, force):
         d2 = read_environment(module)
         diff = get_diff(d1, d2)
 
-    if reloaded:
-        try:
-            os.system("source {0}".format(ENVFILE))
-        except Exception:
-            module.fail_json(changed=False, msg="Failed to source {0}: {1}".format(ENVFILE, get_exception()))
 
     module.exit_json(changed=True, diff=diff)
 
 
-def del_environment(module, name, reloaded):
+def del_environment(module, name):
     if not os.path.exists(ENVFILE):
         module.fail_json(changed=False, msg="OS may not be supported because {0} is not present".format(ENVFILE))
 
@@ -228,12 +202,6 @@ def del_environment(module, name, reloaded):
         d2 = read_environment(module)
         diff = get_diff(d1, d2)
 
-    if reloaded:
-        try:
-            os.system("source {0}".format(ENVFILE))
-        except Exception:
-            module.fail_json(msg="Failed to source {0}: {1}".format(ENVFILE, get_exception()))
-
     module.exit_json(changed=True, diff=diff)
 
 
@@ -242,22 +210,19 @@ def main():
         argument_spec=dict(
             key=dict(aliases=['name']),
             value=dict(),
-            state=dict(default='present', choices=['absent', 'present', 'reloaded']),
-            reload=dict(default=False, type='bool'),
+            state=dict(default='present', choices=['absent', 'present']),
             force=dict(default=True, type='bool')
         ),
         supports_check_mode=True,
         required_if=[
             ["state", "present", ["key", "value"]],
-            ["state", "absent", ["key"]],
-            ["state", "reloaded", []]
+            ["state", "absent", ["key"]]
         ])
     try:
         name = module.params['name']
     except KeyError:
         name = module.params['key']
 
-    reloaded = module.params['reload']
     value = module.params['value']
     state = module.params['state']
     force = module.params['force']
@@ -274,18 +239,10 @@ def main():
         else:
             module.exit_json(changed=True)
 
-    elif module.check_mode and state == "reloaded":
-        if os.access(ENVFILE, os.F_OK) and os.access(ENVFILE, os.R_OK):
-            module.exit_json(changed=True)
-        else:
-            module.exit_json(changed=False)
-
     if state == "present":
-        set_environment(module, name, value, reloaded, force)
+        set_environment(module, name, value, force)
     elif state == "absent":
-        del_environment(module, name, reloaded)
-    elif state == "reloaded":
-        reload_environment(module)
+        del_environment(module, name)
 
     module.exit_json()
 
