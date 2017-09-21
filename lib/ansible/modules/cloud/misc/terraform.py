@@ -81,12 +81,13 @@ command:
 """
 
 import os
+import json
 import tempfile
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
 
-APPLY_ARGS = ('apply', '-auto-approve', 'true')
+APPLY_ARGS = ('apply', '-auto-approve=true')
 
 def preflight_validation(module, bin_path, project_path, variables_file=None, plan_file=None):
     if not os.path.exists(bin_path):
@@ -100,14 +101,21 @@ def preflight_validation(module, bin_path, project_path, variables_file=None, pl
 
 
 def build_plan(module, bin_path, project_path, variables_args):
-    #TODO - for right now just require a plan file
     _, plan_path = tempfile.mkstemp(suffix='.tfplan')
 
-    rc, out, err = module.run_command([bin_path, 'plan', '-out', plan_path] + variables_args, cwd=project_path)
+    rc, out, err = module.run_command([bin_path, 'plan', '-detailed-exitcode', '-out', plan_path] + variables_args, cwd=project_path)
 
     if rc == 0:
+        # no changes
+        return plan_path, False
+    elif rc == 1:
+        # failure to plan
+        module.fail_json(msg='Terraform plan could not be created\r\nSTDOUT: {}\r\n\r\nSTDERR: {}'.format(rc, out, err))
+    elif rc == 2:
+        # changes, but successful
         return plan_path, True
-    return plan_path, False
+
+    module.fail_json(msg='Terraform plan failed with unexpected exit code {}. \r\nSTDOUT: {}\r\n\r\nSTDERR: {}'.format(rc, out, err))
 
 
 def main():
@@ -116,7 +124,7 @@ def main():
             service_path=dict(required=True, type='path'),
             binary_path=dict(type='path'),
             state=dict(default='present', choices=['present', 'absent', 'latest']),
-            variables=dict(type='json'),
+            variables=dict(type='dict'),
             variables_file=dict(type='path'),
             plan_file=dict(type='path'),
             state_file=dict(type='path'), #TODO
@@ -126,7 +134,7 @@ def main():
     project_path = module.params.get('service_path')
     bin_path = module.params.get('binary_path')
     state = module.params.get('state')
-    variables = module.params.get('variables')
+    variables = module.params.get('variables') or {}
     variables_file = module.params.get('variables_file')
     plan_file = module.params.get('plan_file')
     state_file = module.params.get('state_file')
@@ -142,7 +150,7 @@ def main():
     for k, v in variables.items():
         variables_args.extend([
             '-var',
-            '{}={}'.format(variables)
+            '{}={}'.format(k, v)
         ])
     if variables_file:
         variables_args.append('-var-file', variables_file)
@@ -150,23 +158,28 @@ def main():
 
     command.extend(APPLY_ARGS)
 
+    # we aren't sure if this plan will result in changes, so assume yes
+    needs_application = True
+
     if plan_file and os.path.exists('plan_file'):
         command.append(plan_file)
     else:
-        plan_file, success = build_plan(module, command[0], project_path, variables_args)
+        plan_file, needs_application = build_plan(module, command[0], project_path, variables_args)
         command.append(plan_file)
 
+    #module.fail_json(msg="About to run: {}, needs_application: {}".format(command, needs_application))
     rc, out, err = module.run_command(command, cwd=project_path)
     if rc != 0:
-        if state == 'absent' and "-{}' does not exist".format(stage) in out:
-            module.exit_json(changed=False, state='absent', command=command,
-                    out=out, service_name=get_service_name(module, stage))
-
         module.fail_json(msg="Failure when executing Terraform command. Exited {}.\nstdout: {}\nstderr: {}".format(rc, out, err))
 
+    rc, outputs_text, outputs_err = module.run_command([command[0], 'output', '-json'], cwd=project_path)
+    if rc != 0:
+        module.fail_json(msg="Failure when getting Terraform outputs. Exited {}.\nstdout: {}\nstderr: {}".format(rc, outputs_text, outputs_err))
+    outputs = json.loads(outputs_text)
+
+
     # gather some facts about the deployment
-    module.exit_json(changed=True, state='present', out=out, command=command,
-            service_name=get_service_name(module, stage))
+    module.exit_json(changed=True, state='present', outputs=outputs, sdtout=out, stderr=err, command=command)
 
 
 if __name__ == '__main__':
