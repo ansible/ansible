@@ -22,14 +22,23 @@ DOCUMENTATION = '''
                - name: ansible_host
                - name: ansible_ssh_host
       host_key_checking:
-          #constant: HOST_KEY_CHECKING
           description: Determines if ssh should check host keys
           type: boolean
           ini:
               - section: defaults
                 key: 'host_key_checking'
+              - section: ssh_connection
+                key: 'host_key_checking'
+                version_added: '2.5'
           env:
               - name: ANSIBLE_HOST_KEY_CHECKING
+              - name: ANSIBLE_SSH_HOST_KEY_CHECKING
+                version_added: '2.5'
+          vars:
+              - name: ansible_host_key_checking
+                version_added: '2.5'
+              - name: ansible_ssh_host_key_checking
+                version_added: '2.5'
       password:
           description: Authentication password for the C(remote_user). Can be supplied as CLI option.
           vars:

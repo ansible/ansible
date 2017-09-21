@@ -11,8 +11,13 @@ DOCUMENTATION = """
     short_description: Run tasks over Microsoft's WinRM
     description:
         - Run commands or put/fetch on a target via WinRM
+        - This plugin allows extra arguments to be passed that are supported by the protocol but not explicitly defined here.
+          They should take the form of variables declared with the following pattern `ansible_winrm_<option>`.
     version_added: "2.0"
+    requirements:
+        - pywinrm (python library)
     options:
+      # figure out more elegant 'delegation'
       remote_addr:
         description:
             - Address of the windows machine
@@ -21,11 +26,58 @@ DOCUMENTATION = """
             - name: ansible_host
             - name: ansible_winrm_host
       remote_user:
+        keywords:
+          - name: user
+          - name: remote_user
         description:
             - The user to log in as to the Windows machine
         vars:
             - name: ansible_user
             - name: ansible_winrm_user
+      port:
+        description:
+            - port for winrm to connect on remote target
+            - The default is the https (5896) port, if using http it should be 5895
+        vars:
+          - name: ansible_port
+          - name: ansible_winrm_port
+        default: 5986
+        keywords:
+          - name: port
+        type: integer
+      scheme:
+        description:
+            - URI scheme to use
+        choices: [http, https]
+        default: https
+        vars:
+          - name: ansible_winrm_scheme
+      path:
+        description: URI path to connect to
+        default: '/wsman'
+        vars:
+          - name: ansible_winrm_path
+      transport:
+        description:
+           - List of winrm transports to attempt to to use (ssl, plaintext, kerberos, etc)
+           - If None (the default) the plugin will try to automatically guess the correct list
+           - The choices avialable depend on your version of pywinrm
+        type: list
+        vars:
+          - name: ansible_winrm_transport
+      kerberos_command:
+        description: kerberos command to use to request a authentication ticket
+        default: kinit
+        vars:
+          - name: ansible_winrm_kinit_cmd
+      kerberos_mode:
+        description:
+            - kerberos usage mode.
+            - The managed option means Ansible will obtain kerberos ticket.
+            - While the manual one means a ticket must already have been obtained by the user.
+        choices: [managed, manual]
+        vars:
+          - name: ansible_winrm_kinit_mode
 """
 
 import base64
@@ -84,43 +136,40 @@ class Connection(ConnectionBase):
     module_implementation_preferences = ('.ps1', '.exe', '')
     become_methods = ['runas']
     allow_executable = False
+    has_pipelining = True
+    allow_extras = True
 
     def __init__(self, *args, **kwargs):
 
-        self.has_pipelining = True
         self.always_pipeline_modules = True
         self.has_native_async = True
+
         self.protocol = None
         self.shell_id = None
         self.delegate = None
         self._shell_type = 'powershell'
-        # FUTURE: Add runas support
 
         super(Connection, self).__init__(*args, **kwargs)
 
-    def set_host_overrides(self, host, variables, templar):
-        '''
-        Override WinRM-specific options from host variables.
-        '''
+    def set_options(self, task_keys=None var_options=None, direct=None):
         if not HAS_WINRM:
             return
 
-        hostvars = {}
-        for k in variables:
-            if k.startswith('ansible_winrm'):
-                hostvars[k] = templar.template(variables[k])
+        super(Connection, self).set_options(task_keys=None, var_options=var_options, direct=direct)
 
         self._winrm_host = self._play_context.remote_addr
-        self._winrm_port = int(self._play_context.port or 5986)
-        self._winrm_scheme = hostvars.get('ansible_winrm_scheme', 'http' if self._winrm_port == 5985 else 'https')
-        self._winrm_path = hostvars.get('ansible_winrm_path', '/wsman')
         self._winrm_user = self._play_context.remote_user
         self._winrm_pass = self._play_context.password
+
         self._become_method = self._play_context.become_method
         self._become_user = self._play_context.become_user
         self._become_pass = self._play_context.become_pass
 
-        self._kinit_cmd = hostvars.get('ansible_winrm_kinit_cmd', 'kinit')
+        self._winrm_port = self._options['port']
+        self._winrm_scheme = self._options['scheme']
+        self._winrm_path = self._options['path']
+        self._kinit_cmd = self._options['kerberos_command']
+        self._winrm_transport = self._options['transport']
 
         if hasattr(winrm, 'FEATURE_SUPPORTED_AUTHTYPES'):
             self._winrm_supported_authtypes = set(winrm.FEATURE_SUPPORTED_AUTHTYPES)
@@ -128,16 +177,15 @@ class Connection(ConnectionBase):
             # for legacy versions of pywinrm, use the values we know are supported
             self._winrm_supported_authtypes = set(['plaintext', 'ssl', 'kerberos'])
 
-        # TODO: figure out what we want to do with auto-transport selection in the face of NTLM/Kerb/CredSSP/Cert/Basic
-        transport_selector = 'ssl' if self._winrm_scheme == 'https' else 'plaintext'
+        # calculate transport if needed
+        if self._winrm_transport is None or self._winrm_transport[0] is None:
+            # TODO: figure out what we want to do with auto-transport selection in the face of NTLM/Kerb/CredSSP/Cert/Basic
+            transport_selector = ['ssl'] if self._winrm_scheme == 'https' else ['plaintext']
 
-        if HAVE_KERBEROS and ((self._winrm_user and '@' in self._winrm_user)):
-            self._winrm_transport = 'kerberos,%s' % transport_selector
-        else:
-            self._winrm_transport = transport_selector
-        self._winrm_transport = hostvars.get('ansible_winrm_transport', self._winrm_transport)
-        if isinstance(self._winrm_transport, string_types):
-            self._winrm_transport = [x.strip() for x in self._winrm_transport.split(',') if x.strip()]
+            if HAVE_KERBEROS and ((self._winrm_user and '@' in self._winrm_user)):
+                self._winrm_transport = ['kerberos'] + transport_selector
+            else:
+                self._winrm_transport = transport_selector
 
         unsupported_transports = set(self._winrm_transport).difference(self._winrm_supported_authtypes)
 
@@ -145,16 +193,14 @@ class Connection(ConnectionBase):
             raise AnsibleError('The installed version of WinRM does not support transport(s) %s' % list(unsupported_transports))
 
         # if kerberos is among our transports and there's a password specified, we're managing the tickets
-        kinit_mode = to_text(hostvars.get('ansible_winrm_kinit_mode', '')).strip()
-        if kinit_mode == "":
+        kinit_mode = self._options['kerberos_mode']
+        if kinit_mode is None:
             # HACK: ideally, remove multi-transport stuff
             self._kerb_managed = "kerberos" in self._winrm_transport and self._winrm_pass
         elif kinit_mode == "managed":
             self._kerb_managed = True
         elif kinit_mode == "manual":
             self._kerb_managed = False
-        else:
-            raise AnsibleError('Unknown ansible_winrm_kinit_mode value: "%s" (must be "managed" or "manual")' % kinit_mode)
 
         # arg names we're going passing directly
         internal_kwarg_mask = set(['self', 'endpoint', 'transport', 'username', 'password', 'scheme', 'path', 'kinit_mode', 'kinit_cmd'])
@@ -163,16 +209,16 @@ class Connection(ConnectionBase):
         argspec = inspect.getargspec(Protocol.__init__)
         supported_winrm_args = set(argspec.args)
         supported_winrm_args.update(internal_kwarg_mask)
-        passed_winrm_args = set([v.replace('ansible_winrm_', '') for v in hostvars if v.startswith('ansible_winrm_')])
+        passed_winrm_args = set([v.replace('ansible_winrm_', '') for v in self._options['_extras']])
         unsupported_args = passed_winrm_args.difference(supported_winrm_args)
 
         # warn for kwargs unsupported by the installed version of pywinrm
         for arg in unsupported_args:
             display.warning("ansible_winrm_{0} unsupported by pywinrm (is an up-to-date version of pywinrm installed?)".format(arg))
 
-        # pass through matching kwargs, excluding the list we want to treat specially
+        # pass through matching extras, excluding the list we want to treat specially
         for arg in passed_winrm_args.difference(internal_kwarg_mask).intersection(supported_winrm_args):
-            self._winrm_kwargs[arg] = hostvars['ansible_winrm_%s' % arg]
+            self._winrm_kwargs[arg] = self._options['_extras']['ansible_winrm_%s' % arg]
 
     # Until pykerberos has enough goodies to implement a rudimentary kinit/klist, simplest way is to let each connection
     # auth itself with a private CCACHE.
