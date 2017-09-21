@@ -36,7 +36,7 @@ description:
     - IPv6 subnets must come from publicly routable /56 block from your project.
     - See U(https://help.packet.net/technical/networking/how-do-i-configure-additional-elastic-ips-on-my-server) for more info on IP block reservation.
 
-version_added: 2.4
+version_added: 2.5
 
 author: Tomas Karasek <tom.to.the.k@gmail.com>
 
