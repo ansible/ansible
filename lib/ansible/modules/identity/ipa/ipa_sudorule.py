@@ -326,20 +326,20 @@ def ensure(module, client):
 
 def main():
     argument_spec = ipa_argument_spec()
-    argument_spec.update(cmd=dict(type='list', required=False),
-                         cmdcategory=dict(type='str', required=False, choices=['all']),
+    argument_spec.update(cmd=dict(type='list'),
+                         cmdcategory=dict(type='str', choices=['all']),
                          cn=dict(type='str', required=True, aliases=['name']),
-                         description=dict(type='str', required=False),
-                         host=dict(type='list', required=False),
-                         hostcategory=dict(type='str', required=False, choices=['all']),
-                         hostgroup=dict(type='list', required=False),
-                         runasusercategory=dict(type='str', required=False, choices=['all']),
-                         runasgroupcategory=dict(type='str', required=False, choices=['all']),
-                         sudoopt=dict(type='list', required=False),
-                         state=dict(type='str', required=False, default='present', choices=['present', 'absent', 'enabled', 'disabled']),
-                         user=dict(type='list', required=False),
-                         usercategory=dict(type='str', required=False, choices=['all']),
-                         usergroup=dict(type='list', required=False))
+                         description=dict(type='str'),
+                         host=dict(type='list'),
+                         hostcategory=dict(type='str', choices=['all']),
+                         hostgroup=dict(type='list'),
+                         runasusercategory=dict(type='str', choices=['all']),
+                         runasgroupcategory=dict(type='str', choices=['all']),
+                         sudoopt=dict(type='list'),
+                         state=dict(type='str', default='present', choices=['present', 'absent', 'enabled', 'disabled']),
+                         user=dict(type='list'),
+                         usercategory=dict(type='str', choices=['all']),
+                         usergroup=dict(type='list'))
 
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=[['cmdcategory', 'cmd'],
