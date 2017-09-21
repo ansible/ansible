@@ -1,20 +1,11 @@
 #!/usr/bin/python
-# This file is part of Ansible
+# Copyright (c) 2014-2017 Ansible Project
+# Copyright (c) 2017 Will Thames
+# Copyright (c) 2017 Michael De La Rue
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 #
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# This is a derivative of rds.py although no untouched lines survive.  See also that module.
 
-# Make coding more python3-ish
 # from __future__ import (absolute_import, division, print_function)
 
 ANSIBLE_METADATA = {'status': ['preview'],
@@ -34,15 +25,21 @@ description:
        you want to have an immediate change and see the results then you should give both
        the 'wait' and the 'apply_immediately' parameters.  In this case, when the module
        returns
-     - The behavior in the case where only one of apply_immediately is given is complex
-       and subject to change.  It should reflect the status after renaming is applied but
-       the instance state is likely to continue to change.  Please do not rely on the
-       return value to match the status soon afterwards.
+     - The behavior in the case where only one of apply_immediately or wait is given is
+       complex and subject to change.  It currently waits a bit to see the rename actually
+       happens and should reflect the status after renaming is applied but the instance
+       state is likely to continue to change afterwards.  Please do not rely on the return
+       value to match the status soon afterwards.
      - In the case that apply_immediately is not given then the return value from
+notes:
+     - Whilst this module aims to be safe for use in production and will attempt to never
+       destroy data unless explicitly told to, this is currently more an aspiration than
+       something to rely on.  Please ensure you have a tested restore strategy in place
+       for your data which does not rely on the contents of the RDS instance.
 requirements:
     - "python >= 2.6"
     - "boto3"
-version_added: "2.4"
+version_added: "2.5"
 author:
     - Bruce Pennypacker (@bpennypacker)
     - Will Thames (@willthames)
@@ -55,6 +52,8 @@ options:
     default: present
     choices: [ 'present', 'absent', 'rebooted' ]
   db_instance_identifier:
+    aliases:
+      - id
     description:
       - Database instance identifier.
     required: true
@@ -74,7 +73,9 @@ options:
                 sqlserver-se', 'sqlserver-ex', 'sqlserver-web', 'postgres', 'aurora']
   allocated_storage:
     description:
-      - Size in gigabytes of the initial storage for the DB instance.  See [API documentation](https://botocore.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.create_db_instance) for details of limits
+      - Size in gigabytes of the initial storage for the DB instance.  See
+        [API documentation](https://botocore.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.create_db_instance)
+        for details of limits
       - Required unless the database type is aurora,
   storage_type:
     description:
@@ -111,7 +112,7 @@ options:
     choices:  [ 'license-included', 'bring-your-own-license', 'general-public-license', 'postgresql-license' ]
   multi_zone:
     description:
-      - Specifies if this is a Multi-availability-zone deployment. Cazn not be used in conjunction with zone parameter.
+      - Specifies if this is a Multi-availability-zone deployment. Can not be used in conjunction with zone parameter.
     choices: [ "yes", "no" ]
     required: false
   iops:
@@ -122,7 +123,7 @@ options:
     description: Comma separated list of one or more security groups.
     required: false
   vpc_security_groups:
-    description: Comma separated list of one or more vpc security group ids. Also requires `subnet` to be specified.
+    description: Comma separated list of one or more vpc security group ids. Also requires I(subnet) to be specified.
     required: false
   port:
     description: Port number that the DB instance uses for connections.
@@ -314,15 +315,15 @@ import time
 import traceback
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn
-from ansible.module_utils.ec2 import HAS_BOTO3, camel_dict_to_snake_dict
-from ansible.module_utils.ec2 import ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict
+from ansible.module_utils.ec2 import ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict, compare_aws_tags
 from ansible.module_utils.aws.rds import get_db_instance, instance_to_facts, instance_facts_diff
 from ansible.module_utils.aws.rds import DEFAULT_PORTS, DB_ENGINES, LICENSE_MODELS
 
 try:
     import botocore
 except ImportError:
-    pass  # caught by imported HAS_BOTO3
+    pass  # caught by imported AnsibleAWSModule
 
 
 def eprint(*args, **kwargs):
@@ -343,11 +344,11 @@ def await_resource(conn, instance_id, status, module, await_pending=None):
     while ((await_pending and rdat) or resource['DBInstanceStatus'] != status) and wait_timeout > time.time():
         time.sleep(5)
         # Temporary until all the rds2 commands have their responses parsed
-        id = resource.get('DBInstanceIdentifier')
-        if id is None:
+        current_id = resource.get('DBInstanceIdentifier')
+        if current_id is None:
             module.fail_json(
                 msg="There was a problem waiting for RDS instance %s" % resource.instance)
-        resource = get_db_instance(conn, id)
+        resource = get_db_instance(conn, current_id)
         if resource is None:
             break
         rdat = resource["PendingModifiedValues"]
@@ -496,46 +497,39 @@ def delete_db_instance(module, conn):
     return dict(changed=True, response=response, instance=instance)
 
 
-def update_rds_tags(module, conn, db_instance=None):
-    # if we get no db_instance we should go collect one; not needed
+def update_rds_tags(module, client, db_instance=None):
+    # FIXME
+    # If we get no db_instance we should go collect one; not needed
     # now - we currently inherit the one modify ends up with
-    assert db_instance is not None, "internal error - no db_instance in update_rds_tags call"
+
+    # FIXME2 unify with ec2_group tag handling logic somehow.
 
     db_instance_arn = db_instance['DBInstanceArn']
 
-    # it's much easier to do set manipulation in ansible form
-    current_tag_list = conn.list_tags_for_resource(db_instance_arn)['TagList']
-    current_tags = boto3_tag_list_to_ansible_dict(current_tag_list)
-    desired_tags = module.params.get('tags')
-
-    if desired_tags is None:
-        return False
-
+    # from here on code matches closely code in ec2_group so that later we can merge together
+    current_tags = boto3_tag_list_to_ansible_dict(client.list_tags_for_resource(db_instance_arn)['TagList'])
+    if current_tags is None:
+        current_tags = []
+    tags = module.params.get('tags')
+    if tags is None:
+        tags = {}
+    purge_tags = True  # For now - might make this a parameter
     changed = False
 
-    current_keys = set(current_tags.keys())
-    desired_keys = set(desired_tags.keys())
-    to_add = desired_keys - current_keys
-    to_delete = current_keys - desired_keys
-
-    for k in desired_keys & current_keys:
-        if current_tags[k] != desired_tags[k]:
-            to_delete.add(k)
-            to_add.add(k)
-
-    if to_delete:
+    tags_need_modify, tags_to_delete = compare_aws_tags(current_tags, tags, purge_tags)
+    if tags_to_delete:
         try:
-            conn.remove_tags_from_resource(ResourceName=db_instance_arn, TagKeys=list(to_delete))
+            client.remove_tags_from_resource(ResourceName=db_instance_arn, TagKeys=tags_to_delete)
         except botocore.exceptions.ClientError as e:
-            module.fail_json_aws(e, msg="trying to remove old tags from instance")
+            module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
         changed = True
 
-    if to_add:
-        tag_map = [{'Key': k, 'Value': desired_tags[k]} for k in to_add]
+    # Add/update tags
+    if tags_need_modify:
         try:
-            conn.add_tags_to_resource(ResourceName=db_instance_arn, Tags=tag_map)
+            client.add_tags_to_resource(ResourceName=db_instance_arn, Tags=ansible_dict_to_boto3_tag_list(tags_need_modify))
         except botocore.exceptions.ClientError as e:
-            module.fail_json_aws(e, msg="trying to add new tags to instance")
+            module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
         changed = True
 
     return changed
@@ -571,7 +565,12 @@ def snake_dict_to_cap_camel_dict(snake_dict):
         return new_type
 
     def camel(words):
-        return ''.join(x.capitalize() or '_' for x in words.split('_'))
+        return ''.join(capitalize_with_abbrevs(x) or '_' for x in words.split('_'))
+
+    def capitalize_with_abbrevs(word):
+        if word in ["db", "aws"]:
+            return word.upper()
+        return word.capitalize()
 
     return camelize(snake_dict)
 
@@ -880,6 +879,7 @@ argument_spec = dict(
     apply_immediately=dict(type='bool', default=False),
     old_db_instance_identifier=dict(aliases=['old_id']),
     tags=dict(type='dict'),
+    # FIXME: add a purge_tags option using compare_aws_tags()
     publicly_accessible=dict(type='bool'),
     character_set_name=dict(),
     force_failover=dict(type='bool', default=False),
@@ -904,8 +904,6 @@ def setup_module_object():
         argument_spec=argument_spec,
         required_if=required_if
     )
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 is required for rds_instance module')
     return module
 
 
