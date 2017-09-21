@@ -4,9 +4,8 @@ lib/ansible/config/data.py
 lib/ansible/config/manager.py
 lib/ansible/modules/cloud/amazon/_ec2_ami_search.py
 lib/ansible/modules/cloud/amazon/_ec2_remote_facts.py
-lib/ansible/modules/cloud/amazon/_ec2_elb.py
-lib/ansible/modules/cloud/amazon/_ec2_elb_facts.py
-lib/ansible/modules/cloud/amazon/_ec2_elb_lb.py
+lib/ansible/modules/cloud/amazon/ec2_elb.py
+lib/ansible/modules/cloud/amazon/ec2_elb_lb.py
 lib/ansible/modules/cloud/amazon/_ec2_vpc.py
 lib/ansible/modules/cloud/amazon/_ec2_vpc_dhcp_options.py
 lib/ansible/modules/cloud/openstack/_os_server_actions.py
@@ -46,7 +45,6 @@ lib/ansible/modules/cloud/amazon/ecs_taskdefinition.py
 lib/ansible/modules/cloud/amazon/efs.py
 lib/ansible/modules/cloud/amazon/elasticache_subnet_group.py
 lib/ansible/modules/cloud/amazon/elb_instance.py
-lib/ansible/modules/cloud/amazon/elb_classic_lb_facts.py
 lib/ansible/modules/cloud/amazon/elb_classic_lb.py
 lib/ansible/modules/cloud/amazon/execute_lambda.py
 lib/ansible/modules/cloud/amazon/iam.py
