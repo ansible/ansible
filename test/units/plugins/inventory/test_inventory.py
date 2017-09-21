@@ -162,7 +162,7 @@ class IniInventory(unittest.TestCase):
 
     @mock.patch('ansible.inventory.manager.unfrackpath', mock_unfrackpath_noop)
     @mock.patch('os.path.exists', lambda x: True)
-    @mock.patch('os.access', lambda x,y: True)
+    @mock.patch('os.access', lambda x, y: True)
     def test_yaml_inventory(self, filename="test.yaml"):
         inventory_content = {filename: textwrap.dedent("""\
         ---
