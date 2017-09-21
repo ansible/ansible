@@ -159,8 +159,7 @@ class IniInventory(unittest.TestCase):
             else:
                 self.assertIsInstance(variables['var%s' % i], type(values[i]))
 
-    @mock.patch('ansible.inventory.manager.unfrackpath',
-        mock_unfrackpath_noop)
+    @mock.patch('ansible.inventory.manager.unfrackpath', mock_unfrackpath_noop)
     @mock.patch('os.path.exists')
     @mock.patch('os.access')
     def test_yaml_inventory(self, p_access, p_exist):
@@ -179,7 +178,6 @@ all:
 
         im = InventoryManager(loader=fake_loader, sources=["test.yaml"])
         self.assertTrue(im._inventory.hosts)
-
 
     def _get_inventory(self, inventory_content):
 
