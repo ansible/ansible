@@ -1436,6 +1436,22 @@ SYSTEM_WARNINGS:
   ini:
   - {key: system_warnings, section: defaults}
   type: boolean
+TAGS_RUN:
+  name: Run Tags
+  default: []
+  type: list
+  description: default list of tags to run in your plays, Skip Tags has precedence.
+  env: [{name: ANSIBLE_RUN_TAGS}]
+  ini:
+  - {key: run, section: tags}
+TAGS_SKIP:
+  name: Skip Tags
+  default: []
+  type: list
+  description: default list of tags to skip in your plays, has precedence over Run Tags
+  env: [{name: ANSIBLE_SKIP_TAGS}]
+  ini:
+  - {key: skip, section: tags}
 USE_PERSISTENT_CONNECTIONS:
   name: Persistence
   default: False

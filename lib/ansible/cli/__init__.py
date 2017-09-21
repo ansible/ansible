@@ -453,9 +453,9 @@ class CLI(with_metaclass(ABCMeta, object)):
                               help='the new vault identity to use for rekey')
 
         if subset_opts:
-            parser.add_option('-t', '--tags', dest='tags', default=[], action='append',
+            parser.add_option('-t', '--tags', dest='tags', default=C.TAGS_RUN, action='append',
                               help="only run plays and tasks tagged with these values")
-            parser.add_option('--skip-tags', dest='skip_tags', default=[], action='append',
+            parser.add_option('--skip-tags', dest='skip_tags', default=C.TAGS_SKIP, action='append',
                               help="only run plays and tasks whose tags do not match these values")
 
         if output_opts:
