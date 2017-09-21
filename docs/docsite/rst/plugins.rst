@@ -11,6 +11,8 @@ There are many types of plugins, these are the most relevant ones:
     :glob:
 
     plugins/*
+    playbooks_filters
+    playbooks_tests
 
 Most of the time you are using them without having to know about them, but when you want to change certain behaviours you need to know how to enable,
 activate or trigger each type.
