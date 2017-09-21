@@ -71,9 +71,6 @@ EXAMPLES = """
 - name: Create a password without any non-alphanumeric characters
   debug: msg="{{ lookup('passwordstore', 'example/test create=true nosymbols=true) }}"
 
-- name: Create a password without any non-alphanumeric characters
-  debug: msg="{{ lookup('passwordstore', 'example/test create=true nosymbols=true) }}"
-
 - name: Return the value for user in the KV pair user, username
   debug: msg="{{ lookup('passwordstore', 'example/test subkey=user')}}"
 
