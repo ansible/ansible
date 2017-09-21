@@ -37,6 +37,14 @@ options:
         default: null
         aliases:
             - blob_name
+    blob_type:
+        description:
+            - Type of Blob Object.
+        required: false
+        default: block
+        choices:
+            - block
+            - page
     container:
         description:
             - Name of a blob container within the storage account.
@@ -212,6 +220,7 @@ class AzureRMStorageBlob(AzureRMModuleBase):
         self.module_arg_spec = dict(
             storage_account_name=dict(required=True, type='str', aliases=['account_name', 'storage_account']),
             blob=dict(type='str', aliases=['blob_name']),
+            blob_type=dict(type='str', default='block', choices=['block','page']),
             container=dict(required=True, type='str', aliases=['container_name']),
             dest=dict(type='str'),
             force=dict(type='bool', default=False),
@@ -234,6 +243,7 @@ class AzureRMStorageBlob(AzureRMModuleBase):
         self.storage_account_name = None
         self.blob = None
         self.blob_obj = None
+        self.blob_type = None
         self.container = None
         self.container_obj = None
         self.dest = None
@@ -264,7 +274,7 @@ class AzureRMStorageBlob(AzureRMModuleBase):
 
         # add file path validation
 
-        self.blob_client = self.get_blob_client(self.resource_group, self.storage_account_name)
+        self.blob_client = self.get_blob_client(self.resource_group, self.storage_account_name, self.blob_type)
         self.container_obj = self.get_container()
 
         if self.blob is not None:
