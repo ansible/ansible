@@ -47,6 +47,10 @@ DOCUMENTATION = """
         description: password length
         type: integer
         default: 16
+      nosymbols:
+        description: do not use any non-alphanumeric characters
+        type: boolean
+        default: False
 """
 EXAMPLES = """
 # Debug is used for examples, BAD IDEA to show passwords on screen
@@ -63,6 +67,9 @@ EXAMPLES = """
 
 - name: Create password and overwrite the password if it exists. As a bonus, this module includes the old password inside the pass file
   debug: msg="{{ lookup('passwordstore', 'example/test create=true overwrite=true')}}"
+  
+- name: Create a password without any non-alphanumeric characters
+  debug: msg="{{ lookup('passwordstore', 'example/test create=true nosymbols=true) }}"
 
 - name: Return the value for user in the KV pair user, username
   debug: msg="{{ lookup('passwordstore', 'example/test subkey=user')}}"
@@ -86,6 +93,7 @@ from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.utils.encrypt import random_password
 from ansible.plugins.lookup import LookupBase
+from ansible import constants as C
 
 
 # backhacked check_output with input for python 2.7
@@ -144,7 +152,7 @@ class LookupModule(LookupBase):
                 raise AnsibleError(e)
             # check and convert values
             try:
-                for key in ['create', 'returnall', 'overwrite']:
+                for key in ['create', 'returnall', 'overwrite', 'nosymbols']:
                     if not isinstance(self.paramvals[key], bool):
                         self.paramvals[key] = util.strtobool(self.paramvals[key])
             except (ValueError, AssertionError) as e:
@@ -187,10 +195,15 @@ class LookupModule(LookupBase):
         return True
 
     def get_newpass(self):
+        if self.paramvals['nosymbols']:
+            chars = C[:62]
+        else:
+            chars = C
+
         if self.paramvals['userpass']:
             newpass = self.paramvals['userpass']
         else:
-            newpass = random_password(length=self.paramvals['length'])
+            newpass = random_password(length=self.paramvals['length'], chars=chars)
         return newpass
 
     def update_password(self):
@@ -236,6 +249,7 @@ class LookupModule(LookupBase):
             'create': False,
             'returnall': False,
             'overwrite': False,
+            'nosymbols': False,
             'userpass': '',
             'length': 16,
         }
