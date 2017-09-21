@@ -127,7 +127,7 @@ def _validate_pv(module, vg, pvs):
     :return: [bool, message] or module.fail_json for errors.
     """
 
-    lspv_cmd = module.get_bin_path("lspv", True)
+    lspv_cmd = module.get_bin_path('lspv', True)
     rc, current_lspv, err = module.run_command("%s" % lspv_cmd)
     if rc != 0:
         module.fail_json(
@@ -145,7 +145,7 @@ def _validate_pv(module, vg, pvs):
             if lspv_list[pv] == 'None':
                 # Disk None, looks free.
                 # Check if PV is not already in use by Oracle ASM.
-                lquerypv_cmd = module.get_bin_path("lquerypv", True)
+                lquerypv_cmd = module.get_bin_path('lquerypv', True)
                 rc, current_lquerypv, err = module.run_command(
                     "%s -h /dev/%s 20 10" % (lquerypv_cmd, pv))
                 if rc != 0:
@@ -186,7 +186,7 @@ def _validate_vg(module, vg):
     :return: True (VG in varyon state) or False (VG in varyoff state) or
              None (VG does not exist), message.
     """
-    lsvg_cmd = module.get_bin_path("lsvg", True)
+    lsvg_cmd = module.get_bin_path('lsvg', True)
     rc, current_active_vgs, err = module.run_command("%s -o" % lsvg_cmd)
     if rc != 0:
         module.fail_json(msg="Failed executing %s command." % lsvg_cmd)
@@ -228,9 +228,9 @@ def create_extend_vg(module, vg, pvs, pp_size, vg_type, force, vg_validation):
         msg = ""
 
         if not module.check_mode:
-            extendvg_cmd = module.get_bin_path("extendvg", True)
+            extendvg_cmd = module.get_bin_path('extendvg', True)
             rc, _, err = module.run_command(
-                "%s %s %s" % (extendvg_cmd, vg, " ".join(pvs)))
+                "%s %s %s" % (extendvg_cmd, vg, ' '.join(pvs)))
             if rc == 0:
                 changed = True
                 msg = "Volume group %s extended." % vg
@@ -248,17 +248,16 @@ def create_extend_vg(module, vg, pvs, pp_size, vg_type, force, vg_validation):
     elif vg_state is None:
         # Volume group creation.
         changed = True
-        msg = ""
+        msg = ''
 
         if not module.check_mode:
-            mkvg_cmd = module.get_bin_path("mkvg", True)
+            mkvg_cmd = module.get_bin_path('mkvg', True)
             rc, _, err = module.run_command(
                 "%s %s %s %s -y %s %s" % (
                     mkvg_cmd, vg_opt[vg_type], pp_size, force_opt[force],
                     vg, ' '.join(pvs)))
 
             if rc == 0:
-                changed = True
                 msg = "Volume group %s created." % vg
 
                 return changed, msg
@@ -289,7 +288,7 @@ def reduce_vg(module, vg, pvs, vg_validation):
     if pvs is None:
         # Remove VG if pvs are note informed.
         # Remark: AIX will permit remove only if the VG has not LVs.
-        lsvg_cmd = module.get_bin_path("lsvg", True)
+        lsvg_cmd = module.get_bin_path('lsvg', True)
         rc, current_pvs, err = module.run_command("%s -p %s" % (lsvg_cmd, vg))
         if rc != 0:
             module.fail_json(msg="Failing to execute %s command." % lsvg_cmd)
@@ -303,7 +302,7 @@ def reduce_vg(module, vg, pvs, vg_validation):
         pvs_to_remove = pvs
         reduce_msg = (
             "Physical volume(s) %s removed from Volume group %s." % (
-                " ".join(pvs_to_remove), vg))
+                ' '.join(pvs_to_remove), vg))
 
     # Reduce volume group.
     if len(pvs_to_remove) > 0:
@@ -311,13 +310,12 @@ def reduce_vg(module, vg, pvs, vg_validation):
         msg = ''
 
         if not module.check_mode:
-            reducevg_cmd = module.get_bin_path("reducevg", True)
+            reducevg_cmd = module.get_bin_path('reducevg', True)
             rc, _, err = module.run_command(
-                "%s -df %s %s" % (reducevg_cmd, vg, " ".join(pvs_to_remove)))
+                "%s -df %s %s" % (reducevg_cmd, vg, ' '.join(pvs_to_remove)))
 
             if rc == 0:
-
-                return changed, reduce_msg
+                msg = reduce_msg
 
             else:
                 module.fail_json(
@@ -344,7 +342,7 @@ def state_vg(module, vg, state, vg_validation):
             changed = True
             msg = ''
             if not module.check_mode:
-                varyonvg_cmd = module.get_bin_path("varyonvg", True)
+                varyonvg_cmd = module.get_bin_path('varyonvg', True)
                 rc, varyonvg_out, err = module.run_command(
                     "%s %s" % (varyonvg_cmd, vg))
                 if rc != 0:
@@ -365,7 +363,7 @@ def state_vg(module, vg, state, vg_validation):
             changed = True
             msg = ''
             if not module.check_mode:
-                varyonvg_cmd = module.get_bin_path("varyoffvg", True)
+                varyonvg_cmd = module.get_bin_path('varyoffvg', True)
                 rc, varyonvg_out, err = module.run_command(
                     "%s %s" % (varyonvg_cmd, vg))
                 if rc != 0:
@@ -386,27 +384,28 @@ def state_vg(module, vg, state, vg_validation):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            force=dict(type="bool", default=False),
-            pp_size=dict(type="int", default=None),
-            pvs=dict(type="list", default=None),
-            state=dict(choices=["absent", "present", "varyon", "varyoff"],
-                       default="present"),
+            force=dict(type='bool', default=False),
+            pp_size=dict(type='int', default=None),
+            pvs=dict(type='list', default=None),
+            state=dict(
+                choices=['absent', 'present', 'varyon', 'varyoff'],
+                default='present'),
             vg=dict(required=True),
-            vg_type=dict(choices=["normal", "big", "scalable"],
-                         default="normal"),
+            vg_type=dict(
+                choices=['normal', 'big', 'scalable'], default='normal')
         ),
         supports_check_mode=True,
     )
 
-    force = module.params["force"]
-    pp_size = module.params["pp_size"]
-    pvs = module.params["pvs"]
-    state = module.params["state"]
-    vg = module.params["vg"]
-    vg_type = module.params["vg_type"]
+    force = module.params['force']
+    pp_size = module.params['pp_size']
+    pvs = module.params['pvs']
+    state = module.params['state']
+    vg = module.params['vg']
+    vg_type = module.params['vg_type']
 
     if pp_size is None:
-        pp_size = ""
+        pp_size = ''
     else:
         pp_size = "-s %s" % pp_size
 
