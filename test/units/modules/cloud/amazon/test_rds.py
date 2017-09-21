@@ -37,7 +37,6 @@ import time
 import datetime
 import copy
 import json
-import pdb
 boto3 = pytest.importorskip("boto3")
 boto = pytest.importorskip("boto")
 
@@ -377,7 +376,6 @@ def test_update_rds_tags_should_add_and_remove_appropriate_tags():
     rm_tag_fn = rds_client_double.remove_tags_from_resource
     ls_tag_fn = rds_client_double.list_tags_for_resource
 
-    pdb.set_trace()
     ls_tag_fn.return_value = {'TagList': [{"Key": "oldtagb", "Value": "bvalue"},
                                           {"Key": "oldtagc", "Value": "cvalue"}, ]}
 
@@ -418,7 +416,12 @@ def test_update_rds_tags_should_delete_if_empty_tags():
     tag_update_return = rds_i.update_rds_tags(module_double, rds_client_double, db_instance=my_instance)
 
     mk_tag_fn.assert_not_called()
-    rm_tag_fn.assert_called_with(ResourceName='arn:aws:rds:us-east-1:1234567890:db:fakedb', TagKeys=['oldtagb', 'oldtagc'])
+    rm_tag_fn.assert_called_once()
+
+    args = rm_tag_fn.call_args
+    assert args[1]["ResourceName"] =='arn:aws:rds:us-east-1:1234567890:db:fakedb' 
+    assert 'oldtagb' in args[1]["TagKeys"] and 'oldtagc' in args[1]["TagKeys"]
+    assert len(args[1]["TagKeys"]) == 2
     assert tag_update_return is True
 
 
