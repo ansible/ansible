@@ -493,7 +493,7 @@ class Ec2Inventory(object):
             filters = config.get('ec2', 'instance_filters')
 
             if self.stack_filters and '&' in filters:
-                self.fail_with_error("AND filters along with stack_filter enabled is not supported.")
+                self.fail_with_error("AND filters along with stack_filter enabled is not supported.\n")
 
             filter_sets = [f for f in filters.split(',') if f]
 
