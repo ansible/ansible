@@ -520,7 +520,7 @@ def get_redirected_output(path_name):
     with open(path_name, 'r') as fd:
         for line in fd:
             # strip terminal format/color chars
-            new_line = re.sub(r'\x1b\[.+m', '', line.encode('ascii'))
+            new_line = re.sub(r'\x1b\[.+m', '', line)
             output.append(new_line)
     fd.close()
     os.remove(path_name)
