@@ -24,6 +24,7 @@ Ansible Changes By Release
 * updated porting guide with notes for callbacks and config
 * Added backwards compatiblity shim for callbacks that do not inherit from CallbackBase
 * Corrected issue with configuration and multiple ini entries being overwriten even when not set.
+* backported fix for doc generation (plugin_formatter)
 
 <a id="2.4"></a>
 

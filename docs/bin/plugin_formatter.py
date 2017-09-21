@@ -120,6 +120,9 @@ def write_data(text, output_dir, outputname, module=None):
     if output_dir is not None:
         if module:
             outputname = outputname % module
+
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
         fname = os.path.join(output_dir, outputname)
         fname = fname.replace(".py", "")
         with open(fname, 'wb') as f:
