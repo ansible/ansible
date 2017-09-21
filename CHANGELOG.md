@@ -32,6 +32,7 @@ Ansible Changes By Release
   eval() for using variables in the default field of config (https://github.com/ansible/ansible/pull/30650)
 
 * Fixed precedence and values for become flags and executable settings
+* Fix for win_domain_membership to throw more helpful error messages and check/fix when calling WMI function after changing workgroup
 
 <a id="2.4"></a>
 
