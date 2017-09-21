@@ -7,8 +7,8 @@ Strategy plugins control the flow of play execution, they handle task and host s
 Enabling Cache Plugins
 ++++++++++++++++++++++
 
-Only one stragy plugin can be used in a play, but you can use different ones for each play in a playbook or ansible run.
-The default is the :doc:`linear strategy/linear` plugin, you can change this default via :doc:`.configuration  ./config`.:
+Only one strategy plugin can be used in a play, but you can use different ones for each play in a playbook or ansible run.
+The default is the :doc:`linear strategy/linear` plugin, you can change this default via :doc:`.configuration ../config`:
 
 .. code-block:: shell
 
