@@ -675,6 +675,7 @@ This differs from the data structure returned when using ``register`` without a 
             }
         ]
     }
+(Note: the data structure returned when running in ``--check`` mode will look somewhat different)
 
 Subsequent loops over the registered variable to inspect the results may look like::
 
