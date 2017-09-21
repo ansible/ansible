@@ -3,10 +3,10 @@
 UNICODE_LITERALS_USERS=$(grep -r unicode_literals . \
     --exclude-dir .git \
     --exclude-dir .tox \
-    --exclude SOURCES.txt \
     --exclude no-unicode-literals.sh \
     --exclude no-unicode-literals.rst |
-    grep -v ./test/results \
+    grep -v ./test/results | \
+    grep -v ansible.egg-info/SOURCES.txt | \
     )
 
 if [ "${UNICODE_LITERALS_USERS}" ]; then
