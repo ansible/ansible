@@ -36,9 +36,9 @@ class InventoryModule(BaseInventoryPlugin):
     def verify_file(self, host_list):
 
         valid = False
-        b_path = to_bytes(host_list)
+        b_path = to_bytes(host_list, errors='surrogate_or_strict')
         if not os.path.exists(b_path) and ',' in host_list:
-                valid = True
+            valid = True
         return valid
 
     def parse(self, inventory, loader, host_list, cache=True):
@@ -61,7 +61,7 @@ class InventoryModule(BaseInventoryPlugin):
                         if host not in self.inventory.hosts:
                             self.inventory.add_host(host, group='ungrouped', port=port)
         except Exception as e:
-            raise AnsibleParserError("Invalid data from string, could not parse: %s" % str(e))
+            raise AnsibleParserError("Invalid data from string, could not parse: %s" % to_native(e))
 
     def _expand_hostpattern(self, hostpattern):
         '''

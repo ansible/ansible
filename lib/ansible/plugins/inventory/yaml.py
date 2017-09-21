@@ -51,11 +51,12 @@ all: # keys must be unique, i.e. only one 'hosts' per group
 
 import re
 import os
+from collections import MutableMapping
 
 from ansible import constants as C
 from ansible.errors import AnsibleParserError
 from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils._text import to_native
 from ansible.parsing.utils.addresses import parse_address
 from ansible.plugins.inventory import BaseFileInventoryPlugin, detect_range, expand_hostname_range
 
@@ -74,9 +75,8 @@ class InventoryModule(BaseFileInventoryPlugin):
     def verify_file(self, path):
 
         valid = False
-        b_path = to_bytes(path)
-        if super(InventoryModule, self).verify_file(b_path):
-            file_name, ext = os.path.splitext(b_path)
+        if super(InventoryModule, self).verify_file(path):
+            file_name, ext = os.path.splitext(path)
             if ext and ext in C.YAML_FILENAME_EXTENSIONS:
                 valid = True
         return valid
@@ -96,11 +96,11 @@ class InventoryModule(BaseFileInventoryPlugin):
 
         # We expect top level keys to correspond to groups, iterate over them
         # to get host, vars and subgroups (which we iterate over recursivelly)
-        if isinstance(data, dict):
+        if isinstance(data, MutableMapping):
             for group_name in data:
                 self._parse_group(group_name, data[group_name])
         else:
-            raise AnsibleParserError("Invalid data from file, expected dictionary and got:\n\n%s" % data)
+            raise AnsibleParserError("Invalid data from file, expected dictionary and got:\n\n%s" % to_native(data))
 
     def _parse_group(self, group, group_data):
 
@@ -108,7 +108,7 @@ class InventoryModule(BaseFileInventoryPlugin):
 
             self.inventory.add_group(group)
 
-            if isinstance(group_data, dict):
+            if isinstance(group_data, MutableMapping):
                 # make sure they are dicts
                 for section in ['vars', 'children', 'hosts']:
                     if section in group_data and isinstance(group_data[section], string_types):
@@ -167,4 +167,4 @@ class InventoryModule(BaseFileInventoryPlugin):
         '''
         Compiles the regular expressions required to parse the inventory and stores them in self.patterns.
         '''
-        self.patterns['groupname'] = re.compile(r'''^[A-Za-z_][A-Za-z0-9_]*$''')
+        self.patterns['groupname'] = re.compile(u'''^[A-Za-z_][A-Za-z0-9_]*$''')

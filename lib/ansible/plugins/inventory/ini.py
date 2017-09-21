@@ -105,7 +105,7 @@ class InventoryModule(BaseFileInventoryPlugin):
             if self.loader:
                 (b_data, private) = self.loader._get_file_contents(path)
             else:
-                b_path = to_bytes(path)
+                b_path = to_bytes(path, errors='surrogate_or_strict')
                 with open(b_path, 'rb') as fh:
                     b_data = fh.read()
 
@@ -366,14 +366,14 @@ class InventoryModule(BaseFileInventoryPlugin):
         # [naughty:children] # only get coal in their stockings
 
         self.patterns['section'] = re.compile(
-            r'''^\[
+            to_text(r'''^\[
                     ([^:\]\s]+)             # group name (see groupname below)
                     (?::(\w+))?             # optional : and tag name
                 \]
                 \s*                         # ignore trailing whitespace
                 (?:\#.*)?                   # and/or a comment till the
                 $                           # end of the line
-            ''', re.X
+            ''', errors='surrogate_or_strict'), re.X
         )
 
         # FIXME: What are the real restrictions on group names, or rather, what
@@ -382,10 +382,10 @@ class InventoryModule(BaseFileInventoryPlugin):
         # precise rules in order to support better diagnostics.
 
         self.patterns['groupname'] = re.compile(
-            r'''^
+            to_text(r'''^
                 ([^:\]\s]+)
                 \s*                         # ignore trailing whitespace
                 (?:\#.*)?                   # and/or a comment till the
                 $                           # end of the line
-            ''', re.X
+            ''', errors='surrogate_or_strict'), re.X
         )
