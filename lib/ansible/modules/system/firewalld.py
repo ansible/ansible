@@ -63,13 +63,13 @@ options:
         operate on firewalld configs when it's not running (requires firewalld >= 3.0.9). (NOTE: If this is false, immediate is assumed true.)
     required: false
     default: null
-    choices: ["yes","no"]
+    type: bool
   immediate:
     description:
       - "Should this configuration be applied immediately, if set as permanent"
     required: false
     default: false
-    choices: ["yes","no"]
+    type: bool
     version_added: "1.9"
   state:
     description:
