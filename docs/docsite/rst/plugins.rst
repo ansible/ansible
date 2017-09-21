@@ -17,8 +17,6 @@ There are many types of plugins, these are the most relevant ones:
 Most of the time you are using them without having to know about them, but when you want to change certain behaviours you need to know how to enable,
 activate or trigger each type.
 
-You can get a complete list from :doc:`list_of_all_plugins`.
-
 .. seealso::
 
    :doc:`playbooks`

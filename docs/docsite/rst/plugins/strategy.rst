@@ -8,7 +8,7 @@ Enabling Cache Plugins
 ++++++++++++++++++++++
 
 Only one strategy plugin can be used in a play, but you can use different ones for each play in a playbook or ansible run.
-The default is the :doc:`linear strategy/linear` plugin, you can change this default via :doc:`.configuration ../config`:
+The default is the :doc:`strategy/linear` plugin, you can change this default via :doc:`../config`:
 
 .. code-block:: shell
 

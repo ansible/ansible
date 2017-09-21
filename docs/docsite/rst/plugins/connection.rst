@@ -9,6 +9,7 @@ depending on what it detects on your system capabilities, it normally chooses 's
 
 The basics of these connection types are covered in the :doc:`../intro_getting_started` section.
 
+.. content::
 
 .. _ssh_plugins:
 
@@ -42,6 +43,9 @@ Each plugin might also have a specific version that overrides the general one. i
 
 Should you want to extend Ansible to support other transports (SNMP, Message bus, etc) it's as simple as dropping a custom plugin
 into the `connection_plugins` directory.
+
+Plugin list
++++++++++++
 
 You can use ``ansible-doc -t connection -l`` to see the list of available plugins,
 use ``ansible-doc -t connection <plugin name>`` to examine detailed documentation and examples.

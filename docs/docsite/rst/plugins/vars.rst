@@ -2,7 +2,7 @@ Vars Plugins
 ------------
 
 They inject additional variable data into ansible runs that did not come from an inventory source, playbook, or command line.
-The :doc:`host_group_vars vars/host_group_vars` plugin shipped with Ansible provides reading variables from :ref:`host_vars` and :ref:`group_vars`.
+The :doc:`vars/host_group_vars` plugin shipped with Ansible provides reading variables from :ref:`host_vars` and :ref:`group_vars`.
 
 
 Enabling Vars Plugins

@@ -7,6 +7,7 @@ to avoid the cost of retrieving them from source.
 The default plugin is the `memory` plugin which will only cache the data for the current execution of Ansible.
 Other plugins with persistent storage are available to allow caching the data across runs.
 
+.. content::
 
 Enabling Cache Plugins
 ++++++++++++++++++++++
@@ -32,6 +33,8 @@ or the ansible :doc:`configuration ../config` for more details.
 You can use ``ansible-doc -t cache -l`` to see the list of available plugins,
 use ``ansible-doc -t cache <plugin name>`` to see specific documents and examples.
 
+Plugin list
++++++++++++
 
 .. toctree:: :maxdepth: 1
     :glob:
