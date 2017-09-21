@@ -1,0 +1,5 @@
+---
+- hosts: testhost
+  gather_facts: False
+  roles:
+    - { role: include_role_role, rolename: some_role1 }

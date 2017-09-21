@@ -1,0 +1,8 @@
+---
+- name: import_role_role debug tash
+  debug:
+    msg: 'import_role_role debug task ran role_path={{ role_path}} rolename={{ rolename }}'
+
+- name: an import_role task
+  import_role:
+    name: "{{ rolename }}"
