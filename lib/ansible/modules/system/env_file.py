@@ -165,7 +165,6 @@ def set_environment(module, name, value, force):
         d2 = read_environment(module)
         diff = get_diff(d1, d2)
 
-
     module.exit_json(changed=True, diff=diff)
 
 
