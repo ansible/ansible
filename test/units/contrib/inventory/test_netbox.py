@@ -6,7 +6,7 @@ import json
 import yaml
 import pytest
 import tempfile
-from netbox import netbox
+from contrib.inventory import netbox
 from requests.models import Response
 
 # Import Mock.
