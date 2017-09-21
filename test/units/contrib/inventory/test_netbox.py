@@ -8,9 +8,12 @@ import yaml
 import pytest
 from requests.models import Response
 
-# Import netbox script as a module.
-sys.path.append("contrib/inventory/")
-import netbox
+# Import netbox as a module.
+try:
+    from netbox import netbox
+except ImportError:
+    sys.path.append("contrib/inventory/")
+    import netbox
 
 # Import Mock.
 try:
