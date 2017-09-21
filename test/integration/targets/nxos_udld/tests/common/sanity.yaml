@@ -1,6 +1,8 @@
 ---
 - debug: msg="START TRANSPORT:{{ connection.transport }} nxos_udld sanity test"
 
+- set_fact: titanium=true
+
 - block:
   - name: "Enable feature udld"
     nxos_feature: 
@@ -48,7 +50,8 @@
 
   - assert: *false
 
-  when: not (platform | search('N9K-F'))
+  when: not (platform | search('N9K-F')) or
+        (titanium is defined) and not ((titanium | search('true')))
 
   always:
   - name: "Disable udld"

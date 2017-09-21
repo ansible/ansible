@@ -55,7 +55,8 @@
       state: absent
       provider: "{{ nxapi }}"
 
-  when: not (platform | search('N9K-F'))
+  when: not (platform | search('N9K-F')) or
+        (titanium is defined) and not ((titanium | search('true')))
 
   always:
   - name: "Disable udld"
