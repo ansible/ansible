@@ -196,9 +196,9 @@ class LookupModule(LookupBase):
 
     def get_newpass(self):
         if self.paramvals['nosymbols']:
-            chars = C[:62]
+            chars = C.DEFAULT_PASSWORD_CHARS[:62]
         else:
-            chars = C
+            chars = C.DEFAULT_PASSWORD_CHARS
 
         if self.paramvals['userpass']:
             newpass = self.paramvals['userpass']
