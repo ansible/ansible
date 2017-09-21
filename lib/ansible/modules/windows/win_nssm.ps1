@@ -33,7 +33,7 @@ $name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $tru
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent","started","stopped","restarted" -resultobj $result
 
 $application = Get-AnsibleParam -obj $params -name "application" -type "str"
-$appParameters = Get-AnsibleParam -obj $params -name "app_parameters" -type "str"
+$appParameters = Get-AnsibleParam -obj $params -name "app_parameters" -typre "raw"
 $appParametersFree  = Get-AnsibleParam -obj $params -name "app_parameters_free_form" -type "str"
 $startMode = Get-AnsibleParam -obj $params -name "start_mode" -type "str" -default "auto" -validateset "auto","manual","disabled" -resultobj $result
 
