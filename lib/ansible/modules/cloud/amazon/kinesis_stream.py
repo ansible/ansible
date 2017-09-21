@@ -1205,7 +1205,7 @@ def delete_stream(client, stream_name, wait=False, wait_timeout=300,
     return success, changed, err_msg, results
 
 
-def start_stream_encryption(client, stream_name, encryption_type='',key_id='',
+def start_stream_encryption(client, stream_name, encryption_type='', key_id='',
                             wait=False, wait_timeout=300, check_mode=False):
     """Start encryption on an Amazon Kinesis Stream.
     Args:
