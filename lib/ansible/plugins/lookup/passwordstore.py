@@ -67,7 +67,7 @@ EXAMPLES = """
 
 - name: Create password and overwrite the password if it exists. As a bonus, this module includes the old password inside the pass file
   debug: msg="{{ lookup('passwordstore', 'example/test create=true overwrite=true')}}"
-  
+
 - name: Create a password without any non-alphanumeric characters
   debug: msg="{{ lookup('passwordstore', 'example/test create=true nosymbols=true) }}"
 
