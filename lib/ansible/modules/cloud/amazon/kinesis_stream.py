@@ -27,7 +27,7 @@ description:
     - Update the retention period of a Kinesis Stream.
     - Update Tags on a Kinesis Stream.
     - Enable/disable server side encryption on a Kinesis Stream.
-version_added: "2.5"
+version_added: "2.2"
 author: Allen Sanabria (@linuxdynasty)
 options:
   name:
@@ -75,16 +75,19 @@ options:
       - "Enable or Disable encryption on the Kinesis Stream."
     required: false
     choices: [ 'enabled', 'disabled' ]
+    version_added: "2.5"
   encryption_type:
     description:
       - "The type of encryption."
     required: false
     default: KMS
+    version_added: "2.5"
   key_id:
     description:
       - "The GUID or alias for the KMS key."
     required: false
     default: None
+    version_added: "2.5"
 extends_documentation_fragment:
     - aws
     - ec2
