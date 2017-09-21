@@ -163,8 +163,8 @@ class IniInventory(unittest.TestCase):
     @mock.patch('ansible.inventory.manager.unfrackpath', mock_unfrackpath_noop)
     @mock.patch('os.path.exists', lambda x: True)
     @mock.patch('os.access', lambda x,y: True)
-    def test_yaml_inventory(self):
-        inventory_content = {"test.yaml": textwrap.dedent("""\
+    def test_yaml_inventory(self, filename="test.yaml"):
+        inventory_content = {filename: textwrap.dedent("""\
         ---
         all:
             hosts:
@@ -173,7 +173,7 @@ class IniInventory(unittest.TestCase):
         """)}
         C.INVENTORY_ENABLED = ['yaml']
         fake_loader = DictDataLoader(inventory_content)
-        im = InventoryManager(loader=fake_loader, sources=["test.yaml"])
+        im = InventoryManager(loader=fake_loader, sources=filename)
         self.assertTrue(im._inventory.hosts)
 
     def _get_inventory(self, inventory_content):
