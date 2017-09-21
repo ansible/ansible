@@ -33,6 +33,7 @@ Ansible Changes By Release
 
 * Fixed precedence and values for become flags and executable settings
 * Fix for win_domain_membership to throw more helpful error messages and check/fix when calling WMI function after changing workgroup
+* Fix for win_power_plan to compare the OS version's correctly and work on Windows 10/Server 2016
 
 <a id="2.4"></a>
 
