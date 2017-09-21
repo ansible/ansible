@@ -47,6 +47,7 @@ def json_query(data, expr):
         # For older jmespath, we can get ValueError and TypeError without much info.
         raise AnsibleFilterError('Error in jmespath.search in json_query filter plugin:\n%s' % e)
 
+
 class FilterModule(object):
     ''' Query filter '''
 
