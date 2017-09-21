@@ -488,19 +488,27 @@ class Ec2Inventory(object):
             self.stack_filters = False
 
         # Instance filters (see boto and EC2 API docs). Ignore invalid filters.
-        self.ec2_instance_filters = defaultdict(list)
+        self.ec2_instance_filters = []
         if config.has_option('ec2', 'instance_filters'):
+            filters = config.get('ec2', 'instance_filters')
 
-            filters = [f for f in config.get('ec2', 'instance_filters').split(',') if f]
+            if self.stack_filters and '&' in filters:
+                self.fail_with_error("AND filters along with stack_filter enabled is not supported.\n")
 
-            for instance_filter in filters:
-                instance_filter = instance_filter.strip()
-                if not instance_filter or '=' not in instance_filter:
-                    continue
-                filter_key, filter_value = [x.strip() for x in instance_filter.split('=', 1)]
-                if not filter_key:
-                    continue
-                self.ec2_instance_filters[filter_key].append(filter_value)
+            filter_sets = [f for f in filters.split(',') if f]
+
+            for filter_set in filter_sets:
+                filters = {}
+                filter_set = filter_set.strip()
+                for instance_filter in filter_set.split("&"):
+                    instance_filter = instance_filter.strip()
+                    if not instance_filter or '=' not in instance_filter:
+                        continue
+                    filter_key, filter_value = [x.strip() for x in instance_filter.split('=', 1)]
+                    if not filter_key:
+                        continue
+                    filters[filter_key] = filter_value
+                self.ec2_instance_filters.append(filters.copy())
 
     def parse_cli_args(self):
         ''' Command line argument processing '''
@@ -582,12 +590,12 @@ class Ec2Inventory(object):
             if self.ec2_instance_filters:
                 if self.stack_filters:
                     filters_dict = {}
-                    for filter_key, filter_values in self.ec2_instance_filters.items():
-                        filters_dict[filter_key] = filter_values
+                    for filters in self.ec2_instance_filters:
+                        filters_dict.update(filters)
                     reservations.extend(conn.get_all_instances(filters=filters_dict))
                 else:
-                    for filter_key, filter_values in self.ec2_instance_filters.items():
-                        reservations.extend(conn.get_all_instances(filters={filter_key: filter_values}))
+                    for filters in self.ec2_instance_filters:
+                        reservations.extend(conn.get_all_instances(filters=filters))
             else:
                 reservations = conn.get_all_instances()
 
@@ -627,31 +635,28 @@ class Ec2Inventory(object):
         ''' return True if given tags match configured filters '''
         if not self.ec2_instance_filters:
             return True
-        match = self.stack_filters
-        for filter_name, filter_value in self.ec2_instance_filters.items():
-            if filter_name[:4] != 'tag:':
-                continue
-            filter_name = filter_name[4:]
-            if filter_name not in tags:
-                if self.stack_filters:
-                    match = False
-                    break
-                continue
-            if isinstance(filter_value, list):
-                if self.stack_filters and tags[filter_name] not in filter_value:
-                    match = False
-                    break
-                if not self.stack_filters and tags[filter_name] in filter_value:
-                    match = True
-                    break
-            if isinstance(filter_value, six.string_types):
-                if self.stack_filters and tags[filter_name] != filter_value:
-                    match = False
-                    break
-                if not self.stack_filters and tags[filter_name] == filter_value:
-                    match = True
-                    break
-        return match
+
+        for filters in self.ec2_instance_filters:
+            for filter_name, filter_value in filters.items():
+                if filter_name[:4] != 'tag:':
+                    continue
+                filter_name = filter_name[4:]
+                if filter_name not in tags:
+                    if self.stack_filters:
+                        return False
+                    continue
+                if isinstance(filter_value, list):
+                    if self.stack_filters and tags[filter_name] not in filter_value:
+                        return False
+                    if not self.stack_filters and tags[filter_name] in filter_value:
+                        return True
+                if isinstance(filter_value, six.string_types):
+                    if self.stack_filters and tags[filter_name] != filter_value:
+                        return False
+                    if not self.stack_filters and tags[filter_name] == filter_value:
+                        return True
+
+        return self.stack_filters
 
     def get_rds_instances_by_region(self, region):
         ''' Makes an AWS API call to the list of RDS instances in a particular
@@ -718,7 +723,7 @@ class Ec2Inventory(object):
             if 'LatestRestorableTime' in c:
                 del c['LatestRestorableTime']
 
-            if self.ec2_instance_filters == {}:
+            if not self.ec2_instance_filters:
                 matches_filter = True
             else:
                 matches_filter = False
@@ -730,14 +735,18 @@ class Ec2Inventory(object):
                 c['Tags'] = tags['TagList']
 
                 if self.ec2_instance_filters:
-                    for filter_key, filter_values in self.ec2_instance_filters.items():
-                        # get AWS tag key e.g. tag:env will be 'env'
-                        tag_name = filter_key.split(":", 1)[1]
-                        # Filter values is a list (if you put multiple values for the same tag name)
-                        matches_filter = any(d['Key'] == tag_name and d['Value'] in filter_values for d in c['Tags'])
+                    for filters in self.ec2_instance_filters:
+                        for filter_key, filter_values in filters.items():
+                            # get AWS tag key e.g. tag:env will be 'env'
+                            tag_name = filter_key.split(":", 1)[1]
+                            # Filter values is a list (if you put multiple values for the same tag name)
+                            matches_filter = any(d['Key'] == tag_name and d['Value'] in filter_values for d in c['Tags'])
+
+                            if matches_filter:
+                                # it matches a filter, so stop looking for further matches
+                                break
 
                         if matches_filter:
-                            # it matches a filter, so stop looking for further matches
                             break
 
             except Exception as e:
