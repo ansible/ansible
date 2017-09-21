@@ -1,3 +1,5 @@
+.. contents:: Topics
+
 Callback Plugins
 ----------------
 
@@ -10,10 +12,10 @@ but can also be used to add additional output, integrate with other tools and ma
 Example Callback Plugins
 ++++++++++++++++++++++++
 
-The :doc:`log_plays callback/log_plays` callback is an example of how to record playbook events to a log file,
+The :doc:`log_plays <callback/log_plays>` callback is an example of how to record playbook events to a log file,
 and the :doc:`mail callback/mail` callback sends email on playbook failures.
 
-The :doc:`osx_say callback/oxs_say` callback provided is particularly entertaining --
+The :doc:`osx_say <callback/oxs_say>` callback provided is particularly entertaining --
 it will respond with computer synthesized speech on OS X in relation to playbook events,
 and is guaranteed to entertain and/or annoy coworkers.
 
@@ -23,12 +25,12 @@ and is guaranteed to entertain and/or annoy coworkers.
 Enabling Callback Plugins
 ++++++++++++++++++++++++++
 
-You can activate a custom callback by either dropping it into a `callback_plugins` directory adjacent to your play or inside a role
-or by putting it in one of the callback directory sources configured in :doc:`ansible.cfg ../config`.
+You can activate a custom callback by either dropping it into a ``callback_plugins`` directory adjacent to your play or inside a role
+or by putting it in one of the callback directory sources configured in :doc:`ansible.cfg <../config>`.
 
 Plugins are loaded in alphanumeric order; for example, a plugin implemented in a file named `1_first.py` would run before a plugin file named `2_second.py`.
 
-Most callbacks shipped with Ansible are disabled by default and need to be whitelisted in your :doc:`ansible.cfg ../config` file in order to function.
+Most callbacks shipped with Ansible are disabled by default and need to be whitelisted in your :doc:`ansible.cfg <../config>` file in order to function.
 For example:
 
 .. code-block:: ini
@@ -39,7 +41,7 @@ For example:
 Managing stdout
 ```````````````
 
-You can only have one plugin be the main manager of your console output. If you want to replace the default, you should define CALLBACK_TYPE = stdout in the subclass and then configure the stdout plugin in :doc:`ansible.cfg ../config`. For example:
+You can only have one plugin be the main manager of your console output. If you want to replace the default, you should define CALLBACK_TYPE = stdout in the subclass and then configure the stdout plugin in :doc:`ansible.cfg <../config>`. For example:
 
 .. code-block:: ini
 
@@ -56,8 +58,8 @@ This only affects :doc:`../ansible-playbook` by default.
 Managing AdHoc
 ``````````````
 
-The `ansible` AdHoc command speifically uses a different callback plugin for stdout, so there is an extra setting you need to enable
-it to use the stdout callback defined above, in ansible.cfg:
+The :doc:`ansible <../ansible>` AdHoc command speifically uses a different callback plugin for stdout,
+so there is an extra setting you need to enable it to use the stdout callback defined above, in :doc:`ansible.cfg <../config>`:
 
 .. code-block:: ini
 
@@ -69,6 +71,10 @@ or as an environment variable:
 .. code-block:: shell
 
     export ANSIBLE_LOAD_CALLBACK_PLUGINS=1
+
+
+Plugin List
++++++++++++
 
 You can use ``ansible-doc -t callback -l`` to see the list of available plugins,
 use ``ansible-doc -t callback <plugin name>`` to see specific documents and examples.

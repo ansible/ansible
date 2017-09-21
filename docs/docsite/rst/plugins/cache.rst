@@ -1,13 +1,14 @@
+.. contents:: Topics
+
 Cache Plugins
 -------------
 
 This plugin implelents a backend caching mechanism for Ansible to store gathered facts or inventory source data
 to avoid the cost of retrieving them from source.
 
-The default plugin is the `memory` plugin which will only cache the data for the current execution of Ansible.
+The default plugin is the :doc:`memory <cache/memory>` plugin which will only cache the data for the current execution of Ansible.
 Other plugins with persistent storage are available to allow caching the data across runs.
 
-.. content::
 
 Enabling Cache Plugins
 ++++++++++++++++++++++
@@ -20,7 +21,7 @@ You can enable in configuration, either via environment variable:
 
     export ANSIBLE_CACHE_PLUGIN=jsonfile
 
-or in the `ansible.cfg` file:
+or in the ``ansible.cfg`` file:
 
 .. code-block:: ini
 
@@ -28,13 +29,13 @@ or in the `ansible.cfg` file:
     fact_caching=redis
 
 You will also need to setup other settings specific to each plugin, you can check the individual plugin documenattion
-or the ansible :doc:`configuration ../config` for more details.
+or the ansible :doc:`configuration <../config>` for more details.
+
+Plugin List
++++++++++++
 
 You can use ``ansible-doc -t cache -l`` to see the list of available plugins,
 use ``ansible-doc -t cache <plugin name>`` to see specific documents and examples.
-
-Plugin list
-+++++++++++
 
 .. toctree:: :maxdepth: 1
     :glob:

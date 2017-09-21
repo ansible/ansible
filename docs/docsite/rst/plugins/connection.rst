@@ -1,3 +1,5 @@
+.. contents:: Topics
+
 Connection Plugins
 ------------------
 
@@ -9,7 +11,7 @@ depending on what it detects on your system capabilities, it normally chooses 's
 
 The basics of these connection types are covered in the :doc:`../intro_getting_started` section.
 
-.. content::
+.. contents:: Topics
 
 .. _ssh_plugins:
 
@@ -25,9 +27,9 @@ so much so that ssh options are included in the command line tools unlike other 
 Using Connection Plugins
 ++++++++++++++++++++++++
 
-The transport can be changed via :doc:`configuration ../config`, in the command line (`-c`, `--connection`), as a keyword (:ref:`connection`)
+The transport can be changed via :doc:`configuration <../config>`, in the command line (``-c``, ``--connection``), as a keyword (:ref:`connection`)
 in your play or by setting the a connection variable (:ref:`ansible_connection`), most often, in your inventory.
-For example, for windows machines you might want o use the :doc:`winrm connection/winrm` plugin instead.
+For example, for windows machines you might want o use the :doc:`winrm <connection/winrm>` plugin instead.
 
 Most connection plugins can operate with a minimum configuration, by defaul they use the :ref:`inventory_hostname` and defaults to find the target host.
 Each plugin documents it's configuration options and how to set, the following are 'connection variables' common to most:
@@ -35,16 +37,19 @@ Each plugin documents it's configuration options and how to set, the following a
 :ref:ansible_host
     The name of the host to connect to, if different from the :ref:`inventory_hostname`.
 :ref:ansible_port
-    The ssh port number, for :doc:`ssh connection/ssh` and :doc:`paramiko connection/paramiko` it defaults to 22.
+    The ssh port number, for :doc:`ssh <connection/ssh>` and :doc:`paramiko <connection/paramiko>` it defaults to 22.
 :ref:ansible_user
     The default user name to log in as, most plugins defaul to the 'current user running Ansible'
 
-Each plugin might also have a specific version that overrides the general one. i.e :ref:`ansible_ssh_host` for the :doc:`ssh connection/ssh` plugin.
+Each plugin might also have a specific version that overrides the general one. i.e :ref:`ansible_ssh_host` for the :doc:`ssh <connection/ssh>` plugin.
+
+Enabling Connection Plugins
++++++++++++++++++++++++++++
 
 Should you want to extend Ansible to support other transports (SNMP, Message bus, etc) it's as simple as dropping a custom plugin
-into the `connection_plugins` directory.
+into the ``connection_plugins`` directory.
 
-Plugin list
+Plugin List
 +++++++++++
 
 You can use ``ansible-doc -t connection -l`` to see the list of available plugins,

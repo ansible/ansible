@@ -1,3 +1,5 @@
+.. contents:: Topics
+
 Strategy Plugins
 ----------------
 
@@ -8,7 +10,7 @@ Enabling Cache Plugins
 ++++++++++++++++++++++
 
 Only one strategy plugin can be used in a play, but you can use different ones for each play in a playbook or ansible run.
-The default is the :doc:`strategy/linear` plugin, you can change this default via :doc:`../config`:
+The default is the :doc:`linear <strategy/linear>` plugin, you can change this default via :doc:`configuration <../config>`:
 
 .. code-block:: shell
 
@@ -35,6 +37,9 @@ Or you can just speicfy the plugin in the play via the :ref:`strategy` keyword::
       - name: restart_tomcat
         service: name=tomcat state=restarted
 
+
+Plugin List
++++++++++++
 
 You can use ``ansible-doc -t strategy -l`` to see the list of available plugins,
 use ``ansible-doc -t strategy <plugin name>`` to see specific documents and examples.

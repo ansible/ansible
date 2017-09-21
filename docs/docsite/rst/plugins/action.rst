@@ -1,7 +1,7 @@
 Action Plugins
 ---------------
 
-These plugins act in conjunction with :doc:`modules ../modules` to execute the actions required by playbook tasks.
+These plugins act in conjunction with :doc:`modules <../modules>` to execute the actions required by playbook tasks.
 They mostly execute automatically in the background doing prerequisite work for the modules of the same to be able to execute.
 
 The 'normal' action plugin takes care of modules that do not already have an action plugin.
@@ -9,8 +9,8 @@ The 'normal' action plugin takes care of modules that do not already have an act
 Enabling Vars Plugins
 +++++++++++++++++++++
 
-You can activate a custom action plugins by either dropping it into a `action_plugins` directory adjacent to your play or inside a role
-or by putting it in one of the action plugin directory sources configured in `ansible.cfg`.
+You can activate a custom action plugins by either dropping it into a ``action_plugins`` directory adjacent to your play or inside a role
+or by putting it in one of the action plugin directory sources configured in :doc:`ansible.cfg <../config>`.
 
 
 

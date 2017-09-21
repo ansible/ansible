@@ -3,7 +3,7 @@ Shell Plugins
 
 These plugins work behind the scenes making sure the basic commands Ansible runs in order to be able to execute a task's action are
 properly formated to work with the target machine.
-You normally don't have to wory about these plugins at all unless you have a restricted or exotic setup in which the default `/bin/sh` is
+You normally don't have to wory about these plugins at all unless you have a restricted or exotic setup in which the default ``/bin/sh`` is
 not a POSIX compatible shell or not availble for execution..
 
 Enabling Shell Plugins

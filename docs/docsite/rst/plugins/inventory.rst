@@ -1,3 +1,5 @@
+.. contents:: Topics
+
 Inventory Plugins
 -----------------
 
@@ -9,8 +11,8 @@ They control what happens when with ``-i /path/to/file`` and/or ``-i 'host1, hos
 Enabling Inventory Plugins
 ++++++++++++++++++++++++++
 
-Most inventory plugins shipped with Ansible are disabled by default and need to be whitelisted in your `ansible.cfg` file in order to function.
-For example, this is how the default looks like:
+Most inventory plugins shipped with Ansible are disabled by default and need to be whitelisted in your
+:doc:`ansible.cfg <../config>` file in order to function.  For example, this is how the default looks like:
 
 .. code-block:: ini
 
@@ -24,6 +26,10 @@ Any plugins left out of the list will not be considered, so you can 'optimize' y
 
    [inventory]
    enable_plugins = 'host_list', 'yaml'
+
+
+Plugin List
++++++++++++
 
 You can use ``ansible-doc -t inventory -l`` to see the list of available plugins,
 use ``ansible-doc -t inventory <plugin name>`` to see specific documents and examples.
