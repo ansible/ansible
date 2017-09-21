@@ -13,7 +13,7 @@ Ansible Changes By Release
 
 #### Deprecated Modules (to be removed in 2.9):
 
-#### Removed Modules (previouslly deprecated):
+#### Removed Modules (previously deprecated):
 * accelerate
 
 ### Minor Changes
