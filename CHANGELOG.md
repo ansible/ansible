@@ -21,6 +21,13 @@ Ansible Changes By Release
   ansible_diff_mode, ansible_inventory_sources, ansible_limit, ansible_run_tags , ansible_forks and ansible_skip_tags
 * Updated the bundled copy of the six library to 1.11.0
 
+### New Modules
+
+#### Windows
+
+  * win_scheduled_task_stat
+
+
 <a id="2.4"></a>
 
 ## 2.4 "Dancing Days" - RELEASE CANDIDATE
