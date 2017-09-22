@@ -181,10 +181,9 @@ class SourcesList(object):
         raise StopIteration
 
     def _expand_path(self, filename):
-        if '/' in filename:
-            return filename
-        else:
-            return os.path.abspath(os.path.join(self._apt_cfg_dir('Dir::Etc::sourceparts'), filename))
+        if '/' not in filename:
+            filename = os.path.abspath(os.path.join(self._apt_cfg_dir('Dir::Etc::sourceparts'), filename))
+        return filename
 
     def _suggest_filename(self, line):
         def _cleanup_filename(s):
@@ -462,9 +461,7 @@ def get_add_ppa_signing_key_callback(module):
     def _run_command(command):
         module.run_command(command, check_rc=True)
 
-    if module.check_mode:
-        return None
-    else:
+    if not module.check_mode:
         return _run_command
 
 
