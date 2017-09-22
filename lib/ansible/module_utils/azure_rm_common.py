@@ -548,7 +548,7 @@ class AzureRMModuleBase(object):
                 self.fail("Error {0} has a provisioning state of {1}. Expecting state to be {2}.".format(
                     azure_object.name, azure_object.provisioning_state, AZURE_SUCCESS_STATE))
 
-    def get_blob_client(self, resource_group_name, storage_account_name):
+    def get_blob_client(self, resource_group_name, storage_account_name, storage_blob_type='block'):
         keys = dict()
         try:
             # Get keys from the storage account
@@ -559,7 +559,12 @@ class AzureRMModuleBase(object):
 
         try:
             self.log('Create blob service')
-            return CloudStorageAccount(storage_account_name, account_keys.keys[0].value).create_block_blob_service()
+            if storage_blob_type == 'page':
+                return CloudStorageAccount(storage_account_name, account_keys.keys[0].value).create_page_blob_service()
+            elif storage_blob_type == 'block':
+                return CloudStorageAccount(storage_account_name, account_keys.keys[0].value).create_block_blob_service()
+            else:
+                raise Exception("Invalid storage blob type defined.")
         except Exception as exc:
             self.fail("Error creating blob service client for storage account {0} - {1}".format(storage_account_name,
                                                                                                 str(exc)))
