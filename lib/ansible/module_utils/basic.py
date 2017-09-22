@@ -1251,7 +1251,7 @@ class AnsibleModule(object):
 
     def set_attributes_if_different(self, path, attributes, changed, diff=None, expand=True):
 
-        if attributes is None:
+        if not attributes:
             return changed
 
         b_path = to_bytes(path, errors='surrogate_or_strict')
