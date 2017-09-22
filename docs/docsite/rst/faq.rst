@@ -306,9 +306,9 @@ You shouldn't put plaintext passwords in your playbook or host_vars; instead, us
 .. _commercial_support:
 
 Ansible supports dot notation and array notation for variables. Which notation should I use?
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-The dot notation comes from Jina and works fine for variables without special
+The dot notation comes from Jinja and works fine for variables without special
 characters. If your variable contains dots (.), colons (:), or dashes (-) it is
 safer to use the array notation for variables.
 
@@ -316,7 +316,7 @@ safer to use the array notation for variables.
 
     item[0]['checksum:md5']
     item['region']['Mid-Atlantic']
-    It is {{ temperature['Celcius']['-3'] }} outside.
+    It is {{ temperature['Celsius']['-3'] }} outside.
 
 Can I get training on Ansible?
 ++++++++++++++++++++++++++++++
