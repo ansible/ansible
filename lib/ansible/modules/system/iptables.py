@@ -572,21 +572,7 @@ def main():
                 else:
                     append_rule(iptables_path, module, module.params)
             else:
-                insert = (module.params['action'] == 'insert')
-                rule_is_present = check_present(iptables_path, module, module.params)
-                should_be_present = (args['state'] == 'present')
-
-                # Check if target is up to date
-                args['changed'] = (rule_is_present != should_be_present)
-
-                if args['changed'] and not module.check_mode:
-                    if should_be_present:
-                        if insert:
-                            insert_rule(iptables_path, module, module.params)
-                        else:
-                            append_rule(iptables_path, module, module.params)
-                    else:
-                        remove_rule(iptables_path, module, module.params)
+                remove_rule(iptables_path, module, module.params)
 
     module.exit_json(**args)
 
