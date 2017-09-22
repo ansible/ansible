@@ -24,22 +24,19 @@ description:
   - This module manages a basic AIX mksysb (image) of rootvg.
 version_added: "2.5"
 options:
-  name:
+  backup_crypt_files:
     description:
-      - Backup name
-    required: true
-  storage_path:
+      - Backup encrypted files.
+    choices: ["yes", "no"]
+    default: "yes"
+  backup_dmapi_fs:
     description:
-      - Storage path where the mksysb will stored.
-    required: true
+      - Back up DMAPI filesystem files.
+    choices: ["yes", "no"]
+    default: "yes"
   create_map_files:
     description:
       - Creates a new MAP files.
-    choices: ["yes", "no"]
-    default: "no"
-  use_snapshot:
-    description:
-      - Creates backup using snapshots.
     choices: ["yes", "no"]
     default: "no"
   exclude_files:
@@ -52,6 +49,15 @@ options:
       - Excludes WPAR files.
     choices: ["yes", "no"]
     default: "no"
+  extended_attrs:
+    description:
+      - Backup extended attributes.
+    choices: ["yes", "no"]
+    default: "yes"
+  name:
+    description:
+      - Backup name
+    required: true
   new_image_data:
     description:
       - Creates a new file data.
@@ -63,21 +69,15 @@ options:
         /etc/exclude_packing.rootvg.
     choices: ["yes", "no"]
     default: "no"
-  extended_attrs:
+  storage_path:
     description:
-      - Backup extended attributes.
-    choices: ["yes", "no"]
-    default: "yes"
-  backup_crypt_files:
+      - Storage path where the mksysb will stored.
+    required: true
+  use_snapshot:
     description:
-      - Backup encrypted files.
+      - Creates backup using snapshots.
     choices: ["yes", "no"]
-    default: "yes"
-  backup_dmapi_fs:
-    description:
-      - Back up DMAPI filesystem files.
-    choices: ["yes", "no"]
-    default: "yes"
+    default: "no"
 '''
 
 EXAMPLES = '''
@@ -104,8 +104,9 @@ msg:
 
 
 from ansible.module_utils.basic import AnsibleModule
+import os
 
-# command options
+# Command options.
 map_file_opt = {
     True: '-m',
     False: ''
@@ -155,44 +156,53 @@ dmapi_fs_opt = {
 def main():
     module = AnsibleModule(
         argument_spec=dict(
+            backup_crypt_files=dict(type='bool', default=True),
+            backup_dmapi_fs=dict(type='bool', default=True),
+            create_map_files=dict(type='bool', default=False),
+            exclude_files=dict(type='bool', default=False),
+            exclude_wpar_files=dict(type='bool', default=False),
+            extended_attrs=dict(type='bool', default=True),
             name=dict(required=True),
+            new_image_data=dict(type='bool', default=True),
+            software_packing=dict(type='bool', default=False),
             storage_path=dict(required=True),
-            create_map_files=dict(type="bool", default=False),
-            use_snapshot=dict(type="bool", default=False),
-            exclude_files=dict(type="bool", default=False),
-            exclude_wpar_files=dict(type="bool", default=False),
-            new_image_data=dict(type="bool", default=True),
-            software_packing=dict(type="bool", default=False),
-            extended_attrs=dict(type="bool", default=True),
-            backup_crypt_files=dict(type="bool", default=True),
-            backup_dmapi_fs=dict(type="bool", default=True)
-        ))
+            use_snapshot=dict(type='bool', default=False)
+        ), supports_check_mode=True,
+    )
 
-    name = module.params['name']
-    storage_path = module.params['storage_path']
-    create_map_files = map_file_opt[module.params['create_map_files']]
-    use_snapshot = use_snapshot_opt[module.params['use_snapshot']]
-    exclude_files = exclude_files_opt[module.params['exclude_files']]
-    exclude_wpar_files = exclude_wpar_opt[module.params['exclude_wpar_files']]
-    new_image_data = new_image_data_opt[module.params['new_image_data']]
-    software_packing = soft_packing_opt[module.params['software_packing']]
-    extended_attrs = extend_attr_opt[module.params['extended_attrs']]
     backup_crypt_files = crypt_files_opt[module.params['backup_crypt_files']]
     backup_dmapi_fs = dmapi_fs_opt[module.params['backup_dmapi_fs']]
+    create_map_files = map_file_opt[module.params['create_map_files']]
+    exclude_files = exclude_files_opt[module.params['exclude_files']]
+    exclude_wpar_files = exclude_wpar_opt[module.params['exclude_wpar_files']]
+    extended_attrs = extend_attr_opt[module.params['extended_attrs']]
+    name = module.params['name']
+    new_image_data = new_image_data_opt[module.params['new_image_data']]
+    software_packing = soft_packing_opt[module.params['software_packing']]
+    storage_path = module.params['storage_path']
+    use_snapshot = use_snapshot_opt[module.params['use_snapshot']]
 
-    mksysb_cmd = module.get_bin_path("mksysb", True)
+    # Validate if storage_path is a valid directory.
+    if os.path.isdir(storage_path):
+        if not module.check_mode:
+            # Generates the mksysb image backup.
+            mksysb_cmd = module.get_bin_path('mksysb', True)
+            rc, mksysb_output, err = module.run_command(
+                "%s -X %s %s %s %s %s %s %s %s %s %s/%s" % (
+                    mksysb_cmd, create_map_files, use_snapshot, exclude_files,
+                    exclude_wpar_files, software_packing, extended_attrs,
+                    backup_crypt_files, backup_dmapi_fs, new_image_data,
+                    storage_path, name))
+            if rc == 0:
+                module.exit_json(changed=True, msg=mksysb_output)
+            else:
+                module.fail_json(msg="mksysb failed.", rc=rc, err=err)
 
-    # generates the mksysb image backup
-    rc, mksysb_output, err = module.run_command(
-        "%s -X %s %s %s %s %s %s %s %s %s %s/%s" % (
-            mksysb_cmd, create_map_files, use_snapshot, exclude_files,
-            exclude_wpar_files, software_packing, extended_attrs,
-            backup_crypt_files, backup_dmapi_fs, new_image_data,
-            storage_path, name))
-    if rc == 0:
         module.exit_json(changed=True, msg=mksysb_output)
+
     else:
-        module.fail_json(msg="mksysb failed.", rc=rc, err=err)
+        module.fail_json(msg="Storage path %s is not valid." % storage_path)
+
 
 if __name__ == '__main__':
     main()
