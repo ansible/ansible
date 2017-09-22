@@ -1,4 +1,3 @@
-# unit tests for ansible/module_utils/facts/__init__.py
 # -*- coding: utf-8 -*-
 #
 #
@@ -22,7 +21,7 @@ __metaclass__ = type
 
 # for testing
 from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import Mock
+from ansible.compat.tests.mock import Mock, patch
 
 from ansible.module_utils.facts import collector
 from ansible.module_utils.facts import ansible_collector
@@ -40,7 +39,7 @@ from ansible.module_utils.facts.system.dns import DnsFactCollector
 from ansible.module_utils.facts.system.fips import FipsFactCollector
 from ansible.module_utils.facts.system.local import LocalFactCollector
 from ansible.module_utils.facts.system.lsb import LSBFactCollector
-from ansible.module_utils.facts.system.pkg_mgr import PkgMgrFactCollector
+from ansible.module_utils.facts.system.pkg_mgr import PkgMgrFactCollector, OpenBSDPkgMgrFactCollector
 from ansible.module_utils.facts.system.platform import PlatformFactCollector
 from ansible.module_utils.facts.system.python import PythonFactCollector
 from ansible.module_utils.facts.system.selinux import SelinuxFactCollector
@@ -59,6 +58,7 @@ ALL_COLLECTOR_CLASSES = \
      SystemCapabilitiesFactCollector,
      FipsFactCollector,
      PkgMgrFactCollector,
+     OpenBSDPkgMgrFactCollector,
      ServiceMgrFactCollector,
      LSBFactCollector,
      DateTimeFactCollector,
@@ -311,3 +311,34 @@ class TestOhaiCollectedFacts(TestCollectedFacts):
     expected_facts = ['gather_subset',
                       'module_setup']
     not_expected_facts = ['lsb']
+
+
+class TestPkgMgrFacts(TestCollectedFacts):
+    gather_subset = ['pkg_mgr']
+    min_fact_count = 1
+    max_fact_count = 10
+    expected_facts = ['gather_subset',
+                      'module_setup',
+                      'pkg_mgr']
+
+
+class TestOpenBSDPkgMgrFacts(TestPkgMgrFacts):
+    def test_is_openbsd_pkg(self):
+        self.assertIn('pkg_mgr', self.facts)
+        self.assertEqual(self.facts['pkg_mgr'], 'openbsd_pkg')
+
+    def setUp(self):
+        self.patcher = patch('platform.system')
+        mock_platform = self.patcher.start()
+        mock_platform.return_value = 'OpenBSD'
+
+        mock_module = self._mock_module()
+        collectors = self._collectors(mock_module)
+
+        fact_collector = \
+            ansible_collector.AnsibleFactCollector(collectors=collectors,
+                                                   namespace=ns)
+        self.facts = fact_collector.collect(module=mock_module)
+
+    def tearDown(self):
+        self.patcher.stop()
