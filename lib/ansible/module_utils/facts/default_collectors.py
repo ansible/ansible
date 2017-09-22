@@ -73,16 +73,44 @@ from ansible.module_utils.facts.virtual.netbsd import NetBSDVirtualCollector
 from ansible.module_utils.facts.virtual.openbsd import OpenBSDVirtualCollector
 from ansible.module_utils.facts.virtual.sunos import SunOSVirtualCollector
 
-# TODO: make config driven
-collectors = [ApparmorFactCollector,
+_base = [
+              # these should always be first due to most other facts depending on them
+              PlatformFactCollector,
+              DistributionFactCollector,
+              LSBFactCollector,]
+
+_restrictive = [
+              # These restrict what is possible in others
+              SelinuxFactCollector,
+              ApparmorFactCollector,
               ChrootFactCollector,
+              FipsFactCollector,]
+
+_general = [
+              # general info, not required but probably useful for other facts
+              PythonFactCollector,
+              SystemCapabilitiesFactCollector,
+              PkgMgrFactCollector,
+              ServiceMgrFactCollector,
               CmdLineFactCollector,
               DateTimeFactCollector,
-              DistributionFactCollector,
-              DnsFactCollector,
               EnvFactCollector,
-              FipsFactCollector,
+              SshPubKeyFactCollector,
+              UserFactCollector,]
 
+_virtual = [
+              # virtual, this might also limit hardware/networking
+              VirtualCollector,
+              DragonFlyVirtualCollector,
+              FreeBSDVirtualCollector,
+              LinuxVirtualCollector,
+              OpenBSDVirtualCollector,
+              NetBSDVirtualCollector,
+              SunOSVirtualCollector,
+              HPUXVirtualCollector,]
+
+_hardware = [
+              # hardware
               HardwareCollector,
               AIXHardwareCollector,
               DarwinHardwareCollector,
@@ -93,10 +121,11 @@ collectors = [ApparmorFactCollector,
               LinuxHardwareCollector,
               NetBSDHardwareCollector,
               OpenBSDHardwareCollector,
-              SunOSHardwareCollector,
-              LocalFactCollector,
-              LSBFactCollector,
+              SunOSHardwareCollector,]
 
+_network = [
+              # networking
+              DnsFactCollector,
               NetworkCollector,
               AIXNetworkCollector,
               DarwinNetworkCollector,
@@ -107,25 +136,13 @@ collectors = [ApparmorFactCollector,
               LinuxNetworkCollector,
               NetBSDNetworkCollector,
               OpenBSDNetworkCollector,
-              SunOSNetworkCollector,
+              SunOSNetworkCollector,]
 
-              PkgMgrFactCollector,
-              PlatformFactCollector,
-              PythonFactCollector,
-              SelinuxFactCollector,
-              ServiceMgrFactCollector,
-              SshPubKeyFactCollector,
-              SystemCapabilitiesFactCollector,
-              UserFactCollector,
-
-              VirtualCollector,
-              DragonFlyVirtualCollector,
-              FreeBSDVirtualCollector,
-              LinuxVirtualCollector,
-              OpenBSDVirtualCollector,
-              NetBSDVirtualCollector,
-              SunOSVirtualCollector,
-              HPUXVirtualCollector,
-
+_extra_facts = [
+              # other fact sources
+              LocalFactCollector,
               FacterFactCollector,
               OhaiFactCollector]
+
+# TODO: make config driven
+collectors = _base + _restrictive + _general + _virtual + _hardware + _network + _extra_facts
