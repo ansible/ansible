@@ -65,6 +65,7 @@ RETURN = '''#'''
 
 import os
 import copy
+import tempfile
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import get_exception
 from ansible.module_utils._text import to_text
@@ -105,22 +106,6 @@ def read_environment(module):
                     module.fail_json(msg="There was an error reading the environment vars in {0}. Is your file corrupted?".format(ENVFILE))
             d[k] = v
     return d
-
-
-def delete_unnescessary_newlines(module):
-    with open(ENVFILE, 'rb') as f:
-        b_data = f.readlines()
-        for i, l in enumerate(b_data):
-            try:
-                j = to_text(l)
-            except UnicodeError:
-                module.fail_json(msg="There was an error converting content of {0} as binary to text: {1}".format(ENVFILE, get_exception()))
-            if j == "\n":
-                b_data[i] = to_bytes("")
-        with open(ENVFILE, 'wb') as f:
-            for line in b_data:
-                f.write(line)
-    return True
 
 
 def is_key_and_value_present(module, name, value, force):
@@ -177,24 +162,24 @@ def del_environment(module, name):
 
     d = read_environment(module)
 
+    _, tmpfile = tempfile.mkstemp(dir=os.path.dirname(ENVFILE))
+
     if module._diff:
         d1 = copy.deepcopy(d)
 
-    while True:
-        if d.get(name):
-            try:
-                d.pop(name, None)
-            except KeyError:
-                module.fail_json(msg="An undefined exception occured: {0}".format(get_exception()))
+    if d.get(name):
+        try:
+            d.pop(name, None)
+        except KeyError:
+            module.fail_json(msg="An undefined exception occured: {0}".format(get_exception()))
 
-            with open(ENVFILE, 'wb') as f:
-                for k, v in d.items():
-                    f.write(to_bytes("{0}={1}\n".format(k, v)))
-
-            delete_unnescessary_newlines(module)
-        else:
-            break
-        d = read_environment(module)
+        with open(tmpfile, 'wb') as f:
+            for k, v in d.items():
+                f.write(to_bytes("{0}={1}\n".format(k, v)))
+    try:
+        module.atomic_move(tmpfile, ENVFILE)
+    except IOError:
+        module.fail_json(msg="Failed to update environment file: {0}".format(get_exception()))
 
     diff = {}
     if module._diff:
