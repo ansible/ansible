@@ -27,7 +27,7 @@ EXAMPLES = '''
         var_sum: var1 + var2
 
         # this variable will only be set if I have a persistent fact cache enabled (and have non expired facts)
-        # `strict: False` will skip this instead of producing an error if it is misisng facts.
+        # `strict: False` will skip this instead of producing an error if it is missing facts.
         server_type: "ansible_hostname | regex_replace ('(.{6})(.{2}).*', '\\2')"
     groups:
         # simple name matching
