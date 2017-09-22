@@ -137,16 +137,16 @@ def delete_snapshot(module, conn):
 
 
 def create_snapshot(module, conn):
-    instance_name = module.params.get('instance_name')
-    if not instance_name:
-        module.fail_json(msg='instance_name is required for rds_snapshot when state=present')
-    snapshot_name = module.params.get('snapshot')
+    db_instance_identifier = module.params.get('db_instance_identifier')
+    if not db_instance_identifier:
+        module.fail_json(msg='db_instance_identifier is required for rds_snapshot when state=present')
+    snapshot_name = module.params.get('db_snapshot_identifier')
     changed = False
     snapshot = get_snapshot(conn, snapshot_name)
     if not snapshot:
         try:
             snapshot = conn.create_db_snapshot(DBSnapshotIdentifier=snapshot_name,
-                                               DBInstanceIdentifier=instance_name)
+                                               DBInstanceIdentifier=db_instance_identifier)
             changed = True
         except botocore.exceptions.ClientError as e:
             module.fail_json_aws(e, msg="trying to create db snapshot")
@@ -156,7 +156,8 @@ def create_snapshot(module, conn):
     else:
         snapshot = get_snapshot(conn, snapshot_name)
 
-    return dict(changed=changed, snapshot=snapshot_to_facts(snapshot))
+    if snapshot:
+        return dict(changed=changed, snapshot=snapshot_to_facts(snapshot))
 
 
 argument_spec = dict(
@@ -189,6 +190,7 @@ def main():
     else:
         ret_dict = create_snapshot(module, conn)
     module.exit_json(**ret_dict)
+
 
 if __name__ == '__main__':
     main()

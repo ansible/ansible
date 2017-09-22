@@ -27,6 +27,7 @@ import ansible.module_utils.basic as basic
 import pytest
 from dateutil.tz import tzutc
 import datetime
+import botocore
 
 boto3 = pytest.importorskip("boto3")
 boto = pytest.importorskip("boto")
@@ -69,14 +70,24 @@ describe_snapshot_return = {
 def test_create_snapshot_if_not_present():
     params = {
         "db_instance_identifier": "fakedb-too",
+        "db_snapshot_identifier": "fake-snapshot",
     }
 
     module_double = MagicMock(ansible_module_template)
     module_double.params = params
     rds_client_double = MagicMock()
-    rds_client_double.describe_db_snapshots.return_value = describe_snapshot_return
+
+    error_response = {'Error': {'Code': 'DBSnapshotNotFound', 'Message': 'Fake Testing Error'}}
+    operation_name = 'FakeOperation'
+    db_snapshot_gone_error = botocore.exceptions.ClientError(error_response, operation_name)
+
+    rds_client_double.describe_db_snapshots.side_effect = db_snapshot_gone_error
 
     rds_s.create_snapshot(module_double, rds_client_double)
+
+    module_double.fail_json.assert_not_called()
+    rds_client_double.create_db_snapshot.assert_called_with(DBSnapshotIdentifier='fake-snapshot',
+                                                            DBInstanceIdentifier='fakedb-too')
 
 
 def test_call_delete_with_sensible_arguments_if_present_when_should_not_be():
