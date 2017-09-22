@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright: (c) 2015, Linus Unnebäck <linus@folkdatorn.se>
+# Copyright: (c) 2017, Sébastien DA ROCHA <sebastien@da-rocha.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -18,6 +19,7 @@ short_description: Modify the systems iptables
 version_added: "2.0"
 author:
 - Linus Unnebäck (@LinusU) <linus@folkdatorn.se>
+- Sébastien DA ROCHA (@sebastiendarocha)
 description:
   - Iptables is used to set up, maintain, and inspect the tables of IP packet
     filter rules in the Linux kernel.
