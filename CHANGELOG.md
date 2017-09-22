@@ -36,6 +36,7 @@ Ansible Changes By Release
 * Fix for win_power_plan to compare the OS version's correctly and work on Windows 10/Server 2016
 * Fix module doc for typo in telnet command option
 * Fix OpenBSD pkg_mgr fact (https://github.com/ansible/ansible/issues/30623)
+* Fix encoding error when there are nonascii values in the path to the ssh binary
 
 <a id="2.4"></a>
 
