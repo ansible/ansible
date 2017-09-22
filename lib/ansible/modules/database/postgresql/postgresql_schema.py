@@ -73,6 +73,8 @@ notes:
      using this module.
 requirements: [ psycopg2 ]
 author: "Flavien Chantelot <contact@flavien.io>"
+extends_documentation_fragment:
+- postgres
 '''
 
 EXAMPLES = '''
@@ -182,7 +184,7 @@ def main():
     argument_spec.update(dict(
         schema=dict(required=True, aliases=['name']),
         owner=dict(default=""),
-        database=dict(default="postgres"),
+        database=dict(default="postgres", aliases=['db']),
         state=dict(default="present", choices=["absent", "present"]),
     ))
     module = AnsibleModule(
