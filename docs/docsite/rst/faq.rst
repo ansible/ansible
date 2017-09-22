@@ -315,6 +315,7 @@ safer to use the array notation for variables.
 .. code-block:: jinja
 
     item[0]['checksum:md5']
+    item['section']['2.1']
     item['region']['Mid-Atlantic']
     It is {{ temperature['Celsius']['-3'] }} outside.
 
