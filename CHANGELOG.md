@@ -57,6 +57,7 @@ Ansible Changes By Release
 * digital_ocean_sshkey_facts
 * ec2_ami_facts
 * ecs_taskdefinition_facts
+* elasticache_facts
 
 #### Windows
 
