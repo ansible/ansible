@@ -258,20 +258,18 @@ class Homebrew(object):
             - absent
         '''
 
-        if state is None:
-            return True
-        else:
-            return (
-                isinstance(state, string_types)
-                and state.lower() in (
-                    'installed',
-                    'upgraded',
-                    'head',
-                    'linked',
-                    'unlinked',
-                    'absent',
-                )
-            )
+        result = True
+        available_states = (
+            'installed',
+            'upgraded',
+            'head',
+            'linked',
+            'unlinked',
+            'absent',
+        )
+        if state:
+            result = (isinstance(state, string_types) and state.lower() in available_states)
+        return result
 
     @classmethod
     def valid_module(cls, module):
