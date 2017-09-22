@@ -509,7 +509,9 @@ def deregister_image(module, connection):
     snapshots = []
     if 'BlockDeviceMappings' in image:
         for mapping in image.get('BlockDeviceMappings'):
-            snapshots.append(mapping.get('SnapshotId'))
+            snapshot_id = mapping.get('SnapshotId')
+            if snapshot_id is not None:
+                snapshots.append(snapshot_id)
 
     # When trying to re-deregister an already deregistered image it doesn't raise an exception, it just returns an object without image attributes.
     if 'ImageId' in image:
