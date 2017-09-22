@@ -127,8 +127,7 @@ def update_package_db(module, xbps_path):
         module.fail_json(msg="Could not update package db")
     if "avg rate" in stdout:
         return True
-    else:
-        return False
+    return False
 
 
 def upgrade(module, xbps_path):
@@ -138,7 +137,7 @@ def upgrade(module, xbps_path):
 
     rc, stdout, stderr = module.run_command(cmdneedupgrade, check_rc=False)
     if rc == 0:
-        if(len(stdout.splitlines()) == 0):
+        if not stdout.splitlines():
             module.exit_json(changed=False, msg='Nothing to upgrade')
         else:
             rc, stdout, stderr = module.run_command(cmdupgrade, check_rc=False)
@@ -168,8 +167,7 @@ def remove_packages(module, xbps_path, packages):
 
         changed_packages.append(package)
 
-    if len(changed_packages) > 0:
-
+    if changed_packages:
         module.exit_json(changed=True, msg="removed %s package(s)" %
                          len(changed_packages), packages=changed_packages)
 
@@ -189,7 +187,7 @@ def install_packages(module, xbps_path, state, packages):
 
         toInstall.append(package)
 
-    if len(toInstall) == 0:
+    if not toInstall:
         module.exit_json(changed=False, msg="Nothing to Install")
 
     cmd = "%s -y %s" % (xbps_path['install'], " ".join(toInstall))
