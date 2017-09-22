@@ -74,12 +74,15 @@ containerDefinitions:
             contains:
                 containerPort:
                     description: The port number on the container.
+                    returned: when present
                     type: int
                 hostPort
                     description: The port number on the container instance to reserve for your container.
+                    returned: when present
                     type: int
                 protocol:
                     description: The protocol used for the port mapping.
+                    returned: when present
                     type: string
         essential:
             description: Whether this is an essential container or not.
@@ -129,7 +132,7 @@ containerDefinitions:
             type: complex
             contains:
                 sourceContainer:
-                description: The name of another container within the same task definition to mount volumes from.
+                    description: The name of another container within the same task definition to mount volumes from.
                     returned: when present
                     type: string
                 readOnly:
