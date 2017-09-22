@@ -53,7 +53,7 @@ Environmental configuration
 
 Ansible also allows configuration of settings via environment variables.  If
 these environment variables are set, they will override any setting loaded
-from the configuration file.  These variables are defined in `constants.py <https://github.com/ansible/ansible/blob/devel/lib/ansible/constants.py>`_.
+from the configuration file.  These variables are defined in `base.yml <https://github.com/ansible/ansible/blob/devel/lib/ansible/config/base.yml>`_ (look for the `env: [{ name: ... }]` lines).
 
 .. _config_values_by_section:
 
