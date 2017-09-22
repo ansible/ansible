@@ -382,7 +382,7 @@ def package_present(m, name, want_latest):
     if any(p.version for p in packages):
         m.params['oldpackage'] = True
 
-    if not want_latest and not urls:
+    if not want_latest:
         # for state=present: filter out already installed packages
         # if a version is given leave the package in to let zypper handle the version
         # resolution
