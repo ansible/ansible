@@ -84,9 +84,10 @@ def get_local_version(pear_output):
     return None
 
 def _get_pear_path(module):
-    result = module.get_bin_path('pear', True, [module.params['executable']])
     if module.params['executable'] and os.path.isfile(module.params['executable']):
         result = module.params['executable']
+    else:
+        result = module.get_bin_path('pear', True, [module.params['executable']])
     return result
 
 def get_repository_version(pear_output):
