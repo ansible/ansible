@@ -607,7 +607,9 @@ files:
   $modules/system/selinux_permissive.py: mscherer
   $modules/system/seport.py: dankeder
   $modules/system/service.py: $team_ansible
-  $modules/system/setup.py: $team_ansible
+  $modules/system/setup.py:
+    ignored: david_obrien
+    maintainers: $team_ansible
   $modules/system/solaris_zone.py: pmarkham
   $modules/system/svc.py: bcoca
   $modules/system/sysctl.py: akasurde davixx
