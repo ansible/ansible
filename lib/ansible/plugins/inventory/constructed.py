@@ -21,7 +21,7 @@ DOCUMENTATION = '''
 
 EXAMPLES = '''
     # inventory.config file in YAML format
-    plugin: comstructed
+    plugin: constructed
     strict: False
     compose:
         var_sum: var1 + var2
