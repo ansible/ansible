@@ -118,7 +118,6 @@ try:
 except ImportError:
     HAS_BOTO3 = False
 
-
 def get_arn_from_kms_alias(kms, aliasname):
     ret = kms.list_aliases()
     key_id = None
@@ -156,11 +155,15 @@ def do_grant(kms, keyarn, role_arn, granttypes, mode='grant', dry_run=True, clea
             # do we want this grant type? Are we on its statement?
             # and does the role have this grant type?
 
-            # Ensure statement looks as expected
-            if not statement.get('Principal'):
-                statement['Principal'] = {'AWS': []}
-            if not isinstance(statement['Principal']['AWS'], list):
-                statement['Principal']['AWS'] = [statement['Principal']['AWS']]
+            # create Principal and 'AWS' so we can safely use them later.
+            if not isinstance(statement.get('Principal'), dict):
+                statement['Principal'] = dict()
+
+            if 'AWS' in statement['Principal'] and isinstance(statement['Principal']['AWS'], str):
+                # convert to list
+                statement['Principal']['AWS'] = list([statement['Principal']['AWS']])
+            if not isinstance(statement['Principal'].get('AWS'), list):
+                statement['Principal']['AWS'] = list()
 
             if mode == 'grant' and statement['Sid'] == statement_label[granttype]:
                 # we're granting and we recognize this statement ID.
@@ -174,35 +177,31 @@ def do_grant(kms, keyarn, role_arn, granttypes, mode='grant', dry_run=True, clea
                         statement['Principal']['AWS'] = valid_entries
                         had_invalid_entries = True
 
-
                     if not role_arn in statement['Principal']['AWS']: # needs to be added.
                         changes_needed[granttype] = 'add'
-                        if not dry_run:
-                            statement['Principal']['AWS'].append(role_arn)
+                        statement['Principal']['AWS'].append(role_arn)
                 elif role_arn in statement['Principal']['AWS']: # not one the places the role should be
                     changes_needed[granttype] = 'remove'
-                    if not dry_run:
                         statement['Principal']['AWS'].remove(role_arn)
 
             elif mode == 'deny' and statement['Sid'] == statement_label[granttype] and role_arn in statement['Principal']['AWS']:
                 # we don't selectively deny. that's a grant with a
                 # smaller list. so deny=remove all of this arn.
                 changes_needed[granttype] = 'remove'
-                if not dry_run:
-                    statement['Principal']['AWS'].remove(role_arn)
+                statement['Principal']['AWS'].remove(role_arn)
 
     try:
         if len(changes_needed) and not dry_run:
             policy_json_string = json.dumps(policy)
-    except Exception as e:
-            raise Exception("{0}: // {1}".format(e, repr(policy)))
-    kms.put_key_policy(KeyId=keyarn, PolicyName='default', Policy=policy_json_string)
-
-    # returns nothing, so we have to just assume it didn't throw
-    ret['changed'] = changes_needed and not had_invalid_entries
+            kms.put_key_policy(KeyId=keyarn, PolicyName='default', Policy=policy_json_string)
+            # returns nothing, so we have to just assume it didn't throw
+            ret['changed'] = True
+    except:
+        raise
 
     ret['changes_needed'] = changes_needed
     ret['had_invalid_entries'] = had_invalid_entries
+    ret['new_policy'] = policy
     if dry_run:
         # true if changes > 0
         ret['changed'] = (not len(changes_needed) == 0)
@@ -280,8 +279,10 @@ def main():
                 if not g in statement_label:
                     module.fail_json(msg='{} is an unknown grant type.'.format(g))
 
-        ret = do_grant(kms, module.params['key_arn'], module.params['role_arn'], module.params['grant_types'], mode=mode, dry_run=module.check_mode,
-                       clean_invalid_entries=module.params['clean_invalid_entries'])
+        ret = do_grant(kms, module.params['key_arn'], module.params['role_arn'], module.params['grant_types'],
+                  mode=mode,
+                  dry_run=module.check_mode,
+                  clean_invalid_entries=module.params['clean_invalid_entries'])
         result.update(ret)
 
     except Exception as err:
