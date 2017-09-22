@@ -173,7 +173,7 @@ def update_package_db(module, exit):
 def query_package(module, name):
     cmd = "%s -v info --installed %s" % (APK_PATH, name)
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
-    return rc == 0:
+    return rc == 0
 
 
 def query_latest(module, name):
