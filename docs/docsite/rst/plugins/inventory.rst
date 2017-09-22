@@ -18,7 +18,7 @@ Most inventory plugins shipped with Ansible are disabled by default and need to 
 .. code-block:: ini
 
    [inventory]
-   enable_plugins = 'host_list', 'script', 'yaml', 'ini'
+   enable_plugins = host_list, script, yaml, ini
 
 This list also establishes the order in which each plugin tries to parse an inventory source (in the case 2 plugins can use the same source).
 Any plugins left out of the list will not be considered, so you can 'optimize' your inventory loading by minimizing it to what you actually use:
@@ -26,7 +26,7 @@ Any plugins left out of the list will not be considered, so you can 'optimize' y
 .. code-block:: ini
 
    [inventory]
-   enable_plugins = 'host_list', 'yaml'
+   enable_plugins = advanced_host_list, constructed, yaml
 
 
 Plugin List
