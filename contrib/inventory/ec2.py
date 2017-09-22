@@ -698,7 +698,7 @@ class Ec2Inventory(object):
                     "or set 'rds = False' in ec2.ini"
             elif not e.reason == "Forbidden":
                 error = "Looks like AWS RDS is down:\n%s" % e.message
-            self.fail_with_error(error, 'getting RDS instances')
+                self.fail_with_error(error, 'getting RDS instances')
 
     def include_rds_clusters_by_region(self, region):
         if not HAS_BOTO3:
@@ -788,7 +788,9 @@ class Ec2Inventory(object):
                     "or set 'elasticache = False' in ec2.ini"
             elif not e.reason == "Forbidden":
                 error = "Looks like AWS ElastiCache is down:\n%s" % e.message
-            self.fail_with_error(error, 'getting ElastiCache clusters')
+                self.fail_with_error(error, 'getting ElastiCache clusters')
+            else:
+                return
 
         try:
             # Boto also doesn't provide wrapper classes to CacheClusters or
@@ -822,7 +824,9 @@ class Ec2Inventory(object):
                 error = self.get_auth_error_message()
             if not e.reason == "Forbidden":
                 error = "Looks like AWS ElastiCache [Replication Groups] is down:\n%s" % e.message
-            self.fail_with_error(error, 'getting ElastiCache clusters')
+                self.fail_with_error(error, 'getting ElastiCache clusters')
+            else:
+                return
 
         try:
             # Boto also doesn't provide wrapper classes to ReplicationGroups
