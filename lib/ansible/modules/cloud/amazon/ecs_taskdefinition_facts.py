@@ -23,7 +23,7 @@ author:
     - Gustavo Maia(@gurumaia)
     - Mark Chance(@Java1Guy)
     - Darek Kaczynski (@kaczynskid)
-requirements: [ json, boto, botocore, boto3 ]
+requirements: [ json, botocore, boto3 ]
 options:
     task_definition:
         description:
@@ -312,7 +312,7 @@ class EcsTaskManager:
             if not region:
                 module.fail_json(msg="Region must be specified as a parameter, in EC2_REGION or AWS_REGION environment variables or in boto configuration file")
             self.ecs = boto3_conn(module, conn_type='client', resource='ecs', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-        except boto.exception.NoAuthHandlerFound as e:
+        except boto3.exception.NoAuthHandlerFound as e:
             self.module.fail_json(msg="Can't authorize connection - %s" % str(e))
 
     def describe_task_definitions(self, family):
@@ -328,9 +328,6 @@ def main():
     ))
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
-
-    if not HAS_BOTO:
-        module.fail_json(msg='boto is required.')
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 is required.')
