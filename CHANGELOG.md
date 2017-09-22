@@ -35,6 +35,7 @@ Ansible Changes By Release
 * Fix for win_domain_membership to throw more helpful error messages and check/fix when calling WMI function after changing workgroup
 * Fix for win_power_plan to compare the OS version's correctly and work on Windows 10/Server 2016
 * Fix module doc for typo in telnet command option
+* Fix OpenBSD pkg_mgr fact (https://github.com/ansible/ansible/issues/30623)
 
 <a id="2.4"></a>
 
