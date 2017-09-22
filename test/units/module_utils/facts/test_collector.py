@@ -20,12 +20,59 @@
 from __future__ import (absolute_import, division)
 __metaclass__ = type
 
+from collections import defaultdict
+import pprint
+
 # for testing
 from ansible.compat.tests import unittest
 
 from ansible.module_utils.facts import collector
 
 from ansible.module_utils.facts import default_collectors
+
+
+class TestFindCollectorsForPlatform(unittest.TestCase):
+    def test(self):
+        compat_platforms = [{'system': 'Generic'}]
+        res = collector.find_collectors_for_platform(default_collectors.collectors,
+                                                     compat_platforms)
+        # pprint.pprint(default_collectors.collectors)
+        # pprint.pprint(res)
+        for coll_class in res:
+            self.assertIn(coll_class._platform, ('Generic'))
+
+    def test_linux(self):
+        compat_platforms = [{'system': 'Linux'}]
+        res = collector.find_collectors_for_platform(default_collectors.collectors,
+                                                     compat_platforms)
+        # pprint.pprint(default_collectors.collectors)
+        # pprint.pprint(res)
+        for coll_class in res:
+            self.assertIn(coll_class._platform, ('Linux'))
+
+    def test_linux_or_generic(self):
+        compat_platforms = [{'system': 'Generic'}, {'system': 'Linux'}]
+        res = collector.find_collectors_for_platform(default_collectors.collectors,
+                                                     compat_platforms)
+        # pprint.pprint(default_collectors.collectors)
+        # pprint.pprint(res)
+        for coll_class in res:
+            self.assertIn(coll_class._platform, ('Generic', 'Linux'))
+
+
+class TestSelectCollectorNames(unittest.TestCase):
+    def test(self):
+        collector_names = set(['distribution', 'all_ipv4_addresses',
+                               'local', 'pkg_mgr'])
+        all_fact_subsets = defaultdict(list)
+        _data = {'pkg_mgr': [default_collectors.PkgMgrFactCollector],
+                 'distribution': [default_collectors.DistributionFactCollector],
+                 'network': [default_collectors.LinuxNetworkCollector]}
+        for key, value in _data.items():
+            all_fact_subsets[key] = value
+
+        res = collector.select_collector_classes(collector_names, all_fact_subsets)
+        pprint.pprint(res)
 
 
 class TestGetCollectorNames(unittest.TestCase):
