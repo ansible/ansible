@@ -29,6 +29,9 @@ from ansible.module_utils._text import to_bytes
 
 
 def set_module_args(args):
+    if 'provider' not in args:
+        args['provider'] = {'transport': args.get('transport') or 'cli'}
+
     args = json.dumps({'ANSIBLE_MODULE_ARGS': args})
     basic._ANSIBLE_ARGS = to_bytes(args)
 

@@ -49,6 +49,7 @@ nxos_provider_spec = {
 
     'use_ssl': dict(type='bool'),
     'validate_certs': dict(type='bool'),
+
     'timeout': dict(type='int'),
 
     'transport': dict(default='cli', choices=['cli', 'nxapi'])
@@ -68,7 +69,7 @@ nxos_top_spec = {
     'validate_certs': dict(removed_in_version=2.9, type='bool'),
     'timeout': dict(removed_in_version=2.9, type='int'),
 
-    'transport': dict(removed_in_version=2.9, default='cli', choices=['cli', 'nxapi'])
+    'transport': dict(removed_in_version=2.9, choices=['cli', 'nxapi'])
 }
 nxos_argument_spec.update(nxos_top_spec)
 
@@ -84,7 +85,7 @@ def check_args(module, warnings):
 def load_params(module):
     provider = module.params.get('provider') or dict()
     for key, value in iteritems(provider):
-        if key in nxos_argument_spec:
+        if key in nxos_provider_spec:
             if module.params.get(key) is None and value is not None:
                 module.params[key] = value
 

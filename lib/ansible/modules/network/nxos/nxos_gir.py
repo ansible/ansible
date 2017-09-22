@@ -170,9 +170,10 @@ from ansible.module_utils.basic import AnsibleModule
 
 def execute_show_command(command, module, command_type='cli_show_ascii'):
     cmds = [command]
-    if module.params['transport'] == 'cli':
+    provider = module.params['provider']
+    if provider['transport'] == 'cli':
         body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
+    elif provider['transport'] == 'nxapi':
         body = run_commands(module, cmds)
 
     return body

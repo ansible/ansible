@@ -425,7 +425,7 @@ def validate_params(addr, interface, mask, tag, allow_secondary, version, state,
             module.fail_json(msg="IPv6 address and mask must be provided when "
                                  "state=absent.")
 
-    if intf_type != "ethernet" and module.params["transport"] == "cli":
+    if intf_type != "ethernet" and module.params["provider"]["transport"] == "cli":
         if is_default(interface, module) == "DNE":
             module.fail_json(msg="That interface does not exist yet. Create "
                                  "it first.", interface=interface)

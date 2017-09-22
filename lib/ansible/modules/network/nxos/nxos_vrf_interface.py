@@ -204,7 +204,7 @@ def main():
                         "Use nxos_vrf to fix this.")
 
     intf_type = get_interface_type(interface)
-    if (intf_type != 'ethernet' and module.params['transport'] == 'cli'):
+    if (intf_type != 'ethernet' and module.params['provider']['transport'] == 'cli'):
         if is_default(interface, module) == 'DNE':
             module.fail_json(msg="interface does not exist on switch. Verify "
                                  "switch platform or create it first with "
