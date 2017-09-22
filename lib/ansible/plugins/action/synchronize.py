@@ -205,6 +205,7 @@ class ActionModule(ActionBase):
 
         # Parameter name needed by the ansible module
         _tmp_args['_local_rsync_path'] = task_vars.get('ansible_rsync_path') or 'rsync'
+        _tmp_args['_local_rsync_password'] = task_vars.get('ansible_ssh_pass') or task_vars.get('ansible_password')
 
         # rsync thinks that one end of the connection is localhost and the
         # other is the host we're running the task for  (Note: We use
