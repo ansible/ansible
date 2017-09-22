@@ -9,7 +9,6 @@ Ansible Changes By Release
 * Removed the previously deprecated 'accelerate' mode and all associated keywords and code.
 
 ### Deprecations
-* previouslly deprecated 'hostfile' config settings have been 're-deprecated' as previouslly code did not warn about deprecated configuration settings.
 
 #### Deprecated Modules (to be removed in 2.9):
 
@@ -18,7 +17,7 @@ Ansible Changes By Release
 
 ### Minor Changes
 * added a few new magic vars corresponding to configuration/command line options:
-  ansible_diff_mode, ansible_inventory_sources, ansible_limit, ansible_run_tags , ansible_forks and ansible_skip_tags
+  `ansible_diff_mode`, `ansible_inventory_sources`, `ansible_limit`, `ansible_run_tags` , `ansible_forks` and `ansible_skip_tags`
 * Updated the bundled copy of the six library to 1.11.0
 
 ### New Modules
@@ -76,6 +75,7 @@ Ansible Changes By Release
   moved to `ansible.utils.unsafe_proxy` to avoid a circular import.
 * The win_get_url module has the dictionary 'win_get_url' in its results deprecated,
   its content is now also available directly in the resulting output, like other modules.
+* previouslly deprecated 'hostfile' config settings have been 're-deprecated' as before the code did not warn about deprecated configuration settings, but it does now.
 
 #### Deprecated Modules (to be removed in 2.8):
 * azure: use M(azure_rm_virtualmachine) instead
