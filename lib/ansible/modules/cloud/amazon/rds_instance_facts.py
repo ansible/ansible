@@ -9,17 +9,17 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: rds_instance_facts
-version_added: "2.4"
+version_added: "2.5"
 short_description: obtain facts about one or more RDS instances
 description:
   - obtain facts about one or more RDS instances
 options:
-  name:
+  db_instance_identifier:
     description:
-      - Name of an RDS instance.
+      - The RDS instance's unique identifier.
     required: false
     aliases:
-      - name
+      - id
   filters:
     description:
       - A filter that specifies one or more DB instances to describe.
@@ -44,6 +44,8 @@ EXAMPLES = '''
 # Get all RDS instances
 - rds_instance_facts:
 '''
+
+# FIXME - return needs updated
 
 RETURN = '''
 instances:
@@ -74,8 +76,9 @@ instances:
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn, ansible_dict_to_boto3_filter_list
-from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict
-from ansible.module_utils.aws.rds import RDSDBInstance
+# FIXME - from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict
+from ansible.module_utils.aws.rds import instance_to_facts
+
 
 try:
     import botocore
@@ -94,38 +97,34 @@ def instance_facts(module, conn):
         params['Filters'] = ansible_dict_to_boto3_filter_list(filters)
 
     marker = ''
-    results = list()
-    while True:
-        try:
-            response = conn.describe_db_instances(Marker=marker, **params)
-            results.extend(response['DBInstances'])
-            marker = response.get('Marker')
-        except botocore.exceptions.ClientError as e:
-            if e.response['Error']['Code'] == 'DBInstanceNotFound':
-                break
-            module.fail_json_aws(e, "trying to get instance information")
-        if not marker:
-            break
+    try:
+        results = conn.describe_db_instances(Marker=marker, **params)['DBInstances']
+    except botocore.exceptions.ClientError as e:
+        if e.response['Error']['Code'] == 'DBInstanceNotFound':
+            results = []
+        module.fail_json_aws(e, "trying to get instance information")
 
-    # Get tags for each response
-    for instance in results:
-        instance['tags'] = boto3_tag_list_to_ansible_dict(
-            conn.list_tags_for_resource(
-                ResourceName=instance['DBInstanceArn'])['TagList'])
+    # FIXME: Get tags for each response
+    # for instance in results:
+    #     instance['tags'] = boto3_tag_list_to_ansible_dict(
+    #         conn.list_tags_for_resource(
+    #             ResourceName=instance['DBInstanceArn'])['TagList'])
 
     # FIXME - this needs to be simplified to do one snakify as we get rid of the
     # RDSDBInstance class - see https://github.com/ansible/ansible/pull/26598
-    module.exit_json(
-        changed=False, db_instances=[
-            RDSDBInstance(instance).data for instance in results])
+
+    return dict(changed=False, db_instances=[instance_to_facts(instance) for instance in results])
+
+
+argument_spec = dict(
+    db_instance_identifier=dict(aliases=['id']),
+    filters=dict(type='list', default=[])
+)
 
 
 def main():
     module = AnsibleAWSModule(
-        argument_spec=dict(
-            name=dict(aliases=['instance_name']),
-            filters=dict(type='list', default=[])
-        ),
+        argument_spec=argument_spec,
         supports_check_mode=True,
     )
 
@@ -140,7 +139,7 @@ def main():
     except Exception as e:
         module.fail_json_aws(e, msg="trying to connect to AWS")
 
-    instance_facts(module, conn)
+    module.exit_json(**instance_facts(module, conn))
 
 
 if __name__ == '__main__':
