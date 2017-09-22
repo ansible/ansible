@@ -189,7 +189,7 @@ def adjust_recursive_directory_permissions(pre_existing_dir, new_directory_list,
     Walk the new directories list and make sure that permissions are as we would expect
     '''
 
-    if len(new_directory_list) > 0:
+    if new_directory_list:
         working_dir = os.path.join(pre_existing_dir, new_directory_list.pop(0))
         directory_args['path'] = working_dir
         changed = module.set_fs_attributes_if_different(directory_args, changed)
@@ -220,15 +220,14 @@ class Artifact(object):
     def path(self, with_version=True):
         base = posixpath.join(self.group_id.replace(".", "/"), self.artifact_id)
         if with_version and self.version:
-            return posixpath.join(base, self.version)
-        else:
-            return base
+            base = posixpath.join(base, self.version)
+        return base
 
     def _generate_filename(self):
+        filename = self.artifact_id + "-" + self.classifier + "." + self.extension
         if not self.classifier:
-            return self.artifact_id + "." + self.extension
-        else:
-            return self.artifact_id + "-" + self.classifier + "." + self.extension
+            filename = self.artifact_id + "." + self.extension
+        return filename
 
     def get_filename(self, filename=None):
         if not filename:
@@ -238,12 +237,12 @@ class Artifact(object):
         return filename
 
     def __str__(self):
+        result = "%s:%s:%s" % (self.group_id, self.artifact_id, self.version)
         if self.classifier:
-            return "%s:%s:%s:%s:%s" % (self.group_id, self.artifact_id, self.extension, self.classifier, self.version)
+            result = "%s:%s:%s:%s:%s" % (self.group_id, self.artifact_id, self.extension, self.classifier, self.version)
         elif self.extension != "jar":
-            return "%s:%s:%s:%s" % (self.group_id, self.artifact_id, self.extension, self.version)
-        else:
-            return "%s:%s:%s" % (self.group_id, self.artifact_id, self.version)
+            result = "%s:%s:%s:%s" % (self.group_id, self.artifact_id, self.extension, self.version)
+        return result
 
     @staticmethod
     def parse(input):
@@ -293,8 +292,10 @@ class MavenDownloader:
             timestamp = xml.xpath("/metadata/versioning/snapshot/timestamp/text()")[0]
             buildNumber = xml.xpath("/metadata/versioning/snapshot/buildNumber/text()")[0]
             for snapshotArtifact in xml.xpath("/metadata/versioning/snapshotVersions/snapshotVersion"):
-                artifact_classifier = snapshotArtifact.xpath("classifier/text()")[0] if len(snapshotArtifact.xpath("classifier/text()")) > 0 else ''
-                artifact_extension = snapshotArtifact.xpath("extension/text()")[0] if len(snapshotArtifact.xpath("extension/text()")) > 0 else ''
+                classifier = snapshotArtifact.xpath("classifier/text()")
+                artifact_classifier = classifier[0] if classifier else ''
+                extension = snapshotArtifact.xpath("extension/text()")
+                artifact_extension = extension[0] if extension else ''
                 if artifact_classifier == artifact.classifier and artifact_extension == artifact.extension:
                     return self._uri_for_artifact(artifact, snapshotArtifact.xpath("value/text()")[0])
             return self._uri_for_artifact(artifact, artifact.version.replace("SNAPSHOT", timestamp + "-" + buildNumber))
@@ -342,6 +343,7 @@ class MavenDownloader:
                                 artifact.classifier, artifact.extension)
 
         url = self.find_uri_for_artifact(artifact)
+        result = True
         if not self.verify_md5(filename, url + ".md5"):
             response = self._request(url, "Failed to download artifact " + str(artifact), lambda r: r)
             if response:
@@ -349,11 +351,9 @@ class MavenDownloader:
                 # f.write(response.read())
                 self._write_chunks(response, f, report_hook=self.chunk_report)
                 f.close()
-                return True
             else:
-                return False
-        else:
-            return True
+                result = False
+        return result
 
     def chunk_report(self, bytes_so_far, chunk_size, total_size):
         percent = float(bytes_so_far) / total_size
@@ -383,12 +383,12 @@ class MavenDownloader:
         return bytes_so_far
 
     def verify_md5(self, file, remote_md5):
-        if not os.path.exists(file):
-            return False
-        else:
+        result = False
+        if os.path.exists(file):
             local_md5 = self._local_md5(file)
             remote = self._request(remote_md5, "Failed to download MD5", lambda r: r.read())
-            return local_md5 == remote
+            result = local_md5 == remote
+        return result
 
     def _local_md5(self, file):
         md5 = hashlib.md5()
