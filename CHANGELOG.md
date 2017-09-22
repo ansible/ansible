@@ -30,7 +30,7 @@ Ansible Changes By Release
 * Fix ec2_lc module for an unknown parameter name (https://github.com/ansible/ansible/pull/30573)
 * Change configuration of defaults to use standard jinja2 instead of custom
   eval() for using variables in the default field of config (https://github.com/ansible/ansible/pull/30650)
-
+* added missing entry in chlog deprecation
 * Fixed precedence and values for become flags and executable settings
 * Fix for win_domain_membership to throw more helpful error messages and check/fix when calling WMI function after changing workgroup
 * Fix for win_power_plan to compare the OS version's correctly and work on Windows 10/Server 2016
@@ -83,6 +83,8 @@ Ansible Changes By Release
   moved to `ansible.utils.unsafe_proxy` to avoid a circular import.
 * The win_get_url module has the dictionary 'win_get_url' in its results deprecated,
   its content is now also available directly in the resulting output, like other modules.
+* previouslly deprecated 'hostfile' config settings have been 're-deprecated' as before the code did not warn about deprecated configuration settings
+, but it does now.
 
 #### Deprecated Modules (to be removed in 2.8):
 * azure: use M(azure_rm_virtualmachine) instead
