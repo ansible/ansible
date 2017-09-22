@@ -1162,6 +1162,7 @@ class LinuxHardware(Hardware):
 
             # model name is for Intel arch, Processor (mind the uppercase P)
             # works for some ARM devices, like the Sheevaplug.
+            # 'ncpus active' is SPARC attribute
             if key in ['model name', 'Processor', 'vendor_id', 'cpu', 'Vendor']:
                 if 'processor' not in self.facts:
                     self.facts['processor'] = []
@@ -1185,6 +1186,8 @@ class LinuxHardware(Hardware):
                 cores[coreid] = int(data[1].strip())
             elif key == '# processors':
                 self.facts['processor_cores'] = int(data[1].strip())
+            elif key == 'ncpus active':
+                i = int(data[1].strip())
 
         # Skip for platforms without vendor_id/model_name in cpuinfo (e.g ppc64le)
         if vendor_id_occurrence > 0:
