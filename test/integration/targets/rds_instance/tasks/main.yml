@@ -35,10 +35,10 @@
         wait_timeout: 1200
         wait: yes
         size: 5
-        instance_type: db.t2.micro
-        db_engine: postgres
-        username: hello
-        password: "world123$$"
+        db_instance_class: db.t2.micro
+        engine: postgres
+        master_username: hello
+        master_user_password: "world123$$"
         region: '{{ec2_region}}'
         aws_access_key: '{{aws_access_key}}'
         aws_secret_key: '{{aws_secret_key}}'
@@ -100,7 +100,7 @@
         size: 5
         instance_type: db.t2.micro
         db_engine: postgres
-        username: hello
+        master_username: hello
         port: 3307
         apply_immediately: yes
         region: '{{ec2_region}}'
@@ -120,7 +120,7 @@
         size: 5
         instance_type: db.t2.micro
         db_engine: postgres
-        username: hello
+        master_username: hello
         port: 3307
         apply_immediately: yes
         region: '{{ec2_region}}'
