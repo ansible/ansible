@@ -197,12 +197,9 @@ def get_publishers(module):
 def unstringify(val):
     if val == "-" or val == '':
         return None
-    elif val == "true":
-        return True
-    elif val == "false":
-        return False
-    else:
-        return val
+    if val in ["true", "false"]:
+        return val == 'true'
+    return val
 
 
 from ansible.module_utils.basic import *
