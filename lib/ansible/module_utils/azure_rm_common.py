@@ -561,10 +561,8 @@ class AzureRMModuleBase(object):
             self.log('Create blob service')
             if storage_blob_type == 'page':
                 return CloudStorageAccount(storage_account_name, account_keys.keys[0].value).create_page_blob_service()
-            elif storage_blob_type == 'block':
-                return CloudStorageAccount(storage_account_name, account_keys.keys[0].value).create_block_blob_service()
             else:
-                raise Exception("Invalid storage blob type")
+                return CloudStorageAccount(storage_account_name, account_keys.keys[0].value).create_block_blob_service()
         except Exception as exc:
             self.fail("Error creating blob service client for storage account {0} - {1}".format(storage_account_name,
                                                                                                 str(exc)))
