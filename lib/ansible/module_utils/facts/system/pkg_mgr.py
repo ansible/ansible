@@ -50,19 +50,27 @@ PKG_MGRS = [{'path': '/usr/bin/yum', 'name': 'yum'},
             ]
 
 
+class OpenBSDPkgMgrFactCollector(BaseFactCollector):
+    name = 'pkg_mgr'
+    _fact_ids = set()
+    _platform = 'OpenBSD'
+
+    def collect(self, module=None, collected_facts=None):
+        facts_dict = {}
+
+        facts_dict['pkg_mgr'] = 'openbsd_pkg'
+        return facts_dict
+
+
 # the fact ends up being 'pkg_mgr' so stick with that naming/spelling
 class PkgMgrFactCollector(BaseFactCollector):
     name = 'pkg_mgr'
     _fact_ids = set()
+    _platform = 'Generic'
 
     def collect(self, module=None, collected_facts=None):
         facts_dict = {}
         collected_facts = collected_facts or {}
-
-        pkg_mgr_name = None
-        if collected_facts.get('system') == 'OpenBSD':
-            facts_dict['pkg_mgr'] = 'openbsd_pkg'
-            return facts_dict
 
         pkg_mgr_name = 'unknown'
         for pkg in PKG_MGRS:

@@ -33,6 +33,7 @@ from ansible.module_utils.facts.system.fips import FipsFactCollector
 from ansible.module_utils.facts.system.local import LocalFactCollector
 from ansible.module_utils.facts.system.lsb import LSBFactCollector
 from ansible.module_utils.facts.system.pkg_mgr import PkgMgrFactCollector
+from ansible.module_utils.facts.system.pkg_mgr import OpenBSDPkgMgrFactCollector
 from ansible.module_utils.facts.system.platform import PlatformFactCollector
 from ansible.module_utils.facts.system.python import PythonFactCollector
 from ansible.module_utils.facts.system.selinux import SelinuxFactCollector
@@ -110,6 +111,7 @@ collectors = [ApparmorFactCollector,
               SunOSNetworkCollector,
 
               PkgMgrFactCollector,
+              OpenBSDPkgMgrFactCollector,
               PlatformFactCollector,
               PythonFactCollector,
               SelinuxFactCollector,
