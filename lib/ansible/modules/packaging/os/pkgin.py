@@ -193,8 +193,7 @@ def query_package(module, name):
                 return 'outdated'
             elif raw_state == '=' or raw_state == '>':
                 return 'present'
-            else:
-                return False
+            return False
             # no fall-through
 
         # No packages were matched, so return False
@@ -210,10 +209,9 @@ def format_action_message(module, action, count):
     else:
         message = "%(actioned)s %(count)d package" % vars
 
-    if count == 1:
-        return message
-    else:
-        return message + "s"
+    if count > 1:
+        message = message + "s"
+    return message
 
 
 def format_pkgin_command(module, command, package=None):
@@ -233,10 +231,10 @@ def format_pkgin_command(module, command, package=None):
             "package": package,
             "force": force}
 
+    msg = "%(pkgin)s -y %(force)s %(command)s %(package)s"
     if module.check_mode:
-        return "%(pkgin)s -n %(command)s %(package)s" % vars
-    else:
-        return "%(pkgin)s -y %(force)s %(command)s %(package)s" % vars
+        msg = "%(pkgin)s -n %(command)s %(package)s"
+    return msg % vars
 
 
 def remove_packages(module, packages):
@@ -290,10 +288,12 @@ def update_package_db(module):
         format_pkgin_command(module, "update"))
 
     if rc == 0:
+        ok = True
+        message = "updated repository database"
         if re.search('database for.*is up-to-date\n$', out):
-            return False, "datebase is up-to-date"
-        else:
-            return True, "updated repository database"
+            ok = False
+            message = "datebase is up-to-date"
+        return ok, message
     else:
         module.fail_json(msg="could not update package db")
 
