@@ -77,11 +77,10 @@ def query_package(module, slackpkg_path, name):
     machine = platform.machine()
     packages = glob.glob("/var/log/packages/%s-*-[%s|noarch]*" % (name,
                                                                   machine))
-
-    if len(packages) > 0:
-        return True
-
-    return False
+    result = False
+    if packages:
+        result = True
+    return result
 
 
 def remove_packages(module, slackpkg_path, packages):
