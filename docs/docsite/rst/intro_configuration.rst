@@ -585,8 +585,8 @@ This is the default location Ansible looks to find modules::
      library = /usr/share/ansible
 
 Ansible can look in multiple locations if you feed it a colon
-separated path, and it also will look for modules in the :file:`./library`
-directory alongside a playbook.
+separated path. In addition to library paths, Ansible also searches other 
+`module paths <http://docs.ansible.com/ansible/modules_intro.html#module-paths>`_.
 
 This can be used to manage modules pulled from several different locations.
 For instance, a site wishing to checkout modules from several different git

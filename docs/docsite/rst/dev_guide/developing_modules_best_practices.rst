@@ -150,8 +150,10 @@ module file and test that the real module works via :command:`ansible` or
 Module Paths
 ````````````
 
-If you are having trouble getting your module "found" by ansible, be
-sure it is in the :envvar:`ANSIBLE_LIBRARY` environment variable.
+**Troubleshooting Module Discovery**
+
+If you are having trouble getting your module "found" by ansible, be sure it 
+is in the correct path, see `Module Paths <http://docs.ansible.com/ansible/modules_intro.html#module-paths>`_.
 
 If you have a fork of one of the ansible module projects, do something like this::
 
@@ -189,5 +191,4 @@ Avoid creating a module that does the work of other modules; this leads to code 
 
 Avoid creating 'caches'. Ansible is designed without a central server or authority, so you cannot guarantee it will not run with different permissions, options or locations. If you need a central authority, have it on top of Ansible (for example, using bastion/cm/ci server or tower); do not try to build it into modules.
 
-Always use the hacking/test-module script when developing modules and it will warn
-you about these kind of things.
+Always use the hacking/test-module script when developing modules to receive warnings about these issues.

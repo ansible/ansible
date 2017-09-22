@@ -48,6 +48,52 @@ A list of all installed modules is also available::
 
     ansible-doc -l
 
+Module Paths
+````````````
+
+Ansible can discover modules in several locations. 
+
+**Relative to Playbooks**
+
+The easiest way to include a module is by adding a ``library`` folder to your project 
+relative to your playbooks. Module files (.py, etc.) can be added there.
+
+The structure will look like this::
+
+    ├── playbook.yml
+    └── library
+        ├── my_module.py
+        └── my_other_module.py
+
+.. note::
+
+    Currently Ansible does not support organizing modules into sub-folders under the ``library``
+    folder.
+    
+**Inside a Role**
+
+The library folder can also exist within a role following the same layout above.
+
+The structure would look like this for a "webservers" role::
+
+    └── roles
+        └── webservers
+            ├── tasks
+            ├── vars
+            ├── ...
+            └── library
+                ├── my_module.py
+                └── my_other_module.py
+
+**Ansible Configuration File**
+
+In the Ansible configuration file you can modify the `library <http://docs.ansible.com/ansible/intro_configuration.html#library>`_
+setting to add additional module search paths.
+
+**Environment & Command-Line**
+
+You can specify additional module paths using the ``--module-path`` command-line option. You may also 
+specify paths in the :envvar:`ANSIBLE_LIBRARY` environment variable. 
 
 .. seealso::
 
