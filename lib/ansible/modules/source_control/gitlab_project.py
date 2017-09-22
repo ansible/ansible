@@ -22,7 +22,7 @@ description:
 version_added: "2.1"
 author: "Werner Dijkerman (@dj-wasabi)"
 requirements:
-    - pyapi-gitlab python module
+    - pyapi-gitlab python module (version: 7.5.x)
 options:
     server_url:
         description:
