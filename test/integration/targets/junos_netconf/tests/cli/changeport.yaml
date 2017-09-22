@@ -31,7 +31,7 @@
 
 - name: wait for persistent socket to timeout, this ensures new socket creation with connection type netconf
   pause:
-    seconds: 30
+    seconds: 120
 
 - name: Ensure we can communicate over 22
   junos_command:
@@ -55,7 +55,7 @@
 
 - name: wait for persistent socket to timeout, this ensures new socket creation with connection type netconf
   pause:
-    seconds: 30
+    seconds: 120
 
 - name: Set back netconf to default port
   junos_netconf:
