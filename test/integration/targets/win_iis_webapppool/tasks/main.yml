@@ -46,16 +46,16 @@
       name: '{{test_iis_webapppool_name}}'
       state: absent
 
-  - name: remove IIS features after test
-    win_feature:
-      name: Web-Server
-      state: absent
-      includ_sub_features: True
-      include_management_tools: True
-    register: feature_uninstall
+  # - name: remove IIS features after test
+  #   win_feature:
+  #     name: Web-Server
+  #     state: absent
+  #     includ_sub_features: True
+  #     include_management_tools: True
+  #   register: feature_uninstall
   
-  - name: reboot after feature install
-    win_reboot:
-    when: feature_uninstall.reboot_required
+  # - name: reboot after feature install
+  #   win_reboot:
+  #   when: feature_uninstall.reboot_required
 
   when: module_available.rc == 0
