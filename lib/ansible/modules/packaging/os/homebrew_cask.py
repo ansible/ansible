@@ -209,16 +209,16 @@ class HomebrewCask(object):
             - absent
         '''
 
-        if state is None:
-            return True
-        else:
-            return (
+        result = True
+        if state is not None:
+            result = (
                 isinstance(state, string_types)
                 and state.lower() in (
                     'installed',
                     'absent',
                 )
             )
+        return result
 
     @classmethod
     def valid_module(cls, module):
