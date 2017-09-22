@@ -76,7 +76,7 @@ containerDefinitions:
                     description: The port number on the container.
                     returned: when present
                     type: int
-                hostPort
+                hostPort:
                     description: The port number on the container instance to reserve for your container.
                     returned: when present
                     type: int
