@@ -216,7 +216,7 @@ def repo_exists(module, repodata, overwrite_multiple):
             if repodata[kw] == oldr[kw] and oldr not in repos:
                 repos.append(oldr)
 
-    if len(repos) == 0:
+    if not repos:
         # Repo does not exist yet
         return (False, False, None)
     elif len(repos) == 1:
