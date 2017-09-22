@@ -816,7 +816,7 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
         }
     },
 
-    # ArchLinux with an empty /etc/arch-release and a /etc/os-releae with NAME=Arch Linux
+    # ArchLinux with an empty /etc/arch-release and a /etc/os-release with "NAME=Arch Linux"
     {
         "platform.dist": [
             "",
@@ -837,8 +837,8 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
         }
     },
 
-    # ArchLinux with no /etc/arch-release and a /etc/os-release with NAME=Arch Linux
-    # The fact needs to map 'Arch Linux' to 'Archlinux' for compat
+    # ArchLinux with no /etc/arch-release but with a /etc/os-release with NAME=Arch Linux
+    # The fact needs to map 'Arch Linux' to 'Archlinux' for compat with 2.3 and earlier facts
     {
         "platform.dist": [
             "",
@@ -934,12 +934,10 @@ def _test_one_distribution(module, testcase):
         res = distro_collector.collect(module)
         return res
 
-    #print(testcase)
     generated_facts = get_facts(testcase)
 
     # testcase['result'] has a list of variables and values it expects Facts() to set
     for key, val in testcase['result'].items():
-        #print('Key: %s' % key)
         assert key in generated_facts
         msg = 'Comparing value of %s on %s, should: %s, is: %s' %\
             (key, testcase['name'], val, generated_facts[key])
