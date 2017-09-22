@@ -13,8 +13,8 @@ DOCUMENTATION = '''
         - Uses a YAML configuration file to define var expresisions and group conditionals
         - The Jinja2 conditionals that qualify a host for membership.
         - The JInja2 exprpessions are calculated and assigned to the variables
-        - Only variables already available from previous inventories can be used for templating.
-        - Failed expressions will be ignored (assumes vars were missing).
+        - Only variables already available from previous inventories or the fact cache can be used for templating.
+        - When `strict` is False, failed expressions will be ignored (assumes vars were missing).
     extends_documentation_fragment:
       - constructed
 '''
@@ -22,8 +22,13 @@ DOCUMENTATION = '''
 EXAMPLES = '''
     # inventory.config file in YAML format
     plugin: comstructed
+    strict: False
     compose:
         var_sum: var1 + var2
+
+        # this variable will only be set if I have a persistenet fact cache enabled (and i have facts)
+        # `strict: False` will skip this instead of producing an error if it is misisng facts.
+        server_type: "ansible_hostname | regex_replace ('(.{6})(.{2}).*', '\\2')"
     groups:
         # simple name matching
         webservers: inventory_hostname.startswith('web')
