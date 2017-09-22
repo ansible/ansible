@@ -342,7 +342,7 @@ class NetAppCDOTVolume(object):
     def change_volume(self):
         """
         Change volume settings.
-        
+
         Currently implemented options that can be changed:
 
         - export-policy
