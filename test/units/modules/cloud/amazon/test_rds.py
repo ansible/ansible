@@ -464,11 +464,19 @@ def test_select_params_should_provide_needed_args_to_create_if_module_has_basics
         "db_instance_class": "t1-pretty-small-really",
         "engine": "postgres",
         "allocated_storage": 5,
-        "username": "jake",
-        "password": "letmeinletmein",
+        "master_username": "jake",
+        "master_user_password": "letmeinletmein",
     })
     module = rds_i.setup_module_object()
     params = rds_i.select_parameters(module, rds_i.db_create_required_vars, rds_i.db_create_valid_vars)
     for i in needed_args:
         assert i in params, "{0} parameter missing".format(i)
         assert len(params[i]) > 0, "{0} parameter lacks value".format(i)
+
+
+def test_camel_should_convert_varied_variables_correctly():
+    assert rds_i.camel('multi_az') == 'MultiAZ'
+    assert rds_i.camel('vpc_security_group_ids') == 'VpcSecurityGroupIds'
+    assert rds_i.camel('db_name') == 'DBName'
+    assert rds_i.camel('tde_credential_arn') == 'TdeCredentialArn'
+    assert rds_i.camel('performance_insights_kms_key_id') == 'PerformanceInsightsKMSKeyId'

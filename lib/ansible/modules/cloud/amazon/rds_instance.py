@@ -87,10 +87,10 @@ options:
     description:
       - The instance type of the database. If source_instance is specified then the replica inherits
         the same instance type as the source instance.
-  username:
+  master_username:
     description:
       - Master database username.
-  password:
+  master_user_password:
     description:
       - Password for the master database username.
   db_name:
@@ -100,7 +100,7 @@ options:
     description:
       - Version number of the database engine to use. If not specified then
       - the current Amazon RDS default engine version is used.
-  parameter_group:
+  db_parameter_group_name:
     description:
       - Name of the DB parameter group to associate with this instance. If omitted
       - then the RDS default DBParameterGroup will be used.
@@ -110,7 +110,7 @@ options:
       - The license model for this DB instance.
     required: false
     choices:  [ 'license-included', 'bring-your-own-license', 'general-public-license', 'postgresql-license' ]
-  multi_zone:
+  multi_az:
     description:
       - Specifies if this is a Multi-availability-zone deployment. Can not be used in conjunction with zone parameter.
     choices: [ "yes", "no" ]
@@ -119,48 +119,51 @@ options:
     description:
       - Specifies the number of IOPS for the instance. Must be an integer greater than 1000.
     required: false
-  security_groups:
+  db_security_groups:
     description: Comma separated list of one or more security groups.
     required: false
-  vpc_security_groups:
+  vpc_security_group_ids:
     description: Comma separated list of one or more vpc security group ids. Also requires I(subnet) to be specified.
+    aliases:
+      - security_groups
     required: false
   port:
     description: Port number that the DB instance uses for connections.
     required: false
     default: 3306 for mysql, 1521 for Oracle, 1433 for SQL Server, 5432 for PostgreSQL.
-  upgrade:
+  auto_minor_version_upgrade:
     description: Indicates that minor version upgrades should be applied automatically.
     required: false
     default: no
     choices: [ "yes", "no" ]
-  option_group:
+  option_group_name:
     description: The name of the option group to use. If not specified then the default option group is used.
     required: false
-  maint_window:
+  preferred_maintenance_window:
     description:
        - "Maintenance window in format of ddd:hh24:mi-ddd:hh24:mi (Example: Mon:22:00-Mon:23:15). "
        - "If not specified then AWS will assign a random maintenance window."
     required: false
-  backup_window:
+  preferred_backup_window:
     description:
        - "Backup window in format of hh24:mi-hh24:mi (Example: 04:00-05:45). If not specified "
        - "then AWS will assign a random backup window."
     required: false
-  backup_retention:
+  backup_retention_period:
     description:
        - "Number of days backups are retained. Set to 0 to disable backups. Default is 1 day. "
        - "Valid range: 0-35."
     required: false
-  zone:
+  availability_zone:
     description:
       - availability zone in which to launch the instance.
     required: false
     aliases: ['aws_zone', 'ec2_zone']
-  subnet:
+  db_subnet_group_name:
     description:
       - VPC subnet group. If specified then a VPC instance is created.
     required: false
+    aliases: ['subnet']
   snapshot:
     description:
       - Name of snapshot to take when state=absent - if no snapshot name is provided then no snapshot is taken.
@@ -226,8 +229,8 @@ EXAMPLES = '''
     engine: MySQL
     allocated_storage: 10
     db_instance_class: db.m1.small
-    username: mysql_admin
-    password: 1nsecure
+    master_username: mysql_admin
+    master_user_password: 1nsecure
     tags:
       Environment: testing
       Application: cms
@@ -271,7 +274,7 @@ EXAMPLES = '''
      snapshot: mypostgres-snapshot
      id: MyNewInstanceID
      region: us-west-2
-     zone: us-west-2b
+     availability_zone: us-west-2b
      subnet: default-vpc-xx441xxx
      publicly_accessible: yes
      wait: yes
@@ -283,7 +286,7 @@ EXAMPLES = '''
 - rds_instance:
      id: MyNewInstanceID
      region: us-west-2
-     vpc_security_groups: sg-xxx945xx
+     vpc_security_group_ids: sg-xxx945xx
 
 - debug:
     msg: "The new db endpoint is {{ rds.instance.endpoint }}"
@@ -361,19 +364,50 @@ def await_resource(conn, instance_id, status, module, await_pending=None):
     return resource
 
 
+# FIXME - parameters from create missing here
+#
+# DBClusterIdentifier *
+# Domain
+# DomainIAMRoleName
+# EnableIAMDatabaseAuthentication
+# EnablePerformanceInsights
+# KmsKeyId *
+# MonitoringInterval
+# MonitoringRoleArn
+# PerformanceInsightsKMSKeyId
+# PreferredBackupWindow * - I want this
+# PromotionTier
+# StorageEncrypted * - Shertel and I want this
+# TdeCredentialArn
+# TdeCredentialPassword
+# Timezone
+#
+# * means this something that had a real request and is actually worth doing
+
+
 aurora_create_required_vars = ['db_instance_identifier', 'db_instance_class', 'engine']
 aurora_create_valid_vars = ['apply_immediately', 'character_set_name', 'cluster', 'db_name',
-                            'engine_version', 'db_instance_class', 'license_model', 'maint_window',
-                            'option_group', 'parameter_group', 'port', 'publicly_accessible',
-                            'subnet', 'upgrade', 'tags', 'zone']
-db_create_required_vars = ['db_instance_identifier', 'engine', 'allocated_storage', 'db_instance_class',
-                           'username', 'password']
-db_create_valid_vars = ['backup_retention', 'backup_window',
-                        'character_set_name', 'cluster', 'db_name', 'engine_version',
-                        'license_model', 'maint_window', 'multi_zone',
-                        'option_group', 'parameter_group', 'port', 'publicly_accessible',
-                        'storage_type', 'subnet', 'upgrade', 'tags', 'security_groups',
-                        'vpc_security_groups', 'zone']
+                            'engine_version', 'db_instance_class', 'license_model', 'preferred_maintenance_window',
+                            'option_group_name', 'db_parameter_group_name', 'port', 'publicly_accessible',
+                            'db_subnet_group_name', 'auto_minor_version_upgrade', 'tags', 'availability_zone']
+db_create_required_vars = ['db_instance_identifier', 'engine', 'allocated_storage',
+                           'db_instance_class', 'master_username', 'master_user_password']
+db_create_valid_vars = ['backup_retention_period', 'preferred_backup_window', 'character_set_name', 'cluster',
+                        'db_name', 'engine_version', 'license_model', 'preferred_maintenance_window', 'multi_az',
+                        'option_group_name', 'db_parameter_group_name', 'port', 'publicly_accessible',
+                        'storage_type', 'db_subnet_group_name', 'auto_minor_version_upgrade', 'tags',
+                        'db_security_groups', 'vpc_security_group_ids', 'availability_zone']
+delete_required_vars = ['db_instance_identifier']
+delete_valid_vars = ['db_snapshot_identifier', 'skip_final_snapshot', 'storage_type']
+restore_required_vars = ['db_instance_identifier', 'snapshot']
+restore_valid_vars = ['db_name', 'iops', 'license_model', 'multi_az', 'option_group_name', 'port',
+                      'publicly_accessible', 'storage_type', 'db_subnet_group_name', 'tags',
+                      'auto_minor_version_upgrade', 'availability_zone', 'instance_type']
+reboot_required_vars = ['db_instance_identifier']
+reboot_valid_vars = ['force_failover']
+replicate_required_vars = ['db_instance_identifier', 'source_instance']
+replicate_valid_vars = ['instance_type', 'iops', 'option_group_name', 'port', 'publicly_accessible',
+                        'storage_type', 'tags', 'auto_minor_version_upgrade', 'availability_zone']
 
 
 def create_db_instance(module, conn):
@@ -384,10 +418,10 @@ def create_db_instance(module, conn):
         required_vars = db_create_required_vars
         valid_vars = db_create_valid_vars
 
-    if module.params.get('subnet'):
-        valid_vars.append('vpc_security_groups')
+    if module.params.get('db_subnet_group_name'):
+        valid_vars.append('vpc_security_group_ids')
     else:
-        valid_vars.append('security_groups')
+        valid_vars.append('db_security_groups')
     params = select_parameters(module, required_vars, valid_vars)
 
     instance_id = module.params.get('db_instance_identifier')
@@ -413,12 +447,7 @@ def create_db_instance(module, conn):
 def replicate_db_instance(module, conn):
     """if the database doesn't exist, create it as a replica of an existing instance
     """
-
-    required_vars = ['db_instance_identifier', 'source_instance']
-    valid_vars = ['instance_type', 'iops', 'option_group', 'port',
-                  'publicly_accessible', 'storage_type',
-                  'tags', 'upgrade', 'zone']
-    params = select_parameters(module, required_vars, valid_vars)
+    params = select_parameters(module, replicate_required_vars, replicate_valid_vars)
     instance_id = module.params.get('db_instance_identifier')
 
     instance = get_db_instance(conn, instance_id)
@@ -449,32 +478,27 @@ def replicate_db_instance(module, conn):
 
 
 def delete_db_instance(module, conn):
-    required_vars = ['db_instance_identifier']
-
-    # we have to accept but ignore variables which have defaults
-    valid_vars = ['snapshot', 'skip_final_snapshot', 'storage_type']
-
     try:
         del(module.params['storage_type'])
     except KeyError:
         pass
 
-    params = select_parameters(module, required_vars, valid_vars)
+    params = select_parameters(module, delete_required_vars, delete_valid_vars)
     instance_id = module.params.get('db_instance_identifier')
-    snapshot = module.params.get('snapshot')
+    snapshot = module.params.get('db_snapshot_identifier')
 
     result = get_db_instance(conn, instance_id)
     if not result:
         return dict(changed=False)
     if result['DBInstanceStatus'] == 'deleting':
         return dict(changed=False)
+    if snapshot:
+        params["SkipFinalSnapshot"] = False
+        params["FinalDBSnapshotIdentifier"] = snapshot
+        del(params['DBSnapshotIdentifier'])
+    else:
+        params["SkipFinalSnapshot"] = True
     try:
-        if snapshot:
-            params["SkipFinalSnapshot"] = False
-            params["FinalDBSnapshotIdentifier"] = snapshot
-            del(params['DBSnapshotIdentifier'])
-        else:
-            params["SkipFinalSnapshot"] = True
         response = conn.delete_db_instance(**params)
         instance = result
     except Exception as e:
@@ -536,7 +560,7 @@ def update_rds_tags(module, client, db_instance=None):
 
 
 def abort_on_impossible_changes(module, before_facts):
-    for immutable_key in ['username', 'engine', 'db_name']:
+    for immutable_key in ['master_username', 'engine', 'db_name']:
         if immutable_key in module.params:
             try:
                 keys_different = module.params[immutable_key] != before_facts[immutable_key]
@@ -545,6 +569,15 @@ def abort_on_impossible_changes(module, before_facts):
             if (keys_different):
                 module.fail_json(msg="Cannot modify parameter %s for instance %s" %
                                  (immutable_key, before_facts['db_instance_identifier']))
+
+
+def camel(words):
+    def capitalize_with_abbrevs(word):
+        if word in ["db", "aws", "az", "kms"]:
+            return word.upper()
+        return word.capitalize()
+
+    return ''.join(capitalize_with_abbrevs(x) or '_' for x in words.split('_'))
 
 
 def snake_dict_to_cap_camel_dict(snake_dict):
@@ -564,14 +597,6 @@ def snake_dict_to_cap_camel_dict(snake_dict):
             return complex_type
         return new_type
 
-    def camel(words):
-        return ''.join(capitalize_with_abbrevs(x) or '_' for x in words.split('_'))
-
-    def capitalize_with_abbrevs(word):
-        if word in ["db", "aws"]:
-            return word.upper()
-        return word.capitalize()
-
     return camelize(snake_dict)
 
 
@@ -584,12 +609,12 @@ def prepare_params_for_modify(module, before_facts):
     force_password_update = module.params.get('force_password_update')
 
     # FIXME: we should use this for filtering in the diff!
-    # valid_vars = ['apply_immediately', 'backup_retention', 'backup_window',
+    # valid_vars = ['apply_immediately', 'backup_retention_period', 'preferred_backup_window',
     #               'engine_version', 'instance_type', 'iops', 'license_model',
-    #               'maint_window', 'multi_zone', 'option_group',
-    #               'parameter_group', 'password', 'port', 'publicly_accessible', 'allocated_storage',
-    #               'storage_type', 'subnet', 'upgrade',
-    #               'security_groups', 'vpc_security_groups']
+    #               'preferred_maintenance_window', 'multi_az', 'option_group_name',
+    #               'db_parameter_group_name', 'master_user_password', 'port', 'publicly_accessible', 'allocated_storage',
+    #               'storage_type', 'db_subnet_group_name', 'auto_minor_version_upgrade',
+    #               'db_security_groups', 'vpc_security_group_ids']
 
     abort_on_impossible_changes(module, before_facts)
 
@@ -605,8 +630,8 @@ def prepare_params_for_modify(module, before_facts):
 
     params = snake_dict_to_cap_camel_dict(facts_to_change)
 
-    if facts_to_change.get('security_groups'):
-        params['DBSecurityGroups'] = facts_to_change.get('security_groups').split(',')
+    if facts_to_change.get('db_security_groups'):
+        params['DBSecurityGroups'] = facts_to_change.get('db_security_groups').split(',')
 
     # modify_db_instance takes DBPortNumber in contrast to
     # create_db_instance which takes Port
@@ -617,7 +642,7 @@ def prepare_params_for_modify(module, before_facts):
 
     # modify_db_instance does not cope with DBSubnetGroup not moving VPC!
     try:
-        if (before_facts['subnet'] == params.get('DBSubnetGroupName')):
+        if (before_facts['db_subnet_group_name'] == params.get('DBSubnetGroupName')):
             del(params['DBSubnetGroupName'])
     except KeyError:
         pass
@@ -720,7 +745,7 @@ def modify_db_instance(module, conn):
 
 def promote_db_instance(module, conn):
     required_vars = ['db_instance_identifier']
-    valid_vars = ['backup_retention', 'backup_window']
+    valid_vars = ['backup_retention_period', 'preferred_backup_window']
     params = select_parameters(module, required_vars, valid_vars)
     instance_id = module.params.get('db_instance_identifier')
 
@@ -748,10 +773,7 @@ def promote_db_instance(module, conn):
 
 
 def reboot_db_instance(module, conn):
-    required_vars = ['db_instance_identifier']
-    valid_vars = ['force_failover']
-
-    params = select_parameters(module, required_vars, valid_vars)
+    params = select_parameters(module, reboot_required_vars, reboot_valid_vars)
     instance_id = module.params.get('db_instance_identifier')
     instance = get_db_instance(conn, instance_id)
     try:
@@ -769,13 +791,8 @@ def reboot_db_instance(module, conn):
 
 
 def restore_db_instance(module, conn):
-    required_vars = ['db_instance_identifier', 'snapshot']
-    valid_vars = ['db_name', 'iops', 'license_model', 'multi_zone',
-                  'option_group', 'port', 'publicly_accessible', 'storage_type',
-                  'subnet', 'tags', 'upgrade', 'zone', 'instance_type']
-    params = select_parameters(module, required_vars, valid_vars)
+    params = select_parameters(module, restore_required_vars, restore_valid_vars)
     instance_id = module.params.get('db_instance_identifier')
-
     changed = False
     instance = get_db_instance(conn, instance_id)
     if not instance:
@@ -831,14 +848,16 @@ def select_parameters(module, required_vars, valid_vars):
 
     for k in valid_vars:
         try:
-            facts[k] = module.params[k]
+            v = module.params[k]
+            if v is not None:
+                facts[k] = v
         except KeyError:
             pass
 
     params = snake_dict_to_cap_camel_dict(facts)
 
-    if params.get('security_groups'):
-        params['DBSecurityGroups'] = facts.get('security_groups').split(',')
+    if params.get('db_security_groups'):
+        params['DBSecurityGroups'] = facts.get('db_security_groups').split(',')
 
     # Convert tags dict to list of tuples that boto expects
     if 'Tags' in params and module.params['tags']:
@@ -853,25 +872,25 @@ argument_spec = dict(
     db_instance_class=dict(),
     source_instance=dict(),
     allocated_storage=dict(type='int', aliases=['size']),
-    username=dict(),
-    password=dict(no_log=True),
+    master_username=dict(),
+    master_user_password=dict(no_log=True),
     db_name=dict(),
     engine_version=dict(),
-    parameter_group=dict(),
+    db_parameter_group_name=dict(),
     license_model=dict(choices=LICENSE_MODELS),
-    multi_zone=dict(type='bool', default=False),
+    multi_az=dict(type='bool', default=False),
     iops=dict(type='int'),
     storage_type=dict(choices=['standard', 'io1', 'gp2'], default='standard'),
-    security_groups=dict(),
-    vpc_security_groups=dict(type='list'),
+    db_security_groups=dict(),
+    vpc_security_group_ids=dict(type='list'),
     port=dict(type='int'),
-    upgrade=dict(type='bool', default=False),
-    option_group=dict(),
-    maint_window=dict(),
-    backup_window=dict(),
-    backup_retention=dict(type='int'),
-    zone=dict(aliases=['aws_zone', 'ec2_zone']),
-    subnet=dict(),
+    auto_minor_version_upgrade=dict(type='bool', default=False),
+    option_group_name=dict(),
+    preferred_maintenance_window=dict(),
+    preferred_backup_window=dict(),
+    backup_retention_period=dict(type='int'),
+    availability_zone=dict(),
+    db_subnet_group_name=dict(aliases=['subnet']),
     wait=dict(type='bool', default=False),
     wait_timeout=dict(type='int', default=600),
     snapshot=dict(),
@@ -956,13 +975,13 @@ def run_task(module, conn):
             restore_return_dict = restore_db_instance(module, conn)
         ensure_return_dict = ensure_db_state(module, conn)
 
-        if ensure_return_dict['change']:
+        if ensure_return_dict['changed']:
             return_dict = ensure_return_dict
         else:
-            if restore_return_dict['change']:
+            if restore_return_dict['changed']:
                 return_dict = restore_return_dict
             else:
-                if replicate_return_dict['change']:
+                if replicate_return_dict['changed']:
                     return_dict = replicate_return_dict
                 else:
                     return_dict = ensure_return_dict
