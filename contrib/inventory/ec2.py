@@ -199,7 +199,6 @@ DEFAULTS = {
     'regions': 'all',
     'regions_exclude': 'us-gov-west-1, cn-north-1',
     'replace_dash_in_groups': 'True',
-    'replace_dash_in_groups': 'True',
     'route53': 'False',
     'route53_excluded_zones': '',
     'route53_hostnames': None,
