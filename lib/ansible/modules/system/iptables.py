@@ -237,7 +237,8 @@ options:
     version_added: "2.1"
   reject_with:
     description:
-      - Specifies the error packet type to return while rejecting.
+      - Specifies the error packet type to return while rejecting. It implies
+        "jump: REJECT"
     version_added: "2.1"
   icmp_type:
     description:
@@ -319,6 +320,13 @@ EXAMPLES = '''
 - iptables:
     chain: INPUT
     policy: DROP
+
+# Reject tcp with tcp-reset
+- iptables:
+    chain: INPUT
+    protocol: tcp
+    reject_with: tcp-reset
+    ip_version: ipv4
 '''
 
 import re
