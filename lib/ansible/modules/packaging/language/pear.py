@@ -85,9 +85,10 @@ def get_local_version(pear_output):
 
 def _get_pear_path(module):
     if module.params['executable'] and os.path.isfile(module.params['executable']):
-        return module.params['executable']
+        result = module.params['executable']
     else:
-        return module.get_bin_path('pear', True, [module.params['executable']])
+        result = module.get_bin_path('pear', True, [module.params['executable']])
+    return result
 
 def get_repository_version(pear_output):
     """Take pear remote-info output and get the latest version"""
