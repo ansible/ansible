@@ -114,7 +114,7 @@ def _check_new_pkg(module, package, repository_path):
     """
 
     if os.path.isdir(repository_path):
-        installp_cmd = module.get_bin_path("installp", True)
+        installp_cmd = module.get_bin_path('installp', True)
         rc, package_result, err = module.run_command(
             "%s -l -MR -d %s" % (installp_cmd, repository_path))
         if rc != 0:
@@ -147,13 +147,13 @@ def _check_installed_pkg(module, package, repository_path):
     :return: Bool, package data.
     """
 
-    lslpp_cmd = module.get_bin_path("lslpp", True)
+    lslpp_cmd = module.get_bin_path('lslpp', True)
 
     rc, lslpp_result, err = module.run_command(
         "%s -lcq %s*" % (lslpp_cmd, package))
     if rc == 1:
         package_state = ' '.join(err.split()[-2:])
-        if package_state == "not installed.":
+        if package_state == 'not installed.':
             return False, None
         else:
             module.fail_json(msg="Failed to run lslpp.", rc=rc, err=err)
@@ -312,12 +312,12 @@ def main():
 
     installp_cmd = module.get_bin_path('installp', True)
 
-    name = installp_params["name"]
-    repository_path = installp_params["repository_path"]
-    accept_license = installp_params["accept_license"]
-    state = installp_params["state"]
+    name = installp_params['name']
+    repository_path = installp_params['repository_path']
+    accept_license = installp_params['accept_license']
+    state = installp_params['state']
 
-    if state == "present":
+    if state == 'present':
         if repository_path is None:
             module.fail_json(msg="repository_path is required to install "
                                  "package")
@@ -325,7 +325,7 @@ def main():
         changed, msg = install(
             module, installp_cmd, name, repository_path, accept_license)
 
-    elif state == "absent":
+    elif state == 'absent':
         changed, msg = remove(module, installp_cmd, name)
 
     else:
