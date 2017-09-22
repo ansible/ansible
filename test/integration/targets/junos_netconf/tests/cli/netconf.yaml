@@ -45,7 +45,7 @@
 
 - name: wait for persistent socket to timeout
   pause:
-    seconds: 30
+    seconds: 120
 
 - name: Ensure we can NOT talk via netconf
   junos_command:
