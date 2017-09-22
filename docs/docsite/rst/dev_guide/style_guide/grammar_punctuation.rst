@@ -55,7 +55,7 @@ Commas are always important, considering the vast difference in meanings of the 
 - Let's eat, Grandma
 - Let's eat Grandma.
 
-Correct punctation could save Grandma's life.
+Correct punctuation could save Grandma's life.
 
 If that does not convince you, maybe this will:
 
