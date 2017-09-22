@@ -358,7 +358,7 @@ def do_with_password(module, cmd, password):
 def main():
     argument_spec = pgutils.postgres_common_argument_spec()
     argument_spec.update(dict(
-        db=dict(required=True, aliases=['name']),
+        db=dict(required=True, aliases=['name', 'database']),
         owner=dict(default=""),
         template=dict(default=""),
         encoding=dict(default=""),

@@ -716,7 +716,7 @@ def main():
             password=dict(default=None, no_log=True),
             state=dict(default="present", choices=["absent", "present"]),
             priv=dict(default=None),
-            db=dict(default=''),
+            db=dict(default='', aliases=['database']),
             port=dict(default='5432'),
             fail_on_user=dict(type='bool', default='yes'),
             role_attr_flags=dict(default=''),
