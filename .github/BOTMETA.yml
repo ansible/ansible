@@ -513,7 +513,7 @@ files:
     maintainers: wltjr
   $modules/packaging/os/portinstall.py: berenddeboer
   $modules/packaging/os/pulp_repo.py: sysadmind
-  $modules/packaging/os/redhat_subscription.py: alikins barnabycourt
+  $modules/packaging/os/redhat_subscription.py: alikins kahowell
   $modules/packaging/os/rhn_channel.py: alikins vincentvdk
   $modules/packaging/os/rhn_register.py: $team_rhn
   $modules/packaging/os/rpm_key.py: hacosta
