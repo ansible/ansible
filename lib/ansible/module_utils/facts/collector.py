@@ -205,22 +205,27 @@ def build_fact_id_to_collector_map(collectors_for_platform):
     return fact_id_to_collector_map, aliases_map
 
 
-def select_collector_classes(collector_names, all_fact_subsets):
+def select_collector_classes(collector_names, all_fact_subsets, all_collector_classes):
     # TODO: can be a set()
     seen_collector_classes = []
 
     selected_collector_classes = []
 
-    for collector_name in collector_names:
-        collector_classes = all_fact_subsets.get(collector_name, [])
+    # pprint.pprint(('all_collector_classes', all_collector_classes))
+    for candidate_collector_class in all_collector_classes:
+        candidate_collector_name = candidate_collector_class.name
 
-        # TODO? log/warn if we dont find an implementation of a fact_id?
+        if candidate_collector_name not in collector_names:
+            continue
+
+        collector_classes = all_fact_subsets.get(candidate_collector_name, [])
 
         for collector_class in collector_classes:
             if collector_class not in seen_collector_classes:
                 selected_collector_classes.append(collector_class)
                 seen_collector_classes.append(collector_class)
 
+    pprint.pprint(('selected_collector_classes', selected_collector_classes))
     return selected_collector_classes
 
 
@@ -271,6 +276,8 @@ def collector_classes_from_gather_subset(all_collector_classes=None,
 
     # pprint.pprint(('collector_names', collector_names))
     # pprint.pprint(('all_fact_subsets', dict(all_fact_subsets)))
-    selected_collector_classes = select_collector_classes(collector_names, all_fact_subsets)
+    selected_collector_classes = select_collector_classes(collector_names,
+                                                          all_fact_subsets,
+                                                          all_collector_classes)
 
     return selected_collector_classes
