@@ -1,6 +1,10 @@
 ---
 - debug: msg="START TRANSPORT:{{ connection.transport }} nxos_snapshot sanity test"
 
+- set_fact: snapshot_run="true"
+- set_fact: snapshot_run="false"
+  when: titanium and (connection.transport | match('nxapi'))
+
 - block:
   - name: create snapshot
     nxos_snapshot:
@@ -30,10 +34,13 @@
       path: '.'
       provider: "{{ connection }}"
 
+  when: snapshot_run
+
+  always:
   - name: delete snapshot
     nxos_snapshot:
       action: delete_all
       provider: "{{ connection }}"
-  when: (titanium is defined) and not ((titanium | search('true')))
+    ignore_errors: yes
 
 - debug: msg="END TRANSPORT:{{ connection.transport }} nxos_snapshot sanity test"
