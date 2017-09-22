@@ -71,6 +71,13 @@ options:
     default: None
     version_added: '2.5'
 
+  space_reserve:
+    description:
+    - Space reserve option to use.
+    choices: ['none', 'file', 'volume']
+    required: false
+    version_added: '2.5'
+
   vserver:
     description:
     - Name of the vserver to use.
@@ -90,6 +97,8 @@ EXAMPLES = """
         size: 20
         size_unit: mb
         vserver: ansibleVServer
+        export_policy: default
+        space_reserve: volume
         hostname: "{{ netapp_hostname }}"
         username: "{{ netapp_username }}"
         password: "{{ netapp_password }}"
@@ -150,6 +159,7 @@ class NetAppCDOTVolume(object):
                                     'pb', 'eb', 'zb', 'yb'], type='str'),
             aggregate_name=dict(type='str'),
             export_policy=dict(required=False, type='str'),
+            space_reserve=dict(required=False, type='str'),
             vserver=dict(required=True, type='str', default=None),
         ))
 
@@ -181,6 +191,11 @@ class NetAppCDOTVolume(object):
             self.export_policy = p['export_policy']
         else:
             self.export_policy = 'default'
+
+        if p['space_reserve'] is not None:
+            self.space_reserve = p['space_reserve']
+        else:
+            self.space_reserve = 'volume'
 
         if HAS_NETAPP_LIB is False:
             self.module.fail_json(msg="the python NetApp-Lib module is required")
@@ -221,6 +236,7 @@ class NetAppCDOTVolume(object):
             volume_space_attributes = volume_attributes.get_child_by_name(
                 'volume-space-attributes')
             current_size = volume_space_attributes.get_child_content('size')
+            current_space_reserve = volume_space_attributes.get_child_content('space-guarantee')
 
             # Get volume's current export-policy
             volume_export_attributes = volume_attributes.get_child_by_name(
@@ -239,6 +255,7 @@ class NetAppCDOTVolume(object):
             return_value = {
                 'name': self.name,
                 'size': current_size,
+                'space_reserve': current_space_reserve,
                 'is_online': is_online,
                 'export_policy': current_export_policy,
             }
@@ -251,6 +268,7 @@ class NetAppCDOTVolume(object):
                                 'containing-aggr-name': self.aggregate_name,
                                 'size': str(self.size),
                                 'junction-path': '/%s' % (self.name),
+                                'space-reserve': '%s' % (self.space_reserve),
                                 'export-policy': self.export_policy})
 
         try:
@@ -321,9 +339,14 @@ class NetAppCDOTVolume(object):
         except netapp_utils.zapi.NaApiError as e:
             self.module.fail_json(msg='Error re-sizing volume %s: %s' % (self.name, to_native(e)),
                                   exception=traceback.format_exc())
-    def change_export(self):
+    def change_volume(self):
         """
-        Change export policy of the volume.
+        Change volume settings.
+        
+        Currently implemented options that can be changed:
+
+        - export-policy
+        - space-reserve
         """
 
         volume_change = netapp_utils.zapi.NaElement('volume-modify-iter')
@@ -333,9 +356,15 @@ class NetAppCDOTVolume(object):
         volume_attributes.add_child_elem(volume_id_attributes)
 
         change_attributes = netapp_utils.zapi.NaElement('volume-attributes')
+
         change_export_attributes = netapp_utils.zapi.NaElement('volume-export-attributes')
         change_export_attributes.add_new_child('policy', self.export_policy)
+
+        change_space_attributes = netapp_utils.zapi.NaElement('volume-space-attributes')
+        change_space_attributes.add_new_child('space-guarantee', self.space_reserve)
+
         change_attributes.add_child_elem(change_export_attributes)
+        change_attributes.add_child_elem(change_space_attributes)
 
         query = netapp_utils.zapi.NaElement('query')
         query.add_child_elem(volume_attributes)
@@ -396,7 +425,7 @@ class NetAppCDOTVolume(object):
         volume_exists = False
         rename_volume = False
         resize_volume = False
-        change_export = False
+        change_volume = False
         volume_detail = self.get_volume()
 
         if volume_detail:
@@ -410,7 +439,10 @@ class NetAppCDOTVolume(object):
                     resize_volume = True
                     changed = True
                 if volume_detail['export_policy'] != self.export_policy:
-                    change_export = True
+                    change_volume = True
+                    changed = True
+                if volume_detail['space_reserve'] != self.space_reserve:
+                    change_volume = True
                     changed = True
                 if (volume_detail['is_online'] is not None) and (volume_detail['is_online'] != self.is_online):
                     changed = True
@@ -436,8 +468,8 @@ class NetAppCDOTVolume(object):
                     else:
                         if resize_volume:
                             self.resize_volume()
-                        if change_export:
-                            self.change_export()
+                        if change_volume:
+                            self.change_volume()
                         if volume_detail['is_online'] is not \
                                 None and volume_detail['is_online'] != \
                                 self.is_online:
