@@ -118,11 +118,13 @@ class EcsTaskManager:
     def describe_task_definitions(self, family):
         # Return the full descriptions of the task definition
         return self.ecs.describe_task_definition(taskDefinition=family)['taskDefinition']
+
+
 def main():
 
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        task_definition=dict(required=True, type='str' )
+        task_definition=dict(required=True, type='str')
     ))
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
