@@ -46,6 +46,174 @@ containerDefinitions:
     description: Returns a list of complex objects representing the containers
     returned: success
     type: complex
+    contains:
+        name:
+            description: The name of a container.
+            returned: always
+            type: string
+        image:
+            description: The image used to start a container.
+            returned: always
+            type: string
+        cpu:
+            description: The number of cpu units reserved for the container.
+            returned: always
+            type: int
+        memoryReservation:
+            description: The soft limit (in MiB) of memory to reserve for the container.
+            returned: when present
+            type: int
+        links:
+            description: Links to other containers.
+            returned: when present
+            type: string
+        portMappings:
+            description: The list of port mappings for the container.
+            returned: always
+            type: complex
+            contains:
+                containerPort:
+                    description: The port number on the container.
+                    type: int
+                hostPort
+                    description: The port number on the container instance to reserve for your container.
+                    type: int
+                protocol:
+                    description: The protocol used for the port mapping.
+                    type: string
+        essential:
+            description: Whether this is an essential container or not.
+            returned: always
+            type: bool
+        entryPoint:
+            description: The entry point that is passed to the container.
+            returned: when present
+            type: string
+        command:
+            description: The command that is passed to the container.
+            returned: when present
+            type: string
+        environment:
+            description: The environment variables to pass to a container.
+            returned: always
+            type: complex
+            contains:
+                name:
+                    description: The name of the environment variable.
+                    returned: when present
+                    type: string
+                value:
+                    description: The value of the environment variable.
+                    returned: when present
+                    type: string
+        mountPoints:
+            description: The mount points for data volumes in your container.
+            returned: always
+            type: complex
+            contains:
+                sourceVolume:
+                    description: The name of the volume to mount.
+                    returned: when present
+                    type: string
+                containerPath:
+                    description: The path on the container to mount the host volume at.
+                    returned: when present
+                    type: string
+                readOnly:
+                    description: If this value is true , the container has read-only access to the volume. If this value is false , then the container can write to the volume.
+                    returned: when present
+                    type: bool
+        volumesFrom:
+            description: Data volumes to mount from another container.
+            returned: always
+            type: complex
+            contains:
+                sourceContainer:
+                description: The name of another container within the same task definition to mount volumes from.
+                    returned: when present
+                    type: string
+                readOnly:
+                    description: If this value is true , the container has read-only access to the volume. If this value is false , then the container can write to the volume.
+                    returned: when present
+                    type: bool
+        hostname:
+            description: The hostname to use for your container.
+            returned: when present
+            type: string
+        user:
+            description: The user name to use inside the container.
+            returned: when present
+            type: string
+        workingDirectory:
+            description: The working directory in which to run commands inside the container.
+            returned: when present
+            type: string
+        disableNetworking:
+            description: When this parameter is true, networking is disabled within the container.
+            returned: when present
+            type: bool
+        privileged:
+            description: When this parameter is true, the container is given elevated privileges on the host container instance (similar to the root user).
+            returned: when present
+            type: bool
+        readonlyRootFilesystem:
+            description: When this parameter is true, the container is given read-only access to its root file system.
+            returned: when present
+            type: bool
+        dnsServers:
+            description: A list of DNS servers that are presented to the container.
+            returned: when present
+            type: string
+        dnsSearchDomains:
+            description: A list of DNS search domains that are presented to the container.
+            returned: when present
+            type: string
+        extraHosts:
+            description: A list of hostnames and IP address mappings to append to the /etc/hosts file on the container.
+            returned: when present
+            type: complex
+            contains:
+                hostname:
+                    description: The hostname to use in the /etc/hosts entry.
+                    returned: when present
+                    type: string
+                ipAddress:
+                    description: The IP address to use in the /etc/hosts entry.
+                    returned: when present
+                    type: string
+        dockerSecurityOptions:
+            description: A list of strings to provide custom labels for SELinux and AppArmor multi-level security systems.
+            returned: when present
+            type: string
+        dockerLabels:
+            description: A key/value map of labels to add to the container.
+            returned: when present
+            type: string
+        ulimits:
+            description: A list of ulimits to set in the container.
+            returned: when present
+            type: complex
+            contains:
+                name:
+                    description: The type of the ulimit .
+                    returned: when present
+                    type: string
+                softLimit:
+                    description: The soft limit for the ulimit type.
+                    returned: when present
+                    type: int
+                hardLimit:
+                    description: The hard limit for the ulimit type.
+                    returned: when present
+                    type: int
+        logConfiguration:
+            description: The log configuration specification for the container.
+            returned: when present
+            type: string
+        options:
+            description: The configuration options to send to the log driver.
+            returned: when present
+            type: string
 family:
     description: The family of your task definition, used as the definition name
     returned: always
@@ -70,6 +238,19 @@ volumes:
     description: The list of volumes in a task
     returned: always
     type: complex
+    contains:
+        name:
+            description: The name of the volume.
+            returned: when present
+            type: string
+        host:
+            description: The contents of the host parameter determine whether your data volume persists on the host container instance and where it is stored.
+            returned: when present
+            type: bool
+        sourcePath:
+            description: The path on the host container instance that is presented to the container.
+            returned: when present
+            type: string
 status:
     description: The status of the task definition
     returned: always
@@ -78,18 +259,37 @@ requiresAttributes:
     description: The container instance attributes required by your task
     returned: when present
     type: complex
+    contains:
+        name:
+            description: The name of the attribute.
+            returned: when present
+            type: string
+        value:
+            description: The value of the attribute.
+            returned: when present
+            type: string
+        targetType:
+            description: The type of the target with which to attach the attribute.
+            returned: when present
+            type: string
+        targetId:
+            description: The ID of the target.
+            returned: when present
+            type: string
 placementConstraints:
     description: A list of placement constraint objects to use for tasks
     returned: always
     type: complex
+    contains:
+        type:
+            description: The type of constraint.
+            returned: when present
+            type: string
+        expression:
+            description: A cluster query language expression to apply to the constraint.
+            returned: when present
+            type: string
 '''  # NOQA
-
-try:
-    import boto
-    import botocore
-    HAS_BOTO = True
-except ImportError:
-    HAS_BOTO = False
 
 try:
     import boto3
