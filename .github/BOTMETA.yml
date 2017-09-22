@@ -271,21 +271,21 @@ files:
   $modules/cloud/vmware/vmware_guest.py: $team_vmware
   $modules/cloud/vmware/vmware_guest_facts.py: nerzhul
   $modules/cloud/vmware/vmware_guest_find.py: $team_vmware
-  $modules/cloud/vmware/vmware_host.py: $team_ansible jcpowermac mtnbikenc
+  $modules/cloud/vmware/vmware_host.py: $team_ansible jcpowermac
   $modules/cloud/vmware/vmware_local_user_manager.py: $team_ansible
   $modules/cloud/vmware/vmware_maintenancemode.py: $team_ansible
-  $modules/cloud/vmware/vmware_migrate_vmk.py: $team_ansible jcpowermac mtnbikenc
-  $modules/cloud/vmware/vmware_portgroup.py: $team_ansible jcpowermac mtnbikenc
+  $modules/cloud/vmware/vmware_migrate_vmk.py: $team_ansible jcpowermac
+  $modules/cloud/vmware/vmware_portgroup.py: $team_ansible jcpowermac
   $modules/cloud/vmware/vmware_resource_pool.py: dav1x
   $modules/cloud/vmware/vmware_target_canonical_facts.py: $team_ansible
   $modules/cloud/vmware/vmware_vm_facts.py: $team_ansible jcpowermac
   $modules/cloud/vmware/vmware_vm_shell.py: chrrrles ritzk
   $modules/cloud/vmware/vmware_vm_vss_dvs_migrate.py: $team_ansible jcpowermac
-  $modules/cloud/vmware/vmware_vmkernel.py: $team_ansible jcpowermac mtnbikenc
-  $modules/cloud/vmware/vmware_vmkernel_ip_config.py: $team_ansible jcpowermac mtnbikenc
+  $modules/cloud/vmware/vmware_vmkernel.py: $team_ansible jcpowermac
+  $modules/cloud/vmware/vmware_vmkernel_ip_config.py: $team_ansible jcpowermac
   $modules/cloud/vmware/vmware_vmotion.py: $team_ansible bedecarroll
-  $modules/cloud/vmware/vmware_vsan_cluster.py: $team_ansible mtnbikenc
-  $modules/cloud/vmware/vmware_vswitch.py: akasurde jcpowermac mtnbikenc
+  $modules/cloud/vmware/vmware_vsan_cluster.py: $team_ansible
+  $modules/cloud/vmware/vmware_vswitch.py: akasurde jcpowermac
   $modules/cloud/vmware/vsphere_copy.py: dagwieers
   $modules/cloud/vmware/vsphere_guest.py: $team_ansible rhoop
   $modules/cloud/webfaction/: quentinsf
