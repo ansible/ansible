@@ -56,7 +56,7 @@ by default if OpenSSH is new enough to support ControlPersist as an option.
 
 Paramiko is great for starting out, but the OpenSSH type offers many advanced options.  You will want to run Ansible
 from a machine new enough to support ControlPersist, if you are using this connection type.  You can still manage
-older clients.  If you are using RHEL 6, CentOS 6, SLES 10 or SLES 11 the version of OpenSSH is still a bit old, so 
+older clients.  If you are using RHEL 6, CentOS 6, SLES 10 or SLES 11 the version of OpenSSH is still a bit old, so
 consider managing from a Fedora or openSUSE client even though you are managing older nodes, or just use paramiko.
 
 We keep paramiko as the default as if you are first installing Ansible on an EL box, it offers a better experience
@@ -116,7 +116,7 @@ By default, Ansible assumes it can find a /usr/bin/python on your remote system 
 
 Setting the inventory variable 'ansible_python_interpreter' on any host will allow Ansible to auto-replace the interpreter
 used when executing python modules.   Thus, you can point to any python you want on the system if /usr/bin/python on your
-system does not point to a Python 2.X interpreter.  
+system does not point to a Python 2.X interpreter.
 
 Some Linux operating systems, such as Arch, may only have Python 3 installed by default.  This is not sufficient and you will
 get syntax errors trying to run modules with Python 3.  Python 3 is essentially not the same language as Python 2.  Python 3
@@ -305,6 +305,20 @@ You shouldn't put plaintext passwords in your playbook or host_vars; instead, us
 
 .. _commercial_support:
 
+Ansible supports dot notation and array notation for variables. Which notation should I use?
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+The dot notation comes from Jinja and works fine for variables without special
+characters. If your variable contains dots (.), colons (:), or dashes (-) it is
+safer to use the array notation for variables.
+
+.. code-block:: jinja
+
+    item[0]['checksum:md5']
+    item['section']['2.1']
+    item['region']['Mid-Atlantic']
+    It is {{ temperature['Celsius']['-3'] }} outside.
+
 Can I get training on Ansible?
 ++++++++++++++++++++++++++++++
 
@@ -407,6 +421,3 @@ Please see the section below for a link to IRC and the Google Group, where you c
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-
-
-
