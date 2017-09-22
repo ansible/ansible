@@ -37,6 +37,7 @@ Ansible Changes By Release
 * Fix module doc for typo in telnet command option
 * Fix OpenBSD pkg_mgr fact (https://github.com/ansible/ansible/issues/30623)
 * Fix encoding error when there are nonascii values in the path to the ssh binary
+* removed YAML inventory group name validation, broke existing setups and should be global in any case, and configurable
 
 <a id="2.4"></a>
 
