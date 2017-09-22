@@ -164,7 +164,7 @@ class ConfigManager(object):
     UNABLE = []
     DEPRECATED = []
 
-    def __init__(self, conf_file=None):
+    def __init__(self, conf_file=None, defs_file=None):
 
         self._base_defs = {}
         self._plugins = {}
@@ -173,19 +173,24 @@ class ConfigManager(object):
         self._config_file = conf_file
         self.data = ConfigData()
 
-        # FIXME: make dynamic? scan for more? make it's own method?
-        # Create configuration definitions from source
-        bconfig_def = to_bytes('%s/base.yml' % os.path.dirname(__file__))
-        if os.path.exists(bconfig_def):
-            with open(bconfig_def, 'rb') as config_def:
+        if defs_file is None:
+            # Create configuration definitions from source
+            b_defs_file = to_bytes('%s/base.yml' % os.path.dirname(__file__))
+        else:
+            b_defs_file = to_bytes(defs_file)
+
+        # consume definitions
+        if os.path.exists(b_defs_file):
+            with open(b_defs_file, 'rb') as config_def:
                 self._base_defs = yaml.safe_load(config_def)
         else:
-            raise AnsibleError("Missing base configuration definition file (bad install?): %s" % to_native(bconfig_def))
+            raise AnsibleError("Missing base configuration definition file (bad install?): %s" % to_native(b_defs_file))
 
         if self._config_file is None:
             # set config using ini
             self._config_file = find_ini_config_file()
 
+        # consume configuration
         if self._config_file:
             if os.path.exists(self._config_file):
                 # initialize parser and read config
@@ -270,9 +275,12 @@ class ConfigManager(object):
 
         if cfile is None:
             cfile = self._config_file
+        else:
+            self._parse_config_file(cfile)
 
         # Note: sources that are lists listed in low to high precedence (last one wins)
         value = None
+        origin = None
         defs = {}
         if plugin_type is None:
             defs = self._base_defs
@@ -281,60 +289,63 @@ class ConfigManager(object):
         else:
             defs = self._plugins[plugin_type][plugin_name]
 
-        # Use 'variable overrides' if present, highest precedence, but only present when querying running play
-        if variables:
-            value, origin = self._loop_entries(variables, defs[config]['vars'])
-            origin = 'var: %s' % origin
+        if config in defs:
+            # Use 'variable overrides' if present, highest precedence, but only present when querying running play
+            if variables:
+                value, origin = self._loop_entries(variables, defs[config]['vars'])
+                origin = 'var: %s' % origin
 
-        # env vars are next precedence
-        if value is None and defs[config].get('env'):
-            value, origin = self._loop_entries(os.environ, defs[config]['env'])
-            origin = 'env: %s' % origin
+            # env vars are next precedence
+            if value is None and defs[config].get('env'):
+                value, origin = self._loop_entries(os.environ, defs[config]['env'])
+                origin = 'env: %s' % origin
 
-        # try config file entries next, if we have one
-        if value is None and cfile is not None:
-            ftype = get_config_type(cfile)
-            if ftype and defs[config].get(ftype):
-                if ftype == 'ini':
-                    # load from ini config
-                    try:  # FIXME: generaelize _loop_entries to allow for files also, most of this code is dupe
-                        for ini_entry in defs[config]['ini']:
-                            temp_value = get_ini_config_value(self._parser, ini_entry)
-                            if temp_value is not None:
-                                value = temp_value
-                                origin = cfile
-                                if 'deprecated' in ini_entry:
-                                    self.DEPRECATED.append(('[%s]%s' % (ini_entry['section'], ini_entry['key']), ini_entry['deprecated']))
-                    except Exception as e:
-                        sys.stderr.write("Error while loading ini config %s: %s" % (cfile, to_native(e)))
-                elif ftype == 'yaml':
-                    # FIXME: implement, also , break down key from defs (. notation???)
-                    origin = cfile
+            # try config file entries next, if we have one
+            if value is None and cfile is not None:
+                ftype = get_config_type(cfile)
+                if ftype and defs[config].get(ftype):
+                    if ftype == 'ini':
+                        # load from ini config
+                        try:  # FIXME: generalize _loop_entries to allow for files also, most of this code is dupe
+                            for ini_entry in defs[config]['ini']:
+                                temp_value = get_ini_config_value(self._parser, ini_entry)
+                                if temp_value is not None:
+                                    value = temp_value
+                                    origin = cfile
+                                    if 'deprecated' in ini_entry:
+                                        self.DEPRECATED.append(('[%s]%s' % (ini_entry['section'], ini_entry['key']), ini_entry['deprecated']))
+                        except Exception as e:
+                            sys.stderr.write("Error while loading ini config %s: %s" % (cfile, to_native(e)))
+                    elif ftype == 'yaml':
+                        # FIXME: implement, also , break down key from defs (. notation???)
+                        origin = cfile
 
-        '''
-        # for plugins, try using existing constants, this is for backwards compatiblity
-        if plugin_name and defs[config].get('constants'):
-            value, origin = self._loop_entries(self.data, defs[config]['constants'])
-            origin = 'constant: %s' % origin
-        '''
+            '''
+            # for plugins, try using existing constants, this is for backwards compatiblity
+            if plugin_name and defs[config].get('constants'):
+                value, origin = self._loop_entries(self.data, defs[config]['constants'])
+                origin = 'constant: %s' % origin
+            '''
 
-        # set default if we got here w/o a value
-        if value is None:
-            value = defs[config].get('default')
-            origin = 'default'
-            # skip typing as this is a temlated default that will be resolved later in constants, which has needed vars
-            if plugin_type is None and isinstance(value, string_types) and (value.startswith('{{') and value.endswith('}}')):
-                return value, origin
+            # set default if we got here w/o a value
+            if value is None:
+                value = defs[config].get('default')
+                origin = 'default'
+                # skip typing as this is a temlated default that will be resolved later in constants, which has needed vars
+                if plugin_type is None and isinstance(value, string_types) and (value.startswith('{{') and value.endswith('}}')):
+                    return value, origin
 
-        # ensure correct type
-        try:
-            value = ensure_type(value, defs[config].get('type'), origin=origin)
-        except Exception as e:
-            self.UNABLE.append(config)
+            # ensure correct type
+            try:
+                value = ensure_type(value, defs[config].get('type'), origin=origin)
+            except Exception as e:
+                self.UNABLE.append(config)
 
-        # deal with deprecation of the setting
-        if 'deprecated' in defs[config] and origin != 'default':
-            self.DEPRECATED.append((config, defs[config].get('deprecated')))
+            # deal with deprecation of the setting
+            if 'deprecated' in defs[config] and origin != 'default':
+                self.DEPRECATED.append((config, defs[config].get('deprecated')))
+        else:
+            raise AnsibleError('Requested option %s was not defined in configuration' % to_native(config))
 
         return value, origin
 
