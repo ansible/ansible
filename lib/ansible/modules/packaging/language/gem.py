@@ -115,9 +115,10 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def get_rubygems_path(module):
-    result = [module.get_bin_path('gem', True)]
     if module.params['executable']:
         result = module.params['executable'].split(' ')
+    else:
+        result = [module.get_bin_path('gem', True)]
     return result
 
 def get_rubygems_version(module):
