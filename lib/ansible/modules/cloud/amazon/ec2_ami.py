@@ -535,7 +535,7 @@ def deregister_image(module, connection):
     if delete_snapshot:
         try:
             for snapshot_id in snapshots:
-                connection.delete_snapshot(snapshot_id)
+                connection.delete_snapshot(SnapshotId=snapshot_id)
         except botocore.exceptions.ClientError as e:
             # Don't error out if root volume snapshot was already deregistered as part of deregister_image
             if e.error_code == 'InvalidSnapshot.NotFound':
@@ -665,7 +665,7 @@ def main():
         resource = boto3_conn(module, conn_type='resource', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_kwargs)
     except botocore.exceptions.NoRegionError:
         module.fail_json(msg=("Region must be specified as a parameter in AWS_DEFAULT_REGION environment variable or in boto configuration file."))
-    except botocore.exceptions.ClientError as e:
+    except (botocore.exceptions.NoCredentialsError, botocore.exceptions.ProfileNotFound) as e:
         module.fail_json(msg="Unable to establish connection - " + str(e), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     if module.params.get('state') == 'absent':
