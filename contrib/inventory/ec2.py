@@ -178,7 +178,6 @@ DEFAULTS = {
     'group_by_elasticache_replication_group': 'True',
     'group_by_instance_id': 'True',
     'group_by_instance_state': 'False',
-    'group_by_instance_state': 'True',
     'group_by_instance_type': 'True',
     'group_by_key_pair': 'True',
     'group_by_platform': 'True',
@@ -474,13 +473,7 @@ class Ec2Inventory(object):
             filters = config.get('ec2', 'instance_filters')
 
             if self.stack_filters and '&' in filters:
-                instance_filter = instance_filter.strip()
-                if not instance_filter or '=' not in instance_filter:
-                    continue
                 self.fail_with_error("AND filters along with stack_filter enabled is not supported.\n")
-                if not filter_key:
-                    continue
-                self.ec2_instance_filters[filter_key].append(filter_value)
 
             filter_sets = [f for f in filters.split(',') if f]
 
