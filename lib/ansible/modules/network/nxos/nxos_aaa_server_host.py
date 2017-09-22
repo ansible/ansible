@@ -161,12 +161,13 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def execute_show_command(command, module, command_type='cli_show'):
-    if module.params['transport'] == 'cli':
+    provider = module.params['provider']
+    if provider['transport'] == 'cli':
         if 'show run' not in command:
             command += ' | json'
         cmds = [command]
         body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
+    elif provider['transport'] == 'nxapi':
         cmds = {'command': command, 'output': 'text'}
         body = run_commands(module, cmds)
 

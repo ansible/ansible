@@ -129,11 +129,12 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def execute_show_command(command, module):
-    if module.params['transport'] == 'cli':
+    provider = module.params['provider']
+    if provider['transport'] == 'cli':
         command += ' | json'
         cmds = [command]
         body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
+    elif provider['transport'] == 'nxapi':
         cmds = [command]
         body = run_commands(module, cmds)
 
@@ -394,7 +395,7 @@ def main():
     auth_type = module.params['auth_type']
     auth_string = module.params['auth_string']
 
-    transport = module.params['transport']
+    transport = module.params['provider']['transport']
 
     if state == 'present' and not vip:
         module.fail_json(msg='the "vip" param is required when state=present')
