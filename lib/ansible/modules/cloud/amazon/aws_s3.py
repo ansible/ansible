@@ -75,9 +75,9 @@ options:
     description:
       - Switches the module behaviour between put (upload), get (download), geturl (return download url, Ansible 1.3+),
         getstr (download object as string (1.3+)), list (list keys, Ansible 2.0+), create (bucket), delete (bucket),
-        and delobj (delete object, Ansible 2.0+).
+        delobj (delete object, Ansible 2.0+) and copyobj (copy object, Ansible 2.5+).
     required: true
-    choices: ['get', 'put', 'delete', 'create', 'geturl', 'getstr', 'delobj', 'list']
+    choices: ['get', 'put', 'delete', 'create', 'geturl', 'getstr', 'delobj', 'copyobj', 'list']
   object:
     description:
       - Keyname of the object inside the bucket. Can be used to create "virtual directories", see examples.
@@ -119,6 +119,15 @@ options:
     description:
       - S3 URL endpoint for usage with Ceph, Eucalypus, fakes3, etc.  Otherwise assumes AWS
     aliases: [ S3_URL ]
+  src_bucket:
+    description:
+      - Bucket of the object to be copied. To be used with mode='copyobj'
+    default: bucket
+    version_added: "2.5"
+  src_object:
+    description:
+      - Key of the object to be copied. To be used with mode='copyobj'
+    version_added: "2.5"
   rgw:
     description:
       - Enable Ceph RGW S3 support. This option requires an explicit url via s3_url.
@@ -234,6 +243,14 @@ EXAMPLES = '''
     bucket: mybucket
     object: /my/desired/key.txt
     mode: delobj
+
+- name: Copy an object on a bucket
+  aws_s3:
+    bucket: mybucket
+    src_bucket: original-bucket
+    src_object: /my/object/to/be/copied.txt
+    object: /my/desired/key.txt
+    mode: copyobj
 '''
 
 import os
@@ -369,6 +386,19 @@ def delete_key(module, s3, bucket, obj):
         module.exit_json(msg="Object deleted from bucket %s." % (bucket), changed=True)
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg="Failed while trying to delete %s." % obj, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+
+
+def copy_key(module, s3, bucket, src_bucket, obj, src_obj):
+    if module.check_mode:
+        module.exit_json(msg="COPY operation skipped - running in check mode", changed=True)
+    try:
+        source_key = "%s/%s" % (src_bucket, src_obj)
+        s3.copy_object(Bucket=bucket, Key=obj, CopySource=source_key)
+        module.exit_json(msg="Object copied in bucket %s." % (bucket), changed=True)
+    except botocore.exceptions.ClientError as e:
+        module.fail_json(msg="Failed while trying to copy %s from bucket %s to %s in bucket %s." % (src_obj, src_bucket, obj, bucket),
+                         exception=traceback.format_exc(),
+                         **camel_dict_to_snake_dict(e.response))
 
 
 def create_dirkey(module, s3, bucket, obj):
@@ -518,7 +548,7 @@ def main():
             marker=dict(default=""),
             max_keys=dict(default=1000, type='int'),
             metadata=dict(type='dict'),
-            mode=dict(choices=['get', 'put', 'delete', 'create', 'geturl', 'getstr', 'delobj', 'list'], required=True),
+            mode=dict(choices=['get', 'put', 'delete', 'create', 'geturl', 'getstr', 'delobj', 'copyobj', 'list'], required=True),
             object=dict(),
             permission=dict(type='list', default=['private']),
             version=dict(default=None),
@@ -526,6 +556,8 @@ def main():
             prefix=dict(default=""),
             retries=dict(aliases=['retry'], type='int', default=0),
             s3_url=dict(aliases=['S3_URL']),
+            src_bucket=dict(),
+            src_object=dict(),
             rgw=dict(default='no', type='bool'),
             src=dict(),
             ignore_nonexistent_bucket=dict(default=False, type='bool')
@@ -557,6 +589,8 @@ def main():
     prefix = module.params.get('prefix')
     retries = module.params.get('retries')
     s3_url = module.params.get('s3_url')
+    src_bucket = module.params.get('src_bucket')
+    src_obj = module.params.get('src_object')
     rgw = module.params.get('rgw')
     src = module.params.get('src')
     ignore_nonexistent_bucket = module.params.get('ignore_nonexistent_bucket')
@@ -711,6 +745,21 @@ def main():
             deletertn = delete_key(module, s3, bucket, obj)
             if deletertn is True:
                 module.exit_json(msg="Object deleted from bucket %s." % bucket, changed=True)
+        else:
+            module.fail_json(msg="Bucket parameter is required.")
+
+    # Copy an object from a bucket, not the entire bucket
+    if mode == 'copyobj':
+        if obj is None:
+            module.fail_json(msg="object parameter is required")
+        if src_obj is None:
+            module.fail_json(msg="src_object parameter is required")
+        if src_bucket is None:
+            src_bucket = bucket
+        if bucket:
+            copyrtn = copy_key(module, s3, bucket, src_bucket, obj, src_obj)
+            if copyrtn is True:
+                module.exit_json(msg="Object %s from bucket %s copied to %s on bucket %s." % (src_obj, src_bucket, obj, bucket), changed=True)
         else:
             module.fail_json(msg="Bucket parameter is required.")
 
