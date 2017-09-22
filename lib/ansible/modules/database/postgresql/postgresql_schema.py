@@ -186,8 +186,8 @@ def main():
         state=dict(default="present", choices=["absent", "present"]),
     ))
     module = AnsibleModule(
-      argument_spec = argument_spec,
-      supports_check_mode = True
+        argument_spec = argument_spec,
+        supports_check_mode = True
     )
 
     if not postgresqldb_found:
