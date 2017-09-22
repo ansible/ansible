@@ -171,9 +171,10 @@ def _build_cmd_line(name, from_path, notest, locallib, mirror, mirror_only, inst
 
 
 def _get_cpanm_path(module):
-    result = module.get_bin_path('cpanm', True)
     if module.params['executable']:
         result = module.params['executable']
+    else:
+        result = module.get_bin_path('cpanm', True)
     return result
 
 
