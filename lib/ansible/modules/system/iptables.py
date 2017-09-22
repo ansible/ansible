@@ -425,7 +425,8 @@ def construct_rule(params):
     append_param(rule, params['limit_burst'], '--limit-burst', False)
     append_match(rule, params['uid_owner'], 'owner')
     append_param(rule, params['uid_owner'], '--uid-owner', False)
-    append_jump(rule, params['reject_with'], 'REJECT')
+    if params['jump'] is None:
+        append_jump(rule, params['reject_with'], 'REJECT')
     append_param(rule, params['reject_with'], '--reject-with', False)
     append_param(
         rule,
