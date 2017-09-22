@@ -68,6 +68,7 @@ class AwsCloudProvider(CloudProvider):
                 ACCESS_KEY=credentials['access_key'],
                 SECRET_KEY=credentials['secret_key'],
                 SECURITY_TOKEN=credentials['session_token'],
+                REGION='us-east-1',
             )
 
             config = self._populate_config_template(config, values)
