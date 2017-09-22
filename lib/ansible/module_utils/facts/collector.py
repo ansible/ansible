@@ -36,11 +36,20 @@ import platform
 from ansible.module_utils.facts import timeout
 
 
+class CycleFoundInFactDeps(Exception):
+    pass
+
+
+class UnresolvedFactDep(ValueError):
+    pass
+
+
 class BaseFactCollector:
     _fact_ids = set()
 
     _platform = 'Generic'
     name = None
+    required_facts = set()
 
     def __init__(self, collectors=None, namespace=None):
         '''Base class for things that collect facts.
@@ -218,9 +227,18 @@ def build_fact_id_to_collector_map(collectors_for_platform):
 
 def select_collector_classes(collector_names, all_fact_subsets, all_collector_classes):
     # TODO: can be a set()
-    seen_collector_classes = []
+    seen_collector_classes = set()
 
     selected_collector_classes = []
+
+    for collector_name in collector_names:
+        collector_classes = all_fact_subsets.get(collector_name, [])
+        for collector_class in collector_classes:
+            if collector_class not in seen_collector_classes:
+                selected_collector_classes.append(collector_class)
+                seen_collector_classes.add(collector_class)
+
+    return selected_collector_classes
 
     for candidate_collector_class in all_collector_classes:
         candidate_collector_name = candidate_collector_class.name
@@ -236,6 +254,71 @@ def select_collector_classes(collector_names, all_fact_subsets, all_collector_cl
                 seen_collector_classes.append(collector_class)
 
     return selected_collector_classes
+
+
+def find_unresolved_requires(collector_names, all_fact_subsets):
+    '''Find any collector names that have unresolved requires
+
+    Returns a list of collector names that correspond to collector
+    classes whose .requires_facts() are not in collector_names.
+    '''
+    unresolved = set()
+
+    for collector_name in collector_names:
+        collector_classes = all_fact_subsets[collector_name]
+        for collector_class in collector_classes:
+            for required_fact in collector_class.required_facts:
+                if required_fact not in collector_names:
+                    unresolved.add(required_fact)
+
+    return unresolved
+
+
+def resolve_requires(unresolved_requires, all_fact_subsets):
+    new_names = set()
+    failed = []
+    for unresolved in unresolved_requires:
+        if unresolved in all_fact_subsets:
+            new_names.add(unresolved)
+        else:
+            failed.append(unresolved)
+
+    if failed:
+        raise UnresolvedFactDep('unresolved fact dep %s' % ','.join(failed), failed_deps=failed)
+    return new_names
+
+
+def build_dep_data(collector_names, all_fact_subsets):
+    dep_map = defaultdict(set)
+    for collector_name in collector_names:
+        collector_deps = set()
+        for collector in all_fact_subsets[collector_name]:
+            for dep in collector.required_facts:
+                collector_deps.add(dep)
+        dep_map[collector_name] = collector_deps
+    return dep_map
+
+
+def tsort(dep_map):
+    sorted_list = []
+
+    unsorted_map = dep_map.copy()
+
+    while unsorted_map:
+        acyclic = False
+        for node, edges in list(unsorted_map.items()):
+            for edge in edges:
+                if edge in unsorted_map:
+                    break
+            else:
+                acyclic = True
+                del unsorted_map[node]
+                sorted_list.append((node, edges))
+
+        if not acyclic:
+            raise CycleFoundInFactDeps('Unable to tsort deps, there was a cycle in the graph. sorted=%s' % sorted_list)
+
+    return sorted_list
 
 
 def collector_classes_from_gather_subset(all_collector_classes=None,
@@ -282,6 +365,16 @@ def collector_classes_from_gather_subset(all_collector_classes=None,
                                           gather_subset=gather_subset,
                                           aliases_map=aliases_map,
                                           platform_info=platform_info)
+
+    unresolved = find_unresolved_requires(collector_names, all_fact_subsets)
+
+    new_names = resolve_requires(unresolved, all_fact_subsets)
+    collector_names.update(new_names)
+
+    dep_map = build_dep_data(collector_names, all_fact_subsets)
+
+    ordered_deps = tsort(dep_map)
+    collector_names = [x[0] for x in ordered_deps]
 
     selected_collector_classes = select_collector_classes(collector_names,
                                                           all_fact_subsets,
