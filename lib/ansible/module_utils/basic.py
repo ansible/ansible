@@ -2396,7 +2396,7 @@ class AnsibleModule(object):
         # Set the attributes
         current_attribs = self.get_file_attributes(src)
         current_attribs = current_attribs.get('attr_flags', [])
-        current_attribs = ''.join(current_attribs)
+        current_attribs = ''.join(current_attribs) or None
         self.set_attributes_if_different(dest, current_attribs, True)
 
     def atomic_move(self, src, dest, unsafe_writes=False):
