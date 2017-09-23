@@ -262,8 +262,20 @@ def resize_fs(module, filesystem, size):
         rc, chfs_out, err = module.run_command(
             '%s -a size="%s" %s' % (chfs_cmd, size, filesystem))
 
-        if rc != 0:
-            module.fail_json("Failed to run chfs.", rc=rc, err=err)
+        if rc == 28:
+            changed = False
+
+            return changed, chfs_out
+
+        elif rc != 0:
+            if re.findall('Maximum allocation for logical', err):
+                changed = False
+
+                return changed, err
+
+            else:
+                module.fail_json("Failed to run chfs.", rc=rc, err=err)
+
         else:
             if re.findall('The filesystem size is already', chfs_out):
                 changed = False
@@ -396,8 +408,11 @@ def remove_fs(module, filesystem, rm_mount_point):
             module.fail_json(msg="Failed to run rmfs.", rc=rc, err=err)
         else:
             changed = True
+            msg = rmfs_out
+            if not rmfs_out:
+                msg = "File system %s removed." % filesystem
 
-            return changed, rmfs_out
+            return changed, msg
     else:
         changed = True
         msg = ''
