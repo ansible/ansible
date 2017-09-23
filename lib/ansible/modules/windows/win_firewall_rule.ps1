@@ -186,7 +186,7 @@ $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "prese
 
 $force = Get-AnsibleParam -obj $params -name "force" -type "bool" -default $false
 if ($force) {
-    Add-Warning -obj $result -message "'force' isn't required anymore"
+    Add-DeprecationWarning -obj $result -message "'force' isn't required anymore" -version 2.9
 }
 
 if ($diff_support) {

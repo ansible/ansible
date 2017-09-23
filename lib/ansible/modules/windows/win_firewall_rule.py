@@ -76,6 +76,9 @@ options:
       - The profile this rule applies to.
     default: 'domain,private,public'
     aliases: [ 'profile' ]
+  force:
+    description:
+      - DEPRECATED, will be removed in 2.9.
 '''
 
 EXAMPLES = r'''
