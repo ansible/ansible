@@ -178,22 +178,6 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ismount import ismount
 import re
 
-# Command option parameters.
-account_subsys_opt = {
-    True: '-t yes',
-    False: '-t no'
-}
-
-auto_mount_opt = {
-    True: '-A yes',
-    False: '-A no'
-}
-
-rm_mount_point_opt = {
-    True: '-r',
-    False: ''
-}
-
 
 def _fs_exists(module, filesystem):
     """
@@ -302,8 +286,23 @@ def create_fs(
     attributes = ' -a '.join(attributes)
 
     # Parameters definition.
+    account_subsys_opt = {
+        True: '-t yes',
+        False: '-t no'
+    }
+
+
     if nfs_server is not None:
-        vg = ''
+        auto_mount_opt = {
+            True: '-A',
+            False: '-a'
+        }
+
+    else:
+        auto_mount_opt = {
+            True: '-A yes',
+            False: '-A no'
+        }
 
     if size is None:
         size = ''
@@ -328,15 +327,15 @@ def create_fs(
 
     if mount_group is None:
         mount_group = ''
+
     else:
         mount_group = "-u %s" % mount_group
 
-    if nfs_server is not None:
-        if auto_mount == '-A yes':
-            auto_mount = '-A'
-        if auto_mount == '-A no':
-            auto_mount = '-a'
+    auto_mount = auto_mount_opt[auto_mount]
+    account_subsystem = account_subsys_opt[account_subsystem]
 
+    if nfs_server is not None:
+        # Creates a NFS file system.
         mknfsmnt_cmd = module.get_bin_path('mknfsmnt', True)
         if not module.check_mode:
             rc, mknfsmnt_out, err = module.run_command(
@@ -357,6 +356,7 @@ def create_fs(
             return changed, msg
 
     else:
+        # Creates a LVM file system.
         crfs_cmd = module.get_bin_path('crfs', True)
         if not module.check_mode:
             rc, crfs_out, err = module.run_command(
@@ -379,6 +379,15 @@ def create_fs(
 
 def remove_fs(module, filesystem, rm_mount_point):
     """ Remove an LVM file system or NFS entry. """
+
+    # Command parameters.
+    rm_mount_point_opt = {
+        True: '-r',
+        False: ''
+    }
+
+    rm_mount_point = rm_mount_point_opt[rm_mount_point]
+
     rmfs_cmd = module.get_bin_path('rmfs', True)
     if not module.check_mode:
         rc, rmfs_out, err = module.run_command(
@@ -461,16 +470,16 @@ def main():
         supports_check_mode=True
     )
 
-    account_subsystem = account_subsys_opt[module.params['account_subsystem']]
+    account_subsystem = module.params['account_subsystem']
     attributes = module.params['attributes']
-    auto_mount = auto_mount_opt[module.params['auto_mount']]
+    auto_mount = module.params['auto_mount']
     device = module.params['device']
     fs_type = module.params['fs_type']
     permissions = module.params['permissions']
     mount_group = module.params['mount_group']
     filesystem = module.params['filesystem']
     nfs_server = module.params['nfs_server']
-    rm_mount_point = rm_mount_point_opt[module.params['rm_mount_point']]
+    rm_mount_point = module.params['rm_mount_point']
     size = module.params['size']
     state = module.params['state']
     vg = module.params['vg']
