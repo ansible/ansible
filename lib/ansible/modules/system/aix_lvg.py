@@ -103,18 +103,6 @@ msg:
 
 from ansible.module_utils.basic import AnsibleModule
 
-# Command option parameters.
-force_opt = {
-    True: '-f',
-    False: ''
-}
-
-vg_opt = {
-    'normal': '',
-    'big': '-B',
-    'scalable': '-S',
-}
-
 
 def _validate_pv(module, vg, pvs):
     """
@@ -208,6 +196,18 @@ def _validate_vg(module, vg):
 
 def create_extend_vg(module, vg, pvs, pp_size, vg_type, force, vg_validation):
     """ Creates or extend a volume group. """
+
+    # Command option parameters.
+    force_opt = {
+        True: '-f',
+        False: ''
+    }
+
+    vg_opt = {
+        'normal': '',
+        'big': '-B',
+        'scalable': '-S',
+    }
 
     # Validate if PV are not already in use.
     pv_state, msg = _validate_pv(module, vg, pvs)
