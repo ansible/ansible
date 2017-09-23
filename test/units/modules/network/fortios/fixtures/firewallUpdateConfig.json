@@ -1,0 +1,582 @@
+{
+  "policies": [
+      {
+        "policyid": 14,
+        "srcintf": [
+          {
+            "name": "port4"
+          }
+        ],
+        "dstintf": [
+          {
+            "name": "port3"
+          }
+        ],
+        "srcaddr": [
+          {
+            "name": "auth.gfx.ms"
+          }
+        ],
+        "dstaddr": [
+          {
+            "name": "all"
+          }
+        ],
+        "action": "accept",
+        "schedule": "always",
+        "service": [
+          {
+            "name": "ALL_ICMP"
+          }
+        ],
+        "comments": "F5-internet_outbound_nat",
+        "name": "F5_ICMP_out",
+        "nat": "enable"
+      },
+      {
+        "policyid": 5,
+        "srcintf": [
+          {
+            "name": "port3"
+          }
+        ],
+        "dstintf": [
+          {
+            "name": "port4"
+          }
+        ],
+        "srcaddr": [
+          {
+            "name": "all"
+          }
+        ],
+        "dstaddr": [
+          {
+            "name": "all"
+          }
+        ],
+        "action": "accept",
+        "schedule": "always",
+        "service": [
+          {
+            "name": "ALL_ICMP"
+          }
+        ],
+        "comments": "allow_icmp_in",
+        "name": "icmp_in"
+      },
+      {
+        "policyid": 16,
+        "srcintf": [
+          {
+            "name": "port3"
+          }
+        ],
+        "dstintf": [
+          {
+            "name": "port4"
+          }
+        ],
+        "srcaddr": [
+          {
+            "name": "all"
+          }
+        ],
+        "dstaddr": [
+          {
+            "name": "util_vip"
+          }
+        ],
+        "action": "accept",
+        "schedule": "always",
+        "service": [
+          {
+            "name": "HTTP"
+          },
+          {
+            "name": "HTTPS"
+          }
+        ],
+        "name": "util_vip_in"
+      },
+      {
+        "policyid": 15,
+        "srcintf": [
+          {
+            "name": "port3"
+          }
+        ],
+        "dstintf": [
+          {
+            "name": "port4"
+          }
+        ],
+        "srcaddr": [
+          {
+            "name": "all"
+          }
+        ],
+        "dstaddr": [
+          {
+            "name": "all"
+          }
+        ],
+        "action": "accept",
+        "schedule": "always",
+        "service": [
+          {
+            "name": "HTTP"
+          },
+          {
+            "name": "HTTPS"
+          }
+        ],
+        "name": "service_http_in"
+      },
+      {
+        "policyid": 18,
+        "srcintf": [
+          {
+            "name": "port3"
+          }
+        ],
+        "dstintf": [
+          {
+            "name": "port4"
+          }
+        ],
+        "srcaddr": [
+          {
+            "name": "all"
+          }
+        ],
+        "dstaddr": [
+          {
+            "name": "all"
+          }
+        ],
+        "action": "accept",
+        "schedule": "always",
+        "service": [
+          {
+            "name": "HTTP"
+          },
+          {
+            "name": "HTTPS"
+          }
+        ],
+        "comments": "allow_inbound_icmp_http_https",
+        "name": "Public_access"
+      },
+      {
+        "policyid": 12,
+        "srcintf": [
+          {
+            "name": "port1"
+          }
+        ],
+        "dstintf": [
+          {
+            "name": "port3"
+          }
+        ],
+        "srcaddr": [
+          {
+            "name": "all"
+          }
+        ],
+        "dstaddr": [
+          {
+            "name": "all"
+          }
+        ],
+        "action": "accept",
+        "schedule": "always",
+        "service": [
+          {
+            "name": "ALL"
+          }
+        ],
+        "comments": "allow_snap_mirror_out",
+        "name": "snap_mirror_out"
+      },
+      {
+        "policyid": 13,
+        "srcintf": [
+          {
+            "name": "port3"
+          }
+        ],
+        "dstintf": [
+          {
+            "name": "port6"
+          }
+        ],
+        "srcaddr": [
+          {
+            "name": "dwre_remote_netapp"
+          }
+        ],
+        "dstaddr": [
+          {
+            "name": "dwre_netapp_pub_block"
+          }
+        ],
+        "action": "accept",
+        "schedule": "always",
+        "service": [
+          {
+            "name": "ALL"
+          }
+        ],
+        "comments": "allow_snap_mirror_in",
+        "name": "snap_mirror_in"
+      },
+      {
+        "policyid": 20,
+        "srcintf": [
+          {
+            "name": "port9"
+          }
+        ],
+        "dstintf": [
+          {
+            "name": "port3"
+          }
+        ],
+        "srcaddr": [
+          {
+            "name": "dwre_sf_private_block"
+          }
+        ],
+        "dstaddr": [
+          {
+            "name": "dwre_sf_private_block"
+          }
+        ],
+        "action": "accept",
+        "schedule": "always",
+        "service": [
+          {
+            "name": "ALL"
+          }
+        ],
+        "name": "replication_net_out"
+      },
+      {
+        "policyid": 9,
+        "srcintf": [
+          {
+            "name": "port3"
+          }
+        ],
+        "dstintf": [
+          {
+            "name": "port4"
+          }
+        ],
+        "srcaddr": [
+          {
+            "name": "all"
+          }
+        ],
+        "dstaddr": [
+          {
+            "name": "all"
+          }
+        ],
+        "action": "accept",
+        "schedule": "always",
+        "service": [
+          {
+            "name": "dwre_sits ALL_ICMP"
+          }
+        ],
+        "name": "cloudbox_in"
+      },
+      {
+        "policyid": 17,
+        "srcintf": [
+          {
+            "name": "port3"
+          }
+        ],
+        "dstintf": [
+          {
+            "name": "port4"
+          }
+        ],
+        "srcaddr": [
+          {
+            "name": "all"
+          }
+        ],
+        "dstaddr": [
+          {
+            "name": "logcenter_aaph logcenter_aapi"
+          }
+        ],
+        "action": "accept",
+        "schedule": "always",
+        "service": [
+          {
+            "name": "HTTP HTTPS"
+          }
+        ],
+        "name": "logcenter_in"
+      },
+      {
+        "policyid": 25,
+        "srcintf": [
+          {
+            "name": "port3"
+          }
+        ],
+        "dstintf": [
+          {
+            "name": "port4"
+          }
+        ],
+        "srcaddr": [
+          {
+            "name": "all"
+          }
+        ],
+        "dstaddr": [
+          {
+            "name": "test_realm_dev test_realm_prd test_realm_s01 test_realm_s06 test_realm_stg"
+          }
+        ],
+        "action": "accept",
+        "schedule": "always",
+        "service": [
+          {
+            "name": "HTTP HTTPS"
+          }
+        ],
+        "name": "test_realm_in"
+      },
+      {
+        "policyid": 11,
+        "srcintf": [
+          {
+            "name": "port4"
+          }
+        ],
+        "dstintf": [
+          {
+            "name": "port3"
+          }
+        ],
+        "srcaddr": [
+          {
+            "name": "all"
+          }
+        ],
+        "dstaddr": [
+          {
+            "name": "all"
+          }
+        ],
+        "action": "accept",
+        "schedule": "always",
+        "service": [
+          {
+            "name": "dwre_allow_outbound_ports"
+          }
+        ],
+        "comments": "general outbound nat",
+        "name": "general_out",
+        "nat": "enable",
+        "ippool": "enable",
+        "poolname": [
+          {
+            "name": "general_out_pool"
+          }
+        ]
+      },
+      {
+        "policyid": 21,
+        "srcintf": [
+          {
+            "name": "port4"
+          }
+        ],
+        "dstintf": [
+          {
+            "name": "port3"
+          }
+        ],
+        "srcaddr": [
+          {
+            "name": "util_vip_private"
+          }
+        ],
+        "dstaddr": [
+          {
+            "name": "all"
+          }
+        ],
+        "action": "accept",
+        "schedule": "always",
+        "service": [
+          {
+            "name": "dwre_allow_outbound_utils"
+          }
+        ],
+        "name": "util_vip_out",
+        "nat": "enable",
+        "ippool": "enable",
+        "poolname": [
+          {
+            "name": "util_out_pool"
+          }
+        ]
+      },
+      {
+        "policyid": 22,
+        "srcintf": [
+          {
+            "name": "port4"
+          }
+        ],
+        "dstintf": [
+          {
+            "name": "port3"
+          }
+        ],
+        "srcaddr": [
+          {
+            "name": "util_vip_private"
+          }
+        ],
+        "dstaddr": [
+          {
+            "name": "dwre_UltraDNS_fqdn"
+          }
+        ],
+        "action": "accept",
+        "schedule": "always",
+        "service": [
+          {
+            "name": "dwre_UltraDNS"
+          }
+        ],
+        "name": "util_out_UDNS",
+        "nat": "enable",
+        "ippool": "enable",
+        "poolname": [
+          {
+            "name": "util_out_pool"
+          }
+        ]
+      },
+      {
+        "policyid": 23,
+        "srcintf": [
+          {
+            "name": "port4"
+          }
+        ],
+        "dstintf": [
+          {
+            "name": "port3"
+          }
+        ],
+        "srcaddr": [
+          {
+            "name": "util_vip_private"
+          }
+        ],
+        "dstaddr": [
+          {
+            "name": "AmazonGraphite"
+          }
+        ],
+        "action": "accept",
+        "schedule": "always",
+        "service": [
+          {
+            "name": "dwre_amzGraphite_tcp_2004 dwre_amzGraphite_tcp_9993"
+          }
+        ],
+        "name": "util_vip_Graphite",
+        "nat": "enable",
+        "ippool": "enable",
+        "poolname": [
+          {
+            "name": "util_out_pool"
+          }
+        ]
+      },
+      {
+        "policyid": 24,
+        "srcintf": [
+          {
+            "name": "port4"
+          }
+        ],
+        "dstintf": [
+          {
+            "name": "port3"
+          }
+        ],
+        "srcaddr": [
+          {
+            "name": "util_vip_private"
+          }
+        ],
+        "dstaddr": [
+          {
+            "name": "dwre_WA_Log_upload"
+          }
+        ],
+        "action": "accept",
+        "schedule": "always",
+        "service": [
+          {
+            "name": "dwre_WA_Log_upload"
+          }
+        ],
+        "name": "util_out_WA",
+        "nat": "enable",
+        "ippool": "enable",
+        "poolname": [
+          {
+            "name": "util_out_pool"
+          }
+        ]
+      },
+      {
+        "policyid": 19,
+        "srcintf": [
+          {
+            "name": "port3"
+          }
+        ],
+        "dstintf": [
+          {
+            "name": "replication_net"
+          }
+        ],
+        "srcaddr": [
+          {
+            "name": "dwre_sf_private_block"
+          }
+        ],
+        "dstaddr": [
+          {
+            "name": "dwre_sf_private_block"
+          }
+        ],
+        "action": "accept",
+        "schedule": "always",
+        "service": [
+          {
+            "name": "ALL"
+          }
+        ],
+        "name": "replication_net_in"
+      }
+    ]
+}

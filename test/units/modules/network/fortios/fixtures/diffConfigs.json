@@ -1,0 +1,595 @@
+{
+  "prefixes": [
+    {
+      "name": "default_only",
+      "rule": [
+        {
+          "prefix": "0.0.0.0 0.0.0.0"
+        }
+      ]
+    },
+    {
+      "name": "dwre_sf_block7",
+      "rule": [
+        {
+          "prefix": "10.254.160.0 255.255.240.0"
+        },
+        {
+          "prefix": "1.0.0.0 255.0.0.0"
+        }
+      ]
+    }
+  ],
+  "current": [
+    {
+      "comments": "",
+      "name": "default_only",
+      "q_origin_key": "default_only",
+      "rule": [
+        {
+          "action": "permit",
+          "flags": 0,
+          "ge": [],
+          "id": 1,
+          "le": [],
+          "prefix": "0.0.0.0 0.0.0.0",
+          "q_origin_key": "1"
+        }
+      ]
+    },
+    {
+      "comments": "",
+      "name": "dwre_sf_block7",
+      "q_origin_key": "dwre_sf_block7",
+      "rule": [
+        {
+          "action": "permit",
+          "flags": 0,
+          "ge": [],
+          "id": 1,
+          "le": [],
+          "prefix": "10.254.160.0 255.255.240.0",
+          "q_origin_key": "1"
+        },
+        {
+          "action": "permit",
+          "flags": 0,
+          "ge": [],
+          "id": 2,
+          "le": [],
+          "prefix": "2.0.0.0 255.0.0.0",
+          "q_origin_key": "2"
+        },
+        {
+          "action": "permit",
+          "flags": 0,
+          "ge": [],
+          "id": 3,
+          "le": [],
+          "prefix": "3.0.0.0 255.0.0.0",
+          "q_origin_key": "3"
+        }
+      ]
+    }
+  ],
+  "expected": [
+    {
+      "name": "dwre_sf_block7",
+      "rule": [
+        {
+          "prefix": "10.254.160.0 255.255.240.0"
+        },
+        {
+          "prefix": "1.0.0.0 255.0.0.0"
+        }
+      ]
+    }
+  ],
+  "original_failure": {
+    "confederation-peers": [],
+    "distance-internal": 200,
+    "aggregate-address6": [],
+    "dampening-suppress": 2000,
+    "bestpath-cmp-confed-aspath": "disable",
+    "keepalive-timer": 60,
+    "as": 394808,
+    "ebgp-multipath": "disable",
+    "dampening-reachability-half-life": 15,
+    "dampening-reuse": 750,
+    "neighbor-group": [],
+    "network-import-check": "enable",
+    "dampening-unreachability-half-life": 15,
+    "distance-external": 20,
+    "dampening": "disable",
+    "graceful-restart-time": 120,
+    "router-id": "13.108.3.209",
+    "aggregate-address": [
+      {
+        "as-set": "disable",
+        "q_origin_key": "1",
+        "summary-only": "disable",
+        "prefix": "194.145.16.0 255.255.252.0",
+        "id": 1
+      },
+      {
+        "as-set": "disable",
+        "q_origin_key": "2",
+        "summary-only": "disable",
+        "prefix": "194.145.16.0 255.255.254.0",
+        "id": 2
+      },
+      {
+        "as-set": "disable",
+        "q_origin_key": "3",
+        "summary-only": "disable",
+        "prefix": "194.145.16.0 255.255.255.0",
+        "id": 3
+      }
+    ],
+    "distance-local": 200,
+    "bestpath-med-confed": "disable",
+    "default-local-preference": 100,
+    "graceful-update-delay": 120,
+    "bestpath-cmp-routerid": "disable",
+    "graceful-stalepath-time": 360,
+    "enforce-first-as": "enable",
+    "cluster-id": "0.0.0.0",
+    "scan-time": 60,
+    "ibgp-multipath": "disable",
+    "synchronization": "disable",
+    "bestpath-med-missing-as-worst": "disable",
+    "holdtime-timer": 180,
+    "network6": [],
+    "admin-distance": [],
+    "always-compare-med": "disable",
+    "network": [
+      {
+        "backdoor": "disable",
+        "q_origin_key": "1",
+        "route-map": "",
+        "prefix": "194.145.16.0 255.255.255.0",
+        "id": 1
+      },
+      {
+        "backdoor": "disable",
+        "q_origin_key": "2",
+        "route-map": "",
+        "prefix": "10.254.166.0 255.255.255.0",
+        "id": 2
+      }
+    ],
+    "bestpath-as-path-ignore": "disable",
+    "neighbor-range": [],
+    "redistribute": [
+      {
+        "status": "disable",
+        "q_origin_key": "connected",
+        "route-map": "",
+        "name": "connected"
+      },
+      {
+        "status": "disable",
+        "q_origin_key": "rip",
+        "route-map": "",
+        "name": "rip"
+      },
+      {
+        "status": "enable",
+        "q_origin_key": "ospf",
+        "route-map": "",
+        "name": "ospf"
+      },
+      {
+        "status": "disable",
+        "q_origin_key": "static",
+        "route-map": "",
+        "name": "static"
+      },
+      {
+        "status": "disable",
+        "q_origin_key": "isis",
+        "route-map": "",
+        "name": "isis"
+      }
+    ],
+    "client-to-client-reflection": "enable",
+    "dampening-max-suppress-time": 60,
+    "deterministic-med": "disable",
+    "ignore-optional-capability": "enable",
+    "fast-external-failover": "enable",
+    "redistribute6": [
+      {
+        "status": "disable",
+        "q_origin_key": "connected",
+        "route-map": "",
+        "name": "connected"
+      },
+      {
+        "status": "disable",
+        "q_origin_key": "rip",
+        "route-map": "",
+        "name": "rip"
+      },
+      {
+        "status": "disable",
+        "q_origin_key": "ospf",
+        "route-map": "",
+        "name": "ospf"
+      },
+      {
+        "status": "disable",
+        "q_origin_key": "static",
+        "route-map": "",
+        "name": "static"
+      },
+      {
+        "status": "disable",
+        "q_origin_key": "isis",
+        "route-map": "",
+        "name": "isis"
+      }
+    ],
+    "log-neighbour-changes": "enable",
+    "neighbor": [
+      {
+        "send-community": "both",
+        "remote-as": 14340,
+        "activate": "enable",
+        "filter-list-out6": "",
+        "weight": 4294967295,
+        "attribute-unchanged": "",
+        "distribute-list-out": "",
+        "ip": "13.108.3.208",
+        "filter-list-in6": "",
+        "ebgp-multihop-ttl": 255,
+        "q_origin_key": "13.108.3.208",
+        "default-originate-routemap": "",
+        "default-originate-routemap6": "",
+        "route-reflector-client": "disable",
+        "route-map-out6": "",
+        "dont-capability-negotiate": "disable",
+        "shutdown": "disable",
+        "remove-private-as6": "disable",
+        "unsuppress-map6": "",
+        "as-override6": "disable",
+        "attribute-unchanged6": "",
+        "ebgp-enforce-multihop": "disable",
+        "advertisement-interval": 30,
+        "local-as": 0,
+        "prefix-list-in6": "",
+        "capability-graceful-restart6": "disable",
+        "capability-default-originate6": "disable",
+        "bfd": "disable",
+        "capability-orf": "none",
+        "next-hop-self": "enable",
+        "allowas-in-enable": "enable",
+        "route-reflector-client6": "disable",
+        "remove-private-as": "disable",
+        "unsuppress-map": "",
+        "passive": "disable",
+        "allowas-in": 2,
+        "maximum-prefix6": 0,
+        "route-server-client": "disable",
+        "local-as-replace-as": "disable",
+        "filter-list-out": "",
+        "restart-time": 0,
+        "capability-graceful-restart": "disable",
+        "retain-stale-time": 0,
+        "keep-alive-timer": 4294967295,
+        "maximum-prefix-warning-only": "disable",
+        "maximum-prefix-threshold": 75,
+        "as-override": "disable",
+        "local-as-no-prepend": "disable",
+        "capability-orf6": "none",
+        "soft-reconfiguration6": "disable",
+        "maximum-prefix-warning-only6": "disable",
+        "next-hop-self6": "disable",
+        "allowas-in-enable6": "disable",
+        "allowas-in6": 0,
+        "capability-default-originate": "disable",
+        "interface": "",
+        "route-map-in6": "",
+        "password": "ENC XXXX",
+        "holdtime-timer": 4294967295,
+        "conditional-advertise": [],
+        "activate6": "enable",
+        "filter-list-in": "",
+        "maximum-prefix": 0,
+        "route-server-client6": "disable",
+        "capability-dynamic": "disable",
+        "update-source": "",
+        "strict-capability-match": "disable",
+        "distribute-list-in6": "",
+        "override-capability": "disable",
+        "distribute-list-out6": "",
+        "description": "",
+        "route-map-out": "",
+        "prefix-list-out6": "",
+        "send-community6": "disable",
+        "capability-route-refresh": "enable",
+        "connect-timer": 4294967295,
+        "prefix-list-in": "",
+        "distribute-list-in": "",
+        "route-map-in": "",
+        "maximum-prefix-threshold6": 75,
+        "prefix-list-out": "",
+        "soft-reconfiguration": "enable"
+      }
+    ],
+    "dampening-route-map": "",
+    "confederation-identifier": 0,
+    "graceful-restart": "enable"
+  },
+  "current_failure": {
+    "confederation-peers": [],
+    "distance-internal": 200,
+    "graceful-restart-time": 120,
+    "dampening-suppress": 2000,
+    "bestpath-cmp-confed-aspath": "disable",
+    "keepalive-timer": 60,
+    "as": 492103,
+    "ebgp-multipath": "disable",
+    "dampening-reachability-half-life": 15,
+    "admin-distance": [],
+    "neighbor-group": [],
+    "fast-external-failover": "enable",
+    "dampening-unreachability-half-life": 15,
+    "distance-external": 20,
+    "dampening": "disable",
+    "aggregate-address6": [],
+    "router-id": "101.108.3.209",
+    "aggregate-address": [
+      {
+        "as-set": "disable",
+        "q_origin_key": "1",
+        "prefix": "194.145.16.0 255.255.252.0",
+        "id": 1,
+        "summary-only": "disable"
+      },
+      {
+        "as-set": "disable",
+        "q_origin_key": "2",
+        "prefix": "194.145.16.0 255.255.254.0",
+        "id": 2,
+        "summary-only": "disable"
+      },
+      {
+        "as-set": "disable",
+        "q_origin_key": "3",
+        "prefix": "194.145.16.0 255.255.255.0",
+        "id": 3,
+        "summary-only": "disable"
+      }
+    ],
+    "distance-local": 200,
+    "bestpath-med-confed": "disable",
+    "default-local-preference": 100,
+    "graceful-update-delay": 120,
+    "bestpath-cmp-routerid": "disable",
+    "graceful-stalepath-time": 360,
+    "enforce-first-as": "enable",
+    "cluster-id": "0.0.0.0",
+    "scan-time": 60,
+    "redistribute6": [
+      {
+        "status": "disable",
+        "q_origin_key": "connected",
+        "route-map": "",
+        "name": "connected"
+      },
+      {
+        "status": "disable",
+        "q_origin_key": "rip",
+        "route-map": "",
+        "name": "rip"
+      },
+      {
+        "status": "disable",
+        "q_origin_key": "ospf",
+        "route-map": "",
+        "name": "ospf"
+      },
+      {
+        "status": "disable",
+        "q_origin_key": "static",
+        "route-map": "",
+        "name": "static"
+      },
+      {
+        "status": "disable",
+        "q_origin_key": "isis",
+        "route-map": "",
+        "name": "isis"
+      }
+    ],
+    "ibgp-multipath": "disable",
+    "synchronization": "disable",
+    "bestpath-med-missing-as-worst": "disable",
+    "holdtime-timer": 180,
+    "network6": [],
+    "dampening-reuse": 750,
+    "always-compare-med": "disable",
+    "network": [
+      {
+        "backdoor": "disable",
+        "q_origin_key": "1",
+        "prefix": "194.145.16.0 255.255.255.0",
+        "id": 1,
+        "route-map": ""
+      },
+      {
+        "backdoor": "disable",
+        "q_origin_key": "2",
+        "prefix": "10.254.166.0 255.255.255.0",
+        "id": 2,
+        "route-map": ""
+      }
+    ],
+    "bestpath-as-path-ignore": "disable",
+    "redistribute": [
+      {
+        "status": "disable",
+        "q_origin_key": "connected",
+        "route-map": "",
+        "name": "connected"
+      },
+      {
+        "status": "disable",
+        "q_origin_key": "rip",
+        "route-map": "",
+        "name": "rip"
+      },
+      {
+        "status": "disable",
+        "q_origin_key": "ospf",
+        "route-map": "",
+        "name": "ospf"
+      },
+      {
+        "status": "disable",
+        "q_origin_key": "static",
+        "route-map": "",
+        "name": "static"
+      },
+      {
+        "status": "disable",
+        "q_origin_key": "isis",
+        "route-map": "",
+        "name": "isis"
+      }
+    ],
+    "client-to-client-reflection": "enable",
+    "dampening-max-suppress-time": 60,
+    "deterministic-med": "disable",
+    "ignore-optional-capability": "enable",
+    "network-import-check": "enable",
+    "neighbor-range": [],
+    "log-neighbour-changes": "enable",
+    "neighbor": [
+      {
+        "send-community": "both",
+        "activate": "enable",
+        "filter-list-out6": "",
+        "weight": 4294967295,
+        "attribute-unchanged": "",
+        "ip": "13.108.3.208",
+        "filter-list-in6": "",
+        "ebgp-multihop-ttl": 255,
+        "retain-stale-time": 0,
+        "default-originate-routemap": "",
+        "default-originate-routemap6": "",
+        "route-reflector-client": "disable",
+        "route-map-out6": "",
+        "remove-private-as": "disable",
+        "shutdown": "disable",
+        "route-map-in6": "",
+        "unsuppress-map6": "",
+        "unsuppress-map": "",
+        "as-override6": "disable",
+        "attribute-unchanged6": "",
+        "ebgp-enforce-multihop": "disable",
+        "advertisement-interval": 30,
+        "local-as": 0,
+        "prefix-list-in6": "",
+        "as-override": "disable",
+        "capability-default-originate6": "disable",
+        "bfd": "disable",
+        "capability-orf": "none",
+        "next-hop-self": "enable",
+        "allowas-in-enable": "enable",
+        "conditional-advertise": [],
+        "route-reflector-client6": "disable",
+        "dont-capability-negotiate": "disable",
+        "connect-timer": 4294967295,
+        "passive": "disable",
+        "route-map-out": "",
+        "allowas-in": 2,
+        "maximum-prefix6": 0,
+        "route-server-client": "disable",
+        "maximum-prefix-threshold": 75,
+        "filter-list-out": "",
+        "local-as-no-prepend": "disable",
+        "restart-time": 0,
+        "capability-graceful-restart": "disable",
+        "q_origin_key": "13.108.3.208",
+        "keep-alive-timer": 4294967295,
+        "maximum-prefix-warning-only": "disable",
+        "description": "",
+        "capability-graceful-restart6": "disable",
+        "distribute-list-out": "",
+        "capability-orf6": "none",
+        "soft-reconfiguration6": "disable",
+        "maximum-prefix-warning-only6": "disable",
+        "next-hop-self6": "disable",
+        "allowas-in-enable6": "disable",
+        "allowas-in6": 0,
+        "interface": "",
+        "remove-private-as6": "disable",
+        "password": "ENC XXXX",
+        "holdtime-timer": 4294967295,
+        "route-map-in": "",
+        "activate6": "enable",
+        "filter-list-in": "",
+        "maximum-prefix": 0,
+        "route-server-client6": "disable",
+        "capability-dynamic": "disable",
+        "update-source": "",
+        "distribute-list-in6": "",
+        "override-capability": "disable",
+        "distribute-list-out6": "",
+        "send-community6": "disable",
+        "local-as-replace-as": "disable",
+        "prefix-list-out6": "",
+        "capability-default-originate": "disable",
+        "capability-route-refresh": "enable",
+        "strict-capability-match": "disable",
+        "prefix-list-in": "",
+        "distribute-list-in": "",
+        "remote-as": 14340,
+        "maximum-prefix-threshold6": 75,
+        "prefix-list-out": "",
+        "soft-reconfiguration": "enable"
+      }
+    ],
+    "dampening-route-map": "",
+    "confederation-identifier": 0,
+    "graceful-restart": "enable"
+  },
+  "update_failure": {
+    "redistribute": [
+      {
+        "name": "connected"
+      },
+      {
+        "name": "rip"
+      },
+      {
+        "status": "disable",
+        "name": "ospf"
+      },
+      {
+        "name": "static"
+      },
+      {
+        "name": "isis"
+      }
+    ],
+    "network": [],
+    "router-id": "101.108.3.209",
+    "aggregate-address": [],
+    "as": 492103,
+    "log-neighbour-changes": "enable",
+    "neighbor": [
+      {
+        "ip": "13.108.3.208",
+        "allowas-in-enable": "enable",
+        "soft-reconfiguration": "enable",
+        "send-community6": "disable",
+        "next-hop-self": "enable",
+        "allowas-in": 2,
+        "remote-as": 14340
+      }
+    ],
+    "graceful-restart": "enable"
+  }
+}

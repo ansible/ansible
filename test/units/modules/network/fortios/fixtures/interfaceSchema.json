@@ -1,0 +1,2673 @@
+{
+  "interface_schema_response": {
+      "http_method": "GET",
+      "results": {
+        "name": "interface",
+        "category": "table",
+        "help": "Configure interfaces.",
+        "mkey": "name",
+        "mkey_type": "string",
+        "children": {
+          "name": {
+            "name": "name",
+            "category": "unitary",
+            "type": "string",
+            "help": "Name.",
+            "size": 15
+          },
+          "vdom": {
+            "name": "vdom",
+            "category": "unitary",
+            "type": "string",
+            "help": "Virtual domain name.",
+            "datasource": [
+              "system.vdom.name"
+            ],
+            "size": 11
+          },
+          "cli-conn-status": {
+            "name": "cli-conn-status",
+            "category": "unitary",
+            "type": "integer",
+            "help": "CLI connection status.",
+            "min-value": 0,
+            "max-value": 4294967295
+          },
+          "mode": {
+            "name": "mode",
+            "category": "unitary",
+            "type": "option",
+            "help": "Addressing mode (static, DHCP, PPPoE).",
+            "options": [
+              {
+                "name": "static",
+                "help": "Static setting."
+              },
+              {
+                "name": "dhcp",
+                "help": "External DHCP client mode."
+              },
+              {
+                "name": "pppoe",
+                "help": "External PPPoE mode."
+              }
+            ]
+          },
+          "distance": {
+            "name": "distance",
+            "category": "unitary",
+            "type": "integer",
+            "help": "Distance of learned routes.",
+            "min-value": 1,
+            "max-value": 255
+          },
+          "priority": {
+            "name": "priority",
+            "category": "unitary",
+            "type": "integer",
+            "help": "Priority of learned routes.",
+            "min-value": 0,
+            "max-value": 4294967295
+          },
+          "dhcp-relay-service": {
+            "name": "dhcp-relay-service",
+            "category": "unitary",
+            "type": "option",
+            "help": "Enable\/disable use DHCP relay service.",
+            "options": [
+              {
+                "name": "disable",
+                "help": "None."
+              },
+              {
+                "name": "enable",
+                "help": "DHCP relay agent."
+              }
+            ]
+          },
+          "dhcp-relay-ip": {
+            "name": "dhcp-relay-ip",
+            "category": "unitary",
+            "type": "user",
+            "help": "DHCP relay IP address."
+          },
+          "dhcp-relay-type": {
+            "name": "dhcp-relay-type",
+            "category": "unitary",
+            "type": "option",
+            "help": "DHCP relay type.",
+            "options": [
+              {
+                "name": "regular",
+                "help": "Regular DHCP relay."
+              },
+              {
+                "name": "ipsec",
+                "help": "DHCP relay for IPsec."
+              }
+            ]
+          },
+          "ip": {
+            "name": "ip",
+            "category": "unitary",
+            "type": "ipv4-classnet-host",
+            "help": "IP address of interface."
+          },
+          "allowaccess": {
+            "name": "allowaccess",
+            "category": "unitary",
+            "type": "option",
+            "help": "Allow management access to the interface.",
+            "options": [
+              {
+                "name": "ping",
+                "help": "PING access."
+              },
+              {
+                "name": "https",
+                "help": "HTTPS access."
+              },
+              {
+                "name": "ssh",
+                "help": "SSH access."
+              },
+              {
+                "name": "snmp",
+                "help": "SNMP access."
+              },
+              {
+                "name": "http",
+                "help": "HTTP access."
+              },
+              {
+                "name": "telnet",
+                "help": "TELNET access."
+              },
+              {
+                "name": "fgfm",
+                "help": "FortiManager access."
+              },
+              {
+                "name": "auto-ipsec",
+                "help": "IPsec auto-configuration."
+              },
+              {
+                "name": "radius-acct",
+                "help": "RADIUS accounting access."
+              },
+              {
+                "name": "probe-response",
+                "help": "Probe access."
+              },
+              {
+                "name": "capwap",
+                "help": "CAPWAP access."
+              }
+            ]
+          },
+          "gwdetect": {
+            "name": "gwdetect",
+            "category": "unitary",
+            "type": "option",
+            "help": "Enable\/disable detect gateway alive for first.",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable detect gateway alive for first."
+              },
+              {
+                "name": "disable",
+                "help": "Disable detect gateway alive for first."
+              }
+            ]
+          },
+          "ping-serv-status": {
+            "name": "ping-serv-status",
+            "category": "unitary",
+            "type": "integer",
+            "help": "PING server status.",
+            "min-value": 0,
+            "max-value": 4294967295
+          },
+          "detectserver": {
+            "name": "detectserver",
+            "category": "unitary",
+            "type": "user",
+            "help": "Gateway's ping server for this IP."
+          },
+          "detectprotocol": {
+            "name": "detectprotocol",
+            "category": "unitary",
+            "type": "option",
+            "help": "Protocols used to detect the server.",
+            "options": [
+              {
+                "name": "ping",
+                "help": "PING."
+              },
+              {
+                "name": "tcp-echo",
+                "help": "TCP echo."
+              },
+              {
+                "name": "udp-echo",
+                "help": "UDP echo."
+              }
+            ]
+          },
+          "ha-priority": {
+            "name": "ha-priority",
+            "category": "unitary",
+            "type": "integer",
+            "help": "HA election priority for the PING server.",
+            "min-value": 1,
+            "max-value": 50
+          },
+          "fail-detect": {
+            "name": "fail-detect",
+            "category": "unitary",
+            "type": "option",
+            "help": "Enable\/disable interface failed option status.",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable interface failed option status."
+              },
+              {
+                "name": "disable",
+                "help": "Disable interface failed option status."
+              }
+            ]
+          },
+          "fail-detect-option": {
+            "name": "fail-detect-option",
+            "category": "unitary",
+            "type": "option",
+            "help": "Interface fail detect option.",
+            "options": [
+              {
+                "name": "detectserver",
+                "help": "Detect server."
+              },
+              {
+                "name": "link-down",
+                "help": "Link-down."
+              }
+            ]
+          },
+          "fail-alert-method": {
+            "name": "fail-alert-method",
+            "category": "unitary",
+            "type": "option",
+            "help": "Interface fail alert.",
+            "options": [
+              {
+                "name": "link-failed-signal",
+                "help": "Link-failed-signal."
+              },
+              {
+                "name": "link-down",
+                "help": "Link-down."
+              }
+            ]
+          },
+          "fail-action-on-extender": {
+            "name": "fail-action-on-extender",
+            "category": "unitary",
+            "type": "option",
+            "help": "Action on extender when interface fail .",
+            "options": [
+              {
+                "name": "soft-restart",
+                "help": "Soft-restart-on-extender."
+              },
+              {
+                "name": "hard-restart",
+                "help": "Hard-restart-on-extender."
+              },
+              {
+                "name": "reboot",
+                "help": "Reboot-on-extender."
+              }
+            ]
+          },
+          "fail-alert-interfaces": {
+            "name": "fail-alert-interfaces",
+            "category": "table",
+            "help": "Physical interfaces that will be alerted.",
+            "mkey": "name",
+            "mkey_type": "string",
+            "children": {
+              "name": {
+                "name": "name",
+                "category": "unitary",
+                "type": "string",
+                "help": "Physical interface name.",
+                "datasource": [
+                  "system.interface.name"
+                ],
+                "size": 64
+              }
+            },
+            "max_table_size_vdom": 0,
+            "max_table_size_global": 0,
+            "max_table_size_item": 0
+          },
+          "dhcp-client-identifier": {
+            "name": "dhcp-client-identifier",
+            "category": "unitary",
+            "type": "string",
+            "help": "DHCP client identifier.",
+            "size": 48
+          },
+          "ipunnumbered": {
+            "name": "ipunnumbered",
+            "category": "unitary",
+            "type": "ipv4-address",
+            "help": "PPPoE unnumbered IP."
+          },
+          "username": {
+            "name": "username",
+            "category": "unitary",
+            "type": "string",
+            "help": "User name.",
+            "size": 64
+          },
+          "pppoe-unnumbered-negotiate": {
+            "name": "pppoe-unnumbered-negotiate",
+            "category": "unitary",
+            "type": "option",
+            "help": "Enable\/disable PPPoE unnumbered negotiation.",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable IP address negotiating for unnumbered."
+              },
+              {
+                "name": "disable",
+                "help": "Disable IP address negotiating for unnumbered."
+              }
+            ]
+          },
+          "password": {
+            "name": "password",
+            "category": "unitary",
+            "type": "password",
+            "help": "Password",
+            "size": 128
+          },
+          "idle-timeout": {
+            "name": "idle-timeout",
+            "category": "unitary",
+            "type": "integer",
+            "help": "PPPoE auto disconnect after idle timeout seconds.",
+            "min-value": 0,
+            "max-value": 4294967295
+          },
+          "detected-peer-mtu": {
+            "name": "detected-peer-mtu",
+            "category": "unitary",
+            "type": "integer",
+            "help": "MTU of detected peer (0 - 4294967295).",
+            "min-value": 0,
+            "max-value": 4294967295
+          },
+          "disc-retry-timeout": {
+            "name": "disc-retry-timeout",
+            "category": "unitary",
+            "type": "integer",
+            "help": "PPPoE discovery init timeout value in sec.",
+            "min-value": 0,
+            "max-value": 4294967295
+          },
+          "padt-retry-timeout": {
+            "name": "padt-retry-timeout",
+            "category": "unitary",
+            "type": "integer",
+            "help": "PPPoE terminate timeout value in sec.",
+            "min-value": 0,
+            "max-value": 4294967295
+          },
+          "service-name": {
+            "name": "service-name",
+            "category": "unitary",
+            "type": "string",
+            "help": "PPPoE service name.",
+            "size": 63
+          },
+          "ac-name": {
+            "name": "ac-name",
+            "category": "unitary",
+            "type": "string",
+            "help": "PPPoE AC name.",
+            "size": 63
+          },
+          "lcp-echo-interval": {
+            "name": "lcp-echo-interval",
+            "category": "unitary",
+            "type": "integer",
+            "help": "PPPoE LCP echo interval (sec).",
+            "min-value": 0,
+            "max-value": 4294967295
+          },
+          "lcp-max-echo-fails": {
+            "name": "lcp-max-echo-fails",
+            "category": "unitary",
+            "type": "integer",
+            "help": "Maximum missed LCP echo messages before disconnect.",
+            "min-value": 0,
+            "max-value": 4294967295
+          },
+          "defaultgw": {
+            "name": "defaultgw",
+            "category": "unitary",
+            "type": "option",
+            "help": "Enable\/disable default gateway.",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable setting."
+              },
+              {
+                "name": "disable",
+                "help": "Disable setting."
+              }
+            ]
+          },
+          "dns-server-override": {
+            "name": "dns-server-override",
+            "category": "unitary",
+            "type": "option",
+            "help": "Enable\/disable use DNS acquired by DHCP or PPPoE.",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable setting."
+              },
+              {
+                "name": "disable",
+                "help": "Disable setting."
+              }
+            ]
+          },
+          "auth-type": {
+            "name": "auth-type",
+            "category": "unitary",
+            "type": "option",
+            "help": "PPP authentication type to use.",
+            "options": [
+              {
+                "name": "auto",
+                "help": "Automatically choose authentication."
+              },
+              {
+                "name": "pap",
+                "help": "PAP authentication."
+              },
+              {
+                "name": "chap",
+                "help": "CHAP authentication."
+              },
+              {
+                "name": "mschapv1",
+                "help": "MS-CHAPv1 authentication."
+              },
+              {
+                "name": "mschapv2",
+                "help": "MS-CHAPv2 authentication."
+              }
+            ]
+          },
+          "pptp-client": {
+            "name": "pptp-client",
+            "category": "unitary",
+            "type": "option",
+            "help": "Enable\/disable PPTP client.",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable PPTP client."
+              },
+              {
+                "name": "disable",
+                "help": "Disable PPTP client."
+              }
+            ]
+          },
+          "pptp-user": {
+            "name": "pptp-user",
+            "category": "unitary",
+            "type": "string",
+            "help": "PPTP user name.",
+            "size": 64
+          },
+          "pptp-password": {
+            "name": "pptp-password",
+            "category": "unitary",
+            "type": "password",
+            "help": "PPTP password.",
+            "size": 128
+          },
+          "pptp-server-ip": {
+            "name": "pptp-server-ip",
+            "category": "unitary",
+            "type": "ipv4-address",
+            "help": "PPTP server IP address."
+          },
+          "pptp-auth-type": {
+            "name": "pptp-auth-type",
+            "category": "unitary",
+            "type": "option",
+            "help": "PPTP authentication type.",
+            "options": [
+              {
+                "name": "auto",
+                "help": "Automatically choose authentication."
+              },
+              {
+                "name": "pap",
+                "help": "PAP authentication."
+              },
+              {
+                "name": "chap",
+                "help": "CHAP authentication."
+              },
+              {
+                "name": "mschapv1",
+                "help": "MS-CHAPv1 authentication."
+              },
+              {
+                "name": "mschapv2",
+                "help": "MS-CHAPv2 authentication."
+              }
+            ]
+          },
+          "pptp-timeout": {
+            "name": "pptp-timeout",
+            "category": "unitary",
+            "type": "integer",
+            "help": "Idle timer in minutes (0 for disabled).",
+            "min-value": 0,
+            "max-value": 4294967295
+          },
+          "arpforward": {
+            "name": "arpforward",
+            "category": "unitary",
+            "type": "option",
+            "help": "Enable\/disable ARP forwarding.",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable ARP forwarding."
+              },
+              {
+                "name": "disable",
+                "help": "Disable ARP forwarding."
+              }
+            ]
+          },
+          "ndiscforward": {
+            "name": "ndiscforward",
+            "category": "unitary",
+            "type": "option",
+            "help": "Enable\/disable NDISC forwarding.",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable NDISC forwarding."
+              },
+              {
+                "name": "disable",
+                "help": "Disable NDISC forwarding."
+              }
+            ]
+          },
+          "broadcast-forward": {
+            "name": "broadcast-forward",
+            "category": "unitary",
+            "type": "option",
+            "help": "Enable\/disable broadcast forwarding.",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable broadcast forwarding."
+              },
+              {
+                "name": "disable",
+                "help": "Disable broadcast forwarding."
+              }
+            ]
+          },
+          "bfd": {
+            "name": "bfd",
+            "category": "unitary",
+            "type": "option",
+            "help": "Bidirectional Forwarding Detection (BFD).",
+            "options": [
+              {
+                "name": "global",
+                "help": "BFD behavior of this interface will be based on global configuration."
+              },
+              {
+                "name": "enable",
+                "help": "Enable BFD on this interface and ignore global configuration."
+              },
+              {
+                "name": "disable",
+                "help": "Disable BFD on this interface and ignore global configuration."
+              }
+            ]
+          },
+          "bfd-desired-min-tx": {
+            "name": "bfd-desired-min-tx",
+            "category": "unitary",
+            "type": "integer",
+            "help": "BFD desired minimal transmit interval.",
+            "min-value": 0,
+            "max-value": 4294967295
+          },
+          "bfd-detect-mult": {
+            "name": "bfd-detect-mult",
+            "category": "unitary",
+            "type": "integer",
+            "help": "BFD detection multiplier.",
+            "min-value": 0,
+            "max-value": 4294967295
+          },
+          "bfd-required-min-rx": {
+            "name": "bfd-required-min-rx",
+            "category": "unitary",
+            "type": "integer",
+            "help": "BFD required minimal receive interval.",
+            "min-value": 0,
+            "max-value": 4294967295
+          },
+          "l2forward": {
+            "name": "l2forward",
+            "category": "unitary",
+            "type": "option",
+            "help": "Enable\/disable l2 forwarding.",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable setting."
+              },
+              {
+                "name": "disable",
+                "help": "Disable setting."
+              }
+            ]
+          },
+          "icmp-redirect": {
+            "name": "icmp-redirect",
+            "category": "unitary",
+            "type": "option",
+            "help": "Enable\/disable ICMP redirect.",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable setting."
+              },
+              {
+                "name": "disable",
+                "help": "Disable setting."
+              }
+            ]
+          },
+          "vlanforward": {
+            "name": "vlanforward",
+            "category": "unitary",
+            "type": "option",
+            "help": "Enable\/disable VLAN forwarding.",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable setting."
+              },
+              {
+                "name": "disable",
+                "help": "Disable setting."
+              }
+            ]
+          },
+          "stpforward": {
+            "name": "stpforward",
+            "category": "unitary",
+            "type": "option",
+            "help": "Enable\/disable STP forwarding.",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable setting."
+              },
+              {
+                "name": "disable",
+                "help": "Disable setting."
+              }
+            ]
+          },
+          "stpforward-mode": {
+            "name": "stpforward-mode",
+            "category": "unitary",
+            "type": "option",
+            "help": "Configure STP forwarding mode.",
+            "options": [
+              {
+                "name": "rpl-all-ext-id",
+                "help": "Replace all extension IDs (root, bridge)."
+              },
+              {
+                "name": "rpl-bridge-ext-id",
+                "help": "Replace the bridge extension ID only."
+              },
+              {
+                "name": "rpl-nothing",
+                "help": "Replace nothing."
+              }
+            ]
+          },
+          "ips-sniffer-mode": {
+            "name": "ips-sniffer-mode",
+            "category": "unitary",
+            "type": "option",
+            "help": "Enable\/disable IPS sniffer mode.",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable setting."
+              },
+              {
+                "name": "disable",
+                "help": "Disable setting."
+              }
+            ]
+          },
+          "ident-accept": {
+            "name": "ident-accept",
+            "category": "unitary",
+            "type": "option",
+            "help": "Enable\/disable accept ident protocol.",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable setting."
+              },
+              {
+                "name": "disable",
+                "help": "Disable setting."
+              }
+            ]
+          },
+          "ipmac": {
+            "name": "ipmac",
+            "category": "unitary",
+            "type": "option",
+            "help": "Enable\/disable IP\/MAC binding status.",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable setting."
+              },
+              {
+                "name": "disable",
+                "help": "Disable setting."
+              }
+            ]
+          },
+          "subst": {
+            "name": "subst",
+            "category": "unitary",
+            "type": "option",
+            "help": "Enable\/disable substitute MAC.",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable setting."
+              },
+              {
+                "name": "disable",
+                "help": "Disable setting."
+              }
+            ]
+          },
+          "macaddr": {
+            "name": "macaddr",
+            "category": "unitary",
+            "type": "mac-address",
+            "help": "MAC address."
+          },
+          "substitute-dst-mac": {
+            "name": "substitute-dst-mac",
+            "category": "unitary",
+            "type": "mac-address",
+            "help": "Substitute destination MAC address."
+          },
+          "speed": {
+            "name": "speed",
+            "category": "unitary",
+            "type": "option",
+            "help": "Speed",
+            "options": [
+              {
+                "name": "auto",
+                "help": "Automatically adjust speed."
+              },
+              {
+                "name": "10full",
+                "help": "10M full-duplex."
+              },
+              {
+                "name": "10half",
+                "help": "10M half-duplex."
+              },
+              {
+                "name": "100full",
+                "help": "100M full-duplex."
+              },
+              {
+                "name": "100half",
+                "help": "100M half-duplex."
+              },
+              {
+                "name": "1000full",
+                "help": "1000M full-duplex."
+              },
+              {
+                "name": "1000half",
+                "help": "1000M half-duplex."
+              },
+              {
+                "name": "1000auto",
+                "help": "1000M auto adjust."
+              }
+            ]
+          },
+          "status": {
+            "name": "status",
+            "category": "unitary",
+            "type": "option",
+            "help": "Interface status.",
+            "options": [
+              {
+                "name": "up",
+                "help": "Interface up."
+              },
+              {
+                "name": "down",
+                "help": "Interface down."
+              }
+            ]
+          },
+          "netbios-forward": {
+            "name": "netbios-forward",
+            "category": "unitary",
+            "type": "option",
+            "help": "Enable\/disable NETBIOS forwarding.",
+            "options": [
+              {
+                "name": "disable",
+                "help": "Disable NETBIOS forwarding."
+              },
+              {
+                "name": "enable",
+                "help": "Enable NETBIOS forwarding."
+              }
+            ]
+          },
+          "wins-ip": {
+            "name": "wins-ip",
+            "category": "unitary",
+            "type": "ipv4-address",
+            "help": "WINS server IP."
+          },
+          "type": {
+            "name": "type",
+            "category": "unitary",
+            "type": "option",
+            "help": "Interface type.",
+            "options": [
+              {
+                "name": "physical",
+                "help": "Physical interface."
+              },
+              {
+                "name": "vlan",
+                "help": "VLAN interface."
+              },
+              {
+                "name": "aggregate",
+                "help": "aggregate interface"
+              },
+              {
+                "name": "redundant",
+                "help": "Redundant interface."
+              },
+              {
+                "name": "tunnel",
+                "help": "Tunnel interface."
+              },
+              {
+                "name": "vdom-link",
+                "help": "VDOM link interface."
+              },
+              {
+                "name": "loopback",
+                "help": "Loopback interface."
+              },
+              {
+                "name": "switch",
+                "help": "Software switch interface."
+              },
+              {
+                "name": "hard-switch",
+                "help": "Hardware switch interface."
+              },
+              {
+                "name": "vap-switch",
+                "help": "VAP interface."
+              },
+              {
+                "name": "wl-mesh",
+                "help": "WLAN mesh interface."
+              },
+              {
+                "name": "fext-wan",
+                "help": "FortiExtender interface."
+              },
+              {
+                "name": "hdlc",
+                "help": "T1\/E1 interface."
+              },
+              {
+                "name": "switch-vlan",
+                "help": "switch-vlan interface"
+              }
+            ]
+          },
+          "dedicated-to": {
+            "name": "dedicated-to",
+            "category": "unitary",
+            "type": "option",
+            "help": "Configure interface for single purpose.",
+            "options": [
+              {
+                "name": "none",
+                "help": "Interface not dedicated for any purpose."
+              },
+              {
+                "name": "management",
+                "help": "Dedicate this interface for management purposes only."
+              }
+            ]
+          },
+          "trust-ip-1": {
+            "name": "trust-ip-1",
+            "category": "unitary",
+            "type": "ipv4-classnet-any",
+            "help": "Trusted host for dedicated management traffic (0.0.0.0\/24 for all hosts)."
+          },
+          "trust-ip-2": {
+            "name": "trust-ip-2",
+            "category": "unitary",
+            "type": "ipv4-classnet-any",
+            "help": "Trusted host for dedicated management traffic (0.0.0.0\/24 for all hosts)."
+          },
+          "trust-ip-3": {
+            "name": "trust-ip-3",
+            "category": "unitary",
+            "type": "ipv4-classnet-any",
+            "help": "Trusted host for dedicated management traffic (0.0.0.0\/24 for all hosts)."
+          },
+          "trust-ip6-1": {
+            "name": "trust-ip6-1",
+            "category": "unitary",
+            "type": "ipv6-prefix",
+            "help": "Trusted IPv6 host for dedicated management traffic (::\/0 for all hosts)."
+          },
+          "trust-ip6-2": {
+            "name": "trust-ip6-2",
+            "category": "unitary",
+            "type": "ipv6-prefix",
+            "help": "Trusted IPv6 host for dedicated management traffic (::\/0 for all hosts)."
+          },
+          "trust-ip6-3": {
+            "name": "trust-ip6-3",
+            "category": "unitary",
+            "type": "ipv6-prefix",
+            "help": "Trusted IPv6 host for dedicated management traffic (::\/0 for all hosts)."
+          },
+          "mtu-override": {
+            "name": "mtu-override",
+            "category": "unitary",
+            "type": "option",
+            "help": "Enable\/disable use custom MTU.",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Override default MTU."
+              },
+              {
+                "name": "disable",
+                "help": "Use default MTU (1500)."
+              }
+            ]
+          },
+          "mtu": {
+            "name": "mtu",
+            "category": "unitary",
+            "type": "integer",
+            "help": "Maximum transportation unit.",
+            "min-value": 0,
+            "max-value": 4294967295
+          },
+          "wccp": {
+            "name": "wccp",
+            "category": "unitary",
+            "type": "option",
+            "help": "Enable\/disable WCCP protocol on this interface.",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable WCCP protocol on this interface."
+              },
+              {
+                "name": "disable",
+                "help": "Disable WCCP protocol on this interface."
+              }
+            ]
+          },
+          "netflow-sampler": {
+            "name": "netflow-sampler",
+            "category": "unitary",
+            "type": "option",
+            "help": "NetFlow measurement status.",
+            "options": [
+              {
+                "name": "disable",
+                "help": "Disable NetFlow protocol on this interface."
+              },
+              {
+                "name": "tx",
+                "help": "Monitor transmitted traffic on this interface."
+              },
+              {
+                "name": "rx",
+                "help": "Monitor received traffic on this interface."
+              },
+              {
+                "name": "both",
+                "help": "Monitor transmitted\/received traffic on this interface."
+              }
+            ]
+          },
+          "sflow-sampler": {
+            "name": "sflow-sampler",
+            "category": "unitary",
+            "type": "option",
+            "help": "Enable\/disable sFlow protocol.",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable sFlow protocol on this interface."
+              },
+              {
+                "name": "disable",
+                "help": "Disable sFlow protocol on this interface."
+              }
+            ]
+          },
+          "drop-overlapped-fragment": {
+            "name": "drop-overlapped-fragment",
+            "category": "unitary",
+            "type": "option",
+            "help": "Enable\/disable drop overlapped fragment packets.",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable drop of overlapped fragment packets."
+              },
+              {
+                "name": "disable",
+                "help": "Disable drop of overlapped fragment packets."
+              }
+            ]
+          },
+          "drop-fragment": {
+            "name": "drop-fragment",
+            "category": "unitary",
+            "type": "option",
+            "help": "Enable\/disable drop fragment packets.",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable\/disable drop fragment packets."
+              },
+              {
+                "name": "disable",
+                "help": "Do not drop fragment packets."
+              }
+            ]
+          },
+          "scan-botnet-connections": {
+            "name": "scan-botnet-connections",
+            "category": "unitary",
+            "type": "option",
+            "help": "Enable\/disable scanning of connections to Botnet servers.",
+            "options": [
+              {
+                "name": "disable",
+                "help": "Do not scan connections to botnet servers."
+              },
+              {
+                "name": "block",
+                "help": "Block connections to botnet servers."
+              },
+              {
+                "name": "monitor",
+                "help": "Log connections to botnet servers."
+              }
+            ]
+          },
+          "sample-rate": {
+            "name": "sample-rate",
+            "category": "unitary",
+            "type": "integer",
+            "help": "sFlow sampler sample rate.",
+            "min-value": 10,
+            "max-value": 99999
+          },
+          "polling-interval": {
+            "name": "polling-interval",
+            "category": "unitary",
+            "type": "integer",
+            "help": "sFlow sampler counter polling interval.",
+            "min-value": 1,
+            "max-value": 255
+          },
+          "sample-direction": {
+            "name": "sample-direction",
+            "category": "unitary",
+            "type": "option",
+            "help": "sFlow sample direction.",
+            "options": [
+              {
+                "name": "tx",
+                "help": "Monitor transmitted traffic on this interface."
+              },
+              {
+                "name": "rx",
+                "help": "Monitor received traffic on this interface."
+              },
+              {
+                "name": "both",
+                "help": "Monitor transmitted\/received traffic on this interface."
+              }
+            ]
+          },
+          "explicit-web-proxy": {
+            "name": "explicit-web-proxy",
+            "category": "unitary",
+            "type": "option",
+            "help": "Enable\/disable explicit Web proxy.",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable explicit Web proxy on this interface."
+              },
+              {
+                "name": "disable",
+                "help": "Disable explicit Web proxy on this interface."
+              }
+            ]
+          },
+          "explicit-ftp-proxy": {
+            "name": "explicit-ftp-proxy",
+            "category": "unitary",
+            "type": "option",
+            "help": "Enable\/disable explicit FTP proxy.",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable explicit FTP proxy on this interface."
+              },
+              {
+                "name": "disable",
+                "help": "Disable explicit FTP proxy on this interface."
+              }
+            ]
+          },
+          "tcp-mss": {
+            "name": "tcp-mss",
+            "category": "unitary",
+            "type": "integer",
+            "help": "Maximum sending TCP packet size.",
+            "min-value": 0,
+            "max-value": 4294967295
+          },
+          "inbandwidth": {
+            "name": "inbandwidth",
+            "category": "unitary",
+            "type": "integer",
+            "help": "Bandwidth limit for incoming traffic (0 - 16776000 kbps).",
+            "min-value": 0,
+            "max-value": 16776000
+          },
+          "outbandwidth": {
+            "name": "outbandwidth",
+            "category": "unitary",
+            "type": "integer",
+            "help": "Bandwidth limit for outgoing traffic (0 - 16776000 kbps).",
+            "min-value": 0,
+            "max-value": 16776000
+          },
+          "spillover-threshold": {
+            "name": "spillover-threshold",
+            "category": "unitary",
+            "type": "integer",
+            "help": "Egress Spillover threshold (0 - 16776000 kbps).",
+            "min-value": 0,
+            "max-value": 16776000
+          },
+          "ingress-spillover-threshold": {
+            "name": "ingress-spillover-threshold",
+            "category": "unitary",
+            "type": "integer",
+            "help": "Ingress Spillover threshold (0 - 16776000 kbps).",
+            "min-value": 0,
+            "max-value": 16776000
+          },
+          "weight": {
+            "name": "weight",
+            "category": "unitary",
+            "type": "integer",
+            "help": "Default weight for static routes (if route has no weight configured).",
+            "min-value": 0,
+            "max-value": 255
+          },
+          "interface": {
+            "name": "interface",
+            "category": "unitary",
+            "type": "string",
+            "help": "Interface name.",
+            "datasource": [
+              "system.interface.name"
+            ],
+            "size": 15
+          },
+          "external": {
+            "name": "external",
+            "category": "unitary",
+            "type": "option",
+            "help": "Enable\/disable identifying interface as connected to external side.",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable identifying interface as connected to external side."
+              },
+              {
+                "name": "disable",
+                "help": "Disable identifying interface as connected to external side."
+              }
+            ]
+          },
+          "vlanid": {
+            "name": "vlanid",
+            "category": "unitary",
+            "type": "integer",
+            "help": "VLAN ID.",
+            "min-value": 0,
+            "max-value": 4294967295
+          },
+          "forward-domain": {
+            "name": "forward-domain",
+            "category": "unitary",
+            "type": "integer",
+            "help": "TP mode forward domain.",
+            "min-value": 0,
+            "max-value": 2147483647
+          },
+          "remote-ip": {
+            "name": "remote-ip",
+            "category": "unitary",
+            "type": "ipv4-address-any",
+            "help": "Remote IP address of tunnel."
+          },
+          "member": {
+            "name": "member",
+            "category": "table",
+            "help": "Physical interfaces that belong to the aggregate\/redundant interface.",
+            "mkey": "interface-name",
+            "mkey_type": "string",
+            "children": {
+              "interface-name": {
+                "name": "interface-name",
+                "category": "unitary",
+                "type": "string",
+                "help": "Physical interface name.",
+                "datasource": [
+                  "system.interface.name"
+                ],
+                "size": 64
+              }
+            },
+            "max_table_size_vdom": 0,
+            "max_table_size_global": 0,
+            "max_table_size_item": 0
+          },
+          "lacp-mode": {
+            "name": "lacp-mode",
+            "category": "unitary",
+            "type": "option",
+            "help": "LACP mode.",
+            "options": [
+              {
+                "name": "static",
+                "help": "Use static aggregation, do not send and ignore any LACP messages."
+              },
+              {
+                "name": "passive",
+                "help": "Passively use LACP to negotiate 802.3ad aggregation."
+              },
+              {
+                "name": "active",
+                "help": "Actively use LACP to negotiate 802.3ad aggregation."
+              }
+            ]
+          },
+          "lacp-ha-slave": {
+            "name": "lacp-ha-slave",
+            "category": "unitary",
+            "type": "option",
+            "help": "LACP HA slave.",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Allow HA slave to send\/receive LACP messages."
+              },
+              {
+                "name": "disable",
+                "help": "Block HA slave from sending\/receiving LACP messages."
+              }
+            ]
+          },
+          "lacp-speed": {
+            "name": "lacp-speed",
+            "category": "unitary",
+            "type": "option",
+            "help": "LACP speed.",
+            "options": [
+              {
+                "name": "slow",
+                "help": "Send LACP message every 30 seconds."
+              },
+              {
+                "name": "fast",
+                "help": "Send LACP message every second."
+              }
+            ]
+          },
+          "min-links": {
+            "name": "min-links",
+            "category": "unitary",
+            "type": "integer",
+            "help": "Minimum number of aggregated ports that must be up.",
+            "min-value": 1,
+            "max-value": 32
+          },
+          "min-links-down": {
+            "name": "min-links-down",
+            "category": "unitary",
+            "type": "option",
+            "help": "Action to take when there are less than min-links active members.",
+            "options": [
+              {
+                "name": "operational",
+                "help": "Set the aggregate operationally down."
+              },
+              {
+                "name": "administrative",
+                "help": "Set the aggregate administratively down."
+              }
+            ]
+          },
+          "algorithm": {
+            "name": "algorithm",
+            "category": "unitary",
+            "type": "option",
+            "help": "Frame distribution algorithm.",
+            "options": [
+              {
+                "name": "L2",
+                "help": "Use layer 2 address for distribution."
+              },
+              {
+                "name": "L3",
+                "help": "Use layer 3 address for distribution."
+              },
+              {
+                "name": "L4",
+                "help": "Use layer 4 information for distribution."
+              }
+            ]
+          },
+          "link-up-delay": {
+            "name": "link-up-delay",
+            "category": "unitary",
+            "type": "integer",
+            "help": "Number of milliseconds to wait before considering a link is up.",
+            "min-value": 50,
+            "max-value": 3600000
+          },
+          "priority-override": {
+            "name": "priority-override",
+            "category": "unitary",
+            "type": "option",
+            "help": "Enable\/disable fail back to higher priority port once recovered.",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable fail back to higher priority port once recovered."
+              },
+              {
+                "name": "disable",
+                "help": "Disable fail back to higher priority port once recovered."
+              }
+            ]
+          },
+          "aggregate": {
+            "name": "aggregate",
+            "category": "unitary",
+            "type": "string",
+            "help": "Aggregate interface.",
+            "size": 15
+          },
+          "redundant-interface": {
+            "name": "redundant-interface",
+            "category": "unitary",
+            "type": "string",
+            "help": "Redundant interface.",
+            "size": 15
+          },
+          "managed-device": {
+            "name": "managed-device",
+            "category": "table",
+            "help": "FortiLink interface managed device.",
+            "mkey": "name",
+            "mkey_type": "string",
+            "children": {
+              "name": {
+                "name": "name",
+                "category": "unitary",
+                "type": "string",
+                "help": "Managed dev identifier.",
+                "size": 64
+              }
+            },
+            "max_table_size_vdom": 0,
+            "max_table_size_global": 0,
+            "max_table_size_item": 0
+          },
+          "devindex": {
+            "name": "devindex",
+            "category": "unitary",
+            "type": "integer",
+            "help": "Device Index.",
+            "min-value": 0,
+            "max-value": 4294967295
+          },
+          "vindex": {
+            "name": "vindex",
+            "category": "unitary",
+            "type": "integer",
+            "help": "Switch control interface VLAN ID.",
+            "min-value": 0,
+            "max-value": 4294967295
+          },
+          "switch": {
+            "name": "switch",
+            "category": "unitary",
+            "type": "string",
+            "help": "Contained in switch.",
+            "size": 15
+          },
+          "description": {
+            "name": "description",
+            "category": "unitary",
+            "type": "var-string",
+            "help": "Description.",
+            "size": 255
+          },
+          "alias": {
+            "name": "alias",
+            "category": "unitary",
+            "type": "string",
+            "help": "Alias.",
+            "size": 25
+          },
+          "security-mode": {
+            "name": "security-mode",
+            "category": "unitary",
+            "type": "option",
+            "help": "Security mode.",
+            "options": [
+              {
+                "name": "none",
+                "help": "No security option."
+              },
+              {
+                "name": "captive-portal",
+                "help": "Captive portal authentication."
+              },
+              {
+                "name": "802.1X",
+                "help": "802.1X port-based authentication."
+              }
+            ]
+          },
+          "security-mac-auth-bypass": {
+            "name": "security-mac-auth-bypass",
+            "category": "unitary",
+            "type": "option",
+            "help": "Enable\/disable MAC authentication bypass.",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable MAC authentication bypass."
+              },
+              {
+                "name": "disable",
+                "help": "Disable MAC authentication bypass."
+              }
+            ]
+          },
+          "security-external-web": {
+            "name": "security-external-web",
+            "category": "unitary",
+            "type": "string",
+            "help": "URL of external authentication web server.",
+            "size": 127
+          },
+          "security-external-logout": {
+            "name": "security-external-logout",
+            "category": "unitary",
+            "type": "string",
+            "help": "URL of external authentication logout server.",
+            "size": 127
+          },
+          "replacemsg-override-group": {
+            "name": "replacemsg-override-group",
+            "category": "unitary",
+            "type": "string",
+            "help": "Specify replacement message override group.",
+            "size": 35
+          },
+          "security-redirect-url": {
+            "name": "security-redirect-url",
+            "category": "unitary",
+            "type": "string",
+            "help": "URL redirection after disclaimer\/authentication.",
+            "size": 127
+          },
+          "security-exempt-list": {
+            "name": "security-exempt-list",
+            "category": "unitary",
+            "type": "string",
+            "help": "Name of security-exempt-list.",
+            "size": 35
+          },
+          "security-groups": {
+            "name": "security-groups",
+            "category": "table",
+            "help": "Group name.",
+            "mkey": "name",
+            "mkey_type": "string",
+            "children": {
+              "name": {
+                "name": "name",
+                "category": "unitary",
+                "type": "string",
+                "help": "Group name.",
+                "size": 64
+              }
+            },
+            "max_table_size_vdom": 0,
+            "max_table_size_global": 0,
+            "max_table_size_item": 0
+          },
+          "device-identification": {
+            "name": "device-identification",
+            "category": "unitary",
+            "type": "option",
+            "help": "Enable\/disable passive gathering of identity information about source hosts on this interface.",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable setting."
+              },
+              {
+                "name": "disable",
+                "help": "Disable setting."
+              }
+            ]
+          },
+          "device-user-identification": {
+            "name": "device-user-identification",
+            "category": "unitary",
+            "type": "option",
+            "help": "Enable\/disable passive gathering of user identity information about source hosts on this interface.",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable setting."
+              },
+              {
+                "name": "disable",
+                "help": "Disable setting."
+              }
+            ]
+          },
+          "device-identification-active-scan": {
+            "name": "device-identification-active-scan",
+            "category": "unitary",
+            "type": "option",
+            "help": "Enable\/disable active gathering of identity information about source hosts on this interface.",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable setting."
+              },
+              {
+                "name": "disable",
+                "help": "Disable setting."
+              }
+            ]
+          },
+          "device-access-list": {
+            "name": "device-access-list",
+            "category": "unitary",
+            "type": "string",
+            "help": "Device access list.",
+            "size": 35
+          },
+          "device-netscan": {
+            "name": "device-netscan",
+            "category": "unitary",
+            "type": "option",
+            "help": "Enable\/disable inclusion of devices detected on this interface in network vulnerability scans.",
+            "options": [
+              {
+                "name": "disable",
+                "help": "Disable inclusion of devices detected on this interface in network vulnerability scans."
+              },
+              {
+                "name": "enable",
+                "help": "Enable inclusion of devices detected on this interface in network vulnerability scans."
+              }
+            ]
+          },
+          "lldp-transmission": {
+            "name": "lldp-transmission",
+            "category": "unitary",
+            "type": "option",
+            "help": "Enable\/disable Link Layer Discovery Protocol (LLDP) transmission.",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable transmission of Link Layer Discovery Protocol (LLDP)."
+              },
+              {
+                "name": "disable",
+                "help": "Disable transmission of Link Layer Discovery Protocol (LLDP)."
+              },
+              {
+                "name": "vdom",
+                "help": "Use VDOM Link Layer Discovery Protocol (LLDP) configuration setting."
+              }
+            ]
+          },
+          "fortiheartbeat": {
+            "name": "fortiheartbeat",
+            "category": "unitary",
+            "type": "option",
+            "help": "Enable\/disable FortiHeartBeat (FortiTelemetry on GUI).",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable FortiHeartBeat."
+              },
+              {
+                "name": "disable",
+                "help": "Disable FortiHeartBeat."
+              }
+            ]
+          },
+          "broadcast-forticlient-discovery": {
+            "name": "broadcast-forticlient-discovery",
+            "category": "unitary",
+            "type": "option",
+            "help": "Enable\/disable broadcast FortiClient discovery messages.",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable broadcasting FortiClient discovery messages."
+              },
+              {
+                "name": "disable",
+                "help": "Disable broadcasting FortiClient discovery messages."
+              }
+            ]
+          },
+          "endpoint-compliance": {
+            "name": "endpoint-compliance",
+            "category": "unitary",
+            "type": "option",
+            "help": "Enable\/disable endpoint compliance enforcement.",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable endpoint compliance enforcement."
+              },
+              {
+                "name": "disable",
+                "help": "Disable endpoint compliance enforcement."
+              }
+            ]
+          },
+          "estimated-upstream-bandwidth": {
+            "name": "estimated-upstream-bandwidth",
+            "category": "unitary",
+            "type": "integer",
+            "help": "Estimated maximum upstream bandwidth (kbps). Used to estimate link utilization.",
+            "min-value": 0,
+            "max-value": 4294967295
+          },
+          "estimated-downstream-bandwidth": {
+            "name": "estimated-downstream-bandwidth",
+            "category": "unitary",
+            "type": "integer",
+            "help": "Estimated maximum downstream bandwidth (kbps). Used to estimate link utilization.",
+            "min-value": 0,
+            "max-value": 4294967295
+          },
+          "vrrp-virtual-mac": {
+            "name": "vrrp-virtual-mac",
+            "category": "unitary",
+            "type": "option",
+            "help": "Enable\/disable use of virtual MAC for VRRP.",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable use of virtual MAC for VRRP."
+              },
+              {
+                "name": "disable",
+                "help": "Disable use of virtual MAC for VRRP."
+              }
+            ]
+          },
+          "vrrp": {
+            "name": "vrrp",
+            "category": "table",
+            "help": "VRRP configuration.",
+            "mkey": "vrid",
+            "mkey_type": "integer",
+            "children": {
+              "vrid": {
+                "name": "vrid",
+                "category": "unitary",
+                "type": "integer",
+                "help": "Virtual router identifier (1 - 255).",
+                "min-value": 1,
+                "max-value": 255
+              },
+              "vrgrp": {
+                "name": "vrgrp",
+                "category": "unitary",
+                "type": "integer",
+                "help": "VRRP group ID (1 - 65535).",
+                "min-value": 1,
+                "max-value": 65535
+              },
+              "vrip": {
+                "name": "vrip",
+                "category": "unitary",
+                "type": "ipv4-address-any",
+                "help": "IP address of the virtual router."
+              },
+              "priority": {
+                "name": "priority",
+                "category": "unitary",
+                "type": "integer",
+                "help": "Priority of the virtual router (1 - 255).",
+                "min-value": 1,
+                "max-value": 255
+              },
+              "adv-interval": {
+                "name": "adv-interval",
+                "category": "unitary",
+                "type": "integer",
+                "help": "Advertisement interval (1 - 255 seconds).",
+                "min-value": 1,
+                "max-value": 255
+              },
+              "start-time": {
+                "name": "start-time",
+                "category": "unitary",
+                "type": "integer",
+                "help": "Startup time (1 - 255 seconds).",
+                "min-value": 1,
+                "max-value": 255
+              },
+              "preempt": {
+                "name": "preempt",
+                "category": "unitary",
+                "type": "option",
+                "help": "Enable\/disable preempt mode.",
+                "options": [
+                  {
+                    "name": "enable",
+                    "help": "Enable preempt mode."
+                  },
+                  {
+                    "name": "disable",
+                    "help": "Disable preempt mode."
+                  }
+                ]
+              },
+              "vrdst": {
+                "name": "vrdst",
+                "category": "unitary",
+                "type": "ipv4-address-any",
+                "help": "Monitor the route to this destination."
+              },
+              "status": {
+                "name": "status",
+                "category": "unitary",
+                "type": "option",
+                "help": "Enable\/disable status.",
+                "options": [
+                  {
+                    "name": "enable",
+                    "help": "Enable status."
+                  },
+                  {
+                    "name": "disable",
+                    "help": "Disable status."
+                  }
+                ]
+              }
+            },
+            "max_table_size_vdom": 0,
+            "max_table_size_global": 0,
+            "max_table_size_item": 0
+          },
+          "role": {
+            "name": "role",
+            "category": "unitary",
+            "type": "option",
+            "help": "Interface role.",
+            "options": [
+              {
+                "name": "lan",
+                "help": "Connected to local network of endpoints."
+              },
+              {
+                "name": "wan",
+                "help": "Connected to Internet."
+              },
+              {
+                "name": "dmz",
+                "help": "Connected to server zone."
+              },
+              {
+                "name": "undefined",
+                "help": "Interface has no specific role."
+              }
+            ]
+          },
+          "snmp-index": {
+            "name": "snmp-index",
+            "category": "unitary",
+            "type": "integer",
+            "help": "Permanent SNMP Index of the interface.",
+            "min-value": 0,
+            "max-value": 4294967295
+          },
+          "secondary-IP": {
+            "name": "secondary-IP",
+            "category": "unitary",
+            "type": "option",
+            "help": "Enable\/disable secondary IP.",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable secondary IP."
+              },
+              {
+                "name": "disable",
+                "help": "Disable secondary IP."
+              }
+            ]
+          },
+          "secondaryip": {
+            "name": "secondaryip",
+            "category": "table",
+            "help": "Second IP address of interface.",
+            "mkey": "id",
+            "mkey_type": "integer",
+            "children": {
+              "id": {
+                "name": "id",
+                "category": "unitary",
+                "type": "integer",
+                "help": "ID.",
+                "min-value": 0,
+                "max-value": 4294967295
+              },
+              "ip": {
+                "name": "ip",
+                "category": "unitary",
+                "type": "ipv4-classnet-host",
+                "help": "IP address of interface."
+              },
+              "allowaccess": {
+                "name": "allowaccess",
+                "category": "unitary",
+                "type": "option",
+                "help": "Allow management access to the interface.",
+                "options": [
+                  {
+                    "name": "ping",
+                    "help": "PING access."
+                  },
+                  {
+                    "name": "https",
+                    "help": "HTTPS access."
+                  },
+                  {
+                    "name": "ssh",
+                    "help": "SSH access."
+                  },
+                  {
+                    "name": "snmp",
+                    "help": "SNMP access."
+                  },
+                  {
+                    "name": "http",
+                    "help": "HTTP access."
+                  },
+                  {
+                    "name": "telnet",
+                    "help": "TELNET access."
+                  },
+                  {
+                    "name": "fgfm",
+                    "help": "FortiManager access."
+                  },
+                  {
+                    "name": "auto-ipsec",
+                    "help": "IPsec auto-configuration."
+                  },
+                  {
+                    "name": "radius-acct",
+                    "help": "RADIUS accounting access."
+                  },
+                  {
+                    "name": "probe-response",
+                    "help": "Probe access."
+                  },
+                  {
+                    "name": "capwap",
+                    "help": "CAPWAP access."
+                  }
+                ]
+              },
+              "gwdetect": {
+                "name": "gwdetect",
+                "category": "unitary",
+                "type": "option",
+                "help": "Enable\/disable detect gateway alive for first.",
+                "options": [
+                  {
+                    "name": "enable",
+                    "help": "Enable detect gateway alive for first."
+                  },
+                  {
+                    "name": "disable",
+                    "help": "Disable detect gateway alive for first."
+                  }
+                ]
+              },
+              "ping-serv-status": {
+                "name": "ping-serv-status",
+                "category": "unitary",
+                "type": "integer",
+                "help": "PING server status.",
+                "min-value": 0,
+                "max-value": 4294967295
+              },
+              "detectserver": {
+                "name": "detectserver",
+                "category": "unitary",
+                "type": "user",
+                "help": "Gateway's ping server for this IP."
+              },
+              "detectprotocol": {
+                "name": "detectprotocol",
+                "category": "unitary",
+                "type": "option",
+                "help": "Protocols used to detect the server.",
+                "options": [
+                  {
+                    "name": "ping",
+                    "help": "PING."
+                  },
+                  {
+                    "name": "tcp-echo",
+                    "help": "TCP echo."
+                  },
+                  {
+                    "name": "udp-echo",
+                    "help": "UDP echo."
+                  }
+                ]
+              },
+              "ha-priority": {
+                "name": "ha-priority",
+                "category": "unitary",
+                "type": "integer",
+                "help": "HA election priority for the PING server.",
+                "min-value": 1,
+                "max-value": 50
+              }
+            },
+            "max_table_size_vdom": 0,
+            "max_table_size_global": 0,
+            "max_table_size_item": 32
+          },
+          "auto-auth-extension-device": {
+            "name": "auto-auth-extension-device",
+            "category": "unitary",
+            "type": "option",
+            "help": "Enable\/disable automatic authorization of dedicated Fortinet extension device on this interface.",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable automatic authorization of dedicated Fortinet extension device on this interface."
+              },
+              {
+                "name": "disable",
+                "help": "Disable automatic authorization of dedicated Fortinet extension device on this interface."
+              }
+            ]
+          },
+          "ap-discover": {
+            "name": "ap-discover",
+            "category": "unitary",
+            "type": "option",
+            "help": "Enable\/disable automatic registration of unknown FortiAP devices.",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable automatic registration of unknown FortiAP devices."
+              },
+              {
+                "name": "disable",
+                "help": "Disable automatic registration of unknown FortiAP devices."
+              }
+            ]
+          },
+          "fortilink": {
+            "name": "fortilink",
+            "category": "unitary",
+            "type": "option",
+            "help": "Enable\/disable FortiLink to dedicated interface for managing FortiSwitch devices.",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable FortiLink to dedicated interface for managing FortiSwitch devices."
+              },
+              {
+                "name": "disable",
+                "help": "Disable FortiLink to dedicated interface for managing FortiSwitch devices."
+              }
+            ]
+          },
+          "fortilink-stacking": {
+            "name": "fortilink-stacking",
+            "category": "unitary",
+            "type": "option",
+            "help": "Enable\/disable FortiLink switch-stacking on this interface.",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable FortiLink switch stacking."
+              },
+              {
+                "name": "disable",
+                "help": "Disable FortiLink switch stacking."
+              }
+            ]
+          },
+          "fortilink-split-interface": {
+            "name": "fortilink-split-interface",
+            "category": "unitary",
+            "type": "option",
+            "help": "Enable\/disable FortiLink split interface to connect member link to different FortiSwitch in stack for uplink redundancy (maximum 2 interfaces in the \"members\" command).",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable FortiLink split interface to connect member link to different FortiSwitch in stack for uplink redundancy."
+              },
+              {
+                "name": "disable",
+                "help": "Disable FortiLink split interface."
+              }
+            ]
+          },
+          "internal": {
+            "name": "internal",
+            "category": "unitary",
+            "type": "integer",
+            "help": "Implicitly created.",
+            "min-value": 0,
+            "max-value": 4294967295
+          },
+          "fortilink-backup-link": {
+            "name": "fortilink-backup-link",
+            "category": "unitary",
+            "type": "integer",
+            "help": "fortilink split interface backup link.",
+            "min-value": 0,
+            "max-value": 4294967295
+          },
+          "switch-controller-auth": {
+            "name": "switch-controller-auth",
+            "category": "unitary",
+            "type": "option",
+            "help": "Switch controller authentication.",
+            "options": [
+              {
+                "name": "usergroup",
+                "help": "User group."
+              },
+              {
+                "name": "radius",
+                "help": "RADIUS."
+              }
+            ]
+          },
+          "switch-controller-radius-server": {
+            "name": "switch-controller-radius-server",
+            "category": "unitary",
+            "type": "string",
+            "help": "RADIUS server name for this FortiSwitch VLAN.",
+            "size": 35
+          },
+          "color": {
+            "name": "color",
+            "category": "unitary",
+            "type": "integer",
+            "help": "GUI icon color.",
+            "min-value": 0,
+            "max-value": 32
+          },
+          "ipv6": {
+            "name": "ipv6",
+            "category": "complex",
+            "help": "IPv6 of interface.",
+            "children": {
+              "ip6-mode": {
+                "name": "ip6-mode",
+                "category": "unitary",
+                "type": "option",
+                "help": "Addressing mode (static, DHCP, delegated).",
+                "options": [
+                  {
+                    "name": "static",
+                    "help": "Static setting."
+                  },
+                  {
+                    "name": "dhcp",
+                    "help": "DHCPv6 client mode."
+                  },
+                  {
+                    "name": "pppoe",
+                    "help": "IPv6 over PPPoE mode."
+                  },
+                  {
+                    "name": "delegated",
+                    "help": "IPv6 address with delegated prefix."
+                  }
+                ]
+              },
+              "ip6-dns-server-override": {
+                "name": "ip6-dns-server-override",
+                "category": "unitary",
+                "type": "option",
+                "help": "Enable\/disable use DNS acquired by DHCP.",
+                "options": [
+                  {
+                    "name": "enable",
+                    "help": "Enable setting."
+                  },
+                  {
+                    "name": "disable",
+                    "help": "Disable setting."
+                  }
+                ]
+              },
+              "ip6-address": {
+                "name": "ip6-address",
+                "category": "unitary",
+                "type": "ipv6-prefix",
+                "help": "Primary IPv6 address prefix of interface."
+              },
+              "ip6-extra-addr": {
+                "name": "ip6-extra-addr",
+                "category": "table",
+                "help": "Extra IPv6 address prefixes of interface.",
+                "mkey": "prefix",
+                "mkey_type": "ipv6-prefix",
+                "children": {
+                  "prefix": {
+                    "name": "prefix",
+                    "category": "unitary",
+                    "type": "ipv6-prefix",
+                    "help": "IPv6 address prefix."
+                  }
+                },
+                "max_table_size_vdom": 0,
+                "max_table_size_global": 0,
+                "max_table_size_item": 0
+              },
+              "ip6-allowaccess": {
+                "name": "ip6-allowaccess",
+                "category": "unitary",
+                "type": "option",
+                "help": "Allow management access to the interface.",
+                "options": [
+                  {
+                    "name": "ping",
+                    "help": "PING access."
+                  },
+                  {
+                    "name": "https",
+                    "help": "HTTPS access."
+                  },
+                  {
+                    "name": "ssh",
+                    "help": "SSH access."
+                  },
+                  {
+                    "name": "snmp",
+                    "help": "SNMP access."
+                  },
+                  {
+                    "name": "http",
+                    "help": "HTTP access."
+                  },
+                  {
+                    "name": "telnet",
+                    "help": "TELNET access."
+                  },
+                  {
+                    "name": "fgfm",
+                    "help": "FortiManager access."
+                  },
+                  {
+                    "name": "capwap",
+                    "help": "CAPWAP access."
+                  }
+                ]
+              },
+              "ip6-send-adv": {
+                "name": "ip6-send-adv",
+                "category": "unitary",
+                "type": "option",
+                "help": "Enable\/disable send advertisements flag.",
+                "options": [
+                  {
+                    "name": "enable",
+                    "help": "Enable setting."
+                  },
+                  {
+                    "name": "disable",
+                    "help": "Disable setting."
+                  }
+                ]
+              },
+              "ip6-manage-flag": {
+                "name": "ip6-manage-flag",
+                "category": "unitary",
+                "type": "option",
+                "help": "Enable\/disable managed flag.",
+                "options": [
+                  {
+                    "name": "enable",
+                    "help": "Enable setting."
+                  },
+                  {
+                    "name": "disable",
+                    "help": "Disable setting."
+                  }
+                ]
+              },
+              "ip6-other-flag": {
+                "name": "ip6-other-flag",
+                "category": "unitary",
+                "type": "option",
+                "help": "Enable\/disable other flag.",
+                "options": [
+                  {
+                    "name": "enable",
+                    "help": "Enable setting."
+                  },
+                  {
+                    "name": "disable",
+                    "help": "Disable setting."
+                  }
+                ]
+              },
+              "ip6-max-interval": {
+                "name": "ip6-max-interval",
+                "category": "unitary",
+                "type": "integer",
+                "help": "Maximum interval (sec; between 4 to 1800).",
+                "min-value": 0,
+                "max-value": 4294967295
+              },
+              "ip6-min-interval": {
+                "name": "ip6-min-interval",
+                "category": "unitary",
+                "type": "integer",
+                "help": "Minimum interval (sec; between 3 to 1350).",
+                "min-value": 0,
+                "max-value": 4294967295
+              },
+              "ip6-link-mtu": {
+                "name": "ip6-link-mtu",
+                "category": "unitary",
+                "type": "integer",
+                "help": "Link MTU.",
+                "min-value": 0,
+                "max-value": 4294967295
+              },
+              "ip6-reachable-time": {
+                "name": "ip6-reachable-time",
+                "category": "unitary",
+                "type": "integer",
+                "help": "Reachable time (milliseconds; 0 means unspecified).",
+                "min-value": 0,
+                "max-value": 4294967295
+              },
+              "ip6-retrans-time": {
+                "name": "ip6-retrans-time",
+                "category": "unitary",
+                "type": "integer",
+                "help": "Retransmit time (milliseconds; 0 means unspecified).",
+                "min-value": 0,
+                "max-value": 4294967295
+              },
+              "ip6-default-life": {
+                "name": "ip6-default-life",
+                "category": "unitary",
+                "type": "integer",
+                "help": "Default life (sec).",
+                "min-value": 0,
+                "max-value": 4294967295
+              },
+              "ip6-hop-limit": {
+                "name": "ip6-hop-limit",
+                "category": "unitary",
+                "type": "integer",
+                "help": "Hop limit (0 means unspecified).",
+                "min-value": 0,
+                "max-value": 4294967295
+              },
+              "autoconf": {
+                "name": "autoconf",
+                "category": "unitary",
+                "type": "option",
+                "help": "Enable\/disable address auto config.",
+                "options": [
+                  {
+                    "name": "enable",
+                    "help": "Enable auto-configuration."
+                  },
+                  {
+                    "name": "disable",
+                    "help": "Disable auto-configuration."
+                  }
+                ]
+              },
+              "ip6-upstream-interface": {
+                "name": "ip6-upstream-interface",
+                "category": "unitary",
+                "type": "string",
+                "help": "Interface name providing delegated information.",
+                "datasource": [
+                  "system.interface.name"
+                ],
+                "size": 15
+              },
+              "ip6-subnet": {
+                "name": "ip6-subnet",
+                "category": "unitary",
+                "type": "ipv6-prefix",
+                "help": " Add subnet ID to routing prefix."
+              },
+              "ip6-prefix-list": {
+                "name": "ip6-prefix-list",
+                "category": "table",
+                "help": "Advertised prefix list.",
+                "mkey": "prefix",
+                "mkey_type": "ipv6-network",
+                "children": {
+                  "prefix": {
+                    "name": "prefix",
+                    "category": "unitary",
+                    "type": "ipv6-network",
+                    "help": "IPv6 prefix."
+                  },
+                  "autonomous-flag": {
+                    "name": "autonomous-flag",
+                    "category": "unitary",
+                    "type": "option",
+                    "help": "Enable\/disable autonomous flag.",
+                    "options": [
+                      {
+                        "name": "enable",
+                        "help": "Enable setting."
+                      },
+                      {
+                        "name": "disable",
+                        "help": "Disable setting."
+                      }
+                    ]
+                  },
+                  "onlink-flag": {
+                    "name": "onlink-flag",
+                    "category": "unitary",
+                    "type": "option",
+                    "help": "Enable\/disable onlink flag.",
+                    "options": [
+                      {
+                        "name": "enable",
+                        "help": "Enable setting."
+                      },
+                      {
+                        "name": "disable",
+                        "help": "Disable setting."
+                      }
+                    ]
+                  },
+                  "valid-life-time": {
+                    "name": "valid-life-time",
+                    "category": "unitary",
+                    "type": "integer",
+                    "help": "Valid life time (sec).",
+                    "min-value": 0,
+                    "max-value": 4294967295
+                  },
+                  "preferred-life-time": {
+                    "name": "preferred-life-time",
+                    "category": "unitary",
+                    "type": "integer",
+                    "help": "Preferred life time (sec).",
+                    "min-value": 0,
+                    "max-value": 4294967295
+                  }
+                },
+                "max_table_size_vdom": 0,
+                "max_table_size_global": 0,
+                "max_table_size_item": 32
+              },
+              "ip6-delegated-prefix-list": {
+                "name": "ip6-delegated-prefix-list",
+                "category": "table",
+                "help": "Advertised IPv6 delegated prefix list.",
+                "mkey": "prefix-id",
+                "mkey_type": "integer",
+                "children": {
+                  "prefix-id": {
+                    "name": "prefix-id",
+                    "category": "unitary",
+                    "type": "integer",
+                    "help": "Prefix ID.",
+                    "min-value": 0,
+                    "max-value": 4294967295
+                  },
+                  "upstream-interface": {
+                    "name": "upstream-interface",
+                    "category": "unitary",
+                    "type": "string",
+                    "help": "Interface name from where delegated information is provided.",
+                    "datasource": [
+                      "system.interface.name"
+                    ],
+                    "size": 15
+                  },
+                  "autonomous-flag": {
+                    "name": "autonomous-flag",
+                    "category": "unitary",
+                    "type": "option",
+                    "help": "Enable\/disable autonomous flag.",
+                    "options": [
+                      {
+                        "name": "enable",
+                        "help": "Enable autonomous flag."
+                      },
+                      {
+                        "name": "disable",
+                        "help": "Disable autonomous flag."
+                      }
+                    ]
+                  },
+                  "onlink-flag": {
+                    "name": "onlink-flag",
+                    "category": "unitary",
+                    "type": "option",
+                    "help": "Enable\/disable onlink flag.",
+                    "options": [
+                      {
+                        "name": "enable",
+                        "help": "Enable onlink flag."
+                      },
+                      {
+                        "name": "disable",
+                        "help": "Disable onlink flag."
+                      }
+                    ]
+                  },
+                  "subnet": {
+                    "name": "subnet",
+                    "category": "unitary",
+                    "type": "ipv6-network",
+                    "help": " Add subnet ID to routing prefix."
+                  }
+                },
+                "max_table_size_vdom": 0,
+                "max_table_size_global": 0,
+                "max_table_size_item": 0
+              },
+              "dhcp6-relay-service": {
+                "name": "dhcp6-relay-service",
+                "category": "unitary",
+                "type": "option",
+                "help": "Enable\/disable use DHCPv6 relay service.",
+                "options": [
+                  {
+                    "name": "disable",
+                    "help": "none"
+                  },
+                  {
+                    "name": "enable",
+                    "help": "DHCP relay agent."
+                  }
+                ]
+              },
+              "dhcp6-relay-type": {
+                "name": "dhcp6-relay-type",
+                "category": "unitary",
+                "type": "option",
+                "help": "DHCPv6 relay type.",
+                "options": [
+                  {
+                    "name": "regular",
+                    "help": "Regular DHCP relay."
+                  }
+                ]
+              },
+              "dhcp6-relay-ip": {
+                "name": "dhcp6-relay-ip",
+                "category": "unitary",
+                "type": "user",
+                "help": "DHCPv6 relay IP address."
+              },
+              "dhcp6-client-options": {
+                "name": "dhcp6-client-options",
+                "category": "unitary",
+                "type": "option",
+                "help": "DHCPv6 client options.",
+                "options": [
+                  {
+                    "name": "rapid",
+                    "help": "Send rapid commit option."
+                  },
+                  {
+                    "name": "iapd",
+                    "help": "Send including IA-PD option."
+                  },
+                  {
+                    "name": "iana",
+                    "help": "Send including IA-NA option."
+                  },
+                  {
+                    "name": "dns",
+                    "help": "Request domain name server."
+                  },
+                  {
+                    "name": "dnsname",
+                    "help": "Request domain name."
+                  }
+                ]
+              },
+              "dhcp6-prefix-delegation": {
+                "name": "dhcp6-prefix-delegation",
+                "category": "unitary",
+                "type": "option",
+                "help": "Enable\/disable DHCPv6 prefix delegation.",
+                "options": [
+                  {
+                    "name": "enable",
+                    "help": "Enable DHCPv6 prefix delegation."
+                  },
+                  {
+                    "name": "disable",
+                    "help": "Disable DHCPv6 prefix delegation."
+                  }
+                ]
+              },
+              "dhcp6-prefix-hint": {
+                "name": "dhcp6-prefix-hint",
+                "category": "unitary",
+                "type": "ipv6-network",
+                "help": "DHCPv6 prefix that will be used as a hint to the upstream DHCPv6 server."
+              },
+              "dhcp6-prefix-hint-plt": {
+                "name": "dhcp6-prefix-hint-plt",
+                "category": "unitary",
+                "type": "integer",
+                "help": "DHCPv6 prefix hint preferred life time (sec).",
+                "min-value": 0,
+                "max-value": 4294967295
+              },
+              "dhcp6-prefix-hint-vlt": {
+                "name": "dhcp6-prefix-hint-vlt",
+                "category": "unitary",
+                "type": "integer",
+                "help": "DHCPv6 prefix hint valid life time (sec).",
+                "min-value": 0,
+                "max-value": 4294967295
+              }
+            }
+          }
+        },
+        "max_table_size_vdom": 0,
+        "max_table_size_global": 256,
+        "max_table_size_item": 0,
+        "path": "system",
+        "q_type": 0
+      },
+      "vdom": "root",
+      "path": "system",
+      "name": "interface",
+      "action": "schema",
+      "status": "success",
+      "http_status": 200,
+      "serial": "FGVMEV0000000000",
+      "version": "v5.4.5",
+      "build": 1138
+    }
+}

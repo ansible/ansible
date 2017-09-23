@@ -1,0 +1,250 @@
+{
+  "update": [
+    {
+      "name": "default_only",
+      "rule": [
+        {
+          "ge": [],
+          "le": [],
+          "prefix": "0.0.0.0 0.0.0.0",
+          "id": 1
+        }
+      ]
+    },
+    {
+      "name": "advertise_private_blocks",
+      "rule": [
+        {
+          "ge": 24,
+          "le": 26,
+          "prefix": "10.254.160.0 255.255.240.0",
+          "id": 1
+        }
+      ]
+    },
+    {
+      "name": "dwre_sf_block",
+      "rule": [
+        {
+          "ge": 24,
+          "le": 26,
+          "prefix": "10.254.160.0 255.255.240.0",
+          "id": 1
+        },
+        {
+          "action": "deny",
+          "ge": [],
+          "le": [],
+          "prefix": "194.145.18.0 255.255.255.0",
+          "id": 2
+        },
+        {
+          "action": "deny",
+          "ge": [],
+          "le": [],
+          "prefix": "194.145.16.0 255.255.255.224",
+          "id": 3
+        },
+        {
+          "action": "deny",
+          "ge": [],
+          "le": [],
+          "prefix": "194.145.16.0 255.255.255.0",
+          "id": 4
+        },
+        {
+          "action": "deny",
+          "ge": [],
+          "le": [],
+          "prefix": "194.145.16.0 255.255.240.0",
+          "id": 5
+        },
+        {
+          "ge": 21,
+          "le": 30,
+          "prefix": "194.145.16.0 255.255.240.0",
+          "id": 6
+        }
+      ]
+    },
+    {
+      "name": "advertise_blocks",
+      "rule": [
+        {
+          "action": "deny",
+          "ge": [],
+          "le": [],
+          "prefix": "194.145.18.0 255.255.255.0",
+          "id": 1
+        },
+        {
+          "ge": [],
+          "le": [],
+          "prefix": "194.145.16.0 255.255.240.0",
+          "id": 2
+        },
+        {
+          "ge": 24,
+          "le": 27,
+          "prefix": "194.145.16.0 255.255.254.0",
+          "id": 3
+        }
+      ]
+    }
+  ],
+  "raw": [
+    {
+      "name": "advertise_blocks",
+      "q_origin_key": "advertise_blocks",
+      "comments": "",
+      "rule": [
+        {
+          "id": 1,
+          "q_origin_key": "1",
+          "action": "deny",
+          "prefix": "194.145.18.0 255.255.255.0",
+          "ge": [
+          ],
+          "le": [
+          ],
+          "flags": 0
+        },
+        {
+          "id": 2,
+          "q_origin_key": "2",
+          "action": "permit",
+          "prefix": "194.145.16.0 255.255.240.0",
+          "ge": [
+          ],
+          "le": [
+          ],
+          "flags": 0
+        },
+        {
+          "id": 3,
+          "q_origin_key": "3",
+          "action": "permit",
+          "prefix": "194.145.16.0 255.255.254.0",
+          "ge": [
+          ],
+          "le": [
+          ],
+          "flags": 0
+        }
+      ]
+    },
+    {
+      "name": "advertise_private_blocks",
+      "q_origin_key": "advertise_private_blocks",
+      "comments": "",
+      "rule": [
+        {
+          "id": 1,
+          "q_origin_key": "1",
+          "action": "permit",
+          "prefix": "10.254.160.0 255.255.240.0",
+          "ge": [
+          ],
+          "le": [
+          ],
+          "flags": 0
+        }
+      ]
+    },
+    {
+      "name": "default_only",
+      "q_origin_key": "default_only",
+      "comments": "",
+      "rule": [
+        {
+          "id": 1,
+          "q_origin_key": "1",
+          "action": "permit",
+          "prefix": "0.0.0.0 0.0.0.0",
+          "ge": [
+          ],
+          "le": [
+          ],
+          "flags": 0
+        }
+      ]
+    },
+    {
+      "name": "dwre_sf_block",
+      "q_origin_key": "dwre_sf_block",
+      "comments": "",
+      "rule": [
+        {
+          "id": 1,
+          "q_origin_key": "1",
+          "action": "permit",
+          "prefix": "10.254.160.0 255.255.240.0",
+          "ge": [
+          ],
+          "le": [
+          ],
+          "flags": 0
+        },
+        {
+          "id": 2,
+          "q_origin_key": "2",
+          "action": "deny",
+          "prefix": "194.145.18.0 255.255.255.0",
+          "ge": [
+          ],
+          "le": [
+          ],
+          "flags": 0
+        },
+        {
+          "id": 3,
+          "q_origin_key": "3",
+          "action": "deny",
+          "prefix": "194.145.16.0 255.255.255.224",
+          "ge": [
+          ],
+          "le": [
+          ],
+          "flags": 0
+        },
+        {
+          "id": 4,
+          "q_origin_key": "4",
+          "action": "deny",
+          "prefix": "194.145.16.0 255.255.255.0",
+          "ge": [
+          ],
+          "le": [
+          ],
+          "flags": 0
+        },
+        {
+          "id": 5,
+          "q_origin_key": "5",
+          "action": "deny",
+          "prefix": "194.145.16.0 255.255.240.0",
+          "ge": [
+          ],
+          "le": [
+          ],
+          "flags": 0
+        },
+        {
+          "id": 6,
+          "q_origin_key": "6",
+          "action": "permit",
+          "prefix": "194.145.16.0 255.255.240.0",
+          "ge": [
+          ],
+          "le": [
+          ],
+          "flags": 0
+        }
+      ]
+    }
+  ],
+  "expected": {
+    "ge": 24,
+    "le": 26
+  }
+}
