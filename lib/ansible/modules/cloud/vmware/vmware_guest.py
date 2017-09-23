@@ -187,6 +187,14 @@ options:
     - ' - C(runonce) (list): List of commands to run at first user logon.'
     - ' - C(timezone) (int): Timezone (See U(https://msdn.microsoft.com/en-us/library/ms912391.aspx)).'
     version_added: '2.3'
+  action:
+    description:
+    - Specify action to be performed with related to virtual machine
+    - If set C(powerstate), module will try to find virtual machine and set power state of virtual machine to user specified.
+    - If set C(clone), module will deploy or reconfigure virtual machine.
+    choices: ['clone', 'powerstate']
+    default: clone
+    version_added: '2.4'
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -1447,6 +1455,7 @@ def main():
         networks=dict(type='list', default=[]),
         resource_pool=dict(type='str'),
         customization=dict(type='dict', default={}, no_log=True),
+        action=dict(type='str', default='clone', choices=['clone', 'powerstate'])
     )
 
     module = AnsibleModule(argument_spec=argument_spec,
@@ -1466,31 +1475,37 @@ def main():
 
     # Check if the VM exists before continuing
     vm = pyv.getvm(name=module.params['name'], folder=module.params['folder'], uuid=module.params['uuid'])
+    action = module.params['action']
+    state = module.params['state']
 
-    # VM already exists
     if vm:
-        if module.params['state'] == 'absent':
-            # destroy it
+        if state == 'present' and action == 'clone':
+            # VM is present, user wants to reconfigure it
+            result = pyv.reconfigure_vm()
+        elif state == 'absent':
+            # VM is present, user wants to remove it
             if module.params['force']:
-                # has to be poweredoff first
+                # VM has to be poweredoff first
                 pyv.set_powerstate(vm, 'poweredoff', module.params['force'])
             result = pyv.remove_vm(vm)
-        elif module.params['state'] == 'present':
-            result = pyv.reconfigure_vm()
-        elif module.params['state'] in ['poweredon', 'poweredoff', 'restarted', 'suspended', 'shutdownguest', 'rebootguest']:
+        elif state in ['poweredon', 'poweredoff', 'restarted', 'suspended', 'shutdownguest', 'rebootguest'] and action == 'powerstate':
             # set powerstate
-            tmp_result = pyv.set_powerstate(vm, module.params['state'], module.params['force'])
+            tmp_result = pyv.set_powerstate(vm, state, module.params['force'])
             if tmp_result['changed']:
                 result["changed"] = True
             if not tmp_result["failed"]:
                 result["failed"] = False
-        else:
-            # This should not happen
-            assert False
-    # VM doesn't exist
+        elif state == 'present' and action == 'powerstate':
+            result['changed'] = False
+            result['msg'] = "No state specified. Please specify state from one of " \
+                            "'poweredon', 'poweredoff', 'restarted', 'suspended', 'shutdownguest', 'rebootguest'"
     else:
-        if module.params['state'] in ['poweredon', 'poweredoff', 'present', 'restarted', 'suspended']:
-            # Create it ...
+        # VM does not exists
+        if state in ['poweredon', 'poweredoff', 'restarted', 'suspended', 'shutdownguest', 'rebootguest'] and action == 'powerstate':
+            result['changed'] = False
+            result['msg'] = 'Unable to find virtual machine named [%(name)s] to set power state as [%(state)s]' % module.params
+        elif state in ['poweredon', 'poweredoff', 'present', 'restarted', 'suspended'] and action == 'clone':
+            # Create VM
             result = pyv.deploy_vm()
 
     if result['failed']:
