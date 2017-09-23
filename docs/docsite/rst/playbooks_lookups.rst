@@ -3,15 +3,15 @@ Lookups
 
 Lookup plugins allow access of data in Ansible from outside sources. Like all templating, these plugins are evaluated on the Ansible control
 machine, and can include reading the filesystem but also contacting external datastores and services.
-These values are then made available using the standard templating system in Ansible, and are typically used to load variables or templates with information from those systems.
 
-.. note:: This is considered an advanced feature, and many users will probably not rely on these features.
+These values are then made available using the standard templating system in Ansible,
+and are typically used to load variables or templates with information from those systems.
 
-.. note:: Lookups occur on the local computer, not on the remote computer.
-
-.. note:: Lookups are executed with a cwd relative to the role or play, as opposed to local tasks which are executed with the cwd of the executed script.
-
-.. note:: Since 1.9 you can pass wantlist=True to lookups to use in jinja2 template "for" loops.
+.. note::
+    - Lookups occur on the local computer, not on the remote computer.
+    - They are executed with a cwd relative to the role or play, as opposed to local tasks which are executed with the cwd of the executed script.
+    - Since 1.9 you can pass wantlist=True to lookups to use in jinja2 template "for" loops.
+    - This is considered an advanced feature, you should try to feel comfortable with Ansible plays before incorporating them.
 
 .. warning:: Some lookups pass arguments to a shell. When using variables from a remote/untrusted source, use the `|quote` filter to ensure safe usage.
 
