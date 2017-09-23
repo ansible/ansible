@@ -1,0 +1,150 @@
+---
+- name: setup
+  local_action:
+    module: vr_ssh_key
+    name: "{{ vr_ssh_key_name }}"
+    state: absent
+  register: result
+- name: verify setup
+  assert:
+    that:
+    - result|success
+
+- name: test fail if missing name
+  local_action:
+    module: vr_ssh_key
+  register: result
+  ignore_errors: true
+- name: verify test fail if missing name
+  assert:
+    that:
+    - result|failed
+    - 'result.msg == "missing required arguments: name"'
+
+- name: test fail if missing params for state=present
+  local_action:
+    module: vr_ssh_key
+    name: "{{ vr_ssh_key_name }}"
+  register: result
+  ignore_errors: true
+- name: verify fail if missing params for state=present
+  assert:
+    that:
+    - result|failed
+    - 'result.msg == "state is present but the following are missing: ssh_key"'
+
+- name: test create ssh key in check mode
+  local_action:
+    module: vr_ssh_key
+    name: "{{ vr_ssh_key_name }}"
+    ssh_key: "{{ vr_ssh_key }}"
+  register: result
+  check_mode: true
+- name: verify test create ssh key in check mode
+  assert:
+    that:
+    - result|changed
+
+- name: test create ssh key
+  local_action:
+    module: vr_ssh_key
+    name: "{{ vr_ssh_key_name }}"
+    ssh_key: "{{ vr_ssh_key }}"
+  register: result
+- name: verify test create ssh key
+  assert:
+    that:
+    - result|changed
+    - result.vultr_ssh_key.name == '{{ vr_ssh_key_name }}'
+    - result.vultr_ssh_key.ssh_key == '{{ vr_ssh_key }}'
+
+- name: test create ssh key idempotence
+  local_action:
+    module: vr_ssh_key
+    name: "{{ vr_ssh_key_name }}"
+    ssh_key: "{{ vr_ssh_key }}"
+  register: result
+- name: verify test create ssh key idempotence
+  assert:
+    that:
+    - not result|changed
+    - result.vultr_ssh_key.name == '{{ vr_ssh_key_name }}'
+    - result.vultr_ssh_key.ssh_key == '{{ vr_ssh_key }}'
+
+- name: test update ssh key in check mode
+  local_action:
+    module: vr_ssh_key
+    name: "{{ vr_ssh_key_name }}"
+    ssh_key: "{{ vr_ssh_key2 }}"
+  register: result
+  check_mode: true
+- name: verify test update ssh key in check mode
+  assert:
+    that:
+    - result|changed
+    - result.vultr_ssh_key.name == '{{ vr_ssh_key_name }}'
+    - result.vultr_ssh_key.ssh_key == '{{ vr_ssh_key }}'
+
+- name: test update ssh key
+  local_action:
+    module: vr_ssh_key
+    name: "{{ vr_ssh_key_name }}"
+    ssh_key: "{{ vr_ssh_key2 }}"
+  register: result
+- name: verify test update ssh key
+  assert:
+    that:
+    - result|changed
+    - result.vultr_ssh_key.name == '{{ vr_ssh_key_name }}'
+    - result.vultr_ssh_key.ssh_key == '{{ vr_ssh_key2 }}'
+
+- name: test update ssh key idempotence
+  local_action:
+    module: vr_ssh_key
+    name: "{{ vr_ssh_key_name }}"
+    ssh_key: "{{ vr_ssh_key2 }}"
+  register: result
+- name: verify test update ssh key idempotence
+  assert:
+    that:
+    - not result|changed
+    - result.vultr_ssh_key.name == '{{ vr_ssh_key_name }}'
+    - result.vultr_ssh_key.ssh_key == '{{ vr_ssh_key2 }}'
+
+- name: test absent ssh key in check mode
+  local_action:
+    module: vr_ssh_key
+    name: "{{ vr_ssh_key_name }}"
+    state: absent
+  register: result
+  check_mode: true
+- name: verify test absent ssh key in check mode
+  assert:
+    that:
+    - result|changed
+    - result.vultr_ssh_key.name == '{{ vr_ssh_key_name }}'
+    - result.vultr_ssh_key.ssh_key == '{{ vr_ssh_key2 }}'
+
+- name: test absent ssh key
+  local_action:
+    module: vr_ssh_key
+    name: "{{ vr_ssh_key_name }}"
+    state: absent
+  register: result
+- name: verify test absent ssh key
+  assert:
+    that:
+    - result|changed
+    - result.vultr_ssh_key.name == '{{ vr_ssh_key_name }}'
+    - result.vultr_ssh_key.ssh_key == '{{ vr_ssh_key2 }}'
+
+- name: test absent ssh key idempotence
+  local_action:
+    module: vr_ssh_key
+    name: "{{ vr_ssh_key_name }}"
+    state: absent
+  register: result
+- name: verify test absent ssh key idempotence
+  assert:
+    that:
+    - not result|changed
