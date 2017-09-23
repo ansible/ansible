@@ -144,6 +144,21 @@ def find_datacenter_by_name(content, datacenter_name):
     return None
 
 
+def get_parent_datacenter(obj):
+    """ Walk the parent tree to find the objects datacenter """
+    if isinstance(obj, vim.Datacenter):
+        return obj
+    datacenter = None
+    while True:
+        if not hasattr(obj, 'parent'):
+            break
+        obj = obj.parent
+        if isinstance(obj, vim.Datacenter):
+            datacenter = obj
+            break
+    return datacenter
+
+
 def find_datastore_by_name(content, datastore_name):
 
     datastores = get_all_objs(content, [vim.Datastore])
