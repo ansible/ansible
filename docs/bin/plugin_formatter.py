@@ -179,7 +179,7 @@ def get_module_info(module_dir, limit_to_modules=None, verbose=False):
 
         # Do not list blacklisted modules
         module = os.path.splitext(os.path.basename(module_path))[0]
-        if module in plugin_docs.BLACKLIST['MODULE']:
+        if module in plugin_docs.BLACKLIST['MODULE'] or module == 'base':
             continue
 
         # If requested, limit module documentation building only to passed-in
@@ -309,8 +309,7 @@ def too_old(added):
     return added_float < TO_OLD_TO_BE_NOTABLE
 
 
-def process_modules(module_map, templates, outputname,
-                    output_dir, ansible_version, plugin_type):
+def process_modules(module_map, templates, outputname, output_dir, ansible_version, plugin_type):
     for module in module_map:
         # print("rendering: %s" % module)
 
@@ -574,21 +573,23 @@ def main():
     validate_options(options)
 
     plugin_type = options.plugin_type
-    templates = jinja2_environment(options.template_dir, options.type,
-                                   plugin_type)
 
-    # for plugins, just use the short name 'ssh.rst' vs 'ssh_module.rst'
-    outputname = '%s.rst'
-    # trim trailing s off of plugin_type for plugin_type=='modules'. ie 'copy_module.rst'
     if plugin_type == 'modules':
+        templates = jinja2_environment(options.template_dir, options.type, plugin_type)
+        output_dir = options.output_dir
+        # trim trailing s off of plugin_type for plugin_type=='modules'. ie 'copy_module.rst'
         outputname = '%s_' + '%s.rst' % plugin_type[:-1]
+    else:
+        templates = jinja2_environment(options.template_dir, options.type, 'plugins')
+        # for plugins, just use 'ssh.rst' vs 'ssh_module.rst'
+        outputname = '%s.rst'
+        output_dir = '%s/plugins/%s' % (options.output_dir, plugin_type)
 
     # Convert passed-in limit_to_modules to None or list of modules.
     if options.limit_to_modules is not None:
         options.limit_to_modules = [s.lower() for s in options.limit_to_modules.split(",")]
 
-    mod_info, categories = get_module_info(options.module_dir, limit_to_modules=options.limit_to_modules,
-                                           verbose=options.verbose)
+    mod_info, categories = get_module_info(options.module_dir, limit_to_modules=options.limit_to_modules, verbose=options.verbose)
 
     categories['all'] = {'_modules': mod_info.keys()}
 
@@ -606,22 +607,22 @@ def main():
                     short_desc = ''
                 record['doc']['short_description'] = rst_ify(short_desc)
 
-    # Write master category list
-    category_list_text = templates['category_list'].render(categories=sorted(categories.keys()))
-    category_index_name = '%s_by_category.rst' % plugin_type
-    write_data(category_list_text, options.output_dir, category_index_name)
+    if plugin_type == 'module':
+        # Write master category list
+        category_list_text = templates['category_list'].render(categories=sorted(categories.keys()))
+        category_index_name = '%s_by_category.rst' % plugin_type
+        write_data(category_list_text, output_dir, category_index_name)
 
     # Render all the individual module pages
-    process_modules(mod_info, templates, outputname,
-                    options.output_dir, options.ansible_version, plugin_type)
+    process_modules(mod_info, templates, outputname, output_dir, options.ansible_version, plugin_type)
 
     # Render all the categories for modules
-    category_list_name_template = 'list_of_%s_' + '%s.rst' % plugin_type
-    process_categories(mod_info, categories, templates, options.output_dir,
-                       category_list_name_template, plugin_type)
+    if plugin_type == 'module':
+        category_list_name_template = 'list_of_%s_' + '%s.rst' % plugin_type
+        process_categories(mod_info, categories, templates, output_dir, category_list_name_template, plugin_type)
 
-    # Render all the categories for modules
-    process_support_levels(mod_info, templates, options.output_dir, plugin_type)
+        # Render all the categories for modules
+        process_support_levels(mod_info, templates, output_dir, plugin_type)
 
 
 if __name__ == '__main__':
