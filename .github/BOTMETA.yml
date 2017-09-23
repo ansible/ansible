@@ -811,6 +811,14 @@ files:
     labels:
     - "c:inventory/contrib_script"
     support: community
+  contrib/inventory/digital_ocean.py:
+    keywords:
+    - digital_ocean dynamic inventory script
+    maintainers: BondAnthony
+    labels:
+    - cloud
+    - digital_ocean
+    support: community
   contrib/inventory/linode.py:
     keywords:
     - linode dynamic inventory script
