@@ -41,7 +41,7 @@ options:
     default: "no"
   exclude_files:
     description:
-      - Excludes files using /etc/rootvg.exclude.
+      - Excludes files using C(/etc/rootvg.exclude).
     choices: ["yes", "no"]
     default: "no"
   exclude_wpar_files:
@@ -66,7 +66,7 @@ options:
   software_packing:
     description:
       - Exclude files from packing option listed in
-        /etc/exclude_packing.rootvg.
+        C(/etc/exclude_packing.rootvg).
     choices: ["yes", "no"]
     default: "no"
   storage_path:
@@ -106,52 +106,6 @@ msg:
 from ansible.module_utils.basic import AnsibleModule
 import os
 
-# Command options.
-map_file_opt = {
-    True: '-m',
-    False: ''
-}
-
-use_snapshot_opt = {
-    True: '-T',
-    False: ''
-}
-
-exclude_files_opt = {
-    True: '-e',
-    False: ''
-}
-
-exclude_wpar_opt = {
-    True: '-G',
-    False: ''
-}
-
-new_image_data_opt = {
-    True: '-i',
-    False: ''
-}
-
-soft_packing_opt = {
-    True: '',
-    False: '-p'
-}
-
-extend_attr_opt = {
-    True: '',
-    False: '-a'
-}
-
-crypt_files_opt = {
-    True: '',
-    False: '-Z'
-}
-
-dmapi_fs_opt = {
-    True: '-a',
-    False: ''
-}
-
 
 def main():
     module = AnsibleModule(
@@ -167,8 +121,55 @@ def main():
             software_packing=dict(type='bool', default=False),
             storage_path=dict(required=True),
             use_snapshot=dict(type='bool', default=False)
-        ), supports_check_mode=True,
+        ),
+        supports_check_mode=True,
     )
+
+    # Command options.
+    map_file_opt = {
+        True: '-m',
+        False: ''
+    }
+
+    use_snapshot_opt = {
+        True: '-T',
+        False: ''
+    }
+
+    exclude_files_opt = {
+        True: '-e',
+        False: ''
+    }
+
+    exclude_wpar_opt = {
+        True: '-G',
+        False: ''
+    }
+
+    new_image_data_opt = {
+        True: '-i',
+        False: ''
+    }
+
+    soft_packing_opt = {
+        True: '',
+        False: '-p'
+    }
+
+    extend_attr_opt = {
+        True: '',
+        False: '-a'
+    }
+
+    crypt_files_opt = {
+        True: '',
+        False: '-Z'
+    }
+
+    dmapi_fs_opt = {
+        True: '-a',
+        False: ''
+    }
 
     backup_crypt_files = crypt_files_opt[module.params['backup_crypt_files']]
     backup_dmapi_fs = dmapi_fs_opt[module.params['backup_dmapi_fs']]
@@ -198,7 +199,7 @@ def main():
             else:
                 module.fail_json(msg="mksysb failed.", rc=rc, err=err)
 
-        module.exit_json(changed=True, msg=mksysb_output)
+        module.exit_json(changed=True)
 
     else:
         module.fail_json(msg="Storage path %s is not valid." % storage_path)
