@@ -233,6 +233,7 @@ fortios_api_argument_spec = dict(
     vdom=dict(type='str', default="root"),
     print_current_config=dict(type='bool'),
     permanent_objects=dict(type='list'),
+    ignore_objects=dict(type='list'),
     default_ignore_params=dict(type='list'),
     endpoint_information=dict(type='dict')
 )
