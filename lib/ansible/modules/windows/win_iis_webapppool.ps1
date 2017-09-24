@@ -178,6 +178,19 @@ if ($state -eq "absent") {
             }
             $result.changed = $true
         }
+        
+        # periodic restart schedule needs special handling, as it's an array
+        if ($attribute_key -eq "recycling.periodicRestart.schedule") {
+            $schedule=$new_raw_value
+
+            # Set restart times for the pool
+            Clear-ItemProperty -Path IIS:\AppPools\$name -Name Recycling.periodicRestart.schedule
+            if ((-not $schedule -eq "")) {
+                foreach ($restartTime in $schedule) {
+                    New-ItemProperty -Path IIS:\AppPools\$name -Name Recycling.periodicRestart.schedule -Value @{value=$restartTime}
+                }
+            }
+        }
     }
 
     # Set the state of the pool
