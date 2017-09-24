@@ -177,8 +177,8 @@ def test_modify_should_return_changed_if_param_changes():
     params = {
         "port": 342,
         "force_password_update": True,
-        "db_instance_identifier": "fakedb-too",
-        "old_db_instance_identifier": "fakedb",
+        "db_instance_identifier": "fakedb-too",  # should not yet exist
+        "old_db_instance_identifier": "fakedb",  # should be currently existing
         "allocated_storage": 5,
         "storage_type": "gp",
     }
@@ -191,14 +191,43 @@ def test_modify_should_return_changed_if_param_changes():
 
     module_double = MagicMock(ansible_module_template)
     module_double.params = params
-#    params_mock.__getitem__.side_effect = [old_params, params]
 
     mod_return = rds_i.modify_db_instance(module_double, rds_client_double)
     print("rds calls:\n" + str(rds_client_double.mock_calls))
     print("module calls:\n" + str(module_double.mock_calls))
 
+    mod_db_fn.assert_called_once(), "modify called more than once which shoudn't be needed"
     mod_db_fn.assert_called_with(DBInstanceIdentifier='fakedb', DBPortNumber=342,
                                  NewDBInstanceIdentifier='fakedb-too', StorageType='gp')
+    assert mod_return["changed"], "modify failed to return changed"
+
+
+def test_modify_should_modify_new_db_and_ignore_old_param_if_new_exists_and_old_doesnt():
+    params = {
+        "port": 342,
+        "force_password_update": True,
+        "db_instance_identifier": "fakedb",  # should be already existing
+        "old_db_instance_identifier": "fakedb-zero",  # doesn't exist
+        "allocated_storage": 5,
+        "storage_type": "gp",
+    }
+
+    rds_client_double = MagicMock()
+    rds_instance_entry_mock = rds_client_double.describe_db_instances.return_value.__getitem__.return_value.__getitem__
+    rds_instance_entry_mock.return_value = describe_rds_return['DBInstances'][0]
+    mod_db_fn = rds_client_double.modify_db_instance
+    mod_db_fn.return_value = modify_rds_return
+
+    module_double = MagicMock(ansible_module_template)
+    module_double.params = params
+
+    mod_return = rds_i.modify_db_instance(module_double, rds_client_double)
+    print("rds calls:\n" + str(rds_client_double.mock_calls))
+    print("module calls:\n" + str(module_double.mock_calls))
+
+    mod_db_fn.assert_called_once(), "modify called more than once which shoudn't be needed"
+    mod_db_fn.assert_called_with(DBInstanceIdentifier='fakedb', DBPortNumber=342,
+                                 StorageType='gp')
     assert mod_return["changed"], "modify failed to return changed"
 
 

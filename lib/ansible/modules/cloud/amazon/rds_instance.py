@@ -665,6 +665,8 @@ def prepare_params_for_modify(module, before_facts):
     if before_facts['db_instance_identifier'] != mod_params['db_instance_identifier']:
         params['DBInstanceIdentifier'] = mod_params['old_db_instance_identifier']
         params['NewDBInstanceIdentifier'] = mod_params['db_instance_identifier']
+    else:
+        params['DBInstanceIdentifier'] = mod_params['db_instance_identifier']
 
     return params
 
@@ -690,13 +692,16 @@ def modify_db_instance(module, conn):
     old_instance_id = module.params.get('old_db_instance_identifier')
     if old_instance_id is not None:
         before_instance = get_db_instance(conn, old_instance_id)
-        if before_instance is None:
-            module.fail_json("old RDS instance disappeared under us.  Maybe try again?")
+        if get_db_instance(conn, instance_id):
+            module.fail_json(
+                msg="both old and new instance exist so can't act safely; please clean up",
+                exception=traceback.format_exc())
     else:
         before_instance = get_db_instance(conn, instance_id)
 
     before_facts = instance_to_facts(before_instance)
     params = prepare_params_for_modify(module, before_facts)
+
 
     if not params:
         return dict(changed=False, instance=before_facts)
