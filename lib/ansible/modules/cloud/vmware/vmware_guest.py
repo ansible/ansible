@@ -105,7 +105,8 @@ options:
   resource_pool:
     description:
     - Affect machine to the given resource pool.
-    - Resource pool should be child of the selected host parent.
+    - Resource pool should be child of the selected host or cluster parent.
+    default: 'Resources'
     version_added: '2.3'
   wait_for_ip_address:
     description:
@@ -1445,7 +1446,7 @@ def main():
         snapshot_src=dict(type='str'),
         linked_clone=dict(type='bool', default=False),
         networks=dict(type='list', default=[]),
-        resource_pool=dict(type='str'),
+        resource_pool=dict(type='str', default='Resources'),
         customization=dict(type='dict', default={}, no_log=True),
     )
 
