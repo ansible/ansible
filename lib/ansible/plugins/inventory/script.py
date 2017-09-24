@@ -61,7 +61,7 @@ class InventoryModule(BaseInventoryPlugin):
 
         return valid
 
-    def parse(self, inventory, loader, path, cache=True):
+    def parse(self, inventory, loader, path, cache=False):
 
         super(InventoryModule, self).parse(inventory, loader, path)
 
