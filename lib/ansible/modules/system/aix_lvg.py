@@ -430,7 +430,7 @@ def main():
         changed = False
         msg = "Unexpected state"
 
-    module.exit_json(changed=changed, msg=msg)
+    module.exit_json(changed=changed, msg=msg, state=state)
 
 
 if __name__ == '__main__':
