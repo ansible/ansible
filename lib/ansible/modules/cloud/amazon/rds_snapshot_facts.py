@@ -119,7 +119,7 @@ def snapshot_facts(module, conn):
     while True:
         try:
             response = conn.describe_db_snapshots(Marker=marker, **params)
-            results.append(*response["DBSnapshots"])
+            results = results + response["DBSnapshots"]
             marker = response.get('Marker')
         except botocore.exceptions.ClientError as e:
             if e.response['Error']['Code'] == 'DBSnapshotNotFound':
