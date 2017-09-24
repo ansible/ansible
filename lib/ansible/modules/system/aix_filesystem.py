@@ -19,11 +19,11 @@ DOCUMENTATION = '''
 ---
 author: Kairo Araujo (@kairoaraujo)
 module: aix_filesystem
-short_description: Configure basics LVM and NFS file systems for AIX.
+short_description: Configure LVM and NFS file systems for AIX.
 description:
   - This module creates, removes, mount and unmount LVM and NFS file system for
-    AIX using /etc/filesystems. For LVM file systems is also possible to resize
-    the file system.
+    AIX using C(/etc/filesystems). For LVM file systems is possible to resize a
+    file system.
 version_added: "2.5"
 options:
   account_subsystem:
@@ -35,7 +35,7 @@ options:
     required: false
   attributes:
     description:
-      - Specifies attributes for files system.
+      - Specifies attributes for files system separated by comma.
     default: agblksize='4096',isnapshot='no'
     required: false
   auto_mount:
@@ -46,9 +46,11 @@ options:
     required: false
   device:
     description:
-      - Logical volume (LV) name or device to create the filesystem (NFS). It
-        is used to create a file system on an already existing logical volume.
-        If not mentioned a new logical name will be created.
+      - Logical volume (LV) device name or remote export device to create a NFS
+        file system. It is used to create a file system on an already existing
+        logical volume or the exported NFS file system.
+        If not mentioned a new logical volume name will be created following
+        AIX standards (LVM).
     default: None
     required: false
   fs_type:
@@ -58,7 +60,7 @@ options:
     required: no
   permissions:
     description:
-      - Set file system permissions. rw (read-write), ro(read-only)
+      - Set file system permissions. C(rw) (read-write) or C(ro) (read-only).
     choices: [rw, ro]
     default: rw
     required: false
@@ -78,7 +80,7 @@ options:
     required: false
   rm_mount_point:
     description:
-      - Remove the mount point directory when used with state C(absent).
+      - Removes the mount point directory when used with state C(absent).
     default: false
     required: false
   size:
@@ -88,19 +90,21 @@ options:
         512-byte blocks, Megabytes or Gigabytes. If the value has M specified
         it will be in Megabytes. If the value has G specified it will be in
         Gigabytes.
-        If no M or G the value will be  512-byte blocks.
+        If no M or G the value will be 512-byte blocks.
         If "+" is specified in begin of value, the value will be added. If "-"
         is specified in begin of value, the value will be removed. If "+" or
         "-" is not specified, the total value will be the specified.
-        Size will respect the LVM AIX standards.
+        Size will respects the LVM AIX standards.
     required: false
   state:
     description:
       - Controls the file system state.
-        C(present) check if exists or creates.
-        C(absent) removes and existing file system if already C(unmounted).
-        C(mounted) checks if the state is mounted or mount a file system.
-        C(unmounted) check if state is unmounted or unmount a files system.
+        C(present) check if file system exists, creates or resize.
+        C(absent) removes existing file system if already C(unmounted).
+        C(mounted) checks if the file system is mounted or mount the file
+        system.
+        C(unmounted) check if the file system is unmounted or unmount the file
+        system.
     choices: [present, absent, mounted, unmounted]
     default: present
     required: true
@@ -109,7 +113,7 @@ options:
       - Specifies an existing volume group (VG).
     required: true
 notes:
-  - For more C(attributes), please check "crfs" AIX manuals.
+  - For more C(attributes), please check "crfs" AIX manual.
 '''
 
 EXAMPLES = '''
@@ -166,12 +170,12 @@ changed:
   description: Return changed for aix_filesystems actions as true or false.
   returned: always
   type: boolean
-  version_added: 2.5
+  version_added: "2.5"
 msg:
   description: Return message regarding the action.
   returned: always
   type: string
-  version_added: 2.5
+  version_added: "2.5"
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -303,7 +307,6 @@ def create_fs(
         False: '-t no'
     }
 
-
     if nfs_server is not None:
         auto_mount_opt = {
             True: '-A',
@@ -376,7 +379,13 @@ def create_fs(
                     crfs_cmd, fs_type, filesystem, vg, device, mount_group,
                     auto_mount, account_subsystem, permissions, size,
                     attributes))
-            if rc != 0:
+
+            if rc == 10:
+                module.exit_json(
+                    msg="Using a existent previously defined logical volume, "
+                        "volume group needs to be empty. %s" % err)
+
+            elif rc != 0:
                 module.fail_json(msg="Failed to run crfs.", rc=rc, err=err)
 
             else:
@@ -556,26 +565,26 @@ def main():
     elif state == 'absent':
         if ismount(filesystem):
             changed = False
-            msg = "File system mounted."
+            msg = "File system %s mounted." % filesystem
         else:
             fs_status = _fs_exists(module, filesystem)
             if not fs_status:
                 changed = False
-                msg = "File system does not exist."
+                msg = "File system %s does not exist." % filesystem
             else:
                 changed, msg = remove_fs(module, filesystem, rm_mount_point)
 
     elif state == 'mounted':
         if ismount(filesystem):
             changed = True
-            msg = "File system already mounted."
+            msg = "File system %s already mounted." % filesystem
         else:
             changed, msg = mount_fs(module, filesystem)
 
     elif state == 'unmounted':
         if not ismount(filesystem):
             changed = False
-            msg = "File system already unmounted."
+            msg = "File system %s already unmounted." % filesystem
         else:
             changed, msg = unmount_fs(module, filesystem)
 
@@ -584,7 +593,7 @@ def main():
         msg = ''
         module.fail_json(msg="Unexpected state %s." % state)
 
-    module.exit_json(changed=changed, msg=msg)
+    module.exit_json(changed=changed, msg=msg, state=state)
 
 
 if __name__ == '__main__':
