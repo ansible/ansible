@@ -50,6 +50,7 @@ eos_provider_spec = {
     'auth_pass': dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS'])),
 
     'use_ssl': dict(default=True, type='bool'),
+    'use_proxy': dict(default=True, type='bool'),
     'validate_certs': dict(default=True, type='bool'),
     'timeout': dict(type='int'),
 
@@ -292,10 +293,11 @@ class Eapi:
 
         headers = {'Content-Type': 'application/json-rpc'}
         timeout = self._module.params['timeout']
+        use_proxy = self._module.params['provider']['use_proxy']
 
         response, headers = fetch_url(
             self._module, self._url, data=data, headers=headers,
-            method='POST', timeout=timeout
+            method='POST', timeout=timeout, use_proxy=use_proxy
         )
 
         if headers['status'] != 200:
