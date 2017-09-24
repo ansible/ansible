@@ -164,9 +164,19 @@ options:
       - VPC subnet group. If specified then a VPC instance is created.
     required: false
     aliases: ['subnet']
+  db_snapshot_identifier:
+    description:
+      - Name of snapshot to take when state=absent - if no snapshot name is provided then no
+        snapshot is taken.
+    required: false
+  snapshot_identifier:
+    description:
+      - Name of snapshot to use when restoring a database with state=present
+        snapshot is taken.
+    required: false
   snapshot:
     description:
-      - Name of snapshot to take when state=absent - if no snapshot name is provided then no snapshot is taken.
+      - snapshot provides a default for either db_snapshot_identifier or snapshot_identifier
     required: false
   wait:
     description:
@@ -893,6 +903,8 @@ argument_spec = dict(
     db_subnet_group_name=dict(aliases=['subnet']),
     wait=dict(type='bool', default=False),
     wait_timeout=dict(type='int', default=600),
+    db_snapshot_identifier=dict(),
+    snapshot_identifier=dict(),
     snapshot=dict(),
     skip_final_snapshot=dict(type='bool'),
     apply_immediately=dict(type='bool', default=False),
@@ -934,6 +946,10 @@ def set_module_defaults(module):
         else:
             engine = module.params['engine']
         module.params['port'] = DEFAULT_PORTS[engine.lower()]
+    if module.params['db_snapshot_identifier'] is None:
+        module.params['db_snapshot_identifier'] = module.params['snapshot']
+    if module.params['snapshot_identifier'] is None:
+        module.params['snapshot_identifier'] = module.params['snapshot']
 
 
 """creating instances from replicas, renames and so on
