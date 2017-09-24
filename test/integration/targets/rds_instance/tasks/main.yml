@@ -87,7 +87,7 @@
 
     - name: get instance facts again to debug
       rds_instance_facts:
-        instance_name: "{{ rds_instance_name }}"
+        db_instance_identifier: "{{ rds_instance_name }}"
         region: '{{ec2_region}}'
         aws_access_key: '{{aws_access_key}}'
         aws_secret_key: '{{aws_secret_key}}'
