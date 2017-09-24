@@ -702,7 +702,6 @@ def modify_db_instance(module, conn):
     before_facts = instance_to_facts(before_instance)
     params = prepare_params_for_modify(module, before_facts)
 
-
     if not params:
         return dict(changed=False, instance=before_facts)
 
