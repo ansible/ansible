@@ -619,16 +619,6 @@ def serialize_spec(clonespec):
                 data[x].append(serialize_spec(xe))
         elif issubclass(xt, string_types + integer_types + (float, bool)):
             data[x] = to_text(xt)
-        elif issubclass(xt, str):
-            data[x] = to_text(xo)
-        elif issubclass(xt, unicode):
-            data[x] = to_text(xo)
-        elif issubclass(xt, int):
-            data[x] = xo
-        elif issubclass(xt, float):
-            data[x] = xo
-        elif issubclass(xt, long):
-            data[x] = xo
         elif issubclass(xt, bool):
             data[x] = xo
         elif issubclass(xt, dict):
