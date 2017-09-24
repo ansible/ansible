@@ -607,7 +607,7 @@ def main():
                     short_desc = ''
                 record['doc']['short_description'] = rst_ify(short_desc)
 
-    if plugin_type == 'module':
+    if plugin_type == 'modules':
         # Write master category list
         category_list_text = templates['category_list'].render(categories=sorted(categories.keys()))
         category_index_name = '%s_by_category.rst' % plugin_type
@@ -617,7 +617,7 @@ def main():
     process_modules(mod_info, templates, outputname, output_dir, options.ansible_version, plugin_type)
 
     # Render all the categories for modules
-    if plugin_type == 'module':
+    if plugin_type == 'modules':
         category_list_name_template = 'list_of_%s_' + '%s.rst' % plugin_type
         process_categories(mod_info, categories, templates, output_dir, category_list_name_template, plugin_type)
 
