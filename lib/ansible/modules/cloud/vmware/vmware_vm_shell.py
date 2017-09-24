@@ -140,7 +140,7 @@ from ansible.module_utils.vmware import (connect_to_api, find_cluster_by_name, f
 
 
 # https://github.com/vmware/pyvmomi-community-samples/blob/master/samples/execute_program_in_vm.py
-def execute_command(content, vm, vm_username, vm_password, program_path, args="", env=None, cwd=None):
+def execute_command(content, vm, vm_username, vm_password, program_path, args="", env=None, cwd=None, wait=False):
 
     creds = vim.vm.guest.NamePasswordAuthentication(username=vm_username, password=vm_password)
     cmdspec = vim.vm.guest.ProcessManager.ProgramSpec(arguments=args, envVariables=env, programPath=program_path, workingDirectory=cwd)
@@ -148,7 +148,10 @@ def execute_command(content, vm, vm_username, vm_password, program_path, args=""
     pm = content.guestOperationsManager.processManager
     cmdpid = pm.StartProgramInGuest(vm=vm, auth=creds, spec=cmdspec)
 
-    if cmdpid > 0:
+    if not wait:
+        exitcode = 0
+        msg = "Program %d is started and running in guest %r without waiting" % (cmdpid, vm.summary.guest.ipAddress)
+    elif cmdpid > 0:
         exitcode = pm.ListProcessesInGuest(vm=vm, auth=creds, pids=[cmdpid]).pop().exitCode
 
         # If its not a numeric result code, it says None on submit
@@ -170,7 +173,7 @@ def execute_command(content, vm, vm_username, vm_password, program_path, args=""
                 break
     else:
         exitcode = -1
-        msg = "No command executed!"
+        msg = "No running program!"
 
     return exitcode, msg
 
@@ -187,7 +190,8 @@ def main():
                               vm_shell=dict(required=True, type='str'),
                               vm_shell_args=dict(default=" ", type='str'),
                               vm_shell_env=dict(default=None, type='list'),
-                              vm_shell_cwd=dict(default=None, type='str')))
+                              vm_shell_cwd=dict(default=None, type='str'),
+                              wait_for_shell_exit=dict(type='bool', default=False)))
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=False,
@@ -225,7 +229,8 @@ def main():
             module.fail_json(msg='VM not found')
 
         (exitcode, msg) = execute_command(content, vm, p['vm_username'], p['vm_password'],
-                                          p['vm_shell'], p['vm_shell_args'], p['vm_shell_env'], p['vm_shell_cwd'])
+                                          p['vm_shell'], p['vm_shell_args'], p['vm_shell_env'], p['vm_shell_cwd'],
+                                          p['wait_for_shell_exit'])
 
         if exitcode != 0:
             module.fail_json(changed=False, msg=msg)
