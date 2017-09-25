@@ -91,17 +91,7 @@ RETURN = '''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.manageiq import ManageIQ, manageiq_argument_spec
-
-
-def manageiq_entities():
-    return {
-        'provider': 'providers', 'host': 'hosts', 'vm': 'vms',
-        'category': 'categories', 'cluster': 'clusters', 'data store': 'data_stores',
-        'group': 'groups', 'resource pool': 'resource_pools', 'service': 'services',
-        'service template': 'service_templates', 'template': 'templates',
-        'tenant': 'tenants', 'user': 'users', 'blueprint': 'blueprints'
-    }
+from ansible.module_utils.manageiq import ManageIQ, manageiq_argument_spec, manageiq_entities
 
 
 def query_resource_id(manageiq, resource_type, resource_name):
