@@ -20,6 +20,20 @@ Python version
 
 Ansible will not support Python 2.4 nor 2.5 on the target hosts anymore. Going forward, Python 2.6+ will be required on targets, as already is the case on the controller.
 
+
+Inventory
+=========
+
+Inventory has been revamped, it is now plugin based (you can read details below) and allows for multiple sources,
+this will mostly be transparent to users.
+
+One exception is the ``inventory_dir``, which is now 'a host variable'.
+Before it could only have one value so it was set globally.
+This means you cannot use it early in plays anymore to determine ``hosts:`` or similar keywords.
+
+The ``inventory_file`` remains unchaged, as it was always host specific.
+
+
 Deprecated
 ==========
 
