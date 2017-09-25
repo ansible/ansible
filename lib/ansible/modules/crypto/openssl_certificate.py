@@ -539,7 +539,8 @@ class AssertOnlyCertificate(Certificate):
                     extension = self.cert.get_extension(extension_idx)
                     if extension.get_short_name() == b'keyUsage':
                         keyUsage = [OpenSSL._util.lib.OBJ_txt2nid(keyUsage) for keyUsage in self.keyUsage]
-                        current_ku = [OpenSSL._util.lib.OBJ_txt2nid(to_bytes(usage.strip())) for usage in str(extension).split(',')]
+                        current_ku = [OpenSSL._util.lib.OBJ_txt2nid(usage.strip()) for usage in
+                            to_bytes(extension, errors='surrogate_or_strict').split(b',')]
                         if (not self.keyUsage_strict and not all(x in current_ku for x in keyUsage)) or \
                            (self.keyUsage_strict and not set(keyUsage) == set(current_ku)):
                             self.message.append(
@@ -552,7 +553,8 @@ class AssertOnlyCertificate(Certificate):
                     extension = self.cert.get_extension(extension_idx)
                     if extension.get_short_name() == b'extendedKeyUsage':
                         extKeyUsage = [OpenSSL._util.lib.OBJ_txt2nid(keyUsage) for keyUsage in self.extendedKeyUsage]
-                        current_xku = [OpenSSL._util.lib.OBJ_txt2nid(to_bytes(usage.strip())) for usage in str(extension).split(',')]
+                        current_xku = [OpenSSL._util.lib.OBJ_txt2nid(usage.strip()) for usage in
+                            to_bytes(extension, errors='surrogate_or_strict').split(b',')]
                         if (not self.extendedKeyUsage_strict and not all(x in current_xku for x in extKeyUsage)) or \
                            (self.extendedKeyUsage_strict and not set(extKeyUsage) == set(current_xku)):
                             self.message.append(
@@ -565,7 +567,8 @@ class AssertOnlyCertificate(Certificate):
                 for extension_idx in range(0, self.cert.get_extension_count()):
                     extension = self.cert.get_extension(extension_idx)
                     if extension.get_short_name() == b'subjectAltName':
-                        l_altnames = [to_bytes(altname.replace('IP Address', 'IP')) for altname in str(extension).split(', ')]
+                        l_altnames = [altname.replace(b'IP Address', b'IP') for altname in
+                            to_bytes(extension, errors='surrogate_or_strict').split(b', ')]
                         if (not self.subjectAltName_strict and not all(x in l_altnames for x in self.subjectAltName)) or \
                            (self.subjectAltName_strict and not set(self.subjectAltName) == set(l_altnames)):
                             self.message.append(
