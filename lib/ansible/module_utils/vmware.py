@@ -608,7 +608,7 @@ def serialize_spec(clonespec):
         elif isinstance(xo, vim.vm.device.VirtualDisk):
             data[x] = serialize_spec(xo)
         elif isinstance(xo, vim.vm.device.VirtualDeviceSpec.FileOperation):
-            data[x] = serialize_spec(xo)
+            data[x] = to_text(xo)
         elif isinstance(xo, vim.Description):
             data[x] = {
                 'dynamicProperty': serialize_spec(xo.dynamicProperty),
