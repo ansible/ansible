@@ -3,22 +3,19 @@ Developing Plugins
 
 .. contents:: Topics
 
-Plugins are pieces of code that augment Ansible's core functionality. Ansible ships with a number of handy plugins, and you can easily write your own.
-This section describes the various types of plugins and how to implement them.
+Plugins are pieces of code that augment Ansible's core functionality. Ansible ships with a number of handy plugins, and you can easily write your own. This section describes the various types of Ansible  plugins and how to implement them.
 
 .. _plugin_guidelines:
 
 General Guidelines
 ------------------
 
-Some things that should apply to any type of plugin you develop.
+This section lists some things that should apply to any type of plugin you develop.
 
 Raising Errors
 ``````````````
 
-In general, errors encountered during execution should be returned by raising AnsibleError() or similar class with a message describing the error.
-When wrapping other exceptions into error messages you should always use the `to_text` Ansible function to ensure proper string compatiblity across
-Python versions:
+In general, errors encountered during execution should be returned by raising AnsibleError() or similar class with a message describing the error. When wrapping other exceptions into error messages, you should always use the `to_text` Ansible function to ensure proper string compatiblity across Python versions:
 
 .. code-block:: python
 
@@ -31,35 +28,32 @@ Python versions:
 
 Check the different AnsibleError objects and see which one applies the best to your situation.
 
-String encoding
+String Encoding
 ```````````````
-Any strings returned by your plugin that could ever contain non-ASCII characters must be converted into Python's unicode type
-because the strings will be run through jinja2.  To do this, you can use:
+Any strings returned by your plugin that could ever contain non-ASCII characters must be converted into Python's unicode type because the strings will be run through jinja2.  To do this, you can use:
 
 .. code-block:: python
 
     from ansible.module_utils._text import to_text
     result_string = to_text(result_string)
 
-Plugin configuration
+Plugin Configuration
 ````````````````````
 
-Starting in 2.4 and going forward, we are unifying how each plugin type is configured and how they get those settings, plugins will be able to 'declare'
-their needs and have Ansible provide them with the 'resolved' configuration. As of 2.4 both Callback and Connection type plugins can use this system,
-most plugins will be able to use  `self._options[<optionname>]` to access the settings, except callbacks that due to prexisting collsion
-use `self._plugin_optoins[<optionname>]`.
+Starting with Ansible version 2.4, we are unifying how each plugin type is configured and how they get those settings.  Plugins will be able to declare their requirements and have Ansible provide them with a resolved'configuration. Starting with Ansible 2.4 both callback and connection type plugins can use this system. 
 
-Plugins that supprot docs (see `ansible-doc` for the list) are now required to provide documentation to be considered for merge into the Ansible repo.
+Most plugins will be able to use  `self._options[<optionname>]` to access the settings, except callbacks that use `self._plugin_options[<optionname>]`.
 
-Also be aware that if you inherit from a plugin you must ALSO document the optoins it takes, either via a documentation fragment or as a copy.
+Plugins that support embedded documentation (see `ansible-doc` for the list) are now required to provide well-formed doc strings to be considered for merge into the Ansible repo.
+
+If you inherit from a plugin, you must document the options it takes, either via a documentation fragment or as a copy.
 
 .. _developing_callbacks:
 
 Callback Plugins
 ----------------
 
-See :doc: plugins/callback as to what they are and how to use them. This section explains how to use them.
-
+Callback plugins enable adding new behaviors to Ansible when responding to events. By default, callback plugins control most of the output you see when running the command line programs.
 
 Callback plugins are created by creating a new class with the Base(Callbacks) class as the parent:
 
@@ -76,8 +70,8 @@ For a complete list of methods that you can override, please see ``__init__.py``
 `lib/ansible/plugins/callback <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/callback>`_ directory.
 
 
-The following example shows a modified example Ansible's timer plugin is implemented,
-but with an extra option so you can see how configuration works in Ansible >= 2.4:
+The following is a modified example of how Ansible's timer plugin is implemented,
+but with an extra option so you can see how configuration works in Ansible version 2.4 and later:
 
 .. code-block:: python
 
@@ -135,67 +129,68 @@ but with an extra option so you can see how configuration works in Ansible >= 2.
           r_seconds = runtime.seconds - (minutes * 60)
           return runtime.days, runtime.seconds // 3600, minutes, r_seconds
 
-      # this is only event we care about for display, when the play shows it's summary stats, the rest are ignored by the base class
+      # this is only event we care about for display, when the play shows its summary stats; the rest are ignored by the base class
       def v2_playbook_on_stats(self, stats):
           end_time = datetime.now()
           runtime = end_time - self.start_time
 
-          # Shows the usage of a config option declared in the DOCUMENTATION variable, Ansible will have set it when it loads the plugin.
-          # Also note the use of the display object to print to screen, available to all callbacks, you should prefer this over printing yoruself
+          # Shows the usage of a config option declared in the DOCUMENTATION variable. Ansible will have set it when it loads the plugin.
+          # Also note the use of the display object to print to screen. This is available to all callbacks, and you should use this over printing yourself
           self._display.display(self._plugin_options['format_string'] % (self._days_hours_minutes_seconds(runtime)))
 
-Note that the CALLBACK_VERSION and CALLBACK_NAME definitions are required for properly functioning plugins for Ansible >=2.0.
-CALLBACK_TYPE is mostly needed to distinguish 'stout' plugins from the rest, as you can only load one of that type.
+Note that the CALLBACK_VERSION and CALLBACK_NAME definitions are required for properly functioning plugins for Ansible version 2.0 and later. CALLBACK_TYPE is mostly needed to distinguish 'stdout' plugins from the rest, since you can only load one plugin that writes to stdout.
 
 .. _developing_connection_plugins:
 
 Connection Plugins
 ------------------
 
-By default, Ansible ships with a 'paramiko' SSH, native ssh (just called 'ssh'), 'local' connection type, and there are also some minor players like 'chroot' and 'jail'.  All of these can be used in playbooks and with /usr/bin/ansible to decide how you want to talk to remote machines.  The basics of these connection types
-are covered in the :doc:`../intro_getting_started` section.  Should you want to extend Ansible to support other transports (SNMP, Message bus, etc) it's as simple as copying the format of one of the existing modules and dropping it into the connection plugins
-directory.   The value of 'smart' for a connection allows selection of paramiko or openssh based on system capabilities, and chooses
-'ssh' if OpenSSH supports ControlPersist, in Ansible 1.2.1 and later.  Previous versions did not support 'smart'.
+Connection plugins allow Ansible to connect to the target hosts so it can execute tasks on them. Ansible ships with many connection plugins, but only one can be used per host at a time.
 
-More documentation on writing connection plugins is pending, though you can jump into
-`lib/ansible/plugins/connection <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/connection>`_ and figure things out pretty easily.
+By default, Ansible ships with several plugins. The most commonly used are the 'paramiko' SSH, native ssh (just called 'ssh'), and 'local' connection types.  All of these can be used in playbooks and with /usr/bin/ansible to decide how you want to talk to remote machines.  
+
+The basics of these connection types are covered in the :doc:`../intro_getting_started` section.  
+
+Should you want to extend Ansible to support other transports (SNMP, Message bus, etc) it's as simple as copying the format of one of the existing modules and dropping it into the connection plugins directory.  
+
+Ansible version 2.1 introduced the 'smart' connection plugin. The 'smart' connection type allows Ansible to automatically select either the 'paramiko' or 'openssh' connection plugin based on system capabilities, or the 'ssh' connection plugin if OpenSSH supports ControlPersist. 
+
+For examples on how to implement a connection plug in, see the source code here: 
+`lib/ansible/plugins/connection <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/connection>`_.
 
 .. _developing_inventory_plugins:
 
 Inventory Plugins
 -----------------
 
-Added in Ansible 2.4 they are in charge of parsing inventory sources and forming the 'in memory' representation of the Inventory.
+Inventory plugins were added in Ansible version 2.4. Inventory plugins parse inventory sources and form an in memory representation of the inventory.
 
-They are invoked via the InventoryManager and are given access to any existing inventory data added previouslly,
-they are given an 'inventory source' as supplied to Ansible (via config/optoins/defaults/etc), which they can ignore
-(return false from the `verify_file` method), or attempt to parse (via `parse` method) and return an `AnsibleParserError` on failure.
+Inventory plugins are invoked via the InventoryManager and are given access to any existing inventory data. They are given an 'inventory source' as supplied to Ansible (via config/options/defaults/etc), which they can either ignore
+by returning false from the `verify_file` method, or attempting to parse (with the `parse` method) and return an `AnsibleParserError` on failure.
 
 .. code-block:: python
 
    def parse(self, inventory, loader, path, cache=True):
         pass # your code goes here
 
-The parameters are:
+Inventory plugins take the following parameters:
 
  * inventory: inventory object with existing data and the methods to add hosts/groups/variables to inventory
- * loader: Ansible's DataLoader, it can read files, auto load JSON/YAML and decrypt vaulted data, it also caches read filesh.
- * path: string with inventory source (normally a path, but not required)
- * cache: hint to the plugin if it should use or avoid caches (Cache plugin and/or loader)
+ * loader: Ansible's DataLoader. The DataLoader can read files, auto load JSON/YAML and decrypt vaulted data, and cache read files.
+ * path: string with inventory source (this is usually a path, but is not required)
+ * cache: indicates whether the plugin should use or avoid caches (cache plugin and/or loader)
 
-Inventory sources are strings, most of the time they correspond to a file path, but can also be a comma separated list,
-a uri or anything your plugin can use as input.
-The 'inventory source' provided can be either a string (`host_list` plugin), a data file (like consumed by the `yaml` and `ini` plugins),
-a configuration file (see `virtualbox` and `constructed`) or even a script or executable (the `script` uses those) which is how 'inventory scripts' work.
+Inventory sources are strings. They usually correspond to a file path, but they can also be a comma separated list,
+a URI, or anything your plugin can use as input.
+The 'inventory source' provided can be either a string (`host_list` plugin), a data file (like consumed by the `yaml` and `ini` plugins), a configuration file (see `virtualbox` and `constructed`) or even a script or executable (the `script` uses those).
 
-Inventory plugins can also use the configured Cache plugin to store and retrieve data to avoid costly external calls,
-of course this only works if using a 'persistent' cache (i.e not the memory one).
+When using the 'persistent' cache, inventory plugins can also use the configured cache plugin to store and retrieve data to avoid costly external calls. 
 
-Be aware that inventory plugins normally only execute at the start of the run, before playbooks/plays and roles are found,
+Inventory plugins normally only execute at the start of a run, before playbooks/plays and roles are found,
 but they can be 're-executed' via the `meta: refresh_inventory` task, which will clear out the existing inventory and rebuild it.
 
-More documentation on writing inventory plugins is pending, though you can jump into
-`lib/ansible/plugins/inventory <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/inventory>`_ and figure things out pretty easily.
+For examples on how to implement a connection plug in, see the source code here:
+`lib/ansible/plugins/inventory <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/inventory>`_.
 
 .. _developing_lookup_plugins:
 
@@ -208,7 +203,7 @@ Here's a simple lookup plugin implementation - this lookup returns the contents 
 
 .. code-block:: python
 
-  # python 3ish headers, required if submitting to Ansible
+  # python 3 headers, required if submitting to Ansible
   from __future__ import (absolute_import, division, print_function)
   __metaclass__ = type
 
@@ -225,7 +220,7 @@ Here's a simple lookup plugin implementation - this lookup returns the contents 
               required: True
           notes:
             - if read in variable context, the file can be interpreted as YAML if the content is valid to the parser.
-            - this lookup does not understand 'globing', use the fileglob lookup instead.
+            - this lookup does not understand 'globing' - use the fileglob lookup instead.
   """
   from ansible.errors import AnsibleError, AnsibleParserError
   from ansible.plugins.lookup import LookupBase
@@ -269,7 +264,7 @@ Here's a simple lookup plugin implementation - this lookup returns the contents 
 
           return ret
 
-An example of how this lookup is called::
+The following is an example of how this lookup is called::
 
   ---
   - hosts: all
@@ -282,19 +277,18 @@ An example of how this lookup is called::
 
 For more example lookup plugins, check out the source code for the lookup plugins that are included with Ansible here: `lib/ansible/plugins/lookup <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/lookup>`_.
 
-For usage examples of lookup plugins, see `Using Lookups <http://docs.ansible.com/ansible/playbooks_lookups.html>`_.
+For more usage examples of lookup plugins, see `Using Lookups <http://docs.ansible.com/ansible/playbooks_lookups.html>`_.
 
 .. _developing_vars_plugins:
 
 Vars Plugins
 ------------
 
-Playbook constructs like 'host_vars' and 'group_vars' work via 'vars' plugins.
-They inject additional variable data into ansible runs that did not come from an inventory source, playbook, or command line.
+Vars plugins inject additional variable data into Ansible runs that did not come from an inventory source, playbook, or command line. Playbook constructs like 'host_vars' and 'group_vars' work using vars plugins.
 
-Vars plugins got rewritten in 2.4 and had been semi-functional since 2.0.
+Vars plugins were partially implented in Ansible 2.0 and rewritten to be fully implemented starting with Ansible 2.4.
 
-Older pugins used a `run` method as their main body/work:
+Older plugins used a `run` method as their main body/work:
 
 .. code-block:: python
 
@@ -302,7 +296,7 @@ Older pugins used a `run` method as their main body/work:
         pass # your code goes here
 
 
-But Ansible 2.0 did not pass passwords to them so vaults were unavilable.
+Ansible 2.0 did not pass passwords to older plugins, so vaults were unavilable.
 Most of the work now  happens in the `get_vars` method which is called from the VariableManager when needed.
 
 .. code-block:: python
@@ -312,18 +306,16 @@ Most of the work now  happens in the `get_vars` method which is called from the 
 
 The parameters are:
 
- * loader: Ansible's DataLoader, it can read files, auto load JSON/YAML and decrypt vaulted data, it also caches read filesh.
- * path: this is 'directory data' for every inventory source and the current play's playbook directory, so they can search for data
-         in reference to them, `get_vars` will be called at least once per available path.
- * entities: these are host or group names that are pertinent to the variables needed, the plugin will get called once for hosts and again for groups.
+ * loader: Ansible's DataLoader. The DataLoader can read files, auto load JSON/YAML and decrypt vaulted data, and cache read files.
+ * path: this is 'directory data' for every inventory source and the current play's playbook directory, so they can search for data in reference to them. `get_vars` will be called at least once per available path.
+ * entities: these are host or group names that are pertinent to the variables needed. The plugin will get called once for hosts and again for groups.
 
-This method just needs to return a dictionary structure with the pertinent variables.
+This `get vars` method just needs to return a dictionary structure with the variables.
 
-Since Ansible 2.4, vars plugins execute as needed when preparing to execute a task, this avoids the costly 'always execute' that used
-to happend during inventory construction.
+Since Ansible version 2.4, vars plugins only execute as needed when preparing to execute a task. This avoids the costly 'always execute' behavior that occurred during inventory construction in older versions of Ansible.
 
-More documentation on writing vars plugins is pending, though you can jump into
-`lib/ansible/plugins/vars <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/vars>`_ and figure things out pretty easily.
+For implementation examples of vars plugins, check out the source code for the vars plugins that are included with Ansible:
+`lib/ansible/plugins/vars <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/vars>`_  .
 
 
 .. _developing_filter_plugins:
