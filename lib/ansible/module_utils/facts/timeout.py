@@ -25,7 +25,7 @@ GATHER_TIMEOUT = None
 DEFAULT_GATHER_TIMEOUT = 10
 
 
-class TimeoutError(Exception):
+class TimeoutError(BaseException):
     pass
 
 
