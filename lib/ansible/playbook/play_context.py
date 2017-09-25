@@ -294,6 +294,9 @@ class PlayContext(Base):
         if play.force_handlers is not None:
             self.force_handlers = play.force_handlers
 
+        if play.any_errors_fatal is not None:
+            self.any_errors_fatal = play.any_errors_fatal
+
     def set_options_from_plugin(self, plugin):
         # generic derived from connection plugin, temporary for backwards compat, in the end we should not set play_context properties
 
