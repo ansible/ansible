@@ -198,13 +198,115 @@ are created::
 
 Running Commands
 ----------------
-Info on running a command/process using ``win_shell``/``win_command``/``raw``/``script``.
+In the case that there is not module that can complete a task that is required,
+a command or script can be run using the ``win_shell``/``win_command``/``raw``/
+``script`` modules. 
 
-Escaping Spaces
-+++++++++++++++
+The ``raw`` module executes a low level command without any of the normal
+wrappers that Ansible uses. Because of this, things like ``become``, ``async``
+and environment variables do not work and ``raw`` should be not be used unless
+required.
+
+The ``script`` module executes a script from a local directory to the Ansible
+host on the Windows server. Like ``raw`` is currently does not support
+``become``, ``async`` and environment variables. It still has it's uses if the
+script to be executed in located on the Ansible host and not the Windows host.
+
+The ``win_command`` module is used to execute a command which is either an
+executable or batch file while ``win_shell`` is used to execute command(s)
+within a shell. Further down has more details on the differences between the
+two.
 
 Command or Shell
 ++++++++++++++++
+The modules ``win_shell`` and ``win_command`` are similar in the fact that they
+can be used to execute a command or commands. ``win_shell`` is run within a
+shell like ``powershell`` or ``cmd`` so it has access to shell operators like
+``<``, ``>``, ``|``, ``;``, ``&&``, ``||`` and so on. Multi-lined commands
+can also be run in ``win_shell``.
+
+``win_command`` is different where it is meant to run an executable outside of
+a shell. It can still run a shell command like ``mkdir``, ``New-Item`` by
+running it with the ``cmd.exe`` or ``powershell.exe`` executable.
+
+Here are some examples of using ``win_command`` or ``win_shell``::
+
+    - name: run a command under powershell
+      win_shell: New-Item -Path C:\temp -ItemType Directory
+    
+    - name: run a command under cmd
+      win_shell: mkdir C:\temp
+      args:
+        executable: cmd.exe
+    
+    - name: run a multiple shell commands
+      win_shell: |
+        New-Item -Path C:\temp -ItemType Directory
+        Remove-Item -Path C:\temp -Force -Recurse
+    
+    - name: run an executable using win_command
+      win_command: whomi.exe
+    
+    - name: run a cmd command
+      win_command: cmd.exe /c mkdir C:\temp
+
+    - name: run a vbs script
+      win_command: cscript.exe script.vbs
+
+Argument Rules
+++++++++++++++
+When running a command through ``win_command``, the standard Windows argument
+rules apply. 
+
+The rules can be simplified to the following rules:
+
+* Each argument is delimited by a while space, which can either be a space or a
+  tab
+
+* An argument can be surrounded by double quotes ``"``, anything inside these
+  quotes is intepreted as a single argument even if it contains whitespace
+
+* A double quote preceded by a backslash ``\`` is intepreted as just a double
+  quote ``"``
+
+* Backslashes are interpreted literally unless it is immediately preceed double
+  quotes, e.g. ``\`` == ``\`` and ``\"`` == ``"``
+
+* If an even number of backslashes is followed by a double quote, one
+  backslash is used in the argument for every pair and the double quote is
+  used as a string delimiter for the argument
+
+* If an odd number of backslashes is followed by a double quote, one backslash
+  is used in the argument for every pair and the double quote is escaped and
+  made a literal double quote in the argument
+
+Using the following rules, these are some examples of quoting::
+
+    - win_command: C:\temp\executable.exe argument1 "argument 2" "C:\path\with space" "double \"quoted\""
+
+    argv[0] = C:\temp\executable.exe
+    argv[1] = argument1
+    argv[2] = argument 2
+    argv[3] = C:\path\with space
+    argv[4] = double "quoted"
+
+    - win_command: '"C:\Program Files\Program\program.exe" "escaped \\\" backslash" unqouted-end-backslash\'
+
+    argv[0] = C:\Program Files\Program\program.exe
+    argv[1] = escaped \" backslash
+    argv[2] = unquoted-end-backslash\
+
+    # due to YAML and Ansible parsing ``\"`` must be written as ``{% raw %}\\{% endraw %}
+    - win_command: C:\temp\executable.exe C:\no\space\path "arg with end \ before end quote{% raw %]\\{% endraw %}"
+
+    argv[0] = C:\temp\executable.exe
+    argv[1] = C:\no\space\path
+    argv[2] = arg with end \ before end quote\"
+
+These rules can be further explored in greater depth by reading
+escaping arguments_.
+
+.. _escaping arguments: https://msdn.microsoft.com/en-us/library/17w5ykft(v=vs.85).aspx
 
 Creating and Running Scheduled Task
 -----------------------------------
