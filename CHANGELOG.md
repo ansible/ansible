@@ -39,6 +39,7 @@ Ansible Changes By Release
 * Fix encoding error when there are nonascii values in the path to the ssh binary
 * removed YAML inventory group name validation, broke existing setups and should be global in any case, and configurable
 * performance improvment for inventory, had slown down considerably from 2.3
+* Fix cpu facts on sparc64 (https://github.com/ansible/ansible/pull/30261)
 
 <a id="2.4"></a>
 
