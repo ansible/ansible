@@ -67,6 +67,16 @@ def validate_connection_params(module):
             module.fail_json(msg=error_str.format(arg))
 
 
+def manageiq_entities():
+    return {
+        'provider': 'providers', 'host': 'hosts', 'vm': 'vms',
+        'category': 'categories', 'cluster': 'clusters', 'data store': 'data_stores',
+        'group': 'groups', 'resource pool': 'resource_pools', 'service': 'services',
+        'service template': 'service_templates', 'template': 'templates',
+        'tenant': 'tenants', 'user': 'users', 'blueprint': 'blueprints'
+    }
+
+
 class ManageIQ(object):
     """
         class encapsulating ManageIQ API client.
