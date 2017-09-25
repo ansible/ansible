@@ -16,9 +16,7 @@ Example Callback Plugins
 The :doc:`log_plays <callback/log_plays>` callback is an example of how to record playbook events to a log file,
 and the :doc:`mail callback/mail` callback sends email on playbook failures.
 
-The :doc:`osx_say <callback/oxs_say>` callback provided is particularly entertaining --
-it will respond with computer synthesized speech on OS X in relation to playbook events,
-and is guaranteed to entertain and/or annoy coworkers.
+The :doc:`osx_say <callback/oxs_say>` callback responds with computer synthesized speech on OS X in relation to playbook events.
 
 
 .. _enabling_callbacks:
@@ -26,13 +24,11 @@ and is guaranteed to entertain and/or annoy coworkers.
 Enabling Callback Plugins
 ++++++++++++++++++++++++++
 
-You can activate a custom callback by either dropping it into a ``callback_plugins`` directory adjacent to your play or inside a role
-or by putting it in one of the callback directory sources configured in :doc:`ansible.cfg <../config>`.
+You can activate a custom callback by either dropping it into a ``callback_plugins`` directory adjacent to your play,  inside a role, or by putting it in one of the callback directory sources configured in :doc:`ansible.cfg <../config>`.
 
-Plugins are loaded in alphanumeric order; for example, a plugin implemented in a file named `1_first.py` would run before a plugin file named `2_second.py`.
+Plugins are loaded in alphanumeric order. For example, a plugin implemented in a file named `1_first.py` would run before a plugin file named `2_second.py`.
 
-Most callbacks shipped with Ansible are disabled by default and need to be whitelisted in your :doc:`ansible.cfg <../config>` file in order to function.
-For example:
+Most callbacks shipped with Ansible are disabled by default and need to be whitelisted in your :doc:`ansible.cfg <../config>` file in order to function. For example:
 
 .. code-block:: ini
 
@@ -59,15 +55,15 @@ This only affects :doc:`../ansible-playbook` by default.
 Managing AdHoc
 ``````````````
 
-The :doc:`ansible <../ansible>` AdHoc command speifically uses a different callback plugin for stdout,
-so there is an extra setting you need to enable it to use the stdout callback defined above, in :doc:`ansible.cfg <../config>`:
+The :doc:`ansible <../ansible>` AdHoc command specifically uses a different callback plugin for stdout,
+so there is an extra setting in :doc:`ansible.cfg <../config>` you need to add to use the stdout callback defined above:
 
 .. code-block:: ini
 
     [defaults]
     bin_ansible_callbacks=True
 
-or as an environment variable:
+You can also set this as an environment variable:
 
 .. code-block:: shell
 
@@ -77,8 +73,8 @@ or as an environment variable:
 Plugin List
 +++++++++++
 
-You can use ``ansible-doc -t callback -l`` to see the list of available plugins,
-use ``ansible-doc -t callback <plugin name>`` to see specific documents and examples.
+You can use ``ansible-doc -t callback -l`` to see the list of available plugins. 
+Use ``ansible-doc -t callback <plugin name>`` to see specific documents and examples.
 
 
 .. toctree:: :maxdepth: 1
