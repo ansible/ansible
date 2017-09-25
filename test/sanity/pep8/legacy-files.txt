@@ -432,7 +432,6 @@ lib/ansible/modules/system/puppet.py
 lib/ansible/modules/system/runit.py
 lib/ansible/modules/system/seboolean.py
 lib/ansible/modules/system/seport.py
-lib/ansible/modules/system/service.py
 lib/ansible/modules/system/solaris_zone.py
 lib/ansible/modules/system/svc.py
 lib/ansible/modules/system/systemd.py
