@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2012, Red Hat, inc
+# Copyright: (c) 2012, Red Hat, inc
 # Written by Seth Vidal
 # based on the mount modules from salt and puppet
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -9,11 +9,9 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
-
 
 DOCUMENTATION = '''
 ---
@@ -37,25 +35,18 @@ options:
     description:
       - Device to be mounted on I(path). Required when I(state) set to
         C(present) or C(mounted).
-    required: false
-    default: null
   fstype:
     description:
       - Filesystem type. Required when I(state) is C(present) or C(mounted).
-    required: false
-    default: null
   opts:
     description:
       - Mount options (see fstab(5), or vfstab(4) on Solaris).
-    required: false
-    default: null
   dump:
     description:
       - Dump (see fstab(5)). Note that if set to C(null) and I(state) set to
         C(present), it will cease to work and duplicate entries will be made
         with subsequent runs.
       - Has no effect on Solaris systems.
-    required: false
     default: 0
   passno:
     description:
@@ -63,7 +54,6 @@ options:
         C(present), it will cease to work and duplicate entries will be made
         with subsequent runs.
       - Deprecated on Solaris systems.
-    required: false
     default: 0
   state:
     description:
@@ -76,7 +66,7 @@ options:
         point will be created.
       - Similarly, specifying C(absent) will remove the mount point directory.
     required: true
-    choices: ["present", "absent", "mounted", "unmounted"]
+    choices: [ absent, mounted, present, unmounted ]
   fstab:
     description:
       - File to use instead of C(/etc/fstab). You shouldn't use this option
@@ -85,16 +75,14 @@ options:
         does not allow specifying alternate fstab files with mount so do not
         use this on OpenBSD with any state that operates on the live
         filesystem.
-    required: false
     default: /etc/fstab (/etc/vfstab on Solaris)
   boot:
-    version_added: 2.2
     description:
       - Determines if the filesystem should be mounted on boot.
       - Only applies to Solaris systems.
-    required: false
-    default: yes
-    choices: ["yes", "no"]
+    type: bool
+    default: 'yes'
+    version_added: '2.2'
 notes:
   - As of Ansible 2.3, the I(name) option has been changed to I(path) as
     default, but I(name) still works as well.
@@ -356,7 +344,7 @@ def mount(module, args):
     if rc == 0:
         return 0, ''
     else:
-        return rc, out+err
+        return rc, out + err
 
 
 def umount(module, path):
@@ -370,7 +358,7 @@ def umount(module, path):
     if rc == 0:
         return 0, ''
     else:
-        return rc, out+err
+        return rc, out + err
 
 
 def remount(module, args):
@@ -551,23 +539,21 @@ def get_linux_mounts(module, mntinfo_file="/proc/self/mountinfo"):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            boot=dict(default='yes', choices=['yes', 'no']),
-            dump=dict(),
-            fstab=dict(default=None),
-            fstype=dict(),
-            path=dict(required=True, aliases=['name'], type='path'),
-            opts=dict(),
+            boot=dict(type='bool', default=True),
+            dump=dict(type='str'),
+            fstab=dict(type='str'),
+            fstype=dict(type='str'),
+            path=dict(type='path', required=True, aliases=['name']),
+            opts=dict(type='str'),
             passno=dict(type='str'),
             src=dict(type='path'),
-            state=dict(
-                required=True,
-                choices=['present', 'absent', 'mounted', 'unmounted']),
+            state=dict(type='str', required=True, choices=['absent', 'mounted', 'present', 'unmounted']),
         ),
         supports_check_mode=True,
         required_if=(
             ['state', 'mounted', ['src', 'fstype']],
-            ['state', 'present', ['src', 'fstype']]
-        )
+            ['state', 'present', ['src', 'fstype']],
+        ),
     )
 
     # solaris args:
