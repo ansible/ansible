@@ -1,11 +1,11 @@
 Plugins
 =======
 
-Ansible uses a plugin architecture to enable a rich, flexible and expandible feature set.
-They are pieces of code that augment Ansible's core functionality.
+Plugins are pieces of code that augment Ansible's core functionality. Ansible uses a plugin architecture to enable a rich, flexible and expandible feature set.
+
 Ansible ships with a number of handy plugins, and you can easily write your own.
 
-There are many types of plugins, these are the most relevant ones:
+This section covers the various types of plugins that are included with Ansible:
 
 .. toctree:: :maxdepth: 1
     :glob:
@@ -14,8 +14,6 @@ There are many types of plugins, these are the most relevant ones:
     playbooks_filters
     playbooks_tests
 
-Most of the time you are using them without having to know about them, but when you want to change certain behaviours you need to know how to enable,
-activate or trigger each type.
 
 .. seealso::
 

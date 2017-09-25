@@ -4,7 +4,7 @@ Configuration
 .. contents:: Topics
 
 
-There are several ways to control Ansible settings, this is a brief descriptoin of them.
+This topic describes how to control Ansible settings.
 
 
 .. _the_configuration_file:
@@ -20,16 +20,15 @@ The stock configuration should be sufficient for most users, but there may be re
 Getting the latest configuration
 ````````````````````````````````
 
-If installing ansible from a package manager, the latest ansible.cfg should be present in /etc/ansible, possibly
+If installing Ansible from a package manager, the latest ansible.cfg file should be present in /etc/ansible, possibly
 as a ".rpmnew" file (or other) as appropriate in the case of updates.
 
-If you have installed from pip or from source, however, you may want to create this file in order to override
+If you installed Ansible from pip or from source, you may want to create this file in order to override
 default settings in Ansible.
 
-An example file is availble `ansible.cfg in source control <https://raw.github.com/ansible/ansible/devel/examples/ansible.cfg>`_
+An `example file is available on Github <https://raw.github.com/ansible/ansible/devel/examples/ansible.cfg>`_.
 
-For more details and a full listing of available configurations go to :doc:configuration or (starting at Ansible 2.4)
-you can use the :doc:`ansible-config` command line utility to list your available options and inspect the current values.
+For more details and a full listing of available configurations go to :doc:configuration. Starting with Ansible version 2.4, you can use the :doc:`ansible-config` command line utility to list your available options and inspect the current values.
 
 For in depth details you check out :doc:`config`.
 
@@ -37,10 +36,10 @@ For in depth details you check out :doc:`config`.
 Environmental configuration
 +++++++++++++++++++++++++++
 
-Ansible also allows configuration of settings via environment variables.
+Ansible also allows configuration of settings using environment variables.
 If these environment variables are set, they will override any setting loaded from the configuration file.
 
-You can get a full listing of available variables from :doc:`config`.
+You can get a full listing of available environment variables from :doc:`config`.
 
 .. _command_line_configuration:
 

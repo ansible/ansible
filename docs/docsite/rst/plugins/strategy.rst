@@ -4,14 +4,14 @@
 Strategy Plugins
 ----------------
 
-Strategy plugins control the flow of play execution, they handle task and host scheduleing.
+Strategy plugins control the flow of play execution by handling task and host scheduling.
 
 
-Enabling Cache Plugins
-++++++++++++++++++++++
+Enabling Strategy Plugins
++++++++++++++++++++++++++
 
-Only one strategy plugin can be used in a play, but you can use different ones for each play in a playbook or ansible run.
-The default is the :doc:`linear <strategy/linear>` plugin, you can change this default via :doc:`configuration <../config>`:
+Only one strategy plugin can be used in a play, but you can use different ones for each play in a playbook or Ansible run.
+The default is the :doc:`linear <strategy/linear>` plugin. You can change this default in Ansible :doc:`configuration <../config>` using an environment variable:
 
 .. code-block:: shell
 
@@ -24,7 +24,7 @@ or in the `ansible.cfg` file:
     [defaults]
     strategy=linear
 
-Or you can just speicfy the plugin in the play via the :ref:`strategy` keyword::
+You can also specify the strategy plugin in the play via the :ref:`strategy` keyword::
 
   - hosts: all
     strategy: debug
@@ -42,8 +42,8 @@ Or you can just speicfy the plugin in the play via the :ref:`strategy` keyword::
 Plugin List
 +++++++++++
 
-You can use ``ansible-doc -t strategy -l`` to see the list of available plugins,
-use ``ansible-doc -t strategy <plugin name>`` to see specific documents and examples.
+You can use ``ansible-doc -t strategy -l`` to see the list of available plugins. 
+Use ``ansible-doc -t strategy <plugin name>`` to see plugin-specific specific documentation and examples.
 
 
 .. toctree:: :maxdepth: 1
