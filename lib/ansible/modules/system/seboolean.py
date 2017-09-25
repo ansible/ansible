@@ -1,46 +1,44 @@
 #!/usr/bin/python
 
-# (c) 2012, Stephen Fromm <sfromm@gmail.com>
+# Copyright: (c) 2012, Stephen Fromm <sfromm@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
-
 DOCUMENTATION = '''
 ---
 module: seboolean
-short_description: Toggles SELinux booleans.
+short_description: Toggles SELinux booleans
 description:
      - Toggles SELinux booleans.
 version_added: "0.7"
 options:
   name:
     description:
-      - Name of the boolean to configure
+      - Name of the boolean to configure.
     required: true
-    default: null
   persistent:
     description:
-      - Set to C(yes) if the boolean setting should survive a reboot
-    required: false
-    default: no
-    choices: [ "yes", "no" ]
+      - Set to C(yes) if the boolean setting should survive a reboot.
+    type: bool
+    default: 'no'
   state:
     description:
       - Desired boolean value
+    type: bool
     required: true
-    default: null
-    choices: [ 'yes', 'no' ]
 notes:
-   - Not tested on any debian based system
-requirements: [ libselinux-python, libsemanage-python ]
-author: "Stephen Fromm (@sfromm)"
+   - Not tested on any Debian based system.
+requirements:
+- libselinux-python
+- libsemanage-python
+author:
+- Stephen Fromm (@sfromm)
 '''
 
 EXAMPLES = '''
@@ -55,15 +53,15 @@ import os
 
 try:
     import selinux
-    HAVE_SELINUX=True
+    HAVE_SELINUX = True
 except ImportError:
-    HAVE_SELINUX=False
+    HAVE_SELINUX = False
 
 try:
     import semanage
-    HAVE_SEMANAGE=True
+    HAVE_SEMANAGE = True
 except ImportError:
-    HAVE_SEMANAGE=False
+    HAVE_SEMANAGE = False
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import binary_type
@@ -86,6 +84,7 @@ def has_boolean_value(module, name):
     else:
         return False
 
+
 def get_boolean_value(module, name):
     state = 0
     try:
@@ -96,6 +95,7 @@ def get_boolean_value(module, name):
         return True
     else:
         return False
+
 
 # The following method implements what setsebool.c does to change
 # a boolean and make it persist after reboot..
@@ -152,6 +152,7 @@ def semanage_boolean_value(module, name, state):
         module.fail_json(msg="Failed to manage policy for boolean %s: %s" % (name, str(e)))
     return True
 
+
 def set_boolean_value(module, name, state):
     rc = 0
     value = 0
@@ -166,14 +167,15 @@ def set_boolean_value(module, name, state):
     else:
         return False
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            name=dict(required=True),
-            persistent=dict(default='no', type='bool'),
-            state=dict(required=True, type='bool')
+        argument_spec=dict(
+            name=dict(type='str', required=True),
+            persistent=dict(type='bool', default=False),
+            state=dict(type='bool', required=True)
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
     )
 
     if not HAVE_SELINUX:
@@ -188,8 +190,9 @@ def main():
     name = module.params['name']
     persistent = module.params['persistent']
     state = module.params['state']
-    result = {}
-    result['name'] = name
+    result = dict(
+        name=name,
+    )
 
     if hasattr(selinux, 'selinux_boolean_sub'):
         # selinux_boolean_sub allows sites to rename a boolean and alias the old name
