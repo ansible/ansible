@@ -42,7 +42,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-containerDefinitions:
+container_definitions:
     description: Returns a list of complex objects representing the containers
     returned: success
     type: complex
@@ -59,24 +59,24 @@ containerDefinitions:
             description: The number of cpu units reserved for the container.
             returned: always
             type: int
-        memoryReservation:
-            description: The soft limit (in MiB) of memory to reserve for the container.
+        memory_reservation:
+            description: The soft limit (in Mi_b) of memory to reserve for the container.
             returned: when present
             type: int
         links:
             description: Links to other containers.
             returned: when present
             type: string
-        portMappings:
+        port_mappings:
             description: The list of port mappings for the container.
             returned: always
             type: complex
             contains:
-                containerPort:
+                container_port:
                     description: The port number on the container.
                     returned: when present
                     type: int
-                hostPort:
+                host_port:
                     description: The port number on the container instance to reserve for your container.
                     returned: when present
                     type: int
@@ -88,7 +88,7 @@ containerDefinitions:
             description: Whether this is an essential container or not.
             returned: always
             type: bool
-        entryPoint:
+        entry_point:
             description: The entry point that is passed to the container.
             returned: when present
             type: string
@@ -109,33 +109,33 @@ containerDefinitions:
                     description: The value of the environment variable.
                     returned: when present
                     type: string
-        mountPoints:
+        mount_points:
             description: The mount points for data volumes in your container.
             returned: always
             type: complex
             contains:
-                sourceVolume:
+                source_volume:
                     description: The name of the volume to mount.
                     returned: when present
                     type: string
-                containerPath:
+                container_path:
                     description: The path on the container to mount the host volume at.
                     returned: when present
                     type: string
-                readOnly:
+                read_only:
                     description: If this value is true , the container has read-only access to the volume. If this value is false , then the container can write to the volume.
                     returned: when present
                     type: bool
-        volumesFrom:
+        volumes_from:
             description: Data volumes to mount from another container.
             returned: always
             type: complex
             contains:
-                sourceContainer:
+                source_container:
                     description: The name of another container within the same task definition to mount volumes from.
                     returned: when present
                     type: string
-                readOnly:
+                read_only:
                     description: If this value is true , the container has read-only access to the volume. If this value is false , then the container can write to the volume.
                     returned: when present
                     type: bool
@@ -147,11 +147,11 @@ containerDefinitions:
             description: The user name to use inside the container.
             returned: when present
             type: string
-        workingDirectory:
+        working_directory:
             description: The working directory in which to run commands inside the container.
             returned: when present
             type: string
-        disableNetworking:
+        disable_networking:
             description: When this parameter is true, networking is disabled within the container.
             returned: when present
             type: bool
@@ -159,19 +159,19 @@ containerDefinitions:
             description: When this parameter is true, the container is given elevated privileges on the host container instance (similar to the root user).
             returned: when present
             type: bool
-        readonlyRootFilesystem:
+        readonly_root_filesystem:
             description: When this parameter is true, the container is given read-only access to its root file system.
             returned: when present
             type: bool
-        dnsServers:
+        dns_servers:
             description: A list of DNS servers that are presented to the container.
             returned: when present
             type: string
-        dnsSearchDomains:
+        dns_search_domains:
             description: A list of DNS search domains that are presented to the container.
             returned: when present
             type: string
-        extraHosts:
+        extra_hosts:
             description: A list of hostnames and IP address mappings to append to the /etc/hosts file on the container.
             returned: when present
             type: complex
@@ -180,15 +180,15 @@ containerDefinitions:
                     description: The hostname to use in the /etc/hosts entry.
                     returned: when present
                     type: string
-                ipAddress:
+                ip_address:
                     description: The IP address to use in the /etc/hosts entry.
                     returned: when present
                     type: string
-        dockerSecurityOptions:
-            description: A list of strings to provide custom labels for SELinux and AppArmor multi-level security systems.
+        docker_security_options:
+            description: A list of strings to provide custom labels for SELinux and App_armor multi-level security systems.
             returned: when present
             type: string
-        dockerLabels:
+        docker_labels:
             description: A key/value map of labels to add to the container.
             returned: when present
             type: string
@@ -201,15 +201,15 @@ containerDefinitions:
                     description: The type of the ulimit .
                     returned: when present
                     type: string
-                softLimit:
+                soft_limit:
                     description: The soft limit for the ulimit type.
                     returned: when present
                     type: int
-                hardLimit:
+                hard_limit:
                     description: The hard limit for the ulimit type.
                     returned: when present
                     type: int
-        logConfiguration:
+        log_configuration:
             description: The log configuration specification for the container.
             returned: when present
             type: string
@@ -221,15 +221,15 @@ family:
     description: The family of your task definition, used as the definition name
     returned: always
     type: string
-taskDefinitionArn:
+task_definition_arn:
     description: ARN of the task definition
     returned: always
     type: string
-taskRoleArn:
+task_role_arn:
     description: The ARN of the IAM role that containers in this task can assume
     returned: when role is set
     type: string
-networkMode:
+network_mode:
     description: Network mode for the containers
     returned: always
     type: string
@@ -250,7 +250,7 @@ volumes:
             description: The contents of the host parameter determine whether your data volume persists on the host container instance and where it is stored.
             returned: when present
             type: bool
-        sourcePath:
+        source_path:
             description: The path on the host container instance that is presented to the container.
             returned: when present
             type: string
@@ -258,7 +258,7 @@ status:
     description: The status of the task definition
     returned: always
     type: string
-requiresAttributes:
+requires_attributes:
     description: The container instance attributes required by your task
     returned: when present
     type: complex
@@ -271,15 +271,15 @@ requiresAttributes:
             description: The value of the attribute.
             returned: when present
             type: string
-        targetType:
+        target_type:
             description: The type of the target with which to attach the attribute.
             returned: when present
             type: string
-        targetId:
+        target_id:
             description: The ID of the target.
             returned: when present
             type: string
-placementConstraints:
+placement_constraints:
     description: A list of placement constraint objects to use for tasks
     returned: always
     type: complex
@@ -301,7 +301,7 @@ except ImportError:
     HAS_BOTO3 = False
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, boto3_conn, ec2_argument_spec, get_aws_connection_info
 
 
 class EcsTaskManager:
@@ -320,7 +320,7 @@ class EcsTaskManager:
 
     def describe_task_definitions(self, family):
         # Return the full descriptions of the task definition
-        return self.ecs.describe_task_definition(taskDefinition=family)['taskDefinition']
+        return camel_dict_to_snake_dict(self.ecs.describe_task_definition(taskDefinition=family)['taskDefinition'])
 
 
 def main():
