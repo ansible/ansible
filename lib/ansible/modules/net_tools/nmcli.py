@@ -97,6 +97,14 @@ options:
         description:
             - The connection MTU, e.g. 9000. This can't be applied when creating the interface and is done once the interface has been created.
             - Can be used when modifying Team, VLAN, Ethernet (Future plans to implement wifi, pppoe, infiniband)
+    ignore_auto_dns:
+        required: False
+        default: None
+        choices: [ "yes", "no" ]
+        version_added: "2.5"
+        description:
+            - When "ipv4.method" is set to "auto" and this property to "yes", automatically configured nameservers and search domains
+            - are ignored and only nameservers and search domains specified in the "dns" and "dns-search" properties, if any, are used.
     primary:
         required: False
         default: None
@@ -557,6 +565,7 @@ class Nmcli(object):
         self.ip4=module.params['ip4']
         self.gw4=module.params['gw4']
         self.dns4=' '.join(module.params['dns4'])
+        self.ignore_auto_dns=module.params['ignore_auto_dns']
         self.ip6=module.params['ip6']
         self.gw6=module.params['gw6']
         self.dns6=module.params['dns6']
@@ -740,6 +749,9 @@ class Nmcli(object):
         if self.dns4 is not None:
             cmd.append('ipv4.dns')
             cmd.append(self.dns4)
+        if self.ignore_auto_dns is not None:
+            cmd.append('ipv4.ignore-auto-dns')
+            cmd.append(self.bool_to_string(self.ignore_auto_dns))
         if self.ip6 is not None:
             cmd.append('ipv6.address')
             cmd.append(self.ip6)
@@ -860,6 +872,9 @@ class Nmcli(object):
         if self.dns4 is not None:
             cmd.append('ipv4.dns')
             cmd.append(self.dns4)
+        if self.ignore_auto_dns is not None:
+            cmd.append('ipv4.ignore-auto-dns')
+            cmd.append(self.bool_to_string(self.ignore_auto_dns))
         if self.ip6 is not None:
             cmd.append('ipv6.address')
             cmd.append(self.ip6)
@@ -961,6 +976,9 @@ class Nmcli(object):
         if self.dns4 is not None:
             cmd.append('ipv4.dns')
             cmd.append(self.dns4)
+        if self.ignore_auto_dns is not None:
+            cmd.append('ipv4.ignore-auto-dns')
+            cmd.append(self.bool_to_string(self.ignore_auto_dns))
         if self.ip6 is not None:
             cmd.append('ipv6.address')
             cmd.append(self.ip6)
@@ -1093,6 +1111,7 @@ def main():
             ip4=dict(required=False, default=None, type='str'),
             gw4=dict(required=False, default=None, type='str'),
             dns4=dict(required=False, default=None, type='list'),
+            ignore_auto_dns=dict(required=False, default=None, type='bool'),
             ip6=dict(required=False, default=None, type='str'),
             gw6=dict(required=False, default=None, type='str'),
             dns6=dict(required=False, default=None, type='str'),
