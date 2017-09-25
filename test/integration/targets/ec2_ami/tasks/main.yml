@@ -346,21 +346,20 @@
           - "result.changed"
           - "'image_id' not in result"
 
-# FIXME: in ec2_snapshot_facts OwnerIds is cast to a map, causing traceback (needs to be a list or tuple)
-#    - name: ensure the snapshot still exists
-#      ec2_snapshot_facts:
-#        snapshot_ids:
-#          - '{{ ec2_ami_snapshot }}'
-#        ec2_region: '{{ec2_region}}'
-#        ec2_access_key: '{{ec2_access_key}}'
-#        ec2_secret_key: '{{ec2_secret_key}}'
-#        security_token: '{{security_token}}'
-#      register: snapshot_result
+    - name: ensure the snapshot still exists
+      ec2_snapshot_facts:
+        snapshot_ids:
+          - '{{ ec2_ami_snapshot }}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+      register: snapshot_result
 
-#    - name: assert the snapshot wasn't deleted
-#      assert:
-#        that:
-#          - "snapshot_result.snapshots[0].snapshot_id == ec2_ami_snapshot"
+    - name: assert the snapshot wasn't deleted
+      assert:
+        that:
+          - "snapshot_result.snapshots[0].snapshot_id == ec2_ami_snapshot"
 
     - name: delete ami for a second time
       ec2_ami:
