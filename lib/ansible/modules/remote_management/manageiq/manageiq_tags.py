@@ -123,15 +123,10 @@ class ManageIQTags(object):
 
         self.resource_type = resource_type
         self.resource_id = resource_id
-        self.resource_url = self.calc_resource_url()
-
-    def calc_resource_url(self):
-        """ Return the resource api url
-        """
-        return '{api_url}/{resource_type}/{resource_id}'.format(
+        self.resource_url = '{api_url}/{resource_type}/{resource_id}'.format(
             api_url=self.api_url,
-            resource_type=self.resource_type,
-            resource_id=self.resource_id)
+            resource_type=resource_type,
+            resource_id=resource_id)
 
     def full_tag_name(self, tag):
         """ Returns the full tag name in manageiq
@@ -195,7 +190,7 @@ class ManageIQTags(object):
                 error=e)
             self.module.fail_json(msg=msg)
 
-        # check all entities in resoult to be successfull
+        # check all entities in result to be successfull
         for result in response['results']:
             if not result['success']:
                 msg = "Failed to {action}: {message}".format(
