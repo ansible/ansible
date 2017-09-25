@@ -100,12 +100,19 @@ options:
     description:
       - A dictionary of one or more tags to assign to the load balancer.
     required: false
+  type:
+    description:
+      - Type of Load Balaner, Application or Network Load Balancer.
+    required: false
+    default: application
+    choices: ['application', 'network']
 extends_documentation_fragment:
     - aws
     - ec2
 notes:
   - Listeners are matched based on port. If a listener's port is changed then a new listener will be created.
   - Listener rules are matched based on priority. If a rule's priority is changed then a new rule will be created.
+  - Security Groups is not a valid parameter for Network Load Balancer.
 '''
 
 EXAMPLES = '''
@@ -183,6 +190,21 @@ EXAMPLES = '''
             Actions:
               - TargetGroupName: test-target-group
                 Type: forward
+    state: present
+
+# Create an NLB with listeners
+- elb_application_lb:
+    name: myelb
+    subnets:
+      - subnet-400d543b
+      - subnet-b57b7edc
+    listeners:
+      - Protocol: TCP # Required. The protocol can only be TCP for Network Load Balancer.
+        Port: 80 # Required. The port on which the load balancer is listening.
+        DefaultActions:
+          - Type: forward # Required. Only 'forward' is accepted at this time
+            TargetGroupName: wp-testing
+    type: network
     state: present
 
 # Remove an ELB
@@ -797,14 +819,20 @@ def create_or_update_elb(connection, connection_ec2, module):
     params = dict()
     params['Name'] = module.params.get("name")
     params['Subnets'] = module.params.get("subnets")
-    try:
-        params['SecurityGroups'] = get_ec2_security_group_ids_from_names(module.params.get('security_groups'), connection_ec2, boto3=True)
-    except ValueError as e:
-        module.fail_json(msg=str(e), exception=traceback.format_exc())
-    except ClientError as e:
-        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-    except NoCredentialsError as e:
-        module.fail_json(msg="AWS authentication problem. " + e.message, exception=traceback.format_exc())
+    params['Type'] = module.params.get("type")
+
+    if params['Type'] == 'application':
+        is_alb = True
+
+    if is_alb:
+        try:
+            params['SecurityGroups'] = get_ec2_security_group_ids_from_names(module.params.get('security_groups'), connection_ec2, boto3=True)
+        except ValueError as e:
+            module.fail_json(msg=str(e), exception=traceback.format_exc())
+        except ClientError as e:
+            module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        except NoCredentialsError as e:
+            module.fail_json(msg="AWS authentication problem. " + e.message, exception=traceback.format_exc())
 
     params['Scheme'] = module.params.get("scheme")
     if module.params.get("tags"):
@@ -831,12 +859,13 @@ def create_or_update_elb(connection, connection_ec2, module):
             changed = True
 
         # Security Groups
-        if set(elb['SecurityGroups']) != set(params['SecurityGroups']):
-            try:
-                connection.set_security_groups(LoadBalancerArn=elb['LoadBalancerArn'], SecurityGroups=params['SecurityGroups'])
-            except ClientError as e:
-                module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-            changed = True
+        if is_alb:
+            if set(elb['SecurityGroups']) != set(params['SecurityGroups']):
+                try:
+                    connection.set_security_groups(LoadBalancerArn=elb['LoadBalancerArn'], SecurityGroups=params['SecurityGroups'])
+                except ClientError as e:
+                    module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                changed = True
 
         # Tags - only need to play with tags if tags parameter has been set to something
         if module.params.get("tags"):
@@ -880,18 +909,19 @@ def create_or_update_elb(connection, connection_ec2, module):
     # Get current attributes
     current_elb_attributes = get_elb_attributes(connection, module, elb['LoadBalancerArn'])
 
-    if access_logs_enabled and current_elb_attributes['access_logs_s3_enabled'] != "true":
-        update_attributes.append({'Key': 'access_logs.s3.enabled', 'Value': "true"})
-    if not access_logs_enabled and current_elb_attributes['access_logs_s3_enabled'] != "false":
-        update_attributes.append({'Key': 'access_logs.s3.enabled', 'Value': 'false'})
-    if access_logs_s3_bucket is not None and access_logs_s3_bucket != current_elb_attributes['access_logs_s3_bucket']:
-        update_attributes.append({'Key': 'access_logs.s3.bucket', 'Value': access_logs_s3_bucket})
-    if access_logs_s3_prefix is not None and access_logs_s3_prefix != current_elb_attributes['access_logs_s3_prefix']:
-        update_attributes.append({'Key': 'access_logs.s3.prefix', 'Value': access_logs_s3_prefix})
-    if deletion_protection and current_elb_attributes['deletion_protection_enabled'] != "true":
-        update_attributes.append({'Key': 'deletion_protection.enabled', 'Value': "true"})
-    if not deletion_protection and current_elb_attributes['deletion_protection_enabled'] != "false":
-        update_attributes.append({'Key': 'deletion_protection.enabled', 'Value': "false"})
+    if is_alb:
+        if access_logs_enabled and current_elb_attributes['access_logs_s3_enabled'] != "true":
+            update_attributes.append({'Key': 'access_logs.s3.enabled', 'Value': "true"})
+        if not access_logs_enabled and current_elb_attributes['access_logs_s3_enabled'] != "false":
+            update_attributes.append({'Key': 'access_logs.s3.enabled', 'Value': 'false'})
+        if access_logs_s3_bucket is not None and access_logs_s3_bucket != current_elb_attributes['access_logs_s3_bucket']:
+            update_attributes.append({'Key': 'access_logs.s3.bucket', 'Value': access_logs_s3_bucket})
+        if access_logs_s3_prefix is not None and access_logs_s3_prefix != current_elb_attributes['access_logs_s3_prefix']:
+            update_attributes.append({'Key': 'access_logs.s3.prefix', 'Value': access_logs_s3_prefix})
+        if deletion_protection and current_elb_attributes['deletion_protection_enabled'] != "true":
+            update_attributes.append({'Key': 'deletion_protection.enabled', 'Value': "true"})
+        if not deletion_protection and current_elb_attributes['deletion_protection_enabled'] != "false":
+            update_attributes.append({'Key': 'deletion_protection.enabled', 'Value': "false"})
     if idle_timeout is not None and str(idle_timeout) != current_elb_attributes['idle_timeout_timeout_seconds']:
         update_attributes.append({'Key': 'idle_timeout.timeout_seconds', 'Value': str(idle_timeout)})
 
@@ -975,6 +1005,7 @@ def main():
             scheme=dict(default='internet-facing', choices=['internet-facing', 'internal']),
             state=dict(choices=['present', 'absent'], type='str'),
             tags=dict(default={}, type='dict'),
+            type=dict(default='application', type='str', choices=['application', 'network']),
             wait_timeout=dict(type='int'),
             wait=dict(type='bool')
         )
@@ -982,7 +1013,7 @@ def main():
 
     module = AnsibleModule(argument_spec=argument_spec,
                            required_if=[
-                               ('state', 'present', ['subnets', 'security_groups'])
+                               ('state', 'present', ['subnets'])
                            ],
                            required_together=(
                                ['access_logs_enabled', 'access_logs_s3_bucket', 'access_logs_s3_prefix']
