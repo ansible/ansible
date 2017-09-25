@@ -146,9 +146,9 @@ class CloudWatchEventRule(object):
             error_code = e.response.get('Error', {}).get('Code')
             if error_code == 'ResourceNotFoundException':
                 return {}
-            self.module.fail_json_aws(e, msg="Could not describe rule")
+            self.module.fail_json_aws(e, msg="Could not describe rule %s" % self.name)
         except botocore.exceptions.BotoCoreError as e:
-            self.module.fail_json_aws(e, msg="Could not describe rule")
+            self.module.fail_json_aws(e, msg="Could not describe rule %s" % self.name)
         return self._snakify(rule_info)
 
     def put(self, enabled=True):
@@ -165,26 +165,39 @@ class CloudWatchEventRule(object):
             request['Description'] = self.description
         if self.role_arn:
             request['RoleArn'] = self.role_arn
-        response = self.client.put_rule(**request)
+        try:
+            response = self.client.put_rule(**request)
+        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+            self.module.fail_json_aws(e, msg="Could not create/update rule %s" % self.name)
         self.changed = True
         return response
 
     def delete(self):
         """Deletes the rule in AWS"""
         self.remove_all_targets()
-        response = self.client.delete_rule(Name=self.name)
+
+        try:
+            response = self.client.delete_rule(Name=self.name)
+        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+            self.module.fail_json_aws(e, msg="Could not delete rule %s" % self.name)
         self.changed = True
         return response
 
     def enable(self):
         """Enables the rule in AWS"""
-        response = self.client.enable_rule(Name=self.name)
+        try:
+            response = self.client.enable_rule(Name=self.name)
+        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+            self.module.fail_json_aws(e, msg="Could not enable rule %s" % self.name)
         self.changed = True
         return response
 
     def disable(self):
         """Disables the rule in AWS"""
-        response = self.client.disable_rule(Name=self.name)
+        try:
+            response = self.client.disable_rule(Name=self.name)
+        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+            self.module.fail_json_aws(e, msg="Could not disable rule %s" % self.name)
         self.changed = True
         return response
 
@@ -196,9 +209,9 @@ class CloudWatchEventRule(object):
             error_code = e.response.get('Error', {}).get('Code')
             if error_code == 'ResourceNotFoundException':
                 return []
-            self.module.fail_json_aws(e, msg="Could not describe rule")
+            self.module.fail_json_aws(e, msg="Could not find target for rule %s" % self.name)
         except botocore.exceptions.BotoCoreError as e:
-            self.module.fail_json_aws(e, msg="Could not describe rule")
+            self.module.fail_json_aws(e, msg="Could not find target for rule %s" % self.name)
         return self._snakify(targets)['targets']
 
     def put_targets(self, targets):
@@ -209,7 +222,10 @@ class CloudWatchEventRule(object):
             'Rule': self.name,
             'Targets': self._targets_request(targets),
         }
-        response = self.client.put_targets(**request)
+        try:
+            response = self.client.put_targets(**request)
+        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+            self.module.fail_json_aws(e, msg="Could not create/update rule targets for rule %s" % self.name)
         self.changed = True
         return response
 
@@ -221,7 +237,10 @@ class CloudWatchEventRule(object):
             'Rule': self.name,
             'Ids': target_ids
         }
-        response = self.client.remove_targets(**request)
+        try:
+            response = self.client.remove_targets(**request)
+        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+            self.module.fail_json_aws(e, msg="Could not remove rule targets from rule %s" % self.name)
         self.changed = True
         return response
 
