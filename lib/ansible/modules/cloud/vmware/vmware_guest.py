@@ -1166,6 +1166,21 @@ class PyVmomiHelper(object):
 
         return root
 
+    def get_resource_pool(self):
+
+        resource_pool = None
+
+        if self.params['esxi_hostname']:
+            host = self.select_host()
+            resource_pool = self.select_resource_pool_by_host(host)
+        else:
+            resource_pool = self.select_resource_pool_by_name(self.params['resource_pool'])
+
+        if resource_pool is None:
+            self.module.fail_json(msg='Unable to find resource pool "%(resource_pool)s"' % self.params)
+
+        return resource_pool
+
     def deploy_vm(self):
         # https://github.com/vmware/pyvmomi-community-samples/blob/master/samples/clone_vm.py
         # https://www.vmware.com/support/developer/vc-sdk/visdk25pubs/ReferenceGuide/vim.vm.CloneSpec.html
@@ -1215,14 +1230,7 @@ class PyVmomiHelper(object):
 
         # need a resource pool if cloning from template
         if self.params['resource_pool'] or self.params['template']:
-            if self.params['esxi_hostname']:
-                host = self.select_host()
-                resource_pool = self.select_resource_pool_by_host(host)
-            else:
-                resource_pool = self.select_resource_pool_by_name(self.params['resource_pool'])
-
-            if resource_pool is None:
-                self.module.fail_json(msg='Unable to find resource pool "%(resource_pool)s"' % self.params)
+            resource_pool = self.get_resource_pool()
 
         # set the destination datastore for VM & disks
         (datastore, datastore_name) = self.select_datastore(vm_obj)
@@ -1289,6 +1297,7 @@ class PyVmomiHelper(object):
                                                         vmPathName="[" + datastore_name + "] " + self.params["name"])
 
                 clone_method = 'CreateVM_Task'
+                resource_pool = self.get_resource_pool()
                 task = destfolder.CreateVM_Task(config=self.configspec, pool=resource_pool)
                 self.change_detected = True
             self.wait_for_task(task)
