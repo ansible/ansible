@@ -815,6 +815,48 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
             "distribution_version": "NA"
         }
     },
+
+    # ArchLinux with an empty /etc/arch-release and a /etc/os-release with "NAME=Arch Linux"
+    {
+        "platform.dist": [
+            "",
+            "",
+            ""
+        ],
+        "input": {
+            "/etc/os-release": "NAME=\"Arch Linux\"\nPRETTY_NAME=\"Arch Linux\"\nID=arch\nID_LIKE=archlinux\nANSI_COLOR=\"0;36\"\nHOME_URL=\"https://www.archlinux.org/\"\nSUPPORT_URL=\"https://bbs.archlinux.org/\"\nBUG_REPORT_URL=\"https://bugs.archlinux.org/\"\n\n",  # noqa
+            "/etc/arch-release": "",
+        },
+        "name": "Arch Linux NA",
+        "result": {
+            "distribution_release": "NA",
+            "distribution": "Archlinux",
+            "distribution_major_version": "NA",
+            "os_family": "Archlinux",
+            "distribution_version": "NA"
+        }
+    },
+
+    # ArchLinux with no /etc/arch-release but with a /etc/os-release with NAME=Arch Linux
+    # The fact needs to map 'Arch Linux' to 'Archlinux' for compat with 2.3 and earlier facts
+    {
+        "platform.dist": [
+            "",
+            "",
+            ""
+        ],
+        "input": {
+            "/etc/os-release": "NAME=\"Arch Linux\"\nPRETTY_NAME=\"Arch Linux\"\nID=arch\nID_LIKE=archlinux\nANSI_COLOR=\"0;36\"\nHOME_URL=\"https://www.archlinux.org/\"\nSUPPORT_URL=\"https://bbs.archlinux.org/\"\nBUG_REPORT_URL=\"https://bugs.archlinux.org/\"\n\n",  # noqa
+        },
+        "name": "Arch Linux no arch-release NA",
+        "result": {
+            "distribution_release": "NA",
+            "distribution": "Archlinux",
+            "distribution_major_version": "NA",
+            "os_family": "Archlinux",
+            "distribution_version": "NA"
+        }
+    }
 ]
 
 
