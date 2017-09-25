@@ -156,27 +156,8 @@ class ManageIQTags(object):
         tags_set = set([tag['name'] for tag in tags])
         return tags_set
 
-    def post_tags(self, tags, action):
-        """ Post the tags for the resource using ManageIQ rest api
-        """
-        url = '{resource_url}/tags'.format(resource_url=self.resource_url)
-        try:
-            response = self.client.post(url, action=action, resources=tags)
-        except Exception as e:
-            msg = "Failed to {action} tag: {error}".format(
-                action=action,
-                error=e)
-            self.module.fail_json(msg=msg)
-
-        for result in response['results']:
-            if not result['success']:
-                msg = "Failed to {action}: {message}".format(
-                    action=action,
-                    message=result['message'])
-                self.module.fail_json(msg=msg)
-
-    def assign_or_unassign_tags(self, tags, action):
-        """ Assign or unassign the tag on a manageiq resource.
+    def tags_to_update(self, tags, action):
+        """ Create a list of tags we need to update in ManageIQ.
 
         Returns:
             Whether or not a change took place and a message describing the
@@ -192,15 +173,40 @@ class ManageIQTags(object):
             elif (not assigned) and action == 'assign':
                 tags_to_post.append(tag)
 
+        return tags_to_post
+
+    def assign_or_unassign_tags(self, tags, action):
+        """ Perform assign/unassign action
+        """
+        # get a list of tags needed to be changed
+        tags_to_post = self.tags_to_update(tags, action)
         if not tags_to_post:
             return dict(
                 changed=False,
                 msg="Tags already {action}ed, nothing to do".format(action=action))
-        else:
-            self.post_tags(tags_to_post, action)
-            return dict(
-                changed=True,
-                msg="Successfully {action}ed tags".format(action=action))
+
+        # try to assign or unassign tags to resource
+        url = '{resource_url}/tags'.format(resource_url=self.resource_url)
+        try:
+            response = self.client.post(url, action=action, resources=tags)
+        except Exception as e:
+            msg = "Failed to {action} tag: {error}".format(
+                action=action,
+                error=e)
+            self.module.fail_json(msg=msg)
+
+        # check all entities in resoult to be successfull
+        for result in response['results']:
+            if not result['success']:
+                msg = "Failed to {action}: {message}".format(
+                    action=action,
+                    message=result['message'])
+                self.module.fail_json(msg=msg)
+
+        # successfully changed all needed tags
+        return dict(
+            changed=True,
+            msg="Successfully {action}ed tags".format(action=action))
 
 
 def main():
@@ -228,17 +234,14 @@ def main():
     action = actions[state]
     resource_type = manageiq_entities()[resource_type_key]
 
-    # create the manageiq object
     manageiq = ManageIQ(module)
 
-    # query resource id,
-    # fail if resource does not exist
+    # query resource id, fail if resource does not exist
     resource_id = query_resource_id(manageiq, resource_type, resource_name)
 
-    # create the manageiq tag object
     manageiq_tags = ManageIQTags(manageiq, resource_type, resource_id)
 
-    # run action
+    # assign or unassign the tags
     res_args = manageiq_tags.assign_or_unassign_tags(tags, action)
 
     module.exit_json(**res_args)
