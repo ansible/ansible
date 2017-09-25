@@ -102,7 +102,7 @@ options:
     default: "no"
     choices: ["yes", "no"]
     aliases: []
-    version_added: "2.4"
+    version_added: "2.5"
 
   installroot:
     description:
