@@ -29,15 +29,17 @@ description:
 options:
   state:
     description:
-      - absent - tags should not exist, present - tags should be.
+      - absent - tags should not exist,
+      - present - tags should be,
+      - list - list current tags.
     required: False
-    choices: ['absent', 'present']
+    choices: ['absent', 'present', 'list']
     default: 'present'
   tags:
     description:
       - tags - list of dictionaries, each includes 'name' and 'category' keys.
-      - categories - tag categories.
-    required: true
+      - required if state is present or absent.
+    required: false
     default: null
   resource_type:
     description:
@@ -80,6 +82,17 @@ EXAMPLES = '''
       name: prod
     - category: owner
       name: prod_ops
+    manageiq_connection:
+      url: 'http://127.0.0.1:3000'
+      username: 'admin'
+      password: 'smartvm'
+      verify_ssl: False
+
+- name: List current tags for a provider in ManageIQ
+  manageiq_tags:
+    state: list
+    resource_name: 'EngLab'
+    resource_type: 'provider'
     manageiq_connection:
       url: 'http://127.0.0.1:3000'
       username: 'admin'
@@ -205,19 +218,23 @@ class ManageIQTags(object):
 
 
 def main():
-    actions = {'present': 'assign', 'absent': 'unassign'}
+    actions = {'present': 'assign', 'absent': 'unassign', 'list': 'list'}
 
     module = AnsibleModule(
         argument_spec=dict(
             manageiq_connection=dict(required=True, type='dict',
                                      options=manageiq_argument_spec()),
-            tags=dict(required=True, type='list'),
+            tags=dict(type='list'),
             resource_name=dict(required=True, type='str'),
             resource_type=dict(required=True, type='str',
                                choices=manageiq_entities().keys()),
             state=dict(required=False, type='str',
-                       choices=['present', 'absent'], default='present'),
-        )
+                       choices=['present', 'absent', 'list'], default='present'),
+        ),
+        required_if=[
+            ('state', 'present', ['tags']),
+            ('state', 'absent', ['tags'])
+        ],
     )
 
     tags = module.params['tags']
@@ -236,8 +253,13 @@ def main():
 
     manageiq_tags = ManageIQTags(manageiq, resource_type, resource_id)
 
-    # assign or unassign the tags
-    res_args = manageiq_tags.assign_or_unassign_tags(tags, action)
+    if action == 'list':
+        # return a list of current tags for this object
+        current_tags = manageiq_tags.query_resource_tags()
+        res_args = dict(changed=False, tags=current_tags)
+    else:
+        # assign or unassign the tags
+        res_args = manageiq_tags.assign_or_unassign_tags(tags, action)
 
     module.exit_json(**res_args)
 
