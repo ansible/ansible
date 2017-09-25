@@ -315,7 +315,7 @@ This `get vars` method just needs to return a dictionary structure with the vari
 Since Ansible version 2.4, vars plugins only execute as needed when preparing to execute a task. This avoids the costly 'always execute' behavior that occurred during inventory construction in older versions of Ansible.
 
 For implementation examples of vars plugins, check out the source code for the vars plugins that are included with Ansible:
-`lib/ansible/plugins/vars <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/vars>`_.
+`lib/ansible/plugins/vars <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/vars>`_  .
 
 
 .. _developing_filter_plugins:

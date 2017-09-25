@@ -4,23 +4,21 @@
 Connection Plugins
 ------------------
 
-These plugins are in charge of enabling Ansible to connect to the target hosts so it can execute tasks on them.
-Ansible ships we many connection plugins but only one can be used per host at a time.
+Connection plugins allow Ansible to connect to the target hosts so it can execute tasks on them. Ansible ships with many connection plugins, but only one can be used per host at a time.
 
-By default, the configuration uses a 'smart' value, which means Ansible will decide to use the 'ssh' or 'paramiko' (python version of ssh client)
-depending on what it detects on your system capabilities, it normally chooses 'ssh' if OpenSSH supports ControlPersist.
+By default, Ansible ships with several plugins. The most commonly used are the 'paramiko' SSH, native ssh (just called 'ssh'), and 'local' connection types.  All of these can be used in playbooks and with /usr/bin/ansible to decide how you want to talk to remote machines.  
 
-The basics of these connection types are covered in the :doc:`../intro_getting_started` section.
+The basics of these connection types are covered in the :doc:`../intro_getting_started` section.  
+
 
 .. contents:: Topics
 
 .. _ssh_plugins:
 
-The ssh Plugins
-++++++++++++++++
+ssh Plugins
++++++++++++
 
-Since ssh is the default protocol used in system administration it is also the most used and prevalent in Ansible,
-so much so that ssh options are included in the command line tools unlike other plugins, see :doc:`../ansible-playbook` for more details.
+Because ssh is the default protocol used in system administration and the protocol most used in Ansible, ssh options are included in the command line tools. See :doc:`../ansible-playbook` for more details.
 
 
 .. _using_connection_plugins:
@@ -32,29 +30,30 @@ The transport can be changed via :doc:`configuration <../config>`, in the comman
 in your play or by setting the a connection variable (:ref:`ansible_connection`), most often, in your inventory.
 For example, for windows machines you might want o use the :doc:`winrm <connection/winrm>` plugin instead.
 
-Most connection plugins can operate with a minimum configuration, by defaul they use the :ref:`inventory_hostname` and defaults to find the target host.
-Each plugin documents it's configuration options and how to set, the following are 'connection variables' common to most:
+Most connection plugins can operate with a minimum configuration. By default they use the :ref:`inventory_hostname` and defaults to find the target host.
+
+Plugins are self-documenting. Each plugin should document its configuration options. The following are connection variables common to most connection plugins:
 
 :ref:ansible_host
     The name of the host to connect to, if different from the :ref:`inventory_hostname`.
 :ref:ansible_port
-    The ssh port number, for :doc:`ssh <connection/ssh>` and :doc:`paramiko <connection/paramiko>` it defaults to 22.
+    The ssh port number. For :doc:`ssh <connection/ssh>` and :doc:`paramiko <connection/paramiko>` the default value is 22.
 :ref:ansible_user
-    The default user name to log in as, most plugins defaul to the 'current user running Ansible'
+    The default user name to use for log in. Most plugins default to the current user running Ansible.
 
-Each plugin might also have a specific version that overrides the general one. i.e :ref:`ansible_ssh_host` for the :doc:`ssh <connection/ssh>` plugin.
+Each plugin might also have a specific version of a variable that overrides the general version. For example, :ref:`ansible_ssh_host` for the :doc:`ssh <connection/ssh>` plugin.
 
 Enabling Connection Plugins
 +++++++++++++++++++++++++++
 
-Should you want to extend Ansible to support other transports (SNMP, Message bus, etc) it's as simple as dropping a custom plugin
+You can extend Ansible to support other transports (such as SNMP or message bus) by dropping a custom plugin
 into the ``connection_plugins`` directory.
 
 Plugin List
 +++++++++++
 
-You can use ``ansible-doc -t connection -l`` to see the list of available plugins,
-use ``ansible-doc -t connection <plugin name>`` to examine detailed documentation and examples.
+You can use ``ansible-doc -t connection -l`` to see the list of available plugins.
+Use ``ansible-doc -t connection <plugin name>`` to see detailed documentation and examples.
 
 
 .. toctree:: :maxdepth: 1
