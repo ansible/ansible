@@ -103,6 +103,7 @@ options:
   purge_secondary_private_ip_addresses:
     description:
       - To be used with I(secondary_private_ip_addresses) to determine whether or not to remove any secondary IP addresses other than those specified.
+        Set secondary_private_ip_addresses to an empty list to purge all secondary addresses.
     required: false
     default: False
     version_added: 2.4
@@ -586,7 +587,8 @@ def main():
                            ],
                            required_if=([
                                ('state', 'absent', ['eni_id']),
-                               ('attached', True, ['instance_id'])
+                               ('attached', True, ['instance_id']),
+                               ('purge_secondary_private_ip_addresses', True, ['secondary_private_ip_addresses'])
                            ])
                            )
 
