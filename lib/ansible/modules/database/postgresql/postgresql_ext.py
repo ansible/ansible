@@ -86,46 +86,16 @@ import traceback
 try:
     import psycopg2
     import psycopg2.extras
-    postgresqldb_found = True
 except ImportError:
-    postgresqldb_found = False
-
-try:
-    # quote_ident is available since Psycopg 2.7
-    from psycopg2.extensions import quote_ident
-    HAS_QUOTE_IDENT = True
-except ImportError:
-    HAS_QUOTE_IDENT = False
-
-    import re
-    class QuotedIdentifier(object):
-        # See https://www.postgresql.org/docs/current/static/sql-syntax-lexical.html#SQL-SYNTAX-IDENTIFIERS
-        EXTENSION_PATTERN = r'[^\W\d][\w_\$]+$'
-        def __init__(self, identifier):
-            self.identifier = identifier
-
-        def getquoted(self):
-            if re.match(self.EXTENSION_PATTERN, self.identifier):
-                return self.identifier
-            else:
-                raise Exception('%r is not a valid identifier' % self.identifier)
-
+    pass
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
+from ansible.module_utils.postgres import escape_identifier_cursor, ensure_libs, LibraryError
 
 
 class NotSupportedError(Exception):
     pass
-
-
-def prepare_ext_query(cursor, query, params, name):
-    if HAS_QUOTE_IDENT:
-        query = query.format(ext=quote_ident(name, cursor))
-    else:
-        query = query.format(ext='%(ext)s')
-        params['ext'] = QuotedIdentifier(name)
-    return query
 
 
 # ===========================================
@@ -137,15 +107,13 @@ def ext_exists(cursor, ext, ver=None):
         query = "SELECT * FROM pg_extension WHERE extname=%(ext)s and extversion=%(ver)s"
     else:
         query = "SELECT * FROM pg_extension WHERE extname=%(ext)s"
-    cursor.execute(query, {'ext': ext, 'ver': ver})
+    cursor.execute(query, vars={'ext': ext, 'ver': ver})
     return cursor.rowcount == 1
 
 def ext_delete(cursor, ext):
     if ext_exists(cursor, ext):
-        query = "DROP EXTENSION {ext}"
-        params = {}
-        query = prepare_ext_query(cursor, query, params, ext)
-        cursor.execute(query, params)
+        query = "DROP EXTENSION ${ext}"
+        cursor.execute(query, identifiers={'ext': ext})
         return True
     else:
         return False
@@ -153,21 +121,17 @@ def ext_delete(cursor, ext):
 def ext_create(cursor, ext, ver=None):
     if not ext_exists(cursor, ext):
         if ver:
-            query = 'CREATE EXTENSION {ext} VERSION %(ver)s'
+            query = 'CREATE EXTENSION ${ext} VERSION %(ver)s'
         else:
-            query = 'CREATE EXTENSION {ext}'
+            query = 'CREATE EXTENSION ${ext}'
 
-        params = {'ver': ver}
-        query = prepare_ext_query(cursor, query, params, ext)
-        cursor.execute(query, params)
+        cursor.execute(query, vars={'ver': ver}, identifiers={'ext': ext})
         return True
     else:
         if ver:
             if not ext_exists(cursor, ext, ver):
-                query = 'ALTER EXTENSION {ext} UPDATE TO %(ver)s'
-                params = {'ver': ver}
-                query = prepare_ext_query(cursor, query, params, ext)
-                cursor.execute(query, params)
+                query = 'ALTER EXTENSION ${ext} UPDATE TO %(ver)s'
+                cursor.execute(query, vars={'ver': ver}, identifiers={'ext': ext})
                 return True
         return False
 
@@ -190,10 +154,10 @@ def main():
         supports_check_mode = True
     )
 
-    if not postgresqldb_found:
+    try:
+        ensure_libs()
+    except LibraryError:
         module.fail_json(msg="the python psycopg2 module is required")
-    elif not HAS_QUOTE_IDENT:
-        psycopg2.extensions.register_adapter(QuotedIdentifier, lambda identifier: identifier)
 
     db = module.params["db"]
     ext = module.params["ext"]
@@ -222,8 +186,7 @@ def main():
             db_connection.set_isolation_level(psycopg2
                                               .extensions
                                               .ISOLATION_LEVEL_AUTOCOMMIT)
-        cursor = db_connection.cursor(
-            cursor_factory=psycopg2.extras.DictCursor)
+        cursor = db_connection.cursor(cursor_factory=escape_identifier_cursor(module, cursor=psycopg2.extras.DictCursor))
     except Exception as e:
         module.fail_json(msg="unable to connect to database: %s" % to_native(e), exception=traceback.format_exc())
 
