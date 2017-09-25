@@ -27,15 +27,91 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+__metaclass__ = type
+
 try:
     import psycopg2
     import psycopg2.extras
+    import psycopg2.extensions
     HAS_PSYCOPG2 = True
 except ImportError:
     HAS_PSYCOPG2 = False
 
-from ansible.module_utils.basic import get_exception
-from ansible.module_utils.six import iteritems
+import ctypes
+import ctypes.util
+import re
+import string
+
+try:
+    # quote_ident is available since Psycopg 2.7
+    from psycopg2.extensions import quote_ident
+    HAS_PSYCOPG2_QUOTE_IDENT = True
+except ImportError:
+    HAS_PSYCOPG2_QUOTE_IDENT = False
+
+
+class unionPthreadMutex(ctypes.Union):
+    _pack_ = True
+    _fields_ = [
+        ('__size', ctypes.c_char * 40),  # sizeof(struct___pthread_mutex_s)
+        ('__align', ctypes.c_int64),
+        ('PADDING_0', ctypes.c_ubyte * 32),
+    ]
+
+
+class structConnectionObject(ctypes.Structure):
+    _pack_ = True
+    _fields_ = [
+        ('ob_refcnt', ctypes.c_int64),
+        ('ob_type', ctypes.c_void_p),
+        ('lock', unionPthreadMutex),
+        ('dsn', ctypes.c_void_p),
+        ('critical', ctypes.c_void_p),
+        ('encoding', ctypes.c_void_p),
+        ('closed', ctypes.c_int64),
+        ('mark', ctypes.c_int64),
+        ('status', ctypes.c_int32),
+        ('PADDING_0', ctypes.c_ubyte * 4),
+        ('tpc_xid', ctypes.c_void_p),
+        ('async', ctypes.c_int64),
+        ('protocol', ctypes.c_int32),
+        ('server_version', ctypes.c_int32),
+        ('pgconn', ctypes.c_void_p),
+        # fields after pgconn can be ignored
+    ]
+
+try:
+    assert not HAS_PSYCOPG2_QUOTE_IDENT and psycopg2.__libpq_version__ >= 90000
+
+    libpq = ctypes.cdll.LoadLibrary(ctypes.util.find_library('pq'))
+    libpq.PQescapeIdentifier.argtypes = (ctypes.c_void_p, ctypes.c_char_p, ctypes.c_size_t)
+    libpq.PQescapeIdentifier.restype = ctypes.c_void_p
+    libpq.PQfreemem.argtypes = (ctypes.c_void_p,)
+    libpq.PQfreemem.restype = None
+
+    HAS_LIBPQ_QUOTE_IDENT = True
+except Exception:
+    HAS_LIBPQ_QUOTE_IDENT = False
+
+
+if not HAS_LIBPQ_QUOTE_IDENT:
+    class UnquotedIdentifier(object):
+        """Allow unquoted identifiers only
+        See https://www.postgresql.org/docs/current/static/sql-syntax-lexical.html#SQL-SYNTAX-IDENTIFIERS
+        """
+        EXTENSION_PATTERN = r'[^\W\d][\w_\$]+$'
+
+        def __init__(self, identifier):
+            self.identifier = identifier
+
+        def getquoted(self):
+            if re.match(self.EXTENSION_PATTERN, self.identifier):
+                return self.identifier
+            else:
+                raise Exception('%r is not a valid identifier' % self.identifier)
+
+    if HAS_PSYCOPG2:
+        psycopg2.extensions.register_adapter(UnquotedIdentifier, lambda identifier: identifier)
 
 
 class LibraryError(Exception):
@@ -62,3 +138,50 @@ def postgres_common_argument_spec():
         ssl_mode=dict(default='prefer', choices=['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
         ssl_rootcert=dict(),
     )
+
+
+class EscapeIdentifierCursor(object):
+    """Escape identifiers using psycopg2.extensions.quote_ident if available,
+    else try with libpq.PQescapeIdentifier. If both are not available,
+    identifiers are not escaped."""
+
+    __metaclass__ = type
+
+    def execute(self, query, vars=None, identifiers=None):
+        """Replace string.Template placeholder ${...} by identifiers if any"""
+        if identifiers:
+            query = string.Template(query)
+            if HAS_PSYCOPG2_QUOTE_IDENT:
+                query = query.substitute(dict((name, quote_ident(value, self)) for name, value in identifiers.items()))
+            elif HAS_LIBPQ_QUOTE_IDENT:
+                query = query.substitute(dict((name, self.escape_identifier(value)) for name, value in identifiers.items()))
+            else:
+                if vars is None:
+                    vars = {}
+                if identifiers:
+                    self.module.warn('Unable to escape identifiers')
+                query = query.substitute(dict((name, '%%(%s)s' % name) for name in identifiers.keys()))
+                vars.update(dict((name, UnquotedIdentifier(value)) for name, value in identifiers.items()))
+
+        return super(EscapeIdentifierCursor, self).execute(query, vars=vars)
+
+    def escape_identifier(self, identifier):
+        assert not HAS_PSYCOPG2_QUOTE_IDENT and HAS_LIBPQ_QUOTE_IDENT
+        _connection = ctypes.cast(ctypes.c_void_p(id(self.connection)), ctypes.POINTER(structConnectionObject)).contents
+        escaped = libpq.PQescapeIdentifier(_connection.pgconn, ctypes.c_char_p(identifier), ctypes.c_size_t(len(identifier)))
+        try:
+            return ctypes.cast(escaped, ctypes.c_char_p).value
+        finally:
+            if escaped is not None:
+                libpq.PQfreemem(escaped)
+
+
+def escape_identifier_cursor(module, cursor=None):
+    """Create a cursor allowing to escape identifiers: 'cursor.execute' method
+    accepts an identifier dictionary. When not empty, string.Template
+    placeholders ${...} in query will be replaced by escaped identifiers.
+
+    Usage: connection.cursor(cursor_factory=escape_identifier_cursor(module, cursor=psycopg2.extras.DictCursor)"""
+    if cursor is None:
+        cursor = psycopg2.extensions.cursor
+    return type("Cursor", (EscapeIdentifierCursor, cursor), {'module': module})
