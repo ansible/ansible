@@ -1,27 +1,24 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-#
-# (c) 2012, Dane Summers <dsummers@pinedesk.biz>
-# (c) 2013, Mike Grozak  <mike.grozak@gmail.com>
-# (c) 2013, Patrick Callahan <pmc@patrickcallahan.com>
-# (c) 2015, Evan Kaufman <evan@digitalflophouse.com>
-# (c) 2015, Luca Berruti <nadirio@gmail.com>
-#
+
+# Copyright: (c) 2012, Dane Summers <dsummers@pinedesk.biz>
+# Copyright: (c) 2013, Mike Grozak  <mike.grozak@gmail.com>
+# Copyright: (c) 2013, Patrick Callahan <pmc@patrickcallahan.com>
+# Copyright: (c) 2015, Evan Kaufman <evan@digitalflophouse.com>
+# Copyright: (c) 2015, Luca Berruti <nadirio@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = """
 ---
 module: cron
-short_description: Manage cron.d and crontab entries.
+short_description: Manage cron.d and crontab entries
 description:
   - Use this module to manage crontab and environment variables entries. This module allows
     you to create environment variables and named crontab entries, update, or delete them.
@@ -41,27 +38,21 @@ options:
       - Description of a crontab entry or, if env is set, the name of environment variable.
         Required if state=absent. Note that if name is not set and state=present, then a
         new crontab entry will always be created, regardless of existing ones.
-    default: null
-    required: false
   user:
     description:
       - The specific user whose crontab should be modified.
-    required: false
     default: root
   job:
     description:
       - The command to execute or, if env is set, the value of environment variable.
         The command should not contain line breaks.
         Required if state=present.
-    required: false
-    aliases: ['value']
-    default: null
+    aliases: [ value ]
   state:
     description:
       - Whether to ensure the job or environment variable is present or absent.
-    required: false
+    choices: [ absent, present ]
     default: present
-    choices: [ "present", "absent" ]
   cron_file:
     description:
       - If specified, uses this file instead of an individual user's crontab.
@@ -70,92 +61,77 @@ options:
         Many linux distros expect (and some require) the filename portion to consist solely
         of upper- and lower-case letters, digits, underscores, and hyphens.
         To use the C(cron_file) parameter you must specify the C(user) as well.
-    required: false
-    default: null
   backup:
     description:
       - If set, create a backup of the crontab before it is modified.
         The location of the backup is returned in the C(backup_file) variable by this module.
-    required: false
-    choices: [ "yes", "no" ]
-    default: no
+    type: bool
+    default: 'no'
   minute:
     description:
       - Minute when the job should run ( 0-59, *, */2, etc )
-    required: false
     default: "*"
   hour:
     description:
       - Hour when the job should run ( 0-23, *, */2, etc )
-    required: false
     default: "*"
   day:
     description:
       - Day of the month the job should run ( 1-31, *, */2, etc )
-    required: false
     default: "*"
-    aliases: [ "dom" ]
+    aliases: [ dom ]
   month:
     description:
       - Month of the year the job should run ( 1-12, *, */2, etc )
-    required: false
     default: "*"
   weekday:
     description:
       - Day of the week that the job should run ( 0-6 for Sunday-Saturday, *, etc )
-    required: false
     default: "*"
-    aliases: [ "dow" ]
+    aliases: [ dow ]
   reboot:
     description:
       - If the job should be run at reboot. This option is deprecated. Users should use special_time.
     version_added: "1.0"
-    required: false
+    type: bool
     default: "no"
-    choices: [ "yes", "no" ]
   special_time:
     description:
       - Special time specification nickname.
+    choices: [ reboot, yearly, annually, monthly, weekly, daily, hourly ]
     version_added: "1.3"
-    required: false
-    default: null
-    choices: [ "reboot", "yearly", "annually", "monthly", "weekly", "daily", "hourly" ]
   disabled:
     description:
-      - If the job should be disabled (commented out) in the crontab. Only has effect if state=present
+      - If the job should be disabled (commented out) in the crontab.
+      - Only has effect if C(state=present).
+    type: bool
+    default: 'no'
     version_added: "2.0"
-    required: false
-    default: false
   env:
     description:
       - If set, manages a crontab's environment variable. New variables are added on top of crontab.
         "name" and "value" parameters are the name and the value of environment variable.
-    version_added: "2.1"
-    required: false
+    type: bool
     default: "no"
-    choices: [ "yes", "no" ]
+    version_added: "2.1"
   insertafter:
     description:
       - Used with C(state=present) and C(env). If specified, the environment variable will be
         inserted after the declaration of specified environment variable.
     version_added: "2.1"
-    required: false
-    default: null
   insertbefore:
     description:
       - Used with C(state=present) and C(env). If specified, the environment variable will be
         inserted before the declaration of specified environment variable.
     version_added: "2.1"
-    required: false
-    default: null
 requirements:
   - cron
 author:
-    - "Dane Summers (@dsummersl)"
-    - 'Mike Grozak'
-    - 'Patrick Callahan'
-    - 'Evan Kaufman (@EvanK)'
-    - 'Luca Berruti (@lberruti)'
+    - Dane Summers (@dsummersl)
+    - Mike Grozak
+    - Patrick Callahan
+    - Evan Kaufman (@EvanK)
+    - Luca Berruti (@lberruti)
 """
 
 EXAMPLES = '''
@@ -242,12 +218,12 @@ class CronTab(object):
         cron_file - a cron file under /etc/cron.d, or an absolute path
     """
     def __init__(self, module, user=None, cron_file=None):
-        self.module    = module
-        self.user      = user
-        self.root      = (os.getuid() == 0)
-        self.lines     = None
-        self.ansible   = "#Ansible: "
-        self.existing  = ''
+        self.module = module
+        self.user = user
+        self.root = (os.getuid() == 0)
+        self.lines = None
+        self.ansible = "#Ansible: "
+        self.existing = ''
 
         if cron_file:
             if os.path.isabs(cron_file):
@@ -278,7 +254,7 @@ class CronTab(object):
             # using safely quoted shell for now, but this really should be two non-shell calls instead.  FIXME
             (rc, out, err) = self.module.run_command(self._read_user_execute(), use_unsafe_shell=True)
 
-            if rc != 0 and rc != 1: # 1 can mean that there are no jobs.
+            if rc != 0 and rc != 1:  # 1 can mean that there are no jobs.
                 raise CronTabError("Unable to read crontab")
 
             self.existing = out
@@ -286,9 +262,9 @@ class CronTab(object):
             lines = out.splitlines()
             count = 0
             for l in lines:
-                if count > 2 or (not re.match( r'# DO NOT EDIT THIS FILE - edit the master and reinstall.', l) and
-                                 not re.match( r'# \(/tmp/.*installed on.*\)', l) and
-                                 not re.match( r'# \(.*version.*\)', l)):
+                if count > 2 or (not re.match(r'# DO NOT EDIT THIS FILE - edit the master and reinstall.', l) and
+                                 not re.match(r'# \(/tmp/.*installed on.*\)', l) and
+                                 not re.match(r'# \(.*version.*\)', l)):
                     self.lines.append(l)
                 else:
                     pattern = re.escape(l) + '[\r\n]?'
@@ -370,7 +346,7 @@ class CronTab(object):
         other_decl = self.find_env(other_name)
         if len(other_decl) > 0:
             if insertafter:
-                index = other_decl[0]+1
+                index = other_decl[0] + 1
             elif insertbefore:
                 index = other_decl[0]
             self.lines.insert(index, decl)
@@ -409,32 +385,32 @@ class CronTab(object):
                     return [comment, l]
                 else:
                     comment = None
-            elif re.match( r'%s' % self.ansible, l):
-                comment = re.sub( r'%s' % self.ansible, '', l)
+            elif re.match(r'%s' % self.ansible, l):
+                comment = re.sub(r'%s' % self.ansible, '', l)
 
         # failing that, attempt to find job by exact match
         if job:
             for i, l in enumerate(self.lines):
                 if l == job:
                     # if no leading ansible header, insert one
-                    if not re.match( r'%s' % self.ansible, self.lines[i-1]):
+                    if not re.match(r'%s' % self.ansible, self.lines[i - 1]):
                         self.lines.insert(i, self.do_comment(name))
                         return [self.lines[i], l, True]
                     # if a leading blank ansible header AND job has a name, update header
-                    elif name and self.lines[i-1] == self.do_comment(None):
-                        self.lines[i-1] = self.do_comment(name)
-                        return [self.lines[i-1], l, True]
+                    elif name and self.lines[i - 1] == self.do_comment(None):
+                        self.lines[i - 1] = self.do_comment(name)
+                        return [self.lines[i - 1], l, True]
 
         return []
 
     def find_env(self, name):
         for index, l in enumerate(self.lines):
-            if re.match( r'^%s=' % name, l):
+            if re.match(r'^%s=' % name, l):
                 return [index, l]
 
         return []
 
-    def get_cron_job(self,minute,hour,day,month,weekday,job,special,disabled):
+    def get_cron_job(self, minute, hour, day, month, weekday, job, special, disabled):
         # normalize any leading/trailing newlines (ansible/ansible-modules-core#3791)
         job = job.strip('\r\n')
 
@@ -450,17 +426,16 @@ class CronTab(object):
                 return "%s@%s %s" % (disable_prefix, special, job)
         else:
             if self.cron_file:
-                return "%s%s %s %s %s %s %s %s" % (disable_prefix,minute,hour,day,month,weekday,self.user,job)
+                return "%s%s %s %s %s %s %s %s" % (disable_prefix, minute, hour, day, month, weekday, self.user, job)
             else:
-                return "%s%s %s %s %s %s %s" % (disable_prefix,minute,hour,day,month,weekday,job)
-
+                return "%s%s %s %s %s %s %s" % (disable_prefix, minute, hour, day, month, weekday, job)
 
     def get_jobnames(self):
         jobnames = []
 
         for l in self.lines:
-            if re.match( r'%s' % self.ansible, l):
-                jobnames.append(re.sub( r'%s' % self.ansible, '', l))
+            if re.match(r'%s' % self.ansible, l):
+                jobnames.append(re.sub(r'%s' % self.ansible, '', l))
 
         return jobnames
 
@@ -468,7 +443,7 @@ class CronTab(object):
         envnames = []
 
         for l in self.lines:
-            if re.match( r'^\S+=' , l):
+            if re.match(r'^\S+=', l):
                 envnames.append(l.split('=')[0])
 
         return envnames
@@ -492,13 +467,13 @@ class CronTab(object):
         if len(newlines) == 0:
             return True
         else:
-            return False # TODO add some more error testing
+            return False  # TODO add some more error testing
 
     def _update_env(self, name, decl, addenvfunction):
         newlines = []
 
         for l in self.lines:
-            if re.match( r'^%s=' % name, l):
+            if re.match(r'^%s=' % name, l):
                 addenvfunction(newlines, decl)
             else:
                 newlines.append(l)
@@ -529,10 +504,10 @@ class CronTab(object):
             elif platform.system() == 'AIX':
                 return "%s -l %s" % (pipes.quote(CRONCMD), pipes.quote(self.user))
             elif platform.system() == 'HP-UX':
-                return "%s %s %s" % (CRONCMD , '-l', pipes.quote(self.user))
+                return "%s %s %s" % (CRONCMD, '-l', pipes.quote(self.user))
             elif pwd.getpwuid(os.getuid())[0] != self.user:
                 user = '-u %s' % pipes.quote(self.user)
-        return "%s %s %s" % (CRONCMD , user, '-l')
+        return "%s %s %s" % (CRONCMD, user, '-l')
 
     def _write_execute(self, path):
         """
@@ -544,11 +519,8 @@ class CronTab(object):
                 return "chown %s %s ; su '%s' -c '%s %s'" % (pipes.quote(self.user), pipes.quote(path), pipes.quote(self.user), CRONCMD, pipes.quote(path))
             elif pwd.getpwuid(os.getuid())[0] != self.user:
                 user = '-u %s' % pipes.quote(self.user)
-        return "%s %s %s" % (CRONCMD , user, pipes.quote(path))
+        return "%s %s %s" % (CRONCMD, user, pipes.quote(path))
 
-
-
-#==================================================
 
 def main():
     # The following example playbooks:
@@ -572,63 +544,60 @@ def main():
     # * * 5,2 * * /some/dir/job.sh
 
     module = AnsibleModule(
-        argument_spec = dict(
-            name=dict(required=False),
-            user=dict(required=False),
-            job=dict(required=False, aliases=['value']),
-            cron_file=dict(required=False),
-            state=dict(default='present', choices=['present', 'absent']),
-            backup=dict(default=False, type='bool'),
-            minute=dict(default='*'),
-            hour=dict(default='*'),
-            day=dict(aliases=['dom'], default='*'),
-            month=dict(default='*'),
-            weekday=dict(aliases=['dow'], default='*'),
-            reboot=dict(required=False, default=False, type='bool'),
-            special_time=dict(required=False,
-                              default=None,
-                              choices=["reboot", "yearly", "annually", "monthly", "weekly", "daily", "hourly"],
-                              type='str'),
-            disabled=dict(default=False, type='bool'),
-            env=dict(required=False, type='bool'),
-            insertafter=dict(required=False),
-            insertbefore=dict(required=False),
+        argument_spec=dict(
+            name=dict(type='str'),
+            user=dict(type='str'),
+            job=dict(type='str', aliases=['value']),
+            cron_file=dict(type='str'),
+            state=dict(type='str', default='present', choices=['present', 'absent']),
+            backup=dict(type='bool', default=False),
+            minute=dict(type='str', default='*'),
+            hour=dict(type='str', default='*'),
+            day=dict(type='str', default='*', aliases=['dom']),
+            month=dict(type='str', default='*'),
+            weekday=dict(type='str', default='*', aliases=['dow']),
+            reboot=dict(type='bool', default=False),
+            special_time=dict(type='str', choices=["reboot", "yearly", "annually", "monthly", "weekly", "daily", "hourly"]),
+            disabled=dict(type='bool', default=False),
+            env=dict(type='bool'),
+            insertafter=dict(type='str'),
+            insertbefore=dict(type='str'),
         ),
-        supports_check_mode = True,
+        supports_check_mode=True,
         mutually_exclusive=[
             ['reboot', 'special_time'],
             ['insertafter', 'insertbefore'],
-        ]
+        ],
     )
 
-    name         = module.params['name']
-    user         = module.params['user']
-    job          = module.params['job']
-    cron_file    = module.params['cron_file']
-    state        = module.params['state']
-    backup       = module.params['backup']
-    minute       = module.params['minute']
-    hour         = module.params['hour']
-    day          = module.params['day']
-    month        = module.params['month']
-    weekday      = module.params['weekday']
-    reboot       = module.params['reboot']
+    name = module.params['name']
+    user = module.params['user']
+    job = module.params['job']
+    cron_file = module.params['cron_file']
+    state = module.params['state']
+    backup = module.params['backup']
+    minute = module.params['minute']
+    hour = module.params['hour']
+    day = module.params['day']
+    month = module.params['month']
+    weekday = module.params['weekday']
+    reboot = module.params['reboot']
     special_time = module.params['special_time']
-    disabled     = module.params['disabled']
-    env          = module.params['env']
-    insertafter  = module.params['insertafter']
+    disabled = module.params['disabled']
+    env = module.params['env']
+    insertafter = module.params['insertafter']
     insertbefore = module.params['insertbefore']
-    do_install   = state == 'present'
+    do_install = state == 'present'
 
-    changed      = False
-    res_args     = dict()
-    warnings     = list()
+    changed = False
+    res_args = dict()
+    warnings = list()
 
     if cron_file:
         cron_file_basename = os.path.basename(cron_file)
         if not re.search(r'^[A-Z0-9_-]+$', cron_file_basename, re.I):
-            warnings.append('Filename portion of cron_file ("%s") should consist' % cron_file_basename
-            + ' solely of upper- and lower-case letters, digits, underscores, and hyphens')
+            warnings.append('Filename portion of cron_file ("%s") should consist' % cron_file_basename +
+                            ' solely of upper- and lower-case letters, digits, underscores, and hyphens')
 
     # Ensure all files generated are only writable by the owning user.  Primarily relevant for the cron_file option.
     os.umask(int('022', 8))
@@ -675,7 +644,6 @@ def main():
         (backuph, backup_file) = tempfile.mkstemp(prefix='crontab')
         crontab.write(backup_file)
 
-
     if crontab.cron_file and not name and not do_install:
         if module._diff:
             diff['after'] = ''
@@ -686,7 +654,7 @@ def main():
             changed = os.path.isfile(crontab.cron_file)
         else:
             changed = crontab.remove_job_file()
-        module.exit_json(changed=changed,cron_file=cron_file,state=state,diff=diff)
+        module.exit_json(changed=changed, cron_file=cron_file, state=state, diff=diff)
 
     if env:
         if ' ' in name:
@@ -737,10 +705,10 @@ def main():
             changed = True
 
     res_args = dict(
-        jobs = crontab.get_jobnames(),
-        envs = crontab.get_envnames(),
-        warnings = warnings,
-        changed = changed
+        jobs=crontab.get_jobnames(),
+        envs=crontab.get_envnames(),
+        warnings=warnings,
+        changed=changed
     )
 
     if changed:
