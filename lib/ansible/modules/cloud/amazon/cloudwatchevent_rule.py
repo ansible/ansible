@@ -408,16 +408,18 @@ def get_cloudwatchevents_client(module):
 
 def main():
     argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
-        name                 = dict(required=True),
-        schedule_expression  = dict(),
-        event_pattern        = dict(),
-        state                = dict(choices=['present', 'disabled', 'absent'],
-                                    default='present'),
-        description          = dict(),
-        role_arn             = dict(),
-        targets              = dict(type='list', default=[]),
-    ))
+    argument_spec.update(
+        dict(
+            name=dict(required=True),
+            schedule_expression=dict(),
+            event_pattern=dict(),
+            state=dict(choices=['present', 'disabled', 'absent'],
+                       default='present'),
+            description=dict(),
+            role_arn=dict(),
+            targets=dict(type='list', default=[]),
+        )
+    )
     module = AnsibleAWSModule(argument_spec=argument_spec)
 
     if not HAS_BOTO3:
