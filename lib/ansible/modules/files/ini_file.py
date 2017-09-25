@@ -14,7 +14,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = '''
 ---
 module: ini_file
@@ -33,9 +32,8 @@ options:
     description:
       - Path to the INI-style file; this file is created if required.
       - Before 2.3 this option was only usable as I(dest).
+    aliases: [ dest ]
     required: true
-    default: null
-    aliases: ['dest']
   section:
     description:
       - Section name in INI file. This is added if C(state=present) automatically when
@@ -43,48 +41,39 @@ options:
       - If left empty or set to `null`, the I(option) will be placed before the first I(section).
         Using `null` is also required if the config format does not support sections.
     required: true
-    default: null
   option:
     description:
       - If set (required for changing a I(value)), this is the name of the option.
       - May be omitted if adding/removing a whole I(section).
-    required: false
-    default: null
   value:
     description:
      - The string value to be associated with an I(option). May be omitted when removing an I(option).
-    required: false
-    default: null
   backup:
     description:
       - Create a backup file including the timestamp information so you can get
         the original file back if you somehow clobbered it incorrectly.
-    required: false
-    default: "no"
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
   others:
      description:
        - All arguments accepted by the M(file) module also work here
-     required: false
   state:
      description:
        - If set to C(absent) the option or section will be removed if present instead of created.
-     required: false
-     default: "present"
-     choices: [ "present", "absent" ]
+     choices: [ absent, present ]
+     default: present
   no_extra_spaces:
      description:
        - Do not insert spaces before and after '=' symbol
-     required: false
-     default: false
+     type: bool
+     default: 'no'
      version_added: "2.1"
   create:
-     required: false
-     choices: [ "yes", "no" ]
-     default: "yes"
      description:
        - If set to 'no', the module will fail if the file does not already exist.
          By default it will create the file if it is missing.
+     type: bool
+     default: 'yes'
      version_added: "2.2"
 notes:
    - While it is possible to add an I(option) without specifying a I(value), this makes
@@ -92,8 +81,8 @@ notes:
    - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but
      I(dest) still works as well.
 author:
-    - "Jan-Piet Mens (@jpmens)"
-    - "Ales Nosek (@noseka1)"
+    - Jan-Piet Mens (@jpmens)
+    - Ales Nosek (@noseka1)
 '''
 
 EXAMPLES = '''
@@ -118,35 +107,30 @@ EXAMPLES = '''
 import os
 import re
 
-# import module snippets
 from ansible.module_utils.basic import AnsibleModule
 
-# ==============================================================
-# match_opt
 
 def match_opt(option, line):
     option = re.escape(option)
     return re.match('( |\t)*%s( |\t)*=' % option, line) \
-      or re.match('#( |\t)*%s( |\t)*=' % option, line) \
-      or re.match(';( |\t)*%s( |\t)*=' % option, line)
+        or re.match('#( |\t)*%s( |\t)*=' % option, line) \
+        or re.match(';( |\t)*%s( |\t)*=' % option, line)
 
-# ==============================================================
-# match_active_opt
 
 def match_active_opt(option, line):
     option = re.escape(option)
     return re.match('( |\t)*%s( |\t)*=' % option, line)
 
-# ==============================================================
-# do_ini
 
 def do_ini(module, filename, section=None, option=None, value=None,
-        state='present', backup=False, no_extra_spaces=False, create=True):
+           state='present', backup=False, no_extra_spaces=False, create=True):
 
-    diff = {'before': '',
-            'after': '',
-            'before_header': '%s (content)' % filename,
-            'after_header': '%s (content)' % filename}
+    diff = dict(
+        before='',
+        after='',
+        before_header='%s (content)' % filename,
+        after_header='%s (content)' % filename,
+    )
 
     if not os.path.exists(filename):
         if not create:
@@ -263,24 +247,22 @@ def do_ini(module, filename, section=None, option=None, value=None,
 
     return (changed, backup_file, diff, msg)
 
-# ==============================================================
-# main
 
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-            path = dict(required=True, aliases=['dest'], type='path'),
-            section = dict(required=True),
-            option = dict(required=False),
-            value = dict(required=False),
-            backup = dict(default='no', type='bool'),
-            state = dict(default='present', choices=['present', 'absent']),
-            no_extra_spaces = dict(required=False, default=False, type='bool'),
-            create=dict(default=True, type='bool')
+        argument_spec=dict(
+            path=dict(type='path', required=True, aliases=['dest']),
+            section=dict(type='str', required=True),
+            option=dict(type='str'),
+            value=dict(type='str'),
+            backup=dict(type='bool', default=False),
+            state=dict(type='str', default='present', choices=['absent', 'present']),
+            no_extra_spaces=dict(type='bool', default=False),
+            create=dict(type='bool', default=True)
         ),
-        add_file_common_args = True,
-        supports_check_mode = True
+        add_file_common_args=True,
+        supports_check_mode=True,
     )
 
     path = module.params['path']
@@ -292,13 +274,18 @@ def main():
     no_extra_spaces = module.params['no_extra_spaces']
     create = module.params['create']
 
-    (changed,backup_file,diff,msg) = do_ini(module, path, section, option, value, state, backup, no_extra_spaces, create)
+    (changed, backup_file, diff, msg) = do_ini(module, path, section, option, value, state, backup, no_extra_spaces, create)
 
     if not module.check_mode and os.path.exists(path):
         file_args = module.load_file_common_arguments(module.params)
         changed = module.set_fs_attributes_if_different(file_args, changed)
 
-    results = { 'changed': changed, 'msg': msg, 'path': path, 'diff': diff }
+    results = dict(
+        changed=changed,
+        diff=diff,
+        msg=msg,
+        path=path,
+    )
     if backup_file is not None:
         results['backup_file'] = backup_file
 
