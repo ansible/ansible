@@ -30,6 +30,10 @@ description:
 version_added: '2.4'
 requirements: [ boto3 ]
 options:
+   name:
+    description:
+      - The name of the API to manage.  If api_id is None, then the name will be
+        used to lookup the api_id.  This means the name should be unique.
   api_id:
     description:
       - The ID of the API you want to manage.
@@ -122,6 +126,7 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
+            name=dict(type='str', required=False),
             api_id=dict(type='str', required=False),
             state=dict(type='str', default='present', choices=['present', 'absent']),
             swagger_file=dict(type='path', default=None, aliases=['src', 'api_file']),
@@ -137,6 +142,7 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False,
                            mutually_exclusive=mutually_exclusive)
 
+    name = module.params.get('name')
     api_id = module.params.get('api_id')
     state = module.params.get('state')   # noqa: F841
     swagger_file = module.params.get('swagger_file')
@@ -166,16 +172,21 @@ def main():
 
     changed = True   # for now it will stay that way until we can sometimes avoid change
 
+    # get api id if not given but name given
+    if api_id is None and name is not None:
+        api_id = get_rest_api_id(module, client, name)
+
     conf_res = None
     dep_res = None
     del_res = None
+    ren_res = None
 
     if state == "present":
         if api_id is None:
             api_id = create_empty_api(module, client)
         api_data = get_api_definitions(module, swagger_file=swagger_file,
                                        swagger_dict=swagger_dict, swagger_text=swagger_text)
-        conf_res, dep_res = ensure_api_in_correct_state(module, client, api_id=api_id,
+        conf_res, dep_res, ren_res = ensure_api_in_correct_state(module, client, name=name, api_id=api_id,
                                                         api_data=api_data, stage=stage,
                                                         deploy_desc=deploy_desc)
     if state == "absent":
@@ -189,6 +200,8 @@ def main():
         exit_args['deploy_response'] = camel_dict_to_snake_dict(dep_res)
     if del_res is not None:
         exit_args['delete_response'] = camel_dict_to_snake_dict(del_res)
+    if ren_res is not None:
+        exit_args['rename_response'] = camel_dict_to_snake_dict(ren_res)
 
     module.exit_json(**exit_args)
 
@@ -239,7 +252,7 @@ def delete_rest_api(module, client, api_id):
     return delete_response
 
 
-def ensure_api_in_correct_state(module, client, api_id=None, api_data=None, stage=None,
+def ensure_api_in_correct_state(module, client, name=None, api_id=None, api_data=None, stage=None,
                                 deploy_desc=None):
     """Make sure that we have the API configured and deployed as instructed.
 
@@ -256,6 +269,11 @@ def ensure_api_in_correct_state(module, client, api_id=None, api_data=None, stag
     except (botocore.exceptions.ClientError, botocore.exceptions.EndpointConnectionError) as e:
         fail_json_aws(module, e, msg="configuring API {}".format(api_id))
 
+    # if name given, then make sure import didn't rename it
+    rename_response = None
+    if name is not None and configure_response['name'] != name:
+        rename_response = rename_api(client, name=name, api_id=api_id)
+
     deploy_response = None
 
     if stage:
@@ -266,7 +284,7 @@ def ensure_api_in_correct_state(module, client, api_id=None, api_data=None, stag
             msg = "deploying api {} to stage {}".format(api_id, stage)
             fail_json_aws(module, e, msg)
 
-    return configure_response, deploy_response
+    return configure_response, deploy_response, rename_response
 
 
 # There is a PR open to merge fail_json_aws this into the standard module code;
@@ -303,6 +321,24 @@ def fail_json_aws(module, exception, msg=None):
 retry_params = {"tries": 10, "delay": 5, "backoff": 1.2}
 
 
+def get_rest_api_id(module, client, name):
+    """
+    Gets the api id for a given name, takes first one returned
+    """
+    desc = "Incomplete API creation by ansible aws_api_gateway module"
+    try:
+        awsret = get_rest_apis(client)
+    except (botocore.exceptions.ClientError, botocore.exceptions.EndpointConnectionError) as e:
+        fail_json_aws(module, e, msg="getting REST APIs")
+    # find the first one
+    if awsret is not None and len(awsret['items']) > 0:
+        for item in awsret['items']:
+            if item['name'] == name:
+                return item['id']
+    # if not found - return None
+    return None
+
+
 @AWSRetry.backoff(**retry_params)
 def create_api(client, name=None, description=None):
     return client.create_rest_api(name="ansible-temp-api", description=description)
@@ -322,6 +358,22 @@ def configure_api(client, api_data=None, api_id=None, mode="overwrite"):
 def create_deployment(client, api_id=None, stage=None, description=None):
     # we can also get None as an argument so we don't do this as a defult
     return client.create_deployment(restApiId=api_id, stageName=stage, description=description)
+
+@AWSRetry.backoff(**retry_params)
+def get_rest_apis(client, limit=500):
+    return client.get_rest_apis(limit=limit)
+
+
+@AWSRetry.backoff(**retry_params)
+def rename_api(client, name, api_id):
+    operations = [
+        {
+            'op':'replace',
+            'path':'/name',
+            'value':name
+        }
+    ]
+    return client.update_rest_api(restApiId=api_id, patchOperations=operations)
 
 
 if __name__ == '__main__':
