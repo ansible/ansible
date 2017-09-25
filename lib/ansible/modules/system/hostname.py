@@ -1,24 +1,22 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2013, Hiroaki Nakamura <hnakamur@gmail.com>
+# Copyright: (c) 2013, Hiroaki Nakamura <hnakamur@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
 module: hostname
 author:
-    - "Adrian Likins (@alikins)"
-    - "Hideki Saito (@saito-hideki)"
+    - Adrian Likins (@alikins)
+    - Hideki Saito (@saito-hideki)
 version_added: "1.4"
 short_description: Manage hostname
 requirements: [ hostname ]
@@ -28,9 +26,9 @@ description:
     - Windows, HP-UX and AIX are not currently supported.
 options:
     name:
-        required: true
         description:
             - Name of the host
+        required: true
 '''
 
 EXAMPLES = '''
@@ -43,12 +41,13 @@ import socket
 import traceback
 from distutils.version import LooseVersion
 
-from ansible.module_utils.basic import (AnsibleModule,
-                                        get_distribution,
-                                        get_distribution_version,
-                                        get_platform,
-                                        load_platform_subclass,
-                                       )
+from ansible.module_utils.basic import (
+    AnsibleModule,
+    get_distribution,
+    get_distribution_version,
+    get_platform,
+    load_platform_subclass,
+)
 from ansible.module_utils.facts.system.service_mgr import ServiceMgrFactCollector
 from ansible.module_utils._text import to_native
 
@@ -88,6 +87,7 @@ class UnimplementedStrategy(object):
         self.module.fail_json(
             msg='hostname module cannot be used on platform %s' % msg_platform)
 
+
 class Hostname(object):
     """
     This is a generic Hostname manipulation class that is subclassed
@@ -106,8 +106,8 @@ class Hostname(object):
         return load_platform_subclass(Hostname, args, kwargs)
 
     def __init__(self, module):
-        self.module       = module
-        self.name         = module.params['name']
+        self.module = module
+        self.name = module.params['name']
         if self.platform == 'Linux' and ServiceMgrFactCollector.is_systemd_managed(module):
             self.strategy = SystemdStrategy(module)
         else:
@@ -127,6 +127,7 @@ class Hostname(object):
 
     def set_permanent_hostname(self, name):
         self.strategy.set_permanent_hostname(name)
+
 
 class GenericStrategy(object):
     """
@@ -169,16 +170,14 @@ class GenericStrategy(object):
         cmd = [self.hostname_cmd]
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
-            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
-                (rc, out, err))
+            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
         return to_native(out).strip()
 
     def set_current_hostname(self, name):
         cmd = [self.hostname_cmd, name]
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
-            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
-                (rc, out, err))
+            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
 
     def get_permanent_hostname(self):
         return None
@@ -186,8 +185,6 @@ class GenericStrategy(object):
     def set_permanent_hostname(self, name):
         pass
 
-
-# ===========================================
 
 class DebianStrategy(GenericStrategy):
     """
@@ -225,7 +222,6 @@ class DebianStrategy(GenericStrategy):
             self.module.fail_json(msg="failed to update hostname: %s" %
                                   to_native(e), exception=traceback.format_exc())
 
-# ===========================================
 
 class SLESStrategy(GenericStrategy):
     """
@@ -262,7 +258,6 @@ class SLESStrategy(GenericStrategy):
             self.module.fail_json(msg="failed to update hostname: %s" %
                                   to_native(e), exception=traceback.format_exc())
 
-# ===========================================
 
 class RedHatStrategy(GenericStrategy):
     """
@@ -310,7 +305,6 @@ class RedHatStrategy(GenericStrategy):
             self.module.fail_json(msg="failed to update hostname: %s" %
                                   to_native(e), exception=traceback.format_exc())
 
-# ===========================================
 
 class AlpineStrategy(GenericStrategy):
     """
@@ -357,11 +351,8 @@ class AlpineStrategy(GenericStrategy):
         cmd = [self.hostname_cmd, '-F', self.HOSTNAME_FILE]
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
-            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
-                (rc, out, err))
+            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
 
-
-# ===========================================
 
 class SystemdStrategy(GenericStrategy):
     """
@@ -373,8 +364,7 @@ class SystemdStrategy(GenericStrategy):
         cmd = ['hostname']
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
-            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
-                (rc, out, err))
+            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
         return to_native(out).strip()
 
     def set_current_hostname(self, name):
@@ -383,15 +373,13 @@ class SystemdStrategy(GenericStrategy):
         cmd = ['hostnamectl', '--transient', 'set-hostname', name]
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
-            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
-                (rc, out, err))
+            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
 
     def get_permanent_hostname(self):
         cmd = ['hostnamectl', '--static', 'status']
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
-            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
-                (rc, out, err))
+            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
         return to_native(out).strip()
 
     def set_permanent_hostname(self, name):
@@ -400,16 +388,12 @@ class SystemdStrategy(GenericStrategy):
         cmd = ['hostnamectl', '--pretty', 'set-hostname', name]
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
-            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
-                (rc, out, err))
+            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
         cmd = ['hostnamectl', '--static', 'set-hostname', name]
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
-            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
-                (rc, out, err))
+            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
 
-
-# ===========================================
 
 class OpenRCStrategy(GenericStrategy):
     """
@@ -455,7 +439,6 @@ class OpenRCStrategy(GenericStrategy):
         finally:
             f.close()
 
-# ===========================================
 
 class OpenBSDStrategy(GenericStrategy):
     """
@@ -493,7 +476,6 @@ class OpenBSDStrategy(GenericStrategy):
             self.module.fail_json(msg="failed to update hostname: %s" %
                                   to_native(e), exception=traceback.format_exc())
 
-# ===========================================
 
 class SolarisStrategy(GenericStrategy):
     """
@@ -506,8 +488,7 @@ class SolarisStrategy(GenericStrategy):
         cmd = [self.hostname_cmd, cmd_option, name]
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
-            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
-                (rc, out, err))
+            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
 
     def get_permanent_hostname(self):
         fmri = 'svc:/system/identity:node'
@@ -515,18 +496,15 @@ class SolarisStrategy(GenericStrategy):
         cmd = '/usr/sbin/svccfg -s %s listprop -o value %s' % (fmri, pattern)
         rc, out, err = self.module.run_command(cmd, use_unsafe_shell=True)
         if rc != 0:
-            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
-                (rc, out, err))
+            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
         return to_native(out).strip()
 
     def set_permanent_hostname(self, name):
         cmd = [self.hostname_cmd, name]
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
-            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
-                (rc, out, err))
+            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
 
-# ===========================================
 
 class FreeBSDStrategy(GenericStrategy):
     """
@@ -579,12 +557,12 @@ class FreeBSDStrategy(GenericStrategy):
         finally:
             f.close()
 
-# ===========================================
 
 class FedoraHostname(Hostname):
     platform = 'Linux'
     distribution = 'Fedora'
     strategy_class = SystemdStrategy
+
 
 class SLESHostname(Hostname):
     platform = 'Linux'
@@ -595,70 +573,84 @@ class SLESHostname(Hostname):
     else:
         strategy_class = UnimplementedStrategy
 
+
 class OpenSUSEHostname(Hostname):
     platform = 'Linux'
     distribution = 'Opensuse '
     strategy_class = SystemdStrategy
+
 
 class ArchHostname(Hostname):
     platform = 'Linux'
     distribution = 'Arch'
     strategy_class = SystemdStrategy
 
+
 class RedHat5Hostname(Hostname):
     platform = 'Linux'
     distribution = 'Redhat'
     strategy_class = RedHatStrategy
+
 
 class RedHatServerHostname(Hostname):
     platform = 'Linux'
     distribution = 'Red hat enterprise linux server'
     strategy_class = RedHatStrategy
 
+
 class RedHatWorkstationHostname(Hostname):
     platform = 'Linux'
     distribution = 'Red hat enterprise linux workstation'
     strategy_class = RedHatStrategy
+
 
 class RedHatAtomicHostname(Hostname):
     platform = 'Linux'
     distribution = 'Red hat enterprise linux atomic host'
     strategy_class = RedHatStrategy
 
+
 class CentOSHostname(Hostname):
     platform = 'Linux'
     distribution = 'Centos'
     strategy_class = RedHatStrategy
+
 
 class CentOSLinuxHostname(Hostname):
     platform = 'Linux'
     distribution = 'Centos linux'
     strategy_class = RedHatStrategy
 
+
 class CloudlinuxHostname(Hostname):
     platform = 'Linux'
     distribution = 'Cloudlinux'
     strategy_class = RedHatStrategy
+
 
 class CloudlinuxServerHostname(Hostname):
     platform = 'Linux'
     distribution = 'Cloudlinux server'
     strategy_class = RedHatStrategy
 
+
 class ScientificHostname(Hostname):
     platform = 'Linux'
     distribution = 'Scientific'
     strategy_class = RedHatStrategy
+
 
 class ScientificLinuxHostname(Hostname):
     platform = 'Linux'
     distribution = 'Scientific linux'
     strategy_class = RedHatStrategy
 
+
 class ScientificLinuxCERNHostname(Hostname):
     platform = 'Linux'
     distribution = 'Scientific linux cern slc'
     strategy_class = RedHatStrategy
+
 
 class OracleLinuxHostname(Hostname):
     platform = 'Linux'
@@ -677,65 +669,78 @@ class AmazonLinuxHostname(Hostname):
     distribution = 'Amazon'
     strategy_class = RedHatStrategy
 
+
 class DebianHostname(Hostname):
     platform = 'Linux'
     distribution = 'Debian'
     strategy_class = DebianStrategy
+
 
 class KaliHostname(Hostname):
     platform = 'Linux'
     distribution = 'Kali'
     strategy_class = DebianStrategy
 
+
 class UbuntuHostname(Hostname):
     platform = 'Linux'
     distribution = 'Ubuntu'
     strategy_class = DebianStrategy
+
 
 class LinuxmintHostname(Hostname):
     platform = 'Linux'
     distribution = 'Linuxmint'
     strategy_class = DebianStrategy
 
+
 class LinaroHostname(Hostname):
     platform = 'Linux'
     distribution = 'Linaro'
     strategy_class = DebianStrategy
+
 
 class DevuanHostname(Hostname):
     platform = 'Linux'
     distribution = 'Devuan'
     strategy_class = DebianStrategy
 
+
 class GentooHostname(Hostname):
     platform = 'Linux'
     distribution = 'Gentoo base system'
     strategy_class = OpenRCStrategy
+
 
 class ALTLinuxHostname(Hostname):
     platform = 'Linux'
     distribution = 'Altlinux'
     strategy_class = RedHatStrategy
 
+
 class AlpineLinuxHostname(Hostname):
     platform = 'Linux'
     distribution = 'Alpine'
     strategy_class = AlpineStrategy
+
 
 class OpenBSDHostname(Hostname):
     platform = 'OpenBSD'
     distribution = None
     strategy_class = OpenBSDStrategy
 
+
 class SolarisHostname(Hostname):
     platform = 'SunOS'
     distribution = None
     strategy_class = SolarisStrategy
 
+
 class FreeBSDHostname(Hostname):
     platform = 'FreeBSD'
     distribution = None
     strategy_class = FreeBSDStrategy
+
 
 class NetBSDHostname(Hostname):
     platform = 'NetBSD'
@@ -749,14 +754,12 @@ class NeonHostname(Hostname):
     strategy_class = DebianStrategy
 
 
-# ===========================================
-
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
+        argument_spec=dict(
             name=dict(required=True)
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
     )
 
     hostname = Hostname(module)

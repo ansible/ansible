@@ -415,7 +415,6 @@ lib/ansible/modules/system/gconftool2.py
 lib/ansible/modules/system/getent.py
 lib/ansible/modules/system/gluster_volume.py
 lib/ansible/modules/system/group.py
-lib/ansible/modules/system/hostname.py
 lib/ansible/modules/system/iptables.py
 lib/ansible/modules/system/java_cert.py
 lib/ansible/modules/system/kernel_blacklist.py
