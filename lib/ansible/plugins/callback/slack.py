@@ -90,9 +90,9 @@ class CallbackModule(CallbackBase):
                                   'installed. Disabling the Slack callback '
                                   'plugin.')
 
-        self.webhook_url = self._plugin_options['webook_url']
-        self.channel = self._plugin_options['channel']
-        self.username = self._plugin_options['username']
+        self.webhook_url = self._plugin_options.get('webhook_url')
+        self.channel = self._plugin_options.get('channel')
+        self.username = self._plugin_options.get('username')
         self.show_invocation = (self._display.verbosity > 1)
 
         if self.webhook_url is None:
