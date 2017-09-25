@@ -64,6 +64,7 @@ class DistributionFiles:
         {'path': '/etc/system-release', 'name': 'Amazon'},
         {'path': '/etc/alpine-release', 'name': 'Alpine'},
         {'path': '/etc/arch-release', 'name': 'Archlinux', 'allowempty': True},
+        {'path': '/etc/os-release', 'name': 'Archlinux'},
         {'path': '/etc/os-release', 'name': 'SUSE'},
         {'path': '/etc/SuSE-release', 'name': 'SUSE'},
         {'path': '/etc/gentoo-release', 'name': 'Gentoo'},
@@ -82,6 +83,13 @@ class DistributionFiles:
         'Altlinux': 'ALT Linux',
         'ClearLinux': 'Clear Linux Software for Intel Architecture',
         'SMGL': 'Source Mage GNU/Linux',
+    }
+
+    # We can't include this in SEARCH_STRING because a name match on its keys
+    # causes a fallback to using the first whitespace seperated item from the file content
+    # as the name. For os-release, that is in form 'NAME=Arch'
+    OS_RELEASE_ALIAS = {
+        'Archlinux': 'Arch Linux'
     }
 
     def __init__(self, module):
@@ -114,16 +122,19 @@ class DistributionFiles:
 
             return True, dist_file_dict
 
+        if name in self.OS_RELEASE_ALIAS:
+            if self.OS_RELEASE_ALIAS[name] in dist_file_content:
+                dist_file_dict['distribution'] = name
+                return True, dist_file_dict
+
         # call a dedicated function for parsing the file content
         # TODO: replace with a map or a class
         try:
             # FIXME: most of these dont actually look at the dist file contents, but random other stuff
             distfunc_name = 'parse_distribution_file_' + name
             # print('distfunc_name: %s' % distfunc_name)
-
             distfunc = getattr(self, distfunc_name)
             # print('distfunc: %s' % distfunc)
-
             parsed, dist_file_dict = distfunc(name, dist_file_content, path, collected_facts)
             return parsed, dist_file_dict
         except AttributeError as exc:
@@ -165,6 +176,12 @@ class DistributionFiles:
 
             has_dist_file, dist_file_content = self._get_dist_file_content(path, allow_empty=allow_empty)
 
+            # but we allow_empty. For example, ArchLinux with an empty /etc/arch-release and a
+            # /etc/os-release with a different name
+            if has_dist_file and allow_empty:
+                dist_file_facts['distribution'] = name
+                break
+
             if not has_dist_file:
                 # keep looking
                 continue
@@ -180,7 +197,7 @@ class DistributionFiles:
 
             dist_file_facts['distribution_file_parsed'] = parsed_dist_file
 
-            # finally found the right os dist file and were able to parse it
+            # finally found the right os dit file and were able to parse it
             if parsed_dist_file:
                 dist_file_facts.update(parsed_dist_file_facts)
                 break
