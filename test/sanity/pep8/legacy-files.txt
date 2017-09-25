@@ -405,7 +405,6 @@ lib/ansible/modules/storage/zfs/zfs.py
 lib/ansible/modules/system/aix_inittab.py
 lib/ansible/modules/system/at.py
 lib/ansible/modules/system/capabilities.py
-lib/ansible/modules/system/cron.py
 lib/ansible/modules/system/cronvar.py
 lib/ansible/modules/system/crypttab.py
 lib/ansible/modules/system/debconf.py
