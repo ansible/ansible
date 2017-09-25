@@ -1,0 +1,53 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: no
+
+  vars:
+    test_hostfile: "/tmp/blockfromfile-test--hostfile"
+
+  tasks:
+    - block:
+
+      - name: "Create dummy file against which to test"
+        copy:
+          dest: "{{ test_hostfile }}"
+          content: |
+            # IPv4 usual suspects
+            127.0.0.1 localhost.localdomain localhost
+            # IPv6
+            ::1 ip6-localhost ip6-loopback
+            fe00::0 ip6-localnet
+            ff00::0 ip6-mcastprefix
+            ff02::1 ip6-allnodes
+            ff02::2 ip6-allrouters
+            ff02::3 ip6-allhosts
+
+      - name: "Test against dummy file"
+        blockfromfile:
+          src: "{{ test_hostfile }}"
+          regexp: '^[ \t\f\v]*(?P<address>[a-f\d.:]+)[ \t\f\v]*(?P<hostnames>(?:\S+[ \t\f\v]*)+)'
+        register: matchesfromfile
+
+      - name: "Validate blocks matched from file"
+        assert:
+          that:
+            # basic validation of return format
+            - matchesfromfile|success
+            - matchesfromfile|changed
+            - matchesfromfile.msg == "Found 7 matches in {{test_hostfile}}"
+            # assert first match has both named and ordered groups with expected values
+            - matchesfromfile.matches[0].groups[0] == '127.0.0.1'
+            - matchesfromfile.matches[0].groups[1] == 'localhost.localdomain localhost'
+            - matchesfromfile.matches[0].named_groups.address == '127.0.0.1'
+            - matchesfromfile.matches[0].named_groups.hostnames == 'localhost.localdomain localhost'
+            # assert last match has both named and ordered groups with expected values
+            - matchesfromfile.matches[-1].groups[0] == 'ff02::3'
+            - matchesfromfile.matches[-1].groups[1] == 'ip6-allhosts'
+            - matchesfromfile.matches[-1].named_groups.address == 'ff02::3'
+            - matchesfromfile.matches[-1].named_groups.hostnames == 'ip6-allhosts'
+
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'blockfromfile' ]"
+            test_failed: true
