@@ -40,6 +40,7 @@ Ansible Changes By Release
 * removed YAML inventory group name validation, broke existing setups and should be global in any case, and configurable
 * performance improvment for inventory, had slown down considerably from 2.3
 * Fix cpu facts on sparc64 (https://github.com/ansible/ansible/pull/30261)
+* Fix ansible_distribution fact for Arch linux (https://github.com/ansible/ansible/issues/30600)
 
 <a id="2.4"></a>
 
