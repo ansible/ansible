@@ -237,8 +237,8 @@ options:
     version_added: "2.1"
   reject_with:
     description:
-      - Specifies the error packet type to return while rejecting. It implies
-        "jump: REJECT"
+      - 'Specifies the error packet type to return while rejecting. It implies
+        "jump: REJECT"'
     version_added: "2.1"
   icmp_type:
     description:
