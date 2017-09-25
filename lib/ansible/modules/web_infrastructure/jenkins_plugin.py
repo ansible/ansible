@@ -63,6 +63,8 @@ options:
     description:
       - Option used to allow the user to overwrite any of the other options. To
         remove an option, set the value of the option to C(null).
+      - Changed in 2.5.0, 2.4.1, 2.3.3 to raise an error if C(url_password) is specified in params.
+        Use the actual C(url_password) argument instead.
   state:
     required: false
     choices: [absent, present, pinned, unpinned, enabled, disabled, latest]
@@ -177,20 +179,18 @@ EXAMPLES = '''
     state: absent
 
 #
-# Example of how to use the params
-#
-# Define a variable and specify all default parameters you want to use across
-# all jenkins_plugin calls:
+# Example of how to authenticate
 #
 # my_jenkins_params:
 #   url_username: admin
-#   url_password: p4ssw0rd
-#   url: http://localhost:8888
 #
 - name: Install plugin
   jenkins_plugin:
     name: build-pipeline-plugin
     params: "{{ my_jenkins_params }}"
+    url_password: p4ssw0rd
+    url: http://localhost:8888
+# Note that url_password **can not** be placed in params as params could end up in a log file
 
 #
 # Example of a Play which handles Jenkins restarts during the state changes
@@ -775,6 +775,11 @@ def main():
 
     # Update module parameters by user's parameters if defined
     if 'params' in module.params and isinstance(module.params['params'], dict):
+        if 'url_password' in module.params['params']:
+            # The params argument should be removed eventually.  Until then, raise an error if
+            # url_password is specified there as it can lead to the password being logged
+            module.fail_json(msg='Do not specify url_password in params as it may get logged')
+
         module.params.update(module.params['params'])
         # Remove the params
         module.params.pop('params', None)
