@@ -403,7 +403,6 @@ lib/ansible/modules/storage/netapp/sf_volume_access_group_manager.py
 lib/ansible/modules/storage/netapp/sf_volume_manager.py
 lib/ansible/modules/storage/zfs/zfs.py
 lib/ansible/modules/system/aix_inittab.py
-lib/ansible/modules/system/at.py
 lib/ansible/modules/system/capabilities.py
 lib/ansible/modules/system/cron.py
 lib/ansible/modules/system/cronvar.py
