@@ -328,7 +328,7 @@ import time
 import traceback
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, AWSRetry
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict, compare_aws_tags
 from ansible.module_utils.aws.rds import get_db_instance, instance_to_facts, instance_facts_diff
 from ansible.module_utils.aws.rds import DEFAULT_PORTS, DB_ENGINES, LICENSE_MODELS
@@ -706,9 +706,14 @@ def modify_db_instance(module, conn):
         return dict(changed=False, instance=before_facts)
 
     return_instance = None
-    try:
+
+    @AWSRetry.backoff(tries=5, delay=5, catch_extra_error_codes=['InvalidDBInstanceState'])
+    def modify_the_instance(**params):
         response = conn.modify_db_instance(**params)
-        return_instance = response['DBInstance']
+        return response['DBInstance']
+
+    try:
+        return_instance = modify_the_instance(**params)
     except botocore.exceptions.ClientError as e:
         module.fail_json_aws(e, msg="trying to modify RDS instance")
 

@@ -25,7 +25,7 @@ from ansible.compat.tests.mock import MagicMock, patch
 # pre-requisites are not present.
 import ansible.modules.cloud.amazon.rds_instance as rds_i
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.aws.core import AnsibleAWSModule
 import ansible.module_utils.basic as basic
 import ansible.module_utils.aws.rds as rds
 # from ansible.module_utils.aws.rds import
@@ -109,6 +109,10 @@ describe_rds_return = {
                         'content-type': 'text/xml',
                         'date': 'Tue, 15 Aug 2018 11:09:12 GMT'}}}
 
+
+describe_rds_new_return = copy.deepcopy(describe_rds_return)
+describe_rds_new_return['DBInstances'][0][u'DBInstanceIdentifier'] = 'fakedb-too'
+
 # this is the return in the case that ApplyPending is _NOT_ given
 modify_rds_return = {
     u'DBInstance': {
@@ -168,7 +172,7 @@ modify_rds_return = {
 # def test_module_parses_args_right()
 
 basic._ANSIBLE_ARGS = to_bytes(b'{ "ANSIBLE_MODULE_ARGS": { "db_instance_class":"very-small-indeed", "engine": "postgres", "id":"fred", "port": 242} }')
-ansible_module_template = AnsibleModule(argument_spec=rds_i.argument_spec, required_if=rds_i.required_if)
+ansible_module_template = AnsibleAWSModule(argument_spec=rds_i.argument_spec, required_if=rds_i.required_if)
 #    basic._ANSIBLE_ARGS = to_bytes('{ "ANSIBLE_MODULE_ARGS": { "old_id": "fakedb", "old_id":"fred", "port": 342} }')
 #    basic._ANSIBLE_ARGS = to_bytes('{ "ANSIBLE_MODULE_ARGS": { "id":"fred", "port": 342} }')
 
@@ -199,6 +203,41 @@ def test_modify_should_return_changed_if_param_changes():
     mod_db_fn.assert_called_once(), "modify called more than once which shoudn't be needed"
     mod_db_fn.assert_called_with(DBInstanceIdentifier='fakedb', DBPortNumber=342,
                                  NewDBInstanceIdentifier='fakedb-too', StorageType='gp')
+    assert mod_return["changed"], "modify failed to return changed"
+
+
+# FIXME - make a more interesting set of changes here.
+def test_modify_should_retry_state_failures():
+    params = {
+        "port": 342,
+        "force_password_update": True,
+        "db_instance_identifier": "fakedb-too",  # should not yet exist
+        "allocated_storage": 5,
+        "storage_type": "gp",
+    }
+
+    rds_client_double = MagicMock()
+    rds_client_double.describe_db_instances.return_value = describe_rds_new_return
+    mod_db_fn = rds_client_double.modify_db_instance
+
+    error_response = {'Error': {'Code': 'InvalidDBInstanceState', 'Message': 'Fake Testing Error'}}
+    operation_name = 'FakeOperation'
+    db_instance_not_available_error = ClientError(error_response, operation_name)
+
+    mod_db_fn.side_effect = [db_instance_not_available_error, modify_rds_return]
+
+    module_double = MagicMock(ansible_module_template)
+    module_double.params = params
+
+#    pdb.set_trace()
+    mod_return = rds_i.modify_db_instance(module_double, rds_client_double)
+    print("rds calls:\n" + str(rds_client_double.mock_calls))
+    print("module calls:\n" + str(module_double.mock_calls))
+
+    mod_db_fn.assert_called_with(DBInstanceIdentifier='fakedb-too', DBPortNumber=342,
+                                 StorageType='gp')
+    module_double.fail_json.assert_not_called()
+    module_double.fail_json_aws.assert_not_called()
     assert mod_return["changed"], "modify failed to return changed"
 
 
