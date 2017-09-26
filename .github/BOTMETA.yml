@@ -309,8 +309,7 @@ files:
   $modules/database/misc/riak.py: drewkerrigan jsmartin
   $modules/database/mongodb/mongodb_parameter.py: nerzhul
   $modules/database/mongodb/mongodb_user.py: lujeni
-  $modules/database/mssql/mssql_db.py: Jmainguy vedit
-  $modules/database/mysql/mysql_db.py: $team_ansible
+  $modules/database/mssql/mssql_db.py: Jmainguy vedit kenichi-ogawa-1988
   $modules/database/mysql/mysql_replication.py: banyek
   $modules/database/mysql/mysql_user.py: Jmainguy
   $modules/database/mysql/mysql_variables.py: banyek
