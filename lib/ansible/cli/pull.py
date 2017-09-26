@@ -159,6 +159,7 @@ class PullCLI(CLI):
         # Attempt to use the inventory passed in as an argument
         # It might not yet have been downloaded so use localhost as default
         inv_opts = ''
+        host_opts = 'all'
         if getattr(self.options, 'inventory'):
             for inv in self.options.inventory:
                 if isinstance(inv, list):
@@ -167,6 +168,10 @@ class PullCLI(CLI):
                     inv_opts += ' -i %s ' % inv
         else:
             inv_opts = "-i 'localhost,'"
+
+        # use localhost instead of all if no usable inventory and need implicit
+        if not inv_opts:
+            host_opts = 'localhost'
 
         # FIXME: enable more repo modules hg/svn?
         if self.options.module_name == 'git':
@@ -198,7 +203,7 @@ class PullCLI(CLI):
 
         bin_path = os.path.dirname(os.path.abspath(sys.argv[0]))
         # hardcode local and inventory/host as this is just meant to fetch the repo
-        cmd = '%s/ansible %s %s -m %s -a "%s" all -l "%s"' % (bin_path, inv_opts, base_opts, self.options.module_name, repo_opts, limit_opts)
+        cmd = '%s/ansible %s %s -m %s -a "%s" "%s" -l "%s"' % (bin_path, inv_opts, base_opts, self.options.module_name, repo_opts, host_opts, limit_opts)
 
         for ev in self.options.extra_vars:
             cmd += ' -e "%s"' % ev
