@@ -235,6 +235,7 @@ def _is_enabled(item):
 def _set_state(item, state):
     name = item.params['name']
     typ = item.params['type']
+    force = item.params['force']
     typUpper = typ[0].upper() + typ[1:]
 
     want_enabled = state == 'present'
@@ -260,6 +261,10 @@ def _set_state(item, state):
             item.fail_json(
                 msg='%s not found. Perhaps this system does not use %s'
                 ' to manage apache' % (a2binary, a2binary))
+
+        if typ == 'module' and not want_enabled and force:
+            # force exists only for a2dismod on debian
+            a2binary += ' -f'
 
         result, stdout, stderr = item.run_command(
             "%s %s" % (a2binary, name))
