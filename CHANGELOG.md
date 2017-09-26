@@ -42,6 +42,7 @@ Ansible Changes By Release
 * Fix cpu facts on sparc64 (https://github.com/ansible/ansible/pull/30261)
 * Fix ansible_distribution fact for Arch linux (https://github.com/ansible/ansible/issues/30600)
 * remove print statements from play_context/become
+* Fix vault errors after 'ansible-vault edit' (https://github.com/ansible/ansible/issues/30575)
 
 <a id="2.4"></a>
 

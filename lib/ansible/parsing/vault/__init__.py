@@ -491,6 +491,20 @@ class VaultLib:
         return b_vaulttext
 
     def decrypt(self, vaulttext, filename=None):
+        '''Decrypt a piece of vault encrypted data.
+
+        :arg vaulttext: a string to decrypt.  Since vault encrypted data is an
+            ascii text format this can be either a byte str or unicode string.
+        :kwarg filename: a filename that the data came from.  This is only
+            used to make better error messages in case the data cannot be
+            decrypted.
+        :returns: a byte string containing the decrypted data and the vault-id that was used
+
+        '''
+        plaintext, vault_id = self.decrypt_and_get_vault_id(vaulttext, filename=filename)
+        return plaintext
+
+    def decrypt_and_get_vault_id(self, vaulttext, filename=None):
         """Decrypt a piece of vault encrypted data.
 
         :arg vaulttext: a string to decrypt.  Since vault encrypted data is an
@@ -498,7 +512,8 @@ class VaultLib:
         :kwarg filename: a filename that the data came from.  This is only
             used to make better error messages in case the data cannot be
             decrypted.
-        :returns: a byte string containing the decrypted data
+        :returns: a byte string containing the decrypted data and the vault-id that was used
+
         """
         b_vaulttext = to_bytes(vaulttext, errors='strict', encoding='utf-8')
 
@@ -536,6 +551,7 @@ class VaultLib:
         # we check it first.
 
         vault_id_matchers = []
+        vault_id_used = None
 
         if vault_id:
             display.vvvvv('Found a vault_id (%s) in the vaulttext' % (vault_id))
@@ -563,6 +579,7 @@ class VaultLib:
                 display.vvvv('Trying secret %s for vault_id=%s' % (vault_secret, vault_secret_id))
                 b_plaintext = this_cipher.decrypt(b_vaulttext, vault_secret)
                 if b_plaintext is not None:
+                    vault_id_used = vault_secret_id
                     display.vvvvv('decrypt succesful with secret=%s and vault_id=%s' % (vault_secret, vault_secret_id))
                     break
             except AnsibleError as e:
@@ -581,7 +598,7 @@ class VaultLib:
                 msg += " on %s" % filename
             raise AnsibleError(msg)
 
-        return b_plaintext
+        return b_plaintext, vault_id_used
 
 
 class VaultEditor:
@@ -692,6 +709,7 @@ class VaultEditor:
 
         # shuffle tmp file into place
         self.shuffle_files(tmp_path, filename)
+        display.vvvvv('Saved edited file "%s" encrypted using %s and  vault id "%s"' % (filename, secret, vault_id))
 
     def _real_path(self, filename):
         # '-' is special to VaultEditor, dont expand it.
@@ -754,7 +772,8 @@ class VaultEditor:
 
         try:
             # vaulttext gets converted back to bytes, but alas
-            plaintext = self.vault.decrypt(vaulttext)
+            # TODO: return the vault_id that worked?
+            plaintext, vault_id_used = self.vault.decrypt_and_get_vault_id(vaulttext)
         except AnsibleError as e:
             raise AnsibleError("%s for %s" % (to_bytes(e), to_bytes(filename)))
 
@@ -762,15 +781,25 @@ class VaultEditor:
         # (duplicates parts of decrypt, but alas...)
         dummy, dummy, cipher_name, vault_id = parse_vaulttext_envelope(b_vaulttext)
 
-        # if we could decrypt, the vault_id should be in secrets
+        # vault id here may not be the vault id actually used for decrypting
+        # as when the edited file has no vault-id but is decrypted by non-default id in secrets
+        # (vault_id=default, while a different vault-id decrypted)
+
+        # if we could decrypt, the vault_id should be in secrets or we use vault_id_used
         # though we could have multiple secrets for a given vault_id, pick the first one
-        secrets = match_secrets(self.vault.secrets, [vault_id])
+        secrets = match_secrets(self.vault.secrets, [vault_id_used, vault_id])
+
+        if not secrets:
+            raise AnsibleVaultError('Attempting to encrypt "%s" but no vault secrets were found for vault ids "%s" or "%s"' %
+                                    (filename, vault_id, vault_id_used))
+
         secret = secrets[0][1]
+
         if cipher_name not in CIPHER_WRITE_WHITELIST:
             # we want to get rid of files encrypted with the AES cipher
-            self._edit_file_helper(filename, secret, existing_data=plaintext, force_save=True)
+            self._edit_file_helper(filename, secret, existing_data=plaintext, force_save=True, vault_id=vault_id)
         else:
-            self._edit_file_helper(filename, secret, existing_data=plaintext, force_save=False)
+            self._edit_file_helper(filename, secret, existing_data=plaintext, force_save=False, vault_id=vault_id)
 
     def plaintext(self, filename):
 
