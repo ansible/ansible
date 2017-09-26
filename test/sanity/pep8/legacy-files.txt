@@ -105,7 +105,6 @@ lib/ansible/modules/cloud/lxd/lxd_profile.py
 lib/ansible/modules/cloud/misc/ovirt.py
 lib/ansible/modules/cloud/misc/rhevm.py
 lib/ansible/modules/cloud/misc/serverless.py
-lib/ansible/modules/cloud/misc/virt.py
 lib/ansible/modules/cloud/misc/virt_net.py
 lib/ansible/modules/cloud/misc/virt_pool.py
 lib/ansible/modules/cloud/misc/xenserver_facts.py
