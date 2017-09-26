@@ -1087,7 +1087,7 @@ class PyVmomiHelper(object):
         assert obj is not None and parent is not None
         current_parent = obj
 
-        while True:
+        while hasattr(current_parent, 'parent'):
             if current_parent.name == parent.name:
                 return True
 
@@ -1213,16 +1213,18 @@ class PyVmomiHelper(object):
         else:
             vm_obj = None
 
+        resource_pool = None
+
         # need a resource pool if cloning from template
         if self.params['resource_pool'] or self.params['template']:
+            resource_pool = self.select_resource_pool_by_name(self.params['resource_pool'])
+        else:
             if self.params['esxi_hostname']:
                 host = self.select_host()
                 resource_pool = self.select_resource_pool_by_host(host)
-            else:
-                resource_pool = self.select_resource_pool_by_name(self.params['resource_pool'])
 
-            if resource_pool is None:
-                self.module.fail_json(msg='Unable to find resource pool "%(resource_pool)s"' % self.params)
+        if resource_pool is None:
+            self.module.fail_json(msg='Unable to find resource pool')
 
         # set the destination datastore for VM & disks
         (datastore, datastore_name) = self.select_datastore(vm_obj)
