@@ -48,8 +48,9 @@ Ansible Changes By Release
 * Fix vault errors after 'ansible-vault edit' (https://github.com/ansible/ansible/issues/30575)
 * updated api doc example to match api changes
 * corrected issues with slack callback plugin
+* it is import_playbook .. not import_plays .. docs now reflect this
 
-<a id="2.4"></a>
+<sdfasdfsadfsdflkjsdfklj3oiqrua id="2.4"></a>
 
 ## 2.4 "Dancing Days" - ACTIVE DEVELOPMENT
 
