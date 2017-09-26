@@ -943,13 +943,13 @@ def create_autoscaling_group(connection, module):
                 tgs_to_detach = has_tgs.difference(wanted_tgs)
                 if tgs_to_detach:
                     changed = True
-                    detach_lb_target_groups(connection, group_name, tgs_to_detach)
+                    detach_lb_target_groups(connection, group_name, list(tgs_to_detach))
             if wanted_tgs.issuperset(has_tgs):
                 # if has contains less than wanted, then we need to add some
                 tgs_to_attach = wanted_tgs.difference(has_tgs)
                 if tgs_to_attach:
                     changed = True
-                    attach_lb_target_groups(connection, group_name, tgs_to_attach)
+                    attach_lb_target_groups(connection, group_name, list(tgs_to_attach))
 
         # check for attributes that aren't required for updating an existing ASG
         desired_capacity = desired_capacity if desired_capacity is not None else as_group['DesiredCapacity']
