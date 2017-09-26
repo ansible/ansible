@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 ---
 author:
     - "Ansible Core Team (@ansible)"
-module: import_plays
+module: import_playbook
 short_description: import a playbook.
 description:
      - Includes a file with a list of plays to be executed.
@@ -37,7 +37,7 @@ EXAMPLES = """
     - debug:
         msg: "play1"
 
-- import_plays: otherplays.yml
+- import_playbook: otherplays.yml
 
 
 - name: This DOES NOT WORK
@@ -47,7 +47,7 @@ EXAMPLES = """
         msg: task1
 
     - name: This failes because I'm inside a play already
-      import_plays: stuff.yml
+      import_playbook: stuff.yml
 """
 
 RETURN = """
