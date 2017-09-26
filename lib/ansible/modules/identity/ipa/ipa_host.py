@@ -47,7 +47,7 @@ options:
     - Set the one time password (OTP).
     required: false
     aliases: ["otp"]
-    version_added: 2.4
+    version_added: 2.5
   ns_host_location:
     description:
     - Host location (e.g. "Lab 2")
