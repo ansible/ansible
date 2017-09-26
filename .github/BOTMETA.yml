@@ -216,7 +216,7 @@ files:
   $modules/cloud/misc/helm.py: flaper87
   $modules/cloud/misc/ovirt.py:
     ignored: vincentvdk
-    maintainers: joshainglis karmab
+    maintainers: joshainglis karmab machacekondra mwperina
   $modules/cloud/misc/proxmox.py: UnderGreen
   $modules/cloud/misc/proxmox_kvm.py: helldorado
   $modules/cloud/misc/proxmox_template.py: UnderGreen
@@ -230,7 +230,7 @@ files:
   $modules/cloud/openstack/os_keystone_service.py: $team_openstack SamYaple
   $modules/cloud/openstack/os_project.py: $team_openstack agireud
   $modules/cloud/ovh/ovh_ip_loadbalancing_backend.py: pascalheraud
-  $modules/cloud/ovirt/: machacekondra
+  $modules/cloud/ovirt/: machacekondra mwperina
   $modules/cloud/packet/:
   $modules/cloud/profitbricks/: baldwinSPC
   $modules/cloud/pubnub/pubnub_blocks.py: parfeon pubnub
