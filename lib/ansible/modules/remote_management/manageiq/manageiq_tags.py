@@ -30,7 +30,7 @@ options:
   state:
     description:
       - absent - tags should not exist,
-      - present - tags should be,
+      - present - tags should exist,
       - list - list current tags.
     required: False
     choices: ['absent', 'present', 'list']
