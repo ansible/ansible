@@ -54,6 +54,12 @@ options:
             - Subnet mask for IPv4 or IPv6 Address in decimal format.
         required: false
         default: null
+    dot1q:
+        description:
+            - Configures IEEE 802.1Q VLAN encapsulation on the subinterface. The range is from 2 to 4093.
+        required: false
+        default: null
+        version_added: "2.5"
     tag:
         description:
             - Route tag for IPv4 or IPv6 Address in integer format.
@@ -102,6 +108,16 @@ EXAMPLES = '''
     version: v4
     state: present
     tag: 100
+    addr: 20.20.20.20
+    mask: 24
+
+- name: Ensure ipv4 address is configured on sub-intf with dot1q encapsulation
+  nxos_ip_interface:
+    interface: Ethernet1/32.10
+    transport: nxapi
+    version: v4
+    state: present
+    dot1q: 10
     addr: 20.20.20.20
     mask: 24
 
@@ -322,6 +338,35 @@ def parse_unstructured_data(body, interface_name, version, module):
     return interface
 
 
+def parse_interface_data(body):
+    body = body[0]
+    splitted_body = body.split('\n')
+
+    for index in range(0, len(splitted_body) - 1):
+            if "Encapsulation 802.1Q" in splitted_body[index]:
+                regex = '(.+?ID\s(?P<dot1q>\d+).*)?'
+                match = re.match(regex, splitted_body[index])
+                if match:
+                    match_dict = match.groupdict()
+                    if match_dict['dot1q'] is not None:
+                        return int(match_dict['dot1q'])
+    return 0
+
+
+def get_dot1q_id(interface_name, module):
+
+    if "." not in interface_name:
+        return 0
+
+    command = 'show interface {0}'.format(interface_name)
+    try:
+        body = execute_show_command(command, module)
+        dot1q = parse_interface_data(body)
+        return dot1q
+    except KeyError:
+        return 0
+
+
 def get_ip_interface(interface_name, version, module):
     body = send_show_command(interface_name, version, module)
     interface = parse_unstructured_data(body, interface_name, version, module)
@@ -329,7 +374,7 @@ def get_ip_interface(interface_name, version, module):
 
 
 def get_remove_ip_config_commands(interface, addr, mask, existing, version):
-    commands = ['interface {0}'.format(interface)]
+    commands = []
     if version == 'v4':
         # We can't just remove primary address if secondary address exists
         for address in existing['addresses']:
@@ -398,10 +443,6 @@ def get_config_ip_commands(delta, interface, existing, version):
         commands += get_remove_ip_config_commands(interface, delta['addr'], delta['mask'], existing, version)
 
     commands.append(command)
-
-    if commands[0] != 'interface {0}'.format(interface):
-        commands.insert(0, 'interface {0}'.format(interface))
-
     return commands
 
 
@@ -415,7 +456,7 @@ def flatten_list(command_lists):
     return flat_command_list
 
 
-def validate_params(addr, interface, mask, tag, allow_secondary, version, state, intf_type, module):
+def validate_params(addr, interface, mask, dot1q, tag, allow_secondary, version, state, intf_type, module):
     if state == "present":
         if addr is None or mask is None:
             module.fail_json(msg="An IP address AND a mask must be provided "
@@ -446,6 +487,13 @@ def validate_params(addr, interface, mask, tag, allow_secondary, version, state,
         except ValueError:
             module.fail_json(msg="Warning! Invalid ip address or mask set.", addr=addr, mask=mask)
 
+    if dot1q is not None:
+        try:
+            if 2 > dot1q > 4093:
+                raise ValueError
+        except ValueError:
+            module.fail_json(msg="Warning! 'dot1q' must be an integer between"
+                                 " 2 and 4093", dot1q=dot1q)
     if tag is not None:
         try:
             if 0 > tag > 4294967295:
@@ -470,6 +518,7 @@ def main():
         version=dict(required=False, choices=['v4', 'v6'],
                      default='v4'),
         mask=dict(type='str', required=False),
+        dot1q=dict(required=False, default=0, type='int'),
         tag=dict(required=False, default=0, type='int'),
         state=dict(required=False, default='present',
                    choices=['present', 'absent']),
@@ -494,13 +543,14 @@ def main():
     addr = module.params['addr']
     version = module.params['version']
     mask = module.params['mask']
+    dot1q = module.params['dot1q']
     tag = module.params['tag']
     allow_secondary = module.params['allow_secondary']
     interface = module.params['interface'].lower()
     state = module.params['state']
 
     intf_type = get_interface_type(interface)
-    validate_params(addr, interface, mask, tag, allow_secondary, version, state, intf_type, module)
+    validate_params(addr, interface, mask, dot1q, tag, allow_secondary, version, state, intf_type, module)
 
     mode = get_interface_mode(interface, intf_type, module)
     if mode == 'layer2':
@@ -509,21 +559,35 @@ def main():
 
     existing = get_ip_interface(interface, version, module)
 
-    args = dict(addr=addr, mask=mask, tag=tag, interface=interface, allow_secondary=allow_secondary)
+    dot1q_tag = get_dot1q_id(interface, module)
+    if dot1q_tag > 1:
+        existing['dot1q'] = dot1q_tag
+
+    args = dict(addr=addr, mask=mask, dot1q=dot1q, tag=tag, interface=interface, allow_secondary=allow_secondary)
     proposed = dict((k, v) for k, v in args.items() if v is not None)
     commands = []
     changed = False
     end_state = existing
 
-    if state == 'absent' and existing['addresses']:
-        if find_same_addr(existing, addr, mask):
-            command = get_remove_ip_config_commands(interface, addr,
-                                                    mask, existing, version)
+    commands = ['interface {0}'.format(interface)]
+    if state == 'absent':
+        if existing['addresses']:
+            if find_same_addr(existing, addr, mask):
+                command = get_remove_ip_config_commands(interface, addr,
+                                                        mask, existing, version)
+                commands.append(command)
+        if 'dot1q' in existing and existing['dot1q'] > 1:
+            command = 'no encapsulation dot1Q {0}'.format(existing['dot1q'])
             commands.append(command)
     elif state == 'present':
         if not find_same_addr(existing, addr, mask, full=True, tag=tag, version=version):
             command = get_config_ip_commands(proposed, interface, existing, version)
             commands.append(command)
+        if 'dot1q' not in existing and (intf_type in ['ethernet', 'portchannel'] and "." in interface):
+            command = 'encapsulation dot1Q {0}'.format(proposed['dot1q'])
+            commands.append(command)
+    if len(commands) < 2:
+        del commands[0]
     cmds = flatten_list(commands)
     if cmds:
         if module.check_mode:
