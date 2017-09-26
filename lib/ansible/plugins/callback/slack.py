@@ -93,7 +93,7 @@ class CallbackModule(CallbackBase):
 
         super(CallbackModule, self).set_options(options)
 
-        self.webhook_url = self._plugin_options['webook_url']
+        self.webhook_url = self._plugin_options['webhook_url']
         self.channel = self._plugin_options['channel']
         self.username = self._plugin_options['username']
         self.show_invocation = (self._display.verbosity > 1)
