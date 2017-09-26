@@ -1,4 +1,4 @@
-
+# setup
 - set_fact: output_dir_test={{output_dir}}/test_blockfromfile
 
 - name: make sure our testing sub-directory does not exist
@@ -7,10 +7,7 @@
 - name: create our testing sub-directory
   file: path="{{ output_dir_test }}" state=directory
 
-##
-## blockfromfile
-##
-
+# tests
 - name: copy the hosts_file to the test dir
   copy:
       src: hosts_file
