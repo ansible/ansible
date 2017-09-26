@@ -148,21 +148,43 @@ class ManageIQTags(object):
             tag_category=tag['category'],
             tag_name=tag['name'])
 
-    def query_resource_tags(self):
-        """ Returns a set of the full tag names assigned to the resource
+    def clean_tag_object(self, tag):
+        """ Clean a tag object to have human readable form of:
+        {
+            full_name: STR,
+            name: STR,
+            display_name: STR,
+            category: STR
+        }
         """
-        url = '{resource_url}/tags?expand=resources'.format(resource_url=self.resource_url)
+        full_name = tag.get('name')
+        categorization = tag.get('categorization', {})
+
+        return dict(
+            full_name=full_name,
+            name=categorization.get('name'),
+            display_name=categorization.get('display_name'),
+            category=categorization.get('category', {}).get('name'))
+
+    def query_resource_tags(self):
+        """ Returns a set of the tag objects assigned to the resource
+        """
+        url = '{resource_url}/tags?expand=resources&attributes=categorization'
         try:
-            response = self.client.get(url)
+            response = self.client.get(url.format(resource_url=self.resource_url))
         except Exception as e:
             msg = "Failed to query {resource_type} tags: {error}".format(
                 resource_type=self.resource_type,
                 error=e)
             self.module.fail_json(msg=msg)
 
-        tags = response.get('resources', [])
-        tags_set = set([tag['name'] for tag in tags])
-        return tags_set
+        resources = response.get('resources', [])
+
+        # clean the returned rest api tag object to look like:
+        # {full_name: STR, name: STR, display_name: STR, category: STR}
+        tags = [self.clean_tag_object(tag) for tag in resources]
+
+        return tags
 
     def tags_to_update(self, tags, action):
         """ Create a list of tags we need to update in ManageIQ.
@@ -173,8 +195,13 @@ class ManageIQTags(object):
         """
         tags_to_post = []
         assigned_tags = self.query_resource_tags()
+
+        # make a list of assigned full tag names strings
+        # e.g. ['/managed/environment/prod', ...]
+        assigned_tags_set = set([tag['full_name'] for tag in assigned_tags])
+
         for tag in tags:
-            assigned = self.full_tag_name(tag) in assigned_tags
+            assigned = self.full_tag_name(tag) in assigned_tags_set
 
             if assigned and action == 'unassign':
                 tags_to_post.append(tag)
