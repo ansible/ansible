@@ -112,6 +112,7 @@ stderr:
 
 import re
 import os
+from ansible.module_utils.basic import AnsibleModule
 
 
 def _run_threaded(item):
@@ -302,7 +303,5 @@ def main():
     if item.params['state'] in ['present', 'absent']:
         _set_state(item, item.params['state'])
 
-# import module snippets
-from ansible.module_utils.basic import AnsibleModule
 if __name__ == '__main__':
     main()
