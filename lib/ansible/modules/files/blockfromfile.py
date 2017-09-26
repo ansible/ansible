@@ -23,9 +23,9 @@ description:
   - This module will search a remote file for all instances of a pattern.
   - Effectively the inverse of M(replace).
 options:
-  src:
+  path:
     required: true
-    aliases: [ path ]
+    aliases: [ src ]
     description:
       - The file to search.
   regexp:
@@ -94,7 +94,7 @@ def find_from_content(regexp, content):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            src=dict(type='path', required=True, aliases=['path']),
+            path=dict(type='path', required=True, aliases=['src']),
             regexp=dict(type='str', required=True),
             fail_on_missing=dict(type='bool', default=False),
             encoding=dict(type='str', default='utf-8'),
@@ -104,7 +104,7 @@ def main():
 
     params = module.params
     params['regexp'] = to_text(params['regexp'], errors='surrogate_or_strict', nonstring='passthru')
-    src = params['src']
+    src = params['path']
 
     if os.path.isdir(src):
         module.fail_json(msg="File '%s' is a directory !" % src)
