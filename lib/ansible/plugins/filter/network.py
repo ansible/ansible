@@ -87,9 +87,11 @@ def parse_cli(output, tmpl):
     for name, attrs in iteritems(spec['keys']):
         value = attrs['value']
 
-        if template.can_template(value):
+        try:
             variables = spec.get('vars', {})
             value = template(value, variables)
+        except:
+            pass
 
         if 'start_block' in attrs and 'end_block' in attrs:
             start_block = re.compile(attrs['start_block'])
