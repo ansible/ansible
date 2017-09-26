@@ -1213,16 +1213,15 @@ class PyVmomiHelper(object):
         else:
             vm_obj = None
 
-        # need a resource pool if cloning from template
-        if self.params['resource_pool'] or self.params['template']:
-            if self.params['esxi_hostname']:
-                host = self.select_host()
-                resource_pool = self.select_resource_pool_by_host(host)
-            else:
-                resource_pool = self.select_resource_pool_by_name(self.params['resource_pool'])
+        # resource_pool is mandatory for CreateVM_task
+        if self.params['esxi_hostname']:
+            host = self.select_host()
+            resource_pool = self.select_resource_pool_by_host(host)
+        else:
+            resource_pool = self.select_resource_pool_by_name(self.params['resource_pool'])
 
-            if resource_pool is None:
-                self.module.fail_json(msg='Unable to find resource pool "%(resource_pool)s"' % self.params)
+        if resource_pool is None:
+            self.module.fail_json(msg='Unable to find resource pool "%(resource_pool)s"' % self.params)
 
         # set the destination datastore for VM & disks
         (datastore, datastore_name) = self.select_datastore(vm_obj)
