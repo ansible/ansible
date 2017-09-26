@@ -386,7 +386,6 @@ lib/ansible/modules/remote_management/foreman/katello.py
 lib/ansible/modules/remote_management/stacki/stacki_host.py
 lib/ansible/modules/source_control/bzr.py
 lib/ansible/modules/source_control/hg.py
-lib/ansible/modules/source_control/subversion.py
 lib/ansible/modules/storage/infinidat/infini_export.py
 lib/ansible/modules/storage/infinidat/infini_export_client.py
 lib/ansible/modules/storage/infinidat/infini_fs.py
