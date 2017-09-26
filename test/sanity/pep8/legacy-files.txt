@@ -179,7 +179,6 @@ lib/ansible/modules/cloud/webfaction/webfaction_domain.py
 lib/ansible/modules/cloud/webfaction/webfaction_site.py
 lib/ansible/modules/clustering/consul_kv.py
 lib/ansible/modules/clustering/consul_session.py
-lib/ansible/modules/clustering/kubernetes.py
 lib/ansible/modules/clustering/pacemaker_cluster.py
 lib/ansible/modules/database/misc/kibana_plugin.py
 lib/ansible/modules/database/misc/redis.py
