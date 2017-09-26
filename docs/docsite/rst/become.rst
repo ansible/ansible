@@ -232,7 +232,7 @@ A lot of tasks in Windows requires administrative privileges to complete.
 Ansible will attempt to run a process as an administrator and fall back to a
 limited token if that fails.
 
-Ways to become with an admin tokena are:
+Ways to become with an admin token are:
 
 * Set the ``become_user`` to the default local ``Administrator`` account. This
   account is not any user that is a member of the local Administrators group

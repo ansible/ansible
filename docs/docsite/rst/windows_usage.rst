@@ -1,11 +1,17 @@
 Using Ansible and Windows
 =========================
-Info about using Ansible and Windows such as common use cases and how to write
-tasks.
+When using Ansible to manage Windows, a lot of the syntax and rules that apply
+for Unix/Linux hosts also apply to Windows. There are still some differences
+between the hosts when it comes to components like path separators and OS
+specific tasks. Details specific for Windows such as how to install programs,
+represent paths in YAML can be found on this page.
+
+..contents:: Topics
 
 Use Cases
 `````````
-Some common use cases with Ansible and Windows.
+Ansible can be used to orchestrate a multitude of tasks on Windows servers,
+below are some examples and info about common tasks.
 
 Installing Programs
 -------------------
@@ -232,7 +238,7 @@ running it with the ``cmd.exe`` or ``powershell.exe`` executable.
 Here are some examples of using ``win_command`` or ``win_shell``::
 
     - name: run a command under powershell
-      win_shell: New-Item -Path C:\temp -ItemType Directory
+      win_shell: Get-Service -Name service | Stop-Service
     
     - name: run a command under cmd
       win_shell: mkdir C:\temp
@@ -243,9 +249,11 @@ Here are some examples of using ``win_command`` or ``win_shell``::
       win_shell: |
         New-Item -Path C:\temp -ItemType Directory
         Remove-Item -Path C:\temp -Force -Recurse
+        $path_info = Get-Item -Path C:\temp
+        $path_info.FullName
     
     - name: run an executable using win_command
-      win_command: whomi.exe
+      win_command: whoami.exe
     
     - name: run a cmd command
       win_command: cmd.exe /c mkdir C:\temp
@@ -310,7 +318,41 @@ escaping arguments_.
 
 Creating and Running Scheduled Task
 -----------------------------------
-Info on how to create a scheduled task, run and wait for it to compelete.
+As WinRM has a few restrictions in place that cause errors when running certain
+commands, one way to bypass these restrictions is to run a command through a
+scheduled task. Scheduled tasks is a Windows component that provides the
+ability to run an executable on a schedule and under a different account.
+
+As of Ansible 2.5, the modules used to manipulate scheduled tasks have made it
+easier to create an adhoc task, run it and wait for completion. The following
+is an example of running a script as a scheduled task that deletes itself after
+running::
+
+    - name: create scheduled task to run a process
+      win_scheduled_task:
+        name: adhoc-task
+        username: SYSTEM
+        actions:
+        - path: powershell.exe
+          arguments: |
+            Start-Sleep -Seconds 30 # this isn't required, just here as a demonstration
+            New-Item -Path C:\temp\test -ItemType Directory
+        # remove this action if the task shouldn't be deleted on completion
+        - path: cmd.exe
+          arguments: /c schtasks.exe /Delete /TN "adhoc-task" /F
+        triggers:
+        - type: registration
+
+    - name: wait for the scheduled task to complete
+      win_scheduled_task_stat:
+        name: adhoc-task
+      register: task_stat
+      until: (task_stat.state is defined and task_stat.state.status != "TASK_STATE_RUNNING") or (task_stat.task_exists == False)
+      retries: 12
+      delay: 10
+
+.. Note:: The modules used in the above example were updated/added in Anisble
+    2.5. While older versions can do this, this example will not work.
 
 Path Formatting for Windows
 ```````````````````````````
