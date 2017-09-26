@@ -34,6 +34,7 @@ options:
     description:
       - The name of the API to manage.  If api_id is None, then the name will be
         used to lookup the api_id.  This means the name should be unique.
+    version_added: '2.5'
   api_id:
     description:
       - The ID of the API you want to manage.
