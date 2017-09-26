@@ -1,0 +1,43 @@
+
+- set_fact: output_dir_test={{output_dir}}/test_blockfromfile
+
+- name: make sure our testing sub-directory does not exist
+  file: path="{{ output_dir_test }}" state=absent
+
+- name: create our testing sub-directory
+  file: path="{{ output_dir_test }}" state=directory
+
+##
+## blockfromfile
+##
+
+- name: copy the hosts_file to the test dir
+  copy:
+      src: hosts_file
+      dest: "{{ output_dir_test }}"
+
+- name: match against test hosts_file
+  blockfromfile:
+    src: "{{ output_dir_test }}/hosts_file"
+    regexp: '^[ \t\f\v]*(?P<address>[a-f\d.:]+)[ \t\f\v]*(?P<hostnames>(?:\S+[ \t\f\v]*)+)'
+  register: blockfromfile_test0
+
+- debug: var=blockfromfile_test0
+
+- name: validate blocks matched from file
+  assert:
+    that:
+      # basic validation of return format
+      - blockfromfile_test0|success
+      - blockfromfile_test0|changed
+      - blockfromfile_test0.msg.startswith("Found 7 matches in ")
+      # assert first match has both named and ordered groups with expected values
+      - blockfromfile_test0.matches[0].groups[0] == '127.0.0.1'
+      - blockfromfile_test0.matches[0].groups[1] == 'localhost.localdomain localhost'
+      - blockfromfile_test0.matches[0].named_groups.address == '127.0.0.1'
+      - blockfromfile_test0.matches[0].named_groups.hostnames == 'localhost.localdomain localhost'
+      # assert last match has both named and ordered groups with expected values
+      - blockfromfile_test0.matches[-1].groups[0] == 'ff02::3'
+      - blockfromfile_test0.matches[-1].groups[1] == 'ip6-allhosts'
+      - blockfromfile_test0.matches[-1].named_groups.address == 'ff02::3'
+      - blockfromfile_test0.matches[-1].named_groups.hostnames == 'ip6-allhosts'
