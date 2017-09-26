@@ -49,12 +49,14 @@ Other options include:
 'datacenter':
 
 which restricts the included nodes to those from the given datacenter
+This can also be set with the environmental variable CONSUL_DATACENTER
 
 'url':
 
 the URL of the Consul cluster. host, port and scheme are derived from the
 URL. If not specified, connection configuration defaults to http requests
 to localhost on port 8500.
+This can also be set with the environmental variable CONSUL_URL
 
 'domain':
 
@@ -416,6 +418,7 @@ class ConsulConfig(dict):
     def __init__(self):
         self.read_settings()
         self.read_cli_args()
+        self.read_env_vars()
 
     def has_config(self, name):
         if hasattr(self, name):
@@ -459,6 +462,14 @@ class ConsulConfig(dict):
         for arg in arg_names:
             if getattr(args, arg):
                 setattr(self, arg, getattr(args, arg))
+
+    def read_env_vars(self):
+        env_var_options = ['datacenter', 'url']
+        for option in env_var_options:
+            value = None
+            env_var = 'CONSUL_' + option.upper()
+            if os.environ.get(env_var):
+                setattr(self, option, os.environ.get(env_var))
 
     def get_availability_suffix(self, suffix, default):
         if self.has_config(suffix):
