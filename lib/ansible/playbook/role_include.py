@@ -43,10 +43,10 @@ class IncludeRole(TaskInclude):
     circumstances related to the `- include_role: ...`
     """
 
-    BASE = frozenset(['name', 'role'])  # directly assigned
-    FROM_ARGS = frozenset(['tasks_from', 'vars_from', 'defaults_from'])  # used to populate from dict in role
-    OTHER_ARGS = frozenset(['private', 'allow_duplicates'])  # assigned to matching property
-    VALID_ARGS = frozenset(BASE.union(FROM_ARGS.union(OTHER_ARGS)))  # all valid args
+    BASE = ('name', 'role')  # directly assigned
+    FROM_ARGS = ('tasks_from', 'vars_from', 'defaults_from')  # used to populate from dict in role
+    OTHER_ARGS = ('private', 'allow_duplicates')  # assigned to matching property
+    VALID_ARGS = list(set(BASE).union(set(FROM_ARGS).union(set(OTHER_ARGS))))  # all valid args
 
     # =================================================================================
     # ATTRIBUTES
@@ -113,7 +113,7 @@ class IncludeRole(TaskInclude):
             raise AnsibleParserError("'name' is a required field for include_role.")
 
         # validate bad args, otherwise we silently ignore
-        bad_opts = my_arg_names.difference(IncludeRole.VALID_ARGS)
+        bad_opts = my_arg_names.difference(set(IncludeRole.VALID_ARGS))
         if bad_opts:
             raise AnsibleParserError('Invalid options for include_role: %s' % ','.join(list(bad_opts)))
 
