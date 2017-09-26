@@ -329,6 +329,20 @@ class LinuxHardware(Hardware):
                         dmi_facts[k] = 'NA'
                 else:
                     dmi_facts[k] = 'NA'
+                if k == 'bios_version':
+                    # process firmware/bios version info for Linux on SPARC64 and PPC64 architectures
+                    if collected_facts.get('ansible_architecture') == 'sparc64':
+                        if os.access('/proc/cpuinfo', os.R_OK):
+                            for line in get_file_lines('/proc/cpuinfo'):
+                                data = line.split(":", 1)
+                                key = data[0].strip()
+                                if key == "prom":
+                                    dmi_facts[k] = data[1].strip()
+                    elif collected_facts.get('ansible_architecture') == 'ppc64':
+                        if os.access('/proc/device-tree/openprom/ibm,fw-vernum_encoded', os.R_OK):
+                            line = get_file_content('/proc/device-tree/openprom/ibm,fw-vernum_encoded')
+                            if line is not None:
+                                dmi_facts[k] = line
 
         return dmi_facts
 
