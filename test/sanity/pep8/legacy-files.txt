@@ -372,7 +372,6 @@ lib/ansible/modules/packaging/os/pkgng.py
 lib/ansible/modules/packaging/os/pkgutil.py
 lib/ansible/modules/packaging/os/portage.py
 lib/ansible/modules/packaging/os/portinstall.py
-lib/ansible/modules/packaging/os/rhn_channel.py
 lib/ansible/modules/packaging/os/rpm_key.py
 lib/ansible/modules/packaging/os/sorcery.py
 lib/ansible/modules/packaging/os/svr4pkg.py
