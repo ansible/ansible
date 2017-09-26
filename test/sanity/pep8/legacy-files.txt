@@ -344,7 +344,6 @@ lib/ansible/modules/packaging/language/cpanm.py
 lib/ansible/modules/packaging/language/gem.py
 lib/ansible/modules/packaging/language/maven_artifact.py
 lib/ansible/modules/packaging/language/pear.py
-lib/ansible/modules/packaging/language/pip.py
 lib/ansible/modules/packaging/os/apk.py
 lib/ansible/modules/packaging/os/apt.py
 lib/ansible/modules/packaging/os/apt_key.py
