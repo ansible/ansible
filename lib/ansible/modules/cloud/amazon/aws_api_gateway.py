@@ -187,8 +187,8 @@ def main():
         api_data = get_api_definitions(module, swagger_file=swagger_file,
                                        swagger_dict=swagger_dict, swagger_text=swagger_text)
         conf_res, dep_res, ren_res = ensure_api_in_correct_state(module, client, name=name,
-                                                        api_id=api_id, api_data=api_data,
-                                                        stage=stage, deploy_desc=deploy_desc)
+                                                                  api_id=api_id, api_data=api_data,
+                                                                  stage=stage, deploy_desc=deploy_desc)
     if state == "absent":
         del_res = delete_rest_api(module, client, api_id)
 
