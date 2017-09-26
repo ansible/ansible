@@ -121,7 +121,7 @@ except ImportError:
     # module_utils.ec2.HAS_BOTO3 will do the right thing
     pass
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import (HAS_BOTO3, boto3_conn, camel_dict_to_snake_dict,
                                       ec2_argument_spec, get_aws_connection_info)
 
@@ -136,6 +136,7 @@ class CloudWatchEventRule(object):
         self.event_pattern = event_pattern
         self.description = description
         self.role_arn = role_arn
+        self.module = module
 
     def describe(self):
         """Returns the existing details of the rule in AWS"""
@@ -145,7 +146,9 @@ class CloudWatchEventRule(object):
             error_code = e.response.get('Error', {}).get('Code')
             if error_code == 'ResourceNotFoundException':
                 return {}
-            raise
+            self.module.fail_json_aws(e, msg="Could not describe rule")
+        except botocore.exceptions.BotoCoreError as e:
+            self.module.fail_json_aws(e, msg="Could not describe rule")
         return self._snakify(rule_info)
 
     def put(self, enabled=True):
@@ -193,7 +196,9 @@ class CloudWatchEventRule(object):
             error_code = e.response.get('Error', {}).get('Code')
             if error_code == 'ResourceNotFoundException':
                 return []
-            raise
+            self.module.fail_json_aws(e, msg="Could not describe rule")
+        except botocore.exceptions.BotoCoreError as e:
+            self.module.fail_json_aws(e, msg="Could not describe rule")
         return self._snakify(targets)['targets']
 
     def put_targets(self, targets):
@@ -394,7 +399,7 @@ def main():
         role_arn             = dict(),
         targets              = dict(type='list', default=[]),
     ))
-    module = AnsibleModule(argument_spec=argument_spec)
+    module = AnsibleAWSModule(argument_spec=argument_spec)
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')
