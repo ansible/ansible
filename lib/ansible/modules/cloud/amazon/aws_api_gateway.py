@@ -30,7 +30,7 @@ description:
 version_added: '2.4'
 requirements: [ boto3 ]
 options:
-   name:
+  name:
     description:
       - The name of the API to manage.  If api_id is None, then the name will be
         used to lookup the api_id.  This means the name should be unique.
@@ -186,9 +186,9 @@ def main():
             api_id = create_empty_api(module, client)
         api_data = get_api_definitions(module, swagger_file=swagger_file,
                                        swagger_dict=swagger_dict, swagger_text=swagger_text)
-        conf_res, dep_res, ren_res = ensure_api_in_correct_state(module, client, name=name, api_id=api_id,
-                                                        api_data=api_data, stage=stage,
-                                                        deploy_desc=deploy_desc)
+        conf_res, dep_res, ren_res = ensure_api_in_correct_state(module, client, name=name,
+                                                        api_id=api_id, api_data=api_data,
+                                                        stage=stage, deploy_desc=deploy_desc)
     if state == "absent":
         del_res = delete_rest_api(module, client, api_id)
 
@@ -359,6 +359,7 @@ def create_deployment(client, api_id=None, stage=None, description=None):
     # we can also get None as an argument so we don't do this as a defult
     return client.create_deployment(restApiId=api_id, stageName=stage, description=description)
 
+
 @AWSRetry.backoff(**retry_params)
 def get_rest_apis(client, limit=500):
     return client.get_rest_apis(limit=limit)
@@ -368,9 +369,9 @@ def get_rest_apis(client, limit=500):
 def rename_api(client, name, api_id):
     operations = [
         {
-            'op':'replace',
-            'path':'/name',
-            'value':name
+            'op': 'replace',
+            'path': '/name',
+            'value': name
         }
     ]
     return client.update_rest_api(restApiId=api_id, patchOperations=operations)
