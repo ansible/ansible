@@ -545,8 +545,8 @@ class PlayContext(Base):
             # set flags to use for the privilege escalation method, with various overrides
             flags = self.become_flags or getattr(self, '%s_flags' % self.become_method, '')
 
-            print(exe)
-            print(flags)
+            # print(exe)
+            # print(flags)
             if self.become_method == 'sudo':
                 # If we have a password, we run sudo with a randomly-generated
                 # prompt set using -p. Otherwise we run it with default -n, which makes
