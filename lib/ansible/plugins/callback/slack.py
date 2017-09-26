@@ -54,7 +54,6 @@ except ImportError:
     cli = None
 
 from ansible.module_utils.urls import open_url
-from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.callback import CallbackBase
 
 try:
@@ -75,13 +74,6 @@ class CallbackModule(CallbackBase):
 
     def __init__(self, display=None):
 
-        self.disabled = False
-
-        if cli:
-            self._plugin_options = cli.options
-        else:
-            self._plugin_options = None
-
         super(CallbackModule, self).__init__(display=display)
 
         if not HAS_PRETTYTABLE:
@@ -90,7 +82,18 @@ class CallbackModule(CallbackBase):
                                   'installed. Disabling the Slack callback '
                                   'plugin.')
 
-        self.webhook_url = self._plugin_options['webook_url']
+        self.playbook_name = None
+
+        # This is a 6 character identifier provided with each message
+        # This makes it easier to correlate messages when there are more
+        # than 1 simultaneous playbooks running
+        self.guid = uuid.uuid4().hex[:6]
+
+    def set_options(self, options):
+
+        super(CallbackModule, self).set_options(options)
+
+        self.webhook_url = self._plugin_options['webhook_url']
         self.channel = self._plugin_options['channel']
         self.username = self._plugin_options['username']
         self.show_invocation = (self._display.verbosity > 1)
@@ -101,14 +104,6 @@ class CallbackModule(CallbackBase):
                                   'Slack Webhook URL can be provided using '
                                   'the `SLACK_WEBHOOK_URL` environment '
                                   'variable.')
-
-        else:
-            self.playbook_name = None
-
-            # This is a 6 character identifier provided with each message
-            # This makes it easier to correlate messages when there are more
-            # than 1 simultaneous playbooks running
-            self.guid = uuid.uuid4().hex[:6]
 
     def send_msg(self, attachments):
         payload = {
