@@ -107,23 +107,27 @@ rule:
     description: CloudWatch Event rule data
     returned: success
     type: dict
-    sample: "{ 'arn': 'arn:aws:events:us-east-1:123456789012:rule/MyCronTask', 'description': 'Run my scheduled task', 'name': 'MyCronTask', 'schedule_expression': 'cron(0 20 * * ? *)', 'state': 'ENABLED' }"
+    sample:
+      arn: 'arn:aws:events:us-east-1:123456789012:rule/MyCronTask'
+      description: 'Run my scheduled task'
+      name: 'MyCronTask'
+      schedule_expression: 'cron(0 20 * * ? *)'
+      state: 'ENABLED'
 targets:
     description: CloudWatch Event target(s) assigned to the rule
     returned: success
     type: list
     sample: "[{ 'arn': 'arn:aws:lambda:us-east-1:123456789012:function:MyFunction', 'id': 'MyTargetId' }]"
-'''  # NOQA
+'''
 
 try:
     import botocore
 except ImportError:
-    # module_utils.ec2.HAS_BOTO3 will do the right thing
-    pass
+    pass  # handled by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import (HAS_BOTO3, boto3_conn, camel_dict_to_snake_dict,
-                                      ec2_argument_spec, get_aws_connection_info)
+from ansible.module_utils.ec2 import boto3_conn, camel_dict_to_snake_dict
+from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info
 
 
 class CloudWatchEventRule(object):
@@ -421,9 +425,6 @@ def main():
         )
     )
     module = AnsibleAWSModule(argument_spec=argument_spec)
-
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
 
     rule_data = dict(
         [(rf, module.params.get(rf)) for rf in CloudWatchEventRuleManager.RULE_FIELDS]
