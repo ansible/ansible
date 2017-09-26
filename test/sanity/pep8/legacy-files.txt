@@ -13,7 +13,6 @@ lib/ansible/modules/cloud/ovirt/_ovirt_affinity_groups.py
 lib/ansible/modules/cloud/amazon/aws_kms.py
 lib/ansible/modules/cloud/amazon/cloudformation.py
 lib/ansible/modules/cloud/amazon/cloudformation_facts.py
-lib/ansible/modules/cloud/amazon/cloudfront_facts.py
 lib/ansible/modules/cloud/amazon/cloudwatchevent_rule.py
 lib/ansible/modules/cloud/amazon/dynamodb_table.py
 lib/ansible/modules/cloud/amazon/ec2_ami_copy.py
