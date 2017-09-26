@@ -18,7 +18,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.errors import AnsibleError
-from ansible.utils.vars import combine_vars
 
 
 class Group:
@@ -74,7 +73,7 @@ class Group:
         self.depth = data.get('depth', 0)
         self.hosts = data.get('hosts', {})
 
-        self._hosts = set(self.hosts)
+        self._hosts = set([ h.name for h in self.hosts])
 
         parent_groups = data.get('parent_groups', [])
         for parent_data in parent_groups:
