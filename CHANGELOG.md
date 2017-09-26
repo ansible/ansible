@@ -7,6 +7,9 @@ Ansible Changes By Release
 
 ### Bugfixes
 
+* Security fix for CVE-2017-7550 the jenkins_plugin module was logging the jenkins
+  server password if the url_password was passed via the params field:
+  https://github.com/ansible/ansible/pull/30875
 * Update openssl\* module documentation to show openssl-0.16 is the minimum version
 * Fix openssl_certificate's csr handling
 * Python-3 fixes
