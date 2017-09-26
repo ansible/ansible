@@ -1,22 +1,20 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2012, Matt Wright <matt@nobien.net>
+# Copyright: (c) 2012, Matt Wright <matt@nobien.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
 
-
 DOCUMENTATION = '''
 ---
 module: pip
-short_description: Manages Python library dependencies.
+short_description: Manages Python library dependencies
 description:
      - "Manage Python library dependencies. To use this module, one of the following keys is required: C(name)
        or C(requirements)."
@@ -26,19 +24,13 @@ options:
     description:
       - The name of a Python library to install or the url of the remote package.
       - As of 2.2 you can supply a list of names.
-    required: false
-    default: null
   version:
     description:
-      - The version number to install of the Python library specified in the I(name) parameter
-    required: false
-    default: null
+      - The version number to install of the Python library specified in the I(name) parameter.
   requirements:
     description:
       - The path to a pip requirements file, which should be local to the remote system.
         File can be specified as a relative path if using the chdir option.
-    required: false
-    default: null
   virtualenv:
     description:
       - An optional path to a I(virtualenv) directory to install into.
@@ -47,62 +39,51 @@ options:
         If the virtualenv does not exist, it will be created before installing
         packages. The optional virtualenv_site_packages, virtualenv_command,
         and virtualenv_python options affect the creation of the virtualenv.
-    required: false
-    default: null
   virtualenv_site_packages:
-    version_added: "1.0"
     description:
       - Whether the virtual environment will inherit packages from the
         global site-packages directory.  Note that if this setting is
         changed on an already existing virtual environment it will not
         have any effect, the environment must be deleted and newly
         created.
-    required: false
+    type: bool
     default: "no"
-    choices: [ "yes", "no" ]
+    version_added: "1.0"
   virtualenv_command:
-    version_added: "1.1"
     description:
       - The command or a pathname to the command to create the virtual
         environment with. For example C(pyvenv), C(virtualenv),
         C(virtualenv2), C(~/bin/virtualenv), C(/usr/local/bin/virtualenv).
-    required: false
     default: virtualenv
+    version_added: "1.1"
   virtualenv_python:
-    version_added: "2.0"
     description:
       - The Python executable used for creating the virtual environment.
         For example C(python3.5), C(python2.7). When not specified, the
         Python version used to run the ansible module is used. This parameter
         should not be used when C(virtualenv_command) is using C(pyvenv) or
         the C(-m venv) module.
-    required: false
-    default: null
+    version_added: "2.0"
   state:
     description:
       - The state of module
       - The 'forcereinstall' option is only available in Ansible 2.1 and above.
-    required: false
+    choices: [ absent, forcereinstall, latest, present ]
     default: present
-    choices: [ "present", "absent", "latest", "forcereinstall" ]
   extra_args:
     description:
       - Extra arguments passed to pip.
-    required: false
-    default: null
     version_added: "1.0"
   editable:
     description:
       - Pass the editable flag.
-    required: false
-    default: false
+    type: bool
+    default: 'no'
     version_added: "2.0"
   chdir:
     description:
       - cd into this directory before running the command
     version_added: "1.3"
-    required: false
-    default: null
   executable:
     description:
       - The explicit executable or a pathname to the executable to be used to
@@ -113,8 +94,6 @@ options:
         By default, it will take the appropriate version for the python interpreter
         use by ansible, e.g. pip3 on python 3, and pip2 or pip on python 2.
     version_added: "1.3"
-    required: false
-    default: null
   umask:
     description:
       - The system umask to apply before installing the pip package. This is
@@ -123,17 +102,17 @@ options:
         packages which are to be used by all users. Note that this requires you
         to specify desired umask mode in octal, with a leading 0 (e.g., 0077).
     version_added: "2.1"
-    required: false
-    default: null
-
 notes:
    - Please note that virtualenv (U(http://www.virtualenv.org/)) must be
      installed on the remote host if the virtualenv parameter is specified and
      the virtualenv needs to be created.
    - By default, this module will use the appropriate version of pip for the
      interpreter used by ansible (e.g. pip3 when using python 3, pip2 otherwise)
-requirements: [ "virtualenv", "pip" ]
-author: "Matt Wright (@mattupstate)"
+requirements:
+- pip
+- virtualenv
+author:
+- Matt Wright (@mattupstate)
 '''
 
 EXAMPLES = '''
@@ -307,8 +286,8 @@ def _get_pip(module, env=None, executable=None):
             else:
                 # For-else: Means that we did not break out of the loop
                 # (therefore, that pip was not found)
-                module.fail_json(msg='Unable to find any of %s to use.  pip'
-                        ' needs to be installed.' % ', '.join(candidate_pip_basenames))
+                module.fail_json(msg='Unable to find any of %s to use.  pip' +
+                                     ' needs to be installed.' % ', '.join(candidate_pip_basenames))
         else:
             # If we're using a virtualenv we must use the pip from the
             # virtualenv
@@ -322,10 +301,9 @@ def _get_pip(module, env=None, executable=None):
             else:
                 # For-else: Means that we did not break out of the loop
                 # (therefore, that pip was not found)
-                module.fail_json(msg='Unable to find pip in the virtualenv,'
-                        ' %s, under any of these names: %s. Make sure pip is'
-                        ' present in the virtualenv.' % (env,
-                            ', '.join(candidate_pip_basenames)))
+                module.fail_json(msg='Unable to find pip in the virtualenv, %s, ' % env +
+                                     'under any of these names: %s. ' % (', '.join(candidate_pip_basenames)) +
+                                     'Make sire pip is present in the virtualenv.')
 
     return pip
 
@@ -374,24 +352,24 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(default='present', choices=state_map.keys()),
+            state=dict(type='str', default='present', choices=state_map.keys()),
             name=dict(type='list'),
             version=dict(type='str'),
             requirements=dict(type='str'),
             virtualenv=dict(type='path'),
-            virtualenv_site_packages=dict(default=False, type='bool'),
-            virtualenv_command=dict(default='virtualenv', type='path'),
+            virtualenv_site_packages=dict(type='bool', default=False),
+            virtualenv_command=dict(type='path', default='virtualenv'),
             virtualenv_python=dict(type='str'),
-            use_mirrors=dict(default=True, type='bool'),
+            use_mirrors=dict(type='bool', default=True),
             extra_args=dict(type='str'),
-            editable=dict(default=False, type='bool'),
+            editable=dict(type='bool', default=False),
             chdir=dict(type='path'),
             executable=dict(type='path'),
             umask=dict(type='str'),
         ),
         required_one_of=[['name', 'requirements']],
         mutually_exclusive=[['name', 'requirements'], ['executable', 'virtualenv']],
-        supports_check_mode=True
+        supports_check_mode=True,
     )
 
     state = module.params['state']
