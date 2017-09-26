@@ -38,6 +38,8 @@ docs/docsite/rst/partner_maintained.rst
 docs/docsite/rst/playbook_keywords.rst
 docs/docsite/rst/playbooks_directives.rst
 docs/docsite/*.html
+docs/docsite/rst/ansible.rst
+docs/docsite/rst/ansible-*.rst
 docs/docsite/_static/*.gif
 docs/docsite/_static/*.png
 docs/docsite/_static/websupport.js
