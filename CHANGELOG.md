@@ -47,6 +47,7 @@ Ansible Changes By Release
 * remove print statements from play_context/become
 * Fix vault errors after 'ansible-vault edit' (https://github.com/ansible/ansible/issues/30575)
 * updated api doc example to match api changes
+* corrected issues with slack callback plugin
 
 <a id="2.4"></a>
 
