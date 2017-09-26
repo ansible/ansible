@@ -116,8 +116,7 @@ targets:
 '''  # NOQA
 
 try:
-    import boto3.exception
-    import botocore.exceptions
+    import botocore
 except ImportError:
     # module_utils.ec2.HAS_BOTO3 will do the right thing
     pass
@@ -379,7 +378,7 @@ def get_cloudwatchevents_client(module):
                           resource='events',
                           region=region, endpoint=ec2_url,
                           **aws_conn_kwargs)
-    except boto3.exception.NoAuthHandlerFound as e:
+    except botocore.exceptions.ProfileNotFound as e:
         module.fail_json(msg=str(e))
 
 
