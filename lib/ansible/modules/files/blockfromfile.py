@@ -18,9 +18,10 @@ module: blockfromfile
 author:
   - Evan Kaufman (@EvanK)
 version_added: "2.5"
-short_description: Search file from remote node using a provided regular expression
+short_description: Find instances of pattern in a file
 description:
-  - This module will search a remote file for all instances of a pattern.
+  - This module will search the contents of a file for all instances of a
+    regular expression pattern.
   - Effectively the inverse of M(replace).
 options:
   path:
@@ -32,9 +33,9 @@ options:
     required: true
     description:
       - The regular expression to look for in the contents of the file.
-        Uses Python regular expressions; see
+      - Uses Python regular expressions; see
         U(http://docs.python.org/2/library/re.html).
-        Uses multiline mode, which means C(^) and C($) match the beginning
+      - Uses multiline mode, which means C(^) and C($) match the beginning
         and end respectively of I(each line) of the file.
   fail_on_missing:
     description:
