@@ -21,11 +21,11 @@ version_added: "2.5"
 short_description: Search file from remote node using a provided regular expression
 description:
   - This module will search a remote file for all instances of a pattern.
-    Effectively the inverse of M(replace).
+  - Effectively the inverse of M(replace).
 options:
   src:
     required: true
-    aliases: [ name, srcfile ]
+    aliases: [ path ]
     description:
       - The file to search.
   regexp:
@@ -37,27 +37,29 @@ options:
         Uses multiline mode, which means C(^) and C($) match the beginning
         and end respectively of I(each line) of the file.
   fail_on_missing:
-    default: false
     description:
-      - Makes it fails when the source file is missing.
+      - When set to C(yes), fail when the file is missing.
+    type: bool
+    default: 'no'
+
 notes:
-   - "See also: M(replace)"
+   - See also M(replace)
 """
 
 EXAMPLES = r"""
 # finds one named group, "priority"
 - blockfromfile:
-    src: /etc/keepalived/keepalived.conf
+    path: /etc/keepalived/keepalived.conf
     regexp: '^[ \t\f\v]*priority[ \t\f\v]*(?P<priority>\d+)[ \t\f\v]*'
 
 # finds two named groups, "address" and "hostnames"
 - blockfromfile:
-    src: /etc/hosts
+    path: /etc/hosts
     regexp: '^[ \t\f\v]*(?P<address>[a-f\d.:]+)[ \t\f\v]*(?P<hostnames>(?:\S+[ \t\f\v]*)+)'
 
 # finds one unnamed group
 - blockfromfile:
-    src: /etc/sudoers
+    path: /etc/sudoers
     regexp: '^[ \t\f\v]*(\S+)(?:[ \t\f\v]+\S*)+NOPASSWD:ALL'
 """
 
@@ -73,7 +75,6 @@ import re
 import os
 
 from ansible.module_utils._text import to_text
-from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -93,10 +94,10 @@ def find_from_content(regexp, content):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            src=dict(required=True, aliases=['name', 'srcfile', 'path'], type='path'),
-            regexp=dict(required=True),
-            fail_on_missing=dict(default=False, type='bool'),
-            encoding=dict(default='utf-8', type='str'),
+            src=dict(type='path', required=True, aliases=['path']),
+            regexp=dict(type='str', required=True),
+            fail_on_missing=dict(type='bool', default=False),
+            encoding=dict(type='str', default='utf-8'),
         ),
         supports_check_mode=True
     )
@@ -106,28 +107,22 @@ def main():
     src = params['src']
 
     if os.path.isdir(src):
-        module.fail_json(rc=256, msg='Source %s is a directory !' % src)
+        module.fail_json(msg="File '%s' is a directory !" % src)
 
     if not os.path.exists(src):
         if params['fail_on_missing']:
-            module.fail_json(rc=255, msg='Source %s does not exist !' % src)
+            module.fail_json(msg="File '%s' does not exist !" % src)
         else:
-            module.exit_json(changed=False, msg='Source %s does not exist !' % src)
+            module.exit_json(changed=False, msg="File '%s' does not exist !" % src)
     else:
         try:
-            f = open(src, 'rb')
-            contents = to_text(f.read(), errors='surrogate_or_strict', encoding=params['encoding'])
-            f.close()
-        except IOError:
-            e = get_exception()
-            module.fail_json(rc=254, msg='Source %s could not be read: %s' % (src, e.strerror))
+            with open(src, 'rb') as f:
+                contents = to_text(f.read(), errors='surrogate_or_strict', encoding=params['encoding'])
+        except IOError as e:
+            module.fail_json(msg="File '%s' could not be read: %s" % (src, e.strerror))
 
     result = find_from_content(params['regexp'], contents)
-
-    if result:
-        module.exit_json(matches=result, changed=True, msg='Found %d matches in %s' % (len(result), src))
-    else:
-        module.exit_json(changed=False, msg='Found no matches in %s' % src)
+    module.exit_json(matches=result, changed=bool(result), msg="Found %d matches in '%s'" % (len(result), src))
 
 if __name__ == '__main__':
     main()
