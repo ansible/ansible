@@ -73,7 +73,7 @@ class Group:
         self.depth = data.get('depth', 0)
         self.hosts = data.get('hosts', {})
 
-        self._hosts = set([ h.name for h in self.hosts])
+        self._hosts = set([h.name for h in self.hosts])
 
         parent_groups = data.get('parent_groups', [])
         for parent_data in parent_groups:
