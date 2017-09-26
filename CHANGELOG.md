@@ -41,6 +41,7 @@ Ansible Changes By Release
 * performance improvment for inventory, had slown down considerably from 2.3
 * Fix cpu facts on sparc64 (https://github.com/ansible/ansible/pull/30261)
 * Fix ansible_distribution fact for Arch linux (https://github.com/ansible/ansible/issues/30600)
+* remove print statements from play_context/become
 
 <a id="2.4"></a>
 
