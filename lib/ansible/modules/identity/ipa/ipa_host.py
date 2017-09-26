@@ -42,6 +42,11 @@ options:
     - If an empty list is passed all assigned MAC addresses will be removed.
     - MAC addresses that are already assigned but not passed will be removed.
     aliases: ["macaddress"]
+  userpassword:
+    description:
+    - Set the one time password (OTP).
+    required: false
+    aliases: ["otp"]
   ns_host_location:
     description:
     - Host location (e.g. "Lab 2")
@@ -165,7 +170,7 @@ class HostIPAClient(IPAClient):
 
 
 def get_host_dict(description=None, force=None, ip_address=None, ns_host_location=None, ns_hardware_platform=None,
-                  ns_os_version=None, user_certificate=None, mac_address=None):
+                  ns_os_version=None, user_certificate=None, mac_address=None, userpassword=None):
     data = {}
     if description is not None:
         data['description'] = description
@@ -183,6 +188,8 @@ def get_host_dict(description=None, force=None, ip_address=None, ns_host_locatio
         data['usercertificate'] = [{"__base64__": item} for item in user_certificate]
     if mac_address is not None:
         data['macaddress'] = mac_address
+    if userpassword is not None:
+        data['userpassword'] = userpassword
     return data
 
 
@@ -206,7 +213,8 @@ def ensure(module, client):
                                 ns_hardware_platform=module.params['ns_hardware_platform'],
                                 ns_os_version=module.params['ns_os_version'],
                                 user_certificate=module.params['user_certificate'],
-                                mac_address=module.params['mac_address'])
+                                mac_address=module.params['mac_address'],
+                                userpassword=module.params['userpassword'])
     changed = False
     if state in ['present', 'enabled', 'disabled']:
         if not ipa_host:
@@ -245,6 +253,7 @@ def main():
                          user_certificate=dict(type='list', aliases=['usercertificate']),
                          mac_address=dict(type='list', aliases=['macaddress']),
                          update_dns=dict(type='bool'),
+                         userpassword=dict(type='str', required=False, aliases=['otp']),
                          state=dict(type='str', default='present', choices=['present', 'absent', 'enabled', 'disabled']))
 
     module = AnsibleModule(argument_spec=argument_spec,
