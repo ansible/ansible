@@ -1,5 +1,6 @@
 #!/usr/bin/python
-# Copyright (c) 2016-2017 Hewlett Packard Enterprise Development LP
+
+# Copyright: (c) 2016-2017, Hewlett Packard Enterprise Development LP
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
@@ -26,10 +27,10 @@ options:
     state:
         description:
             - Indicates the desired state for the Logical Interconnect Group resource.
-              C(present) will ensure data properties are compliant with OneView.
               C(absent) will remove the resource from OneView, if it exists.
+              C(present) will ensure data properties are compliant with OneView.
+        choices: [absent, present]
         default: present
-        choices: ['present', 'absent']
     data:
         description:
             - List with the Logical Interconnect Group properties.
@@ -45,19 +46,19 @@ EXAMPLES = '''
     config: /etc/oneview/oneview_config.json
     state: present
     data:
-      name: 'Test Logical Interconnect Group'
+      name: Test Logical Interconnect Group
       uplinkSets: []
-      enclosureType: 'C7000'
+      enclosureType: C7000
       interconnectMapTemplate:
         interconnectMapEntryTemplates:
           - logicalDownlinkUri: ~
             logicalLocation:
                 locationEntries:
-                    - relativeValue: "1"
-                      type: "Bay"
                     - relativeValue: 1
-                      type: "Enclosure"
-            permittedInterconnectTypeName: 'HP VC Flex-10/10D Module'
+                      type: Bay
+                    - relativeValue: 1
+                      type: Enclosure
+            permittedInterconnectTypeName: HP VC Flex-10/10D Module
             # Alternatively you can inform permittedInterconnectTypeUri
   delegate_to: localhost
 
