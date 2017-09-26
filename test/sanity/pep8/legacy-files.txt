@@ -98,7 +98,6 @@ lib/ansible/modules/cloud/google/gce_pd.py
 lib/ansible/modules/cloud/google/gce_tag.py
 lib/ansible/modules/cloud/google/gcpubsub.py
 lib/ansible/modules/cloud/google/gcspanner.py
-lib/ansible/modules/cloud/linode/linode.py
 lib/ansible/modules/cloud/lxc/lxc_container.py
 lib/ansible/modules/cloud/lxd/lxd_container.py
 lib/ansible/modules/cloud/lxd/lxd_profile.py
