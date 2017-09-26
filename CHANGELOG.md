@@ -6,6 +6,9 @@ Ansible Changes By Release
 ## 2.3.3 "Ramble On" - TBD
 
 ### Bugfixes
+* Security fix for CVE-2017-7550 the jenkins_plugin module was logging the jenkins
+  server password if the url_password was passed via the params field:
+  https://github.com/ansible/ansible/pull/30875
 * Fix alternatives module handlling of non existing options
 * Fix synchronize traceback with the docker connection plugin
 * Do not escape backslashes in the template lookup plugin to mirror what the template module does
