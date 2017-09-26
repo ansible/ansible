@@ -601,8 +601,9 @@ def main():
 
     # Look at s3_url and tweak connection settings
     # if connecting to RGW, Walrus or fakes3
-    for key in ['validate_certs', 'security_token', 'profile_name']:
-        aws_connect_kwargs.pop(key, None)
+    if s3_url:
+        for key in ['validate_certs', 'security_token', 'profile_name']:
+            aws_connect_kwargs.pop(key, None)
     try:
         s3 = get_s3_connection(module, aws_connect_kwargs, location, rgw, s3_url)
     except (botocore.exceptions.NoCredentialsError, botocore.exceptions.ProfileNotFound) as e:
