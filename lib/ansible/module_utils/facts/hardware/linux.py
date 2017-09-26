@@ -81,7 +81,7 @@ class LinuxHardware(Hardware):
 
         cpu_facts = self.get_cpu_facts(collected_facts=collected_facts)
         memory_facts = self.get_memory_facts()
-        dmi_facts = self.get_dmi_facts()
+        dmi_facts = self.get_dmi_facts(collected_facts=collected_facts)
         device_facts = self.get_device_facts()
         uptime_facts = self.get_uptime_facts()
         lvm_facts = self.get_lvm_facts()
@@ -255,13 +255,14 @@ class LinuxHardware(Hardware):
 
         return cpu_facts
 
-    def get_dmi_facts(self):
+    def get_dmi_facts(self, collected_facts=None):
         ''' learn dmi facts from system
 
         Try /sys first for dmi related facts.
         If that is not available, fall back to dmidecode executable '''
 
         dmi_facts = {}
+        collected_facts = collected_facts or {}
 
         if os.path.exists('/sys/devices/virtual/dmi/id/product_name'):
             # Use kernel DMI info, if available
