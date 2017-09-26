@@ -1,11 +1,10 @@
 Windows Remote Management
 =========================
-
-.. contents:: Topics
-
 Unlike Linux/Unix machine which use SSH by default, Windows machines are
 configured with WinRM instead. This page will expand on WinRM in more detail
 and how Ansible can be configured to use it.
+
+.. contents:: Topics
 
 What is WinRM?
 ``````````````
@@ -21,9 +20,10 @@ installed by running the following::
 
    pip install "pywinrm>=0.2.2"
 
-.. Note:: on distributions with multiple python versions, use pip2 or pip2.x, where x matches the python minor version Ansible is running under.
+.. Note:: on distributions with multiple python versions, use pip2 or pip2.x,
+    where x matches the python minor version Ansible is running under.
 
-.. _pywinrm https://github.com/diyan/pywinrm
+.. _pywinrm: https://github.com/diyan/pywinrm
 
 Authentication Options
 ``````````````````````
@@ -153,7 +153,7 @@ Generating a certificate with ``New-SelfSignedCertificate``:
     [System.IO.File]::WriteAllLines("$output_path\cert.pem", $pem_output)
 
     # export the private key in a PFX file
-    [System.IO.File]::WriteAllBytes("$output_path\cert.pfx", $cert.Export("Pfx")
+    [System.IO.File]::WriteAllBytes("$output_path\cert.pfx", $cert.Export("Pfx"))
 
 
 .. Note:: To convert the PFX file to a private key that pywinrm can use, run
@@ -507,6 +507,30 @@ the following powershell commands to enable TLS 1.2:
 
 .. _KRB3080079: https://support.microsoft.com/en-us/help/3080079/update-to-add-rds-support-for-tls-1.1-and-tls-1.2-in-windows-7-or-windows-server-2008-r2
 
+Set CredSSP Certificate
++++++++++++++++++++++++
+CredSSP works by encrypting the credentials through the TLS protocol and by
+default it uses a self signed certificate. The ``CertificateThumbprint`` option
+under the WinRM service configuration can be used to specify the thumbprint of
+another certificate.
+
+.. Note:: This certificate thumbprint is different from the WinRM listener
+    thumbprint and is completely indepenent from it. The message transport
+    is still sent over the WinRM listener but all the TLS encryption processes
+    are done with the certificate set by the service level certificate of that
+    thumbprint.
+
+To explicitly set the certificate to use for CredSSP, use the code below:
+
+.. code-block:: powershell
+
+    # note the value $certificate_thumbprint will be different in each
+    # situation, this needs to be set based on the cert that is used.
+    $certificate_thumbprint = "7C8DCBD5427AFEE6560F4AF524E325915F51172C"
+
+    # set the thumbprint value
+    Set-Item -Path WSMan:\localhost\Service\CertificateThumbprint -Value $certificate_thumbprint
+
 Non Administrator Accounts
 ``````````````````````````
 By default WinRM is configured to only allow accounts in the local
@@ -660,6 +684,9 @@ Some of the major limitations of WinRM are:
 * Commands under WinRM are done under a non interactive session which can break
   certain commands or executables from running
 
+* Run a process that interacts with ``DPAPI``, this can include installers that
+  call this like the SQL Server installer
+
 There are three ways in which these issues can be bypassed which are:
 
 * Set ``ansible_winrm_transport`` to ``credssp`` or ``kerberos`` (with
@@ -668,7 +695,8 @@ There are three ways in which these issues can be bypassed which are:
 
 * Use ``become`` to bypass all WinRM restrictions and run a command as it would
   locally. Unlike using an authentication transport like ``credssp`` this will
-  also remove the non-interactive restriction and the Windows Update API
+  also remove the non-interactive restriction and API restrictions like WUA and
+  DPAPI
 
 * Use a scheduled task to run a command which can be created with the
   ``win_scheduled_task`` module. Like ``become`` this bypasses all WinRM
