@@ -919,7 +919,7 @@ def main():
     use_apt_get = p['force_apt_get']
 
     if not use_apt_get and not APTITUDE_CMD and p.get('upgrade', None) in ['full', 'safe', 'yes']:
-        module.warn("Could not find aptitude. Using apt-get instead")
+        module.warn("Could not find aptitude. Using apt-get instead.")
         use_apt_get = True
 
     updated_cache = False
@@ -932,8 +932,10 @@ def main():
 
     # Deal with deprecated aliases
     if p['state'] == 'installed':
+        module.deprecate("State 'installed' is deprecated. Using state 'present' instead.", version=2.8)
         p['state'] = 'present'
     if p['state'] == 'removed':
+        module.deprecate("State 'removed' is deprecated. Using state 'absent' instead.", version=2.8)
         p['state'] = 'absent'
 
     # Get the cache object
