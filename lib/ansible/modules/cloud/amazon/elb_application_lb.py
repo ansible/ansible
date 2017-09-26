@@ -106,6 +106,7 @@ options:
     required: false
     default: application
     choices: ['application', 'network']
+    version_added: "2.5"
 extends_documentation_fragment:
     - aws
     - ec2
