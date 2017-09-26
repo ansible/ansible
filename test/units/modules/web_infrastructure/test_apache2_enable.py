@@ -1,6 +1,6 @@
 import pytest
 
-from ansible.modules.web_fnfrastructure.apache2_enable import create_apache_identifier
+from ansible.modules.web_infrastructure.apache2_enable import create_apache_identifier
 
 REPLACEMENTS = [
     ('php7.1', 'php7_module'),
