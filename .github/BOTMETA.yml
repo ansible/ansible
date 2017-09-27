@@ -35,11 +35,9 @@
 automerge: True
 files:
   .github/BOTMETA.yml:
-    labels:
-    - botmeta
+    labels: botmeta
   $modules/cloud/amazon/:
-    notify:
-    - willthames
+    notify: willthames
   $modules/cloud/amazon/aws_api_gateway.py: mikedlr willthames
   $modules/cloud/amazon/aws_direct_connect_connection.py: s-hertel
   $modules/cloud/amazon/aws_direct_connect_link_aggregation_group.py: s-hertel
@@ -816,15 +814,13 @@ files:
     - dynamic inventory script
     - dynamic inventory
     - inventory script
-    labels:
-    - "c:inventory/contrib_script"
+    labels: "c:inventory/contrib_script"
     support: community
   contrib/inventory/linode.py:
     keywords:
     - linode dynamic inventory script
     maintainers: intheclouddan rwaweber zbal
-    labels:
-    - cloud
+    labels: cloud
   contrib/inventory/openstack.py:
     keywords:
     - openstack dynamic inventory script
@@ -872,7 +868,9 @@ files:
     labels: networking
   $module_utils/aci.py:
     maintainers: dagwieers schunduri jmcgill298
-    labels: networking
+    labels:
+    - aci
+    - networking
   $module_utils/aireos.py:
     maintainers: jmighion
     labels: networking
@@ -887,7 +885,9 @@ files:
     labels: networking
   $module_utils/avi.py:
     maintainers: $team_avi
-    labels: networking
+    labels:
+    - avi
+    - networking
   $module_utils/bigswitch_utils.py:
     maintainers: jayakody tedelhourani vuile
     labels: networking
@@ -913,7 +913,9 @@ files:
     labels: networking
   $module_utils/f5_utils.py:
     maintainers: caphrim007
-    labels: networking
+    labels:
+    - f5
+    - networking
   $module_utils/fortios.py:
     maintainers: bjolivot
     labels: networking
@@ -1086,8 +1088,7 @@ files:
     - validate-modules
   docs/:
     labels: docs_pull_request
-    notify:
-      - dharmabumstead
+    notify: dharmabumstead
   packaging/:
     # 'packaging' automatically added to labels
 macros:
