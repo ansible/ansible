@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = """
 ---
-module: blockfromfile
+module: match
 author:
   - Evan Kaufman (@EvanK)
 version_added: "2.5"
@@ -49,17 +49,17 @@ notes:
 
 EXAMPLES = r"""
 # finds one named group, "priority"
-- blockfromfile:
+- match:
     path: /etc/keepalived/keepalived.conf
     regexp: '^[ \t\f\v]*priority[ \t\f\v]*(?P<priority>\d+)[ \t\f\v]*'
 
 # finds two named groups, "address" and "hostnames"
-- blockfromfile:
+- match:
     path: /etc/hosts
     regexp: '^[ \t\f\v]*(?P<address>[a-f\d.:]+)[ \t\f\v]*(?P<hostnames>(?:\S+[ \t\f\v]*)+)'
 
 # finds one unnamed group
-- blockfromfile:
+- match:
     path: /etc/sudoers
     regexp: '^[ \t\f\v]*(\S+)(?:[ \t\f\v]+\S*)+NOPASSWD:ALL'
 """

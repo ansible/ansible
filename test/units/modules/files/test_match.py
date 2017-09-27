@@ -1,9 +1,9 @@
 from ansible.compat.tests import unittest
 
-from ansible.modules.files.blockfromfile import find_from_content
+from ansible.modules.files.match import find_from_content
 
 
-class BlockFromFileTestCase(unittest.TestCase):
+class MatchTestCase(unittest.TestCase):
 
     def test_no_match(self):
         result = find_from_content(r'[Aa]+rdvark', "nothing here\nshould match\nthe given\nregular expression\n")

@@ -1,5 +1,5 @@
 # setup
-- set_fact: output_dir_test={{output_dir}}/test_blockfromfile
+- set_fact: output_dir_test={{output_dir}}/test_match
 
 - name: make sure our testing sub-directory does not exist
   file: path="{{ output_dir_test }}" state=absent
@@ -15,97 +15,97 @@
 
 ## test #1
 - name: match against test hosts_file
-  blockfromfile:
+  match:
     path: "{{ output_dir_test }}/hosts_file"
     regexp: '^[ \t\f\v]*(?P<address>[a-f\d.:]+)[ \t\f\v]*(?P<hostnames>(?:\S+[ \t\f\v]*)+)'
-  register: blockfromfile_test0
+  register: match_test0
 
-- debug: var=blockfromfile_test0
+- debug: var=match_test0
 
 - name: validate blocks matched from file
   assert:
     that:
       # basic validation of return format
-      - blockfromfile_test0|success
-      - blockfromfile_test0|changed
-      - blockfromfile_test0.msg.startswith("Found 7 matches in ")
+      - match_test0|success
+      - match_test0|changed
+      - match_test0.msg.startswith("Found 7 matches in ")
       # assert first match has both named and ordered groups with expected values
-      - blockfromfile_test0.matches[0].groups[0] == '127.0.0.1'
-      - blockfromfile_test0.matches[0].groups[1] == 'localhost.localdomain localhost'
-      - blockfromfile_test0.matches[0].named_groups.address == '127.0.0.1'
-      - blockfromfile_test0.matches[0].named_groups.hostnames == 'localhost.localdomain localhost'
+      - match_test0.matches[0].groups[0] == '127.0.0.1'
+      - match_test0.matches[0].groups[1] == 'localhost.localdomain localhost'
+      - match_test0.matches[0].named_groups.address == '127.0.0.1'
+      - match_test0.matches[0].named_groups.hostnames == 'localhost.localdomain localhost'
       # assert last match has both named and ordered groups with expected values
-      - blockfromfile_test0.matches[-1].groups[0] == 'ff02::3'
-      - blockfromfile_test0.matches[-1].groups[1] == 'ip6-allhosts'
-      - blockfromfile_test0.matches[-1].named_groups.address == 'ff02::3'
-      - blockfromfile_test0.matches[-1].named_groups.hostnames == 'ip6-allhosts'
+      - match_test0.matches[-1].groups[0] == 'ff02::3'
+      - match_test0.matches[-1].groups[1] == 'ip6-allhosts'
+      - match_test0.matches[-1].named_groups.address == 'ff02::3'
+      - match_test0.matches[-1].named_groups.hostnames == 'ip6-allhosts'
 
 ## test #2
 - name: fail match against test hosts_file
-  blockfromfile:
+  match:
     path: "{{ output_dir_test }}/hosts_file"
     regexp: '^[ \t\f\v]*(\S+)(?:[ \t\f\v]+\S*)+NOPASSWD:ALL'
-  register: blockfromfile_test1
+  register: match_test1
 
-- debug: var=blockfromfile_test1
+- debug: var=match_test1
 
 - name: validate no blocks matched from file
   assert:
     that:
       # basic validation of return format
-      - blockfromfile_test1|success
-      - not blockfromfile_test1|changed
-      - blockfromfile_test1.msg.startswith("Found 0 matches in ")
+      - match_test1|success
+      - not match_test1|changed
+      - match_test1.msg.startswith("Found 0 matches in ")
       # assert empty matches list
-      - blockfromfile_test1.matches == []
+      - match_test1.matches == []
 
 ## test #3
 - name: match against directory
-  blockfromfile:
+  match:
     path: "{{ output_dir_test }}"
     regexp: '^[ \t\f\v]*(?P<address>[a-f\d.:]+)[ \t\f\v]*(?P<hostnames>(?:\S+[ \t\f\v]*)+)'
-  register: blockfromfile_test2
+  register: match_test2
   ignore_errors: true
 
-- debug: var=blockfromfile_test2
+- debug: var=match_test2
 
 - name: validate failure matching directory
   assert:
     that:
       # basic validation of return format
-      - blockfromfile_test2|failure
-      - blockfromfile_test2.msg.endswith(" is a directory !")
+      - match_test2|failure
+      - match_test2.msg.endswith(" is a directory !")
 
 ## test #4
 - name: match against non-existent file
-  blockfromfile:
+  match:
     path: "{{ output_dir_test }}/missing_file"
     regexp: '^[ \t\f\v]*(?P<address>[a-f\d.:]+)[ \t\f\v]*(?P<hostnames>(?:\S+[ \t\f\v]*)+)'
-  register: blockfromfile_test3
+  register: match_test3
 
-- debug: var=blockfromfile_test3
+- debug: var=match_test3
 
 - name: validate silent failure matching non-existent file
   assert:
     that:
       # basic validation of return format
-      - blockfromfile_test3|success
-      - blockfromfile_test3.msg.endswith(" does not exist !")
+      - match_test3|success
+      - match_test3.msg.endswith(" does not exist !")
 
 ## test #5
 - name: fail against non-existent file (with fail_on_missing)
-  blockfromfile:
+  match:
     path: "{{ output_dir_test }}/missing_file"
     regexp: '^[ \t\f\v]*(?P<address>[a-f\d.:]+)[ \t\f\v]*(?P<hostnames>(?:\S+[ \t\f\v]*)+)'
     fail_on_missing: true
-  register: blockfromfile_test4
+  register: match_test4
   ignore_errors: true
 
-- debug: var=blockfromfile_test4
+- debug: var=match_test4
 
 - name: validate explicit failure matching directory
   assert:
     that:
       # basic validation of return format
-      - blockfromfile_test4|failure
-      - blockfromfile_test3.msg.endswith(" does not exist !")
+      - match_test4|failure
+      - match_test3.msg.endswith(" does not exist !")
