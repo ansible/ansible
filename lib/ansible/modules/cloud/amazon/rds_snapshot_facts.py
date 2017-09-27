@@ -22,7 +22,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: rds_snapshot_facts
-version_added: "2.4"
+version_added: "2.5"
 short_description: obtain facts about one or more RDS snapshots
 description:
   - obtain facts about one or more RDS snapshots.  This does not currently include
