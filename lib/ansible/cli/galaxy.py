@@ -91,6 +91,9 @@ class GalaxyCLI(CLI):
                                    help='Ignore errors and continue with the next specified role.')
             self.parser.add_option('-n', '--no-deps', dest='no_deps', action='store_true', default=False, help='Don\'t download roles listed as dependencies')
             self.parser.add_option('-r', '--role-file', dest='role_file', help='A file containing a list of roles to be imported')
+            self.parser.add_option('-C', '--check', dest='check_mode', action='store_true', default=False,
+                                   help='Don\'t make any changes; instead, try to predict some of the changes that may occur')
+
         elif self.action == "remove":
             self.parser.set_usage("usage: %prog remove role1 role2 ...")
         elif self.action == "list":
@@ -314,6 +317,7 @@ class GalaxyCLI(CLI):
 
         no_deps = self.options.no_deps
         force = self.options.force
+        check_mode = self.options.check_mode
 
         roles_left = []
         if role_file:
@@ -389,7 +393,11 @@ class GalaxyCLI(CLI):
                     continue
 
             try:
-                installed = role.install()
+                if not check_mode:
+                    installed = role.install()
+                else:
+                    installed = False
+                    display.display('- %s would be installed, but running in check mode.' % role.name)
             except AnsibleError as e:
                 display.warning("- %s was NOT installed successfully: %s " % (role.name, str(e)))
                 self.exit_without_ignore()
@@ -423,7 +431,7 @@ class GalaxyCLI(CLI):
                             else:
                                 display.display('- dependency %s is already installed, skipping.' % dep_role.name)
 
-            if not installed:
+            if not installed and not check_mode:
                 display.warning("- %s was NOT installed successfully." % role.name)
                 self.exit_without_ignore()
 
