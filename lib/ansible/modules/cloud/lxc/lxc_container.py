@@ -573,7 +573,7 @@ def create_script(command):
     (fd, script_file) = tempfile.mkstemp(prefix='lxc-attach-script')
     f = os.fdopen(fd, 'wb')
     try:
-        f.write(to_bytes(ATTACH_TEMPLATE % {'container_command': command}))
+        f.write(to_bytes(ATTACH_TEMPLATE % {'container_command': command}, errors='surrogate_or_strict'))
         f.flush()
     finally:
         f.close()
@@ -764,7 +764,7 @@ class LxcContainerManagement(object):
                 self.container.stop()
 
             with open(container_config_file, 'wb') as f:
-                f.writelines([to_bytes(line) for line in container_config])
+                f.writelines([to_bytes(line, errors='surrogate_or_strict') for line in container_config])
 
             self.state_change = True
             if container_state == 'running':
