@@ -51,6 +51,7 @@ Ansible Changes By Release
 * it is import_playbook .. not import_plays .. docs now reflect this
 * fixed typo and missed include/import conversion in import_tasks docs
 * updated porting docs with note about inventory_dir
+* removed extension requirement for yaml inventory plugin to restore previous behaviour
 
 <sdfasdfsadfsdflkjsdfklj3oiqrua id="2.4"></a>
 
