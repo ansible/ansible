@@ -639,7 +639,9 @@ files:
   $modules/web_infrastructure/ejabberd_user.py: privateip
   $modules/web_infrastructure/gunicorn.py: agmezr
   $modules/web_infrastructure/htpasswd.py: $team_ansible
-  $modules/web_infrastructure/jboss.py: jhoekx
+  $modules/web_infrastructure/jboss.py:
+    labels: jboss
+    maintainers: jhoekx
   $modules/web_infrastructure/jenkins_job.py: sermilrod
   $modules/web_infrastructure/jenkins_plugin.py: jtyr
   $modules/web_infrastructure/jenkins_script.py: hogarthj
