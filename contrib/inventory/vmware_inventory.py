@@ -41,6 +41,7 @@ from __future__ import print_function
 import atexit
 import datetime
 import getpass
+import itertools
 import json
 import os
 import re
@@ -82,6 +83,14 @@ def regex_match(s, pattern):
         return True
     else:
         return False
+
+
+def select_chain_match(inlist, key, pattern):
+    '''Get a key from a list of dicts, squash values to a single list, then filter'''
+    outlist = [x[key] for x in inlist]
+    outlist = list(itertools.chain(*outlist))
+    outlist = [x for x in outlist if regex_match(x, pattern)]
+    return outlist
 
 
 class VMwareMissingHostException(Exception):
@@ -127,6 +136,7 @@ class VMWareInventory(object):
     # use jinja environments to allow for custom filters
     env = Environment()
     env.filters['regex_match'] = regex_match
+    env.filters['select_chain_match'] = select_chain_match
 
     # translation table for attributes to fetch for known vim types
 
