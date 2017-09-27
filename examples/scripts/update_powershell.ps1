@@ -4,11 +4,11 @@
     pre-requisites list .NET Framework 4.5.2.
 .DESCRIPTION
     The script will upgrade the powershell version to whatever is supplied as
-    the 'target_version' on the host (see PARAMETER target_version for
+    the 'version' on the host (see PARAMETER version for
     supported targets).
 
     This script can be run on the following OS'
-        Windows Server 2008 (with SP2) - only supported target_version 3.0
+        Windows Server 2008 (with SP2) - only supported version 3.0
         Windows Server 2008 R2 (with SP1)
         Windows Server 2012
         Windows Server 2012 R2
@@ -37,7 +37,7 @@
     A log of this process is created in
     $env:SystemDrive\temp\update_powershell.log which is usually C:\temp\. This
     log can used to see how the script faired after an automatic reboot.
-.PARAMETER target_version
+.PARAMETER version
     [string] - The target powershell version to upgrade to. This can be;
         3.0,
         4.0, or
@@ -56,13 +56,13 @@
 .EXAMPLE
     # upgrade from powershell 1.0 to 3.0 with automatic login and reboots
     Set-ExecutionPolicy Unrestricted -Force
-    &.\update_powershell.ps1 -target_version 3.0 -username "Administrator" -password "Password" -Verbose
+    &.\update_powershell.ps1 -version 3.0 -username "Administrator" -password "Password" -Verbose
 .EXAMPLE
     # upgrade to 5.1 with defaults and manual login and reboots
     powershell.exe -ExecutionPolicy ByPass -File winrm_hotfix.ps1
 .EXAMPLE
     # upgrade to powershell 4.0 with automatic login and reboots
-    powershell.exe -ExecutionPolicy ByPass -File winrm_hotfix.ps1 -target_version 4.0 -username "Administrator" -password "Password" -Verbose
+    powershell.exe -ExecutionPolicy ByPass -File winrm_hotfix.ps1 -version 4.0 -username "Administrator" -password "Password" -Verbose
 .NOTES
     Author: Jordan Borean <jborean93@gmail.com>
     Contributors:
@@ -71,7 +71,7 @@
         Initial script created
 #>
 Param(
-    [string]$target_version = "5.1",
+    [string]$version = "5.1",
     [string]$username,
     [string]$password,
     [switch]$verbose = $false
@@ -99,7 +99,7 @@ Function Reboot-AndResume {
     Write-Log -message "adding script to run on next logon"
     $script_path = $script:MyInvocation.MyCommand.Path
     $ps_path = "$env:SystemDrive\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"
-    $arguments = "-target_version $target_version"
+    $arguments = "-version $version"
     if ($username -and $password) {
         $arguments = "$arguments -username `"$username`" -password `"$password`""
     }
@@ -225,7 +225,7 @@ if ($PSVersionTable -eq $null) {
 
 # exit if the target version is the same as the actual version
 $current_ps_version = [version]"$($PSVersionTable.PSVersion.Major).$($PSVersionTable.PSVersion.Minor)"
-if ($current_ps_version -eq [version]$target_version) {
+if ($current_ps_version -eq [version]$version) {
     Write-Log -message "current and target PS version are the same, no action is required"
     Clear-AutoLogon
     exit 0
@@ -240,7 +240,7 @@ if ($architecture -eq "AMD64") {
 }
 
 $actions = @()
-switch ($target_version) {
+switch ($version) {
     "3.0" {
         $actions += "3.0"
         break
@@ -271,7 +271,7 @@ switch ($target_version) {
         break
     }
     default {
-        $error_msg = "target_version '$target_version' is not supported in this upgrade script"
+        $error_msg = "version '$version' is not supported in this upgrade script"
         Write-Log -message $error_msg -level "ERROR"
         throw $error_msg
     }
