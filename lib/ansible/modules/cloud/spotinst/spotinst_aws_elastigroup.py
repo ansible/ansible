@@ -515,7 +515,6 @@ EXAMPLES = '''
             - sg-8f4b8fe9
           spot_instance_types:
             - c3.large
-          state: absent
           do_not_update:
             - image_id
             - target
@@ -1478,6 +1477,8 @@ def expand_scaling_policies(scaling_policies):
 
         if policy.get('maximum') is not None:
             eg_scaling_action.maximum = policy.get('maximum')
+
+        eg_policy.action = eg_scaling_action
 
         if policy.get('unit') is not None:
             eg_policy.unit = policy.get('unit')
