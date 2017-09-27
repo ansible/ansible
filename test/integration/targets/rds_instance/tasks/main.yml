@@ -136,7 +136,10 @@
     - name: create rds replica
       rds_instance:
         id: "{{ rds_instance_name }}-replica"
-        source_instance: "{{ rds_instance_name }}"
+        source_db_instance_identifier: "{{ rds_instance_name }}"
+        size: 5
+        db_instance_class: db.t2.micro
+        engine: postgres
         wait: yes
         wait_timeout: 1200
         region: '{{ec2_region}}'
