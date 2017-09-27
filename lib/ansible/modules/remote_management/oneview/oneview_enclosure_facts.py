@@ -41,36 +41,52 @@ extends_documentation_fragment:
 EXAMPLES = '''
 - name: Gather facts about all Enclosures
   oneview_enclosure_facts:
-    config: /etc/oneview/oneview_config.json
+    hostname: 172.16.101.48
+    username: administrator
+    password: my_password
+    api_version: 500
+  no_log: true
   delegate_to: localhost
 - debug: var=enclosures
 
 - name: Gather paginated, filtered and sorted facts about Enclosures
   oneview_enclosure_facts:
-    config: /etc/oneview/oneview_config.json
     params:
       start: 0
       count: 3
       sort: name:descending
       filter: status=OK
+    hostname: 172.16.101.48
+    username: administrator
+    password: my_password
+    api_version: 500
+  no_log: true
   delegate_to: localhost
 - debug: var=enclosures
 
 - name: Gather facts about an Enclosure by name
   oneview_enclosure_facts:
-    config: /etc/oneview/oneview_config.json
     name: Enclosure-Name
+    hostname: 172.16.101.48
+    username: administrator
+    password: my_password
+    api_version: 500
+  no_log: true
   delegate_to: localhost
 - debug: var=enclosures
 
 - name: Gather facts about an Enclosure by name with options
   oneview_enclosure_facts:
-    config: /etc/oneview/oneview_config.json
     name: Test-Enclosure
     options:
       - script                       # optional
       - environmentalConfiguration   # optional
       - utilization                  # optional
+    hostname: 172.16.101.48
+    username: administrator
+    password: my_password
+    api_version: 500
+  no_log: true
   delegate_to: localhost
 - debug: var=enclosures
 - debug: var=enclosure_script
@@ -80,7 +96,6 @@ EXAMPLES = '''
 - name: "Gather facts about an Enclosure with temperature data at a resolution of one sample per day, between two
          specified dates"
   oneview_enclosure_facts:
-    config: /etc/oneview/oneview_config.json
     name: Test-Enclosure
     options:
       - utilization:                   # optional
@@ -90,6 +105,11 @@ EXAMPLES = '''
             - endDate=2017-07-01T03:29:42.000Z
           view: day
           refresh: false
+    hostname: 172.16.101.48
+    username: administrator
+    password: my_password
+    api_version: 500
+  no_log: true
   delegate_to: localhost
 - debug: var=enclosures
 - debug: var=enclosure_utilization
