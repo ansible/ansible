@@ -988,7 +988,6 @@ def enforce_count(module, ec2, vpc):
             inst = get_instance_info(inst)
         all_instances.append(inst)
 
-        # Check that public ip assignment is the same and warn if not
         warn_if_public_ip_assignment_changed(module, inst)
 
     return (all_instances, instance_dict_array, changed_instance_ids, changed)
@@ -1448,7 +1447,6 @@ def startstop_instances(module, ec2, instance_ids, state, instance_tags):
     for res in ec2.get_all_instances(instance_ids, filters=filters):
         for inst in res.instances:
 
-            # Check that public ip assignment is the same and warn if not
             warn_if_public_ip_assignment_changed(module, inst)
 
             # Check "source_dest_check" attribute
@@ -1578,7 +1576,6 @@ def restart_instances(module, ec2, instance_ids, state, instance_tags):
     for res in ec2.get_all_instances(instance_ids, filters=filters):
         for inst in res.instances:
 
-            # Check that public ip assignment is the same and warn if not
             warn_if_public_ip_assignment_changed(module, inst)
 
             # Check "source_dest_check" attribute
