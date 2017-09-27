@@ -49,7 +49,7 @@ EXAMPLES = """
     - debug:
         msg: task1
 
-    - include: stuff.yml"
+    - import_tasks: stuff.yml
       when: hostvar is defined
 """
 
