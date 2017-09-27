@@ -61,7 +61,8 @@ Blocks also introduce the ability to handle errors in a way similar to exception
 
 The tasks in the ``block`` would execute normally, if there is any error the ``rescue`` section would get executed
 with whatever you need to do to recover from the previous error. The ``always`` section runs no matter what previous
-error did or did not occur in the ``block`` and ``rescue`` sections.
+error did or did not occur in the ``block`` and ``rescue`` sections. It should be noted that the play continues if a
+``rescue`` section completes successfully as it 'erases' the error status (but not the reporting), this means it won't trigger ``max_fail_percentage`` nor ``any_errors_fatal`` configurations but will appear in the playbook statistics.
 
 
 Another example is how to run handlers after an error occurred :
