@@ -136,12 +136,12 @@ def _system_state_change(module, endpoint):
 
 def main():
     argument_spec = openstack_full_argument_spec(
-        service=dict(required=True),
-        interface=dict(required=True, choices=['admin', 'public', 'internal']),
-        url=dict(required=True),
-        region=dict(required=False, default=None),
-        enabled=dict(default=True, type='bool'),
-        state=dict(default='present', choices=['absent', 'present']),
+        service=dict(type='str', required=True),
+        interface=dict(type='str', required=True, choices=['admin', 'public', 'internal']),
+        url=dict(type='str', required=True),
+        region=dict(type='str'),
+        enabled=dict(type='bool', default=True),
+        state=dict(type='str', default='present', choices=['absent', 'present']),
     )
 
     module_kwargs = openstack_module_kwargs()
