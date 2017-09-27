@@ -103,3 +103,41 @@
     state: present
     type: module
   when: "ansible_os_family == 'Debian'"
+
+- name: Set up test site file
+  file:
+    path: /etc/apache2/sites-available/apache2_enable_site.conf
+    contents: "#  test file"
+  when: "ansible_os_family == 'Debian'"
+
+- name: enable apache2_enable site
+  apache2_enable:
+    name: apache2_enable_site
+    type: site
+  when: "ansible_os_family == 'Debian'"
+
+- name: disable apache2_enable site
+  apache2_enable:
+    name: apache2_enable_site
+    type: site
+    state: absent
+  when: "ansible_os_family == 'Debian'"
+
+- name: Set up test conf file
+  file:
+    path: /etc/apache2/sites-available/apache2_enable_conf.conf
+    contents: "#  test file"
+  when: "ansible_os_family == 'Debian'"
+
+- name: enable apache2_enable conf
+  apache2_enable:
+    name: apache2_enable_conf
+    type: conf
+  when: "ansible_os_family == 'Debian'"
+
+- name: disable apache2_enable conf
+  apache2_enable:
+    name: apache2_enable_conf
+    type: conf
+    state: absent
+  when: "ansible_os_family == 'Debian'"
