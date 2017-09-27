@@ -57,7 +57,7 @@ options:
     description:
       - Database instance identifier.
     required: true
-  source_instance:
+  source_db_instance_identifier:
     description:
       - Name of the database when sourcing from a replica
     required: false
@@ -76,7 +76,7 @@ options:
       - Size in gigabytes of the initial storage for the DB instance.  See
         [API documentation](https://botocore.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.create_db_instance)
         for details of limits
-      - Required unless the database type is aurora,
+      - Required unless the database type is aurora.
   storage_type:
     description:
       - Specifies the storage type to be associated with the DB instance. C(iops) must
@@ -85,7 +85,7 @@ options:
     default: standard unless iops is set
   db_instance_class:
     description:
-      - The instance type of the database. If source_instance is specified then the replica inherits
+      - The instance type of the database. If source_db_instance_identifier is specified then the replica inherits
         the same instance type as the source instance.
   master_username:
     description:
@@ -177,6 +177,7 @@ options:
   snapshot:
     description:
       - snapshot provides a default for either db_snapshot_identifier or snapshot_identifier
+        allowing the same parameter to be used for both backup and restore.
     required: false
   wait:
     description:
@@ -248,11 +249,11 @@ EXAMPLES = '''
 # Create a read-only replica and wait for it to become available
 - rds_instance:
     id: new-database-replica
-    source_instance: new_database
+    source_db_instance_identifier: new_database
     wait: yes
     wait_timeout: 600
 
-# Promote the read replica to a standalone database by removing the source_instance
+# Promote the read replica to a standalone database by removing the source_db_instance_identifier
 # setting.  We use the full parameter names matching the ones AWS uses.
 - rds_instance:
     db_instance_identifier: new-database-replica
@@ -462,9 +463,9 @@ aurora_create_valid_vars = ['apply_immediately', 'character_set_name', 'cluster'
                             'engine_version', 'db_instance_class', 'license_model', 'preferred_maintenance_window',
                             'option_group_name', 'db_parameter_group_name', 'port', 'publicly_accessible',
                             'db_subnet_group_name', 'auto_minor_version_upgrade', 'tags', 'availability_zone']
-db_create_required_vars = ['db_instance_identifier', 'engine', 'allocated_storage',
+create_required_vars = ['db_instance_identifier', 'engine', 'allocated_storage',
                            'db_instance_class', 'master_username', 'master_user_password']
-db_create_valid_vars = ['backup_retention_period', 'preferred_backup_window', 'character_set_name', 'cluster',
+create_valid_vars = ['backup_retention_period', 'preferred_backup_window', 'character_set_name', 'cluster',
                         'db_name', 'engine_version', 'license_model', 'preferred_maintenance_window', 'multi_az',
                         'option_group_name', 'db_parameter_group_name', 'port', 'publicly_accessible',
                         'storage_type', 'db_subnet_group_name', 'auto_minor_version_upgrade', 'tags',
@@ -477,7 +478,7 @@ restore_valid_vars = ['db_name', 'iops', 'license_model', 'multi_az', 'option_gr
                       'auto_minor_version_upgrade', 'availability_zone', 'instance_type']
 reboot_required_vars = ['db_instance_identifier']
 reboot_valid_vars = ['force_failover']
-replicate_required_vars = ['db_instance_identifier', 'source_instance']
+replicate_required_vars = ['db_instance_identifier', 'source_db_instance_identifier']
 replicate_valid_vars = ['instance_type', 'iops', 'option_group_name', 'port', 'publicly_accessible',
                         'storage_type', 'tags', 'auto_minor_version_upgrade', 'availability_zone']
 
@@ -488,8 +489,8 @@ def create_db_instance(module, conn):
         required_vars = aurora_create_required_vars
         valid_vars = aurora_create_valid_vars
     else:
-        required_vars = db_create_required_vars
-        valid_vars = db_create_valid_vars
+        required_vars = create_required_vars
+        valid_vars = create_valid_vars
 
     if module.params.get('db_subnet_group_name'):
         valid_vars.append('vpc_security_group_ids')
@@ -638,7 +639,7 @@ def update_rds_tags(module, client, db_instance=None):
 
 def abort_on_impossible_changes(module, before_facts):
     for immutable_key in ['master_username', 'engine', 'db_name']:
-        if immutable_key in module.params:
+        if immutable_key in module.params and module.params[immutable_key] is not None:
             try:
                 keys_different = module.params[immutable_key] != before_facts[immutable_key]
             except KeyError:
@@ -995,7 +996,7 @@ argument_spec = dict(
     log_level=dict(type='int', default=10),
 
     # replication variables
-    source_instance=dict(),
+    source_db_instance_identifier=dict(),
 
     # RDS create variables
     db_instance_identifier=dict(aliases=["id"], required=True),
@@ -1040,6 +1041,9 @@ argument_spec = dict(
     # FIXME: add a purge_tags option using compare_aws_tags()
 )
 
+# FIXME allocated_storage should be required if state=present and engine is not aurora
+# if aurora then parameter should be ignored.
+
 required_if = [
     ('storage_type', 'io1', ['iops']),
     ('state', 'present', ['engine', 'db_instance_class']),
@@ -1057,7 +1061,7 @@ def setup_module_object():
     module = AnsibleAWSModule(
         argument_spec=argument_spec,
         required_if=required_if,
-        mutually_exclusive=[['old_instance_id', 'source_instance', 'snapshot']],
+        mutually_exclusive=[['old_instance_id', 'source_db_instance_identifier', 'snapshot']],
     )
     return module
 
@@ -1105,7 +1109,7 @@ def ensure_rds_state(module, conn):
     changed = False
     instance = get_instance_to_work_on(module, conn)
 
-    if instance is None and module.params.get('source_instance'):
+    if instance is None and module.params.get('source_db_instance_identifier'):
         replicate_return_dict = replicate_db_instance(module, conn)
         instance = replicate_return_dict['instance']
         changed = True
@@ -1120,7 +1124,7 @@ def ensure_rds_state(module, conn):
     if instance is None:
         return_dict = create_db_instance(module, conn)
     else:
-        if instance.get('replication_source') and not module.params.get('source_instance'):
+        if instance.get('replication_source') and not module.params.get('source_db_instance_identifier'):
             promote_db_instance(module, conn)
         if update_rds_tags(module, conn, instance):
             changed = True

@@ -191,6 +191,7 @@ def test_modify_should_change_instance_and_return_changed_if_param_changes():
         "allocated_storage": 5,
         "storage_type": "gp",
         "apply_immediately": True,
+        "master_username": None
     }
 
     rds_client_double = MagicMock()
@@ -216,6 +217,7 @@ def test_modify_should_change_instance_and_return_changed_if_param_changes():
     mod_db_fn.assert_called_with(DBInstanceIdentifier='fakedb', DBPortNumber=342,
                                  NewDBInstanceIdentifier='fakedb-too', StorageType='gp',
                                  ApplyImmediately=True)
+    module_double.fail_json.assert_not_called()
     assert mod_return["changed"], "modify failed to return changed"
 
 
@@ -554,7 +556,7 @@ def test_select_params_should_provide_needed_args_to_create_if_module_has_basics
         "master_user_password": "letmeinletmein",
     })
     module = rds_i.setup_module_object()
-    params = rds_i.select_parameters(module, rds_i.db_create_required_vars, rds_i.db_create_valid_vars)
+    params = rds_i.select_parameters(module, rds_i.create_required_vars, rds_i.create_valid_vars)
     for i in needed_args:
         assert i in params, "{0} parameter missing".format(i)
         assert len(params[i]) > 0, "{0} parameter lacks value".format(i)
