@@ -133,3 +133,47 @@
   assert:
     that:
         - "clone_d1_c1_f0_remodify.results|map(attribute='changed')|unique|list == [false]"
+
+- name: delete the new VMs
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: "{{ 'newvm_' + item|basename }}"
+    #template: "{{ item|basename }}"
+    #guest_id: centos64Guest
+    datacenter: "{{ (item|basename).split('_')[0] }}"
+    state: absent
+    folder: "{{ item|dirname }}"
+  with_items: "{{ vmlist['json'] }}"
+  register: clone_d1_c1_f0_delete
+
+- debug: var=clone_d1_c1_f0_delete
+
+- name: assert that changes were made with deletion
+  assert:
+    that:
+        - "clone_d1_c1_f0_delete.results|map(attribute='changed')|unique|list == [true]"
+
+- name: re-delete the new VMs
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: "{{ 'newvm_' + item|basename }}"
+    #template: "{{ item|basename }}"
+    #guest_id: centos64Guest
+    datacenter: "{{ (item|basename).split('_')[0] }}"
+    state: absent
+    folder: "{{ item|dirname }}"
+  with_items: "{{ vmlist['json'] }}"
+  register: clone_d1_c1_f0_redelete
+
+- debug: var=clone_d1_c1_f0_redelete
+
+- name: assert that no changes were made with redeletion
+  assert:
+    that:
+        - "clone_d1_c1_f0_redelete.results|map(attribute='changed')|unique|list == [false]"
