@@ -40,11 +40,14 @@
   gather_subset: "hardware"
   gather_facts: yes
   tasks:
+    - name: debug stuff
+      debug:
+        var: hostvars['facthost22']
     # we should also collect platform, but not distribution
     - name: Test that retrieving hardware facts works and gets prereqs from platform and distribution
+      when: ansible_system|default("UNDEF") == "Linux"
       assert:
         # LinuxHardwareCollector requires 'platform' facts
-        when: ansible_system|default("UNDEF") == "Linux"
         that:
           - 'ansible_memory_mb|default("UNDEF") != "UNDEF"'
           - 'ansible_default_ipv4|default("UNDEF") == "UNDEF"'
