@@ -336,10 +336,13 @@ files:
   $modules/files/synchronize.py: $team_ansible tima
   $modules/files/tempfile.py:
   $modules/files/template.py: $team_ansible
-  $modules/files/unarchive.py: dagwieers pileofrogs
+  $modules/files/unarchive.py:
+    labels: unarchive
+    maintainers: dagwieers pileofrogs
   $modules/files/xattr.py: $team_ansible bcoca
   $modules/files/xml.py:
     ignored: magnus919
+    labels: xml
     maintainers: tbielawa dagwieers sm4rk0 cmprescott
   $modules/identity/ipa/:
     maintainers: $team_ipa
