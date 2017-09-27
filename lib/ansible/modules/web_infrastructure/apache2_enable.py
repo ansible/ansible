@@ -225,7 +225,7 @@ def _is_enabled(item):
 
     if typ == 'module':
         return _module_is_enabled(item)
-    elif typ == 'conf' or typ == 'site':
+    elif typ in ('conf', 'site'):
         server_root = _get_serverroot(item)
         dirname = {'site': 'sites', 'conf': 'conf'}[typ]
         return os.path.exists(os.path.join(
@@ -274,8 +274,8 @@ def _set_state(item, state):
                 changed=True, result=success_msg, warnings=item.warnings)
         else:
             item.fail_json(
-                msg="Failed to set site %s to %s: %s"
-                % (name, state_string, stdout),
+                msg="Failed to set %s %s to %s: %s"
+                % (typ, name, state_string, stdout),
                 rc=result, stdout=stdout, stderr=stderr)
     else:
         item.exit_json(

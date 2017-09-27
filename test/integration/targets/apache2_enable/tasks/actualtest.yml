@@ -106,38 +106,38 @@
 
 - name: Set up test site file
   copy:
-    dest: /etc/apache2/sites-available/apache2_enable_site.conf
+    dest: /etc/apache2/sites-available/testsite.conf
     content: "#  test file"
   when: "ansible_os_family == 'Debian'"
 
 - name: enable apache2_enable site
   apache2_enable:
-    name: apache2_enable_site
+    name: testsite
     type: site
   when: "ansible_os_family == 'Debian'"
 
 - name: disable apache2_enable site
   apache2_enable:
-    name: apache2_enable_site
+    name: testsite
     type: site
     state: absent
   when: "ansible_os_family == 'Debian'"
 
 - name: Set up test conf file
   copy:
-    dest: /etc/apache2/sites-available/apache2_enable_conf.conf
+    dest: /etc/apache2/conf-available/testconfig.conf
     content: "#  test file"
   when: "ansible_os_family == 'Debian'"
 
 - name: enable apache2_enable conf
   apache2_enable:
-    name: apache2_enable_conf
+    name: testconfig
     type: conf
   when: "ansible_os_family == 'Debian'"
 
 - name: disable apache2_enable conf
   apache2_enable:
-    name: apache2_enable_conf
+    name: testconfig
     type: conf
     state: absent
   when: "ansible_os_family == 'Debian'"
