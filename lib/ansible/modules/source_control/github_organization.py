@@ -1,23 +1,9 @@
 #!/usr/bin/python
 #
-# (c) 2017, Peter Murray <peter.murray@osirisoft.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -27,14 +13,13 @@ module: github_organization
 short_description: Create/Rename a GitHub organization.
 description:
     - Create or Rename a GitHub organization.
-version_added: "2.4"
+version_added: "2.5"
 options:
   state:
     description:
       -  Whether to create or rename an organization
     choices: ['present', 'rename']
     default: 'present'
-    required: false
   name:
     description:
       - The name of the organization to create or rename
@@ -43,7 +28,6 @@ options:
     description:
       - The owner of the organization that is being created.
         The owner is required when I(state=present)
-    required: False
   rename_to:
     description:
       - The new name of the organization when renaming.
@@ -69,8 +53,8 @@ options:
     description:
       - Whether or not to validate the certificate returned from the GitHub Enterprise
         instance. This is useful when using a self signed certificate.
+    type: bool
     default: True
-    required: False
 author:
   - "Peter Murray (@peter-murray)"
 '''
@@ -161,7 +145,7 @@ def _build_api_url(base_url, path):
 
 
 def _get_auth_header(user, token):
-    auth = base64.encodestring('%s:%s' % (user, token)).replace('\n', '')
+    auth = base64.encodestring(('%s:%s' % (user, token)).encode()).decode().replace('\n', '')
     return 'Basic %s' % auth
 
 
@@ -298,8 +282,6 @@ def main():
         result = create_organization(module, auth_header)
     elif state == 'rename':
         result = rename_organization(module, auth_header)
-    else:
-        module.fail_json(msg='Unexpected state "{0}"'.format(state))
 
     module.exit_json(**result)
 
