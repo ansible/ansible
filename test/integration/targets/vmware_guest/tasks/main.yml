@@ -12,3 +12,4 @@
 - include: poweroff_d1_c1_f0.yml
 - include: poweroff_d1_c1_f1.yml
 - include: clone_d1_c1_f0.yml
+- include: create_d1_c1_f0.yml
