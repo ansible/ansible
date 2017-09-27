@@ -53,6 +53,7 @@ Ansible Changes By Release
 * fixed typo and missed include/import conversion in import_tasks docs
 * updated porting docs with note about inventory_dir
 * removed extension requirement for yaml inventory plugin to restore previous behaviour
+* fixed ansible-pull to now correctly deal with inventory
 
 <sdfasdfsadfsdflkjsdfklj3oiqrua id="2.4"></a>
 
