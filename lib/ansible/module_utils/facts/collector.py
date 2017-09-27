@@ -37,6 +37,13 @@ from ansible.module_utils.facts import timeout
 
 
 class CycleFoundInFactDeps(Exception):
+    '''Indicates there is a cycle in fact collector deps
+
+    If collector-B requires collector-A, and collector-A requires
+    collector-B, that is a cycle. In that case, there is no ordering
+    that will satisfy B before A and A and before B. That will cause this
+    error to be raised.
+    '''
     pass
 
 
@@ -321,6 +328,16 @@ def tsort(dep_map):
     return sorted_list
 
 
+def _solve_deps(collector_names, all_fact_subsets):
+    solutions = collector_names.copy()
+    unresolved = find_unresolved_requires(collector_names, all_fact_subsets)
+
+    new_names = resolve_requires(unresolved, all_fact_subsets)
+    solutions.update(new_names)
+
+    return solutions
+
+
 def collector_classes_from_gather_subset(all_collector_classes=None,
                                          valid_subsets=None,
                                          minimal_gather_subset=None,
@@ -366,17 +383,14 @@ def collector_classes_from_gather_subset(all_collector_classes=None,
                                           aliases_map=aliases_map,
                                           platform_info=platform_info)
 
-    unresolved = find_unresolved_requires(collector_names, all_fact_subsets)
+    complete_collector_names = _solve_deps(collector_names, all_fact_subsets)
 
-    new_names = resolve_requires(unresolved, all_fact_subsets)
-    collector_names.update(new_names)
-
-    dep_map = build_dep_data(collector_names, all_fact_subsets)
+    dep_map = build_dep_data(complete_collector_names, all_fact_subsets)
 
     ordered_deps = tsort(dep_map)
-    collector_names = [x[0] for x in ordered_deps]
+    ordered_collector_names = [x[0] for x in ordered_deps]
 
-    selected_collector_classes = select_collector_classes(collector_names,
+    selected_collector_classes = select_collector_classes(ordered_collector_names,
                                                           all_fact_subsets,
                                                           all_collector_classes)
 
