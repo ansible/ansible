@@ -1,6 +1,10 @@
 #!/usr/bin/python
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -19,8 +23,8 @@ options:
     description:
       - Create, update or cancel instances
     required: false
-    default: 'present'
-    choices: ['present', 'absent', 'latest', 'reloaded']
+    default: present
+    choices: ["present", "absent", "latest", "reloaded"]
   name:
     description:
       - Name of the WAS instance to be created, updated or cancelled
@@ -32,9 +36,9 @@ options:
     default: false
   instance_type:
     description:
-      - Type of WebSphere instance to create. Required when creating or reloading instance, but not when cancelling instance
-      - Valid options when creating: C(LibertyCollective)/C(LibertyCore)/C(LibertyNDServer)/C(WASBase)/C(WASCell)/C(WASNDServer)
+      - Type of WebSphere instance to create. Required if I(state==present) creating or reloading instance, but not when cancelling instance
     required: false
+    choices: ["LibertyCollective", "LibertyCore", "LibertyNDServer", "WASBase", "WASCell", "WASNDServer"]
   size:
     description:
       - T-Shirt size of WebSphere instance.
@@ -145,9 +149,6 @@ public_ip:
 from ansible.module_utils.basic import AnsibleModule
 import time
 import base64
-
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
 
 try:
     import requests
