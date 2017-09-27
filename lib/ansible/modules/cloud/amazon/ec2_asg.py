@@ -952,9 +952,15 @@ def create_autoscaling_group(connection, module):
                     attach_lb_target_groups(connection, group_name, list(tgs_to_attach))
 
         # check for attributes that aren't required for updating an existing ASG
-        desired_capacity = desired_capacity if desired_capacity is not None else as_group['DesiredCapacity']
-        min_size = min_size if min_size is not None else as_group['MinSize']
-        max_size = max_size if max_size is not None else as_group['MaxSize']
+        # check if min_size/max_size/desired capacity have been specified and if not use ASG values
+        if min_size is None:
+            min_size = as_group['MinSize']
+        if max_size is None:
+            max_size = as_group['MaxSize']
+        if desired_capacity is None and as_group['DesiredCapacity'] is None:
+            desired_capacity = min_size
+        elif desired_capacity is None:
+            desired_capacity = as_group['DesiredCapacity']
         launch_config_name = launch_config_name or as_group['LaunchConfigurationName']
 
         launch_configs = describe_launch_configurations(connection, launch_config_name)
@@ -1110,7 +1116,9 @@ def replace(connection, module):
         min_size = as_group['MinSize']
     if max_size is None:
         max_size = as_group['MaxSize']
-    if desired_capacity is None:
+    if desired_capacity is None and as_group['DesiredCapacity'] is None:
+        desired_capacity = min_size
+    elif desired_capacity is None:
         desired_capacity = as_group['DesiredCapacity']
     # set temporary settings and wait for them to be reached
     # This should get overwritten if the number of instances left is less than the batch size.
