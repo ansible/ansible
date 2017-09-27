@@ -232,13 +232,26 @@ def compile_folder_path_for_object(vobj):
     if isinstance(vobj, vim.Folder):
         paths.append(vobj.name)
 
+    broke = False
+
     thisobj = vobj
-    while hasattr(thisobj, 'parent'):
-        thisobj = thisobj.parent
-        if thisobj.name == 'Datacenters':
+    while True:
+        try:
+            thisobj = thisobj.parent
+            if thisobj is None:
+                broke = True
+                break
+        except (IndexError, AttributeError) as err:
+            broke = True
             break
         if isinstance(thisobj, vim.Folder):
             paths.append(thisobj.name)
+        else:
+            """ break as soon as we hit something that is not a folder """
+            break
+    if broke:
+        """ we reached the top. Remove the 'datacenters' folder from the list """
+        paths.pop()
     paths.reverse()
     return '/' + '/'.join(paths)
 
