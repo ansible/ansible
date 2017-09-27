@@ -106,7 +106,7 @@ options:
         Set secondary_private_ip_addresses to an empty list to purge all secondary addresses.
     required: false
     default: False
-    version_added: 2.4
+    version_added: 2.5
   secondary_private_ip_address_count:
     description:
       - The number of secondary IP addresses to assign to the network interface. This option is mutually exclusive of secondary_private_ip_addresses
