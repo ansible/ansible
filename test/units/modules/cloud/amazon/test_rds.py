@@ -46,6 +46,10 @@ def diff_return_a_populated_dict(junk, junktoo):
     return {"before": "fake", "after": "faketoo"}
 
 
+def sleeper_double(junk):
+    pass
+
+
 # the following are two matching almost real responses from describe
 # and modify calls based on actual returns in which all of the
 # returned data has been subtituted with fake identifiers etc.
@@ -53,6 +57,7 @@ def diff_return_a_populated_dict(junk, junktoo):
 # they are good for testing code can understand such a response and
 # return something useful though we should not rely on the structure
 # remaining stable beyond what is documented
+
 
 describe_rds_return = {
     u'DBInstances': [{
@@ -177,7 +182,7 @@ ansible_module_template = AnsibleAWSModule(argument_spec=rds_i.argument_spec, re
 #    basic._ANSIBLE_ARGS = to_bytes('{ "ANSIBLE_MODULE_ARGS": { "id":"fred", "port": 342} }')
 
 
-def test_modify_should_return_changed_if_param_changes():
+def test_modify_should_change_instance_and_return_changed_if_param_changes():
     params = {
         "port": 342,
         "force_password_update": True,
@@ -185,24 +190,32 @@ def test_modify_should_return_changed_if_param_changes():
         "old_db_instance_identifier": "fakedb",  # should be currently existing
         "allocated_storage": 5,
         "storage_type": "gp",
+        "apply_immediately": True,
     }
 
     rds_client_double = MagicMock()
     rds_instance_entry_mock = rds_client_double.describe_db_instances.return_value.__getitem__.return_value.__getitem__
-    rds_instance_entry_mock.return_value = describe_rds_return['DBInstances'][0]
+
+    instance = describe_rds_return['DBInstances'][0]
+    new_instance = describe_rds_new_return['DBInstances'][0]
+    rds_instance_entry_mock.return_value = new_instance
+
     mod_db_fn = rds_client_double.modify_db_instance
     mod_db_fn.return_value = modify_rds_return
 
     module_double = MagicMock(ansible_module_template)
     module_double.params = params
 
-    mod_return = rds_i.modify_db_instance(module_double, rds_client_double)
+    with patch.object(time, 'sleep', sleeper_double):
+        mod_return = rds_i.modify_db_instance(module_double, rds_client_double, instance)
+
     print("rds calls:\n" + str(rds_client_double.mock_calls))
     print("module calls:\n" + str(module_double.mock_calls))
 
     mod_db_fn.assert_called_once(), "modify called more than once which shoudn't be needed"
     mod_db_fn.assert_called_with(DBInstanceIdentifier='fakedb', DBPortNumber=342,
-                                 NewDBInstanceIdentifier='fakedb-too', StorageType='gp')
+                                 NewDBInstanceIdentifier='fakedb-too', StorageType='gp',
+                                 ApplyImmediately=True)
     assert mod_return["changed"], "modify failed to return changed"
 
 
@@ -211,7 +224,7 @@ def test_modify_should_retry_state_failures():
     params = {
         "port": 342,
         "force_password_update": True,
-        "db_instance_identifier": "fakedb-too",  # should not yet exist
+        "db_instance_identifier": "fakedb-too",  # should exist
         "allocated_storage": 5,
         "storage_type": "gp",
     }
@@ -229,8 +242,11 @@ def test_modify_should_retry_state_failures():
     module_double = MagicMock(ansible_module_template)
     module_double.params = params
 
-#    pdb.set_trace()
-    mod_return = rds_i.modify_db_instance(module_double, rds_client_double)
+    instance = describe_rds_new_return['DBInstances'][0]
+
+    with patch.object(time, 'sleep', sleeper_double):
+        mod_return = rds_i.modify_db_instance(module_double, rds_client_double, instance)
+
     print("rds calls:\n" + str(rds_client_double.mock_calls))
     print("module calls:\n" + str(module_double.mock_calls))
 
@@ -260,7 +276,8 @@ def test_modify_should_modify_new_db_and_ignore_old_param_if_new_exists_and_old_
     module_double = MagicMock(ansible_module_template)
     module_double.params = params
 
-    mod_return = rds_i.modify_db_instance(module_double, rds_client_double)
+    instance = describe_rds_return['DBInstances'][0]
+    mod_return = rds_i.modify_db_instance(module_double, rds_client_double, instance)
     print("rds calls:\n" + str(rds_client_double.mock_calls))
     print("module calls:\n" + str(module_double.mock_calls))
 
@@ -286,11 +303,12 @@ def test_modify_should_return_false_in_changed_if_param_same():
     my_instance['DBInstanceIdentifier'] = 'fakedb-too'
     rds_instance_entry_mock.return_value = my_instance
 
+    instance = describe_rds_new_return['DBInstances'][0]
     rds_client_double.modify_db_instance.return_value = modify_rds_return
 
     module_double = MagicMock(ansible_module_template)
     module_double.params = params
-    mod_return = rds_i.modify_db_instance(module_double, rds_client_double)
+    mod_return = rds_i.modify_db_instance(module_double, rds_client_double, instance)
     print("rds calls:\n" + str(rds_client_double.mock_calls))
     print("module calls:\n" + str(module_double.mock_calls))
 
@@ -394,7 +412,7 @@ def test_await_should_wait_till_not_pending():
                              await_pending=1)
     print("dbinstance calls:\n" + str(rds_client_double.describe_db_instances.mock_calls))
     assert(len(sleeper_double.mock_calls) > 5), "await_pending didn't wait enough"
-    assert(len(rds_client_double.describe_db_instances.mock_calls) > 7), "await_pending didn't wait enough"
+    assert(len(rds_client_double.describe_db_instances.mock_calls) > 7), "await_pending waited more than needed"
 
 
 error_response = {'Error': {'Code': 'DBInstanceNotFound', 'Message': 'Fake Testing Error'}}
@@ -433,7 +451,7 @@ def test_await_should_wait_for_delete_and_handle_none():
     assert(len(rds_client_double.describe_db_instances.mock_calls) > 5), "await_pending didn't wait enough"
 
 
-def test_update_rds_tags_should_add_and_remove_appropriate_tags():
+def test_update_rds_tags_should_check_then_add_and_remove_appropriate_tags():
     params = {
         "tags": dict(newtaga="avalue", oldtagb="bvalue"),
         "db_instance_identifier": "fakedb-too",
@@ -450,12 +468,12 @@ def test_update_rds_tags_should_add_and_remove_appropriate_tags():
     rds_instance_entry_mock = rds_client_double.describe_db_instances.return_value.__getitem__.return_value.__getitem__n
     my_instance = copy.deepcopy(describe_rds_return['DBInstances'][0])
     rds_instance_entry_mock.return_value = my_instance
-
     module_double = MagicMock(ansible_module_template)
     module_double.params = params
 
     tag_update_return = rds_i.update_rds_tags(module_double, rds_client_double, db_instance=my_instance)
 
+    ls_tag_fn.assert_called_with(ResourceName='arn:aws:rds:us-east-1:1234567890:db:fakedb')
     mk_tag_fn.assert_called_with(ResourceName='arn:aws:rds:us-east-1:1234567890:db:fakedb', Tags=[{'Value': 'avalue', 'Key': 'newtaga'}])
     rm_tag_fn.assert_called_with(ResourceName='arn:aws:rds:us-east-1:1234567890:db:fakedb', TagKeys=['oldtagc'])
     assert tag_update_return is True
@@ -548,3 +566,64 @@ def test_camel_should_convert_varied_variables_correctly():
     assert rds_i.camel('db_name') == 'DBName'
     assert rds_i.camel('tde_credential_arn') == 'TdeCredentialArn'
     assert rds_i.camel('performance_insights_kms_key_id') == 'PerformanceInsightsKMSKeyId'
+
+
+def test_given_apply_immediately_and_wait_modify_should_call_await_function():
+    params = {
+        "port": 342,
+        "force_password_update": True,
+        "db_instance_identifier": "fakedb-too",  # should not yet exist
+        "old_db_instance_identifier": "fakedb",  # should be currently existing
+        "allocated_storage": 5,
+        "storage_type": "gp",
+        "apply_immediately": True,
+    }
+
+    rds_client_double = MagicMock()
+    rds_instance_entry_mock = rds_client_double.describe_db_instances.return_value.__getitem__.return_value.__getitem__
+    rds_instance_entry_mock.return_value = describe_rds_return['DBInstances'][0]
+    mod_db_fn = rds_client_double.modify_db_instance
+    mod_db_fn.return_value = modify_rds_return
+
+    module_double = MagicMock(ansible_module_template)
+    module_double.params = params
+
+    instance = describe_rds_return['DBInstances'][0]
+
+    with patch.object(time, 'sleep', sleeper_double):
+        mod_return = rds_i.modify_db_instance(module_double, rds_client_double, instance)
+    print("rds calls:\n" + str(rds_client_double.mock_calls))
+    print("module calls:\n" + str(module_double.mock_calls))
+
+    mod_db_fn.assert_called_once(), "modify called more than once which shoudn't be needed"
+    mod_db_fn.assert_called_with(DBInstanceIdentifier='fakedb', DBPortNumber=342,
+                                 NewDBInstanceIdentifier='fakedb-too', StorageType='gp',
+                                 ApplyImmediately=True)
+
+    assert mod_return["changed"], "modify failed to return changed"
+
+
+# test with exceptions so we can avoid stepping through the rest of the logic of the function
+class LogCalledGood(Exception):
+    pass
+
+
+def test_major_functions_should_log_at_least_once():
+    for i in [rds_i.create_db_instance, rds_i.replicate_db_instance,
+              rds_i.delete_db_instance, rds_i.update_rds_tags, rds_i.modify_db_instance,
+              rds_i.promote_db_instance, rds_i.reboot_db_instance,
+              rds_i.restore_db_instance]:
+        instance_double = MagicMock()
+        rds_client_double = MagicMock()
+        module_double = MagicMock(ansible_module_template)
+        module_double.log.side_effect = LogCalledGood
+        rds_i.main_logger.module = module_double
+        passed = False
+        try:
+            if i is rds_i.modify_db_instance:
+                i(module_double, rds_client_double, instance_double)
+            else:
+                i(module_double, rds_client_double)
+        except LogCalledGood:
+            passed = True
+        assert passed, i + " failed to call log function"

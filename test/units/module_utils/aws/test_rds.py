@@ -129,25 +129,28 @@ class FakeResource():
                     u'DBInstanceIdentifier': 'fakeDBIDstring'}]}
 
 
+db_id_key = 'db_instance_identifier'
+
+
 class RDSUtilsTestCase(unittest.TestCase):
 
     def test_get_db_instance_should_return_camel_dict(self):
         conn = FakeResource()
         db_inst = get_db_instance(conn, "fakeDBIDstring")
-        assert 'id' not in db_inst
+        assert db_id_key not in db_inst
         assert db_inst["DBInstanceIdentifier"] == "fakeDBIDstring"
 
     def test_get_db_snapshot_should_return_camel_dict(self):
         conn = FakeResource()
         db_snap = get_snapshot(conn, "rds:fakeSnapshotIDstring")
-        for i in "id", "wait", "wait_timeout":
+        for i in "id", db_id_key, "wait", "wait_timeout":
             assert i not in db_snap
         assert db_snap["DBSnapshotIdentifier"] == "rds:fakeSnapshotIDstring"
 
     def test_instance_facts_gives_sensible_values(self):
         conn = FakeResource()
         db_facts = instance_to_facts(get_db_instance(conn, "fakeDBIDstring"))
-        assert db_facts['id'] == "fakeDBIDstring"
+        assert db_facts[db_id_key] == "fakeDBIDstring"
 #  FIXME - we need to agree which of these need to go
 #        assert db_facts['size'] == "fakeSnapshotIDString"
 #        assert db_facts['region'] == "fakeawsregion"
@@ -156,9 +159,9 @@ class RDSUtilsTestCase(unittest.TestCase):
     def test_snapshot_facts_gives_sensible_values(self):
         conn = FakeResource()
         snap_facts = snapshot_to_facts(get_snapshot(conn, "rds:fakeSnapshotIDstring"))
-        assert 'id' in snap_facts
+        assert db_id_key in snap_facts
 #  FIXME - we need to agree which of these need to go
-#        assert snap_facts['id'] == "fakeSnapshotIDString"
+#        assert snap_facts['db_snapshot_identifier'] == "fakeSnapshotIDString"
 #        assert snap_facts['instance_id'] == "fakeBackedUpIDString"
 
     def test_diff_should_compare_important_rds_attributes(self):
