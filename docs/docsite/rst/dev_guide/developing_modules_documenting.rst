@@ -41,7 +41,8 @@ code.
 .. code-block:: python
 
     #!/usr/bin/python
-    # Copyright (c) 2017 Ansible Project
+    
+    # Copyright: (c) 2017, Ansible Project
     # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 Every file should have a copyright line with the original copyright holder.
@@ -61,8 +62,9 @@ add the newer line above the older one, like so:
 .. code-block:: python
 
     #!/usr/bin/python
-    # Copyright (c) 2017 [New Contributor(s)]
-    # Copyright (c) 2015 [Original Contributor(s)]
+    
+    # Copyright: (c) 2017, [New Contributor(s)]
+    # Copyright: (c) 2015, [Original Contributor(s)]
     # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 
