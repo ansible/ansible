@@ -79,7 +79,7 @@ options:
     description:
       - Monitor rule type when C(monitors) > 1.
     version_added: "1.3"
-    choices: ['and_list', 'm_of_n']
+    choices: ['and_list', 'm_of_n', 'single']
   quorum:
     description:
       - Monitor quorum value when C(monitor_type) is C(m_of_n).
@@ -252,9 +252,8 @@ class Parameters(AnsibleF5Parameters):
     }
 
     updatables = [
-        'monitor_type', 'quorum', 'monitors', 'service_down_action',
-        'description', 'lb_method', 'slow_ramp_time', 'reselect_tries',
-        'host', 'port'
+        'quorum', 'monitor', 'service_down_action', 'description',
+        'lb_method', 'slow_ramp_time', 'reselect_tries', 'host', 'port'
     ]
 
     returnables = [
@@ -319,7 +318,9 @@ class Parameters(AnsibleF5Parameters):
                  "'monitors' parameter is specified."
         error2 = "The 'monitor' parameter cannot be empty when " \
                  "'monitor_type' parameter is specified"
-        if monitor_list is not None and monitor_type is None:
+        if monitor_list is not None and len(monitor_list) == 1:
+            pass
+        elif monitor_list is not None and monitor_type is None:
             raise F5ModuleError(error1)
         elif monitor_list is None and monitor_type is not None:
             raise F5ModuleError(error2)
@@ -349,30 +350,33 @@ class Parameters(AnsibleF5Parameters):
 
     @property
     def monitor(self):
-        monitors = self.monitors
-        monitor_type = self._values['monitor_type']
-        quorum = self.quorum
-
-        if monitors is None:
-            return None
-
-        if monitor_type == 'and_list':
-            and_list = list()
-            for m in monitors:
-                if monitors.index(m) == 0:
-                    and_list.append(m)
-                else:
-                    and_list.append('and')
-                    and_list.append(m)
-            result = ' '.join(and_list)
+        if self._values['monitor']:
+            result = self._values['monitor']
         else:
-            min_list = list()
-            prefix = 'min {0} of {{'.format(str(quorum))
-            min_list.append(prefix)
-            for m in monitors:
-                min_list.append(m)
-            min_list.append('}')
-            result = ' '.join(min_list)
+            monitors = self.monitors
+            monitor_type = self._values['monitor_type']
+            quorum = self.quorum
+
+            if monitors is None:
+                return None
+
+            if monitor_type == 'm_of_n':
+                min_list = list()
+                prefix = 'min {0} of {{'.format(str(quorum))
+                min_list.append(prefix)
+                for m in monitors:
+                    min_list.append(m)
+                min_list.append('}')
+                result = ' '.join(min_list)
+            else:
+                and_list = list()
+                for m in monitors:
+                    if monitors.index(m) == 0:
+                        and_list.append(m)
+                    else:
+                        and_list.append('and')
+                        and_list.append(m)
+                result = ' '.join(and_list)
 
         return result
 
@@ -485,6 +489,14 @@ class ModuleManager(object):
             if getattr(self.want, key) is not None:
                 attr1 = getattr(self.want, key)
                 attr2 = getattr(self.have, key)
+                try:
+                    # python 2
+                    if isinstance(attr2, unicode):
+                        attr2 = attr2.strip()
+                except:
+                    # python 3
+                    if isinstance(attr2, str):
+                        attr2 = attr2.strip()
                 if attr1 != attr2:
                     changed[key] = attr1
         if changed:
@@ -680,7 +692,7 @@ class ArgumentSpec(object):
             ),
             monitor_type=dict(
                 choices=[
-                    'and_list', 'm_of_n'
+                    'and_list', 'm_of_n', 'single'
                 ]
             ),
             quorum=dict(
