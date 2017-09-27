@@ -18,7 +18,6 @@ __metaclass__ = type
 
 from collections import defaultdict
 
-import pprint
 import platform
 
 from ansible.module_utils.facts import timeout
@@ -211,7 +210,6 @@ def select_collector_classes(collector_names, all_fact_subsets, all_collector_cl
 
     selected_collector_classes = []
 
-    # pprint.pprint(('all_collector_classes', all_collector_classes))
     for candidate_collector_class in all_collector_classes:
         candidate_collector_name = candidate_collector_class.name
 
@@ -225,7 +223,6 @@ def select_collector_classes(collector_names, all_fact_subsets, all_collector_cl
                 selected_collector_classes.append(collector_class)
                 seen_collector_classes.append(collector_class)
 
-    pprint.pprint(('selected_collector_classes', selected_collector_classes))
     return selected_collector_classes
 
 
@@ -274,8 +271,6 @@ def collector_classes_from_gather_subset(all_collector_classes=None,
                                           aliases_map=aliases_map,
                                           platform_info=platform_info)
 
-    # pprint.pprint(('collector_names', collector_names))
-    # pprint.pprint(('all_fact_subsets', dict(all_fact_subsets)))
     selected_collector_classes = select_collector_classes(collector_names,
                                                           all_fact_subsets,
                                                           all_collector_classes)
