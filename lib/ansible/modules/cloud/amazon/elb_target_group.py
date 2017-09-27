@@ -103,6 +103,12 @@ options:
     description:
       - A dictionary of one or more tags to assign to the target group.
     required: false
+  target_type:
+    description:
+      - Indicate whether the target group consists of instances IDS 'instance' or IP addresses 'ip'. Default is 'instance'.
+    choices: ['instance', 'ip']
+    required: false
+    version_added: "2.5"
   targets:
     description:
       - A list of targets to assign to the target group. This parameter defaults to an empty list. Unless you set the 'modify_targets' parameter then
@@ -377,6 +383,10 @@ def create_or_update_target_group(connection, module):
             params['Matcher'] = {}
             params['Matcher']['HttpCode'] = module.params.get("successful_response_codes")
 
+    # Get target type
+    if module.params.get("target_type") is not None:
+        params['TargetType'] = module.params.get("target_type")
+
     # Get target group
     tg = get_target_group(connection, module)
 
@@ -637,6 +647,7 @@ def main():
             state=dict(required=True, choices=['present', 'absent'], type='str'),
             successful_response_codes=dict(type='str'),
             tags=dict(default={}, type='dict'),
+            target_type=dict(default='instance', choices=['instance', 'ip'], type='str'),
             targets=dict(type='list'),
             unhealthy_threshold_count=dict(type='int'),
             vpc_id=dict(type='str'),
