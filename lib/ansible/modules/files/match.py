@@ -35,8 +35,13 @@ options:
       - The regular expression to look for in the contents of the file.
       - Uses Python regular expressions; see
         U(http://docs.python.org/2/library/re.html).
-      - Uses multiline mode, which means C(^) and C($) match the beginning
-        and end respectively of I(each line) of the file.
+      - Uses MULTILINE mode, which means C(^) and C($) match the beginning
+        and end of the file, as well as the beginning and end respectively
+        of I(each line) of the file.
+      - Does not use DOTALL, which means the C(.) special character matches
+        any character I(except newlines). A common mistake is to assume that
+        a negated character set like C([^#]) will also not match newlines.
+        In order to exclude newlines, they must be added to the set like C([^#\\n]).
   fail_on_missing:
     description:
       - When set to C(yes), fail when the file is missing.
