@@ -120,17 +120,21 @@ def get_snmp_traps(group, module):
         'isEnabled': 'enabled'
     }
 
-    resource = {}
+    trap_key_5k = {
+        'trap': 'trap',
+        'enabled': 'enabled'
+    }
 
+    resource = {}
+    feature_list = ['aaa', 'bridge', 'callhome', 'cfs', 'config',
+                    'entity', 'feature-control', 'hsrp', 'license',
+                    'link', 'lldp', 'ospf', 'pim', 'rf', 'rmon',
+                    'snmp', 'storm-control', 'stpx', 'sysmgr',
+                    'system', 'upgrade', 'vtp']
     try:
         resource_table = body[0]['TABLE_snmp_trap']['ROW_snmp_trap']
 
-        for each_feature in ['aaa', 'bridge', 'callhome', 'cfs', 'config',
-                             'entity', 'feature-control', 'hsrp', 'license',
-                             'link', 'lldp', 'ospf', 'pim', 'rf', 'rmon',
-                             'snmp', 'storm-control', 'stpx', 'sysmgr',
-                             'system', 'upgrade', 'vtp']:
-
+        for each_feature in feature_list:
             resource[each_feature] = []
 
         for each_resource in resource_table:
@@ -139,8 +143,23 @@ def get_snmp_traps(group, module):
 
             if key != 'Generic':
                 resource[key].append(mapped_trap)
+    except KeyError:
+        try:
+            resource_table = body[0]['TABLE_mib']['ROW_mib']
 
-    except (KeyError, AttributeError):
+            for each_feature in feature_list:
+                resource[each_feature] = []
+
+            for each_resource in resource_table:
+                key = str(each_resource['mib'])
+                each_resource = each_resource['TABLE_trap']['ROW_trap']
+                mapped_trap = apply_key_map(trap_key_5k, each_resource)
+
+                if key != 'Generic':
+                    resource[key].append(mapped_trap)
+        except (KeyError, AttributeError):
+            return resource   
+    except AttributeError:
         return resource
 
     find = resource.get(group, None)
@@ -221,7 +240,6 @@ def main():
     existing = get_snmp_traps(group, module)
 
     commands = get_trap_commands(group, state, existing, module)
-
     cmds = flatten_list(commands)
     if cmds:
         results['changed'] = True
