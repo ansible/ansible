@@ -318,6 +318,34 @@ class TestBuildDepData(unittest.TestCase):
                           'env': set()})
 
 
+class TestSolveDeps(unittest.TestCase):
+    def test_no_solution(self):
+        unresolved = set(['required_thing1', 'required_thing2'])
+        all_fact_subsets = {'env': [default_collectors.EnvFactCollector],
+                            'network': [default_collectors.LinuxNetworkCollector],
+                            'virtual': [default_collectors.LinuxVirtualCollector]}
+
+        self.assertRaises(collector.CollectorNotFoundError,
+                          collector._solve_deps,
+                          unresolved,
+                          all_fact_subsets)
+
+    def test(self):
+        unresolved = set(['env', 'network'])
+        all_fact_subsets = {'env': [default_collectors.EnvFactCollector],
+                            'network': [default_collectors.LinuxNetworkCollector],
+                            'virtual': [default_collectors.LinuxVirtualCollector],
+                            'platform': [default_collectors.PlatformFactCollector],
+                            'distribution': [default_collectors.DistributionFactCollector]}
+        res = collector.resolve_requires(unresolved, all_fact_subsets)
+
+        res = collector._solve_deps(unresolved, all_fact_subsets)
+
+        self.assertIsInstance(res, set)
+        for goal in unresolved:
+            self.assertIn(goal, res)
+
+
 class TestResolveRequires(unittest.TestCase):
     def test_no_resolution(self):
         unresolved = ['required_thing1', 'required_thing2']

@@ -51,6 +51,10 @@ class UnresolvedFactDep(ValueError):
     pass
 
 
+class CollectorNotFoundError(KeyError):
+    pass
+
+
 class BaseFactCollector:
     _fact_ids = set()
 
@@ -266,15 +270,14 @@ def select_collector_classes(collector_names, all_fact_subsets, all_collector_cl
 def _get_requires_by_collector_name(collector_name, all_fact_subsets):
     required_facts = set()
 
-    collector_classes = all_fact_subsets[collector_name]
+    try:
+        collector_classes = all_fact_subsets[collector_name]
+    except KeyError as e:
+        print(e)
+        raise CollectorNotFoundError('%s collector not found' % collector_name)
     for collector_class in collector_classes:
         required_facts.update(collector_class.required_facts)
     return required_facts
-
-#    for collector_name in collector_names:
-#        collector_classes = all_fact_subsets[collector_name]
-#        for collector_class in collector_classes:
-
 
 
 def find_unresolved_requires(collector_names, all_fact_subsets):
@@ -340,15 +343,21 @@ def tsort(dep_map):
 
     return sorted_list
 
-
+import pprint
 def _solve_deps(collector_names, all_fact_subsets):
-    unsolved = collector_names.copy()
+    unresolved = collector_names.copy()
     solutions = collector_names.copy()
-    unresolved = find_unresolved_requires(collector_names, all_fact_subsets)
 
-    new_names = resolve_requires(unresolved, all_fact_subsets)
-    solutions.update(new_names)
+    while True:
+        print('unresolved: %s' % unresolved)
+        unresolved = find_unresolved_requires(solutions, all_fact_subsets)
+        if unresolved == set():
+            break
 
+        new_names = resolve_requires(unresolved, all_fact_subsets)
+        solutions.update(new_names)
+
+    pprint.pprint(('solutions', solutions))
     return solutions
 
 
