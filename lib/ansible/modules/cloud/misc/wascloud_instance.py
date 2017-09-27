@@ -33,7 +33,7 @@ options:
   instance_type:
     description:
       - Type of WebSphere instance to create. Required when creating or reloading instance, but not when cancelling instance
-      - Valid options when creating: C("LibertyCollective", "LibertyCore", "LibertyNDServer", "WASBase", "WASCell", "WASNDServer")
+      - Valid options when creating: C(LibertyCollective)/C(LibertyCore)/C(LibertyNDServer)/C(WASBase)/C(WASCell)/C(WASNDServer)
     required: false
   size:
     description:
@@ -146,6 +146,9 @@ from ansible.module_utils.basic import AnsibleModule
 import time
 import base64
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 try:
     import requests
     HAS_REQUESTS = True
@@ -172,8 +175,8 @@ def main():
         ),
 
         required_if=[
-            ['instance_type', 'WASBase',           ['size']],
-            ['instance_type', 'WASCell',           ['controller_size', 'app_vms', 'size']],
+            ['instance_type', 'WASBase', ['size']],
+            ['instance_type', 'WASCell', ['controller_size', 'app_vms', 'size']],
             ['instance_type', 'LibertyCollective', ['controller_size', 'app_vms', 'size']]
         ]
     )
@@ -450,7 +453,7 @@ class WASaaSAPI(object):
         else:
             return False, r.text
 
-    #### Not used yet. Method for downloading zip with openvpn certificates and config for the region
+    # Not used yet. Method for downloading zip with openvpn certificates and config for the region
     def get_vpnConfig_zip(self):
         if self.sid == '':
             self.fetch_resource_details()
@@ -485,7 +488,7 @@ class WASaaSAPI(object):
     def instance_exists(self):
         success, sis = self.get_serviceinstances(self.org, self.space)
         for s in sis:
-            if not 'Name' in s['ServiceInstance']:
+            if 'Name' not in s['ServiceInstance']:
                 # Some instance deployment types do not seem to have these
                 continue
             if s['ServiceInstance']['Name'] == self.si_name:
@@ -507,7 +510,7 @@ class WASaaSAPI(object):
                     break
 
             if not si:
-                print("Could not find service instance with name %s " % self.si_name)
+                # print("Could not find service instance with name %s " % self.si_name)
                 return False
 
             # Ensure this is basic WAS as we don't support ND cluster yet
