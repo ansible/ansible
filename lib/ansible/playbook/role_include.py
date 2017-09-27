@@ -118,12 +118,12 @@ class IncludeRole(TaskInclude):
             raise AnsibleParserError('Invalid options for include_role: %s' % ','.join(list(bad_opts)))
 
         # build options for role includes
-        for key in IncludeRole.FROM_ARGS.intersection(my_arg_names):
+        for key in set(IncludeRole.FROM_ARGS).intersection(my_arg_names):
             from_key = key.replace('_from', '')
             ir._from_files[from_key] = basename(ir.args.get(key))
 
         # manual list as otherwise the options would set other task parameters we don't want.
-        for option in IncludeRole.OTHER_ARGS.intersection(my_arg_names):
+        for option in set(IncludeRole.OTHER_ARGS).intersection(my_arg_names):
             setattr(ir, option, ir.args.get(option))
 
         return ir
