@@ -50,6 +50,7 @@ Ansible Changes By Release
 * corrected issues with slack callback plugin
 * it is import_playbook .. not import_plays .. docs now reflect this
 * fixed typo and missed include/import conversion in import_tasks docs
+* updated porting docs with note about inventory_dir
 
 <sdfasdfsadfsdflkjsdfklj3oiqrua id="2.4"></a>
 
