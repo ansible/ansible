@@ -74,77 +74,82 @@ from ansible.module_utils.facts.virtual.netbsd import NetBSDVirtualCollector
 from ansible.module_utils.facts.virtual.openbsd import OpenBSDVirtualCollector
 from ansible.module_utils.facts.virtual.sunos import SunOSVirtualCollector
 
+# these should always be first due to most other facts depending on them
 _base = [
-              # these should always be first due to most other facts depending on them
-              PlatformFactCollector,
-              DistributionFactCollector,
-              LSBFactCollector]
+    PlatformFactCollector,
+    DistributionFactCollector,
+    LSBFactCollector
+]
 
+# These restrict what is possible in others
 _restrictive = [
-              # These restrict what is possible in others
-              SelinuxFactCollector,
-              ApparmorFactCollector,
-              ChrootFactCollector,
-              FipsFactCollector]
+    SelinuxFactCollector,
+    ApparmorFactCollector,
+    ChrootFactCollector,
+    FipsFactCollector
+]
 
+# general info, not required but probably useful for other facts
 _general = [
-              # general info, not required but probably useful for other facts
-              PythonFactCollector,
-              SystemCapabilitiesFactCollector,
-              PkgMgrFactCollector,
-              OpenBSDPkgMgrFactCollector,
-              ServiceMgrFactCollector,
-              CmdLineFactCollector,
-              DateTimeFactCollector,
-              EnvFactCollector,
-              SshPubKeyFactCollector,
-              UserFactCollector]
+    PythonFactCollector,
+    SystemCapabilitiesFactCollector,
+    PkgMgrFactCollector,
+    OpenBSDPkgMgrFactCollector,
+    ServiceMgrFactCollector,
+    CmdLineFactCollector,
+    DateTimeFactCollector,
+    EnvFactCollector,
+    SshPubKeyFactCollector,
+    UserFactCollector
+]
 
+# virtual, this might also limit hardware/networking
 _virtual = [
-              # virtual, this might also limit hardware/networking
-              VirtualCollector,
-              DragonFlyVirtualCollector,
-              FreeBSDVirtualCollector,
-              LinuxVirtualCollector,
-              OpenBSDVirtualCollector,
-              NetBSDVirtualCollector,
-              SunOSVirtualCollector,
-              HPUXVirtualCollector]
+    VirtualCollector,
+    DragonFlyVirtualCollector,
+    FreeBSDVirtualCollector,
+    LinuxVirtualCollector,
+    OpenBSDVirtualCollector,
+    NetBSDVirtualCollector,
+    SunOSVirtualCollector,
+    HPUXVirtualCollector
+]
 
 _hardware = [
-              # hardware
-              HardwareCollector,
-              AIXHardwareCollector,
-              DarwinHardwareCollector,
-              DragonFlyHardwareCollector,
-              FreeBSDHardwareCollector,
-              HPUXHardwareCollector,
-              HurdHardwareCollector,
-              LinuxHardwareCollector,
-              NetBSDHardwareCollector,
-              OpenBSDHardwareCollector,
-              SunOSHardwareCollector]
+    HardwareCollector,
+    AIXHardwareCollector,
+    DarwinHardwareCollector,
+    DragonFlyHardwareCollector,
+    FreeBSDHardwareCollector,
+    HPUXHardwareCollector,
+    HurdHardwareCollector,
+    LinuxHardwareCollector,
+    NetBSDHardwareCollector,
+    OpenBSDHardwareCollector,
+    SunOSHardwareCollector
+]
 
 _network = [
-              # networking
-              DnsFactCollector,
-              NetworkCollector,
-              AIXNetworkCollector,
-              DarwinNetworkCollector,
-              DragonFlyNetworkCollector,
-              FreeBSDNetworkCollector,
-              HPUXNetworkCollector,
-              HurdNetworkCollector,
-              LinuxNetworkCollector,
-              NetBSDNetworkCollector,
-              OpenBSDNetworkCollector,
-              SunOSNetworkCollector]
+    DnsFactCollector,
+    NetworkCollector,
+    AIXNetworkCollector,
+    DarwinNetworkCollector,
+    DragonFlyNetworkCollector,
+    FreeBSDNetworkCollector,
+    HPUXNetworkCollector,
+    HurdNetworkCollector,
+    LinuxNetworkCollector,
+    NetBSDNetworkCollector,
+    OpenBSDNetworkCollector,
+    SunOSNetworkCollector
+]
 
+# other fact sources
 _extra_facts = [
-              # other fact sources
-              LocalFactCollector,
-              FacterFactCollector,
-              OhaiFactCollector]
+    LocalFactCollector,
+    FacterFactCollector,
+    OhaiFactCollector
+]
 
 # TODO: make config driven
 collectors = _base + _restrictive + _general + _virtual + _hardware + _network + _extra_facts
