@@ -925,7 +925,7 @@ class PyVmomiHelper(object):
                 return expected * 1024 * 1024 * 1024
             elif unit == 'gb':
                 return expected * 1024 * 1024
-            elif unit == ' mb':
+            elif unit == 'mb':
                 return expected * 1024
             elif unit == 'kb':
                 return expected
