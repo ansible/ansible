@@ -164,7 +164,9 @@ def netStatParse(raw):
     return results
 
 
-def applyWhitelist(portspids, whitelist=list()):
+def applyWhitelist(portspids, whitelist=None):
+    if whitelist is None:
+        whitelist = list()
     processes = list()
     for p in portspids:
         if int(p['port']) not in whitelist and str(p['port']) not in whitelist:
