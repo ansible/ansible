@@ -239,7 +239,6 @@ class PullCLI(CLI):
             for vault_password_file in self.options.vault_password_files:
                 cmd += " --vault-password-file=%s" % vault_password_file
 
-
         for ev in self.options.extra_vars:
             cmd += ' -e "%s"' % ev
         if self.options.ask_sudo_pass or self.options.ask_su_pass or self.options.become_ask_pass:
