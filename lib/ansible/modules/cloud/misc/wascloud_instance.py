@@ -33,7 +33,7 @@ options:
   instance_type:
     description:
       - Type of WebSphere instance to create. Required when creating or reloading instance, but not when cancelling instance
-      - Valid options when creating: C('LibertyCollective', 'LibertyCore', 'LibertyNDServer', 'WASBase', 'WASCell', 'WASNDServer')
+      - Valid options when creating: C("LibertyCollective", "LibertyCore", "LibertyNDServer", "WASBase", "WASCell", "WASNDServer")
     required: false
   size:
     description:
@@ -45,7 +45,6 @@ options:
       - Number of application server VMs in a WAS Cell or Liberty Collective
       - Required if I(instance_type==WASCell/LibertyCollective)
     required: false
-    type: 'int'
   controller_size:
     description:
       - T-Shirt size of controller VM in WAS Cell or Liberty Collective
@@ -57,7 +56,7 @@ options:
     required: false
   region:
     description:
-      - Bluemix region to provision to. 
+      - Bluemix region to provision to.
     required: true
   org:
     description:
@@ -101,22 +100,46 @@ EXAMPLES = '''
 
 RETURN = '''
 instance_deleted:
-  description: Whether an instance was deleted during the task run 
+  description: Whether an instance was deleted during the task run
   returned: always
-  type: boolean 
+  type: boolean
 resources:
   description: List of resources in the WAS service instance. If the service instance is not ready an empty list is returned
-  returned: always 
-  type: complex
-  contains:
-    resource_dictionary:
-      description: information about the VM(s) of the WAS Service instance. 
-      type: dict
-      sample: {"WASaaSResourceID": "33a7f6d1-f33e-439b-98d9-ce4412e48591","creationTime": "08-10-2017 22:33:18", "disk": 12.0,"expireTime": null, <br />"ifixinfo": [],"keyStorePassword": "p9N2ZmXf","machinename": "tWAS Base (RHEL 6.8, WebSphere 9004 and JDK 8) 17.13", "machinestatus": "RUNNING","memory": 2048,"osAdminPassword": "aa58786a", "osAdminUser": "root", "osHostname": "169.44.39.132",  "osType": "RHEL 6.8 X64","vcpu": 1, "virtuserPrivateSshKey": "-----BEGIN RSA PRIVATE KEY-----privatekeystring==\n-----END RSA PRIVATE KEY-----\n", "vpnConfigLink": "https://wasaas-broker.ng.bluemix.net:443/wasaas-broker/consumerPortal/openvpn/openvpnConfig.zip", "wasAdminPass": "ed85b817", "wasAdminUser": "wsadmin", "waslink": "http://169.44.39.132:9060/ibm/console"}
+  returned: always
+  type: list
+  sample: [
+    {
+      "WASaaSresourceID": "string",
+      "disk": 0,
+      "vcpu": 0,
+      "memory": 0,
+      "machinename": "string",
+      "machinestatus": "string",
+      "creationTime": "string",
+      "expireTime": "string",
+      "vpnConfigLink": "string",
+      "waslink": "string",
+      "wasAdminUser": "string",
+      "wasAdminPass": "string",
+      "ifixinfo": "string",
+      "osType": "string",
+      "osHostname": "string",
+      "osAdminUser": "string",
+      "osAdminPassword": "string",
+      "virtuserPrivateSshKey": "string",
+      "keyStorePassword": "string",
+      "publicIpInfo": {
+        "ipResourceStatus": "string",
+        "publicIp": "string",
+        "ipResourceId": "string",
+        "open": true
+      }
+    }
+  ]
 public_ip:
   description: The public IP address for the service instance
   returned: When public_ip is set to True in playbook
-  type: string 
+  type: string
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -129,52 +152,53 @@ try:
 except ImportError:
     HAS_REQUESTS = False
 
+
 def main():
     module = AnsibleModule(
-        argument_spec     = dict(
-            state         = dict(default='present', choices=['present', 'absent', 'latest', 'reloaded']),
-            name          = dict(required=True),
-            wait          = dict(required=False, default=False, type='bool'),
-            instance_type = dict(required=False),
-            size          = dict(required=False),
-            app_vms       = dict(required=False, type='int'),
-            controller_size= dict(required=False),
-            software_level= dict(required=False),
-            region        = dict(required=True),
-            org           = dict(required=True),
-            space         = dict(required=True),
-            apikey        = dict(required=True),
-            public_ip     = dict(required=False, default=False, type='bool')
+        argument_spec=dict(
+            state=dict(default='present', choices=['present', 'absent', 'latest', 'reloaded']),
+            name=dict(required=True),
+            wait=dict(required=False, default=False, type='bool'),
+            instance_type=dict(required=False),
+            size=dict(required=False),
+            app_vms=dict(required=False, type='int'),
+            controller_size=dict(required=False),
+            software_level=dict(required=False),
+            region=dict(required=True),
+            org=dict(required=True),
+            space=dict(required=True),
+            apikey=dict(required=True),
+            public_ip=dict(required=False, default=False, type='bool')
         ),
 
-        required_if       = [
-                                ['instance_type', 'WASBase',           ['size']],
-                                ['instance_type', 'WASCell',           ['controller_size', 'app_vms', 'size']],
-                                ['instance_type', 'LibertyCollective', ['controller_size', 'app_vms', 'size']]
-                            ]
+        required_if=[
+            ['instance_type', 'WASBase',           ['size']],
+            ['instance_type', 'WASCell',           ['controller_size', 'app_vms', 'size']],
+            ['instance_type', 'LibertyCollective', ['controller_size', 'app_vms', 'size']]
+        ]
     )
 
-    regionKey     = module.params['region']
-    organisation  = module.params['org']
-    space         = module.params['space']
+    regionKey = module.params['region']
+    organisation = module.params['org']
+    space = module.params['space']
     instance_name = module.params['name']
-    state         = module.params['state']
-    apiKey        = module.params['apikey']
+    state = module.params['state']
+    apiKey = module.params['apikey']
     instance_type = module.params['instance_type']
-    size          = module.params['size']
-    software_level= module.params['software_level']
-    wait          = module.params['wait']
-    public_ip     = module.params['public_ip']
+    size = module.params['size']
+    software_level = module.params['software_level']
+    wait = module.params['wait']
+    public_ip = module.params['public_ip']
 
     if not HAS_REQUESTS:
-      module.fail_json(msg='python requests package required for this module')
+        module.fail_json(msg='python requests package required for this module')
 
     # Get authorizatin token from Bluemix
-    bx = BluemixAPI(region_key = regionKey, apiKey = apiKey)
+    bx = BluemixAPI(region_key=regionKey, apiKey=apiKey)
     authorization = 'Bearer ' + bx.get_token()
 
     # Create a connection object for WebSphere in Bluemix broker
-    was = WASaaSAPI(region_key = regionKey, org = organisation, space = space, si_name = instance_name, token = authorization)
+    was = WASaaSAPI(region_key=regionKey, org=organisation, space=space, si_name=instance_name, token=authorization)
 
     status = {}
     status['instance_deleted'] = False
@@ -204,7 +228,6 @@ def main():
         else:
             if state == 'absent':
                 module.exit_json(msg='Instance name not found', **status)
-
 
     # The instance creation part of the task
     if state in ['present', 'latest', 'reloaded']:
@@ -277,11 +300,11 @@ class BluemixAPI(object):
 
     def fetch_token(self):
         headers = {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Accept': 'application/json',
-          'Authorization': 'Basic ' + base64.b64encode(b'bx:bx').decode('ascii')}
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept': 'application/json',
+            'Authorization': 'Basic ' + base64.b64encode(b'bx:bx').decode('ascii')}
 
-        data='apikey=%s&grant_type=urn:ibm:params:oauth:grant-type:apikey&response_type=cloud_iam,uaa&uaa_client_id=cf&uaa_client_secret=' % self.apiKey
+        data = 'apikey=%s&grant_type=urn:ibm:params:oauth:grant-type:apikey&response_type=cloud_iam,uaa&uaa_client_id=cf&uaa_client_secret=' % self.apiKey
 
         url = 'https://iam.%s.bluemix.net/oidc/token' % self.region_key
 
@@ -302,7 +325,7 @@ class BluemixAPI(object):
 
 class WASaaSAPI(object):
 
-    def __init__(self, region_key, org, space, si_name = '', token = '', refresh_token = ''):
+    def __init__(self, region_key, org, space, si_name='', token='', refresh_token=''):
         self.token = token
         self.si_name = si_name
         self.sid = ''
@@ -324,19 +347,19 @@ class WASaaSAPI(object):
         # Sydney - https://wasaas-broker.au-syd.bluemix.net/wasaas-broker/api/v1
         # Frankfurt - https://wasaas-broker.eu-de.bluemix.net/wasaas-broker/api/v1
         regions = {
-          'ng': 'https://wasaas-broker.ng.bluemix.net/wasaas-broker/api/v1',
-          'eu-gb': 'https://wasaas-broker.eu-gb.bluemix.net/wasaas-broker/api/v1',
-          'eu-de': 'https://wasaas-broker.eu-de.bluemix.net/wasaas-broker/api/v1',
-          'au-syd': 'https://wasaas-broker.au-syd.bluemix.net/wasaas-broker/api/v1'
+            'ng': 'https://wasaas-broker.ng.bluemix.net/wasaas-broker/api/v1',
+            'eu-gb': 'https://wasaas-broker.eu-gb.bluemix.net/wasaas-broker/api/v1',
+            'eu-de': 'https://wasaas-broker.eu-de.bluemix.net/wasaas-broker/api/v1',
+            'au-syd': 'https://wasaas-broker.au-syd.bluemix.net/wasaas-broker/api/v1'
         }
         self.baseUrl = regions[self.regionKey]
-        self._headers={
-          'User-Agent': 'ansible-wascloud 1.0',
-          'authorization': self.token,
-          'Accept': 'application/json'
+        self._headers = {
+            'User-Agent': 'ansible-wascloud 1.0',
+            'authorization': self.token,
+            'Accept': 'application/json'
         }
 
-    def create_instance(self, config, wait_until_ready = False):
+    def create_instance(self, config, wait_until_ready=False):
 
         url = self.baseUrl + '/organizations/{0}/spaces/{1}/serviceinstances'.format(self.org, self.space)
         r = requests.post(url, json=config, headers=self._headers)
@@ -374,7 +397,6 @@ class WASaaSAPI(object):
         r = requests.put(url, headers=self._headers)
         if r.status_code != 200:
             return False, str(r.status_code)
-
 
         # Query primary host for IP
         url = self.baseUrl + '/organizations/%s/spaces/%s/serviceinstances/%s/resources/%s' % (self.org, self.space, self.sid, primary_host_id)
@@ -497,11 +519,11 @@ class WASaaSAPI(object):
 
         r = self.get_resources_list()
 
-        self.resources_raw  = r
-        self.adminip        = r[0]['osHostname']
-        self.rootpassword   = r[0]['osAdminPassword']
-        self.wsadmin_user   = r[0]['wasAdminUser']
-        self.wsadmin_pass   = r[0]['wasAdminPass']
+        self.resources_raw = r
+        self.adminip = r[0]['osHostname']
+        self.rootpassword = r[0]['osAdminPassword']
+        self.wsadmin_user = r[0]['wasAdminUser']
+        self.wsadmin_pass = r[0]['wasAdminPass']
         self.vpnConfig_link = r[0]['vpnConfigLink']
 
         return True
