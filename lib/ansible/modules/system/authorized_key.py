@@ -148,6 +148,16 @@ EXAMPLES = '''
     user: ubuntu
     state: present
     key: "{{ lookup('file', lookup('env','HOME') + '/.ssh/id_rsa.pub') }}"
+
+- block:
+  - name: Set up authorized_keys exclusively with many keys
+    set_fact: pubkey_list="{{ lookup('file', 'pubkeys/' + item) }}"
+    register: pubkeys
+    with_items:
+      - key1.pub
+      - key2.pub
+  - set_fact: pubkey_string={{ pubkeys.results | map(attribute='ansible_facts.pubkey_list') | join('\n') }}
+  - authorized_key: user=root key="{{ pubkey_string }}" exclusive=yes
 '''
 
 RETURN = '''
