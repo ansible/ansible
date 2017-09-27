@@ -413,7 +413,9 @@ files:
   $modules/network/aos/: dgarros jeremyschulman
   $modules/network/aruba/: jmighion
   $modules/network/asa/: ogenstad
-  $modules/network/avi/: $team_avi
+  $modules/network/avi/:
+    labels: avi
+    maintainers: $team_avi
   $modules/network/bigswitch/: jayakody tedelhourani vuile
   $modules/network/citrix/netscaler.py: $team_ansible
   $modules/network/cloudengine/: QijunPan
