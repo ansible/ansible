@@ -105,9 +105,9 @@
   when: "ansible_os_family == 'Debian'"
 
 - name: Set up test site file
-  file:
+  copy:
     path: /etc/apache2/sites-available/apache2_enable_site.conf
-    contents: "#  test file"
+    content: "#  test file"
   when: "ansible_os_family == 'Debian'"
 
 - name: enable apache2_enable site
@@ -124,9 +124,9 @@
   when: "ansible_os_family == 'Debian'"
 
 - name: Set up test conf file
-  file:
+  copy:
     path: /etc/apache2/sites-available/apache2_enable_conf.conf
-    contents: "#  test file"
+    content: "#  test file"
   when: "ansible_os_family == 'Debian'"
 
 - name: enable apache2_enable conf
