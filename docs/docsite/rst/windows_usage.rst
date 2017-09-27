@@ -386,7 +386,7 @@ The YAML specification considers the following escape sequences_:
 * ``\0``, ``\``, ``"``, ``\a``, ``\b``, ``\e``, ``\f``, ``\n``, ``\r``, ``\t``
   and ``\v`` -- Single character escape
 
-* ``<TAB>``, ``<SPACE>``, ``<NBSP>``, ``<LNSP>``, ``<PSP>` -- Special
+* ``<TAB>``, ``<SPACE>``, ``<NBSP>``, ``<LNSP>``, ``<PSP>`` -- Special
   characters
 
 * ``\x..`` -- 2-digit hex escape

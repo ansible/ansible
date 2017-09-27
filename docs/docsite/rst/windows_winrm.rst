@@ -90,6 +90,9 @@ be enabled by running the following in powershell:
 
     Set-Item -Path WSMan:\localhost\Service\Auth\Certificate -Value $true
 
+.. Note:: Encrypted private key's cannot be used as the urllib3 library that
+    is used by Ansible for WinRM does not support this functionality as of yet.
+
 Generate Certificate
 ++++++++++++++++++++
 Before mapping a certificate to a local user it first needs to be generated.
@@ -364,7 +367,7 @@ Add a line like the following for each domain that Ansible needs access for:
 You can configure other settings in this file such as the default domain, see
 krb5.conf_ for more details
 
-.. _krb5.config: https://web.mit.edu/kerberos/krb5-1.12/doc/admin/conf_files/krb5_conf.html
+.. _krb5.conf: https://web.mit.edu/kerberos/krb5-1.12/doc/admin/conf_files/krb5_conf.html
 
 Automatic Kerberos Ticket Management
 ++++++++++++++++++++++++++++++++++++
