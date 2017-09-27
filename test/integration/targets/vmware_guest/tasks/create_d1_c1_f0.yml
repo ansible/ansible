@@ -133,4 +133,3 @@
   assert:
     that:
         - "clone_d1_c1_f0_remodify.results|map(attribute='changed')|unique|list == [false]"
-
