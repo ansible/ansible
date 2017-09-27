@@ -9,7 +9,7 @@
       setup:
        gather_subset:
            - "!hardware"
-             # register: not_hardware_facts
+      register: not_hardware_facts
 
 - name: min and network test for platform added
   hosts: facthost21
@@ -18,9 +18,6 @@
   gather_subset: "!all,network"
   gather_facts: yes
   tasks:
-    - name: debug min+network platform
-      debug:
-        var: hostvars['facthost21']
     - name: Test that retrieving network facts works and gets prereqs from platform and distribution
       assert:
         that:
@@ -43,9 +40,6 @@
   gather_subset: "hardware"
   gather_facts: yes
   tasks:
-    - name: debug min+hardware platform
-      debug:
-        var: hostvars['facthost22']
     # we should also collect platform, but not distribution
     - name: Test that retrieving hardware facts works and gets prereqs from platform and distribution
       assert:
@@ -76,9 +70,6 @@
   gather_subset: "!all,service_mgr"
   gather_facts: yes
   tasks:
-    - name: debug min+service_mgr platform
-      debug:
-        var: hostvars['facthost23']
     - name: Test that retrieving service_mgr facts works and gets prereqs from platform and distribution
       assert:
         that:
@@ -119,7 +110,7 @@
   tasks:
     - setup:
         filter: "*env*"
-        # register: fact_results
+      register: fact_results
 
     - name: Test that retrieving all facts filtered to env works
       assert:
@@ -136,7 +127,7 @@
   tasks:
     - setup:
         filter: "ansible_user_id"
-        # register: fact_results
+      register: fact_results
 
     - name: Test that retrieving all facts filtered to specific fact ansible_user_id works
       assert:
@@ -155,7 +146,7 @@
   tasks:
     - setup:
         filter: "*"
-        # register: fact_results
+      register: fact_results
 
     - name: Test that retrieving all facts filtered to splat
       assert:
@@ -172,7 +163,7 @@
   tasks:
     - setup:
         filter: ""
-        # register: fact_results
+      register: fact_results
 
     - name: Test that retrieving all facts filtered to empty filter_spec works
       assert:
@@ -205,9 +196,6 @@
   gather_subset: "!all,!min,network"
   gather_facts: yes
   tasks:
-    - name: debug facthost2 part deux
-      debug:
-        var: hostvars['facthost2']
     - name: Test that retrieving network facts work
       assert:
         that:
