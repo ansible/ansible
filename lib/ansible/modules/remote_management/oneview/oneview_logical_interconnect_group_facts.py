@@ -35,27 +35,39 @@ extends_documentation_fragment:
 EXAMPLES = '''
 - name: Gather facts about all Logical Interconnect Groups
   oneview_logical_interconnect_group_facts:
-    config: /etc/oneview/oneview_config.json
+    hostname: 172.16.101.48
+    username: administrator
+    password: my_password
+    api_version: 500
+  no_log: true
   delegate_to: localhost
 
 - debug: var=logical_interconnect_groups
 
 - name: Gather paginated, filtered and sorted facts about Logical Interconnect Groups
   oneview_logical_interconnect_group_facts:
-    config: /etc/oneview/oneview_config.json
     params:
       start: 0
       count: 3
       sort: name:descending
       filter: name=LIGName
+    hostname: 172.16.101.48
+    username: administrator
+    password: my_password
+    api_version: 500
+  no_log: true
   delegate_to: localhost
 
 - debug: var=logical_interconnect_groups
 
 - name: Gather facts about a Logical Interconnect Group by name
   oneview_logical_interconnect_group_facts:
-    config: /etc/oneview/oneview_config.json
     name: logical lnterconnect group name
+    hostname: 172.16.101.48
+    username: administrator
+    password: my_password
+    api_version: 500
+  no_log: true
   delegate_to: localhost
 
 - debug: var=logical_interconnect_groups
