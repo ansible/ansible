@@ -21,7 +21,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: rds_snapshot
-version_added: "2.4"
+version_added: "2.5"
 short_description: manage Amazon RDS snapshots
 description:
      - Creates or deletes RDS snapshots.
