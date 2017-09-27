@@ -49,6 +49,7 @@ Ansible Changes By Release
 * updated api doc example to match api changes
 * corrected issues with slack callback plugin
 * it is import_playbook .. not import_plays .. docs now reflect this
+* fixed typo and missed include/import conversion in import_tasks docs
 
 <sdfasdfsadfsdflkjsdfklj3oiqrua id="2.4"></a>
 
