@@ -70,7 +70,6 @@ lib/ansible/modules/cloud/azure/azure_rm_virtualmachine.py
 lib/ansible/modules/cloud/azure/azure_rm_virtualnetwork.py
 lib/ansible/modules/cloud/azure/azure_rm_virtualnetwork_facts.py
 lib/ansible/modules/cloud/centurylink/clc_loadbalancer.py
-lib/ansible/modules/cloud/cloudscale/cloudscale_server.py
 lib/ansible/modules/cloud/cloudstack/cs_instance.py
 lib/ansible/modules/cloud/cloudstack/cs_instance_facts.py
 lib/ansible/modules/cloud/cloudstack/_cs_nic.py
