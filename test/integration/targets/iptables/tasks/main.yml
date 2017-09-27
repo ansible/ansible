@@ -1,0 +1,29 @@
+---
+- name: install iptables for ubuntu
+  apt:
+    name: iptables
+  when: ansible_distribution == "Ubuntu"
+
+- name: install iptables for opensuse
+  zypper:
+    name: iptables
+  when: ansible_distribution == "openSUSE Leap"
+
+- include: test-allow-related-and-established-connections.yaml
+- include: test-block-specific-ip.yml
+- include: test-forward-port-80-to-8600.yml
+- include: test-set-the-policy-for-the-input-chain-to-drop.yaml
+- include: test-tag-all-outbound-tcp-packets-with-DSCP-mark-8.yaml
+- include: test-tag-all-outbound-tcp-packets-with-dscp-diffservclass-cs1.yaml
+
+- name: uninstall iptables for ubuntu
+  apt:
+    name: iptables
+    state: absent
+  when: ansible_distribution == "Ubuntu"
+
+- name: uninstall iptables for opensuse
+  zypper:
+    name: iptables
+    state: absent
+  when: ansible_distribution == "openSUSE Leap"

@@ -1,0 +1,50 @@
+---
+- set_fact:
+    chain: PREROUTING
+    table: nat
+    name: Forward port 80 to 8600
+    idempotent: false
+    check: true
+    command: -i eth0 -p tcp -m tcp --dport 80 --jump REDIRECT --to-ports 8600 -m comment --comment "Redirect web traffic to port 8600"
+
+- name: clear input table
+  iptables:
+    chain: PREROUTING
+    table: nat
+    flush: true
+  become: yes
+
+- name: "{{name}}"
+  iptables:
+    table: nat
+    chain: PREROUTING
+    in_interface: eth0
+    protocol: tcp
+    match: tcp
+    destination_port: 80
+    jump: REDIRECT
+    to_ports: 8600
+    comment: Redirect web traffic to port 8600
+  become: yes
+  register: iptables
+
+- include_tasks: check-table.yml
+
+- set_fact:
+    idempotent: true
+
+- name: "{{name}} idempotent"
+  iptables:
+    table: nat
+    chain: PREROUTING
+    in_interface: eth0
+    protocol: tcp
+    match: tcp
+    destination_port: 80
+    jump: REDIRECT
+    to_ports: 8600
+    comment: Redirect web traffic to port 8600
+  become: yes
+  register: iptables
+
+- include_tasks: check-table.yml

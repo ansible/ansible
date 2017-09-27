@@ -1,0 +1,29 @@
+---
+- name: "{{name}} assert changed {{idempotent}}"
+  assert:
+    that:
+      - 'iptables.changed == {{ idempotent|ternary(false,true) }}'
+
+- name: "{{name}} check result {{ idempotent|ternary('idempotent','')}}"
+  command: iptables -C {{chain}} -t {{table|default('filter')}} {{command}}
+  register: check_iptables
+  when: "check|default(true)"
+
+- name: "{{name}} assert result {{idempotent}}"
+  assert:
+    that:
+      - 'check_iptables.rc == 0'
+  when: "check|default(true)"
+
+
+
+- name: "{{name}} check rules created {{ idempotent|ternary('idempotent','')}}"
+  command: iptables -L {{chain}} -t {{table|default('filter')}} -n
+  register: check_iptables
+
+- name: "{{name}} assert rules created {{idempotent}}"
+  assert:
+    that:
+      - 'check_iptables.rc == 0'
+      - 'check_iptables.stdout_lines|length == {{rules|default(1) + 2}}'
+

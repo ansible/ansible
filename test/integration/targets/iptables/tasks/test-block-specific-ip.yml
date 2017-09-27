@@ -1,0 +1,42 @@
+---
+- set_fact:
+    chain: INPUT
+    table: filter
+    name: Block specific IP
+    idempotent: false
+    check: true
+    command: --source 8.8.8.8 --jump DROP
+
+- name: clear {{chain}} chain / of {{table|default('filter')}} table
+  iptables:
+    chain: "{{chain}}"
+    table: "{{table}}"
+    flush: true
+  become: yes
+
+- name: "{{name}}"
+  iptables:
+    chain: INPUT
+    source: 8.8.8.8
+    jump: DROP
+  become: yes
+  register: iptables
+
+- include_tasks: check-table.yml
+
+- set_fact:
+    idempotent: true
+
+- name: "{{name}} indempotent"
+  iptables:
+    chain: INPUT
+    source: 8.8.8.8
+    jump: DROP
+  become: yes
+  register: iptables
+
+- assert:
+    that:
+      - 'iptables.changed == false'
+
+- include_tasks: check-table.yml

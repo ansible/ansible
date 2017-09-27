@@ -1,0 +1,6 @@
+destructive
+posix/ci/group3
+iptables
+skip/osx
+needs/privileged
+skip/freebsd

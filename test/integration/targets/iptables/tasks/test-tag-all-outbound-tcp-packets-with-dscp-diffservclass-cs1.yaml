@@ -1,0 +1,43 @@
+---
+- set_fact:
+    chain: OUTPUT
+    table: mangle
+    name: Tag all outbound tcp packets with DSCP DiffServClass CS1
+    idempotent: false
+    check: true
+    command: --jump DSCP -p tcp --set-dscp-class CS1
+    rules: 1
+
+- name: clear {{chain}} chain / of {{table|default('filter')}} table
+  iptables:
+    chain: "{{chain}}"
+    table: "{{table}}"
+    flush: true
+  become: yes
+
+- name: "{{name}}"
+  iptables:
+    chain: OUTPUT
+    jump: DSCP
+    table: mangle
+    set_dscp_mark_class: CS1
+    protocol: tcp
+  become: yes
+  register: iptables
+
+- include_tasks: check-table.yml
+
+- set_fact:
+    idempotent: true
+
+- name: "{{name}} idempotent"
+  iptables:
+    chain: OUTPUT
+    jump: DSCP
+    table: mangle
+    set_dscp_mark_class: CS1
+    protocol: tcp
+  become: yes
+  register: iptables
+
+- include_tasks: check-table.yml

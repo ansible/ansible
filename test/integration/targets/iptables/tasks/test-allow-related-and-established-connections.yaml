@@ -1,0 +1,40 @@
+---
+- set_fact:
+    chain: INPUT
+    table: filter
+    name: Allow related and established connections
+    idempotent: false
+    check: true
+    command: --jump ACCEPT -m conntrack --ctstate ESTABLISHED,RELATED
+    rules: 1
+
+- name: clear {{chain}} chain / of {{table|default('filter')}} table
+  iptables:
+    chain: "{{chain}}"
+    table: "{{table}}"
+    flush: true
+  become: yes
+
+- name: "{{name}}"
+  iptables:
+    chain: INPUT
+    ctstate: ESTABLISHED,RELATED
+    jump: ACCEPT
+  become: yes
+  register: iptables
+
+- include_tasks: check-table.yml
+
+- set_fact:
+    idempotent: true
+
+
+- name: "{{name}} idempotent"
+  iptables:
+    chain: INPUT
+    ctstate: ESTABLISHED,RELATED
+    jump: ACCEPT
+  become: yes
+  register: iptables
+
+- include_tasks: check-table.yml
