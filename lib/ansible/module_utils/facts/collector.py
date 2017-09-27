@@ -160,7 +160,6 @@ def get_collector_names(valid_subsets=None,
 
     additional_subsets.difference_update(exclude_subsets - explicitly_added)
 
-    # pprint.pprint(('additiona_subsets', additional_subsets))
     return additional_subsets
 
 
