@@ -1,0 +1,7 @@
+---
+- hosts: localhost
+  gather_facts: no
+  roles:
+    - { role: test_vr_server, tags: test_vr_server }
+    - { role: test_vr_ssh_key, tags: test_vr_ssh_key }
+    - { role: test_vr_firewall_group, tags: test_vr_firewall_group }

@@ -1,0 +1,92 @@
+---
+- name: setup
+  local_action:
+    module: vr_firewall_group
+    name: "{{ vr_firewall_group_name }}"
+    state: absent
+  register: result
+- name: verify setup
+  assert:
+    that:
+    - result|success
+
+- name: test fail if missing name
+  local_action:
+    module: vr_firewall_group
+  register: result
+  ignore_errors: true
+- name: verify test fail if missing name
+  assert:
+    that:
+    - result|failed
+    - 'result.msg == "missing required arguments: name"'
+
+- name: test create firewall group in check mode
+  local_action:
+    module: vr_firewall_group
+    name: "{{ vr_firewall_group_name }}"
+  register: result
+  check_mode: true
+- name: verify test create firewall group in check mode
+  assert:
+    that:
+    - result|changed
+
+- name: test create firewall group
+  local_action:
+    module: vr_firewall_group
+    name: "{{ vr_firewall_group_name }}"
+  register: result
+- name: verify test create firewall group
+  assert:
+    that:
+    - result|changed
+    - result.vultr_firewall_group.name == '{{ vr_firewall_group_name }}'
+
+- name: test create firewall group idempotence
+  local_action:
+    module: vr_firewall_group
+    name: "{{ vr_firewall_group_name }}"
+
+  register: result
+- name: verify test create firewall group idempotence
+  assert:
+    that:
+    - not result|changed
+    - result.vultr_firewall_group.name == '{{ vr_firewall_group_name }}'
+
+- name: test absent firewall group in check mode
+  local_action:
+    module: vr_firewall_group
+    name: "{{ vr_firewall_group_name }}"
+    state: absent
+  register: result
+  check_mode: true
+- name: verify test absent firewall group in check mode
+  assert:
+    that:
+    - result|changed
+    - result.vultr_firewall_group.name == '{{ vr_firewall_group_name }}'
+
+- name: test absent firewall group
+  local_action:
+    module: vr_firewall_group
+    name: "{{ vr_firewall_group_name }}"
+    state: absent
+  register: result
+- name: verify test absent firewall group
+  assert:
+    that:
+    - result|changed
+    - result.vultr_firewall_group.name == '{{ vr_firewall_group_name }}'
+
+- name: test absent firewall group idempotence
+  local_action:
+    module: vr_firewall_group
+    name: "{{ vr_firewall_group_name }}"
+    state: absent
+  register: result
+- name: verify test absent firewall group idempotence
+  assert:
+    that:
+    - not result|changed
