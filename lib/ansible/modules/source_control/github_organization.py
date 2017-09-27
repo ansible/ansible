@@ -211,8 +211,14 @@ def create_organization(module, auth_header):
             result.update({'changed': True})
             _merge_organization_result(result, org)
         else:
-            failure = module.from_json(info['body'])
-            module.fail_json(msg='Failed to create organization: {0}'.format(failure['message']))
+            try:
+                failure = module.from_json(info['body'])
+                error_message = failure['message']
+            except ValueError:
+                error_message = info['body']
+
+            module.fail_json(msg='Failed to create organization: {0}'.format(error_message))
+
     else:
         _merge_organization_result(result, existing_org)
 
