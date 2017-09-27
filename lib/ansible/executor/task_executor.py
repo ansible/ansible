@@ -675,12 +675,14 @@ class TaskExecutor:
                 if self._task.changed_when is not None and self._task.changed_when:
                     cond = Conditional(loader=self._loader)
                     cond.when = self._task.changed_when
+                    cond.this = result
                     result['changed'] = cond.evaluate_conditional(templar, vars_copy)
 
             def _evaluate_failed_when_result(result):
                 if self._task.failed_when:
                     cond = Conditional(loader=self._loader)
                     cond.when = self._task.failed_when
+                    cond.this = result
                     failed_when_result = cond.evaluate_conditional(templar, vars_copy)
                     result['failed_when_result'] = result['failed'] = failed_when_result
                 else:
@@ -728,6 +730,7 @@ class TaskExecutor:
             if retries > 1:
                 cond = Conditional(loader=self._loader)
                 cond.when = self._task.until
+                cond.this = result
                 if cond.evaluate_conditional(templar, vars_copy):
                     break
                 else:

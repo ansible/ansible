@@ -47,6 +47,7 @@ class Conditional:
     '''
 
     _when = FieldAttribute(isa='list', default=list, extend=True, prepend=True)
+    this = None
 
     def __init__(self, loader=None):
         # when used directly, this class needs a loader, but we want to
@@ -124,6 +125,15 @@ class Conditional:
             display.warning('conditional statements should not include jinja2 '
                             'templating delimiters such as {{ }} or {%% %%}. '
                             'Found: %s' % conditional)
+
+        if self.this is not None:
+            if 'this' in all_vars:
+                display.warning("variable 'this' is a reserved keyword and should not be set")
+            else:
+                # Avoid polluting all_vars
+                all_vars = all_vars.copy()
+                all_vars['this'] = self.this
+
         # make sure the templar is using the variables specified with this method
         templar.set_available_variables(variables=all_vars)
 
