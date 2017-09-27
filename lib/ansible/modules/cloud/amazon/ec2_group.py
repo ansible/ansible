@@ -593,7 +593,7 @@ def serialize_revoke(grant, rule):
     return fix_port_and_protocol(permission)
 
 
-def serialize_ip_grant(rule, thisip, ethertype, has_rule_description):
+def serialize_ip_grant(rule, thisip, ethertype, has_rule_description=None):
     permission = {'IpProtocol': rule['proto'],
                   'FromPort': rule['from_port'],
                   'ToPort': rule['to_port']}
