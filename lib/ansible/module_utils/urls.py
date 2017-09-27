@@ -728,7 +728,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
                 port = proxy_parts.get('port') or 443
                 s = socket.create_connection((proxy_parts.get('hostname'), port))
                 if proxy_parts.get('scheme') == 'http':
-                    s.sendall((self.CONNECT_COMMAND % (self.hostname, self.port)).encode())
+                    s.sendall(to_bytes(self.CONNECT_COMMAND % (self.hostname, self.port)))
                     if proxy_parts.get('username'):
                         credentials = "%s:%s" % (proxy_parts.get('username', ''), proxy_parts.get('password', ''))
                         s.sendall(b'Proxy-Authorization: Basic %s\r\n' % base64.b64encode(to_bytes(credentials, errors='surrogate_or_strict')).strip())
