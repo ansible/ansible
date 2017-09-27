@@ -273,7 +273,8 @@ class ZipArchive(object):
         old_out = out
         diff = ''
         out = ''
-        if rc == 0:
+        # rc == 0 means no warnings, rc == 1 means warnings
+        if rc == 0 or rc == 1:
             unarchived = True
         else:
             unarchived = False
@@ -576,6 +577,9 @@ class ZipArchive(object):
             cmd.extend(['-x'] + self.excludes)
         cmd.extend(['-d', self.dest])
         rc, out, err = self.module.run_command(cmd)
+        # rc == 0 means no warnings, rc == 1 means warnings
+        if rc == 1:
+            self.module.warn('Extracting files from archive emitted warnings.')
         return dict(cmd=cmd, rc=rc, out=out, err=err)
 
     def can_handle_archive(self):
