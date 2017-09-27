@@ -158,7 +158,7 @@
       assert:
         that:
           - "result.failed"
-          - "result.msg == 'image_id needs to be an ami image to registered/delete'"
+          - "result.msg == 'state is absent but the following are missing&#58; image_id'"
 
     # ============================================================
 
