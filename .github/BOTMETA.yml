@@ -426,6 +426,7 @@ files:
   $modules/network/eos/: privateip trishnaguha
   $modules/network/f5/:
     ignored: Etienne-Carriere mhite mryanlam perzizzle srvg wojtek0806
+    labels: f5
     maintainers: caphrim007
   $modules/network/fortios/: bjolivot
   $modules/network/illumos/: xen0l
