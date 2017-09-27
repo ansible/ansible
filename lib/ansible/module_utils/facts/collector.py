@@ -284,7 +284,7 @@ def resolve_requires(unresolved_requires, all_fact_subsets):
             failed.append(unresolved)
 
     if failed:
-        raise UnresolvedFactDep('unresolved fact dep %s' % ','.join(failed), failed_deps=failed)
+        raise UnresolvedFactDep('unresolved fact dep %s' % ','.join(failed))
     return new_names
 
 
