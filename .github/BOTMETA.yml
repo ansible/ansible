@@ -406,7 +406,9 @@ files:
   $modules/net_tools/omapi_host.py: nerzhul
   $modules/net_tools/snmp_facts.py: ogenstad
   $modules/network/a10/: ericchou1 mischapeters
-  $modules/network/aci/: dagwieers schunduri jmcgill298
+  $modules/network/aci/:
+    labels: aci
+    maintainers: dagwieers schunduri jmcgill298
   $modules/network/aireos/: jmighion
   $modules/network/aos/: dgarros jeremyschulman
   $modules/network/aruba/: jmighion
