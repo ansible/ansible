@@ -5,6 +5,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
+
 DOCUMENTATION = '''
 ---
 module: wascloud_instance
@@ -12,7 +13,7 @@ short_description: create, update or cancel an instance of WebSphere on Cloud
 description:
   - Creates, updates or cancels WebSphere on Cloud instances. When created, optionally waits for it to be 'running'.
   - More information about WebSphere on Cloud in IBM Marketplace U(https://www.ibm.com/us-en/marketplace/application-server-on-cloud)
-version_added: "2.4"
+version_added: "2.5"
 options:
   state:
     description:
@@ -75,16 +76,16 @@ options:
       - Whether to request a public ip address when creating an instance
     required: false
     default: false
+
 requirements:
     - "python >= 2.7"
-    - "requests >= "2.11.0"
+    - "requests >= 2.11.0"
 author: "Hans Kristian Moen (@hassenius)"
 '''
 
 EXAMPLES = '''
----
-Example usage:
-  wascloud_instance:
+# Simple example that creates a WAS Base on a single VM
+- wascloud_instance:
     state: present
     name: temp_dev_env
     instance_type: WASBase
