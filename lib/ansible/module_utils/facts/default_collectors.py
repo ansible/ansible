@@ -78,14 +78,14 @@ _base = [
               # these should always be first due to most other facts depending on them
               PlatformFactCollector,
               DistributionFactCollector,
-              LSBFactCollector,]
+              LSBFactCollector]
 
 _restrictive = [
               # These restrict what is possible in others
               SelinuxFactCollector,
               ApparmorFactCollector,
               ChrootFactCollector,
-              FipsFactCollector,]
+              FipsFactCollector]
 
 _general = [
               # general info, not required but probably useful for other facts
@@ -98,7 +98,7 @@ _general = [
               DateTimeFactCollector,
               EnvFactCollector,
               SshPubKeyFactCollector,
-              UserFactCollector,]
+              UserFactCollector]
 
 _virtual = [
               # virtual, this might also limit hardware/networking
@@ -109,7 +109,7 @@ _virtual = [
               OpenBSDVirtualCollector,
               NetBSDVirtualCollector,
               SunOSVirtualCollector,
-              HPUXVirtualCollector,]
+              HPUXVirtualCollector]
 
 _hardware = [
               # hardware
@@ -123,7 +123,7 @@ _hardware = [
               LinuxHardwareCollector,
               NetBSDHardwareCollector,
               OpenBSDHardwareCollector,
-              SunOSHardwareCollector,]
+              SunOSHardwareCollector]
 
 _network = [
               # networking
@@ -138,7 +138,7 @@ _network = [
               LinuxNetworkCollector,
               NetBSDNetworkCollector,
               OpenBSDNetworkCollector,
-              SunOSNetworkCollector,]
+              SunOSNetworkCollector]
 
 _extra_facts = [
               # other fact sources
