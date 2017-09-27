@@ -678,8 +678,8 @@ def main():
     has_rule_description = rule_description_attr(client)
     if not has_rule_description:
         all_rules = rules if rules else [] + rules_egress if rules_egress else []
-        if any(rule.get('rule_desc') for rule in all_rules):
-            module.warn("Using rule descriptions requires botocore version >= 1.7.2.")
+        if any('rule_desc' in rule for rule in all_rules):
+            module.fail_json(msg="Using rule descriptions requires botocore version >= 1.7.2.")
 
     group = None
     groups = dict()
