@@ -21,7 +21,6 @@ from __future__ import (absolute_import, division)
 __metaclass__ = type
 
 from collections import defaultdict
-import pprint
 
 # for testing
 from ansible.compat.tests import unittest
@@ -36,8 +35,6 @@ class TestFindCollectorsForPlatform(unittest.TestCase):
         compat_platforms = [{'system': 'Generic'}]
         res = collector.find_collectors_for_platform(default_collectors.collectors,
                                                      compat_platforms)
-        # pprint.pprint(default_collectors.collectors)
-        # pprint.pprint(res)
         for coll_class in res:
             self.assertIn(coll_class._platform, ('Generic'))
 
@@ -45,8 +42,6 @@ class TestFindCollectorsForPlatform(unittest.TestCase):
         compat_platforms = [{'system': 'Linux'}]
         res = collector.find_collectors_for_platform(default_collectors.collectors,
                                                      compat_platforms)
-        # pprint.pprint(default_collectors.collectors)
-        # pprint.pprint(res)
         for coll_class in res:
             self.assertIn(coll_class._platform, ('Linux'))
 
@@ -54,8 +49,6 @@ class TestFindCollectorsForPlatform(unittest.TestCase):
         compat_platforms = [{'system': 'Generic'}, {'system': 'Linux'}]
         res = collector.find_collectors_for_platform(default_collectors.collectors,
                                                      compat_platforms)
-        # pprint.pprint(default_collectors.collectors)
-        # pprint.pprint(res)
         for coll_class in res:
             self.assertIn(coll_class._platform, ('Generic', 'Linux'))
 
@@ -69,7 +62,6 @@ class TestSelectCollectorNames(unittest.TestCase):
         res = collector.select_collector_classes(collector_names,
                                                  all_fact_subsets,
                                                  all_collector_classes)
-        pprint.pprint(res)
 
         expected = [default_collectors.DistributionFactCollector,
                     default_collectors.PkgMgrFactCollector]
@@ -85,7 +77,6 @@ class TestSelectCollectorNames(unittest.TestCase):
         res = collector.select_collector_classes(collector_names,
                                                  all_fact_subsets,
                                                  all_collector_classes)
-        pprint.pprint(res)
 
         expected = [default_collectors.PkgMgrFactCollector,
                     default_collectors.DistributionFactCollector]
@@ -99,17 +90,14 @@ class TestSelectCollectorNames(unittest.TestCase):
                                                                          compat_platforms)
 
         all_fact_subsets, aliases_map = collector.build_fact_id_to_collector_map(collectors_for_platform)
-        pprint.pprint((dict(all_fact_subsets), dict(aliases_map)))
 
         all_valid_subsets = frozenset(all_fact_subsets.keys())
         collector_names = collector.get_collector_names(valid_subsets=all_valid_subsets,
                                                         aliases_map=aliases_map,
                                                         platform_info=platform_info)
-        res = collector.select_collector_classes(collector_names,
-                                                 all_fact_subsets,
-                                                 default_collectors.collectors)
-
-        pprint.pprint(res)
+        collector.select_collector_classes(collector_names,
+                                           all_fact_subsets,
+                                           default_collectors.collectors)
 
     def _all_collector_classes(self):
         return [default_collectors.DistributionFactCollector,
