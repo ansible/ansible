@@ -263,6 +263,20 @@ def select_collector_classes(collector_names, all_fact_subsets, all_collector_cl
     return selected_collector_classes
 
 
+def _get_requires_by_collector_name(collector_name, all_fact_subsets):
+    required_facts = set()
+
+    collector_classes = all_fact_subsets[collector_name]
+    for collector_class in collector_classes:
+        required_facts.update(collector_class.required_facts)
+    return required_facts
+
+#    for collector_name in collector_names:
+#        collector_classes = all_fact_subsets[collector_name]
+#        for collector_class in collector_classes:
+
+
+
 def find_unresolved_requires(collector_names, all_fact_subsets):
     '''Find any collector names that have unresolved requires
 
@@ -272,11 +286,10 @@ def find_unresolved_requires(collector_names, all_fact_subsets):
     unresolved = set()
 
     for collector_name in collector_names:
-        collector_classes = all_fact_subsets[collector_name]
-        for collector_class in collector_classes:
-            for required_fact in collector_class.required_facts:
-                if required_fact not in collector_names:
-                    unresolved.add(required_fact)
+        required_facts = _get_requires_by_collector_name(collector_name, all_fact_subsets)
+        for required_fact in required_facts:
+            if required_fact not in collector_names:
+                unresolved.add(required_fact)
 
     return unresolved
 
@@ -329,6 +342,7 @@ def tsort(dep_map):
 
 
 def _solve_deps(collector_names, all_fact_subsets):
+    unsolved = collector_names.copy()
     solutions = collector_names.copy()
     unresolved = find_unresolved_requires(collector_names, all_fact_subsets)
 
