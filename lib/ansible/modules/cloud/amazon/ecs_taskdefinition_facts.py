@@ -333,7 +333,7 @@ def main():
     ecs_td_snake = {}
     for k, v in ecs_td.items():
         ecs_td_snake[_camel_to_snake(k)] = v
-    
+
     ecs_td_facts_result = dict(changed=False, ansible_facts=ecs_td_snake)
     module.exit_json(**ecs_td_facts_result)
 
