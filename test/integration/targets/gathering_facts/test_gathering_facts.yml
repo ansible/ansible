@@ -44,8 +44,7 @@
     - name: Test that retrieving hardware facts works and gets prereqs from platform and distribution
       assert:
         # LinuxHardwareCollector requires 'platform' facts
-        when:
-          - 'ansible_system|default("UNDEF") == "Linux"'
+        when: ansible_system|default("UNDEF") == "Linux"
         that:
           - 'ansible_memory_mb|default("UNDEF") != "UNDEF"'
           - 'ansible_default_ipv4|default("UNDEF") == "UNDEF"'
