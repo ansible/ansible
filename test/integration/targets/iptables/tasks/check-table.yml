@@ -16,7 +16,6 @@
   when: "check|default(true)"
 
 
-
 - name: "{{name}} check rules created {{ idempotent|ternary('idempotent','')}}"
   command: iptables -L {{chain}} -t {{table|default('filter')}} -n
   register: check_iptables
@@ -26,4 +25,3 @@
     that:
       - 'check_iptables.rc == 0'
       - 'check_iptables.stdout_lines|length == {{rules|default(1) + 2}}'
-
