@@ -1,20 +1,4 @@
 ---
-# There is a bug currently where the nxapi server can get
-# stuck in a bad state when enabling/disabling rapidly by
-# the integration tests.
-#
-# Toggle the command off/on as mitigation.
-- name: Toggle feature nxapi - Disable
-  nxos_config:
-    lines:
-      - no feature nxapi
-    provider: "{{ cli }}"
-  ignore_errors: yes
-
-# Pause after disabling nxapi
-- pause:
-    seconds: 3
-
 - name: Toggle feature nxapi - Enable
   nxos_config:
     lines:
@@ -22,9 +6,9 @@
     provider: "{{ cli }}"
   ignore_errors: yes
 
-# Pause after enabling nxapi
-- pause:
-    seconds: 3
+- name: Set nxapi to default state
+  nxos_nxapi:
+      provider: "{{ cli }}"
 
 # Gather the list of interfaces on this device and make the list
 # available for integration tests that need them.
@@ -35,7 +19,7 @@
 #
 #   - name: "Interface selected for this test"
 #     debug: msg="{{ testint }}"
-#
+
 - name: "Collect interface list"
   nxos_command:
     commands: ['show interface brief | json']
