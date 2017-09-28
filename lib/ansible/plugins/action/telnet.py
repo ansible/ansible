@@ -43,7 +43,7 @@ class ActionModule(ActionBase):
             login_prompt = self._task.args.get('login_prompt', "login: ")
             password_prompt = self._task.args.get('password_prompt', "Password: ")
             prompts = self._task.args.get('prompts', "$ ")
-            commands = self._task.args.get('command')
+            commands = self._task.args.get('command') or self._task.args.get('commands')
 
             if isinstance(commands, text_type):
                 commands = commands.split(',')
