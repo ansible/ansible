@@ -39,7 +39,8 @@ options:
     aliases: [ 'pkg' ]
   exclude:
     description:
-      - "Package name(s) to exclude when state=present, or latest"
+      - Package name(s) to exclude when state=present, or latest
+      - Updates to ansible binary while a playbook is running can cause issues. It is advisable to exclude ansible when performing os updates from ansible.
     required: false
     version_added: "2.0"
     default: null
@@ -212,6 +213,7 @@ EXAMPLES = '''
   yum:
     name: '*'
     state: latest
+    exclude: ansible
 
 - name: upgrade all packages, excluding kernel & foo related packages
   yum:
