@@ -451,7 +451,10 @@ To get a sha512 password hash (random salt)::
 To get a sha256 password hash with a specific salt::
 
     {{ 'secretpassword'|password_hash('sha256', 'mysecretsalt') }}
+    
+An idempotent method to generate unique hashes per system is to use a salt that is consistent between runs::
 
+    {{ 'secretpassword'|password_hash('sha512', 65534|random(seed=inventory_hostname)|string) }}
 
 Hash types available depend on the master system running ansible,
 'hash' depends on hashlib password_hash depends on passlib (http://passlib.readthedocs.io/en/stable/lib/passlib.hash.html).
