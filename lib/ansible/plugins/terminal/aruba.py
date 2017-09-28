@@ -30,11 +30,14 @@ from ansible.plugins.terminal import TerminalBase
 class TerminalModule(TerminalBase):
 
     terminal_stdout_re = [
-        re.compile(br"[\r\n]?[\w]*\(.+\) ?#(?:\s*)$")
+        re.compile(br"[\r\n]?[\w]*\(.+\) ?#(?:\s*)$"),
+        re.compile(br"[pP]assword:$")
     ]
 
     terminal_stderr_re = [
         re.compile(br"% ?Error"),
+        re.compile(br"Error:", re.M),
+        re.compile(br"^% \w+", re.M),
         re.compile(br"% ?Bad secret"),
         re.compile(br"invalid input", re.I),
         re.compile(br"(?:incomplete|ambiguous) command", re.I),
