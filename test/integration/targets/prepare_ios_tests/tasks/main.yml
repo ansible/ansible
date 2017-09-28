@@ -4,8 +4,6 @@
   ios_config:
     src: config.j2
     authorize: yes
-    provider: "{{ cli }}"
-
 
 # Some AWS hostnames can be longer than those allowed by the system we are testing
 # Truncate the hostname
