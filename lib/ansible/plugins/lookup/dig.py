@@ -8,24 +8,23 @@ DOCUMENTATION = """
     lookup: dig
     author: Jan-Piet Mens (@jpmens) <jpmens(at)gmail.com>
     version_added: "1.9"
-    short_description: use 'dig' to query DNS
+    short_description: query DNS using the dnspython library
     requirements:
-      - dig (CLI utility)
+      - dnspython (python library, http://www.dnspython.org/)
     description: test
-    lola:
-#      - The dig lookup runs queries against DNS servers to retrieve DNS records for a specific name (FQDN - fully qualified domain name).
-#        It is possible to lookup any DNS record in this manner.
-#      - There is a couple of different syntaxes that can be used to specify what record should be retrieved, and for which name.
-#         It is also possible to explicitly specify the DNS server(s) to use for lookups.
-#      - In its simplest form, the dig lookup plugin can be used to retrieve an IPv4 address (DNS A record) associated with FQDN
-#      - In addition to (default) A record, it is also possible to specify a different record type that should be queried.
-#        This can be done by either passing-in additional parameter of format qtype=TYPE to the dig lookup, or by appending /TYPE to the FQDN being queried.
-#      - If multiple values are associated with the requested record, the results will be returned as a comma-separated list.
-#        In such cases you may want to pass option wantlist=True to the plugin, which will result in the record values being returned as a list
-#        over which you can iterate later on.
-#      - By default, the lookup will rely on system-wide configured DNS servers for performing the query.
-#        It is also possible to explicitly specify DNS servers to query using the @DNS_SERVER_1,DNS_SERVER_2,...,DNS_SERVER_N notation.
-#        This needs to be passed-in as an additional parameter to the lookup
+      - The dig lookup runs queries against DNS servers to retrieve DNS records for a specific name (FQDN - fully qualified domain name).
+        It is possible to lookup any DNS record in this manner.
+      - There is a couple of different syntaxes that can be used to specify what record should be retrieved, and for which name.
+         It is also possible to explicitly specify the DNS server(s) to use for lookups.
+      - In its simplest form, the dig lookup plugin can be used to retrieve an IPv4 address (DNS A record) associated with FQDN
+      - In addition to (default) A record, it is also possible to specify a different record type that should be queried.
+        This can be done by either passing-in additional parameter of format qtype=TYPE to the dig lookup, or by appending /TYPE to the FQDN being queried.
+      - If multiple values are associated with the requested record, the results will be returned as a comma-separated list.
+        In such cases you may want to pass option wantlist=True to the plugin, which will result in the record values being returned as a list
+        over which you can iterate later on.
+      - By default, the lookup will rely on system-wide configured DNS servers for performing the query.
+        It is also possible to explicitly specify DNS servers to query using the @DNS_SERVER_1,DNS_SERVER_2,...,DNS_SERVER_N notation.
+        This needs to be passed-in as an additional parameter to the lookup
     options:
       _terms:
         description: domain(s) to query
@@ -200,7 +199,7 @@ class LookupModule(LookupBase):
         '''
 
         if HAVE_DNS is False:
-            raise AnsibleError("Can't LOOKUP(dig): module dns.resolver is not installed")
+            raise AnsibleError("The dig lookup requires the python 'dnspython' library and it is not installed")
 
         # Create Resolver object so that we can set NS if necessary
         myres = dns.resolver.Resolver(configure=True)
