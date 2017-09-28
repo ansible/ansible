@@ -8,9 +8,9 @@ DOCUMENTATION = """
     lookup: dig
     author: Jan-Piet Mens (@jpmens) <jpmens(at)gmail.com>
     version_added: "1.9"
-    short_description: use 'dig' to query DNS
+    short_description: query DNS using the dnspython library
     requirements:
-      - dig (CLI utility)
+      - dnspython (python library, http://www.dnspython.org/)
     description: test
       - The dig lookup runs queries against DNS servers to retrieve DNS records for a specific name (FQDN - fully qualified domain name).
         It is possible to lookup any DNS record in this manner.
@@ -199,7 +199,7 @@ class LookupModule(LookupBase):
         '''
 
         if HAVE_DNS is False:
-            raise AnsibleError("Can't LOOKUP(dig): module dns.resolver is not installed")
+            raise AnsibleError("The dig lookup requires the python 'dnspython' library and it is not installed")
 
         # Create Resolver object so that we can set NS if necessary
         myres = dns.resolver.Resolver(configure=True)
