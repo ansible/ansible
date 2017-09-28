@@ -85,8 +85,6 @@ class Group:
                 host_debug = ', '.join(self.safe_repr(key) for key in self.hosts)
                 raise AnsibleError('One or more hosts in group %s do not have a name: %s' % (self.name, host_debug))
 
-        self._hosts = set(self.hosts)
-
         parent_groups = data.get('parent_groups', [])
         for parent_data in parent_groups:
             g = Group()
@@ -129,7 +127,12 @@ class Group:
         except RuntimeError:
             raise AnsibleError("The group named '%s' has a recursive dependency loop." % self.name)
 
+    def _init_hosts_set(self):
+        if self._hosts is None:
+            self._hosts = set(self.hosts)
+
     def add_host(self, host):
+        self._init_hosts_set()
         if host.name not in self._hosts:
             self.hosts.append(host)
             self._hosts.add(host.name)
@@ -138,6 +141,7 @@ class Group:
 
     def remove_host(self, host):
 
+        self._init_hosts_set()
         if host.name in self._hosts:
             self.hosts.remove(host)
             self._hosts.remove(host.name)
