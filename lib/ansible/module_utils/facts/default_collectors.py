@@ -74,60 +74,82 @@ from ansible.module_utils.facts.virtual.netbsd import NetBSDVirtualCollector
 from ansible.module_utils.facts.virtual.openbsd import OpenBSDVirtualCollector
 from ansible.module_utils.facts.virtual.sunos import SunOSVirtualCollector
 
+# these should always be first due to most other facts depending on them
+_base = [
+    PlatformFactCollector,
+    DistributionFactCollector,
+    LSBFactCollector
+]
+
+# These restrict what is possible in others
+_restrictive = [
+    SelinuxFactCollector,
+    ApparmorFactCollector,
+    ChrootFactCollector,
+    FipsFactCollector
+]
+
+# general info, not required but probably useful for other facts
+_general = [
+    PythonFactCollector,
+    SystemCapabilitiesFactCollector,
+    PkgMgrFactCollector,
+    OpenBSDPkgMgrFactCollector,
+    ServiceMgrFactCollector,
+    CmdLineFactCollector,
+    DateTimeFactCollector,
+    EnvFactCollector,
+    SshPubKeyFactCollector,
+    UserFactCollector
+]
+
+# virtual, this might also limit hardware/networking
+_virtual = [
+    VirtualCollector,
+    DragonFlyVirtualCollector,
+    FreeBSDVirtualCollector,
+    LinuxVirtualCollector,
+    OpenBSDVirtualCollector,
+    NetBSDVirtualCollector,
+    SunOSVirtualCollector,
+    HPUXVirtualCollector
+]
+
+_hardware = [
+    HardwareCollector,
+    AIXHardwareCollector,
+    DarwinHardwareCollector,
+    DragonFlyHardwareCollector,
+    FreeBSDHardwareCollector,
+    HPUXHardwareCollector,
+    HurdHardwareCollector,
+    LinuxHardwareCollector,
+    NetBSDHardwareCollector,
+    OpenBSDHardwareCollector,
+    SunOSHardwareCollector
+]
+
+_network = [
+    DnsFactCollector,
+    NetworkCollector,
+    AIXNetworkCollector,
+    DarwinNetworkCollector,
+    DragonFlyNetworkCollector,
+    FreeBSDNetworkCollector,
+    HPUXNetworkCollector,
+    HurdNetworkCollector,
+    LinuxNetworkCollector,
+    NetBSDNetworkCollector,
+    OpenBSDNetworkCollector,
+    SunOSNetworkCollector
+]
+
+# other fact sources
+_extra_facts = [
+    LocalFactCollector,
+    FacterFactCollector,
+    OhaiFactCollector
+]
+
 # TODO: make config driven
-collectors = [ApparmorFactCollector,
-              ChrootFactCollector,
-              CmdLineFactCollector,
-              DateTimeFactCollector,
-              DistributionFactCollector,
-              DnsFactCollector,
-              EnvFactCollector,
-              FipsFactCollector,
-
-              HardwareCollector,
-              AIXHardwareCollector,
-              DarwinHardwareCollector,
-              DragonFlyHardwareCollector,
-              FreeBSDHardwareCollector,
-              HPUXHardwareCollector,
-              HurdHardwareCollector,
-              LinuxHardwareCollector,
-              NetBSDHardwareCollector,
-              OpenBSDHardwareCollector,
-              SunOSHardwareCollector,
-              LocalFactCollector,
-              LSBFactCollector,
-
-              NetworkCollector,
-              AIXNetworkCollector,
-              DarwinNetworkCollector,
-              DragonFlyNetworkCollector,
-              FreeBSDNetworkCollector,
-              HPUXNetworkCollector,
-              HurdNetworkCollector,
-              LinuxNetworkCollector,
-              NetBSDNetworkCollector,
-              OpenBSDNetworkCollector,
-              SunOSNetworkCollector,
-
-              PkgMgrFactCollector,
-              OpenBSDPkgMgrFactCollector,
-              PlatformFactCollector,
-              PythonFactCollector,
-              SelinuxFactCollector,
-              ServiceMgrFactCollector,
-              SshPubKeyFactCollector,
-              SystemCapabilitiesFactCollector,
-              UserFactCollector,
-
-              VirtualCollector,
-              DragonFlyVirtualCollector,
-              FreeBSDVirtualCollector,
-              LinuxVirtualCollector,
-              OpenBSDVirtualCollector,
-              NetBSDVirtualCollector,
-              SunOSVirtualCollector,
-              HPUXVirtualCollector,
-
-              FacterFactCollector,
-              OhaiFactCollector]
+collectors = _base + _restrictive + _general + _virtual + _hardware + _network + _extra_facts
