@@ -58,6 +58,7 @@ Ansible Changes By Release
 * fixed ansible-pull to now correctly deal with inventory
 * corrected dig lookup docs
 * fix type handling for sensu_silence so the module works
+* added fix for win_iis_webapppool to correctly handle array elements
 
 <sdfasdfsadfsdflkjsdfklj3oiqrua id="2.4"></a>
 
