@@ -255,9 +255,9 @@ def allocate_address(ec2, domain, reuse_existing_ip_allowed):
             unassociated_addresses = [a for a in all_addresses
                                       if not a.instance_id]
         if unassociated_addresses:
-            return unassociated_addresses[0]
+            return unassociated_addresses[0], False
 
-    return ec2.allocate_address(domain=domain)
+    return ec2.allocate_address(domain=domain), True
 
 
 def release_address(ec2, address, check_mode):
@@ -305,8 +305,7 @@ def ensure_present(ec2, module, domain, address, private_ip_address, device_id,
         if check_mode:
             return {'changed': True}
 
-        address = allocate_address(ec2, domain, reuse_existing_ip_allowed)
-        changed = True
+        address, changed = allocate_address(ec2, domain, reuse_existing_ip_allowed)
 
     if device_id:
         # Allocate an IP for instance since no public_ip was provided
@@ -404,15 +403,18 @@ def main():
         if device_id:
             address = find_address(ec2, public_ip, device_id, isinstance=is_instance)
         else:
-            address = False
+            address = find_address(ec2, public_ip, None)
 
         if state == 'present':
             if device_id:
                 result = ensure_present(ec2, module, domain, address, private_ip_address, device_id,
                                     reuse_existing_ip_allowed, module.check_mode, isinstance=is_instance)
             else:
-                address = allocate_address(ec2, domain, reuse_existing_ip_allowed)
-                result = {'changed': True, 'public_ip': address.public_ip, 'allocation_id': address.allocation_id}
+                if address:
+                    changed = False
+                else:
+                    address, changed = allocate_address(ec2, domain, reuse_existing_ip_allowed)
+                result = {'changed': changed, 'public_ip': address.public_ip, 'allocation_id': address.allocation_id}
         else:
             if device_id:
                 disassociated = ensure_absent(ec2, domain, address, device_id, module.check_mode, isinstance=is_instance)
@@ -423,7 +425,6 @@ def main():
                 else:
                     result = {'changed': disassociated['changed'], 'disassociated': disassociated, 'released': {'changed': False}}
             else:
-                address = find_address(ec2, public_ip, None)
                 released = release_address(ec2, address, module.check_mode)
                 result = {'changed': released['changed'], 'disassociated': {'changed': False}, 'released': released}
 
