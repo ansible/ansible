@@ -4,24 +4,28 @@
 - name: expected successful ping
   ios_ping: &valid_ip
     dest: '8.8.8.8'
+    authorize: yes
   register: esp
   
 - name: unexpected unsuccessful ping
   ios_ping: &invalid_ip
     dest: '10.255.255.250'
     timeout: 45
+    authorize: yes
   register: uup
 
 - name: unexpected successful ping
   ios_ping:
     <<: *valid_ip
     state: 'absent'
+    authorize: yes
   register: usp
 
 - name: expected unsuccessful ping
   ios_ping:
     <<: *invalid_ip
     state: 'absent'
+    authorize: yes
   register: eup
 
 - name: assert

@@ -7,7 +7,6 @@
       role: network-operator
       state: present
       authorize: yes
-      provider: "{{ cli }}"
       configured_password: pass123
 
   - name: test login
@@ -34,6 +33,5 @@
     ios_user:
       name: auth_user
       state: absent
-      provider: "{{ cli }}"
       authorize: yes
     register: result
