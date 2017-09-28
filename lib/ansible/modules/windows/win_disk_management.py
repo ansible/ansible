@@ -29,9 +29,9 @@ module: win_disk_management
 version_added: '2.5'
 short_description: A Windows disk management module
 description:
-   - With the module you can select a disk on the computer and manage it (e.g. initializing, partitioning, formatting).
+   - With the module you can select a disk on the target and manage it (e.g. initializing, partitioning, formatting).
    - To select the disk and to manage it you have several options which are all described in the documentation.
-   - If more than one disk with the exact same specifications was found on the computer, the first found disk will be selected.
+   - If more than one disk with the exact same specifications was found on the target, the first found disk will be selected.
    - The module detects any existing volume and/or partition on the selected disk and will end the module in this case.
    - If parameter file_system is set to "refs" the parameter allocation_unit_size will be automatically adjusted to "64" (KB).
    - The module recognizes whether the selected switches are suitable with the selected parameters.
