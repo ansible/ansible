@@ -5,12 +5,12 @@
   ios_config:
     lines: ['hostname {{ shorter_hostname }}']
     match: none
-    provider: "{{ cli }}"
+    authorize: yes
 
 - name: configure top level command
   ios_config:
     lines: ['hostname foo']
-    provider: "{{ cli }}"
+    authorize: yes
   register: result
 
 - assert:
@@ -21,7 +21,7 @@
 - name: configure top level command idempotent check
   ios_config:
     lines: ['hostname foo']
-    provider: "{{ cli }}"
+    authorize: yes
   register: result
 
 - assert:
@@ -32,6 +32,6 @@
   ios_config:
     lines: ['hostname {{ shorter_hostname }}']
     match: none
-    provider: "{{ cli }}"
+    authorize: yes
 
 - debug: msg="END cli/toplevel.yaml"

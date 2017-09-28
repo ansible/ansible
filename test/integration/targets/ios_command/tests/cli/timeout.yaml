@@ -5,6 +5,7 @@
   ios_command:
     commands:
       - show version
+    authorize: yes
     wait_for:
       - "result[0] contains bad_value_string"
   register: result

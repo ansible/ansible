@@ -6,7 +6,6 @@
     name: 172.16.0.1
     state: absent
     authorize: yes
-    provider: "{{ cli }}"
 
 - name: Remove console
   ios_logging:
@@ -14,7 +13,6 @@
     level: warnings
     state: absent
     authorize: yes
-    provider: "{{ cli }}"
 
 - name: Remove buffer
   ios_logging:
@@ -22,7 +20,6 @@
     size: 8000
     authorize: yes
     state: absent
-    provider: "{{ cli }}"
 
 # start tests
 - name: Set up host logging
@@ -31,7 +28,6 @@
     name: 172.16.0.1
     state: present
     authorize: yes
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -46,7 +42,6 @@
     name: 172.16.0.1
     state: present
     authorize: yes
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -59,7 +54,6 @@
     name: 172.16.0.1
     state: absent
     authorize: yes
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -73,7 +67,6 @@
     name: 172.16.0.1
     state: absent
     authorize: yes
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -86,7 +79,6 @@
     level: warnings
     state: present
     authorize: yes
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -99,7 +91,6 @@
     dest: buffered
     size: 8000
     authorize: yes
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -113,7 +104,6 @@
       - { dest: console, level: notifications }
       - { dest: buffered, size: 9000 }
     authorize: yes
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -129,7 +119,6 @@
       - { dest: buffered, size: 9000 }
     state: absent
     authorize: yes
-    provider: "{{ cli }}"
   register: result
 
 - assert:

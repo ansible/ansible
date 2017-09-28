@@ -8,12 +8,10 @@
       - vrf definition ansible
     match: none
     authorize: yes
-    provider: "{{ cli }}"
 
 - name: configure lookup_source
   ios_system:
     lookup_source: Loopback10
-    provider: "{{ cli }}"
     authorize: yes
   register: result
 
@@ -25,7 +23,6 @@
 - name: verify lookup_source
   ios_system:
     lookup_source: Loopback10
-    provider: "{{ cli }}"
     authorize: yes
   register: result
 
@@ -36,7 +33,6 @@
 - name: Disable lookup_source
   ios_system:
     lookup_enabled: False
-    provider: "{{ cli }}"
     authorize: yes
   register: result
 
@@ -48,7 +44,6 @@
 - name: Disable lookup_source
   ios_system:
     lookup_enabled: True
-    provider: "{{ cli }}"
     authorize: yes
   register: result
 
@@ -93,7 +88,6 @@
       - no vrf definition ansible
     match: none
     authorize: yes
-    provider: "{{ cli }}"
   ignore_errors: yes
 # FIXME: Not sure why this is failing with msg": "no vrf definition ansible\r\n% IPv4 and IPv6 addresses from all interfaces in VRF ansible have been removed\r\nfoo(config)#", rc:1
 

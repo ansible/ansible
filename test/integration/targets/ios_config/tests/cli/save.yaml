@@ -9,13 +9,13 @@
     parents:
       - interface Loopback999
     match: none
-    provider: "{{ cli }}"
+    authorize: yes
 
 
 - name: save config
   ios_config:
     save: true
-    provider: "{{ cli }}"
+    authorize: yes
   register: result
 # FIXME https://github.com/ansible/ansible-modules-core/issues/5008
   ignore_errors: true
@@ -29,7 +29,7 @@
 - name: save should always run
   ios_config:
     save: true
-    provider: "{{ cli }}"
+    authorize: yes
   register: result
 # FIXME https://github.com/ansible/ansible-modules-core/issues/5008
   ignore_errors: true
