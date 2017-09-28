@@ -257,9 +257,10 @@ class Connection(ConnectionBase):
             self.protocol = self._winrm_connect()
             self._connected = True
         if from_exec:
-            display.vvvvv("WINRM EXEC %r %r" % (command, args), host=self._winrm_host)
+            display.vvvvv("WINRM EXEC %r" % command, host=self._winrm_host)
         else:
-            display.vvvvvv("WINRM EXEC %r %r" % (command, args), host=self._winrm_host)
+            display.vvvvvv("WINRM EXEC %r" % command, host=self._winrm_host)
+        display.debug("<%s> WINRM EXEC %r %r" % (self._winrm_host, command, args))
         command_id = None
         try:
             stdin_push_failed = False
@@ -346,7 +347,7 @@ class Connection(ConnectionBase):
         cmd_parts = self._shell._encode_script(cmd, as_list=True, strict_mode=False, preserve_rc=False)
 
         # TODO: display something meaningful here
-        display.vvv("EXEC (via pipeline wrapper)")
+        display.vvv("WINRM EXEC (via pipeline wrapper)")
 
         stdin_iterator = None
 
@@ -388,9 +389,9 @@ class Connection(ConnectionBase):
         if '-EncodedCommand' in cmd_parts:
             encoded_cmd = cmd_parts[cmd_parts.index('-EncodedCommand') + 1]
             decoded_cmd = to_text(base64.b64decode(encoded_cmd).decode('utf-16-le'))
-            display.vvv("EXEC %s" % decoded_cmd, host=self._winrm_host)
+            display.vvv("WINRM EXEC %s" % decoded_cmd, host=self._winrm_host)
         else:
-            display.vvv("EXEC %s" % cmd, host=self._winrm_host)
+            display.vvv("WINRM EXEC %s" % cmd, host=self._winrm_host)
         try:
             result = self._winrm_exec(cmd_parts[0], cmd_parts[1:], from_exec=True)
         except Exception:
