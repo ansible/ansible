@@ -343,6 +343,60 @@
     - restart_from_stop_pool|changed
     - restart_from_stop_pool_actual.stdout == 'Started\r\n'
 
+- name: set web pool attribute that is a collection (check mode)
+  win_iis_webapppool:
+    name: '{{test_iis_webapppool_name}}'
+    state: present
+    attributes:
+      recycling.periodicRestart.schedule: "00:10:00,10:10:00"
+  register: collection_change_check
+  check_mode: yes
+
+- name: get result of set web pool attribute that is a collection (check mode)
+  win_shell: |
+    Import-Module WebAdministration
+    (Get-ItemProperty -Path "IIS:\AppPools\{{test_iis_webapppool_name}}" -Name recycling.periodicRestart.schedule).Collection | ForEach-Object { $_.value.ToString() }
+  register: collection_change_result_check
+
+- name: assert results of set web pool attribute that is a collection (check mode)
+  assert:
+    that:
+    - collection_change_check|changed
+    - collection_change_result_check.stdout == ""
+
+- name: set web pool attribute that is a collection
+  win_iis_webapppool:
+    name: '{{test_iis_webapppool_name}}'
+    state: present
+    attributes:
+      recycling.periodicRestart.schedule: "00:10:00,10:10:00"
+  register: collection_change
+
+- name: get result of set web pool attribute that is a collection
+  win_shell: |
+    Import-Module WebAdministration
+    (Get-ItemProperty -Path "IIS:\AppPools\{{test_iis_webapppool_name}}" -Name recycling.periodicRestart.schedule).Collection | ForEach-Object { $_.value.ToString() }
+  register: collection_change_result
+
+- name: assert results of set web pool attribute that is a collection
+  assert:
+    that:
+    - collection_change|changed
+    - collection_change_result.stdout_lines == [ "00:10:00", "10:10:00" ]
+
+- name: set web pool attribute that is a collection (idempotent)
+  win_iis_webapppool:
+    name: '{{test_iis_webapppool_name}}'
+    state: present
+    attributes:
+      recycling.periodicRestart.schedule: [ "00:10:00", "10:10:00" ]
+  register: collection_change_again
+
+- name: assert results of set web pool attribute that is a collection (idempotent)
+  assert:
+    that:
+    - not collection_change_again|changed
+
 # The following tests are only for IIS versions 8.0 or newer
 - block:
   - name: delete test pool
