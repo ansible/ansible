@@ -43,15 +43,15 @@ options:
         description:
             - Group to which the user will belong to.
         required: true
-    auth:
+    authentication:
         description:
-            - Auth parameters for the user.
+            - Authentication parameters for the user.
         required: false
         default: null
         choices: ['md5', 'sha']
     pwd:
         description:
-            - Auth password when using md5 or sha.
+            - Authentication password when using md5 or sha.
         required: false
         default: null
     privacy:
@@ -77,7 +77,7 @@ EXAMPLES = '''
 - nxos_snmp_user:
     user: ntc
     group: network-operator
-    auth: md5
+    authentication: md5
     pwd: test_password
 '''
 
