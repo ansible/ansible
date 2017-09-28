@@ -67,16 +67,23 @@ class Group:
 
         return result
 
+    def safe_repr(self, value):
+        try:
+            return value.__repr__()
+        except Exception:
+            return type(value)
+
     def deserialize(self, data):
         self.__init__()
         self.name = data.get('name')
         self.vars = data.get('vars', dict())
         self.depth = data.get('depth', 0)
-        self.hosts = data.get('hosts', {})
+        self.hosts = data.get('hosts', [])
 
         for host in self.hosts:
             if not hasattr(host, 'name'):
-                raise AnsibleError('One or more hosts do not have a name: %s' % data)
+                host_debug = ', '.join(self.safe_repr(key) for key in self.hosts)
+                raise AnsibleError('One or more hosts in group %s do not have a name: %s' % (self.name, host_debug))
 
         self._hosts = set(self.hosts)
 
