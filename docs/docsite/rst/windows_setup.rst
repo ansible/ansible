@@ -1,9 +1,9 @@
-Ansible Windows Setup
-=====================
+Setting up a Windows Host
+=========================
 Before Ansible can communicate with a Windows host, there may be some setup
 required on the host to enable this.
 
-..contents:: Topics
+.. contents:: Topics
 
 Host Requirments
 ````````````````
@@ -30,9 +30,9 @@ Upgrading Powershell and .NET Framework
 ---------------------------------------
 Ansible requires Powershell v3 and .NET Framework 4.0 or newer to function and
 on older OS' like Server 2008 and Windows 7, the base image does not meet this
-requirement. The script update_powershell.ps1_ can be used to install whatever
-powershell version that is set along with the required .NET Framework alongside
-it.
+requirement. The script `update_powershell.ps1 <https://github.com/ansible/ansible/blob/devel/examples/scripts/update_powershell.ps1>`_
+can be used to install whatever powershell version that is set along with the
+required .NET Framework alongside it.
 
 This is an example of how to run this script from powershell:
 
@@ -46,8 +46,8 @@ This is an example of how to run this script from powershell:
     (New-Object -TypeName System.Net.WebClient).DownloadFile($url, $file)
     Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Force
 
-    # target_version can be 3.0, 4.0 or 5.1
-    &$file -target_version 5.1 -username $username -password $password -Verbose
+    # version can be 3.0, 4.0 or 5.1
+    &$file -version 5.1 -username $username -password $password -Verbose
 
 Once complete, the following commands should be run to remove the auto logon
 and set the execution policy from powershell:
@@ -56,6 +56,8 @@ and set the execution policy from powershell:
 
     # this isn't needed but is a good security practice to complete
     Set-ExecutionPolicy -ExecutionPolicy Restricted -Force
+
+    $reg_winlogon_path = "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Winlogon"
     Set-ItemProperty -Path $reg_winlogon_path -Name AutoAdminLogon -Value 0
     Remove-ItemProperty -Path $reg_winlogon_path -Name DefaultUserName -ErrorAction SilentlyContinue
     Remove-ItemProperty -Path $reg_winlogon_path -Name DefaultPassword -ErrorAction SilentlyContinue
@@ -83,8 +85,6 @@ actions are required.
     are run after runnning this step to ensure no credentials are still stored
     on the host.
 
-.. _upgrade_powershell.ps1: https://github.com/ansible/ansible/blob/devel/examples/scripts/update_powershell.ps1
-
 WinRM Memory Hotfix
 -------------------
 When running on Powershell v3.0, there is a bug with the WinRM service on
@@ -92,8 +92,8 @@ Windows Server 2008, 2008 R2, 2012, and Windows 7 that limits the amount of
 memory available to the service. Without this hotfix installed, Ansible will
 fail to execute certain commands on the Windows host. It is highly recommended
 these hotfixes are installed as part of the system bootstapping or imaging
-process. The script winrm_hotfix.ps1_ can be used to install the hotfix on
-affected hosts.
+process. The script `winrm_hotfix.ps1 <https://github.com/ansible/ansible/blob/devel/examples/scripts/winrm_hotfix.ps1>`_
+can be used to install the hotfix on affected hosts.
 
 The following powershell command will install the hotfix:
 
@@ -105,17 +105,15 @@ The following powershell command will install the hotfix:
     (New-Object -TypeName System.Net.WebClient).DownloadFile($url, $file)
     powershell.exe -ExecutionPolicy ByPass -File $file -Verbose
 
-.. _winrm_hotfix.ps1: https://github.com/ansible/ansible/blob/devel/examples/scripts/winrm_hotfix.ps1
-
-WinRM Host Setup
-````````````````
+WinRM Setup
+```````````
 Once powershell has been upgraded to at least 3.0, the final step is for the
 WinRM service to be configured so that Ansible can connect to it. There are two
 main components of the WinRM service that Ansible interfaces with; the
 ``listener`` and the ``service`` configuration settings.
 
 Further details about each component can be read below but to get a single host
-up and running to use with Windows the script ConfigureRemotingForAnsible.ps1_
+up and running to use with Windows the script `ConfigureRemotingForAnsible.ps1 <https://github.com/ansible/ansible/blob/devel/examples/scripts/ConfigureRemotingForAnsible.ps1>`_
 can be used. This script set's up both a HTTP and HTTPS listener with a self
 signed certificate as well as enabling the ``Basic`` authentication option on
 the service.
@@ -139,8 +137,6 @@ for these options are located at the top of the script itself.
     production environment. It enables settings that can be inherently insecure
     like ``Basic`` auth. It is only designed for dev work and to help people
     can get started.
-
-.. _ConfigureRemotingForAnsible.ps1: https://github.com/ansible/ansible/blob/devel/examples/scripts/ConfigureRemotingForAnsible.ps1
 
 WinRM Listener
 --------------
@@ -196,11 +192,12 @@ the key options that are useful to understand are:
 * ``CertificateThumbprint``: If running over a HTTPS listener, this is the
   thumbprint of the certificate in the Windows Certificate Store that is used
   in the connection. To get the details of the certificate itself, run this
-  command in powershell::
+  command in powershell:
 
-    Get-ChildItem -Path cert:\LocalMachine\My -Recurse |
-        Where-Object { $_.Thumbprint -eq "E6CDAA82EEAF2ECE8546E05DB7F3E01AA47D76CE" } |
-        Select-Object *
+  .. code-block:: powershell
+    
+    $thumbprint = "E6CDAA82EEAF2ECE8546E05DB7F3E01AA47D76CE"
+    Get-ChildItem -Path cert:\LocalMachine\My -Recurse | Where-Object { $_.Thumbprint -eq $thumbprint } | Select-Object *
 
 Setup WinRM Listener
 ++++++++++++++++++++
@@ -237,13 +234,12 @@ can be set up are:
 
       New-WSManInstance -ResourceURI "winrm/config/Listener" -SelectorSet $selector_set -ValueSet $value_set
 
-  To see the other options with this powershell cmdlet, see New-WSManInstance_.
+  To see the other options with this powershell cmdlet, see
+  `New-WSManInstance <https://docs.microsoft.com/en-us/powershell/module/microsoft.wsman.management/new-wsmaninstance?view=powershell-5.1>`_.
 
 .. Note:: When creating a HTTPS listener, an existing certificate needs to be
     created and stored in the ``LocalMachine\My`` certificate store. Without a
     certificate being present in this store, most commands will fail.
-
-.. _New-WSManInstance: https://docs.microsoft.com/en-us/powershell/module/microsoft.wsman.management/new-wsmaninstance?view=powershell-5.1
 
 Delete WinRM Listener
 +++++++++++++++++++++
@@ -428,3 +424,18 @@ Ansible is unable to even reach the host. Some things to check for this are:
 * The firewall is not set to block the WinRM port's it is listening on
 * There is a WinRM listener enabled on the port and path set by the host vars
 * The WinRM service ``winrm`` is started and running on the Windows host
+
+.. seealso::
+
+   :doc:`index`
+       The documentation index
+   :doc:`playbooks`
+       An introduction to playbooks
+   :doc:`playbooks_best_practices`
+       Best practices advice
+   `List of Windows Modules <http://docs.ansible.com/list_of_windows_modules.html>`_
+       Windows specific module list, all implemented in PowerShell
+   `User Mailing List <http://groups.google.com/group/ansible-project>`_
+       Have a question?  Stop by the google group!
+   `irc.freenode.net <http://irc.freenode.net>`_
+       #ansible IRC chat channel

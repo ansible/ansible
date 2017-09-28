@@ -1,7 +1,7 @@
 Desired State Configuration
 ===========================
 
-..contents:: Topics
+.. contents:: Topics
 
 What is Desired State Configuration?
 ````````````````````````````````````
@@ -12,9 +12,7 @@ modules and can leverage DSC. Since Ansible 2.4, the ``win_dsc`` module has
 been created and can be used to leverage existing DSC resources when
 interacting with a Windows host.
 
-More details on DSC can be viewed at DSC Overview_.
-
-.. _DSC Overview: https://docs.microsoft.com/en-us/powershell/dsc/overview
+More details on DSC can be viewed at `DSC Overview <https://docs.microsoft.com/en-us/powershell/dsc/overview>`_.
 
 Host Requirements
 `````````````````
@@ -29,9 +27,10 @@ Why Use It?
 ```````````
 DSC and Ansible modules have a common goal which is to define the state of a
 resource and the code will ensure that resource meets that state. Because of
-this resources like the File_ DSC resource and win_file can be used to achieve
-the same result. The question is why would someone use DSC over an Ansible
-module and the answer is it depends.
+this resources like the `File <https://docs.microsoft.com/en-us/powershell/dsc/fileresource>`_
+DSC resource and win_file can be used to achieve the same result. The question
+is why would someone use DSC over an Ansible module and the answer is it
+depends.
 
 Reasons for using an Ansible module over a DSC resource are:
 
@@ -57,16 +56,14 @@ module, what matters is that the task is performanced correctly and the code
 is still readible. If someone has more experience with DSC over Ansible there
 is no reason why DSC can't be used for every step that can use it.
 
-.. _File: https://docs.microsoft.com/en-us/powershell/dsc/fileresource
-
 How to use it?
 ``````````````
 The ``win_dsc`` module takes in a free form of options so that it changes
 according to the resource it is managing. A list of built in resource can be
-found at _resources.
+found at `resources <https://docs.microsoft.com/en-us/powershell/dsc/resources>`_.
 
-Using the the Registry_ resource as an example, this is the DSC definition as
-documented by Microsoft::
+Using the the `Registry <https://docs.microsoft.com/en-us/powershell/dsc/registryresource>`_
+resource as an example, this is the DSC definition as documented by Microsoft::
 
     Registry [string] #ResourceName
     {
@@ -98,9 +95,6 @@ this is what the Ansible task would look like::
         Key: HKEY_LOCAL_MACHINE\SOFTWARE\ExampleKey
         ValueName: TestValue
         ValueData: TestData
-
-.. _resources: https://docs.microsoft.com/en-us/powershell/dsc/resources
-.. _Registry: https://docs.microsoft.com/en-us/powershell/dsc/registryresource
 
 Property Types
 --------------
@@ -172,8 +166,9 @@ modules can be installed to manage other resources.
 
 Finding Custom DSC Resource
 ---------------------------
-The main source to find custom resources would be PSGallery_, this site can
-then link to further documentation or details on how to install it manually.
+The main source to find custom resources would be `PSGallery <https://www.powershellgallery.com/>`_,
+this site can then link to further documentation or details on how to install
+it manually.
 
 The ``Find-DscResource`` cmdlet can also be used to find custom resources. An
 example of this cmdlet is:
@@ -188,8 +183,6 @@ example of this cmdlet is:
 
 .. Note:: DSC resources that start with ``x`` mean the module is experimental
     and comes with no support.
-
-.. _PSGallery: https://www.powershellgallery.com/
 
 Installing Custom Resource
 --------------------------
@@ -327,3 +320,18 @@ Setup IIS Website
         Name: NewIISSite
         State: Started
         PhysicalPath: C:\inetpub\IISSite\index.html
+
+.. seealso::
+
+   :doc:`index`
+       The documentation index
+   :doc:`playbooks`
+       An introduction to playbooks
+   :doc:`playbooks_best_practices`
+       Best practices advice
+   `List of Windows Modules <http://docs.ansible.com/list_of_windows_modules.html>`_
+       Windows specific module list, all implemented in PowerShell
+   `User Mailing List <http://groups.google.com/group/ansible-project>`_
+       Have a question?  Stop by the google group!
+   `irc.freenode.net <http://irc.freenode.net>`_
+       #ansible IRC chat channel

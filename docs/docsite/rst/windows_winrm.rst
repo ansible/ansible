@@ -14,16 +14,14 @@ included in all recent Windows operating systems on install. Since Windows
 Server 2012 it has also been enabled by default but in most cases extra
 configuration will be required for Ansible to use it.
 
-Ansible uses the ``pywinrm_`` package to communicate with Windows servers over
-WinRM. It is not installed by default with the Ansible package but can be
-installed by running the following::
+Ansible uses the `pywinrm <https://github.com/diyan/pywinrm>`_ package to
+communicate with Windows servers over WinRM. It is not installed by default
+with the Ansible package but can be installed by running the following::
 
    pip install "pywinrm>=0.2.2"
 
 .. Note:: on distributions with multiple python versions, use pip2 or pip2.x,
     where x matches the python minor version Ansible is running under.
-
-.. _pywinrm: https://github.com/diyan/pywinrm
 
 Authentication Options
 ``````````````````````
@@ -229,6 +227,7 @@ This can be done with the following powershell command:
         -Credential $credential `
         -Force
 
+
 Once this is complete, the hostvar ``ansible_winrm_cert_pem`` should be set to
 the path of the public key and ``ansible_winrm_cert_key_pem`` should be set to
 the path of the private key.
@@ -365,9 +364,8 @@ Add a line like the following for each domain that Ansible needs access for:
         .my.domain.com = MY.DOMAIN.COM
 
 You can configure other settings in this file such as the default domain, see
-krb5.conf_ for more details
-
-.. _krb5.conf: https://web.mit.edu/kerberos/krb5-1.12/doc/admin/conf_files/krb5_conf.html
+`krb5.conf <https://web.mit.edu/kerberos/krb5-1.12/doc/admin/conf_files/krb5_conf.html>`_
+for more details.
 
 Automatic Kerberos Ticket Management
 ++++++++++++++++++++++++++++++++++++
@@ -476,7 +474,6 @@ The ``requests-credssp`` wrapper can be installed via ``pip``:
 
     pip install pywinrm[credssp]
 
-
 CredSSP and TLS 1.2
 +++++++++++++++++++
 By default the ``requests-credssp`` library is configured to authenticate over
@@ -493,8 +490,9 @@ There are two ways that older hosts can be used with CredSSP, which are:
   has no way of supporting TLS 1.2
 
 To enable TLS 1.2 support on Server 2008 R2 and Windows 7, the optional update
-KRB3080079_ needs to be installed. Once installed and the host rebooted, run
-the following powershell commands to enable TLS 1.2:
+`KRB3080079 <https://support.microsoft.com/en-us/help/3080079/update-to-add-rds-support-for-tls-1.1-and-tls-1.2-in-windows-7-or-windows-server-2008-r2>`_
+needs to be installed. Once installed and the host rebooted, run the following
+powershell commands to enable TLS 1.2:
 
 .. code-block:: powershell
 
@@ -507,8 +505,6 @@ the following powershell commands to enable TLS 1.2:
     New-ItemProperty -Path "$reg_path\Server" -Name "DisabledByDefault" -Value 0 -PropertyType DWord
     New-ItemProperty -Path "$reg_path\Client" -Name "Enabled" -Value 1 -PropertyType DWord
     New-ItemProperty -Path "$reg_path\Client" -Name "DisabledByDefault" -Value 0 -PropertyType DWord
-
-.. _KRB3080079: https://support.microsoft.com/en-us/help/3080079/update-to-add-rds-support-for-tls-1.1-and-tls-1.2-in-windows-7-or-windows-server-2008-r2
 
 Set CredSSP Certificate
 +++++++++++++++++++++++
@@ -584,7 +580,6 @@ check the following command can be run in powershell:
     absolutey required. Doing so will leave any sensitive information such as
     credentials and secret files viewable by anyone on the network.
 
-
 Inventory Options
 `````````````````
 Ansible's windows support relies on a few standard variables to indicate the
@@ -644,7 +639,7 @@ for additional configuration of WinRM connections:
   read timeout errors keep occurring
 
 * ``ansible_winrm_message_encryption``: Specify the message encryption
-  operation (``auto``, ``always``, ``never``) to use, Ansible used ``auto`` by
+  operation (``auto``, ``always``, ``never``) to use, Ansible uses ``auto`` by
   default. ``auto`` means message encryption is only used when
   ``ansible_winrm_scheme`` is ``http`` and ``ansible_winrm_transport`` supports
   message encryption. ``always`` means message encryption will always be used
@@ -705,11 +700,18 @@ There are three ways in which these issues can be bypassed which are:
   ``win_scheduled_task`` module. Like ``become`` this bypasses all WinRM
   restrictions but can only run a command and not modules.
 
+
 .. seealso::
 
+   :doc:`index`
+       The documentation index
+   :doc:`playbooks`
+       An introduction to playbooks
+   :doc:`playbooks_best_practices`
+       Best practices advice
    `List of Windows Modules <http://docs.ansible.com/list_of_windows_modules.html>`_
        Windows specific module list, all implemented in PowerShell
-   `Mailing List <http://groups.google.com/group/ansible-project>`_
-       Questions? Help? Ideas?  Stop by the list on Google Groups
+   `User Mailing List <http://groups.google.com/group/ansible-project>`_
+       Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

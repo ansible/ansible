@@ -6,7 +6,7 @@ between the hosts when it comes to components like path separators and OS
 specific tasks. Details specific for Windows such as how to install programs,
 represent paths in YAML can be found on this page.
 
-..contents:: Topics
+.. contents:: Topics
 
 Use Cases
 `````````
@@ -93,7 +93,7 @@ update or hotfix file that has been downloaded locally.
 
 .. Note:: ``win_hotfix`` has a requirement on the DISM powershell cmdlets being
     present. These cmdlets were only added by default on Windows Server 2012
-    and newer.
+    and newer and must be installed on older Windows hosts.
 
 The following example shows how ``win_updates`` can be used::
 
@@ -261,6 +261,10 @@ Here are some examples of using ``win_command`` or ``win_shell``::
     - name: run a vbs script
       win_command: cscript.exe script.vbs
 
+.. Note:: Some commands like ``mkdir``, ``del``, ``copy`` are all commands that
+    only exist in the CMD shell. To run them with ``win_command`` they must be
+    prefixed with ``cmd.exe /c``.
+
 Argument Rules
 ++++++++++++++
 When running a command through ``win_command``, the standard Windows argument
@@ -304,7 +308,7 @@ Using the following rules, these are some examples of quoting::
     argv[1] = escaped \" backslash
     argv[2] = unquoted-end-backslash\
 
-    # due to YAML and Ansible parsing ``\"`` must be written as ``{% raw %}\\{% endraw %}
+    # due to YAML and Ansible parsing '\"' must be written as '{% raw %}\\{% endraw %}"'
     - win_command: C:\temp\executable.exe C:\no\space\path "arg with end \ before end quote{% raw %]\\{% endraw %}"
 
     argv[0] = C:\temp\executable.exe
@@ -312,9 +316,7 @@ Using the following rules, these are some examples of quoting::
     argv[2] = arg with end \ before end quote\"
 
 These rules can be further explored in greater depth by reading
-escaping arguments_.
-
-.. _escaping arguments: https://msdn.microsoft.com/en-us/library/17w5ykft(v=vs.85).aspx
+`escaping arguments <https://msdn.microsoft.com/en-us/library/17w5ykft(v=vs.85).aspx>`_.
 
 Creating and Running Scheduled Task
 -----------------------------------
@@ -381,7 +383,7 @@ standard:
 .. Note:: It is recommended to only quote strings when it is absolutely
     necessary or required by YAML and if quotes are required, use single quotes
 
-The YAML specification considers the following escape sequences_:
+The YAML specification considers the following `escape sequences <http://www.yaml.org/spec/current.html#id2517668>`_:
 
 * ``\0``, ``\``, ``"``, ``\a``, ``\b``, ``\e``, ``\f``, ``\n``, ``\r``, ``\t``
   and ``\v`` -- Single character escape
@@ -395,8 +397,6 @@ The YAML specification considers the following escape sequences_:
 
 * ``\U........`` -- 8-digit hex escape
 
-.. _escape sequences: http://www.yaml.org/spec/current.html#id2517668
-
 Here are some examples on how to write Windows paths::
 
     GOOD
@@ -408,7 +408,7 @@ Here are some examples on how to write Windows paths::
 
     BAD, BUT SOMETIMES WORKS
     tempdir: C:\\Windows\\Temp
-    tempdir: 'C:\\Windows\\Temp
+    tempdir: 'C:\\Windows\\Temp'
     tempdir: C:/Windows/Temp
 
     FAILS
@@ -431,7 +431,7 @@ This syntact depends on the specific implementation in Ansible, and quoting
 Ansible.
 
 The Ansible key=value parser parse_kv() considers the following escape
-sequences::
+sequences:
 
 * ``\``, ``'``, ``"``, ``\a``, ``\b``, ``\f``, ``\n``, ``\r``, ``\t`` and
   ``\v`` -- Single character escape
@@ -470,8 +470,8 @@ Here are some examples of using Windows paths with the key=value style::
 The failing examples don't fail outright but will substitute ``\t`` with the
 ``<TAB>`` character resulting in ``tempdir`` being ``C:\Windows<TAB>emp``.
 
-What you Cannot Do
-``````````````````
+Limitations
+```````````
 Some things you cannot do, or do easily, with Ansible are:
 
 * Upgrade powershell
@@ -486,3 +486,25 @@ process it runs breaks the underlying connection Ansible uses.
 
 These steps are best left to the bootstrapping process or before an image is
 created.
+
+Developing Windows Modules
+``````````````````````````
+Because Ansible modules for Windows are written in Powershell, the development
+guides differ from the usual practice. Please see
+:doc:`dev_guide/developing_modules_general_windows` for more information about
+this topic.
+
+.. seealso::
+
+   :doc:`index`
+       The documentation index
+   :doc:`playbooks`
+       An introduction to playbooks
+   :doc:`playbooks_best_practices`
+       Best practices advice
+   `List of Windows Modules <http://docs.ansible.com/list_of_windows_modules.html>`_
+       Windows specific module list, all implemented in PowerShell
+   `User Mailing List <http://groups.google.com/group/ansible-project>`_
+       Have a question?  Stop by the google group!
+   `irc.freenode.net <http://irc.freenode.net>`_
+       #ansible IRC chat channel
