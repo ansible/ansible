@@ -39,7 +39,7 @@ class TestHost(unittest.TestCase):
 
     def test_hashability(self):
         # equality implies the hash values are the same
-        self.assertEqual(hash(self.hostA), hash(Host('a')))
+        self.assertEqual(hash(self.hostA), hash(Host(name=self.hostA.name, gen_uuid=False, uuid=self.hostA._uuid)))
 
     def test_get_vars(self):
         host_vars = self.hostA.get_vars()
