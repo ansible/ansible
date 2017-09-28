@@ -1,0 +1,8 @@
+---
+# defaults file for ec2_snapshot
+test_id: '{{resource_prefix}}'
+snapshot_description: 'Created by ansible integration tests'
+# image for Amazon Linux AMI 2017.03.1 (HVM), SSD Volume Type
+ec2_ami_image:
+  us-east-1: ami-4fffc834
+  us-east-2: ami-ea87a78f
