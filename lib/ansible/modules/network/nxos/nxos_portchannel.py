@@ -203,6 +203,8 @@ def get_portchannel(module, netcfg=None):
         for pc in pc_table:
             if pc['group'] == module.params['group']:
                 portchannel_table = pc
+            elif module.params['group'].isdigit() and pc['group'] == int(module.params['group']):
+                portchannel_table = pc
     except (KeyError, AttributeError, TypeError, IndexError):
         return {}
 
