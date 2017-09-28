@@ -74,6 +74,10 @@ class Group:
         self.depth = data.get('depth', 0)
         self.hosts = data.get('hosts', {})
 
+        for host in self.hosts:
+            if not hasattr(host, 'name'):
+                raise AnsibleError('One or more hosts do not have a name: %s' % data)
+
         self._hosts = set(self.hosts)
 
         parent_groups = data.get('parent_groups', [])
