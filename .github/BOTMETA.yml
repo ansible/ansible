@@ -1046,6 +1046,9 @@ files:
     labels:
     - cloud
     - openstack
+  lib/ansible/plugins/lookukp/dig:
+    maintainers: jpmens
+    labels: community
   lib/ansible/plugins/netconf/:
     maintainers: $team_networking
     labels: networking
