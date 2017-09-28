@@ -10,7 +10,7 @@
     parents: ['ip access-list extended test']
     before: ['no ip access-list extended test']
     after: ['exit']
-    provider: "{{ cli }}"
+    authorize: yes
     match: none
 
 - name: configure sub level command using block resplace
@@ -23,7 +23,7 @@
     parents: ['ip access-list extended test']
     replace: block
     after: ['exit']
-    provider: "{{ cli }}"
+    authorize: yes
   register: result
 
 - assert:
@@ -45,7 +45,7 @@
     parents: ['ip access-list extended test']
     replace: block
     after: ['exit']
-    provider: "{{ cli }}"
+    authorize: yes
   register: result
 
 - assert:
@@ -57,6 +57,6 @@
     lines:
       - no ip access-list extended test
     match: none
-    provider: "{{ cli }}"
+    authorize: yes
 
 - debug: msg="END cli/sublevel_block.yaml"
