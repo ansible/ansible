@@ -181,7 +181,7 @@ def main():
             app_name=dict(aliases=['name'], type='str', required=False),
             description=dict(type='str', required=False),
             state=dict(choices=['present', 'absent', 'list'], default='present'),
-            terminate_by_force(type='bool', default=False, required=False)
+            terminate_by_force=dict(type='bool', default=False, required=False)
         )
     )
 
@@ -244,7 +244,7 @@ def main():
                 try:
                     ebs.delete_application(ApplicationName=app_name)
                 except Exception as e:
-                    module.fail_json_aws(e, msg="Cannot terminate app with running environments"):
+                    module.fail_json(e, msg="Cannot terminate app with running environments")
 
             result = dict(changed=True, app=app)
 
