@@ -448,8 +448,8 @@ def main():
                         if rc != 0:
                             module.fail_json(msg="Unable to %s service %s: %s" % (action, unit, err))
             else:
-                # this should not happen?
-                module.fail_json(msg="Service is in unknown state", status=result['status'])
+                # this condition occurs when running inside the Anaconda installer chroot environment
+                pass
 
 
     module.exit_json(**result)
