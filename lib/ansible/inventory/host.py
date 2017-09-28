@@ -30,6 +30,8 @@ class Host:
 
     # __slots__ = [ 'name', 'vars', 'groups' ]
 
+    __hash__ = object.__hash__
+
     def __getstate__(self):
         return self.serialize()
 
@@ -43,9 +45,6 @@ class Host:
 
     def __ne__(self, other):
         return not self.__eq__(other)
-
-    def __hash__(self):
-        return hash(self.name)
 
     def __str__(self):
         return self.get_name()
