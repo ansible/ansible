@@ -106,6 +106,12 @@ class VaultCLI(CLI):
         elif self.action == "rekey":
             self.parser.set_usage("usage: %prog rekey [options] file_name")
 
+        # For encrypting actions, we can also specify which of multiple vault ids should be used for encrypting
+        if self.action in ['create', 'edit', 'encrypt', 'encrypt_string', 'rekey']:
+            self.parser.add_option('--encrypt-vault-id', default=[], dest='encrypt_vault_id',
+                                   action='store', type='string',
+                                   help='the vault id used to encrypt (required if more than vault-id is provided)')
+
     def parse(self):
 
         self.parser = CLI.base_parser(
@@ -173,10 +179,7 @@ class VaultCLI(CLI):
             if not vault_secrets:
                 raise AnsibleOptionsError("A vault password is required to use Ansible's Vault")
 
-        if self.action in ['encrypt', 'encrypt_string', 'create']:
-            if len(vault_ids) > 1:
-                raise AnsibleOptionsError("Only one --vault-id can be used for encryption")
-
+        if self.action in ['encrypt', 'encrypt_string', 'create', 'edit']:
             vault_secrets = None
             vault_secrets = \
                 self.setup_vault_secrets(loader,
@@ -185,16 +188,17 @@ class VaultCLI(CLI):
                                          ask_vault_pass=self.options.ask_vault_pass,
                                          create_new_password=True)
 
-            if len(vault_secrets) > 1:
-                raise AnsibleOptionsError("Only one --vault-id can be used for encryption. This includes passwords from configuration and cli.")
+            if len(vault_secrets) > 1 and not self.options.encrypt_vault_id:
+                raise AnsibleOptionsError("The vault-ids %s are available to encrypt. Specify the vault-id to encrypt with --encrypt-vault-id" %
+                                          ','.join([x[0] for x in vault_secrets]))
 
             if not vault_secrets:
                 raise AnsibleOptionsError("A vault password is required to use Ansible's Vault")
 
-            encrypt_secret = match_encrypt_secret(vault_secrets)
+            encrypt_secret = match_encrypt_secret(vault_secrets,
+                                                  encrypt_vault_id=self.options.encrypt_vault_id)
+
             # only one secret for encrypt for now, use the first vault_id and use its first secret
-            # self.encrypt_vault_id = list(vault_secrets.keys())[0]
-            # self.encrypt_secret = vault_secrets[self.encrypt_vault_id][0]
             self.encrypt_vault_id = encrypt_secret[0]
             self.encrypt_secret = encrypt_secret[1]
 
@@ -213,8 +217,10 @@ class VaultCLI(CLI):
             if not new_vault_secrets:
                 raise AnsibleOptionsError("A new vault password is required to use Ansible's Vault rekey")
 
-            # There is only one new_vault_id currently and one new_vault_secret
-            new_encrypt_secret = match_encrypt_secret(new_vault_secrets)
+            # There is only one new_vault_id currently and one new_vault_secret, or we
+            # use the id specified in --encrypt-vault-id
+            new_encrypt_secret = match_encrypt_secret(new_vault_secrets,
+                                                      encrypt_vault_id=self.options.encrypt_vault_id)
 
             self.new_encrypt_vault_id = new_encrypt_secret[0]
             self.new_encrypt_secret = new_encrypt_secret[1]

@@ -412,12 +412,40 @@ def match_best_secret(secrets, target_vault_ids):
     return None
 
 
-def match_encrypt_secret(secrets):
+def match_encrypt_vault_id_secret(secrets, encrypt_vault_id=None):
+    # See if the --encrypt-vault-id matches a vault-id
+    display.vvvv('encrypt_vault_id=%s' % encrypt_vault_id)
+
+    if encrypt_vault_id is None:
+        raise AnsibleError('match_encrypt_vault_id_secret requires a non None encrypt_vault_id')
+
+    encrypt_vault_id_matchers = [encrypt_vault_id]
+    encrypt_secret = match_best_secret(secrets, encrypt_vault_id_matchers)
+
+    # return the best match for --encrypt-vault-id
+    if encrypt_secret:
+        return encrypt_secret
+
+    # If we specified a encrypt_vault_id and we couldn't find it, dont
+    # fallback to using the first/best secret
+    raise AnsibleVaultError('Did not find a match for --encrypt-vault-id=%s in the known vault-ids %s' % (encrypt_vault_id,
+                                                                                                          [_v for _v, _vs in secrets]))
+
+
+def match_encrypt_secret(secrets, encrypt_vault_id=None):
     '''Find the best/first/only secret in secrets to use for encrypting'''
 
+    display.vvvv('encrypt_vault_id=%s' % encrypt_vault_id)
+    # See if the --encrypt-vault-id matches a vault-id
+    if encrypt_vault_id:
+        return match_encrypt_vault_id_secret(secrets,
+                                             encrypt_vault_id=encrypt_vault_id)
+
+    # Find the best/first secret from secrets since we didnt specify otherwise
     # ie, consider all of the available secrets as matches
     _vault_id_matchers = [_vault_id for _vault_id, dummy in secrets]
     best_secret = match_best_secret(secrets, _vault_id_matchers)
+
     # can be empty list sans any tuple
     return best_secret
 
