@@ -8,9 +8,6 @@ matrix:
   exclude:
     - env: TEST=none
   include:
-    - env: TEST=linux/ubuntu1604py3/3
-    - env: TEST=linux/ubuntu1604py3/3
-    - env: TEST=linux/ubuntu1604py3/3
     - env: TEST=repro/ubuntu1604py3/handlers
     - env: TEST=repro/ubuntu1604py3/handlers
     - env: TEST=repro/ubuntu1604py3/handlers
