@@ -1,0 +1,93 @@
+---
+# tasks file for aws_elasticbeanstalk_app
+- block:
+  # ============================================================
+  - name: test with no parameters
+    aws_elasticbeanstalk_app:
+    register: result
+    ignore_errors: true
+  
+  - name: assert failure when called with no parameters
+    assert:
+      that:
+        - 'result.failed'
+
+  # ============================================================
+  - name: test create app
+    aws_elasticbeanstalk_app:
+      app_name: "{{ app_name }}"
+      description: "{{ description }}"
+      state: present
+      aws_access_key: "{{ ec2_access_key }}"
+      aws_secret_key: "{{ ec2_secret_key }}"
+      security_token: "{{security_token}}"
+    register: result
+
+  - name: assert changed is True
+    assert:
+      that:
+        - result.changed == True
+
+  # ============================================================
+  - name: test create when app already exists
+    aws_elasticbeanstalk_app:
+      app_name: "{{ app_name }}"
+      description: "{{ description }}"
+      state: present
+      aws_access_key: "{{ ec2_access_key }}"
+      aws_secret_key: "{{ ec2_secret_key }}"
+      security_token: "{{security_token}}"
+    register: result
+
+  - name: assert changed is False since the app already exists
+    assert:
+      that:
+        - result.changed == False
+
+  # ============================================================
+  - name: make an update to an existing app 
+    aws_elasticbeanstalk_app:
+      app_name: "{{ app_name }}"
+      description: "{{ alternate_description }}"
+      state: present
+      aws_access_key: "{{ ec2_access_key }}"
+      aws_secret_key: "{{ ec2_secret_key }}"
+      security_token: "{{security_token}}"
+    register: result
+
+  - name: assert changed is True
+    assert:
+      that:
+        - result.changed == True
+
+  # ============================================================
+  - name: delete non existent app
+    aws_elasticbeanstalk_app:
+      app_name: "non_app"
+      state: absent
+      aws_access_key: "{{ ec2_access_key }}"
+      aws_secret_key: "{{ ec2_secret_key }}"
+      security_token: "{{security_token}}"
+    register: result
+    ignore_error: True
+  - name: assert deleteing non existant app
+    assert:
+      that:
+        - 'result.failed'
+
+ 
+  # ============================================================
+  - name: delete existing app
+    aws_elasticbeanstalk_app:
+      app_name: "{{ app_name }}"
+      state: absent
+      aws_access_key: "{{ ec2_access_key }}"
+      aws_secret_key: "{{ ec2_secret_key }}"
+      security_token: "{{security_token}}"
+    register: result
+    ignore_error: True
+
+  - name: assert changed is True
+    assert:
+      that:
+        - result.changed == True
