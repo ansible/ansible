@@ -7,7 +7,6 @@
       - name: ansibletest3
     state: absent
     authorize: yes
-    provider: "{{ cli }}"
   register: result
 
 - name: Create user (SetUp)
@@ -17,7 +16,6 @@
     role: network-operator
     state: present
     authorize: yes
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -33,7 +31,6 @@
     authorize: yes
     state: present
     view: network-admin
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -48,7 +45,6 @@
     role: network-operator
     state: present
     authorize: yes
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -64,7 +60,6 @@
     authorize: yes
     state: present
     view: network-admin
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -80,7 +75,6 @@
       - name: ansibletest3
     state: absent
     authorize: yes
-    provider: "{{ cli }}"
   register: result
 
 - assert:

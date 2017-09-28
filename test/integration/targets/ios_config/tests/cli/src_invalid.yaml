@@ -6,6 +6,7 @@
 - name: configure with invalid src
   ios_config:
     src: basic/foobar.j2
+    authorize: yes
   register: result
   ignore_errors: yes
 
