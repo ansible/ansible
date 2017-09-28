@@ -226,9 +226,9 @@ You can apply variables using ``:vars`` or ``vars:``:
               halon_system_timeout: 30
               self_destruct_countdown: 60
               escape_pods: 2
-         northeast:
-         northwest:
-         southwest:
+          northeast:
+          northwest:
+          southwest:
 
 If you need to store lists or hash data, or prefer to keep host and group specific variables separate from the inventory file, see the next section.
 Child groups have a couple of properties to note:
