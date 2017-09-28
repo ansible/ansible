@@ -201,9 +201,6 @@ def main():
         if not address:
             # Doesn't exist in GCE, and state==absent.
             changed = False
-            module.fail_json(
-                msg="Cannot delete unknown address: %s" %
-                (params['name']))
         else:
             # Delete
             (changed, json_output['address']) = delete_address(address)
