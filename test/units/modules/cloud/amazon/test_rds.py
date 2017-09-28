@@ -177,7 +177,8 @@ modify_rds_return = {
 
 # def test_module_parses_args_right()
 
-basic._ANSIBLE_ARGS = to_bytes(b'{ "ANSIBLE_MODULE_ARGS": { "db_instance_class":"very-small-indeed", "engine": "postgres", "id":"fred", "port": 242, "allocated_storage": 10} }')
+basic._ANSIBLE_ARGS = to_bytes(b'{ "ANSIBLE_MODULE_ARGS": { "db_instance_class":"very-small-indeed", "engine": "postgres",'
+                               b'"id":"fred", "port": 242, "allocated_storage": 10} }')
 ansible_module_template = AnsibleAWSModule(argument_spec=rds_i.argument_spec, required_if=rds_i.required_if)
 #    basic._ANSIBLE_ARGS = to_bytes('{ "ANSIBLE_MODULE_ARGS": { "old_id": "fakedb", "old_id":"fred", "port": 342} }')
 #    basic._ANSIBLE_ARGS = to_bytes('{ "ANSIBLE_MODULE_ARGS": { "id":"fred", "port": 342} }')

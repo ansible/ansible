@@ -335,9 +335,9 @@ from ansible.module_utils.ec2 import camel_dict_to_snake_dict, AWSRetry
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict, compare_aws_tags
 from ansible.module_utils.aws.rds import get_db_instance, instance_to_facts, instance_facts_diff
 from ansible.module_utils.aws.rds import DEFAULT_PORTS, DB_ENGINES, LICENSE_MODELS
-from botocore import xform_name
 try:
     import botocore
+    from botocore import xform_name
 except ImportError:
     pass  # caught by imported AnsibleAWSModule
 
