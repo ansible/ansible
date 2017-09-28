@@ -60,7 +60,7 @@ Ansible Changes By Release
 * fix type handling for sensu_silence so the module works
 * added fix for win_iis_webapppool to correctly handle array elements
 * Fix bugs caused by lack of collector ordering like service_mgr being incorrect (https://github.com/ansible/ansible/issues/30753)
-* Fix os_image when the id parameter is not set in the task.
+* Fix os_image when the id parameter is not set in the task. ( https://github.com/ansible/ansible/pull/29147 )
 
 
 <sdfasdfsadfsdflkjsdfklj3oiqrua id="2.4"></a>
