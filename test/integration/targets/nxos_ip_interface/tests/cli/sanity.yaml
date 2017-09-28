@@ -8,14 +8,12 @@
   nxos_config: &intdefault1
     lines:
       - "default interface {{ testint1 }}"
-    provider: "{{ cli }}"
   ignore_errors: yes
 
 - name: "Put interface {{testint2}} into default state"
   nxos_config: &intdefault2
     lines:
       - "default interface {{ testint2 }}"
-    provider: "{{ cli }}"
   ignore_errors: yes
 
 - name: "Make {{testint1}} a layer3 interface"
@@ -25,7 +23,6 @@
     description: 'Configured by Ansible - Layer3'
     admin_state: 'up'
     state: present
-    provider: "{{ cli }}"
 
 - name: "Make {{testint2}} a layer3 interface"
   nxos_interface: &l3int2
@@ -34,7 +31,6 @@
     description: 'Configured by Ansible - Layer3'
     admin_state: 'up'
     state: present
-    provider: "{{ cli }}"
 
 # For titanium
 - name: Clear interface v4
@@ -44,7 +40,6 @@
     state: absent
     addr: 20.20.20.20
     mask: 24
-    provider: "{{ cli }}"
 
 # For titanium
 - name: Clear interface v6
@@ -54,7 +49,6 @@
     state: absent
     addr: 'fd56:31f7:e4ad:5585::1'
     mask: 64
-    provider: "{{ cli }}"
 
 - name: Ensure ipv4 address is configured
   nxos_ip_interface: &ipv4
@@ -63,7 +57,6 @@
     state: present
     addr: 20.20.20.20
     mask: 24
-    provider: "{{ cli }}"
   register: result
 
 - assert: &true
@@ -85,7 +78,6 @@
     state: present
     addr: 'fd56:31f7:e4ad:5585::1'
     mask: 64
-    provider: "{{ cli }}"
   register: result
 
 - assert: *true

@@ -18,4 +18,3 @@
   nxos_config:
     lines:
       - no feature nxapi
-    provider: "{{ cli }}"

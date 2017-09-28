@@ -4,7 +4,6 @@
 - name: Disable NXAPI
   nxos_nxapi:
     state: absent
-    provider: "{{ cli }}"
   register: result
   # delegate_to: "{{ delegate_to }}"
 
@@ -15,7 +14,6 @@
   nxos_command:
     commands:
       - show feature | grep nxapi
-    provider: "{{ cli }}"
   register: result
   # delegate_to: "{{ delegate_to }}"
 
@@ -31,7 +29,6 @@
   nxos_nxapi:
     state:
       absent
-    provider: "{{ cli }}"
   register: result
   # delegate_to: "{{ delegate_to }}"
 
