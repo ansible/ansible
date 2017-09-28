@@ -206,12 +206,12 @@ general_log:
             sample: "successful"
         set_operational_status:
             description: Documents whether setting the operational status of the disk was successful or not
-            returned: success or failed (only displayed if operational status was set)
+            returned: success or failed
             type: string
             sample: "successful"
-        set_read_only_false:
-            description: Documents whether setting the read-only status of the disk to false was successful or not
-            returned: success or failed (only displayed if read-only status was set)
+        set_writeable_status:
+            description: Documents whether setting the writeable status of the disk (disk set read-only or not) was successful or not
+            returned: success, failed or untouched
             type: string
             sample: "successful"
         check_parameters:
@@ -224,9 +224,9 @@ general_log:
             returned: success or failed
             type: string
             sample: "failed"
-        initialize_convert_disk:
+        initialize_convert:
             description: Documents whether the initialization of the disk or convertion of the partition style was successful or not
-            returned: success or failed (disk will be inititialized or convert, not both)
+            returned: success or failed (disk will be inititialized or converted, not both)
             type: string
             sample: "successful"
         check_volumes_partitions:
@@ -271,36 +271,6 @@ search_log:
                     returned: success or failed
                     type: string
                     sample: "1"
-                location:
-                    description: Information about the location of the disk chosen
-                    returned: success or failed
-                    type: string
-                    sample: "PCIROOT(0)#PCI(0C00)#SCSI(P00T00L00)"
-                serial_number:
-                    description: Information about the serial number of the disk chosen
-                    returned: success or failed
-                    type: string
-                    sample: "488da91d1ea04457884b"
-                unique_id:
-                    description: Information about the unique id of the disk chosen
-                    returned: success or failed
-                    type: string
-                    sample: "3141463431303031"
-                operational_status:
-                    description: Information about the operational status of the disk chosen
-                    returned: success or failed
-                    type: string
-                    sample: "Online"
-                partition_style:
-                    description: Information about the partition style of the disk chosen
-                    returned: success or failed
-                    type: string
-                    sample: "GPT"
-                read_only:
-                    description: Information about the read-only status of the disk chosen (True=read-only, False=writeable)
-                    returned: success or failed
-                    type: string
-                    sample: "True"
         existing_volumes:
             description: Detailed information about existing volumes on the disk chosen
             returned: always
@@ -335,7 +305,7 @@ search_log:
             description: Information about ShellHWService state (check)
             returned: success or failed
             type: string
-            sample: "started"
+            sample: "running"
 change_log:
     description: dictionary containing all the detailed information about changes on the selected disk
     returned: always
@@ -366,22 +336,22 @@ change_log:
                     returned: success or failed
                     type: string
                     sample: "No convertion of option variable needed"
-        operational_status_disk:
+        operational_status:
             description: Detailed information about setting operational status of the disk
             returned: success or failed
             type: string
-            sample: "No changes because partition style is RAW and disk will be set to online in intialization part"
-        read_only_disk:
+            sample: "Disk is offline, but nothing will be changed because partition style is RAW and disk will be set to online during intialization part"
+        writeable_status:
             description: Detailed information if disk was set from read-only to writeable and if not why it was not set to it
             returned: success or failed
             type: string
-            sample: "Disk set from read-only to writeable state"
-        initialize_disk:
+            sample: "Disk set from read-only to writeable"
+        initializing:
             description: Detailed information about initializing the disk
             returned: success or failed
             type: string
             sample: "Disk initialization successful - Partition style raw (partition_style_select) was initalized to gpt (partition_style_set)"
-        convert_disk:
+        converting:
             description: Detailed information about converting the partition style of the disk (in case of converting no initalization of disk)
             returned: success or failed
             type: string
@@ -417,7 +387,7 @@ parameters:
             type: string
             sample: "r"
         drive_letter_used:
-            description: Documents whether the chosen drive letter is already in use on the computer
+            description: Documents whether the chosen drive letter is in use on the computer already
             returned: success or failed
             type: string
             sample: "no"
