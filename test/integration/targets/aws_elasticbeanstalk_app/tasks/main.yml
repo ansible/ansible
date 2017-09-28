@@ -95,7 +95,6 @@
       that:
         - result.changed == False
         - 'result.output.startswith("Application not found")'
-
  
   # ============================================================
   - name: delete existing app
