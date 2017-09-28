@@ -72,7 +72,7 @@ class Group:
         self.name = data.get('name')
         self.vars = data.get('vars', dict())
         self.depth = data.get('depth', 0)
-        self.hosts = data.get('hosts', {})
+        self.hosts = data.get('hosts', [])
 
         self._hosts = set(self.hosts)
 
