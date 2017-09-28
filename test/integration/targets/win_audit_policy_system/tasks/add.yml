@@ -1,0 +1,126 @@
+########################
+### check mode apply ###
+########################
+- name: check mode enable category
+  win_audit_policy_system:
+    category: "{{ category }}"
+    audit_type: success
+  check_mode: yes
+  register: cm_category
+
+- name: check mode enable subcategory
+  win_audit_policy_system:
+    subcategory: "{{ subcategory }}"
+    audit_type: success
+  check_mode: yes
+  register: cm_subcategory
+
+- name: check mode get current status category
+  test_get_audit_policy:
+    category: "{{ category }}"
+  register: cm_category_results
+
+- name: check mode get current status subcategory
+  test_get_audit_policy:
+    subcategory: "{{ subcategory }}"
+  register: cm_subcategory_results
+
+- name: check mode assert that changed is true
+  assert:
+    that:
+      - cm_category | changed
+      - cm_subcategory | changed
+
+- name: check mode assert that audit_type is "no auditing"
+  assert:
+    that:
+      - item == "no auditing"
+  with_items:
+    - "{{ cm_subcategory_results.current_audit_policy.values() | list }}"
+    - "{{ cm_category_results.current_audit_policy.values() | list | unique }}"
+
+#alternative check for category...pretty noise and requires more lines
+#  - name: assert that audit_type is no auditing
+#    assert:
+#      that: item.value == "no auditing"
+#    with_dict: "{{ cm_category.current_audit_policy }}"
+
+####################
+### apply change ###
+####################
+
+- name: enable category
+  win_audit_policy_system:
+    category: "{{ category }}"
+    audit_type: success
+  register: enable_category
+
+- name: enable subcategory
+  win_audit_policy_system:
+    subcategory: "{{ subcategory }}"
+    audit_type: success
+  register: enable_subcategory
+
+- name: get current status category
+  test_get_audit_policy:
+    category: "{{ category }}"
+  register: enable_category_results
+
+- name: get current status subcategory
+  test_get_audit_policy:
+    subcategory: "{{ subcategory }}"
+  register: enable_subcategory_results
+
+- name: assert that changed is true
+  assert:
+    that:
+      - enable_category | changed
+      - enable_subcategory | changed
+
+- name: assert that audit_type is "success"
+  assert:
+    that:
+      - item == "success"
+  with_items:
+    - "{{ enable_subcategory_results.current_audit_policy.values() | list }}"
+    - "{{ enable_category_results.current_audit_policy.values() | list | unique }}"
+
+###############################
+### idempotent apply change ###
+###############################
+
+- name: idem enable category
+  win_audit_policy_system:
+    category: "{{ category }}"
+    audit_type: success
+  register: idem_enable_category
+
+- name: idem enable subcategory
+  win_audit_policy_system:
+    subcategory: "{{ subcategory }}"
+    audit_type: success
+  register: idem_enable_subcategory
+
+- name: idem get current status category
+  test_get_audit_policy:
+    category: "{{ category }}"
+  register: idem_enable_category_results
+
+- name: idem get current status subcategory
+  test_get_audit_policy:
+    subcategory: "{{ subcategory }}"
+  register: idem_enable_subcategory_results
+
+- name: idem assert that changed is false
+  assert:
+    that:
+      - not idem_enable_category | changed
+      - not idem_enable_subcategory | changed
+
+- name: assert that audit_type is "success"
+  assert:
+    that:
+      - item == "success"
+  with_items:
+    - "{{ idem_enable_subcategory_results.current_audit_policy.values() | list }}"
+    - "{{ idem_enable_category_results.current_audit_policy.values() | list | unique }}"

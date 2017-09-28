@@ -1,0 +1,4 @@
+#important that the subcategory is from a different category
+category: detailed tracking
+subcategory: file system
+backup_path: c:\windows\temp\win_audit_policy_system_backup_test.csv
