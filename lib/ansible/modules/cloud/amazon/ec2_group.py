@@ -622,7 +622,7 @@ def fix_port_and_protocol(permission):
     return permission
 
 
-def check_rule_desc_update_for_group_grant(client, module, rule, groupRules, rule_id, group_id, rule_type, changed):
+def check_rule_desc_update_for_group_grant(client, module, rule, group, groupRules, rule_id, group_id, rule_type, changed):
     if 'rule_desc' in rule:
         current_rule_description = rule.get('rule_desc') or ''
         if current_rule_description != groupRules[rule_id][0]['UserIdGroupPairs'][0].get('Description', ''):
@@ -820,7 +820,7 @@ def main():
                 if group_id:
                     rule_id = make_rule_key('in', rule, group['GroupId'], group_id)
                     if rule_id in groupRules:
-                        changed = check_rule_desc_update_for_group_grant(client, module, rule, groupRules, rule_id, group_id, rule_type='in', changed=changed)
+                        changed = check_rule_desc_update_for_group_grant(client, module, rule, group, groupRules, rule_id, group_id, rule_type='in', changed=changed)
                         del groupRules[rule_id]
                     else:
                         if not module.check_mode:
@@ -886,7 +886,7 @@ def main():
                 if group_id:
                     rule_id = make_rule_key('out', rule, group['GroupId'], group_id)
                     if rule_id in groupRules:
-                        changed = check_rule_desc_update_for_group_grant(client, module, rule, groupRules, rule_id, group_id, rule_type='out', changed=changed)
+                        changed = check_rule_desc_update_for_group_grant(client, module, rule, group, groupRules, rule_id, group_id, rule_type='out', changed=changed)
                         del groupRules[rule_id]
                     else:
                         if not module.check_mode:
