@@ -815,7 +815,7 @@ def main():
                                 if not module.check_mode:
                                     ip_permission = serialize_group_grant(group_id, rule)
                                     update_rules_description(module, client, 'in', group['GroupId'], ip_permission)
-                            changed = True
+                                changed = True
                         del groupRules[rule_id]
                     else:
                         if not module.check_mode:
@@ -887,7 +887,7 @@ def main():
                                 if not module.check_mode:
                                     ip_permission = serialize_group_grant(group_id, rule)
                                     update_rules_description(module, client, 'in', group['GroupId'], ip_permission)
-                            changed = True
+                                changed = True
                         del groupRules[rule_id]
                     else:
                         if not module.check_mode:
