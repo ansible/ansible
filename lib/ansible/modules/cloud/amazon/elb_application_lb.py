@@ -1002,6 +1002,9 @@ def main():
                 if key not in ['Protocol', 'Port', 'SslPolicy', 'Certificates', 'DefaultActions', 'Rules']:
                     module.fail_json(msg="listeners parameter contains invalid dict keys. Should be one of 'Protocol', "
                                          "'Port', 'SslPolicy', 'Certificates', 'DefaultActions', 'Rules'.")
+                # Make sure Port is always an integer
+                elif key == 'Port':
+                    listener[key] = int(listener[key])
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')
