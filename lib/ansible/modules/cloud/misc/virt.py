@@ -131,27 +131,30 @@ from ansible.module_utils._text import to_native
 
 VIRT_FAILED = 1
 VIRT_SUCCESS = 0
-VIRT_UNAVAILABLE=2
+VIRT_UNAVAILABLE = 2
 
 ALL_COMMANDS = []
-VM_COMMANDS = ['create','status', 'start', 'stop', 'pause', 'unpause',
-                'shutdown', 'undefine', 'destroy', 'get_xml', 'define']
+VM_COMMANDS = [
+    'create', 'status', 'start', 'stop', 'pause', 'unpause',
+    'shutdown', 'undefine', 'destroy', 'get_xml', 'define']
 HOST_COMMANDS = ['freemem', 'list_vms', 'info', 'nodeinfo', 'virttype']
 ALL_COMMANDS.extend(VM_COMMANDS)
 ALL_COMMANDS.extend(HOST_COMMANDS)
 
 VIRT_STATE_NAME_MAP = {
-    0 : "running",
-    1 : "running",
-    2 : "running",
-    3 : "paused",
-    4 : "shutdown",
-    5 : "shutdown",
-    6 : "crashed"
+    0: "running",
+    1: "running",
+    2: "running",
+    3: "paused",
+    4: "shutdown",
+    5: "shutdown",
+    6: "crashed"
 }
+
 
 class VMNotFound(Exception):
     pass
+
 
 class LibvirtConnection(object):
 
@@ -165,7 +168,9 @@ class LibvirtConnection(object):
         if "xen" in stdout:
             conn = libvirt.open(None)
         elif "esx" in uri:
-            auth = [[libvirt.VIR_CRED_AUTHNAME, libvirt.VIR_CRED_NOECHOPROMPT], [], None]
+            auth = [
+                [libvirt.VIR_CRED_AUTHNAME, libvirt.VIR_CRED_NOECHOPROMPT],
+                [], None]
             conn = libvirt.openAuth(uri, auth)
         else:
             conn = libvirt.open(uri)
@@ -230,11 +235,11 @@ class LibvirtConnection(object):
 
     def get_status2(self, vm):
         state = vm.info()[0]
-        return VIRT_STATE_NAME_MAP.get(state,"unknown")
+        return VIRT_STATE_NAME_MAP.get(state, "unknown")
 
     def get_status(self, vmid):
         state = self.find_vm(vmid).info()[0]
-        return VIRT_STATE_NAME_MAP.get(state,"unknown")
+        return VIRT_STATE_NAME_MAP.get(state, "unknown")
 
     def nodeinfo(self):
         return self.conn.getInfo()
@@ -288,7 +293,7 @@ class Virt(object):
         state = []
         for vm in vms:
             state_blurb = self.conn.get_status(vm)
-            state.append("%s %s" % (vm,state_blurb))
+            state.append("%s %s" % (vm, state_blurb))
         return state
 
     def info(self):
@@ -302,11 +307,11 @@ class Virt(object):
             # assume the other end of the xmlrpc connection can figure things
             # out or doesn't care.
             info[vm] = {
-                "state"     : VIRT_STATE_NAME_MAP.get(data[0],"unknown"),
-                "maxMem"    : str(data[1]),
-                "memory"    : str(data[2]),
-                "nrVirtCpu" : data[3],
-                "cpuTime"   : str(data[4]),
+                "state": VIRT_STATE_NAME_MAP.get(data[0], "unknown"),
+                "maxMem": str(data[1]),
+                "memory": str(data[2]),
+                "nrVirtCpu": data[3],
+                "cpuTime": str(data[4]),
             }
             info[vm]["autostart"] = self.conn.get_autostart(vm)
 
@@ -317,14 +322,14 @@ class Virt(object):
         info = dict()
         data = self.conn.nodeinfo()
         info = {
-            "cpumodel"     : str(data[0]),
-            "phymemory"    : str(data[1]),
-            "cpus"         : str(data[2]),
-            "cpumhz"       : str(data[3]),
-            "numanodes"    : str(data[4]),
-            "sockets"      : str(data[5]),
-            "cpucores"     : str(data[6]),
-            "cputhreads"   : str(data[7])
+            "cpumodel": str(data[0]),
+            "phymemory": str(data[1]),
+            "cpus": str(data[2]),
+            "cpumhz": str(data[3]),
+            "numanodes": str(data[4]),
+            "sockets": str(data[5]),
+            "cpucores": str(data[6]),
+            "cputhreads": str(data[7])
         }
         return info
 
@@ -361,11 +366,11 @@ class Virt(object):
         return self.conn.getFreeMemory()
 
     def shutdown(self, vmid):
-        """ Make the machine with the given vmid stop running.  Whatever that takes.  """
+        """ Make the machine with the given vmid stop running.
+        Whatever that takes. """
         self.__get_conn()
         self.conn.shutdown(vmid)
         return 0
-
 
     def pause(self, vmid):
         """ Pause the machine with the given vmid.  """
@@ -392,19 +397,22 @@ class Virt(object):
         return self.conn.create(vmid)
 
     def destroy(self, vmid):
-        """ Pull the virtual power from the virtual domain, giving it virtually no time to virtually shut down.  """
+        """ Pull the virtual power from the virtual domain,
+        giving it virtually no time to virtually shut down.  """
         self.__get_conn()
         return self.conn.destroy(vmid)
 
     def undefine(self, vmid):
-        """ Stop a domain, and then wipe it from the face of the earth.  (delete disk/config file) """
+        """ Stop a domain, and then wipe it from the face of the earth.
+        (delete disk/config file) """
 
         self.__get_conn()
         return self.conn.undefine(vmid)
 
     def status(self, vmid):
         """
-        Return a state suitable for server consumption.  Aka, codes.py values, not XM output.
+        Return a state suitable for server consumption.
+        Aka, codes.py values, not XM output.
         """
         self.__get_conn()
         return self.conn.get_status(vmid)
@@ -441,27 +449,28 @@ class Virt(object):
         self.__get_conn()
         return self.conn.define_from_xml(xml)
 
+
 def core(module):
 
-    state      = module.params.get('state', None)
-    autostart  = module.params.get('autostart', None)
-    guest      = module.params.get('name', None)
-    command    = module.params.get('command', None)
-    uri        = module.params.get('uri', None)
-    xml        = module.params.get('xml', None)
+    state = module.params.get('state', None)
+    autostart = module.params.get('autostart', None)
+    guest = module.params.get('name', None)
+    command = module.params.get('command', None)
+    uri = module.params.get('uri', None)
+    xml = module.params.get('xml', None)
 
     v = Virt(uri, module)
     res = {}
 
-    if state and command=='list_vms':
+    if state and command == 'list_vms':
         res = v.list_vms(state=state)
         if not isinstance(res, dict):
-            res = { command: res }
+            res = {command: res}
         return VIRT_SUCCESS, res
 
     if state:
         if not guest:
-            module.fail_json(msg = "state change requires a guest specified")
+            module.fail_json(msg="state change requires a guest specified")
 
         if state == 'running':
             if v.status(guest) is 'paused':
@@ -493,10 +502,10 @@ def core(module):
     if command:
         if command in VM_COMMANDS:
             if not guest:
-                module.fail_json(msg = "%s requires 1 argument: guest" % command)
+                module.fail_json(msg="%s requires 1 argument: guest" % command)
             if command == 'define':
                 if not xml:
-                    module.fail_json(msg = "define requires xml argument")
+                    module.fail_json(msg="define requires xml argument")
                 try:
                     v.get_vm(guest)
                 except VMNotFound:
@@ -505,13 +514,13 @@ def core(module):
                 return VIRT_SUCCESS, res
             res = getattr(v, command)(guest)
             if not isinstance(res, dict):
-                res = { command: res }
+                res = {command: res}
             return VIRT_SUCCESS, res
 
         elif hasattr(v, command):
             res = getattr(v, command)()
             if not isinstance(res, dict):
-                res = { command: res }
+                res = {command: res}
             return VIRT_SUCCESS, res
 
         else:
@@ -519,20 +528,21 @@ def core(module):
 
     module.fail_json(msg="expected state or command parameter to be specified")
 
+
 def main():
 
     module = AnsibleModule(argument_spec=dict(
-        name = dict(aliases=['guest']),
-        state = dict(choices=['running', 'shutdown', 'destroyed', 'paused']),
-        autostart = dict(type='bool'),
-        command = dict(choices=ALL_COMMANDS),
-        uri = dict(default='qemu:///system'),
-        xml = dict(),
+        name=dict(aliases=['guest']),
+        state=dict(choices=['running', 'shutdown', 'destroyed', 'paused']),
+        autostart=dict(type='bool'),
+        command=dict(choices=ALL_COMMANDS),
+        uri=dict(default='qemu:///system'),
+        xml=dict(),
     ))
 
     if not HAS_VIRT:
         module.fail_json(
-            msg='The `libvirt` module is not importable. Check the requirements.'
+            msg='The libvirt module is not importable. Check the requirements.'
         )
 
     rc = VIRT_SUCCESS
@@ -541,7 +551,8 @@ def main():
     except Exception as e:
         module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
-    if rc != 0: # something went wrong emit the msg
+    if rc != 0:
+        # something went wrong emit the msg
         module.fail_json(rc=rc, msg=result)
     else:
         module.exit_json(**result)
@@ -549,3 +560,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
