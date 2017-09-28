@@ -69,7 +69,7 @@ class Group:
 
     def safe_repr(self, value):
         try:
-            return value.__repr__()
+            return '%s: %s' % (type(value), value.__repr__())
         except Exception:
             return str(type(value))
 
