@@ -152,24 +152,24 @@ def import_cert_url(module, executable, url, port, keystore_path, keystore_pass,
     bypass_proxy = False
     if no_proxy is not None:
 
-      for pattern in no_proxy.split(','):
-        # If the pattern starts with a dot, match all hostnames that end
-        # with the given pattern. Otherwise, the hostname has to match
-        # the pattern exactly to be excluded from proxy access.
-        if re.match('^\..+', pattern):
-          if re.match(r'.+' + pattern.replace('.', '\.') + '$', url):
-            bypass_proxy = True
-            break
-        elif url == pattern:
-          bypass_proxy = True
-          break
+        for pattern in no_proxy.split(','):
+            # If the pattern starts with a dot, match all hostnames that end
+            # with the given pattern. Otherwise, the hostname has to match
+            # the pattern exactly to be excluded from proxy access.
+            if re.match('^\..+', pattern):
+                if re.match(r'.+' + pattern.replace('.', '\.') + '$', url):
+                    bypass_proxy = True
+                    break
+            elif url == pattern:
+                bypass_proxy = True
+                break
 
     if https_proxy is None or bypass_proxy:
-      fetch_cmd = ("%s -printcert -rfc -sslserver %s:%d")%(executable, url, port)
+        fetch_cmd = ("%s -printcert -rfc -sslserver %s:%d")%(executable, url, port)
     else:
-      (proxy_host, proxy_port) = https_proxy.split(':')
+        (proxy_host, proxy_port) = https_proxy.split(':')
 
-      fetch_cmd = ("%s -printcert -rfc -J-Dhttps.proxyHost=%s -J-Dhttps.proxyPort=%s -sslserver %s:%d")%(executable, proxy_host, proxy_port, url, port)
+        fetch_cmd = ("%s -printcert -rfc -J-Dhttps.proxyHost=%s -J-Dhttps.proxyPort=%s -sslserver %s:%d")%(executable, proxy_host, proxy_port, url, port)
 
     import_cmd = ("%s -importcert -noprompt -keystore '%s' "
                   "-storepass '%s' -alias '%s'")%(executable, keystore_path,
