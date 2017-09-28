@@ -1,8 +1,8 @@
 ---
 - set_fact:
-    chain: INPUT
+    chain: FORWARD
     table: filter
-    name: Set the policy for the INPUT chain to DROP
+    name: Set the policy for the FORWARD chain to DROP
     idempotent: false
     rules: 0
     check: false
@@ -16,7 +16,7 @@
 
 - name: "{{name}}"
   iptables:
-    chain: INPUT
+    chain: FORWARD
     policy: DROP
   become: yes
   register: iptables
@@ -25,14 +25,14 @@
 - name: "{{name}} assert policy set"
   assert:
     that:
-      - 'check_iptables.stdout_lines[0] == "Chain INPUT (policy DROP)"'
+      - 'check_iptables.stdout_lines[0] == "Chain FORWARD (policy DROP)"'
 
 - set_fact:
     idempotent: true
 
 - name: "{{name}} idempotent"
   iptables:
-    chain: INPUT
+    chain: FORWARD
     policy: DROP
   become: yes
   register: iptables
@@ -41,4 +41,4 @@
 - name: "{{name}} assert policy set"
   assert:
     that:
-      - 'check_iptables.stdout_lines[0] == "Chain INPUT (policy DROP)"'
+      - 'check_iptables.stdout_lines[0] == "Chain FORWARD (policy DROP)"'
