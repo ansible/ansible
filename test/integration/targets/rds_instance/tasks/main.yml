@@ -147,13 +147,20 @@
         aws_secret_key: '{{aws_secret_key}}'
         security_token: '{{security_token}}'
 
-    # #NOT YET WORKING - bombs out with "No modifications were requested"
-    # - name: promote rds replica
-    #   rds_instance:
-    #     id: "{{ rds_instance_name }}-replica"
-    #     wait: yes
+    - name: promote rds replica
+      rds_instance:
+        id: "{{ rds_instance_name }}-replica"
+        size: 5
+        db_instance_class: db.t2.micro
+        engine: postgres
+        wait: yes
+        wait_timeout: 1200
+        region: '{{ec2_region}}'
+        aws_access_key: '{{aws_access_key}}'
+        aws_secret_key: '{{aws_secret_key}}'
+        security_token: '{{security_token}}'
 
-    - name: delete rds instance
+    - name: delete rds instance creating snapshot
       rds_instance:
         id: "{{ rds_instance_name }}"
         state: absent
