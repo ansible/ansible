@@ -56,19 +56,20 @@ extends_documentation_fragment: aws
 
 EXAMPLES = '''
 # Create or update an application
-- elasticbeanstalk_app:
-    app_name: Sample App
-    description: Hello World App
+- aws_elasticbeanstalk_app:
+    app_name: Sample_App
+    description: "Hello World App"
     state: present
 
 # Delete application
-- elasticbeanstalk_app:
-    app_name: Sample App
+- aws_elasticbeanstalk_app:
+    app_name: Samplei_App
     state: absent
 
 # List applications
-- elasticbeanstalk_app:
+- aws_elasticbeanstalk_app:
     state: list
+  register: app_list
 '''
 
 RETURN = '''
@@ -169,7 +170,7 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            app_name=dict(aliases=['name'],type='str', required=False),
+            app_name=dict(aliases=['name'], type='str', required=False),
             description=dict(type='str', required=False),
             state=dict(choices=['present', 'absent', 'list'], default='present')
         )
