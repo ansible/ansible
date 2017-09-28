@@ -48,6 +48,11 @@ options:
     required: false
     default: present
     choices: ['absent','present','list']
+  terminate_by_force:
+    description:
+      - when set to true, running environments will be terminated before deleting the application
+    required: false
+    default: false
 author:
     - Harpreet Singh (@hsingh)
     - Stephen Granger (@viper233)
@@ -63,7 +68,7 @@ EXAMPLES = '''
 
 # Delete application
 - aws_elasticbeanstalk_app:
-    app_name: Samplei_App
+    app_name: Sample_App
     state: absent
 
 # List applications
@@ -158,6 +163,8 @@ def check_app(ebs, app, module):
         result = dict(changed=False, output="App does not exist")
     elif state == 'absent' and app is not None:
         result = dict(changed=True, output="App will be deleted", app=app)
+    elif state == 'absent' and app is not None and terminate_by_force is True:
+        result = dict(changed=True, output="Running environments terminated before the App will be deleted", app=app)
 
     module.exit_json(**result)
 
@@ -168,13 +175,16 @@ def filter_empty(**kwargs):
 
 def main():
     argument_spec = ec2_argument_spec()
+
     argument_spec.update(
         dict(
             app_name=dict(aliases=['name'], type='str', required=False),
             description=dict(type='str', required=False),
-            state=dict(choices=['present', 'absent', 'list'], default='present')
+            state=dict(choices=['present', 'absent', 'list'], default='present'),
+            terminate_by_force(type='bool', default=False, required=False)
         )
     )
+
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
     if not HAS_BOTO3:
@@ -212,8 +222,11 @@ def main():
             result = dict(changed=True, app=app)
         else:
             if app.get("Description", None) != description:
-                ebs.update_application(ApplicationName=app_name,
-                                       Description=description)
+                if not description:
+                    ebs.update_application(ApplicationName=app_name)
+                else:
+                    ebs.update_application(ApplicationName=app_name, Description=description)
+
                 app = describe_app(ebs, app_name)
 
                 result = dict(changed=True, app=app)
@@ -224,7 +237,15 @@ def main():
         if app is None:
             result = dict(changed=False, output='Application not found')
         else:
-            ebs.delete_application(ApplicationName=app_name)
+            if terminate_by_force:
+                # Running environments will be terminated before deleting the application
+                ebs.delete_application(ApplicationName=app_name, TerminateEnvByForce=terminate_by_force)
+            else:
+                try:
+                    ebs.delete_application(ApplicationName=app_name)
+                except Exception as e:
+                    module.fail_json_aws(e, msg="Cannot terminate app with running environments"):
+
             result = dict(changed=True, app=app)
 
     else:
