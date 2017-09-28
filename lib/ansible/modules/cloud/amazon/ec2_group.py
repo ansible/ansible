@@ -622,6 +622,17 @@ def fix_port_and_protocol(permission):
     return permission
 
 
+def check_rule_desc_update_for_group_grant(client, module, rule, groupRules, rule_id, group_id, rule_type, changed):
+    if 'rule_desc' in rule:
+        current_rule_description = rule.get('rule_desc') or ''
+        if current_rule_description != groupRules[rule_id][0]['UserIdGroupPairs'][0].get('Description', ''):
+            if not module.check_mode:
+                ip_permission = serialize_group_grant(group_id, rule)
+                update_rules_description(module, client, rule_type, group['GroupId'], ip_permission)
+            changed = True
+    return changed
+
+
 def has_rule_description_attr(client):
     return hasattr(client, "update_security_group_rule_descriptions_egress")
 
@@ -809,13 +820,7 @@ def main():
                 if group_id:
                     rule_id = make_rule_key('in', rule, group['GroupId'], group_id)
                     if rule_id in groupRules:
-                        if 'rule_desc' in rule:
-                            current_rule_description = rule.get('rule_desc') or ''
-                            if current_rule_description != groupRules[rule_id][0]['UserIdGroupPairs'][0].get('Description', ''):
-                                if not module.check_mode:
-                                    ip_permission = serialize_group_grant(group_id, rule)
-                                    update_rules_description(module, client, 'in', group['GroupId'], ip_permission)
-                                changed = True
+                        changed = check_rule_desc_update_for_group_grant(client, module, rule, groupRules, rule_id, group_id, rule_type='in', changed=changed)
                         del groupRules[rule_id]
                     else:
                         if not module.check_mode:
@@ -881,13 +886,7 @@ def main():
                 if group_id:
                     rule_id = make_rule_key('out', rule, group['GroupId'], group_id)
                     if rule_id in groupRules:
-                        if 'rule_desc' in rule:
-                            current_rule_description = rule.get('rule_desc') or ''
-                            if current_rule_description != groupRules[rule_id][0]['UserIdGroupPairs'][0].get('Description', ''):
-                                if not module.check_mode:
-                                    ip_permission = serialize_group_grant(group_id, rule)
-                                    update_rules_description(module, client, 'in', group['GroupId'], ip_permission)
-                                changed = True
+                        changed = check_rule_desc_update_for_group_grant(client, module, rule, groupRules, rule_id, group_id, rule_type='out', changed=changed)
                         del groupRules[rule_id]
                     else:
                         if not module.check_mode:
