@@ -150,6 +150,7 @@ def check_app(ebs, app, module):
     app_name = module.params['app_name']
     description = module.params['description']
     state = module.params['state']
+    terminate_by_force = module.params['terminate_by_force']
 
     result = {}
 
@@ -193,6 +194,7 @@ def main():
     app_name = module.params['app_name']
     description = module.params['description']
     state = module.params['state']
+    terminate_by_force = module.params['terminate_by_force']
 
     if app_name is None:
         if state != 'list':
