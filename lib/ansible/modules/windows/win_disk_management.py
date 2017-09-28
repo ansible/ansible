@@ -317,7 +317,7 @@ change_log:
               - This change log does not changes anything on the target client only in module and script environment
               - Convertion will be only take place if one oft the integer options is of type string
               - The convert of the option variables will also help to identify wrong option values
-              - For instance non numeric string was used for the size option the convertion does fail and end the module
+              - For instance non numeric string was used for the size option the convertion does fail and cancel the module
             returned: always
             type: complex
             contains:
