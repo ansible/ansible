@@ -263,7 +263,7 @@ def main():
         session=dict(required=False)
     )
 
-    module = AnsibleModule(argument_spec, supports_check_mode=False)
+    module = AnsibleModule(argument_spec, supports_check_mode=True)
 
     test_dependencies(module)
 
