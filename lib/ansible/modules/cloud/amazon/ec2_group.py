@@ -519,19 +519,19 @@ def update_rules_description(module, client, rule_type, group_id, ip_permissions
 
 
 def authorize_ip(type, changed, client, group, groupRules,
-                 ip, ip_permission, module, rule, ethertype, has_rule_description=None):
+                 ip, ip_permission, module, rule, ethertype):
     # If rule already exists, don't later delete it
     for thisip in ip:
         rule_id = make_rule_key(type, rule, group['GroupId'], thisip)
         if rule_id in groupRules:
 
             # update the rule description
-            if has_rule_description:
-                desired_rule_desc = rule.get('rule_desc', '')
+            if 'rule_desc' in rule:
+                desired_rule_desc = rule.get('rule_desc') or ''
                 current_rule = groupRules[rule_id][0].get('IpRanges') or groupRules[rule_id][0].get('Ipv6Ranges')
                 if desired_rule_desc != current_rule[0].get('Description', ''):
                     if not module.check_mode:
-                        ip_permission = serialize_ip_grant(rule, thisip, ethertype, has_rule_description)
+                        ip_permission = serialize_ip_grant(rule, thisip, ethertype)
                         update_rules_description(module, client, type, group['GroupId'], ip_permission)
                     changed = True
 
@@ -539,7 +539,7 @@ def authorize_ip(type, changed, client, group, groupRules,
             del groupRules[rule_id]
         else:
             if not module.check_mode:
-                ip_permission = serialize_ip_grant(rule, thisip, ethertype, has_rule_description)
+                ip_permission = serialize_ip_grant(rule, thisip, ethertype)
                 if ip_permission:
                     try:
                         if type == "in":
@@ -556,13 +556,13 @@ def authorize_ip(type, changed, client, group, groupRules,
     return changed, ip_permission
 
 
-def serialize_group_grant(group_id, rule, has_rule_description=None):
+def serialize_group_grant(group_id, rule):
     permission = {'IpProtocol': rule['proto'],
                   'FromPort': rule['from_port'],
                   'ToPort': rule['to_port'],
                   'UserIdGroupPairs': [{'GroupId': group_id}]}
 
-    if has_rule_description:
+    if 'rule_desc' in rule:
         permission['UserIdGroupPairs'][0]['Description'] = rule.get('rule_desc') or ''
 
     return fix_port_and_protocol(permission)
@@ -593,17 +593,17 @@ def serialize_revoke(grant, rule):
     return fix_port_and_protocol(permission)
 
 
-def serialize_ip_grant(rule, thisip, ethertype, has_rule_description=None):
+def serialize_ip_grant(rule, thisip, ethertype):
     permission = {'IpProtocol': rule['proto'],
                   'FromPort': rule['from_port'],
                   'ToPort': rule['to_port']}
     if ethertype == "ipv4":
         permission['IpRanges'] = [{'CidrIp': thisip}]
-        if has_rule_description:
+        if 'rule_desc' in rule:
             permission['IpRanges'][0]['Description'] = rule.get('rule_desc') or ''
     elif ethertype == "ipv6":
         permission['Ipv6Ranges'] = [{'CidrIpv6': thisip}]
-        if has_rule_description:
+        if 'rule_desc' in rule:
             permission['Ipv6Ranges'][0]['Description'] = rule.get('rule_desc') or ''
 
     return fix_port_and_protocol(permission)
@@ -622,7 +622,7 @@ def fix_port_and_protocol(permission):
     return permission
 
 
-def rule_description_attr(client):
+def has_rule_description_attr(client):
     return hasattr(client, "update_security_group_rule_descriptions_egress")
 
 
@@ -675,8 +675,7 @@ def main():
                              "profile.")
     client = boto3_conn(module, conn_type='client', resource='ec2', endpoint=ec2_url, region=region, **aws_connect_params)
 
-    has_rule_description = rule_description_attr(client)
-    if not has_rule_description:
+    if not has_rule_description_attr(client):
         all_rules = rules if rules else [] + rules_egress if rules_egress else []
         if any('rule_desc' in rule for rule in all_rules):
             module.fail_json(msg="Using rule descriptions requires botocore version >= 1.7.2.")
@@ -810,15 +809,17 @@ def main():
                 if group_id:
                     rule_id = make_rule_key('in', rule, group['GroupId'], group_id)
                     if rule_id in groupRules:
-                        if has_rule_description and rule.get('rule_desc', '') != groupRules[rule_id][0]['UserIdGroupPairs'][0].get('Description', ''):
-                            if not module.check_mode:
-                                ip_permission = serialize_group_grant(group_id, rule, has_rule_description)
-                                update_rules_description(module, client, 'in', group['GroupId'], ip_permission)
+                        if 'rule_desc' in rule:
+                            current_rule_description = rule.get('rule_desc') or ''
+                            if current_rule_description != groupRules[rule_id][0]['UserIdGroupPairs'][0].get('Description', ''):
+                                if not module.check_mode:
+                                    ip_permission = serialize_group_grant(group_id, rule)
+                                    update_rules_description(module, client, 'in', group['GroupId'], ip_permission)
                             changed = True
                         del groupRules[rule_id]
                     else:
                         if not module.check_mode:
-                            ip_permission = serialize_group_grant(group_id, rule, has_rule_description)
+                            ip_permission = serialize_group_grant(group_id, rule)
                             if ip_permission:
                                 ips = ip_permission
                                 if vpc_id:
@@ -838,14 +839,14 @@ def main():
                         ip = [ip]
 
                     changed, ip_permission = authorize_ip("in", changed, client, group, groupRules, ip, ip_permission,
-                                                          module, rule, "ipv4", has_rule_description)
+                                                          module, rule, "ipv4")
                 elif ipv6:
                     # Convert ip to list we can iterate over
                     if not isinstance(ipv6, list):
                         ipv6 = [ipv6]
                     # If rule already exists, don't later delete it
                     changed, ip_permission = authorize_ip("in", changed, client, group, groupRules, ipv6, ip_permission,
-                                                          module, rule, "ipv6", has_rule_description)
+                                                          module, rule, "ipv6")
         # Finally, remove anything left in the groupRules -- these will be defunct rules
         if purge_rules:
             for (rule, grant) in groupRules.values():
@@ -880,15 +881,17 @@ def main():
                 if group_id:
                     rule_id = make_rule_key('out', rule, group['GroupId'], group_id)
                     if rule_id in groupRules:
-                        if has_rule_description and rule.get('rule_desc', '') != groupRules[rule_id][0]['UserIdGroupPairs'][0].get('Description', ''):
-                            if not module.check_mode:
-                                ip_permission = serialize_group_grant(group_id, rule, has_rule_description)
-                                update_rules_description(module, client, 'in', group['GroupId'], ip_permission)
+                        if 'rule_desc' in rule:
+                            current_rule_description = rule.get('rule_desc') or ''
+                            if current_rule_description != groupRules[rule_id][0]['UserIdGroupPairs'][0].get('Description', ''):
+                                if not module.check_mode:
+                                    ip_permission = serialize_group_grant(group_id, rule)
+                                    update_rules_description(module, client, 'in', group['GroupId'], ip_permission)
                             changed = True
                         del groupRules[rule_id]
                     else:
                         if not module.check_mode:
-                            ip_permission = serialize_group_grant(group_id, rule, has_rule_description)
+                            ip_permission = serialize_group_grant(group_id, rule)
                             if ip_permission:
                                 ips = ip_permission
                                 if vpc_id:
@@ -907,14 +910,14 @@ def main():
                     if not isinstance(ip, list):
                         ip = [ip]
                     changed, ip_permission = authorize_ip("out", changed, client, group, groupRules, ip,
-                                                          ip_permission, module, rule, "ipv4", has_rule_description)
+                                                          ip_permission, module, rule, "ipv4")
                 elif ipv6:
                     # Convert ip to list we can iterate over
                     if not isinstance(ipv6, list):
                         ipv6 = [ipv6]
                     # If rule already exists, don't later delete it
                     changed, ip_permission = authorize_ip("out", changed, client, group, groupRules, ipv6,
-                                                          ip_permission, module, rule, "ipv6", has_rule_description)
+                                                          ip_permission, module, rule, "ipv6")
         elif vpc_id is not None:
             # when no egress rules are specified and we're in a VPC,
             # we add in a default allow all out rule, which was the
