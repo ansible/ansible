@@ -50,7 +50,7 @@
 
 - name: create temp testing folder
   win_file:
-    path: C:\ansible
+    path: C:\ansible testing
     state: directory
 
 - name: download binary the outputs argv to stdout
