@@ -17,6 +17,7 @@ Ansible Changes By Release
   * Fix for python3 and nonascii strings in inventory plugins (https://github.com/ansible/ansible/pull/30666)
   * Fix missing urllib in iam_policy
   * Fix crypttab module for bytes<=>text string mismatch ( https://github.com/ansible/ansible/pull/30457 )
+  * Fix lxc_container module combining bytes with text ( https://github.com/ansible/ansible/pull/30572 )
 * Fix for win_file to respect check mode when deleting directories
 * Fix for Ansible.ModuleUtils.Legacy.psm1 to return list params correctly
 * Fix for a proper logout in the module ovirt_vms
