@@ -577,8 +577,13 @@ class StrategyBase:
 
         ret_results = []
 
+        start_seconds = time.time()
+
         display.debug("waiting for pending results...")
         while self._pending_results > 0 and not self._tqm._terminated:
+
+            if time.time() - start_seconds > 60:
+                raise AnsibleError("Waited too long on pending results")
 
             if self._tqm.has_dead_workers():
                 raise AnsibleError("A worker was found in a dead state")
