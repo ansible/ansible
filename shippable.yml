@@ -14,6 +14,12 @@ matrix:
     - env: TEST=repro/ubuntu1604py3/handlers
     - env: TEST=repro/ubuntu1604py3/handlers
     - env: TEST=repro/ubuntu1604py3/handlers
+    - env: TEST=repro/ubuntu1604py3/handlers
+    - env: TEST=repro/ubuntu1604py3/handlers
+    - env: TEST=repro/ubuntu1604py3/handlers
+    - env: TEST=repro/ubuntu1604py3/handlers
+    - env: TEST=repro/ubuntu1604py3/handlers
+    - env: TEST=repro/ubuntu1604py3/handlers
 
 branches:
   except:
