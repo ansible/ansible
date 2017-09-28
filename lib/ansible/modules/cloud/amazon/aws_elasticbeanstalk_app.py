@@ -36,6 +36,7 @@ options:
       - name of the beanstalk application you wish to manage
     required: false
     default: null
+    aliases: [ 'name' ]
   description:
     description:
       - describes the application
@@ -168,7 +169,7 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            app_name=dict(type='str', required=False),
+            app_name=dict(aliases=['name'],type='str', required=False),
             description=dict(type='str', required=False),
             state=dict(choices=['present', 'absent', 'list'], default='present')
         )
