@@ -107,7 +107,11 @@ def map_obj_to_commands(want, have, module):
 
 
 def map_config_to_obj(module):
-    output = run_commands(module, ['show banner %s' % module.params['banner']])[0]
+    output = run_commands(module, ['show banner %s' % module.params['banner']], False)[0]
+
+    if "Invalid command" in output:
+        module.fail_json(msg="banner: exec may not be supported on this platform.  Possible values are : exec | motd")
+
     if isinstance(output, dict):
         output = list(output.values())[0]
 
@@ -148,6 +152,7 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
+
     check_args(module, warnings)
 
     result = {'changed': False}
@@ -155,7 +160,6 @@ def main():
         result['warnings'] = warnings
     want = map_params_to_obj(module)
     have = map_config_to_obj(module)
-
     commands = map_obj_to_commands(want, have, module)
     result['commands'] = commands
 

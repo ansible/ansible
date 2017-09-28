@@ -150,10 +150,16 @@ class Cli:
             if check_rc and rc != 0:
                 self._module.fail_json(msg=to_text(err, errors='surrogate_then_replace'))
 
-            try:
-                out = self._module.from_json(out)
-            except ValueError:
-                out = str(out).strip()
+            if not check_rc and rc != 0:
+                try:
+                    out = self._module.from_json(err)
+                except ValueError:
+                    out = to_text(err, errors='surrogate_then_replace').strip()
+            else:
+                try:
+                    out = self._module.from_json(out)
+                except ValueError:
+                    out = to_text(out, errors='surrogate_then_replace').strip()
 
             responses.append(out)
         return responses
