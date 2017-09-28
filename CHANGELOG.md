@@ -55,6 +55,7 @@ Ansible Changes By Release
 * removed extension requirement for yaml inventory plugin to restore previous behaviour
 * fixed ansible-pull to now correctly deal with inventory
 * corrected dig lookup docs
+* fix type handling for sensu_silence so the module works
 
 <sdfasdfsadfsdflkjsdfklj3oiqrua id="2.4"></a>
 
