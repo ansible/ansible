@@ -609,9 +609,8 @@ def main():
             aws_connect_kwargs.pop(key, None)
     try:
         s3 = get_s3_connection(module, aws_connect_kwargs, location, rgw, s3_url)
-    except (botocore.exceptions.NoCredentialsError, botocore.exceptions.ProfileNotFound) as e:
-        module.fail_json(msg="Can't authorize connection. Check your credentials and profile.",
-                         exceptions=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+    except botocore.exceptions.ProfileNotFound as e:
+        module.fail_json(msg=to_native(e))
 
     validate = not ignore_nonexistent_bucket
 
