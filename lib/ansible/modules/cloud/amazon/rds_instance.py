@@ -325,7 +325,7 @@ response:
   type: dict
 '''
 
-from six import print_
+from ansible.module_utils.six import print_
 import sys
 import time
 import traceback
@@ -336,6 +336,10 @@ from ansible.module_utils.ec2 import ansible_dict_to_boto3_tag_list, boto3_tag_l
 from ansible.module_utils.aws.rds import get_db_instance, instance_to_facts, instance_facts_diff
 from ansible.module_utils.aws.rds import DEFAULT_PORTS, DB_ENGINES, LICENSE_MODELS
 from botocore import xform_name
+try:
+    import botocore
+except ImportError:
+    pass  # caught by imported AnsibleAWSModule
 
 # Q is a simple logging framework NOT suitable for production use but handy in development.
 # try:
@@ -344,17 +348,11 @@ from botocore import xform_name
 # except:
 #     HAS_Q = False
 
+HAS_Q = False
+
 
 def q(junk):
     pass
-
-
-HAS_Q = False
-
-try:
-    import botocore
-except ImportError:
-    pass  # caught by imported AnsibleAWSModule
 
 
 # Ansible avoids proper python logging for reasons too complicted for
@@ -362,6 +360,7 @@ except ImportError:
 # security (see proposals, many tickets and a number of PRs), so we
 # make a little improvised logger here which goes through module.log
 # we can always point to a more sophisticated logger when one exists.
+
 
 class the_logger():
     default_log_level = 20
