@@ -31,7 +31,7 @@ $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "b
 $Size = Get-AnsibleParam -obj $params -name "size" -type "str/int" -failifempty $true
 $FindPartitionStyle = Get-AnsibleParam -obj $params -name "partition_style_select" -type "str" -default "raw" -ValidateSet "raw","mbr","gpt"
 $OperationalStatus = Get-AnsibleParam -obj $params -name "operational_status" -type "str" -default "offline" -ValidateSet "offline","online"
-$ReadOnly = Get-AnsibleParam -obj $params -name "read_only" -default $true -type "bool"
+$ReadOnly = Get-AnsibleParam -obj $params -name "read_only" -type "bool" -default $true
 $Number = Get-AnsibleParam -obj $params -name "number" -type "str/int"
 # Set attributes partition
 $SetPartitionStyle = Get-AnsibleParam -obj $params -name "partition_style_set" -type "str" -default "gpt" -ValidateSet "gpt","mbr"
@@ -41,9 +41,9 @@ $FileSystem = Get-AnsibleParam -obj $params -name "file_system" -type "str" -def
 $Label = Get-AnsibleParam -obj $params -name "label" -type "str" -default "ansible_disk"
 $AllocUnitSize = Get-AnsibleParam -obj $params -name "allocation_unit_size" -type "str/int" -default 4 -ValidateSet 4,8,16,32,64
 # Set attributes switches
-$LargeFRS = Get-AnsibleParam -obj $params -name "large_frs" -default $false -type "bool"
-$ShortNames = Get-AnsibleParam -obj $params -name "short_names" -default $false -type "bool"
-$IntegrityStreams = Get-AnsibleParam -obj $params -name "integrity_streams" -default $false -type "bool"
+$LargeFRS = Get-AnsibleParam -obj $params -name "large_frs" -type "bool" -default $false
+$ShortNames = Get-AnsibleParam -obj $params -name "short_names" -type "bool" -default $false
+$IntegrityStreams = Get-AnsibleParam -obj $params -name "integrity_streams" -type "bool" -default $false
 
 # Create a new result object
 $result = @{
