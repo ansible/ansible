@@ -71,7 +71,7 @@ class Group:
         try:
             return value.__repr__()
         except Exception:
-            return type(value)
+            return str(type(value))
 
     def deserialize(self, data):
         self.__init__()
