@@ -178,6 +178,9 @@
       rds_instance:
         id: "{{ rds_instance_name }}-restore"
         snapshot: "{{ rds_instance_name }}-snapshot"
+        size: 5
+        db_instance_class: db.t2.micro
+        engine: postgres
         wait: yes
         wait_timeout: 1200
         region: '{{ec2_region}}'

@@ -164,19 +164,19 @@ options:
       - VPC subnet group. If specified then a VPC instance is created.
     required: false
     aliases: ['subnet']
-  db_snapshot_identifier:
+  final_db_snapshot_identifier:
     description:
       - Name of snapshot to take when state=absent - if no snapshot name is provided then no
         snapshot is taken.
     required: false
-  snapshot_identifier:
+  db_snapshot_identifier:
     description:
       - Name of snapshot to use when restoring a database with state=present
         snapshot is taken.
     required: false
   snapshot:
     description:
-      - snapshot provides a default for either db_snapshot_identifier or snapshot_identifier
+      - snapshot provides a default for either final_db_snapshot_identifier or db_snapshot_identifier
         allowing the same parameter to be used for both backup and restore.
     required: false
   wait:
@@ -335,6 +335,7 @@ from ansible.module_utils.ec2 import camel_dict_to_snake_dict, AWSRetry
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict, compare_aws_tags
 from ansible.module_utils.aws.rds import get_db_instance, instance_to_facts, instance_facts_diff
 from ansible.module_utils.aws.rds import DEFAULT_PORTS, DB_ENGINES, LICENSE_MODELS
+from botocore import xform_name
 
 # Q is a simple logging framework NOT suitable for production use but handy in development.
 # try:
@@ -460,27 +461,19 @@ def await_resource(conn, instance_id, status, module, await_pending=None):
 
 aurora_create_required_vars = ['db_instance_identifier', 'db_instance_class', 'engine']
 aurora_create_valid_vars = ['apply_immediately', 'character_set_name', 'cluster', 'db_name',
-                            'engine_version', 'db_instance_class', 'license_model', 'preferred_maintenance_window',
-                            'option_group_name', 'db_parameter_group_name', 'port', 'publicly_accessible',
-                            'db_subnet_group_name', 'auto_minor_version_upgrade', 'tags', 'availability_zone']
+                            'engine_version', 'db_instance_class', 'license_model',
+                            'preferred_maintenance_window', 'option_group_name',
+                            'db_parameter_group_name', 'port', 'publicly_accessible',
+                            'db_subnet_group_name', 'auto_minor_version_upgrade', 'tags',
+                            'availability_zone']
 create_required_vars = ['db_instance_identifier', 'engine', 'allocated_storage',
-                           'db_instance_class', 'master_username', 'master_user_password']
-create_valid_vars = ['backup_retention_period', 'preferred_backup_window', 'character_set_name', 'cluster',
-                        'db_name', 'engine_version', 'license_model', 'preferred_maintenance_window', 'multi_az',
-                        'option_group_name', 'db_parameter_group_name', 'port', 'publicly_accessible',
-                        'storage_type', 'db_subnet_group_name', 'auto_minor_version_upgrade', 'tags',
-                        'db_security_groups', 'vpc_security_group_ids', 'availability_zone']
-delete_required_vars = ['db_instance_identifier']
-delete_valid_vars = ['db_snapshot_identifier', 'skip_final_snapshot', 'storage_type']
-restore_required_vars = ['db_instance_identifier', 'snapshot']
-restore_valid_vars = ['db_name', 'iops', 'license_model', 'multi_az', 'option_group_name', 'port',
-                      'publicly_accessible', 'storage_type', 'db_subnet_group_name', 'tags',
-                      'auto_minor_version_upgrade', 'availability_zone', 'instance_type']
-reboot_required_vars = ['db_instance_identifier']
-reboot_valid_vars = ['force_failover']
-replicate_required_vars = ['db_instance_identifier', 'source_db_instance_identifier']
-replicate_valid_vars = ['instance_type', 'iops', 'option_group_name', 'port', 'publicly_accessible',
-                        'storage_type', 'tags', 'auto_minor_version_upgrade', 'availability_zone']
+                        'db_instance_class', 'master_username', 'master_user_password']
+create_valid_vars = ['backup_retention_period', 'preferred_backup_window', 'character_set_name',
+                     'cluster', 'db_name', 'engine_version', 'license_model',
+                     'preferred_maintenance_window', 'multi_az', 'option_group_name',
+                     'db_parameter_group_name', 'port', 'publicly_accessible', 'storage_type',
+                     'db_subnet_group_name', 'auto_minor_version_upgrade', 'tags',
+                     'db_security_groups', 'vpc_security_group_ids', 'availability_zone']
 
 
 def create_db_instance(module, conn):
@@ -522,7 +515,7 @@ def replicate_db_instance(module, conn):
     """if the database doesn't exist, create it as a replica of an existing instance
     """
     main_logger.log(30, "replicate_db_instance called")
-    params = select_parameters(module, replicate_required_vars, replicate_valid_vars)
+    params = select_parameters_meta(module, conn, 'CreateDBInstanceReadReplica')
     instance_id = module.params.get('db_instance_identifier')
 
     instance = get_db_instance(conn, instance_id)
@@ -559,9 +552,9 @@ def delete_db_instance(module, conn):
     except KeyError:
         pass
 
-    params = select_parameters(module, delete_required_vars, delete_valid_vars)
+    params = select_parameters_meta(module, conn, 'DeleteDBInstance')
     instance_id = module.params.get('db_instance_identifier')
-    snapshot = module.params.get('db_snapshot_identifier')
+    snapshot = module.params.get('final_db_snapshot_identifier')
 
     result = get_db_instance(conn, instance_id)
     if not result:
@@ -571,7 +564,7 @@ def delete_db_instance(module, conn):
     if snapshot:
         params["SkipFinalSnapshot"] = False
         params["FinalDBSnapshotIdentifier"] = snapshot
-        del(params['DBSnapshotIdentifier'])
+        del(module.params['snapshot'])
     else:
         params["SkipFinalSnapshot"] = True
     try:
@@ -878,9 +871,7 @@ def get_instance_to_work_on(module, conn):
 
 def promote_db_instance(module, conn):
     main_logger.log(30, "promote_db_instance called")
-    required_vars = ['db_instance_identifier']
-    valid_vars = ['backup_retention_period', 'preferred_backup_window']
-    params = select_parameters(module, required_vars, valid_vars)
+    params = select_parameters_meta(module, conn, 'PromoteReadReplica')
     instance_id = module.params.get('db_instance_identifier')
 
     result = get_db_instance(conn, instance_id)
@@ -899,7 +890,7 @@ def promote_db_instance(module, conn):
         changed = False
 
     if module.params.get('wait'):
-        instance = await_resource(conn, instance, 'available', module)
+        instance = await_resource(conn, instance_id, 'available', module)
     else:
         instance = get_db_instance(conn, instance_id)
 
@@ -908,7 +899,7 @@ def promote_db_instance(module, conn):
 
 def reboot_db_instance(module, conn):
     main_logger.log(30, "reboot_db_instance called")
-    params = select_parameters(module, reboot_required_vars, reboot_valid_vars)
+    params = select_parameters_meta(module, conn, 'RebootDBInstance')
     instance_id = module.params.get('db_instance_identifier')
     instance = get_db_instance(conn, instance_id)
     try:
@@ -918,7 +909,7 @@ def reboot_db_instance(module, conn):
         module.fail_json(msg="Failed to reboot instance: %s " % str(e),
                          exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
     if module.params.get('wait'):
-        instance = await_resource(conn, instance, 'available', module)
+        instance = await_resource(conn, instance_id, 'available', module)
     else:
         instance = get_db_instance(conn, instance_id)
 
@@ -927,7 +918,7 @@ def reboot_db_instance(module, conn):
 
 def restore_db_instance(module, conn):
     main_logger.log(30, "resore_db_instance called")
-    params = select_parameters(module, restore_required_vars, restore_valid_vars)
+    params = select_parameters_meta(module, conn, 'RestoreDBInstanceFromDBSnapshot')
     instance_id = module.params.get('db_instance_identifier')
     changed = False
     instance = get_db_instance(conn, instance_id)
@@ -941,7 +932,7 @@ def restore_db_instance(module, conn):
                              exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     if module.params.get('wait'):
-        instance = await_resource(conn, instance, 'available', module)
+        instance = await_resource(conn, instance_id, 'available', module)
     else:
         instance = get_db_instance(conn, instance_id)
 
@@ -954,6 +945,31 @@ def validate_parameters(module):
     params = module.params
     if params.get('db_instance_identifier') == params.get('old_db_instance_identifier'):
         module.fail_json(msg="if specified, old_db_instance_identifier must be different from db_instance_identifier")
+
+
+def select_parameters_meta(module, client, operation):
+    """
+    given an AWS API operation name, select those parameters that can be used for it
+    """
+
+    # we do _NOT_ enforce required parameters at this level.  That
+    # should be enforced at the ansible argument parsing level to make
+    # sure that incoming we have all we need and then that gets
+    # checked by botocore at the moment the API call is actually made.
+
+    params = {}
+
+    operations_model = client._service_model.operation_model(operation)
+    relevant_parameters = operations_model.input_shape.members.keys()
+    for k in relevant_parameters:
+        try:
+            v = module.params[xform_name(k)]
+            if v is not None:
+                params[k] = v
+        except KeyError:
+            pass
+
+    return params
 
 
 def select_parameters(module, required_vars, valid_vars):
@@ -994,49 +1010,54 @@ argument_spec = dict(
     # module function variables
     state=dict(choices=['absent', 'present', 'rebooted', 'restarted'], default='present'),
     log_level=dict(type='int', default=10),
+    apply_immediately=dict(type='bool', default=False),
+    wait=dict(type='bool', default=False),
+    wait_timeout=dict(type='int', default=600),
+
+    force_password_update=dict(type='bool', default=False),
 
     # replication variables
     source_db_instance_identifier=dict(),
 
-    # RDS create variables
-    db_instance_identifier=dict(aliases=["id"], required=True),
-    engine=dict(choices=DB_ENGINES),
-    db_instance_class=dict(),
+    # RDS present (create / modify) variables
     allocated_storage=dict(type='int', aliases=['size']),
-    master_username=dict(),
-    master_user_password=dict(no_log=True),
-    db_name=dict(),
-    engine_version=dict(),
-    db_parameter_group_name=dict(),
-    license_model=dict(choices=LICENSE_MODELS),
-    multi_az=dict(type='bool', default=False),
-    iops=dict(type='int'),
-    storage_type=dict(choices=['standard', 'io1', 'gp2'], default='standard'),
-    db_security_groups=dict(),
-    vpc_security_group_ids=dict(type='list'),
-    port=dict(type='int'),
     auto_minor_version_upgrade=dict(type='bool', default=False),
-    option_group_name=dict(),
-    preferred_maintenance_window=dict(),
-    preferred_backup_window=dict(),
-    backup_retention_period=dict(type='int'),
     availability_zone=dict(),
-    db_subnet_group_name=dict(aliases=['subnet']),
-    wait=dict(type='bool', default=False),
-    wait_timeout=dict(type='int', default=600),
-    db_snapshot_identifier=dict(),
-    snapshot_identifier=dict(),
-    snapshot=dict(),
-    skip_final_snapshot=dict(type='bool'),
-    apply_immediately=dict(type='bool', default=False),
-    old_db_instance_identifier=dict(aliases=['old_id']),
-    tags=dict(type='dict'),
-    publicly_accessible=dict(type='bool'),
+    backup_retention_period=dict(type='int'),
     character_set_name=dict(),
+    db_instance_class=dict(),
+    db_instance_identifier=dict(aliases=["id"], required=True),
+    db_name=dict(),
+    db_parameter_group_name=dict(),
+    db_security_groups=dict(),
+    db_snapshot_identifier=dict(),
+    db_subnet_group_name=dict(aliases=['subnet']),
+    engine=dict(choices=DB_ENGINES),
+    engine_version=dict(),
+    iops=dict(type='int'),
+    license_model=dict(choices=LICENSE_MODELS),
+    master_user_password=dict(no_log=True),
+    master_username=dict(),
+    multi_az=dict(type='bool', default=False),
+    old_db_instance_identifier=dict(aliases=['old_id']),
+    option_group_name=dict(),
+    port=dict(type='int'),
+    preferred_backup_window=dict(),
+    preferred_maintenance_window=dict(),
+    publicly_accessible=dict(type='bool'),
+    snapshot=dict(),
+    storage_type=dict(choices=['standard', 'io1', 'gp2'], default='standard'),
+    tags=dict(type='dict'),
+    vpc_security_group_ids=dict(type='list'),
+
+    # RDS reboot only variables
     force_failover=dict(type='bool', default=False),
 
-    # RDS Modify only variables
-    force_password_update=dict(type='bool', default=False),
+    # RDS absent / delete only variables
+    final_db_snapshot_identifier=dict(),
+    skip_final_snapshot=dict(type='bool'),
+
+
 
     # FIXME: add a purge_tags option using compare_aws_tags()
 )
@@ -1046,7 +1067,7 @@ argument_spec = dict(
 
 required_if = [
     ('storage_type', 'io1', ['iops']),
-    ('state', 'present', ['engine', 'db_instance_class']),
+    ('state', 'present', ['engine', 'db_instance_class', 'allocated_storage']),
 ]
 
 
@@ -1061,7 +1082,8 @@ def setup_module_object():
     module = AnsibleAWSModule(
         argument_spec=argument_spec,
         required_if=required_if,
-        mutually_exclusive=[['old_instance_id', 'source_db_instance_identifier', 'snapshot']],
+        mutually_exclusive=[['old_instance_id', 'source_db_instance_identifier',
+                             'db_snapshot_identifier']],
     )
     return module
 
@@ -1074,10 +1096,11 @@ def set_module_defaults(module):
         else:
             engine = module.params['engine']
         module.params['port'] = DEFAULT_PORTS[engine.lower()]
+    if module.params['final_db_snapshot_identifier'] is None:
+        module.params['final_db_snapshot_identifier'] = module.params.get('snapshot')
     if module.params['db_snapshot_identifier'] is None:
-        module.params['db_snapshot_identifier'] = module.params['snapshot']
-    if module.params['snapshot_identifier'] is None:
-        module.params['snapshot_identifier'] = module.params['snapshot']
+        module.params['db_snapshot_identifier'] = module.params.get('snapshot')
+    module.params.get('snapshot')
 
 
 """creating instances from replicas, renames and so on
@@ -1106,6 +1129,7 @@ should try to be careful.
 
 
 def ensure_rds_state(module, conn):
+    """ensures RDS instance exists and is correctly configured"""
     changed = False
     instance = get_instance_to_work_on(module, conn)
 

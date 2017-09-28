@@ -37,6 +37,7 @@ import time
 import datetime
 import copy
 import json
+import botocore.session
 boto3 = pytest.importorskip("boto3")
 boto = pytest.importorskip("boto")
 
@@ -176,7 +177,7 @@ modify_rds_return = {
 
 # def test_module_parses_args_right()
 
-basic._ANSIBLE_ARGS = to_bytes(b'{ "ANSIBLE_MODULE_ARGS": { "db_instance_class":"very-small-indeed", "engine": "postgres", "id":"fred", "port": 242} }')
+basic._ANSIBLE_ARGS = to_bytes(b'{ "ANSIBLE_MODULE_ARGS": { "db_instance_class":"very-small-indeed", "engine": "postgres", "id":"fred", "port": 242, "allocated_storage": 10} }')
 ansible_module_template = AnsibleAWSModule(argument_spec=rds_i.argument_spec, required_if=rds_i.required_if)
 #    basic._ANSIBLE_ARGS = to_bytes('{ "ANSIBLE_MODULE_ARGS": { "old_id": "fakedb", "old_id":"fred", "port": 342} }')
 #    basic._ANSIBLE_ARGS = to_bytes('{ "ANSIBLE_MODULE_ARGS": { "id":"fred", "port": 342} }')
@@ -629,3 +630,26 @@ def test_major_functions_should_log_at_least_once():
         except LogCalledGood:
             passed = True
         assert passed, i + " failed to call log function"
+
+
+def test_select_parameters_meta_should_select_relevant_parameters_for_call():
+    params = {
+        "port": 342,
+        "force_password_update": True,
+        "db_instance_identifier": "fakedb-too",  # should not yet exist
+        "old_db_instance_identifier": "fakedb",  # should be currently existing
+        "allocated_storage": 5,
+        "storage_type": "gp",
+        "apply_immediately": True,
+    }
+
+    session = botocore.session.get_session()
+    rds_client_double = session.create_client('rds', region_name='us-west-2')
+
+    module_double = MagicMock(ansible_module_template)
+    module_double.params = params
+
+    params = rds_i.select_parameters_meta(module_double, rds_client_double, 'DeleteDBInstance')
+
+    assert len(params) < 2
+    assert params['DBInstanceIdentifier'] == 'fakedb-too'
