@@ -180,9 +180,6 @@ class VaultCLI(CLI):
                 raise AnsibleOptionsError("A vault password is required to use Ansible's Vault")
 
         if self.action in ['encrypt', 'encrypt_string', 'create', 'edit']:
-            if len(vault_ids) > 1 and not self.options.encrypt_vault_id:
-                raise AnsibleOptionsError("Only one --vault-id can be used for encryption")
-
             vault_secrets = None
             vault_secrets = \
                 self.setup_vault_secrets(loader,
@@ -191,8 +188,9 @@ class VaultCLI(CLI):
                                          ask_vault_pass=self.options.ask_vault_pass,
                                          create_new_password=True)
 
-            if len(vault_secrets) > 1:
-                raise AnsibleOptionsError("Only one --vault-id can be used for encryption. This includes passwords from configuration and cli.")
+            if len(vault_secrets) > 1 and not self.options.encrypt_vault_id:
+                raise AnsibleOptionsError("The vault-ids %s are available to encrypt. Specify the vault-id to encrypt with --encrypt-vault-id" %
+                                          ','.join([x[0] for x in vault_secrets]))
 
             if not vault_secrets:
                 raise AnsibleOptionsError("A vault password is required to use Ansible's Vault")

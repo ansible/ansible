@@ -396,7 +396,6 @@ def match_secrets(secrets, target_vault_ids):
     if not secrets:
         return []
 
-    print('match_secrets: secrets: %s target_vault_ids: %s' % (secrets, target_vault_ids))
     matches = [(vault_id, secret) for vault_id, secret in secrets if vault_id in target_vault_ids]
     return matches
 
@@ -407,7 +406,6 @@ def match_best_secret(secrets, target_vault_ids):
     Since secrets should be ordered so the early secrets are 'better' than later ones, this
     just finds all the matches, then returns the first secret'''
     matches = match_secrets(secrets, target_vault_ids)
-    print('match_best_secret matches: %s' % matches)
     if matches:
         return matches[0]
     # raise exception?
@@ -423,7 +421,6 @@ def match_encrypt_vault_id_secret(secrets, encrypt_vault_id=None):
 
     encrypt_vault_id_matchers = [encrypt_vault_id]
     encrypt_secret = match_best_secret(secrets, encrypt_vault_id_matchers)
-    print('encrypt_secret: %s' % repr(encrypt_secret))
 
     # return the best match for --encrypt-vault-id
     if encrypt_secret:
