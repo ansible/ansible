@@ -63,7 +63,7 @@ Ansible Changes By Release
 * Fix os_image when the id parameter is not set in the task. ( https://github.com/ansible/ansible/pull/29147 )
 
 
-<sdfasdfsadfsdflkjsdfklj3oiqrua id="2.4"></a>
+<a id="2.4"></a>
 
 ## 2.4 "Dancing Days" - ACTIVE DEVELOPMENT
 
