@@ -250,7 +250,7 @@ def main():
                 try:
                     ebs.delete_application(ApplicationName=app_name)
                 except Exception as e:
-                    fail_json_aws(e, msg="Cannot terminate app with running environments")
+                    module.fail_json_aws(e, msg="Cannot terminate app with running environments")
 
             result = dict(changed=True, app=app)
 
