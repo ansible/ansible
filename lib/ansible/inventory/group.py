@@ -80,7 +80,7 @@ class Group:
             self.parent_groups.append(g)
 
     @property
-    def _hosts(self):
+    def host_names(self):
         if self._hosts is None:
             self._hosts = set(self.hosts)
         return self._hosts
@@ -122,7 +122,7 @@ class Group:
             raise AnsibleError("The group named '%s' has a recursive dependency loop." % self.name)
 
     def add_host(self, host):
-        if host.name not in self._hosts:
+        if host.name not in self.host_names:
             self.hosts.append(host)
             self._hosts.add(host.name)
             host.add_group(self)
@@ -130,7 +130,7 @@ class Group:
 
     def remove_host(self, host):
 
-        if host.name in self._hosts:
+        if host.name in self.host_names:
             self.hosts.remove(host)
             self._hosts.remove(host.name)
             host.remove_group(self)
