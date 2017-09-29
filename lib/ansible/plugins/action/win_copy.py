@@ -413,8 +413,8 @@ class ActionModule(ActionBase):
 
             # Get a list of the files we want to replicate on the remote side
             source_files = self._walk_dirs(source, local_follow=follow,
-                                      trailing_slash_detector=self._connection._shell.path_has_trailing_slash,
-                                      checksum_check=force)
+                                           trailing_slash_detector=self._connection._shell.path_has_trailing_slash,
+                                           checksum_check=force)
 
             # If it's recursive copy, destination is always a dir,
             # explicitly mark it so (note - win_copy module relies on this).
