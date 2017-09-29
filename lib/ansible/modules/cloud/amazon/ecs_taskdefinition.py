@@ -241,10 +241,11 @@ def main():
     task_mgr = EcsTaskManager(module)
     results = dict(changed=False)
 
-    for container in module.params['containers']:
-        if 'environment' in container:
-            for environment in container['environment']:
-                environment['value'] = str(environment['value'])
+    if 'containers' in module.params and isinstance(module.params['containers'], list):
+        for container in module.params['containers']:
+            if 'environment' in container:
+                for environment in container['environment']:
+                    environment['value'] = str(environment['value'])
 
     if module.params['state'] == 'present':
         if 'containers' not in module.params or not module.params['containers']:
