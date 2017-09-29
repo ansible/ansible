@@ -1,54 +1,51 @@
 #!/usr/bin/python
-# Copyright 2015 Google Inc. All Rights Reserved.
+
+# Copyright: (c) 2015, Google Inc. All Rights Reserved.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
 module: kubernetes
 version_added: "2.1"
-short_description: Manage Kubernetes resources.
+short_description: Manage Kubernetes resources
 description:
     - This module can manage Kubernetes resources on an existing cluster using
       the Kubernetes server API. Users can specify in-line API data, or
-      specify an existing Kubernetes YAML file. Currently, this module,
-        Only supports HTTP Basic Auth
-        Only supports 'strategic merge' for update, http://goo.gl/fCPYxT
-        SSL certs are not working, use 'validate_certs=off' to disable
+      specify an existing Kubernetes YAML file.
+    - Currently, this module
+      (1) Only supports HTTP Basic Auth
+      (2) Only supports 'strategic merge' for update, http://goo.gl/fCPYxT
+      SSL certs are not working, use C(validate_certs=off) to disable.
 options:
   api_endpoint:
     description:
       - The IPv4 API endpoint of the Kubernetes cluster.
     required: true
-    default: null
-    aliases: ["endpoint"]
+    aliases: [ endpoint ]
   inline_data:
     description:
       - The Kubernetes YAML data to send to the API I(endpoint). This option is
         mutually exclusive with C('file_reference').
     required: true
-    default: null
   file_reference:
     description:
       - Specify full path to a Kubernets YAML file to send to API I(endpoint).
         This option is mutually exclusive with C('inline_data').
-    required: false
-    default: null
   patch_operation:
-    description: >
-      - Specify patch operation for Kubernetes resource update. For details, see the description of PATCH operations at
+    description:
+      - Specify patch operation for Kubernetes resource update.
+      - For details, see the description of PATCH operations at
         U(https://github.com/kubernetes/kubernetes/blob/release-1.5/docs/devel/api-conventions.md#patch-operations).
     default: Strategic Merge Patch
-    aliases: ["patch_strategy"]
-    choices: ["JSON Patch", "Merge Patch", "Strategic Merge Patch"]
+    choices: [ JSON Patch, Merge Patch, Strategic Merge Patch ]
+    aliases: [ patch_strategy ]
     version_added: 2.4
   certificate_authority_data:
     description:
@@ -56,40 +53,37 @@ options:
         standard PEM format or base64 encoded PEM data. Note that certificate
         verification is broken until ansible supports a version of
         'match_hostname' that can match the IP address against the CA data.
-    required: false
-    default: null
   state:
     description:
       - The desired action to take on the Kubernetes data.
     required: true
-    default: "present"
-    choices: ["present", "absent", "update", "replace"]
+    choices: [ absent, present, replace, update ]
+    default: present
   url_password:
     description:
       - The HTTP Basic Auth password for the API I(endpoint). This should be set
         unless using the C('insecure') option.
-    default: null
-    aliases: ["password"]
+    aliases: [ password ]
   url_username:
     description:
       - The HTTP Basic Auth username for the API I(endpoint). This should be set
         unless using the C('insecure') option.
-    default: "admin"
-    aliases: ["username"]
+    default: admin
+    aliases: [ username ]
   insecure:
     description:
-      - "Reverts the connection to using HTTP instead of HTTPS. This option should
+      - Reverts the connection to using HTTP instead of HTTPS. This option should
         only be used when execuing the M('kubernetes') module local to the Kubernetes
-        cluster using the insecure local port (locahost:8080 by default)."
+        cluster using the insecure local port (locahost:8080 by default).
   validate_certs:
     description:
       - Enable/disable certificate validation. Note that this is set to
         C(false) until Ansible can support IP address based certificate
         hostname matching (exists in >= python3.5.0).
-    required: false
-    default: false
-
-author: "Eric Johnson (@erjohnso) <erjohnso@google.com>"
+    type: bool
+    default: 'no'
+author:
+- Eric Johnson (@erjohnso) <erjohnso@google.com>
 '''
 
 EXAMPLES = '''
@@ -158,9 +152,9 @@ import json
 
 try:
     import yaml
-    has_lib_yaml = True
+    HAS_LIB_YAML = True
 except ImportError:
-    has_lib_yaml = False
+    HAS_LIB_YAML = False
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
@@ -334,27 +328,27 @@ def k8s_update_resource(module, url, data, patch_operation):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            http_agent=dict(default=USER_AGENT),
-
-            url_username=dict(default="admin", aliases=["username"]),
-            url_password=dict(default="", no_log=True, aliases=["password"]),
-            force_basic_auth=dict(default="yes"),
-            validate_certs=dict(default=False, type='bool'),
-            certificate_authority_data=dict(required=False),
-            insecure=dict(default=False, type='bool'),
-            api_endpoint=dict(required=True),
-            patch_operation=dict(default='Strategic Merge Patch', aliases=['patch_strategy'], choices=['JSON Patch', 'Merge Patch', 'Strategic Merge Patch']),
-            file_reference=dict(required=False),
-            inline_data=dict(required=False),
-            state=dict(default="present", choices=["present", "absent", "update", "replace"])
+            http_agent=dict(type='str', default=USER_AGENT),
+            url_username=dict(type='str', default='admin', aliases=['username']),
+            url_password=dict(type='str', default='', no_log=True, aliases=['password']),
+            force_basic_auth=dict(type='bool', default=True),
+            validate_certs=dict(type='bool', default=False),
+            certificate_authority_data=dict(type='str'),
+            insecure=dict(type='bool', default=False),
+            api_endpoint=dict(type='str', required=True),
+            patch_operation=dict(type='str', default='Strategic Merge Patch', aliases=['patch_strategy'],
+                                 choices=['JSON Patch', 'Merge Patch', 'Strategic Merge Patch']),
+            file_reference=dict(type='str'),
+            inline_data=dict(type='str'),
+            state=dict(type='str', default='present', choices=['absent', 'present', 'replace', 'update'])
         ),
-        mutually_exclusive = (('file_reference', 'inline_data'),
-                              ('url_username', 'insecure'),
-                              ('url_password', 'insecure')),
-        required_one_of = (('file_reference', 'inline_data'),),
+        mutually_exclusive=(('file_reference', 'inline_data'),
+                            ('url_username', 'insecure'),
+                            ('url_password', 'insecure')),
+        required_one_of=(('file_reference', 'inline_data')),
     )
 
-    if not has_lib_yaml:
+    if not HAS_LIB_YAML:
         module.fail_json(msg="missing python library: yaml")
 
     decode_cert_data(module)
@@ -393,7 +387,7 @@ def main():
 
     # make sure the data is a list
     if not isinstance(data, list):
-        data = [ data ]
+        data = [data]
 
     for item in data:
         namespace = "default"
