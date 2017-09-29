@@ -35,7 +35,7 @@ $ReadOnly = Get-AnsibleParam -obj $params -name "read_only" -type "bool" -defaul
 $Number = Get-AnsibleParam -obj $params -name "number" -type "str/int"
 # Set attributes partition
 $SetPartitionStyle = Get-AnsibleParam -obj $params -name "partition_style_set" -type "str" -default "gpt" -ValidateSet "gpt","mbr"
-$DriveLetter = Get-AnsibleParam -obj $params -name "drive_letter" -type "str" -default "e"
+$DriveLetter = Get-AnsibleParam -obj $params -name "drive_letter" -type "str"
 # Set attributes file system
 $FileSystem = Get-AnsibleParam -obj $params -name "file_system" -type "str" -default "ntfs" -ValidateSet "ntfs","refs"
 $Label = Get-AnsibleParam -obj $params -name "label" -type "str" -default "ansible_disk"
@@ -74,7 +74,7 @@ if (($Size.GetType()).Name -eq 'String') {
         [int32]$Size = [convert]::ToInt32($Size, 10)
     } catch {
         $result.general_log.convert_validate_options = "failed"
-        Fail-Json -obj $result -message "Failed to convert option variable from string to int: $($_.Exception.Message)"
+        Fail-Json -obj $result -message "Failed to convert option variable size from string to int: $($_.Exception.Message)"
     }
     $result.change_log.convert_options.size = "Converted option variable from string to int"     
 } else {
@@ -86,7 +86,7 @@ if (($AllocUnitSize.GetType()).Name -eq 'String') {
         [int32]$AllocUnitSize = [convert]::ToInt32($AllocUnitSize, 10)
     } catch {
         $result.general_log.convert_validate_options = "failed"
-        Fail-Json -obj $result -message "Failed to convert option variable from string to int: $($_.Exception.Message)"
+        Fail-Json -obj $result -message "Failed to convert option variable allocation_unit_size from string to int: $($_.Exception.Message)"
     }
     $result.change_log.convert_options.allocation_unit_size = "Converted option variable from string to int"   
 } else {
@@ -99,7 +99,7 @@ if ($Number -ne $null) {
             [int32]$Number = [convert]::ToInt32($Number, 10)
         } catch {
             $result.general_log.convert_validate_options = "failed"
-            Fail-Json -obj $result -message "Failed to convert option variable from string to int: $($_.Exception.Message)"
+            Fail-Json -obj $result -message "Failed to convert option variable number from string to int: $($_.Exception.Message)"
         }
         $result.change_log.convert_options.number = "Converted option variable from string to int"     
     } else {
@@ -107,6 +107,23 @@ if ($Number -ne $null) {
     }
 } else {
     $result.change_log.convert_options.number = "No number option used, no convertion needed"
+}
+
+if ($DriveLetter -ne $null) {
+    if ($DriveLetter -like "[a-z]") {
+        try {
+            [char]$DriveLetter = [convert]::ToChar($DriveLetter)
+        } catch {
+            $result.general_log.convert_validate_options = "failed"
+            Fail-Json -obj $result -message "Failed to convert option variable from string to char: $($_.Exception.Message)"
+        }
+        $result.change_log.convert_options.drive_letter = "Converted option variable from string to char"
+    } else {
+        $result.general_log.convert_validate_options = "failed"
+        Fail-Json -obj $result -message "Failed to convert option variable drive_letter from string to char because drive_letter value is no letter: $($_.Exception.Message)"
+    }
+} else {
+    $result.change_log.convert_options.drive_letter = "No drive_letter option used, no convertion needed"
 }
 
 $result.general_log.convert_validate_options = "successful"
@@ -401,53 +418,50 @@ $result.general_log.set_writeable_status = "successful"
 
 # Check volumes and partitions
 [string]$PartNumber = $disk.NumberOfPartitions
-# Collect partitions
-try {
-    $Fpartition = Get-Partition
-} catch {
-    $result.general_log.check_volumes_partitions = "failed"
-    if ($SetOnline) {
-        try {
-            Set-OperationalStatus -Disk $disk -Deactivate
-        } catch {
-            $OPStatusFailed = $true
-        } finally {
-            if (-not $OPStatusFailed) {
-                $result.general_log.set_operational_status = "successful"
-                $result.change_log.operational_status = "Disk set online and now offline again"
-                $result.changed = $true
-            } else {
-                $result.general_log.set_operational_status = "failed"
-                $result.change_log.operational_status = "Disk failed to set offline again"
-            }
-        }
-    } else {
-        $result.change_log.operational_status = "Disk was online already and need not to be set offline"  
-    }
-    if ($SetWriteable) {
-        try {
-            Set-DiskWriteable -Disk $disk -Deactivate
-        } catch {
-            $ROStatusFailed = $true
-        } finally {
-            if (-not $ROStatusFailed) {
-                $result.general_log.set_writeable_status = "successful"
-                $result.change_log.writeable_status = "Disk set writeable and now read-only again"
-                $result.changed = $true
-            } else {
-                $result.general_log.set_writeable_status = "failed"
-                $result.change_log.writeable_status = "Disk failed to set read-only again"
-            }
-        }
-    } else {
-        $result.change_log.writeable_status = "Disk was writeable already and need not to be set read-only"  
-    }
-    Fail-Json -obj $result -message "General error while searching for partitions on the target: $($_.Exception.Message)"
-}
 # Verify partitons and volumes
 if ($PartNumber -ge 1) {
-    $Spartition = $Fpartition | Where-Object {
-        $_.DiskNumber -eq $disk.Number
+    # Collect partitions
+    try {
+        $Fpartition = Get-Partition -DiskNumber $disk.Number
+    } catch {
+        $result.general_log.check_volumes_partitions = "failed"
+        if ($SetOnline) {
+            try {
+                Set-OperationalStatus -Disk $disk -Deactivate
+            } catch {
+                $OPStatusFailed = $true
+            } finally {
+                if (-not $OPStatusFailed) {
+                    $result.general_log.set_operational_status = "successful"
+                    $result.change_log.operational_status = "Disk set online and now offline again"
+                    $result.changed = $true
+                } else {
+                    $result.general_log.set_operational_status = "failed"
+                    $result.change_log.operational_status = "Disk failed to set offline again"
+                }
+            }
+        } else {
+            $result.change_log.operational_status = "Disk was online already and need not to be set offline"  
+        }
+        if ($SetWriteable) {
+            try {
+                Set-DiskWriteable -Disk $disk -Deactivate
+            } catch {
+                $ROStatusFailed = $true
+            } finally {
+                if (-not $ROStatusFailed) {
+                    $result.general_log.set_writeable_status = "successful"
+                    $result.change_log.writeable_status = "Disk set writeable and now read-only again"
+                    $result.changed = $true
+                } else {
+                    $result.general_log.set_writeable_status = "failed"
+                    $result.change_log.writeable_status = "Disk failed to set read-only again"
+                }
+            }
+        } else {
+            $result.change_log.writeable_status = "Disk was writeable already and need not to be set read-only"  
+        }
+        Fail-Json -obj $result -message "General error while searching for partitions on the selected disk: $($_.Exception.Message)"
     }
     # Collect volumes
     try {
@@ -586,96 +600,194 @@ if ($PartNumber -ge 1) {
 $result.general_log.check_volumes_partitions = "successful"
 
 # Check set parameters
-[char]$DriveLetter = [convert]::ToChar($DriveLetter)
 # Check drive letter
-if ($Fpartition.DriveLetter -notcontains $DriveLetter) {
-    $result.parameters.drive_letter_set = "$DriveLetter"
-    $result.parameters.drive_letter_used = "no"
+if ($DriveLetter -is [char]) {
+    # Use defined drive letter
+    try {
+        $CheckLetter = Get-ChildItem Function:[$DriveLetter]: | Foreach-Object {
+            Test-Path $_
+        }
+    } catch {
+        $result.general_log.check_parameters = "failed"
+        $result.parameters.drive_letter_set = "$DriveLetter"
+        $result.parameters.drive_letter_used = "unchecked"
+        if ($SetOnline) {
+            try {
+                Set-OperationalStatus -Disk $disk -Deactivate
+            } catch {
+                $OPStatusFailed = $true
+            } finally {
+                if (-not $OPStatusFailed) {
+                    $result.general_log.set_operational_status = "successful"
+                    $result.change_log.operational_status = "Disk set online and now offline again"
+                    $result.changed = $true
+                } else {
+                    $result.general_log.set_operational_status = "failed"
+                    $result.change_log.operational_status = "Disk failed to set offline again"
+                }
+            }
+        } else {
+            $result.change_log.operational_status = "Disk was online already and need not to be set offline"  
+        }
+        if ($SetWriteable) {
+            try {
+                Set-DiskWriteable -Disk $disk -Deactivate
+            } catch {
+                $ROStatusFailed = $true
+            } finally {
+                if (-not $ROStatusFailed) {
+                    $result.general_log.set_writeable_status = "successful"
+                    $result.change_log.writeable_status = "Disk set writeable and now read-only again"
+                    $result.changed = $true
+                } else {
+                    $result.general_log.set_writeable_status = "failed"
+                    $result.change_log.writeable_status = "Disk failed to set read-only again"
+                }
+            }
+        } else {
+            $result.change_log.writeable_status = "Disk was writeable already and need not to be set read-only"  
+        }
+        Fail-Json -obj $result -message "Check if drive_letter value is used already on another partition on the target failed"
+    }
+    if (!$CheckLetter) {
+        $result.parameters.drive_letter_set = "$DriveLetter"
+        $result.parameters.drive_letter_used = "no"
+    } else {
+        $result.general_log.check_parameters = "failed"
+        $result.parameters.drive_letter_set = "$DriveLetter"
+        $result.parameters.drive_letter_used = "yes"
+        if ($SetOnline) {
+            try {
+                Set-OperationalStatus -Disk $disk -Deactivate
+            } catch {
+                $OPStatusFailed = $true
+            } finally {
+                if (-not $OPStatusFailed) {
+                    $result.general_log.set_operational_status = "successful"
+                    $result.change_log.operational_status = "Disk set online and now offline again"
+                    $result.changed = $true
+                } else {
+                    $result.general_log.set_operational_status = "failed"
+                    $result.change_log.operational_status = "Disk failed to set offline again"
+                }
+            }
+        } else {
+            $result.change_log.operational_status = "Disk was online already and need not to be set offline"  
+        }
+        if ($SetWriteable) {
+            try {
+                Set-DiskWriteable -Disk $disk -Deactivate
+            } catch {
+                $ROStatusFailed = $true
+            } finally {
+                if (-not $ROStatusFailed) {
+                    $result.general_log.set_writeable_status = "successful"
+                    $result.change_log.writeable_status = "Disk set writeable and now read-only again"
+                    $result.changed = $true
+                } else {
+                    $result.general_log.set_writeable_status = "failed"
+                    $result.change_log.writeable_status = "Disk failed to set read-only again"
+                }
+            }
+        } else {
+            $result.change_log.writeable_status = "Disk was writeable already and need not to be set read-only"  
+        }
+        Fail-Json -obj $result -message "The drive_letter $DriveLetter is set on another partition on this target already which is not allowed"
+    }
 } else {
-    $result.general_log.check_parameters = "failed"
-    $result.parameters.drive_letter_set = "$DriveLetter"
-    $result.parameters.drive_letter_used = "yes"
-    if ($SetOnline) {
-        try {
-            Set-OperationalStatus -Disk $disk -Deactivate
-        } catch {
-            $OPStatusFailed = $true
-        } finally {
-            if (-not $OPStatusFailed) {
-                $result.general_log.set_operational_status = "successful"
-                $result.change_log.operational_status = "Disk set online and now offline again"
-                $result.changed = $true
-            } else {
-                $result.general_log.set_operational_status = "failed"
-                $result.change_log.operational_status = "Disk failed to set offline again"
+    # Use random drive letter
+    try {
+        $DriveLetter = Get-ChildItem Function:[a-z]: -name | Where-Object {
+            !(Test-Path $_)
+        } | Get-Random
+    } catch {
+        $result.general_log.check_parameters = "failed"
+        $result.parameters.drive_letter_set = "not_available"
+        $result.parameters.drive_letter_used = "no"
+        if ($SetOnline) {
+            try {
+                Set-OperationalStatus -Disk $disk -Deactivate
+            } catch {
+                $OPStatusFailed = $true
+            } finally {
+                if (-not $OPStatusFailed) {
+                    $result.general_log.set_operational_status = "successful"
+                    $result.change_log.operational_status = "Disk set online and now offline again"
+                    $result.changed = $true
+                } else {
+                    $result.general_log.set_operational_status = "failed"
+                    $result.change_log.operational_status = "Disk failed to set offline again"
+                }
             }
+        } else {
+            $result.change_log.operational_status = "Disk was online already and need not to be set offline"  
         }
-    } else {
-        $result.change_log.operational_status = "Disk was online already and need not to be set offline"  
-    }
-    if ($SetWriteable) {
-        try {
-            Set-DiskWriteable -Disk $disk -Deactivate
-        } catch {
-            $ROStatusFailed = $true
-        } finally {
-            if (-not $ROStatusFailed) {
-                $result.general_log.set_writeable_status = "successful"
-                $result.change_log.writeable_status = "Disk set writeable and now read-only again"
-                $result.changed = $true
-            } else {
-                $result.general_log.set_writeable_status = "failed"
-                $result.change_log.writeable_status = "Disk failed to set read-only again"
+        if ($SetWriteable) {
+            try {
+                Set-DiskWriteable -Disk $disk -Deactivate
+            } catch {
+                $ROStatusFailed = $true
+            } finally {
+                if (-not $ROStatusFailed) {
+                    $result.general_log.set_writeable_status = "successful"
+                    $result.change_log.writeable_status = "Disk set writeable and now read-only again"
+                    $result.changed = $true
+                } else {
+                    $result.general_log.set_writeable_status = "failed"
+                    $result.change_log.writeable_status = "Disk failed to set read-only again"
+                }
             }
+        } else {
+            $result.change_log.writeable_status = "Disk was writeable already and need not to be set read-only"  
         }
-    } else {
-        $result.change_log.writeable_status = "Disk was writeable already and need not to be set read-only"  
+        Fail-Json -obj $result -message "The check to get free drive letters on the target failed"
     }
-    Fail-Json -obj $result -message "Option drive_letter with value $DriveLetter is set on another partition on this client already which is not allowed"
-}
-# Check forbidden drive letter
-if ($DriveLetter -ne "C" -and $DriveLetter -ne "D") {
-    $result.parameters.forbidden_drive_letter_set = "no"
-} else {
-    $result.general_log.check_parameters = "failed"
-    $result.parameters.forbidden_drive_letter_set = "yes"
-    if ($SetOnline) {
-        try {
-            Set-OperationalStatus -Disk $disk -Deactivate
-        } catch {
-            $OPStatusFailed = $true
-        } finally {
-            if (-not $OPStatusFailed) {
-                $result.general_log.set_operational_status = "successful"
-                $result.change_log.operational_status = "Disk set online and now offline again"
-                $result.changed = $true
-            } else {
-                $result.general_log.set_operational_status = "failed"
-                $result.change_log.operational_status = "Disk failed to set offline again"
+    if ($DriveLetter) {
+        $DriveLetter = $DriveLetter.TrimEnd(":").ToLower()
+        $result.parameters.drive_letter_set = "$DriveLetter"
+        $result.parameters.drive_letter_used = "no"
+    } else {
+        $result.general_log.check_parameters = "failed"
+        $result.parameters.drive_letter_set = "no_free_drive_letter_available"
+        $result.parameters.drive_letter_used = "yes"
+        if ($SetOnline) {
+            try {
+                Set-OperationalStatus -Disk $disk -Deactivate
+            } catch {
+                $OPStatusFailed = $true
+            } finally {
+                if (-not $OPStatusFailed) {
+                    $result.general_log.set_operational_status = "successful"
+                    $result.change_log.operational_status = "Disk set online and now offline again"
+                    $result.changed = $true
+                } else {
+                    $result.general_log.set_operational_status = "failed"
+                    $result.change_log.operational_status = "Disk failed to set offline again"
+                }
             }
+        } else {
+            $result.change_log.operational_status = "Disk was online already and need not to be set offline"  
         }
-    } else {
-        $result.change_log.operational_status = "Disk was online already and need not to be set offline"  
-    }
-    if ($SetWriteable) {
-        try {
-            Set-DiskWriteable -Disk $disk -Deactivate
-        } catch {
-            $ROStatusFailed = $true
-        } finally {
-            if (-not $ROStatusFailed) {
-                $result.general_log.set_writeable_status = "successful"
-                $result.change_log.writeable_status = "Disk set writeable and now read-only again"
-                $result.changed = $true
-            } else {
-                $result.general_log.set_writeable_status = "failed"
-                $result.change_log.writeable_status = "Disk failed to set read-only again"
+        if ($SetWriteable) {
+            try {
+                Set-DiskWriteable -Disk $disk -Deactivate
+            } catch {
+                $ROStatusFailed = $true
+            } finally {
+                if (-not $ROStatusFailed) {
+                    $result.general_log.set_writeable_status = "successful"
+                    $result.change_log.writeable_status = "Disk set writeable and now read-only again"
+                    $result.changed = $true
+                } else {
+                    $result.general_log.set_writeable_status = "failed"
+                    $result.change_log.writeable_status = "Disk failed to set read-only again"
+                }
             }
+        } else {
+            $result.change_log.writeable_status = "Disk was writeable already and need not to be set read-only"  
         }
-    } else {
-        $result.change_log.writeable_status = "Disk was writeable already and need not to be set read-only"  
+        Fail-Json -obj $result -message "No free drive_letter left on the target"
     }
-    Fail-Json -obj $result -message "Option drive_letter with value $DriveLetter contains protected letters C or D"
 }
 # Check file system
 if ($FileSystem -eq "ntfs") {
