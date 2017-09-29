@@ -235,7 +235,7 @@ def compile_folder_path_for_object(vobj):
     thisobj = vobj
     while hasattr(thisobj, 'parent'):
         thisobj = thisobj.parent
-        if thisobj.name == 'Datacenters':
+        if thisobj._moId == 'group-d1':
             break
         if isinstance(thisobj, vim.Folder):
             paths.append(thisobj.name)
