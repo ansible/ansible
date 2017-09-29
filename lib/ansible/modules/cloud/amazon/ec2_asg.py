@@ -957,10 +957,11 @@ def create_autoscaling_group(connection, module):
             min_size = as_group['MinSize']
         if max_size is None:
             max_size = as_group['MaxSize']
-        if desired_capacity is None and as_group['DesiredCapacity'] is None:
-            desired_capacity = min_size
-        elif desired_capacity is None:
-            desired_capacity = as_group['DesiredCapacity']
+        if desired_capacity is None:
+            if as_group['DesiredCapacity'] is None:
+                desired_capacity = min_size
+            else:
+                desired_capacity = as_group['DesiredCapacity']
         launch_config_name = launch_config_name or as_group['LaunchConfigurationName']
 
         launch_configs = describe_launch_configurations(connection, launch_config_name)
@@ -1116,10 +1117,11 @@ def replace(connection, module):
         min_size = as_group['MinSize']
     if max_size is None:
         max_size = as_group['MaxSize']
-    if desired_capacity is None and as_group['DesiredCapacity'] is None:
-        desired_capacity = min_size
-    elif desired_capacity is None:
-        desired_capacity = as_group['DesiredCapacity']
+    if desired_capacity is None:
+        if as_group['DesiredCapacity'] is None:
+            desired_capacity = min_size
+        else:
+            desired_capacity = as_group['DesiredCapacity']
     # set temporary settings and wait for them to be reached
     # This should get overwritten if the number of instances left is less than the batch size.
 
