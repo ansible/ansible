@@ -127,7 +127,7 @@ try:
 except ImportError:
     HAS_BOTO3 = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
 
 
@@ -184,13 +184,13 @@ def main():
     argument_spec.update(
         dict(
             app_name=dict(aliases=['name'], type='str', required=False),
-            description=dict(type='str', required=False),
+            description=dict(),
             state=dict(choices=['present', 'absent', 'list'], default='present'),
             terminate_by_force=dict(type='bool', default=False, required=False)
         )
     )
 
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+    module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')
