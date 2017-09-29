@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 # (c) 2017, Will Weber
 #
@@ -155,23 +155,22 @@ def call(legacy, all_linodes, token):
                 token))
             response = conn.getresponse()
             lin_dict = json.loads(response.read())
-            ansible_vars_dict['_meta']['hostvars'] = {
-                elem['LABEL']: {
+            ansible_vars_dict['_meta']['hostvars'] = dict(
+                (elem['LABEL'], dict(
                     "public_ip": ipitem['IPADDRESS'],
                     "ansible_host": ipitem['IPADDRESS'],
                     "ansible_ssh_host": ipitem['IPADDRESS'],
                     "linode_id": ipitem["LINODEID"],
                     "status": _linode_status(elem["STATUS"]),
                     "distro": elem["DISTRIBUTIONVENDOR"],
-                    "datacenter": _datacenter_lookup(elem["DATACENTERID"]),
-                }
+                    "datacenter": _datacenter_lookup(elem["DATACENTERID"])))
                 for elem in lin_dict["DATA"] for ipitem in ip_dict["DATA"]
                 # filter linodes by those running or when all_linodes is true
                 # return only unique ones.
                 if ipitem["LINODEID"] == elem["LINODEID"] and
                 (_linode_status(elem["STATUS"]) == "Running") or
                 ipitem["LINODEID"] == elem["LINODEID"] and all_linodes
-            }
+            )
         ansible_vars_dict[""] = list(
             ansible_vars_dict['_meta']['hostvars'].keys())
         return ansible_vars_dict
