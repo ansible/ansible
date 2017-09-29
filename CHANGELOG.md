@@ -19,6 +19,7 @@ Ansible Changes By Release
   * Fix crypttab module for bytes<=>text string mismatch ( https://github.com/ansible/ansible/pull/30457 )
   * Fix lxc_container module combining bytes with text ( https://github.com/ansible/ansible/pull/30572 )
   * Fix map doesn't return a list on python3 in ec2_snapshot_facts module (https://github.com/ansible/ansible/pull/30606)
+  * Fix uri (and other url retrieving) modules when used with a proxy. (https://github.com/ansible/ansible/issues/31109)
 * Fix for win_file to respect check mode when deleting directories
 * Fix for Ansible.ModuleUtils.Legacy.psm1 to return list params correctly
 * Fix for a proper logout in the module ovirt_vms
