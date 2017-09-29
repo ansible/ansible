@@ -64,6 +64,7 @@ Ansible Changes By Release
 * Fix os_image when the id parameter is not set in the task. ( https://github.com/ansible/ansible/pull/29147 )
 * Fix for the winrm connection to use proper task vars
 * removed typo from dig lookup docs
+* Updated win_chocolatey example to be clearer around what should be used with become
 
 
 <a id="2.4"></a>
