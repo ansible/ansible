@@ -339,7 +339,7 @@ class Nxapi:
                 item['command'] = str(item['command']).split('|')[0]
                 item['output'] = 'json'
 
-            if all((output == 'json', item['output'] == 'text')) or all((output == 'text', item['output'] == 'json')):
+            if output != item['output']:
                 responses.extend(_send(queue, output))
                 queue = list()
 

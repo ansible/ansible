@@ -85,10 +85,9 @@
 - name: teardown
   nxos_config:
     lines:
-      - no ip lookup source-interface
+      - no ip name-server 1.1.1.1
+      - no ip name-server 2.2.2.2
     match: none
     provider: "{{ cli }}"
-  ignore_errors: yes
-  # FIXME Copied from iosxr, not sure what we need here
 
 - debug: msg="END cli/set_name_servers.yaml"

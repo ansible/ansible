@@ -295,7 +295,6 @@ lib/ansible/modules/network/nxos/nxos_ping.py
 lib/ansible/modules/network/nxos/nxos_smu.py
 lib/ansible/modules/network/nxos/nxos_snapshot.py
 lib/ansible/modules/network/nxos/nxos_static_route.py
-lib/ansible/modules/network/nxos/nxos_system.py
 lib/ansible/modules/network/nxos/nxos_udld.py
 lib/ansible/modules/network/nxos/nxos_udld_interface.py
 lib/ansible/modules/network/nxos/nxos_user.py
