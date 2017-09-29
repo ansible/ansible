@@ -158,7 +158,7 @@ def get_snmp_traps(group, module):
                 if key != 'Generic':
                     resource[key].append(mapped_trap)
         except (KeyError, AttributeError):
-            return resource   
+            return resource
     except AttributeError:
         return resource
 
