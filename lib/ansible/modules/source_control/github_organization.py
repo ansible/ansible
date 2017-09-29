@@ -125,6 +125,8 @@ EXAMPLES = '''
 import base64
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils.basic import AnsibleModule
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 
 def _build_api_url(base_url, path):
