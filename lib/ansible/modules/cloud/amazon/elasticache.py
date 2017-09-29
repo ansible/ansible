@@ -235,8 +235,8 @@ class ElastiCacheManager(object):
                 self.changed = True
         else:
             tags = boto3_tag_list_to_ansible_dict(self.conn.list_tags_for_resource(ResourceName=self.get_arn())['TagList'])
-            if tags:
-                self.conn.remove_tags_from_resource(ResourceName=self.get_arn(), TagKeys=tags.keys())
+            if tags and self.purge_tags:
+                self.conn.remove_tags_from_resource(ResourceName = self.get_arn(), TagKeys = list(tags.keys()))
                 self.changed = True
 
     def ensure_absent(self):
