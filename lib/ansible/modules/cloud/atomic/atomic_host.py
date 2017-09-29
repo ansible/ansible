@@ -7,43 +7,40 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
 module: atomic_host
 short_description: Manage the atomic host platform
 description:
-    - Manage the atomic host platform
-    - Rebooting of Atomic host platform should be done outside this module
+    - Manage the atomic host platform.
+    - Rebooting of Atomic host platform should be done outside this module.
 version_added: "2.2"
-author: "Saravanan KR @krsacme"
+author:
+- Saravanan KR (@krsacme)
 notes:
-    - Host should be an atomic platform (verified by existence of '/run/ostree-booted' file)
+    - Host should be an atomic platform (verified by existence of '/run/ostree-booted' file).
 requirements:
   - atomic
-  - "python >= 2.6"
+  - python >= 2.6
 options:
     revision:
         description:
           - The version number of the atomic host to be deployed. Providing C(latest) will upgrade to the latest available version.
-        required: false
         default: latest
-        aliases: ["version"]
+        aliases: [ version ]
 '''
 
 EXAMPLES = '''
-
-# Upgrade the atomic host platform to the latest version (atomic host upgrade)
-- atomic_host:
+- name: Upgrade the atomic host platform to the latest version (atomic host upgrade)
+  atomic_host:
     revision: latest
 
-# Deploy a specific revision as the atomic host (atomic host deploy 23.130)
-- atomic_host:
+- name: Deploy a specific revision as the atomic host (atomic host deploy 23.130)
+  atomic_host:
     revision: 23.130
 '''
 
@@ -89,9 +86,9 @@ def core(module):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            revision=dict(default='latest', required=False, aliases=["version"]),
-            ),
-        )
+            revision=dict(type='str', default='latest', aliases=["version"]),
+        ),
+    )
 
     # Verify that the platform is atomic host
     if not os.path.exists("/run/ostree-booted"):
