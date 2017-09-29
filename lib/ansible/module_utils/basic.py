@@ -1696,7 +1696,7 @@ class AnsibleModule(object):
                     if count == 0:
                         missing.append(check)
             if len(missing) and len(missing) >= max_missing_count:
-                msg = "%s is %s but %s of the following are missing: %s" % (key, val, ', '.join(missing))
+                msg = "%s is %s but %s of the following are missing: %s" % (key, val, term, ', '.join(missing))
                 if self._options_context:
                     msg += " found in %s" % " -> ".join(self._options_context)
                 self.fail_json(msg=msg)
