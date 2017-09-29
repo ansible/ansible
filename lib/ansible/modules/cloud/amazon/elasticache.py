@@ -100,7 +100,7 @@ options:
       - Set instance tags
     required: false
     default: none
-    version_added: "2.4"
+    version_added: "2.5"
   purge_tags:
     description:
       - If yes, existing tags will be purged from the resource to match exactly what is defined by I(tags) parameter. If the I(tags) parameter is not set then
@@ -108,7 +108,7 @@ options:
     required: false
     default: yes
     choices: [ 'yes', 'no' ]
-    version_added: "2.4"
+    version_added: "2.5"
 
 extends_documentation_fragment:
     - aws
