@@ -17,8 +17,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from collections import OrderedDict
+
 from ansible.errors import AnsibleError
-from ansible.utils.vars import combine_vars
 
 
 class Group:
@@ -30,8 +31,7 @@ class Group:
 
         self.depth = 0
         self.name = name
-        self.hosts = []
-        self._hosts = set()
+        self.hosts = OrderedDict()
         self.vars = {}
         self.child_groups = []
         self.parent_groups = []
@@ -55,8 +55,6 @@ class Group:
         for parent in self.parent_groups:
             parent_groups.append(parent.serialize())
 
-        self._hosts = None
-
         result = dict(
             name=self.name,
             vars=self.vars.copy(),
@@ -72,9 +70,7 @@ class Group:
         self.name = data.get('name')
         self.vars = data.get('vars', dict())
         self.depth = data.get('depth', 0)
-        self.hosts = data.get('hosts', {})
-
-        self._hosts = set(self.hosts)
+        self.hosts = data.get('hosts', OrderedDict())
 
         parent_groups = data.get('parent_groups', [])
         for parent_data in parent_groups:
@@ -119,17 +115,15 @@ class Group:
             raise AnsibleError("The group named '%s' has a recursive dependency loop." % self.name)
 
     def add_host(self, host):
-        if host.name not in self._hosts:
-            self.hosts.append(host)
-            self._hosts.add(host.name)
+        if host.name not in self.hosts:
+            self.hosts[host.name] = host
             host.add_group(self)
             self.clear_hosts_cache()
 
     def remove_host(self, host):
 
-        if host.name in self._hosts:
-            self.hosts.remove(host)
-            self._hosts.remove(host.name)
+        if host.name in self.hosts:
+            del self.hosts[host.name]
             host.remove_group(self)
             self.clear_hosts_cache()
 
@@ -167,9 +161,10 @@ class Group:
         for mine in self.hosts:
             if mine not in seen:
                 seen[mine] = 1
-                if self.name == 'all' and mine.implicit:
+                host = self.hosts[mine]
+                if self.name == 'all' and host.implicit:
                     continue
-                hosts.append(mine)
+                hosts.append(host)
         return hosts
 
     def get_vars(self):
