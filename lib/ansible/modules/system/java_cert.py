@@ -149,27 +149,22 @@ def import_cert_url(module, executable, url, port, keystore_path, keystore_pass,
     https_proxy = os.getenv("https_proxy")
     no_proxy = os.getenv("no_proxy")
 
-    bypass_proxy = False
-    if no_proxy is not None:
-
-        for pattern in no_proxy.split(','):
-            # If the pattern starts with a dot, match all hostnames that end
-            # with the given pattern. Otherwise, the hostname has to match
-            # the pattern exactly to be excluded from proxy access.
-            if re.match('^\..+', pattern):
-                if re.match(r'.+' + pattern.replace('.', '\.') + '$', url):
-                    bypass_proxy = True
-                    break
-            elif url == pattern:
-                bypass_proxy = True
-                break
-
-    if https_proxy is None or bypass_proxy:
-        fetch_cmd = ("%s -printcert -rfc -sslserver %s:%d")%(executable, url, port)
-    else:
+    proxy_opts = ''
+    if https_proxy is not None:
         (proxy_host, proxy_port) = https_proxy.split(':')
+        proxy_opts = ("-J-Dhttps.proxyHost=%s -J-Dhttps.proxyPort=%s")%(proxy_host, proxy_port)
 
-        fetch_cmd = ("%s -printcert -rfc -J-Dhttps.proxyHost=%s -J-Dhttps.proxyPort=%s -sslserver %s:%d")%(executable, proxy_host, proxy_port, url, port)
+        if no_proxy is not None:
+            # For Java's nonProxyHosts property, items are separated by '|',
+            # and patterns have to start with "*".
+            non_proxy_hosts = no_proxy.replace(',', '|')
+            non_proxy_hosts = re.sub(r'(^|\|)\.', r'\1*.', non_proxy_hosts)
+
+            # The property name is http.nonProxyHosts, there is no
+            # separate setting for HTTPS.
+            proxy_opts += (" -J-Dhttp.nonProxyHosts='%s'")%(non_proxy_hosts)
+
+    fetch_cmd = ("%s -printcert -rfc -sslserver %s %s:%d")%(executable, proxy_opts, url, port)
 
     import_cmd = ("%s -importcert -noprompt -keystore '%s' "
                   "-storepass '%s' -alias '%s'")%(executable, keystore_path,
