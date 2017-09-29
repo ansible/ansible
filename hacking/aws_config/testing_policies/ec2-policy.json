@@ -25,6 +25,7 @@
                 "ec2:DeleteNatGateway",
                 "ec2:DeleteSnapshot",
                 "ec2:DeleteSubnet",
+                "ec2:DeleteTags",
                 "ec2:DeleteVpc",
                 "ec2:DeregisterImage",
                 "ec2:Describe*",
