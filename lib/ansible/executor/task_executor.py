@@ -474,18 +474,11 @@ class TaskExecutor:
                 not getattr(self._connection, 'connected', False) or
                 self._play_context.remote_addr != self._connection._play_context.remote_addr):
             self._connection = self._get_connection(variables=variables, templar=templar)
-            hostvars = variables.get('hostvars', None)
             # only template the vars if the connection actually implements set_host_overrides
             # NB: this is expensive, and should be removed once connection-specific vars are being handled by play_context
             sho_impl = getattr(type(self._connection), 'set_host_overrides', None)
-            if hostvars and sho_impl and sho_impl != ConnectionBase.set_host_overrides:
-                try:
-                    target_hostvars = hostvars.get(self._host.name)
-                except:
-                    # FIXME: this should catch the j2undefined error here
-                    #        specifically instead of all exceptions
-                    target_hostvars = dict()
-                self._connection.set_host_overrides(host=self._host, hostvars=target_hostvars)
+            if sho_impl and sho_impl != ConnectionBase.set_host_overrides:
+                self._connection.set_host_overrides(self._host, variables, templar)
         else:
             # if connection is reused, its _play_context is no longer valid and needs
             # to be replaced with the one templated above, in case other data changed
