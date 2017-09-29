@@ -1557,7 +1557,7 @@ YAML_FILENAME_EXTENSIONS:
   env:
     - name: ANSIBLE_YAML_FILENAME_EXT
   ini:
-    - section: yaml_valid_extensions
-      key: defaults
+    - section: defaults
+      key: yaml_valid_extensions
   type: list
 ...

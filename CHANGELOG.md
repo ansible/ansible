@@ -66,6 +66,7 @@ Ansible Changes By Release
 * removed typo from dig lookup docs
 * Updated win_chocolatey example to be clearer around what should be used with become
 * Fix for copy module when permissions are changed but the file contents are not ( https://github.com/ansible/ansible/issues/30556 )
+* corrected YAML_FILENAME_EXTENSIONS ini setter as key/section were swapped
 
 
 <a id="2.4"></a>
