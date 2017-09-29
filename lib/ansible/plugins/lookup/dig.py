@@ -11,7 +11,7 @@ DOCUMENTATION = """
     short_description: query DNS using the dnspython library
     requirements:
       - dnspython (python library, http://www.dnspython.org/)
-    description: test
+    description:
       - The dig lookup runs queries against DNS servers to retrieve DNS records for a specific name (FQDN - fully qualified domain name).
         It is possible to lookup any DNS record in this manner.
       - There is a couple of different syntaxes that can be used to specify what record should be retrieved, and for which name.

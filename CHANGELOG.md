@@ -62,6 +62,7 @@ Ansible Changes By Release
 * Fix bugs caused by lack of collector ordering like service_mgr being incorrect (https://github.com/ansible/ansible/issues/30753)
 * Fix os_image when the id parameter is not set in the task. ( https://github.com/ansible/ansible/pull/29147 )
 * Fix for the winrm connection to use proper task vars
+* removed typo from dig lookup docs
 
 
 <a id="2.4"></a>
