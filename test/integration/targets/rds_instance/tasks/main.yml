@@ -20,6 +20,42 @@
         aws_secret_key: '{{aws_secret_key}}'
         security_token: '{{security_token}}'
 
+    - name: fail to create rds instance in check mode
+      rds_instance:
+        id:  "ansible-test-dont-create-youll-break-the-tests"
+        wait_timeout: 1200
+        wait: yes
+        size: 5
+        db_instance_class: db.t2.micro
+        engine: postgres
+        master_username: hello
+        master_user_password: "world123$$"
+        region: '{{ec2_region}}'
+        aws_access_key: '{{aws_access_key}}'
+        aws_secret_key: '{{aws_secret_key}}'
+        security_token: '{{security_token}}'
+      check_mode: yes
+      register: rds_instance_check_mode
+
+    - name: check check mode said changed
+      assert:
+        that:
+         - rds_instance_check_mode|changed
+
+    - name: ensure non-existent instance is still not present
+      rds_instance:
+        id: "ansible-test-dont-create-youll-break-the-tests"
+        state: absent
+        region: '{{ec2_region}}'
+        aws_access_key: '{{aws_access_key}}'
+        aws_secret_key: '{{aws_secret_key}}'
+        security_token: '{{security_token}}'
+      register: rds_non_existant_recheck
+
+    - name: check check mode said changed
+      assert:
+        that: not rds_non_existant_recheck|changed
+
     - name: ensure non-existent snapshot is not present
       rds_snapshot:
         db_snapshot_identifier: "ansible-test-dont-create-youll-break-the-tests"
@@ -44,6 +80,10 @@
         aws_secret_key: '{{aws_secret_key}}'
         security_token: '{{security_token}}'
       register: rds_instance
+
+    - name: check modify instance changed
+      assert:
+        that: rds_instance|changed
 
     - name: show instance details
       debug:

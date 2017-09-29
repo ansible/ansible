@@ -495,6 +495,8 @@ def create_db_instance(module, conn):
     changed = False
     instance = get_db_instance(conn, instance_id)
     if instance is None:
+        if module.check_mode:
+            module.exit_json(changed=True, create_db_instance_params=params)
         try:
             response = conn.create_db_instance(**params)
             instance = get_db_instance(conn, instance_id)
@@ -529,6 +531,8 @@ def replicate_db_instance(module, conn):
 
         changed = False
     else:
+        if module.check_mode:
+            module.exit_json(changed=True, create_db_instance_read_replica_params=params)
         try:
             response = conn.create_db_instance_read_replica(**params)
             instance = get_db_instance(conn, instance_id)
@@ -566,6 +570,8 @@ def delete_db_instance(module, conn):
         del(module.params['snapshot'])
     else:
         params["SkipFinalSnapshot"] = True
+    if module.check_mode:
+        module.exit_json(changed=True, delete_db_instance_params=params)
     try:
         response = conn.delete_db_instance(**params)
         instance = result
@@ -589,7 +595,7 @@ def delete_db_instance(module, conn):
     return dict(changed=True, response=response, instance=instance)
 
 
-def update_rds_tags(module, client, db_instance=None):
+def update_rds_tags(module, conn, db_instance=None):
     main_logger.log(30, "update_rds_tags called")
     # FIXME
     # If we get no db_instance we should go collect one; not needed
@@ -601,7 +607,7 @@ def update_rds_tags(module, client, db_instance=None):
     db_instance_arn = db_instance['DBInstanceArn']
 
     # from here on code matches closely code in ec2_group so that later we can merge together
-    current_tags = boto3_tag_list_to_ansible_dict(client.list_tags_for_resource(ResourceName=db_instance_arn)['TagList'])
+    current_tags = boto3_tag_list_to_ansible_dict(conn.list_tags_for_resource(ResourceName=db_instance_arn)['TagList'])
     if current_tags is None:
         current_tags = []
     tags = module.params.get('tags')
@@ -612,16 +618,20 @@ def update_rds_tags(module, client, db_instance=None):
 
     tags_need_modify, tags_to_delete = compare_aws_tags(current_tags, tags, purge_tags)
     if tags_to_delete:
+        if module.check_mode:
+            module.exit_json(changed=True, remove_tags_from_resource_params=tags_to_delete)
         try:
-            client.remove_tags_from_resource(ResourceName=db_instance_arn, TagKeys=tags_to_delete)
+            conn.remove_tags_from_resource(ResourceName=db_instance_arn, TagKeys=tags_to_delete)
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
         changed = True
 
     # Add/update tags
     if tags_need_modify:
+        if module.check_mode:
+            module.exit_json(changed=True, add_tags_to_resource_params=tags_need_modify)
         try:
-            client.add_tags_to_resource(ResourceName=db_instance_arn, Tags=ansible_dict_to_boto3_tag_list(tags_need_modify))
+            conn.add_tags_to_resource(ResourceName=db_instance_arn, Tags=ansible_dict_to_boto3_tag_list(tags_need_modify))
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
         changed = True
@@ -793,6 +803,8 @@ def modify_db_instance(module, conn, before_instance):
         response = conn.modify_db_instance(**call_params)
         return response['DBInstance']
 
+    if module.check_mode:
+        module.exit_json(changed=True, modify_db_instance_params=call_params)
     try:
         return_instance = modify_the_instance(**call_params)
     except botocore.exceptions.ClientError as e:
@@ -878,6 +890,8 @@ def promote_db_instance(module, conn):
         module.fail_json(msg="DB Instance %s does not exist" % instance_id)
 
     if result.get('replication_source'):
+        if module.check_mode:
+            module.exit_json(changed=True, promote_read_replica_params=params)
         try:
             response = conn.promote_read_replica(**params)
             instance = response['DBInstance']
@@ -901,6 +915,8 @@ def reboot_db_instance(module, conn):
     params = select_parameters_meta(module, conn, 'RebootDBInstance')
     instance_id = module.params.get('db_instance_identifier')
     instance = get_db_instance(conn, instance_id)
+    if module.check_mode:
+        module.exit_json(changed=True, reboot_db_instance_params=params)
     try:
         response = conn.reboot_db_instance(**params)
         instance = response['DBInstance']
@@ -922,6 +938,8 @@ def restore_db_instance(module, conn):
     changed = False
     instance = get_db_instance(conn, instance_id)
     if not instance:
+        if module.check_mode:
+            module.exit_json(changed=True, restore_db_instance_from_db_snapshot_params=params)
         try:
             response = conn.restore_db_instance_from_db_snapshot(**params)
             instance = response['DBInstance']
@@ -946,7 +964,7 @@ def validate_parameters(module):
         module.fail_json(msg="if specified, old_db_instance_identifier must be different from db_instance_identifier")
 
 
-def select_parameters_meta(module, client, operation):
+def select_parameters_meta(module, conn, operation):
     """
     given an AWS API operation name, select those parameters that can be used for it
     """
@@ -958,7 +976,7 @@ def select_parameters_meta(module, client, operation):
 
     params = {}
 
-    operations_model = client._service_model.operation_model(operation)
+    operations_model = conn._service_model.operation_model(operation)
     relevant_parameters = operations_model.input_shape.members.keys()
     for k in relevant_parameters:
         try:
@@ -1083,6 +1101,7 @@ def setup_module_object():
         required_if=required_if,
         mutually_exclusive=[['old_instance_id', 'source_db_instance_identifier',
                              'db_snapshot_identifier']],
+        supports_check_mode=True,
     )
     return module
 
@@ -1132,6 +1151,8 @@ def ensure_rds_state(module, conn):
     changed = False
     instance = get_instance_to_work_on(module, conn)
 
+    # FIXME : restart instance if it's stopped.
+
     if instance is None and module.params.get('source_db_instance_identifier'):
         replicate_return_dict = replicate_db_instance(module, conn)
         instance = replicate_return_dict['instance']
@@ -1160,10 +1181,11 @@ def ensure_rds_state(module, conn):
 
 def run_task(module, conn):
     """run all actual changes to the rds"""
+    if module.params['state'] == 'stopped':
+        module.fail_json(msg="FIXME: stopped state is not yet implemented")
     if module.params['state'] == 'absent':
         return delete_db_instance(module, conn)
     if module.params['state'] in ['rebooted', 'restarted']:
-        # FIXME: check the parameters match??
         return reboot_db_instance(module, conn)
     if module.params['state'] == 'present':
         return_dict = ensure_rds_state(module, conn)

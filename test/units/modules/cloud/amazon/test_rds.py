@@ -320,6 +320,57 @@ def test_modify_should_return_false_in_changed_if_param_same():
     assert not mod_return["changed"], "modify return changed when should be false"
 
 
+class ExitCalledGood(Exception):
+    pass
+
+
+class FailCalledBad(Exception):
+    pass
+
+
+def test_modify_should_do_no_changes_if_check_mode_set():
+    params = {
+        "port": 342,
+        "force_password_update": True,
+        "db_instance_identifier": "fakedb-too",  # should not yet exist
+        "old_db_instance_identifier": "fakedb",  # should be currently existing
+        "allocated_storage": 5,
+        "storage_type": "gp",
+        "apply_immediately": True,
+        "master_username": None
+    }
+
+    rds_client_double = MagicMock()
+    rds_instance_entry_mock = rds_client_double.describe_db_instances.return_value.__getitem__.return_value.__getitem__
+
+    instance = describe_rds_return['DBInstances'][0]
+    new_instance = describe_rds_new_return['DBInstances'][0]
+    rds_instance_entry_mock.return_value = new_instance
+
+    mod_db_fn = rds_client_double.modify_db_instance
+    mod_db_fn.return_value = modify_rds_return
+
+    module_double = MagicMock(ansible_module_template)
+    module_double.params = params
+    module_double.exit_json.side_effect = ExitCalledGood
+    module_double.check_mode = True
+
+    passed = False
+    try:
+        with patch.object(time, 'sleep', sleeper_double):
+            rds_i.modify_db_instance(module_double, rds_client_double, instance)
+    except ExitCalledGood:
+        passed = True
+
+    assert passed, "failed to call exit_json function"
+
+    print("rds calls:\n" + str(rds_client_double.mock_calls))
+    print("module calls:\n" + str(module_double.mock_calls))
+
+    mod_db_fn.assert_not_called(), "modify called during check mode"
+    module_double.fail_json.assert_not_called()
+
+
 # def test_rds_instance_should_be_careful():
 
 #     #rds_instance should rename databases to the name given
