@@ -243,7 +243,9 @@ def rename_organization(module, auth_header):
     existing_org = _get_organization(module, base_url, auth_header, organization_name)
     target_org = _get_organization(module, base_url, auth_header, new_name)
 
-    if existing_org is not None:
+    if existing_org is None:
+        module.fail_json(msg="Organization to rename '%s' does not exist, cannot rename." % organization_name)
+    else:
         if target_org is None:
             url = _build_api_url(base_url, 'admin/organizations/{0}'.format(organization_name))
             headers = {'Authorization': auth_header}
