@@ -171,7 +171,11 @@ def check_app(ebs, app, module):
 
 
 def filter_empty(**kwargs):
-    return {k: v for k, v in iter(kwargs.items()) if v}
+    retval = {}
+    for k, v in kwargs.items():
+        if v:
+            retval[k] = v
+    return retval
 
 
 def main():
@@ -246,7 +250,7 @@ def main():
                 try:
                     ebs.delete_application(ApplicationName=app_name)
                 except Exception as e:
-                    module.fail_json(e, msg="Cannot terminate app with running environments")
+                    fail_json_aws(e, msg="Cannot terminate app with running environments")
 
             result = dict(changed=True, app=app)
 
