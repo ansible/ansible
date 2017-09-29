@@ -139,7 +139,7 @@ from ansible.module_utils import ec2 as ec2_utils
 
 HAS_BOTO3 = False
 try:
-    import boto3
+    import boto3  # noqa
     HAS_BOTO3 = True
 except ImportError:
     pass
@@ -151,6 +151,60 @@ try:
     import json
 except ImportError:
     import simplejson as json
+
+DEFAULTS = {
+    'all_elasticache_clusters': 'False',
+    'all_elasticache_nodes': 'False',
+    'all_elasticache_replication_groups': 'False',
+    'all_instances': 'False',
+    'all_rds_instances': 'False',
+    'aws_access_key_id': None,
+    'aws_secret_access_key': None,
+    'aws_security_token': None,
+    'boto_profile': None,
+    'cache_max_age': '300',
+    'cache_path': '~/.ansible/tmp',
+    'destination_variable': 'public_dns_name',
+    'elasticache': 'True',
+    'eucalyptus': 'False',
+    'eucalyptus_host': None,
+    'expand_csv_tags': 'False',
+    'group_by_ami_id': 'True',
+    'group_by_availability_zone': 'True',
+    'group_by_aws_account': 'False',
+    'group_by_elasticache_cluster': 'True',
+    'group_by_elasticache_engine': 'True',
+    'group_by_elasticache_parameter_group': 'True',
+    'group_by_elasticache_replication_group': 'True',
+    'group_by_instance_id': 'True',
+    'group_by_instance_state': 'False',
+    'group_by_instance_type': 'True',
+    'group_by_key_pair': 'True',
+    'group_by_platform': 'True',
+    'group_by_rds_engine': 'True',
+    'group_by_rds_parameter_group': 'True',
+    'group_by_region': 'True',
+    'group_by_route53_names': 'True',
+    'group_by_security_group': 'True',
+    'group_by_tag_keys': 'True',
+    'group_by_tag_none': 'True',
+    'group_by_vpc_id': 'True',
+    'hostname_variable': None,
+    'iam_role': None,
+    'include_rds_clusters': 'False',
+    'nested_groups': 'False',
+    'pattern_exclude': None,
+    'pattern_include': None,
+    'rds': 'False',
+    'regions': 'all',
+    'regions_exclude': 'us-gov-west-1, cn-north-1',
+    'replace_dash_in_groups': 'True',
+    'route53': 'False',
+    'route53_excluded_zones': '',
+    'route53_hostnames': None,
+    'stack_filters': 'False',
+    'vpc_destination_variable': 'ip_address'
+}
 
 
 class Ec2Inventory(object):
@@ -232,24 +286,32 @@ class Ec2Inventory(object):
         }
 
         if six.PY3:
-            config = configparser.ConfigParser()
+            config = configparser.ConfigParser(DEFAULTS)
         else:
-            config = configparser.SafeConfigParser()
+            config = configparser.SafeConfigParser(DEFAULTS)
         ec2_ini_path = os.environ.get('EC2_INI_PATH', defaults['ec2']['ini_path'])
         ec2_ini_path = os.path.expanduser(os.path.expandvars(ec2_ini_path))
 
         if not os.path.isfile(ec2_ini_path):
             ec2_ini_path = os.path.expanduser(defaults['ec2']['ini_fallback'])
 
-        config.read(ec2_ini_path)
+        if os.path.isfile(ec2_ini_path):
+            config.read(ec2_ini_path)
+
+        # Add empty sections if they don't exist
+        try:
+            config.add_section('ec2')
+        except configparser.DuplicateSectionError:
+            pass
+
+        try:
+            config.add_section('credentials')
+        except configparser.DuplicateSectionError:
+            pass
 
         # is eucalyptus?
-        self.eucalyptus_host = None
-        self.eucalyptus = False
-        if config.has_option('ec2', 'eucalyptus'):
-            self.eucalyptus = config.getboolean('ec2', 'eucalyptus')
-        if self.eucalyptus and config.has_option('ec2', 'eucalyptus_host'):
-            self.eucalyptus_host = config.get('ec2', 'eucalyptus_host')
+        self.eucalyptus = config.getboolean('ec2', 'eucalyptus')
+        self.eucalyptus_host = config.get('ec2', 'eucalyptus_host')
 
         # Regions
         self.regions = []
@@ -259,6 +321,7 @@ class Ec2Inventory(object):
                 self.regions.append(boto.connect_euca(host=self.eucalyptus_host).region.name, **self.credentials)
             else:
                 configRegions_exclude = config.get('ec2', 'regions_exclude')
+
                 for regionInfo in ec2.regions():
                     if regionInfo.name not in configRegions_exclude:
                         self.regions.append(regionInfo.name)
@@ -273,11 +336,7 @@ class Ec2Inventory(object):
         # Destination addresses
         self.destination_variable = config.get('ec2', 'destination_variable')
         self.vpc_destination_variable = config.get('ec2', 'vpc_destination_variable')
-
-        if config.has_option('ec2', 'hostname_variable'):
-            self.hostname_variable = config.get('ec2', 'hostname_variable')
-        else:
-            self.hostname_variable = None
+        self.hostname_variable = config.get('ec2', 'hostname_variable')
 
         if config.has_option('ec2', 'destination_format') and \
            config.has_option('ec2', 'destination_format_tags'):
@@ -289,36 +348,22 @@ class Ec2Inventory(object):
 
         # Route53
         self.route53_enabled = config.getboolean('ec2', 'route53')
-        if config.has_option('ec2', 'route53_hostnames'):
-            self.route53_hostnames = config.get('ec2', 'route53_hostnames')
-        else:
-            self.route53_hostnames = None
+        self.route53_hostnames = config.get('ec2', 'route53_hostnames')
+
         self.route53_excluded_zones = []
-        if config.has_option('ec2', 'route53_excluded_zones'):
-            self.route53_excluded_zones.extend(
-                config.get('ec2', 'route53_excluded_zones', '').split(','))
+        self.route53_excluded_zones = [a for a in config.get('ec2', 'route53_excluded_zones').split(',') if a]
 
         # Include RDS instances?
-        self.rds_enabled = True
-        if config.has_option('ec2', 'rds'):
-            self.rds_enabled = config.getboolean('ec2', 'rds')
+        self.rds_enabled = config.get('ec2', 'rds')
 
         # Include RDS cluster instances?
-        if config.has_option('ec2', 'include_rds_clusters'):
-            self.include_rds_clusters = config.getboolean('ec2', 'include_rds_clusters')
-        else:
-            self.include_rds_clusters = False
+        self.include_rds_clusters = config.getboolean('ec2', 'include_rds_clusters')
 
         # Include ElastiCache instances?
-        self.elasticache_enabled = True
-        if config.has_option('ec2', 'elasticache'):
-            self.elasticache_enabled = config.getboolean('ec2', 'elasticache')
+        self.elasticache_enabled = config.getboolean('ec2', 'elasticache')
 
         # Return all EC2 instances?
-        if config.has_option('ec2', 'all_instances'):
-            self.all_instances = config.getboolean('ec2', 'all_instances')
-        else:
-            self.all_instances = False
+        self.all_instances = config.getboolean('ec2', 'all_instances')
 
         # Instance states to be gathered in inventory. Default is 'running'.
         # Setting 'all_instances' to 'yes' overrides this option.
@@ -343,49 +388,30 @@ class Ec2Inventory(object):
             self.ec2_instance_states = ['running']
 
         # Return all RDS instances? (if RDS is enabled)
-        if config.has_option('ec2', 'all_rds_instances') and self.rds_enabled:
-            self.all_rds_instances = config.getboolean('ec2', 'all_rds_instances')
-        else:
-            self.all_rds_instances = False
+        self.all_rds_instances = config.getboolean('ec2', 'all_rds_instances')
 
         # Return all ElastiCache replication groups? (if ElastiCache is enabled)
-        if config.has_option('ec2', 'all_elasticache_replication_groups') and self.elasticache_enabled:
-            self.all_elasticache_replication_groups = config.getboolean('ec2', 'all_elasticache_replication_groups')
-        else:
-            self.all_elasticache_replication_groups = False
+        self.all_elasticache_replication_groups = config.getboolean('ec2', 'all_elasticache_replication_groups')
 
         # Return all ElastiCache clusters? (if ElastiCache is enabled)
-        if config.has_option('ec2', 'all_elasticache_clusters') and self.elasticache_enabled:
-            self.all_elasticache_clusters = config.getboolean('ec2', 'all_elasticache_clusters')
-        else:
-            self.all_elasticache_clusters = False
+        self.all_elasticache_clusters = config.getboolean('ec2', 'all_elasticache_clusters')
 
         # Return all ElastiCache nodes? (if ElastiCache is enabled)
-        if config.has_option('ec2', 'all_elasticache_nodes') and self.elasticache_enabled:
-            self.all_elasticache_nodes = config.getboolean('ec2', 'all_elasticache_nodes')
-        else:
-            self.all_elasticache_nodes = False
+        self.all_elasticache_nodes = config.getboolean('ec2', 'all_elasticache_nodes')
 
         # boto configuration profile (prefer CLI argument then environment variables then config file)
-        self.boto_profile = self.args.boto_profile or os.environ.get('AWS_PROFILE')
-        if config.has_option('ec2', 'boto_profile') and not self.boto_profile:
-            self.boto_profile = config.get('ec2', 'boto_profile')
+        self.boto_profile = self.args.boto_profile or \
+            os.environ.get('AWS_PROFILE') or \
+            config.get('ec2', 'boto_profile')
 
         # AWS credentials (prefer environment variables)
         if not (self.boto_profile or os.environ.get('AWS_ACCESS_KEY_ID') or
                 os.environ.get('AWS_PROFILE')):
-            if config.has_option('credentials', 'aws_access_key_id'):
-                aws_access_key_id = config.get('credentials', 'aws_access_key_id')
-            else:
-                aws_access_key_id = None
-            if config.has_option('credentials', 'aws_secret_access_key'):
-                aws_secret_access_key = config.get('credentials', 'aws_secret_access_key')
-            else:
-                aws_secret_access_key = None
-            if config.has_option('credentials', 'aws_security_token'):
-                aws_security_token = config.get('credentials', 'aws_security_token')
-            else:
-                aws_security_token = None
+
+            aws_access_key_id = config.get('credentials', 'aws_access_key_id')
+            aws_secret_access_key = config.get('credentials', 'aws_secret_access_key')
+            aws_security_token = config.get('credentials', 'aws_security_token')
+
             if aws_access_key_id:
                 self.credentials = {
                     'aws_access_key_id': aws_access_key_id,
@@ -409,86 +435,39 @@ class Ec2Inventory(object):
         self.cache_path_index = os.path.join(cache_dir, "%s.index" % cache_name)
         self.cache_max_age = config.getint('ec2', 'cache_max_age')
 
-        if config.has_option('ec2', 'expand_csv_tags'):
-            self.expand_csv_tags = config.getboolean('ec2', 'expand_csv_tags')
-        else:
-            self.expand_csv_tags = False
+        self.expand_csv_tags = config.getboolean('ec2', 'expand_csv_tags')
 
         # Configure nested groups instead of flat namespace.
-        if config.has_option('ec2', 'nested_groups'):
-            self.nested_groups = config.getboolean('ec2', 'nested_groups')
-        else:
-            self.nested_groups = False
+        self.nested_groups = config.getboolean('ec2', 'nested_groups')
 
         # Replace dash or not in group names
-        if config.has_option('ec2', 'replace_dash_in_groups'):
-            self.replace_dash_in_groups = config.getboolean('ec2', 'replace_dash_in_groups')
-        else:
-            self.replace_dash_in_groups = True
+        self.replace_dash_in_groups = config.getboolean('ec2', 'replace_dash_in_groups')
 
         # IAM role to assume for connection
-        if config.has_option('ec2', 'iam_role'):
-            self.iam_role = config.get('ec2', 'iam_role')
-        else:
-            self.iam_role = None
+        self.iam_role = config.get('ec2', 'iam_role')
 
         # Configure which groups should be created.
-        group_by_options = [
-            'group_by_instance_id',
-            'group_by_region',
-            'group_by_availability_zone',
-            'group_by_ami_id',
-            'group_by_instance_type',
-            'group_by_instance_state',
-            'group_by_platform',
-            'group_by_key_pair',
-            'group_by_vpc_id',
-            'group_by_security_group',
-            'group_by_tag_keys',
-            'group_by_tag_none',
-            'group_by_route53_names',
-            'group_by_rds_engine',
-            'group_by_rds_parameter_group',
-            'group_by_elasticache_engine',
-            'group_by_elasticache_cluster',
-            'group_by_elasticache_parameter_group',
-            'group_by_elasticache_replication_group',
-            'group_by_aws_account',
-        ]
+
+        group_by_options = [a for a in DEFAULTS if a.startswith('group_by')]
         for option in group_by_options:
-            if config.has_option('ec2', option):
-                setattr(self, option, config.getboolean('ec2', option))
-            else:
-                setattr(self, option, True)
+            setattr(self, option, config.getboolean('ec2', option))
 
         # Do we need to just include hosts that match a pattern?
-        try:
-            pattern_include = config.get('ec2', 'pattern_include')
-            if pattern_include and len(pattern_include) > 0:
-                self.pattern_include = re.compile(pattern_include)
-            else:
-                self.pattern_include = None
-        except configparser.NoOptionError:
-            self.pattern_include = None
+        self.pattern_include = config.get('ec2', 'pattern_include')
+        if self.pattern_include:
+            self.pattern_include = re.compile(self.pattern_include)
 
         # Do we need to exclude hosts that match a pattern?
-        try:
-            pattern_exclude = config.get('ec2', 'pattern_exclude')
-            if pattern_exclude and len(pattern_exclude) > 0:
-                self.pattern_exclude = re.compile(pattern_exclude)
-            else:
-                self.pattern_exclude = None
-        except configparser.NoOptionError:
-            self.pattern_exclude = None
+        self.pattern_exclude = config.get('ec2', 'pattern_exclude')
+        if self.pattern_exclude:
+            self.pattern_exclude = re.compile(self.pattern_exclude)
 
         # Do we want to stack multiple filters?
-        if config.has_option('ec2', 'stack_filters'):
-            self.stack_filters = config.getboolean('ec2', 'stack_filters')
-        else:
-            self.stack_filters = False
+        self.stack_filters = config.getboolean('ec2', 'stack_filters')
 
         # Instance filters (see boto and EC2 API docs). Ignore invalid filters.
         self.ec2_instance_filters = []
+
         if config.has_option('ec2', 'instance_filters'):
             filters = config.get('ec2', 'instance_filters')
 
