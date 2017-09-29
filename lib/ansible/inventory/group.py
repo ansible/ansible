@@ -70,7 +70,7 @@ class Group:
         self.name = data.get('name')
         self.vars = data.get('vars', dict())
         self.depth = data.get('depth', 0)
-        self.hosts = data.get('hosts', {})
+        self.hosts = data.get('hosts', OrderedDict())
 
         parent_groups = data.get('parent_groups', [])
         for parent_data in parent_groups:
