@@ -31,16 +31,27 @@ short_description: A Windows disk management module
 description:
    - With the module you can select a disk on the target and manage it (e.g. initializing, partitioning, formatting).
    - To select the disk and to manage it you have several options which are all described in the documentation.
-   - If more than one disk with the exact same specifications was found on the target, the first found disk will be selected.
-   - The module detects any existing volume and/or partition on the selected disk and will end the module in this case.
-   - If parameter file_system is set to "refs" the parameter allocation_unit_size will be automatically adjusted to "64" (KB).
-   - The module recognizes whether the selected switches are suitable with the selected parameters.
-   - If they do not fit with the selected parameters, the switches will be automatically deactivated.
-   - The modul will set the disk to online and writeable (read-only eq. false) if it's not the state of the disk already.
-   - If the disk was initilaized already the modul will try to convert the partition style of the disk to the selected partition style.
-   - The module will stop and start the service "ShellHWService" again in order to avoid disk management GUI messages.
-   - If the module fails with an error and the operational status was set from "Offline" to "Online" before, the module will set the disk to
-   - operational status "Offline" again.
+   - The values of the following options will be checked and converted if needed in the beginning of the module
+   - size, allocation_unit_size, number, drive_letter.
+   - If one of the values can not be converted the module will be canceled.
+   - In order to find only one disk you can use the number option for the search of the disk.
+   - If no number option value was defined and multiple disks were found on the target with the defined option values
+   - the module will select the first disk found.
+   - The module detects any existing volume and/or partition on the selected disk and will cancel the module in this case.
+   - If you want to set a specific drive letter to the selected disk you can use the option drive_letter.
+   - If this drive letter is already in use on the target the module will be canceled.
+   - If no drive_letter option value was defined the module will use a free drive letter on the target randomly.
+   - If no free drive lettter is left on the target the module will be canceled.
+   - If option file_system is set to "refs" the option allocation_unit_size will be automatically adjusted to "64" (KB).
+   - The module recognizes whether the selected switches (large_frs etc.) are suitable with the selected options.
+   - If they do not fit with the selected options, the switches will be automatically deactivated.
+   - If the disk is not yet initialized the module will initialize the disk (set partition style, online and writeable).
+   - If the disk is initialized already the script will try to set the disk to "online" and "writeable" (read-only eq. false)
+   - if it's not the state of the disk already.
+   - Further in this case it will convert the partition style of the disk to the selected partition style if needed.
+   - The script will stop and start the service "ShellHWService" again in order to avoid disk management GUI messages.
+   - If the script fails with an error and the operational status was set from "offline" to "online" before, the script will set the disk to
+   - operational status "offline" again.
 requirements:
     - Windows 8.1 / Windows 2012R2 (NT 6.3) or newer
 author:
@@ -78,10 +89,7 @@ options:
   number:
       description:
         - Number of the disk which will be selected
-        - If a number is defined the module will try to select the disk with this defined number
-        - If no number is defined the module will select the first disk found on the target
-        - If multiple disks were found with defined option values (because no number option value was defined)
-        - the module will select the first disk found on the target
+        - If a number is defined the module will try to select the disk with this given number
       required: false
   partition_style_set:
       description:
@@ -93,9 +101,9 @@ options:
         - mbr
   drive_letter:
       description:
-        - Drive letter which will be set for the partition on selected disk (protected letters are C and D)
+        - Drive letter which will be set for the partition on selected disk
+        - If a drive letter is defined the module will try to set the partition on selected disk with this given drive letter
       required: false
-      default: e
   file_system:
       description:
         - File system which will be set on selected disk
@@ -151,7 +159,6 @@ EXAMPLES = r'''
     number: 1
     # set_disk_by
     partition_style_set: mbr
-    drive_letter: e
     file_system: ntfs
     label: database_disk
     allocation_unit_size: 4
@@ -317,7 +324,7 @@ change_log:
               - This change log does not changes anything on the target client only in module and script environment
               - Convertion will be only take place if one oft the integer options is of type string
               - The convert of the option variables will also help to identify wrong option values
-              - For instance non numeric string was used for the size option the convertion does fail and cancel the module
+              - For instance non numeric string was used for the size option the convertion does fail and end the module
             returned: always
             type: complex
             contains:
@@ -382,17 +389,12 @@ parameters:
             type: string
             sample: "64gb"
         drive_letter_set:
-            description: Shows the chosen drive letter
+            description: Shows the chosen drive letter or the stauts if nothing could be chosen (not_available, no_free_drive_letter_available)
             returned: success or failed
             type: string
             sample: "r"
         drive_letter_used:
             description: Documents whether the chosen drive letter is in use on the computer already
-            returned: success or failed
-            type: string
-            sample: "no"
-        forbidden_drive_letter_set:
-            description: Documents whether the chosen drive letter is forbidden letter C or D
             returned: success or failed
             type: string
             sample: "no"
