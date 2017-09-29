@@ -213,13 +213,13 @@ class ElastiCacheManager(object):
     def get_arn(self):
         region, ec2_url, aws_connect_params = get_aws_connection_info(self.module, boto3=True)
         if region:
-            client = boto3_conn(self.module, conn_type='client', resource='rds',
+            client = boto3_conn(self.module, conn_type='client', resource='sts',
                                 region=region, endpoint=ec2_url, **aws_connect_params)
         else:
             self.module.fail_json(msg="region must be specified")
         instance_counts = {}
-        response = client.describe_db_instances()
-        user_id = response['DBInstances'][0]['DBInstanceArn'].split(':')[4]
+        response = client.get_caller_identity()
+        user_id = response['Account']
         arn = "arn:aws:elasticache:" + region + ":" + user_id + ":cluster:" + self.name
         return arn
 
