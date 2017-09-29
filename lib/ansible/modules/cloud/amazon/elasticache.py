@@ -225,13 +225,11 @@ class ElastiCacheManager(object):
 
     def compare_and_update_tags(self):
         if self.tags:
-            self.tags = ansible_dict_to_boto3_tag_list(self.tags)
             tags = boto3_tag_list_to_ansible_dict(self.conn.list_tags_for_resource(ResourceName=self.get_arn())['TagList'])
-            add, remove = compare_aws_tags(tags, boto3_tag_list_to_ansible_dict(self.tags), self.purge_tags)
+            add, remove = compare_aws_tags(tags, self.tags, self.purge_tags)
             if add:
                 self.conn.add_tags_to_resource(ResourceName=self.get_arn(), Tags=ansible_dict_to_boto3_tag_list(add))
                 self.changed = True
-
             if remove:
                 self.conn.remove_tags_from_resource(ResourceName=self.get_arn(), TagKeys=remove)
                 self.changed = True
@@ -281,7 +279,7 @@ class ElastiCacheManager(object):
         if self.cache_port is not None:
             kwargs['Port'] = self.cache_port
         if self.tags is not None:
-            kwargs['Tags'] = self.tags
+            kwargs['Tags'] = ansible_dict_to_boto3_tag_list(self.tags)
 
         try:
             self.conn.create_cache_cluster(**kwargs)
