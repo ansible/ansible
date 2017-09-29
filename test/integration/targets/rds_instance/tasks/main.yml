@@ -81,7 +81,7 @@
         security_token: '{{security_token}}'
       register: rds_instance
 
-    - name: check modify instance changed
+    - name: check that create instance worked
       assert:
         that: rds_instance|changed
 
@@ -96,6 +96,14 @@
         aws_access_key: '{{aws_access_key}}'
         aws_secret_key: '{{aws_secret_key}}'
         security_token: '{{security_token}}'
+      register: rds_instance_facts
+
+    - name: check facts match expected instance
+      assert:
+        that:
+         - rds_instance_facts.db_instances[0].db_instance_class == "db.t2.micro"
+         - rds_instance_facts.db_instances[0].engine == "postgres"
+         - rds_instance_facts.db_instances[0].allocated_storage == 5
 
     - name: snapshot instance
       rds_snapshot:
@@ -153,7 +161,29 @@
       assert:
         that: rds_instance_modify|changed
 
-    - name: don't modify rds instance
+    - name: fail to modify rds instance in check mode
+      rds_instance:
+        id: "{{ rds_instance_name }}"
+        wait: yes
+        size: 15
+        db_instance_class: db.t2.micro
+        engine: postgres
+        master_username: hello
+        port: 9998
+        apply_immediately: yes
+        region: '{{ec2_region}}'
+        aws_access_key: '{{aws_access_key}}'
+        aws_secret_key: '{{aws_secret_key}}'
+        security_token: '{{security_token}}'
+      check_mode: yes
+      register: rds_instance_modify_check_mode
+
+    - name: check check mode said changed
+      assert:
+        that:
+         - rds_instance_modify_check_mode|changed
+
+    - name: "give same parameters as before so don't modify rds instance"
       rds_instance:
         id: "{{ rds_instance_name }}"
         wait: yes
