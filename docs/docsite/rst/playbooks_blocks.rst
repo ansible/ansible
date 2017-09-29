@@ -32,7 +32,7 @@ for all the enclosed tasks.
 
 .. versionadded:: 2.3
 
-    The ``name:`` keyword for ``blocks:`` was added in Ansible 2.3.
+    The ``name:`` keyword for ``block:`` was added in Ansible 2.3.
 
 .. _block_error_handling:
 
