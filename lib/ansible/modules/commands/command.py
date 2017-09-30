@@ -1,8 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>, and others
-# (c) 2016, Toshio Kuratomi <tkuratomi@ansible.com>
+# Copyright: (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>, and others
+# Copyright: (c) 2016, Toshio Kuratomi <tkuratomi@ansible.com>
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -93,17 +93,17 @@ delta:
   description: cmd end time - cmd start time
   returned: always
   type: string
-  sample: '0:00:00.001529'
+  sample: 0:00:00.001529
 end:
   description: cmd end time
   returned: always
   type: string
-  sample: '2017-09-29 22:03:48.084657'
+  sample: 2017-09-29 22:03:48.084657
 start:
   description: cmd start time
   returned: always
   type: string
-  sample: '2017-09-29 22:03:48.083128'
+  sample: 2017-09-29 22:03:48.083128
 '''
 
 import datetime
