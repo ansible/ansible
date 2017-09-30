@@ -65,11 +65,12 @@ Ansible Changes By Release
 * Fix for the winrm connection to use proper task vars
 * removed typo from dig lookup docs
 * Updated win_chocolatey example to be clearer around what should be used with become
+* Fix for copy module when permissions are changed but the file contents are not ( https://github.com/ansible/ansible/issues/30556 )
 
 
 <a id="2.4"></a>
 
-## 2.4 "Dancing Days" - ACTIVE DEVELOPMENT
+## 2.4 "Dancing Days" - 2017-09-19
 
 ### Major Changes
 
