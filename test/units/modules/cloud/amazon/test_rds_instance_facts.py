@@ -32,6 +32,7 @@ from ansible.module_utils._text import to_bytes
 import pytest
 from dateutil.tz import tzutc
 import datetime
+import copy
 boto3 = pytest.importorskip("boto3")
 boto = pytest.importorskip("boto")
 
@@ -100,6 +101,11 @@ describe_rds_return = {
                         'content-type': 'text/xml',
                         'date': 'Tue, 15 Aug 2018 11:09:12 GMT'}}}
 
+describe_rds_double_return = copy.deepcopy(describe_rds_return)
+
+describe_rds_double_return[u'DBInstances'].append(copy.deepcopy(describe_rds_return)[u'DBInstances'][0])
+describe_rds_double_return[u'DBInstances'][1]['DBInstanceIdentifier'] = 'fakedb-too'
+
 # def test_module_parses_args_right()
 
 basic._ANSIBLE_ARGS = to_bytes(b'{ "ANSIBLE_MODULE_ARGS": { "id":"fred"} }')
@@ -110,12 +116,33 @@ ansible_module_template = AnsibleModule(argument_spec=rds_i_f.argument_spec)
 
 def test_instance_facts_should_return_facts():
     params = {
-        "db_instance_identifier": "fakedb-too",
+        "db_instance_identifier": "fakedb",
     }
 
     rds_client_double = MagicMock()
     rds_instance_entry_mock = rds_client_double.describe_db_instances.return_value.__getitem__.return_value.__getitem__
     rds_instance_entry_mock.return_value = describe_rds_return['DBInstances'][0]
+
+    module_double = MagicMock(ansible_module_template)
+    module_double.params = params
+#    params_mock.__getitem__.side_effect = [old_params, params]
+
+    facts_return = rds_i_f.instance_facts(module_double, rds_client_double)
+
+    print("rds calls:\n" + str(rds_client_double.mock_calls))
+    print("module calls:\n" + str(module_double.mock_calls))
+
+    rds_client_double.describe_db_instances.assert_called_once()
+    assert not facts_return["changed"], "facts module returned changed!!"
+
+
+def test_instance_facts_should_filter_extra_matching_facts():
+    params = {
+        "db_instance_identifier": "fakedb",
+    }
+
+    rds_client_double = MagicMock()
+    rds_client_double.describe_db_instances.return_value = describe_rds_return
 
     module_double = MagicMock(ansible_module_template)
     module_double.params = params

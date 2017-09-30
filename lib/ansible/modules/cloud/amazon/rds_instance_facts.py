@@ -104,6 +104,9 @@ def instance_facts(module, conn):
             results = []
         module.fail_json_aws(e, "trying to get instance information")
 
+    if instance_name:
+        results = [x for x in results if x['DBInstanceIdentifier'] == instance_name]
+
     # FIXME: Get tags for each response
     # for instance in results:
     #     instance['tags'] = boto3_tag_list_to_ansible_dict(
