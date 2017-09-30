@@ -49,6 +49,13 @@ EXAMPLES = '''
     groups: just_created
     foo: 42
 
+# add a host to multiple groups
+- add_host:
+    hostname: "{{ new_ip }}"
+    groups:
+      - group1
+      - group2
+
 # add a host with a non-standard port local to your machines
 - add_host:
     name: "{{ new_ip }}:{{ new_port }}"
