@@ -506,7 +506,9 @@ class StrategyBase:
             results = self._process_pending_results(iterator)
             ret_results.extend(results)
             if self._pending_results > 0:
-                time.sleep(C.DEFAULT_INTERNAL_POLL_INTERVAL)
+                #time.sleep(C.DEFAULT_INTERNAL_POLL_INTERVAL)
+                self._tqm._res_ready.wait()
+                self._tqm._res_ready.clear()
 
         display.debug("no more pending results, returning what we have")
 

@@ -129,6 +129,7 @@ class TaskQueueManager:
 
         self._res_queue = deque()
         self._res_queue_lock = threading.Lock()
+        self._res_ready = threading.Event()
 
     def _put_in_queue(self, data, queue, lock):
         lock.acquire()
@@ -154,6 +155,7 @@ class TaskQueueManager:
 
     def put_result(self, data):
         self._put_in_queue(data, self._res_queue, self._res_queue_lock)
+        self._res_ready.set()
 
     def get_result(self):
         return self._pop_off_queue(self._res_queue, self._res_queue_lock)
