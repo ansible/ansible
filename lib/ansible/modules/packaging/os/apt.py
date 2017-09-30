@@ -722,7 +722,13 @@ def cleanup(m, purge=False, force=False, operation=None,
 
 def upgrade(m, mode="yes", force=False, default_release=None,
             use_apt_get=False,
-            dpkg_options=expand_dpkg_options(DPKG_OPTIONS)):
+            dpkg_options=expand_dpkg_options(DPKG_OPTIONS), autoremove=None):
+
+    if autoremove:
+        autoremove = '--auto-remove'
+    else:
+        autoremove = ''
+
     if m.check_mode:
         check_arg = '--simulate'
     else:
@@ -741,7 +747,7 @@ def upgrade(m, mode="yes", force=False, default_release=None,
     else:
         if use_apt_get:
             apt_cmd = APT_GET_CMD
-            upgrade_command = "upgrade --with-new-pkgs --autoremove"
+            upgrade_command = "upgrade --with-new-pkgs %s" % (autoremove)
         else:
             # aptitude safe-upgrade # mode=yes # default
             apt_cmd = APTITUDE_CMD
@@ -975,7 +981,7 @@ def main():
         force_yes = p['force']
 
         if p['upgrade']:
-            upgrade(module, p['upgrade'], force_yes, p['default_release'], use_apt_get, dpkg_options)
+            upgrade(module, p['upgrade'], force_yes, p['default_release'], use_apt_get, dpkg_options, autoremove)
 
         if p['deb']:
             if p['state'] != 'present':
@@ -995,7 +1001,7 @@ def main():
         if latest and all_installed:
             if packages:
                 module.fail_json(msg='unable to install additional packages when ugrading all installed packages')
-            upgrade(module, 'yes', force_yes, p['default_release'], use_apt_get, dpkg_options)
+            upgrade(module, 'yes', force_yes, p['default_release'], use_apt_get, dpkg_options, autoremove)
 
         if packages:
             for package in packages:

@@ -1957,7 +1957,14 @@ class ContainerManager(DockerBaseClass):
 
             if not self.parameters.detach:
                 status = self.client.wait(container_id)
-                output = self.client.logs(container_id, stdout=True, stderr=True, stream=False, timestamps=False)
+                config = self.client.inspect_container(container_id)
+                logging_driver = config['HostConfig']['LogConfig']['Type']
+
+                if logging_driver == 'json-file' or logging_driver == 'journald':
+                    output = self.client.logs(container_id, stdout=True, stderr=True, stream=False, timestamps=False)
+                else:
+                    output = "Result logged using `%s` driver" % logging_driver
+
                 if status != 0:
                     self.fail(output, status=status)
                 if self.parameters.cleanup:

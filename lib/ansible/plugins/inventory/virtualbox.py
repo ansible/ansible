@@ -173,7 +173,7 @@ class InventoryModule(BaseInventoryPlugin):
 
         if not config_data or config_data.get('plugin') != self.NAME:
             # this is not my config file
-            return False
+            raise AnsibleParserError("Incorrect plugin name in file: %s" % config_data.get('plugin', 'none found'))
 
         source_data = None
         if cache and cache_key in inventory.cache:

@@ -109,15 +109,18 @@ class ActionModule(ActionBase):
         if self.source_dir:
             self._set_dir_defaults()
             self._set_root_dir()
-            if path.exists(self.source_dir):
+            if not path.exists(self.source_dir):
+                failed = True
+                err_msg = ('{0} directory does not exist'.format(self.source_dir))
+            elif not path.isdir(self.source_dir):
+                failed = True
+                err_msg = ('{0} is not a directory'.format(self.source_dir))
+            else:
                 for root_dir, filenames in self._traverse_dir_depth():
                     failed, err_msg, updated_results = (self._load_files_in_dir(root_dir, filenames))
                     if failed:
                         break
                     results.update(updated_results)
-            else:
-                failed = True
-                err_msg = ('{0} directory does not exist'.format(self.source_dir))
         else:
             try:
                 self.source_file = self._find_needle('vars', self.source_file)

@@ -801,15 +801,8 @@ Function Run($payload) {
         # FUTURE: decode CLIXML stderr output (and other streams?)
 
         $rc = [Ansible.Shell.NativeProcessUtil]::GetProcessExitCode($pi.hProcess)
-
-        If ($rc -eq 0) {
-            $str_stdout
-            $str_stderr
-        }
-        Else {
-            Throw "failed, rc was $rc, stderr was $str_stderr, stdout was $str_stdout"
-        }
-
+        [Console]::Out.WriteLine($str_stdout.Trim())
+        [Console]::Error.WriteLine($str_stderr.Trim())
     }
     Catch {
         $excep = $_
@@ -818,7 +811,7 @@ Function Run($payload) {
     Finally {
         Remove-Item $temp -ErrorAction SilentlyContinue
     }
-
+    $host.SetShouldExit($rc)
 }
 
 '''  # end become_wrapper

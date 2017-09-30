@@ -406,7 +406,10 @@ class CLI(with_metaclass(ABCMeta, object)):
 
     @staticmethod
     def unfrack_path(option, opt, value, parser):
-        setattr(parser.values, option.dest, unfrackpath(value))
+        if value != '-':
+            setattr(parser.values, option.dest, unfrackpath(value))
+        else:
+            setattr(parser.values, option.dest, value)
 
     @staticmethod
     def base_parser(usage="", output_opts=False, runas_opts=False, meta_opts=False, runtask_opts=False, vault_opts=False, module_opts=False,
@@ -612,7 +615,7 @@ class CLI(with_metaclass(ABCMeta, object)):
                     self.options.inventory = [self.options.inventory]
 
                 # Ensure full paths when needed
-                self.options.inventory = [unfrackpath(opt) if ',' not in opt else opt for opt in self.options.inventory]
+                self.options.inventory = [unfrackpath(opt, follow=False) if ',' not in opt else opt for opt in self.options.inventory]
 
             else:
                 self.options.inventory = C.DEFAULT_HOST_LIST

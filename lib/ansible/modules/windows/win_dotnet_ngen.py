@@ -45,6 +45,57 @@ options: {}
 '''
 
 EXAMPLES = r'''
-  # Run ngen tasks
+- name: run ngen tasks
   win_dotnet_ngen:
+'''
+
+RETURN = r'''
+dotnet_ngen_update_exit_code:
+  description: The exit code after running the 32-bit ngen.exe update /force
+    command.
+  returned: 32-bit ngen executable exists
+  type: int
+  sample: 0
+dotnet_ngen_update_output:
+  description: The stdout after running the 32-bit ngen.exe update /force
+    command.
+  returned: 32-bit ngen executable exists
+  type: str
+  sample: sample output
+dotnet_ngen_eqi_exit_code:
+  description: The exit code after running the 32-bit ngen.exe
+    executeQueuedItems command.
+  returned: 32-bit ngen executable exists
+  type: int
+  sample: 0
+dotnet_ngen_eqi_output:
+  description: The stdout after running the 32-bit ngen.exe executeQueuedItems
+    command.
+  returned: 32-bit ngen executable exists
+  type: str
+  sample: sample output
+dotnet_ngen64_update_exit_code:
+  description: The exit code after running the 64-bit ngen.exe update /force
+    command.
+  returned: 64-bit ngen executable exists
+  type: int
+  sample: 0
+dotnet_ngen64_update_output:
+  description: The stdout after running the 64-bit ngen.exe update /force
+    command.
+  returned: 64-bit ngen executable exists
+  type: str
+  sample: sample output
+dotnet_ngen64_eqi_exit_code:
+  description: The exit code after running the 64-bit ngen.exe
+    executeQueuedItems command.
+  returned: 64-bit ngen executable exists
+  type: int
+  sample: 0
+dotnet_ngen64_eqi_output:
+  description: The stdout after running the 64-bit ngen.exe executeQueuedItems
+    command.
+  returned: 64-bit ngen executable exists
+  type: str
+  sample: sample output
 '''

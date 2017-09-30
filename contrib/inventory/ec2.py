@@ -354,7 +354,7 @@ class Ec2Inventory(object):
         self.route53_excluded_zones = [a for a in config.get('ec2', 'route53_excluded_zones').split(',') if a]
 
         # Include RDS instances?
-        self.rds_enabled = config.get('ec2', 'rds')
+        self.rds_enabled = config.getboolean('ec2', 'rds')
 
         # Include RDS cluster instances?
         self.include_rds_clusters = config.getboolean('ec2', 'include_rds_clusters')
