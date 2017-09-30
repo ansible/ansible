@@ -23,12 +23,12 @@ DOCUMENTATION = '''
 ---
 module: aws_elasticbeanstalk_app
 
-short_description: create, update, delete and list beanstalk application
+short_description: create, update, and delete an elastic beanstalk application
 
 version_added: "2.5"
 
 description:
-    - "creates, updates, deletes beanstalk applications if app_name is provided. Can also list applications"
+    - "creates, updates, deletes beanstalk applications if app_name is provided"
 
 options:
   app_name:
@@ -44,10 +44,10 @@ options:
     default: null
   state:
     description:
-      - whether to ensure the application is present or absent, or to list existing applications
+      - whether to ensure the application is present or absent
     required: false
     default: present
-    choices: ['absent','present','list']
+    choices: ['absent','present']
   terminate_by_force:
     description:
       - when set to true, running environments will be terminated before deleting the application
@@ -71,10 +71,6 @@ EXAMPLES = '''
     app_name: Sample_App
     state: absent
 
-# List applications
-- aws_elasticbeanstalk_app:
-    state: list
-  register: app_list
 '''
 
 RETURN = '''
@@ -93,26 +89,6 @@ app:
             "1.0.1"
         ]
     }
-apps:
-    description: list of beanstalk applications
-    returned: when state == list
-    type: list
-    sample: [
-        {
-            "ApplicationName": "app1",
-            "ConfigurationTemplates": [],
-            "DateCreated": "2016-12-28T14:50:03.185000+00:00",
-            "DateUpdated": "2016-12-28T14:50:03.185000+00:00",
-            "Description": "description"
-        },
-        {
-            "ApplicationName": "app2",
-            "ConfigurationTemplates": [],
-            "DateCreated": "2016-12-28T14:50:03.185000+00:00",
-            "DateUpdated": "2016-12-28T14:50:03.185000+00:00",
-            "Description": "description"
-        }
-    ]
 output:
     description: message indicating what change will occur
     returned: in check mode
@@ -201,8 +177,7 @@ def main():
     terminate_by_force = module.params['terminate_by_force']
 
     if app_name is None:
-        if state != 'list':
-            module.fail_json(msg='Module parameter "app_name" is required if "state" is not "list"')
+        module.fail_json(msg='Module parameter "app_name" is required')
 
     result = {}
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
@@ -215,7 +190,7 @@ def main():
 
     app = describe_app(ebs, app_name)
 
-    if module.check_mode and state != 'list':
+    if module.check_mode:
         check_app(ebs, app, module)
         module.fail_json(msg='ASSERTION FAILURE: check_app() should not return control.')
 
@@ -239,7 +214,7 @@ def main():
             else:
                 result = dict(changed=False, app=app)
 
-    elif state == 'absent':
+    else:
         if app is None:
             result = dict(changed=False, output='Application not found')
         else:
@@ -254,9 +229,6 @@ def main():
 
             result = dict(changed=True, app=app)
 
-    else:
-        apps = list_apps(ebs, app_name)
-        result = dict(changed=False, apps=apps)
 
     module.exit_json(**result)
 
