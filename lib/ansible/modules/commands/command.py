@@ -104,12 +104,12 @@ end:
   description: cmd end time
   returned: always
   type: string
-  sample: 2017-09-29 22:03:48.084657
+  sample: '2017-09-29 22:03:48.084657'
 start:
   description: cmd start time
   returned: always
   type: string
-  sample: 2017-09-29 22:03:48.083128
+  sample: '2017-09-29 22:03:48.083128'
 '''
 
 import datetime
