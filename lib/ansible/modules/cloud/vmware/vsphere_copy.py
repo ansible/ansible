@@ -12,7 +12,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = '''
 ---
 module: vsphere_copy
@@ -22,6 +21,12 @@ description:
 version_added: 2.0
 author: Dag Wieers (@dagwieers) <dag@wieers.com>
 options:
+  state:
+    description:
+      - The state of the remote file on the datastore
+    default: present
+    choices: ['present', 'absent']
+    version_added: '2.5'
   host:
     description:
       - The vCenter server on which the datastore is available.
@@ -37,18 +42,19 @@ options:
   src:
     description:
       - The file to push to vCenter
-    required: true
+      - Required when C(state) is set to C(present)
+    required: false
   datacenter:
     description:
       - The datacenter on the vCenter server that holds the datastore.
     required: true
   datastore:
     description:
-      - The datastore on the vCenter server to push files to.
+      - The datastore on the vCenter server to upload/delete files to.
     required: true
   path:
     description:
-      - The file to push to the datastore on the vCenter server.
+      - The filename on the destination datastore on the vCenter server.
     required: true
   validate_certs:
     description:
@@ -61,11 +67,12 @@ options:
 notes:
   - "This module ought to be run from a system that can access vCenter directly and has the file to transfer.
     It can be the normal remote target or you can change it either by using C(transport: local) or using C(delegate_to)."
-  - Tested on vSphere 5.5
+  - Tested on vSphere 5.5, 6.0
 '''
 
 EXAMPLES = '''
-- vsphere_copy:
+- name: Copy a local file to a remote datastore (using local transport)
+  vsphere_copy:
     host: vhost
     login: vuser
     password: vpass
@@ -74,7 +81,8 @@ EXAMPLES = '''
     datastore: datastore1
     path: some/remote/file
   transport: local
-- vsphere_copy:
+- name: Copy a file from the managed node to a remote datastore
+  vsphere_copy:
     host: vhost
     login: vuser
     password: vpass
@@ -83,8 +91,18 @@ EXAMPLES = '''
     datastore: datastore2
     path: other/remote/file
   delegate_to: other_system
+- name: Delete a remote file
+  vsphere_copy:
+    host: vhost
+    login: vuser
+    password: vpass
+    state: absent
+    datacenter: DC2 Someplace
+    datastore: datastore2
+    path: other/remote/file
 '''
 
+import os
 import atexit
 import errno
 import mmap
@@ -115,18 +133,22 @@ def vmware_path(datastore, datacenter, path):
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-            host = dict(required=True, aliases=[ 'hostname' ]),
-            login = dict(required=True, aliases=[ 'username' ]),
-            password = dict(required=True, no_log=True),
-            src = dict(required=True, aliases=[ 'name' ]),
-            datacenter = dict(required=True),
-            datastore = dict(required=True),
-            dest = dict(required=True, aliases=[ 'path' ]),
-            validate_certs = dict(required=False, default=True, type='bool'),
+        argument_spec=dict(
+            state=dict(required=False, choices=['present', 'absent'], default='present'),
+            host=dict(required=True, aliases=['hostname']),
+            login=dict(required=True, aliases=['username']),
+            password=dict(required=True, no_log=True),
+            src=dict(required=False, aliases=['name']),
+            datacenter=dict(required=True),
+            datastore=dict(required=True),
+            dest=dict(required=True, aliases=['path']),
+            validate_certs=dict(required=False, default=True, type='bool'),
         ),
         # Implementing check-mode using HEAD is impossible, since size/date is not 100% reliable
         supports_check_mode = False,
+        required_if=[
+            [ 'state', 'present', [ 'src' ] ]
+            ],
     )
 
     host = module.params.get('host')
@@ -137,12 +159,21 @@ def main():
     datastore = module.params.get('datastore')
     dest = module.params.get('dest')
     validate_certs = module.params.get('validate_certs')
+    state = module.params.get('state')
 
-    fd = open(src, "rb")
-    atexit.register(fd.close)
+    if state == 'present':
+        fd = open(src, "rb")
+        atexit.register(fd.close)
 
-    data = mmap.mmap(fd.fileno(), 0, access=mmap.ACCESS_READ)
-    atexit.register(data.close)
+        if os.stat(src).st_size == 0:
+            data = ''
+        else:
+            data = mmap.mmap(fd.fileno(), 0, access=mmap.ACCESS_READ)
+            atexit.register(data.close)
+        action = 'upload'
+    elif state == 'absent':
+        action = 'delete'
+        data = ''
 
     remote_path = vmware_path(datastore, datacenter, dest)
     url = 'https://%s%s' % (host, remote_path)
@@ -153,13 +184,19 @@ def main():
     }
 
     try:
-        r = open_url(url, data=data, headers=headers, method='PUT',
-                url_username=login, url_password=password, validate_certs=validate_certs,
-                force_basic_auth=True)
+        if state == 'present':
+            r = open_url(url, data=data, headers=headers, method='PUT',
+                         url_username=login, url_password=password,
+                         validate_certs=validate_certs, force_basic_auth=True)
+        elif state == 'absent':
+            r = open_url(url, headers=headers, method='DELETE',
+                         url_username=login, url_password=password,
+                         validate_certs=validate_certs, force_basic_auth=True)
+
     except socket.error as e:
         if isinstance(e.args, tuple) and e[0] == errno.ECONNRESET:
             # VSphere resets connection if the file is in use and cannot be replaced
-            module.fail_json(msg='Failed to upload, image probably in use', status=None, errno=e[0], reason=to_native(e), url=url)
+            module.fail_json(msg='Failed to {0}, image probably in use'.format(action), status=None, errno=e[0], reason=to_native(e), url=url)
         else:
             module.fail_json(msg=str(e), status=None, errno=e[0], reason=str(e),
                              url=url, exception=traceback.format_exc())
@@ -174,16 +211,25 @@ def main():
                          reason=to_native(e), url=url, exception=traceback.format_exc())
 
     status = r.getcode()
-    if 200 <= status < 300:
-        module.exit_json(changed=True, status=status, reason=r.msg, url=url)
-    else:
-        length = r.headers.get('content-length', None)
-        if r.headers.get('transfer-encoding', '').lower() == 'chunked':
-            chunked = 1
-        else:
-            chunked = 0
 
-        module.fail_json(msg='Failed to upload', errno=None, status=status, reason=r.msg, length=length, headers=dict(r.headers), chunked=chunked, url=url)
+    # it's legal to return 404 on delete of non-existent object
+    if state == 'absent':
+        if status == 204 or status == 404:
+            module.exit_json(changed=False, status=status, reason=r.msg, url=url)
+        if 200 <= status < 300:
+            module.exit_json(changed=True, status=status, reason=r.msg, url=url)
+    elif state == 'present':
+        if 200 <= status < 300:
+            module.exit_json(changed=True, status=status, reason=r.msg, url=url)
+        else:
+            length = r.headers.get('content-length', None)
+            if r.headers.get('transfer-encoding', '').lower() == 'chunked':
+                chunked = 1
+            else:
+                chunked = 0
+
+    module.fail_json(msg='Failed to {0}'.format(action), errno=None, status=status, reason=r.msg,
+                     length=length, headers=dict(r.headers), chunked=chunked, url=url)
 
 
 if __name__ == '__main__':
