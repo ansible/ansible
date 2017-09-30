@@ -29,7 +29,7 @@ Ansible Changes By Release
 
 <a id="2.4"></a>
 
-## 2.4 "Dancing Days" - RELEASE CANDIDATE
+## 2.4 "Dancing Days" - 2017/09/18
 
 ### Major Changes
 
