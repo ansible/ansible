@@ -125,6 +125,9 @@ EXAMPLES = '''
 
 '''
 
+import re
+import time
+
 try:
     from pyVmomi import vim, vmodl
     HAS_PYVMOMI = True
@@ -137,13 +140,42 @@ from ansible.module_utils.vmware import (connect_to_api, find_cluster_by_name, f
 
 
 # https://github.com/vmware/pyvmomi-community-samples/blob/master/samples/execute_program_in_vm.py
-def execute_command(content, vm, vm_username, vm_password, program_path, args="", env=None, cwd=None):
+def execute_command(content, vm, vm_username, vm_password, program_path, args="", env=None, cwd=None, wait=False):
 
     creds = vim.vm.guest.NamePasswordAuthentication(username=vm_username, password=vm_password)
     cmdspec = vim.vm.guest.ProcessManager.ProgramSpec(arguments=args, envVariables=env, programPath=program_path, workingDirectory=cwd)
-    cmdpid = content.guestOperationsManager.processManager.StartProgramInGuest(vm=vm, auth=creds, spec=cmdspec)
 
-    return cmdpid
+    pm = content.guestOperationsManager.processManager
+    cmdpid = pm.StartProgramInGuest(vm=vm, auth=creds, spec=cmdspec)
+
+    if not wait:
+        exitcode = 0
+        msg = "Program %d is started and running in guest %r without waiting" % (cmdpid, vm.summary.guest.ipAddress)
+    elif cmdpid > 0:
+        exitcode = pm.ListProcessesInGuest(vm=vm, auth=creds, pids=[cmdpid]).pop().exitCode
+
+        # If its not a numeric result code, it says None on submit
+        while (re.match('[^0-9]+', str(exitcode))):
+            time.sleep(5)
+            exitcode = pm.ListProcessesInGuest(vm=vm, auth=creds, pids=[cmdpid]).pop().exitCode
+
+            if (exitcode == 0):
+                msg = "Program %d completed with success" % cmdpid
+                break
+            # Look for non-zero code to fail
+            elif (re.match('[1-9]+', str(exitcode))):
+                msg = "ERROR: Program %d completed with failute.\n" % cmdpid
+                msg += "  tip: Try running this on guest %r to debug.\n" % vm.summary.guest.ipAddress
+                msg += "       Or you can enable debug mode of the program\n"
+                msg += "       and redirect the output to a temporary file.\n"
+                msg += "ERROR: More info on process:\n"
+                msg += str(pm.ListProcessesInGuest(vm=vm, auth=creds, pids=[cmdpid]))
+                break
+    else:
+        exitcode = -1
+        msg = "No running program!"
+
+    return exitcode, msg
 
 
 def main():
@@ -158,7 +190,8 @@ def main():
                               vm_shell=dict(required=True, type='str'),
                               vm_shell_args=dict(default=" ", type='str'),
                               vm_shell_env=dict(default=None, type='list'),
-                              vm_shell_cwd=dict(default=None, type='str')))
+                              vm_shell_cwd=dict(default=None, type='str'),
+                              wait_for_shell_exit=dict(type='bool', default=False)))
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=False,
@@ -195,10 +228,14 @@ def main():
         if not vm:
             module.fail_json(msg='VM not found')
 
-        msg = execute_command(content, vm, p['vm_username'], p['vm_password'],
-                              p['vm_shell'], p['vm_shell_args'], p['vm_shell_env'], p['vm_shell_cwd'])
+        (exitcode, msg) = execute_command(content, vm, p['vm_username'], p['vm_password'],
+                                          p['vm_shell'], p['vm_shell_args'], p['vm_shell_env'], p['vm_shell_cwd'],
+                                          p['wait_for_shell_exit'])
 
-        module.exit_json(changed=True, uuid=vm.summary.config.uuid, msg=msg)
+        if exitcode != 0:
+            module.fail_json(changed=False, msg=msg)
+        else:
+            module.exit_json(changed=True, uuid=vm.summary.config.uuid, msg=msg)
     except vmodl.RuntimeFault as runtime_fault:
         module.fail_json(changed=False, msg=runtime_fault.msg)
     except vmodl.MethodFault as method_fault:
