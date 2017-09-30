@@ -112,6 +112,23 @@
       that:
         - result|success
 
+#   # ============================================================
+#   - name: deleting an app that has environments that exist with terminate_by_force True
+#     aws_elasticbeanstalk_app:
+#       app_name: "non_app"
+#       state: absent
+#       terminate_by_force: True
+#       aws_access_key: "{{ ec2_access_key }}"
+#       aws_secret_key: "{{ ec2_secret_key }}"
+#       security_token: "{{ security_token }}"
+#       region: "{{ aws_region }}"
+#     register: result
+#
+#   - name: assert deleteing app with running environments with terminate_by_force True
+#     assert:
+#       that:
+#         - result.changed == True
+#
   # ============================================================
   - name: delete non existent app
     aws_elasticbeanstalk_app:

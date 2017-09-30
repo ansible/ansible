@@ -23,7 +23,7 @@ DOCUMENTATION = '''
 ---
 module: aws_elasticbeanstalk_app
 
-short_description: create, update, delete and list beanstalk application
+short_description: create, update, and delete an elastic beanstalk application
 
 version_added: "2.5"
 
