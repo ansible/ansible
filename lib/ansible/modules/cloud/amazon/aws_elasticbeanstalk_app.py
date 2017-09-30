@@ -97,12 +97,6 @@ output:
 '''
 
 
-try:
-    import boto3
-    HAS_BOTO3 = True
-except ImportError:
-    HAS_BOTO3 = False
-
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
 
@@ -168,9 +162,6 @@ def main():
 
     module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
 
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
-
     app_name = module.params['app_name']
     description = module.params['description']
     state = module.params['state']
@@ -228,7 +219,6 @@ def main():
                     module.fail_json_aws(e, msg="Cannot terminate app with running environments")
 
             result = dict(changed=True, app=app)
-
 
     module.exit_json(**result)
 

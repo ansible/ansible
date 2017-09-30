@@ -63,7 +63,6 @@
       that:
         - result.changed == True
 
-# Need to have environments also created, this will depend on a aws_elasticbeanstalk_env module being available.
 #   # ============================================================
 #   - name: fail deleting an app that has environments that exist
 #     aws_elasticbeanstalk_app:
@@ -115,7 +114,6 @@
       that:
         - result.changed == False
         - 'result.output.startswith("Application not found")'
-
 
   # ============================================================
   - name: delete existing app
