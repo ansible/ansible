@@ -1,0 +1,243 @@
+# Test code for the vmware_guest_facts module.
+# (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+- name: make sure pyvmomi is installed
+  pip:
+    name: pyvmomi
+    state: latest
+
+- name: store the vcenter container ip
+  set_fact:
+    vcsim: "{{ lookup('env', 'vcenter_host') }}"
+
+- debug: var=vcsim
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
+
+- name: kill vcsim
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/killall' }}"
+
+- name: start vcsim
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/spawn?datacenter=1&cluster=1&folder=1' }}"
+  register: vcsim_instance
+
+- name: Wait for vcsim server to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
+ 
+- name: get a list of virtual machines from vcsim
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=VM' }}"
+  register: vms
+
+- set_fact:
+    vm1: "{{ vms['json'][0] }}"
+
+- name: Gather vm data
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/govc_vm_info' }}"
+  register: vm_info
+
+- set_fact:
+    vmi1: "{{ vm_info['json'][vm1 | basename] }}"
+
+- name: get a list of Datacenter from vcsim
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=DC' }}"
+  register: datacenters
+
+- set_fact:
+    dc1: "{{ datacenters['json'][0] }}"
+
+- name: get a list of datastores from vcsim
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=D' }}"
+  register: datastores
+
+- set_fact:
+    ds1: "{{ datastores['json'][0] }}"
+
+- name: get a list of resource pools from vcsim
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=RP' }}"
+  register: resource_pools
+
+- set_fact:
+    rs1: "{{ resource_pools['json'][0] }}"
+
+- name: get a list of clusters from vcsim
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=CCR' }}"
+  register: clusters
+
+- set_fact:
+    cl1: "{{ clusters['json'][0] }}"
+
+# Testcase 0001: Unregister the first VM
+- name: Unregister first VM
+  vmware_register:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    datacenter: "{{ dc1 | basename }}"
+    #path: "{{ vmi1['Path'] + '/' + vm1 | basename + '.vmx' }}"
+    path: "{{ vm1 | basename + '/' + vm1 | basename + '.vmx' }}"
+    folder: "{{ vm1 | dirname }}"
+    name: "{{ vm1 | basename }}"
+    datastore: "{{ ds1 | basename }}"
+    state: absent
+  register: register_0001
+
+- name: Gather vm data again
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/govc_vm_info' }}"
+  register: vm_info_1
+
+- assert:
+    that:
+      - "vm_info_1['json'][vm1 | basename] is not defined"
+
+# Testcase 0002: Re-register the first VM, with a resouce_pool
+- name: Re-register first VM with resource_pool
+  vmware_register:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    datacenter: "{{ dc1 | basename }}"
+    path: "{{ vm1 | basename + '/' + vm1 | basename + '.vmx' }}"
+    folder: "{{ vm1 | dirname }}"
+    name: "{{ vm1 | basename }}"
+    datastore: "{{ ds1 | basename }}"
+    resource_pool: "{{ rs1 | basename }}"
+    #esxi_hostname: DC0_H0
+    state: present
+  register: register_0002
+
+- name: Gather vm data again
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/govc_vm_info' }}"
+  register: vm_info_2
+
+- assert:
+    that:
+      - "vm_info_2['json'][vm1 | basename] is defined"
+
+# Testcase 0003: Deregister first VM, then re-register by host
+- name: Unregister first VM
+  vmware_register:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    datacenter: "{{ dc1 | basename }}"
+    path: "{{ vm1 | basename + '/' + vm1 | basename + '.vmx' }}"
+    folder: "{{ vm1 | dirname }}"
+    name: "{{ vm1 | basename }}"
+    datastore: "{{ ds1 | basename }}"
+    state: absent
+
+- name: Gather vm data again
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/govc_vm_info' }}"
+  register: vm_info_3_1
+
+- assert:
+    that:
+      - "vm_info_3_1['json'][vm1 | basename] is not defined"
+
+- name: Re-register first VM with host
+  vmware_register:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    datacenter: "{{ dc1 | basename }}"
+    path: "{{ vm1 | basename + '/' + vm1 | basename + '.vmx' }}"
+    folder: "{{ vm1 | dirname }}"
+    name: "{{ vm1 | basename }}"
+    datastore: "{{ ds1 | basename }}"
+    esxi_hostname: "{{ vmi1['Host'] }}"
+    state: present
+  register: register_0003
+
+- name: Gather vm data again
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/govc_vm_info' }}"
+  register: vm_info_3_2
+
+- assert:
+    that:
+      - "vm_info_3_2['json'][vm1 | basename] is defined"
+
+# Testcase 0004: Deregister first VM, then re-register by cluster
+- name: Unregister first VM
+  vmware_register:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    datacenter: "{{ dc1 | basename }}"
+    path: "{{ vm1 | basename + '/' + vm1 | basename + '.vmx' }}"
+    folder: "{{ vm1 | dirname }}"
+    name: "{{ vm1 | basename }}"
+    datastore: "{{ ds1 | basename }}"
+    state: absent
+
+- name: Gather vm data again
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/govc_vm_info' }}"
+  register: vm_info_4_1
+
+- assert:
+    that:
+      - "vm_info_4_1['json'][vm1 | basename] is not defined"
+
+- name: Re-register first VM with cluster
+  vmware_register:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    datacenter: "{{ dc1 | basename }}"
+    path: "{{ vm1 | basename + '/' + vm1 | basename + '.vmx' }}"
+    folder: "{{ vm1 | dirname }}"
+    name: "{{ vm1 | basename }}"
+    datastore: "{{ ds1 | basename }}"
+    cluster: "{{ cl1 | basename }}"
+    resource_pool_cluster_root: True
+    state: present
+  register: register_0004
+
+- name: Gather vm data again
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/govc_vm_info' }}"
+  register: vm_info_4_2
+
+- assert:
+    that:
+      - "vm_info_4_2['json'][vm1 | basename] is defined"
