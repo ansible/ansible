@@ -102,6 +102,7 @@
   copy:
     src: foo.txt
     dest: "{{ remote_file }}"
+    decrypt: no
   register: copy_result2
 
 - name: Assert that the file was not changed
@@ -113,6 +114,7 @@
   copy:
     content: "modified"
     dest: "{{ remote_file }}"
+    decrypt: no
   register: copy_result3
 
 - name: Check the stat results of the file
@@ -137,6 +139,7 @@
     content: "modified"
     dest: "{{ remote_file }}"
     mode: 0700
+    decrypt: no
   register: copy_result4
 
 - name: Check the stat results of the file
@@ -167,6 +170,7 @@
     content: 'modified'
     dest: '{{ remote_file }}'
     mode: 0700
+    decrypt: no
   register: copy_results
 
 - name: Check the stat results of the file
@@ -191,6 +195,7 @@
     content: 'modified'
     dest: '{{ remote_file }}'
     mode: 0404
+    decrypt: no
   register: copy_results
 
 - name: Check the stat results of the file
