@@ -239,7 +239,7 @@ def compile_folder_path_for_object(vobj):
             moid = thisobj._moId
         except AttributeError:
             moid = None
-        if moid == 'group-d1':
+        if moid in ['group-d1', 'ha-folder-root']:
             break
         if isinstance(thisobj, vim.Folder):
             paths.append(thisobj.name)
