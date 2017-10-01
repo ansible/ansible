@@ -15,16 +15,16 @@ This section lists some things that should apply to any type of plugin you devel
 Raising Errors
 ``````````````
 
-In general, errors encountered during execution should be returned by raising AnsibleError() or similar class with a message describing the error. When wrapping other exceptions into error messages, you should always use the `to_text` Ansible function to ensure proper string compatiblity across Python versions:
+In general, errors encountered during execution should be returned by raising AnsibleError() or similar class with a message describing the error. When wrapping other exceptions into error messages, you should always use the `to_text` Ansible function to ensure proper string compatibility across Python versions:
 
 .. code-block:: python
 
     from ansible.module_utils._text import to_native
 
     try:
-        cause_an_exeption()
+        cause_an_exception()
     except Exception as e:
-        AnsibleError('Something happend, this was original exception: %s' % to_native(e))
+        AnsibleError('Something happened, this was original exception: %s' % to_native(e))
 
 Check the different AnsibleError objects and see which one applies the best to your situation.
 
@@ -112,7 +112,7 @@ but with an extra option so you can see how configuration works in Ansible versi
       CALLBACK_TYPE = 'aggregate'
       CALLBACK_NAME = 'timer'
 
-      # only needed if you ship it and dont want to enable by default
+      # only needed if you ship it and don't want to enable by default
       CALLBACK_NEEDS_WHITELIST = True
 
       def __init__(self):
@@ -120,7 +120,7 @@ but with an extra option so you can see how configuration works in Ansible versi
           # make sure the expected objects are present, calling the base's __init__
           super(CallbackModule, self).__init__()
 
-          # start the timer when the plugin is loaded, the first play should start a few miliseconds after.
+          # start the timer when the plugin is loaded, the first play should start a few milliseconds after.
           self.start_time = datetime.now()
 
       def _days_hours_minutes_seconds(self, runtime):
@@ -286,7 +286,7 @@ Vars Plugins
 
 Vars plugins inject additional variable data into Ansible runs that did not come from an inventory source, playbook, or command line. Playbook constructs like 'host_vars' and 'group_vars' work using vars plugins.
 
-Vars plugins were partially implented in Ansible 2.0 and rewritten to be fully implemented starting with Ansible 2.4.
+Vars plugins were partially implemented in Ansible 2.0 and rewritten to be fully implemented starting with Ansible 2.4.
 
 Older plugins used a `run` method as their main body/work:
 
@@ -296,7 +296,7 @@ Older plugins used a `run` method as their main body/work:
         pass # your code goes here
 
 
-Ansible 2.0 did not pass passwords to older plugins, so vaults were unavilable.
+Ansible 2.0 did not pass passwords to older plugins, so vaults were unavailable.
 Most of the work now  happens in the `get_vars` method which is called from the VariableManager when needed.
 
 .. code-block:: python
