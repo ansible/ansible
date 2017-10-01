@@ -58,21 +58,22 @@ def parse():
     parser.usage = "%prog -[options] (-h for help)"
 
     parser.add_option('-m', '--module-path', dest='module_path',
-        help="REQUIRED: full path of module source to execute")
+                      help="REQUIRED: full path of module source to execute")
     parser.add_option('-a', '--args', dest='module_args', default="",
-        help="module argument string")
+                      help="module argument string")
     parser.add_option('-D', '--debugger', dest='debugger',
-        help="path to python debugger (e.g. /usr/bin/pdb)")
+                      help="path to python debugger (e.g. /usr/bin/pdb)")
     parser.add_option('-I', '--interpreter', dest='interpreter',
-        help="path to interpreter to use for this module (e.g. ansible_python_interpreter=/usr/bin/python)",
-        metavar='INTERPRETER_TYPE=INTERPRETER_PATH')
+                      help="path to interpreter to use for this module "
+                      "(e.g. ansible_python_interpreter=/usr/bin/python)",
+                      metavar='INTERPRETER_TYPE=INTERPRETER_PATH')
     parser.add_option('-c', '--check', dest='check', action='store_true',
-        help="run the module in check mode")
+                      help="run the module in check mode")
     parser.add_option('-n', '--noexecute', dest='execute', action='store_false',
-        default=True, help="do not run the resulting module")
+                      default=True, help="do not run the resulting module")
     parser.add_option('-o', '--output', dest='filename',
-        help="Filename for resulting module",
-        default="~/.ansible_module_generated")
+                      help="Filename for resulting module",
+                      default="~/.ansible_module_generated")
     options, args = parser.parse_args()
     if not options.module_path:
         parser.print_help()
@@ -128,11 +129,11 @@ def boilerplate_module(modfile, args, interpreters, check, destfile):
     if args.startswith("@"):
         # Argument is a YAML file (JSON is a subset of YAML)
         complex_args = utils_vars.combine_vars(complex_args, loader.load_from_file(args[1:]))
-        args=''
+        args = ''
     elif args.startswith("{"):
         # Argument is a YAML document (not a file)
         complex_args = utils_vars.combine_vars(complex_args, loader.load(args))
-        args=''
+        args = ''
 
     if args:
         parsed_args = parse_kv(args)
@@ -227,7 +228,7 @@ def runtest(modfile, argspath, modname, module_style, interpreters):
 
     print("*" * 35)
     print("PARSED OUTPUT")
-    print(jsonify(results,format=True))
+    print(jsonify(results, format=True))
 
 
 def rundebug(debugger, modfile, argspath, modname, module_style, interpreters):
