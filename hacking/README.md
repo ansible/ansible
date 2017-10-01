@@ -49,6 +49,12 @@ Use:
     $ ./hacking/test-module -m module \
         -a '{"parent": {"child": [{"item": "first", "val": "foo"}, {"item": "second", "val": "bar"}]}}'
 
+return_skeleton_generator.py
+----------------------------
+
+return_skeleton_generator.py helps in generating the RETURNS section of a module. It takes
+JSON output of a module provided either as a file argument or via stdin.
+
 Module-formatter
 ----------------
 
