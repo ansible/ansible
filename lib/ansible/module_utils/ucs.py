@@ -44,13 +44,14 @@ ucs_argument_spec = dict(
     proxy=dict(type='str', default=None),
 )
 
+
 class UcsConnection():
 
     def __init__(self, module):
         self.module = module
         self.handle = None
         if not HAS_UCSMSDK:
-	    self.module.fail_json(msg='ucsmsdk is required for this module')
+            self.module.fail_json(msg='ucsmsdk is required for this module')
 
     def login(self):
         handle = self.module.params.get('login_handle')
@@ -60,17 +61,17 @@ class UcsConnection():
         from ucsmsdk.ucshandle import UcsHandle
         results = {}
         try:
-	    if self.module.params['use_proxy']:
-	        # force use of the system defined proxy (env variable defined)
-	        proxy = None
-	    else:
-	        if self.module.params['proxy']:
-		    # use the specified proxy
-		    proxy = self.module.params['proxy']
-		else:
-		    # force no proxy to be used.  Note that proxy=None will
-		    # use the system proxy so we must set to something else
-		    proxy = {}
+            if self.module.params['use_proxy']:
+                # force use of the system defined proxy (env variable defined)
+                proxy = None
+            else:
+                if self.module.params['proxy']:
+                    # use the specified proxy
+                    proxy = self.module.params['proxy']
+                else:
+                    # force no proxy to be used.  Note that proxy=None will
+                    # use the system proxy so we must set to something else
+                    proxy = {}
             handle = UcsHandle(ip=self.module.params['hostname'],
                                username=self.module.params['username'],
                                password=self.module.params['password'],
