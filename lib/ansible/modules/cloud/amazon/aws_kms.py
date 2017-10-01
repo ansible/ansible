@@ -161,7 +161,7 @@ def do_grant(kms, keyarn, role_arn, granttypes, mode='grant', dry_run=True, clea
 
             if 'AWS' in statement['Principal'] and isinstance(statement['Principal']['AWS'], str):
                 # convert to list
-                statement['Principal']['AWS'] = list([statement['Principal']['AWS']])
+                statement['Principal']['AWS'] = list(statement['Principal']['AWS'])
             if not isinstance(statement['Principal'].get('AWS'), list):
                 statement['Principal']['AWS'] = list()
 
