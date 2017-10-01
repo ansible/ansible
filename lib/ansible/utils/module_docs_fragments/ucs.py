@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 # This code is part of Ansible, but is an independent component.
 # This particular file snippet, and this file snippet only, is BSD licensed.
 # Modules you write using this snippet, which is embedded dynamically by Ansible
@@ -29,51 +31,48 @@
 
 
 class ModuleDocFragment(object):
-
     # Cisco UCS doc fragment
     DOCUMENTATION = '''
 options:
-    hostname:
-        description:
-            - IP address or hostname of Cisco UCS Manager.
-        type: str
-	required: yes
-    username:
-        description:
-            - Username for Cisco UCS Manager authentication.
-        type: str
-	required: yes
-        default: admin
-    password:
-        description:
-            - Password for Cisco UCS Manager authentication.
-        type: str
-	required: yes
-    port:
-        description:
-            - Port number to be used during connection (by default uses 443 for https and 80 for http connection).
-        type: int
-	required: no
-    use_ssl:
-        description:
-            - If C(no), an HTTP connection will be used instead of the default HTTPS connection.
-        type: bool
-	default: yes
-    use_proxy:
-        description:
-	    - If C(no), will not use the proxy as defined by system environment varialbe.
-	type: bool
-	default: yes
-    proxy:
-        description:
-            - If use_proxy is no, specfies proxy to be used for connection.
-              e.g. 'http://proxy.xy.z:8080'
-        type: str
-    login_handle:
-        description:
-            - UcsHandle object to interact with Cisco UCS Manager.
-              A single connection handle can be used across the multiple modules rather than making a connection each time for each module.
-        type: UcsHandle
-	required: no
+  hostname:
+    description:
+    - IP address or hostname of Cisco UCS Manager.
+    type: str
+    required: yes
+  username:
+    description:
+    - Username for Cisco UCS Manager authentication.
+    type: str
+    default: admin
+  password:
+    description:
+    - Password for Cisco UCS Manager authentication.
+    type: str
+    required: yes
+  port:
+    description:
+    - Port number to be used during connection (by default uses 443 for https and 80 for http connection).
+    type: int
+  use_ssl:
+    description:
+    - If C(no), an HTTP connection will be used instead of the default HTTPS connection.
+    type: bool
+    default: yes
+  use_proxy:
+    description:
+    - If C(no), will not use the proxy as defined by system environment variable.
+    type: bool
+    default: yes
+  proxy:
+    description:
+    - If use_proxy is no, specfies proxy to be used for connection.
+      e.g. 'http://proxy.xy.z:8080'
+    type: str
+  login_handle:
+    description:
+    - UcsHandle object to interact with Cisco UCS Manager.
+      A single connection handle can be used across multiple modules rather than making a connection each time for each module.
+    type: UcsHandle
+    required: no
 '''
 
