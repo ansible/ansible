@@ -92,6 +92,8 @@ class DistributionFiles:
         'Archlinux': 'Arch Linux'
     }
 
+    STRIP_QUOTES = r'\'\"\\'
+
     def __init__(self, module):
         self.module = module
 
@@ -108,6 +110,7 @@ class DistributionFiles:
 
     def _parse_dist_file(self, name, dist_file_content, path, collected_facts):
         dist_file_dict = {}
+        dist_file_content = dist_file_content.strip(DistributionFiles.STRIP_QUOTES)
         if name in self.SEARCH_STRING:
             # look for the distribution string in the data and replace according to RELEASE_NAME_MAP
             # only the distribution name is set, the version is assumed to be correct from platform.dist()
