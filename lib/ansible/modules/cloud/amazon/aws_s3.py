@@ -236,6 +236,19 @@ EXAMPLES = '''
     mode: delobj
 '''
 
+RETURN = '''
+msg:
+  description: msg indicating the status of the operation
+  returned: always
+  type: string
+  sample: PUT operation complete
+url:
+  description: url of the uploaded object
+  returned: (for PUT operation)
+  type: string
+  sample: https://my-bucket.s3.amazonaws.com/my-key.txt?AWSAccessKeyId=<access-key>&Expires=1506888865&Signature=<signature>
+'''
+
 import os
 import traceback
 from ansible.module_utils.six.moves.urllib.parse import urlparse
