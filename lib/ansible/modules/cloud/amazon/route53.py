@@ -554,7 +554,7 @@ def main():
             ns = record['values']
         else:
             # Retrieve name servers associated to the zone.
-            ns = conn.get_zone(zone_in).get_nameservers()
+            ns = zone.get_nameservers()
 
         module.exit_json(changed=False, set=record, nameservers=ns)
 
