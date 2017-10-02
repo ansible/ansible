@@ -350,7 +350,7 @@ class Interfaces(FactsBase):
                 objects[local_intf].append(nbor)
 
         return objects
-        
+
     def populate_neighbors_cdp(self, data):
         objects = dict()
         data = data['TABLE_cdp_neighbor_detail_info']['ROW_cdp_neighbor_detail_info']
