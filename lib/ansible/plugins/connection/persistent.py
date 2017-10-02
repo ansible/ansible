@@ -88,16 +88,7 @@ class Connection(ConnectionBase):
         socket path exists. If the path exists (or the timeout has expired),
         returns the socket path.
         """
-        #socket_path = None
-        #rc, out, err = self._do_it('RUN:')
-        #match = re.search(br"#SOCKET_PATH#: (\S+)", out)
-        #if match:
-        #    socket_path = to_text(match.group(1).strip(), errors='surrogate_or_strict')
-
-        #return socket_path
-        connection = connection_loader.get(self._play_context.connection,  self._play_context, '/dev/null')
+        connection = connection_loader.get(self._play_context.connection, self._play_context, '/dev/null')
         process = ConnectionProcess(connection)
         process.start()
         return connection.socket_path
-
-

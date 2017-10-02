@@ -92,12 +92,14 @@ def request_builder(method, *args, **kwargs):
 
     return req
 
+
 class ConnectionError(Exception):
 
     def __init__(self, message, *args, **kwargs):
         super(ConnectionError, self).__init__(message)
         for k, v in iteritems(kwargs):
             setattr(self, k, v)
+
 
 class Connection:
 
@@ -134,8 +136,7 @@ class Connection:
             response = json.loads(out)
 
         except socket.error as e:
-            raise ConnectionError('unable to connect to socket', err=to_native(e),
-                    exception=traceback.format_exc())
+            raise ConnectionError('unable to connect to socket', err=to_native(e), exception=traceback.format_exc())
 
         if response['id'] != reqid:
             raise ConnectionError('invalid json-rpc id received')
@@ -158,12 +159,8 @@ class Connection:
 
         except socket.error as e:
             sf.close()
-            raise ConnectionError('unable to connect to socket', err=to_native(e),
-                    exception=traceback.format_exc())
+            raise ConnectionError('unable to connect to socket', err=to_native(e), exception=traceback.format_exc())
 
         sf.close()
 
         return to_native(response, errors='surrogate_or_strict')
-
-get_connection = lambda module: Connection(module._socket_path)
-

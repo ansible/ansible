@@ -109,4 +109,3 @@ class JsonRpcServer(object):
 
     def internal_error(self, data=None):
         return self.error(-32603, 'Internal error', data)
-

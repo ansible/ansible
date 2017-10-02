@@ -202,4 +202,3 @@ class ConnectionProcess(object):
             raise AnsibleError('timeout waiting for local socket', play_context.remote_addr)
 
         return socket_path
-

@@ -340,5 +340,3 @@ class Connection(ConnectionBase):
         '''
         display.vvvv('closing shell due to sigalarm', host=self._play_context.remote_addr)
         self.close()
-
-

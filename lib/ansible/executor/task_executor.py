@@ -151,7 +151,6 @@ class TaskExecutor:
             except AttributeError:
                 pass
             except Exception as e:
-                raise
                 display.debug(u"error closing connection: %s" % to_text(e))
 
     def _get_loop_items(self):
