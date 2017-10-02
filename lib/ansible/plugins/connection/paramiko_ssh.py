@@ -100,6 +100,7 @@ with warnings.catch_warnings():
 class MyAddPolicy(object):
     """
     Based on AutoAddPolicy in paramiko so we can determine when keys are added
+
     and also prompt for input.
 
     Policy for automatically adding the hostname and new host key to the
@@ -114,8 +115,13 @@ class MyAddPolicy(object):
 
         if all((C.HOST_KEY_CHECKING, not C.PARAMIKO_HOST_KEY_AUTO_ADD)):
 
+            fingerprint = hexlify(key.get_fingerprint())
+            ktype = key.get_name()
+
             if C.USE_PERSISTENT_CONNECTIONS:
-                raise AnsibleConnectionFailure('rejected %s host key for host %s: %s' % (key.get_name(), hostname, hexlify(key.get_fingerprint())))
+                # don't print the prompt string since the user cannot respond
+                # to the question anyway
+                raise AnsibleError(AUTHENTICITY_MSG[1:92] % (hostname, ktype, fingerprint))
 
             self.connection.connection_lock()
 
@@ -124,9 +130,6 @@ class MyAddPolicy(object):
 
             # clear out any premature input on sys.stdin
             tcflush(sys.stdin, TCIFLUSH)
-
-            fingerprint = hexlify(key.get_fingerprint())
-            ktype = key.get_name()
 
             inp = input(AUTHENTICITY_MSG % (hostname, ktype, fingerprint))
             sys.stdin = old_stdin
