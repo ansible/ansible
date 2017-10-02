@@ -1132,9 +1132,9 @@ class AnsibleModule(object):
                 return True
             try:
                 os.lchown(b_path, uid, -1)
-            except OSError:
+            except (IOError, OSError) as e:
                 path = to_text(b_path)
-                self.fail_json(path=path, msg='chown failed')
+                self.fail_json(path=path, msg='chown failed: %s' % (to_text(e)))
             changed = True
         return changed
 
