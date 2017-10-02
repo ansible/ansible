@@ -45,7 +45,7 @@ class Host:
         return not self.__eq__(other)
 
     def __hash__(self):
-        return hash(self.name)
+        return hash(self._uuid)
 
     def __str__(self):
         return self.get_name()
@@ -68,13 +68,12 @@ class Host:
         )
 
     def deserialize(self, data):
-        self.__init__(gen_uuid=False)
-
         self.name = data.get('name')
         self.vars = data.get('vars', dict())
         self.address = data.get('address', '')
         self._uuid = data.get('uuid', None)
         self.implicit = data.get('implicit', False)
+        self.groups = []
 
         groups = data.get('groups', [])
         for group_data in groups:
@@ -82,11 +81,20 @@ class Host:
             g.deserialize(group_data)
             self.groups.append(g)
 
-    def __init__(self, name=None, port=None, gen_uuid=True):
+    def __getnewargs__(self):
+        return self.name, None, False, self._uuid
+
+    def __new__(cls, name=None, port=None, gen_uuid=True, uuid=None):
+        obj = super(Host, cls).__new__(cls)
+        obj.name = name
+        obj._uuid = uuid
+        return obj
+
+    def __init__(self, name=None, port=None, gen_uuid=True, uuid=None):
 
         self.vars = {}
         self.groups = []
-        self._uuid = None
+        self._uuid = uuid
 
         self.name = name
         self.address = name
