@@ -133,6 +133,11 @@ if __name__ == '__main__':
         display.error("Unexpected Exception, this is probably a bug: %s" % to_text(e), wrap_text=False)
         if not have_cli_options or have_cli_options and cli.options.verbosity > 2:
             log_only = False
+            if hasattr(e, 'orig_exc'):
+                display.vvv('\nexception type: %s' % to_text(type(e.orig_exc)))
+                why = to_text(e.orig_exc)
+                if to_text(e) != why:
+                    display.vvv('\noriginal msg: %s' % why)
         else:
             display.display("to see the full traceback, use -vvv")
             log_only = True
