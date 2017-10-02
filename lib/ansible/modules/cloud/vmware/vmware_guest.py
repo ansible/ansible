@@ -554,6 +554,8 @@ class PyVmomiHelper(object):
 
                 elif expected_state == 'poweredon':
                     task = vm.PowerOn()
+                    if self.params['wait_for_ip_address']:
+                        self.wait_for_vm_ip(vm)
 
                 elif expected_state == 'restarted':
                     if current_state in ('poweredon', 'poweringon', 'resetting', 'poweredoff'):
@@ -1370,8 +1372,12 @@ class PyVmomiHelper(object):
         change_applied = False
 
         relospec = vim.vm.RelocateSpec()
-        if self.params['resource_pool']:
-            relospec.pool = self.select_resource_pool_by_name(self.params['resource_pool'])
+        if self.params['resource_pool'] or self.params['template']:
+            if self.params['esxi_hostname']:
+                host = self.select_host()
+                relospec.pool = self.select_resource_pool_by_host(host)
+            else:
+                relospec.pool = self.select_resource_pool_by_name(self.params['resource_pool'])
 
             if relospec.pool is None:
                 self.module.fail_json(msg='Unable to find resource pool "%(resource_pool)s"' % self.params)
@@ -1405,6 +1411,12 @@ class PyVmomiHelper(object):
         if self.params['is_template']:
             self.current_vm_obj.MarkAsTemplate()
             change_applied = True
+        elif self.params['name'] == self.params['template']:
+            try:
+                self.current_vm_obj.MarkAsVirtualMachine(relospec.pool, self.select_host())
+                change_applied = True
+            except pyVmomi.vmodl.fault.NotSupported:
+                change_applied = False
 
         vm_facts = self.gather_facts(self.current_vm_obj)
         return {'changed': change_applied, 'failed': False, 'instance': vm_facts}
@@ -1496,6 +1508,9 @@ def main():
                 result["changed"] = True
             if not tmp_result["failed"]:
                 result["failed"] = False
+            # If wait_for_ip_address is yes than return all information
+            if module.params['wait_for_ip_address']:
+                result = tmp_result
         else:
             # This should not happen
             assert False
