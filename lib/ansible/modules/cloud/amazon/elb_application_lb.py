@@ -615,6 +615,8 @@ def compare_listeners(connection, module, current_listeners, new_listeners, purg
     Compare listeners and return listeners to add, listeners to modify and listeners to remove
     Listeners are compared based on port
 
+    :param connection: ELBv2 boto3 connection
+    :param module: Ansible module object
     :param current_listeners:
     :param new_listeners:
     :param purge_listeners:
@@ -655,10 +657,10 @@ def compare_rules(connection, module, current_listeners, listener):
     Compare rules and return rules to add, rules to modify and rules to remove
     Rules are compared based on priority
 
-    :param connection:
-    :param module:
-    :param current_listeners:
-    :param listener:
+    :param connection: ELBv2 boto3 connection
+    :param module: Ansible module object
+    :param current_listeners: list of listeners currently associated with the ELB
+    :param listener: dict object of a listener passed by the user
     :return:
     """
 
@@ -668,8 +670,11 @@ def compare_rules(connection, module, current_listeners, listener):
             listener['ListenerArn'] = current_listener['ListenerArn']
             break
 
-    # Get rules for the listener
-    current_rules = get_listener_rules(connection, module, listener['ListenerArn'])
+    # If the listener exists (i.e. has an ARN) get rules for the listener
+    if 'ListenerArn' in listener:
+        current_rules = get_listener_rules(connection, module, listener['ListenerArn'])
+    else:
+        current_rules = []
 
     rules_to_modify = []
     rules_to_delete = []
@@ -993,6 +998,9 @@ def main():
                 if key not in ['Protocol', 'Port', 'SslPolicy', 'Certificates', 'DefaultActions', 'Rules']:
                     module.fail_json(msg="listeners parameter contains invalid dict keys. Should be one of 'Protocol', "
                                          "'Port', 'SslPolicy', 'Certificates', 'DefaultActions', 'Rules'.")
+                # Make sure Port is always an integer
+                elif key == 'Port':
+                    listener[key] = int(listener[key])
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')
