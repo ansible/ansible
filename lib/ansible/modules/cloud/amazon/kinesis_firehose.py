@@ -157,6 +157,7 @@ try:
 except ImportError:
     HAS_BOTO3 = False
 
+import logging
 import re
 import datetime
 import time
@@ -526,6 +527,7 @@ def update_tags(client, stream_name, tags, check_mode=False):
     success = False
     changed = False
     err_msg = ''
+    logging.info('UPDATE TAGS!!!!!!!')
     tag_success, tag_msg, current_tags = (
         get_tags(client, stream_name, check_mode=check_mode)
     )
@@ -834,54 +836,54 @@ def create_stream(client, stream_name, number_of_shards=1, retention_period=None
                         .format(stream_name)
                 )
 
-            if tags:
-                changed, err_msg = (
-                    tags_action(
-                        client, stream_name, tags, action='create',
-                        check_mode=check_mode
-                    )
-                )
-                if changed:
-                    success = True
-                if not success:
-                    return success, changed, err_msg, results
+            # if tags:
+            #     changed, err_msg = (
+            #         tags_action(
+            #             client, stream_name, tags, action='create',
+            #             check_mode=check_mode
+            #         )
+            #     )
+            #     if changed:
+            #         success = True
+            #     if not success:
+            #         return success, changed, err_msg, results
 
             stream_found, stream_msg, current_stream = (
                 find_stream(client, stream_name, check_mode=check_mode)
             )
-            if retention_period and current_stream.get('StreamStatus') == 'ACTIVE':
-                changed, err_msg = (
-                    retention_action(
-                        client, stream_name, retention_period, action='increase',
-                        check_mode=check_mode
-                    )
-                )
-                if changed:
-                    success = True
-                if not success:
-                    return success, changed, err_msg, results
-            else:
-                err_msg = (
-                    'StreamStatus has to be ACTIVE in order to modify the retention period. Current status is {0}'
-                        .format(current_stream.get('StreamStatus', 'UNKNOWN'))
-                )
-                success = create_success
-                changed = True
+            # if retention_period and current_stream.get('StreamStatus') == 'ACTIVE':
+            #     changed, err_msg = (
+            #         retention_action(
+            #             client, stream_name, retention_period, action='increase',
+            #             check_mode=check_mode
+            #         )
+            #     )
+            #     if changed:
+            #         success = True
+            #     if not success:
+            #         return success, changed, err_msg, results
+            # else:
+            #     err_msg = (
+            #         'StreamStatus has to be ACTIVE in order to modify the retention period. Current status is {0}'
+            #             .format(current_stream.get('StreamStatus', 'UNKNOWN'))
+            #     )
+            #     success = create_success
+            #     changed = True
 
     if success:
         _, _, results = (
             find_stream(client, stream_name, check_mode=check_mode)
         )
-        _, _, current_tags = (
-            get_tags(client, stream_name, check_mode=check_mode)
-        )
-        if current_tags and not check_mode:
-            current_tags = make_tags_in_proper_format(current_tags)
-            results['Tags'] = current_tags
-        elif check_mode and tags:
-            results['Tags'] = tags
-        else:
-            results['Tags'] = dict()
+        # _, _, current_tags = (
+        #     get_tags(client, stream_name, check_mode=check_mode)
+        # )
+        # if current_tags and not check_mode:
+        #     current_tags = make_tags_in_proper_format(current_tags)
+        #     results['Tags'] = current_tags
+        # elif check_mode and tags:
+        #     results['Tags'] = tags
+        # else:
+        #     results['Tags'] = dict()
         results = convert_to_lower(results)
 
     return success, changed, err_msg, results
@@ -949,6 +951,8 @@ def delete_stream(client, stream_name, wait=False, wait_timeout=300,
 
 
 def main():
+    logging.basicConfig(filename='/tmp/python.log',level=logging.INFO)
+    logging.info('Hello START')
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
