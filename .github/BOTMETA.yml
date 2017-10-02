@@ -544,7 +544,7 @@ files:
   $modules/remote_management/stacki/stacki_host.py: bbyhuy bsanders
   $modules/remote_management/wakeonlan.py: dagwieers
   $modules/source_control/bzr.py: andreparames
-  $modules/source_control/git.py: $team_ansible robinro
+  $modules/source_control/git.py: $team_ansible
   $modules/source_control/git_config.py: djmattyg007
   $modules/source_control/github_deploy_key.py: bincyber
   $modules/source_control/github_hooks.py: pcgentry
