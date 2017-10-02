@@ -184,7 +184,7 @@ If the PR does not resolve the issue, or if you see any failures from the unit/i
    |
    |   \```
    |   some output
-   |   StrackTrace
+   |   StackTrace
    |   some other output
    |   \```
 
