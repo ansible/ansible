@@ -59,7 +59,7 @@ author: "Ryan Scott Brown @ryansb"
 EXAMPLES = """
 # Basic deploy of a service
 - terraform:
-    service_path: '{{ project_dir }}'
+    project_path: '{{ project_dir }}'
     state: latest
 """
 
@@ -110,7 +110,7 @@ def build_plan(module, bin_path, project_path, variables_args):
         return plan_path, False
     elif rc == 1:
         # failure to plan
-        module.fail_json(msg='Terraform plan could not be created\r\nSTDOUT: {}\r\n\r\nSTDERR: {}'.format(rc, out, err))
+        module.fail_json(msg='Terraform plan could not be created\r\nSTDOUT: {}\r\n\r\nSTDERR: {}'.format(out, err))
     elif rc == 2:
         # changes, but successful
         return plan_path, True
@@ -121,7 +121,7 @@ def build_plan(module, bin_path, project_path, variables_args):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            service_path=dict(required=True, type='path'),
+            project_path=dict(required=True, type='path'),
             binary_path=dict(type='path'),
             state=dict(default='present', choices=['present', 'absent', 'latest']),
             variables=dict(type='dict'),
@@ -131,7 +131,7 @@ def main():
         ),
     )
 
-    project_path = module.params.get('service_path')
+    project_path = module.params.get('project_path')
     bin_path = module.params.get('binary_path')
     state = module.params.get('state')
     variables = module.params.get('variables') or {}
@@ -159,27 +159,34 @@ def main():
     command.extend(APPLY_ARGS)
 
     # we aren't sure if this plan will result in changes, so assume yes
-    needs_application = True
+    needs_application, changed = True, True
 
-    if plan_file and os.path.exists('plan_file'):
+    if plan_file and os.path.exists(os.path.expanduser('plan_file')):
         command.append(plan_file)
+    if plan_file and not os.path.exists('plan_file'):
+        module.fail_json(msg='Could not find plan_file "{}", check the path and try again.'.format(plan_file))
     else:
         plan_file, needs_application = build_plan(module, command[0], project_path, variables_args)
         command.append(plan_file)
 
     #module.fail_json(msg="About to run: {}, needs_application: {}".format(command, needs_application))
-    rc, out, err = module.run_command(command, cwd=project_path)
-    if rc != 0:
-        module.fail_json(msg="Failure when executing Terraform command. Exited {}.\nstdout: {}\nstderr: {}".format(rc, out, err))
+    if needs_application:
+        rc, out, err = module.run_command(command, cwd=project_path)
+        if rc != 0:
+            module.fail_json(msg="Failure when executing Terraform command. Exited {}.\nstdout: {}\nstderr: {}".format(rc, out, err))
+    else:
+        changed = False
+        out, err = '', ''
 
     rc, outputs_text, outputs_err = module.run_command([command[0], 'output', '-json'], cwd=project_path)
     if rc != 0:
         module.fail_json(msg="Failure when getting Terraform outputs. Exited {}.\nstdout: {}\nstderr: {}".format(rc, outputs_text, outputs_err))
+
     outputs = json.loads(outputs_text)
 
 
     # gather some facts about the deployment
-    module.exit_json(changed=True, state='present', outputs=outputs, sdtout=out, stderr=err, command=command)
+    module.exit_json(changed=changed, state='present', outputs=outputs, sdtout=out, stderr=err, command=command)
 
 
 if __name__ == '__main__':
