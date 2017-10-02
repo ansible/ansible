@@ -319,24 +319,24 @@ def find_stream(client, stream_name, check_mode=False):
     err_msg = ''
     success = False
     params = {
-        'StreamName': stream_name,
+        'DeliveryStreamName': stream_name,
     }
     results = dict()
     has_more_shards = True
     shards = list()
     try:
         if not check_mode:
-            while has_more_shards:
+            # while has_more_shards:
                 results = (
-                    client.describe_stream(**params)['StreamDescription']
+                    client.describe_delivery_stream(**params)['DeliveryStreamDescription']
                 )
-                shards.extend(results.pop('Shards'))
-                has_more_shards = results['HasMoreShards']
-            results['Shards'] = shards
-            num_closed_shards = len([s for s in shards if 'EndingSequenceNumber' in s['SequenceNumberRange']])
-            results['OpenShardsCount'] = len(shards) - num_closed_shards
-            results['ClosedShardsCount'] = num_closed_shards
-            results['ShardsCount'] = len(shards)
+                # shards.extend(results.pop('Shards'))
+                # has_more_shards = results['HasMoreShards']
+            # results['Shards'] = shards
+            # num_closed_shards = len([s for s in shards if 'EndingSequenceNumber' in s['SequenceNumberRange']])
+            # results['OpenShardsCount'] = len(shards) - num_closed_shards
+            # results['ClosedShardsCount'] = num_closed_shards
+            # results['ShardsCount'] = len(shards)
         else:
             results = {
                 'OpenShardsCount': 5,
@@ -610,16 +610,21 @@ def stream_action(client, stream_name, shard_count=1, action='create',
     success = False
     err_msg = ''
     params = {
-        'StreamName': stream_name
+        'DeliveryStreamName': stream_name
     }
     try:
         if not check_mode:
             if action == 'create':
-                params['ShardCount'] = shard_count
-                client.create_stream(**params)
+                # params['ShardCount'] = shard_count
+
+                params['S3DestinationConfiguration'] = dict(
+                    RoleARN='arn:aws:iam::417034048139:role/firehose_delivery_role_S3',
+                    BucketARN='arn:aws:s3:::clarky.play.metadev.io'
+                )
+                client.create_delivery_stream(**params)
                 success = True
             elif action == 'delete':
-                client.delete_stream(**params)
+                client.delete_delivery_stream(**params)
                 success = True
             else:
                 err_msg = 'Invalid action {0}'.format(action)
@@ -738,168 +743,6 @@ def update_shard_count(client, stream_name, number_of_shards=1, check_mode=False
     return success, err_msg
 
 
-def update(client, current_stream, stream_name, number_of_shards=1, retention_period=None,
-           tags=None, wait=False, wait_timeout=300, check_mode=False):
-    """Update an Amazon Kinesis Stream.
-    Args:
-        client (botocore.client.EC2): Boto3 client.
-        stream_name (str): The name of the kinesis stream.
-
-    Kwargs:
-        number_of_shards (int): Number of shards this stream will use.
-            default=1
-        retention_period (int): This is how long messages will be kept before
-            they are discarded. This can not be less than 24 hours.
-        tags (dict): The tags you want applied.
-        wait (bool): Wait until Stream is ACTIVE.
-            default=False
-        wait_timeout (int): How long to wait until this operation is considered failed.
-            default=300
-        check_mode (bool): This will pass DryRun as one of the parameters to the aws api.
-            default=False
-
-    Basic Usage:
-        >>> client = boto3.client('kinesis')
-        >>> current_stream = {
-            'ShardCount': 3,
-            'HasMoreShards': True,
-            'RetentionPeriodHours': 24,
-            'StreamName': 'test-stream',
-            'StreamARN': 'arn:aws:kinesis:us-west-2:123456789:stream/test-stream',
-            'StreamStatus': "ACTIVE'
-        }
-        >>> stream_name = 'test-stream'
-        >>> retention_period = 48
-        >>> number_of_shards = 10
-        >>> update(client, current_stream, stream_name,
-                   number_of_shards, retention_period )
-
-    Returns:
-        Tuple (bool, bool, str)
-    """
-    success = True
-    changed = False
-    err_msg = ''
-    if retention_period:
-        if wait:
-            wait_success, wait_msg, current_stream = (
-                wait_for_status(
-                    client, stream_name, 'ACTIVE', wait_timeout,
-                    check_mode=check_mode
-                )
-            )
-            if not wait_success:
-                return wait_success, False, wait_msg
-
-        if current_stream.get('StreamStatus') == 'ACTIVE':
-            retention_changed = False
-            if retention_period > current_stream['RetentionPeriodHours']:
-                retention_changed, retention_msg = (
-                    retention_action(
-                        client, stream_name, retention_period, action='increase',
-                        check_mode=check_mode
-                    )
-                )
-
-            elif retention_period < current_stream['RetentionPeriodHours']:
-                retention_changed, retention_msg = (
-                    retention_action(
-                        client, stream_name, retention_period, action='decrease',
-                        check_mode=check_mode
-                    )
-                )
-
-            elif retention_period == current_stream['RetentionPeriodHours']:
-                retention_msg = (
-                    'Retention {0} is the same as {1}'
-                        .format(
-                        retention_period,
-                        current_stream['RetentionPeriodHours']
-                    )
-                )
-                success = True
-
-            if retention_changed:
-                success = True
-                changed = True
-
-            err_msg = retention_msg
-            if changed and wait:
-                wait_success, wait_msg, current_stream = (
-                    wait_for_status(
-                        client, stream_name, 'ACTIVE', wait_timeout,
-                        check_mode=check_mode
-                    )
-                )
-                if not wait_success:
-                    return wait_success, False, wait_msg
-            elif changed and not wait:
-                stream_found, stream_msg, current_stream = (
-                    find_stream(client, stream_name, check_mode=check_mode)
-                )
-                if stream_found:
-                    if current_stream['StreamStatus'] != 'ACTIVE':
-                        err_msg = (
-                            'Retention Period for {0} is in the process of updating'
-                                .format(stream_name)
-                        )
-                        return success, changed, err_msg
-        else:
-            err_msg = (
-                'StreamStatus has to be ACTIVE in order to modify the retention period. Current status is {0}'
-                    .format(current_stream.get('StreamStatus', 'UNKNOWN'))
-            )
-            return success, changed, err_msg
-
-    if current_stream['OpenShardsCount'] != number_of_shards:
-        success, err_msg = (
-            update_shard_count(client, stream_name, number_of_shards, check_mode=check_mode)
-        )
-
-        if not success:
-            return success, changed, err_msg
-
-        changed = True
-
-        if wait:
-            wait_success, wait_msg, current_stream = (
-                wait_for_status(
-                    client, stream_name, 'ACTIVE', wait_timeout,
-                    check_mode=check_mode
-                )
-            )
-            if not wait_success:
-                return wait_success, changed, wait_msg
-        else:
-            stream_found, stream_msg, current_stream = (
-                find_stream(client, stream_name, check_mode=check_mode)
-            )
-            if stream_found and current_stream['StreamStatus'] != 'ACTIVE':
-                err_msg = (
-                    'Number of shards for {0} is in the process of updating'
-                        .format(stream_name)
-                )
-                return success, changed, err_msg
-
-    if tags:
-        _, _, err_msg = (
-            update_tags(client, stream_name, tags, check_mode=check_mode)
-        )
-    if wait:
-        success, err_msg, _ = (
-            wait_for_status(
-                client, stream_name, 'ACTIVE', wait_timeout,
-                check_mode=check_mode
-            )
-        )
-    if success and changed:
-        err_msg = 'Kinesis Stream {0} updated successfully.'.format(stream_name)
-    elif success and not changed:
-        err_msg = 'Kinesis Stream {0} did not change.'.format(stream_name)
-
-    return success, changed, err_msg
-
-
 def create_stream(client, stream_name, number_of_shards=1, retention_period=None,
                   tags=None, wait=False, wait_timeout=300, check_mode=False):
     """Create an Amazon Kinesis Stream.
@@ -948,16 +791,17 @@ def create_stream(client, stream_name, number_of_shards=1, retention_period=None
             )
         )
 
-    if stream_found and not check_mode:
-        if current_stream['ShardsCount'] != number_of_shards:
-            err_msg = 'Can not change the number of shards in a Kinesis Stream'
-            return success, changed, err_msg, results
+    # if stream_found and not check_mode:
+    #     if current_stream['ShardsCount'] != number_of_shards:
+    #         err_msg = 'Can not change the number of shards in a Kinesis Stream'
+    #         return success, changed, err_msg, results
 
     if stream_found and current_stream.get('StreamStatus') != 'DELETING':
-        success, changed, err_msg = update(
-            client, current_stream, stream_name, number_of_shards,
-            retention_period, tags, wait, wait_timeout, check_mode=check_mode
-        )
+        # success, changed, err_msg = update(
+        #     client, current_stream, stream_name, number_of_shards,
+        #     retention_period, tags, wait, wait_timeout, check_mode=check_mode
+        # )
+        return False, True, 'UPDATE NOT IMPLEMENTED', {}
     else:
         create_success, create_msg = (
             stream_action(
@@ -1130,8 +974,8 @@ def main():
     wait = module.params.get('wait')
     wait_timeout = module.params.get('wait_timeout')
 
-    if state == 'present' and not shards:
-        module.fail_json(msg='Shards is required when state == present.')
+    # if state == 'present' and not shards:
+    #     module.fail_json(msg='Shards is required when state == present.')
 
     if retention_period:
         if retention_period < 24:
@@ -1147,7 +991,7 @@ def main():
         )
         client = (
             boto3_conn(
-                module, conn_type='client', resource='kinesis',
+                module, conn_type='client', resource='firehose',
                 region=region, endpoint=ec2_url, **aws_connect_kwargs
             )
         )
