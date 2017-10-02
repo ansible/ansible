@@ -21,7 +21,9 @@ import subprocess
 
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.six.moves import cPickle
+from ansible.plugins.loader import connection_loader
 from ansible.plugins.connection import ConnectionBase
+from ansible.executor.process.connection import ConnectionProcess
 
 try:
     from __main__ import display
@@ -86,10 +88,16 @@ class Connection(ConnectionBase):
         socket path exists. If the path exists (or the timeout has expired),
         returns the socket path.
         """
-        socket_path = None
-        rc, out, err = self._do_it('RUN:')
-        match = re.search(br"#SOCKET_PATH#: (\S+)", out)
-        if match:
-            socket_path = to_text(match.group(1).strip(), errors='surrogate_or_strict')
+        #socket_path = None
+        #rc, out, err = self._do_it('RUN:')
+        #match = re.search(br"#SOCKET_PATH#: (\S+)", out)
+        #if match:
+        #    socket_path = to_text(match.group(1).strip(), errors='surrogate_or_strict')
 
-        return socket_path
+        #return socket_path
+        connection = connection_loader.get(self._play_context.connection,  self._play_context, '/dev/null')
+        process = ConnectionProcess(connection)
+        process.start()
+        return connection.socket_path
+
+

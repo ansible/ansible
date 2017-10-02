@@ -1,21 +1,7 @@
+# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
 # (c) 2015 Toshio Kuratomi <tkuratomi@ansible.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
-# Make coding more python3-ish
+# (c) 2017, Peter Sprygada <psprygad@redhat.com>
+# (c) 2017 Ansible Project
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -68,6 +54,7 @@ class ConnectionBase(AnsiblePlugin):
     # language means any language.
     module_implementation_preferences = ('',)
     allow_executable = True
+    force_persistent_connection = False
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
 
@@ -87,6 +74,8 @@ class ConnectionBase(AnsiblePlugin):
         self.success_key = None
         self.prompt = None
         self._connected = False
+
+        self._socket_path = None
 
         # load the shell plugin for this action/connection
         if play_context.shell:
@@ -109,6 +98,11 @@ class ConnectionBase(AnsiblePlugin):
     def connected(self):
         '''Read-only property holding whether the connection to the remote host is active or closed.'''
         return self._connected
+
+    @property
+    def socket_path(self):
+        '''Read-only property holding the connection socket path for this remote host'''
+        return self._socket_path
 
     def _become_method_supported(self):
         ''' Checks if the current class supports this privilege escalation method '''
