@@ -1,4 +1,3 @@
-lib/ansible/module_utils/ansible_tower.py
 lib/ansible/modules/cloud/amazon/cloudtrail.py
 lib/ansible/modules/cloud/amazon/ec2_vpc_igw.py
 lib/ansible/modules/cloud/amazon/ec2_vpc_route_table.py
@@ -56,4 +55,3 @@ lib/ansible/modules/network/lenovo/cnos_vlag.py
 lib/ansible/modules/network/lenovo/cnos_vlan.py
 lib/ansible/modules/network/nxos/nxos_file_copy.py
 lib/ansible/modules/packaging/language/maven_artifact.py
-lib/ansible/modules/web_infrastructure/ansible_tower/tower_job_wait.py
