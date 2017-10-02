@@ -400,10 +400,6 @@ class TaskExecutor:
             # the options specified on the command line
             self._play_context = self._play_context.set_task_and_variable_override(task=self._task, variables=variables, templar=templar)
 
-            # fields set from the play/task may be based on variables, so we have to
-            # do the same kind of post validation step on it here before we use it.
-            self._play_context.post_validate(templar=templar)
-
             # now that the play context is finalized, if the remote_addr is not set
             # default to using the host's address field as the remote address
             if not self._play_context.remote_addr:
@@ -413,6 +409,10 @@ class TaskExecutor:
             # a certain subset of variables exist.
             self._play_context.update_vars(variables)
 
+            # fields set from the play/task may be based on variables, so we have to
+            # do the same kind of post validation step on it here before we use it.
+            self._play_context.post_validate(templar=templar)
+            
             # FIXME: update connection/shell plugin options
         except AnsibleError as e:
             # save the error, which we'll raise later if we don't end up
