@@ -69,6 +69,7 @@ Ansible Changes By Release
 * corrected YAML_FILENAME_EXTENSIONS ini setter as key/section were swapped
 * Better error message when a yaml inventory is invalid
 * avoid include_Xs conflating vars with options
+* Fix aws_s3 module handling `encrypt` option (https://github.com/ansible/ansible/pull/31203)
 
 
 <a id="2.4"></a>
