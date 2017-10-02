@@ -71,6 +71,7 @@ Ansible Changes By Release
 * avoid include_Xs conflating vars with options
 * Fix aws_s3 module handling `encrypt` option (https://github.com/ansible/ansible/pull/31203)
 * Fix for win_msg to document and show error when message is greater than 255 characters
+* Fix for win_dotnet_ngen to work after recent regression
 
 
 <a id="2.4"></a>
