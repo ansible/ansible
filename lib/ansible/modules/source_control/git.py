@@ -183,7 +183,7 @@ options:
               Allowed archive formats ["zip", "tar.gz", "tar", "tgz"]
 
 requirements:
-    - git>=1.7.1 (the command line tool)
+    - git>=1.7.6 (the command line tool)
 
 notes:
     - "If the task seems to be hanging, first verify remote host is in C(known_hosts).
