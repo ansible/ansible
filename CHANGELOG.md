@@ -67,6 +67,8 @@ Ansible Changes By Release
 * Updated win_chocolatey example to be clearer around what should be used with become
 * Fix for copy module when permissions are changed but the file contents are not ( https://github.com/ansible/ansible/issues/30556 )
 * corrected YAML_FILENAME_EXTENSIONS ini setter as key/section were swapped
+* Better error message when a yaml inventory is invalid
+* avoid include_Xs conflating vars with options
 
 
 <a id="2.4"></a>
