@@ -56,20 +56,12 @@ class TerminalBase(with_metaclass(ABCMeta, object)):
         self._connection = connection
 
     def _exec_cli_command(self, cmd, check_rc=True):
-        """
-        Executes a CLI command on the device
+        '''
+        Executes the CLI command on the remote device and returns the output
 
-        :arg cmd: Byte string consisting of the command to execute
-        :kwarg check_rc: If True, the default, raise an
-            :exc:`AnsibleConnectionFailure` if the return code from the
-            command is nonzero
-        :returns: A tuple of return code, stdout, and stderr from running the
-            command.  stdout and stderr are both byte strings.
-        """
-        rc, out, err = self._connection.exec_command(cmd)
-        if check_rc and rc != 0:
-            raise AnsibleConnectionFailure(err)
-        return rc, out, err
+        :arg cmd: Byte string command to be executed
+        '''
+        return self._connection.send(cmd)
 
     def _get_prompt(self):
         """
@@ -77,9 +69,8 @@ class TerminalBase(with_metaclass(ABCMeta, object)):
 
         :returns: A byte string of the prompt
         """
-        for cmd in (b'\n', b'prompt()'):
-            rc, out, err = self._exec_cli_command(cmd)
-        return out
+        self._exec_cli_command(b'\n')
+        return self._connection._matched_prompt
 
     def on_open_shell(self):
         """Called after the SSH session is established
