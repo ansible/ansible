@@ -301,6 +301,7 @@ instance:
     sample: None
 '''
 
+import posixpath
 import time
 
 HAS_PYVMOMI = False
@@ -525,6 +526,33 @@ class PyVmomiHelper(object):
             self.current_vm_obj = vm
 
         return vm
+
+    def get_datacenter(self):
+        # datacenters = get_all_objs(self.content, [vim.Datacenter])
+        datacenter = self.cache.find_obj(self.content, [vim.Datacenter], self.params['datacenter'])
+        if datacenter is None:
+            self.module.fail_json(msg='No datacenter named %(datacenter)s was found' % self.params)
+
+        return datacenter
+
+    def get_folder_path(self, datacenter):
+        # Ensure we have a starting slash and no trailing slash
+        self.params['folder'] = posixpath.join('/', self.params['folder']).rstrip('/')
+
+        toppath = compile_folder_path_for_object(datacenter)
+        dcpath = posixpath.join(toppath, self.params['datacenter'])
+
+        # Check for full path first in case it was already supplied
+        if (self.params['folder'].startswith(dcpath + '/vm/') or self.params['folder'] == dcpath + '/vm'):
+            fullpath = self.params['folder']
+        elif (self.params['folder'].startswith('/vm/') or self.params['folder'] == '/vm'):
+            fullpath = "%s%s" % (dcpath, self.params['folder'])
+        elif (self.params['folder'].startswith('/')):
+            fullpath = "%s/vm%s" % (dcpath, self.params['folder'])
+        else:
+            fullpath = "%s/vm/%s" % (dcpath, self.params['folder'])
+
+        return fullpath
 
     def set_powerstate(self, vm, state, force):
         """
@@ -1184,7 +1212,7 @@ class PyVmomiHelper(object):
 
         return resource_pool
 
-    def deploy_vm(self):
+    def deploy_vm(self, datacenter):
         # https://github.com/vmware/pyvmomi-community-samples/blob/master/samples/clone_vm.py
         # https://www.vmware.com/support/developer/vc-sdk/visdk25pubs/ReferenceGuide/vim.vm.CloneSpec.html
         # https://www.vmware.com/support/developer/vc-sdk/visdk25pubs/ReferenceGuide/vim.vm.ConfigSpec.html
@@ -1194,28 +1222,7 @@ class PyVmomiHelper(object):
         #   - multiple templates by the same name
         #   - static IPs
 
-        # datacenters = get_all_objs(self.content, [vim.Datacenter])
-        datacenter = self.cache.find_obj(self.content, [vim.Datacenter], self.params['datacenter'])
-        if datacenter is None:
-            self.module.fail_json(msg='No datacenter named %(datacenter)s was found' % self.params)
-
-        # Prepend / if it was missing from the folder path, also strip trailing slashes
-        if not self.params['folder'].startswith('/'):
-            self.params['folder'] = '/%(folder)s' % self.params
-        self.params['folder'] = self.params['folder'].rstrip('/')
-
-        dcpath = compile_folder_path_for_object(datacenter)
-
-        # Check for full path first in case it was already supplied
-        if (self.params['folder'].startswith(dcpath + self.params['datacenter'] + '/vm')):
-            fullpath = self.params['folder']
-        elif (self.params['folder'].startswith('/vm/') or self.params['folder'] == '/vm'):
-            fullpath = "%s%s%s" % (dcpath, self.params['datacenter'], self.params['folder'])
-        elif (self.params['folder'].startswith('/')):
-            fullpath = "%s%s/vm%s" % (dcpath, self.params['datacenter'], self.params['folder'])
-        else:
-            fullpath = "%s%s/vm/%s" % (dcpath, self.params['datacenter'], self.params['folder'])
-
+        fullpath = self.get_folder_path(datacenter)
         f_obj = self.content.searchIndex.FindByInventoryPath(fullpath)
 
         # abort if no strategy was successful
@@ -1476,8 +1483,10 @@ def main():
 
     pyv = PyVmomiHelper(module)
 
+    datacenter = pyv.get_datacenter()
     # Check if the VM exists before continuing
-    vm = pyv.getvm(name=module.params['name'], folder=module.params['folder'], uuid=module.params['uuid'])
+    folder_path = pyv.get_folder_path(datacenter)
+    vm = pyv.getvm(name=module.params['name'], folder=folder_path, uuid=module.params['uuid'])
 
     # VM already exists
     if vm:
@@ -1492,10 +1501,16 @@ def main():
         elif module.params['state'] in ['poweredon', 'poweredoff', 'restarted', 'suspended', 'shutdownguest', 'rebootguest']:
             # set powerstate
             tmp_result = pyv.set_powerstate(vm, module.params['state'], module.params['force'])
+
             if tmp_result['changed']:
                 result["changed"] = True
-            if not tmp_result["failed"]:
-                result["failed"] = False
+                result['instance'] = tmp_result['instance']
+            else:
+                result['instance'] = vm
+
+            if tmp_result['failed']:
+                result['failed'] = True
+                result['msg'] = tmp_result['msg']
         else:
             # This should not happen
             assert False
@@ -1503,7 +1518,7 @@ def main():
     else:
         if module.params['state'] in ['poweredon', 'poweredoff', 'present', 'restarted', 'suspended']:
             # Create it ...
-            result = pyv.deploy_vm()
+            result = pyv.deploy_vm(datacenter)
 
     if result['failed']:
         module.fail_json(**result)
