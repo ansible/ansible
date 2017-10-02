@@ -1,71 +1,62 @@
 #!powershell
 # This file is part of Ansible
-#
+
 # Copyright 2015, Peter Mounce <public@neverrunwithscissors.com>
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-$ErrorActionPreference = "Stop"
+#Requires -Module Ansible.ModuleUtils.Legacy.psm1
+#Requires -Module Ansible.ModuleUtils.CommandUtil.psm1
 
-# WANT_JSON
-# POWERSHELL_COMMON
+$ErrorActionPreference = 'Stop'
 
-$params = Parse-Args $args;
+$params = Parse-Args $args -supports_check_mode $true
+$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
 $result = @{
     changed = $false
 }
 
-function Invoke-NGen
-{
-    [CmdletBinding()]
+Function Invoke-Ngen($architecture="") {
+    $cmd = "$($env:windir)\Microsoft.NET\Framework$($architecture)\v4.0.30319\ngen.exe"
 
-    param
-    (
-       [Parameter(Mandatory=$false, Position=0)] [string] $arity = ""
-    )
+    if (Test-Path -Path $cmd) {
+        $arguments = "update /force"
+        if ($check_mode) {
+            $ngen_result = @{
+                rc = 0
+                stdout = "check mode output for $cmd $arguments"
+            }
+        } else {
+            try {
+                $ngen_result = Run-Command -command "$cmd $arguments"
+            } catch {
+                Fail-Json -obj $result -message "failed to execute '$cmd $arguments': $($_.Exception.Message)"
+            }
+        }
+        $result."dotnet_ngen$($architecture)_update_exit_code" = $ngen_result.rc
+        $result."dotnet_ngen$($architecture)_update_output" = $ngen_result.stdout
 
-    if ($arity -eq $null)
-    {
-        $arity = ""
-    }
-    $cmd = "$($env:windir)\microsoft.net\framework$($arity)\v4.0.30319\ngen.exe"
-    if (test-path $cmd)
-    {
-        $update = Invoke-Expression "$cmd update /force";
-        $(result.dotnet_ngen$($arity)_update_exit_code) = $lastexitcode
-        $(result.dotnet_ngen$($arity)_update_output) = $update
-        $eqi = Invoke-Expression "$cmd executequeueditems";
-        $(result.dotnet_ngen$($arity)_eqi_exit_code) = $lastexitcode
-        $(result.dotnet_ngen$($arity)_eqi_output) = $eqi
-
+        $arguments = "executeQueuedItems"
+        if ($check_mode) {
+            $executed_queued_items = @{
+                rc = 0
+                stdout = "check mode output for $cmd $arguments"
+            }
+        } else {
+            try {
+                $executed_queued_items = Run-Command -command "$cmd $arguments"
+            } catch {
+                Fail-Json -obj $result -message "failed to execute '$cmd $arguments': $($_.Exception.Message)"
+            }
+        }
+        $result."dotnet_ngen$($architecture)_eqi_exit_code" = $executed_queued_items.rc
+        $result."dotnet_ngen$($architecture)_eqi_output" = $executed_queued_items.stdout
         $result.changed = $true
     }
-    else
-    {
-        Write-Host "Not found: $cmd"
-    }
 }
 
-Try
-{
-    Invoke-NGen
-    Invoke-NGen -arity "64"
+Invoke-Ngen
+Invoke-Ngen -architecture "64"
 
-    Exit-Json $result;
-}
-Catch
-{
-    Fail-Json $result $_.Exception.Message
-}
+Exit-Json -obj $result
