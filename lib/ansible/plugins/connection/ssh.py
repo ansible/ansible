@@ -116,11 +116,18 @@ DOCUMENTATION = '''
             - However this conflicts with privilege escalation (become).
               For example, when using sudo operations you must first disable 'requiretty' in the sudoers file for the target hosts,
               which is why this feature is disabled by default.
-          env: [{name: ANSIBLE_SSH_PIPELINING}]
+          env:
+            - name: ANSIBLE_PIPELINING
+            #- name: ANSIBLE_SSH_PIPELINING
           ini:
-          - {key: pipelining, section: ssh_connection}
+            - section: defaults
+              key: pipelining
+            #- section: ssh_connection
+            #  key: pipelining
           type: boolean
-          vars: [{name: ansible_ssh_pipelining}]
+          vars:
+            - name: ansible_pipelining
+            - name: ansible_ssh_pipelining
       private_key_file:
           description:
               - Path to private key file to use for authentication
