@@ -70,6 +70,11 @@ Jinja2 provides a useful 'default' filter, that is often a better approach to fa
 In the above example, if the variable 'some_variable' is not defined, the value used will be 5, rather than an error
 being raised.
 
+If the variable evaluates to a false value (e.g. empty string), the second parameter of the filter have to be set to
+`true`:
+
+    {{ lookup('env', 'MY_USER') | default('admin', true) }}
+
 
 .. _omitting_undefined_variables:
 
