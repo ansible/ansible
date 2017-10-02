@@ -241,24 +241,32 @@ class GalaxyAPI(object):
             raise AnsibleError("Failed to download the %s list: %s" % (what, str(error)))
 
     @g_connect
-    def search_roles(self, search, **kwargs):
+    def search_roles(self, search, platforms=None, tags=None, author=None, page_size=None):
+        """
+        Search galaxy for a set of roles that satisfy certain criteria
+
+        :arg search: List of terms to search for
+        :kwarg tags: List of Galaxy tags to filter the results on
+        :kwarg platform: List of Platforms tagged in galaxy to filter the results on
+        :kwarg author: Author username to filter the results on
+        :kwarg page_size: Numer of results to return
+        :returns: Iterable of results
+
+        """
 
         search_url = self.baseurl + '/search/roles/?'
 
         if search:
             search_url += '&autocomplete=' + urlquote(search)
 
-        tags = kwargs.get('tags', None)
-        platforms = kwargs.get('platforms', None)
-        page_size = kwargs.get('page_size', None)
-        author = kwargs.get('author', None)
-
-        if tags and isinstance(tags, string_types):
-            tags = tags.split(',')
+        if tags:
+            if isinstance(tags, string_types):
+                tags = tags.split(',')
             search_url += '&tags_autocomplete=' + '+'.join(tags)
 
-        if platforms and isinstance(platforms, string_types):
-            platforms = platforms.split(',')
+        if platforms:
+            if isinstance(platforms, string_types):
+                platforms = platforms.split(',')
             search_url += '&platforms_autocomplete=' + '+'.join(platforms)
 
         if page_size:
