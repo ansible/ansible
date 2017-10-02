@@ -73,6 +73,7 @@ Ansible Changes By Release
 * Fix for win_msg to document and show error when message is greater than 255 characters
 * Fix for win_dotnet_ngen to work after recent regression
 * fixed backwards compat method for config
+* removed docs for prematurely added ssh specific pipelining settings
 
 
 <a id="2.4"></a>
