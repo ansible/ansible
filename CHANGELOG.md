@@ -104,6 +104,7 @@ Ansible Changes By Release
   https://github.com/ansible/ansible/issues/24169
 * Do not log data field in `docker_secrets` module (https://github.com/ansible/ansible/pull/31366)
 * Fix rpm_key taking the wrong 8 chars from the keyid (https://github.com/ansible/ansible/pull/31045)
+* chown errors now more informative
 
 <a id="2.4"></a>
 
