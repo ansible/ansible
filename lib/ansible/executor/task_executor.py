@@ -412,7 +412,7 @@ class TaskExecutor:
             # fields set from the play/task may be based on variables, so we have to
             # do the same kind of post validation step on it here before we use it.
             self._play_context.post_validate(templar=templar)
-            
+
             # FIXME: update connection/shell plugin options
         except AnsibleError as e:
             # save the error, which we'll raise later if we don't end up
