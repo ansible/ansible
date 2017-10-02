@@ -525,15 +525,15 @@ def get_remote_head(git_path, module, dest, version, remote, bare):
     if version == 'HEAD':
         if cloning:
             # cloning the repo, just get the remote's HEAD version
-            cmd = '%s ls-remote %s -h HEAD' % (git_path, remote)
+            cmd = '%s ls-remote --exit-code -h %s HEAD' % (git_path, remote)
         else:
             head_branch = get_head_branch(git_path, module, dest, remote, bare)
-            cmd = '%s ls-remote %s -h refs/heads/%s' % (git_path, remote, head_branch)
+            cmd = '%s ls-remote --exit-code -h %s refs/heads/%s' % (git_path, remote, head_branch)
     elif is_remote_branch(git_path, module, dest, remote, version):
-        cmd = '%s ls-remote %s -h refs/heads/%s' % (git_path, remote, version)
+        cmd = '%s ls-remote --exit-code -h %s refs/heads/%s' % (git_path, remote, version)
     elif is_remote_tag(git_path, module, dest, remote, version):
         tag = True
-        cmd = '%s ls-remote %s -t refs/tags/%s*' % (git_path, remote, version)
+        cmd = '%s ls-remote --exit-code -t %s refs/tags/%s*' % (git_path, remote, version)
     else:
         # appears to be a sha1.  return as-is since it appears
         # cannot check for a specific sha1 on remote
@@ -558,7 +558,7 @@ def get_remote_head(git_path, module, dest, version, remote, bare):
 
 
 def is_remote_tag(git_path, module, dest, remote, version):
-    cmd = '%s ls-remote %s -t refs/tags/%s' % (git_path, remote, version)
+    cmd = '%s ls-remote --exit-code -t %s refs/tags/%s' % (git_path, remote, version)
     (rc, out, err) = module.run_command(cmd, check_rc=True, cwd=dest)
     if to_native(version, errors='surrogate_or_strict') in out:
         return True
@@ -593,7 +593,7 @@ def get_annotated_tags(git_path, module, dest):
 
 
 def is_remote_branch(git_path, module, dest, remote, version):
-    cmd = '%s ls-remote %s -h refs/heads/%s' % (git_path, remote, version)
+    cmd = '%s ls-remote --exit-code -h %s refs/heads/%s' % (git_path, remote, version)
     (rc, out, err) = module.run_command(cmd, check_rc=True, cwd=dest)
     if to_native(version, errors='surrogate_or_strict') in out:
         return True
@@ -665,7 +665,7 @@ def get_head_branch(git_path, module, dest, remote, bare=False):
 
 def get_remote_url(git_path, module, dest, remote):
     '''Return URL of remote source for repo.'''
-    command = [git_path, 'ls-remote', '--get-url', remote]
+    command = [git_path, 'ls-remote', '--exit-code', '--get-url', remote]
     (rc, out, err) = module.run_command(command, cwd=dest)
     if rc != 0:
         # There was an issue getting remote URL, most likely
