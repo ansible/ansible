@@ -27,9 +27,10 @@ options:
   name:
     description:
       - A package name, like C(foo), or package specifier with version, like C(foo=1.0). Name wildcards (fnmatch) like C(apt*) and version wildcards
-        like C(foo=1.0*) are also supported.  Note that the apt-get commandline supports implicit regex matches here but we do not because it can let
-        typos through easier (If you typo C(foo) as C(fo) apt-get would install packages that have "fo" in their name with a warning and a prompt for
-        the user.  Since we don't have warnings and prompts before installing we disallow this.  Use an explicit fnmatch pattern if you want wildcarding)
+        like C(foo=1.0*) are also supported.  Can also take a comma-separated list of values to manage multiple packages at once.  Note that the apt-get
+        commandline supports implicit regex matches here but we do not because it can let typos through easier (If you typo C(foo) as C(fo) apt-get would
+        install packages that have "fo" in their name with a warning and a prompt for the user.  Since we don't have warnings and prompts before
+        installing we disallow this.  Use an explicit fnmatch pattern if you want wildcarding)
     required: false
     default: null
     aliases: [ 'pkg', 'package' ]
@@ -163,6 +164,11 @@ EXAMPLES = '''
 - name: Install the version '1.00' of package "foo"
   apt:
     name: foo=1.00
+    state: present
+
+- name: Install both the "foo" and "bar" packages with the same command
+  apt:
+    name: foo,bar
     state: present
 
 - name: Update the repository cache and update package "nginx" to latest version using default release squeeze-backport
