@@ -111,6 +111,7 @@ Ansible Changes By Release
 * reverted implicit localhost getting vars from 'all' group
 * Fix the ping module documentation to reference win_ping instead of itself: https://github.com/ansible/ansible/pull/31444
 * Fix for ec2_win_password to allow blank key_passphrase again (https://github.com/ansible/ansible/pull/28791)
+* added toggle for vars_plugin behaviour to execute relative to playbook, set default to revert to previous way. 
 
 <a id="2.4"></a>
 
