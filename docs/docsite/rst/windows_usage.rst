@@ -18,8 +18,9 @@ Installing Programs
 There are three main ways that Ansible can be used to install programs which
 are:
 
-* Using the ``win_chocolatey`` module which installs by default from an
-  external chocolatey repository
+* Using the ``win_chocolatey`` module sources the program data from an external
+  chocolatey repository. Internal repositories can be used instead by setting
+  the ``source`` option. 
 
 * Using the ``win_package`` module which installs a program from a
   local/network path or URL
@@ -84,6 +85,9 @@ the module like it would when running it locally. Unfortunately a lot of the
 installers are vague when it errors out over WinRM, the best bet is if it works
 locally and not through Ansible is to use become.
 
+Some installers restart the WinRM service, or cause it to become (temporarily)
+unavaible, making Ansible assume the system is unreachable.
+
 Installing Updates
 ------------------
 The modules ``win_updates`` and ``win_hotfix`` can be used to install updates
@@ -91,7 +95,7 @@ or hotfixes on a host. The module ``win_updates`` is used to install multiple
 updates per a category while ``win_hotfix`` can be used to install a single
 update or hotfix file that has been downloaded locally.
 
-.. Note:: ``win_hotfix`` has a requirement on the DISM powershell cmdlets being
+.. Note:: ``win_hotfix`` has a requirement on the DISM PowerShell cmdlets being
     present. These cmdlets were only added by default on Windows Server 2012
     and newer and must be installed on older Windows hosts.
 
@@ -204,7 +208,7 @@ are created::
 
 Running Commands
 ----------------
-In the case that there is not module that can complete a task that is required,
+In the case that there is no module that can complete a task that is required,
 a command or script can be run using the ``win_shell``/``win_command``/``raw``/
 ``script`` modules. 
 
@@ -215,8 +219,8 @@ required.
 
 The ``script`` module executes a script from a local directory to the Ansible
 host on the Windows server. Like ``raw`` is currently does not support
-``become``, ``async`` and environment variables. It still has it's uses if the
-script to be executed in located on the Ansible host and not the Windows host.
+``become``, ``async`` and environment variables. It still has its uses if the
+script to be executed is located on the Ansible host and not the Windows host.
 
 The ``win_command`` module is used to execute a command which is either an
 executable or batch file while ``win_shell`` is used to execute command(s)
@@ -227,17 +231,17 @@ Command or Shell
 ++++++++++++++++
 The modules ``win_shell`` and ``win_command`` are similar in the fact that they
 can be used to execute a command or commands. ``win_shell`` is run within a
-shell like ``powershell`` or ``cmd`` so it has access to shell operators like
-``<``, ``>``, ``|``, ``;``, ``&&``, ``||`` and so on. Multi-lined commands
-can also be run in ``win_shell``.
+shell like process like ``PowerShell`` or ``cmd`` so it has access to shell
+operators like ``<``, ``>``, ``|``, ``;``, ``&&``, ``||`` and so on.
+Multi-lined commands can also be run in ``win_shell``.
 
 ``win_command`` is different where it is meant to run an executable outside of
 a shell. It can still run a shell command like ``mkdir``, ``New-Item`` by
-running it with the ``cmd.exe`` or ``powershell.exe`` executable.
+running it with the ``cmd.exe`` or ``PowerShell.exe`` executable.
 
 Here are some examples of using ``win_command`` or ``win_shell``::
 
-    - name: run a command under powershell
+    - name: run a command under PowerShell
       win_shell: Get-Service -Name service | Stop-Service
     
     - name: run a command under cmd
@@ -270,18 +274,18 @@ Argument Rules
 When running a command through ``win_command``, the standard Windows argument
 rules apply. 
 
-The rules can be simplified to the following rules:
+The rules can be simplified to the following points:
 
-* Each argument is delimited by a while space, which can either be a space or a
+* Each argument is delimited by a white space, which can either be a space or a
   tab
 
 * An argument can be surrounded by double quotes ``"``, anything inside these
-  quotes is intepreted as a single argument even if it contains whitespace
+  quotes is interpreted as a single argument even if it contains whitespace
 
-* A double quote preceded by a backslash ``\`` is intepreted as just a double
-  quote ``"``
+* A double quote preceded by a backslash ``\`` is interpreted as just a double
+  quote ``"``not as an argument delimiter
 
-* Backslashes are interpreted literally unless it is immediately preceed double
+* Backslashes are interpreted literally unless it is immediately preceeds double
   quotes, e.g. ``\`` == ``\`` and ``\"`` == ``"``
 
 * If an even number of backslashes is followed by a double quote, one
@@ -335,7 +339,7 @@ running::
         name: adhoc-task
         username: SYSTEM
         actions:
-        - path: powershell.exe
+        - path: PowerShell.exe
           arguments: |
             Start-Sleep -Seconds 30 # this isn't required, just here as a demonstration
             New-Item -Path C:\temp\test -ItemType Directory
@@ -424,9 +428,9 @@ Here are some examples on how to write Windows paths::
 Legacy key=value Style
 ----------------------
 The legacy ``key=value`` syntax is used on the command line for adhoc commands,
-or inside playbook. Using this style is not recommended for using inside
-playbooks as backslashes need to escaped and it makes the tasks harder to read.
-This syntact depends on the specific implementation in Ansible, and quoting
+or inside playbooks. The use of this style is discouraged within playbooks
+because backslash need to be escaped and it makes playbooks harder to read.
+This syntax depends on the specific implementation in Ansible, and quoting
 (both single and double) does not have any effect on how it is parsed by
 Ansible.
 
@@ -474,13 +478,13 @@ Limitations
 ```````````
 Some things you cannot do, or do easily, with Ansible are:
 
-* Upgrade powershell
+* Upgrade PowerShell
 
 * Interact with the WinRM listeners
 
 This is because WinRM is reliant on the services being online and running
-during normal operations. If powershell was to be upgraded or the WinRM service
-was to bounced then the connection will fail. This can technically be avoided
+during normal operations. If PowerShell was to be upgraded or the WinRM service
+was bounced then the connection will fail. This can technically be avoided
 by using ``async`` or a scheduled task but those methods are fragile if the
 process it runs breaks the underlying connection Ansible uses.
 
@@ -489,7 +493,7 @@ created.
 
 Developing Windows Modules
 ``````````````````````````
-Because Ansible modules for Windows are written in Powershell, the development
+Because Ansible modules for Windows are written in PowerShell, the development
 guides differ from the usual practice. Please see
 :doc:`dev_guide/developing_modules_general_windows` for more information about
 this topic.

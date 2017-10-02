@@ -5,22 +5,21 @@ Desired State Configuration
 
 What is Desired State Configuration?
 ````````````````````````````````````
-Desired State Configuration, or DSC, is a tool built into Powershell that can
+Desired State Configuration, or DSC, is a tool built into PowerShell that can
 be used to define a Windows host setup through code. The overall purpose of DSC
-is the same as Ansible but the benefits of Ansible is that it has it's own
-modules and can leverage DSC. Since Ansible 2.4, the ``win_dsc`` module has
-been created and can be used to leverage existing DSC resources when
-interacting with a Windows host.
+is the same as Ansible, it is just executed in a different manner. Since
+Ansible 2.4, the ``win_dsc`` module has been added and can be used to leverage
+existing DSC resources when interacting with a Windows host.
 
 More details on DSC can be viewed at `DSC Overview <https://docs.microsoft.com/en-us/powershell/dsc/overview>`_.
 
 Host Requirements
 `````````````````
-To use the ``win_dsc`` module, a Windows host must have Powershell v5.0 or
+To use the ``win_dsc`` module, a Windows host must have PowerShell v5.0 or
 newer installed. All supported hosts, except for Server 2008 (non R2) can be
-upgraded to Powershell v5.
+upgraded to PowerShell v5.
 
-To use DSC once the Powershell requirements have been met is as simple as
+To use DSC once the PowerShell requirements have been met is as simple as
 creating a task with the ``win_dsc`` module.
 
 Why Use It?
@@ -28,33 +27,32 @@ Why Use It?
 DSC and Ansible modules have a common goal which is to define the state of a
 resource and the code will ensure that resource meets that state. Because of
 this resources like the `File <https://docs.microsoft.com/en-us/powershell/dsc/fileresource>`_
-DSC resource and win_file can be used to achieve the same result. The question
-is why would someone use DSC over an Ansible module and the answer is it
-depends.
+DSC resource and ``win_file`` can be used to achieve the same result. Why would
+someone use DSC over an Ansible module? Well, it depends.
 
 Reasons for using an Ansible module over a DSC resource are:
 
-* The host does not support Powershell v5.0 or it cannot easily be upgraded
+* The host does not support PowerShell v5.0 or it cannot easily be upgraded
 * The DSC resource does not offer a feature present in an Ansible module, e.g.
-  win_regedit can manage the ``REG_NONE`` type where the DSC ``Registry``
-  resource cannot
-* DSC resources have limited check mode support where some modules have better
-  checks
-* DSC resources do not support diff mode, where some modules do
-* Custom resources require further installation on the host where modules are
-  in built with Ansible and no installation is required
-* There are bug with a DSC resource where an Ansible module works
+  win_regedit can manage the ``REG_NONE`` property type where the DSC
+  ``Registry`` resource cannot
+* DSC resources have limited check mode support where some Ansible modules have
+  better checks
+* DSC resources do not support diff mode, where some Ansible modules do
+* Custom resources require further installation steps to be run on the host
+  beforehand, where Ansible modules are in built-in with Ansible
+* There are bugs in a DSC resource where an Ansible module works
 
 Reasons for using a DSC resource over an Ansible module are:
 
 * The Ansible module does not support a feature present in a DSC resource
-* The only alternative to a DSC resource is to run a command and not a module
-* There are bugs with an existing module while DSC works
+* There is no Ansible module available
+* There are bugs in an existing module where a DSC resource works
 
-In the end, it doesn't matter how the task is done with DSC or an Ansible
-module, what matters is that the task is performanced correctly and the code
-is still readible. If someone has more experience with DSC over Ansible there
-is no reason why DSC can't be used for every step that can use it.
+In the end, it doesn't matter whether the task is performed with DSC or an
+Ansible module, what matters is that the task is performed correctly and the
+playbooks are still readable. If you have more experience with DSC over Ansible
+and it does the job, just use DSC for that task.
 
 How to use it?
 ``````````````
@@ -78,15 +76,16 @@ resource as an example, this is the DSC definition as documented by Microsoft::
     }
 
 When defining the task, ``resource_name`` must be set to the DSC resource being
-used, in this case ``Registry``. The ``module_version`` can refer to a specific
-version of the DSC resource but if left blank will default to the latest. The
-other parameters are set word for word as the options of the resource like
-``Key``, ``ValueName``, etc. The options in the task are not case sensitive but
-it makes it easier to see what is for the DSC resource and what is an Ansible
-option when they are kept as PascalCase.
+used, in this case the ``resource_name`` should be set to ``Registry``. The
+``module_version`` can refer to a specific version of the DSC resource
+installed, if left blank it will default to the latest version. The other
+options are parameters that are used to define the resource like ``Key``,
+``ValueName``, etc. The options in the task are not case sensitive but,
+keeping the case as is is recommended as it makes it easier to distiguish DSC
+resources options with the builtin ``win_dsc`` options.
 
-Using the same example as what is in the Microsoft documentation for Registry,
-this is what the Ansible task would look like::
+Using the same example as what is in the Microsoft documentation for the
+Registry resource, this is what the Ansible task would look like::
 
     - name: use win_dsc module with the Registry DSC resource
       win_dsc:
@@ -100,7 +99,7 @@ Property Types
 --------------
 Each DSC resource property has a type that is associated with it and Ansible
 will try and convert the options defined to the correct type during execution.
-For string types like ``[string]`` and ``[bool]`` this is a simple operation,
+For simple types like ``[string]`` and ``[bool]`` this is a simple operation,
 but complex types like ``[PSCredential]`` or arrays like ``[string[]]`` this
 requires certain rules to be followed.
 
@@ -119,9 +118,9 @@ that has the PSCredential type::
     SourceCredential_username: AdminUser
     SourceCredential_password: PasswordForAdminUser
 
-It is recommended to use ``no_log: true`` on the task definition in Ansible
-to ensure any credentials used are not stored in any log file or console
-output.
+.. Note:: It is recommended to use ``no_log: true`` on the task definition in
+    Ansible to ensure any credentials used are not stored in any log file or
+    console output.
 
 Simple Type Arrays
 ++++++++++++++++++
@@ -138,15 +137,15 @@ to defined a simple type array in Ansible::
 Run As Another User
 -------------------
 By default, DSC runs each resource as the SYSTEM account and not the account
-that Ansible run the module as. This means that to access resources that are
-usually loaded with a user profile like ``HKEY_CURRENT_USER`` with the Registry
-resource will be for the SYSTEM account. The parameter ``PsDscRunAsCredential``
-is a parameter that can be set for every DSC resource to force the DSC engine
-to run under a different account than SYSTEM. As ``PsDscRunAsCredential`` has a
-type of ``PSCredential``, it is defined with the ``_username`` and
-``_password`` suffix.
+that Ansible runs the module as. This means that resources that are dynamically
+loaded based on a user profile, like the ``HKEY_CURRENT_USER`` registry hive,
+will be loaded under the ``SYSTEM`` profile. The parameter 
+`PsDscRunAsCredential`` is a parameter that can be set for every DSC resource
+force the DSC engine to run under a different account. As
+``PsDscRunAsCredential`` has a type of ``PSCredential``, it is defined with the
+``_username`` and ``_password`` suffix.
 
-Using the Registry resource type as an example, this is how to define a type
+Using the Registry resource type as an example, this is how to define a task
 to access the ``HKEY_CURRENT_USER`` hive of the Ansible user::
 
     - name: use win_dsc with PsDscRunAsCredential to run as a different user
@@ -158,20 +157,22 @@ to access the ``HKEY_CURRENT_USER`` hive of the Ansible user::
         ValueData: TestData
         PsDscRunAsCredential_username: '{{ansible_user}}'
         PsDscRunAsCredential_password: '{{ansible_password}}'
+      no_log: true
 
 Custom DSC Resources
 ````````````````````
 DSC resources are not limited to the builtin options from Microsoft and custom
-modules can be installed to manage other resources.
+modules can be installed to manage other resources not usually available.
 
 Finding Custom DSC Resource
 ---------------------------
-The main source to find custom resources would be `PSGallery <https://www.powershellgallery.com/>`_,
-this site can then link to further documentation or details on how to install
-it manually.
+The main source to use for finding custom resources would be the
+`PSGallery <https://www.powershellgallery.com/>`_. This site can then link to
+further documentation or details on how to install it the resource on a Windows
+host.
 
 The ``Find-DscResource`` cmdlet can also be used to find custom resources. An
-example of this cmdlet is:
+example of how to use this cmdlet is:
 
 .. code-block:: powershell
 
@@ -181,16 +182,16 @@ example of this cmdlet is:
     # find all DSC resources that relate to SQL
     Find-DscResource -ModuleName "*sql*"
 
-.. Note:: DSC resources that start with ``x`` mean the module is experimental
-    and comes with no support.
+.. Note:: DSC resources developed by Microsoft that start with ``x``, means the
+    resource is experimental and comes with no support.
 
 Installing Custom Resource
 --------------------------
 There are three ways that a DSC resource can be installed on a host:
 
 * Manually with the ``Install-Module`` cmdlet
-* Using the ``win_psmodule`` module
-* Saving the module and installing it without internet access
+* Using the ``win_psmodule`` Ansible module
+* Saving the module manually and copying it another host
 
 This is an example of installing the ``xWebAdministration`` resources using
 ``win_psmodule``::
@@ -203,19 +204,20 @@ This is an example of installing the ``xWebAdministration`` resources using
 Once installed, the win_dsc module will be able to use it by referencing it
 with the ``resource_name`` option.
 
-The methods above only work when the host has access to the internet but there
-where a host without internet access requires a custom resource. To achieve
-this the first step would be to save the module first on a Windows host that
-has internet access. This can be done with the following command::
+The first two methods above only work when the host has access to the internet.
+When a host does not have internet access, the module must first be installed
+using the methods above on another host with internet access and then copied
+across. To save a module to a local filepath, the following PowerShell cmdlet
+can be run::
 
     Save-Module -Name xWebAdministration -Path C:\temp
 
 This will create a folder called ``xWebAdministration`` in ``C:\temp`` which
-can be copied to any host. On the host without internet access, this folder
-must be copied to a directory under ``PSModulePath``. Usually the path
-``C:\Program Files\WindowsPowerShell\Modules`` is under this path but it is
-best to check this environment value before copying. Any modules that under the
-``PSModulePath`` folder are accessible in Powershell.
+can be copied to any host. For PowerShell to see this offline resource, it must
+be copied to a directory set in the ``PSModulePath`` environment variable.
+In most cases the path ``C:\Program Files\WindowsPowerShell\Module`` is set
+through this variable but the ``win_path`` module can be used to add different
+paths.
 
 Examples
 ````````

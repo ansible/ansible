@@ -5,36 +5,36 @@ required on the host to enable this.
 
 .. contents:: Topics
 
-Host Requirments
-````````````````
+Host Requirements
+`````````````````
 For Ansible to communicate to a Windows host and use Windows modules, the
 Windows host must meet the following requirements:
 
 * The OS versions that are supported under Ansible fall under the same support
   agreement as Microsoft. If running a desktop OS, it must be Windows 7, 8.1,
-  or 10. If running a desktop OS it must be Windows Server 2008, 2008 R2,
+  or 10. If running a server OS it must be Windows Server 2008, 2008 R2,
   2012, 2012 R2, or 2016.
 
-* Ansible requires Powershell 3.0 or newer and at least .NET 4.0 to be
+* Ansible requires PowerShell 3.0 or newer and at least .NET 4.0 to be
   installed on the Windows host.
 
 * A WinRM listener is created and is activated, more details for this can be
   found below.
 
-.. Note:: While these are the base requirements some modules have separate
-    requirements where it may need a newer OS or the latest powershell
-    version. Please read the notes section on a module to determine whether
-    a host meets those requirements.
+.. Note:: While these are the base requirements some Ansible modules have
+    separate requirements where it may need a newer OS or the latest powershell
+    version. Please read the notes section on the module's documentation page
+    to determine whether a host meets those requirements.
 
-Upgrading Powershell and .NET Framework
+Upgrading PowerShell and .NET Framework
 ---------------------------------------
-Ansible requires Powershell v3 and .NET Framework 4.0 or newer to function and
+Ansible requires PowerShell v3 and .NET Framework 4.0 or newer to function and
 on older OS' like Server 2008 and Windows 7, the base image does not meet this
 requirement. The script `update_powershell.ps1 <https://github.com/ansible/ansible/blob/devel/examples/scripts/update_powershell.ps1>`_
-can be used to install whatever powershell version that is set along with the
-required .NET Framework alongside it.
+can be used to install whatever PowerShell version that is desired and it will
+also install .NET Framework 4.5.2 if required.
 
-This is an example of how to run this script from powershell:
+This is an example of how to run this script from PowerShell:
 
 .. code-block:: powershell
 
@@ -49,8 +49,9 @@ This is an example of how to run this script from powershell:
     # version can be 3.0, 4.0 or 5.1
     &$file -version 5.1 -username $username -password $password -Verbose
 
-Once complete, the following commands should be run to remove the auto logon
-and set the execution policy from powershell:
+Once completed, the following commands should be run to remove the auto logon
+and set the execution policy back to the default of ``Restricted`` from
+PowerShell:
 
 .. code-block:: powershell
 
@@ -63,39 +64,37 @@ and set the execution policy from powershell:
     Remove-ItemProperty -Path $reg_winlogon_path -Name DefaultPassword -ErrorAction SilentlyContinue
 
 The script works by checking to see what programs need to be installed like
-.NET Framework 4.5.2 and then what powershell version is required. If a reboot
+.NET Framework 4.5.2 and then what PowerShell version is required. If a reboot
 is required and the ``username`` and ``password`` parameters are set, the
-script will automatically reboot and automatically logon when it comes back up
-from the reboot. This continues until no more actions are required and the
-powershell version matches the target version. If the ``username`` and
+script will automatically reboot and logon when it comes back up from the
+reboot. The script will continue until no more actions are required and the
+PowerShell version matches the target version. If the ``username`` and
 ``password`` parameters are not set, the script will prompt the user to
 manually reboot and logon when required. When the user is next logged in, the
 script will continue where it left off and the process continues until no more
 actions are required.
 
-.. Note:: If running on Server 2008, then SP2 must be installed before .NET 4.0
-    and Powershell 3.0 can be installed. If running on Server 2008 R2 or
-    Windows 7, then SP1 must be installed.
+.. Note:: If running on Server 2008, then SP2 must be installed. If running on
+    Server 2008 R2 or Windows 7, then SP1 must be installed.
 
-.. Note:: Windows Server 2008 can only install Powershell 3.0, specifying a
+.. Note:: Windows Server 2008 can only install PowerShell 3.0, specifying a
     newer version will result in the script failing.
 
 .. Note:: If setting the ``username`` and ``password`` parameter, these values
     are stored in plain text in the registry. Make sure the cleanup commands
-    are run after runnning this step to ensure no credentials are still stored
+    are run after the script finishes to ensure no credentials are still stored
     on the host.
 
 WinRM Memory Hotfix
 -------------------
-When running on Powershell v3.0, there is a bug with the WinRM service on
-Windows Server 2008, 2008 R2, 2012, and Windows 7 that limits the amount of
-memory available to the service. Without this hotfix installed, Ansible will
-fail to execute certain commands on the Windows host. It is highly recommended
-these hotfixes are installed as part of the system bootstapping or imaging
-process. The script `winrm_hotfix.ps1 <https://github.com/ansible/ansible/blob/devel/examples/scripts/winrm_hotfix.ps1>`_
+When running on PowerShell v3.0, there is a bug with the WinRM service that
+limits the amount of memory available to WinRM. Without this hotfix installed,
+Ansible will fail to execute certain commands on the Windows host. It is highly
+recommended these hotfixes are installed as part of the system bootstapping or
+imaging process. The script `winrm_hotfix.ps1 <https://github.com/ansible/ansible/blob/devel/examples/scripts/winrm_hotfix.ps1>`_
 can be used to install the hotfix on affected hosts.
 
-The following powershell command will install the hotfix:
+The following PowerShell command will install the hotfix:
 
 .. code-block:: powershell
 
@@ -107,18 +106,18 @@ The following powershell command will install the hotfix:
 
 WinRM Setup
 ```````````
-Once powershell has been upgraded to at least 3.0, the final step is for the
+Once Powershell has been upgraded to at least 3.0, the final step is for the
 WinRM service to be configured so that Ansible can connect to it. There are two
-main components of the WinRM service that Ansible interfaces with; the
-``listener`` and the ``service`` configuration settings.
+main components of the WinRM service that governs how Ansible can interace with
+the Windows host; the ``listener`` and the ``service`` configuration settings.
 
-Further details about each component can be read below but to get a single host
-up and running to use with Windows the script `ConfigureRemotingForAnsible.ps1 <https://github.com/ansible/ansible/blob/devel/examples/scripts/ConfigureRemotingForAnsible.ps1>`_
-can be used. This script set's up both a HTTP and HTTPS listener with a self
-signed certificate as well as enabling the ``Basic`` authentication option on
-the service.
+Further details about each component can be read below but the script
+`ConfigureRemotingForAnsible.ps1 <https://github.com/ansible/ansible/blob/devel/examples/scripts/ConfigureRemotingForAnsible.ps1>`_
+can be used to set up the basics. This script set's up both a HTTP and HTTPS
+listener with a self-signed certificate as well as enabling the ``Basic``
+authentication option on the service.
 
-To run this script, run the following in powershell:
+To run this script, run the following in PowerShell:
 
 .. code-block:: powershell
 
@@ -130,19 +129,19 @@ To run this script, run the following in powershell:
     powershell.exe -ExecutionPolicy ByPass -File $file
 
 There are different switches and parameters, like ``-EnableCredSSP`` and
-``-ForceNewSSLCert`` that can be set alongside this script. he documentation
+``-ForceNewSSLCert`` that can be set alongside this script. The documentation
 for these options are located at the top of the script itself.
 
 .. Note:: The ConfigureRemotingForAnsible.ps1 script should not be used in a
     production environment. It enables settings that can be inherently insecure
     like ``Basic`` auth. It is only designed for dev work and to help people
-    can get started.
+    get started.
 
 WinRM Listener
 --------------
-WinRM works by having the service listen on a port or ports from requests and
-handle them accordingly. For it to listener on a port it must have a listener
-created and configured with that port.
+WinRM works by having the service listen on a port or ports for external
+requests and handle them accordingly. For it to listen on a port it must have a
+listener created and configured with that port.
 
 To view the current listeners that are running on the WinRM service, run the
 following::
@@ -192,7 +191,7 @@ the key options that are useful to understand are:
 * ``CertificateThumbprint``: If running over a HTTPS listener, this is the
   thumbprint of the certificate in the Windows Certificate Store that is used
   in the connection. To get the details of the certificate itself, run this
-  command in powershell:
+  command with the relevant certificate thumbprint in PowerShell:
 
   .. code-block:: powershell
     
@@ -205,7 +204,7 @@ When setting up a WinRM listener, there are three ways in which they can be
 created. The best option to choose from depends on how each environment is
 setup, e.g. use GPO when in a domain environment vs quickconfig when spinning
 a new host in the cloud not in a domain. The three different ways a listener
-can be set up are:
+can be set up which are:
 
 * Using ``winrm quickconfig`` for HTTP or
   ``winrm quickconfig -transport:https`` for HTTPS. This is the simplest option
@@ -219,8 +218,8 @@ can be set up are:
   way to create a listener when the host is a member of a domain as the
   configuration is done automatically without any user input.
 
-* Using powershell to create the listener with a specific configuration. This
-  can be done by running the following powershell commands:
+* Using PowerShell to create the listener with a specific configuration. This
+  can be done by running the following PowerShell commands:
 
   .. code-block:: powershell
 
@@ -234,7 +233,7 @@ can be set up are:
 
       New-WSManInstance -ResourceURI "winrm/config/Listener" -SelectorSet $selector_set -ValueSet $value_set
 
-  To see the other options with this powershell cmdlet, see
+  To see the other options with this PowerShell cmdlet, see
   `New-WSManInstance <https://docs.microsoft.com/en-us/powershell/module/microsoft.wsman.management/new-wsmaninstance?view=powershell-5.1>`_.
 
 .. Note:: When creating a HTTPS listener, an existing certificate needs to be
@@ -261,7 +260,7 @@ can be used to do so:
 WinRM Service Options
 ---------------------
 The WinRM service component is what governs the rules around the WinRM service
-such as the authentication options supported, 
+such as the authentication options supported, memory settings, etc.
 
 To get an output of the service configurations currently set, run the
 following::
@@ -309,15 +308,15 @@ While a lot of these options should rarely be changed, a few can easily impact
 the operations over WinRM and are useful to understand. Some of the important
 options are:
 
-* ``Service\AllowUnencrypted``: This option states whether the WinRM will allow
+* ``Service\AllowUnencrypted``: This option states whether WinRM will allow
   traffic that is run over HTTP without message encryption. Message level
   encryption is only supported when ``ansible_winrm_transport`` is ``ntlm``,
   ``kerberos`` or ``credssp``. By default this is ``false`` and should only be
-  set to ``true`` in when debugging WinRM messages.
+  set to ``true`` when debugging WinRM messages.
 
 * ``Service\Auth\*``: These are the flags that states what authentication
-  options are allowed with the WinRM service. By default ``Negotiate/NTLM`` and
-  ``Kerberos`` are enabled.
+  options are allowed with the WinRM service. By default ``Negotiate (NTLM)``
+  and ``Kerberos`` are enabled.
 
 * ``Service\Auth\CbtHardeningLevel``: States whether channel binding tokens are
   not verified (None), verified but not required (Relaxed), or verified and
@@ -328,8 +327,8 @@ options are:
 
 * ``Service\CertificateThumbprint``: This is the thumbprint of the certificate
   used to encrypt the TLS channel used with CredSSP authentication. By default
-  this is not set to anything which means a self signed certificate generated
-  when the WinRM service starts is used instead.
+  this is not set to anything which means a self-signed certificate is
+  generated when the WinRM service starts and is used in the TLS process.
 
 * ``Winrs\MaxShellRunTime``: This is the maximum time, in milliseconds, that a
   remote command is allowed to execute for.
@@ -337,15 +336,27 @@ options are:
 * ``Winrs\MaxMemoryPerShellMB``: This is the maximum amount of memory allocated
   per shell, including the shell's child processes.
 
-To modify a setting in powershell, the following command can be used:
+To modify a setting under the ``Service`` key in PowerShell, the following
+command can be used:
 
 .. code-block:: powershell
 
-    # substitute {path} with the path to the option after winrm/config
-    Set-Item -Path WSMan:\localhost\{path} -Value "value here"
+    # substitute {path} with the path to the option after winrm/config/Service
+    Set-Item -Path WSMan:\localhost\Service\{path} -Value "value here"
 
     # e.g. to change Service\Auth\CbtHardeningLevel run
     Set-Item -Path WSMan:\localhost\Service\Auth\CbtHardeningLevel -Value Strict
+
+To modify a setting under the ``Winrs`` key in PowerShell, the following
+command can be used:
+
+.. code-block:: powershell
+
+    # substitute {path} with the path to the option after winrm/config/Winrs
+    Set-Item -Path WSMan:\localhost\Shell\{path} -Value "value here"
+
+    # e.g. to change Winrs\MaxShellRunTime run
+    Set-Item -Path WSMan:\localhost\Shell\MaxShellRunTime -Value 2147483647
 
 .. Note:: If running in a domain environment, some of these options are set by
     GPO and cannot be changed on the host itself. When a key has been
@@ -353,11 +364,12 @@ To modify a setting in powershell, the following command can be used:
 
 Common WinRM Issues
 -------------------
-WinRM can be a finnicky protocol due to the complexity in it's setup and the
+WinRM can be a finnicky protocol due to the complexity in its setup and the
 wide range of configuration options that can be used. Because of this
 complexity, issues that are shown by Ansible could in fact be issues with the
 host setup instead. One easy way to determine whether it is a host issue is by
-running the following command from another Windows host::
+running the following command from another Windows host to connect to the
+target Windows host::
 
     # test out HTTP
     winrs -r:http://server:5985/wsman -u:Username -p:Password ipconfig
@@ -403,9 +415,9 @@ connection. Some things to check for this are:
 * If using Kerberos authentication, check ``Service\Auth\CbtHardeningLevel`` is
   not set to ``Strict``
 
-* When using Basic or Certificate auth, check the user set by ``ansible_user``
-  is a local account and not a domain account. Domain accounts do not work over
-  Basic and Certificate auth.
+* When using Basic or Certificate auth, check the user is a local account and
+  not a domain account. Domain accounts do not work over Basic and Certificate
+  auth.
 
 HTTP 500 Error
 ++++++++++++++
@@ -424,6 +436,20 @@ Ansible is unable to even reach the host. Some things to check for this are:
 * The firewall is not set to block the WinRM port's it is listening on
 * There is a WinRM listener enabled on the port and path set by the host vars
 * The WinRM service ``winrm`` is started and running on the Windows host
+
+Connection Refused Errors
++++++=+++++++++++++++++++
+These errors usually indicate an error when trying to communicate with the
+WinRM service on the host. Some things to check for this are:
+
+* The WinRM service is up and running on the host, use
+  ``(Get-Service -Name winrm).Status`` to get the status of the service
+* Check the host Firewall is allowing traffic over the WinRM port, by default
+  this is ``5985`` for HTTP and ``5986`` for HTTPS.
+
+Sometimes an installer may restart the WinRM service and cause this error. The
+best way to deal with this at the moment is to use ``win_psexec`` from another
+Windows host.
 
 .. seealso::
 

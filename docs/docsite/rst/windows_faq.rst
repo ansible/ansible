@@ -22,7 +22,7 @@ supported hosts are:
 * Windows 8.1
 * Windows 10
 
-There is also a requirement on the version of Powershell that needs to be
+There is also a requirement on the version of PowerShell that needs to be
 installed.
 
 See :doc:`windows_setup` for more information.
@@ -103,7 +103,7 @@ running a command locally in these ways:
 * Each process over WinRM is run in an non-interactive process, any
   applications that rely on having an interactive session will not work.
 
-* Wgeb running through WinRM, Windows restricts access to internal Windows
+* When running through WinRM, Windows restricts access to internal Windows
   API's like the Windows Update API and DPAPI which some installers and
   programs rely on.
 
@@ -139,7 +139,7 @@ Linux/Unix machines and arbitrary web services. These modules are written in
 Python and do not work on Windows for various reasons.
 
 Because of this, there are dedicated Windows modules that are written in
-Powershell and are meant to be run on Windows hosts which can be found
+PowerShell and are meant to be run on Windows hosts which can be found
 `here <http://docs.ansible.com/list_of_windows_modules.html>`_.
 
 In addition, the following core modules/action-plugins work with Windows
@@ -167,7 +167,7 @@ In addition, the following core modules/action-plugins work with Windows
 
 Can I run Python modules?
 `````````````````````````
-No, the WinRM connection protocol is set to use powershell modules and Python
+No, the WinRM connection protocol is set to use PowerShell modules and Python
 modules will not work. A way to bypass this issue to use
 ``delegate_to: localhost`` to run a Python module on the Ansible controller.
 This is useful if during a playbook, an external service needs to be contacted

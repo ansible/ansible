@@ -208,20 +208,21 @@ module.
 Become and Windows
 ``````````````````
 
-Since Ansible 2.3, become can be used on Windows hosts through the ``runas``
-method. Become on Windows uses the same inventory setup and invocation
-arguments as the normal method so nothing in different from the above.
+Since Ansible 2.3, ``become`` can be used on Windows hosts through the
+``runas`` method. Become on Windows uses the same inventory setup and
+invocation arguments as as ``become`` on a non Windows host so the setup and
+variables names are the same as what is defined in this document.
 
 While ``become`` can be used to become another user, there are other uses for
-using become with Windows hosts. One important use is to bypass some of the
+using it with Windows hosts. One important use is to bypass some of the
 limitations that are imposed when running on WinRM such as constrained network
-delegation or forbidden system calls like the WUA API. You can use ``become``
-with the same user as ``ansible_user`` to bypass these limitations and do tasks
-that are not normally accessible in a WinRM session.
+delegation or accessing forbidden system calls like the WUA API. You can use
+``become`` with the same user as ``ansible_user`` to bypass these limitations
+run commands that are not normally accessible in a WinRM session.
 
 .. note:: While become support was added for Windows since Ansible 2.3 it is
     still considered experimental and can change in the future based on issues
-    and limitations that are found. Before Ansible 2.4 become would only work
+    and limitations that are found. Before Ansible 2.4, become would only work
     when ``ansible_winrm_transport`` was either ``basic`` or ``credssp`` but
     since that release it now works on all transport types.
 
@@ -232,20 +233,19 @@ A lot of tasks in Windows requires administrative privileges to complete.
 Ansible will attempt to run a process as an administrator and fall back to a
 limited token if that fails.
 
-Ways to become with an admin token are:
+Ways to use ``become`` with an admin token are:
 
 * Set the ``become_user`` to the default local ``Administrator`` account. This
-  account is not any user that is a member of the local Administrators group
-  but rather the user called ``Administrator`` that is installed with Windows.
+  account is the default user called ``Administrator`` that is installed with
+  Windows and not just a user under the local Administrators group.
 
 * Grant the privilege ``SeTcbPrivilege`` to the user Ansible connects with on
   WinRM. The privilege ``SeTcbPrivilege`` is a high level privilege that grants
-  full control over the operating system. No user is giving this privilege by
+  full control over the operating system. No user is given this privilege by
   default and care should be taken if you grant a user or group to this
   privilege. More details on this privilege and what it does can be seen
   `here <https://technet.microsoft.com/en-us/library/dn221957(v=ws.11).aspx>`_.
-  You can use the below task to before this action on a Windows
-  host::
+  You can use the below task to set this privilege on a Windows host::
 
     - name: grant the ansible user the SeTcbPrivilege right
       win_user_right:
@@ -274,15 +274,12 @@ Ways to become with an admin token are:
 Limitations
 -----------
 
-There are currently a few known limitations with ``become`` on Windows should
-be kept aware of.
+Be aware of the following limitations with ``become`` on Windows:
 
-These limitations are:
+* Running a task with ``async`` and ``become`` do not work.
 
-* Running and task with ``async`` and become do not work under Windows.
-
-* Become does not currently work like the local service accounts like
-  ``NT AUTHORITY\\SYSTEM`` but there are plans on adding this feature in later
+* Become does not currently work with local service accounts like
+  ``NT AUTHORITY\\SYSTEM``, there are plans on adding this feature in later
   releases.
 
 * The become user logs on with an interactive session so it must have the
@@ -291,8 +288,8 @@ These limitations are:
   privilege, the become process will fail.
 
 * Before Ansible 2.3, become only worked when ``ansible_winrm_transport`` was
-  either ``basic`` or ``credssp``. These restrictions have been lifted since
-  the 2.4 release.
+  either ``basic`` or ``credssp``. This restriction has been lifted since the
+  2.4 release.
 
 .. seealso::
 

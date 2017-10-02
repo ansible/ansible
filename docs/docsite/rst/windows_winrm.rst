@@ -10,7 +10,7 @@ What is WinRM?
 ``````````````
 WinRM is a management protocol used by Windows to remotely communicate with
 another server. It is a SOAP-based protocol that communicates over HTTP and is
-included in all recent Windows operating systems on install. Since Windows
+included in all recent Windows operating systems by default. Since Windows
 Server 2012 it has also been enabled by default but in most cases extra
 configuration will be required for Ansible to use it.
 
@@ -62,7 +62,7 @@ To use basic authentication, the host vars are configured like so::
     ansible_winrm_transport: basic
 
 Basic authentication is not enabled by default on a Windows host but can be
-enabled by running the following in powershell:
+enabled by running the following in PowerShell:
 
 .. code-block:: powershell
 
@@ -74,7 +74,7 @@ Certificate authentication is one of the lesser know authentication options
 when it comes to WinRM. It uses certificates as keys similar to the SSH key
 pairs but the file format and key generation process is different.
 
-The use certificate authentication, the host vars are configured like so::
+To use certificate authentication, the host vars are configured like so::
 
     ansible_connection: winrm
     ansible_winrm_cert_pem: /path/to/certificate/public/key.pem
@@ -82,7 +82,7 @@ The use certificate authentication, the host vars are configured like so::
     ansible_winrm_transport: certificate
 
 Certificate authentication is not enabled by default on a Windows host but can
-be enabled by running the following in powershell:
+be enabled by running the following in PowerShell:
 
 .. code-block:: powershell
 
@@ -97,13 +97,13 @@ Before mapping a certificate to a local user it first needs to be generated.
 This can be done through 3 different methods:
 
 * With OpenSSL
-* With Powershell by using the ``New-SelfSignedCertificate`` cmdlet
+* With PowerShell by using the ``New-SelfSignedCertificate`` cmdlet
 * With Active Directory Certificate Services
 
 The third option using ADCS is out of scope in this documentation but might be
 the best option to use when running in a domain environment.
 
-.. Note:: Using the powershell cmdlet ``New-SelfSignedCertificate`` to generate
+.. Note:: Using the PowerShell cmdlet ``New-SelfSignedCertificate`` to generate
     a certificate for authentication only works when being generated from a
     Windows 10 or Server 2012 R2 host or later. OpenSSL is still required to
     extract the private key from the PFX certificate to a PEM file for Ansible
@@ -207,7 +207,7 @@ Mapping Certificate to Account
 Once the certificate has been import then it needs to be mapped to the relevant
 local user account.
 
-This can be done with the following powershell command:
+This can be done with the following PowerShell command:
 
 .. code-block:: powershell
 
@@ -459,7 +459,7 @@ There are some extra host variables that can be set as shown below::
     ansible_winrm_credssp_disable_tlsv1_2: when true will not use TLS 1.2 in the CredSSP auth process
 
 CredSSP authentication is not enabled by default on a Windows host but can
-be enabled by running the following in powershell:
+be enabled by running the following in PowerShell:
 
 .. code-block:: powershell
 
@@ -492,7 +492,7 @@ There are two ways that older hosts can be used with CredSSP, which are:
 To enable TLS 1.2 support on Server 2008 R2 and Windows 7, the optional update
 `KRB3080079 <https://support.microsoft.com/en-us/help/3080079/update-to-add-rds-support-for-tls-1.1-and-tls-1.2-in-windows-7-or-windows-server-2008-r2>`_
 needs to be installed. Once installed and the host rebooted, run the following
-powershell commands to enable TLS 1.2:
+PowerShell commands to enable TLS 1.2:
 
 .. code-block:: powershell
 
@@ -570,7 +570,7 @@ in the host vars.
 A last resort is to disable the encryption check on the Windows host. This
 should only be used for developmental and debugging purposes as anything sent
 from Ansible can viewed by anyone on the network. To disable the encryption
-check the following command can be run in powershell:
+check the following command can be run in PowerShell:
 
 .. code-block:: powershell
 
