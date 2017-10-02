@@ -297,6 +297,10 @@ class Interfaces(FactsBase):
         if data:
             self.facts['neighbors'] = self.populate_neighbors(data)
 
+        data = self.run('show cdp neighbors detail', 'json')
+        if data:
+            self.facts['neighbors_cdp'] = self.populate_neighbors_cdp(data)
+
     def populate_interfaces(self, data):
         interfaces = dict()
         for item in data['TABLE_interface']['ROW_interface']:
@@ -345,6 +349,20 @@ class Interfaces(FactsBase):
                 nbor['host'] = item['chassis_id']
                 objects[local_intf].append(nbor)
 
+        return objects
+
+    def populate_neighbors_cdp(self, data):
+        objects = dict()
+        for item in data['TABLE_cdp_neighbor_detail_info']['ROW_cdp_neighbor_detail_info']:
+            try:
+                local_intf = item['intf_id']
+                objects[local_intf] = list()
+                nbor = dict()
+                nbor['port'] = item['port_id']
+                nbor['host'] = item['device_id']
+                objects[local_intf].append(nbor)
+            except TypeError:
+                objects = {}
         return objects
 
     def parse_ipv6_interfaces(self, data):
