@@ -311,13 +311,27 @@ def po_to_envra(po):
     return '%s:%s-%s-%s.%s' % (po.epoch, po.name, po.version, po.release, po.arch)
 
 
-def is_group_installed(name):
+def is_group_env_installed(name):
+    name_lower = name.lower()
+
     my = yum_base()
-    groups_list = my.doGroupLists()
-    for group in groups_list[0]:  # list of the installed groups on the first index
-        name_lower = name.lower()
+    if yum.__version__ >= '3.4':
+        groups_list = my.doGroupLists(return_evgrps=True)
+    else:
+        groups_list = my.doGroupLists()
+
+    # list of the installed groups on the first index
+    groups = groups_list[0]
+    for group in groups:
         if name_lower.endswith(group.name.lower()) or name_lower.endswith(group.groupid.lower()):
             return True
+
+    if yum.__version__ >= '3.4':
+        # list of the installed env_groups on the third index
+        envs = groups_list[2]
+        for env in envs:
+            if name_lower.endswith(env.name.lower()) or name_lower.endswith(env.environmentid.lower()):
+                return True
 
     return False
 
@@ -729,7 +743,7 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, i
 
         # groups
         elif spec.startswith('@'):
-            if is_group_installed(spec):
+            if is_group_env_installed(spec):
                 continue
 
             pkg = spec
@@ -835,7 +849,7 @@ def remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, in
 
     for pkg in items:
         if pkg.startswith('@'):
-            installed = is_group_installed(pkg)
+            installed = is_group_env_installed(pkg)
         else:
             installed = is_installed(module, repoq, pkg, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot)
 
@@ -868,7 +882,7 @@ def remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, in
         # at this point we check to see if the pkg is no longer present
         for pkg in pkgs:
             if pkg.startswith('@'):
-                installed = is_group_installed(pkg)
+                installed = is_group_env_installed(pkg)
             else:
                 installed = is_installed(module, repoq, pkg, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot)
 
