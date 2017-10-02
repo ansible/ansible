@@ -100,7 +100,7 @@ def set_config_state(state, configfile):
 
     with open(configfile, "w") as write_file:
         for line in lines:
-            write_file.write(re.sub(r'^SELINUX=.*', stateline, line))
+            write_file.write(re.sub(r'^SELINUX=.*', stateline, line) + '\n')
 
 
 def set_state(module, state):
@@ -123,7 +123,7 @@ def set_config_policy(policy, configfile):
 
     with open(configfile, "w") as write_file:
         for line in lines:
-            write_file.write(re.sub(r'^SELINUXTYPE=.*', policyline, line))
+            write_file.write(re.sub(r'^SELINUXTYPE=.*', policyline, line) + '\n')
 
 
 def main():
@@ -214,7 +214,6 @@ def main():
 
     module.exit_json(changed=changed, msg=', '.join(msgs), configfile=configfile, policy=policy, state=state)
 
-#################################################
 
 if __name__ == '__main__':
     main()
