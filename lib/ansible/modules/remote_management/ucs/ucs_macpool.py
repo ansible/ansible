@@ -52,7 +52,7 @@ requirements:
 author:
 - David Soper (@dsoper2)
 - CiscoUcs (@CiscoUcs)
-version_added: '2.4'
+version_added: '2.5'
 '''
 
 EXAMPLES = r'''
@@ -73,6 +73,7 @@ RETURN = r'''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ucs import UcsConnection, ucs_argument_spec
 
 
 def _argument_mo():
@@ -183,8 +184,6 @@ def setup(login_handle, module):
         result['changed'] = False
 
     return result, err
-
-from ansible.module_utils.ucs import UcsConnection, ucs_argument_spec
 
 
 def main():
