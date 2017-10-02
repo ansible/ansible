@@ -82,9 +82,10 @@ options:
     description:
       - The state of module
       - The 'forcereinstall' option is only available in Ansible 2.1 and above.
+      - The 'prerelease' option is only available in Ansible 2.4 and above.
     required: false
     default: present
-    choices: [ "present", "absent", "latest", "forcereinstall" ]
+    choices: [ "present", "absent", "latest", "forcereinstall", "prerelease" ]
   extra_args:
     description:
       - Extra arguments passed to pip.
@@ -203,6 +204,11 @@ EXAMPLES = '''
 - pip:
     name: bottle
     state: forcereinstall
+
+# Install (Bottle), using the latest pre-release version
+- pip:
+    name: bottle
+    state: prerelease
 
 # Install (Bottle) while ensuring the umask is 0022 (to ensure other users can use it)
 - pip:
@@ -370,6 +376,7 @@ def main():
         absent='uninstall -y',
         latest='install -U',
         forcereinstall='install -U --force-reinstall',
+        prerelease='install -U --pre'
     )
 
     module = AnsibleModule(
