@@ -89,6 +89,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 APPLY_ARGS = ('apply', '-auto-approve=true')
 
+
 def preflight_validation(module, bin_path, project_path, variables_file=None, plan_file=None):
     if not os.path.exists(bin_path):
         module.fail_json(msg="Path for Terraform binary '{0}' doesn't exist on this host - check the path and try again please.".format(project_path))
@@ -127,8 +128,10 @@ def main():
             variables=dict(type='dict'),
             variables_file=dict(type='path'),
             plan_file=dict(type='path'),
-            state_file=dict(type='path'), #TODO
+            # TODO: implement statefile support
+            state_file=dict(type='path'),
         ),
+        supports_check_mode=True,
     )
 
     project_path = module.params.get('project_path')
@@ -155,22 +158,20 @@ def main():
     if variables_file:
         variables_args.append('-var-file', variables_file)
 
-
     command.extend(APPLY_ARGS)
 
     # we aren't sure if this plan will result in changes, so assume yes
     needs_application, changed = True, True
 
-    if plan_file and os.path.exists(os.path.expanduser('plan_file')):
+    if plan_file and os.path.exists(plan_file):
         command.append(plan_file)
-    if plan_file and not os.path.exists('plan_file'):
+    if plan_file and not os.path.exists(plan_file):
         module.fail_json(msg='Could not find plan_file "{}", check the path and try again.'.format(plan_file))
     else:
         plan_file, needs_application = build_plan(module, command[0], project_path, variables_args)
         command.append(plan_file)
 
-    #module.fail_json(msg="About to run: {}, needs_application: {}".format(command, needs_application))
-    if needs_application:
+    if needs_application and not module.check_mode:
         rc, out, err = module.run_command(command, cwd=project_path)
         if rc != 0:
             module.fail_json(msg="Failure when executing Terraform command. Exited {}.\nstdout: {}\nstderr: {}".format(rc, out, err))
