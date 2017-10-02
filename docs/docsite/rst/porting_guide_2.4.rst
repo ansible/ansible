@@ -99,7 +99,10 @@ There have been many changes to the implementation of vars plugins, but both use
 
 The most notable difference to users is that vars plugins now get invoked on demand instead of at inventory build time.  This should make them more efficient for large inventories, especially when using a subset of the hosts.
 
-.. note:: This also creates a difference with group/host_vars when using them adjacent to playbooks. Before, the 'first' playbook loaded determined the variables; now the 'current' playbook does. We are looking to fix this soon, since 'all playbooks' in the path should be considered for variable loading.
+
+.. note::
+  - This also creates a difference with group/host_vars when using them adjacent to playbooks. Before, the 'first' playbook loaded determined the variables; now the 'current' playbook does. We are looking to fix this soon, since 'all playbooks' in the path should be considered for variable loading.
+  - In 2.4.1 we added a toggle to allow you to control this behaviour, 'top' will be the pre 2.4, 'bottom' will use the current playbook hosting the task and 'all' will use them all from top to bottom.
 
 
 Inventory plugins
