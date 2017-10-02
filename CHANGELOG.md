@@ -74,6 +74,7 @@ Ansible Changes By Release
 * Fix for win_dotnet_ngen to work after recent regression
 * fixed backwards compat method for config
 * removed docs for prematurely added ssh specific pipelining settings
+* fixed redis cache typo
 
 
 <a id="2.4"></a>
