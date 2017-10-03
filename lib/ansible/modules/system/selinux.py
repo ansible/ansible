@@ -8,9 +8,11 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['stableinterface'],
-                    'supported_by': 'core'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.1',
+    'status': ['stableinterface'],
+    'supported_by': 'core'
+}
 
 
 DOCUMENTATION = '''
@@ -73,7 +75,7 @@ from ansible.module_utils.facts.utils import get_file_lines
 
 # getter subroutines
 def get_config_state(configfile):
-    lines = get_file_lines(configfile)
+    lines = get_file_lines(configfile, strip=False)
 
     for line in lines:
         stateline = re.match(r'^SELINUX=.*$', line)
@@ -82,7 +84,7 @@ def get_config_state(configfile):
 
 
 def get_config_policy(configfile):
-    lines = get_file_lines(configfile)
+    lines = get_file_lines(configfile, strip=False)
 
     for line in lines:
         stateline = re.match(r'^SELINUXTYPE=.*$', line)
@@ -96,7 +98,7 @@ def set_config_state(state, configfile):
     # edit config file with state value
     stateline = 'SELINUX=%s' % state
 
-    lines = get_file_lines(configfile)
+    lines = get_file_lines(configfile, strip=False)
 
     with open(configfile, "w") as write_file:
         for line in lines:
@@ -119,7 +121,7 @@ def set_config_policy(policy, configfile):
     # edit config file with state value
     # SELINUXTYPE=targeted
     policyline = 'SELINUXTYPE=%s' % policy
-    lines = get_file_lines(configfile)
+    lines = get_file_lines(configfile, strip=False)
 
     with open(configfile, "w") as write_file:
         for line in lines:
@@ -148,6 +150,7 @@ def main():
     runtime_enabled = selinux.is_selinux_enabled()
     runtime_policy = selinux.selinux_getpolicytype()[1]
     runtime_state = 'disabled'
+    reboot_required = False
 
     if runtime_enabled:
         # enabled means 'enforcing' or 'permissive'
@@ -167,7 +170,7 @@ def main():
     # check to see if policy is set if state is not 'disabled'
     if state != 'disabled':
         if not policy:
-            module.fail_json(msg='policy is required if state is not \'disabled\'')
+            module.fail_json(msg='Policy is required if state is not \'disabled\'')
     else:
         if not policy:
             policy = config_policy
@@ -177,13 +180,13 @@ def main():
         if module.check_mode:
             module.exit_json(changed=True)
         # cannot change runtime policy
-        msgs.append('reboot to change the loaded policy')
+        msgs.append('Running SELinux policy changed from \'%s\' to \'%s\'' % (runtime_policy, policy))
         changed = True
 
     if policy != config_policy:
         if module.check_mode:
             module.exit_json(changed=True)
-        msgs.append('config policy changed from \'%s\' to \'%s\'' % (config_policy, policy))
+        msgs.append('Config SELinux policy changed from \'%s\' to \'%s\'' % (config_policy, policy))
         set_config_policy(policy, configfile)
         changed = True
 
@@ -195,24 +198,29 @@ def main():
                 if runtime_state != 'permissive':
                     # Temporarily set state to permissive
                     set_state(module, 'permissive')
-                    msgs.append('runtime state temporarily changed from \'%s\' to \'permissive\', state change will take effect next reboot' % (runtime_state))
+                    module.warn('SELinux state temporarily changed from \'%s\' to \'permissive\'. State change will take effect next reboot.' % (runtime_state))
                 else:
-                    msgs.append('state change will take effect next reboot')
+                    module.warn('SELinux state change will take effect next reboot')
+                reboot_required = True
             else:
                 set_state(module, state)
-                msgs.append('runtime state changed from \'%s\' to \'%s\'' % (runtime_state, state))
+                msgs.append('SELinux state changed from \'%s\' to \'%s\'' % (runtime_state, state))
+
+                # Only report changes if the file is changed.
+                # This prevents the task from reporting changes every time the task is run.
+                changed = True
         else:
-            msgs.append('state change will take effect next reboot')
-        changed = True
+            module.warn("Reboot is required to set SELinux state to %s" % state)
+            reboot_required = True
 
     if state != config_state:
         if module.check_mode:
             module.exit_json(changed=True)
-        msgs.append('config state changed from \'%s\' to \'%s\'' % (config_state, state))
+        msgs.append('Config SELinux state changed from \'%s\' to \'%s\'' % (config_state, state))
         set_config_state(state, configfile)
         changed = True
 
-    module.exit_json(changed=changed, msg=', '.join(msgs), configfile=configfile, policy=policy, state=state)
+    module.exit_json(changed=changed, msg=', '.join(msgs), configfile=configfile, policy=policy, state=state, reboot_required=reboot_required)
 
 
 if __name__ == '__main__':
