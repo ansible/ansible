@@ -78,8 +78,8 @@ class TestSelectCollectorNames(unittest.TestCase):
                                                  all_fact_subsets,
                                                  all_collector_classes)
 
-        expected = [default_collectors.PkgMgrFactCollector,
-                    default_collectors.DistributionFactCollector]
+        expected = [default_collectors.DistributionFactCollector,
+                    default_collectors.PkgMgrFactCollector]
 
         self.assertEqual(res, expected)
 
