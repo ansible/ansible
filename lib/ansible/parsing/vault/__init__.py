@@ -757,7 +757,10 @@ class VaultLib:
                 b_plaintext = this_cipher.decrypt(b_vaulttext, vault_secret)
                 if b_plaintext is not None:
                     vault_id_used = vault_secret_id
-                    display.vvvvv('decrypt successful with secret=%s and vault_id=%s' % (vault_secret, vault_secret_id))
+                    file_slug = ''
+                    if filename:
+                        file_slug = ' of "%s"' % filename
+                    display.vvvvv('Decrypt%s successful with secret=%s and vault_id=%s' % (file_slug, vault_secret, vault_secret_id))
                     break
             except AnsibleVaultFormatError as exc:
                 msg = "There was a vault format error"
@@ -995,7 +998,7 @@ class VaultEditor:
         vaulttext = to_text(b_vaulttext)
 
         try:
-            plaintext = self.vault.decrypt(vaulttext)
+            plaintext = self.vault.decrypt(vaulttext, filename=filename)
             return plaintext
         except AnsibleError as e:
             raise AnsibleVaultError("%s for %s" % (to_bytes(e), to_bytes(filename)))
@@ -1010,8 +1013,10 @@ class VaultEditor:
         b_vaulttext = self.read_data(filename)
         vaulttext = to_text(b_vaulttext)
 
+        display.vvvvv('Rekeying file "%s" to with new vault-id "%s" and vault secret %s' %
+                      (filename, new_vault_id, new_vault_secret))
         try:
-            plaintext = self.vault.decrypt(vaulttext)
+            plaintext, vault_id_used = self.vault.decrypt_and_get_vault_id(vaulttext)
         except AnsibleError as e:
             raise AnsibleError("%s for %s" % (to_bytes(e), to_bytes(filename)))
 
@@ -1035,6 +1040,9 @@ class VaultEditor:
         # preserve permissions
         os.chmod(filename, prev.st_mode)
         os.chown(filename, prev.st_uid, prev.st_gid)
+
+        display.vvvvv('Rekeyed file "%s" (decrypted with vault id "%s") was encrypted with new vault-id "%s" and vault secret %s' %
+                      (filename, vault_id_used, new_vault_id, new_vault_secret))
 
     def read_data(self, filename):
 
