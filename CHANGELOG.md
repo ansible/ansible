@@ -75,6 +75,7 @@ Ansible Changes By Release
 * fixed backwards compat method for config
 * removed docs for prematurely added ssh specific pipelining settings
 * fixed redis cache typo
+* Fix AttributeError during inventory group deserialization (https://github.com/ansible/ansible/issues/30903)
 
 
 <a id="2.4"></a>
