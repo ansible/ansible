@@ -161,8 +161,8 @@ ANSIBLE_PIPELINING:
     - "However this conflicts with privilege escalation (become). For example, when using 'sudo:' operations you must first
       disable 'requiretty' in /etc/sudoers on all managed hosts, which is why it is disabled by default."
   env:
-    - name: ANSIBLE_SSH_PIPELINING
     - name: ANSIBLE_PIPELINING
+    - name: ANSIBLE_SSH_PIPELINING
   ini:
   - section: connection
     key: pipelining
