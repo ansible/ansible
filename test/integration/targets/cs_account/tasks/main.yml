@@ -26,7 +26,7 @@
   assert:
     that:
     - acc|failed
-    - 'acc.msg == "missing required arguments: email,username,password,first_name,last_name"'
+    - 'acc.msg == "missing required arguments: email, username, password, first_name, last_name"'
 
 - name: test create user account in check mode
   cs_account:

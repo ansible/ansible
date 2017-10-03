@@ -73,7 +73,7 @@
   assert:
     that:
     - fw|failed
-    - "fw.msg == 'one of the following is required: ip_address,network'"
+    - "fw.msg == 'one of the following is required: ip_address, network'"
 
 - name: test fail if missing params
   cs_firewall:
@@ -97,7 +97,7 @@
   assert:
     that:
     - fw|failed
-    - "fw.msg == 'one of the following is required: ip_address,network'"
+    - "fw.msg == 'one of the following is required: ip_address, network'"
 
 - name: test present firewall rule ingress 80 in check mode
   cs_firewall:
