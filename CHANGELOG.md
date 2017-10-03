@@ -82,6 +82,7 @@ Ansible Changes By Release
 * Updated return values for win_reg_stat to correctly show what is being returned (https://github.com/ansible/ansible/pull/31252)
 * reduced normal error redundancy and verbosity, display on increased and when needed
 * Give an informative error instead of a traceback if include_vars dir is file instead of directory (https://github.com/ansible/ansible/pull/31157)
+* Fix monit module's version check for color support (https://github.com/ansible/ansible/pull/31212)
 
 <a id="2.4"></a>
 
