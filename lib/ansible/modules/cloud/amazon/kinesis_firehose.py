@@ -287,19 +287,12 @@ def wait_for_status(client, stream_name, status, wait_timeout=300,
     stream = dict()
     err_msg = ""
 
-    logging.info('wait_timeout='+str(wait_timeout))
-
     while wait_timeout > time.time():
         try:
-            logging.info('sleeping for '+str(polling_increment_secs))
-            time.sleep(polling_increment_secs)
+            logging.info('STREAM surrent status is {0} : Waiting for status : {1}'.format(stream.get('DeliveryStreamStatus'), status))
             find_success, find_msg, stream = (
                 find_stream(client, stream_name, check_mode=check_mode)
             )
-            logging.info('AFTER calling find_stream find_success='+str(find_success))
-            logging.info('AFTER calling find_stream find_msg='+str(find_msg))
-            logging.info('AFTER calling find_stream stream='+str(stream))
-            # logging.info('stream.get(DeliveryStreamStatus) =  '+str(stream.get('DeliveryStreamStatus')))
             if check_mode:
                 status_achieved = True
                 break
@@ -315,9 +308,8 @@ def wait_for_status(client, stream_name, status, wait_timeout=300,
                     status_achieved = True
                     break
 
-            else:
-                logging.info(' 2 sleeping for '+str(polling_increment_secs))
-                time.sleep(polling_increment_secs)
+            time.sleep(polling_increment_secs)
+
         except botocore.exceptions.ClientError as e:
             logging.info(' EXCEPTION '+to_native(e))
             err_msg = to_native(e)
@@ -457,7 +449,6 @@ def create_stream(client, stream_name, s3_destination, stream_type,
             return create_success, changed, err_msg, {}
         else:
             changed = True
-            logging.info('WAITING FOR ACTIVE STATUS')
             if wait:
                 wait_success, wait_msg, results = (
                     wait_for_status(
@@ -465,9 +456,6 @@ def create_stream(client, stream_name, s3_destination, stream_type,
                         check_mode=check_mode
                     )
                 )
-                logging.info('wait_for_status RETURNED wait_success '+ str(wait_success))
-                logging.info('wait_for_status RETURNED wait_msg '+ str(wait_msg))
-                logging.info('wait_for_status RETURNED results '+ str(results))
                 if wait_success:
                     success = wait_success
                     err_msg = wait_msg
@@ -479,7 +467,7 @@ def create_stream(client, stream_name, s3_destination, stream_type,
                     return wait_success, changed, wait_msg, results
             else:
                 err_msg = (
-                    'Kinesis Stream {0} create requested successfully'
+                    'Kinesis Stream {0} is in the process of being created.'
                     .format(stream_name)
                 )
 
@@ -556,14 +544,13 @@ def delete_stream(client, stream_name, wait=False, wait_timeout=300,
 
 def main():
     logging.basicConfig(filename='/tmp/python.log',level=logging.INFO)
-    logging.info('Hello START')
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
             name=dict(default=None, required=True),
-            s3_destination=dict(required=False, type='dict'),
-            stream_type=dict(required=False, type='str'),
-            KinesisStreamSourceConfiguration=dict(default=None, required=False, type='dict'),
+            s3_destination=dict(required=True, type='dict'),
+            stream_type=dict(required=True, type='str',choices=['KinesisStreamAsSource']),
+            KinesisStreamSourceConfiguration=dict(required=True, type='dict'),
             wait=dict(default=True, required=False, type='bool'),
             wait_timeout=dict(default=300, required=False, type='int'),
             state=dict(default='present', choices=['present', 'absent']),
@@ -574,7 +561,6 @@ def main():
         supports_check_mode=True,
     )
 
-    # retention_period = module.params.get('retention_period')
     stream_name = module.params.get('name')
     s3_destination = module.params.get('s3_destination')
     stream_type = module.params.get('stream_type')
@@ -582,13 +568,6 @@ def main():
     KinesisStreamSourceConfiguration = module.params.get('KinesisStreamSourceConfiguration')
     wait = module.params.get('wait')
     wait_timeout = module.params.get('wait_timeout')
-
-    # if state == 'present' and not shards:
-    #     module.fail_json(msg='Shards is required when state == present.')
-
-    # if retention_period:
-    #     if retention_period < 24:
-    #         module.fail_json(msg='Retention period can not be less than 24 hours.')
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 is required.')
