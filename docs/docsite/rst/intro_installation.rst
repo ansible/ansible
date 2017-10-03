@@ -115,7 +115,7 @@ RPMs for RHEL6 are available from yum for `EPEL
 <http://fedoraproject.org/wiki/EPEL>`_ 6 and currently supported
 Fedora distributions.
 
-Ansible will also have RPMs/YUM-repo available at `<https://releases.ansible.com/ansible/rpms/`.
+Ansible will also have RPMs/YUM-repo available `here <https://releases.ansible.com/ansible/rpm/>`_.
 
 Ansible version 2.4 can manage earlier operating
 systems that contain Python 2.6 or higher.
