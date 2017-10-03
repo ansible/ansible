@@ -111,16 +111,31 @@ Latest Release Via Yum
 
 RPMs for RHEL7 are available from `the Extras channel <https://access.redhat.com/solutions/912213>`_.
 
+Please note that the Extras channel is enabled by default in CentOS 7.
+
 RPMs for RHEL6 are available from yum for `EPEL
 <http://fedoraproject.org/wiki/EPEL>`_ 6 and currently supported
 Fedora distributions.
+
+To enable EPEL repos on RHEL6, or enquivalent, you can type the following:
+
+.. code-block:: bash
+
+    $ sudo yum install epel-release
 
 Ansible will also have RPMs/YUM-repo available `here <https://releases.ansible.com/ansible/rpm/>`_.
 
 Ansible version 2.4 can manage earlier operating
 systems that contain Python 2.6 or higher.
 
-You can also build an RPM yourself.  From the root of a checkout or tarball, use the ``make rpm`` command to build an RPM you can distribute and install.
+You can install Ansible with the following commande:
+
+.. code-block:: bash
+
+    $ sudo yum update
+    $ sudo yum install ansible
+
+Or you can also build an RPM yourself.  From the root of a checkout or tarball, use the ``make rpm`` command to build an RPM you can distribute and install.
 
 .. code-block:: bash
 
