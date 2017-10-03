@@ -223,8 +223,8 @@ def main():
     if policy != config_policy:
         if module.check_mode:
             module.exit_json(changed=True)
-        msgs.append('SELinux policy configuration in \'%s\' changed from \'%s\' to \'%s\'' % (configfile, config_policy, policy))
         set_config_policy(module, policy, configfile)
+        msgs.append('SELinux policy configuration in \'%s\' changed from \'%s\' to \'%s\'' % (configfile, config_policy, policy))
         changed = True
 
     if state != runtime_state:
