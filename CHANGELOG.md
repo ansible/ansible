@@ -88,6 +88,7 @@ Ansible Changes By Release
 * Fix removal of newlines when writing SELinux config (https://github.com/ansible/ansible/issues/30618)
 * clarified extension requirement for constructed inv plugin
 * really turn off inventory caching, toggle will be added in 2.5
+* for inventory sources, dont follow symlinks to calculate base directory, used for group/host_vars
 
 <a id="2.4"></a>
 
