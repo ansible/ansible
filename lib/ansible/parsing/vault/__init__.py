@@ -653,7 +653,11 @@ class VaultLib:
             raise AnsibleError(u"{0} cipher could not be found".format(self.cipher_name))
 
         # encrypt data
-        display.vvvvv('Encrypting with vault secret %s' % secret)
+        if vault_id:
+            display.vvvvv('Encrypting with vault_id "%s" and vault secret %s' % (vault_id, secret))
+        else:
+            display.vvvvv('Encrypting without a vault_id using vault secret %s' % secret)
+
         b_ciphertext = this_cipher.encrypt(b_plaintext, secret)
 
         # format the data for output to the file

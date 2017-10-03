@@ -169,6 +169,10 @@ class VaultCLI(CLI):
 
         default_vault_ids = C.DEFAULT_VAULT_IDENTITY_LIST
         vault_ids = default_vault_ids + vault_ids
+        default_encrypt_vault_id = C.DEFAULT_VAULT_ENCRYPT_IDENTITY
+        encrypt_vault_id = self.options.encrypt_vault_id or C.DEFAULT_VAULT_ENCRYPT_IDENTITY
+        print('encrypt_vault_id: %s' % encrypt_vault_id)
+        print('default_encrypt_vault_id: %s' % default_encrypt_vault_id)
 
         # TODO: instead of prompting for these before, we could let VaultEditor
         #       call a callback when it needs it.
@@ -189,7 +193,7 @@ class VaultCLI(CLI):
                                          ask_vault_pass=self.options.ask_vault_pass,
                                          create_new_password=True)
 
-            if len(vault_secrets) > 1 and not self.options.encrypt_vault_id:
+            if len(vault_secrets) > 1 and not encrypt_vault_id:
                 raise AnsibleOptionsError("The vault-ids %s are available to encrypt. Specify the vault-id to encrypt with --encrypt-vault-id" %
                                           ','.join([x[0] for x in vault_secrets]))
 
@@ -197,9 +201,10 @@ class VaultCLI(CLI):
                 raise AnsibleOptionsError("A vault password is required to use Ansible's Vault")
 
             encrypt_secret = match_encrypt_secret(vault_secrets,
-                                                  encrypt_vault_id=self.options.encrypt_vault_id)
+                                                  encrypt_vault_id=encrypt_vault_id)
 
             # only one secret for encrypt for now, use the first vault_id and use its first secret
+            # TODO: exception if more than one?
             self.encrypt_vault_id = encrypt_secret[0]
             self.encrypt_secret = encrypt_secret[1]
 

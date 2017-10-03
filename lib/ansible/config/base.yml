@@ -1102,6 +1102,14 @@ DEFAULT_VAULT_IDENTITY:
   ini:
   - {key: vault_identity, section: defaults}
   yaml: {key: defaults.vault_identity}
+DEFAULT_VAULT_ENCRYPT_IDENTITY:
+  name: Vault id to use for encryption
+  default:
+  description: 'The vault of of the vault secret to use for encryption if not otherwise specified'
+  env: [{name: ANSIBLE_VAULT_ENCRYPT_IDENTITY}]
+  ini:
+  - {key: vault_encrypt_identity, section: defaults}
+  yaml: {key: defaults.vault_encrypt_identity}
 DEFAULT_VAULT_IDENTITY_LIST:
   name: Default vault ids
   default: []
