@@ -283,7 +283,7 @@ The rules can be simplified to the following points:
   quotes is interpreted as a single argument even if it contains whitespace
 
 * A double quote preceded by a backslash ``\`` is interpreted as just a double
-  quote ``"``not as an argument delimiter
+  quote ``"`` not as an argument delimiter
 
 * Backslashes are interpreted literally unless it is immediately preceeds double
   quotes, e.g. ``\`` == ``\`` and ``\"`` == ``"``
