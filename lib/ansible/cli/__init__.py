@@ -199,6 +199,7 @@ class CLI(with_metaclass(ABCMeta, object)):
     def build_vault_ids(vault_ids, vault_password_files=None,
                         ask_vault_pass=None, create_new_password=None,
                         auto_prompt=True):
+        print('vault_ids0: %s' % vault_ids)
         vault_password_files = vault_password_files or []
         vault_ids = vault_ids or []
 
@@ -211,6 +212,7 @@ class CLI(with_metaclass(ABCMeta, object)):
             # used by --vault-id and --vault-password-file
             vault_ids.append(id_slug)
 
+        print('vault_ids: %s' % vault_ids)
         # if an action needs an encrypt password (create_new_password=True) and we dont
         # have other secrets setup, then automatically add a password prompt as well.
         # prompts cant/shouldnt work without a tty, so dont add prompt secrets

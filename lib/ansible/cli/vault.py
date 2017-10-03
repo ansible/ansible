@@ -211,8 +211,16 @@ class VaultCLI(CLI):
             self.encrypt_secret = encrypt_secret[1]
 
         if self.action in ['rekey']:
+            default_encrypt_vault_id = C.DEFAULT_VAULT_ENCRYPT_IDENTITY
+            encrypt_vault_id = self.options.encrypt_vault_id or C.DEFAULT_VAULT_ENCRYPT_IDENTITY
+            print('encrypt_vault_id: %s' % encrypt_vault_id)
+            print('default_encrypt_vault_id: %s' % default_encrypt_vault_id)
+
             # new_vault_ids should only ever be one item, from
+            # load the default vault ids if we are using encrypt-vault-id
             new_vault_ids = []
+            if encrypt_vault_id:
+                new_vault_ids = default_vault_ids
             if self.options.new_vault_id:
                 new_vault_ids.append(self.options.new_vault_id)
 
@@ -224,8 +232,8 @@ class VaultCLI(CLI):
                 self.setup_vault_secrets(loader,
                                          vault_ids=new_vault_ids,
                                          vault_password_files=new_vault_password_files,
-                                         ask_vault_pass=self.options.ask_vault_pass,
-                                         # set encrypt_vault_id here?
+                                         ask_vault_pass=False,
+                                         #ask_vault_pass=self.options.ask_vault_pass,
                                          create_new_password=True)
 
             if not new_vault_secrets:
@@ -234,7 +242,7 @@ class VaultCLI(CLI):
             # There is only one new_vault_id currently and one new_vault_secret, or we
             # use the id specified in --encrypt-vault-id
             new_encrypt_secret = match_encrypt_secret(new_vault_secrets,
-                                                      encrypt_vault_id=self.options.encrypt_vault_id)
+                                                      encrypt_vault_id=encrypt_vault_id)
 
             self.new_encrypt_vault_id = new_encrypt_secret[0]
             self.new_encrypt_secret = new_encrypt_secret[1]
