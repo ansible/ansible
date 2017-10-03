@@ -211,10 +211,9 @@ class VaultCLI(CLI):
             self.encrypt_secret = encrypt_secret[1]
 
         if self.action in ['rekey']:
-            default_encrypt_vault_id = C.DEFAULT_VAULT_ENCRYPT_IDENTITY
             encrypt_vault_id = self.options.encrypt_vault_id or C.DEFAULT_VAULT_ENCRYPT_IDENTITY
-            print('encrypt_vault_id: %s' % encrypt_vault_id)
-            print('default_encrypt_vault_id: %s' % default_encrypt_vault_id)
+            # print('encrypt_vault_id: %s' % encrypt_vault_id)
+            # print('default_encrypt_vault_id: %s' % default_encrypt_vault_id)
 
             # new_vault_ids should only ever be one item, from
             # load the default vault ids if we are using encrypt-vault-id
