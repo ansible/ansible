@@ -28,7 +28,7 @@ options:
     description:
       - The protocol the load balancer uses when performing health checks on targets.
     required: false
-    choices: [ 'http', 'https' ]
+    choices: [ 'http', 'https', 'tcp' ]
   health_check_port:
     description:
       - The port the load balancer uses when performing health checks on targets.
@@ -68,7 +68,7 @@ options:
     description:
       - The protocol to use for routing traffic to the targets. Required when I(state) is C(present).
     required: false
-    choices: [ 'http', 'https' ]
+    choices: [ 'http', 'https', 'tcp' ]
   purge_tags:
     description:
       - If yes, existing tags will be purged from the resource to match exactly what is defined by I(tags) parameter. If the tag parameter is not set then
@@ -620,7 +620,7 @@ def main():
     argument_spec.update(
         dict(
             deregistration_delay_timeout=dict(type='int'),
-            health_check_protocol=dict(choices=['http', 'https', 'HTTP', 'HTTPS'], type='str'),
+            health_check_protocol=dict(choices=['http', 'https', 'tcp', 'HTTP', 'HTTPS', 'TCP'], type='str'),
             health_check_port=dict(type='int'),
             health_check_path=dict(default=None, type='str'),
             health_check_interval=dict(type='int'),
@@ -629,7 +629,7 @@ def main():
             modify_targets=dict(default=True, type='bool'),
             name=dict(required=True, type='str'),
             port=dict(type='int'),
-            protocol=dict(choices=['http', 'https', 'HTTP', 'HTTPS'], type='str'),
+            protocol=dict(choices=['http', 'https', 'tcp', 'HTTP', 'HTTPS', 'TCP'], type='str'),
             purge_tags=dict(default=True, type='bool'),
             stickiness_enabled=dict(type='bool'),
             stickiness_type=dict(default='lb_cookie', type='str'),
