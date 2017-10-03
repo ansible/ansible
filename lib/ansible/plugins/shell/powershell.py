@@ -801,8 +801,8 @@ Function Run($payload) {
         # FUTURE: decode CLIXML stderr output (and other streams?)
 
         $rc = [Ansible.Shell.NativeProcessUtil]::GetProcessExitCode($pi.hProcess)
-        [Console]::Out.WriteLine($str_stdout)
-        [Console]::Error.WriteLine($str_stderr)
+        [Console]::Out.WriteLine($str_stdout.Trim())
+        [Console]::Error.WriteLine($str_stderr.Trim())
     }
     Catch {
         $excep = $_
