@@ -87,8 +87,8 @@ class LookupModule(LookupBase):
 
         try:
             response = client.get_parameters(**ssm_dict)
-        except ClientError:
-            raise AnsibleError("ssm parameter store plugin can't get parameters, is AWS access key correct and not expired?")
+        except ClientError as e:
+            raise AnsibleError("SSM lookup exception: {0}".format(e))
 
         ret.update(response)
 
