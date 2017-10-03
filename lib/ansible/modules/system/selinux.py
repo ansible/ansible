@@ -68,7 +68,7 @@ msg:
     type: string
     sample: Config SELinux state changed from 'disabled' to 'permissive'
 configfile:
-    description: Path to SElinux configuration file
+    description: Path to SELinux configuration file
     returned: always
     type: string
     sample: /etc/selinux/config
