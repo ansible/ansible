@@ -90,14 +90,16 @@ commands:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.nxos import load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
-
+import re
 
 def map_obj_to_commands(want, have, module):
     commands = list()
     state = module.params['state']
+    platform_regex = 'Nexus.*Switch'
 
-    if (state == 'absent' and (have.get('text') and have.get('text') != 'User Access Verification')):
-        commands.append('no banner %s' % module.params['banner'])
+    if state == 'absent':
+        if (have.get('text') and not ((have.get('text') == 'User Access Verification') or re.match(platform_regex, have.get('text')))):
+            commands.append('no banner %s' % module.params['banner'])
 
     elif state == 'present' and want.get('text') != have.get('text'):
         banner_cmd = 'banner %s @\n%s\n@' % (module.params['banner'], want['text'].strip())
