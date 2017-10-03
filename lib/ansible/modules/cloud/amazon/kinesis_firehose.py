@@ -202,6 +202,42 @@ def convert_to_lower(data):
                 results[key] = val
     return results
 
+def convert_to_title(data):
+    """Convert all uppercase keys in dict with lowercase_
+    Args:
+        data (dict): Dictionary with keys that have upper cases in them
+            Example.. FooBar == foo_bar
+            if a val is of type datetime.datetime, it will be converted to
+            the ISO 8601
+
+    Basic Usage:
+        >>> test = {'FooBar': []}
+        >>> test = convert_to_lower(test)
+        {
+            'foo_bar': []
+        }
+
+    Returns:
+        Dictionary
+    """
+    results = dict()
+    if isinstance(data, dict):
+        for key, val in data.items():
+            key = to_title(key)
+            if key[0] == '_':
+                key = key[1:]
+            if isinstance(val, datetime.datetime):
+                results[key] = val.isoformat()
+            elif isinstance(val, dict):
+                results[key] = convert_to_lower(val)
+            elif isinstance(val, list):
+                converted = list()
+                for item in val:
+                    converted.append(convert_to_lower(item))
+                results[key] = converted
+            else:
+                results[key] = val
+    return results
 
 def find_stream(client, stream_name, check_mode=False):
     """Retrieve a Kinesis Stream.
@@ -323,7 +359,7 @@ def wait_for_status(client, stream_name, status, wait_timeout=300,
     return status_achieved, err_msg, stream
 
 
-def stream_action(client, stream_name, s3_destination='NA', stream_type='NA', KinesisStreamSourceConfiguration='NA', action='create',
+def stream_action(client, stream_name, s3_destination='NA', stream_type='NA', KinesisStreamSourceConfiguration='NA', ExtendedS3DestinationConfiguration='NA', action='create',
                   timeout=300, check_mode=False):
     """Create or Delete an Amazon Kinesis Stream.
     Args:
@@ -356,9 +392,10 @@ def stream_action(client, stream_name, s3_destination='NA', stream_type='NA', Ki
         if not check_mode:
             if action == 'create':
                 # params['ShardCount'] = shard_count
-                params['S3DestinationConfiguration'] = s3_destination
+                # params['S3DestinationConfiguration'] = s3_destination
                 params['DeliveryStreamType'] = stream_type
                 params['KinesisStreamSourceConfiguration'] = KinesisStreamSourceConfiguration
+                params['ExtendedS3DestinationConfiguration'] = ExtendedS3DestinationConfiguration
                 logging.info('params '+str(params))
                 client.create_delivery_stream(**params)
                 success = True
@@ -382,7 +419,7 @@ def stream_action(client, stream_name, s3_destination='NA', stream_type='NA', Ki
 
 
 def create_stream(client, stream_name, s3_destination, stream_type,
-                  KinesisStreamSourceConfiguration, wait=False, wait_timeout=300, check_mode=False):
+                  KinesisStreamSourceConfiguration, ExtendedS3DestinationConfiguration, wait=False, wait_timeout=300, check_mode=False):
     """Create an Amazon Kinesis Stream.
     Args:
         client (botocore.client.EC2): Boto3 client.
@@ -439,7 +476,7 @@ def create_stream(client, stream_name, s3_destination, stream_type,
     else:
         create_success, create_msg = (
             stream_action(
-                client, stream_name, s3_destination, stream_type, KinesisStreamSourceConfiguration, action='create',
+                client, stream_name, s3_destination, stream_type, KinesisStreamSourceConfiguration, ExtendedS3DestinationConfiguration, action='create',
                 check_mode=check_mode
             )
         )
@@ -541,16 +578,19 @@ def delete_stream(client, stream_name, wait=False, wait_timeout=300,
 
     return success, changed, err_msg, results
 
+def to_title(word):
+    return ''.join([si.title() if not (str.isdigit(si[0])) else si for si in word.split('_')])
 
 def main():
     logging.basicConfig(filename='/tmp/python.log',level=logging.INFO)
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            name=dict(default=None, required=True),
+            delivery_stream_name=dict(default=None, required=True),
             s3_destination=dict(required=True, type='dict'),
-            stream_type=dict(required=True, type='str',choices=['KinesisStreamAsSource']),
-            KinesisStreamSourceConfiguration=dict(required=True, type='dict'),
+            delivery_stream_type=dict(required=True, type='str',choices=['KinesisStreamAsSource']),
+            kinesis_stream_source_configuration=dict(required=True, type='dict'),
+            extended_s3_destination_configuration=dict(required=True, type='dict'),
             wait=dict(default=True, required=False, type='bool'),
             wait_timeout=dict(default=300, required=False, type='int'),
             state=dict(default='present', choices=['present', 'absent']),
@@ -561,13 +601,16 @@ def main():
         supports_check_mode=True,
     )
 
-    stream_name = module.params.get('name')
+    delivery_stream_name = module.params.get('delivery_stream_name')
     s3_destination = module.params.get('s3_destination')
-    stream_type = module.params.get('stream_type')
+    delivery_stream_type = module.params.get('delivery_stream_type')
     state = module.params.get('state')
-    KinesisStreamSourceConfiguration = module.params.get('KinesisStreamSourceConfiguration')
+    kinesis_stream_source_configuration = module.params.get('kinesis_stream_source_configuration')
+    extended_s3_destination_configuration = module.params.get('extended_s3_destination_configuration')
     wait = module.params.get('wait')
     wait_timeout = module.params.get('wait_timeout')
+
+    logging.info('convert_to_title >>>  ='+str(convert_to_title(argument_spec)))
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 is required.')
@@ -592,13 +635,13 @@ def main():
     if state == 'present':
         success, changed, err_msg, results = (
             create_stream(
-                client, stream_name, s3_destination, stream_type, KinesisStreamSourceConfiguration,
+                client, delivery_stream_name, s3_destination, delivery_stream_type, kinesis_stream_source_configuration, extended_s3_destination_configuration,
                 wait, wait_timeout, check_mode
             )
         )
     elif state == 'absent':
         success, changed, err_msg, results = (
-            delete_stream(client, stream_name, wait, wait_timeout, check_mode)
+            delete_stream(client, delivery_stream_name, wait, wait_timeout, check_mode)
         )
 
     if success:
