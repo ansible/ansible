@@ -1,0 +1,81 @@
+digraph {
+
+/* rankdir="LR" */
+
+/* style for 'destination' nodes */
+   node[shape="box", style=""];
+    use_kerb; use_kerb_delegation; use_credssp; use_credssp_delegation; use_ntlm; use_insecure; use_certificates;
+
+/* style for decision nodes (questions) */
+   node[shape="box", style="rounded"]
+
+/* questions */
+
+   start[root=true start=true label="Answer these questions to work out the 
+best settings for connecting to Windows 
+hosts in your environment"];
+
+   ad[label="Do you have an existing
+Active Directory domain 
+that your windows hosts
+and users
+will be members of?"];
+
+   ad_delegation[label="Do you need to delegate credentials
+(this enables ansible-managed 
+windows hosts to access remote 
+SMB/CIFS file shares & printers)?"];
+
+   credssp_ok[label="Is credssp allowed on your network?"];
+
+   lab_only[label="Are you setting up an insecure test lab where it
+does not matter that ALL traffic between
+ansible and the Windows hosts, including
+passwords, will be sent as plain text?"];
+
+   workgroup[label="Are the windows machines
+all members of the same
+windows workgroup?"];
+
+   certs_ok[label="Are you happy to acquire/generate
+certificates for each user and machine
+you want to manage via ansible?"];
+
+/* connections between questions (and destinations) */
+
+   start -> ad;
+  
+   ad -> lab_only[label="No"];
+   ad -> ad_delegation[label="Yes"];
+
+   lab_only -> use_insecure[label="Yes"];
+   lab_only -> workgroup[label="No"];
+
+   workgroup -> certs_ok[label="No"];
+   workgroup -> use_ntlm[label="Yes"];
+
+   ad_delegation -> use_kerb[label="No"];
+   ad_delegation -> credssp_ok[label="Yes"];
+
+   credssp_ok -> use_kerb_delegation[label="No"];
+   credssp_ok -> use_credssp_delegation[label="Yes"];
+
+   certs_ok -> use_credssp[label="No"];
+   certs_ok -> use_certificates[label="Yes"];
+
+/* destinations */
+   use_kerb[label="Kerb"];
+   use_kerb_delegation[label="Kerb delegation"];
+   use_credssp[label="credssp"];
+   use_credssp_delegation[label="Credssp delegation"];
+   use_ntlm[label="Ntlm"];
+   use_insecure[label="Insecure"];
+   use_certificates[label="Certificates"]
+
+
+/* rankings, to get the destination nodes to appear at the bottom of the graph */
+
+    {rank=min; start}
+    {rank=same; use_certificates use_kerb use_kerb_delegation use_credssp use_credssp_delegation use_ntlm use_insecure}
+
+}
