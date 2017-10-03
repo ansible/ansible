@@ -76,6 +76,7 @@ Ansible Changes By Release
 * removed docs for prematurely added ssh specific pipelining settings
 * fixed redis cache typo
 * Fix AttributeError during inventory group deserialization (https://github.com/ansible/ansible/issues/30903)
+* Fix 'ansible-vault encrypt --output=-' (https://github.com/ansible/ansible/issues/30550)
 
 
 <a id="2.4"></a>
