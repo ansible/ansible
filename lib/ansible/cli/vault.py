@@ -107,7 +107,7 @@ class VaultCLI(CLI):
             self.parser.set_usage("usage: %prog rekey [options] file_name")
 
         # For encrypting actions, we can also specify which of multiple vault ids should be used for encrypting
-        if self.action in ['create', 'edit', 'encrypt', 'encrypt_string', 'rekey']:
+        if self.action in ['create', 'encrypt', 'encrypt_string', 'rekey']:
             self.parser.add_option('--encrypt-vault-id', default=[], dest='encrypt_vault_id',
                                    action='store', type='string',
                                    help='the vault id used to encrypt (required if more than vault-id is provided)')
@@ -169,10 +169,6 @@ class VaultCLI(CLI):
 
         default_vault_ids = C.DEFAULT_VAULT_IDENTITY_LIST
         vault_ids = default_vault_ids + vault_ids
-        default_encrypt_vault_id = C.DEFAULT_VAULT_ENCRYPT_IDENTITY
-        encrypt_vault_id = self.options.encrypt_vault_id or C.DEFAULT_VAULT_ENCRYPT_IDENTITY
-        print('encrypt_vault_id: %s' % encrypt_vault_id)
-        print('default_encrypt_vault_id: %s' % default_encrypt_vault_id)
 
         # TODO: instead of prompting for these before, we could let VaultEditor
         #       call a callback when it needs it.
@@ -185,6 +181,12 @@ class VaultCLI(CLI):
                 raise AnsibleOptionsError("A vault password is required to use Ansible's Vault")
 
         if self.action in ['encrypt', 'encrypt_string', 'create', 'edit']:
+
+            default_encrypt_vault_id = C.DEFAULT_VAULT_ENCRYPT_IDENTITY
+            encrypt_vault_id = self.options.encrypt_vault_id or C.DEFAULT_VAULT_ENCRYPT_IDENTITY
+            print('encrypt_vault_id: %s' % encrypt_vault_id)
+            print('default_encrypt_vault_id: %s' % default_encrypt_vault_id)
+
             vault_secrets = None
             vault_secrets = \
                 self.setup_vault_secrets(loader,
@@ -209,15 +211,21 @@ class VaultCLI(CLI):
             self.encrypt_secret = encrypt_secret[1]
 
         if self.action in ['rekey']:
+            # new_vault_ids should only ever be one item, from
             new_vault_ids = []
             if self.options.new_vault_id:
                 new_vault_ids.append(self.options.new_vault_id)
 
+            new_vault_password_files = []
+            if self.options.new_vault_password_file:
+                new_vault_password_files.append(self.options.new_vault_password_file)
+
             new_vault_secrets = \
                 self.setup_vault_secrets(loader,
                                          vault_ids=new_vault_ids,
-                                         vault_password_files=self.options.new_vault_password_files,
+                                         vault_password_files=new_vault_password_files,
                                          ask_vault_pass=self.options.ask_vault_pass,
+                                         # set encrypt_vault_id here?
                                          create_new_password=True)
 
             if not new_vault_secrets:

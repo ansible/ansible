@@ -377,6 +377,9 @@ class CLI(with_metaclass(ABCMeta, object)):
             if (op.ask_vault_pass and op.vault_password_files):
                 self.parser.error("--ask-vault-pass and --vault-password-file are mutually exclusive")
 
+            if (op.new_vault_id and op.new_vault_password_file):
+                self.parser.error("--new-vault-password-file and --new-vault-id are mutually exclusive")
+
         if runas_opts:
             # Check for privilege escalation conflicts
             if ((op.su or op.su_user) and (op.sudo or op.sudo_user) or
@@ -452,8 +455,8 @@ class CLI(with_metaclass(ABCMeta, object)):
                               help='the vault identity to use')
 
         if vault_rekey_opts:
-            parser.add_option('--new-vault-password-file', default=[], dest='new_vault_password_files',
-                              help="new vault password file for rekey", action="callback", callback=CLI.unfrack_paths, type='string')
+            parser.add_option('--new-vault-password-file', default=None, dest='new_vault_password_file',
+                              help="new vault password file for rekey", action="callback", callback=CLI.unfrack_path, type='string')
             parser.add_option('--new-vault-id', default=None, dest='new_vault_id', type='string',
                               help='the new vault identity to use for rekey')
 
