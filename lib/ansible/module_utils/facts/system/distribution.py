@@ -69,6 +69,7 @@ class DistributionFiles:
         {'path': '/etc/SuSE-release', 'name': 'SUSE'},
         {'path': '/etc/gentoo-release', 'name': 'Gentoo'},
         {'path': '/etc/os-release', 'name': 'Debian'},
+        {'path': '/etc/lsb-release', 'name': 'Debian'},
         {'path': '/etc/lsb-release', 'name': 'Mandriva'},
         {'path': '/etc/altlinux-release', 'name': 'Altlinux'},
         {'path': '/etc/sourcemage-release', 'name': 'SMGL'},
