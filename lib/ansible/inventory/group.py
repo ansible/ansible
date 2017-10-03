@@ -30,7 +30,7 @@ class Group:
         self.depth = 0
         self.name = name
         self.hosts = []
-        self._hosts = set()
+        self._hosts = None
         self.vars = {}
         self.child_groups = []
         self.parent_groups = []
@@ -72,6 +72,7 @@ class Group:
         self.vars = data.get('vars', dict())
         self.depth = data.get('depth', 0)
         self.hosts = data.get('hosts', [])
+        self._hosts = None
 
         parent_groups = data.get('parent_groups', [])
         for parent_data in parent_groups:
