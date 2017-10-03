@@ -3,7 +3,7 @@
 set -o pipefail
 
 declare -a args
-IFS='/:' read -ra args <<< "${TEST}"
+IFS='/:' read -ra args <<< "$1"
 
 image="ansible/ansible:${args[1]}"
 target="posix/ci/group${args[2]}/"
