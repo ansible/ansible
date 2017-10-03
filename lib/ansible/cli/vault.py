@@ -182,10 +182,10 @@ class VaultCLI(CLI):
 
         if self.action in ['encrypt', 'encrypt_string', 'create', 'edit']:
 
-            default_encrypt_vault_id = C.DEFAULT_VAULT_ENCRYPT_IDENTITY
-            encrypt_vault_id = self.options.encrypt_vault_id or C.DEFAULT_VAULT_ENCRYPT_IDENTITY
-            print('encrypt_vault_id: %s' % encrypt_vault_id)
-            print('default_encrypt_vault_id: %s' % default_encrypt_vault_id)
+            encrypt_vault_id = None
+            # no --encrypt-vault-id self.options.encrypt_vault_id for 'edit'
+            if self.action not in ['edit']:
+                encrypt_vault_id = self.options.encrypt_vault_id or C.DEFAULT_VAULT_ENCRYPT_IDENTITY
 
             vault_secrets = None
             vault_secrets = \
@@ -232,8 +232,7 @@ class VaultCLI(CLI):
                 self.setup_vault_secrets(loader,
                                          vault_ids=new_vault_ids,
                                          vault_password_files=new_vault_password_files,
-                                         ask_vault_pass=False,
-                                         #ask_vault_pass=self.options.ask_vault_pass,
+                                         ask_vault_pass=self.options.ask_vault_pass,
                                          create_new_password=True)
 
             if not new_vault_secrets:
