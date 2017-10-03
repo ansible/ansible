@@ -394,7 +394,7 @@ def main():
             classic_link_vpc_security_groups=dict(type='list'),
             classic_link_vpc_id=dict(),
             vpc_id=dict(),
-            placement_tenancy=dict(default='default', choices=['default', 'dedicated'])
+            placement_tenancy=dict(choices=['default', 'dedicated'])
         )
     )
 
