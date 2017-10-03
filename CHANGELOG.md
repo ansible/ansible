@@ -80,6 +80,7 @@ Ansible Changes By Release
 * restore pre 2.4 pipeline configuration options (env and ini)
 * Fix win_copy regression: handling of vault-encrypted source files (https://github.com/ansible/ansible/pull/31084)
 * Updated return values for win_reg_stat to correctly show what is being returned (https://github.com/ansible/ansible/pull/31252)
+* reduced normal error redundancy and verbosity, display on increased and when needed
 
 
 <a id="2.4"></a>
