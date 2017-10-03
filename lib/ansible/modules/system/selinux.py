@@ -61,6 +61,34 @@ EXAMPLES = '''
     state: disabled
 '''
 
+RETURN = '''
+msg:
+    description: Messages that describe changes that were made
+    returned: always
+    type: string
+    sample: Config SELinux state changed from 'disabled' to 'permissive'
+configfile:
+    description: Path to SElinux configuration file
+    returned: always
+    type: string
+    sample: /etc/selinux/config
+policy:
+    description: Name of the SELinux policy
+    returned: always
+    type: string
+    sample: targeted
+state:
+    description: SELinux mode
+    returned: always
+    type: string
+    sample: enforcing
+reboot_required:
+    description: Whether or not an reboot is required for the changes to take effect
+    returned: always
+    type: bool
+    sample: true
+'''
+
 import os
 import re
 
