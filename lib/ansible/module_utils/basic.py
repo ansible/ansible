@@ -178,6 +178,18 @@ from ansible.module_utils.parsing.convert_bool import BOOLEANS, BOOLEANS_FALSE, 
 
 
 PASSWORD_MATCH = re.compile(r'^(?:.+[-_\s])?pass(?:[-_\s]?(?:word|phrase|wrd|wd)?)(?:[-_\s].+)?$', re.I)
+# yaml style date match
+DATETIME_MATCH = re.compile(
+    ur'''^(?P<year>[0-9][0-9][0-9][0-9])
+        -(?P<month>[0-9][0-9]?)
+        -(?P<day>[0-9][0-9]?)
+        (?:(?:[Tt]|[ \t]+)
+        (?P<hour>[0-9][0-9]?)
+        :(?P<minute>[0-9][0-9])
+        :(?P<second>[0-9][0-9])
+        (?:\.(?P<fraction>[0-9]*))?
+        (?:[ \t]*(?P<tz>Z|(?P<tz_sign>[-+])(?P<tz_hour>[0-9][0-9]?)
+        (?::(?P<tz_minute>[0-9][0-9]))?))?)?$''', re.X)
 
 _NUMBERTYPES = tuple(list(integer_types) + [float])
 
@@ -858,6 +870,7 @@ class AnsibleModule(object):
             'json': self._check_type_jsonarg,
             'bytes': self._check_type_bytes,
             'bits': self._check_type_bits,
+            'datetime': self._check_type_datetime,
         }
         if not bypass_checks:
             self._check_required_arguments()
@@ -1909,6 +1922,13 @@ class AnsibleModule(object):
         except ValueError:
             raise TypeError('%s cannot be converted to a Bit value' % type(value))
 
+    def _check_type_datetime(self, value):
+        ''' only yaml date formats are supported '''
+        try:
+            return self.datetime_conversion(value)
+        except ValueError:
+            raise TypeError('Not able to recognize the datetime format')
+
     def _handle_options(self, argument_spec=None, params=None):
         ''' deal with options to create sub spec '''
         if argument_spec is None:
@@ -2832,6 +2852,37 @@ class AnsibleModule(object):
 
     def human_to_bytes(self, number, isbits=False):
         return human_to_bytes(number, isbits)
+
+    def datetime_conversion(self, value):
+        match = DATETIME_MATCH.match(value)
+        if match:
+            values = match.groupdict()
+            year = int(values['year'])
+            month = int(values['month'])
+            day = int(values['day'])
+            if not values['hour']:
+                return datetime.date(year, month, day)
+            hour = int(values['hour'])
+            minute = int(values['minute'])
+            second = int(values['second'])
+            fraction = 0
+            if values['fraction']:
+                fraction = values['fraction'][:6]
+                while len(fraction) < 6:
+                    fraction += '0'
+                fraction = int(fraction)
+            delta = None
+            if values['tz_sign']:
+                tz_hour = int(values['tz_hour'])
+                tz_minute = int(values['tz_minute'] or 0)
+                delta = datetime.timedelta(hours=tz_hour, minutes=tz_minute)
+                if values['tz_sign'] == '-':
+                    delta = -delta
+            data = datetime.datetime(year, month, day, hour, minute, second, fraction)
+            if delta:
+                data -= delta
+            return data
+        raise ValueError(datetime.datetime)
 
     #
     # Backwards compat
