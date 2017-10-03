@@ -250,7 +250,7 @@ def find_stream(client, stream_name, check_mode=False):
                 'RetentionPeriodHours': 24,
                 'StreamName': stream_name,
                 'StreamARN': 'arn:aws:kinesis:east-side:123456789:stream/{0}'.format(stream_name),
-                'StreamStatus': 'ACTIVE'
+                'DeliveryStreamStatus': 'ACTIVE'
             }
         success = True
     except botocore.exceptions.ClientError as e:
@@ -287,18 +287,26 @@ def wait_for_status(client, stream_name, status, wait_timeout=300,
     stream = dict()
     err_msg = ""
 
+    logging.info('wait_timeout='+str(wait_timeout))
+
     while wait_timeout > time.time():
         try:
+            logging.info('sleeping for '+str(polling_increment_secs))
+            time.sleep(polling_increment_secs)
             find_success, find_msg, stream = (
                 find_stream(client, stream_name, check_mode=check_mode)
             )
+            logging.info('AFTER calling find_stream find_success='+str(find_success))
+            logging.info('AFTER calling find_stream find_msg='+str(find_msg))
+            logging.info('AFTER calling find_stream stream='+str(stream))
+            # logging.info('stream.get(DeliveryStreamStatus) =  '+str(stream.get('DeliveryStreamStatus')))
             if check_mode:
                 status_achieved = True
                 break
 
             elif status != 'DELETING':
                 if find_success and stream:
-                    if stream.get('StreamStatus') == status:
+                    if stream.get('DeliveryStreamStatus') == status:
                         status_achieved = True
                         break
 
@@ -308,8 +316,10 @@ def wait_for_status(client, stream_name, status, wait_timeout=300,
                     break
 
             else:
+                logging.info(' 2 sleeping for '+str(polling_increment_secs))
                 time.sleep(polling_increment_secs)
         except botocore.exceptions.ClientError as e:
+            logging.info(' EXCEPTION '+to_native(e))
             err_msg = to_native(e)
 
     if not status_achieved:
@@ -317,10 +327,11 @@ def wait_for_status(client, stream_name, status, wait_timeout=300,
     else:
         err_msg = "Status {0} achieved successfully".format(status)
 
+    logging.info(' EXITING  err_msg='+str(err_msg))
     return status_achieved, err_msg, stream
 
 
-def stream_action(client, stream_name, shard_count=1, action='create',
+def stream_action(client, stream_name, s3_destination='NA', stream_type='NA', KinesisStreamSourceConfiguration='NA', action='create',
                   timeout=300, check_mode=False):
     """Create or Delete an Amazon Kinesis Stream.
     Args:
@@ -353,11 +364,10 @@ def stream_action(client, stream_name, shard_count=1, action='create',
         if not check_mode:
             if action == 'create':
                 # params['ShardCount'] = shard_count
-
-                params['S3DestinationConfiguration'] = dict(
-                    RoleARN='arn:aws:iam::417034048139:role/firehose_delivery_role_S3',
-                    BucketARN='arn:aws:s3:::clarky.play.metadev.io'
-                )
+                params['S3DestinationConfiguration'] = s3_destination
+                params['DeliveryStreamType'] = stream_type
+                params['KinesisStreamSourceConfiguration'] = KinesisStreamSourceConfiguration
+                logging.info('params '+str(params))
                 client.create_delivery_stream(**params)
                 success = True
             elif action == 'delete':
@@ -379,8 +389,8 @@ def stream_action(client, stream_name, shard_count=1, action='create',
     return success, err_msg
 
 
-def create_stream(client, stream_name, number_of_shards=1, retention_period=None,
-                  tags=None, wait=False, wait_timeout=300, check_mode=False):
+def create_stream(client, stream_name, s3_destination, stream_type,
+                  KinesisStreamSourceConfiguration, wait=False, wait_timeout=300, check_mode=False):
     """Create an Amazon Kinesis Stream.
     Args:
         client (botocore.client.EC2): Boto3 client.
@@ -419,7 +429,7 @@ def create_stream(client, stream_name, number_of_shards=1, retention_period=None
         find_stream(client, stream_name, check_mode=check_mode)
     )
 
-    if stream_found and current_stream.get('StreamStatus') == 'DELETING' and wait:
+    if stream_found and current_stream.get('DeliveryStreamStatus') == 'DELETING' and wait:
         wait_success, wait_msg, current_stream = (
             wait_for_status(
                 client, stream_name, 'ACTIVE', wait_timeout,
@@ -432,25 +442,22 @@ def create_stream(client, stream_name, number_of_shards=1, retention_period=None
     #         err_msg = 'Can not change the number of shards in a Kinesis Stream'
     #         return success, changed, err_msg, results
 
-    if stream_found and current_stream.get('StreamStatus') != 'DELETING':
-        # success, changed, err_msg = update(
-        #     client, current_stream, stream_name, number_of_shards,
-        #     retention_period, tags, wait, wait_timeout, check_mode=check_mode
-        # )
-        return False, True, 'UPDATE NOT IMPLEMENTED', {}
+    if stream_found and current_stream.get('DeliveryStreamStatus') != 'DELETING':
+        return False, True, 'Error creating Stream: Stream already exists', {}
     else:
         create_success, create_msg = (
             stream_action(
-                client, stream_name, number_of_shards, action='create',
+                client, stream_name, s3_destination, stream_type, KinesisStreamSourceConfiguration, action='create',
                 check_mode=check_mode
             )
         )
         if not create_success:
-            changed = True
+            changed = False
             err_msg = 'Failed to create Kinesis stream: {0}'.format(create_msg)
-            return False, True, err_msg, {}
+            return create_success, changed, err_msg, {}
         else:
             changed = True
+            logging.info('WAITING FOR ACTIVE STATUS')
             if wait:
                 wait_success, wait_msg, results = (
                     wait_for_status(
@@ -458,66 +465,29 @@ def create_stream(client, stream_name, number_of_shards=1, retention_period=None
                         check_mode=check_mode
                     )
                 )
-                err_msg = (
-                    'Kinesis Stream {0} is in the process of being created'
-                        .format(stream_name)
-                )
-                if not wait_success:
-                    return wait_success, True, wait_msg, results
+                logging.info('wait_for_status RETURNED wait_success '+ str(wait_success))
+                logging.info('wait_for_status RETURNED wait_msg '+ str(wait_msg))
+                logging.info('wait_for_status RETURNED results '+ str(results))
+                if wait_success:
+                    success = wait_success
+                    err_msg = wait_msg
+                else:
+                    err_msg = (
+                        'Kinesis Stream {0} is in the process of being created'
+                            .format(stream_name)
+                    )
+                    return wait_success, changed, wait_msg, results
             else:
                 err_msg = (
-                    'Kinesis Stream {0} created successfully'
-                        .format(stream_name)
+                    'Kinesis Stream {0} create requested successfully'
+                    .format(stream_name)
                 )
 
-            # if tags:
-            #     changed, err_msg = (
-            #         tags_action(
-            #             client, stream_name, tags, action='create',
-            #             check_mode=check_mode
-            #         )
-            #     )
-            #     if changed:
-            #         success = True
-            #     if not success:
-            #         return success, changed, err_msg, results
-
-            stream_found, stream_msg, current_stream = (
-                find_stream(client, stream_name, check_mode=check_mode)
-            )
-            # if retention_period and current_stream.get('StreamStatus') == 'ACTIVE':
-            #     changed, err_msg = (
-            #         retention_action(
-            #             client, stream_name, retention_period, action='increase',
-            #             check_mode=check_mode
-            #         )
-            #     )
-            #     if changed:
-            #         success = True
-            #     if not success:
-            #         return success, changed, err_msg, results
-            # else:
-            #     err_msg = (
-            #         'StreamStatus has to be ACTIVE in order to modify the retention period. Current status is {0}'
-            #             .format(current_stream.get('StreamStatus', 'UNKNOWN'))
-            #     )
-            #     success = create_success
-            #     changed = True
 
     if success:
         _, _, results = (
             find_stream(client, stream_name, check_mode=check_mode)
         )
-        # _, _, current_tags = (
-        #     get_tags(client, stream_name, check_mode=check_mode)
-        # )
-        # if current_tags and not check_mode:
-        #     current_tags = make_tags_in_proper_format(current_tags)
-        #     results['Tags'] = current_tags
-        # elif check_mode and tags:
-        #     results['Tags'] = tags
-        # else:
-        #     results['Tags'] = dict()
         results = convert_to_lower(results)
 
     return success, changed, err_msg, results
@@ -591,9 +561,9 @@ def main():
     argument_spec.update(
         dict(
             name=dict(default=None, required=True),
-            shards=dict(default=None, required=False, type='int'),
-            retention_period=dict(default=None, required=False, type='int'),
-            tags=dict(default=None, required=False, type='dict', aliases=['resource_tags']),
+            s3_destination=dict(required=False, type='dict'),
+            stream_type=dict(required=False, type='str'),
+            KinesisStreamSourceConfiguration=dict(default=None, required=False, type='dict'),
             wait=dict(default=True, required=False, type='bool'),
             wait_timeout=dict(default=300, required=False, type='int'),
             state=dict(default='present', choices=['present', 'absent']),
@@ -604,20 +574,21 @@ def main():
         supports_check_mode=True,
     )
 
-    retention_period = module.params.get('retention_period')
+    # retention_period = module.params.get('retention_period')
     stream_name = module.params.get('name')
-    shards = module.params.get('shards')
+    s3_destination = module.params.get('s3_destination')
+    stream_type = module.params.get('stream_type')
     state = module.params.get('state')
-    tags = module.params.get('tags')
+    KinesisStreamSourceConfiguration = module.params.get('KinesisStreamSourceConfiguration')
     wait = module.params.get('wait')
     wait_timeout = module.params.get('wait_timeout')
 
     # if state == 'present' and not shards:
     #     module.fail_json(msg='Shards is required when state == present.')
 
-    if retention_period:
-        if retention_period < 24:
-            module.fail_json(msg='Retention period can not be less than 24 hours.')
+    # if retention_period:
+    #     if retention_period < 24:
+    #         module.fail_json(msg='Retention period can not be less than 24 hours.')
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 is required.')
@@ -642,7 +613,7 @@ def main():
     if state == 'present':
         success, changed, err_msg, results = (
             create_stream(
-                client, stream_name, shards, retention_period, tags,
+                client, stream_name, s3_destination, stream_type, KinesisStreamSourceConfiguration,
                 wait, wait_timeout, check_mode
             )
         )
