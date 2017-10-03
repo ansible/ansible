@@ -30,6 +30,7 @@ One exception is the ``inventory_dir``, which is now a host variable; previously
 
 The ``inventory_file`` remains unchaged, as it was always host specific.
 
+A bug was fixed with the inventory path/dir which was defaulting to 'current working directory' so ``group_vars`` and ``host_vars`` were being picked up from cwd instead of just adjacent to the playbook or inventory directory when a host list (comma separated host names) was provided as inventory.
 
 Deprecated
 ==========
@@ -39,7 +40,7 @@ Specifying Inventory sources
 
 Use of ``--inventory-file`` on the command line is now deprecated. Use ``--inventory`` or ``-i``.
 The associated ini configuration key, ``hostfile``, and environment variable, :envvar:`ANSIBLE_HOSTS`,
-are also deprecated.  Replace them with the configuration key ``inventory`` and environment variable :envvar:        `ANSIBLE_INVENTORY`.
+are also deprecated.  Replace them with the configuration key ``inventory`` and environment variable :envvar:`ANSIBLE_INVENTORY`.
 
 Use of multiple tags
 --------------------
