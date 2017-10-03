@@ -44,41 +44,6 @@ LICENSE_MODELS = [
     'postgresql-license'
 ]
 
-PARAMETER_MAP = {
-    'apply_immediately': 'ApplyImmediately',
-    'backup_retention': 'BackupRetentionPeriod',
-    'backup_window': 'PreferredBackupWindow',
-    'character_set_name': 'CharacterSetName',
-    'cluster': 'DBClusterIdentifer',
-    'db_engine': 'Engine',
-    'db_name': 'DBName',
-    'engine_version': 'EngineVersion',
-    'force_failover': 'ForceFailover',
-    'db_instance_id': 'DBInstanceIdentifier',
-    'instance_type': 'DBInstanceClass',
-    'iops': 'Iops',
-    'license_model': 'LicenseModel',
-    'maint_window': 'PreferredMaintenanceWindow',
-    'multi_zone': 'MultiAZ',
-    'option_group': 'OptionGroupName',
-    'parameter_group': 'DBParameterGroupName',
-    'password': 'MasterUserPassword',
-    'port': 'Port',
-    'publicly_accessible': 'PubliclyAccessible',
-    'security_groups': 'DBSecurityGroups',
-    'size': 'AllocatedStorage',
-    'skip_final_snapshot': 'SkipFinalSnapshot"',
-    'source_instance': 'SourceDBInstanceIdentifier',
-    'snapshot': 'DBSnapshotIdentifier',
-    'storage_type': 'StorageType',
-    'subnet': 'DBSubnetGroupName',
-    'tags': 'Tags',
-    'upgrade': 'AutoMinorVersionUpgrade',
-    'username': 'MasterUsername',
-    'vpc_security_groups': 'VpcSecurityGroupIds',
-    'zone': 'AvailabilityZone',
-}
-
 
 def get_db_instance(conn, instancename):
     try:
