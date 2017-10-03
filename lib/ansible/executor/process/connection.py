@@ -19,9 +19,9 @@ from ansible import constants as C
 
 from ansible.module_utils._text import to_bytes
 from ansible.module_utils.connection import send_data, recv_data
+from ansible.module_utils.service import fork_process
 from ansible.utils.path import unfrackpath, makedirs_safe
 from ansible.errors import AnsibleError
-from ansible.executor.process import do_fork
 from ansible.utils.jsonrpc import JsonRpcServer
 
 
@@ -166,7 +166,7 @@ class ConnectionProcess(object):
 
         if not os.path.exists(socket_path):
             display.vvvv('forking process to start persistent connection', host=play_context.remote_addr)
-            pid = do_fork()
+            pid = fork_process(redirect_stdout=False, redirect_stderr=False)
             if pid == 0:
                 rc = 0
                 try:

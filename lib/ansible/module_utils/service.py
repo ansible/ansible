@@ -91,6 +91,58 @@ def fail_if_missing(module, found, service, msg=''):
             module.fail_json(msg='Could not find the requested service %s: %s' % (service, msg))
 
 
+def fork_process(redirect_stdin=True, redirect_stdout=True, redirect_stderr=True):
+    '''
+    This function performs the double fork process to detach from the
+    parent process and execute.
+
+    :arg redirect_stdin: boolean specifies if stdin should be redirected to /dev/null
+    :arg redirect_stdout: boolean specifies if stdout should be redirected to /dev/null
+    :arg redirect_stderr: boolean specifies if stderr should be redirected to /dev/null
+    '''
+
+    fds = range(3)
+    for pos, arg in enumerate((redirect_stdin, redirect_stdout, redirect_stderr)):
+        if not arg:
+            fds.remove(pos)
+
+    pid = os.fork()
+
+    if pid == 0:
+        # Set stdin/stdout/stderr to /dev/null
+        fd = os.open(os.devnull, os.O_RDWR)
+
+        # clone stdin/out/err
+        for num in fds:
+            if fd != num:
+                os.dup2(fd, num)
+
+        # close otherwise
+        if fd not in range(3):
+            os.close(fd)
+
+        # Make us a daemon
+        pid = os.fork()
+
+        # end if not in child
+        if pid > 0:
+            os._exit(0)
+
+        # get new process session and detach
+        sid = os.setsid()
+        if sid == -1:
+            raise Exception("Unable to detach session while daemonizing")
+
+        # avoid possible problems with cwd being removed
+        os.chdir("/")
+
+        pid = os.fork()
+        if pid > 0:
+            os._exit(0)
+
+    return pid
+
+
 def daemonize(module, cmd):
     '''
     Execute a command while detaching as a daemon, returns rc, stdout, and stderr.
@@ -110,44 +162,15 @@ def daemonize(module, cmd):
     # start it!
     try:
         pipe = os.pipe()
-        pid = os.fork()
+        pid = fork_process()
     except OSError:
         module.fail_json(msg="Error while attempting to fork: %s", exception=traceback.format_exc())
+    except Exception as exc:
+        module.fail_json(msg=to_text(exc), exception=traceback.format_exc())
 
     # we don't do any locking as this should be a unique module/process
     if pid == 0:
-
         os.close(pipe[0])
-        # Set stdin/stdout/stderr to /dev/null
-        fd = os.open(os.devnull, os.O_RDWR)
-
-        # clone stdin/out/err
-        for num in range(3):
-            if fd != num:
-                os.dup2(fd, num)
-
-        # close otherwise
-        if fd not in range(3):
-            os.close(fd)
-
-        # Make us a daemon
-        pid = os.fork()
-
-        # end if not in child
-        if pid > 0:
-            os._exit(0)
-
-        # get new process session and detach
-        sid = os.setsid()
-        if sid == -1:
-            module.fail_json(msg="Unable to detach session while daemonizing")
-
-        # avoid possible problems with cwd being removed
-        os.chdir("/")
-
-        pid = os.fork()
-        if pid > 0:
-            os._exit(0)
 
         # if command is string deal with  py2 vs py3 conversions for shlex
         if not isinstance(cmd, list):
