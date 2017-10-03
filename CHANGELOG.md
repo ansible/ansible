@@ -87,6 +87,7 @@ Ansible Changes By Release
 * Fix for become on Windows to handle ignored errors (https://github.com/ansible/ansible/issues/30468)
 * Fix removal of newlines when writing SELinux config (https://github.com/ansible/ansible/issues/30618)
 * clarified extension requirement for constructed inv plugin
+* really turn off inventory caching, toggle will be added in 2.5
 
 <a id="2.4"></a>
 
