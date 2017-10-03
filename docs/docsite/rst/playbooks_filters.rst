@@ -71,7 +71,7 @@ In the above example, if the variable 'some_variable' is not defined, the value 
 being raised.
 
 If the variable evaluates to an empty string, the second parameter of the filter should be set to
-`true`:
+`true`::
 
     {{ lookup('env', 'MY_USER') | default('admin', true) }}
 
