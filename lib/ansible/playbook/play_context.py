@@ -294,11 +294,6 @@ class PlayContext(Base):
         if play.force_handlers is not None:
             self.force_handlers = play.force_handlers
 
-        if play.any_errors_fatal is not None:
-            self.any_errors_fatal = play.any_errors_fatal
-        else:
-            self.any_errors_fatal = C.ANY_ERRORS_FATAL
-
     def set_options_from_plugin(self, plugin):
         # generic derived from connection plugin, temporary for backwards compat, in the end we should not set play_context properties
 
@@ -496,9 +491,6 @@ class PlayContext(Base):
         # set no_log to default if it was not previouslly set
         if new_info.no_log is None:
             new_info.no_log = C.DEFAULT_NO_LOG
-
-        if new_info.any_errors_fatal is None:
-            new_info.any_errors_fatal = C.ANY_ERRORS_FATAL
 
         if task.always_run:
             display.deprecated("always_run is deprecated. Use check_mode = no instead.", version="2.4", removed=False)

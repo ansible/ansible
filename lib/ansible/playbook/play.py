@@ -111,6 +111,11 @@ class Play(Base, Taggable, Become):
         p = Play()
         return p.load_data(data, variable_manager=variable_manager, loader=loader)
 
+    def _post_validate_any_errors_fatal(self, attribute, value, templar):
+        if value is None:
+            return C.ANY_ERRORS_FATAL
+        return templar.template(value)
+
     def preprocess_data(self, ds):
         '''
         Adjusts play datastructure to cleanup old/legacy items

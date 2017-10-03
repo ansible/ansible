@@ -21,6 +21,7 @@ __metaclass__ = type
 
 import os
 
+from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils._text import to_native
@@ -246,6 +247,11 @@ class Task(Base, Conditional, Taggable, Become):
             self._parent.post_validate(templar)
 
         super(Task, self).post_validate(templar)
+
+    def _post_validate_any_errors_fatal(self, attr, value, templar):
+        if value is None:
+            return C.ANY_ERRORS_FATAL
+        return templar.template(value)
 
     def _post_validate_loop_args(self, attr, value, templar):
         '''

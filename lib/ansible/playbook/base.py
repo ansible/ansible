@@ -354,8 +354,10 @@ class Base(with_metaclass(BaseMeta, object)):
         for (name, attribute) in iteritems(self._valid_attrs):
 
             if getattr(self, name) is None:
-                if not attribute.required:
+                if not attribute.required and not attribute.always_post_validate:
                     continue
+                elif not attribute.required and attribute.always_post_validate:
+                    pass
                 else:
                     raise AnsibleParserError("the field '%s' is required but was not set" % name)
             elif not attribute.always_post_validate and self.__class__.__name__ not in ('Task', 'Handler', 'PlayContext'):
