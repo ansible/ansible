@@ -127,9 +127,9 @@ class CallbackModule(CallbackBase):
 
         self.start_timer()
 
-        # self.playbook is either set by Ansible (v1), or by us in the `playbook_start` callback method (v2)
+        # self.playbook is either set by Ansible (v1), or in the `playbook_start` callback method (v2)
         self.playbook = None
-        # self.play is either set by Ansible (v1), or by us in the `playbook_on_play_start` callback method (v2)
+        # self.play is either set by Ansible (v1), or in the `playbook_on_play_start` callback method (v2)
         self.play = None
 
         # pytelegraf makes asyc calls to telegraf so doesn't raise errors.  Check once.
@@ -150,7 +150,8 @@ class CallbackModule(CallbackBase):
         self._host = self._plugin_options['host']
         self._port = self._plugin_options['port']
         self._wire_protocol = self._plugin_options['wire_protocol']
-        self._display.display('host {}, port {}, wire_protocol {}'.format(self._host, self._port, self._wire_protocol))
+        self._display.display('host {}, port {}, wire_protocol {}'.format(
+            self._host, self._port, self._wire_protocol))
         if self._display.verbosity > 1:
             self._display.display('Using wire protocol {}, host {}, port {}'.format(
                 self._wire_protocol, self._host, self._port))
@@ -174,7 +175,7 @@ class CallbackModule(CallbackBase):
             except ImportError as err:
                 self._display.error('Could not import telegraf.client. pip install pytelegraf')
                 self.disabled = True
-                raise(err)
+                raise err
 
         if not self._connection_tested:
             import contextlib
