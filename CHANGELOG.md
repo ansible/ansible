@@ -77,6 +77,7 @@ Ansible Changes By Release
 * fixed redis cache typo
 * Fix AttributeError during inventory group deserialization (https://github.com/ansible/ansible/issues/30903)
 * Fix 'ansible-vault encrypt --output=-' (https://github.com/ansible/ansible/issues/30550)
+* restore pre 2.4 pipeline configuration options (env and ini)
 
 
 <a id="2.4"></a>

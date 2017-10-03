@@ -160,9 +160,14 @@ ANSIBLE_PIPELINING:
     - This can result in a very significant performance improvement when enabled.
     - "However this conflicts with privilege escalation (become). For example, when using 'sudo:' operations you must first
       disable 'requiretty' in /etc/sudoers on all managed hosts, which is why it is disabled by default."
-  env: [{name: ANSIBLE_PIPELINING}]
+  env:
+    - name: ANSIBLE_SSH_PIPELINING
+    - name: ANSIBLE_PIPELINING
   ini:
-  - {key: pipelining, section: connection}
+  - section: connection
+    key: pipelining
+  - section: ssh_connection
+    key: pipelining
   type: boolean
   yaml: {key: plugins.connection.pipelining}
 ANSIBLE_SSH_ARGS:
