@@ -91,7 +91,6 @@ reboot_required:
 
 import os
 import re
-import shutil
 import tempfile
 
 try:
@@ -128,11 +127,9 @@ def set_config_state(module, state, configfile):
     # SELINUX=permissive
     # edit config file with state value
     stateline = 'SELINUX=%s' % state
+    lines = get_file_lines(configfile, strip=False)
 
     tmpfd, tmpfile = tempfile.mkstemp()
-    shutil.copy2(configfile, tmpfile)
-
-    lines = get_file_lines(tmpfile, strip=False)
 
     with open(tmpfile, "w") as write_file:
         for line in lines:
@@ -157,11 +154,9 @@ def set_config_policy(module, policy, configfile):
     # edit config file with state value
     # SELINUXTYPE=targeted
     policyline = 'SELINUXTYPE=%s' % policy
+    lines = get_file_lines(configfile, strip=False)
 
     tmpfd, tmpfile = tempfile.mkstemp()
-    shutil.copy2(configfile, tmpfile)
-
-    lines = get_file_lines(tmpfile, strip=False)
 
     with open(tmpfile, "w") as write_file:
         for line in lines:
@@ -228,7 +223,7 @@ def main():
     if policy != config_policy:
         if module.check_mode:
             module.exit_json(changed=True)
-        msgs.append('Config SELinux policy changed from \'%s\' to \'%s\'' % (config_policy, policy))
+        msgs.append('SELinux policy configuration in \'%s\' changed from \'%s\' to \'%s\'' % (configfile, config_policy, policy))
         set_config_policy(module, policy, configfile)
         changed = True
 
