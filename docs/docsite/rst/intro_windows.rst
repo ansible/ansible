@@ -91,6 +91,15 @@ When connecting to a Windows host there are different authentication options tha
 
 You can specify which authentication option you wish to use by setting it to the ``ansible_winrm_transport`` variable.
 
+Authentication Options Choices
+``````````````````````````````
+
+This flowchart can be used to work out the most appropriate Authentication options for your environments.
+
+.. raw:: html
+
+    <object data="../_static/win_choices..svg" type="image/svg+xml"></object>
+
 Certificate
 +++++++++++
 
