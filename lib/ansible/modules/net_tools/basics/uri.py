@@ -654,9 +654,11 @@ def main():
     # Default content_encoding to try
     content_encoding = 'utf-8'
     if 'content_type' in uresp:
-        content_type, params = cgi.parse_header(uresp['content_type'])
-        if 'charset' in params:
-            content_encoding = params['charset']
+        # Handle multiple Content-Type headers
+        for ct in uresp['content_type'].split(','):
+            content_type, params = cgi.parse_header(ct)
+            if 'charset' in params:
+                content_encoding = params['charset']
         u_content = to_text(content, encoding=content_encoding)
         if any(candidate in content_type for candidate in JSON_CANDIDATES):
             try:
