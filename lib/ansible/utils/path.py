@@ -43,6 +43,9 @@ def unfrackpath(path, follow=True):
         '$HOME/../../var/mail' becomes '/var/spool/mail'
     '''
 
+    if path == '-':
+        return path
+
     if follow:
         final_path = os.path.normpath(os.path.realpath(os.path.expanduser(os.path.expandvars(to_bytes(path, errors='surrogate_or_strict')))))
     else:
