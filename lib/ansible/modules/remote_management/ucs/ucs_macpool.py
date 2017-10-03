@@ -139,8 +139,8 @@ def setup_macpool(login_handle, module):
                 if(mac['to'] != '' and mac['from'] != ''):
                     block_dn = dn + '/block-' + mac['from'] + '-' + mac['to']
                     mo_1 = login_handle.query_dn(block_dn)
-                if mo_1:
-                    exists = True
+                    if mo_1:
+                        exists = True
                 else:
                     exists = True
 
