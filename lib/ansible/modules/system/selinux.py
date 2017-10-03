@@ -91,12 +91,15 @@ reboot_required:
 
 import os
 import re
+import shutil
+import tempfile
 
 try:
     import selinux
     HAS_SELINUX = True
 except ImportError:
     HAS_SELINUX = False
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.facts.utils import get_file_lines
 
@@ -121,16 +124,21 @@ def get_config_policy(configfile):
 
 
 # setter subroutines
-def set_config_state(state, configfile):
+def set_config_state(module, state, configfile):
     # SELINUX=permissive
     # edit config file with state value
     stateline = 'SELINUX=%s' % state
 
-    lines = get_file_lines(configfile, strip=False)
+    tmpfd, tmpfile = tempfile.mkstemp()
+    shutil.copy2(configfile, tmpfile)
 
-    with open(configfile, "w") as write_file:
+    lines = get_file_lines(tmpfile, strip=False)
+
+    with open(tmpfile, "w") as write_file:
         for line in lines:
             write_file.write(re.sub(r'^SELINUX=.*', stateline, line) + '\n')
+
+    module.atomic_move(tmpfile, configfile)
 
 
 def set_state(module, state):
@@ -145,15 +153,21 @@ def set_state(module, state):
         module.fail_json(msg=msg)
 
 
-def set_config_policy(policy, configfile):
+def set_config_policy(module, policy, configfile):
     # edit config file with state value
     # SELINUXTYPE=targeted
     policyline = 'SELINUXTYPE=%s' % policy
-    lines = get_file_lines(configfile, strip=False)
 
-    with open(configfile, "w") as write_file:
+    tmpfd, tmpfile = tempfile.mkstemp()
+    shutil.copy2(configfile, tmpfile)
+
+    lines = get_file_lines(tmpfile, strip=False)
+
+    with open(tmpfile, "w") as write_file:
         for line in lines:
             write_file.write(re.sub(r'^SELINUXTYPE=.*', policyline, line) + '\n')
+
+    module.atomic_move(tmpfile, configfile)
 
 
 def main():
@@ -215,7 +229,7 @@ def main():
         if module.check_mode:
             module.exit_json(changed=True)
         msgs.append('Config SELinux policy changed from \'%s\' to \'%s\'' % (config_policy, policy))
-        set_config_policy(policy, configfile)
+        set_config_policy(module, policy, configfile)
         changed = True
 
     if state != runtime_state:
@@ -245,7 +259,7 @@ def main():
         if module.check_mode:
             module.exit_json(changed=True)
         msgs.append('Config SELinux state changed from \'%s\' to \'%s\'' % (config_state, state))
-        set_config_state(state, configfile)
+        set_config_state(module, state, configfile)
         changed = True
 
     module.exit_json(changed=changed, msg=', '.join(msgs), configfile=configfile, policy=policy, state=state, reboot_required=reboot_required)
