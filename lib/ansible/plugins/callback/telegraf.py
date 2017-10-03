@@ -1,4 +1,4 @@
-# (C) 2017-2018, VMware, Inc. All Rights Reserved.  
+# (C) 2017-2018, VMware, Inc. All Rights Reserved.
 # SPDX-License-Identifier: GPL-3.0
 # (C) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -17,7 +17,8 @@ DOCUMENTATION = '''
     short_description: Sends play events to a telegraf forwarder (to metrics collector)
     version_added: "2.4"
     description:
-        - This is an ansible callback plugin that sends playbook stats to a telegraf listener input (udp/http) during playbook execution.
+        - This is an ansible callback plugin that sends playbook stats to a telegraf listener input (udp/http) 
+          during playbook execution.
         - Configure with <playbook root>callback_plugins/ansible-telegraf-callback/telegraf_callback.yml
         - or using the module args or options in ansible.cfg
     notes:
@@ -26,7 +27,8 @@ DOCUMENTATION = '''
         - run with -vvvv.  In the first few lines you should see the callback is loaded
         - grep --binary-file=text changed /var/log/telegraf.log to see if telegraf is receiving 
         - ensure telegraf is running with correct input blocks in /etc/telegraf/telegraf.d/
-          inputs-socket-listener.conf or inputs-http-listener.conf https://github.com/influxdata/telegraf/tree/master/plugins/inputs/socket_listener
+          inputs-socket-listener.conf or inputs-http-listener.conf 
+          https://github.com/influxdata/telegraf/tree/master/plugins/inputs/socket_listener
 
         - Installation
           - in ansible.cfg
@@ -92,6 +94,7 @@ DOCUMENTATION = '''
 import os.path
 import socket
 from datetime import datetime, timedelta
+from ansible.module_utils.six import iteritems
 
 
 try:
@@ -106,7 +109,7 @@ class CallbackModule(CallbackBase):
     """
     This is an ansible callback plugin that sends metrics
     to a collector via telegraf.  Which collector depends on telegraf config.
-    """    
+    """
     CALLBACK_VERSION = 2.0
     CALLBACK_TYPE = 'metrics'  # https://groups.google.com/forum/#!topic/ansible-devel/G9mJUmaM-Eg
     CALLBACK_NAME = 'telegraf'
@@ -157,20 +160,21 @@ class CallbackModule(CallbackBase):
                 from telegraf import HttpClient
                 try:
                     self.client = HttpClient(host=self._host, port=self._port)
-                except Exception as e:
-                    self._display.error('Failed to make http connection to telegraf \n {}'.format(e))
+                except Exception as err:
+                    self._display.error('Failed to make http connection to telegraf \n {}'.format(err))
                     self.disabled = True
             except ImportError:
-                self._display.warning('WARNING: Could not import telegraf HttpClient please pip install pytelegraf[http].  Using udp')
+                self._display.warning('''WARNING: Could not import telegraf HttpClient
+                                         please pip install pytelegraf[http].  Using udp''')
                 self._wire_protocol = 'udp'
         elif self._wire_protocol.startswith('udp'):
             try:
                 from telegraf.client import TelegrafClient
                 self.client = TelegrafClient(host=self._host, port=self._port)
-            except ImportError as e:
-                self._display.error('Could not import telegraf.client please pip install pytelegraf')
+            except ImportError as err:
+                self._display.error('Could not import telegraf.client. pip install pytelegraf')
                 self.disabled = True
-                raise e
+                raise(err)
 
         if not self._connection_tested:
             import contextlib
@@ -180,16 +184,18 @@ class CallbackModule(CallbackBase):
                         self._display.display("Telegraf http connection succeeded!")
                         self._connection_tested = True
                     else:
-                        error_msg = '''Telegraf port connection failed!  Disabling telegraf callback.
-                                   Check connection to {}:{} '''.format(self._host, self._port)
+                        error_msg = '''Telegraf port connection failed!
+                                       Disabling telegraf callback.
+                                       Check connection to {}:{} '''.format(self._host, self._port)
                         self._display.error(error_msg)
                         self.disabled = True
             elif self._wire_protocol.startswith('udp'):
-                self._display.display("wire_protocol = udp.  Cannot verify udp port is available.  Check telegraf.log")
+                self._display.display('''wire_protocol = udp.  Cannot verify udp port is available.
+                                         Check telegraf.log''')
                 self._connection_tested = True
 
     # Send ansible metric to Telegraf
-    def send_metric(self, metric, value, host=None, tags={}):
+    def send_metric(self, metric, value, host=None, tags=None):
         """
         @metric: '.' separated string metric name
         @value: int, float or string
@@ -199,7 +205,7 @@ class CallbackModule(CallbackBase):
         # Records a single value with one tag
         # self.client.metric('some_metric', 123, tags={'server_name': 'my-server'})
         merged_tags = self.default_tags
-        merged_tags.update(tags)
+        merged_tags.update(tags or {})
         if host:
             merged_tags['hostname'] = host
 
@@ -216,7 +222,7 @@ class CallbackModule(CallbackBase):
     # Default tags sent with metrics
     @property
     def default_tags(self):
-        return { 'playbook': self._playbook_name, 'controller': self._controller_hostname }
+        return {'playbook': self._playbook_name, 'controller': self._controller_hostname}
 
     # Start timer to measure playbook running time
     def start_timer(self):
@@ -233,7 +239,7 @@ class CallbackModule(CallbackBase):
         # Set the playbook name from its filename
         self._playbook_name, _ = os.path.splitext(
             os.path.basename(playbook_file_name))
-        
+
     # Implementation compatible with Ansible v1 only
     def playbook_on_start(self):
         playbook_file_name = self.playbook.filename
@@ -266,21 +272,20 @@ class CallbackModule(CallbackBase):
         if self._metric_summary:
             # Send playbook summarized over hosts
             summaries = {'playbook-summary.runtime': self.get_elapsed_time(),
-                  'playbook-summary.changed': total_changed,
-                  'playbook-summary.tasks': total_tasks,
-                  'playbook-summary.errors': total_errors
-                  }
-            for k, v in summaries.iteritems():
-                if k == 'playbook-summary.errors':
+                         'playbook-summary.changed': total_changed,
+                         'playbook-summary.tasks': total_tasks,
+                         'playbook-summary.errors': total_errors
+                        }
+            for key, val in summaries.iteritems():
+                if key == 'playbook-summary.errors':
                     tags = {}
-                    tags['failingHosts'] = ",".join( [ x[0] for x in error_hosts ])
-                    self.send_metric(k, v, tags=tags)
+                    tags['failingHosts'] = ",".join([x[0] for x in error_hosts])
+                    self.send_metric(key, val, tags=tags)
                 else:
-                    self.send_metric(k, v)
+                    self.send_metric(key, val)
 
-    ### Ansible callbacks ###
+    # Ansible callbacks
     # v2_ versions call to these, which mostly just call to v1_ versions
- 
 
     # Implementation compatible with Ansible v2 only
     def v2_playbook_on_start(self, playbook):
@@ -299,4 +304,3 @@ class CallbackModule(CallbackBase):
     def v2_playbook_on_stats(self, stats):
         self._display.display("Playbook sending metrics to telegraf")
         self.playbook_on_stats(stats)
-
