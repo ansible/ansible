@@ -36,9 +36,9 @@ def get_file_content(path, default=None, strip=True):
     return data
 
 
-def get_file_lines(path):
+def get_file_lines(path, strip=True):
     '''get list of lines from file'''
-    data = get_file_content(path)
+    data = get_file_content(path, strip=strip)
     if data:
         ret = data.splitlines()
     else:
