@@ -277,7 +277,9 @@ class Play(Base, Taggable, Become):
         return self.vars.copy()
 
     def get_vars_files(self):
-        return self.vars_files or []
+        if self.vars_files is None:
+            return []
+        return self.vars_files
 
     def get_handlers(self):
         return self.handlers[:]
