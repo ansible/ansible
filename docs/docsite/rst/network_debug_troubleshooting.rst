@@ -32,7 +32,7 @@ Errors generally fall into one of the following categories:
   * Can occur when trying to pull a large amount of data
   * May actually be masking a authentication issue
 :Playbook issues:
-  * Use of ``delegate_to``, instead of ``ProxyCommand``, see :ref:`network proxy guide <network_delegate_to_vs_ProxyCommand>`
+  * Use of ``delegate_to``, instead of ``ProxyCommand``. See :ref:`network proxy guide <network_delegate_to_vs_ProxyCommand>` for more information.
   * Not using ``connection: local``
 
 
@@ -332,7 +332,7 @@ Persistent connection idle timeout:
 For example:
 
 .. code-block:: yaml
-
+"
    2017-04-04 12:19:05,670 p=18591 u=fred |  persistent connection idle timeout triggered, timeout value is 30 secs
 
 Suggestions to resolve:
@@ -410,10 +410,10 @@ For example:
 
 Suggestions to resolve:
 
-Increase value of persistent connection idle timeout.
-Note: This value should be greater than SSH timeout ie. timeout value under defaults
-section in configuration file and less than the value of the persistent
-connection idle timeout (connect_timeout)
+Increase the value of the persistent connection idle timeout.
+Note: This value should be greater than the SSH timeout value (the timeout value under the defaults
+section in the configuration file) and less than the value of the persistent
+connection idle timeout (connect_timeout).
 
 .. code-block:: yaml
 
@@ -519,7 +519,7 @@ no longer supports the use of the ``delegate_to`` directive.
 In order to use a bastion or intermediate jump host to connect to network devices over ``cli``
 transport, network modules now support the use of ``ProxyCommand``.
 
-To use ``ProxyCommand`` configure the proxy settings in the Ansible inventory
+To use ``ProxyCommand``, configure the proxy settings in the Ansible inventory
 file to specify the proxy host.
 
 .. code-block:: ini
@@ -535,12 +535,12 @@ file to specify the proxy host.
 With the configuration above, simply build and run the playbook as normal with
 no additional changes necessary.  The network module will now connect to the
 network device by first connecting to the host specified in
-``ansible_ssh_common_args`` which is ``bastion01`` in the above example.
+``ansible_ssh_common_args``, which is ``bastion01`` in the above example.
 
 
 .. note:: Using ``ProxyCommand`` with passwords via variables
 
-   It is a feature that SSH doesn't support providing passwords via environment variables.
+   By design, SSH doesn't support providing passwords via environment variables.
    This is done to prevent secrets from leaking out, for example in ``ps`` output.
 
-   We recommend using SSH Keys, and if needed and ssh-agent, rather than passwords, where ever possible.
+   We recommend using SSH Keys, and if needed an ssh-agent, rather than passwords, where ever possible.
