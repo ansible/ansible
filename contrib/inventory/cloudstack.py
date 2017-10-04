@@ -95,6 +95,7 @@ class CloudStackInventory(object):
         parser = argparse.ArgumentParser()
         parser.add_argument('--host')
         parser.add_argument('--list', action='store_true')
+        parser.add_argument('--tag', help="Filter machines by a tag. Should be in the form key=value.")
         parser.add_argument('--project')
         parser.add_argument('--domain')
 
@@ -117,10 +118,14 @@ class CloudStackInventory(object):
             print(json.dumps(data, indent=2))
 
         elif options.list:
-            data = self.get_list(project_id, domain_id)
+            tags = dict()
+            if options.tag:
+                tags['tags[0].key'], tags['tags[0].value'] = options.tag.split('=')
+            data = self.get_list(project_id, domain_id, **tags)
             print(json.dumps(data, indent=2))
         else:
-            print("usage: --list | --host <hostname> [--project <project>] [--domain <domain_path>]", file=sys.stderr)
+            print("usage: --list [--tag <tag>] | --host <hostname> [--project <project>] [--domain <domain_path>]",
+                  file=sys.stderr)
             sys.exit(1)
 
     def get_domain_id(self, domain):
@@ -141,8 +146,8 @@ class CloudStackInventory(object):
         print("Error: Project %s not found." % project, file=sys.stderr)
         sys.exit(1)
 
-    def get_host(self, name, project_id=None, domain_id=None):
-        hosts = self.cs.listVirtualMachines(projectid=project_id, domainid=domain_id)
+    def get_host(self, name, project_id=None, domain_id=None, **kwargs):
+        hosts = self.cs.listVirtualMachines(projectid=project_id, domainid=domain_id, **kwargs)
         data = {}
         if not hosts:
             return data
@@ -178,7 +183,7 @@ class CloudStackInventory(object):
                 break
         return data
 
-    def get_list(self, project_id=None, domain_id=None):
+    def get_list(self, project_id=None, domain_id=None, **kwargs):
         data = {
             'all': {
                 'hosts': [],
@@ -197,7 +202,7 @@ class CloudStackInventory(object):
                         'hosts': []
                     }
 
-        hosts = self.cs.listVirtualMachines(projectid=project_id, domainid=domain_id)
+        hosts = self.cs.listVirtualMachines(projectid=project_id, domainid=domain_id, **kwargs)
         if not hosts:
             return data
         for host in hosts['virtualmachine']:
