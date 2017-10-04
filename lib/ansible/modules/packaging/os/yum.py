@@ -1024,23 +1024,23 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, up
                 module.fail_json(**res)
 
             nothing_to_do = True
-            for this in pkglist:
-                if spec in pkgs['install'] and is_available(module, repoq, this, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot):
+            for pkg in pkglist:
+                if spec in pkgs['install'] and is_available(module, repoq, pkg, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot):
                     nothing_to_do = False
                     break
 
                 # this contains the full NVR and spec could contain wildcards
                 # or virtual provides (like "python-*" or "smtp-daemon") while
                 # updates contains name only.
-                this_name_only = '-'.join(this.split('-')[:-2])
-                if spec in pkgs['update'] and this_name_only in updates:
+                pkgname, _, _, _, _ = splitFilename(pkg)
+                if spec in pkgs['update'] and pkgname in updates:
                     nothing_to_do = False
                     will_update.add(spec)
                     # Massage the updates list
-                    if spec != this_name_only:
+                    if spec != pkgname:
                         # For reporting what packages would be updated more
                         # succinctly
-                        will_update_from_other_package[spec] = this_name_only
+                        will_update_from_other_package[spec] = pkgname
                     break
 
             if not is_installed(module, repoq, spec, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot) and update_only:
