@@ -85,6 +85,7 @@ Ansible Changes By Release
 * Fix monit module's version check for color support (https://github.com/ansible/ansible/pull/31212)
 * Max `elasticsearch_plugin` module work with both 2.x and 5.x (https://github.com/ansible/ansible/issues/21989)
 * Fix for become on Windows to handle ignored errors (https://github.com/ansible/ansible/issues/30468)
+* Fix removal of newlines when writing SELinux config (https://github.com/ansible/ansible/issues/30618)
 
 <a id="2.4"></a>
 
