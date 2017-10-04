@@ -64,22 +64,11 @@ def recv_data(s):
 
 def exec_command(module, command):
     try:
-        sf = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        sf.connect(module._socket_path)
-
-        data = "EXEC: %s" % command
-        send_data(sf, to_bytes(data.strip()))
-
-        rc = int(recv_data(sf), 10)
-        stdout = recv_data(sf)
-        stderr = recv_data(sf)
-    except socket.error as e:
-        sf.close()
-        module.fail_json(msg='unable to connect to socket', err=to_native(e), exception=traceback.format_exc())
-
-    sf.close()
-
-    return rc, to_native(stdout, errors='surrogate_or_strict'), to_native(stderr, errors='surrogate_or_strict')
+        connection = Connection(module._socket_path)
+        out = connection.exec_command(command)
+        return 0, out, ''
+    except ConnectionError as exc:
+        return exc.code, '', to_native(exc.msg, errors='surrogate_or_strict')
 
 
 def request_builder(method, *args, **kwargs):

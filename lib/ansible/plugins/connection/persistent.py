@@ -14,16 +14,10 @@ DOCUMENTATION = """
     version_added: "2.3"
 """
 
-import re
-import os
-import pty
-import subprocess
-
-from ansible.module_utils._text import to_bytes, to_text
-from ansible.module_utils.six.moves import cPickle
 from ansible.plugins.loader import connection_loader
 from ansible.plugins.connection import ConnectionBase
 from ansible.executor.process.connection import ConnectionProcess
+from ansible.module_utils.connection import Connection as SocketConnection
 
 try:
     from __main__ import display
@@ -42,41 +36,16 @@ class Connection(ConnectionBase):
         self._connected = True
         return self
 
-    def _do_it(self, action):
-
-        master, slave = pty.openpty()
-        p = subprocess.Popen(["ansible-connection"], stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdin = os.fdopen(master, 'wb', 0)
-        os.close(slave)
-
-        # Need to force a protocol that is compatible with both py2 and py3.
-        # That would be protocol=2 or less.
-        # Also need to force a protocol that excludes certain control chars as
-        # stdin in this case is a pty and control chars will cause problems.
-        # that means only protocol=0 will work.
-        src = cPickle.dumps(self._play_context.serialize(), protocol=0)
-        stdin.write(src)
-
-        stdin.write(b'\n#END_INIT#\n')
-        stdin.write(to_bytes(action))
-        stdin.write(b'\n\n')
-
-        (stdout, stderr) = p.communicate()
-        stdin.close()
-
-        return (p.returncode, stdout, stderr)
-
     def exec_command(self, cmd, in_data=None, sudoable=True):
-        super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
-        return self._do_it('EXEC: ' + cmd)
+        connection = SocketConnection(self.socket_path)
+        out = connection.exec_command(cmd, in_data=in_data, sudoable=sudoable)
+        return 0, out, ''
 
     def put_file(self, in_path, out_path):
-        super(Connection, self).put_file(in_path, out_path)
-        self._do_it('PUT: %s %s' % (in_path, out_path))
+        pass
 
     def fetch_file(self, in_path, out_path):
-        super(Connection, self).fetch_file(in_path, out_path)
-        self._do_it('FETCH: %s %s' % (in_path, out_path))
+        pass
 
     def close(self):
         self._connected = False
@@ -91,4 +60,5 @@ class Connection(ConnectionBase):
         connection = connection_loader.get(self._play_context.connection, self._play_context, '/dev/null')
         process = ConnectionProcess(connection)
         process.start()
+        setattr(self, '_socket_path', connection.socket_path)
         return connection.socket_path

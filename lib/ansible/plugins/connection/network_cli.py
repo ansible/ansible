@@ -109,7 +109,21 @@ class Connection(ConnectionBase):
             return getattr(self._cliconf, name)
 
     def exec_command(self, cmd, in_data=None, sudoable=True):
-        return self._local.exec_command(cmd, in_data, sudoable)
+        # this try..except block is just to handle the transition to supporting
+        # network_cli as a toplevel connection.  Once connection=local is gone,
+        # this block can be removed as well and all calls passed directly to
+        # the local connection
+        try:
+            if cmd == 'prompt()':
+                return self._matched_prompt
+            cmd = json.loads(cmd)
+            kwargs = {'command': cmd['command']}
+            for key in ('prompts', 'answer', 'send_only'):
+                if key in cmd:
+                    kwargs[key] = cmd[key]
+            return self.send(**kwargs)
+        except ValueError:
+            return self._local.exec_command(cmd, in_data, sudoable)
 
     def put_file(self, in_path, out_path):
         return self._local.put_file(in_path, out_path)
@@ -173,7 +187,7 @@ class Connection(ConnectionBase):
         display.vvvv('firing event: on_open_shell()', host=self._play_context.remote_addr)
         self._terminal.on_open_shell()
 
-        if getattr(self._play_context, 'become', None):
+        if self._play_context.become and self._play_context.become_method == 'enable':
             display.vvvv('firing event: on_authorize', host=self._play_context.remote_addr)
             auth_pass = self._play_context.become_pass
             self._terminal.on_authorize(passwd=auth_pass)
@@ -333,10 +347,3 @@ class Connection(ConnectionBase):
             raise AnsibleConnectionFailure(errored_response)
 
         return False
-
-    def alarm_handler(self, signum, frame):
-        '''
-        Alarm handler raised in case of command timeout
-        '''
-        display.vvvv('closing shell due to sigalarm', host=self._play_context.remote_addr)
-        self.close()
