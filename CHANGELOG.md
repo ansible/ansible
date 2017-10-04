@@ -93,6 +93,7 @@ Ansible Changes By Release
 * inventory_file variable again returns full path, not just basename
 * added info about cwd group/host vars to porting guide
 * Fix name parsing out of envra in the yum module
+* give user friendly error on badly formatted yaml inventory source
 
 <a id="2.4"></a>
 
