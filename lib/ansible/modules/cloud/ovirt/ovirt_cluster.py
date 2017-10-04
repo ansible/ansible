@@ -408,11 +408,7 @@ class ClustersModule(BaseModule):
                 ),
             ) if self.param('resilience_policy') else None,
             fencing_policy=otypes.FencingPolicy(
-                enabled=(
-                    self.param('fence_enabled') or
-                    self.param('fence_skip_if_connectivity_broken') or
-                    self.param('fence_skip_if_sd_active')
-                ),
+                enabled=self.param('fence_enabled'),
                 skip_if_connectivity_broken=otypes.SkipIfConnectivityBroken(
                     enabled=self.param('fence_skip_if_connectivity_broken'),
                     threshold=self.param('fence_connectivity_threshold'),
@@ -422,7 +418,7 @@ class ClustersModule(BaseModule):
                 ) else None,
                 skip_if_sd_active=otypes.SkipIfSdActive(
                     enabled=self.param('fence_skip_if_sd_active'),
-                ) if self.param('fence_skip_if_sd_active') else None,
+                ) if self.param('fence_skip_if_sd_active') is not None else None,
             ) if (
                 self.param('fence_enabled') is not None or
                 self.param('fence_skip_if_sd_active') is not None or
@@ -441,7 +437,7 @@ class ClustersModule(BaseModule):
                 ),
             ) if self.param('memory_policy') else None,
             ksm=otypes.Ksm(
-                enabled=self.param('ksm') or self.param('ksm_numa'),
+                enabled=self.param('ksm'),
                 merge_across_nodes=not self.param('ksm_numa'),
             ) if (
                 self.param('ksm_numa') is not None or
@@ -484,8 +480,8 @@ class ClustersModule(BaseModule):
             equal(self.param('gluster'), entity.gluster_service) and
             equal(self.param('virt'), entity.virt_service) and
             equal(self.param('threads_as_cores'), entity.threads_as_cores) and
-            equal(self.param('ksm_numa'), not entity.ksm.merge_across_nodes and entity.ksm.enabled) and
-            equal(self.param('ksm'), entity.ksm.merge_across_nodes and entity.ksm.enabled) and
+            equal(self.param('ksm_numa'), not entity.ksm.merge_across_nodes) and
+            equal(self.param('ksm'), entity.ksm.enabled) and
             equal(self.param('ha_reservation'), entity.ha_reservation) and
             equal(self.param('trusted_service'), entity.trusted_service) and
             equal(self.param('host_reason'), entity.maintenance_reason_required) and
@@ -517,7 +513,7 @@ class ClustersModule(BaseModule):
                 ])
             ) and
             equal(
-                get_id_by_name(self._connection.system_service().mac_pools_service(), self.param('mac_pool')),
+                get_id_by_name(self._connection.system_service().mac_pools_service(), self.param('mac_pool'), raise_error=False),
                 entity.mac_pool.id
             )
         )
