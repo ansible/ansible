@@ -350,8 +350,7 @@ class OC(object):
                 try:
                     if set(destination[key]) != set(destination[key] +
                                                     source[key]):
-                        destination[key] = list(set(destination[key] +
-                                                    source[key]))
+                        destination[key] = source[key]
                         changed = True
                 except TypeError:
                     for new_dict in source[key]:
