@@ -343,7 +343,9 @@ def main():
                 changed = True
         elif module.params['action'] == 'create':
             (rc, out, err) = kt.create()
-            if re.search('^Created topic', out):
+            # according to
+            # https://github.com/apache/kafka/blob/0.10.1/core/src/main/scala/kafka/common/Topic.scala
+            if re.search('Created topic "[a-zA-Z0-9\\._\\-]{1,249}"', out):
                 changed = True
             if not out:
                 out = 'Nothing has changed.'
