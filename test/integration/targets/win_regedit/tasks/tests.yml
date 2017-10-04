@@ -458,3 +458,250 @@
   assert:
     that:
     - not create_prop_with_json_again|changed
+
+- name: create new key in loaded hive (check mode)
+  win_regedit:
+    path: '{{test_win_regedit_hive_key}}'
+    state: present
+    hive: C:\Users\Default\NTUSER.dat
+  register: new_key_in_hive_check
+  check_mode: yes
+
+- name: get result of create new key in loaded hive (check mode)
+  win_shell: |
+    &reg.exe load HKLM\ANSIBLE C:\Users\Default\NTUSER.dat > $null
+    Test-Path -Path HKLM:\ANSIBLE\NewKey
+    [GC]::Collect() > $null
+    &reg.exe unload HKLM\ANSIBLE > $null
+  register: new_key_in_hive_result_check
+
+- name: assert result of create new key in loaded hive (check mode)
+  assert:
+    that:
+    - new_key_in_hive_check|changed
+    - new_key_in_hive_result_check.stdout == "False\r\n"
+
+- name: create new key in loaded hive
+  win_regedit:
+    path: '{{test_win_regedit_hive_key}}'
+    state: present
+    hive: C:\Users\Default\NTUSER.dat
+  register: new_key_in_hive
+
+- name: get result of create new key in loaded hive
+  win_shell: |
+    &reg.exe load HKLM\ANSIBLE C:\Users\Default\NTUSER.dat > $null
+    Test-Path -Path HKLM:\ANSIBLE\NewKey
+    [GC]::Collect() > $null
+    &reg.exe unload HKLM\ANSIBLE > $null
+  register: new_key_in_hive_result
+
+- name: assert result of create new key in loaded hive
+  assert:
+    that:
+    - new_key_in_hive|changed
+    - new_key_in_hive_result.stdout == "True\r\n"
+
+- name: create new key in loaded hive (idempotent)
+  win_regedit:
+    path: '{{test_win_regedit_hive_key}}'
+    state: present
+    hive: C:\Users\Default\NTUSER.dat
+  register: new_key_in_hive_again
+
+- name: assert result of create new key in loaded hive (idempotent)
+  assert:
+    that:
+    - not new_key_in_hive_again|changed
+
+- name: set hive key property (check mode)
+  win_regedit:
+    path: '{{test_win_regedit_hive_key}}'
+    name: TestProp
+    data: string
+    type: string
+    state: present
+    hive: C:\Users\Default\NTUSER.dat
+  register: new_prop_in_hive_check
+  check_mode: yes
+
+- name: get result of set hive key property (check mode)
+  win_shell: |
+    &reg.exe load HKLM\ANSIBLE C:\Users\Default\NTUSER.dat > $null
+    $prop = Get-ItemProperty -Path HKLM:\ANSIBLE\NewKey -Name TestProp -ErrorAction SilentlyContinue
+    if ($prop) {
+      $prop.TestProp
+    }
+    [GC]::Collect() > $null
+    &reg.exe unload HKLM\ANSIBLE > $null
+  register: new_prop_in_hive_result_check
+
+- name: assert result of set hive key property (check mode)
+  assert:
+    that:
+    - new_prop_in_hive_check|changed
+    - new_prop_in_hive_result_check.stdout == ""
+
+- name: set hive key property
+  win_regedit:
+    path: '{{test_win_regedit_hive_key}}'
+    name: TestProp
+    data: string
+    type: string
+    state: present
+    hive: C:\Users\Default\NTUSER.dat
+  register: new_prop_in_hive
+
+- name: get result of set hive key property
+  win_shell: |
+    &reg.exe load HKLM\ANSIBLE C:\Users\Default\NTUSER.dat > $null
+    $prop = Get-ItemProperty -Path HKLM:\ANSIBLE\NewKey -Name TestProp -ErrorAction SilentlyContinue
+    if ($prop) {
+      $prop.TestProp
+    }
+    [GC]::Collect() > $null
+    &reg.exe unload HKLM\ANSIBLE > $null
+  register: new_prop_in_hive_result
+
+- name: assert result of set hive key property
+  assert:
+    that:
+    - new_prop_in_hive|changed
+    - new_prop_in_hive_result.stdout == "string\r\n"
+
+- name: set hive key property (idempotent)
+  win_regedit:
+    path: '{{test_win_regedit_hive_key}}'
+    name: TestProp
+    data: string
+    type: string
+    state: present
+    hive: C:\Users\Default\NTUSER.dat
+  register: new_prop_in_hive_again
+
+- name: assert result of set hive key property (idempotent)
+  assert:
+    that:
+    - not new_prop_in_hive_again|changed
+
+- name: remove hive key property (check mode)
+  win_regedit:
+    path: '{{test_win_regedit_hive_key}}'
+    name: TestProp
+    state: absent
+    hive: C:\Users\Default\NTUSER.dat
+  register: remove_prop_in_hive_check
+  check_mode: yes
+
+- name: get result of remove hive key property (check mode)
+  win_shell: |
+    &reg.exe load HKLM\ANSIBLE C:\Users\Default\NTUSER.dat > $null
+    $prop = Get-ItemProperty -Path HKLM:\ANSIBLE\NewKey -Name TestProp -ErrorAction SilentlyContinue
+    if ($prop) {
+      $prop.TestProp
+    }
+    [GC]::Collect() > $null
+    &reg.exe unload HKLM\ANSIBLE > $null
+  register: remove_prop_in_hive_result_check
+
+- name: assert result of remove hive key property (check mode)
+  assert:
+    that:
+    - remove_prop_in_hive_check|changed
+    - remove_prop_in_hive_result_check.stdout == "string\r\n"
+
+- name: remove hive key property
+  win_regedit:
+    path: '{{test_win_regedit_hive_key}}'
+    name: TestProp
+    state: absent
+    hive: C:\Users\Default\NTUSER.dat
+  register: remove_prop_in_hive
+
+- name: get result of remove hive key property
+  win_shell: |
+    &reg.exe load HKLM\ANSIBLE C:\Users\Default\NTUSER.dat > $null
+    $prop = Get-ItemProperty -Path HKLM:\ANSIBLE\NewKey -Name TestProp -ErrorAction SilentlyContinue
+    if ($prop) {
+      $prop.TestProp
+    }
+    [GC]::Collect() > $null
+    &reg.exe unload HKLM\ANSIBLE > $null
+  register: remove_prop_in_hive_result
+
+- name: assert result of remove hive key property
+  assert:
+    that:
+    - remove_prop_in_hive|changed
+    - remove_prop_in_hive_result.stdout == ""
+
+- name: remove hive key property (idempotent)
+  win_regedit:
+    path: '{{test_win_regedit_hive_key}}'
+    name: TestProp
+    state: absent
+    hive: C:\Users\Default\NTUSER.dat
+  register: remove_prop_in_hive_again
+
+- name: assert result of set hive key property (idempotent)
+  assert:
+    that:
+    - not remove_prop_in_hive_again|changed
+
+- name: remove key in loaded hive (check mode)
+  win_regedit:
+    path: '{{test_win_regedit_hive_key}}'
+    state: absent
+    delete_yes: yes
+    hive: C:\Users\Default\NTUSER.dat
+  register: remove_key_in_hive_check
+  check_mode: yes
+
+- name: get result of remove key in loaded hive (check mode)
+  win_shell: |
+    &reg.exe load HKLM\ANSIBLE C:\Users\Default\NTUSER.dat > $null
+    Test-Path -Path HKLM:\ANSIBLE\NewKey
+    [GC]::Collect() > $null
+    &reg.exe unload HKLM\ANSIBLE > $null
+  register: remove_key_in_hive_result_check
+
+- name: assert result of removekey in loaded hive (check mode)
+  assert:
+    that:
+    - remove_key_in_hive_check|changed
+    - remove_key_in_hive_result_check.stdout == "True\r\n"
+
+- name: remove key in loaded hive
+  win_regedit:
+    path: '{{test_win_regedit_hive_key}}'
+    state: absent
+    delete_yes: yes
+    hive: C:\Users\Default\NTUSER.dat
+  register: remove_key_in_hive
+
+- name: get result of remove key in loaded hive
+  win_shell: |
+    &reg.exe load HKLM\ANSIBLE C:\Users\Default\NTUSER.dat > $null
+    Test-Path -Path HKLM:\ANSIBLE\NewKey
+    [GC]::Collect() > $null
+    &reg.exe unload HKLM\ANSIBLE > $null
+  register: remove_key_in_hive_result
+
+- name: assert result of remove key in loaded hive
+  assert:
+    that:
+    - remove_key_in_hive|changed
+    - remove_key_in_hive_result.stdout == "False\r\n"
+
+- name: remove key in loaded hive (idempotent)
+  win_regedit:
+    path: '{{test_win_regedit_hive_key}}'
+    state: absent
+    delete_yes: yes
+    hive: C:\Users\Default\NTUSER.dat
+  register: remove_key_in_hive_again
+
+- name: assert result of remove key in loaded hive (idempotent)
+  assert:
+    that:
+    - not remove_key_in_hive_again|changed
