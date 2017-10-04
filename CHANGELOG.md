@@ -94,6 +94,7 @@ Ansible Changes By Release
 * added info about cwd group/host vars to porting guide
 * Fix name parsing out of envra in the yum module
 * give user friendly error on badly formatted yaml inventory source
+* Fix any_errors_fatal setting in playbooks.
 
 <a id="2.4"></a>
 
