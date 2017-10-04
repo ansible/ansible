@@ -33,78 +33,87 @@ options:
         several packages this can accept a comma separated list of packages
         or (as of 2.0) a list of packages.
     required: true
-    aliases: [ pkg ]
+    aliases: ['pkg']
   exclude:
     description:
-      - "Package name(s) to exclude when state=present, or latest"
-    version_added: "2.0"
+      - 'Package name(s) to exclude when state=present, or latest'
+    version_added: '2.0'
   list:
     description:
-      - "Package name to run the equivalent of yum list <package> against. In addition to listing packages,
-        use can also list the following: C(installed), C(updates), C(available) and C(repos)."
+      - 'Package name to run the equivalent of yum list <package> against. In addition to listing packages,
+        use can also list the following: C(installed), C(updates), C(available) and C(repos).'
   state:
     description:
       - Whether to install (C(present) or C(installed), C(latest)), or remove (C(absent) or C(removed)) a package.
-    choices: [ absent, installed, latest, present, removed ]
+    choices: ['absent', 'installed', 'latest', 'present', 'removed']
     default: present
+  autoremove:
+    description:
+      - If C(yes), removes all 'leaf' packages from the system that were originally
+        installed as dependencies of user-installed packages but which are no longer
+        required by any such package. Should be used alone or when state is I(absent)
+    default: 'no'
+    choices: ['yes', 'no']
+    type: bool
+    version_added: '2.5'
   enablerepo:
     description:
       - I(Repoid) of repositories to enable for the install/update operation.
         These repos will not persist beyond the transaction.
-        When specifying multiple repos, separate them with a ",".
-    version_added: "0.9"
+        When specifying multiple repos, separate them with a ','.
+    version_added: '0.9'
   disablerepo:
     description:
       - I(Repoid) of repositories to disable for the install/update operation.
         These repos will not persist beyond the transaction.
-        When specifying multiple repos, separate them with a ",".
-    version_added: "0.9"
+        When specifying multiple repos, separate them with a ','.
+    version_added: '0.9'
   conf_file:
     description:
       - The remote yum configuration file to use for the transaction.
-    version_added: "0.6"
+    version_added: '0.6'
   disable_gpg_check:
     description:
       - Whether to disable the GPG checking of signatures of packages being
         installed. Has an effect only if state is I(present) or I(latest).
+    default: 'no'
     type: bool
-    default: "no"
-    version_added: "1.2"
+    version_added: '1.2'
   skip_broken:
     description:
       - Resolve depsolve problems by removing packages that are causing problems from the trans‐
         action.
+    default: 'no'
     type: bool
-    default: "no"
-    version_added: "2.3"
+    version_added: '2.3'
   update_cache:
     description:
       - Force yum to check if cache is out of date and redownload if needed.
         Has an effect only if state is I(present) or I(latest).
+    default: 'no'
     type: bool
-    default: "no"
-    aliases: [ expire-cache ]
-    version_added: "1.9"
+    aliases: ['expire-cache']
+    version_added: '1.9'
   validate_certs:
     description:
       - This only applies if using a https url as the source of the rpm. e.g. for localinstall. If set to C(no), the SSL certificates will not be validated.
       - This should only set to C(no) used on personally controlled sites using self-signed certificates as it avoids verifying the source site.
       - Prior to 2.1 the code worked as if this was set to C(yes).
+    default: 'yes'
     type: bool
-    default: "yes"
-    version_added: "2.1"
+    version_added: '2.1'
   installroot:
     description:
       - Specifies an alternative installroot, relative to which all packages
         will be installed.
-    default: "/"
-    version_added: "2.3"
+    default: '/'
+    version_added: '2.3'
   security:
     description:
       - If set to C(yes), and C(state=latest) then only installs updates that have been marked security related.
+    default: 'no'
     type: bool
-    default: "no"
-    version_added: "2.4"
+    version_added: '2.4'
   allow_downgrade:
     description:
       - Specify if the named package and version is allowed to downgrade
@@ -115,9 +124,9 @@ options:
         packages to install (because dependencies between the downgraded
         package and others can cause changes to the packages which were
         in the earlier transaction).
+    default: 'no'
     type: bool
-    default: "no"
-    version_added: "2.4"
+    version_added: '2.4'
 notes:
   - When used with a loop of package names in a playbook, ansible optimizes
     the call to the yum module.  Instead of calling the module with a single
@@ -161,6 +170,16 @@ EXAMPLES = '''
   yum:
     name: httpd
     state: absent
+
+- name: Autoremove unneeded packages installed as dependencies
+  yum:
+    autoremove: yes
+
+- name: Uninstall httpd and packages installed as dependences
+  yum:
+    name: httpd
+    state: absent
+    autoremove: yes
 
 - name: install the latest version of Apache from the testing repo
   yum:
@@ -824,7 +843,7 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, i
     return res
 
 
-def remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, installroot='/'):
+def remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, autoremove, installroot='/'):
 
     pkgs = []
     res = {}
@@ -844,9 +863,15 @@ def remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, in
         else:
             res['results'].append('%s is not installed' % pkg)
 
-    if pkgs:
+    if pkgs or autoremove:
+        # run an actual yum transaction
+        if autoremove:
+            cmd = yum_basecmd + ['autoremove'] + pkgs
+        else:
+            cmd = yum_basecmd + ['remove'] + pkgs
+
         if module.check_mode:
-            module.exit_json(changed=True, results=res['results'], changes=dict(removed=pkgs))
+            module.exit_json(changed=True, results=res['results'], changes=dict(removed='<dependencies>'))
 
         # run an actual yum transaction
         cmd = yum_basecmd + ["remove"] + pkgs
@@ -1090,10 +1115,9 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, in
 
     return res
 
-
-def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
-           disable_gpg_check, exclude, repoq, skip_broken, security,
-           installroot='/', allow_downgrade=False):
+def ensure(module, state, autoremove, pkgs, conf_file, enablerepo,
+           disablerepo, disable_gpg_check, exclude, repoq, skip_broken,
+           security, installroot='/', allow_downgrade=False):
 
     # fedora will redirect yum to dnf, which has incompatibilities
     # with how this module expects yum to operate. If yum-deprecated
@@ -1189,7 +1213,7 @@ def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
             yum_basecmd.append('--nogpgcheck')
         res = install(module, pkgs, repoq, yum_basecmd, conf_file, en_repos, dis_repos, installroot=installroot, allow_downgrade=allow_downgrade)
     elif state in ['removed', 'absent']:
-        res = remove(module, pkgs, repoq, yum_basecmd, conf_file, en_repos, dis_repos, installroot=installroot)
+        res = remove(module, pkgs, repoq, yum_basecmd, conf_file, en_repos, dis_repos, autoremove, installroot=installroot)
     elif state == 'latest':
         if disable_gpg_check:
             yum_basecmd.append('--nogpgcheck')
@@ -1217,27 +1241,28 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(type='list', aliases=['pkg']),
-            exclude=dict(type='str'),
+            name=dict(aliases=['pkg'], type='list'),
+            exclude=dict(required=False, default=None),
             # removed==absent, installed==present, these are accepted as aliases
-            state=dict(type='str', default='installed', choices=['absent', 'installed', 'latest', 'present', 'removed']),
-            enablerepo=dict(type='str'),
-            disablerepo=dict(type='str'),
-            list=dict(type='str'),
-            conf_file=dict(type='str'),
-            disable_gpg_check=dict(type='bool', default=False),
-            skip_broken=dict(type='bool', default=False),
-            update_cache=dict(type='bool', default=False, aliases=['expire-cache']),
-            validate_certs=dict(type='bool', default=True),
-            installroot=dict(type='str', default="/"),
+            state=dict(choices=['absent', 'present', 'installed', 'removed', 'latest']),
+            autoremove=dict(default='no', type='bool'),
+            enablerepo=dict(),
+            disablerepo=dict(),
+            list=dict(),
+            conf_file=dict(default=None),
+            disable_gpg_check=dict(required=False, default='no', type='bool'),
+            skip_broken=dict(required=False, default='no', aliases=[], type='bool'),
+            update_cache=dict(required=False, default='no', aliases=['expire-cache'], type='bool'),
+            validate_certs=dict(required=False, default='yes', type='bool'),
+            installroot=dict(required=False, default='/', type='str'),
             # this should not be needed, but exists as a failsafe
-            install_repoquery=dict(type='bool', default=True),
-            allow_downgrade=dict(type='bool', default=False),
-            security=dict(type='bool', default=False),
+            install_repoquery=dict(required=False, default='yes', type='bool'),
+            allow_downgrade=dict(required=False, default='no', type='bool'),
+            security=dict(default='no', type='bool'),
         ),
-        required_one_of=[['name', 'list']],
-        mutually_exclusive=[['name', 'list']],
-        supports_check_mode=True,
+        required_one_of=[['name', 'list', 'autoremove']],
+        mutually_exclusive=[['name', 'list'], ['autoremove', 'list']],
+        supports_check_mode=True
     )
 
     error_msgs = []
@@ -1250,6 +1275,20 @@ def main():
         module.fail_json(msg='. '.join(error_msgs))
 
     params = module.params
+
+    if params['autoremove']:
+        # Verify that autoremove is called correctly, if it is called
+        if params['state'] not in ['absent', 'removed', None]:
+            module.fail_json(msg='Autoremove should be used alone or with state=absent')
+
+    if params['state'] is None:
+        # Set default value for state
+        # Not in argument_spec so that autoremove can be used with state=None;
+        # autoremove should not be used with state=present
+        if params['autoremove']:
+            params['state'] = 'absent'
+        else:
+            params['state'] = 'present'
 
     if params['list']:
         repoquerybin = ensure_yum_utils(module)
@@ -1280,18 +1319,21 @@ def main():
                     if params['installroot'] != '/':
                         repoquery.extend(['--installroot', params['installroot']])
 
-        pkg = [p.strip() for p in params['name']]
-        exclude = params['exclude']
         state = params['state']
+        autoremove = params['autoremove']
+        pkg = [p.strip() for p in params['name']]
+        conf_file = params['conf_file']
         enablerepo = params.get('enablerepo', '')
         disablerepo = params.get('disablerepo', '')
         disable_gpg_check = params['disable_gpg_check']
+        exclude = params['exclude']
         skip_broken = params['skip_broken']
         security = params['security']
+        installroot = params['installroot']
         allow_downgrade = params['allow_downgrade']
-        results = ensure(module, state, pkg, params['conf_file'], enablerepo,
+        results = ensure(module, state, autoremove, pkg, conf_file, enablerepo,
                          disablerepo, disable_gpg_check, exclude, repoquery,
-                         skip_broken, security, params['installroot'], allow_downgrade)
+                         skip_broken, security, installroot, allow_downgrade)
         if repoquery:
             results['msg'] = '%s %s' % (results.get('msg', ''),
                              'Warning: Due to potential bad behaviour with rhnplugin and certificates, used slower repoquery calls instead of Yum API.')
