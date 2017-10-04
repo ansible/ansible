@@ -23,9 +23,11 @@ description:
 version_added: "1.2"
 options:
   fstype:
+    choices: [ "ext4", "ext4dev", "ext3", "ext2", "xfs", "btrfs", "reiserfs", "lvm"]
     description:
     - File System type to be created.
     - reiserfs support was added in 2.2.
+    - lvm support was added in 2.5.
     required: true
   dev:
     description:
@@ -111,22 +113,21 @@ def _get_fs_size(fssize_cmd, dev, module):
         # There is no way to get the blocksize and blockcount for btrfs filesystems
         block_size = 1
         block_count = 1
-
+    elif 'pvs' == fssize_cmd:
+        rc, size, err = module.run_command([cmd, '--noheadings', '-o', 'pv_size', '--units', 'b', dev])
+        if rc == 0:
+            block_count = int(size[:-1])
+            block_size = 1
+        else:
+            module.fail_json(msg="Failed to get block count and block size of %s with %s" % (dev, cmd), rc=rc, err=err )
 
     return block_size*block_count
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec = dict(
-            fstype=dict(required=True, aliases=['type']),
-            dev=dict(required=True, aliases=['device']),
-            opts=dict(),
-            force=dict(type='bool', default='no'),
-            resizefs=dict(type='bool', default='no'),
-        ),
-        supports_check_mode=True,
-    )
+    friendly_names = {
+        'lvm': 'LVM2_member',
+    }
 
     # There is no "single command" to manipulate filesystems, so we map them all out and their options
     fs_cmd_map = {
@@ -178,14 +179,37 @@ def main():
             'grow_flag' : 'filesystem resize',
             'force_flag' : '-f',
             'fsinfo': 'btrfs',
+        },
+        'LVM2_member' : {
+            'mkfs' : 'pvcreate',
+            'grow' : 'pvresize',
+            'grow_flag' : None,
+            'force_flag' : '-f' ,
+            'fsinfo': 'pvs',
         }
     }
+
+    module = AnsibleModule(
+        argument_spec = dict(
+            fstype=dict(required=True, aliases=['type'],
+                choices=fs_cmd_map.keys() + friendly_names.keys()),
+            dev=dict(required=True, aliases=['device']),
+            opts=dict(),
+            force=dict(type='bool', default='no'),
+            resizefs=dict(type='bool', default='no'),
+        ),
+        supports_check_mode=True,
+    )
+
 
     dev = module.params['dev']
     fstype = module.params['fstype']
     opts = module.params['opts']
     force = module.boolean(module.params['force'])
     resizefs = module.boolean(module.params['resizefs'])
+
+    if fstype in friendly_names:
+        fstype = friendly_names[fstype]
 
     changed = False
 

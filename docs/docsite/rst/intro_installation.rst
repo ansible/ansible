@@ -139,7 +139,7 @@ Or you can also build an RPM yourself.  From the root of a checkout or tarball, 
 
 .. code-block:: bash
 
-    $ git clone git://github.com/ansible/ansible.git
+    $ git clone https://github.com/ansible/ansible.git
     $ cd ./ansible
     $ make rpm
     $ sudo rpm -Uvh ./rpm-build/ansible-*.noarch.rpm
@@ -278,7 +278,7 @@ Then install Ansible with [1]_::
 
 Or if you are looking for the latest development version::
 
-    pip install git+git://github.com/ansible/ansible.git@devel
+    pip install git+https://github.com/ansible/ansible.git@devel
 
 If you are installing on OS X Mavericks, you may encounter some noise from your compiler.  A workaround is to do the following::
 
@@ -320,7 +320,7 @@ To install from source, clone the Ansible git repository:
 
 .. code-block:: bash
 
-    $ git clone git://github.com/ansible/ansible.git --recursive
+    $ git clone https://github.com/ansible/ansible.git --recursive
     $ cd ./ansible
 
 Once git has cloned the Ansible repository, setup the Ansible environment:

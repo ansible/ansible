@@ -24,7 +24,7 @@ optdepends=('python2-pyasn1: needed for accelerated mode'
 conflicts=('ansible')
 provides=('ansible')
 backup=('etc/ansible/ansible.cfg')
-source=($pkgname::git://github.com/ansible/ansible.git)
+source=($pkgname::git+https://github.com/ansible/ansible.git)
 md5sums=('SKIP')
 
 pkgver() {
