@@ -427,3 +427,32 @@
     that:
         - "'changed' in yum_result"
         - "'msg' in yum_result"
+
+- name: use latest to install httpd
+  yum:
+    name: httpd
+    state: latest
+  register: yum_result
+
+- name: verify httpd was installed
+  assert:
+    that:
+      - "'changed' in yum_result"
+
+- name: uninstall httpd
+  yum:
+    name: httpd
+    state: removed
+
+- name: update httpd only if it exists
+  yum:
+    name: httpd
+    state: latest
+    update_only: yes
+  register: yum_result
+
+- name: verify httpd not installed
+  assert:
+    that:
+      - "not yum_result.changed"
+      - "'Packages providing httpd not installed due to update_only specified' in yum_result.results"
