@@ -92,6 +92,7 @@ Ansible Changes By Release
 * Port the uptime.py example script to the new inventory API.
 * inventory_file variable again returns full path, not just basename
 * added info about cwd group/host vars to porting guide
+* Fix name parsing out of envra in the yum module
 
 <a id="2.4"></a>
 
