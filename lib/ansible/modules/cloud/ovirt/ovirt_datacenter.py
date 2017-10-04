@@ -65,6 +65,15 @@ options:
             - "IMPORTANT: This option is deprecated in oVirt/RHV 4.1. You should
                use C(mac_pool) in C(ovirt_clusters) module, as MAC pools are
                set per cluster since 4.1."
+    force:
+        description:
+            - "This parameter can be used only when removing a data center.
+              If I(True) data center will be forcibly removed, even though it
+              contains some clusters. Default value is I(False), which means
+              that only empty data center can be removed."
+        version_added: "2.5"
+        default: False
+
 extends_documentation_fragment: ovirt
 '''
 
@@ -188,6 +197,7 @@ def main():
         quota_mode=dict(choices=['disabled', 'audit', 'enabled']),
         comment=dict(default=None),
         mac_pool=dict(default=None),
+        force=dict(default=None, type='bool'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -214,7 +224,7 @@ def main():
         if state == 'present':
             ret = clusters_module.create()
         elif state == 'absent':
-            ret = clusters_module.remove()
+            ret = clusters_module.remove(force=module.params['force'])
 
         module.exit_json(**ret)
     except Exception as e:
