@@ -640,6 +640,7 @@ class VmsModule(BaseModule):
         disk_attachments = self.__get_storage_domain_and_all_template_disks(template)
 
         return otypes.Vm(
+            id=self.param('id'),
             name=self.param('name'),
             cluster=otypes.Cluster(
                 name=self.param('cluster')
