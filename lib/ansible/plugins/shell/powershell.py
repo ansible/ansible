@@ -972,7 +972,7 @@ Function Run($payload) {
         $stdout = $result.StandardOut
         $stderr = $result.StandardError
         $rc = $result.ExitCode
-        
+
         [Console]::Out.WriteLine($stdout.Trim())
         [Console]::Error.WriteLine($stderr.Trim())
     } Catch {
