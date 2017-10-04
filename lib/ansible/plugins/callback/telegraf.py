@@ -17,7 +17,7 @@ DOCUMENTATION = '''
     short_description: Sends play events to a telegraf forwarder (to metrics collector)
     version_added: "2.4"
     description:
-        - This is an ansible callback plugin that sends playbook stats to a telegraf listener input (udp/http) 
+        - This is an ansible callback plugin that sends playbook stats to a telegraf listener input (udp/http)
           during playbook execution.
         - Configure with <playbook root>callback_plugins/ansible-telegraf-callback/telegraf_callback.yml
         - or using the module args or options in ansible.cfg
@@ -25,9 +25,9 @@ DOCUMENTATION = '''
         - Troubleshooting
         - it's difficult to debug udp connections, so start with http
         - run with -vvvv.  In the first few lines you should see the callback is loaded
-        - grep --binary-file=text changed /var/log/telegraf.log to see if telegraf is receiving 
+        - grep --binary-file=text changed /var/log/telegraf.log to see if telegraf is receiving
         - ensure telegraf is running with correct input blocks in /etc/telegraf/telegraf.d/
-          inputs-socket-listener.conf or inputs-http-listener.conf 
+          inputs-socket-listener.conf or inputs-http-listener.conf
           https://github.com/influxdata/telegraf/tree/master/plugins/inputs/socket_listener
 
         - Installation
@@ -266,18 +266,16 @@ class CallbackModule(CallbackBase):
 
             if self._metric_per_host:
                 # Send metrics for this host
-                for metric, value in summary.iteritems():
+                for metric, value in iteritems(summary):
                     self.send_metric('task.{0}'.format(metric), value, host=host)
-
 
         if self._metric_summary:
             # Send playbook summarized over hosts
             summaries = {'playbook-summary.runtime': self.get_elapsed_time(),
                          'playbook-summary.changed': total_changed,
                          'playbook-summary.tasks': total_tasks,
-                         'playbook-summary.errors': total_errors
-                        }
-            for key, val in summaries.iteritems():
+                         'playbook-summary.errors': total_errors}
+            for key, val in iteritems(summaries):
                 if key == 'playbook-summary.errors':
                     tags = {}
                     tags['failingHosts'] = ",".join([x[0] for x in error_hosts])
