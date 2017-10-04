@@ -99,17 +99,17 @@ EXAMPLES = '''
       state: present
     register: testout
 
-
   # Basic delete example:
-  kinesis_firehose:
-    delivery_stream_name: clarky-test-stream
-    delivery_stream_type: KinesisStreamAsSource
-    kinesis_stream_source_configuration:
-    s3_destination_configuration:
-    wait: yes
-    wait_timeout: 300
-    state: absent
-  register: testout
+  - name: Delete Kinesis Firehose Stream
+    kinesis_firehose:
+      delivery_stream_name: clarky-test-stream
+      delivery_stream_type: KinesisStreamAsSource
+      kinesis_stream_source_configuration:
+      s3_destination_configuration:
+      wait: yes
+      wait_timeout: 300
+      state: absent
+    register: testout
 '''
 
 RETURN = '''
@@ -180,6 +180,7 @@ def convert_to_snake_case(data):
             else:
                 results[key] = val
     return results
+
 
 def convert_to_title_case(data):
     """Convert all snake_case keys in dict with TitleCase
@@ -324,8 +325,8 @@ def wait_for_status(client, stream_name, status, wait_timeout=300,
     return status_achieved, err_msg, stream
 
 
-def stream_action(client, delivery_stream_name, s3_destination_configuration='NA', delivery_stream_type='NA', kinesis_stream_source_configuration='NA', extended_s3_destination_configuration='NA', action='create',
-                  timeout=300, check_mode=False):
+def stream_action(client, delivery_stream_name, s3_destination_configuration='NA', delivery_stream_type='NA', kinesis_stream_source_configuration='NA',
+                  extended_s3_destination_configuration='NA', action='create', timeout=300, check_mode=False):
     """Create or Delete an Amazon Kinesis Stream.
     Args:
         client (botocore.client.EC2): Boto3 client.
@@ -428,8 +429,8 @@ def create_delivery_stream(client, delivery_stream_name, s3_destination_configur
     else:
         create_success, create_msg = (
             stream_action(
-                client, delivery_stream_name, s3_destination_configuration, stream_type, KinesisStreamSourceConfiguration, ExtendedS3DestinationConfiguration, action='create',
-                check_mode=check_mode
+                client, delivery_stream_name, s3_destination_configuration, stream_type, KinesisStreamSourceConfiguration,
+                ExtendedS3DestinationConfiguration, action='create', check_mode=check_mode
             )
         )
         if not create_success:
@@ -450,8 +451,7 @@ def create_delivery_stream(client, delivery_stream_name, s3_destination_configur
                     err_msg = wait_msg
                 else:
                     err_msg = (
-                        'Kinesis Stream {0} is in the process of being created'
-                            .format(delivery_stream_name)
+                        'Kinesis Stream {0} is in the process of being created'.format(delivery_stream_name)
                     )
                     return wait_success, changed, wait_msg, results
             else:
@@ -459,7 +459,6 @@ def create_delivery_stream(client, delivery_stream_name, s3_destination_configur
                     'Kinesis Stream {0} is in the process of being created.'
                     .format(delivery_stream_name)
                 )
-
 
     if success:
         _, _, results = (
@@ -520,8 +519,7 @@ def delete_stream(client, delivery_stream_name, wait=False, wait_timeout=300,
                     return success, True, err_msg, results
             else:
                 err_msg = (
-                    'Stream {0} is in the process of being deleted'
-                        .format(delivery_stream_name)
+                    'Stream {0} is in the process of being deleted'.format(delivery_stream_name)
                 )
     else:
         success = True
@@ -542,7 +540,7 @@ def main():
         dict(
             delivery_stream_name=dict(default=None, required=True),
             s3_destination_configuration=dict(type='dict'),
-            delivery_stream_type=dict(required=True, type='str',choices=['DirectPut','KinesisStreamAsSource']),
+            delivery_stream_type=dict(required=True, type='str', choices=['DirectPut', 'KinesisStreamAsSource']),
             kinesis_stream_source_configuration=dict(required=True, type='dict'),
             extended_s3_destination_configuration=dict(type='dict'),
             wait=dict(default=True, required=False, type='bool'),
@@ -552,15 +550,15 @@ def main():
     )
     mutually_exclusive = [['s3_destination_configuration', 'extended_s3_destination_configuration']]
 
-    required_one_of=[
+    required_one_of = [
         ['s3_destination_configuration', 'extended_s3_destination_configuration']
     ]
 
     required_if = [
         ['state', 'present', ['delivery_stream_type']],
         ['delivery_stream_type', 'DirectPut', ['s3_destination_configuration']],
-        ['delivery_stream_type', 'KinesisStreamAsSource', ['kinesis_stream_source_configuration']],
-     ]
+        ['delivery_stream_type', 'KinesisStreamAsSource', ['kinesis_stream_source_configuration']]
+    ]
 
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -578,7 +576,6 @@ def main():
     extended_s3_destination_configuration = convert_to_title_case(module.params.get('extended_s3_destination_configuration'))
     wait = module.params.get('wait')
     wait_timeout = module.params.get('wait_timeout')
-
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 is required.')
@@ -603,8 +600,8 @@ def main():
     if state == 'present':
         success, changed, err_msg, results = (
             create_delivery_stream(
-                client, delivery_stream_name, s3_destination_configuration, delivery_stream_type, kinesis_stream_source_configuration, extended_s3_destination_configuration,
-                wait, wait_timeout, check_mode
+                client, delivery_stream_name, s3_destination_configuration, delivery_stream_type, kinesis_stream_source_configuration,
+                extended_s3_destination_configuration, wait, wait_timeout, check_mode
             )
         )
     elif state == 'absent':
@@ -622,8 +619,8 @@ def main():
         )
 
 # import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import boto3_conn, camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info
 
 if __name__ == '__main__':
     main()
