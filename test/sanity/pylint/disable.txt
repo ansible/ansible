@@ -26,7 +26,6 @@ global-at-module-level
 global-statement
 global-variable-not-assigned
 global-variable-undefined
-import-error
 import-self
 invalid-name
 line-too-long
