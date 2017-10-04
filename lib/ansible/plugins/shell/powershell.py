@@ -811,7 +811,7 @@ Function Run($payload) {
     Finally {
         Remove-Item $temp -ErrorAction SilentlyContinue
     }
-    exit $rc
+    $host.SetShouldExit($rc)
 }
 
 '''  # end become_wrapper
