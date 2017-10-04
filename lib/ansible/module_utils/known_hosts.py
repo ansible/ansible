@@ -30,10 +30,7 @@ import os
 import hmac
 import re
 
-try:
-    import urlparse
-except ImportError:
-    import urllib.parse as urlparse
+from ansible.module_utils.six.moves.urllib.parse import urlparse
 
 try:
     from hashlib import sha1
@@ -75,7 +72,7 @@ def get_fqdn_and_port(repo_url):
             fqdn = repo_url.split("/")[0]
     elif "://" in repo_url:
         # this should be something we can parse with urlparse
-        parts = urlparse.urlparse(repo_url)
+        parts = urlparse(repo_url)
         # parts[1] will be empty on python2.4 on ssh:// or git:// urls, so
         # ensure we actually have a parts[1] before continuing.
         if parts[1] != '':
