@@ -86,6 +86,7 @@ Ansible Changes By Release
 * Max `elasticsearch_plugin` module work with both 2.x and 5.x (https://github.com/ansible/ansible/issues/21989)
 * Fix for become on Windows to handle ignored errors (https://github.com/ansible/ansible/issues/30468)
 * Fix removal of newlines when writing SELinux config (https://github.com/ansible/ansible/issues/30618)
+* clarified extension requirement for constructed inv plugin
 
 <a id="2.4"></a>
 

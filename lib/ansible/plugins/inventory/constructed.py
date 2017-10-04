@@ -10,7 +10,7 @@ DOCUMENTATION = '''
     version_added: "2.4"
     short_description: Uses Jinja2 to construct vars and groups based on existing inventory.
     description:
-        - Uses a YAML configuration file to define var expresisions and group conditionals
+        - Uses a YAML configuration file with a ``.config`` extension to define var expresisions and group conditionals
         - The Jinja2 conditionals that qualify a host for membership.
         - The JInja2 exprpessions are calculated and assigned to the variables
         - Only variables already available from previous inventories can be used for templating.
