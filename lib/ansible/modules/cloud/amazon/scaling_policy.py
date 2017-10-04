@@ -168,7 +168,7 @@ def delete_scaling_policy(connection, module):
             )
             changed = True
         except Exception as e:
-            module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+            module.fail_json(msg=str(e), exception=traceback.format_exc())
 
     module.exit_json(changed=changed)
 
@@ -230,7 +230,7 @@ def create_scaling_policy(connection, module):
                     TargetTrackingScalingPolicyConfiguration=scaling_policy['TargetTrackingScalingPolicyConfiguration']
                 )
         except Exception as e:
-            module.fail_json(msg=str(e), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+            module.fail_json(msg=str(e), exception=traceback.format_exc())
 
     try:
         response = connection.describe_scaling_policies(
@@ -241,7 +241,7 @@ def create_scaling_policy(connection, module):
             MaxResults=1
         )
     except Exception as e:
-        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        module.fail_json(msg=str(e), exception=traceback.format_exc())
 
     if (response['ScalingPolicies']):
         snaked_response = camel_dict_to_snake_dict(response['ScalingPolicies'][0])
