@@ -52,52 +52,52 @@ options:
 EXAMPLES = '''
 - name: Update router static
   fortios_api:
-  endpoint_information:
-    endpoint: cmdb/router/static
-    list_identifier: routers
-    object_identifier: seq-num
-    permanent_objects:
-  conn_params:
-    fortigate_username: admin
-    fortigate_password: test
-    fortigate_ip: 1.2.3.4
-    port: 10080
-    verify: false
-    secure: false
-    proxies:
-        http: socks5://127.0.0.1:9000
-  routers:
-  - seq-num: 1
-    status: enable
-    dst: 0.0.0.0 0.0.0.0
-    gateway: 192.0.2.1
-    distance: 10
-    weight: 0
-    priority: 0
-    device: port1
-    comment: ''
-    blackhole: disable
-    dynamic-gateway: disable
-    virtual-wan-link: disable
-    dstaddr: ''
-    internet-service: 0
-    internet-service-custom: ''
+    endpoint_information:
+      endpoint: cmdb/router/static
+      list_identifier: routers
+      object_identifier: seq-num
+      permanent_objects:
+    conn_params:
+      fortigate_username: admin
+      fortigate_password: test
+      fortigate_ip: 1.2.3.4
+      port: 10080
+      verify: false
+      secure: false
+      proxies:
+          http: socks5://127.0.0.1:9000
+    routers:
+    - seq-num: 1
+      status: enable
+      dst: 0.0.0.0 0.0.0.0
+      gateway: 192.0.2.1
+      distance: 10
+      weight: 0
+      priority: 0
+      device: port1
+      comment: ''
+      blackhole: disable
+      dynamic-gateway: disable
+      virtual-wan-link: disable
+      dstaddr: ''
+      internet-service: 0
+      internet-service-custom: ''
 
-  - seq-num: 2
-    status: enable
-    dst: 0.0.0.0 0.0.0.0
-    gateway: 192.0.3.1
-    distance: 10
-    weight: 0
-    priority: 0
-    device: port2
-    comment: ''
-    blackhole: disable
-    dynamic-gateway: disable
-    virtual-wan-link: disable
-    dstaddr: ''
-    internet-service: 0
-    internet-service-custom: ''
+    - seq-num: 2
+      status: enable
+      dst: 0.0.0.0 0.0.0.0
+      gateway: 192.0.3.1
+      distance: 10
+      weight: 0
+      priority: 0
+      device: port2
+      comment: ''
+      blackhole: disable
+      dynamic-gateway: disable
+      virtual-wan-link: disable
+      dstaddr: ''
+      internet-service: 0
+      internet-service-custom: ''
 '''
 
 RETURN = '''
