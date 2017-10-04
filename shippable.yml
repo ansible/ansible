@@ -15,6 +15,7 @@ matrix:
     - env: T=units/3.5
     - env: T=units/3.6
 
+    - env: T=osx/10.11
     - env: T=rhel/7.4
 
     - env: T=windows/1
