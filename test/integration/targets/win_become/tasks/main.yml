@@ -70,6 +70,10 @@
       assert:
         that:
         - whoami_out.stdout_lines[0].endswith(become_test_username)
+  
+  - name: test with module that will return non-zero exit code (https://github.com/ansible/ansible/issues/30468)
+    vars: *become_vars
+    setup:
 
 # FUTURE: test raw + script become behavior once they're running under the exec wrapper again
 # FUTURE: add standalone playbook tests to include password prompting and play become keywords
