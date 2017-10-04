@@ -18,6 +18,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 DOCUMENTATION = '''
 ---
 module: gcp_dataproc
@@ -29,6 +36,9 @@ version_added: "2.3"
 author: "John Baublitz @jbaublitz"
 notes:
   - Dataproc API must be enabled. U(https://console.cloud.google.com/dataproc/enableApi)
+  - Because this module deals directly with a highly variable JSON REST API, much of the input is unvalidated.
+    Check the documentation for Google Cloud for defaults on the cloud side. If input is improperly formatted,
+    ansible will pass back the Google error as opposed to throwing an error on the ansible side.
 requirements:
   - "python >= 2.6"
   - "google-api-python-client >= 1.5.4"
@@ -105,10 +115,6 @@ options:
         (US, ASIA, or EU) for your cluster's staging bucket according to the Google Compute Engine zone where
         your cluster is deployed, and then it will create and manage this project-level, per-location bucket for you.
         (from "https://cloud.google.com/dataproc/docs/reference/rest/v1/projects.regions.clusters#clusterconfig")
-notes:
-  - Because this module deals directly with a highly variable JSON REST API, much of the input is unvalidated.
-    Check the documentation for Google Cloud for defaults on the cloud side. If input is improperly formatted,
-    ansible will pass back the Google error as opposed to throwing an error on the ansible side.
 '''
 
 EXAMPLES = '''
