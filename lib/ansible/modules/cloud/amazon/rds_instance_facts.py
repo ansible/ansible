@@ -87,7 +87,7 @@ except ImportError:
 
 
 def instance_facts(module, conn):
-    instance_name = module.params.get('name')
+    instance_name = module.params.get('db_instance_identifier')
     filters = module.params.get('filters')
 
     params = dict()
@@ -106,6 +106,7 @@ def instance_facts(module, conn):
 
     if instance_name:
         results = [x for x in results if x['DBInstanceIdentifier'] == instance_name]
+        assert len(results) == 1
 
     # FIXME: Get tags for each response
     # for instance in results:

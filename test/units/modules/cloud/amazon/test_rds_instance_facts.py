@@ -120,8 +120,7 @@ def test_instance_facts_should_return_facts():
     }
 
     rds_client_double = MagicMock()
-    rds_instance_entry_mock = rds_client_double.describe_db_instances.return_value.__getitem__.return_value.__getitem__
-    rds_instance_entry_mock.return_value = describe_rds_return['DBInstances'][0]
+    rds_client_double.describe_db_instances.return_value = describe_rds_return
 
     module_double = MagicMock(ansible_module_template)
     module_double.params = params
@@ -142,7 +141,7 @@ def test_instance_facts_should_filter_extra_matching_facts():
     }
 
     rds_client_double = MagicMock()
-    rds_client_double.describe_db_instances.return_value = describe_rds_return
+    rds_client_double.describe_db_instances.return_value = describe_rds_double_return
 
     module_double = MagicMock(ansible_module_template)
     module_double.params = params
@@ -154,4 +153,5 @@ def test_instance_facts_should_filter_extra_matching_facts():
     print("module calls:\n" + str(module_double.mock_calls))
 
     rds_client_double.describe_db_instances.assert_called_once()
+    assert len(facts_return['db_instances']) == 1
     assert not facts_return["changed"], "facts module returned changed!!"
