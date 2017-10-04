@@ -599,8 +599,14 @@ class VmsModule(BaseModule):
                     t for t in templates
                     if t.version.version_number == self.param('template_version')
                 ]
-            if templates:
-                template = templates[0]
+            if not templates:
+                raise ValueError(
+                    "Template with name '%s' and version '%s' was not found'" % (
+                        self.param('template'),
+                        self.param('template_version')
+                    )
+                )
+            template = templates[0]
 
         return template
 
