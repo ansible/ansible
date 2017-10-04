@@ -20,33 +20,18 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: kinesis_stream
-short_description: Manage a Kinesis Stream.
+module: kinesis_firehose
+short_description: Manage a Kinesis Firehose Delivery Stream.
 description:
-    - Create or Delete a Kinesis Stream.
-    - Update the retention period of a Kinesis Stream.
-    - Update Tags on a Kinesis Stream.
-version_added: "2.2"
-author: Allen Sanabria (@linuxdynasty)
+    - Create or Delete a Kinesis Firehose Delivery Stream.
+version_added: "2.5"
+author: Stephen Clark (clarkst)
 options:
-  name:
+  delivery_stream_name:
     description:
-      - "The name of the Kinesis Stream you are managing."
+      - "The name of the Kinesis Firhose Delivery Stream you are managing."
     default: None
     required: true
-  shards:
-    description:
-      - "The number of shards you want to have with this stream."
-      - "This is required when state == present"
-    required: false
-    default: None
-  retention_period:
-    description:
-      - "The default retention period is 24 hours and can not be less than 24
-      hours."
-      - "The retention period can be modified during any point in time."
-    required: false
-    default: None
   state:
     description:
       - "Create or Delete the Kinesis Stream."
@@ -63,12 +48,6 @@ options:
       - How many seconds to wait for an operation to complete before timing out.
     required: false
     default: 300
-  tags:
-    description:
-      - "A dictionary of resource tags of the form: { tag1: value1, tag2: value2 }."
-    required: false
-    default: null
-    aliases: [ "resource_tags" ]
 extends_documentation_fragment:
     - aws
     - ec2
@@ -77,77 +56,78 @@ extends_documentation_fragment:
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
-# Basic creation example:
-- name: Set up Kinesis Stream with 10 shards and wait for the stream to become ACTIVE
-  kinesis_stream:
-    name: test-stream
-    shards: 10
-    wait: yes
-    wait_timeout: 600
-  register: test_stream
+  # Basic creation example:
+  - name: Set up Kinesis Firehose Delivery Stream with a Kinesis Stream input and S3 destination , wait for the stream to become ACTIVE
+    kinesis_firehose:
+      delivery_stream_name: clarky-test-stream
+      delivery_stream_type: KinesisStreamAsSource
+      kinesis_stream_source_configuration:
+        kinesis_stream_a_r_n: arn:aws:kinesis:eu-west-1:XXXXXXXXXXXX:stream/playground-sclark-eu-west-1-Stream
+        role_a_r_n: arn:aws:iam::XXXXXXXXXXXX:role/firehose_delivery_role
+      s3_destination_configuration:
+        role_a_r_n: arn:aws:iam::XXXXXXXXXXXX:role/firehose_delivery_role
+        bucket_a_r_n: arn:aws:s3:::clarky.play.metadev.io
+      wait: yes
+      wait_timeout: 600
+      state: present
+    register: testout
 
-# Basic creation example with tags:
-- name: Set up Kinesis Stream with 10 shards, tag the environment, and wait for the stream to become ACTIVE
-  kinesis_stream:
-    name: test-stream
-    shards: 10
-    tags:
-      Env: development
-    wait: yes
-    wait_timeout: 600
-  register: test_stream
+  # Transformation Lambda creation example:
+  # Basic creation example:
+  - name: Set up Kinesis Firehose Stream , wait for the stream to become ACTIVE
+    kinesis_firehose:
+      delivery_stream_name: clarky-test-stream
+      delivery_stream_type: KinesisStreamAsSource
+      kinesis_stream_source_configuration:
+        kinesis_stream_a_r_n: arn:aws:kinesis:eu-west-1:XXXXXXXXXXXX:stream/playground-sclark-eu-west-1-Stream
+        role_a_r_n: arn:aws:iam::XXXXXXXXXXXX:role/firehose_delivery_role
+      extended_s3_destination_configuration:
+        role_a_r_n: arn:aws:iam::XXXXXXXXXXXX:role/firehose_delivery_role
+        bucket_a_r_n: arn:aws:s3:::clarky.play.metadev.io
+        compression_format: GZIP
+        processing_configuration:
+          enabled: true
+          processors:
+            -
+              type: Lambda
+              parameters:
+                -
+                  parameter_name: LambdaArn
+                  parameter_value: "arn:aws:lambda:eu-west-1:XXXXXXXXXXXX:function:RecordDelimiter"
+      wait: yes
+      wait_timeout: 600
+      state: present
+    register: testout
 
-# Basic creation example with tags and increase the retention period from the default 24 hours to 48 hours:
-- name: Set up Kinesis Stream with 10 shards, tag the environment, increase the retention period and wait for the stream to become ACTIVE
-  kinesis_stream:
-    name: test-stream
-    retention_period: 48
-    shards: 10
-    tags:
-      Env: development
-    wait: yes
-    wait_timeout: 600
-  register: test_stream
 
-# Basic delete example:
-- name: Delete Kinesis Stream test-stream and wait for it to finish deleting.
-  kinesis_stream:
-    name: test-stream
+  # Basic delete example:
+  kinesis_firehose:
+    delivery_stream_name: clarky-test-stream
+    delivery_stream_type: KinesisStreamAsSource
+    kinesis_stream_source_configuration:
+    s3_destination_configuration:
+    wait: yes
+    wait_timeout: 300
     state: absent
-    wait: yes
-    wait_timeout: 600
-  register: test_stream
+  register: testout
 '''
 
 RETURN = '''
-stream_name:
-  description: The name of the Kinesis Stream.
+delivery_stream_name:
+  description: The name of the Kinesis Firehose Delivery Stream.
   returned: when state == present.
   type: string
   sample: "test-stream"
-stream_arn:
+delivery_stream_arn:
   description: The amazon resource identifier
   returned: when state == present.
   type: string
   sample: "arn:aws:kinesis:east-side:123456789:stream/test-stream"
-stream_status:
-  description: The current state of the Kinesis Stream.
+delivery_stream_status:
+  description: The current state of the Kinesis Firehose Delivery Stream.
   returned: when state == present.
   type: string
   sample: "ACTIVE"
-retention_period_hours:
-  description: Number of hours messages will be kept for a Kinesis Stream.
-  returned: when state == present.
-  type: int
-  sample: 24
-tags:
-  description: Dictionary containing all the tags associated with the Kinesis stream.
-  returned: when state == present.
-  type: dict
-  sample: {
-      "Name": "Splunk",
-      "Env": "development"
-  }
 '''
 
 try:
@@ -161,11 +141,10 @@ import logging
 import re
 import datetime
 import time
-from functools import reduce
 from ansible.module_utils._text import to_native
 
 
-def convert_to_lower(data):
+def convert_to_snake_case(data):
     """Convert all uppercase keys in dict with lowercase_
     Args:
         data (dict): Dictionary with keys that have upper cases in them
@@ -175,7 +154,7 @@ def convert_to_lower(data):
 
     Basic Usage:
         >>> test = {'FooBar': []}
-        >>> test = convert_to_lower(test)
+        >>> test = convert_to_snake_case(test)
         {
             'foo_bar': []
         }
@@ -192,29 +171,29 @@ def convert_to_lower(data):
             if isinstance(val, datetime.datetime):
                 results[key] = val.isoformat()
             elif isinstance(val, dict):
-                results[key] = convert_to_lower(val)
+                results[key] = convert_to_snake_case(val)
             elif isinstance(val, list):
                 converted = list()
                 for item in val:
-                    converted.append(convert_to_lower(item))
+                    converted.append(convert_to_snake_case(item))
                 results[key] = converted
             else:
                 results[key] = val
     return results
 
-def convert_to_title(data):
-    """Convert all uppercase keys in dict with lowercase_
+def convert_to_title_case(data):
+    """Convert all snake_case keys in dict with TitleCase
     Args:
-        data (dict): Dictionary with keys that have upper cases in them
-            Example.. FooBar == foo_bar
+        data (dict): Dictionary with keys that have snake_case in them
+            Example.. foo_bar == FooBar
             if a val is of type datetime.datetime, it will be converted to
             the ISO 8601
 
     Basic Usage:
-        >>> test = {'FooBar': []}
-        >>> test = convert_to_lower(test)
+        >>> test = {'foo_bar': []}
+        >>> test = convert_to_title_case(test)
         {
-            'foo_bar': []
+            'FooBar': []
         }
 
     Returns:
@@ -229,28 +208,29 @@ def convert_to_title(data):
             if isinstance(val, datetime.datetime):
                 results[key] = val.isoformat()
             elif isinstance(val, dict):
-                results[key] = convert_to_lower(val)
+                results[key] = convert_to_title_case(val)
             elif isinstance(val, list):
                 converted = list()
                 for item in val:
-                    converted.append(convert_to_lower(item))
+                    converted.append(convert_to_title_case(item))
                 results[key] = converted
             else:
                 results[key] = val
     return results
 
-def find_stream(client, stream_name, check_mode=False):
-    """Retrieve a Kinesis Stream.
+
+def find_stream(client, delivery_stream_name, check_mode=False):
+    """Retrieve a Kinesis Firehose Delivery Stream.
     Args:
         client (botocore.client.EC2): Boto3 client.
-        stream_name (str): Name of the Kinesis stream.
+        stream_name (str): Name of the Kinesis Firehose Delivery stream.
 
     Kwargs:
         check_mode (bool): This will pass DryRun as one of the parameters to the aws api.
             default=False
 
     Basic Usage:
-        >>> client = boto3.client('kinesis')
+        >>> client = boto3.client('firehose')
         >>> stream_name = 'test-stream'
 
     Returns:
@@ -259,33 +239,18 @@ def find_stream(client, stream_name, check_mode=False):
     err_msg = ''
     success = False
     params = {
-        'DeliveryStreamName': stream_name,
+        'DeliveryStreamName': delivery_stream_name,
     }
     results = dict()
-    has_more_shards = True
-    shards = list()
     try:
         if not check_mode:
-            # while has_more_shards:
-                results = (
-                    client.describe_delivery_stream(**params)['DeliveryStreamDescription']
-                )
-                # shards.extend(results.pop('Shards'))
-                # has_more_shards = results['HasMoreShards']
-            # results['Shards'] = shards
-            # num_closed_shards = len([s for s in shards if 'EndingSequenceNumber' in s['SequenceNumberRange']])
-            # results['OpenShardsCount'] = len(shards) - num_closed_shards
-            # results['ClosedShardsCount'] = num_closed_shards
-            # results['ShardsCount'] = len(shards)
+            results = (
+                client.describe_delivery_stream(**params)['DeliveryStreamDescription']
+            )
         else:
             results = {
-                'OpenShardsCount': 5,
-                'ClosedShardsCount': 0,
-                'ShardsCount': 5,
-                'HasMoreShards': True,
-                'RetentionPeriodHours': 24,
-                'StreamName': stream_name,
-                'StreamARN': 'arn:aws:kinesis:east-side:123456789:stream/{0}'.format(stream_name),
+                'StreamName': delivery_stream_name,
+                'StreamARN': 'arn:aws:kinesis:east-side:123456789:stream/{0}'.format(delivery_stream_name),
                 'DeliveryStreamStatus': 'ACTIVE'
             }
         success = True
@@ -310,7 +275,7 @@ def wait_for_status(client, stream_name, status, wait_timeout=300,
             default=False
 
     Basic Usage:
-        >>> client = boto3.client('kinesis')
+        >>> client = boto3.client('firehose')
         >>> stream_name = 'test-stream'
         >>> wait_for_status(client, stream_name, 'ACTIVE', 300)
 
@@ -367,7 +332,6 @@ def stream_action(client, delivery_stream_name, s3_destination_configuration='NA
         stream_name (str): The name of the kinesis stream.
 
     Kwargs:
-        shard_count (int): Number of shards this stream will use.
         action (str): The action to perform.
             valid actions == create and delete
             default=create
@@ -375,9 +339,8 @@ def stream_action(client, delivery_stream_name, s3_destination_configuration='NA
             default=False
 
     Basic Usage:
-        >>> client = boto3.client('kinesis')
+        >>> client = boto3.client('firehose')
         >>> delivery_stream_name = 'test-stream'
-        >>> shard_count = 20
         >>> stream_action(client, delivery_stream_name, shard_count, action='create')
 
     Returns:
@@ -422,19 +385,13 @@ def stream_action(client, delivery_stream_name, s3_destination_configuration='NA
 
 def create_delivery_stream(client, delivery_stream_name, s3_destination_configuration, stream_type,
                   KinesisStreamSourceConfiguration, ExtendedS3DestinationConfiguration, wait=False, wait_timeout=300, check_mode=False):
-    """Create an Amazon Kinesis Stream.
+    """Create an Amazon Kinesis Firehose Delivery Stream.
     Args:
         client (botocore.client.EC2): Boto3 client.
-        stream_name (str): The name of the kinesis stream.
+        stream_name (str): The name of the kinesis firehose delivery stream.
 
     Kwargs:
-        number_of_shards (int): Number of shards this stream will use.
-            default=1
-        retention_period (int): Can not be less than 24 hours
-            default=None
-        tags (dict): The tags you want applied.
-            default=None
-        wait (bool): Wait until Stream is ACTIVE.
+        wait (bool): Wait until Firehose Delivery Stream is ACTIVE.
             default=False
         wait_timeout (int): How long to wait until this operation is considered failed.
             default=300
@@ -442,11 +399,9 @@ def create_delivery_stream(client, delivery_stream_name, s3_destination_configur
             default=False
 
     Basic Usage:
-        >>> client = boto3.client('kinesis')
+        >>> client = boto3.client('firehose')
         >>> stream_name = 'test-stream'
-        >>> number_of_shards = 10
-        >>> tags = {'env': 'test'}
-        >>> create_delivery_stream(client, stream_name, number_of_shards, tags=tags)
+        >>> create_delivery_stream(client, stream_name)
 
     Returns:
         Tuple (bool, bool, str, dict)
@@ -467,11 +422,6 @@ def create_delivery_stream(client, delivery_stream_name, s3_destination_configur
                 check_mode=check_mode
             )
         )
-
-    # if stream_found and not check_mode:
-    #     if current_stream['ShardsCount'] != number_of_shards:
-    #         err_msg = 'Can not change the number of shards in a Kinesis Stream'
-    #         return success, changed, err_msg, results
 
     if stream_found and current_stream.get('DeliveryStreamStatus') != 'DELETING':
         return False, True, 'Error creating Stream: Stream already exists', {}
@@ -515,20 +465,20 @@ def create_delivery_stream(client, delivery_stream_name, s3_destination_configur
         _, _, results = (
             find_stream(client, delivery_stream_name, check_mode=check_mode)
         )
-        results = convert_to_lower(results)
+        results = convert_to_snake_case(results)
 
     return success, changed, err_msg, results
 
 
 def delete_stream(client, delivery_stream_name, wait=False, wait_timeout=300,
                   check_mode=False):
-    """Delete an Amazon Kinesis Stream.
+    """Delete an Amazon Firehose Delivery Kinesis Stream.
     Args:
         client (botocore.client.EC2): Boto3 client.
-        delivery_stream_name (str): The name of the kinesis stream.
+        delivery_stream_name (str): The name of the kinesis firehose delivery stream.
 
     Kwargs:
-        wait (bool): Wait until Stream is ACTIVE.
+        wait (bool): Wait until Delivery Stream is ACTIVE.
             default=False
         wait_timeout (int): How long to wait until this operation is considered failed.
             default=300
@@ -536,7 +486,7 @@ def delete_stream(client, delivery_stream_name, wait=False, wait_timeout=300,
             default=False
 
     Basic Usage:
-        >>> client = boto3.client('kinesis')
+        >>> client = boto3.client('firehose')
         >>> delivery_stream_name = 'test-stream'
         >>> delete_stream(client, delivery_stream_name)
 
@@ -624,12 +574,11 @@ def main():
     s3_destination_configuration = module.params.get('s3_destination_configuration')
     delivery_stream_type = module.params.get('delivery_stream_type')
     state = module.params.get('state')
-    kinesis_stream_source_configuration = convert_to_title(module.params.get('kinesis_stream_source_configuration'))
-    extended_s3_destination_configuration = module.params.get('extended_s3_destination_configuration')
+    kinesis_stream_source_configuration = convert_to_title_case(module.params.get('kinesis_stream_source_configuration'))
+    extended_s3_destination_configuration = convert_to_title_case(module.params.get('extended_s3_destination_configuration'))
     wait = module.params.get('wait')
     wait_timeout = module.params.get('wait_timeout')
 
-    logging.info('convert_to_title >>>  ='+str(kinesis_stream_source_configuration))
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 is required.')
