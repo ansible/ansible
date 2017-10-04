@@ -116,7 +116,6 @@ lib/ansible/modules/cloud/univention/udm_dns_zone.py
 lib/ansible/modules/cloud/univention/udm_group.py
 lib/ansible/modules/cloud/univention/udm_share.py
 lib/ansible/modules/cloud/univention/udm_user.py
-lib/ansible/modules/cloud/vmware/vsphere_guest.py
 lib/ansible/modules/cloud/webfaction/webfaction_app.py
 lib/ansible/modules/cloud/webfaction/webfaction_db.py
 lib/ansible/modules/cloud/webfaction/webfaction_domain.py
