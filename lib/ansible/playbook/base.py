@@ -165,7 +165,7 @@ class Base(with_metaclass(BaseMeta, object)):
     _ignore_errors       = FieldAttribute(isa='bool')
     _check_mode          = FieldAttribute(isa='bool')
     _diff                = FieldAttribute(isa='bool')
-    _any_errors_fatal     = FieldAttribute(isa='bool', always_post_validate=True)
+    _any_errors_fatal    = FieldAttribute(isa='bool')
 
     # param names which have been deprecated/removed
     DEPRECATED_ATTRIBUTES = [
@@ -354,10 +354,8 @@ class Base(with_metaclass(BaseMeta, object)):
         for (name, attribute) in iteritems(self._valid_attrs):
 
             if getattr(self, name) is None:
-                if not attribute.required and not attribute.always_post_validate:
+                if not attribute.required:
                     continue
-                elif not attribute.required and attribute.always_post_validate:
-                    pass
                 else:
                     raise AnsibleParserError("the field '%s' is required but was not set" % name)
             elif not attribute.always_post_validate and self.__class__.__name__ not in ('Task', 'Handler', 'PlayContext'):

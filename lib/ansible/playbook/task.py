@@ -248,11 +248,6 @@ class Task(Base, Conditional, Taggable, Become):
 
         super(Task, self).post_validate(templar)
 
-    def _post_validate_any_errors_fatal(self, attr, value, templar):
-        if value is None:
-            return C.ANY_ERRORS_FATAL
-        return templar.template(value)
-
     def _post_validate_loop_args(self, attr, value, templar):
         '''
         Override post validation for the loop args field, which is templated
@@ -426,6 +421,14 @@ class Task(Base, Conditional, Taggable, Become):
         except KeyError:
             pass
 
+        return value
+
+    def _get_attr_any_errors_fatal(self):
+        value = self._attributes['any_errors_fatal']
+        if value is None:
+            value = self._get_parent_attribute('any_errors_fatal')
+        if value is None:
+            value = C.ANY_ERRORS_FATAL
         return value
 
     def _get_attr_environment(self):
