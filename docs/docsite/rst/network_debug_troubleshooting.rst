@@ -32,7 +32,7 @@ Errors generally fall into one of the following categories:
   * Can occur when trying to pull a large amount of data
   * May actually be masking a authentication issue
 :Playbook issues:
-  * Use of ``delegate_to``, instead of ``ProxyCommand``
+  * Use of ``delegate_to``, instead of ``ProxyCommand``, see :ref:`network proxy guide <network_delegate_to_vs_ProxyCommand>`
   * Not using ``connection: local``
 
 
@@ -410,7 +410,7 @@ For example:
 
 Suggestions to resolve:
 
-Increase value of presistent connection idle timeout.
+Increase value of persistent connection idle timeout.
 Note: This value should be greater than SSH timeout ie. timeout value under defaults
 section in configuration file and less than the value of the persistent
 connection idle timeout (connect_timeout)
@@ -493,7 +493,7 @@ Add ``authorize: yes`` to the task. For example:
 If the user requires a password to go into privileged mode, this can be specified with ``auth_pass``; if ``auth_pass`` isn't set, the environment variable :envvar:`ANSIBLE_NET_AUTHORIZE` will be used instead.
 
 
-Add `authorize: yes` to the task. For example:
+Add ``authorize: yes`` to the task. For example:
 
 .. code-block:: yaml
 
@@ -506,40 +506,41 @@ Add `authorize: yes` to the task. For example:
   register: result
 
 
-.. delete_to not honoured
-   ----------------------
+Proxy Issues
+============
 
-   FIXME Do we get an error message
+ .. _network_delegate_to_vs_ProxyCommand:
 
-   FIXME Link to howto
+delegate_to vs ProxyCommand
+---------------------------
+
+The new connection framework for Network Modules in Ansible 2.3 that uses ``cli`` transport
+no longer supports the use of the ``delegate_to`` directive.
+In order to use a bastion or intermediate jump host to connect to network devices over ``cli``
+transport, network modules now support the use of ``ProxyCommand``.
+
+To use ``ProxyCommand`` configure the proxy settings in the Ansible inventory
+file to specify the proxy host.
+
+.. code-block:: ini
+
+    [nxos]
+    nxos01
+    nxos02
+
+    [nxos:vars]
+    ansible_ssh_common_args='-o ProxyCommand="ssh -W %h:%p -q bastion01"'
 
 
+With the configuration above, simply build and run the playbook as normal with
+no additional changes necessary.  The network module will now connect to the
+network device by first connecting to the host specified in
+``ansible_ssh_common_args`` which is ``bastion01`` in the above example.
 
 
-   fixmes
-   ======
+.. note:: Using ``ProxyCommand`` with passwords via variables
 
-   Error: "number of connection attempts exceeded, unable to connect to control socket"
-   ------------------------------------------------------------------------------------
+   It is a feature that SSH doesn't support providing passwords via environment variables.
+   This is done to prevent secrets from leaking out, for example in ``ps`` output.
 
-   **Platforms:** Any
-
-   This occurs when Ansible wasn't able to connect to the remote device and obtain a shell with the timeout.
-
-
-   This information is available when :ref:`DEFAULT_LOG_PATH` is set see (FIXMELINKTOSECTION):
-
-   .. code-block:: yaml
-
-     less $ANSIBLE_LOG_PATH
-     2017-03-10 15:32:06,173 p=19677 u=fred |  connect retry timeout expired, unable to connect to control socket
-     2017-03-10 15:32:06,174 p=19677 u=fred |  persistent_connect_retry_timeout is 15 secs
-     2017-03-10 15:32:06,222 p=19669 u=fred |  fatal: [veos01]: FAILED! => {
-
-   Suggestions to resolve:
-
-   Do stuff For example:
-
-   .. code-block:: yaml
-
-   	Example stuff
+   We recommend using SSH Keys, and if needed and ssh-agent, rather than passwords, where ever possible.

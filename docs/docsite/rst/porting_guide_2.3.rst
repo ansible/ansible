@@ -219,28 +219,6 @@ In order to use a bastion or intermediate jump host to connect to network device
 transport, network modules now support the use of ``ProxyCommand``.
 
 To use ``ProxyCommand`` configure the proxy settings in the Ansible inventory
-file to specify the proxy host.
+file to specify the proxy host via ``ansible_ssh_common_args``.
 
-.. code-block:: ini
-
-    [nxos]
-    nxos01
-    nxos02
-
-    [nxos:vars]
-    ansible_ssh_common_args='-o ProxyCommand="ssh -W %h:%p -q bastion01"'
-
-
-With the configuration above, simply build and run the playbook as normal with
-no additional changes necessary.  The network module will now connect to the
-network device by first connecting to the host specified in
-``ansible_ssh_common_args`` which is ``bastion01`` in the above example.
-
-
-.. notes: Using ``ProxyCommand`` with passwords via variables
-
-   It is a feature that SSH doesn't support providing passwords via environment variables.
-   This is done to prevent secrets from leaking out, for example in ``ps`` output.
-
-   We recommend using SSH Keys, and if needed and ssh-agent, rather than passwords, where ever possible.
-
+For details on how to do this see the :ref:`network proxy guide <network_delegate_to_vs_ProxyCommand>`.
