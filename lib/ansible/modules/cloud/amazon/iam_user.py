@@ -24,7 +24,7 @@ module: iam_user
 short_description: Manage AWS IAM users
 description:
   - Manage AWS IAM users
-version_added: "2.4"
+version_added: "2.5"
 author: Josh Souza, @joshsouza
 options:
   name:
