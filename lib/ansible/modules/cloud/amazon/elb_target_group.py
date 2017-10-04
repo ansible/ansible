@@ -549,7 +549,7 @@ def create_or_update_target_group(connection, module):
     if stickiness_lb_cookie_duration is not None:
         if str(stickiness_lb_cookie_duration) != current_tg_attributes['stickiness_lb_cookie_duration_seconds']:
             update_attributes.append({'Key': 'stickiness.lb_cookie.duration_seconds', 'Value': str(stickiness_lb_cookie_duration)})
-    if stickiness_type is not None:
+    if stickiness_type is not None and "stickiness_type" in current_tg_attributes:
         if stickiness_type != current_tg_attributes['stickiness_type']:
             update_attributes.append({'Key': 'stickiness.type', 'Value': stickiness_type})
 
