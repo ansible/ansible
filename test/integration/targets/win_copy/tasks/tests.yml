@@ -443,6 +443,70 @@
     state: absent
   delegate_to: localhost
 
+- name: copy an encrypted file without decrypting
+  win_copy:
+    src: '{{role_path}}/files-different/vault/vault-file'
+    dest: '{{test_win_copy_path}}\vault-file'
+    decrypt: no
+  register: copy_encrypted_file
+
+- name: get stat of copied encrypted file without decrypting
+  win_stat:
+    path: '{{test_win_copy_path}}\vault-file'
+  register: copy_encrypted_file_result
+
+- name: assert result of copy an encrypted file without decrypting
+  assert:
+    that:
+    - copy_encrypted_file|changed
+    - copy_encrypted_file_result.stat.checksum == "74a89620002d253f38834ee5b06cddd28956a43d"
+
+- name: copy an encrypted file without decrypting (idempotent)
+  win_copy:
+    src: '{{role_path}}/files-different/vault/vault-file'
+    dest: '{{test_win_copy_path}}\vault-file'
+    decrypt: no
+  register: copy_encrypted_file_again
+
+- name: assert result of copy an encrypted file without decrypting (idempotent)
+  assert:
+    that:
+    - not copy_encrypted_file_again|changed
+
+- name: copy folder with encrypted files without decrypting
+  win_copy:
+    src: '{{role_path}}/files-different/vault/'
+    dest: '{{test_win_copy_path}}\encrypted-test'
+    decrypt: no
+  register: copy_encrypted_file
+
+- name: get result of copy folder with encrypted files without decrypting
+  win_find:
+    paths: '{{test_win_copy_path}}\encrypted-test'
+    recurse: yes
+    patterns: '*vault*'
+  register: copy_encrypted_file_result
+
+- name: assert result of copy folder with encrypted files without decrypting
+  assert:
+    that:
+    - copy_encrypted_file|changed
+    - copy_encrypted_file_result.files|count == 2
+    - copy_encrypted_file_result.files[0].checksum == "834563c94127730ecfa42dfc1e1821bbda2e51da"
+    - copy_encrypted_file_result.files[1].checksum == "74a89620002d253f38834ee5b06cddd28956a43d"
+
+- name: copy folder with encrypted files without decrypting (idempotent)
+  win_copy:
+    src: '{{role_path}}/files-different/vault/'
+    dest: '{{test_win_copy_path}}\encrypted-test'
+    decrypt: no
+  register: copy_encrypted_file_again
+
+- name: assert result of copy folder with encrypted files without decrypting (idempotent)
+  assert:
+    that:
+    - not copy_encrypted_file_again|changed
+
 - name: remove test folder after local to remote tests
   win_file:
     path: '{{test_win_copy_path}}'
