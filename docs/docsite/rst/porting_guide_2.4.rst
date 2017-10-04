@@ -18,7 +18,7 @@ This document is part of a collection on porting. The complete list of porting g
 Python version
 ==============
 
-Ansible will not support Python 2.4 nor 2.5 on the target hosts anymore. Going forward, Python 2.6+ will be required on targets, as already is the case on the controller.
+Ansible will not support Python 2.4 or 2.5 on the target hosts anymore. Going forward, Python 2.6+ will be required on targets, as already is the case on the controller.
 
 
 Inventory
@@ -28,8 +28,9 @@ Inventory has been refactored to be implemented via plugins and now allows for m
 
 One exception is the ``inventory_dir``, which is now a host variable; previously it could only have one value so it was set globally. This means you cannot use it early in plays anymore to determine ``hosts:`` or similar keywords.
 
-The ``inventory_file`` remains unchaged, as it was always host specific.
+The ``inventory_file`` remains unchanged, as it was always host specific.
 
+A bug was fixed with the inventory path/directory, which was defaulting to the current working directory. This caused ``group_vars`` and ``host_vars`` to be picked up from the current working directory instead of just adjacent to the playbook or inventory directory when a host list (comma separated host names) was provided as inventory.
 
 Deprecated
 ==========
@@ -39,7 +40,7 @@ Specifying Inventory sources
 
 Use of ``--inventory-file`` on the command line is now deprecated. Use ``--inventory`` or ``-i``.
 The associated ini configuration key, ``hostfile``, and environment variable, :envvar:`ANSIBLE_HOSTS`,
-are also deprecated.  Replace them with the configuration key ``inventory`` and environment variable :envvar:        `ANSIBLE_INVENTORY`.
+are also deprecated.  Replace them with the configuration key ``inventory`` and environment variable :envvar:`ANSIBLE_INVENTORY`.
 
 Use of multiple tags
 --------------------
