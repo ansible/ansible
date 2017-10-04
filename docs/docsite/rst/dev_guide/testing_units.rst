@@ -2,7 +2,10 @@
 Unit Tests
 **********
 
-Unit tests are small isolated tests that target a specific library or module.
+Unit tests are small isolated tests that target a specific library, or
+module.  Unit tests in Ansible are currently the only way of driving
+tests from python within Ansible's continuous integration process which
+means that in some circumstances the tests may be a bit wider than just units.  
 
 .. contents:: Topics
 
@@ -33,7 +36,6 @@ Or against a specific Python version by doing:
 .. code:: shell
 
    ansible-test units --tox --python 2.7 apt
-
 
 
 For advanced usage see the online help::
@@ -69,6 +71,57 @@ Extending unit tests
 
    If you start writing a test that requires external services then you may be writing an integration test, rather than a unit test.
 
+
+Structuring Unit Tests
+``````````````````````
+
+Ansible drives unit tests through pytest (https://docs.pytest.org/en/latest/) this means that tests can either be written as simple functions which are included in any file name like test_<something>.py.::
+
+  #this function will be called simply because it is called test_*()
+
+  def test_add()
+      a = 10
+      b = 23
+      c = 33
+      assert a + b = c
+    
+or as classes::
+
+  import unittest:
+      
+  class AddTester(unittest.TestCase)
+      
+      def SetUp()
+          self.a = 10
+          self.b = 23
+ 
+      # this function will 
+      def test_add()
+        c = 33
+        assert self.a + self.b = c
+
+     # this function will 
+      def test_subtract()
+        c = -13
+        assert self.a - self.b = c
+
+Both are equivalent;  the function based interface is simpler and quicker and so that's probably where you should start when you are just trying to add a few basic tests for a module.  The class based test allows more tidy set up and tear down of pre-requisites so if you have many test cases for your module you may want to refactor to use that.  Assertions using the simple assert function inside the tests will 
+
+A number of the unit test suites include functions that are shared between several modules, especially in the networking arena.  In these cases a file is created in the same directory which is then included directly.  
+
+
+module test case common code
+````````````````````````````
+
+Keep common code as specific as possible within the `test/units/` directory structure. For
+example, if it's specific to testing Amazon modules, it should be in
+`test/units/modules/cloud/amazon/`. Don't import common unit test code from directories
+outside the current or parent directories.
+
+Don't import other unit tests from a unit test. Any common code should be in dedicated
+files that aren't themselves tests.
+
+
 Fixtures files
 ``````````````
 
@@ -102,4 +155,16 @@ Reports can be generated in several different formats:
 To clear data between test runs, use the ``ansible-test coverage erase`` command. For a full list of features see the online help::
 
    ansible-test coverage --help
+
+
+.. seealso::
+
+   :doc:`testing_units_modules`
+       Special considerations for unit testing modules
+   `Python 3 documentation - 26.4. unittest — Unit testing framework <https://docs.python.org/3/library/unittest.html>`_
+       The documentation of the unittest framework in python 3 
+   `Python 2 documentation - 25.3. unittest — Unit testing framework <https://docs.python.org/3/library/unittest.html>`_
+       The documentation of the earliest supported unittest framework - from Python 2.6
+   `pytest: helps you write better programs <https://docs.pytest.org/en/latest/>`_
+       The documentation of pytest - the framework actually used to run Ansible unit tests
 
