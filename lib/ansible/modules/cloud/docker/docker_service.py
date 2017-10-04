@@ -124,6 +124,13 @@ options:
         - Use with state I(absent) to remove the all images or only local images.
       required: false
       default: null
+  remove_orphans:
+      description:
+        - Use with state I(absent) to remove the all orphans.
+      required: false
+      type: bool
+      default: false
+      version_added: "2.5"
   remove_volumes:
       description:
         - Use with state I(absent) to remove data volumes.
@@ -728,7 +735,7 @@ class ContainerManager(DockerBaseClass):
                         ))
                     result['actions'].append(result_action)
 
-        if not self.check_mode and result['changed']:
+        if not self.check_mode and result['changed'] or self.remove_orphans:
             out_redir_name, err_redir_name = make_redirection_tempfiles()
             try:
                 with stdout_redirector(out_redir_name):
