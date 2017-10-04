@@ -17,7 +17,7 @@ class TestConfigManager(unittest.TestCase):
 
     def _config_file(self, contents=None):
 
-        self.tmp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.cfg')
+        self.tmp_file = tempfile.NamedTemporaryFile(delete=False, mode='w+', suffix='.cfg')
         ini_config = configparser.ConfigParser()
         for item in contents:
             ini_config.add_section(item['section'])
