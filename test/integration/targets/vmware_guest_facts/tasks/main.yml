@@ -1,21 +1,7 @@
 # Test code for the vmware_guest_facts module.
-# (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
+# Copyright: (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
 - name: make sure pyvmomi is installed
   pip:
     name: pyvmomi
@@ -35,11 +21,11 @@
 
 - name: kill vcsim
   uri:
-    url: "{{ 'http://' + vcsim + ':5000/killall' }}"
+    url: http://{{ vcsim }}:5000/killall
 
 - name: start vcsim
   uri:
-    url: "{{ 'http://' + vcsim + ':5000/spawn?datacenter=1&cluster=1&folder=0' }}"
+    url: http://{{ vcsim }}:5000/spawn?datacenter=1&cluster=1&folder=0
   register: vcsim_instance
 
 - name: Wait for vcsim server to come up online
@@ -50,14 +36,14 @@
 
 - name: get a list of Datacenter from vcsim
   uri:
-    url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=DC' }}"
+    url: http://{{ vcsim }}:5000/govc_find?filter=DC
   register: datacenters
 
 - set_fact: dc1="{{ datacenters['json'][0] }}"
 
 - name: get a list of virtual machines from vcsim
   uri:
-    url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=VM' }}"
+    url: http://{{ vcsim }}:5000/govc_find?filter=VM
   register: vms
 
 - set_fact: vm1="{{ vms['json'][0] }}"
