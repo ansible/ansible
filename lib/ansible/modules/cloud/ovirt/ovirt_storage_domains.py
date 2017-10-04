@@ -241,6 +241,7 @@ from ansible.module_utils.ovirt import (
     create_connection,
     equal,
     get_entity,
+    get_id_by_name,
     ovirt_full_argument_spec,
     search_by_name,
     wait,
@@ -262,8 +263,8 @@ class StorageDomainModule(BaseModule):
     def _login(self, storage_type, storage):
         if storage_type == 'iscsi':
             hosts_service = self._connection.system_service().hosts_service()
-            host = search_by_name(hosts_service, self._module.params['host'])
-            hosts_service.host_service(host.id).iscsi_login(
+            host_id = get_id_by_name(hosts_service, self._module.params['host'])
+            hosts_service.host_service(host_id).iscsi_login(
                 iscsi=otypes.IscsiDetails(
                     username=storage.get('username'),
                     password=storage.get('password'),
