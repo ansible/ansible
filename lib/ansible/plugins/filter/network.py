@@ -223,7 +223,7 @@ def parse_cli_textfsm(value, template):
         raise AnsibleError('parse_cli_textfsm filter requires TextFSM library to be installed')
 
     if not os.path.exists(template):
-        raise AnsibleError('unable to locate parse_cli template: %s' % template)
+        raise AnsibleError('unable to locate parse_cli_textfsm template: %s' % template)
 
     try:
         template = open(template)
