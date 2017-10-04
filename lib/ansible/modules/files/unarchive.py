@@ -796,7 +796,8 @@ def main():
         # If remote_src=true, and src= contains ://, try and download the file to a temp directory.
         elif '://' in src:
             tempdir = os.path.dirname(os.path.realpath(__file__))
-            package = os.path.join(tempdir, str(src.rsplit('/', 1)[1]))
+            tempfile = re.search(r'\/([^/?]*)(\?.*)?$', src)[1]
+            package = os.path.join(tempdir, str(tempfile))
             try:
                 rsp, info = fetch_url(module, src)
                 # If download fails, raise a proper exception
