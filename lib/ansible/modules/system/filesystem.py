@@ -27,7 +27,7 @@ options:
     description:
     - File System type to be created.
     - reiserfs support was added in 2.2.
-    - lvm support was added in 2.4.
+    - lvm support was added in 2.5.
     required: true
   dev:
     description:
