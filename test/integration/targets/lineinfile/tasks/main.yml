@@ -189,6 +189,44 @@
     that:
     - "result.stat.checksum == '76955a4516a00a38aad8427afc9ee3e361024ba5'"
 
+- name: insert multiple lines at the end of the file
+  lineinfile: dest={{output_dir}}/test.txt state=present line="This is a line\nwith \\n character" insertafter="EOF"
+  register: result
+
+- name: assert that multiple lines were inserted
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.msg == 'line added'"
+
+- name: stat the test after inserting multiple lines
+  stat: path={{output_dir}}/test.txt
+  register: result
+
+- name: assert test checksum matches after inserting multiple lines
+  assert:
+    that:
+    - "result.stat.checksum == 'bf5b711f8f0509355aaeb9d0d61e3e82337c1365'"
+
+- name: replace a line with backrefs included in the line
+  lineinfile: dest={{output_dir}}/test.txt state=present line="New \\1 created with the backref" backrefs=yes regexp="^This is (line 4)$"
+  register: result
+
+- name: assert that the line with backrefs was changed
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.msg == 'line replaced'"
+
+- name: stat the test after the backref line was replaced
+  stat: path={{output_dir}}/test.txt
+  register: result
+
+- name: assert test checksum matches after backref line was replaced
+  assert:
+    that:
+    - "result.stat.checksum == '04b7a54d0fb233a4e26c9e625325bb4874841b3c'"
+
 - name: use create=yes
   lineinfile: dest={{output_dir}}/new_test.txt create=yes insertbefore=BOF state=present line="This is a new file"
   register: result
@@ -218,17 +256,7 @@
   lineinfile: dest={{output_dir}}/testnoeof.txt state=present line="New line at the end" insertafter="EOF"
   register: result
 
-- name: testempty assert that the line was inserted at the end of the file
-  assert:
-    that:
-    - "result.changed == true"
-    - "result.msg == 'line added'"
-
-- name: insert a multiple lines at the end of the file
-  lineinfile: dest={{output_dir}}/test.txt state=present line="This is a line\nwith \\n character" insertafter="EOF"
-  register: result
-
-- name: assert that the multiple lines was inserted
+- name: testnoeof assert that the line was inserted at the end of the file
   assert:
     that:
     - "result.changed == true"
@@ -266,33 +294,6 @@
   assert:
     that:
     - "result.stat.checksum == 'f440dc65ea9cec3fd496c1479ddf937e1b949412'"
-
-- stat: path={{output_dir}}/test.txt
-  register: result
-
-- name: assert test checksum matches after inserting multiple lines
-  assert:
-    that:
-    - "result.stat.checksum == 'bf5b711f8f0509355aaeb9d0d61e3e82337c1365'"
-
-- name: replace a line with backrefs included in the line
-  lineinfile: dest={{output_dir}}/test.txt state=present line="New \\1 created with the backref" backrefs=yes regexp="^This is (line 4)$"
-  register: result
-
-- name: assert that the line with backrefs was changed
-  assert:
-    that:
-    - "result.changed == true"
-    - "result.msg == 'line replaced'"
-
-- name: stat the test after the backref line was replaced
-  stat: path={{output_dir}}/test.txt
-  register: result
-
-- name: assert test checksum matches after backref line was replaced
-  assert:
-    that:
-    - "result.stat.checksum == '04b7a54d0fb233a4e26c9e625325bb4874841b3c'"
 
 ###################################################################
 # issue 8535
