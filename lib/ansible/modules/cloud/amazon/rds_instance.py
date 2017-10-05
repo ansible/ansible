@@ -437,60 +437,13 @@ def await_resource(conn, instance_id, status, module, await_pending=None):
     return resource
 
 
-# FIXME - parameters from create missing here
-#
-# DBClusterIdentifier *
-# Domain
-# DomainIAMRoleName
-# EnableIAMDatabaseAuthentication
-# EnablePerformanceInsights
-# KmsKeyId *
-# MonitoringInterval
-# MonitoringRoleArn
-# PerformanceInsightsKMSKeyId
-# PreferredBackupWindow * - I want this
-# PromotionTier
-# StorageEncrypted * - Shertel and I want this
-# TdeCredentialArn
-# TdeCredentialPassword
-# Timezone
-#
-# * means this something that had a real request and is actually worth doing
-
-
-aurora_create_required_vars = ['db_instance_identifier', 'db_instance_class', 'engine']
-aurora_create_valid_vars = ['apply_immediately', 'character_set_name', 'cluster', 'db_name',
-                            'engine_version', 'db_instance_class', 'license_model',
-                            'preferred_maintenance_window', 'option_group_name',
-                            'db_parameter_group_name', 'port', 'publicly_accessible',
-                            'db_subnet_group_name', 'auto_minor_version_upgrade', 'tags',
-                            'availability_zone']
-create_required_vars = ['db_instance_identifier', 'engine', 'allocated_storage',
-                        'db_instance_class', 'master_username', 'master_user_password']
-create_valid_vars = ['backup_retention_period', 'preferred_backup_window', 'character_set_name',
-                     'cluster', 'db_name', 'engine_version', 'license_model',
-                     'preferred_maintenance_window', 'multi_az', 'option_group_name',
-                     'db_parameter_group_name', 'port', 'publicly_accessible', 'storage_type',
-                     'db_subnet_group_name', 'auto_minor_version_upgrade', 'tags',
-                     'db_security_groups', 'vpc_security_group_ids', 'availability_zone']
-
-
 def create_db_instance(module, conn):
     main_logger.log(30, "create_db_instance called")
-    if module.params.get('engine') in ['aurora']:
-        required_vars = aurora_create_required_vars
-        valid_vars = aurora_create_valid_vars
-    else:
-        required_vars = create_required_vars
-        valid_vars = create_valid_vars
 
-    if module.params.get('db_subnet_group_name'):
-        valid_vars.append('vpc_security_group_ids')
-    else:
-        valid_vars.append('db_security_groups')
-    params = select_parameters(module, required_vars, valid_vars)
+    params = select_parameters_meta(module, conn, 'CreateDBInstance')
 
     instance_id = module.params.get('db_instance_identifier')
+    params['DBInstanceIdentifier'] = instance_id
 
     changed = False
     instance = get_db_instance(conn, instance_id)
@@ -686,15 +639,6 @@ def prepare_params_for_modify(module, before_facts):
     Select those parameters we want, convert them to AWS CamelCase, change a few from
     the naming used in the create call to the naming used in the modify call.
     """
-
-    # FIXME: we should use this for filtering in the diff!
-
-    # valid_vars = ['apply_immediately', 'backup_retention_period', 'preferred_backup_window',
-    #               'engine_version', 'instance_type', 'iops', 'license_model',
-    #               'preferred_maintenance_window', 'multi_az', 'option_group_name',
-    #               'db_parameter_group_name', 'master_user_password', 'port', 'publicly_accessible', 'allocated_storage',
-    #               'storage_type', 'db_subnet_group_name', 'auto_minor_version_upgrade',
-    #               'db_security_groups', 'vpc_security_group_ids']
 
     abort_on_impossible_changes(module, before_facts)
 
@@ -989,38 +933,25 @@ def select_parameters_meta(module, conn, operation):
     return params
 
 
-def select_parameters(module, required_vars, valid_vars):
-    """select parameters for use in an AWS API call converting them to boto3 naming
-
-    select_parameters takes a list of required variables and valid variables.  Each
-    variable is pulled from the module parameters.  If the required variables are missing
-    then execution is aborted with an error.  Extra parameters on the module are ignored.
-
-    """
-    facts = {}
-
-    for k in required_vars:
-        if not module.params.get(k):
-            raise Exception("Parameter %s required" % k)
-        facts[k] = module.params[k]
-
-    for k in valid_vars:
-        try:
-            v = module.params[k]
-            if v is not None:
-                facts[k] = v
-        except KeyError:
-            pass
-
-    params = snake_dict_to_cap_camel_dict(facts)
-
-    if params.get('db_security_groups'):
-        params['DBSecurityGroups'] = facts.get('db_security_groups').split(',')
-
-    # Convert tags dict to list of tuples that boto expects
-    if 'Tags' in params and module.params['tags']:
-        params['Tags'] = ansible_dict_to_boto3_tag_list(module.params['tags'])
-    return params
+# FIXME - parameters from create missing here
+#
+# DBClusterIdentifier *
+# Domain
+# DomainIAMRoleName
+# EnableIAMDatabaseAuthentication
+# EnablePerformanceInsights
+# KmsKeyId *
+# MonitoringInterval
+# MonitoringRoleArn
+# PerformanceInsightsKMSKeyId
+# PreferredBackupWindow * - I want this
+# PromotionTier
+# StorageEncrypted * - Shertel and I want this
+# TdeCredentialArn
+# TdeCredentialPassword
+# Timezone
+#
+# * means this something that had a real request and is actually worth doing
 
 
 argument_spec = dict(
@@ -1084,8 +1015,16 @@ argument_spec = dict(
 
 required_if = [
     ('storage_type', 'io1', ['iops']),
-    ('state', 'present', ['engine', 'db_instance_class', 'allocated_storage']),
+    ('state', 'present', ['engine', 'db_instance_class']),
 ]
+
+# 'master_user_password' is needed during a create but we leave it out
+# below for now so that we can do modify without it.
+for i in DB_ENGINES:
+    if i == 'aurora':
+        required_if.append(('engine', 'aurora', ['engine', 'db_instance_class'])),
+    else:
+        required_if.append(('engine', i, ['allocated_storage', 'master_username']))
 
 
 def setup_client(module):

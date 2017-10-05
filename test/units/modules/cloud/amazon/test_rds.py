@@ -177,8 +177,11 @@ modify_rds_return = {
 
 # def test_module_parses_args_right()
 
-basic._ANSIBLE_ARGS = to_bytes(b'{ "ANSIBLE_MODULE_ARGS": { "db_instance_class":"very-small-indeed", "engine": "postgres",'
-                               b'"id":"fred", "port": 242, "allocated_storage": 10} }')
+basic._ANSIBLE_ARGS = to_bytes(
+    b'{ "ANSIBLE_MODULE_ARGS": { "db_instance_class":"very-small-indeed", "engine": "postgres",'
+    b'"id":"fred", "port": 242, "allocated_storage": 10, "master_username": "fakeadmin", '
+    b'"master_user_password": "fakeadminpass" } }'
+)
 ansible_module_template = AnsibleAWSModule(argument_spec=rds_i.argument_spec, required_if=rds_i.required_if)
 #    basic._ANSIBLE_ARGS = to_bytes('{ "ANSIBLE_MODULE_ARGS": { "old_id": "fakedb", "old_id":"fred", "port": 342} }')
 #    basic._ANSIBLE_ARGS = to_bytes('{ "ANSIBLE_MODULE_ARGS": { "id":"fred", "port": 342} }')
@@ -608,8 +611,10 @@ def test_select_params_should_provide_needed_args_to_create_if_module_has_basics
         "master_username": "jake",
         "master_user_password": "letmeinletmein",
     })
+    session = botocore.session.get_session()
+    rds_client_double = session.create_client('rds', region_name='us-west-2')
     module = rds_i.setup_module_object()
-    params = rds_i.select_parameters(module, rds_i.create_required_vars, rds_i.create_valid_vars)
+    params = rds_i.select_parameters_meta(module, rds_client_double, 'CreateDBInstance')
     for i in needed_args:
         assert i in params, "{0} parameter missing".format(i)
         assert len(params[i]) > 0, "{0} parameter lacks value".format(i)
