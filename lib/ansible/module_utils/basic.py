@@ -2602,15 +2602,11 @@ class AnsibleModule(object):
             strings on python3, use encoding=None to turn decoding to text off.
         '''
 
-        shell = False
         if isinstance(args, list):
             if use_unsafe_shell:
                 args = " ".join([shlex_quote(x) for x in args])
-                shell = True
         elif isinstance(args, (binary_type, text_type)):
-            if use_unsafe_shell:
-                shell = True
-            else:
+            if not use_unsafe_shell:
                 # On python2.6 and below, shlex has problems with text type
                 # On python3, shlex needs a text type.
                 if PY2:
@@ -2622,9 +2618,12 @@ class AnsibleModule(object):
             msg = "Argument 'args' to run_command must be list or string"
             self.fail_json(rc=257, cmd=args, msg=msg)
 
+        shell = False
         if use_unsafe_shell:
             if executable:
                 args = [executable, '-c', args]
+            else:
+                shell = True
 
         prompt_re = None
         if prompt_regex:
