@@ -30,7 +30,7 @@ Upgrading PowerShell and .NET Framework
 ---------------------------------------
 Ansible requires PowerShell v3 and .NET Framework 4.0 or newer to function and
 on older OS' like Server 2008 and Windows 7, the base image does not meet this
-requirement. The script `update_powershell.ps1 <https://github.com/ansible/ansible/blob/devel/examples/scripts/update_powershell.ps1>`_
+requirement. The script `Upgrade-PowerShell.ps1 <https://github.com/jborean93/ansible-windows/blob/master/scripts/Upgrade-PowerShell.ps1>`_
 can be used to install whatever PowerShell version that is desired and it will
 also install .NET Framework 4.5.2 if required.
 
@@ -38,8 +38,8 @@ This is an example of how to run this script from PowerShell:
 
 .. code-block:: powershell
 
-    $url = "https://raw.githubusercontent.com/ansible/ansible/devel/examples/scripts/update_powershell.ps1"
-    $file = "$env:SystemDrive\temp\update_powershell.ps1"
+    $url = "https://raw.githubusercontent.com/jborean93/ansible-windows/master/scripts/Upgrade-PowerShell.ps1"
+    $file = "$env:SystemDrive\temp\Upgrade-PowerShell.ps1"
     $username = "Administrator"
     $password = "Password"
 
@@ -47,7 +47,7 @@ This is an example of how to run this script from PowerShell:
     Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Force
 
     # version can be 3.0, 4.0 or 5.1
-    &$file -version 5.1 -username $username -password $password -Verbose
+    &$file -Version 5.1 -Username $username -Password $password -Verbose
 
 Once completed, the following commands should be run to remove the auto logon
 and set the execution policy back to the default of ``Restricted`` from
@@ -91,15 +91,15 @@ When running on PowerShell v3.0, there is a bug with the WinRM service that
 limits the amount of memory available to WinRM. Without this hotfix installed,
 Ansible will fail to execute certain commands on the Windows host. It is highly
 recommended these hotfixes are installed as part of the system bootstapping or
-imaging process. The script `winrm_hotfix.ps1 <https://github.com/ansible/ansible/blob/devel/examples/scripts/winrm_hotfix.ps1>`_
+imaging process. The script `Install-WMF3Hotfix.ps1 <https://github.com/jborean93/ansible-windows/blob/master/scripts/Install-WMF3Hotfix.ps1>`_
 can be used to install the hotfix on affected hosts.
 
 The following PowerShell command will install the hotfix:
 
 .. code-block:: powershell
 
-    $url = "https://raw.githubusercontent.com/ansible/ansible/devel/examples/scripts/winrm_hotfix.ps1"
-    $file = "$env:SystemDrive\temp\winrm_hotfix.ps1"
+    $url = "https://raw.githubusercontent.com/jborean93/ansible-windows/master/scripts/Install-WMF3Hotfix.ps1"
+    $file = "$env:SystemDrive\temp\Install-WMF3Hotfix.ps1"
 
     (New-Object -TypeName System.Net.WebClient).DownloadFile($url, $file)
     powershell.exe -ExecutionPolicy ByPass -File $file -Verbose
