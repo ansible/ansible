@@ -101,6 +101,7 @@ Ansible Changes By Release
   this was causing output from commands to change, thus breaking playbooks.
   See the original bug for details and links to the eventual fix:
   https://github.com/ansible/ansible/issues/24169
+* Do not log data field in `docker_secrets` module (https://github.com/ansible/ansible/pull/31366)
 
 <a id="2.4"></a>
 
