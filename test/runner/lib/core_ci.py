@@ -32,6 +32,10 @@ AWS_ENDPOINTS = {
     'us-east-2': 'https://g5xynwbk96.execute-api.us-east-2.amazonaws.com',
 }
 
+PARALLELS_ENDPOINTS = (
+    'https://parallels-1.testing.ansible.com',
+)
+
 
 class AnsibleCoreCI(object):
     """Client for Ansible Core CI services."""
@@ -51,6 +55,8 @@ class AnsibleCoreCI(object):
         self.client = HttpClient(args)
         self.connection = None
         self.instance_id = None
+        self.endpoint = None
+        self.max_threshold = 1
         self.name = name if name else '%s-%s' % (self.platform, self.version)
         self.ci_key = os.path.expanduser('~/.ansible-core-ci.key')
 
@@ -85,7 +91,7 @@ class AnsibleCoreCI(object):
                 # send all non-Shippable jobs to us-east-1 to reduce api key maintenance
                 region = 'us-east-1'
 
-            self.endpoint = AWS_ENDPOINTS[region]
+            self.endpoints = AWS_ENDPOINTS[region],
 
             if self.platform == 'windows':
                 self.ssh_key = None
@@ -94,7 +100,8 @@ class AnsibleCoreCI(object):
                 self.ssh_key = SshKey(args)
                 self.port = 22
         elif self.platform in osx_platforms:
-            self.endpoint = 'https://osx.testing.ansible.com'
+            self.endpoints = tuple(PARALLELS_ENDPOINTS)
+            self.max_threshold = 6
 
             self.ssh_key = SshKey(args)
             self.port = None
@@ -121,8 +128,10 @@ class AnsibleCoreCI(object):
                              verbosity=1)
 
                 self.instance_id = None
+                self.endpoint = None
         else:
             self.instance_id = None
+            self.endpoint = None
             self._clear()
 
         if self.instance_id:
@@ -130,6 +139,7 @@ class AnsibleCoreCI(object):
         else:
             self.started = False
             self.instance_id = str(uuid.uuid4())
+            self.endpoint = None
 
     def start(self):
         """Start instance."""
@@ -291,23 +301,7 @@ class AnsibleCoreCI(object):
             'Content-Type': 'application/json',
         }
 
-        tries = 3
-        sleep = 15
-
-        while True:
-            tries -= 1
-            response = self.client.put(self._uri, data=json.dumps(data), headers=headers)
-
-            if response.status_code == 200:
-                break
-
-            error = self._create_http_error(response)
-
-            if not tries:
-                raise error
-
-            display.warning('%s. Trying again after %d seconds.' % (error, sleep))
-            time.sleep(sleep)
+        response = self._start_try_endpoints(data, headers)
 
         self.started = True
         self._save()
@@ -318,6 +312,64 @@ class AnsibleCoreCI(object):
             return {}
 
         return response.json()
+
+    def _start_try_endpoints(self, data, headers):
+        """
+        :type data: dict[str, any]
+        :type headers: dict[str, str]
+        :rtype: HttpResponse
+        """
+        threshold = 1
+
+        while threshold <= self.max_threshold:
+            for self.endpoint in self.endpoints:
+                try:
+                    return self._start_at_threshold(data, headers, threshold)
+                except CoreHttpError as ex:
+                    if ex.status == 503:
+                        display.info('Service Unavailable: %s' % ex.remote_message, verbosity=1)
+                        continue
+                    display.error(ex.remote_message)
+                except HttpError as ex:
+                    display.error(u'%s' % ex)
+
+                time.sleep(3)
+
+            threshold += 1
+
+        raise ApplicationError('Maximum threshold reached and all endpoints exhausted.')
+
+    def _start_at_threshold(self, data, headers, threshold):
+        """
+        :type data: dict[str, any]
+        :type headers: dict[str, str]
+        :type threshold: int
+        :rtype: HttpResponse | None
+        """
+        tries = 3
+        sleep = 15
+
+        data['threshold'] = threshold
+
+        display.info('Trying endpoint: %s (threshold %d)' % (self.endpoint, threshold), verbosity=1)
+
+        while True:
+            tries -= 1
+            response = self.client.put(self._uri, data=json.dumps(data), headers=headers)
+
+            if response.status_code == 200:
+                return response
+
+            error = self._create_http_error(response)
+
+            if response.status_code == 503:
+                raise error
+
+            if not tries:
+                raise error
+
+            display.warning('%s. Trying again after %d seconds.' % (error, sleep))
+            time.sleep(sleep)
 
     def _clear(self):
         """Clear instance information."""
@@ -332,14 +384,23 @@ class AnsibleCoreCI(object):
         """Load instance information."""
         try:
             with open(self.path, 'r') as instance_fd:
-                self.instance_id = instance_fd.read()
-                self.started = True
+                data = instance_fd.read()
         except IOError as ex:
             if ex.errno != errno.ENOENT:
                 raise
-            self.instance_id = None
 
-        return self.instance_id
+            return False
+
+        if not data.startswith('{'):
+            return False  # legacy format
+
+        config = json.loads(data)
+
+        self.instance_id = config['instance_id']
+        self.endpoint = config['endpoint']
+        self.started = True
+
+        return True
 
     def _save(self):
         """Save instance information."""
@@ -349,7 +410,12 @@ class AnsibleCoreCI(object):
         make_dirs(os.path.dirname(self.path))
 
         with open(self.path, 'w') as instance_fd:
-            instance_fd.write(self.instance_id)
+            config = dict(
+                instance_id=self.instance_id,
+                endpoint=self.endpoint,
+            )
+
+            instance_fd.write(json.dumps(config, indent=4, sort_keys=True))
 
     @staticmethod
     def _create_http_error(response):
@@ -370,7 +436,21 @@ class AnsibleCoreCI(object):
         else:
             message = str(response_json)
 
-        return HttpError(response.status_code, '%s%s' % (message, stack_trace))
+        return CoreHttpError(response.status_code, message, stack_trace)
+
+
+class CoreHttpError(HttpError):
+    """HTTP response as an error."""
+    def __init__(self, status, remote_message, remote_stack_trace):
+        """
+        :type status: int
+        :type remote_message: str
+        :type remote_stack_trace: str
+        """
+        super(CoreHttpError, self).__init__(status, '%s%s' % (remote_message, remote_stack_trace))
+
+        self.remote_message = remote_message
+        self.remote_stack_trace = remote_stack_trace
 
 
 class SshKey(object):
