@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Marc Tschapek <marc.tschapek@outlook.com>
+# (c) 2017, Marc Tschapek <marc.tschapek@bitgroup.de>
 #
 # This file is part of Ansible
 #
@@ -343,6 +343,11 @@ change_log:
                     returned: success or failed
                     type: string
                     sample: "No convertion of option variable needed"
+                drive_letter:
+                    description: Information whether the drive_letter option value was converted or not
+                    returned: success or failed
+                    type: string
+                    sample: "No drive_letter option used, no convertion needed"
         operational_status:
             description: Detailed information about setting operational status of the disk
             returned: success or failed
