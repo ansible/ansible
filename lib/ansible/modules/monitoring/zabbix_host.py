@@ -300,7 +300,7 @@ class Host(object):
                 self._module.exit_json(changed=True)
             parameters = {'hostid': host_id, 'groups': group_ids, 'status': status, 'tls_connect': tls_connect,
                           'tls_accept': tls_accept}
-            if proxy_id:
+            if proxy_id >= 0:
                 parameters['proxy_hostid'] = proxy_id
             if visible_name:
                 parameters['name'] = visible_name
@@ -448,7 +448,7 @@ class Host(object):
         if set(list(template_ids)) != set(exist_template_ids):
             return True
 
-        if host['proxy_hostid'] != proxy_id:
+        if int(host['proxy_hostid']) != int(proxy_id):
             return True
 
         if host['name'] != visible_name:
@@ -602,7 +602,7 @@ def main():
         if proxy:
             proxy_id = host.get_proxyid_by_proxy_name(proxy)
         else:
-            proxy_id = None
+            proxy_id = 0
 
         # get host id by host name
         zabbix_host_obj = host.get_host_by_host_name(host_name)
