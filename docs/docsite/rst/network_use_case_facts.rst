@@ -28,8 +28,16 @@ Create a file called ``inventory``, containing:
 
 .. code-block::
 
-   [switches]
-   sw1.example.net
+   [switches:children]
+   ios
+   vyos
+
+   [ios]
+   ios01.example.net ansible_connection=local ansible_user=cisco ansible_ssh_pass=cisco
+
+   [vyos]
+   vyos01.example.net ansible_connection=local ansible_user=admin ansible_ssh_pass=admin
+
 
 Playbook
 ++++++++
@@ -38,30 +46,20 @@ Create a file called ``fetch-facts.yml`` containing the following:
 
 .. code-block:: yaml
 
-   ---
    - name: "Download switch configuration"
      hosts: switches
-     connection: local
      gather_facts: no
 
      vars:
-       ios_credentials:
-         username: cisco
-         password: cisco
-       vyos_credentials:
-         username: admin
-         password: admin
 
      tasks:
        - name: Gather facts (ios)
          ios_facts:
-           provider: "{{ ios_credentials }}"
          register: result_ios
          when: "'ios' in group_names"
 
        - name: Gather facts (vyos)
          vyos_facts:
-           provider: "{{ vyos_credentials }}"
          register: result_vyos
          when: "'vyos' in group_names"
 
@@ -91,6 +89,7 @@ Create a file called ``fetch-facts.yml`` containing the following:
                {% endfor %}
            dest: /tmp/switch-facts
 
+
 Run it
 ++++++
 
@@ -115,7 +114,7 @@ This is where we explain what the above is doing
 
     * What do we need to link to in main docs: ``:children``, what else?
     * Host groups
-      
+
 * FIXME Step though playbook
 
   * Link to module docs for ios_facts, vyos_facts
