@@ -1,0 +1,163 @@
+---
+
+- name: "Test regex plugins"
+  strategy: debug
+  gather_facts: false
+  hosts: localhost
+  tasks:
+
+    # TODO: Test unicode (U) and locale (L) flags as well
+
+    - name: "regex_search tests"
+      vars:
+        text: |
+          Early to bed and early to rise,
+          makes a man stupid and blind in the eyes.
+        verbose_regex: |
+          [ ]      # a single space
+          [a-z]{3} # three lowercase letters
+          [ ]      # another single space
+      with_items:
+        - name: ignorecase1
+          test: "{{ text | regex_search('early', ignorecase=True) }}"
+          desiredresult: "Early"
+        - name: ignorecase2
+          test: "{{ text | regex_search('early', I=True) }}"
+          desiredresult: "Early"
+        - name: multiline1
+          test: "{{ text | regex_search('rise,$', multiline=True) }}"
+          desiredresult: "rise,"
+        - name: multiline2
+          test: "{{ text | regex_search('rise,$', M=True) }}"
+          desiredresult: "rise,"
+        - name: dotall1
+          test: "{{ text | regex_search('rise,.*man', dotall=True) }}"
+          desiredresult: "rise,\nmakes a man"
+        - name: dotall2
+          test: "{{ text | regex_search('rise,.*man', S=True) }}"
+          desiredresult: "rise,\nmakes a man"
+        - name: verbose1
+          test: "{{ text | regex_search(verbose_regex, verbose=True) }}"
+          desiredresult: " bed " 
+        - name: verbose2
+          test: "{{ text | regex_search(verbose_regex, X=True) }}"
+          desiredresult: " bed " 
+      debug:
+        msg:
+          - "{{ item.name }}: '{{ item.test }}' should == '{{ item.desiredresult }}'"
+      failed_when:
+        item.test != item.desiredresult
+
+    - name: "regex_findall tests"
+      vars:
+        text: |
+          Early to bed and early to rise,
+          makes a man stupid and blind in the eyes.
+        verbose_regex: |
+          [ ]      # a single space
+          [a-z]{3} # three lowercase letters
+          [ ]      # another single space
+      with_items:
+        - name: ignorecase1
+          test: "{{ text | regex_findall('early', ignorecase=True) }}"
+          desiredresult: 
+            - "Early"
+            - "early"
+        - name: ignorecase2
+          test: "{{ text | regex_findall('early', I=True) }}"
+          desiredresult: 
+            - "Early"
+            - "early"
+        - name: multiline1
+          test: "{{ text | regex_findall('rise,$', multiline=True) }}"
+          desiredresult: 
+            - "rise,"
+        - name: multiline2
+          test: "{{ text | regex_findall('rise,$', M=True) }}"
+          desiredresult: 
+            - "rise,"
+        - name: dotall1
+          test: "{{ text | regex_findall('rise,.*man', dotall=True) }}"
+          desiredresult: 
+            - "rise,\nmakes a man"
+        - name: dotall2
+          test: "{{ text | regex_findall('rise,.*man', S=True) }}"
+          desiredresult: 
+            - "rise,\nmakes a man"
+        - name: verbose1
+          test: "{{ text | regex_findall(verbose_regex, verbose=True) }}"
+          desiredresult: 
+            - " bed "
+            - " man "
+            - " and "
+            - " the "
+        - name: verbose2
+          test: "{{ text | regex_findall(verbose_regex, X=True) }}"
+          desiredresult: 
+            - " bed "
+            - " man "
+            - " and "
+            - " the "
+      debug:
+        msg:
+          - "{{ item.name }}: '{{ item.test }}' should == '{{ item.desiredresult }}'"
+      failed_when:
+        item.test != item.desiredresult
+
+    - name: "regex_replace tests"
+      vars:
+        text: |
+          Early to bed and early to rise,
+          makes a man stupid and blind in the eyes.
+        verbose_regex: |
+          [ ]      # a single space
+          [a-z]{3} # three lowercase letters
+          [ ]      # another single space
+      with_items:
+        - name: ignorecase1
+          test: "{{ text | regex_replace('(early|stupid|blind)', 'SUPER-\\1', ignorecase=True) }}"
+          desiredresult: |
+            SUPER-Early to bed and SUPER-early to rise,
+            makes a man SUPER-stupid and SUPER-blind in the eyes.
+        - name: ignorecase2
+          test: "{{ text | regex_replace('(early|stupid|blind)', 'SUPER-\\1', I=True) }}"
+          desiredresult: |
+            SUPER-Early to bed and SUPER-early to rise,
+            makes a man SUPER-stupid and SUPER-blind in the eyes.
+        - name: multiline1
+          test: "{{ text | regex_replace('rise,$', 'wake up,', multiline=True) }}"
+          desiredresult: |
+            Early to bed and early to wake up,
+            makes a man stupid and blind in the eyes.
+        - name: multiline2
+          test: "{{ text | regex_replace('rise,$', 'wake up,', M=True) }}"
+          desiredresult: |
+            Early to bed and early to wake up,
+            makes a man stupid and blind in the eyes.
+        - name: dotall1
+          test: "{{ text | regex_replace('rise,.*man', 'wake up,\nmakes a dude', dotall=True) }}"
+          desiredresult: |
+            Early to bed and early to wake up,
+            makes a dude stupid and blind in the eyes.
+        - name: dotall2
+          test: "{{ text | regex_replace('rise,.*man', 'wake up,\nmakes a dude', S=True) }}"
+          desiredresult: |
+            Early to bed and early to wake up,
+            makes a dude stupid and blind in the eyes.
+        - name: verbose1
+          test: "{{ text | regex_replace(verbose_regex, ' bleep ', verbose=True) }}"
+          desiredresult: |
+            Early to bleep and early to rise,
+            makes a bleep stupid bleep blind in bleep eyes.
+        - name: verbose2
+          test: "{{ text | regex_replace(verbose_regex, ' bleep ', X=True) }}"
+          desiredresult: |
+            Early to bleep and early to rise,
+            makes a bleep stupid bleep blind in bleep eyes.
+      debug:
+        msg:
+          - "{{ item.name }}: '{{ item.test }}' should == '{{ item.desiredresult }}'"
+      failed_when:
+        item.test != item.desiredresult
+
+
