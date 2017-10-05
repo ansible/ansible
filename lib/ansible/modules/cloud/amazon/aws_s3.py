@@ -534,6 +534,7 @@ def main():
             s3_url=dict(aliases=['S3_URL']),
             rgw=dict(default='no', type='bool'),
             src=dict(),
+            meta_md5=dict(),
             ignore_nonexistent_bucket=dict(default=False, type='bool')
         ),
     )
@@ -663,6 +664,17 @@ def main():
 
     # if our mode is a PUT operation (upload), go through the procedure as appropriate ...
     if mode == 'put':
+        src_md5 = None
+        # If we have a custom md5 header, add it to the metadata when uploading
+        if meta_md5:
+            src_md5 = module.md5(src)
+            if metadata:
+                if meta_md5 in metadata:
+                    module.fail_json(msg="meta_md5 key conflicts with key defined in metadata")
+                else:
+                    metadata[meta_md5] = src_md5
+            else:
+                metadata = {meta_md5: src_md5}
 
         # if putting an object in a bucket yet to be created, acls for the bucket and/or the object may be specified
         # these were separated into the variables bucket_acl and object_acl above
@@ -677,11 +689,9 @@ def main():
 
         # Lets check key state. Does it exist and if it does, compute the etag md5sum.
         if bucketrtn and keyrtn:
+            if not src_md5:
+                src_md5 = module.md5(src)
             # Compare the local and remote object
-            src_md5 = module.md5(src)
-            # If we have a custom md5 header, add it to the meta data when uploading
-            if meta_md5:
-                metadata += ',{}={}'.format(meta_md5, src_md5)
             if src_md5 == keysum(module, s3, bucket, obj, meta_md5=meta_md5):
                 sum_matches = True
                 if overwrite == 'always':
