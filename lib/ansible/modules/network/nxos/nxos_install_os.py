@@ -60,6 +60,12 @@ options:
             - Name of the kickstart image file on flash.
         required: false
         default: null
+    issu:
+        description:
+            - Enable In Service Software Upgrade (ISSU).
+        required: false
+        choices: ['true','false']
+        default: 'false'
 '''
 
 EXAMPLES = '''
@@ -111,18 +117,40 @@ install_state:
 
 import re
 
-from ansible.module_utils.nxos import get_config, load_config, run_commands
+from ansible.module_utils.nxos import load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
 
-def execute_show_command(command, module):
-    command = {
+# Output options are 'text' or 'json'
+def execute_show_command(command, module, output='text'):
+    cmds = [{
         'command': command,
-        'output': 'text',
-    }
+        'output': output,
+    }]
 
-    return run_commands(module, [command])
+    return run_commands(module, cmds)
+
+
+def get_platform(module):
+    """Determine platform type"""
+    data = execute_show_command('show inventory', module, 'json')
+    pid = data[0]['TABLE_inv']['ROW_inv'][0]['productid']
+
+    if re.search(r'N3K', pid):
+        type = 'N3K'
+    elif re.search(r'N5K', pid):
+        type = 'N5K'
+    elif re.search(r'N6K', pid):
+        type = 'N6K'
+    elif re.search(r'N7K', pid):
+        type = 'N7K'
+    elif re.search(r'N9K', pid):
+        type = 'N9K'
+    else:
+        type = 'unknown'
+
+    return type
 
 
 def get_boot_options(module):
@@ -158,63 +186,70 @@ def already_set(current_boot_options, system_image_file, kickstart_image_file):
         and current_boot_options.get('kick') == kickstart_image_file
 
 
-def set_boot_options(module, image_name, kickstart=None):
+def do_install_all(module, issu, image_name, kickstart=None):
     """Set boot variables
-    like system image and kickstart image.
+    like system image and kickstart image and boot the os.
     Args:
         The main system image file name.
     Keyword Args: many implementors may choose
         to supply a kickstart parameter to specify a kickstart image.
     """
     commands = ['terminal dont-ask']
+    issu_cmd = 'non-disruptive' if issu else ''
     if kickstart is None:
-        commands.append('install all nxos %s' % image_name)
+        commands.append('install all nxos %s %s' % (image_name, issu_cmd))
     else:
         commands.append(
             'install all system %s kickstart %s' % (image_name, kickstart))
-    load_config(module, commands)
+    install_result = load_config(module, commands)
+    return install_result
 
 
 def main():
     argument_spec = dict(
         system_image_file=dict(required=True),
         kickstart_image_file=dict(required=False),
+        issu=dict(required=False, type='bool', default='false'),
     )
 
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
-                                supports_check_mode=True)
+                           supports_check_mode=True)
 
     warnings = list()
     check_args(module, warnings)
 
-    system_image_file = module.params['system_image_file']
-    kickstart_image_file = module.params['kickstart_image_file']
+    platform = get_platform(module)
 
-    if kickstart_image_file == 'null':
-        kickstart_image_file = None
+    # Get system_image_file(sif), kickstart_image_file(kif) and
+    # issu settings from module params.
+    sif = module.params['system_image_file']
+    kif = module.params['kickstart_image_file']
+    issu = module.params['issu']
 
-    current_boot_options = get_boot_options(module)
+    if issu and not platform == 'N9K':
+        msg = "ISSU option is not supported on %s platforms" % platform
+        module.fail_json(msg=msg)
+
+    if kif == 'null':
+        kif = None
+
+    # Determine current boot options
+    cbo = get_boot_options(module)
     changed = False
-    if not already_set(current_boot_options,
-                       system_image_file,
-                       kickstart_image_file):
+    if not already_set(cbo, sif, kif):
         changed = True
 
-    install_state = current_boot_options
     if not module.check_mode and changed is True:
-        set_boot_options(module,
-                         system_image_file,
-                         kickstart=kickstart_image_file)
+        ir = do_install_all(module, issu, sif, kickstart=kif)[0]
+        if re.search(r'Finishing the upgrade, switch will reboot', ir):
+            cbo = ir
+        else:
+            module.fail_json(msg=ir)
 
-        if not already_set(install_state,
-                           system_image_file,
-                           kickstart_image_file):
-            module.fail_json(msg='Install not successful',
-                             install_state=install_state)
-
-    module.exit_json(changed=changed, install_state=install_state, warnings=warnings)
+    module.exit_json(changed=changed, install_state=cbo,
+                     warnings=warnings)
 
 
 if __name__ == '__main__':
