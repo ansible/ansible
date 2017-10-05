@@ -95,7 +95,8 @@ Ansible Changes By Release
 * Fix name parsing out of envra in the yum module
 * give user friendly error on badly formatted yaml inventory source
 * Fix any_errors_fatal setting in playbooks.
-* Fix setting of ssh-extra-args from the cli ( https://github.com/ansible/ansible/pull/31326 )
+* Fix setting of ssh-extra-args from the cli (https://github.com/ansible/ansible/pull/31326)
+* Change SELinux fact behavior to always return a dictionary. (https://github.com/ansible/ansible/issues/18692)
 
 <a id="2.4"></a>
 
