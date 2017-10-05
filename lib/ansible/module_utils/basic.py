@@ -2605,11 +2605,8 @@ class AnsibleModule(object):
         if isinstance(args, list):
             if use_unsafe_shell:
                 args = " ".join([shlex_quote(x) for x in args])
-                shell = True
         elif isinstance(args, (binary_type, text_type)):
-            if use_unsafe_shell:
-                shell = True
-            else:
+            if not use_unsafe_shell:
                 # On python2.6 and below, shlex has problems with text type
                 # On python3, shlex needs a text type.
                 if PY2:
@@ -2623,8 +2620,6 @@ class AnsibleModule(object):
 
         shell = False
         if use_unsafe_shell:
-            if executable is None:
-                executable = os.environ.get('SHELL')
             if executable:
                 args = [executable, '-c', args]
             else:
