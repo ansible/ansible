@@ -98,7 +98,7 @@ This flowchart can be used to work out the most appropriate Authentication optio
 
 .. raw:: html
 
-    <object data="../_static/win_choices..svg" type="image/svg+xml"></object>
+    <object data="../_static/win_choices.svg" type="image/svg+xml"></object>
 
 Certificate
 +++++++++++
