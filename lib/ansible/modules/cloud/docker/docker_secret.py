@@ -255,7 +255,7 @@ def main():
     argument_spec = dict(
         name=dict(type='str', required=True),
         state=dict(type='str', choices=['absent', 'present'], default='present'),
-        data=dict(type='str'),
+        data=dict(type='str', no_log=True),
         labels=dict(type='dict'),
         force=dict(type='bool', default=False)
     )
