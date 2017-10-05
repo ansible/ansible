@@ -415,6 +415,15 @@ def append_physdev(rule, param, flag):
                 if 'device' in param:
                     rule.extend([param['device']])
 
+def append_physdev(rule, param, flag):
+    if param:
+        if 'filter' in param:
+            rule.extend([flag + '-' + param['filter']])
+            if param['filter'] == 'in' or param['filter'] == 'out':
+                if 'device' in param:
+                    rule.extend([param['device']])
+
+
 def append_match_flag(rule, param, flag, negatable):
     if param == 'match':
         rule.extend([flag])
