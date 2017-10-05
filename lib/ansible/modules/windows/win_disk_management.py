@@ -130,19 +130,19 @@ options:
         - 64
   large_frs:
       description:
-        - Switch to set Large FRS option for file system on selected disk, only for NTFS file system
+        - Switch to set Large FRS option for file system on selected disk, solely settable for NTFS file system
       required: false
       type: bool
       default: 'no'
   short_names:
       description:
-        - Switch to set Short Names option for file system on selected disk, only for NTFS file system
+        - Switch to set Short Names option for file system on selected disk, solely settable for NTFS file system
       required: false
       type: bool
       default: 'no'
   integrity_streams:
       description:
-        - Switch to set Integrity Streams option for file system on selected disk, only for ReFs file system
+        - Switch to set Integrity Streams option for file system on selected disk, solely settable for ReFs file system
       required: false
       type: bool
       default: 'no'
