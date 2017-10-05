@@ -56,6 +56,27 @@
     that:
     - "result.stat.checksum == '7eade4042b23b800958fe807b5bfc29f8541ec09'"
 
+######## idempotency - insert at the beginning, backup
+- name: insert a line at the beginning of the file, and back it up again (idempotent)
+  lineinfile: dest={{output_dir}}/test.txt state=present line="New line at the beginning" insertbefore="BOF" backup=yes
+  register: result
+
+- name: assert that the line was not inserted at the head of the file again
+  assert:
+    that:
+    - "result.changed == false"
+    - "result.backup == ''"
+
+- name: stat the test again after the insert at the head
+  stat: path={{output_dir}}/test.txt
+  register: result
+
+- name: assert test hash is what we expect for the file with the insert at the head
+  assert:
+    that:
+    - "result.stat.checksum == '7eade4042b23b800958fe807b5bfc29f8541ec09'"
+########
+
 - name: insert a line at the end of the file
   lineinfile: dest={{output_dir}}/test.txt state=present line="New line at the end" insertafter="EOF"
   register: result
@@ -74,6 +95,26 @@
   assert:
     that:
     - "result.stat.checksum == 'fb57af7dc10a1006061b000f1f04c38e4bef50a9'"
+
+####### idempotency - insert at the end
+- name: insert a line at the end of the file again (idempotent)
+  lineinfile: dest={{output_dir}}/test.txt state=present line="New line at the end" insertafter="EOF"
+  register: result
+
+- name: assert that the line was not inserted at the end of the file again
+  assert:
+    that:
+    - "result.changed == false"
+
+- name: stat the test again after the insert at the end
+  stat: path={{output_dir}}/test.txt
+  register: result
+
+- name: assert test checksum matches after the insert at the end
+  assert:
+    that:
+    - "result.stat.checksum == 'fb57af7dc10a1006061b000f1f04c38e4bef50a9'"
+#######
 
 - name: insert a line after the first line
   lineinfile: dest={{output_dir}}/test.txt state=present line="New line after line 1" insertafter="^This is line 1$"
@@ -94,6 +135,26 @@
     that:
     - "result.stat.checksum == '5348da605b1bc93dbadf3a16474cdf22ef975bec'"
 
+####### idempotency - insert after first
+- name: insert a line after the first line again (idempotent)
+  lineinfile: dest={{output_dir}}/test.txt state=present line="New line after line 1" insertafter="^This is line 1$"
+  register: result
+
+- name: assert that the line was not inserted after the first line again
+  assert:
+    that:
+    - "result.changed == false"
+
+- name: stat the test again after insert after the first line
+  stat: path={{output_dir}}/test.txt
+  register: result
+
+- name: assert test checksum matches after the insert after the first line
+  assert:
+    that:
+    - "result.stat.checksum == '5348da605b1bc93dbadf3a16474cdf22ef975bec'"
+#######
+
 - name: insert a line before the last line
   lineinfile: dest={{output_dir}}/test.txt state=present line="New line after line 5" insertbefore="^This is line 5$"
   register: result
@@ -112,6 +173,26 @@
   assert:
     that:
     - "result.stat.checksum == 'e1cae425403507feea4b55bb30a74decfdd4a23e'"
+
+####### idempotency - insert before last
+- name: insert a line before the last line again (idempotent)
+  lineinfile: dest={{output_dir}}/test.txt state=present line="New line after line 5" insertbefore="^This is line 5$"
+  register: result
+
+- name: assert that the line was not inserted before the last line again
+  assert:
+    that:
+    - "result.changed == false"
+
+- name: stat the test again after the insert before the last line
+  stat: path={{output_dir}}/test.txt
+  register: result
+
+- name: assert test checksum matches after the insert before the last line
+  assert:
+    that:
+    - "result.stat.checksum == 'e1cae425403507feea4b55bb30a74decfdd4a23e'"
+#######
 
 - name: replace a line with backrefs
   lineinfile: dest={{output_dir}}/test.txt state=present line="This is line 3" backrefs=yes regexp="^(REF) .* \\1$"
@@ -132,6 +213,26 @@
     that:
     - "result.stat.checksum == '2ccdf45d20298f9eaece73b713648e5489a52444'"
 
+####### idempotency - replace with backrefs
+- name: replace a line with backrefs again (idempotent)
+  lineinfile: dest={{output_dir}}/test.txt state=present line="This is line 3" backrefs=yes regexp="^(REF) .* \\1$"
+  register: result
+
+- name: assert that the line with backrefs was not changed again
+  assert:
+    that:
+    - "result.changed == false"
+
+- name: stat the test again after the backref line was replaced
+  stat: path={{output_dir}}/test.txt
+  register: result
+
+- name: assert test checksum matches after backref line was replaced
+  assert:
+    that:
+    - "result.stat.checksum == '2ccdf45d20298f9eaece73b713648e5489a52444'"
+#######
+
 - name: remove the middle line
   lineinfile: dest={{output_dir}}/test.txt state=absent regexp="^This is line 3$"
   register: result
@@ -150,6 +251,26 @@
   assert:
     that:
     - "result.stat.checksum == 'a6ba6865547c19d4c203c38a35e728d6d1942c75'"
+
+####### idempotency - remove line
+- name: remove the middle line again (idempotent)
+  lineinfile: dest={{output_dir}}/test.txt state=absent regexp="^This is line 3$"
+  register: result
+
+- name: assert that the line was not removed again
+  assert:
+    that:
+    - "result.changed == false"
+
+- name: stat the test again after the middle line was removed
+  stat: path={{output_dir}}/test.txt
+  register: result
+
+- name: assert test checksum matches after the middle line was removed
+  assert:
+    that:
+    - "result.stat.checksum == 'a6ba6865547c19d4c203c38a35e728d6d1942c75'"
+#######
 
 - name: run a validation script that succeeds
   lineinfile: dest={{output_dir}}/test.txt state=absent regexp="^This is line 5$" validate="true %s"
@@ -227,6 +348,26 @@
     that:
     - "result.stat.checksum == '04b7a54d0fb233a4e26c9e625325bb4874841b3c'"
 
+####### idempotency - replace with backrefs in line
+- name: replace a line with backrefs included in the line again (idempotent)
+  lineinfile: dest={{output_dir}}/test.txt state=present line="New \\1 created with the backref" backrefs=yes regexp="^This is (line 4)$"
+  register: result
+
+- name: assert that the line with backrefs was not changed again
+  assert:
+    that:
+    - "result.changed == false"
+
+- name: stat the test again after the backref line was replaced
+  stat: path={{output_dir}}/test.txt
+  register: result
+
+- name: assert test checksum matches after backref line was replaced
+  assert:
+    that:
+    - "result.stat.checksum == '04b7a54d0fb233a4e26c9e625325bb4874841b3c'"
+#######
+
 - name: use create=yes
   lineinfile: dest={{output_dir}}/new_test.txt create=yes insertbefore=BOF state=present line="This is a new file"
   register: result
@@ -246,6 +387,27 @@
   assert:
     that:
     - "result.stat.checksum == '038f10f9e31202451b093163e81e06fbac0c6f3a'"
+
+####### idempotency - create file
+- name: use create=yes again (idempotent)
+  lineinfile: dest={{output_dir}}/new_test.txt create=yes insertbefore=BOF state=present line="This is a new file"
+  register: result
+
+- name: assert that the newly created file was not modified
+  assert:
+    that:
+    - "result.changed == false"
+
+- name: stat the newly created file again
+  stat: path={{output_dir}}/new_test.txt
+  register: result
+  ignore_errors: yes
+
+- name: assert the newly created test checksum matches
+  assert:
+    that:
+    - "result.stat.checksum == '038f10f9e31202451b093163e81e06fbac0c6f3a'"
+#######
 
 # Test EOF in cases where file has no newline at EOF
 - name: testnoeof deploy the file for lineinfile
