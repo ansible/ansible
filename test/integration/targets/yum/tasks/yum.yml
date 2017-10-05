@@ -20,7 +20,7 @@
   check_mode: true
   register: yum_result
 
-- name: verify no change on re-uninstall in check mdoe
+- name: verify no change on re-uninstall in check mode
   assert:
     that:
         - "not yum_result.changed"
@@ -470,3 +470,90 @@
         - "yum_result.rc == 1"
         - "not yum_result.changed"
         - "yum_result|failed"
+
+# setup for testing installing an RPM from url
+
+- set_fact:
+    pkg_name: fpaste
+
+- name: cleanup
+  yum:
+    name: "{{ pkg_name }}"
+    state: absent
+
+- set_fact:
+    pkg_url: http://download.fedoraproject.org/pub/epel/7/x86_64/f/fpaste-0.3.7.4.1-1.el7.noarch.rpm
+# setup end
+
+- name: download an rpm
+  get_url:
+    url: "{{ pkg_url }}"
+    dest: "/tmp/{{ pkg_name }}.rpm"
+
+- name: install the downloaded rpm
+  yum:
+    name: "/tmp/{{ pkg_name }}.rpm"
+    state: present
+  register: yum_result
+
+- name: verify installation
+  assert:
+    that:
+        - "yum_result.rc == 0"
+        - "yum_result.changed"
+        - "not yum_result|failed"
+
+- name: verify yum module outputs
+  assert:
+    that:
+        - "'changed' in yum_result"
+        - "'msg' in yum_result"
+        - "'rc' in yum_result"
+        - "'results' in yum_result"
+
+- name: install the downloaded rpm again
+  yum:
+    name: "/tmp/{{ pkg_name }}.rpm"
+    state: present
+  register: yum_result
+
+- name: verify installation
+  assert:
+    that:
+        - "yum_result.rc == 0"
+        - "not yum_result.changed"
+        - "not yum_result|failed"
+
+- name: verify yum module outputs
+  assert:
+    that:
+        - "'changed' in yum_result"
+        - "'msg' in yum_result"
+        - "'rc' in yum_result"
+        - "'results' in yum_result"
+
+- name: clean up
+  yum:
+    name: "{{ pkg_name }}"
+    state: absent
+
+- name: install from url
+  yum:
+    name: "{{ pkg_url }}"
+    state: present
+  register: yum_result
+
+- name: verify installation
+  assert:
+    that:
+        - "yum_result.rc == 0"
+        - "yum_result.changed"
+        - "not yum_result|failed"
+
+- name: verify yum module outputs
+  assert:
+    that:
+        - "'changed' in yum_result"
+        - "'msg' in yum_result"
+        - "'rc' in yum_result"
+        - "'results' in yum_result"
