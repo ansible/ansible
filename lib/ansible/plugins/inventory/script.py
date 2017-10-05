@@ -80,8 +80,7 @@ class InventoryModule(BaseInventoryPlugin):
                 (stdout, stderr) = sp.communicate()
 
                 path = to_native(path)
-                if stderr:
-                    err = to_native(stderr) + "\n"
+                err = to_native(stderr or "") + "\n"
 
                 if sp.returncode != 0:
                     raise AnsibleError("Inventory script (%s) had an execution error: %s " % (path, err))
