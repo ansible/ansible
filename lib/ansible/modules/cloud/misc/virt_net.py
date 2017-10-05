@@ -51,7 +51,7 @@ options:
         required: false
         choices: ["yes", "no"]
         description:
-            - Specify if a given storage pool should be started automatically on system boot.
+            - Specify if a given network should be started automatically on system boot.
     uri:
         required: false
         default: "qemu:///system"
