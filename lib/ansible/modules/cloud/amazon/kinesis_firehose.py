@@ -143,6 +143,10 @@ import datetime
 import time
 from ansible.module_utils._text import to_native
 
+# import module snippets
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import boto3_conn, camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info
+
 
 def convert_to_snake_case(data):
     """Convert all uppercase keys in dict with lowercase_
@@ -291,7 +295,6 @@ def wait_for_status(client, stream_name, status, wait_timeout=300,
 
     while wait_timeout > time.time():
         try:
-            logging.info('STREAM surrent status is {0} : Waiting for status : {1}'.format(stream.get('DeliveryStreamStatus'), status))
             find_success, find_msg, stream = (
                 find_stream(client, stream_name, check_mode=check_mode)
             )
@@ -313,7 +316,7 @@ def wait_for_status(client, stream_name, status, wait_timeout=300,
             time.sleep(polling_increment_secs)
 
         except botocore.exceptions.ClientError as e:
-            logging.info(' EXCEPTION '+to_native(e))
+            logging.info(' EXCEPTION ' + to_native(e))
             err_msg = to_native(e)
 
     if not status_achieved:
@@ -321,7 +324,7 @@ def wait_for_status(client, stream_name, status, wait_timeout=300,
     else:
         err_msg = "Status {0} achieved successfully".format(status)
 
-    logging.info(' EXITING  err_msg='+str(err_msg))
+    logging.info(' EXITING  err_msg=' + str(err_msg))
     return status_achieved, err_msg, stream
 
 
@@ -385,7 +388,8 @@ def stream_action(client, delivery_stream_name, s3_destination_configuration='NA
 
 
 def create_delivery_stream(client, delivery_stream_name, s3_destination_configuration, stream_type,
-                  KinesisStreamSourceConfiguration, ExtendedS3DestinationConfiguration, wait=False, wait_timeout=300, check_mode=False):
+                           KinesisStreamSourceConfiguration, ExtendedS3DestinationConfiguration, wait=False,
+                           wait_timeout=300, check_mode=False):
     """Create an Amazon Kinesis Firehose Delivery Stream.
     Args:
         client (botocore.client.EC2): Boto3 client.
@@ -617,10 +621,6 @@ def main():
         module.fail_json(
             success=success, changed=changed, msg=err_msg, result=results
         )
-
-# import module snippets
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import boto3_conn, camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info
 
 if __name__ == '__main__':
     main()
