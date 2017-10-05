@@ -1192,6 +1192,16 @@ def expand_scheduled_tasks(eg, module):
             if task.get('is_enabled') is not None:
                 eg_task.is_enabled = task.get('is_enabled')
 
+            if task.get('scale_target_capacity') is not None:
+                eg_task.scale_target_capacity = task.get('scale_target_capacity')
+
+            if task.get('scale_min_capacity') is not None:
+                eg_task.scale_min_capacity = task.get('scale_min_capacity')
+
+            if task.get('scale_max_capacity') is not None:
+                eg_task.scale_max_capacity = task.get('scale_max_capacity')
+
+
             eg_tasks.append(eg_task)
 
         if eg_tasks.__sizeof__() > 0:
