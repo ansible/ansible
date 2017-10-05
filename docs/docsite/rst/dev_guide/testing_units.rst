@@ -2,17 +2,19 @@
 Unit Tests
 **********
 
-Unit tests are small isolated tests that target a specific library, or
-module.  Unit tests in Ansible are currently the only way of driving
-tests from python within Ansible's continuous integration process which
-means that in some circumstances the tests may be a bit wider than just units.  
+Unit tests are small isolated tests that target a specific library, or module.  Unit tests
+in Ansible are currently the only way of driving tests from python within Ansible's
+continuous integration process which means that in some circumstances the tests may be a
+bit wider than just units.
 
 .. contents:: Topics
 
 Available Tests
 ===============
 
-Unit tests can be found in `test/units <https://github.com/ansible/ansible/tree/devel/test/units>`_, notice that the directory structure matches that of ``lib/ansible/``
+Unit tests can be found in `test/units
+<https://github.com/ansible/ansible/tree/devel/test/units>`_, notice that the directory
+structure matches that of ``lib/ansible/``
 
 Running Tests
 =============
@@ -48,7 +50,8 @@ Installing dependencies
 
 ``ansible-test`` has a number of dependencies , for ``units`` tests we suggest using ``tox``
 
-The dependencies can be installed using the ``--requirements`` argument, which will install all the required dependencies needed for unit tests. For example:
+The dependencies can be installed using the ``--requirements`` argument, which will
+install all the required dependencies needed for unit tests. For example:
 
 .. code:: shell
 
@@ -60,7 +63,11 @@ The dependencies can be installed using the ``--requirements`` argument, which w
    When using ``ansible-test`` with ``--tox`` requires tox >= 2.5.0
 
 
-The full list of requirements can be found at `test/runner/requirements <https://github.com/ansible/ansible/tree/devel/test/runner/requirements>`_. Requirements files are named after their respective commands. See also the `constraints <https://github.com/ansible/ansible/blob/devel/test/runner/requirements/constraints.txt>`_ applicable to all commands.
+The full list of requirements can be found at `test/runner/requirements
+<https://github.com/ansible/ansible/tree/devel/test/runner/requirements>`_. Requirements
+files are named after their respective commands. See also the `constraints
+<https://github.com/ansible/ansible/blob/devel/test/runner/requirements/constraints.txt>`_
+applicable to all commands.
 
 
 Extending unit tests
@@ -69,13 +76,17 @@ Extending unit tests
 
 .. warning:: What a unit test isn't
 
-   If you start writing a test that requires external services then you may be writing an integration test, rather than a unit test.
+   If you start writing a test that requires external services then
+   you may be writing an integration test, rather than a unit test.
 
 
 Structuring Unit Tests
 ``````````````````````
 
-Ansible drives unit tests through pytest (https://docs.pytest.org/en/latest/) this means that tests can either be written as simple functions which are included in any file name like test_<something>.py.::
+Ansible drives unit tests through pytest
+(https://docs.pytest.org/en/latest/) this means that tests can either
+be written as simple functions which are included in any file name
+like test_<something>.py.::
 
   #this function will be called simply because it is called test_*()
 
@@ -105,9 +116,16 @@ or as classes::
         c = -13
         assert self.a - self.b = c
 
-Both are equivalent;  the function based interface is simpler and quicker and so that's probably where you should start when you are just trying to add a few basic tests for a module.  The class based test allows more tidy set up and tear down of pre-requisites so if you have many test cases for your module you may want to refactor to use that.  Assertions using the simple assert function inside the tests will 
+Both methods work fine in most circumstances; the function based interface is simpler and
+quicker and so that's probably where you should start when you are just trying to add a
+few basic tests for a module.  The class based test allows more tidy set up and tear down
+of pre-requisites so if you have many test cases for your module you may want to refactor
+to use that.  Assertions using the simple assert function inside the tests will.
 
-A number of the unit test suites include functions that are shared between several modules, especially in the networking arena.  In these cases a file is created in the same directory which is then included directly.  
+A number of the unit test suites include functions that are shared
+between several modules, especially in the networking arena.  In these
+cases a file is created in the same directory which is then included
+directly.
 
 
 module test case common code
@@ -125,17 +143,21 @@ files that aren't themselves tests.
 Fixtures files
 ``````````````
 
-To mock out fetching results from devices, you can use ``fixtures`` to read in pre-generated data.
+To mock out fetching results from devices, you can use ``fixtures`` to read in
+pre-generated data.
 
 Text files live in ``test/units/modules/network/PLATFORM/fixtures/``
 
 Data is loaded using the ``load_fixture`` method
 
-See  `eos_banner test <https://github.com/ansible/ansible/blob/devel/test/units/modules/network/eos/test_eos_banner.py>`_ for a practical example.
+See `eos_banner test
+<https://github.com/ansible/ansible/blob/devel/test/units/modules/network/eos/test_eos_banner.py>`_
+for a practical example.
 
 Code Coverage
 `````````````
-Most ``ansible-test`` commands allow you to collect code coverage, this is particularly useful when to indicate where to extend testing.
+Most ``ansible-test`` commands allow you to collect code coverage, this is particularly
+useful when to indicate where to extend testing.
 
 To collect coverage data add the ``--coverage`` argument to your ``ansible-test`` command line:
 

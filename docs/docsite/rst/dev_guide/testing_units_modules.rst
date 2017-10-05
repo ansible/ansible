@@ -7,12 +7,17 @@ Unit Testing Ansible Modules
 Introduction
 ============
 
-This document explains why how and when you should use unit tests for Ansible modules.  The document doesn't apply to other parts of Ansible for which the recommendations are normally different. 
+This document explains why how and when you should use unit tests for Ansible modules.
+The document doesn't apply to other parts of Ansible for which the recommendations are
+normally different.
 
 What
 ----
 
-In the test/unit directory Ansible has a set of unit tests which primarily cover the internals but can also can cover Ansible modules.  There is basic documentation for unit tests in the Ansible developer Guide (https://docs.ansible.com/ansible/devel/dev_guide/testing_units.html) #
+In the test/unit directory Ansible has a set of unit tests which primarily cover the
+internals but can also can cover Ansible modules.  There is basic documentation for unit
+tests in the Ansible developer Guide
+(https://docs.ansible.com/ansible/devel/dev_guide/testing_units.html) #
 
 For most modules integration tests can be used instead, however there are situations where
 cases cannot be verified using integration tests.  This means that Ansible unit test cases
@@ -26,21 +31,31 @@ Why (and why not)?
 Ansible unit tests have advantages and disadvantages. It is important to understand these:
 
 * most unit tests are much faster than most Ansible integration tests.  
-* unit tests can be run by developers who don't have access to system which the module (module dependencies aren't required with unit tests)
+* unit tests can be run by developers who don't have access to system which the module
+  (module dependencies aren't required with unit tests)
 
-There are also plenty of potential disadvantages of unit tests, 
+There are also plenty of potential disadvantages of unit tests.  Unit tests don't normally
+test actual useful valuable features of software, instead just internal implementation
 
-* unit tests which test the internal, non visible features of software may make refactoring difficult if those internal features have to change (see also naming in How below) 
-* unit tests don't normally test actual useful valuable features of software, instead just 
+* unit tests which test the internal, non visible features of software may make
+  refactoring difficult if those internal features have to change (see also naming in How
+  below)
+* even if the internal feature is working correctly it is possible that there will be a
+  problem between the internal code and the actual result delivered to the user
 
-Normally the Ansible integration tests, which are written in Ansible YAML are a better option for most module tests.   If those tests already test a feature and run acceptably quickly then there may be little point in providing a unit test as well.  
+Normally the Ansible integration tests, which are written in Ansible YAML are a better
+option for most module tests.  If those tests already test a feature and run acceptably
+quickly then there may be little point in providing a unit test as well.
 
 When (and when not)?
 --------------------
 
-There are a number of situations where unit tests win out over integration tests  For example testing things which are impossible, slow or very difficult to test with integration tests:
+There are a number of situations where unit tests win out over integration tests For
+example testing things which are impossible, slow or very difficult to test with
+integration tests, such as:
     
-* forcing rare / strange / random situations that can't be forced such as specific network failures an exceptions
+* forcing rare / strange / random situations that can't be forced such as specific network
+  failures an exceptions
 * extensive testing of slow configuration APIs 
 
 Example:
@@ -81,13 +96,23 @@ of the code such as installing all of the packages supplied as arguments to the 
 How to unit test Ansible modules
 ================================
 
-There are a number of techniques which let you unit test modules.   Beware that most modules without unit tests are structured in a way that makes testing quite difficult and lead to very complicated tests which need more work than the code.  Effectively using unit tests may lead you to restructure your code a bit.  This is often a good thing and leads to better code overall.  Good restructuring will make your code into clearer and more easily understood functions, typically ones which can all be viewed on a screen.  Going too far, to functions of only a line or two may end up being more confusing and bad.  
+There are a number of techniques which let you unit test modules.  Beware that most
+modules without unit tests are structured in a way that makes testing quite difficult and
+lead to very complicated tests which need more work than the code.  Effectively using unit
+tests may lead you to restructure your code a bit.  This is often a good thing and leads
+to better code overall.  Good restructuring will make your code into clearer and more
+easily understood functions, typically ones which can all be viewed on a screen.  Going
+too far, to functions of only a line or two may end up being more confusing and bad.
 
 
 Use of Mocks
 ------------
 
-Mock objects (from https://docs.python.org/3/library/unittest.mock.html) can be very useful in building unit tests for special / difficult cases.  On the other hand they can lead to quite complex and confusing coding situations.  A good user for mocks can be in simulating an API. As for 'six', 'mock' python package is bundled with Ansible: use 'import ansible.compat.tests.mock'. See for example 
+Mock objects (from https://docs.python.org/3/library/unittest.mock.html) can be very
+useful in building unit tests for special / difficult cases.  On the other hand they can
+lead to quite complex and confusing coding situations.  A good user for mocks can be in
+simulating an API. As for 'six', 'mock' python package is bundled with Ansible: use
+'import ansible.compat.tests.mock'. See for example
 
 mocking of the actual module
 ----------------------------
@@ -95,20 +120,29 @@ mocking of the actual module
 Naming unit tests
 -----------------
 
-The name of a unit test is a very important feature.  The most important aim is that, if a future developer working on the module being tested breaks the test case because they have changed the internal design, it should be very easy and quick for them to understand from the test name 
+The name of a unit test is a very important feature.  The most important aim is that, if a
+future developer working on the module being tested breaks the test case because they have
+changed the internal design, it should be very easy and quick for them to understand from
+the test name
 
 
 API definition with unit test cases
 -----------------------------------
 
-Normally API interaction is best tested with function tests defined in Ansible's integration testing section which run against the actual API.  There are a couple of cases where the unit tests are likely to work better
+Normally API interaction is best tested with function tests defined in Ansible's
+integration testing section which run against the actual API.  There are a couple of cases
+where the unit tests are likely to work better
 
 a) defining a module against an API specification
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This case is especially important for modules interacting with web services which provide an API which Ansible uses but which are beyond the control of the user.  
+This case is especially important for modules interacting with web services which provide
+an API which Ansible uses but which are beyond the control of the user.
 
-By writing a custom emulation of the calls which return data from the API, we can ensure that only the features which are clearly defined in the specification of the API are present in the message.  This means that we can check that we use the right, guaranteed parameters and nothing else.  
+By writing a custom emulation of the calls which return data from the API, we can ensure
+that only the features which are clearly defined in the specification of the API are
+present in the message.  This means that we can check that we use the right, guaranteed
+parameters and nothing else.
 
 
 *Example:  in rds_instance unit tests a simple instance state is defined*::
@@ -135,15 +169,22 @@ which is then used to create a list of states::
         simple_instance_list('available', {}),
     ]
     
-which are then used returns from a mock object to ensure that the await function;  By doing this we check that the await function will keep waiting through various strange states that it would be impossible to reliably trigger through the integration tests but which can happen in reality.  
+which are then used returns from a mock object to ensure that the await function; By doing
+this we check that the await function will keep waiting through various strange states
+that it would be impossible to reliably trigger through the integration tests but which
+can happen in reality.
 
 
 b) defining a module to work against multiple API versions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This case is especially important for modules interacting with many different versions of software, for example package installation modules which might be expected to work over many different operating system versions.  
+This case is especially important for modules interacting with many different versions of
+software, for example package installation modules which might be expected to work over
+many different operating system versions.
 
-By using previously stored data from various versions of an API we can ensure that the code is tested against the actual data which will be sent from that version of the system even when the version is very obscure and unlikely to be available during testing
+By using previously stored data from various versions of an API we can ensure that the
+code is tested against the actual data which will be sent from that version of the system
+even when the version is very obscure and unlikely to be available during testing
 
 *** example ****
 
@@ -151,14 +192,24 @@ By using previously stored data from various versions of an API we can ensure th
 Ansible special cases for unit testing
 ======================================
 
-There are a number of special cases for unit testing the environment of an Ansible module.  Some of them are documented below and suggestions for other ones can be found by looking at the source code of the exiting unit tests or discussed on the Ansible IRC or mailing lists.  
+There are a number of special cases for unit testing the environment of an Ansible module.
+Some of them are documented below and suggestions for other ones can be found by looking
+at the source code of the exiting unit tests or discussed on the Ansible IRC or mailing
+lists.
 
 doing module argument processing 
 --------------------------------
 
-There are two problems with running the main function of a module.  Firstly, it's a bit difficult to set up the arguments correctly so that the module will get them as parameters and secondly all modules finish by calling either the ``module.fail_json``  or ``module.exit_json``, but these won't work correctly in a testing environment.
+There are two problems with running the main function of a module.  Firstly, it's a bit
+difficult to set up the arguments correctly so that the module will get them as parameters
+and secondly all modules finish by calling either the ``module.fail_json`` or
+``module.exit_json``, but these won't work correctly in a testing environment.
 
-The first problem, passing in arguments, is solved with a function which stores the parameters in a special string variable.  Module creation and argument processing is handled through the AnsibleModule object in the basic section of the utilities.  Normally this accepts input on ``STDIN`` which is not convenient for unit testing when the special variable is set it will be treated as if the input came on ``STDIN`` to the module.::
+The first problem, passing in arguments, is solved with a function which stores the
+parameters in a special string variable.  Module creation and argument processing is
+handled through the AnsibleModule object in the basic section of the utilities.  Normally
+this accepts input on ``STDIN`` which is not convenient for unit testing when the special
+variable is set it will be treated as if the input came on ``STDIN`` to the module.::
 
     import json
     from ansible.module_utils._text import to_bytes
@@ -180,14 +231,17 @@ handling exit correctly
 -----------------------
 
 
-The other problem: module.exit_json won't work properly in a testing environment, it can be solved by replacing it (and module.fail_json) with a function which raises an exception::
+The other problem: module.exit_json won't work properly in a testing environment, it can
+be solved by replacing it (and module.fail_json) with a function which raises an
+exception::
 
     def exit_json(*args, **kwargs):
         if 'changed' not in kwargs:
             kwargs['changed'] = False
         raise AnsibleExitJson(kwargs)
 
-now you can ensure that the first function called is the one you expected simply by expecting the correct exception::
+now you can ensure that the first function called is the one you expected simply by
+expecting the correct exception::
 
     def test_returned_value(self):
         set_module_args({
@@ -198,12 +252,14 @@ now you can ensure that the first function called is the one you expected simply
        with self.assertRaises(AnsibleExitJson) as result:
            my_module.main()
 
-the same technique works for module.fail_json() used for failures or the aws_module.fail_json_aws() used in modules for Amazon Web Services.
+the same technique works for module.fail_json() used for failures or the
+aws_module.fail_json_aws() used in modules for Amazon Web Services.
 
 running the main function
 -------------------------
 
-If you do want to run the actual main function of a module you must import the module, set the arguments as above, set up the appropriate exit exception and then run the module::
+If you do want to run the actual main function of a module you must import the module, set
+the arguments as above, set up the appropriate exit exception and then run the module::
 
     def test_main_function(self):
         set_module_args({
@@ -217,7 +273,8 @@ If you do want to run the actual main function of a module you must import the m
 handling calls to external executables
 --------------------------------------
 
-Module must use AnsibleModule.run_command in order to execute an external command: this method needs to be mocked:
+Module must use AnsibleModule.run_command in order to execute an external command: this
+method needs to be mocked:
 
 Here is a simple mock of AnsibleModule.run_command::
 
@@ -231,12 +288,14 @@ Here is a simple mock of AnsibleModule.run_command::
         self.assertEqual(run_command.call_count, 1)
         self.assertFalse(run_command.called)
 
-Examples taken from test/units/modules/packaging/os/test_rhn_register.py  and  test/units/modules/packaging/os/rhn_utils.py
+Examples taken from test/units/modules/packaging/os/test_rhn_register.py and
+test/units/modules/packaging/os/rhn_utils.py
 
 a complete case techniques in context
 -------------------------------------
 
-The example below is a complete skeleton reusing mocks explained above and adding a new mock for Ansible.get_bin_path::
+The example below is a complete skeleton reusing mocks explained above and adding a new
+mock for Ansible.get_bin_path::
     
     import json
 
@@ -323,7 +382,10 @@ The example below is a complete skeleton reusing mocks explained above and addin
 restructuring modules to make module set up and other processes easily tested
 -----------------------------------------------------------------------------
 
-Often modules have a main() function which both sets up the module and then does other actions.  This can make it difficult to check argument processing .  Simply moving module configuration and initialisation into a separate function means that it's easy to run tests against that.  Move::
+Often modules have a main() function which both sets up the module and then does other
+actions.  This can make it difficult to check argument processing .  Simply moving module
+configuration and initialisation into a separate function means that it's easy to run
+tests against that.  Move::
 
     argument_spec = dict(
         # module function variables
@@ -363,7 +425,9 @@ this now makes it possible to make tests against the module initiation function:
         with self.assertRaises(AnsibleFailJson) as result:
              self.module.setup_json
 
-note that the argument_spec dictionary is visible in a module variable.  This has advantages, both in allowing explicit testing of the arguments and in allowing the easy creation of module objects for testing.  
+note that the argument_spec dictionary is visible in a module variable.  This has
+advantages, both in allowing explicit testing of the arguments and in allowing the easy
+creation of module objects for testing.
 
 see also ``test/units/module_utils/aws/test_rds.py``
 
@@ -374,7 +438,11 @@ functions like::
 
    module.fail_json() 
 
-are normally expected to terminate execution.  When you run with a mock module object this doesn't happen since the mock always just returns another mock from a function call.  You can set up the mock to raise an exception as shown above, but if you don't do that then, in order to avoid tests seeming to pass when they should actually have failed, simply assert that these functions have not been called in each test which should not fail::
+are normally expected to terminate execution.  When you run with a mock module object this
+doesn't happen since the mock always just returns another mock from a function call.  You
+can set up the mock to raise an exception as shown above, but if you don't do that then,
+in order to avoid tests seeming to pass when they should actually have failed, simply
+assert that these functions have not been called in each test which should not fail::
 
   module = MagicMock()
   function_to_test(module, argument)
@@ -386,9 +454,15 @@ function in a module which get the module object.
 Traps for maintaining Python 2 compatibility
 ============================================
 
-As often there are a number of traps of differences between python 2 and 3.  One of the important ones is that if you use the ``mock`` library from the standard library from python 2.6 then a number of the assert functions are missing and *will return as if successful*.  This means that test cases should *not* use functions marked as new in the python 3 documentation or else the test are likely to pass when they should not have.  
+As often there are a number of traps of differences between python 2 and 3.  One of the
+important ones is that if you use the ``mock`` library from the standard library from
+python 2.6 then a number of the assert functions are missing and *will return as if
+successful*.  This means that test cases should *not* use functions marked as new in the
+python 3 documentation or else the test are likely to pass when they should not have.
 
-A helpful development approach to this should be to ensure that all of the tests have been run under 2.6 and each assertion in the test cases has been checked to work by breaking the code in ansible to trigger that failure.  
+A helpful development approach to this should be to ensure that all of the tests have been
+run under 2.6 and each assertion in the test cases has been checked to work by breaking
+the code in ansible to trigger that failure.
 
 .. seealso::
 
