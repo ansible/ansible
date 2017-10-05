@@ -97,6 +97,10 @@ Ansible Changes By Release
 * Fix any_errors_fatal setting in playbooks.
 * Fix setting of ssh-extra-args from the cli (https://github.com/ansible/ansible/pull/31326)
 * Change SELinux fact behavior to always return a dictionary. (https://github.com/ansible/ansible/issues/18692)
+* Revert a fix for using non /bin/sh shells for modules' running commands as
+  this was causing output from commands to change, thus breaking playbooks.
+  See the original bug for details and links to the eventual fix:
+  https://github.com/ansible/ansible/issues/24169
 
 <a id="2.4"></a>
 
