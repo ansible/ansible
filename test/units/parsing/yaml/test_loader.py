@@ -201,7 +201,7 @@ class TestAnsibleLoaderVault(unittest.TestCase, YamlTestUtils):
             self.vault.decrypt(ciphertext)
         except Exception as e:
             self.assertIsInstance(e, errors.AnsibleError)
-            self.assertEqual(e.message, 'Decryption failed (no vault secrets would found that could decrypt)')
+            self.assertEqual(e.message, 'Decryption failed (no vault secrets were found that could decrypt)')
 
     def _encrypt_plaintext(self, plaintext):
         # Construct a yaml repr of a vault by hand
