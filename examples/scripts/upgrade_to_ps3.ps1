@@ -17,10 +17,33 @@
 # 6.2 is 2012
 # 6.3 is 2012 R2
 
+Function Write-Log
+{
+    $Message = $args[0]
+    Write-EventLog -LogName Application -Source $EventSource -EntryType Information -EventId 1 -Message $Message
+}
+
+Function Write-HostLog
+{
+    $Message = $args[0]
+    Write-Host $Message
+    Write-Log $Message
+}
+
+$EventSource = $MyInvocation.MyCommand.Name
+If (-Not $EventSource)
+{
+    $EventSource = "Powershell CLI"
+}
+
+If ([System.Diagnostics.EventLog]::Exists('Application') -eq $False -or [System.Diagnostics.EventLog]::SourceExists($EventSource) -eq $False)
+{
+    New-EventLog -LogName Application -Source $EventSource
+}
 
 if ($PSVersionTable.psversion.Major -ge 3)
 {
-    write-host "Powershell 3 Installed already; You don't need this"
+    Write-HostLog "Powershell 3 Installed already; You don't need this"
     Exit
 }
 
@@ -34,28 +57,27 @@ function download-file
     $client.downloadfile($path, $local)
 }
 
-if (!(test-path $powershellpath))
-{
-    New-Item -ItemType directory -Path $powershellpath
-}
-
-
 # .NET Framework 4.0 is necessary.
 
-#if (($PSVersionTable.CLRVersion.Major) -lt 2)
-#{
-#    $DownloadUrl = "http://download.microsoft.com/download/B/A/4/BA4A7E71-2906-4B2D-A0E1-80CF16844F5F/dotNetFx45_Full_x86_x64.exe"
-#    $FileName = $DownLoadUrl.Split('/')[-1]
-#    download-file $downloadurl "$powershellpath\$filename"
-#    ."$powershellpath\$filename" /quiet /norestart
-#}
+if (($PSVersionTable.CLRVersion.Major) -lt 3)
+{
 
-#You may need to reboot after the .NET install if so just run the script again.
+if (!(test-path $powershellpath))
+{
+    New-Item -ItemType directory -Path $powershellpath | Out-Null
+    $DownloadUrl = "http://download.microsoft.com/download/B/A/4/BA4A7E71-2906-4B2D-A0E1-80CF16844F5F/dotNetFx45_Full_x86_x64.exe"
+    $FileName = $DownLoadUrl.Split('/')[-1]
+    download-file $downloadurl "$powershellpath\$filename"
+    Start-Process -FilePath "$powershellpath\$filename" -Wait -ArgumentList '/quiet','/norestart'
+    Write-HostLog ".NET Framework 4.5 is installed."
+}
+
+}
 
 # If the Operating System is above 6.2, then you already have PowerShell Version > 3
 if ([Environment]::OSVersion.Version.Major -gt 6)
 {
-    write-host "OS is new; upgrade not needed."
+    Write-HostLog "OS is new; upgrade not needed."
     Exit
 }
 
@@ -90,4 +112,9 @@ else
 $FileName = $DownLoadUrl.Split('/')[-1]
 download-file $downloadurl "$powershellpath\$filename"
 
-Start-Process -FilePath "$powershellpath\$filename" -ArgumentList /quiet
+# Extraction is needed if run remotely: https://support.microsoft.com/en-us/help/2773898/
+
+Start-Process wusa.exe "$powershellpath\$filename /extract:$powershellpath"
+$filenamecab = (Get-Item $powershellpath\$filename).Basename
+Start-Process dism.exe "/online /add-package /PackagePath:$powershellpath\$filenamecab.cab /quiet"
+Write-HostLog "Installing Powershell 3.0 (with reboot)"
