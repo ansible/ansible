@@ -1,13 +1,10 @@
 ---
-
 - name: "Test regex plugins"
   strategy: debug
   gather_facts: false
   hosts: localhost
   tasks:
-
     # TODO: Test unicode (U) and locale (L) flags as well
-
     - name: "regex_search tests"
       vars:
         text: |
@@ -47,7 +44,6 @@
           - "{{ item.name }}: '{{ item.test }}' should == '{{ item.desiredresult }}'"
       failed_when:
         item.test != item.desiredresult
-
     - name: "regex_findall tests"
       vars:
         text: |
@@ -103,7 +99,6 @@
           - "{{ item.name }}: '{{ item.test }}' should == '{{ item.desiredresult }}'"
       failed_when:
         item.test != item.desiredresult
-
     - name: "regex_replace tests"
       vars:
         text: |
@@ -159,5 +154,3 @@
           - "{{ item.name }}: '{{ item.test }}' should == '{{ item.desiredresult }}'"
       failed_when:
         item.test != item.desiredresult
-
-
