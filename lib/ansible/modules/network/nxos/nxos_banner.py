@@ -92,6 +92,7 @@ from ansible.module_utils.nxos import load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 import re
 
+
 def map_obj_to_commands(want, have, module):
     commands = list()
     state = module.params['state']
