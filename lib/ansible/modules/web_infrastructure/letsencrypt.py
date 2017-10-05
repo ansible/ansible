@@ -159,6 +159,7 @@ import binascii
 import copy
 import hashlib
 import json
+import locale
 import os
 import re
 import shutil
@@ -791,6 +792,7 @@ def main():
 
     # AnsibleModule() changes the locale, so change it back to C because we rely on time.strptime() when parsing certificate dates.
     module.run_command_environ_update = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C', LC_CTYPE='C')
+    locale.setlocale(locale.LC_ALL, 'C')
 
     cert_days = get_cert_days(module, module.params['dest'])
     if cert_days < module.params['remaining_days']:
