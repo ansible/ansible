@@ -806,6 +806,7 @@ class AnsibleModule(object):
         self.run_command_environ_update = {}
         self._warnings = []
         self._deprecations = []
+        self._clean = {}
 
         self.aliases = {}
         self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug', '_ansible_diff', '_ansible_verbosity',
@@ -2556,6 +2557,41 @@ class AnsibleModule(object):
 
         return data
 
+    def _clean_args(self, args):
+
+        if not self._clean:
+            # create a printable version of the command for use in reporting later,
+            # which strips out things like passwords from the args list
+            to_clean_args = args
+            if PY2:
+                if isinstance(args, text_type):
+                    to_clean_args = to_bytes(args)
+            else:
+                if isinstance(args, binary_type):
+                    to_clean_args = to_text(args)
+            if isinstance(args, (text_type, binary_type)):
+                to_clean_args = shlex.split(to_clean_args)
+
+            clean_args = []
+            is_passwd = False
+            for arg in (to_native(a) for a in to_clean_args):
+                if is_passwd:
+                    is_passwd = False
+                    clean_args.append('********')
+                    continue
+                if PASSWD_ARG_RE.match(arg):
+                    sep_idx = arg.find('=')
+                    if sep_idx > -1:
+                        clean_args.append('%s=********' % arg[:sep_idx])
+                        continue
+                    else:
+                        is_passwd = True
+                arg = heuristic_log_sanitize(arg, self.no_log_values)
+                clean_args.append(arg)
+            self._clean = ' '.join(shlex_quote(arg) for arg in clean_args)
+
+        return self._clean
+
     def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None,
                     use_unsafe_shell=False, prompt_regex=None, environ_update=None, umask=None, encoding='utf-8', errors='surrogate_or_strict'):
         '''
@@ -2601,6 +2637,8 @@ class AnsibleModule(object):
             according to the encoding and errors parameters.  If you want byte
             strings on python3, use encoding=None to turn decoding to text off.
         '''
+        # used by clean args later on
+        self._clean = None
 
         if isinstance(args, list):
             if use_unsafe_shell:
@@ -2679,37 +2717,6 @@ class AnsibleModule(object):
             if not os.environ['PYTHONPATH']:
                 del os.environ['PYTHONPATH']
 
-        # create a printable version of the command for use
-        # in reporting later, which strips out things like
-        # passwords from the args list
-        to_clean_args = args
-        if PY2:
-            if isinstance(args, text_type):
-                to_clean_args = to_bytes(args)
-        else:
-            if isinstance(args, binary_type):
-                to_clean_args = to_text(args)
-        if isinstance(args, (text_type, binary_type)):
-            to_clean_args = shlex.split(to_clean_args)
-
-        clean_args = []
-        is_passwd = False
-        for arg in (to_native(a) for a in to_clean_args):
-            if is_passwd:
-                is_passwd = False
-                clean_args.append('********')
-                continue
-            if PASSWD_ARG_RE.match(arg):
-                sep_idx = arg.find('=')
-                if sep_idx > -1:
-                    clean_args.append('%s=********' % arg[:sep_idx])
-                    continue
-                else:
-                    is_passwd = True
-            arg = heuristic_log_sanitize(arg, self.no_log_values)
-            clean_args.append(arg)
-        clean_args = ' '.join(shlex_quote(arg) for arg in clean_args)
-
         if data:
             st_in = subprocess.PIPE
 
@@ -2741,7 +2748,7 @@ class AnsibleModule(object):
 
         try:
             if self._debug:
-                self.log('Executing: ' + clean_args)
+                self.log('Executing: ' + self._clean_args(args))
             cmd = subprocess.Popen(args, **kwargs)
 
             # the communication logic here is essentially taken from that
@@ -2790,11 +2797,11 @@ class AnsibleModule(object):
 
             rc = cmd.returncode
         except (OSError, IOError) as e:
-            self.log("Error Executing CMD:%s Exception:%s" % (clean_args, to_native(e)))
-            self.fail_json(rc=e.errno, msg=to_native(e), cmd=clean_args)
+            self.log("Error Executing CMD:%s Exception:%s" % (self._clean_args(args), to_native(e)))
+            self.fail_json(rc=e.errno, msg=to_native(e), cmd=self._clean_args(args))
         except Exception as e:
-            self.log("Error Executing CMD:%s Exception:%s" % (clean_args, to_native(traceback.format_exc())))
-            self.fail_json(rc=257, msg=to_native(e), exception=traceback.format_exc(), cmd=clean_args)
+            self.log("Error Executing CMD:%s Exception:%s" % (self._clean_args(args), to_native(traceback.format_exc())))
+            self.fail_json(rc=257, msg=to_native(e), exception=traceback.format_exc(), cmd=self._clean_args(args))
 
         # Restore env settings
         for key, val in old_env_vals.items():
@@ -2808,7 +2815,7 @@ class AnsibleModule(object):
 
         if rc != 0 and check_rc:
             msg = heuristic_log_sanitize(stderr.rstrip(), self.no_log_values)
-            self.fail_json(cmd=clean_args, rc=rc, stdout=stdout, stderr=stderr, msg=msg)
+            self.fail_json(cmd=self._clean_args(args), rc=rc, stdout=stdout, stderr=stderr, msg=msg)
 
         # reset the pwd
         os.chdir(prev_dir)
@@ -2816,6 +2823,7 @@ class AnsibleModule(object):
         if encoding is not None:
             return (rc, to_native(stdout, encoding=encoding, errors=errors),
                     to_native(stderr, encoding=encoding, errors=errors))
+
         return (rc, stdout, stderr)
 
     def append_to_file(self, filename, str):
