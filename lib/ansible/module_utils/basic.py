@@ -801,6 +801,7 @@ class AnsibleModule(object):
         self._debug = False
         self._diff = False
         self._socket_path = None
+        self._shell = None
         self._verbosity = 0
         # May be used to set modifications to the environment for any
         # run_command invocation
@@ -811,7 +812,7 @@ class AnsibleModule(object):
         self.aliases = {}
         self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug', '_ansible_diff', '_ansible_verbosity',
                               '_ansible_selinux_special_fs', '_ansible_module_name', '_ansible_version', '_ansible_syslog_facility',
-                              '_ansible_socket']
+                              '_ansible_socket', '_ansible_shell_executable']
         self._options_context = list()
 
         if add_file_common_args:
@@ -1612,6 +1613,9 @@ class AnsibleModule(object):
 
             elif k == '_ansible_socket':
                 self._socket_path = v
+
+            elif k == '_ansible_shell_executable' and v:
+                self._shell = v
 
             elif check_invalid_arguments and k not in legal_inputs:
                 unsupported_parameters.add(k)
@@ -2602,24 +2606,37 @@ class AnsibleModule(object):
             strings on python3, use encoding=None to turn decoding to text off.
         '''
 
-        shell = False
-        if isinstance(args, list):
-            if use_unsafe_shell:
-                args = " ".join([shlex_quote(x) for x in args])
-                shell = True
-        elif isinstance(args, (binary_type, text_type)) and use_unsafe_shell:
-            shell = True
-        elif isinstance(args, (binary_type, text_type)):
-            # On python2.6 and below, shlex has problems with text type
-            # On python3, shlex needs a text type.
-            if PY2:
-                args = to_bytes(args, errors='surrogate_or_strict')
-            elif PY3:
-                args = to_text(args, errors='surrogateescape')
-            args = shlex.split(args)
-        else:
+        if not isinstance(args, (list, binary_type, text_type)):
             msg = "Argument 'args' to run_command must be list or string"
             self.fail_json(rc=257, cmd=args, msg=msg)
+
+        shell = False
+        if use_unsafe_shell:
+
+            # stringify args for unsafe/direct shell usage
+            if isinstance(args, list):
+                args = " ".join([shlex_quote(x) for x in args])
+
+            # not set explicitly, check if set by controller
+            if executable:
+                args = [executable, '-c', args]
+            elif self._shell not in (None, '/bin/sh'):
+                args = [self._shell, '-c', args]
+            else:
+                shell = True
+        else:
+            # ensure args are a list
+            if isinstance(args, (binary_type, text_type)):
+                # On python2.6 and below, shlex has problems with text type
+                # On python3, shlex needs a text type.
+                if PY2:
+                    args = to_bytes(args, errors='surrogate_or_strict')
+                elif PY3:
+                    args = to_text(args, errors='surrogateescape')
+                args = shlex.split(args)
+
+            # expand shellisms
+            args = [os.path.expanduser(os.path.expandvars(x)) for x in args if x is not None]
 
         prompt_re = None
         if prompt_regex:
@@ -2632,10 +2649,6 @@ class AnsibleModule(object):
                 prompt_re = re.compile(prompt_regex, re.MULTILINE)
             except re.error:
                 self.fail_json(msg="invalid prompt regular expression given to run_command")
-
-        # expand things like $HOME and ~
-        if not shell:
-            args = [os.path.expanduser(os.path.expandvars(x)) for x in args if x is not None]
 
         rc = 0
         msg = None
