@@ -345,7 +345,12 @@ class VariableManager:
         if play:
             all_vars = combine_vars(all_vars, play.get_vars())
 
-            for vars_file_item in play.get_vars_files():
+            vars_files = play.get_vars_files()
+            if not hasattr(vars_files, '__iter__'):
+                raise AnsibleParserError("Error while reading vars files - please supply a list of file names. "
+                                         "Got %s" % type(vars_files))
+
+            for vars_file_item in vars_files:
                 # create a set of temporary vars here, which incorporate the extra
                 # and magic vars so we can properly template the vars_files entries
                 temp_vars = combine_vars(all_vars, self._extra_vars)
