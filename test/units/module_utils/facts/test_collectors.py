@@ -278,7 +278,7 @@ class TestSelinuxFacts(BaseFactsTest):
             fact_collector = self.collector_class()
             facts_dict = fact_collector.collect(module=module)
             self.assertIsInstance(facts_dict, dict)
-            self.assertFalse(facts_dict['selinux'])
+            self.assertEqual(facts_dict['selinux']['status'], 'Missing selinux Python library')
             return facts_dict
 
 
