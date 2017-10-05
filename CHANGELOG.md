@@ -20,6 +20,7 @@ Ansible Changes By Release
   * Fix lxc_container module combining bytes with text ( https://github.com/ansible/ansible/pull/30572 )
   * Fix map doesn't return a list on python3 in ec2_snapshot_facts module (https://github.com/ansible/ansible/pull/30606)
   * Fix uri (and other url retrieving) modules when used with a proxy. (https://github.com/ansible/ansible/issues/31109)
+  * Fix azure_rm dynamic inventory script ConfigParser usage.
 * Fix for win_file to respect check mode when deleting directories
 * Fix for Ansible.ModuleUtils.Legacy.psm1 to return list params correctly
 * Fix for a proper logout in the module ovirt_vms
@@ -102,6 +103,7 @@ Ansible Changes By Release
   See the original bug for details and links to the eventual fix:
   https://github.com/ansible/ansible/issues/24169
 * Do not log data field in `docker_secrets` module (https://github.com/ansible/ansible/pull/31366)
+* Fix rpm_key taking the wrong 8 chars from the keyid (https://github.com/ansible/ansible/pull/31045)
 
 <a id="2.4"></a>
 
