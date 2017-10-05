@@ -149,26 +149,46 @@ def fileglob(pathname):
     return [g for g in glob.glob(pathname) if os.path.isfile(g)]
 
 
-def regex_replace(value='', pattern='', replacement='', ignorecase=False):
+def regex_replace(value='', pattern='', replacement='', **kwargs):
     ''' Perform a `re.sub` returning a string '''
 
     value = to_text(value, errors='surrogate_or_strict', nonstring='simplerepr')
 
-    if ignorecase:
-        flags = re.I
-    else:
-        flags = 0
+    flags = 0
+    if kwargs.get('ignorecase') or kwargs.get('I'):
+        flags |= re.I
+    if kwargs.get('locale') or kwargs.get('L'):
+        flags |= re.L
+    if kwargs.get('multiline') or kwargs.get('M'):
+        flags |= re.M
+    if kwargs.get('dotall') or kwargs.get('S'):
+        flags |= re.S
+    if kwargs.get('unicode') or kwargs.get('U'):
+        flags |= re.U
+    if kwargs.get('verbose') or kwargs.get('X'):
+        flags |= re.X
+
     _re = re.compile(pattern, flags=flags)
     return _re.sub(replacement, value)
 
 
-def regex_findall(value, regex, multiline=False, ignorecase=False):
+def regex_findall(value, regex, **kwargs):
     ''' Perform re.findall and return the list of matches '''
+
     flags = 0
-    if ignorecase:
+    if kwargs.get('ignorecase') or kwargs.get('I'):
         flags |= re.I
-    if multiline:
+    if kwargs.get('locale') or kwargs.get('L'):
+        flags |= re.L
+    if kwargs.get('multiline') or kwargs.get('M'):
         flags |= re.M
+    if kwargs.get('dotall') or kwargs.get('S'):
+        flags |= re.S
+    if kwargs.get('unicode') or kwargs.get('U'):
+        flags |= re.U
+    if kwargs.get('verbose') or kwargs.get('X'):
+        flags |= re.X
+
     return re.findall(regex, value, flags)
 
 
@@ -187,10 +207,18 @@ def regex_search(value, regex, *args, **kwargs):
             raise errors.AnsibleFilterError('Unknown argument')
 
     flags = 0
-    if kwargs.get('ignorecase'):
+    if kwargs.get('ignorecase') or kwargs.get('I'):
         flags |= re.I
-    if kwargs.get('multiline'):
+    if kwargs.get('locale') or kwargs.get('L'):
+        flags |= re.L
+    if kwargs.get('multiline') or kwargs.get('M'):
         flags |= re.M
+    if kwargs.get('dotall') or kwargs.get('S'):
+        flags |= re.S
+    if kwargs.get('unicode') or kwargs.get('U'):
+        flags |= re.U
+    if kwargs.get('verbose') or kwargs.get('X'):
+        flags |= re.X
 
     match = re.search(regex, value, flags)
     if match:
@@ -203,17 +231,17 @@ def regex_search(value, regex, *args, **kwargs):
             return items
 
 
+def regex_escape(string):
+    '''Escape all regular expressions special characters from STRING.'''
+    return re.escape(string)
+
+
 def ternary(value, true_val, false_val):
     '''  value ? true_val : false_val '''
     if bool(value):
         return true_val
     else:
         return false_val
-
-
-def regex_escape(string):
-    '''Escape all regular expressions special characters from STRING.'''
-    return re.escape(string)
 
 
 def from_yaml(data):
@@ -524,9 +552,9 @@ class FilterModule(object):
 
             # regex
             'regex_replace': regex_replace,
-            'regex_escape': regex_escape,
-            'regex_search': regex_search,
             'regex_findall': regex_findall,
+            'regex_search': regex_search,
+            'regex_escape': regex_escape,
 
             # ? : ;
             'ternary': ternary,
