@@ -153,6 +153,8 @@ def main():
 
     # LVM always uses real paths not symlinks so replace symlinks with actual path
     for idx, dev in enumerate(dev_list):
+        if not os.path.isabs(dev):
+            module.fail_json(msg="Device path should not be relative: %s" % dev)
         dev_list[idx] = os.path.realpath(dev)
 
     if state=='present':
