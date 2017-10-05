@@ -187,14 +187,18 @@ Version: 1.0.0
 '''
 
 import argparse
-import ConfigParser
 import json
 import os
 import re
 import sys
 import inspect
-import traceback
 
+try:
+    # python2
+    import ConfigParser as cp
+except ImportError:
+    # python3
+    import configparser as cp
 
 from packaging.version import Version
 
@@ -326,7 +330,7 @@ class AzureRM(object):
         path = expanduser("~")
         path += "/.azure/credentials"
         try:
-            config = ConfigParser.ConfigParser()
+            config = cp.ConfigParser()
             config.read(path)
         except Exception as exc:
             self.fail("Failed to access {0}. Check that the file exists and you have read "
@@ -795,7 +799,7 @@ class AzureInventory(object):
         config = None
         settings = None
         try:
-            config = ConfigParser.ConfigParser()
+            config = cp.ConfigParser()
             config.read(path)
         except:
             pass
