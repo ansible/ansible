@@ -456,3 +456,17 @@
     that:
       - "not yum_result.changed"
       - "'Packages providing httpd not installed due to update_only specified' in yum_result.results"
+
+- name: try to install not compatible arch rpm, should fail
+  yum:
+    name: http://download.fedoraproject.org/pub/epel/7/ppc64le/b/banner-1.3.4-3.el7.ppc64le.rpm
+    state: present
+  register: yum_result
+  ignore_errors: True
+
+- name: verify that yum failed
+  assert:
+    that:
+        - "yum_result.rc == 1"
+        - "not yum_result.changed"
+        - "yum_result|failed"
