@@ -988,6 +988,8 @@ def enforce_count(module, ec2, vpc):
             inst = get_instance_info(inst)
         all_instances.append(inst)
 
+        warn_if_public_ip_assignment_changed(module, inst)
+
     return (all_instances, instance_dict_array, changed_instance_ids, changed)
 
 
@@ -1445,6 +1447,8 @@ def startstop_instances(module, ec2, instance_ids, state, instance_tags):
     for res in ec2.get_all_instances(instance_ids, filters=filters):
         for inst in res.instances:
 
+            warn_if_public_ip_assignment_changed(module, inst)
+
             # Check "source_dest_check" attribute
             try:
                 if inst.vpc_id is not None and inst.get_attribute('sourceDestCheck')['sourceDestCheck'] != source_dest_check:
@@ -1572,6 +1576,8 @@ def restart_instances(module, ec2, instance_ids, state, instance_tags):
     for res in ec2.get_all_instances(instance_ids, filters=filters):
         for inst in res.instances:
 
+            warn_if_public_ip_assignment_changed(module, inst)
+
             # Check "source_dest_check" attribute
             try:
                 if inst.vpc_id is not None and inst.get_attribute('sourceDestCheck')['sourceDestCheck'] != source_dest_check:
@@ -1605,6 +1611,16 @@ def restart_instances(module, ec2, instance_ids, state, instance_tags):
                 changed = True
 
     return (changed, instance_dict_array, instance_ids)
+
+
+def warn_if_public_ip_assignment_changed(module, instance):
+    # This is a non-modifiable attribute.
+    assign_public_ip = module.params.get('assign_public_ip')
+
+    # Check that public ip assignment is the same and warn if not
+    if (assign_public_ip or instance.public_dns_name) and (not instance.public_dns_name or not assign_public_ip):
+        module.warn("Unable to modify public ip assignment to {0} for instance {1}. "
+                    "Whether or not to assign a public IP is determined during instance creation.".format(assign_public_ip, instance.id))
 
 
 def main():
