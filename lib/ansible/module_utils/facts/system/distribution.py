@@ -64,10 +64,12 @@ class DistributionFiles:
         {'path': '/etc/system-release', 'name': 'Amazon'},
         {'path': '/etc/alpine-release', 'name': 'Alpine'},
         {'path': '/etc/arch-release', 'name': 'Archlinux', 'allowempty': True},
+        {'path': '/etc/os-release', 'name': 'Archlinux'},
         {'path': '/etc/os-release', 'name': 'SUSE'},
         {'path': '/etc/SuSE-release', 'name': 'SUSE'},
         {'path': '/etc/gentoo-release', 'name': 'Gentoo'},
         {'path': '/etc/os-release', 'name': 'Debian'},
+        {'path': '/etc/lsb-release', 'name': 'Debian'},
         {'path': '/etc/lsb-release', 'name': 'Mandriva'},
         {'path': '/etc/altlinux-release', 'name': 'Altlinux'},
         {'path': '/etc/sourcemage-release', 'name': 'SMGL'},
@@ -82,6 +84,13 @@ class DistributionFiles:
         'Altlinux': 'ALT Linux',
         'ClearLinux': 'Clear Linux Software for Intel Architecture',
         'SMGL': 'Source Mage GNU/Linux',
+    }
+
+    # We can't include this in SEARCH_STRING because a name match on its keys
+    # causes a fallback to using the first whitespace seperated item from the file content
+    # as the name. For os-release, that is in form 'NAME=Arch'
+    OS_RELEASE_ALIAS = {
+        'Archlinux': 'Arch Linux'
     }
 
     def __init__(self, module):
@@ -105,25 +114,25 @@ class DistributionFiles:
             # only the distribution name is set, the version is assumed to be correct from platform.dist()
             if self.SEARCH_STRING[name] in dist_file_content:
                 # this sets distribution=RedHat if 'Red Hat' shows up in data
-                # self.facts['distribution'] = name
                 dist_file_dict['distribution'] = name
             else:
                 # this sets distribution to what's in the data, e.g. CentOS, Scientific, ...
-                # self.facts['distribution'] = dist_file_content.split()[0]
                 dist_file_dict['distribution'] = dist_file_content.split()[0]
 
             return True, dist_file_dict
+
+        if name in self.OS_RELEASE_ALIAS:
+            if self.OS_RELEASE_ALIAS[name] in dist_file_content:
+                dist_file_dict['distribution'] = name
+                return True, dist_file_dict
+            return False, dist_file_dict
 
         # call a dedicated function for parsing the file content
         # TODO: replace with a map or a class
         try:
             # FIXME: most of these dont actually look at the dist file contents, but random other stuff
             distfunc_name = 'parse_distribution_file_' + name
-            # print('distfunc_name: %s' % distfunc_name)
-
             distfunc = getattr(self, distfunc_name)
-            # print('distfunc: %s' % distfunc)
-
             parsed, dist_file_dict = distfunc(name, dist_file_content, path, collected_facts)
             return parsed, dist_file_dict
         except AttributeError as exc:
@@ -165,29 +174,33 @@ class DistributionFiles:
 
             has_dist_file, dist_file_content = self._get_dist_file_content(path, allow_empty=allow_empty)
 
+            # but we allow_empty. For example, ArchLinux with an empty /etc/arch-release and a
+            # /etc/os-release with a different name
+            if has_dist_file and allow_empty:
+                dist_file_facts['distribution'] = name
+                dist_file_facts['distribution_file_path'] = path
+                dist_file_facts['distribution_file_variety'] = name
+                break
+
             if not has_dist_file:
                 # keep looking
                 continue
 
-            # first valid os dist file we find we count
-            # FIXME: coreos and a few other bits expect this
-            # self.facts['distribution'] = name
-            dist_file_facts['distribution'] = name
-            dist_file_facts['distribution_file_variety'] = name
-            dist_file_facts['distribution_file_path'] = path
-
             parsed_dist_file, parsed_dist_file_facts = self._parse_dist_file(name, dist_file_content, path, dist_file_facts)
-
-            dist_file_facts['distribution_file_parsed'] = parsed_dist_file
 
             # finally found the right os dist file and were able to parse it
             if parsed_dist_file:
+                dist_file_facts['distribution'] = name
+                dist_file_facts['distribution_file_path'] = path
+                # distribution and file_variety are the same here, but distribution
+                # will be changed/mapped to a more specific name.
+                # ie, dist=Fedora, file_variety=RedHat
+                dist_file_facts['distribution_file_variety'] = name
+                dist_file_facts['distribution_file_parsed'] = parsed_dist_file
                 dist_file_facts.update(parsed_dist_file_facts)
                 break
 
         return dist_file_facts
-#        distribution_facts.update(dist_file_facts)
-#        return distribution_facts
 
     # TODO: FIXME: split distro file parsing into its own module or class
     def parse_distribution_file_Slackware(self, name, data, path, collected_facts):
@@ -321,7 +334,7 @@ class DistributionFiles:
         na_facts = {}
         for line in data.splitlines():
             distribution = re.search("^NAME=(.*)", line)
-            if distribution and collected_facts['distribution'] == 'NA':
+            if distribution and name == 'NA':
                 na_facts['distribution'] = distribution.group(1).strip('"')
             version = re.search("^VERSION=(.*)", line)
             if version and collected_facts['distribution_version'] == 'NA':
@@ -515,10 +528,7 @@ class Distribution(object):
     def get_distribution_SunOS(self):
         sunos_facts = {}
 
-        # print('platform.release: %s' % distribution_release)
         data = get_file_content('/etc/release').splitlines()[0]
-
-        # print('get_file_content: data=%s' % data)
 
         if 'Solaris' in data:
             ora_prefix = ''
@@ -532,8 +542,6 @@ class Distribution(object):
 
         uname_v = get_uname_version(self.module)
         distribution_version = None
-
-        # print('uname_v: %s' % uname_v)
 
         if 'SmartOS' in data:
             sunos_facts['distribution'] = 'SmartOS'
@@ -550,7 +558,6 @@ class Distribution(object):
             sunos_facts['distribution'] = 'Nexenta'
             distribution_version = data.split()[-1].lstrip('v')
 
-        # print('sunos_facts: %s' % sunos_facts)
         if sunos_facts.get('distribution', '') in ('SmartOS', 'OpenIndiana', 'OmniOS', 'Nexenta'):
             sunos_facts['distribution_release'] = data.strip()
             if distribution_version is not None:

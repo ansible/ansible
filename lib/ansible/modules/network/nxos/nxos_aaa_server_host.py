@@ -161,13 +161,14 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def execute_show_command(command, module, command_type='cli_show'):
-    if module.params['transport'] == 'cli':
+    provider = module.params['provider']
+    if provider['transport'] == 'cli':
         if 'show run' not in command:
             command += ' | json'
         cmds = [command]
         body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
-        cmds = [command]
+    elif provider['transport'] == 'nxapi':
+        cmds = {'command': command, 'output': 'text'}
         body = run_commands(module, cmds)
 
     return body
@@ -208,7 +209,7 @@ def get_aaa_host_info(module, server_type, address):
 
     body = execute_show_command(command, module, command_type='cli_show_ascii')
 
-    if body:
+    if body[0]:
         try:
             pattern = ('(acct-port \d+)|(timeout \d+)|(auth-port \d+)|'
                        '(key 7 "\w+")|( port \d+)')
@@ -217,9 +218,8 @@ def get_aaa_host_info(module, server_type, address):
                                                     'auth-port': 'auth_port',
                                                     'port': 'tacacs_port',
                                                     'timeout': 'host_timeout'})
-            if aaa_host_info:
-                aaa_host_info['server_type'] = server_type
-                aaa_host_info['address'] = address
+            aaa_host_info['server_type'] = server_type
+            aaa_host_info['address'] = address
         except TypeError:
             return {}
     else:
@@ -365,4 +365,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

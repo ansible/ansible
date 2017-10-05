@@ -6,6 +6,7 @@ azure-mgmt-storage>=1.2.0,<2
 azure-mgmt-resource>=1.1.0,<2
 azure-storage>=0.35.1,<0.36
 azure-cli-core>=2.0.12,<3
+msrest!=0.4.15
 msrestazure>=0.4.11,<0.5
 azure-mgmt-dns>=1.0.1,<2
 azure-mgmt-keyvault>=0.40.0,<0.41

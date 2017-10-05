@@ -160,7 +160,7 @@ def is_default_interface(interface, module):
 
     try:
         body = execute_show_command(command, module)[0]
-    except IndexError:
+    except (IndexError, TypeError) as e:
         body = ''
 
     if body:
@@ -214,22 +214,21 @@ def get_manual_interface_attributes(interface, module):
     """
 
     if get_interface_type(interface) == 'svi':
-        command = 'show interface {0}'.format(interface)
+        command = 'show run interface {0} all'.format(interface)
         try:
-            body = run_commands(module, [command])[0]
+            # body = run_commands(module, [command])[0]
+            body = execute_show_command(command, module)[0]
         except IndexError:
             return None
-
         if body:
             command_list = body.split('\n')
             desc = None
-            admin_state = 'up'
+            admin_state = 'down'
             for each in command_list:
-                if 'Description:' in each:
-                    line = each.split('Description:')
-                    desc = line[1].strip().split('MTU')[0].strip()
-                elif 'Administratively down' in each:
-                    admin_state = 'down'
+                if 'description' in each:
+                    desc = each.lstrip().split("description")[1].lstrip()
+                elif 'no shutdown' in each:
+                    admin_state = 'up'
 
             return dict(description=desc, admin_state=admin_state)
     else:
@@ -277,7 +276,6 @@ def get_interface(intf, module):
         body = execute_show_command(command, module)[0]
     except IndexError:
         body = []
-
     if body:
         interface_table = body['TABLE_interface']['ROW_interface']
         if interface_table.get('eth_mode') == 'fex-fabric':
@@ -343,8 +341,6 @@ def get_interface(intf, module):
             if not temp_dict.get('description'):
                 temp_dict['description'] = "None"
             interface.update(temp_dict)
-
-    interface['type'] = intf_type
 
     return interface
 
@@ -527,7 +523,6 @@ def get_proposed(existing, normalized_interface, args):
 
 
 def smart_existing(module, intf_type, normalized_interface):
-
     # 7K BUG MAY CAUSE THIS TO FAIL
 
     all_interfaces = get_interfaces_dict(module)
@@ -535,12 +530,13 @@ def smart_existing(module, intf_type, normalized_interface):
         existing = get_interface(normalized_interface, module)
         is_default = is_default_interface(normalized_interface, module)
     else:
-        if intf_type == 'ethernet':
-            module.fail_json(msg='Invalid Ethernet interface provided.',
-                             interface=normalized_interface)
-        elif intf_type in ['loopback', 'portchannel', 'svi', 'nve']:
+        if (intf_type in ['loopback', 'portchannel', 'svi', 'nve'] or
+                intf_type == 'ethernet' and "." in normalized_interface):
             existing = {}
             is_default = 'DNE'
+        elif intf_type == 'ethernet':
+            module.fail_json(msg='Invalid Ethernet interface provided.',
+                             interface=normalized_interface)
     return existing, is_default
 
 
@@ -555,7 +551,10 @@ def execute_show_command(command, module):
     }]
 
     body = run_commands(module, cmds)
-    return body
+    if body and "Invalid" in body[0]:
+        return []
+    else:
+        return body
 
 
 def flatten_list(command_lists):
@@ -628,9 +627,13 @@ def main():
             module.fail_json(msg='The ip_forward and '
                                  'fabric_forwarding_anycast_gateway features '
                                  ' are only available for SVIs.')
+
         args = dict(interface=interface, admin_state=admin_state,
                     description=description, mode=mode, ip_forward=ip_forward,
                     fabric_forwarding_anycast_gateway=fabric_forwarding_anycast_gateway)
+        if (normalized_interface.startswith('Eth') or normalized_interface.startswith('po'))\
+           and "." in normalized_interface:
+            args["mode"] = None
 
         if intf_type == 'unknown':
             module.fail_json(msg='unknown interface type found-1',
@@ -651,10 +654,12 @@ def main():
                 if is_default != 'DNE':
                     cmds = ['no interface {0}'.format(normalized_interface)]
                     commands.append(cmds)
-            elif intf_type in ['ethernet']:
-                if is_default is False:
+            elif intf_type in ['ethernet'] and is_default is False:
+                if "." in normalized_interface:
+                    cmds = ['no interface {0}'.format(normalized_interface)]
+                else:
                     cmds = ['default interface {0}'.format(normalized_interface)]
-                    commands.append(cmds)
+                commands.append(cmds)
         elif state == 'present':
             if not existing:
                 cmds = get_interface_config_commands(proposed, normalized_interface, existing)

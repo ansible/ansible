@@ -587,7 +587,7 @@ def elb_dreg(asg_connection, module, group_name, instance_id):
 
     for lb in as_group['LoadBalancerNames']:
         deregister_lb_instances(elb_connection, lb, instance_id)
-        log.debug("De-registering {0} from ELB {1}".format(instance_id, lb))
+        log.debug("De-registering %s from ELB %s", instance_id, lb)
 
     wait_timeout = time.time() + wait_timeout
     while wait_timeout > time.time() and count > 0:
@@ -597,7 +597,7 @@ def elb_dreg(asg_connection, module, group_name, instance_id):
             for i in lb_instances['InstanceStates']:
                 if i['InstanceId'] == instance_id and i['State'] == "InService":
                     count += 1
-                    log.debug("{0}: {1}, {2}".format(i['InstanceId'], i['State'], i['Description']))
+                    log.debug("%s: %s, %s", i['InstanceId'], i['State'], i['Description'])
         time.sleep(10)
 
     if wait_timeout <= time.time():
@@ -614,7 +614,7 @@ def elb_healthy(asg_connection, elb_connection, module, group_name):
     for instance, settings in props['instance_facts'].items():
         if settings['lifecycle_state'] == 'InService' and settings['health_status'] == 'Healthy':
             instances.append(dict(InstanceId=instance))
-    log.debug("ASG considers the following instances InService and Healthy: {0}".format(instances))
+    log.debug("ASG considers the following instances InService and Healthy: %s", instances)
     log.debug("ELB instance status:")
     lb_instances = list()
     for lb in as_group.get('LoadBalancerNames'):
@@ -630,12 +630,12 @@ def elb_healthy(asg_connection, elb_connection, module, group_name):
                              exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
         except botocore.exceptions.BotoCoreError as e:
             module.fail_json(msg="Failed to get load balancer.",
-                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                             exception=traceback.format_exc())
 
         for i in lb_instances.get('InstanceStates'):
             if i['State'] == "InService":
                 healthy_instances.add(i['InstanceId'])
-            log.debug("ELB Health State {0}: {1}".format(i['InstanceId'], i['State']))
+            log.debug("ELB Health State %s: %s", i['InstanceId'], i['State'])
     return len(healthy_instances)
 
 
@@ -648,7 +648,7 @@ def tg_healthy(asg_connection, elbv2_connection, module, group_name):
     for instance, settings in props['instance_facts'].items():
         if settings['lifecycle_state'] == 'InService' and settings['health_status'] == 'Healthy':
             instances.append(dict(Id=instance))
-    log.debug("ASG considers the following instances InService and Healthy: {0}".format(instances))
+    log.debug("ASG considers the following instances InService and Healthy: %s", instances)
     log.debug("Target Group instance status:")
     tg_instances = list()
     for tg in as_group.get('TargetGroupARNs'):
@@ -664,12 +664,12 @@ def tg_healthy(asg_connection, elbv2_connection, module, group_name):
                              exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
         except botocore.exceptions.BotoCoreError as e:
             module.fail_json(msg="Failed to get target group.",
-                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                             exception=traceback.format_exc())
 
         for i in tg_instances.get('TargetHealthDescriptions'):
             if i['TargetHealth']['State'] == "healthy":
                 healthy_instances.add(i['Target']['Id'])
-            log.debug("Target Group Health State {0}: {1}".format(i['Target']['Id'], i['TargetHealth']['State']))
+            log.debug("Target Group Health State %s: %s", i['Target']['Id'], i['TargetHealth']['State'])
     return len(healthy_instances)
 
 
@@ -695,12 +695,12 @@ def wait_for_elb(asg_connection, module, group_name):
 
         while healthy_instances < as_group.get('MinSize') and wait_timeout > time.time():
             healthy_instances = elb_healthy(asg_connection, elb_connection, module, group_name)
-            log.debug("ELB thinks {0} instances are healthy.".format(healthy_instances))
+            log.debug("ELB thinks %s instances are healthy.", healthy_instances)
             time.sleep(10)
         if wait_timeout <= time.time():
             # waiting took too long
             module.fail_json(msg="Waited too long for ELB instances to be healthy. %s" % time.asctime())
-        log.debug("Waiting complete.  ELB thinks {0} instances are healthy.".format(healthy_instances))
+        log.debug("Waiting complete.  ELB thinks %s instances are healthy.", healthy_instances)
 
 
 def wait_for_target_group(asg_connection, module, group_name):
@@ -725,12 +725,12 @@ def wait_for_target_group(asg_connection, module, group_name):
 
         while healthy_instances < as_group.get('MinSize') and wait_timeout > time.time():
             healthy_instances = tg_healthy(asg_connection, elbv2_connection, module, group_name)
-            log.debug("Target Group thinks {0} instances are healthy.".format(healthy_instances))
+            log.debug("Target Group thinks %s instances are healthy.", healthy_instances)
             time.sleep(10)
         if wait_timeout <= time.time():
             # waiting took too long
             module.fail_json(msg="Waited too long for ELB instances to be healthy. %s" % time.asctime())
-        log.debug("Waiting complete. Target Group thinks {0} instances are healthy.".format(healthy_instances))
+        log.debug("Waiting complete. Target Group thinks %s instances are healthy.", healthy_instances)
 
 
 def suspend_processes(ec2_connection, as_group, module):
@@ -849,9 +849,12 @@ def create_autoscaling_group(connection, module):
             asg_properties = get_properties(as_group, module)
             changed = True
             return changed, asg_properties
-        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+        except botocore.exceptions.ClientError as e:
             module.fail_json(msg="Failed to create Autoscaling Group.",
                              exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        except botocore.exceptions.BotoCoreError as e:
+            module.fail_json(msg="Failed to create Autoscaling Group.",
+                             exception=traceback.format_exc())
     else:
         as_group = as_groups['AutoScalingGroups'][0]
         initial_asg_properties = get_properties(as_group, module)
@@ -887,9 +890,12 @@ def create_autoscaling_group(connection, module):
             changed = True
             try:
                 attach_load_balancers(connection, group_name, load_balancers)
-            except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+            except botocore.exceptions.ClientError as e:
                 module.fail_json(msg="Failed to update Autoscaling Group.",
                                  exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+            except botocore.exceptions.BotoCoreError as e:
+                module.fail_json(msg="Failed to update Autoscaling Group.",
+                                 exception=traceback.format_exc())
 
         # Update load balancers if they are specified and one or more already exists
         elif as_group['LoadBalancerNames']:
@@ -920,9 +926,12 @@ def create_autoscaling_group(connection, module):
             changed = True
             try:
                 attach_lb_target_groups(connection, group_name, target_group_arns)
-            except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+            except botocore.exceptions.ClientError as e:
                 module.fail_json(msg="Failed to update Autoscaling Group.",
                                  exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+            except botocore.exceptions.BotoCoreError as e:
+                module.fail_json(msg="Failed to update Autoscaling Group.",
+                                 exception=traceback.format_exc())
         # Update target groups if they are specified and one or more already exists
         elif target_group_arns is not None and as_group['TargetGroupARNs']:
             # Get differences
@@ -934,13 +943,13 @@ def create_autoscaling_group(connection, module):
                 tgs_to_detach = has_tgs.difference(wanted_tgs)
                 if tgs_to_detach:
                     changed = True
-                    detach_lb_target_groups(connection, group_name, tgs_to_detach)
+                    detach_lb_target_groups(connection, group_name, list(tgs_to_detach))
             if wanted_tgs.issuperset(has_tgs):
                 # if has contains less than wanted, then we need to add some
                 tgs_to_attach = wanted_tgs.difference(has_tgs)
                 if tgs_to_attach:
                     changed = True
-                    attach_lb_target_groups(connection, group_name, tgs_to_attach)
+                    attach_lb_target_groups(connection, group_name, list(tgs_to_attach))
 
         # check for attributes that aren't required for updating an existing ASG
         desired_capacity = desired_capacity if desired_capacity is not None else as_group['DesiredCapacity']
@@ -970,9 +979,12 @@ def create_autoscaling_group(connection, module):
         if notification_topic:
             try:
                 put_notification_config(connection, group_name, notification_topic, notification_types)
-            except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+            except botocore.exceptions.ClientError as e:
                 module.fail_json(msg="Failed to update Autoscaling Group notifications.",
                                  exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+            except botocore.exceptions.BotoCoreError as e:
+                module.fail_json(msg="Failed to update Autoscaling Group notifications.",
+                                 exception=traceback.format_exc())
         if wait_for_instances:
             wait_for_new_inst(module, connection, group_name, wait_timeout, desired_capacity, 'viable_instances')
             # Wait for ELB health if ELB(s)defined
@@ -990,9 +1002,12 @@ def create_autoscaling_group(connection, module):
             asg_properties = get_properties(as_group, module)
             if asg_properties != initial_asg_properties:
                 changed = True
-        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+        except botocore.exceptions.ClientError as e:
             module.fail_json(msg="Failed to read existing Autoscaling Groups.",
                              exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        except botocore.exceptions.BotoCoreError as e:
+            module.fail_json(msg="Failed to read existing Autoscaling Groups.",
+                             exception=traceback.format_exc())
         return changed, asg_properties
 
 
@@ -1042,7 +1057,7 @@ def get_chunks(l, n):
 def update_size(connection, group, max_size, min_size, dc):
 
     log.debug("setting ASG sizes")
-    log.debug("minimum size: {0}, desired_capacity: {1}, max size: {2}".format(min_size, dc, max_size))
+    log.debug("minimum size: %s, desired_capacity: %s, max size: %s", min_size, dc, max_size)
     updated_group = dict()
     updated_group['AutoScalingGroupName'] = group['AutoScalingGroupName']
     updated_group['MinSize'] = min_size
@@ -1083,7 +1098,7 @@ def replace(connection, module):
 
         #  we don't want to spin up extra instances if not necessary
         if num_new_inst_needed < batch_size:
-            log.debug("Overriding batch size to {0}".format(num_new_inst_needed))
+            log.debug("Overriding batch size to %s", num_new_inst_needed)
             batch_size = num_new_inst_needed
 
     if not old_instances:
@@ -1143,14 +1158,14 @@ def get_instances_by_lc(props, lc_check, initial_instances):
                 old_instances.append(i)
 
     else:
-        log.debug("Comparing initial instances with current: {0}".format(initial_instances))
+        log.debug("Comparing initial instances with current: %s", initial_instances)
         for i in props['instances']:
             if i not in initial_instances:
                 new_instances.append(i)
             else:
                 old_instances.append(i)
-    log.debug("New instances: {0}, {1}".format(len(new_instances), new_instances))
-    log.debug("Old instances: {0}, {1}".format(len(old_instances), old_instances))
+    log.debug("New instances: %s, %s", len(new_instances), new_instances)
+    log.debug("Old instances: %s, %s", len(old_instances), old_instances)
 
     return new_instances, old_instances
 
@@ -1192,17 +1207,17 @@ def terminate_batch(connection, module, replace_instances, initial_instances, le
     # and they have a non-current launch config
     instances_to_terminate = list_purgeable_instances(props, lc_check, replace_instances, initial_instances)
 
-    log.debug("new instances needed: {0}".format(num_new_inst_needed))
-    log.debug("new instances: {0}".format(new_instances))
-    log.debug("old instances: {0}".format(old_instances))
-    log.debug("batch instances: {0}".format(",".join(instances_to_terminate)))
+    log.debug("new instances needed: %s", num_new_inst_needed)
+    log.debug("new instances: %s", new_instances)
+    log.debug("old instances: %s", old_instances)
+    log.debug("batch instances: %s", ",".join(instances_to_terminate))
 
     if num_new_inst_needed == 0:
         decrement_capacity = True
         if as_group['MinSize'] != min_size:
             updated_params = dict(AutoScalingGroupName=as_group['AutoScalingGroupName'], MinSize=min_size)
             update_asg(connection, **updated_params)
-            log.debug("Updating minimum size back to original of {0}".format(min_size))
+            log.debug("Updating minimum size back to original of %s", min_size)
         # if are some leftover old instances, but we are already at capacity with new ones
         # we don't want to decrement capacity
         if leftovers:
@@ -1216,13 +1231,13 @@ def terminate_batch(connection, module, replace_instances, initial_instances, le
         instances_to_terminate = instances_to_terminate[:num_new_inst_needed]
         decrement_capacity = False
         break_loop = False
-        log.debug("{0} new instances needed".format(num_new_inst_needed))
+        log.debug("%s new instances needed", num_new_inst_needed)
 
-    log.debug("decrementing capacity: {0}".format(decrement_capacity))
+    log.debug("decrementing capacity: %s", decrement_capacity)
 
     for instance_id in instances_to_terminate:
         elb_dreg(connection, module, group_name, instance_id)
-        log.debug("terminating instance: {0}".format(instance_id))
+        log.debug("terminating instance: %s", instance_id)
         terminate_asg_instance(connection, instance_id, decrement_capacity)
 
     # we wait to make sure the machines we marked as Unhealthy are
@@ -1248,7 +1263,7 @@ def wait_for_term_inst(connection, module, term_instances):
         for i in instances:
             lifecycle = instance_facts[i]['lifecycle_state']
             health = instance_facts[i]['health_status']
-            log.debug("Instance {0} has state of {1},{2}".format(i, lifecycle, health))
+            log.debug("Instance %s has state of %s,%s", i, lifecycle, health)
             if lifecycle == 'Terminating' or health == 'Unhealthy':
                 count += 1
         time.sleep(10)
@@ -1263,18 +1278,18 @@ def wait_for_new_inst(module, connection, group_name, wait_timeout, desired_size
     # make sure we have the latest stats after that last loop.
     as_group = describe_autoscaling_groups(connection, group_name)[0]
     props = get_properties(as_group, module)
-    log.debug("Waiting for {0} = {1}, currently {2}".format(prop, desired_size, props[prop]))
+    log.debug("Waiting for %s = %s, currently %s", prop, desired_size, props[prop])
     # now we make sure that we have enough instances in a viable state
     wait_timeout = time.time() + wait_timeout
     while wait_timeout > time.time() and desired_size > props[prop]:
-        log.debug("Waiting for {0} = {1}, currently {2}".format(prop, desired_size, props[prop]))
+        log.debug("Waiting for %s = %s, currently %s", prop, desired_size, props[prop])
         time.sleep(10)
         as_group = describe_autoscaling_groups(connection, group_name)[0]
         props = get_properties(as_group, module)
     if wait_timeout <= time.time():
         # waiting took too long
         module.fail_json(msg="Waited too long for new instances to become viable. %s" % time.asctime())
-    log.debug("Reached {0}: {1}".format(prop, desired_size))
+    log.debug("Reached %s: %s", prop, desired_size)
     return props
 
 

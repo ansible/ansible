@@ -279,6 +279,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     else:
                         task_list.extend(included_blocks)
                 else:
+                    t.is_static = False
                     task_list.append(t)
 
             elif 'include_role' in task_ds or 'import_role' in task_ds:
@@ -296,7 +297,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                 if 'import_role' in task_ds:
                     is_static = True
 
-                if ir.static is not None:
+                elif ir.static is not None:
                     display.deprecated("The use of 'static' for 'include_role' has been deprecated. "
                                        "Use 'import_role' for static inclusion, or 'include_role' for dynamic inclusion")
                     is_static = ir.static
@@ -319,6 +320,15 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     display.debug('Determined that if include_role static is %s' % str(is_static))
 
                 if is_static:
+                    if ir.loop is not None:
+                        if 'import_tasks' in task_ds:
+                            raise AnsibleParserError("You cannot use loops on 'import_role' statements. You should use 'include_role' instead.", obj=task_ds)
+                        else:
+                            raise AnsibleParserError("You cannot use 'static' on an include_role with a loop", obj=task_ds)
+
+                    # we set a flag to indicate this include was static
+                    ir.statically_loaded = True
+
                     # uses compiled list from object
                     blocks, _ = ir.get_block_list(variable_manager=variable_manager, loader=loader)
                     t = task_list.extend(blocks)

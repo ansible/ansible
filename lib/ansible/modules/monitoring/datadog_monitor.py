@@ -33,7 +33,7 @@ options:
     state:
         description: ["The designated state of the monitor."]
         required: true
-        choices: ['present', 'absent', 'muted', 'unmuted']
+        choices: ['present', 'absent', 'mute', 'unmute']
     tags:
         description: ["A list of tags to associate with your monitor when creating or updating. This can help you categorize and filter monitors."]
         required: false

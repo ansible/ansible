@@ -306,7 +306,6 @@ class SolidFireVolume(object):
         if changed:
             if self.module.check_mode:
                 result_message = "Check mode, skipping changes"
-                pass
             else:
                 if self.state == 'present':
                     if not volume_exists:
@@ -329,4 +328,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

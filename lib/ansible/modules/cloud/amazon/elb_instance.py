@@ -7,7 +7,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['stableinterface'],
+                    'status': ['preview'],
                     'supported_by': 'certified'}
 
 
@@ -77,19 +77,19 @@ pre_tasks:
   - name: Gathering ec2 facts
     action: ec2_facts
   - name: Instance De-register
-    local_action:
-      module: ec2_elb
+    elb_instance:
       instance_id: "{{ ansible_ec2_instance_id }}"
       state: absent
+    delegate_to: localhost
 roles:
   - myrole
 post_tasks:
   - name: Instance Register
-    local_action:
-      module: ec2_elb
+    elb_instance:
       instance_id: "{{ ansible_ec2_instance_id }}"
       ec2_elbs: "{{ item }}"
       state: present
+    delegate_to: localhost
     with_items: "{{ ec2_elbs }}"
 """
 

@@ -11,6 +11,18 @@ else
 CPUS ?= $(shell nproc)
 endif
 
+MODULE_ARGS=
+ifdef MODULES
+	MODULE_ARGS = -l $(MODULES)
+endif
+
+PLUGIN_ARGS=
+ifdef PLUGINS
+	PLUGIN_ARGS = -l $(PLUGINS)
+endif
+
+DOC_PLUGINS ?= cache callback connection inventory lookup strategy vars
+
 assertrst:
 ifndef rst
 	$(error specify document or pattern with rst=somefile.rst)
@@ -20,9 +32,13 @@ all: docs
 
 docs: clean htmldocs
 
-htmldocs: testing keywords modules staticmin cli config
+generate_rst: testing keywords modules plugins staticmin cli config
 
+htmldocs: generate_rst
 	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx html
+
+singlehtmldocs: generate_rst
+	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx singlehtml
 
 webdocs: docs
 
@@ -44,10 +60,14 @@ clean:
 	-rm rst/list_of_*.rst
 	-rm rst/*_by_category.rst
 	-rm rst/*_module.rst
+	-rm rst/*_plugin.rst
 	-rm rst/*_maintained.rst
 	-rm rst/playbooks_directives.rst
 	-rm rst/playbooks_keywords.rst
-#	-rm rst/cli/ansible*.rst
+	-rm rst/plugins/*/*.rst
+	-rm rst/config.rst
+	-rm rst/ansible-*.rst
+	-rm rst/ansible.rst
 
 .PHONEY: docs clean
 
@@ -62,12 +82,14 @@ config:
 	PYTHONPATH=../../lib $(CONFIG_DUMPER) --template-file=../templates/config.rst.j2 --output-dir=rst/ -d ../../lib/ansible/config/base.yml
 
 modules: $(FORMATTER) ../templates/plugin.rst.j2
-# Limit building of module documentation if requested.
-ifdef MODULES
-	PYTHONPATH=../../lib $(FORMATTER) -t rst --template-dir=../templates --module-dir=../../lib/ansible/modules -o rst/ -l $(MODULES)
-else
-	PYTHONPATH=../../lib $(FORMATTER) -t rst --template-dir=../templates --module-dir=../../lib/ansible/modules -o rst/
-endif
+	PYTHONPATH=../../lib $(FORMATTER) -t rst --template-dir=../templates --module-dir=../../lib/ansible/modules -o rst/ $(MODULE_ARGS)
+
+plugins: $(FORMATTER) ../templates/plugin.rst.j2
+	@echo "looping over doc plugins"
+	for plugin in $(DOC_PLUGINS); \
+	do \
+		PYTHONPATH=../../lib $(FORMATTER) -t rst --plugin-type $$plugin --template-dir=../templates --module-dir=../../lib/ansible/plugins/$$plugin -o rst/ $(PLUGIN_ARGS); \
+	done
 
 testing:
 	$(TESTING_FORMATTER)

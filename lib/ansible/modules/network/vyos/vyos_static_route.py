@@ -29,7 +29,7 @@ DOCUMENTATION = """
 module: vyos_static_route
 version_added: "2.4"
 author: "Trishna Guha (@trishnaguha)"
-short_description: Manage static IP routes on Cisco VyOS network devices
+short_description: Manage static IP routes on Vyatta VyOS network devices
 description:
   - This module provides declarative management of static
     IP routes on Vyatta VyOS network devices.
@@ -108,7 +108,7 @@ from copy import deepcopy
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network_common import remove_default_spec
 from ansible.module_utils.vyos import get_config, load_config
-from ansible.module_utils.vyos import vyos_argument_spec, check_args
+from ansible.module_utils.vyos import vyos_argument_spec
 
 
 def spec_to_commands(updates, module):
@@ -242,7 +242,6 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
 
     result = {'changed': False}
     if warnings:

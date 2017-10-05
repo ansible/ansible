@@ -37,7 +37,7 @@ from ansible.template import Templar
 from units.mock.loader import DictDataLoader
 
 
-python_module_replacers = b"""
+python_module_replacers = br"""
 #!/usr/bin/python
 
 #ANSIBLE_VERSION = "<<ANSIBLE_VERSION>>"

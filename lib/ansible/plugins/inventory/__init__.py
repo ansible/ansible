@@ -19,12 +19,13 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from collections import MutableMapping
 import hashlib
 import os
 import re
 import string
 
-from ansible.errors import AnsibleError, AnsibleOptionsError
+from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import string_types
@@ -60,18 +61,18 @@ class BaseInventoryPlugin(object):
     def verify_file(self, path):
         ''' Verify if file is usable by this plugin, base does minimal accessability check '''
 
-        b_path = to_bytes(path)
+        b_path = to_bytes(path, errors='surrogate_or_strict')
         return (os.path.exists(b_path) and os.access(b_path, os.R_OK))
 
     def get_cache_prefix(self, path):
         ''' create predictable unique prefix for plugin/inventory '''
 
         m = hashlib.sha1()
-        m.update(to_bytes(self.NAME))
+        m.update(to_bytes(self.NAME, errors='surrogate_or_strict'))
         d1 = m.hexdigest()
 
         n = hashlib.sha1()
-        n.update(to_bytes(path))
+        n.update(to_bytes(path, errors='surrogate_or_strict'))
         d2 = n.hexdigest()
 
         return 's_'.join([d1[:5], d2[:5]])
@@ -80,6 +81,9 @@ class BaseInventoryPlugin(object):
         pass
 
     def populate_host_vars(self, hosts, variables, group=None, port=None):
+        if not isinstance(variables, MutableMapping):
+            raise AnsibleParserError("Invalid data from file, expected dictionary and got:\n\n%s" % to_native(variables))
+
         for host in hosts:
             self.inventory.add_host(host, group=group, port=port)
             for k in variables:

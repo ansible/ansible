@@ -9,9 +9,7 @@ Ansible is a radically simple IT automation system.  It handles configuration-ma
 
 Read the documentation and more at https://ansible.com/
 
-Many users run straight from the development branch (it's generally fine to do so), but you might also wish to consume a release.
-
-You can find instructions [here](https://docs.ansible.com/ansible/intro_installation.html) for a variety of platforms.
+You can find installation instructions [here](https://docs.ansible.com/ansible/intro_installation.html) for a variety of platforms. Most users should probably install a released version of Ansible from `pip`, a package manager or our [release repository](https://releases.ansible.com/ansible/). [Officially supported](https://www.ansible.com/ansible-engine) builds of Ansible are also available. Some power users run directly from the development branch - while significant efforts are made to ensure that `devel` is reasonably stable, you're more likely to encounter breaking changes when running Ansible this way.
 
 Design Principles
 =================
@@ -41,7 +39,6 @@ Branch Info
 
    * Releases are named after Led Zeppelin songs. (Releases prior to 2.0 were named after Van Halen songs.)
    * The devel branch corresponds to the release actively under development.
-   * For releases 1.8 - 2.2, modules are kept in different repos, you'll want to follow [core](https://github.com/ansible/ansible-modules-core) and [extras](https://github.com/ansible/ansible-modules-extras)
    * Various release-X.Y branches exist for previous releases.
    * We'd love to have your contributions, read [Community Information](https://docs.ansible.com/community.html) for notes on how to get started.
 
@@ -52,9 +49,8 @@ Ansible was created by [Michael DeHaan](https://github.com/mpdehaan) (michael.de
 
 Ansible is sponsored by [Ansible, Inc](https://ansible.com)
 
-Licence
+License
 =======
-GNU
-Click on the [Link](COPYING) to see the full text.
+GNU General Public License v3.0
 
-
+See [COPYING](COPYING) to see the full text.

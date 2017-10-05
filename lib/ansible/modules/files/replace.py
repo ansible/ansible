@@ -29,13 +29,12 @@ description:
 version_added: "1.6"
 options:
   path:
-    required: true
-    aliases: [ dest, destfile, name ]
     description:
       - The file to modify.
       - Before 2.3 this option was only usable as I(dest), I(destfile) and I(name).
-  regexp:
+    aliases: [ dest, destfile, name ]
     required: true
+  regexp:
     description:
       - The regular expression to look for in the contents of the file.
         Uses Python regular expressions; see
@@ -50,52 +49,46 @@ options:
       - Note that, as of ansible 2, short form tasks should have any escape
         sequences backslash-escaped in order to prevent them being parsed
         as string literal escapes. See the examples.
+    required: true
   replace:
-    required: false
     description:
       - The string to replace regexp matches. May contain backreferences
         that will get expanded with the regexp capture groups if the regexp
         matches. If not set, matches are removed entirely.
   after:
-    required: false
-    version_added: "2.4"
     description:
       - If specified, the line after the replace/remove will start. Can be used
         in combination with C(before).
         Uses Python regular expressions; see
         U(http://docs.python.org/2/library/re.html).
-  before:
-    required: false
     version_added: "2.4"
+  before:
     description:
       - If specified, the line before the replace/remove will occur. Can be used
         in combination with C(after).
         Uses Python regular expressions; see
         U(http://docs.python.org/2/library/re.html).
+    version_added: "2.4"
   backup:
-    required: false
-    default: "no"
-    choices: [ "yes", "no" ]
     description:
       - Create a backup file including the timestamp information so you can
         get the original file back if you somehow clobbered it incorrectly.
+    type: bool
+    default: 'no'
   others:
     description:
       - All arguments accepted by the M(file) module also work here.
-    required: false
   follow:
-    required: false
-    default: "no"
-    choices: [ "yes", "no" ]
-    version_added: "1.9"
     description:
       - 'This flag indicates that filesystem links, if they exist, should be followed.'
+    type: bool
+    default: "no"
+    version_added: "1.9"
   encoding:
-    required: false
-    default: "utf-8"
-    version_added: "2.4"
     description:
       - "The character encoding for reading and writing the file."
+    default: "utf-8"
+    version_added: "2.4"
 notes:
   - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
 """
@@ -167,7 +160,7 @@ from ansible.module_utils.basic import AnsibleModule
 def write_changes(module, contents, path):
 
     tmpfd, tmpfile = tempfile.mkstemp()
-    f = os.fdopen(tmpfd,'wb')
+    f = os.fdopen(tmpfd, 'wb')
     f.write(contents)
     f.close()
 
@@ -180,7 +173,7 @@ def write_changes(module, contents, path):
         valid = rc == 0
         if rc != 0:
             module.fail_json(msg='failed to validate: '
-                                 'rc:%s error:%s' % (rc,err))
+                                 'rc:%s error:%s' % (rc, err))
     if valid:
         module.atomic_move(tmpfile, path, unsafe_writes=module.params['unsafe_writes'])
 

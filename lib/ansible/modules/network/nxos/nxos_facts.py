@@ -209,7 +209,7 @@ class FactsBase(object):
 
 class Default(FactsBase):
 
-    VERSION_MAP = frozenset([
+    VERSION_MAP_7K = frozenset([
         ('sys_ver_str', 'version'),
         ('proc_board_id', 'serialnum'),
         ('chassis_id', 'model'),
@@ -217,10 +217,21 @@ class Default(FactsBase):
         ('host_name', 'hostname')
     ])
 
+    VERSION_MAP = frozenset([
+        ('kickstart_ver_str', 'version'),
+        ('proc_board_id', 'serialnum'),
+        ('chassis_id', 'model'),
+        ('kick_file_name', 'image'),
+        ('host_name', 'hostname')
+    ])
+
     def populate(self):
         data = self.run('show version', 'json')
         if data:
-            self.facts.update(self.transform_dict(data, self.VERSION_MAP))
+            if data.get('sys_ver_str'):
+                self.facts.update(self.transform_dict(data, self.VERSION_MAP_7K))
+            else:
+                self.facts.update(self.transform_dict(data, self.VERSION_MAP))
 
 
 class Config(FactsBase):

@@ -2,7 +2,7 @@ Community Information & Contributing
 ````````````````````````````````````
 
 Ansible is an open source project designed to bring together administrators and developers of all kinds to collaborate on building
-IT automation solutions that work well for them.   
+IT automation solutions that work well for them.
 
 Should you wish to get more involved -- whether in terms of just asking a question, helping other users, introducing new people to Ansible, or helping with the software or documentation, we welcome your contributions to the project.
 
@@ -16,7 +16,7 @@ I've Got A Question
 
 We're happy to help!
 
-Ansible questions are best asked on the `Ansible Google Group Mailing List <http://groups.google.com/group/ansible-project>`_.  
+Ansible questions are best asked on the `Ansible Google Group Mailing List <http://groups.google.com/group/ansible-project>`_.
 
 This is a very large high-traffic list for answering questions and sharing tips
 and tricks. Anyone can join, and email delivery is optional if you just want to read the group online.  To cut down on spam, your first post is moderated, though posts are approved quickly.
@@ -42,10 +42,10 @@ This is a low-traffic read-only list, where we'll share release announcements an
 I'd Like To Help Share and Promote Ansible
 ------------------------------------------
 
-You can help share Ansible with others by telling friends and colleagues, writing a blog post, 
-or presenting at user groups (like DevOps groups or the local LUG).  
+You can help share Ansible with others by telling friends and colleagues, writing a blog post,
+or presenting at user groups (like DevOps groups or the local LUG).
 
-You are also welcome to share slides on speakerdeck, sign up for a free account and tag it “Ansible”. On Twitter, 
+You are also welcome to share slides on speakerdeck, sign up for a free account and tag it "Ansible". On Twitter,
 you can also share things with #ansible and may wish to `follow us <https://twitter.com/ansible>`_.
 
 I'd Like To Help Ansible Move Faster
@@ -73,31 +73,31 @@ more quickly.
 Do not use the issue tracker for "how do I do this" type questions.  These are great candidates
 for IRC or the mailing list instead where things are likely to be more of a discussion.
 
-To be respectful of reviewers' time and allow us to help everyone efficiently, please 
+To be respectful of reviewers' time and allow us to help everyone efficiently, please
 provide minimal well-reduced and well-commented examples versus sharing your entire production
-playbook.  Include playbook snippets and output where possible.  
+playbook.  Include playbook snippets and output where possible.
 
 When sharing YAML in playbooks, formatting can be preserved by using `code blocks <https://help.github.com/articles/creating-and-highlighting-code-blocks/>`_.
 
 For multiple-file content, we encourage use of gist.github.com.  Online pastebin content can expire, so it's nice to have things around for a longer term if they
 are referenced in a ticket.
 
-If you are not sure if something is a bug yet, you are welcome to ask about something on 
-the mailing list or IRC first.  
+If you are not sure if something is a bug yet, you are welcome to ask about something on
+the mailing list or IRC first.
 
-As we are a very high volume project, if you determine that 
+As we are a very high volume project, if you determine that
 you do have a bug, please be sure to open the issue yourself to ensure we have a record of
-it. Don’t rely on someone else in the community to file the bug report for you.
+it. Don't rely on someone else in the community to file the bug report for you.
 
 It may take some time to get to your report, see our information about priority flags below.
 
 I'd Like To Help With Documentation
 -----------------------------------
 
-Ansible documentation is a community project too!  
+Ansible documentation is a community project too!
 
-If you would like to help with the 
-documentation, whether correcting a typo or improving a section, or maybe even 
+If you would like to help with the
+documentation, whether correcting a typo or improving a section, or maybe even
 documenting a new feature, submit a GitHub pull request to  the code that
 lives in the ``docsite/rst`` subdirectory of the project for most pages, and there is an "Edit on GitHub"
 link up on those.
@@ -107,9 +107,9 @@ Module documentation is generated from a ``DOCUMENTATION`` structure embedded in
 For more information on module documentation see `How to document modules <http://docs.ansible.com/ansible/dev_guide/developing_modules_documenting.html>`_.
 
 Aside from modules, the main docs are in restructured text
-format.  
+format.
 
-If you aren’t comfortable with restructured text, you can also open a ticket on 
+If you aren't comfortable with restructured text, you can also open a ticket on
 GitHub about any errors you spot or sections you would like to see added. For more information
 on creating pull requests, please refer to the
 `GitHub help guide <https://help.github.com/articles/using-pull-requests>`_.
@@ -155,7 +155,7 @@ If you make a mistake you do not need to close your PR. Instead, create a clean 
 with ``--force`` to overwrite the existing branch (permissible in this case as no one else should be using that
 branch as reference). Code comments won't be lost, they just won't be attached to the existing branch.
 
-We’ll then review your contributions and engage with you about questions and  so on.
+We'll then review your contributions and engage with you about questions and  so on.
 
 Because we have a very large and active community it may take awhile to get your contributions
 in!  See the notes about priorities in a later section for understanding our work queue.
@@ -172,14 +172,14 @@ are interested in writing new modules to be included in the core Ansible distrib
 to the `module development documentation <http://docs.ansible.com/developing_modules.html>`_.
 
 Ansible's aesthetic encourages simple, readable code and consistent,
-conservatively extending, backwards-compatible improvements. When contributing code to Ansible, 
+conservatively extending, backwards-compatible improvements. When contributing code to Ansible,
 please observe the following guidelines:
 
 - Code developed for Ansible needs to support Python2-2.6 or higher and Python3-3.5 or higher.
 - Use a 4-space indent, not  tabs.
 - We do not enforce 80 column lines; up to 160 columns are acceptable.
 - We do not accept 'style only' pull requests unless the code is nearly unreadable.
-- We are "PEP8ish", but not strictly compliant, see :doc:`testing_pep8` for more information.
+- We are not strictly compliant with PEP8. See :doc:`dev_guide/testing_pep8` for more information.
 
 You can also contribute by testing and revising other requests, especially if it is one you are interested
 in using. Please keep your comments clear and to the point, courteous and constructive, tickets are not a
@@ -228,7 +228,7 @@ To subscribe to a group from a non-google account, you can send an email to the 
 IRC Meetings
 ------------
 
-The Ansible community holds regular IRC meetings on various topics, and anyone who is interested is invited to 
+The Ansible community holds regular IRC meetings on various topics, and anyone who is interested is invited to
 participate. For more information about Ansible meetings, consult the `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/meetings/README.md>`_.
 
 Release Numbering
@@ -286,7 +286,7 @@ These labels don't really have a definition - they are a simple ordering.  Howev
 affecting a major module (yum, apt, etc) is likely to be prioritized higher than a module
 affecting a smaller number of users.
 
-Since we place a strong emphasis on testing and code review, it may take a few months for a minor feature to get merged. This doesn't mean that we'll be exhausting all of the higher-priority queues before getting to your ticket; we will also take periodic sweeps through the lower priority queues and give them some attention as well, particularly in the area of new module changes. 
+Since we place a strong emphasis on testing and code review, it may take a few months for a minor feature to get merged. This doesn't mean that we'll be exhausting all of the higher-priority queues before getting to your ticket; we will also take periodic sweeps through the lower priority queues and give them some attention as well, particularly in the area of new module changes.
 
 
 Every bit of effort helps - if you're wishing to expedite the inclusion of a P3 feature pull request for instance, the best thing you can do is help close P2 bug reports.

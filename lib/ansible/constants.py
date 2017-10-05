@@ -7,12 +7,15 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os  # used to set lang and for backwards compat get_config
+
+from ast import literal_eval
+from jinja2 import Template
 from string import ascii_letters, digits
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.parsing.convert_bool import boolean, BOOLEANS_TRUE
 from ansible.module_utils.six import string_types
-from ansible.config.manager import ConfigManager, ensure_type
+from ansible.config.manager import ConfigManager, ensure_type, get_ini_config_value
 
 
 def _deprecated(msg):
@@ -40,15 +43,13 @@ def get_config(parser, section, key, env_var, default_value, value_type=None, ex
     value = os.environ.get(env_var, None)
     if value is None:
         try:
-            value = config.get_ini_config(parser, [{'key': key, 'section': section}])
+            value = get_ini_config_value(parser, {'key': key, 'section': section})
         except:
             pass
     if value is None:
         value = default_value
-    try:
-        value = config.ensure_type(value, value_type)
-    except:
-        pass
+
+    value = ensure_type(value, value_type)
 
     return value
 
@@ -59,7 +60,6 @@ def set_constant(name, value, export=vars()):
 
 
 ### CONSTANTS ### yes, actual ones
-BLACKLIST_EXTS = ('.pyc', '.pyo', '.swp', '.bak', '~', '.rpm', '.md', '.txt')
 BECOME_METHODS = ['sudo', 'su', 'pbrun', 'pfexec', 'doas', 'dzdo', 'ksu', 'runas', 'pmrun']
 BECOME_ERROR_STRINGS = {
     'sudo': 'Sorry, try again.',
@@ -81,19 +81,21 @@ BECOME_MISSING_STRINGS = {
     'ksu': 'No password given',
     'pmrun': ''
 }  # FIXME: deal with i18n
+BLACKLIST_EXTS = ('.pyc', '.pyo', '.swp', '.bak', '~', '.rpm', '.md', '.txt')
 BOOL_TRUE = BOOLEANS_TRUE
+CONTROLER_LANG = os.getenv('LANG', 'en_US.UTF-8')
 DEFAULT_BECOME_PASS = None
 DEFAULT_PASSWORD_CHARS = to_text(ascii_letters + digits + ".,:-_", errors='strict')  # characters included in auto-generated passwords
 DEFAULT_SUDO_PASS = None
 DEFAULT_REMOTE_PASS = None
 DEFAULT_SUBSET = None
 DEFAULT_SU_PASS = None
-IGNORE_FILES = ["COPYING", "CONTRIBUTING", "LICENSE", "README", "VERSION", "GUIDELINES"]  # ignore during module search
-INTERNAL_RESULT_KEYS = ['add_host', 'add_group']
-LOCALHOST = frozenset(['127.0.0.1', 'localhost', '::1'])
-MODULE_REQUIRE_ARGS = ['command', 'win_command', 'shell', 'win_shell', 'raw', 'script']
-MODULE_NO_JSON = ['command', 'win_command', 'shell', 'win_shell', 'raw']
-RESTRICTED_RESULT_KEYS = ['ansible_rsync_path', 'ansible_playbook_python']
+IGNORE_FILES = ("COPYING", "CONTRIBUTING", "LICENSE", "README", "VERSION", "GUIDELINES")  # ignore during module search
+INTERNAL_RESULT_KEYS = ('add_host', 'add_group')
+LOCALHOST = ('127.0.0.1', 'localhost', '::1')
+MODULE_REQUIRE_ARGS = ('command', 'win_command', 'shell', 'win_shell', 'raw', 'script')
+MODULE_NO_JSON = ('command', 'win_command', 'shell', 'win_shell', 'raw')
+RESTRICTED_RESULT_KEYS = ('ansible_rsync_path', 'ansible_playbook_python')
 TREE_DIR = None
 VAULT_VERSION_MIN = 1.0
 VAULT_VERSION_MAX = 1.0
@@ -107,13 +109,16 @@ for setting in config.data.get_settings():
     value = setting.value
     if setting.origin == 'default' and \
        isinstance(setting.value, string_types) and \
-       (setting.value.startswith('eval(') and setting.value.endswith(')')):
+       (setting.value.startswith('{{') and setting.value.endswith('}}')):
         try:
-            # FIXME: find better way to do in manager class and/or ensure types
-            eval_string = setting.value.replace('eval(', '', 1)[:-1]
-            value = ensure_type(eval(eval_string), setting.type)  # FIXME: safe eval?
+            t = Template(setting.value)
+            value = t.render(vars())
+            try:
+                value = literal_eval(value)
+            except ValueError:
+                pass  # not a python data structure
         except:
-            # FIXME: should we warn?
-            pass
+            pass # not templatable
+        value = ensure_type(value, setting.name)
 
-    set_constant(setting.name, value or setting.value)
+    set_constant(setting.name, value)

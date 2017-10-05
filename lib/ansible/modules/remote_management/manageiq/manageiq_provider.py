@@ -27,7 +27,7 @@ description:
 options:
   state:
     description:
-      - absent - provider should not exist, present - provider should be, valid - provider authentication should be valid.
+      - absent - provider should not exist, present - provider should be present.
     required: False
     choices: ['absent', 'present']
     default: 'present'
@@ -160,69 +160,156 @@ options:
 '''
 
 EXAMPLES = '''
-  - name: Create a new provider in ManageIQ ('Hawkular' metrics)
-    manageiq_provider:
-      name: 'EngLab'
-      type: 'OpenShift'
-      provider:
-        auth_key: 'topSecret'
-        hostname: 'example.com'
-        port: 8443
-        verify_ssl: False
-      metrics:
-        role: 'hawkular'
-        hostname: 'example.com'
-        port: 443
-        verify_ssl: False
-      manageiq_connection:
-        url: 'http://127.0.0.1:3000'
-        username: 'admin'
-        password: 'smartvm'
-        verify_ssl: False
+- name: Create a new provider in ManageIQ ('Hawkular' metrics)
+  manageiq_provider:
+    name: 'EngLab'
+    type: 'OpenShift'
+    state: 'present'
+    provider:
+      auth_key: 'topSecret'
+      hostname: 'example.com'
+      port: 8443
+      verify_ssl: true
+      security_protocol: 'ssl-with-validation-custom-ca'
+      certificate_authority: |
+        -----BEGIN CERTIFICATE-----
+        FAKECERTsdKgAwIBAgIBATANBgkqhkiG9w0BAQsFADAmMSQwIgYDVQQDDBtvcGVu
+        c2hpZnQtc2lnbmVyQDE1MDMzMjAxMTkwHhcNMTcwODIxMTI1NTE5WhcNMjIwODIw
+        MTI1NTIwWjAmMSQwIgYDVQQDDBtvcGVuc2hpZnQtc2lnbmVyQDE1MDMzMjAxMTkw
+        ggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDUDnL2tQ2xf/zO7F7hmZ4S
+        ZuwKENdI4IYuWSxye4i3hPhKg6eKPzGzmDNWkIMDOrDAj1EgVSNPtPwsOL8OWvJm
+        AaTjr070D7ZGWWnrrDrWEClBx9Rx/6JAM38RT8Pu7c1hXBm0J81KufSLLYiZ/gOw
+        Znks5v5RUSGcAXvLkBJeATbsbh6fKX0RgQ3fFTvqQaE/r8LxcTN1uehPX1g5AaRa
+        z/SNDHaFtQlE3XcqAAukyMn4N5kdNcuwF3GlQ+tJnJv8SstPkfQcZbTMUQ7I2KpJ
+        ajXnMxmBhV5fCN4rb0QUNCrk2/B+EUMBY4MnxIakqNxnN1kvgI7FBbFgrHUe6QvJ
+        AgMBAAGjIzAhMA4GA1UdDwEB/wQEAwICpDAPBgNVHRMBAf8EBTADAQH/MA0GCSqG
+        SIb3DQEBCwUAA4IBAQAYRV57LUsqznSLZHA77o9+0fQetIE115DYP7wea42PODJI
+        QJ+JETEfoCr0+YOMAbVmznP9GH5cMTKEWHExcIpbMBU7nMZp6A3htcJgF2fgPzOA
+        aTUtzkuVCSrV//mbbYVxoFOc6sR3Br0wBs5+5iz3dBSt7xmgpMzZvqsQl655i051
+        gGSTIY3z5EJmBZBjwuTjal9mMoPGA4eoTPqlITJDHQ2bdCV2oDbc7zqupGrUfZFA
+        qzgieEyGzdCSRwjr1/PibA3bpwHyhD9CGD0PRVVTLhw6h6L5kuN1jA20OfzWxf/o
+        XUsdmRaWiF+l4s6Dcd56SuRp5SGNa2+vP9Of/FX5
+        -----END CERTIFICATE-----
+    metrics:
+      auth_key: 'topSecret'
+      role: 'hawkular'
+      hostname: 'example.com'
+      port: 443
+      verify_ssl: true
+      security_protocol: 'ssl-with-validation-custom-ca'
+      certificate_authority: |
+        -----BEGIN CERTIFICATE-----
+        FAKECERTsdKgAwIBAgIBATANBgkqhkiG9w0BAQsFADAmMSQwIgYDVQQDDBtvcGVu
+        c2hpZnQtc2lnbmVyQDE1MDMzMjAxMTkwHhcNMTcwODIxMTI1NTE5WhcNMjIwODIw
+        MTI1NTIwWjAmMSQwIgYDVQQDDBtvcGVuc2hpZnQtc2lnbmVyQDE1MDMzMjAxMTkw
+        ggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDUDnL2tQ2xf/zO7F7hmZ4S
+        ZuwKENdI4IYuWSxye4i3hPhKg6eKPzGzmDNWkIMDOrDAj1EgVSNPtPwsOL8OWvJm
+        AaTjr070D7ZGWWnrrDrWEClBx9Rx/6JAM38RT8Pu7c1hXBm0J81KufSLLYiZ/gOw
+        Znks5v5RUSGcAXvLkBJeATbsbh6fKX0RgQ3fFTvqQaE/r8LxcTN1uehPX1g5AaRa
+        z/SNDHaFtQlE3XcqAAukyMn4N5kdNcuwF3GlQ+tJnJv8SstPkfQcZbTMUQ7I2KpJ
+        ajXnMxmBhV5fCN4rb0QUNCrk2/B+EUMBY4MnxIakqNxnN1kvgI7FBbFgrHUe6QvJ
+        AgMBAAGjIzAhMA4GA1UdDwEB/wQEAwICpDAPBgNVHRMBAf8EBTADAQH/MA0GCSqG
+        SIb3DQEBCwUAA4IBAQAYRV57LUsqznSLZHA77o9+0fQetIE115DYP7wea42PODJI
+        QJ+JETEfoCr0+YOMAbVmznP9GH5cMTKEWHExcIpbMBU7nMZp6A3htcJgF2fgPzOA
+        aTUtzkuVCSrV//mbbYVxoFOc6sR3Br0wBs5+5iz3dBSt7xmgpMzZvqsQl655i051
+        gGSTIY3z5EJmBZBjwuTjal9mMoPGA4eoTPqlITJDHQ2bdCV2oDbc7zqupGrUfZFA
+        qzgieEyGzdCSRwjr1/PibA3bpwHyhD9CGD0PRVVTLhw6h6L5kuN1jA20OfzWxf/o
+        XUsdmRaWiF+l4s6Dcd56SuRp5SGNa2+vP9Of/FX5
+        -----END CERTIFICATE-----
+    manageiq_connection:
+      url: 'https://127.0.0.1:80'
+      username: 'admin'
+      password: 'password'
+      verify_ssl: true
 
-  - name: Update an existing provider named 'EngLab' (defaults to 'Prometheus' metrics)
-    manageiq_provider:
-      name: 'EngLab'
-      type: 'Openshift'
-      provider:
-        auth_key: 'verySecret'
-        hostname: 'next.example.com'
-        port: 8443
-        verify_ssl: False
-      metrics:
-        hostname: 'next.example.com'
-        port: 443
-        verify_ssl: False
-      manageiq_connection:
-        url: 'http://127.0.0.1:3000'
-        username: 'admin'
-        password: 'smartvm'
-        verify_ssl: False
 
-  - name: Delete a provider in ManageIQ
-    manageiq_provider:
-      state: 'absent'
-      name: 'EngLab'
-      manageiq_connection:
-        url: 'http://127.0.0.1:3000'
-        username: 'admin'
-        password: 'smartvm'
-        verify_ssl: False
+- name: Update an existing provider named 'EngLab' (defaults to 'Prometheus' metrics)
+  manageiq_provider:
+    name: 'EngLab'
+    type: 'Openshift'
+    state: 'present'
+    provider:
+      auth_key: 'topSecret'
+      hostname: 'next.example.com'
+      port: 8443
+      verify_ssl: true
+      security_protocol: 'ssl-with-validation-custom-ca'
+      certificate_authority: |
+        -----BEGIN CERTIFICATE-----
+        FAKECERTsdKgAwIBAgIBATANBgkqhkiG9w0BAQsFADAmMSQwIgYDVQQDDBtvcGVu
+        c2hpZnQtc2lnbmVyQDE1MDMzMjAxMTkwHhcNMTcwODIxMTI1NTE5WhcNMjIwODIw
+        MTI1NTIwWjAmMSQwIgYDVQQDDBtvcGVuc2hpZnQtc2lnbmVyQDE1MDMzMjAxMTkw
+        ggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDUDnL2tQ2xf/zO7F7hmZ4S
+        ZuwKENdI4IYuWSxye4i3hPhKg6eKPzGzmDNWkIMDOrDAj1EgVSNPtPwsOL8OWvJm
+        AaTjr070D7ZGWWnrrDrWEClBx9Rx/6JAM38RT8Pu7c1hXBm0J81KufSLLYiZ/gOw
+        Znks5v5RUSGcAXvLkBJeATbsbh6fKX0RgQ3fFTvqQaE/r8LxcTN1uehPX1g5AaRa
+        z/SNDHaFtQlE3XcqAAukyMn4N5kdNcuwF3GlQ+tJnJv8SstPkfQcZbTMUQ7I2KpJ
+        ajXnMxmBhV5fCN4rb0QUNCrk2/B+EUMBY4MnxIakqNxnN1kvgI7FBbFgrHUe6QvJ
+        AgMBAAGjIzAhMA4GA1UdDwEB/wQEAwICpDAPBgNVHRMBAf8EBTADAQH/MA0GCSqG
+        SIb3DQEBCwUAA4IBAQAYRV57LUsqznSLZHA77o9+0fQetIE115DYP7wea42PODJI
+        QJ+JETEfoCr0+YOMAbVmznP9GH5cMTKEWHExcIpbMBU7nMZp6A3htcJgF2fgPzOA
+        aTUtzkuVCSrV//mbbYVxoFOc6sR3Br0wBs5+5iz3dBSt7xmgpMzZvqsQl655i051
+        gGSTIY3z5EJmBZBjwuTjal9mMoPGA4eoTPqlITJDHQ2bdCV2oDbc7zqupGrUfZFA
+        qzgieEyGzdCSRwjr1/PibA3bpwHyhD9CGD0PRVVTLhw6h6L5kuN1jA20OfzWxf/o
+        XUsdmRaWiF+l4s6Dcd56SuRp5SGNa2+vP9Of/FX5
+        -----END CERTIFICATE-----
+    metrics:
+      auth_key: 'topSecret'
+      hostname: 'next.example.com'
+      port: 443
+      verify_ssl: true
+      security_protocol: 'ssl-with-validation-custom-ca'
+      certificate_authority: |
+        -----BEGIN CERTIFICATE-----
+        FAKECERTsdKgAwIBAgIBATANBgkqhkiG9w0BAQsFADAmMSQwIgYDVQQDDBtvcGVu
+        c2hpZnQtc2lnbmVyQDE1MDMzMjAxMTkwHhcNMTcwODIxMTI1NTE5WhcNMjIwODIw
+        MTI1NTIwWjAmMSQwIgYDVQQDDBtvcGVuc2hpZnQtc2lnbmVyQDE1MDMzMjAxMTkw
+        ggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDUDnL2tQ2xf/zO7F7hmZ4S
+        ZuwKENdI4IYuWSxye4i3hPhKg6eKPzGzmDNWkIMDOrDAj1EgVSNPtPwsOL8OWvJm
+        AaTjr070D7ZGWWnrrDrWEClBx9Rx/6JAM38RT8Pu7c1hXBm0J81KufSLLYiZ/gOw
+        Znks5v5RUSGcAXvLkBJeATbsbh6fKX0RgQ3fFTvqQaE/r8LxcTN1uehPX1g5AaRa
+        z/SNDHaFtQlE3XcqAAukyMn4N5kdNcuwF3GlQ+tJnJv8SstPkfQcZbTMUQ7I2KpJ
+        ajXnMxmBhV5fCN4rb0QUNCrk2/B+EUMBY4MnxIakqNxnN1kvgI7FBbFgrHUe6QvJ
+        AgMBAAGjIzAhMA4GA1UdDwEB/wQEAwICpDAPBgNVHRMBAf8EBTADAQH/MA0GCSqG
+        SIb3DQEBCwUAA4IBAQAYRV57LUsqznSLZHA77o9+0fQetIE115DYP7wea42PODJI
+        QJ+JETEfoCr0+YOMAbVmznP9GH5cMTKEWHExcIpbMBU7nMZp6A3htcJgF2fgPzOA
+        aTUtzkuVCSrV//mbbYVxoFOc6sR3Br0wBs5+5iz3dBSt7xmgpMzZvqsQl655i051
+        gGSTIY3z5EJmBZBjwuTjal9mMoPGA4eoTPqlITJDHQ2bdCV2oDbc7zqupGrUfZFA
+        qzgieEyGzdCSRwjr1/PibA3bpwHyhD9CGD0PRVVTLhw6h6L5kuN1jA20OfzWxf/o
+        XUsdmRaWiF+l4s6Dcd56SuRp5SGNa2+vP9Of/FX5
+        -----END CERTIFICATE-----
+    manageiq_connection:
+      url: 'https://127.0.0.1'
+      username: 'admin'
+      password: 'password'
+      verify_ssl: true
 
-  - name: Create a new Amazon provider in ManageIQ using token authentication
-    manageiq_provider:
-      name: 'EngAmazon'
-      type: 'Amazon'
-      provider_region: 'us-east-1'
-      provider:
-        hostname: 'amazon.example.com'
-        userid: 'hello'
-        password: 'world'
-      manageiq_connection:
-        url: 'http://127.0.0.1:3000'
-        token: 'VeryLongToken'
-        verify_ssl: False
 
+- name: Delete a provider in ManageIQ
+  manageiq_provider:
+    name: 'EngLab'
+    type: 'Openshift'
+    state: 'absent'
+    manageiq_connection:
+      url: 'https://127.0.0.1'
+      username: 'admin'
+      password: 'password'
+      verify_ssl: true
+
+
+- name: Create a new Amazon provider in ManageIQ using token authentication
+  manageiq_provider:
+    name: 'EngAmazon'
+    type: 'Amazon'
+    state: 'present'
+    provider:
+      hostname: 'amazon.example.com'
+      userid: 'hello'
+      password: 'world'
+    manageiq_connection:
+      url: 'https://127.0.0.1'
+      token: 'VeryLongToken'
+      verify_ssl: true
 '''
 
 RETURN = '''
@@ -239,6 +326,7 @@ def supported_providers():
             authtype='bearer',
             default_role='default',
             metrics_role='prometheus',
+            alerts_role='prometheus_alerts',
         ),
         Amazon=dict(
             class_name='ManageIQ::Providers::Amazon::CloudManager',

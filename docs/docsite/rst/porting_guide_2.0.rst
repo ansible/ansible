@@ -109,7 +109,7 @@ While all items listed here will show a deprecation warning message, they still 
 
 * Bare variables in ``with_`` loops should instead use the ``"{ {var }}"`` syntax, which helps eliminate ambiguity.
 * The ansible-galaxy text format requirements file. Users should use the YAML format for requirements instead.
-* Undefined variables within a ``with_`` loop’s list currently do not interrupt the loop, but they do issue a warning; in the future, they will issue an error.
+* Undefined variables within a ``with_`` loop's list currently do not interrupt the loop, but they do issue a warning; in the future, they will issue an error.
 * Using dictionary variables to set all task parameters is unsafe and will be removed in a future version. For example::
 
     - hosts: localhost
@@ -129,8 +129,8 @@ While all items listed here will show a deprecation warning message, they still 
 
 * Host patterns should use a comma (,) or colon (:) instead of a semicolon (;) to separate hosts/groups in the pattern.
 * Ranges specified in host patterns should use the [x:y] syntax, instead of [x-y].
-* Playbooks using privilege escalation should always use “become*” options rather than the old su*/sudo* options.
-* The “short form” for vars_prompt is no longer supported.
+* Playbooks using privilege escalation should always use "become*" options rather than the old su*/sudo* options.
+* The "short form" for vars_prompt is no longer supported.
   For example::
 
     vars_prompt:
@@ -138,28 +138,28 @@ While all items listed here will show a deprecation warning message, they still 
 
 * Specifying variables at the top level of a task include statement is no longer supported. For example::
 
-    - include: foo.yml
+    - include_tasks: foo.yml
         a: 1
 
 Should now be::
 
-    - include: foo.yml
+    - include_tasks: foo.yml
       vars:
         a: 1
 
 * Setting any_errors_fatal on a task is no longer supported. This should be set at the play level only.
-* Bare variables in the `environment` dictionary (for plays/tasks/etc.) are no longer supported. Variables specified there should use the full variable syntax: ‘{{foo}}’.
+* Bare variables in the `environment` dictionary (for plays/tasks/etc.) are no longer supported. Variables specified there should use the full variable syntax: '{{foo}}'.
 * Tags (or any directive) should no longer be specified with other parameters in a task include. Instead, they should be specified as an option on the task.
   For example::
 
-    - include: foo.yml tags=a,b,c
+    - include_tasks: foo.yml tags=a,b,c
 
   Should be::
 
-    - include: foo.yml
+    - include_tasks: foo.yml
       tags: [a, b, c]
 
-* The first_available_file option on tasks has been deprecated. Users should use the with_first_found option or lookup (‘first_found’, …) plugin.
+* The first_available_file option on tasks has been deprecated. Users should use the with_first_found option or lookup ('first_found', …) plugin.
 
 
 Other caveats

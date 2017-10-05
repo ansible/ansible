@@ -45,35 +45,29 @@ EXAMPLES = '''
 # Output format tries to match ec2_elb_lb module input parameters
 
 # Gather facts about all ELBs
-- action:
-    module: ec2_elb_facts
+- elb_classic_lb_facts:
   register: elb_facts
 
-- action:
-    module: debug
+- debug:
     msg: "{{ item.dns_name }}"
   with_items: "{{ elb_facts.elbs }}"
 
 # Gather facts about a particular ELB
-- action:
-    module: ec2_elb_facts
+- elb_classic_lb_facts:
     names: frontend-prod-elb
   register: elb_facts
 
-- action:
-    module: debug
+- debug:
     msg: "{{ elb_facts.elbs.0.dns_name }}"
 
 # Gather facts about a set of ELBs
-- action:
-    module: ec2_elb_facts
+- elb_classic_lb_facts:
     names:
     - frontend-prod-elb
     - backend-prod-elb
   register: elb_facts
 
-- action:
-    module: debug
+- debug:
     msg: "{{ item.dns_name }}"
   with_items: "{{ elb_facts.elbs }}"
 
@@ -207,7 +201,6 @@ class ElbInformation(object):
             except ZeroDivisionError:
                 elb_info['instances_inservice_percent'] = 0.
         return elb_info
-
 
     def list_elbs(self):
         elb_array, token = [], None

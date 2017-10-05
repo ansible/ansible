@@ -615,9 +615,6 @@ class StrategyBase:
                 new_group = self._inventory.groups[group_name]
                 new_group.add_host(self._inventory.hosts[host_name])
 
-            # clear pattern caching completely since it's unpredictable what patterns may have referenced the group
-            self._inventory.clear_pattern_cache()
-
             # reconcile inventory, ensures inventory rules are followed
             self._inventory.reconcile_inventory()
 
@@ -655,7 +652,6 @@ class StrategyBase:
             changed = True
 
         if changed:
-            self._inventory.clear_pattern_cache()
             self._inventory.reconcile_inventory()
 
         return changed

@@ -35,11 +35,9 @@
 automerge: True
 files:
   .github/BOTMETA.yml:
-    labels:
-    - botmeta
+    labels: botmeta
   $modules/cloud/amazon/:
-    notify:
-    - willthames
+    notify: willthames
   $modules/cloud/amazon/aws_api_gateway.py: mikedlr willthames
   $modules/cloud/amazon/aws_direct_connect_connection.py: s-hertel
   $modules/cloud/amazon/aws_direct_connect_link_aggregation_group.py: s-hertel
@@ -56,7 +54,7 @@ files:
   $modules/cloud/amazon/ec2_ami.py: Constantin07 gunzy83 scicoin-project willthames
   $modules/cloud/amazon/ec2_ami_copy.py: amir343
   $modules/cloud/amazon/ec2_ami_find.py: tombamford
-  $modules/cloud/amazon/ec2_asg.py: $team_ansible garethr
+  $modules/cloud/amazon/ec2_asg.py: $team_ansible garethr s-hertel ryansb
   $modules/cloud/amazon/ec2_asg_facts.py: wimnat
   $modules/cloud/amazon/ec2_customer_gateway.py: MichaelBaydoun michaelbaydoun
   $modules/cloud/amazon/ec2_eip.py: rickmendes
@@ -174,14 +172,18 @@ files:
   $modules/cloud/azure/azure_rm_virtualnetwork_facts.py: $team_azure
   $modules/cloud/centurylink/: clc-runner
   $modules/cloud/cloudscale/cloudscale_server.py: gaudenz
-  $modules/cloud/cloudstack/: resmo
+  $modules/cloud/cloudstack/:
+    labels: cloudstack
+    maintainers: resmo
   $modules/cloud/digital_ocean/: BondAnthony
   $modules/cloud/digital_ocean/digital_ocean.py: alukovenko zbal
   $modules/cloud/digital_ocean/digital_ocean_domain.py: alukovenko mgregson
   $modules/cloud/digital_ocean/digital_ocean_sshkey.py: alukovenko mgregson
   $modules/cloud/digital_ocean/digital_ocean_tag.py: kontrafiktion
   $modules/cloud/dimensiondata/dimensiondata_network.py: aimonb tintoy
-  $modules/cloud/docker/docker_container.py: ThomasSteinbach $team_ansible cove dusdanig jctanner kassiansun softzilla zfil
+  $modules/cloud/docker/docker_container.py:
+    ignored: ThomasSteinbach
+    maintainers: $team_ansible cove dusdanig jctanner kassiansun softzilla zfil
   $modules/cloud/docker/docker_image.py: $team_ansible jctanner softzilla
   $modules/cloud/docker/docker_image_facts.py: $team_ansible jctanner
   $modules/cloud/docker/docker_login.py: jctanner olsaki
@@ -214,7 +216,7 @@ files:
   $modules/cloud/misc/helm.py: flaper87
   $modules/cloud/misc/ovirt.py:
     ignored: vincentvdk
-    maintainers: joshainglis karmab
+    maintainers: joshainglis karmab machacekondra mwperina
   $modules/cloud/misc/proxmox.py: UnderGreen
   $modules/cloud/misc/proxmox_kvm.py: helldorado
   $modules/cloud/misc/proxmox_template.py: UnderGreen
@@ -228,7 +230,7 @@ files:
   $modules/cloud/openstack/os_keystone_service.py: $team_openstack SamYaple
   $modules/cloud/openstack/os_project.py: $team_openstack agireud
   $modules/cloud/ovh/ovh_ip_loadbalancing_backend.py: pascalheraud
-  $modules/cloud/ovirt/: machacekondra
+  $modules/cloud/ovirt/: machacekondra mwperina
   $modules/cloud/packet/:
   $modules/cloud/profitbricks/: baldwinSPC
   $modules/cloud/pubnub/pubnub_blocks.py: parfeon pubnub
@@ -269,21 +271,21 @@ files:
   $modules/cloud/vmware/vmware_guest.py: $team_vmware
   $modules/cloud/vmware/vmware_guest_facts.py: nerzhul
   $modules/cloud/vmware/vmware_guest_find.py: $team_vmware
-  $modules/cloud/vmware/vmware_host.py: $team_ansible jcpowermac mtnbikenc
+  $modules/cloud/vmware/vmware_host.py: $team_ansible jcpowermac
   $modules/cloud/vmware/vmware_local_user_manager.py: $team_ansible
   $modules/cloud/vmware/vmware_maintenancemode.py: $team_ansible
-  $modules/cloud/vmware/vmware_migrate_vmk.py: $team_ansible jcpowermac mtnbikenc
-  $modules/cloud/vmware/vmware_portgroup.py: $team_ansible jcpowermac mtnbikenc
+  $modules/cloud/vmware/vmware_migrate_vmk.py: $team_ansible jcpowermac
+  $modules/cloud/vmware/vmware_portgroup.py: $team_ansible jcpowermac
   $modules/cloud/vmware/vmware_resource_pool.py: dav1x
   $modules/cloud/vmware/vmware_target_canonical_facts.py: $team_ansible
   $modules/cloud/vmware/vmware_vm_facts.py: $team_ansible jcpowermac
   $modules/cloud/vmware/vmware_vm_shell.py: chrrrles ritzk
   $modules/cloud/vmware/vmware_vm_vss_dvs_migrate.py: $team_ansible jcpowermac
-  $modules/cloud/vmware/vmware_vmkernel.py: $team_ansible jcpowermac mtnbikenc
-  $modules/cloud/vmware/vmware_vmkernel_ip_config.py: $team_ansible jcpowermac mtnbikenc
+  $modules/cloud/vmware/vmware_vmkernel.py: $team_ansible jcpowermac
+  $modules/cloud/vmware/vmware_vmkernel_ip_config.py: $team_ansible jcpowermac
   $modules/cloud/vmware/vmware_vmotion.py: $team_ansible bedecarroll
-  $modules/cloud/vmware/vmware_vsan_cluster.py: $team_ansible mtnbikenc
-  $modules/cloud/vmware/vmware_vswitch.py: akasurde jcpowermac mtnbikenc
+  $modules/cloud/vmware/vmware_vsan_cluster.py: $team_ansible
+  $modules/cloud/vmware/vmware_vswitch.py: akasurde jcpowermac
   $modules/cloud/vmware/vsphere_copy.py: dagwieers
   $modules/cloud/vmware/vsphere_guest.py: $team_ansible rhoop
   $modules/cloud/webfaction/: quentinsf
@@ -307,8 +309,7 @@ files:
   $modules/database/misc/riak.py: drewkerrigan jsmartin
   $modules/database/mongodb/mongodb_parameter.py: nerzhul
   $modules/database/mongodb/mongodb_user.py: lujeni
-  $modules/database/mssql/mssql_db.py: Jmainguy vedit
-  $modules/database/mysql/mysql_db.py: $team_ansible
+  $modules/database/mssql/mssql_db.py: Jmainguy vedit kenichi-ogawa-1988
   $modules/database/mysql/mysql_replication.py: banyek
   $modules/database/mysql/mysql_user.py: Jmainguy
   $modules/database/mysql/mysql_variables.py: banyek
@@ -335,21 +336,16 @@ files:
   $modules/files/synchronize.py: $team_ansible tima
   $modules/files/tempfile.py:
   $modules/files/template.py: $team_ansible
-  $modules/files/unarchive.py: dagwieers pileofrogs
+  $modules/files/unarchive.py:
+    labels: unarchive
+    maintainers: pileofrogs
   $modules/files/xattr.py: $team_ansible bcoca
   $modules/files/xml.py:
     ignored: magnus919
+    labels: xml
     maintainers: tbielawa dagwieers sm4rk0 cmprescott
-  $modules/identity/ipa/ipa_dnsrecord.py: Nosmoht akasurde
-  $modules/identity/ipa/ipa_group.py: Nosmoht
-  $modules/identity/ipa/ipa_hbacrule.py: Nosmoht
-  $modules/identity/ipa/ipa_host.py: Nosmoht
-  $modules/identity/ipa/ipa_hostgroup.py: Nosmoht
-  $modules/identity/ipa/ipa_role.py: Nosmoht
-  $modules/identity/ipa/ipa_sudocmd.py: Nosmoht
-  $modules/identity/ipa/ipa_sudocmdgroup.py: Nosmoht
-  $modules/identity/ipa/ipa_sudorule.py: Nosmoht
-  $modules/identity/ipa/ipa_user.py: Nosmoht
+  $modules/identity/ipa/:
+    maintainers: $team_ipa
   $modules/identity/opendj/opendj_backendprop.py: dj-wasabi
   $modules/inventory/add_host.py: $team_ansible
   $modules/inventory/group_by.py: $team_ansible jhoekx
@@ -411,12 +407,16 @@ files:
   $modules/net_tools/omapi_host.py: nerzhul
   $modules/net_tools/snmp_facts.py: ogenstad
   $modules/network/a10/: ericchou1 mischapeters
-  $modules/network/aci/: dagwieers schunduri jmcgill298
+  $modules/network/aci/:
+    labels: aci
+    maintainers: dagwieers schunduri jmcgill298
   $modules/network/aireos/: jmighion
   $modules/network/aos/: dgarros jeremyschulman
   $modules/network/aruba/: jmighion
   $modules/network/asa/: ogenstad
-  $modules/network/avi/: $team_avi
+  $modules/network/avi/:
+    labels: avi
+    maintainers: $team_avi
   $modules/network/bigswitch/: jayakody tedelhourani vuile
   $modules/network/citrix/netscaler.py: $team_ansible
   $modules/network/cloudengine/: QijunPan
@@ -425,7 +425,10 @@ files:
   $modules/network/dellos6/: abirami-n skg-net
   $modules/network/dellos9/: dhivyap skg-net
   $modules/network/eos/: privateip trishnaguha
-  $modules/network/f5/: caphrim007
+  $modules/network/f5/:
+    ignored: Etienne-Carriere mhite mryanlam perzizzle srvg wojtek0806
+    labels: f5
+    maintainers: caphrim007
   $modules/network/fortios/: bjolivot
   $modules/network/illumos/: xen0l
   $modules/network/interface/: $team_networking
@@ -511,13 +514,13 @@ files:
   $modules/packaging/os/pkgng.py:
     ignored: bleader
     maintainers: JoergFiedler
-  $modules/packaging/os/pkgutil.py: dermute
+  $modules/packaging/os/pkgutil.py: dermute scathatheworm
   $modules/packaging/os/portage.py:
     ignored: sayap
     maintainers: wltjr
   $modules/packaging/os/portinstall.py: berenddeboer
   $modules/packaging/os/pulp_repo.py: sysadmind
-  $modules/packaging/os/redhat_subscription.py: alikins barnabycourt
+  $modules/packaging/os/redhat_subscription.py: alikins kahowell
   $modules/packaging/os/rhn_channel.py: alikins vincentvdk
   $modules/packaging/os/rhn_register.py: $team_rhn
   $modules/packaging/os/rpm_key.py: hacosta
@@ -527,7 +530,7 @@ files:
   $modules/packaging/os/swdepot.py: melodous
   $modules/packaging/os/swupd.py: albertomurillo
   $modules/packaging/os/urpmi.py: pmakowski
-  $modules/packaging/os/yum.py: $team_ansible berenddeschouwer verm666
+  $modules/packaging/os/yum.py: $team_ansible berenddeschouwer verm666 mkrizek
   $modules/packaging/os/yum_repository.py: jtyr
   $modules/packaging/os/zypper.py:
     ignored: dirtyharrycallahan
@@ -541,7 +544,7 @@ files:
   $modules/remote_management/stacki/stacki_host.py: bbyhuy bsanders
   $modules/remote_management/wakeonlan.py: dagwieers
   $modules/source_control/bzr.py: andreparames
-  $modules/source_control/git.py: $team_ansible robinro
+  $modules/source_control/git.py: $team_ansible
   $modules/source_control/git_config.py: djmattyg007
   $modules/source_control/github_deploy_key.py: bincyber
   $modules/source_control/github_hooks.py: pcgentry
@@ -611,7 +614,9 @@ files:
   $modules/system/selinux_permissive.py: mscherer
   $modules/system/seport.py: dankeder
   $modules/system/service.py: $team_ansible
-  $modules/system/setup.py: $team_ansible
+  $modules/system/setup.py:
+    ignored: david_obrien
+    maintainers: $team_ansible
   $modules/system/solaris_zone.py: pmarkham
   $modules/system/svc.py: bcoca
   $modules/system/sysctl.py: akasurde davixx
@@ -640,7 +645,9 @@ files:
   $modules/web_infrastructure/ejabberd_user.py: privateip
   $modules/web_infrastructure/gunicorn.py: agmezr
   $modules/web_infrastructure/htpasswd.py: $team_ansible
-  $modules/web_infrastructure/jboss.py: jhoekx
+  $modules/web_infrastructure/jboss.py:
+    labels: jboss
+    maintainers: jhoekx
   $modules/web_infrastructure/jenkins_job.py: sermilrod
   $modules/web_infrastructure/jenkins_plugin.py: jtyr
   $modules/web_infrastructure/jenkins_script.py: hogarthj
@@ -810,15 +817,13 @@ files:
     - dynamic inventory script
     - dynamic inventory
     - inventory script
-    labels:
-    - "c:inventory/contrib_script"
+    labels: "c:inventory/contrib_script"
     support: community
   contrib/inventory/linode.py:
     keywords:
     - linode dynamic inventory script
     maintainers: intheclouddan rwaweber zbal
-    labels:
-    - cloud
+    labels: cloud
   contrib/inventory/openstack.py:
     keywords:
     - openstack dynamic inventory script
@@ -866,7 +871,9 @@ files:
     labels: networking
   $module_utils/aci.py:
     maintainers: dagwieers schunduri jmcgill298
-    labels: networking
+    labels:
+    - aci
+    - networking
   $module_utils/aireos.py:
     maintainers: jmighion
     labels: networking
@@ -881,7 +888,9 @@ files:
     labels: networking
   $module_utils/avi.py:
     maintainers: $team_avi
-    labels: networking
+    labels:
+    - avi
+    - networking
   $module_utils/bigswitch_utils.py:
     maintainers: jayakody tedelhourani vuile
     labels: networking
@@ -907,7 +916,9 @@ files:
     labels: networking
   $module_utils/f5_utils.py:
     maintainers: caphrim007
-    labels: networking
+    labels:
+    - f5
+    - networking
   $module_utils/fortios.py:
     maintainers: bjolivot
     labels: networking
@@ -951,6 +962,8 @@ files:
   $module_utils/ordnance.py:
     maintainers: alexanderturner djh00t
     labels: networking
+  $module_utils/ovirt.py:
+    maintainers: joshainglis karmab machacekondra
   $module_utils/sros.py:
     maintainers: $team_networking
     labels: networking
@@ -1033,6 +1046,9 @@ files:
     labels:
     - cloud
     - openstack
+  lib/ansible/plugins/lookukp/dig:
+    maintainers: jpmens
+    labels: community
   lib/ansible/plugins/netconf/:
     maintainers: $team_networking
     labels: networking
@@ -1078,8 +1094,7 @@ files:
     - validate-modules
   docs/:
     labels: docs_pull_request
-    notify:
-      - dharmabumstead
+    notify: dharmabumstead
   packaging/:
     # 'packaging' automatically added to labels
 macros:
@@ -1089,7 +1104,7 @@ macros:
   team_avi: ericsysmin grastogi23 khaltore
   team_azure: haroldwongms nitzmahone tstringer
   team_cumulus: isharacomix jrrivers privateip
-  team_manageiq: gtanzillo abellotti zgalor yaacov
+  team_manageiq: gtanzillo abellotti zgalor yaacov cben
   team_netapp: hulquest lmprice broncofan
   team_netscaler: chiradeep giorgos-nikolopoulos
   team_netvisor: Qalthos amitsi gundalow privateip
@@ -1097,8 +1112,9 @@ macros:
   team_nxos: GGabriele jedelman8 mikewiebe privateip rahushen rcarrillocruz trishnaguha
   team_openstack: emonty j2sol juliakreger rcarrillocruz shrews thingee dagnello
   team_openswitch: Qalthos gundalow privateip
-  team_rabbitmq: chrishoffman manuel-sousa romanek-adam hyperized
+  team_rabbitmq: chrishoffman manuel-sousa hyperized
   team_rhn: alikins barnabycourt flossware vritant
   team_tower: ghjm jlaska matburt wwitzel3
   team_vmware: dagwieers dav1x jctanner nerzhul akasurde
   team_windows: dagwieers jborean93 jhawkesworth
+  team_ipa: Nosmoht akasurde

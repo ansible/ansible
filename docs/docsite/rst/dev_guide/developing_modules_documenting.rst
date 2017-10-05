@@ -41,7 +41,8 @@ code.
 .. code-block:: python
 
     #!/usr/bin/python
-    # Copyright (c) 2017 Ansible Project
+    
+    # Copyright: (c) 2017, Ansible Project
     # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 Every file should have a copyright line with the original copyright holder.
@@ -61,8 +62,9 @@ add the newer line above the older one, like so:
 .. code-block:: python
 
     #!/usr/bin/python
-    # Copyright (c) 2017 [New Contributor(s)]
-    # Copyright (c) 2015 [Original Contributor(s)]
+    
+    # Copyright: (c) 2017, [New Contributor(s)]
+    # Copyright: (c) 2015, [Original Contributor(s)]
     # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 
@@ -84,11 +86,11 @@ For new modules, the following block can be simply added into your module
    * ``metadata_version`` is the version of the ``ANSIBLE_METADATA`` schema, *not* the version of the module.
    * Promoting a module's ``status`` or ``supported_by`` status should only be done by members of the Ansible Core Team.
 
-.. note:: Pre-released metdata version
+.. note:: Pre-released metadata version
 
     During development of Ansible-2.3, modules had an initial version of the
     metadata.  This version was modified slightly after release to fix some
-    points of confusion.  You may occassionally see PRs for modules where the
+    points of confusion.  You may occasionally see PRs for modules where the
     ANSIBLE_METADATA doesn't look quite right because of this.  Module
     metadata should be fixed before checking it into the repository.
 
@@ -109,11 +111,11 @@ Structure
 Fields
 ^^^^^^
 
-:metadata_version: An “X.Y” formatted string. X and Y are integers which
+:metadata_version: An "X.Y" formatted string. X and Y are integers which
    define the metadata format version. Modules shipped with Ansible are
    tied to an Ansible release, so we will only ship with a single version
-   of the metadata. We’ll increment Y if we add fields or legal values
-   to an existing field. We’ll increment X if we remove fields or values
+   of the metadata. We'll increment Y if we add fields or legal values
+   to an existing field. We'll increment X if we remove fields or values
    or change the type or meaning of a field.
    Current metadata_version is "1.1"
 :supported_by: This field records who supports the module.
@@ -130,13 +132,13 @@ Fields
    `Modules Support <http://docs.ansible.com/ansible/modules_support.html>`_.
 
 :status: This field records information about the module that is
-   important to the end user. It’s a list of strings. The default value
-   is a single element list [“preview”]. The following strings are valid
+   important to the end user. It's a list of strings. The default value
+   is a single element list ["preview"]. The following strings are valid
    statuses and have the following meanings:
 
-   :stableinterface: This means that the module’s parameters are
+   :stableinterface: This means that the module's parameters are
       stable. Every effort will be made not to remove parameters or change
-      their meaning. It is not a rating of the module’s code quality.
+      their meaning. It is not a rating of the module's code quality.
    :preview: This module is a tech preview. This means it may be
       unstable, the parameters may change, or it may require libraries or
       web services that are themselves subject to incompatible changes.
@@ -223,6 +225,8 @@ The following fields can be used and are all required unless specified otherwise
     * If `required` is false/missing, `default` may be specified (assumed 'null' if missing).
     * Ensure that the default parameter in the docs matches the default parameter in the code.
     * The default option must not be listed as part of the description.
+    * If the option is a boolean value, you can use any of the boolean values recognized by Ansible:
+      (such as true/false or yes/no).  Choose the one that reads better in the context of the option.
   :choices:
     List of option values. Should be absent if empty.
   :type:
@@ -333,8 +337,30 @@ Example::
         returned: when supported
         type: string
         sample: 2a5aeecc61dc98c4d780b14b330e3282
-    ...
+    '''
 
+    RETURN = '''
+    packages:
+        description: Information about package requirements
+        returned: On success
+        type: complex
+        contains:
+            missing:
+                description: Packages that are missing from the system
+                returned: success
+                type: list
+                sample:
+                    - libmysqlclient-dev
+                    - libxml2-dev
+            badversion:
+                description: Packages that are installed but at bad versions.
+                returned: success
+                type: list
+                sample:
+                    - package: libxml2-dev
+                      version: 2.9.4+dfsg1-2
+                      constraint: ">= 3.0"
+    '''
 
 .. note::
 

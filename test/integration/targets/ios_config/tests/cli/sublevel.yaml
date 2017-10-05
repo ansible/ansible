@@ -7,11 +7,13 @@
       - 'no ip access-list extended test'
       - 'no ip access-list standard test'
     match: none
+    authorize: yes
 
 - name: configure sub level command
   ios_config:
     lines: ['permit ip any any log']
     parents: ['ip access-list extended test']
+    authorize: yes
   register: result
 
 - assert:
@@ -24,6 +26,7 @@
   ios_config:
     lines: ['permit ip any any log']
     parents: ['ip access-list extended test']
+    authorize: yes
   register: result
 
 - assert:
@@ -35,5 +38,6 @@
     lines:
       - 'no ip access-list extended test'
     match: none
+    authorize: yes
 
 - debug: msg="END cli/sublevel.yaml"

@@ -193,6 +193,7 @@ class LinuxHardware(Hardware):
 
             # model name is for Intel arch, Processor (mind the uppercase P)
             # works for some ARM devices, like the Sheevaplug.
+            # 'ncpus active' is SPARC attribute
             if key in ['model name', 'Processor', 'vendor_id', 'cpu', 'Vendor', 'processor']:
                 if 'processor' not in cpu_facts:
                     cpu_facts['processor'] = []
@@ -216,6 +217,8 @@ class LinuxHardware(Hardware):
                 cores[coreid] = int(data[1].strip())
             elif key == '# processors':
                 cpu_facts['processor_cores'] = int(data[1].strip())
+            elif key == 'ncpus active':
+                i = int(data[1].strip())
 
         # Skip for platforms without vendor_id/model_name in cpuinfo (e.g ppc64le)
         if vendor_id_occurrence > 0:
@@ -671,7 +674,7 @@ class LinuxHardware(Hardware):
             if vgs_path:
                 rc, vg_lines, err = self.module.run_command('%s %s' % (vgs_path, lvm_util_options))
                 for vg_line in vg_lines.splitlines():
-                    items = vg_line.split(',')
+                    items = vg_line.strip().split(',')
                     vgs[items[0]] = {'size_g': items[-2],
                                      'free_g': items[-1],
                                      'num_lvs': items[2],
@@ -684,7 +687,7 @@ class LinuxHardware(Hardware):
             if lvs_path:
                 rc, lv_lines, err = self.module.run_command('%s %s' % (lvs_path, lvm_util_options))
                 for lv_line in lv_lines.splitlines():
-                    items = lv_line.split(',')
+                    items = lv_line.strip().split(',')
                     lvs[items[0]] = {'size_g': items[3], 'vg': items[1]}
 
             pvs_path = self.module.get_bin_path('pvs')
@@ -693,7 +696,7 @@ class LinuxHardware(Hardware):
             if pvs_path:
                 rc, pv_lines, err = self.module.run_command('%s %s' % (pvs_path, lvm_util_options))
                 for pv_line in pv_lines.splitlines():
-                    items = pv_line.split(',')
+                    items = pv_line.strip().split(',')
                     pvs[self._find_mapper_device_name(items[0])] = {
                         'size_g': items[4],
                         'free_g': items[5],

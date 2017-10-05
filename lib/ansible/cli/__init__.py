@@ -168,7 +168,7 @@ class CLI(with_metaclass(ABCMeta, object)):
         else:
             display.v(u"No config file found; using defaults")
 
-        # warn about deprecated options
+        # warn about deprecated config options
         for deprecated in C.config.DEPRECATED:
             name = deprecated[0]
             why = deprecated[1]['why']
@@ -178,6 +178,10 @@ class CLI(with_metaclass(ABCMeta, object)):
                 alt = ''
             ver = deprecated[1]['version']
             display.deprecated("%s option, %s %s" % (name, why, alt), version=ver)
+
+        # warn about typing issues with configuration entries
+        for unable in C.config.UNABLE:
+            display.warning("Unable to set correct type for configuration entry: %s" % unable)
 
     @staticmethod
     def split_vault_id(vault_id):
@@ -192,7 +196,8 @@ class CLI(with_metaclass(ABCMeta, object)):
 
     @staticmethod
     def build_vault_ids(vault_ids, vault_password_files=None,
-                        ask_vault_pass=None, create_new_password=None):
+                        ask_vault_pass=None, create_new_password=None,
+                        auto_prompt=True):
         vault_password_files = vault_password_files or []
         vault_ids = vault_ids or []
 
@@ -207,7 +212,7 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         # if an action needs an encrypt password (create_new_password=True) and we dont
         # have other secrets setup, then automatically add a password prompt as well.
-        if ask_vault_pass or (create_new_password and not vault_ids):
+        if ask_vault_pass or (auto_prompt and not vault_ids):
             id_slug = u'%s@%s' % (C.DEFAULT_VAULT_IDENTITY, u'prompt_ask_vault_pass')
             vault_ids.append(id_slug)
 
@@ -216,7 +221,8 @@ class CLI(with_metaclass(ABCMeta, object)):
     # TODO: remove the now unused args
     @staticmethod
     def setup_vault_secrets(loader, vault_ids, vault_password_files=None,
-                            ask_vault_pass=None, create_new_password=False):
+                            ask_vault_pass=None, create_new_password=False,
+                            auto_prompt=True):
         # list of tuples
         vault_secrets = []
 
@@ -246,7 +252,8 @@ class CLI(with_metaclass(ABCMeta, object)):
         vault_ids = CLI.build_vault_ids(vault_ids,
                                         vault_password_files,
                                         ask_vault_pass,
-                                        create_new_password)
+                                        create_new_password,
+                                        auto_prompt=auto_prompt)
 
         for vault_id_slug in vault_ids:
             vault_id_name, vault_id_value = CLI.split_vault_id(vault_id_slug)
@@ -399,7 +406,10 @@ class CLI(with_metaclass(ABCMeta, object)):
 
     @staticmethod
     def unfrack_path(option, opt, value, parser):
-        setattr(parser.values, option.dest, unfrackpath(value))
+        if value != '-':
+            setattr(parser.values, option.dest, unfrackpath(value))
+        else:
+            setattr(parser.values, option.dest, value)
 
     @staticmethod
     def base_parser(usage="", output_opts=False, runas_opts=False, meta_opts=False, runtask_opts=False, vault_opts=False, module_opts=False,
@@ -446,9 +456,9 @@ class CLI(with_metaclass(ABCMeta, object)):
                               help='the new vault identity to use for rekey')
 
         if subset_opts:
-            parser.add_option('-t', '--tags', dest='tags', default=[], action='append',
+            parser.add_option('-t', '--tags', dest='tags', default=C.TAGS_RUN, action='append',
                               help="only run plays and tasks tagged with these values")
-            parser.add_option('--skip-tags', dest='skip_tags', default=[], action='append',
+            parser.add_option('--skip-tags', dest='skip_tags', default=C.TAGS_SKIP, action='append',
                               help="only run plays and tasks whose tags do not match these values")
 
         if output_opts:
@@ -605,7 +615,7 @@ class CLI(with_metaclass(ABCMeta, object)):
                     self.options.inventory = [self.options.inventory]
 
                 # Ensure full paths when needed
-                self.options.inventory = [unfrackpath(opt) if ',' not in opt else opt for opt in self.options.inventory]
+                self.options.inventory = [unfrackpath(opt, follow=False) if ',' not in opt else opt for opt in self.options.inventory]
 
             else:
                 self.options.inventory = C.DEFAULT_HOST_LIST
@@ -773,7 +783,8 @@ class CLI(with_metaclass(ABCMeta, object)):
         vault_secrets = CLI.setup_vault_secrets(loader,
                                                 vault_ids=vault_ids,
                                                 vault_password_files=options.vault_password_files,
-                                                ask_vault_pass=options.ask_vault_pass)
+                                                ask_vault_pass=options.ask_vault_pass,
+                                                auto_prompt=False)
         loader.set_vault_secrets(vault_secrets)
 
         # create the inventory, and filter it based on the subset specified (if any)

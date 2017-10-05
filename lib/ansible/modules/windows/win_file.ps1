@@ -1,21 +1,10 @@
 #!powershell
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# WANT_JSON
-# POWERSHELL_COMMON
+# Copyright: (c) 2017, Ansible Project
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+#Requires -Module Ansible.ModuleUtils.Legacy.psm1
 
 $ErrorActionPreference = "Stop"
 
@@ -61,7 +50,7 @@ function Remove-File($file, $checkmode) {
                 [Ansible.Command.SymLinkHelper]::DeleteSymLink($file.FullName)
             }
         } elseif ($file.PSIsContainer) {
-            Remove-Directory -directory $file -WhatIf:$checkmode
+            Remove-Directory -directory $file -checkmode $checkmode
         } else {
             Remove-Item -Path $file.FullName -Force -WhatIf:$checkmode
         }
@@ -70,11 +59,11 @@ function Remove-File($file, $checkmode) {
     }
 }
 
-function Remove-Directory($directory) {
+function Remove-Directory($directory, $checkmode) {
     foreach ($file in Get-ChildItem $directory.FullName) {
-        Remove-File -file $file
+        Remove-File -file $file -checkmode $checkmode
     }
-    Remove-Item -Path $directory.FullName -Force -Recurse
+    Remove-Item -Path $directory.FullName -Force -Recurse -WhatIf:$checkmode
 }
 
 
@@ -87,10 +76,10 @@ if ($state -eq "touch") {
     }
 }
 
-if (Test-Path $path) {
+if (Test-Path -Path $path) {
     $fileinfo = Get-Item -Path $path
     if ($state -eq "absent") {
-        Remove-File -File $fileinfo -CheckMode $check_mode
+        Remove-File -file $fileinfo -checkmode $check_mode
         $result.changed = $true
     } else {
         if ($state -eq "directory" -and -not $fileinfo.PsIsContainer) {

@@ -12,6 +12,7 @@
     parents: ip access-list extended test
     before: no ip access-list extended test
     match: none
+    authorize: yes
 
 - name: configure sub level command using strict match
   ios_config:
@@ -22,6 +23,7 @@
       - permit ip host 4.4.4.4 any log
     parents: ip access-list extended test
     match: strict
+    authorize: yes
   register: result
 
 - assert:
@@ -37,6 +39,7 @@
     parents: ip access-list extended test
     after: exit
     match: strict
+    authorize: yes
   register: result
 
 - assert:
@@ -53,5 +56,6 @@
   ios_config:
     lines: no ip access-list extended test
     match: none
+    authorize: yes
 
 - debug: msg="END cli/sublevel_strict.yaml"

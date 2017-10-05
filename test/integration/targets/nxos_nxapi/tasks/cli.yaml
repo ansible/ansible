@@ -14,8 +14,6 @@
   loop_control:
     loop_var: test_case_to_run
 
-- name: disable nxapi
-  nxos_config:
-    lines:
-      - no feature nxapi
-    provider: "{{ cli }}"
+- name: Reset nxapi to default state
+  nxos_nxapi:
+      provider: "{{ cli }}"

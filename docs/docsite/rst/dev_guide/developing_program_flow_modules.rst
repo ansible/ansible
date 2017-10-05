@@ -277,7 +277,7 @@ substitutions:
 
   - :code:`"<<ANSIBLE_VERSION>>"` is substituted with the Ansible version.  In
     :ref:`new-style Python modules <flow_python_modules>` under the
-    :ref:`Ansiballz` frameworkthe proper way is to instead instantiate an
+    :ref:`Ansiballz` framework the proper way is to instead instantiate an
     :class:`AnsibleModule` and then access the version from
     :attr:``AnsibleModule.ansible_version``.
   - :code:`"<<INCLUDE_ANSIBLE_MODULE_COMPLEX_ARGS>>"` is substituted with

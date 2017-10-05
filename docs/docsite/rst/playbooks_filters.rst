@@ -451,7 +451,10 @@ To get a sha512 password hash (random salt)::
 To get a sha256 password hash with a specific salt::
 
     {{ 'secretpassword'|password_hash('sha256', 'mysecretsalt') }}
+    
+An idempotent method to generate unique hashes per system is to use a salt that is consistent between runs::
 
+    {{ 'secretpassword'|password_hash('sha512', 65534|random(seed=inventory_hostname)|string) }}
 
 Hash types available depend on the master system running ansible,
 'hash' depends on hashlib password_hash depends on passlib (http://passlib.readthedocs.io/en/stable/lib/passlib.hash.html).
@@ -610,34 +613,34 @@ URL Split Filter
 
 The ``urlsplit`` filter extracts the fragment, hostname, netloc, password, path, port, query, scheme, and username from an URL. With no arguments, returns a dictionary of all the fields::
 
-    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#frament" | urlsplit('hostname') }}
+    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#fragment" | urlsplit('hostname') }}
     # => 'www.acme.com'
 
-    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#frament" | urlsplit('netloc') }}
+    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#fragment" | urlsplit('netloc') }}
     # => 'user:password@www.acme.com:9000'
 
-    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#frament" | urlsplit('username') }}
+    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#fragment" | urlsplit('username') }}
     # => 'user'
 
-    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#frament" | urlsplit('password') }}
+    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#fragment" | urlsplit('password') }}
     # => 'password'
 
-    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#frament" | urlsplit('path') }}
+    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#fragment" | urlsplit('path') }}
     # => '/dir/index.html'
 
-    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#frament" | urlsplit('port') }}
+    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#fragment" | urlsplit('port') }}
     # => '9000'
 
-    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#frament" | urlsplit('scheme') }}
+    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#fragment" | urlsplit('scheme') }}
     # => 'http'
 
-    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#frament" | urlsplit('query') }}
+    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#fragment" | urlsplit('query') }}
     # => 'query=term'
 
-    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#frament" | urlsplit('fragment') }}
+    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#fragment" | urlsplit('fragment') }}
     # => 'fragment'
 
-    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#frament" | urlsplit }}
+    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#fragment" | urlsplit }}
     # =>
     #   {
     #       "fragment": "fragment",

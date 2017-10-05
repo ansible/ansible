@@ -76,6 +76,9 @@ options:
         required: false
         description:
             - Optionally set the user's shell.
+            - On Mac OS X, before version 2.5, the default shell for non-system users was
+              /usr/bin/false. Since 2.5, the default shell for non-system users on
+              Mac OS X is /bin/bash.
     home:
         required: false
         description:
@@ -83,7 +86,7 @@ options:
     skeleton:
         required: false
         description:
-            - Optionally set a home skeleton directory. Requires createhome option!
+            - Optionally set a home skeleton directory. Requires create_home option!
         version_added: "2.0"
     password:
         required: false
@@ -100,14 +103,15 @@ options:
         choices: [ present, absent ]
         description:
             - Whether the account should exist or not, taking action if the state is different from what is stated.
-    createhome:
-        required: false
-        default: "yes"
-        choices: [ "yes", "no" ]
+    create_home:
         description:
             - Unless set to C(no), a home directory will be made for the user
               when the account is created or if the home directory does not
               exist.
+            - Changed from C(createhome) to C(create_home) in version 2.5.
+        default: yes
+        type: bool
+        aliases: ['createhome']
     move_home:
         required: false
         default: "no"
@@ -298,7 +302,7 @@ class User(object):
         self.password   = module.params['password']
         self.force      = module.params['force']
         self.remove     = module.params['remove']
-        self.createhome = module.params['createhome']
+        self.create_home = module.params['create_home']
         self.move_home  = module.params['move_home']
         self.skeleton   = module.params['skeleton']
         self.system     = module.params['system']
@@ -419,7 +423,7 @@ class User(object):
             cmd.append('-p')
             cmd.append(self.password)
 
-        if self.createhome:
+        if self.create_home:
             cmd.append('-m')
 
             if self.skeleton is not None:
@@ -815,7 +819,7 @@ class FreeBsdUser(User):
             cmd.append('-G')
             cmd.append(','.join(groups))
 
-        if self.createhome:
+        if self.create_home:
             cmd.append('-m')
 
             if self.skeleton is not None:
@@ -1013,7 +1017,7 @@ class OpenBSDUser(User):
             cmd.append('-p')
             cmd.append(self.password)
 
-        if self.createhome:
+        if self.create_home:
             cmd.append('-m')
 
             if self.skeleton is not None:
@@ -1183,7 +1187,7 @@ class NetBSDUser(User):
             cmd.append('-p')
             cmd.append(self.password)
 
-        if self.createhome:
+        if self.create_home:
             cmd.append('-m')
 
             if self.skeleton is not None:
@@ -1360,7 +1364,7 @@ class SunOS(User):
             cmd.append('-s')
             cmd.append(self.shell)
 
-        if self.createhome:
+        if self.create_home:
             cmd.append('-m')
 
             if self.skeleton is not None:
@@ -1755,13 +1759,18 @@ class DarwinUser(User):
             self.uid = str(self._get_next_uid(self.system))
 
         # Homedir is not created by default
-        if self.createhome:
+        if self.create_home:
             if self.home is None:
                 self.home = '/Users/%s' % self.name
             if not self.module.check_mode:
                 if not os.path.exists(self.home):
                     os.makedirs(self.home)
                 self.chown_homedir(int(self.uid), int(self.group), self.home)
+
+        # dscl sets shell to /usr/bin/false when UserShell is not specified
+        # so set the shell to /bin/bash when the user is not a system user
+        if not self.system and self.shell is None:
+            self.shell = '/bin/bash'
 
         for field in self.fields:
             if field[0] in self.__dict__ and self.__dict__[field[0]]:
@@ -1888,7 +1897,7 @@ class AIX(User):
             cmd.append('-s')
             cmd.append(self.shell)
 
-        if self.createhome:
+        if self.create_home:
             cmd.append('-m')
 
             if self.skeleton is not None:
@@ -2038,7 +2047,7 @@ class HPUX(User):
             cmd.append('-p')
             cmd.append(self.password)
 
-        if self.createhome:
+        if self.create_home:
             cmd.append('-m')
         else:
             cmd.append('-M')
@@ -2160,7 +2169,7 @@ def main():
             force=dict(default='no', type='bool'),
             remove=dict(default='no', type='bool'),
             # following options are specific to useradd
-            createhome=dict(default='yes', type='bool'),
+            create_home=dict(default='yes', aliases=['createhome'], type='bool'),
             skeleton=dict(default=None, type='str'),
             system=dict(default='no', type='bool'),
             # following options are specific to usermod
@@ -2210,7 +2219,7 @@ def main():
                 result['system'] = user.name
             else:
                 result['system'] = user.system
-                result['createhome'] = user.createhome
+                result['create_home'] = user.create_home
         else:
             # modify user (note: this function is check mode aware)
             (rc, out, err) = user.modify_user()
@@ -2248,7 +2257,7 @@ def main():
         info = user.user_info()
         if user.home is None:
             user.home = info[5]
-        if not os.path.exists(user.home) and user.createhome:
+        if not os.path.exists(user.home) and user.create_home:
             if not module.check_mode:
                 user.create_homedir(user.home)
                 user.chown_homedir(info[2], info[3], user.home)

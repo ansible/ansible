@@ -292,16 +292,18 @@ class ConfigManager(object):
             if ftype and defs[config].get(ftype):
                 if ftype == 'ini':
                     # load from ini config
-                    try:  # FIXME: generaelize _loop_entries to allow for files also
+                    try:  # FIXME: generaelize _loop_entries to allow for files also, most of this code is dupe
                         for ini_entry in defs[config]['ini']:
-                            value = get_ini_config_value(self._parser, ini_entry)
-                            origin = cfile
-                            if value is not None and 'deprecated' in ini_entry:
-                                self.DEPRECATED.append(('[%s]%s' % (ini_entry['section'], ini_entry['key']), ini_entry['deprecated']))
+                            temp_value = get_ini_config_value(self._parser, ini_entry)
+                            if temp_value is not None:
+                                value = temp_value
+                                origin = cfile
+                                if 'deprecated' in ini_entry:
+                                    self.DEPRECATED.append(('[%s]%s' % (ini_entry['section'], ini_entry['key']), ini_entry['deprecated']))
                     except Exception as e:
                         sys.stderr.write("Error while loading ini config %s: %s" % (cfile, to_native(e)))
                 elif ftype == 'yaml':
-                    pass  # FIXME: implement, also , break down key from defs (. notation???)
+                    # FIXME: implement, also , break down key from defs (. notation???)
                     origin = cfile
 
         '''
@@ -315,18 +317,9 @@ class ConfigManager(object):
         if value is None:
             value = defs[config].get('default')
             origin = 'default'
-            # FIXME: moved eval to constants as this does not have access to previous vars
-            if plugin_type is None and isinstance(value, string_types) and (value.startswith('eval(') and value.endswith(')')):
+            # skip typing as this is a temlated default that will be resolved later in constants, which has needed vars
+            if plugin_type is None and isinstance(value, string_types) and (value.startswith('{{') and value.endswith('}}')):
                 return value, origin
-            #default_value = defs[config].get('default')
-            #if plugin_type is None and isinstance(default_value, string_types) and (default_value.startswith('eval(') and default_value.endswith(')')):
-            #    try:
-            #        eval_string = default_value.replace('eval(', '', 1)[:-1]
-            #        value = eval(eval_string) # FIXME: safe eval?
-            #    except:
-            #        value = default_value
-            #else:
-            #    value = default_value
 
         # ensure correct type
         try:
@@ -373,11 +366,3 @@ class ConfigManager(object):
 
             # set the constant
             self.data.update_setting(Setting(config, value, origin, defs[config].get('type', 'string')))
-
-        # FIXME: find better way to do this by passing back to where display is available
-        if self.UNABLE:
-            sys.stderr.write("Unable to set correct type for:\n\t%s\n" % '\n\t'.join(self.UNABLE))
-        if self.DEPRECATED:
-            for k, reason in self.DEPRECATED:
-                sys.stderr.write("[DEPRECATED] %(k)s: %(why)s. It will be removed in %(version)s. As alternative use one of [%(alternatives)s]\n"
-                                 % dict(k=k, **reason))

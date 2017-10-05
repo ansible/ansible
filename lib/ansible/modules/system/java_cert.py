@@ -144,7 +144,28 @@ def check_cert_present(module, executable, keystore_path, keystore_pass, alias):
 
 def import_cert_url(module, executable, url, port, keystore_path, keystore_pass, alias):
     ''' Import certificate from URL into keystore located at keystore_path '''
-    fetch_cmd = ("%s -printcert -rfc -sslserver %s:%d")%(executable, url, port)
+    import re
+
+    https_proxy = os.getenv("https_proxy")
+    no_proxy = os.getenv("no_proxy")
+
+    proxy_opts = ''
+    if https_proxy is not None:
+        (proxy_host, proxy_port) = https_proxy.split(':')
+        proxy_opts = ("-J-Dhttps.proxyHost=%s -J-Dhttps.proxyPort=%s")%(proxy_host, proxy_port)
+
+        if no_proxy is not None:
+            # For Java's nonProxyHosts property, items are separated by '|',
+            # and patterns have to start with "*".
+            non_proxy_hosts = no_proxy.replace(',', '|')
+            non_proxy_hosts = re.sub(r'(^|\|)\.', r'\1*.', non_proxy_hosts)
+
+            # The property name is http.nonProxyHosts, there is no
+            # separate setting for HTTPS.
+            proxy_opts += (" -J-Dhttp.nonProxyHosts='%s'")%(non_proxy_hosts)
+
+    fetch_cmd = ("%s -printcert -rfc -sslserver %s %s:%d")%(executable, proxy_opts, url, port)
+
     import_cmd = ("%s -importcert -noprompt -keystore '%s' "
                   "-storepass '%s' -alias '%s'")%(executable, keystore_path,
                                                   keystore_pass, alias)

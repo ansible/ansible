@@ -1,7 +1,35 @@
 Ansible Changes By Release
 ==========================
 
-## 2.4 "Dancing Days" - ACTIVE DEVELOPMENT
+<a id="2.5"></a>
+
+## 2.5 "TBD" - ACTIVE DEVELOPMENT
+
+### Major Changes
+* Removed the previously deprecated 'accelerate' mode and all associated keywords and code.
+
+### Deprecations
+
+#### Deprecated Modules (to be removed in 2.9):
+
+#### Removed Modules (previously deprecated):
+* accelerate
+
+### Minor Changes
+* added a few new magic vars corresponding to configuration/command line options:
+  `ansible_diff_mode`, `ansible_inventory_sources`, `ansible_limit`, `ansible_run_tags` , `ansible_forks` and `ansible_skip_tags`
+* Updated the bundled copy of the six library to 1.11.0
+
+### New Modules
+
+#### Windows
+
+  * win_scheduled_task_stat
+
+
+<a id="2.4"></a>
+
+## 2.4 "Dancing Days" - 2017/09/18
 
 ### Major Changes
 
@@ -20,14 +48,14 @@ Ansible Changes By Release
   - New inventory plugins for creating inventory
   - Old inventory formats are still supported via plugins
   - Inline host_list is also an inventory plugin, an example alternative `advanced_host_list` is also provided (it supports ranges)
-  - New configuration option to list enabled plugins and precedence order: `whitelist_inventory` in ansible.cfg
+  - New configuration option to list enabled plugins and precedence order `[inventory]enable_plugins` in ansible.cfg
   - vars_plugins have been reworked, they are now run from Vars manager and API has changed (need docs)
   - Loading group_vars/host_vars is now a vars plugin and can be overridden
   - It is now possible to specify mulitple inventory sources in the command line (-i /etc/hosts1 -i /opt/hosts2)
   - Inventory plugins can use the cache plugin (i.e. virtualbox) and is affected by `meta: refresh_inventory`
   - Group variable precedence is now configurable via new 'precedence' option in ansible.cfg (needs docs)
   - Improved warnings and error messages across the board
-* Configuration has been changed from a hardcoded into the constants module to dynamically loaded from yaml definitions
+* Configuration has been changed from a hardcoded listing in the constants module to dynamically loaded from yaml definitions
   - Also added an ansible-config CLI to allow for listing config options and dumping current config (including origin)
   - TODO: build upon this to add many features detailed in ansible-config proposal https://github.com/ansible/proposals/issues/35
 * Windows modules now support the use of multiple shared module_utils files in the form of Powershell modules (.psm1), via `#Requires -Module Ansible.ModuleUtils.Whatever.psm1`
@@ -47,16 +75,18 @@ Ansible Changes By Release
   moved to `ansible.utils.unsafe_proxy` to avoid a circular import.
 * The win_get_url module has the dictionary 'win_get_url' in its results deprecated,
   its content is now also available directly in the resulting output, like other modules.
+* previouslly deprecated 'hostfile' config settings have been 're-deprecated' as before the code did not warn about deprecated configuration settings, but it does now.
 
 #### Deprecated Modules (to be removed in 2.8):
-* ec2_facts: replaced by ec2_metadata_facts
+* azure: use M(azure_rm_virtualmachine) instead
 * cs_nic: replaced by cs_instance_nic_secondaryip, also see new module cs_instance_nic for managing nics
+* ec2_facts: replaced by ec2_metadata_facts
+* ec2_remote_facts: replaced by ec2_instance_facts
 * panos_address: use M(panos_object) instead
-* panos_service: use M(panos_object) instead
-* panos_security_policy: use M(panos_security_rule) instead
 * panos_nat_policy: use M(panos_nat_rule) instead
+* panos_security_policy: use M(panos_security_rule) instead
+* panos_service: use M(panos_object) instead
 * s3: replaced by aws_s3
-* ec2_remote_facts: replaced by 
 * win_msi: use M(win_package) instead
 
 #### Removed Modules (previouslly deprecated):
@@ -65,8 +95,8 @@ Ansible Changes By Release
 * iosxr_template: use iosxr_config instead
 * junos_template: use junos_config instead
 * nxos_template: use nxos_config instead
-* ops_template: use ops_config instead
 * openswitch
+* ops_template: use ops_config instead
 
 
 ### Minor Changes
@@ -128,6 +158,11 @@ Ansible Changes By Release
     - extensions of files to ignore when using inventory directory
 	- patterns of flies to ignore when using inventory directory
 	- option to toggle failed inventory source parsing between an error or a warning
+* More fixes for Python 3 across the code base.
+* win_shell and win_command modules now properly preserve quoted arguments passed on the command-line. Tasks that attempted to work around the issue by adding extra quotes/escaping may need to be reworked. See https://github.com/ansible/ansible/issues/23019 for additional detail.
+* All configuration paths are now relative to the `ansible.cfg` file used.
+* By user request, a 'configuration macro' (``CWD``) is available to force configured paths to be relative to the current working directory. Please note that this is unsafe and not recommended.
+
 
 #### New Callbacks:
 - full_skip
@@ -576,6 +611,141 @@ Ansible Changes By Release
   * win_wait_for
   * win_wakeonlan
 
+<a id="2.3.3"></a>
+
+## 2.3.3 "Ramble On" - TBD
+
+### Bugfixes
+* Fix alternatives module handlling of non existing options
+* Fix synchronize traceback with the docker connection plugin
+* Do not escape backslashes in the template lookup plugin to mirror what the template module does
+* Fix the expires option of the postgresq_user module
+* Fix for win_acl when settings permissions on registry objects that use `ALL APPLICATION PACKAGES` and `ALL RESTRICTED APPLICATION PACKAGES`
+* Python3 fixes
+  * asorted azure modules
+  * pause module
+  * hacking/env-setup script
+  * Fix traceback when checking for passwords in logged strings when logging executed commands.
+  * docker_login module
+  * Workaround python-libselinux API change in the seboolean module
+  * digital_ocean_tag module
+  * Fix the zip filter
+  * Fix user module combining bytes and text
+  * Fix for security groups in the amazon efs module
+  * Fix for the jail connection plugin not finding the named jail
+  * Fix for blockinfile's parameters insertbefore and insertafter
+* ios_config: Fix traceback when the efaults parameter is not set
+* iosxr_config: Fixed unicode error when UTF-8 characters are in configs
+* Fix check mode in archive module
+* Fix UnboundLocalError in check mode in cs_role module
+* Fix to always use lowercase hostnames for host keys in known_hosts module
+* Added missing return results for win_stat
+* Fix rabbitmq modules to give a helpful error if requests is not installed
+* Fix yum module not deleting rpms that it downloaded
+* Fix yum module failing with a URL to an rpm
+* Fix file module inappropriately expanding literal dollar signs in a path read
+  from the filesystem as an environment variable.
+* Fix the ssh "smart" transport setting which automatically selects the best means of
+  transferring files over ssh (sftp, ssh, piped).
+* Fix authentication by api_key parameter in exoscale modules.
+* vmware module_utils shared code ssl/validate_certs fixes in connection logic
+* allow 'bridge' facts to work for certain containers that create conflicting ones with connection plugins
+* Fix for win_get_url to use TLS 1.2/1.1 if it is available on the host
+* Fix for the filetree lookup with non-ascii group names
+* Better message for invalid keywords/options in task due to undefined expressions
+* Fixed check mode for enable on Solaris for service module
+* Fix cloudtrail module to allow AWS profiles other than the default
+* Fix an encoding issue with secret (password) vars_prompts
+
+<a id="2.3.2"></a>
+
+## 2.3.2 "Ramble On" - 2017-08-04
+
+### Bugfixes
+* Fix partend i18n issues
+* fixed handling of extra vars for tower_job_template (#25272)
+* Python3 bugfixes
+  * Fix sorting of ec2 policies
+  * Fix digital_ocean dynamic inventory script
+  * Fix for the docker connection plugin
+  * Fix pip module when using python3's pyvenv and python3 -m venv to create virtualenvs
+* Fix for the AnsiBallZ wrapper so that it gives a better error message when
+  there's not enough disk space to create its tempdir.
+* Fix so ansilbe-galaxy install --force with unversioned roles will once again
+  overwrite old versions.
+* Fix for RabbitMQ 3.6.7 endpoint return code changing.
+* Fix for Foreman organization creation
+* fixed incorrect fail_json ref in rpm_key
+* Corrected requried on hash_name for dynamodb_table
+* Fix for fetch action plugin not validating correctly
+* Avoid vault view writing display to logs
+* htpasswd: fix passlib module version comparison
+* Fix for flowdock error message when external_user_name is missing
+* fixed corner case for delegate_to, loops and delegate_facts
+* fixed wait_for python2.4/2.5 compatibility (this is last version this is needed)
+* fix for adhoc not obeying callback options
+* fix for win_find where it fails to recursively scan empty nested directories
+* fix non-pipelined code paths for Windows (eg, ANSIBLE_KEEP_REMOTE_FILES, non-pipelined connection plugins)
+* fix for win_updates where args and check mode were ignored due to common code change
+* fix for unprivileged users to Windows runas become method
+* fix starttls code path for mail module
+* fix missing LC_TYPE in parted module
+* fix CN parsing with OpenSSL 1.1 in letsencrypt module
+* fix params assignment in jabber module
+* fix TXT record type handling in exo_dns_record module
+* fix message queue message ttl can't be 0 in rabbitmq_queue module
+* CloudStack bugfixes:
+  * fix template upload for users in cs_template module, change default to is_routing=None
+  * several fixes in cs_host module fixes hypervisor handling
+  * fix network param ignored due typo in cs_nic module
+  * fix missing type bool in module cs_zone
+  * fix KeyError: 'sshkeypair' in cs_instance module for CloudStack v4.5 and before
+* fix for win_chocolatey where trying to upgrade all the packages as per the example docs fails
+* fix for win_chocolatey where it did not fail if the version set did not exist
+* fix for win_regedit always changing a reg key if the dword values set is a hex
+* fix for wait_for on non-Linux systems with newer versions of psutil
+* fix eos_banner code and test issues
+* run tearup and teardown of EAPI service only on EAPI tests
+* fix eos_config tests so only Eth1 and Eth2 are used
+* Fix for potential bug when using legacy inventory vars for configuring the su password.
+* Fix crash in file module when directories contain non-utf8 filenames
+* Fix for dnf groupinstall with dnf-2.x
+* Fix seboolean module for incompatibility in newer Python3 selinux bindings
+* Optimization for inventory, no need to dedup at every stage, its redundant and slow
+* Fix fact gathering for package and service action plugins
+* make random_choice more error resilient (#27380)
+* ensure prefix in plugin loading to avoid conflicts
+* fix for a small number of modules (tempfile, possibly copy) which could fail
+  if the tempdir on the remote box was a symlink
++ fix non-pipelined code paths for Windows (eg, ANSIBLE_KEEP_REMOTE_FILES, non-pipelined connection plugins)
+* fix for win_updates where args and check mode were ignored due to common code change
+
+<a id="2.3.1"></a>
+
+## 2.3.1 "Ramble On" - 2017-06-01
+
+
+### Bugfixes
+* Security fix for CVE-2017-7481 - data for lookup plugins used as variables was not being correctly marked as "unsafe".
+* Fix default value of fetch module's validate_checksum to be True
+* Added fix for "meta: refresh_connection" not working with default 'smart' connection.
+* Fix template so that the --diff command line option works when the destination is a directory
+* Fix python3 bugs in pam_limits
+* Fix unbound error when using module deprecation as a single string
+* Several places in which error handling was broken due to bad conversions or just typos
+* Fix to user module for appending/setting groups on OpenBSD (flags were reversed)
+* assemble fix to use safer os.join.path, avoids charset issues
+* fixed issue with solaris facts and i18n
+* added python2.4 compatiblity fix to sysctl module
+* Fix comparison of exisiting container security opts in the docker_container module
+* fixed service module invocation of insserv on certain platforms
+* Fix traceback in os_user in an error case.
+* Fix docker container to restart a container when changing to fewer exposed ports
+* Fix tracebacks in docker_network
+* Fixes to detection of updated docker images
+* Handle detection of docker image changes when published ports is changed
+* Fix for docker_container restarting images when links list is empty.
+
 <a id="2.3"></a>
 
 ## 2.3 "Ramble On" - 2017-04-12
@@ -611,6 +781,7 @@ Moving to Ansible 2.3 guide http://docs.ansible.com/ansible/porting_guide_2.3.ht
 * 'service' tasks can now use async again, we had lost this capability when changed into an action plugin.
 * made any_errors_fatal inheritable from play to task and all other objects in between.
 * many small performance improvements in inventory and variable handling and in task execution.
+* Added a retry class to the ec2_asg module since customers were running into throttling errors (AWSRetry is a solution for modules using boto3 which isn't applicable here).
 
 ### Deprecations
 * Specifying --tags (or --skip-tags) multiple times on the command line
@@ -842,6 +1013,14 @@ Moving to Ansible 2.3 guide http://docs.ansible.com/ansible/porting_guide_2.3.ht
   * panos_service
 - postgresql_schema
 - proxmox_kvm
+- proxysql:
+  * proxysql_backend_servers
+  * proxysql_global_variables
+  * proxysql_manage_config
+  * proxysql_mysql_users
+  * proxysql_query_rules
+  * proxysql_replication_hostgroups
+  * proxysql_scheduler
 - pubnub_blocks
 - pulp_repo
 - runit
@@ -1638,7 +1817,7 @@ Module fixes:
   This re-executes inventory scripts, but does not force them to ignore any cache they might use.
 * New delegate_facts directive, a boolean that allows you to apply facts to the delegated host (true/yes) instead of the inventory_hostname (no/false) which is the default and previous behaviour.
 * local connections now work with 'su' as a privilege escalation method
-* Ansible 2.0 has deprecated the “ssh” from ansible_ssh_user, ansible_ssh_host, and ansible_ssh_port to become ansible_user, ansible_host, and ansible_port.
+* Ansible 2.0 has deprecated the "ssh" from ansible_ssh_user, ansible_ssh_host, and ansible_ssh_port to become ansible_user, ansible_host, and ansible_port.
 * New ssh configuration variables (`ansible_ssh_common_args`, `ansible_ssh_extra_args`) can be used to configure a
   per-group or per-host ssh ProxyCommand or set any other ssh options.
   `ansible_ssh_extra_args` is used to set options that are accepted only by ssh (not sftp or scp, which have their own analogous settings).

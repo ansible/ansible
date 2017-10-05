@@ -1,17 +1,13 @@
 Lookups
 -------
 
-Lookup plugins allow access of data in Ansible from outside sources. Like all templating, these plugins are evaluated on the Ansible control
-machine, and can include reading the filesystem but also contacting external datastores and services.
-These values are then made available using the standard templating system in Ansible, and are typically used to load variables or templates with information from those systems.
+Lookup plugins allow access to outside data sources. Like all templating, these plugins are evaluated on the Ansible control machine, and can include reading the filesystem as well as contacting external datastores and services. This data is then made available using the standard templating system in Ansible. 
 
-.. note:: This is considered an advanced feature, and many users will probably not rely on these features.
-
-.. note:: Lookups occur on the local computer, not on the remote computer.
-
-.. note:: Lookups are executed with a cwd relative to the role or play, as opposed to local tasks which are executed with the cwd of the executed script.
-
-.. note:: Since 1.9 you can pass wantlist=True to lookups to use in jinja2 template "for" loops.
+.. note::
+    - Lookups occur on the local computer, not on the remote computer.
+    - They are executed with in the directory containing the role or play, as opposed to local tasks which are executed with the directory of the executed script.
+    - Since Ansible version 1.9, you can pass wantlist=True to lookups to use in jinja2 template "for" loops.
+    - Lookups are an advanced feature. You should have a good working knowledge of Ansible plays before incorporating them.
 
 .. warning:: Some lookups pass arguments to a shell. When using variables from a remote/untrusted source, use the `|quote` filter to ensure safe usage.
 
@@ -24,7 +20,7 @@ Intro to Lookups: Getting File Contents
 
 The file lookup is the most basic lookup type.
 
-Contents can be read off the filesystem as follows::
+Contents can be read from the filesystem as follows::
 
     ---
     - hosts: all
@@ -42,18 +38,14 @@ The Password Lookup
 
 .. note::
 
-    A great alternative to the password lookup plugin, if you don't need to generate random passwords on a per-host basis, would be to use :doc:`playbooks_vault`.  Read the documentation there and consider using it first, it will be more desirable for most applications.
+    We recommend using :doc:`playbooks_vault` instead of the password lookup plugin if you don't need to generate random passwords on a per-host basis.
 
-``password`` generates a random plaintext password and stores it in
+The ``password lookup`` plugin generates a random plaintext password and stores it in
 a file at a given filepath.
 
-(Docs about crypted save modes are pending)
+If the file already exists, it will retrieve its contents, behaving just like with_file. Usage of variables like "{{ inventory_hostname }}" in the filepath can be used to set up random passwords per host (which simplifies password management in 'host_vars' variables).
 
-If the file exists previously, it will retrieve its contents, behaving just like with_file. Usage of variables like "{{ inventory_hostname }}" in the filepath can be used to set
-up random passwords per host (which simplifies password management in 'host_vars' variables).
-
-A special case is using ``/dev/null`` as a path. The password lookup will generate a new random password each time, but will not write it to ``/dev/null``. This can be used when you need a password
-without storing it on the controller.
+A special case is using ``/dev/null`` as a path. The password lookup will generate a new random password each time, but will not write it to ``/dev/null``. This can be used when you need a password without storing it on the controller.
 
 Generated passwords contain a random mix of upper and lowercase ASCII letters, the
 numbers 0-9 and punctuation (". , : - _"). The default length of a generated password is 20 characters.
@@ -74,9 +66,9 @@ This length can be changed by passing an extra parameter::
 
 .. note:: If the file already exists, no data will be written to it. If the file has contents, those contents will be read in as the password. Empty files cause the password to return as an empty string.
 
-Caution: Since this runs on the ansible host as the user running the playbook, and "become" does not apply, the target file must be readable by the playbook user, or, if it does not exist, the playbook user must have sufficient privileges to create it. (So, for example, attempts to write into areas such as /etc will fail unless the entire playbook is being run as root).
+.. warning:: Since the password lookup runs on the Ansible host as the user running the playbook, and "become" does not apply, the target file must be readable by the playbook user, or, if it does not exist, the playbook user must have sufficient privileges to create it. Attempts to write into areas such as /etc will fail unless the entire playbook is being run as root.
 
-Starting in version 1.4, password accepts a "chars" parameter to allow defining a custom character set in the generated passwords. It accepts comma separated list of names that are either string module attributes (ascii_letters,digits, etc) or are used literally::
+Starting in Ansible version 1.4, password accepts a "chars" parameter to allow defining a custom character set in the generated passwords. It accepts comma separated list of names that are either string module attributes (such as ascii_letters or digits) or are used literally::
 
     ---
     - hosts: all
@@ -100,7 +92,7 @@ Starting in version 1.4, password accepts a "chars" parameter to allow defining 
 
         # (...)
 
-To enter comma use two commas ',,' somewhere - preferably at the end. Quotes and double quotes are not supported.
+To enter a comma use two commas ',,' somewhere - preferably at the end. Quotes and double quotes are not supported.
 
 .. _passwordstore_lookup:
 
@@ -458,7 +450,7 @@ Please check https://api.mongodb.org/python/current/api/pymongo/collection.html?
 
 Since there are too many parameters for this lookup method, below is a sample playbook which shows its usage and a nice way to feed the parameters:
 
-.. code-block:: YAML+Jinja
+.. code-block:: yaml
 
     ---
     - hosts: all

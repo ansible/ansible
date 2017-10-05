@@ -438,6 +438,7 @@ else:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE, BOOLEANS_TRUE
 from ansible.module_utils.six.moves import xrange
+from ansible.module_utils._text import to_text, to_bytes
 
 
 # LXC_COMPRESSION_MAP is a map of available compression types when creating
@@ -572,7 +573,7 @@ def create_script(command):
     (fd, script_file) = tempfile.mkstemp(prefix='lxc-attach-script')
     f = os.fdopen(fd, 'wb')
     try:
-        f.write(ATTACH_TEMPLATE % {'container_command': command})
+        f.write(to_bytes(ATTACH_TEMPLATE % {'container_command': command}, errors='surrogate_or_strict'))
         f.flush()
     finally:
         f.close()
@@ -668,8 +669,7 @@ class LxcContainerManagement(object):
             build_command.append(
                 '%s %s' % (key, value)
             )
-        else:
-            return build_command
+        return build_command
 
     def _get_vars(self, variables):
         """Return a dict of all variables as found within the module.
@@ -689,8 +689,7 @@ class LxcContainerManagement(object):
             _var = self.module.params.get(k)
             if _var not in false_values:
                 return_dict[v] = _var
-        else:
-            return return_dict
+        return return_dict
 
     def _run_command(self, build_command, unsafe_shell=False):
         """Return information from running an Ansible Command.
@@ -724,7 +723,7 @@ class LxcContainerManagement(object):
 
         container_config_file = self.container.config_file_name
         with open(container_config_file, 'rb') as f:
-            container_config = f.readlines()
+            container_config = to_text(f.read(), errors='surrogate_or_strict').splitlines()
 
         # Note used ast literal_eval because AnsibleModule does not provide for
         # adequate dictionary parsing.
@@ -765,7 +764,7 @@ class LxcContainerManagement(object):
                 self.container.stop()
 
             with open(container_config_file, 'wb') as f:
-                f.writelines(container_config)
+                f.writelines([to_bytes(line, errors='surrogate_or_strict') for line in container_config])
 
             self.state_change = True
             if container_state == 'running':
@@ -975,16 +974,15 @@ class LxcContainerManagement(object):
                 time.sleep(1)
             else:
                 return True
-        else:
-            self.failure(
-                lxc_container=self._container_data(),
-                error='Failed to start container'
-                      ' [ %s ]' % self.container_name,
-                rc=1,
-                msg='The container [ %s ] failed to start. Check to lxc is'
-                    ' available and that the container is in a functional'
-                    ' state.' % self.container_name
-            )
+        self.failure(
+            lxc_container=self._container_data(),
+            error='Failed to start container'
+                  ' [ %s ]' % self.container_name,
+            rc=1,
+            msg='The container [ %s ] failed to start. Check to lxc is'
+                ' available and that the container is in a functional'
+                ' state.' % self.container_name
+        )
 
     def _check_archive(self):
         """Create a compressed archive of a container.

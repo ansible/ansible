@@ -19,7 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
 import sys
 
 from ansible import constants as C
@@ -187,7 +186,7 @@ class InventoryData(object):
             h = Host(host, port)
             self.hosts[host] = h
             if self.current_source:  # set to 'first source' in which host was encountered
-                self.set_variable(host, 'inventory_file', os.path.basename(self.current_source))
+                self.set_variable(host, 'inventory_file', self.current_source)
                 self.set_variable(host, 'inventory_dir', basedir(self.current_source))
             else:
                 self.set_variable(host, 'inventory_file', None)
@@ -204,7 +203,7 @@ class InventoryData(object):
         else:
             h = self.hosts[host]
 
-        if g and h not in g.get_hosts():
+        if g:
             g.add_host(h)
             self._groups_dict_cache = {}
             display.debug("Added host %s to group %s" % (host, group))

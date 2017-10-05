@@ -32,8 +32,8 @@ description:
        want to receive a certificate with these properties is a CSR (Certificate Signing Request).
        It uses the pyOpenSSL python library to interact with OpenSSL."
 requirements:
-    - python-pyOpenSSL >= 0.15 (if using C(selfsigned) provider)
-    - acme-tiny (if using the acme provider)
+    - python-pyOpenSSL >= 0.15 (if using C(selfsigned) or C(assertonly) provider)
+    - acme-tiny (if using the C(acme) provider)
 options:
     state:
         default: "present"
@@ -70,6 +70,12 @@ options:
     privatekey_passphrase:
         description:
             - The passphrase for the I(privatekey_path).
+
+    selfsigned_version:
+        default: 3
+        description:
+            - Version of the C(selfsigned) certificate. Nowadays it should almost always be C(3).
+        version_added: "2.5"
 
     selfsigned_digest:
         default: "sha256"
@@ -301,7 +307,7 @@ import os
 
 from ansible.module_utils import crypto as crypto_utils
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_bytes
 
 try:
     import OpenSSL
@@ -374,6 +380,7 @@ class SelfSignedCertificate(Certificate):
         self.notBefore = module.params['selfsigned_notBefore']
         self.notAfter = module.params['selfsigned_notAfter']
         self.digest = module.params['selfsigned_digest']
+        self.version = module.params['selfsigned_version']
         self.csr = crypto_utils.load_certificate_request(self.csr_path)
         self.privatekey = crypto_utils.load_privatekey(
             self.privatekey_path, self.privatekey_passphrase
@@ -406,14 +413,9 @@ class SelfSignedCertificate(Certificate):
                 # 10 years. 315360000 is 10 years in seconds.
                 cert.gmtime_adj_notAfter(315360000)
             cert.set_subject(self.csr.get_subject())
-            cert.set_version(self.csr.get_version() - 1)
+            cert.set_version(self.version - 1)
             cert.set_pubkey(self.csr.get_pubkey())
-
-            try:
-                # NOTE: This is only available starting from pyOpenSSL >= 0.15
-                cert.add_extensions(self.csr.get_extensions())
-            except NameError as exc:
-                raise CertificateError('You need to have PyOpenSSL>= 0.15 to generate public keys')
+            cert.add_extensions(self.csr.get_extensions())
 
             cert.sign(self.privatekey, self.digest)
             self.certificate = cert
@@ -467,6 +469,24 @@ class AssertOnlyCertificate(Certificate):
         self.invalid_at = module.params['invalid_at']
         self.valid_in = module.params['valid_in']
         self.message = []
+        self._sanitize_inputs()
+
+    def _sanitize_inputs(self):
+        """Ensure inputs are properly sanitized before comparison."""
+
+        for param in ['signature_algorithms', 'keyUsage', 'extendedKeyUsage',
+                      'subjectAltName', 'subject', 'issuer', 'notBefore',
+                      'notAfter', 'valid_at', 'invalid_at']:
+
+            attr = getattr(self, param)
+            if isinstance(attr, list):
+                setattr(self, param, [to_bytes(item) for item in attr])
+            elif isinstance(attr, tuple):
+                setattr(self, param, dict((to_bytes(k), to_bytes(v)) for (k, v) in attr.items()))
+            elif isinstance(attr, dict):
+                setattr(self, param, dict((to_bytes(k), to_bytes(v)) for (k, v) in attr.items()))
+            elif isinstance(attr, str):
+                setattr(self, param, to_bytes(attr))
 
     def assertonly(self):
 
@@ -517,36 +537,42 @@ class AssertOnlyCertificate(Certificate):
             if self.keyUsage:
                 for extension_idx in range(0, self.cert.get_extension_count()):
                     extension = self.cert.get_extension(extension_idx)
-                    if extension.get_short_name() == 'keyUsage':
-                        keyUsage = [crypto_utils.keyUsageLong.get(keyUsage, keyUsage) for keyUsage in self.keyUsage]
-                        if (not self.keyUsage_strict and not all(x in str(extension).split(', ') for x in keyUsage)) or \
-                           (self.keyUsage_strict and not set(keyUsage) == set(str(extension).split(', '))):
+                    if extension.get_short_name() == b'keyUsage':
+                        keyUsage = [OpenSSL._util.lib.OBJ_txt2nid(keyUsage) for keyUsage in self.keyUsage]
+                        current_ku = [OpenSSL._util.lib.OBJ_txt2nid(usage.strip()) for usage in
+                                      to_bytes(extension, errors='surrogate_or_strict').split(b',')]
+                        if (not self.keyUsage_strict and not all(x in current_ku for x in keyUsage)) or \
+                           (self.keyUsage_strict and not set(keyUsage) == set(current_ku)):
                             self.message.append(
-                                'Invalid keyUsage component (got %s, expected all of %s to be present)' % (str(extension).split(', '), keyUsage)
+                                'Invalid keyUsage component (got %s, expected all of %s to be present)' % (str(extension).split(', '), self.keyUsage)
                             )
 
         def _validate_extendedKeyUsage():
             if self.extendedKeyUsage:
                 for extension_idx in range(0, self.cert.get_extension_count()):
                     extension = self.cert.get_extension(extension_idx)
-                    if extension.get_short_name() == 'extendedKeyUsage':
-                        extKeyUsage = [crypto_utils.extendedKeyUsageLong.get(keyUsage, keyUsage) for keyUsage in self.extendedKeyUsage]
-                        if (not self.extendedKeyUsage_strict and not all(x in str(extension).split(', ') for x in extKeyUsage)) or \
-                           (self.extendedKeyUsage_strict and not set(extKeyUsage) == set(str(extension).split(', '))):
+                    if extension.get_short_name() == b'extendedKeyUsage':
+                        extKeyUsage = [OpenSSL._util.lib.OBJ_txt2nid(keyUsage) for keyUsage in self.extendedKeyUsage]
+                        current_xku = [OpenSSL._util.lib.OBJ_txt2nid(usage.strip()) for usage in
+                                       to_bytes(extension, errors='surrogate_or_strict').split(b',')]
+                        if (not self.extendedKeyUsage_strict and not all(x in current_xku for x in extKeyUsage)) or \
+                           (self.extendedKeyUsage_strict and not set(extKeyUsage) == set(current_xku)):
                             self.message.append(
-                                'Invalid extendedKeyUsage component (got %s, expected all of %s to be present)' % (str(extension).split(', '), extKeyUsage)
+                                'Invalid extendedKeyUsage component (got %s, expected all of %s to be present)' % (str(extension).split(', '),
+                                                                                                                   self.extendedKeyUsage)
                             )
 
         def _validate_subjectAltName():
             if self.subjectAltName:
                 for extension_idx in range(0, self.cert.get_extension_count()):
                     extension = self.cert.get_extension(extension_idx)
-                    if extension.get_short_name() == 'subjectAltName':
-                        l_subjectAltName = [altname.replace('IP', 'IP Address') for altname in self.subjectAltName]
-                        if (not self.subjectAltName_strict and not all(x in str(extension).split(', ') for x in l_subjectAltName)) or \
-                           (self.subjectAltName_strict and not set(l_subjectAltName) == set(str(extension).split(', '))):
+                    if extension.get_short_name() == b'subjectAltName':
+                        l_altnames = [altname.replace(b'IP Address', b'IP') for altname in
+                                      to_bytes(extension, errors='surrogate_or_strict').split(b', ')]
+                        if (not self.subjectAltName_strict and not all(x in l_altnames for x in self.subjectAltName)) or \
+                           (self.subjectAltName_strict and not set(self.subjectAltName) == set(l_altnames)):
                             self.message.append(
-                                'Invalid subjectAltName component (got %s, expected all of %s to be present)' % (str(extension).split(', '), l_subjectAltName)
+                                'Invalid subjectAltName component (got %s, expected all of %s to be present)' % (l_altnames, self.subjectAltName)
                             )
 
         def _validate_notBefore():
@@ -606,7 +632,8 @@ class AssertOnlyCertificate(Certificate):
 
         self.assertonly()
 
-        if self.privatekey_path and not self.check(self.module, perms_required=False):
+        if self.privatekey_path and \
+           not super(AssertOnlyCertificate, self).check(module, perms_required=False):
             self.message.append(
                 'Certificate %s and private key %s does not match' % (self.path, self.privatekey_path)
             )
@@ -726,6 +753,7 @@ def main():
             valid_in=dict(type='int'),
 
             # provider: selfsigned
+            selfsigned_version=dict(type='int', default='3'),
             selfsigned_digest=dict(type='str', default='sha256'),
             selfsigned_notBefore=dict(type='str', aliases=['selfsigned_not_before']),
             selfsigned_notAfter=dict(type='str', aliases=['selfsigned_not_after']),
@@ -740,6 +768,11 @@ def main():
 
     if not pyopenssl_found:
         module.fail_json(msg='The python pyOpenSSL library is required')
+    if module.params['provider'] in ['selfsigned', 'assertonly']:
+        try:
+            getattr(crypto.X509Req, 'get_extensions')
+        except AttributeError:
+            module.fail_json(msg='You need to have PyOpenSSL>=0.15')
 
     base_dir = os.path.dirname(module.params['path'])
     if not os.path.isdir(base_dir):

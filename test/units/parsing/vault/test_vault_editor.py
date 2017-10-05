@@ -309,7 +309,7 @@ class TestVaultEditor(unittest.TestCase):
         self._assert_file_is_link(src_file_link_path, src_file_path)
 
     @patch('ansible.parsing.vault.subprocess.call')
-    def test_edit_file(self, mock_sp_call):
+    def test_edit_file_no_vault_id(self, mock_sp_call):
         self._test_dir = self._create_test_dir()
         src_contents = to_bytes("some info in a file\nyup.")
 
@@ -329,6 +329,36 @@ class TestVaultEditor(unittest.TestCase):
 
         new_src_file = open(src_file_path, 'rb')
         new_src_file_contents = new_src_file.read()
+
+        self.assertTrue(b'$ANSIBLE_VAULT;1.1;AES256' in new_src_file_contents)
+
+        src_file_plaintext = ve.vault.decrypt(new_src_file_contents)
+        self.assertEqual(src_file_plaintext, new_src_contents)
+
+    @patch('ansible.parsing.vault.subprocess.call')
+    def test_edit_file_with_vault_id(self, mock_sp_call):
+        self._test_dir = self._create_test_dir()
+        src_contents = to_bytes("some info in a file\nyup.")
+
+        src_file_path = self._create_file(self._test_dir, 'src_file', content=src_contents)
+
+        new_src_contents = to_bytes("The info is different now.")
+
+        def faux_editor(editor_args):
+            self._faux_editor(editor_args, new_src_contents)
+
+        mock_sp_call.side_effect = faux_editor
+
+        ve = self._vault_editor()
+
+        ve.encrypt_file(src_file_path, self.vault_secret,
+                        vault_id='vault_secrets')
+        ve.edit_file(src_file_path)
+
+        new_src_file = open(src_file_path, 'rb')
+        new_src_file_contents = new_src_file.read()
+
+        self.assertTrue(b'$ANSIBLE_VAULT;1.2;AES256;vault_secrets' in new_src_file_contents)
 
         src_file_plaintext = ve.vault.decrypt(new_src_file_contents)
         self.assertEqual(src_file_plaintext, new_src_contents)
@@ -467,7 +497,6 @@ class TestVaultEditor(unittest.TestCase):
         try:
             ve.decrypt_file(v11_file.name)
         except errors.AnsibleError:
-            raise
             error_hit = True
 
         # verify decrypted content
@@ -493,7 +522,6 @@ class TestVaultEditor(unittest.TestCase):
         try:
             ve.rekey_file(v10_file.name, vault.match_encrypt_secret(new_secrets)[1])
         except errors.AnsibleError:
-            raise
             error_hit = True
 
         # verify decrypted content
@@ -510,7 +538,6 @@ class TestVaultEditor(unittest.TestCase):
         try:
             dec_data = vl.decrypt(fdata)
         except errors.AnsibleError:
-            raise
             error_hit = True
 
         os.unlink(v10_file.name)

@@ -57,6 +57,12 @@ options:
       - Interface link status.
     default: auto
     choices: ['full', 'half', 'auto']
+  delay:
+    description:
+      - Time in seconds to wait before checking for the operational state on remote
+        device. This wait is applicable for operational state argument which are
+        I(state) with values C(up)/C(down) and I(neighbors).
+    default: 10
   neighbors:
     description:
       - Check the operational state of given interface C(name) for LLDP neighbor.
@@ -163,7 +169,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import exec_command
 from ansible.module_utils.network_common import conditional, remove_default_spec
 from ansible.module_utils.vyos import load_config, get_config
-from ansible.module_utils.vyos import vyos_argument_spec, check_args
+from ansible.module_utils.vyos import vyos_argument_spec
 
 
 def search_obj_in_list(name, lst):
@@ -396,7 +402,6 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
 
     result = {'changed': False}
 

@@ -27,25 +27,30 @@ docs/man/man3/*
 *.sublime-project
 *.sublime-workspace
 # docsite stuff...
+docs/api/_build/
+docs/api/rst/
+docs/docsite/*.html
+docs/docsite/_build
+docs/docsite/_static/*.gif
+docs/docsite/_static/*.png
+docs/docsite/_static/websupport.js
+docs/docsite/htmlout
+docs/docsite/searchindex.js
+docs/docsite/rst_warnings
+docs/docsite/rst/*_module.rst
+docs/docsite/rst/ansible.rst
+docs/docsite/rst/ansible-*.rst
 docs/docsite/rst/community_maintained.rst
 docs/docsite/rst/config.rst
 docs/docsite/rst/core_maintained.rst
 docs/docsite/rst/list_of_*.rst
-docs/docsite/rst/*_module.rst
 docs/docsite/rst/modules_by_category.rst
 docs/docsite/rst/network_maintained.rst
+docs/docsite/rst/plugins_by_category.rst
 docs/docsite/rst/partner_maintained.rst
 docs/docsite/rst/playbook_keywords.rst
 docs/docsite/rst/playbooks_directives.rst
-docs/docsite/*.html
-docs/docsite/_static/*.gif
-docs/docsite/_static/*.png
-docs/docsite/_static/websupport.js
-docs/docsite/searchindex.js
-docs/docsite/htmlout
-docs/docsite/_build
-docs/api/rst/
-docs/api/_build/
+docs/docsite/rst/plugins/*/*.rst
 # deb building stuff...
 /debian/
 deb-build
@@ -69,7 +74,8 @@ Vagrantfile
 .vagrant
 ansible.egg-info/
 /shippable/
-/test/integration/cloud-config-azure.yml
+/test/integration/cloud-config-*.*
+!/test/integration/cloud-config-*.*.template
 # Release directory
 packaging/release/ansible_release
 /.cache/

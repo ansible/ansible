@@ -1,0 +1,93 @@
+- block:
+    - name: Generate privatekey
+      openssl_privatekey:
+        path: '{{ output_dir }}/privatekey.pem'
+
+    - name: Generate CSR
+      openssl_csr:
+        path: '{{ output_dir }}/csr.csr'
+        privatekey_path: '{{ output_dir }}/privatekey.pem'
+        commonName: 'www.ansible.com'
+
+    - name: Generate selfsigned certificate
+      openssl_certificate:
+        path: '{{ output_dir }}/cert.pem'
+        csr_path: '{{ output_dir }}/csr.csr'
+        privatekey_path: '{{ output_dir }}/privatekey.pem'
+        provider: selfsigned
+        selfsigned_digest: sha256
+
+    - name: Check selfsigned certificate
+      openssl_certificate:
+        path: '{{ output_dir }}/cert.pem'
+        privatekey_path: '{{ output_dir }}/privatekey.pem'
+        provider: assertonly
+        has_expired: False
+        version: 3
+        signature_algorithms:
+          - sha256WithRSAEncryption
+          - sha256WithECDSAEncryption
+
+    - name: Generate selfsigned v2 certificate
+      openssl_certificate:
+        path: '{{ output_dir }}/cert_v2.pem'
+        csr_path: '{{ output_dir }}/csr.csr'
+        privatekey_path: '{{ output_dir }}/privatekey.pem'
+        provider: selfsigned
+        selfsigned_digest: sha256
+        selfsigned_version: 2
+
+    - name: Generate privatekey2
+      openssl_privatekey:
+        path: '{{ output_dir }}/privatekey2.pem'
+
+    - name: Generate CSR2
+      openssl_csr:
+        C: US
+        ST: California
+        L: Los Angeles
+        O: ACME Inc.
+        OU: Roadrunner pest control
+        path: '{{ output_dir }}/csr2.csr'
+        privatekey_path: '{{ output_dir }}/privatekey2.pem'
+        CN: 'www.example.com'
+        keyUsage:
+          - digitalSignature
+        extendedKeyUsage:
+          - ipsecUser
+          - biometricInfo
+
+    - name: Generate selfsigned certificate2
+      openssl_certificate:
+        path: '{{ output_dir }}/cert2.pem'
+        csr_path: '{{ output_dir }}/csr2.csr'
+        privatekey_path: '{{ output_dir }}/privatekey2.pem'
+        provider: selfsigned
+        selfsigned_digest: sha256
+
+    - name: Check selfsigned certificate2
+      openssl_certificate:
+        path: '{{ output_dir }}/cert2.pem'
+        privatekey_path: '{{ output_dir }}/privatekey2.pem'
+        provider: assertonly
+        has_expired: False
+        version: 3
+        signature_algorithms:
+          - sha256WithRSAEncryption
+          - sha256WithECDSAEncryption
+        subject:
+          CN: www.example.com
+          C: US
+          ST: California
+          L: Los Angeles
+          O: ACME Inc.
+          OU: Roadrunner pest control
+        keyUsage:
+          - digitalSignature
+        extendedKeyUsage:
+          - ipsecUser
+          - biometricInfo
+
+    - import_tasks: ../tests/validate.yml
+
+  when: pyopenssl_version.stdout|version_compare('0.15', '>=')

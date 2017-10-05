@@ -26,7 +26,7 @@ description:
        Note: At least one of common_name or subject_alt_name must be specified.
        This module uses file common arguments to specify generated file permissions."
 requirements:
-    - "python-pyOpenSSL"
+    - "python-pyOpenSSL >= 0.15"
 options:
     state:
         required: false
@@ -49,7 +49,7 @@ options:
             - The passphrase for the privatekey.
     version:
         required: false
-        default: 3
+        default: 1
         description:
             - Version of the certificate signing request
     force:
@@ -227,9 +227,10 @@ import os
 
 from ansible.module_utils import crypto as crypto_utils
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_bytes
 
 try:
+    import OpenSSL
     from OpenSSL import crypto
 except ImportError:
     pyopenssl_found = False
@@ -283,7 +284,7 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
 
         if not self.check(module, perms_required=False) or self.force:
             req = crypto.X509Req()
-            req.set_version(self.version)
+            req.set_version(self.version - 1)
             subject = req.get_subject()
             for (key, value) in self.subject.items():
                 if value is not None:
@@ -348,22 +349,22 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
 
             return True
 
-        def _check_keyUsage_(extensions, extName, expected, critical, long):
+        def _check_keyUsage_(extensions, extName, expected, critical):
             usages_ext = [ext for ext in extensions if ext.get_short_name() == extName]
             if (not usages_ext and expected) or (usages_ext and not expected):
                 return False
             elif not usages_ext and not expected:
                 return True
             else:
-                current = [usage.strip() for usage in str(usages_ext[0]).split(',')]
-                expected = [long[usage] if usage in long else usage for usage in expected]
+                current = [OpenSSL._util.lib.OBJ_txt2nid(to_bytes(usage.strip())) for usage in str(usages_ext[0]).split(',')]
+                expected = [OpenSSL._util.lib.OBJ_txt2nid(to_bytes(usage)) for usage in expected]
                 return set(current) == set(expected) and usages_ext[0].get_critical() == critical
 
         def _check_keyUsage(extensions):
-            return _check_keyUsage_(extensions, b'keyUsage', self.keyUsage, self.keyUsage_critical, crypto_utils.keyUsageLong)
+            return _check_keyUsage_(extensions, b'keyUsage', self.keyUsage, self.keyUsage_critical)
 
         def _check_extenededKeyUsage(extensions):
-            return _check_keyUsage_(extensions, b'extendedKeyUsage', self.extendedKeyUsage, self.extendedKeyUsage_critical, crypto_utils.extendedKeyUsageLong)
+            return _check_keyUsage_(extensions, b'extendedKeyUsage', self.extendedKeyUsage, self.extendedKeyUsage_critical)
 
         def _check_extensions(csr):
             extensions = csr.get_extensions()
@@ -405,7 +406,7 @@ def main():
             digest=dict(default='sha256', type='str'),
             privatekey_path=dict(require=True, type='path'),
             privatekey_passphrase=dict(type='str', no_log=True),
-            version=dict(default='3', type='int'),
+            version=dict(default='1', type='int'),
             force=dict(default=False, type='bool'),
             path=dict(required=True, type='path'),
             countryName=dict(aliases=['C', 'country_name'], type='str'),
@@ -429,6 +430,11 @@ def main():
 
     if not pyopenssl_found:
         module.fail_json(msg='the python pyOpenSSL module is required')
+
+    try:
+        getattr(crypto.X509Req, 'get_extensions')
+    except AttributeError:
+        module.fail_json(msg='You need to have PyOpenSSL>=0.15 to generate CSRs')
 
     base_dir = os.path.dirname(module.params['path'])
     if not os.path.isdir(base_dir):

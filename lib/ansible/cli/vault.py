@@ -165,7 +165,7 @@ class VaultCLI(CLI):
 
         # TODO: instead of prompting for these before, we could let VaultEditor
         #       call a callback when it needs it.
-        if self.action in ['decrypt', 'view', 'rekey']:
+        if self.action in ['decrypt', 'view', 'rekey', 'edit']:
             vault_secrets = self.setup_vault_secrets(loader,
                                                      vault_ids=vault_ids,
                                                      vault_password_files=self.options.vault_password_files,
@@ -173,7 +173,7 @@ class VaultCLI(CLI):
             if not vault_secrets:
                 raise AnsibleOptionsError("A vault password is required to use Ansible's Vault")
 
-        if self.action in ['encrypt', 'encrypt_string', 'create', 'edit']:
+        if self.action in ['encrypt', 'encrypt_string', 'create']:
             if len(vault_ids) > 1:
                 raise AnsibleOptionsError("Only one --vault-id can be used for encryption")
 
@@ -184,6 +184,10 @@ class VaultCLI(CLI):
                                          vault_password_files=self.options.vault_password_files,
                                          ask_vault_pass=self.options.ask_vault_pass,
                                          create_new_password=True)
+
+            if len(vault_secrets) > 1:
+                raise AnsibleOptionsError("Only one --vault-id can be used for encryption. This includes passwords from configuration and cli.")
+
             if not vault_secrets:
                 raise AnsibleOptionsError("A vault password is required to use Ansible's Vault")
 

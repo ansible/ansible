@@ -532,7 +532,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             elif 'json' in errormsg or 'simplejson' in errormsg:
                 x = "5"  # json or simplejson modules needed
         finally:
-            return x
+            return x  # pylint: disable=lost-exception
 
     def _remote_expand_user(self, path, sudoable=True):
         ''' takes a remote path and performs tilde expansion on the remote host '''
@@ -721,11 +721,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                     rm_tmp = tmp
 
             cmd = self._connection._shell.build_module_command(environment_string, shebang, cmd, arg_path=args_file_path, rm_tmp=rm_tmp).strip()
-
-            if module_name == "accelerate":
-                # always run the accelerate module as the user
-                # specified in the play, not the sudo_user
-                sudoable = False
 
         # Fix permissions of the tmp path and tmp files. This should be called after all files have been transferred.
         if remote_files:

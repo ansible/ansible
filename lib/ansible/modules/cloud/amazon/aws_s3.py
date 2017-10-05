@@ -353,7 +353,8 @@ def delete_bucket(module, s3, bucket):
         # if there are contents then we need to delete them before we can delete the bucket
         for keys in paginated_list(s3, Bucket=bucket):
             formatted_keys = [{'Key': key} for key in keys]
-            s3.delete_objects(Bucket=bucket, Delete={'Objects': formatted_keys})
+            if formatted_keys:
+                s3.delete_objects(Bucket=bucket, Delete={'Objects': formatted_keys})
         s3.delete_bucket(Bucket=bucket)
         return True
     except botocore.exceptions.ClientError as e:
@@ -395,11 +396,12 @@ def upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, heade
     if module.check_mode:
         module.exit_json(msg="PUT operation skipped - running in check mode", changed=True)
     try:
+        extra = {}
+        if encrypt:
+            extra['ServerSideEncryption'] = 'AES256'
         if metadata:
-            extra = {'Metadata': dict(metadata)}
-            s3.upload_file(Filename=src, Bucket=bucket, Key=obj, ExtraArgs=extra)
-        else:
-            s3.upload_file(Filename=src, Bucket=bucket, Key=obj)
+            extra['Metadata'] = dict(metadata)
+        s3.upload_file(Filename=src, Bucket=bucket, Key=obj, ExtraArgs=extra)
         for acl in module.params.get('permission'):
             s3.put_object_acl(ACL=acl, Bucket=bucket, Key=obj)
         url = s3.generate_presigned_url(ClientMethod='put_object',
@@ -433,13 +435,11 @@ def download_s3file(module, s3, bucket, obj, dest, retries, version=None):
             if x >= retries:
                 module.fail_json(msg="Failed while downloading %s." % obj, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
             # otherwise, try again, this may be a transient timeout.
-            pass
         except SSLError as e:  # will ClientError catch SSLError?
             # actually fail on last pass through the loop.
             if x >= retries:
                 module.fail_json(msg="s3 download failed: %s." % e, exception=traceback.format_exc())
             # otherwise, try again, this may be a transient timeout.
-            pass
 
 
 def download_s3str(module, s3, bucket, obj, version=None, validate=True):
@@ -586,6 +586,10 @@ def main():
 
     if module.params.get('object'):
         obj = module.params['object']
+        # If there is a top level object, do nothing - if the object starts with /
+        # remove the leading character to maintain compatibility with Ansible versions < 2.4
+        if obj.startswith('/'):
+            obj = obj[1:]
 
     # Bucket deletion does not require obj.  Prevents ambiguity with delobj.
     if obj and mode == "delete":
@@ -601,13 +605,13 @@ def main():
 
     # Look at s3_url and tweak connection settings
     # if connecting to RGW, Walrus or fakes3
-    for key in ['validate_certs', 'security_token', 'profile_name']:
-        aws_connect_kwargs.pop(key, None)
+    if s3_url:
+        for key in ['validate_certs', 'security_token', 'profile_name']:
+            aws_connect_kwargs.pop(key, None)
     try:
         s3 = get_s3_connection(module, aws_connect_kwargs, location, rgw, s3_url)
-    except (botocore.exceptions.NoCredentialsError, botocore.exceptions.ProfileNotFound) as e:
-        module.fail_json(msg="Can't authorize connection. Check your credentials and profile.",
-                         exceptions=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+    except botocore.exceptions.ProfileNotFound as e:
+        module.fail_json(msg=to_native(e))
 
     validate = not ignore_nonexistent_bucket
 

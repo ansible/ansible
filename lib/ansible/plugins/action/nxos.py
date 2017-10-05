@@ -59,13 +59,6 @@ class ActionModule(_ActionModule):
             pc.password = provider['password'] or self._play_context.password
             pc.private_key_file = provider['ssh_keyfile'] or self._play_context.private_key_file
             pc.timeout = int(provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT)
-            self._task.args['provider'] = provider.update(
-                host=pc.remote_addr,
-                port=pc.port,
-                username=pc.remote_user,
-                password=pc.password,
-                ssh_keyfile=pc.private_key_file
-            )
             display.vvv('using connection plugin %s' % pc.connection, pc.remote_addr)
             connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
 
@@ -113,9 +106,6 @@ class ActionModule(_ActionModule):
                 provider['validate_certs'] = True
 
             self._task.args['provider'] = provider
-
-        # make sure a transport value is set in args
-        self._task.args['transport'] = transport
 
         result = super(ActionModule, self).run(tmp, task_vars)
         return result

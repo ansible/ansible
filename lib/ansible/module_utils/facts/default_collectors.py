@@ -23,6 +23,7 @@ from ansible.module_utils.facts.other.ohai import OhaiFactCollector
 
 from ansible.module_utils.facts.system.apparmor import ApparmorFactCollector
 from ansible.module_utils.facts.system.caps import SystemCapabilitiesFactCollector
+from ansible.module_utils.facts.system.chroot import ChrootFactCollector
 from ansible.module_utils.facts.system.cmdline import CmdLineFactCollector
 from ansible.module_utils.facts.system.distribution import DistributionFactCollector
 from ansible.module_utils.facts.system.date_time import DateTimeFactCollector
@@ -32,6 +33,7 @@ from ansible.module_utils.facts.system.fips import FipsFactCollector
 from ansible.module_utils.facts.system.local import LocalFactCollector
 from ansible.module_utils.facts.system.lsb import LSBFactCollector
 from ansible.module_utils.facts.system.pkg_mgr import PkgMgrFactCollector
+from ansible.module_utils.facts.system.pkg_mgr import OpenBSDPkgMgrFactCollector
 from ansible.module_utils.facts.system.platform import PlatformFactCollector
 from ansible.module_utils.facts.system.python import PythonFactCollector
 from ansible.module_utils.facts.system.selinux import SelinuxFactCollector
@@ -72,58 +74,82 @@ from ansible.module_utils.facts.virtual.netbsd import NetBSDVirtualCollector
 from ansible.module_utils.facts.virtual.openbsd import OpenBSDVirtualCollector
 from ansible.module_utils.facts.virtual.sunos import SunOSVirtualCollector
 
+# these should always be first due to most other facts depending on them
+_base = [
+    PlatformFactCollector,
+    DistributionFactCollector,
+    LSBFactCollector
+]
+
+# These restrict what is possible in others
+_restrictive = [
+    SelinuxFactCollector,
+    ApparmorFactCollector,
+    ChrootFactCollector,
+    FipsFactCollector
+]
+
+# general info, not required but probably useful for other facts
+_general = [
+    PythonFactCollector,
+    SystemCapabilitiesFactCollector,
+    PkgMgrFactCollector,
+    OpenBSDPkgMgrFactCollector,
+    ServiceMgrFactCollector,
+    CmdLineFactCollector,
+    DateTimeFactCollector,
+    EnvFactCollector,
+    SshPubKeyFactCollector,
+    UserFactCollector
+]
+
+# virtual, this might also limit hardware/networking
+_virtual = [
+    VirtualCollector,
+    DragonFlyVirtualCollector,
+    FreeBSDVirtualCollector,
+    LinuxVirtualCollector,
+    OpenBSDVirtualCollector,
+    NetBSDVirtualCollector,
+    SunOSVirtualCollector,
+    HPUXVirtualCollector
+]
+
+_hardware = [
+    HardwareCollector,
+    AIXHardwareCollector,
+    DarwinHardwareCollector,
+    DragonFlyHardwareCollector,
+    FreeBSDHardwareCollector,
+    HPUXHardwareCollector,
+    HurdHardwareCollector,
+    LinuxHardwareCollector,
+    NetBSDHardwareCollector,
+    OpenBSDHardwareCollector,
+    SunOSHardwareCollector
+]
+
+_network = [
+    DnsFactCollector,
+    NetworkCollector,
+    AIXNetworkCollector,
+    DarwinNetworkCollector,
+    DragonFlyNetworkCollector,
+    FreeBSDNetworkCollector,
+    HPUXNetworkCollector,
+    HurdNetworkCollector,
+    LinuxNetworkCollector,
+    NetBSDNetworkCollector,
+    OpenBSDNetworkCollector,
+    SunOSNetworkCollector
+]
+
+# other fact sources
+_extra_facts = [
+    LocalFactCollector,
+    FacterFactCollector,
+    OhaiFactCollector
+]
+
 # TODO: make config driven
-collectors = [ApparmorFactCollector,
-              CmdLineFactCollector,
-              DateTimeFactCollector,
-              DistributionFactCollector,
-              DnsFactCollector,
-              EnvFactCollector,
-              FipsFactCollector,
-
-              HardwareCollector,
-              AIXHardwareCollector,
-              DarwinHardwareCollector,
-              DragonFlyHardwareCollector,
-              FreeBSDHardwareCollector,
-              HPUXHardwareCollector,
-              HurdHardwareCollector,
-              LinuxHardwareCollector,
-              NetBSDHardwareCollector,
-              OpenBSDHardwareCollector,
-              SunOSHardwareCollector,
-              LocalFactCollector,
-              LSBFactCollector,
-
-              NetworkCollector,
-              AIXNetworkCollector,
-              DarwinNetworkCollector,
-              DragonFlyNetworkCollector,
-              FreeBSDNetworkCollector,
-              HPUXNetworkCollector,
-              HurdNetworkCollector,
-              LinuxNetworkCollector,
-              NetBSDNetworkCollector,
-              OpenBSDNetworkCollector,
-              SunOSNetworkCollector,
-
-              PkgMgrFactCollector,
-              PlatformFactCollector,
-              PythonFactCollector,
-              SelinuxFactCollector,
-              ServiceMgrFactCollector,
-              SshPubKeyFactCollector,
-              SystemCapabilitiesFactCollector,
-              UserFactCollector,
-
-              VirtualCollector,
-              DragonFlyVirtualCollector,
-              FreeBSDVirtualCollector,
-              LinuxVirtualCollector,
-              OpenBSDVirtualCollector,
-              NetBSDVirtualCollector,
-              SunOSVirtualCollector,
-              HPUXVirtualCollector,
-
-              FacterFactCollector,
-              OhaiFactCollector]
+collectors = _base + _restrictive + _general + _virtual + _hardware + _network + _extra_facts

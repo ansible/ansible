@@ -27,8 +27,9 @@ Here is a most basic example::
         - name: "favcolor"
           prompt: "what is your favorite color?"
 
+
 .. note::
-   Prompts for individual ``vars_prompt`` variables will be skipped for any variable that is already defined through the command line ``--extra-vars`` option, or when running from a non-interactive session (such as cron or Ansible Tower). See :ref:`_passing_variables_on_the_command_line` in the /Variables/ chapter.
+    Prompts for individual ``vars_prompt`` variables will be skipped for any variable that is already defined through the command line ``--extra-vars`` option, or when running from a non-interactive session (such as cron or Ansible Tower). See :ref:`passing_variables_on_the_command_line` in the /Variables/ chapter.
 
 If you have a variable that changes infrequently, it might make sense to
 provide a default value that can be overridden.  This can be accomplished using
@@ -77,13 +78,13 @@ You can use any crypt scheme supported by 'Passlib':
 - *sun_md5_crypt* - Sun MD5 Crypt
 - *sha256_crypt* - SHA-256 Crypt
 - *sha512_crypt* - SHA-512 Crypt
-- *apr_md5_crypt* - Apache’s MD5-Crypt variant
-- *phpass* - PHPass’ Portable Hash
+- *apr_md5_crypt* - Apache's MD5-Crypt variant
+- *phpass* - PHPass' Portable Hash
 - *pbkdf2_digest* - Generic PBKDF2 Hashes
-- *cta_pbkdf2_sha1* - Cryptacular’s PBKDF2 hash
-- *dlitz_pbkdf2_sha1* - Dwayne Litzenberger’s PBKDF2 hash
+- *cta_pbkdf2_sha1* - Cryptacular's PBKDF2 hash
+- *dlitz_pbkdf2_sha1* - Dwayne Litzenberger's PBKDF2 hash
 - *scram* - SCRAM Hash
-- *bsd_nthash* - FreeBSD’s MCF-compatible nthash encoding
+- *bsd_nthash* - FreeBSD's MCF-compatible nthash encoding
 
 However, the only parameters accepted are 'salt' or 'salt_size'. You can use your own salt using
 'salt', or have one generated automatically using 'salt_size'. If nothing is specified, a salt

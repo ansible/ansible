@@ -28,7 +28,6 @@
 
 import os
 import re
-from time import sleep
 
 from ansible.module_utils._text import to_native
 from ansible.module_utils.cloud import CloudRetry
@@ -72,7 +71,7 @@ class AWSRetry(CloudRetry):
         return error.response['Error']['Code']
 
     @staticmethod
-    def found(response_code, catch_extra_error_codes):
+    def found(response_code, catch_extra_error_codes=None):
         # This list of failures is based on this API Reference
         # http://docs.aws.amazon.com/AWSEC2/latest/APIReference/errors-overview.html
         #
@@ -437,7 +436,7 @@ def ansible_dict_to_boto3_filter_list(filters_dict):
     return filters_list
 
 
-def boto3_tag_list_to_ansible_dict(tags_list, tag_name_key_name='Key', tag_value_key_name='Value'):
+def boto3_tag_list_to_ansible_dict(tags_list, tag_name_key_name=None, tag_value_key_name=None):
 
     """ Convert a boto3 list of resource tags to a flat dict of key:value pairs
     Args:
@@ -460,12 +459,17 @@ def boto3_tag_list_to_ansible_dict(tags_list, tag_name_key_name='Key', tag_value
         }
     """
 
-    tags_dict = {}
-    for tag in tags_list:
-        if tag_name_key_name in tag:
-            tags_dict[tag[tag_name_key_name]] = tag[tag_value_key_name]
+    if tag_name_key_name and tag_value_key_name:
+        tag_candidates = {tag_name_key_name: tag_value_key_name}
+    else:
+        tag_candidates = {'key': 'value', 'Key': 'Value'}
 
-    return tags_dict
+    if not tags_list:
+        return {}
+    for k, v in tag_candidates.items():
+        if k in tags_list[0] and v in tags_list[0]:
+            return dict((tag[k], tag[v]) for tag in tags_list)
+    raise ValueError("Couldn't find tag key (candidates %s) in tag list %s" % (str(tag_candidates), str(tags_list)))
 
 
 def ansible_dict_to_boto3_tag_list(tags_dict, tag_name_key_name='Key', tag_value_key_name='Value'):

@@ -3,8 +3,6 @@ Introduction To Ad-Hoc Commands
 
 .. contents:: Topics
 
-.. highlight:: bash
-
 The following examples show how to use `/usr/bin/ansible` for running
 ad hoc tasks. 
 
@@ -195,7 +193,7 @@ Deploying From Source Control
 
 Deploy your webapp straight from git::
 
-    $ ansible webservers -m git -a "repo=git://foo.example.org/repo.git dest=/srv/myapp version=HEAD"
+    $ ansible webservers -m git -a "repo=https://foo.example.org/repo.git dest=/srv/myapp version=HEAD"
 
 Since Ansible modules can notify change handlers it is possible to
 tell Ansible to run specific tasks when the code is updated, such as

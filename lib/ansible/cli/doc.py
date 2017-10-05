@@ -28,6 +28,7 @@ import yaml
 from ansible import constants as C
 from ansible.cli import CLI
 from ansible.errors import AnsibleError, AnsibleOptionsError
+from ansible.module_utils._text import to_native
 from ansible.module_utils.six import string_types
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.plugins.loader import module_loader, action_loader, lookup_loader, callback_loader, cache_loader, \
@@ -227,35 +228,38 @@ class DocCLI(CLI):
         deprecated = []
         for plugin in sorted(self.plugin_list):
 
-            # if the module lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
-            filename = loader.find_plugin(plugin, mod_type='.py', ignore_deprecated=True, check_aliases=True)
-
-            if filename is None:
-                continue
-            if filename.endswith(".ps1"):
-                continue
-            if os.path.isdir(filename):
-                continue
-
-            doc = None
             try:
-                doc, plainexamples, returndocs, metadata = plugin_docs.get_docstring(filename)
-            except:
-                display.warning("%s has a documentation formatting error" % plugin)
+                # if the module lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
+                filename = loader.find_plugin(plugin, mod_type='.py', ignore_deprecated=True, check_aliases=True)
 
-            if not doc:
-                desc = 'UNDOCUMENTED'
-                display.warning("%s parsing did not produce documentation." % plugin)
-            else:
-                desc = self.tty_ify(doc.get('short_description', '?')).strip()
+                if filename is None:
+                    continue
+                if filename.endswith(".ps1"):
+                    continue
+                if os.path.isdir(filename):
+                    continue
 
-            if len(desc) > linelimit:
-                desc = desc[:linelimit] + '...'
+                doc = None
+                try:
+                    doc, plainexamples, returndocs, metadata = plugin_docs.get_docstring(filename)
+                except:
+                    display.warning("%s has a documentation formatting error" % plugin)
 
-            if plugin.startswith('_'):  # Handle deprecated
-                deprecated.append("%-*s %-*.*s" % (displace, plugin[1:], linelimit, len(desc), desc))
-            else:
-                text.append("%-*s %-*.*s" % (displace, plugin, linelimit, len(desc), desc))
+                if not doc or not isinstance(doc, dict):
+                    desc = 'UNDOCUMENTED'
+                    display.warning("%s parsing did not produce documentation." % plugin)
+                else:
+                    desc = self.tty_ify(doc.get('short_description', 'INVALID SHORT DESCRIPTION').strip())
+
+                if len(desc) > linelimit:
+                    desc = desc[:linelimit] + '...'
+
+                if plugin.startswith('_'):  # Handle deprecated
+                    deprecated.append("%-*s %-*.*s" % (displace, plugin[1:], linelimit, len(desc), desc))
+                else:
+                    text.append("%-*s %-*.*s" % (displace, plugin, linelimit, len(desc), desc))
+            except Exception as e:
+                raise AnsibleError("Failed reading docs at %s: %s" % (plugin, to_native(e)))
 
         if len(deprecated) > 0:
             text.append("\nDEPRECATED:")
@@ -401,7 +405,7 @@ class DocCLI(CLI):
 
     def get_man_text(self, doc):
 
-        IGNORE = frozenset(['module', 'docuri', 'version_added', 'short_description', 'now_date', 'plainexamples', 'returndocs'])
+        IGNORE = frozenset(['module', 'docuri', 'version_added', 'short_description', 'now_date', 'plainexamples', 'returndocs', self.options.type])
         opt_indent = "        "
         text = []
         pad = display.columns * 0.20
@@ -417,7 +421,12 @@ class DocCLI(CLI):
         text.append("%s\n" % textwrap.fill(CLI.tty_ify(desc), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
 
         if 'deprecated' in doc and doc['deprecated'] is not None and len(doc['deprecated']) > 0:
-            text.append("DEPRECATED: \n%s\n" % doc.pop('deprecated'))
+            text.append("DEPRECATED: \n")
+            if isinstance(doc['deprecated'], dict):
+                text.append("\tReason: %(why)s\n\tScheduled removal: Ansible %(version)s\n\tAlternatives: %(alternative)s" % doc.pop('deprecated'))
+            else:
+                text.append("%s" % doc.pop('deprecated'))
+            text.append("\n")
 
         try:
             support_block = self.get_support_block(doc)

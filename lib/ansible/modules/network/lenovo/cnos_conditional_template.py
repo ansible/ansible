@@ -39,7 +39,7 @@ description:
      The configuration source can be a set of commands or a template written in the Jinja2 templating language.
      This module functions the same as the cnos_template module.
      The only exception is that the following inventory variable can be specified
-     [“condition = <flag string>”]
+     ["condition = <flag string>"]
      When this inventory variable is specified as the variable of a task, the template is executed for
      the network element that matches the flag string. Usually, templates are used when commands are the
      same across a group of network devices. When there is a requirement to skip the execution of the

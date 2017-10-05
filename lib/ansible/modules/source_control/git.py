@@ -1067,7 +1067,6 @@ def main():
     result.update(before=None)
 
     local_mods = False
-    need_fetch = True
     if (dest and not os.path.exists(gitconfig)) or (not dest and not allow_clone):
         # if there is no git configuration, do a clone operation unless:
         # * the user requested no clone (they just want info)
@@ -1083,7 +1082,6 @@ def main():
             module.exit_json(**result)
         # there's no git config, so clone
         clone(git_path, module, repo, dest, remote, depth, version, bare, reference, refspec, verify_commit)
-        need_fetch = False
     elif not update:
         # Just return having found a repo already in the dest path
         # this does no checking that the repo is the actual repo

@@ -729,8 +729,7 @@ def env_fallback(*args, **kwargs):
     for arg in args:
         if arg in os.environ:
             return os.environ[arg]
-    else:
-        raise AnsibleFallbackNotFound
+    raise AnsibleFallbackNotFound
 
 
 def _lenient_lowercase(lst):
@@ -2607,10 +2606,10 @@ class AnsibleModule(object):
             if use_unsafe_shell:
                 args = " ".join([shlex_quote(x) for x in args])
                 shell = True
-        elif isinstance(args, (binary_type, text_type)) and use_unsafe_shell:
-            shell = True
         elif isinstance(args, (binary_type, text_type)):
-            if not use_unsafe_shell:
+            if use_unsafe_shell:
+                shell = True
+            else:
                 # On python2.6 and below, shlex has problems with text type
                 # On python3, shlex needs a text type.
                 if PY2:

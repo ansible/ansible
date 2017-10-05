@@ -14,7 +14,16 @@ echo "This is a test file for format 1.2" > "${TEST_FILE_1_2}"
 
 TEST_FILE_OUTPUT="${MYTMPDIR}/test_file_output"
 
+TEST_FILE_EDIT="${MYTMPDIR}/test_file_edit"
+echo "This is a test file for edit" > "${TEST_FILE_EDIT}"
 
+TEST_FILE_EDIT2="${MYTMPDIR}/test_file_edit2"
+echo "This is a test file for edit2" > "${TEST_FILE_EDIT2}"
+
+FORMAT_1_1_HEADER="\$ANSIBLE_VAULT;1.1;AES256"
+FORMAT_1_2_HEADER="\$ANSIBLE_VAULT;1.2;AES256"
+
+VAULT_PASSWORD_FILE=vault-password
 
 # old format
 ansible-vault view "$@" --vault-password-file vault-password-ansible format_1_0_AES.yml
@@ -195,9 +204,16 @@ ansible-vault view "$@" --vault-id "tmp_new_password@${NEW_VAULT_PASSWORD}" --va
 ansible-vault decrypt "$@" --vault-password-file "${NEW_VAULT_PASSWORD}" "${TEST_FILE}"
 
 # reading/writing to/from stdin/stdin  (See https://github.com/ansible/ansible/issues/23567)
-ansible-vault encrypt "$@" --vault-password-file "${NEW_VAULT_PASSWORD}" --output="${TEST_FILE_OUTPUT}" < "${TEST_FILE}"
-ansible-vault view "$@" --vault-password-file "${NEW_VAULT_PASSWORD}" - < "${TEST_FILE_OUTPUT}"
-ansible-vault decrypt "$@" --vault-password-file "${NEW_VAULT_PASSWORD}" --output=- < "${TEST_FILE_OUTPUT}"
+ansible-vault encrypt "$@" --vault-password-file "${VAULT_PASSWORD_FILE}" --output="${TEST_FILE_OUTPUT}" < "${TEST_FILE}"
+OUTPUT=$(ansible-vault decrypt "$@" --vault-password-file "${VAULT_PASSWORD_FILE}" --output=- < "${TEST_FILE_OUTPUT}")
+echo "${OUTPUT}" | grep 'This is a test file'
+
+OUTPUT_DASH=$(ansible-vault decrypt "$@" --vault-password-file "${VAULT_PASSWORD_FILE}" --output=- "${TEST_FILE_OUTPUT}")
+echo "${OUTPUT_DASH}" | grep 'This is a test file'
+
+OUTPUT_DASH_SPACE=$(ansible-vault decrypt "$@" --vault-password-file "${VAULT_PASSWORD_FILE}" --output - "${TEST_FILE_OUTPUT}")
+echo "${OUTPUT_DASH_SPACE}" | grep 'This is a test file'
+
 
 # test using an empty vault password file
 ansible-vault view "$@" --vault-password-file empty-password format_1_1_AES256.yml && :
@@ -233,6 +249,27 @@ ansible-vault encrypt_string "$@" --vault-password-file "${NEW_VAULT_PASSWORD}" 
 
 # write to file
 ansible-vault encrypt_string "$@" --vault-password-file "${NEW_VAULT_PASSWORD}" --name "blippy" "a test string names blippy" --output "${MYTMPDIR}/enc_string_test_file"
+
+# test ansible-vault edit with a faux editor
+ansible-vault encrypt "$@" --vault-password-file vault-password "${TEST_FILE_EDIT}"
+
+# edit a 1.1 format with no vault-id, should stay 1.1
+EDITOR=./faux-editor.py ansible-vault edit "$@" --vault-password-file vault-password "${TEST_FILE_EDIT}"
+head -1 "${TEST_FILE_EDIT}" | grep "${FORMAT_1_1_HEADER}"
+
+# edit a 1.1 format with vault-id, should stay 1.1
+EDITOR=./faux-editor.py ansible-vault edit "$@" --vault-id vault_password@vault-password "${TEST_FILE_EDIT}"
+head -1 "${TEST_FILE_EDIT}" | grep "${FORMAT_1_1_HEADER}"
+
+ansible-vault encrypt "$@" --vault-id vault_password@vault-password "${TEST_FILE_EDIT2}"
+
+# edit a 1.2 format with vault id, should keep vault id and 1.2 format
+EDITOR=./faux-editor.py ansible-vault edit "$@" --vault-id vault_password@vault-password "${TEST_FILE_EDIT2}"
+head -1 "${TEST_FILE_EDIT2}" | grep "${FORMAT_1_2_HEADER};vault_password"
+
+# edit a 1.2 file with no vault-id, should keep vault id and 1.2 format
+EDITOR=./faux-editor.py ansible-vault edit "$@" --vault-password-file vault-password "${TEST_FILE_EDIT2}"
+head -1 "${TEST_FILE_EDIT2}" | grep "${FORMAT_1_2_HEADER};vault_password"
 
 
 # test playbooks using vaulted files
