@@ -261,7 +261,11 @@
             "ses:VerifyDomainIdentity",
             "ses:SetIdentityNotificationTopic",
             "ses:SetIdentityHeadersInNotificationsEnabled",
-            "ses:SetIdentityFeedbackForwardingEnabled"
+            "ses:SetIdentityFeedbackForwardingEnabled",
+            "ses:GetIdentityPolicies",
+            "ses:PutIdentityPolicy",
+            "ses:DeleteIdentityPolicy",
+            "ses:ListIdentityPolicies"
           ],
           "Resource": [
             "*"
