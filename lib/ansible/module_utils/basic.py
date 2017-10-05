@@ -2601,32 +2601,24 @@ class AnsibleModule(object):
             strings on python3, use encoding=None to turn decoding to text off.
         '''
 
+        shell = False
         if isinstance(args, list):
             if use_unsafe_shell:
-                args = " ".join([pipes.quote(x) for x in args])
+                args = " ".join([shlex_quote(x) for x in args])
                 shell = True
         elif isinstance(args, (binary_type, text_type)) and use_unsafe_shell:
             shell = True
         elif isinstance(args, (binary_type, text_type)):
-            if not use_unsafe_shell:
-                # On python2.6 and below, shlex has problems with text type
-                # On python3, shlex needs a text type.
-                if PY2:
-                    args = to_bytes(args, errors='surrogate_or_strict')
-                elif PY3:
-                    args = to_text(args, errors='surrogateescape')
-                args = shlex.split(args)
+            # On python2.6 and below, shlex has problems with text type
+            # On python3, shlex needs a text type.
+            if PY2:
+                args = to_bytes(args, errors='surrogate_or_strict')
+            elif PY3:
+                args = to_text(args, errors='surrogateescape')
+            args = shlex.split(args)
         else:
             msg = "Argument 'args' to run_command must be list or string"
             self.fail_json(rc=257, cmd=args, msg=msg)
-
-        shell = False
-        if use_unsafe_shell:
-            executable = os.environ.get('SHELL')
-            if executable:
-                args = [executable, '-c', args]
-            else:
-                shell = True
 
         prompt_re = None
         if prompt_regex:
