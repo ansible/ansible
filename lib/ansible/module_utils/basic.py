@@ -2603,7 +2603,7 @@ class AnsibleModule(object):
 
         if isinstance(args, list):
             if use_unsafe_shell:
-                args = " ".join([shlex_quote(x) for x in args])
+                args = " ".join([pipes.quote(x) for x in args])
                 shell = True
         elif isinstance(args, (binary_type, text_type)) and use_unsafe_shell:
             shell = True
@@ -2622,8 +2622,7 @@ class AnsibleModule(object):
 
         shell = False
         if use_unsafe_shell:
-            if executable is None:
-                executable = os.environ.get('SHELL')
+            executable = os.environ.get('SHELL')
             if executable:
                 args = [executable, '-c', args]
             else:
