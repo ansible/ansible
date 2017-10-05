@@ -103,6 +103,12 @@ options:
         default: 10
         version_added: "2.1"
         required: false
+    validate_certs:
+        description:
+            - Validate SSL certificate of the Zabbix server.
+        default: true
+        version_added: "2.4"
+        required: false
 notes:
     - Useful for setting hosts in maintenance mode before big update,
       and removing maintenance window after update.
@@ -285,6 +291,7 @@ def main():
             desc=dict(type='str', required=False, default="Created by Ansible"),
             collect_data=dict(type='bool', required=False, default=True),
             timeout=dict(type='int', default=10),
+            validate_certs=dict(type='bool', required=False, default=True),
         ),
         supports_check_mode=True,
     )
@@ -305,6 +312,7 @@ def main():
     server_url = module.params['server_url']
     collect_data = module.params['collect_data']
     timeout = module.params['timeout']
+    validate_certs = module.params['validate_certs']
 
     if collect_data:
         maintenance_type = 0
@@ -312,7 +320,7 @@ def main():
         maintenance_type = 1
 
     try:
-        zbx = ZabbixAPI(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password)
+        zbx = ZabbixAPI(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password, validate_certs=validate_certs)
         zbx.login(login_user, login_password)
     except BaseException as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
