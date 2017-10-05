@@ -196,7 +196,7 @@ import inspect
 try:
     # python2
     import ConfigParser as cp
-except ModuleNotFoundError:
+except ImportError:
     # python3
     import configparser as cp
 
