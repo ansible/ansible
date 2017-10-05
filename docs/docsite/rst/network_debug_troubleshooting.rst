@@ -332,7 +332,7 @@ Persistent connection idle timeout:
 For example:
 
 .. code-block:: yaml
-"
+
    2017-04-04 12:19:05,670 p=18591 u=fred |  persistent connection idle timeout triggered, timeout value is 30 secs
 
 Suggestions to resolve:
