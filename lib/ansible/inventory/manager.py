@@ -191,7 +191,7 @@ class InventoryManager(object):
         if not self._inventory_plugins:
             raise AnsibleError("No inventory plugins available to generate inventory, make sure you have at least one whitelisted.")
 
-    def parse_sources(self, cache=False):
+    def parse_sources(self, cache=True):
         ''' iterate over inventory sources and parse each one to populate it'''
 
         self._setup_inventory_plugins()
