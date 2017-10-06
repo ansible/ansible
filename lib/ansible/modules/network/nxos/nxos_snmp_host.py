@@ -150,6 +150,14 @@ def get_snmp_host(host, module):
         'secname': 'community'
     }
 
+    host_map_5k = {
+        'port': 'udp',
+        'version': 'version',
+        'sec_level': 'v3',
+        'notif_type': 'snmp_type',
+        'commun_or_user': 'community'
+    }
+
     resource = {}
 
     if body:
@@ -177,8 +185,35 @@ def get_snmp_host(host, module):
                 if vrf:
                     host_resource['vrf'] = vrf.split(':')[1].strip()
                 resource[key] = host_resource
+        except KeyError:
+            # Handle the 5K case
+            try:
+                resource_table = body[0]['TABLE_hosts']['ROW_hosts']
 
-        except (KeyError, AttributeError, TypeError):
+                if isinstance(resource_table, dict):
+                    resource_table = [resource_table]
+
+                for each in resource_table:
+                    key = str(each['address'])
+                    src = each.get('src_intf')
+                    host_resource = apply_key_map(host_map_5k, each)
+
+                    if src:
+                        host_resource['src_intf'] = src.split(':')[1].strip()
+
+                    vrf_filt = each.get('TABLE_filter_vrf')
+                    if vrf_filt:
+                        vrf_filter = vrf_filt['ROW_filter_vrf']['filter_vrf_name'].split(',')
+                        filters = [vrf.strip() for vrf in vrf_filter]
+                        host_resource['vrf_filter'] = filters
+
+                    vrf = each.get('use_vrf_name')
+                    if vrf:
+                        host_resource['vrf'] = vrf.strip()
+                    resource[key] = host_resource
+            except (KeyError, AttributeError, TypeError):
+                return resource
+        except (AttributeError, TypeError):
             return resource
 
         find = resource.get(host)
