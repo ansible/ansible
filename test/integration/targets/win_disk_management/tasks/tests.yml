@@ -21,7 +21,7 @@
     # module_output
     logging: standard
   register: fail_not_found
-  failed_when: fail_not_found.search_log.disk.disks_found != '0'
+  failed_when: fail_not_found.disk_selected.disk.total_found_disks != '0'
 
 # Use result of module (disk number)
 - name: fail select and manage a specified disk because specified disk is not attached, check results
