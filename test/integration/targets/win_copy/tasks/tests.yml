@@ -413,9 +413,15 @@
   failed_when: "'object at parent directory path is already a file' not in fail_folder_to_file.msg"
 
 # https://github.com/ansible/ansible/issues/31336
+- name: create file with colon in the name
+  copy:
+    dest: '{{role_path}}/files-different/colon:file'
+    content: test
+  delegate_to: localhost
+
 - name: copy a file with colon as a source
   win_copy:
-    src: '{{role_path}}/files-different/special-char/colon:file'
+    src: '{{role_path}}/files-different/colon:file'
     dest: '{{test_win_copy_path}}\colon.file'
   register: copy_file_with_colon
 
@@ -429,7 +435,13 @@
     that:
     - copy_file_with_colon|changed
     - copy_file_with_colon_result.stat.exists == True
-    - copy_file_with_colon_result.stat.checksum == "372ea08cab33e71c02c651dbc83a474d32c676ea" 
+    - copy_file_with_colon_result.stat.checksum == "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3" 
+
+- name: remove file with colon in the name
+  file:
+    path: '{{role_path}}/files-different/colon:file'
+    state: absent
+  delegate_to: localhost
 
 - name: remove test folder after local to remote tests
   win_file:
