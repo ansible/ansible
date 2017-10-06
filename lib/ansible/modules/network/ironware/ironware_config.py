@@ -224,7 +224,7 @@ class NetworkConfig(_NetworkConfig):
 def get_candidate(module):
     candidate = NetworkConfig(indent=1)
     if module.params['src']:
-        candidate.load(module.params['src'])
+        candidate.loadfd(module.params['src'])
     elif module.params['lines']:
         parents = module.params['parents'] or list()
         candidate.add_load(module.params['lines'], parents=parents)
