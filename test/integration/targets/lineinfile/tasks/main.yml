@@ -368,6 +368,462 @@
     - "result.stat.checksum == '04b7a54d0fb233a4e26c9e625325bb4874841b3c'"
 #######
 
+###################################################################
+# PR 24058
+
+- name: deploy the test file with multiple identical lines for lineinfile
+  copy: src=testmultiple.txt dest={{output_dir}}/testmultiple.txt
+  register: result
+
+- name: replace the first line matching regexp
+  lineinfile:
+    dest: "{{output_dir}}/testmultiple.txt"
+    state: present
+    firstmatch: yes
+    line: "This is the modified repeating line"
+    regexp: "repeating line"
+  register: result
+
+- name: assert that the first matching line was replaced
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.msg == 'line replaced'"
+
+- name: stat the test after the first matching line was replaced
+  stat: path={{output_dir}}/testmultiple.txt
+  register: result
+
+- name: assert test checksum matches after the first matching line was replaced
+  assert:
+    that:
+    - "result.stat.checksum == 'f441c9e5fc6abcda06a68bf5d099ae7d8244ae65'"
+
+####### idempotency - replace first matching
+- name: replace the first line matching regexp again (idempotent)
+  lineinfile:
+    dest: "{{output_dir}}/testmultiple.txt"
+    state: present
+    firstmatch: yes
+    line: "This is the modified repeating line"
+    regexp: "repeating line"
+  register: result
+
+- name: assert that the first matching line was not replaced again
+  assert:
+    that:
+    - "result.changed == false"
+
+- name: stat the test again after the first matching line was replaced
+  stat: path={{output_dir}}/testmultiple.txt
+  register: result
+
+- name: assert test checksum matches after the first matching line was replaced
+  assert:
+    that:
+    - "result.stat.checksum == 'f441c9e5fc6abcda06a68bf5d099ae7d8244ae65'"
+#######
+
+- name: insert a line before the first matching line
+  lineinfile:
+    dest: "{{output_dir}}/testmultiple.txt"
+    state: present
+    firstmatch: yes
+    line: "New line before the first repeating line"
+    before: "repeating line"
+  register: result
+
+- name: assert that the line was added before the first matching line
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.msg == 'line added'"
+
+- name: stat the test after the line was added before the first matching line
+  stat: path={{output_dir}}/testmultiple.txt
+  register: result
+
+- name: assert test checksum matches after the line was added before the first matching line
+  assert:
+    that:
+    - "result.stat.checksum == '4e570eeadcf343708ed13506e00477effd386eb3'"
+
+####### idempotency - insert before first matching
+- name: insert a line before the first matching line again (idempotent)
+  lineinfile:
+    dest: "{{output_dir}}/testmultiple.txt"
+    state: present
+    firstmatch: yes
+    line: "New line before the first repeating line"
+    before: "repeating line"
+  register: result
+
+- name: assert that the line was not added before the first matching line again
+  assert:
+    that:
+    - "result.changed == false"
+
+- name: stat the test again after the line was added before the first matching line
+  stat: path={{output_dir}}/testmultiple.txt
+  register: result
+
+- name: assert test checksum matches after the line was added before the first matching line
+  assert:
+    that:
+    - "result.stat.checksum == '4e570eeadcf343708ed13506e00477effd386eb3'"
+#######
+
+- name: insert a line after the first matching line
+  lineinfile:
+    dest: "{{output_dir}}/testmultiple.txt"
+    state: present
+    firstmatch: yes
+    line: "New line after the first repeating line"
+    after: "This is.*repeating line"
+  register: result
+
+- name: assert that the line was added after the first matching line
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.msg == 'line added'"
+
+- name: stat the test after the line was added after the first matching line
+  stat: path={{output_dir}}/testmultiple.txt
+  register: result
+
+- name: assert test checksum matches after the line was added after the first matching line
+  assert:
+    that:
+    - "result.stat.checksum == '1b92bb2a6467853f45b7011df5b668dd50fd19d1'"
+
+####### idempotency - insert after first matching
+- name: insert a line after the first matching line again (idempotent)
+  lineinfile:
+    dest: "{{output_dir}}/testmultiple.txt"
+    state: present
+    firstmatch: yes
+    line: "New line after the first repeating line"
+    after: "This is.*repeating line"
+  register: result
+
+- name: assert that the line was not added after the first matching line again
+  assert:
+    that:
+    - "result.changed == false"
+
+- name: stat the test again after the line was added after the first matching line
+  stat: path={{output_dir}}/testmultiple.txt
+  register: result
+
+- name: assert test checksum matches after the line was added after the first matching line
+  assert:
+    that:
+    - "result.stat.checksum == '1b92bb2a6467853f45b7011df5b668dd50fd19d1'"
+#######
+
+- name: move the line before the first matching line
+  lineinfile:
+    dest: "{{output_dir}}/testmultiple.txt"
+    state: present
+    firstmatch: yes
+    move: yes
+    line: "This is line 9"
+    before: "repeating line"
+  register: result
+
+- name: assert that the line was moved before the first matching line
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.msg == 'line moved'"
+
+- name: stat the test after the line was moved before the first matching line
+  stat: path={{output_dir}}/testmultiple.txt
+  register: result
+
+- name: assert test checksum matches after the line was moved before the first matching line
+  assert:
+    that:
+    - "result.stat.checksum == '98a643057ac4d11cd7caff8538898ead43c28fbf'"
+
+####### idempotency - move before first matching
+- name: move the line before the first matching line again (idempotent)
+  lineinfile:
+    dest: "{{output_dir}}/testmultiple.txt"
+    state: present
+    firstmatch: yes
+    move: yes
+    line: "This is line 9"
+    before: "repeating line"
+  register: result
+
+- name: assert that the line was not moved before the first matching line again
+  assert:
+    that:
+    - "result.changed == false"
+
+- name: stat the test again after the line was moved before the first matching line
+  stat: path={{output_dir}}/testmultiple.txt
+  register: result
+
+- name: assert test checksum matches after the line was moved before the first matching line
+  assert:
+    that:
+    - "result.stat.checksum == '98a643057ac4d11cd7caff8538898ead43c28fbf'"
+#######
+
+- name: move the line after the first matching line
+  lineinfile:
+    dest: "{{output_dir}}/testmultiple.txt"
+    state: present
+    firstmatch: yes
+    move: yes
+    line: "This is line 9"
+    after: "repeating line"
+  register: result
+
+- name: assert that the line was moved after the first matching line
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.msg == 'line moved'"
+
+- name: stat the test after the line was moved after the first matching line
+  stat: path={{output_dir}}/testmultiple.txt
+  register: result
+
+- name: assert test checksum matches after the line was moved after the first matching line
+  assert:
+    that:
+    - "result.stat.checksum == '9c5b3ad530eed78aa5ebee50dd9f6e3cbd1a28fe'"
+
+####### idempotency - move after first matching
+- name: move the line after the first matching line again (idempotent)
+  lineinfile:
+    dest: "{{output_dir}}/testmultiple.txt"
+    state: present
+    firstmatch: yes
+    move: yes
+    line: "This is line 9"
+    after: "repeating line"
+  register: result
+
+- name: assert that the line was not moved after the first matching line again
+  assert:
+    that:
+    - "result.changed == false"
+
+- name: stat the test again after the line was moved after the first matching line
+  stat: path={{output_dir}}/testmultiple.txt
+  register: result
+
+- name: assert test checksum matches after the line was moved after the first matching line
+  assert:
+    that:
+    - "result.stat.checksum == '9c5b3ad530eed78aa5ebee50dd9f6e3cbd1a28fe'"
+#######
+
+- name: move the line after the last matching line
+  lineinfile:
+    dest: "{{output_dir}}/testmultiple.txt"
+    state: present
+    firstmatch: no
+    move: yes
+    line: "This is line 9"
+    after: "repeating line"
+  register: result
+
+- name: assert that the line was moved after the last matching line
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.msg == 'line moved'"
+
+- name: stat the test after the line was moved after the last matching line
+  stat: path={{output_dir}}/testmultiple.txt
+  register: result
+
+- name: assert test checksum matches after the line was moved after the last matching line
+  assert:
+    that:
+    - "result.stat.checksum == '1b92bb2a6467853f45b7011df5b668dd50fd19d1'"
+
+####### idempotency - move after last matching
+- name: move the line after the last matching line again (idempotent)
+  lineinfile:
+    dest: "{{output_dir}}/testmultiple.txt"
+    state: present
+    firstmatch: no
+    move: yes
+    line: "This is line 9"
+    after: "repeating line"
+  register: result
+
+- name: assert that the line was not moved after the last matching line again
+  assert:
+    that:
+    - "result.changed == false"
+
+- name: stat the test again after the line was moved after the last matching line
+  stat: path={{output_dir}}/testmultiple.txt
+  register: result
+
+- name: assert test checksum matches after the line was moved after the last matching line
+  assert:
+    that:
+    - "result.stat.checksum == '1b92bb2a6467853f45b7011df5b668dd50fd19d1'"
+#######
+
+- name: move the line before the last matching line
+  lineinfile:
+    dest: "{{output_dir}}/testmultiple.txt"
+    state: present
+    firstmatch: no
+    move: yes
+    line: "This is line 9"
+    before: "repeating line"
+  register: result
+
+- name: assert that the line was moved before the last matching line
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.msg == 'line moved'"
+
+- name: stat the test after the line was moved before the last matching line
+  stat: path={{output_dir}}/testmultiple.txt
+  register: result
+
+- name: assert test checksum matches after the line was moved before the last matching line
+  assert:
+    that:
+    - "result.stat.checksum == 'ff326bf21cfc8f0dfc6c479ec5ba158ba1f0bea0'"
+
+####### idempotency - move before last matching
+- name: move the line before the last matching line again (idempotent)
+  lineinfile:
+    dest: "{{output_dir}}/testmultiple.txt"
+    state: present
+    firstmatch: no
+    move: yes
+    line: "This is line 9"
+    before: "repeating line"
+  register: result
+
+- name: assert that the line was not moved before the last matching line again
+  assert:
+    that:
+    - "result.changed == false"
+
+- name: stat the test again after the line was moved before the last matching line
+  stat: path={{output_dir}}/testmultiple.txt
+  register: result
+
+- name: assert test checksum matches after the line was moved before the last matching line
+  assert:
+    that:
+    - "result.stat.checksum == 'ff326bf21cfc8f0dfc6c479ec5ba158ba1f0bea0'"
+#######
+
+- name: make sure the line is before the first matching line
+  lineinfile:
+    dest: "{{output_dir}}/testmultiple.txt"
+    state: present
+    firstmatch: yes
+    move: yes
+    line: "This is line 1"
+    before: "repeating line"
+  register: result
+
+- name: assert that the line was not moved because it is already before the first matching line
+  assert:
+    that:
+    - "result.changed == false"
+
+- name: stat the test after making sure the line is before the first matching line
+  stat: path={{output_dir}}/testmultiple.txt
+  register: result
+
+- name: assert test checksum matches after making sure the line is before the first matching line
+  assert:
+    that:
+    - "result.stat.checksum == 'ff326bf21cfc8f0dfc6c479ec5ba158ba1f0bea0'"
+
+- name: make sure the line is after the first matching line
+  lineinfile:
+    dest: "{{output_dir}}/testmultiple.txt"
+    state: present
+    firstmatch: yes
+    move: yes
+    line: "This is line 3"
+    after: "repeating line"
+  register: result
+
+- name: assert that the line was not moved because it is already after the first matching line
+  assert:
+    that:
+    - "result.changed == false"
+
+- name: stat the test after making sure the line is after the first matching line
+  stat: path={{output_dir}}/testmultiple.txt
+  register: result
+
+- name: assert test checksum matches after making sure the line is after the first matching line
+  assert:
+    that:
+    - "result.stat.checksum == 'ff326bf21cfc8f0dfc6c479ec5ba158ba1f0bea0'"
+
+- name: make sure the line is before the last matching line
+  lineinfile:
+    dest: "{{output_dir}}/testmultiple.txt"
+    state: present
+    firstmatch: no
+    move: yes
+    line: "This is line 5"
+    before: "repeating line"
+  register: result
+
+- name: assert that the line was not moved because it is already before the  mstatching line
+  assert:
+    that:
+    - "result.changed == false"
+
+- name: stat the test after making sure the line is before the last matching line
+  stat: path={{output_dir}}/testmultiple.txt
+  register: result
+
+- name: assert test checksum matches after making sure the line is before the last matching line
+  assert:
+    that:
+    - "result.stat.checksum == 'ff326bf21cfc8f0dfc6c479ec5ba158ba1f0bea0'"
+
+- name: make sure the line is after the last matching line
+  lineinfile:
+    dest: "{{output_dir}}/testmultiple.txt"
+    state: present
+    firstmatch: no
+    move: yes
+    line: "This is line 9"
+    after: "first repeating line"
+  register: result
+
+- name: assert that the line was not moved because it is already after the last matching line
+  assert:
+    that:
+    - "result.changed == false"
+
+- name: stat the test after making sure the line is after the last matching line
+  stat: path={{output_dir}}/testmultiple.txt
+  register: result
+
+- name: assert test checksum matches after making sure the line is after the last matching line
+  assert:
+    that:
+    - "result.stat.checksum == 'ff326bf21cfc8f0dfc6c479ec5ba158ba1f0bea0'"
+
+###################################################################
+
 - name: use create=yes
   lineinfile: dest={{output_dir}}/new_test.txt create=yes insertbefore=BOF state=present line="This is a new file"
   register: result
