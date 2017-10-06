@@ -1,0 +1,11 @@
+- block:
+  - apt:
+      name: '{{ item }}'
+      state: present
+      install_recommends: no
+    with_items:
+      - python-pip
+      - python3-pip
+      - virtualenv
+      - git  # for requirement file with an vcs url
+  when: ansible_distribution == 'Debian'
