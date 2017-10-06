@@ -1,7 +1,7 @@
 Release Managers
 ================
 
-The release manager’s (RM’s) duty is to coordinate between developers, docs, and Tower to ensure
+The release manager's (RM's) duty is to coordinate between developers, docs, and Tower to ensure
 a smooth release.
 
 
