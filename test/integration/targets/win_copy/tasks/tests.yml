@@ -28,7 +28,7 @@
 
 - name: fail to copy an encrypted file without the password set
   win_copy:
-    src: '{{role_path}}/files-vault/vault-file'
+    src: '{{role_path}}/files-different/vault/vault-file'
     dest: '{{test_win_copy_path}}\file'
   register: fail_copy_encrypted_file
   ignore_errors: yes # weird failed_when doesn't work in this case
@@ -37,11 +37,11 @@
   assert:
     that:
     - fail_copy_encrypted_file|failed
-    - fail_copy_encrypted_file.msg == 'A vault password or secret must be specified to decrypt {{role_path}}/files-vault/vault-file'
+    - fail_copy_encrypted_file.msg == 'A vault password or secret must be specified to decrypt {{role_path}}/files-different/vault/vault-file'
 
 - name: fail to copy a directory with an encrypted file without the password
   win_copy:
-    src: '{{role_path}}/files-vault'
+    src: '{{role_path}}/files-different/vault'
     dest: '{{test_win_copy_path}}'
   register: fail_copy_directory_with_enc_file
   ignore_errors: yes
@@ -50,7 +50,7 @@
   assert:
     that:
     - fail_copy_directory_with_enc_file|failed
-    - fail_copy_directory_with_enc_file.msg == 'A vault password or secret must be specified to decrypt {{role_path}}/files-vault/vault-file'
+    - fail_copy_directory_with_enc_file.msg == 'A vault password or secret must be specified to decrypt {{role_path}}/files-different/vault/vault-file'
 
 - name: copy with content (check mode)
   win_copy:
@@ -411,6 +411,25 @@
     dest: '{{test_win_copy_path}}\recursive-contents\foo.txt'
   register: fail_folder_to_file
   failed_when: "'object at parent directory path is already a file' not in fail_folder_to_file.msg"
+
+# https://github.com/ansible/ansible/issues/31336
+- name: copy a file with colon as a source
+  win_copy:
+    src: '{{role_path}}/files-different/special-char/colon:file'
+    dest: '{{test_win_copy_path}}\colon.file'
+  register: copy_file_with_colon
+
+- name: get result of file with colon as a source
+  win_stat:
+    path: '{{test_win_copy_path}}\colon.file'
+  register: copy_file_with_colon_result
+
+- name: assert results of copy a file with colon as a source
+  assert:
+    that:
+    - copy_file_with_colon|changed
+    - copy_file_with_colon_result.stat.exists == True
+    - copy_file_with_colon_result.stat.checksum == "372ea08cab33e71c02c651dbc83a474d32c676ea" 
 
 - name: remove test folder after local to remote tests
   win_file:
