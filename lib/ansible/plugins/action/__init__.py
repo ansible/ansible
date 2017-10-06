@@ -821,7 +821,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         same_user = self._play_context.become_user == self._play_context.remote_user
         if sudoable and self._play_context.become and (allow_same_user or not same_user):
             display.debug("_low_level_execute_command(): using become for this command")
-            if self.connection.transport != 'network_cli' and self._play_context.become_method != 'enable':
+            if self._connection.transport != 'network_cli' and self._play_context.become_method != 'enable':
                 cmd = self._play_context.make_become_cmd(cmd, executable=executable)
 
         if self._connection.allow_executable:
