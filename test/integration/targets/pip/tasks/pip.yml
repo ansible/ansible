@@ -183,6 +183,38 @@
       that:
         - "pip_install_venv.changed"
 
+  # Check that 'name' and 'requirements' can be used together
+  - name: overwrite requirement file
+    copy: dest={{ output_dir }}/pipreq.txt
+      content="q"
+
+  - name: check that test packages are not already installed
+    command: 'pip show {{ item }}'
+    with_items: ['q', 'six'] # relative small packages, compatible py2/py3, with wheels
+    ignore_errors: True
+    register: dep_already_installed
+
+  - assert:
+      that:
+        - "{{ dep_already_installed | failed }}"
+
+  - name: "test that 'name' and 'requirements' can be used together"
+    pip:
+      name: six
+      requirements: "{{ output_dir}}/pipreq.txt"
+      virtualenv: "{{ output_dir }}/pipenv"
+    register: pip_install_venv_name_req
+
+  - name: check that test packages are installed
+    shell: '. {{ output_dir }}/pipenv/bin/activate && pip show {{ item }}'
+    with_items: ['q', 'six']
+
+  - name: Ensure installation was successful
+    assert:
+      that:
+        - "pip_install_venv_name_req|changed"
+        - "pip_install_venv_name_req|success"
+
   always:
     - name: "Remove test env"
       file: "state=absent name={{ item }}"
