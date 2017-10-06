@@ -41,6 +41,7 @@ class TestInventoryModule(unittest.TestCase):
             returncode = 0
             stdout = b""
             stderr = b""
+
             def communicate(self):
                 return (self.stdout, self.stderr)
 
@@ -57,12 +58,12 @@ class TestInventoryModule(unittest.TestCase):
         self.popen = register_patch('subprocess.Popen')
         self.popen.return_value = self.popen_result
 
-        self.BaseInventoryPlugin= register_patch('ansible.plugins.inventory.BaseInventoryPlugin')
+        self.BaseInventoryPlugin = register_patch('ansible.plugins.inventory.BaseInventoryPlugin')
         self.BaseInventoryPlugin.get_cache_prefix.return_value = 'abc123'
 
     def test_parse_subprocess_path_not_found_fail(self):
         self.popen.side_effect = OSError("dummy text")
-        
+
         inventory_module = InventoryModule()
         with pytest.raises(AnsibleError) as e:
             inventory_module.parse(self.inventory, self.loader, '/foo/bar/foobar.py')
@@ -73,32 +74,31 @@ class TestInventoryModule(unittest.TestCase):
         self.popen_result.stderr = to_bytes(u"dummyédata")
 
         self.popen_result.returncode = 1
-        
+
         inventory_module = InventoryModule()
         with pytest.raises(AnsibleError) as e:
             inventory_module.parse(self.inventory, self.loader, '/foo/bar/foobar.py')
-        assert e.value.message == to_native("Inventory script (/foo/bar/foobar.py) had an execution error: " \
-                                  "dummyédata\n ")
+        assert e.value.message == to_native("Inventory script (/foo/bar/foobar.py) had an execution error: "
+                                            "dummyédata\n ")
 
     def test_parse_utf8_fail(self):
         self.popen_result.returncode = 0
         self.popen_result.stderr = to_bytes("dummyédata")
         self.loader.load.side_effect = TypeError('obj must be string')
-        
+
         inventory_module = InventoryModule()
         with pytest.raises(AnsibleError) as e:
             inventory_module.parse(self.inventory, self.loader, '/foo/bar/foobar.py')
-        assert e.value.message == to_native("failed to parse executable inventory script results from " \
-                                  "/foo/bar/foobar.py: obj must be string\ndummyédata\n")
+        assert e.value.message == to_native("failed to parse executable inventory script results from "
+                                            "/foo/bar/foobar.py: obj must be string\ndummyédata\n")
 
     def test_parse_dict_fail(self):
         self.popen_result.returncode = 0
         self.popen_result.stderr = to_bytes("dummyédata")
         self.loader.load.return_value = 'i am not a dict'
-        
+
         inventory_module = InventoryModule()
         with pytest.raises(AnsibleError) as e:
             inventory_module.parse(self.inventory, self.loader, '/foo/bar/foobar.py')
-        assert e.value.message == to_native("failed to parse executable inventory script results from " \
-                                  "/foo/bar/foobar.py: needs to be a json dict\ndummyédata\n")
-
+        assert e.value.message == to_native("failed to parse executable inventory script results from "
+                                            "/foo/bar/foobar.py: needs to be a json dict\ndummyédata\n")
