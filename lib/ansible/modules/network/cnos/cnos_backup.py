@@ -1,3 +1,7 @@
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
@@ -166,9 +170,6 @@ msg:
   type: string
   sample: "Config file tranferred to server"
 '''
-
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
 import sys
 import paramiko
