@@ -106,7 +106,11 @@ msg:
 '''
 
 import sys
-import paramiko
+try:
+    import paramiko
+    HAS_PARAMIKO=True
+except ImportError:
+    HAS_PARAMIKO=False
 import time
 import argparse
 import socket
@@ -148,6 +152,8 @@ def main():
     hostIP = module.params['host']
 
     output = ""
+    if not HAS_PARAMIKO:
+        module.fail_json(msg='paramiko is required for this module')
 
     # Here comes the logic against which a template is
     # conditionally executed for right Network element.
