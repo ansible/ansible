@@ -1,5 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 #
 # Copyright (C) 2017 Lenovo, Inc.
 #
@@ -461,9 +463,6 @@ msg:
   type: string
   sample: "Interface configurations accomplished."
 '''
-
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
 import sys
 import paramiko
