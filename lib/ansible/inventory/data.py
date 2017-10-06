@@ -79,9 +79,6 @@ class InventoryData(object):
         else:
             new_host = Host(pattern)
 
-            # use 'all' vars but not part of all group
-            new_host.vars = self.groups['all'].get_vars()
-
             new_host.address = "127.0.0.1"
             new_host.implicit = True
 
