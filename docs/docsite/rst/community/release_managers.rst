@@ -37,7 +37,7 @@ During the beta, we will no longer accept feature submissions.
 What is a Release Candidate?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In a release candidate, we've gotten all known blockers. Any remaining bugfixes are
+In a release candidate, we've fixed all known blockers. Any remaining bugfixes are
 ones that we are willing to leave out of the release. At this point we need user testing to
 determine if there are any other blocker bugs lurking.
 
@@ -51,7 +51,7 @@ into the next major release if blocker bugs require that a new release be made.
 
 The last RC should be as close to the final as possible. The following things may be changed:
 
-    * Version numbers arechanged automatically and will differ as the pre-release tags are removed from
+    * Version numbers are changed automatically and will differ as the pre-release tags are removed from
       the versions.
     * Tests and :file:`docs/docsite/` can differ if really needed as they do not break runtime.
       However, the release manager may still reject them as they have the potential to cause
