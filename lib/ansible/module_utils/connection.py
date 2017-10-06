@@ -27,6 +27,7 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
+import json
 import socket
 import struct
 import traceback
@@ -35,6 +36,7 @@ import uuid
 from functools import partial
 
 from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.six import iteritems
 
 
 def send_data(s, data):
@@ -62,22 +64,11 @@ def recv_data(s):
 
 def exec_command(module, command):
     try:
-        sf = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        sf.connect(module._socket_path)
-
-        data = "EXEC: %s" % command
-        send_data(sf, to_bytes(data.strip()))
-
-        rc = int(recv_data(sf), 10)
-        stdout = recv_data(sf)
-        stderr = recv_data(sf)
-    except socket.error as e:
-        sf.close()
-        module.fail_json(msg='unable to connect to socket', err=to_native(e), exception=traceback.format_exc())
-
-    sf.close()
-
-    return rc, to_native(stdout, errors='surrogate_or_strict'), to_native(stderr, errors='surrogate_or_strict')
+        connection = Connection(module._socket_path)
+        out = connection.exec_command(command)
+        return 0, out, ''
+    except ConnectionError as exc:
+        return exc.code, '', to_native(exc.msg, errors='surrogate_or_strict')
 
 
 def request_builder(method, *args, **kwargs):
@@ -91,10 +82,19 @@ def request_builder(method, *args, **kwargs):
     return req
 
 
+class ConnectionError(Exception):
+
+    def __init__(self, message, *args, **kwargs):
+        super(ConnectionError, self).__init__(message)
+        for k, v in iteritems(kwargs):
+            setattr(self, k, v)
+
+
 class Connection:
 
-    def __init__(self, module):
-        self._module = module
+    def __init__(self, socket_path):
+        assert socket_path is not None, 'socket_path must be a value'
+        self.socket_path = socket_path
 
     def __getattr__(self, name):
         try:
@@ -116,30 +116,40 @@ class Connection:
         req = request_builder(name, *args, **kwargs)
         reqid = req['id']
 
-        if not self._module._socket_path:
-            self._module.fail_json(msg='provider support not available for this host')
-
-        if not os.path.exists(self._module._socket_path):
-            self._module.fail_json(msg='provider socket does not exist, is the provider running?')
+        if not os.path.exists(self.socket_path):
+            raise ConnectionError('socket_path does not exist or cannot be found')
 
         try:
-            data = self._module.jsonify(req)
-            rc, out, err = exec_command(self._module, data)
+            data = json.dumps(req)
+            out = self.send(data)
+            response = json.loads(out)
 
         except socket.error as e:
-            self._module.fail_json(msg='unable to connect to socket', err=to_native(e),
-                                   exception=traceback.format_exc())
-
-        try:
-            response = self._module.from_json(to_text(out, errors='surrogate_then_replace'))
-        except ValueError as exc:
-            self._module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+            raise ConnectionError('unable to connect to socket', err=to_native(e), exception=traceback.format_exc())
 
         if response['id'] != reqid:
-            self._module.fail_json(msg='invalid id received')
+            raise ConnectionError('invalid json-rpc id received')
 
         if 'error' in response:
-            msg = response['error'].get('data') or response['error']['message']
-            self._module.fail_json(msg=to_text(msg, errors='surrogate_then_replace'))
+            err = response.get('error')
+            msg = err.get('data') or err['message']
+            code = err['code']
+            raise ConnectionError(msg, code=code, errors='surrogate_then_replace')
 
         return response['result']
+
+    def send(self, data):
+        try:
+            sf = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            sf.connect(self.socket_path)
+
+            send_data(sf, to_bytes(data))
+            response = recv_data(sf)
+
+        except socket.error as e:
+            sf.close()
+            raise ConnectionError('unable to connect to socket', err=to_native(e), exception=traceback.format_exc())
+
+        sf.close()
+
+        return to_native(response, errors='surrogate_or_strict')
