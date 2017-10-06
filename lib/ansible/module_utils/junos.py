@@ -174,9 +174,9 @@ def locked_config(module):
         unlock_configuration(module)
 
 
-def get_diff(module):
+def get_diff(module, rollback='0'):
 
-    reply = get_configuration(module, compare=True, format='text')
+    reply = get_configuration(module, compare=True, format='text', rollback=rollback)
     # if warning is received from device diff is empty.
     if isinstance(reply, list):
         return None
