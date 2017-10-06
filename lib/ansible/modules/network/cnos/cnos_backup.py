@@ -170,7 +170,11 @@ msg:
 '''
 
 import sys
-import paramiko
+try:
+    import paramiko
+    HAS_PARAMIKO=True
+except ImportError:
+    HAS_PARAMIKO=False
 import time
 import argparse
 import socket
@@ -220,6 +224,9 @@ def main():
     output = ""
     timeout = 90
     tftptimeout = 450
+    
+    if not HAS_PARAMIKO:
+        module.fail_json(msg='paramiko is required for this module')
 
     # Create instance of SSHClient object
     remote_conn_pre = paramiko.SSHClient()
