@@ -210,6 +210,7 @@
         size: 5
         db_instance_class: db.t2.micro
         engine: postgres
+        master_username: hello
         wait: yes
         wait_timeout: 1200
         region: '{{ec2_region}}'
@@ -223,6 +224,7 @@
         size: 5
         db_instance_class: db.t2.micro
         engine: postgres
+        master_username: hello
         wait: yes
         wait_timeout: 1200
         region: '{{ec2_region}}'

@@ -1005,8 +1005,6 @@ argument_spec = dict(
     final_db_snapshot_identifier=dict(),
     skip_final_snapshot=dict(type='bool'),
 
-
-
     # FIXME: add a purge_tags option using compare_aws_tags()
 )
 
@@ -1018,11 +1016,18 @@ required_if = [
     ('state', 'present', ['engine', 'db_instance_class']),
 ]
 
+# 'master_username' is required if creating a database instance other
+# than aurora.  This is a little bit irritating if creating a replica
+# where it won't be used but seems better to require it so create is
+# safe elsewhere.  There's also the interesting 'feature' that giving
+# the engine when deleting an RDS will mean you also have to give the
+# master_username even when normally it wouldn't be needed.
+
 # 'master_user_password' is needed during a create but we leave it out
 # below for now so that we can do modify without it.
 for i in DB_ENGINES:
     if i == 'aurora':
-        required_if.append(('engine', 'aurora', ['engine', 'db_instance_class'])),
+        required_if.append(('engine', 'aurora', ['db_instance_class'])),
     else:
         required_if.append(('engine', i, ['allocated_storage', 'master_username']))
 
