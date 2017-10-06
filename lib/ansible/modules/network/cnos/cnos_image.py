@@ -124,6 +124,9 @@ msg:
   sample: "Image file tranferred to device"
 '''
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import sys
 import paramiko
 import time
