@@ -323,6 +323,8 @@ class VariableManager:
             # only allow to call the functions we want exposed
             for entry in C.VARIABLE_PRECEDENCE:
                 if entry in self._ALLOWED:
+                    if host.implicit and not C.IMPLICIT_HAS_ALL and entry.startswith('all_'):
+                        continue
                     display.debug('Calling %s to load vars for %s' % (entry, host.name))
                     all_vars = combine_vars(all_vars, locals()[entry]())
                 else:
