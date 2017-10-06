@@ -172,11 +172,10 @@ msg:
 import sys
 try:
     import paramiko
-    HAS_PARAMIKO=True
+    HAS_PARAMIKO = True
 except ImportError:
-    HAS_PARAMIKO=False
+    HAS_PARAMIKO = False
 import time
-import argparse
 import socket
 import array
 import json
@@ -224,7 +223,7 @@ def main():
     output = ""
     timeout = 90
     tftptimeout = 450
-    
+
     if not HAS_PARAMIKO:
         module.fail_json(msg='paramiko is required for this module')
 
