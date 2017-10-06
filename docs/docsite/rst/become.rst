@@ -7,15 +7,12 @@ Ansible can use existing privilege escalation systems to allow a user to execute
 
 Become
 ``````
-Ansible allows you to 'become' another user, different from the user that logged into the machine (remote user). This is done using existing
-privilege escalation tools, which you probably already use or have configured, like `sudo`, `su`, `pfexec`, `doas`, `pbrun`, `dzdo`, `ksu`, `runas` and others.
+Ansible allows you to 'become' another user, different from the user that logged into the machine (remote user). This is done using existing privilege escalation tools such as `sudo`, `su`, `pfexec`, `doas`, `pbrun`, `dzdo`, `ksu`, `runas` and others.
 
 
-.. note:: Before 1.9 Ansible mostly allowed the use of `sudo` and a limited use of `su` to allow a login/remote user to become a different user
-    and execute tasks, create resources with the 2nd user's permissions. As of 1.9 `become` supersedes the old sudo/su, while still being backwards compatible.
-    This new system also makes it easier to add other privilege escalation tools like `pbrun` (Powerbroker), `pfexec`, `dzdo` (Centrify), and others.
+.. note:: Prior to version 1.9, Ansible mostly allowed the use of `sudo` and a limited use of `su` to allow a login/remote user to become a different user and execute tasks and create resources with the second user's permissions. As of Ansible version 1.9,  `become` supersedes the old sudo/su, while still being backwards compatible. This new implementation also makes it easier to add other privilege escalation tools, including `pbrun` (Powerbroker), `pfexec`, `dzdo` (Centrify), and others.
 
-.. note:: Become vars & directives are independent, i.e. setting `become_user` does not set `become`.
+.. note:: Become vars and directives are independent. For example, setting `become_user` does not set `become`.
 
 
 Directives
@@ -32,7 +29,7 @@ become_method
     (at play or task level) overrides the default method set in ansible.cfg, set to `sudo`/`su`/`pbrun`/`pfexec`/`doas`/`dzdo`/`ksu`/`runas`
 
 become_flags
-    (at play or task level) permit to use specific flags for the tasks or role. One common use is to change user to nobody when the shell is set to no login. Added in Ansible 2.2.
+    (at play or task level) permit the use of specific flags for the tasks or role. One common use is to change the user to nobody when the shell is set to no login. Added in Ansible 2.2.
 
 For example, to manage a system service (which requires ``root`` privileges) when connected as a non-``root`` user (this takes advantage of the fact that the default value of ``become_user`` is ``root``)::
 
@@ -210,41 +207,42 @@ Become and Windows
 
 Since Ansible 2.3, ``become`` can be used on Windows hosts through the
 ``runas`` method. Become on Windows uses the same inventory setup and
-invocation arguments as as ``become`` on a non Windows host so the setup and
+invocation arguments as ``become`` on a non-Windows host, so the setup and
 variables names are the same as what is defined in this document.
 
-While ``become`` can be used to become another user, there are other uses for
-using it with Windows hosts. One important use is to bypass some of the
-limitations that are imposed when running on WinRM such as constrained network
+While ``become`` can be used to assume the identity of another user, there are other uses for
+it with Windows hosts. One important use is to bypass some of the
+limitations that are imposed when running on WinRM, such as constrained network
 delegation or accessing forbidden system calls like the WUA API. You can use
 ``become`` with the same user as ``ansible_user`` to bypass these limitations
-run commands that are not normally accessible in a WinRM session.
+and run commands that are not normally accessible in a WinRM session.
 
-.. note:: While become support was added for Windows since Ansible 2.3 it is
-    still considered experimental and can change in the future based on issues
-    and limitations that are found. Before Ansible 2.4, become would only work
-    when ``ansible_winrm_transport`` was either ``basic`` or ``credssp`` but
-    since that release it now works on all transport types.
+.. note:: While become support was added for Windows starting with Ansible 
+    version 2.3, this functionality is still considered experimental and can 
+    change in the future based on issues and limitations that are found. Prior to 
+    Ansible 2.4, become would only work when ``ansible_winrm_transport`` was 
+    set to either ``basic`` or ``credssp``, but since Ansible 2.4 become now works on 
+    all transport types.
 
 Administrative Rights
 ---------------------
 
-A lot of tasks in Windows requires administrative privileges to complete.
+Many tasks in Windows require administrative privileges to complete.
 Ansible will attempt to run a process as an administrator and fall back to a
 limited token if that fails.
 
-Ways to use ``become`` with an admin token are:
+The following are some ways to use ``become`` with an admin token:
 
 * Set the ``become_user`` to the default local ``Administrator`` account. This
   account is the default user called ``Administrator`` that is installed with
   Windows and not just a user under the local Administrators group.
 
 * Grant the privilege ``SeTcbPrivilege`` to the user Ansible connects with on
-  WinRM. The privilege ``SeTcbPrivilege`` is a high level privilege that grants
+  WinRM. The privilege ``SeTcbPrivilege`` is a high-level privilege that grants
   full control over the operating system. No user is given this privilege by
-  default and care should be taken if you grant a user or group to this
-  privilege. More details on this privilege and what it does can be seen
-  `here <https://technet.microsoft.com/en-us/library/dn221957(v=ws.11).aspx>`_.
+  default, and care should be taken if you grant this privilege to a user or group. 
+  For more information on this privilege, please see 
+  `Act as part of the operating system <https://technet.microsoft.com/en-us/library/dn221957(v=ws.11).aspx>`_.
   You can use the below task to set this privilege on a Windows host::
 
     - name: grant the ansible user the SeTcbPrivilege right
@@ -255,7 +253,7 @@ Ways to use ``become`` with an admin token are:
 
 * Turn UAC off on the host and reboot before trying to become the user. UAC is
   a security protocol that is designed to run accounts with the
-  ``least privilege`` principal. You can turn UAC off by running the below
+  ``least privilege`` principal. You can turn UAC off by running the following
   tasks::
 
     - name: turn UAC off
@@ -279,17 +277,16 @@ Be aware of the following limitations with ``become`` on Windows:
 * Running a task with ``async`` and ``become`` do not work.
 
 * Become does not currently work with local service accounts like
-  ``NT AUTHORITY\\SYSTEM``, there are plans on adding this feature in later
-  releases.
+  ``NT AUTHORITY\\SYSTEM``. 
 
-* The become user logs on with an interactive session so it must have the
+* The become user logs on with an interactive session, so it must have the
   ability to do so on the Windows host. If it does not inherit the
   ``SeAllowLogOnLocally`` privilege or inherits the ``SeDenyLogOnLocally``
   privilege, the become process will fail.
 
-* Before Ansible 2.3, become only worked when ``ansible_winrm_transport`` was
+* Prior to Ansible version 2.3, become only worked when ``ansible_winrm_transport`` was
   either ``basic`` or ``credssp``. This restriction has been lifted since the
-  2.4 release.
+  2.4 release of Ansible.
 
 .. seealso::
 
