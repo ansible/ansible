@@ -107,6 +107,7 @@ Ansible Changes By Release
 * chown errors now more informative
 * Fix for win_copy to copy a source file that has invalid windows characters in the filename, the dest still must be have valid windows characters (https://github.com/ansible/ansible/issues/31336#issuecomment-334649927)
 * Fix systemd module to not run daemon-reload in check mode.
+* fixed some parsing and selection issues with inventory manager, fixed minor bugs in yaml and constructed plugins
 
 <a id="2.4"></a>
 
