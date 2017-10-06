@@ -21,8 +21,7 @@ Solution
 Create an inventory file
 
 
-Inventory file
-++++++++++++++
+**Inventory file**
 
 Create a file called ``inventory``, containing:
 
@@ -39,8 +38,7 @@ Create a file called ``inventory``, containing:
    vyos01.example.net ansible_connection=local ansible_user=admin ansible_ssh_pass=admin
 
 
-Playbook
-++++++++
+**Playbook**
 
 Create a file called ``fetch-facts.yml`` containing the following:
 
@@ -49,8 +47,6 @@ Create a file called ``fetch-facts.yml`` containing the following:
    - name: "Download switch configuration"
      hosts: switches
      gather_facts: no
-
-     vars:
 
      tasks:
        - name: Gather facts (ios)
@@ -67,7 +63,9 @@ Create a file called ``fetch-facts.yml`` containing the following:
          debug:
            msg: "The hostname is {{ ansible_net_hostname }} and the OS is {{ ansible_net_version }}"
 
-       - debug: var=hostvars['vyos01.example.net']
+       - name: Show how to get a fact from a specific host
+         debug:
+           var: hostvars['vyos01.example.net']
 
        - name: Write to disk
          copy:
@@ -106,9 +104,45 @@ Run it
 Details
 -------
 
+Inventory
++++++++++
+
+The ``inventory`` file is an INI-like configuration file that defines the mapping of hosts into groups
+
+The above inventory file defines the groups ``ios``, ``vyos`` and a "group of groups" called ``switches``. Further details about subgroups and inventory files can be found in the :ref:`Ansible inventory Group documentation <subgroups>`.
+
+The inventory file can be used to define the credentials to log in with, there are various ways credentials could be supplied:
+
+FIXME Link to details regarding different ways to specify credentials (this should be in the main docs somewhere, if not then create it, maybe using a `:fieldtable:`
+
+:Command line:
+
+  * Using ``--user`` (``-u``) and ``--ask-pass`` (``-k``).
+  * Note: This only works if all devices use the same credentials
+
+:Inventory file:
+
+  :``ansible_user``:
+
+    * Details
+
+  : ``ansible_ssh_pass``
+  
+    * Details
 
 
-This is where we explain what the above is doing
+
+
+
+.. warning:: Never store passwords in plain text
+
+   FIXME Details and links to vault go here
+
+
+FIXME: ``ansible_connection=local``
+   
+   
+   This is where we explain what the above is doing
 
 * FIXME Details about inventory
 
@@ -133,3 +167,12 @@ Fixme
 * Add filename to code-blocks
 
 * Troubleshooting link to http://docs.ansible.com/ansible/latest/network_debug_troubleshooting.html#unable-to-open-shell
+
+
+
+
+See also
+
+* Network landing page
+* intro_inventory
+* playbooks_best_practices.html#best-practices-for-variables-and-vaults
