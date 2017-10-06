@@ -502,25 +502,24 @@ def main():
             err += err_pip
 
             changed = False
-            if name:
-                pkg_list = [p for p in out.split('\n') if not p.startswith('You are using') and not p.startswith('You should consider') and p]
+            pkg_list = [p for p in out.split('\n') if not p.startswith('You are using') and not p.startswith('You should consider') and p]
 
-                if pkg_cmd.endswith(' freeze') and ('pip' in name or 'setuptools' in name):
-                    # Older versions of pip (pre-1.3) do not have pip list.
-                    # pip freeze does not list setuptools or pip in its output
-                    # So we need to get those via a specialcase
-                    for pkg in ('setuptools', 'pip'):
-                        if pkg in name:
-                            formatted_dep = _get_package_info(module, pkg, env)
-                            if formatted_dep is not None:
-                                pkg_list.append(formatted_dep)
-                                out += '%s\n' % formatted_dep
+            if pkg_cmd.endswith(' freeze') and ('pip' in name or 'setuptools' in name):
+                # Older versions of pip (pre-1.3) do not have pip list.
+                # pip freeze does not list setuptools or pip in its output
+                # So we need to get those via a specialcase
+                for pkg in ('setuptools', 'pip'):
+                    if pkg in name:
+                        formatted_dep = _get_package_info(module, pkg, env)
+                        if formatted_dep is not None:
+                            pkg_list.append(formatted_dep)
+                            out += '%s\n' % formatted_dep
 
-                for pkg in name:
-                    is_present = _is_present(pkg, version, pkg_list, pkg_cmd)
-                    if (state == 'present' and not is_present) or (state == 'absent' and is_present):
-                        changed = True
-                        break
+            for pkg in name:
+                is_present = _is_present(pkg, version, pkg_list, pkg_cmd)
+                if (state == 'present' and not is_present) or (state == 'absent' and is_present):
+                    changed = True
+                    break
             module.exit_json(changed=changed, cmd=pkg_cmd, stdout=out, stderr=err)
 
         out_freeze_before = None
