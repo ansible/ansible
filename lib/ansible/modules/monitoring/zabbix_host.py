@@ -428,7 +428,7 @@ class Host(object):
 
     # check all the properties before link or clear template
     def check_all_properties(self, host_id, host_groups, status, interfaces, template_ids,
-                             exist_interfaces, host, proxy_id, visible_name):
+                             exist_interfaces, host, proxy_id, visible_name, host_name):
         # get the existing host's groups
         exist_host_groups = self.get_host_groups_by_host_id(host_id)
         if set(host_groups) != set(exist_host_groups):
@@ -451,7 +451,8 @@ class Host(object):
         if int(host['proxy_hostid']) != int(proxy_id):
             return True
 
-        if host['name'] != visible_name:
+        # Check whether the visible_name has changed; Zabbix defaults to the technical hostname if not set.
+        if host['name'] != visible_name and host['name'] != host_name:
             return True
 
         return False
@@ -647,7 +648,7 @@ def main():
 
             if len(exist_interfaces) > interfaces_len:
                 if host.check_all_properties(host_id, host_groups, status, interfaces, template_ids,
-                                             exist_interfaces, zabbix_host_obj, proxy_id, visible_name):
+                                             exist_interfaces, zabbix_host_obj, proxy_id, visible_name, host_name):
                     host.link_or_clear_template(host_id, template_ids, tls_connect, tls_accept, tls_psk_identity,
                                                 tls_psk, tls_issuer, tls_subject)
                     host.update_host(host_name, group_ids, status, host_id,
@@ -660,7 +661,7 @@ def main():
                     module.exit_json(changed=False)
             else:
                 if host.check_all_properties(host_id, host_groups, status, interfaces, template_ids,
-                                             exist_interfaces_copy, zabbix_host_obj, proxy_id, visible_name):
+                                             exist_interfaces_copy, zabbix_host_obj, proxy_id, visible_name, host_name):
                     host.update_host(host_name, group_ids, status, host_id, interfaces, exist_interfaces, proxy_id,
                                      visible_name, tls_connect, tls_accept, tls_psk_identity, tls_psk, tls_issuer,
                                      tls_subject)
