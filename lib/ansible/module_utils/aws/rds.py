@@ -8,6 +8,7 @@
 
 try:
     import botocore
+    from botocore import xform_name
 except:
     pass  # it is assumed that calling modules will detect and provide an appropriate nice error.
 
@@ -88,54 +89,52 @@ def instance_facts_diff(state_a, state_b):
     difference should be an empty dictionary which can be treated as
     False
 
-    The second dict is assumed to represent a target state and so if
-    certain params (such as the maintainence window, which has an
-    automatic default value set by AWS) are missing they will not be
-    considered to show a difference.
+    The function aims to work with both instance states and a set of
+    module parameters.  It will select those parameters that could be
+    used in a create call.
 
+    The second dict is assumed to represent a target state and so if
+    parameters are missing they will not be considered to show a
+    difference.
     """
-    # FIXME compare_keys should be all things that can be modified
-    # except port and instance_name which are handled separately
-    # valid_vars = ['backup_retention', 'backup_window',
-    #               'db_name',  'db_engine', 'engine_version',
-    #               'instance_type', 'iops', 'license_model',
-    #               'maint_window', 'multi_zone', 'new_instance_name',
-    #               'option_group', 'parameter_group', 'password', 'allocated_storage',
-    #               'storage_type', 'subnet', 'tags', 'upgrade', 'username',
-    #               'vpc_security_groups']
-    compare_keys = ['backup_retention', 'instance_type', 'iops',
-                    'maintenance_window', 'multi_zone',
-                    'replication_source',
-                    'allocated_storage', 'storage_type', 'tags', 'zone']
+
+    # FIXME: testing of deletion of parameters needs to be tested
+    # properly.
+
+    session = botocore.session.get_session()
+    conn = session.create_client('rds', region_name='us-west-2')
+    operations_model = conn._service_model.operation_model("CreateDBInstance")
+    compare_keys = [xform_name(x) for x in operations_model.input_shape.members.keys()]
+
     leave_if_null = ['maintenance_window', 'backup_retention']
+    remove_if_null = []
     before = dict()
     after = dict()
-    for k in compare_keys:
-        if state_a.get(k) != state_b.get(k):
-            if state_b.get(k) is None and k in leave_if_null:
-                pass
-            else:
-                before[k] = state_a.get(k)
-                after[k] = state_b.get(k)
 
-    # FIXME - verify that we actually should accept a lack of port
     try:
         old_port = state_a.get("endpoint").get("port")
     except AttributeError:
         old_port = None
-    if old_port is None:
-        old_port = state_a.get("port")
+
+    if old_port is not None:
+        state_a["port"]=old_port
 
     try:
         new_port = state_b.get("endpoint").get("port")
     except AttributeError:
         new_port = None
-    if new_port is None:
-        new_port = state_b.get("port")
 
-    if new_port and (old_port != new_port):
-        before['port'] = old_port
-        after['port'] = new_port
+    if new_port is not None:
+        state_b["port"]=new_port
+
+    for k in compare_keys:
+        if state_a.get(k) != state_b.get(k):
+            if state_b.get(k) is None and not k in remove_if_null:
+                pass
+            else:
+                before[k] = state_a.get(k)
+                after[k] = state_b.get(k)
+
     result = dict()
     if before:
         result = dict(before_header=state_a.get('instance_id'), before=before, after=after)

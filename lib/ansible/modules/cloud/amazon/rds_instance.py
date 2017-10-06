@@ -525,6 +525,13 @@ def delete_db_instance(module, conn):
         params["SkipFinalSnapshot"] = True
     if module.check_mode:
         module.exit_json(changed=True, delete_db_instance_params=params)
+
+    # FIXME: it's possible to get "trying to delete instance: An error occurred
+    # (InvalidDBInstanceState) when calling the DeleteDBInstance operation:
+    # Cannot delete DB Instance with a read replica still creating",
+
+    # our call should retry here.
+
     try:
         response = conn.delete_db_instance(**params)
         instance = result
