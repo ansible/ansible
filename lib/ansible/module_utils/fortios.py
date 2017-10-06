@@ -566,19 +566,19 @@ class API(object):
 
     @return_handler
     def _show(self, path, api='v2', params=None):
-        return json.loads(self._get(path, api=api, params=self._build_params(params)).content)
+        return self._get(path, api=api, params=self._build_params(params)).json()
 
     @return_handler
     def _edit(self, path, api='v2', params=None, data=None):
-        return json.loads(self._put(path, api=api, params=self._build_params(params), data=data).content)
+        return self._put(path, api=api, params=self._build_params(params), data=data).json()
 
     @return_handler
     def _create(self, path, api='v2', params=None, data=None):
-        return json.loads(self._post(path, api=api, params=self._build_params(params), data=data).content)
+        return self._post(path, api=api, params=self._build_params(params), data=data).json()
 
     @return_handler
     def _remove(self, path, api='v2', params=None, data=None):
-        return json.loads(self._delete(path, api=api, params=self._build_params(params), data=data).content)
+        return self._delete(path, api=api, params=self._build_params(params), data=data).json()
 
     def _build_params(self, new_params):
         params = {}
