@@ -152,14 +152,14 @@ def main():
     output = output + cnos.waitForDeviceResponse("configure d\n", "(config)#", 2, remote_conn)
 
     # Send commands one by one
-    #with open(commandfile, "r") as f:
+    # with open(commandfile, "r") as f:
     f = open(commandfile, "r")
     for line in f:
         # Omit the comment lines in template file
         if not line.startswith("#"):
             command = line
             if not line.endswith("\n"):
-                command = command+"\n"
+                command = command + "\n"
             response = cnos.waitForDeviceResponse(command, "#", 2, remote_conn)
             errorMsg = cnos.checkOutputForError(response)
             output = output + response
