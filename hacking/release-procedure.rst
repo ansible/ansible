@@ -1,4 +1,4 @@
-﻿.. Where to put this is a bit hard.  This document will be used while cutting releases.  As such, if
+.. Where to put this is a bit hard.  This document will be used while cutting releases.  As such, if
    there are problems with the document that needs to be fixed, we want to be able to do it in the
    middle of a release.  The problem arises that making changes in the middle of a release could
    cause problems like the website or tarball failing to build.  So we want to put this someplace
@@ -320,7 +320,9 @@ Building docs
       * no: First time we want to update the latest symlink. This should only be done for vX.Y.0.0-1 build[b]
 
 * Click Build
-* If there are other GitHub documentations jobs being run, see left had "Build History", indicated by the GitHub you can click on the job then select the tiny red x from the top right which is between the progress bar and "keep this build for ever"
+* If there are other GitHub documentations jobs being run, see left had "Build History", indicated
+  by the GitHub you can click on the job then select the tiny red x from the top right which is
+  between the progress bar and "keep this build for ever"
 
 
 Communication
