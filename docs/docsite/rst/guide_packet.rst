@@ -152,7 +152,7 @@ The following playbook will create an SSH key, 3 Packet servers, and then wait u
           plan: baremetal_0
           facility: ewr1
           project_id: <your_project_id>
-          wait: true
+          wait_for_public_IPv: 4
           user_data: |
             #cloud-config
             coreos:
@@ -185,7 +185,7 @@ As with most Ansible modules, the default states of the Packet modules are idemp
 
 The second module call provisions 3 Packet Type 0 (specified using the 'plan' parameter) servers in the project identified via the 'project_id' parameter. The servers are all provisioned with CoresOS beta (the 'operating_system' parameter) and are customized with cloud-config user data passed to the 'user_data' parameter.
 
-The ``packet_device`` module has a boolean 'wait' parameter that defaults to 'false'. If set to 'true', Ansible will wait until the GET API call for a device will contain an Internet-routeable IP address. The 'wait' parameter allows us to use the IP address of the device as soon as it's available.
+The ``packet_device`` module has a `wait_for_public_IPv` parameter. If set to `4` or `6`, Ansible will wait until the GET API call for a device will contain an Internet-routeable IP addressi of the respective version. If we want to refer to an IP address in consequent module calls, it's wise to use the `wait_for_public_IPv` parameter.
 
 Run the playbook:
 
