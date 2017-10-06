@@ -77,16 +77,11 @@ options:
         get the original file back if you somehow clobbered it incorrectly.
     type: bool
     default: 'no'
-  follow:
-    description:
-      - 'This flag indicates that filesystem links, if they exist, should be followed.'
-    type: bool
-    default: 'no'
-    version_added: "2.1"
 notes:
   - This module supports check mode.
   - When using 'with_*' loops be aware that if you do not set a unique mark the block will be overwritten on each iteration.
   - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
+  - Option I(follow) has been removed in version 2.5, because this module modifies the contents of the file so I(follow=no) doesn't make sense.
 """
 
 EXAMPLES = r"""
@@ -203,8 +198,6 @@ def main():
 
     params = module.params
     path = params['path']
-    if module.boolean(params.get('follow', None)):
-        path = os.path.realpath(path)
 
     if os.path.isdir(path):
         module.fail_json(rc=256,
@@ -315,7 +308,9 @@ def main():
     if changed and not module.check_mode:
         if module.boolean(params['backup']) and path_exists:
             module.backup_local(path)
-        write_changes(module, result, path)
+        # We should always follow symlinks so that we change the real file
+        real_path = os.path.realpath(params['path'])
+        write_changes(module, result, real_path)
 
     if module.check_mode and not path_exists:
         module.exit_json(changed=changed, msg=msg, diff=diff)
