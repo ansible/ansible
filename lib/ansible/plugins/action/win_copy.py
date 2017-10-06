@@ -473,6 +473,8 @@ class ActionModule(ActionBase):
                 symlinks=source_files['symlinks']
             )
         )
+        # src is not required for query, will fail path validation is src has unix allowed chars
+        query_args.pop('src', None)
 
         query_args.pop('content', None)
         query_return = self._execute_module(module_args=query_args, task_vars=task_vars)
