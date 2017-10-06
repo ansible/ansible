@@ -125,30 +125,34 @@ FIXME Link to details regarding different ways to specify credentials (this shou
   :``ansible_user``:
 
     * Details
+    * Link to main docs
 
-  : ``ansible_ssh_pass``:
-
-    * Details
-
-  : ``ansible_ssh_private_key_file``:
+  :``ansible_ssh_pass``:
 
     * Details
+    * Link to main docs
+
+  :``ansible_ssh_private_key_file``:
+
+    * Details
+    * Link to main docs
 
 :top-level:
 
-  * Details
+  * Moving away from this
+  * Link to main docs
 
 :provider:
 
-  * Details
-
+  * This is OK
+  * Link to main docs
 
 
 
 
 .. warning:: Never store passwords in plain text
 
-   FIXME Details and links to vault go here
+   FIXME Details on why this is bad, links to existing vault docs (improve that example)
 
 
 * FIXME: ``ansible_connection=local``
