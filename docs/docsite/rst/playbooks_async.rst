@@ -56,28 +56,31 @@ Alternatively, if you do not need to wait on the task to complete, you may
    Using a higher value for ``--forks`` will result in kicking off asynchronous
    tasks even faster.  This also increases the efficiency of polling.
 
-If you would like to perform a variation of the "fire and forget" where you 
-"fire and forget, check on it later" you can perform a task similar to the 
+If you would like to perform a variation of the "fire and forget" where you
+"fire and forget, check on it later" you can perform a task similar to the
 following::
 
-      --- 
+      ---
       # Requires ansible 1.8+
       - name: 'YUM - fire and forget task'
-        yum: name=docker-io state=installed
+        yum:
+          name: docker-io
+          state: installed
         async: 1000
         poll: 0
         register: yum_sleeper
 
       - name: 'YUM - check on fire and forget task'
-        async_status: jid={{ yum_sleeper.ansible_job_id }}
+        async_status:
+          jid: "{{ yum_sleeper.ansible_job_id }}"
         register: job_result
         until: job_result.finished
         retries: 30
 
 .. note::
-   If the value of ``async:`` is not high enough, this will cause the 
+   If the value of ``async:`` is not high enough, this will cause the
    "check on it later" task to fail because the temporary status file that
-   the ``async_status:`` is looking for will not have been written or no longer exist 
+   the ``async_status:`` is looking for will not have been written or no longer exist
 
 If you would like to run multiple asynchronous tasks while limiting the amount
 of tasks running concurrently, you can do it this way::
