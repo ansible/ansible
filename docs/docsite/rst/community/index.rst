@@ -19,6 +19,7 @@ To get started, select one of the following topics.
    reporting_bugs_and_features
    how_can_I_help
    maintainers
+   release_managers
    communication
    other_tools_and_programs
 

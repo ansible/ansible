@@ -10,6 +10,12 @@ Road Maps
 
 The Ansible Core team provides a road map for each upcoming release. These road maps can be found `here <http://docs.ansible.com/ansible/latest/roadmap/>`_.
 
+.. Roadmaps are User-oriented.  We should also list the Roadmap Projects and the Blocker Bug
+   Projects here
+
+.. How the actual release schedule, slipping, etc relates to (release_and_maintenance.rst) probably
+   also belongs here somewhere
+
 Pull Requests
 =============
 
