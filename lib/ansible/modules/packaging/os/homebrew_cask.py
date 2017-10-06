@@ -202,25 +202,6 @@ class HomebrewCask(object):
         )
 
     @classmethod
-    def valid_state(cls, state):
-        '''
-        A valid state is one of:
-            - installed
-            - absent
-        '''
-
-        result = True
-        if state is not None:
-            result = (
-                isinstance(state, string_types)
-                and state.lower() in (
-                    'installed',
-                    'absent',
-                )
-            )
-        return result
-
-    @classmethod
     def valid_module(cls, module):
         '''A valid module is an instance of AnsibleModule.'''
 

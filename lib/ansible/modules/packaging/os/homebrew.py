@@ -246,32 +246,6 @@ class Homebrew(object):
         )
 
     @classmethod
-    def valid_state(cls, state):
-        '''
-        A valid state is one of:
-            - None
-            - installed
-            - upgraded
-            - head
-            - linked
-            - unlinked
-            - absent
-        '''
-
-        result = True
-        available_states = (
-            'installed',
-            'upgraded',
-            'head',
-            'linked',
-            'unlinked',
-            'absent',
-        )
-        if state:
-            result = (isinstance(state, string_types) and state.lower() in available_states)
-        return result
-
-    @classmethod
     def valid_module(cls, module):
         '''A valid module is an instance of AnsibleModule.'''
 

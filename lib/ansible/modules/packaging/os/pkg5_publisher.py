@@ -195,9 +195,9 @@ def get_publishers(module):
 
 
 def unstringify(val):
-    if val == "-" or val == '':
+    if val in ("-", ""):
         return None
-    if val in ["true", "false"]:
+    elif val in ("true", "false"):
         return val == 'true'
     return val
 

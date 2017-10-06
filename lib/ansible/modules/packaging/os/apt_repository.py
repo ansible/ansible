@@ -463,6 +463,7 @@ def get_add_ppa_signing_key_callback(module):
 
     if not module.check_mode:
         return _run_command
+    return None
 
 
 def main():

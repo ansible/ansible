@@ -202,7 +202,7 @@ def get_dependencies(module, name):
     result = []
     if len(dependencies) > 1:
         result = dependencies[1:]
-    return []
+    return result
 
 
 def upgrade_packages(module, available):

@@ -137,7 +137,7 @@ class RpmKey(object):
     def normalize_keyid(self, keyid):
         """Ensure a keyid doesn't have a leading 0x, has leading or trailing whitespace, and make sure is uppercase"""
         ret = keyid.strip().upper()
-        if ret.startswith('0x') or ret.startswith('0X'):
+        if ret.startswith('0X'):
             return ret[2:]
         return ret
 
