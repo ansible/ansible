@@ -1,6 +1,6 @@
 #!powershell
 #
-# Copyright 2017, Marc Tschapek <marc.tschapek@bitgroup.de>
+# Copyright 2017, Marc Tschapek <marc.tschapek@outlook.com>
 #
 # Ansible is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,7 +28,8 @@ $params = Parse-Args -arguments $args -supports_check_mode $true
 ## Extract each attributes into a variable
 # Find attributes
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
-$Size = Get-AnsibleParam -obj $params -name "size" -type "str/int" -failifempty $true
+$Logging = Get-AnsibleParam -obj $params -name "logging" -type "str" -default "standard" -ValidateSet "standard","verbose"
+$Size = Get-AnsibleParam -obj $params -name "size" -type "str/int"
 $FindPartitionStyle = Get-AnsibleParam -obj $params -name "partition_style_select" -type "str" -default "raw" -ValidateSet "raw","mbr","gpt"
 $OperationalStatus = Get-AnsibleParam -obj $params -name "operational_status" -type "str" -default "offline" -ValidateSet "offline","online"
 $ReadOnly = Get-AnsibleParam -obj $params -name "read_only" -type "bool" -default $true
@@ -47,90 +48,183 @@ $IntegrityStreams = Get-AnsibleParam -obj $params -name "integrity_streams" -typ
 
 # Create a new result object
 $result = @{
-        changed = $false
-        search_log = @{
-            disk = @{
-            }
-            existing_volumes = @{
-            }
-            existing_partitions = @{
-            }
+    changed = $false
+    disk_selected = @{
+        disk = @{
         }
-        change_log = @{
-            convert_options = @{
-            }
+        existing_volumes = @{
         }
-        general_log = @{
+        existing_partitions = @{
         }
-        parameters = @{
-        }
-        switches = @{
-        }
+    }
+    general_log = @{
+    }
+    change_log = @{
+    }
+    search_log = @{
+    }
+    set_options = @{
+    }
 }
 
-# Convert option variable
-if (($Size.GetType()).Name -eq 'String') {
-    try {
-        [int32]$Size = [convert]::ToInt32($Size, 10)
-    } catch {
-        $result.general_log.convert_validate_options = "failed"
-        Fail-Json -obj $result -message "Failed to convert option variable size from string to int: $($_.Exception.Message)"
+# Convert option variables
+if ($Logging -eq "verbose") {
+    $result.change_log += @{
+        convert_options = @{
+        }
     }
-    $result.change_log.convert_options.size = "Converted option variable from string to int"     
+}
+$SizeInteger = $false
+if ($Size -ne $null) {
+    if (($Size.GetType()).Name -eq 'String') {
+        if ([int32]2147483647 -ge $Size) {
+            try {
+                [int32]$Size = [convert]::ToInt32($Size, 10)
+            } catch {
+                if ($Logging -eq "verbose") {
+                    $result.general_log.convert_validate_options = "failed"
+                }
+                Fail-Json -obj $result -message "Failed to convert option variable size from string to int32: $($_.Exception.Message)"
+            }
+            if ($Logging -eq "verbose") {
+                $result.change_log.convert_options.size = "Converted option variable from string to int32"
+            }
+        } else {
+            try {
+                [int64]$Size = [convert]::ToInt64($Size, 10)
+            } catch {
+                if ($Logging -eq "verbose") {
+                    $result.general_log.convert_validate_options = "failed"
+                }
+                Fail-Json -obj $result -message "Failed to convert option variable size from string to int64: $($_.Exception.Message)"
+            }
+            if ($Logging -eq "verbose") {
+                $result.change_log.convert_options.size = "Converted option variable from string to int64"
+            }
+        }
+    } else {
+        if ($Logging -eq "verbose") {
+            $result.change_log.convert_options.size = "No convertion of option variable needed"
+        }
+    }
+    $SizeInteger = $true
 } else {
-    $result.change_log.convert_options.size = "No convertion of option variable needed"
+    if ($Logging -eq "verbose") {
+        $result.change_log.convert_options.size = "No size option used, no convertion needed"
+    }
 }
 
 if (($AllocUnitSize.GetType()).Name -eq 'String') {
     try {
         [int32]$AllocUnitSize = [convert]::ToInt32($AllocUnitSize, 10)
     } catch {
-        $result.general_log.convert_validate_options = "failed"
-        Fail-Json -obj $result -message "Failed to convert option variable allocation_unit_size from string to int: $($_.Exception.Message)"
+        if ($Logging -eq "verbose") {
+            $result.general_log.convert_validate_options = "failed"
+        }
+        Fail-Json -obj $result -message "Failed to convert option variable allocation_unit_size from string to int32: $($_.Exception.Message)"
     }
-    $result.change_log.convert_options.allocation_unit_size = "Converted option variable from string to int"   
+    if ($Logging -eq "verbose") {
+        $result.change_log.convert_options.allocation_unit_size = "Converted option variable from string to int32" 
+    }  
 } else {
-    $result.change_log.convert_options.allocation_unit_size = "No convertion of option variable needed"
+    if ($Logging -eq "verbose") {
+        $result.change_log.convert_options.allocation_unit_size = "No convertion of option variable needed"
+    }
 }
 
+$NumberInteger = $false
 if ($Number -ne $null) {
     if (($Number.GetType()).Name -eq 'String') {
         try {
             [int32]$Number = [convert]::ToInt32($Number, 10)
         } catch {
-            $result.general_log.convert_validate_options = "failed"
-            Fail-Json -obj $result -message "Failed to convert option variable number from string to int: $($_.Exception.Message)"
+            if ($Logging -eq "verbose") {
+                $result.general_log.convert_validate_options = "failed"
+            }
+            Fail-Json -obj $result -message "Failed to convert option variable number from string to int32: $($_.Exception.Message)"
         }
-        $result.change_log.convert_options.number = "Converted option variable from string to int"     
+        if ($Logging -eq "verbose") {
+            $result.change_log.convert_options.number = "Converted option variable from string to int32"
+        }
     } else {
-        $result.change_log.convert_options.number = "No convertion of option variable needed"
+        if ($Logging -eq "verbose") {        
+            $result.change_log.convert_options.number = "No convertion of option variable needed"
+        }
     }
+    $NumberInteger = $true
 } else {
-    $result.change_log.convert_options.number = "No number option used, no convertion needed"
+    if ($Logging -eq "verbose") {   
+        $result.change_log.convert_options.number = "No number option used, no convertion needed"
+    }
 }
 
+$DriveChar = $false
 if ($DriveLetter -ne $null) {
     if ($DriveLetter -like "[a-z]") {
         try {
             [char]$DriveLetter = [convert]::ToChar($DriveLetter)
         } catch {
-            $result.general_log.convert_validate_options = "failed"
+            if ($Logging -eq "verbose") {            
+                $result.general_log.convert_validate_options = "failed"
+            }
             Fail-Json -obj $result -message "Failed to convert option variable from string to char: $($_.Exception.Message)"
         }
-        $result.change_log.convert_options.drive_letter = "Converted option variable from string to char"
+        if ($Logging -eq "verbose") {
+            $result.change_log.convert_options.drive_letter = "Converted option variable from string to char"
+        }
+        $DriveChar = $true
     } else {
-        $result.general_log.convert_validate_options = "failed"
+        if ($Logging -eq "verbose") {        
+            $result.general_log.convert_validate_options = "failed"
+        }
         Fail-Json -obj $result -message "Failed to convert option variable drive_letter from string to char because drive_letter value is no letter: $($_.Exception.Message)"
     }
 } else {
-    $result.change_log.convert_options.drive_letter = "No drive_letter option used, no convertion needed"
+    if ($Logging -eq "verbose") {
+        $result.change_log.convert_options.drive_letter = "No drive_letter option used, no convertion needed"
+    }
 }
 
 $result.general_log.convert_validate_options = "successful"
 
+# Show option values
+if ($Logging -eq "verbose") {
+    $result += @{ 
+        option_values_passed = @{
+            check_mode = "$check_mode"
+            logging = "$Logging"
+            size = "$(if (-not $SizeInteger) {
+                                $Size = "not_passed"
+                            }
+                            )$($Size)gb"
+            partition_style_select = "$FindPartitionStyle"
+            operational_status = "$OperationalStatus"
+            read_only = "$ReadOnly"
+            number = "$(if (-not $NumberInteger) {
+                                        $Number = "not_passed"
+                                    }
+                                    )$Number"
+            partition_style_set = "$SetPartitionStyle"
+            drive_letter = "$(if (-not $DriveChar) {
+                                                $DriveLetter = "not_passed"
+                                           }
+                                           )$DriveLetter"
+            file_system = "$FileSystem"
+            label = "$Label"
+            allocation_unit_size = "$($AllocUnitSize)kb"
+            large_frs = "$LargeFRS"
+            short_names = "$ShortNames"
+            integrity_streams = "$IntegrityStreams"
+        }
+    }
+    $result.general_log.option_values = "successful"
+}
+
 # Functions
 function Search-Disk {
         param(
+                $DiskSizeInteger,
+                $DiskNumberInteger,
                 $DiskSize,
                 $PartitionStyle,
                 $OperationalStatus,
@@ -138,17 +232,27 @@ function Search-Disk {
                 $Number
         )
 
-        $DiskSize = $DiskSize *1GB
-
-        if ($Number -is [int]) {
+        if ($DiskSizeInteger -and $DiskNumberInteger) {
             $disk = Get-Disk | Where-Object {
-                ($_.PartitionStyle -eq $PartitionStyle) -and ($_.OperationalStatus -eq $OperationalStatus) -and ($_.IsReadOnly -eq $ReadOnly) -and ($_.Number -eq $Number) -and ($_.Size -eq $DiskSize)
+                ($_.PartitionStyle -eq $PartitionStyle) -and ($_.OperationalStatus -eq $OperationalStatus) -and ($_.IsReadOnly -eq $ReadOnly) -and ($_.Size -eq $DiskSize) -and ($_.Number -eq $Number)
+            }
+
+            return $disk
+        } elseif ($DiskSizeInteger) {
+            $disk = Get-Disk | Where-Object {
+                ($_.PartitionStyle -eq $PartitionStyle) -and ($_.OperationalStatus -eq $OperationalStatus) -and ($_.IsReadOnly -eq $ReadOnly) -and ($_.Size -eq $DiskSize)
+            }
+
+            return $disk
+        } elseif ($DiskNumberInteger) {
+            $disk = Get-Disk | Where-Object {
+                ($_.PartitionStyle -eq $PartitionStyle) -and ($_.OperationalStatus -eq $OperationalStatus) -and ($_.IsReadOnly -eq $ReadOnly) -and ($_.Number -eq $Number)
             }
 
             return $disk
         } else {
             $disk = Get-Disk | Where-Object {
-                ($_.PartitionStyle -eq $PartitionStyle) -and ($_.OperationalStatus -eq $OperationalStatus) -and ($_.IsReadOnly -eq $ReadOnly) -and ($_.Size -eq $DiskSize)
+                ($_.PartitionStyle -eq $PartitionStyle) -and ($_.OperationalStatus -eq $OperationalStatus) -and ($_.IsReadOnly -eq $ReadOnly)
             }
 
             return $disk
@@ -304,7 +408,14 @@ try {
 $result.general_log.rescan_disks = "successful"
 
 $ParamsDisk = @{
-    DiskSize = $Size
+    DiskSizeInteger = $SizeInteger
+    DiskNumberInteger = $NumberInteger
+    DiskSize = "$(if ($SizeInteger) {
+                                $SizeF = $Size *1GB
+                            } else {
+                                $SizeF = $null
+                            }
+                           )$SizeF"
     PartitionStyle = $FindPartitionStyle
     OperationalStatus = $OperationalStatus
     ReadOnly = $ReadOnly
@@ -316,24 +427,32 @@ try {
     $disk = Search-Disk @ParamsDisk
 } catch {
     $result.general_log.search_disk = "failed"
-    Fail-Json -obj $result -message "Failed to search and/or select the disk with the specified parameter options: $($_.Exception.Message)"
+    Fail-Json -obj $result -message "Failed to search and/or select the disk with the specified option values: $($_.Exception.Message)"
 }
 if ($disk) {
     $diskcount = $disk | Measure-Object | Select-Object  -ExpandProperty Count
     if ($diskcount -ge 2) {
         $disk = $disk[0]
-        $result.search_log.disk.disks_found = "$diskcount"
-        $result.search_log.disk.disk_number_chosen = "$([string]$disk.Number)"
+        $result.disk_selected.disk.total_found_disks = "$diskcount"
+        $result.disk_selected.disk.number = "$([string]$disk.Number)"
+        $result.disk_selected.disk.size = "$(if (-not $SizeInteger) {
+                                                                                $Size = $disk.Size / 1GB
+                                                                            }
+                                                                           )$($Size)gb"
     } else {
-        $result.search_log.disk.disks_found = "$diskcount"
-        $result.search_log.disk.disk_number_chosen = "$([string]$disk.Number)"
+        $result.disk_selected.disk.total_found_disks = "$diskcount"
+        $result.disk_selected.disk.number = "$([string]$disk.Number)"
+        $result.disk_selected.disk.size = "$(if (-not $SizeInteger) {
+                                                                                $Size = $disk.Size / 1GB
+                                                                            }
+                                                                           )$($Size)gb"
     }
     [string]$DOperSt = $disk.OperationalStatus
     [string]$DPartStyle = $disk.PartitionStyle
     [string]$DROState = $disk.IsReadOnly
 } else {
-        $result.search_log.disk.disks_found = "0"
-        Fail-Json -obj $result -message "No disk could be found and selected with the specified parameter options"
+        $result.disk_selected.disk.total_found_disks = "0"
+        Fail-Json -obj $result -message "No disk could be found and selected with the passed option values"
 }
 $result.general_log.search_disk = "successful"
 
@@ -509,9 +628,9 @@ if ($PartNumber -ge 1) {
     # Existent volumes and partitions
     if (-not $volume) {
         $result.general_log.check_volumes_partitions = "successful"
-        $result.search_log.existing_volumes.volumes_found = "0"
-        $result.search_log.existing_partitions.partitions_found = "$PartNumber"
-        $result.search_log.existing_partitions.partitions_types = "$([string]$Spartition.Type)"
+        $result.disk_selected.existing_volumes.volumes_found = "0"
+        $result.disk_selected.existing_partitions.partitions_found = "$PartNumber"
+        $result.disk_selected.existing_partitions.partitions_types = "$([string]$Spartition.Type)"
         if ($SetOnline) {
             try {
                 Set-OperationalStatus -Disk $disk -Deactivate
@@ -551,10 +670,10 @@ if ($PartNumber -ge 1) {
         Fail-Json -obj $result -message "Existing partitions found on the selected disk"
     } else {
         $result.general_log.check_volumes_partitions = "successful"
-        $result.search_log.existing_volumes.volumes_found = "$((($volume | Measure-Object).Count).ToString())"
-        $result.search_log.existing_volumes.volumes_types = "$([string]$volume.FileSystem)"
-        $result.search_log.existing_partitions.partitions_found = "$PartNumber"
-        $result.search_log.existing_partitions.partitions_types = "$([string]$Spartition.Type)" 
+        $result.disk_selected.existing_volumes.volumes_found = "$((($volume | Measure-Object).Count).ToString())"
+        $result.disk_selected.existing_volumes.volumes_types = "$([string]$volume.FileSystem)"
+        $result.disk_selected.existing_partitions.partitions_found = "$PartNumber"
+        $result.disk_selected.existing_partitions.partitions_types = "$([string]$Spartition.Type)" 
         if ($SetOnline) {
             try {
                 Set-OperationalStatus -Disk $disk -Deactivate
@@ -594,12 +713,12 @@ if ($PartNumber -ge 1) {
         Fail-Json -obj $result -message "Existing volumes found on the selected disk"
     }
 } else {
-    $result.search_log.existing_volumes.volumes_found = "0"
-    $result.search_log.existing_partitions.partitions_found = "$PartNumber"
+    $result.disk_selected.existing_volumes.volumes_found = "0"
+    $result.disk_selected.existing_partitions.partitions_found = "$PartNumber"
 }
 $result.general_log.check_volumes_partitions = "successful"
 
-# Check set parameters
+# Check set option values
 # Check drive letter
 if ($DriveLetter -is [char]) {
     # Use defined drive letter
@@ -608,9 +727,9 @@ if ($DriveLetter -is [char]) {
             Test-Path $_
         }
     } catch {
-        $result.general_log.check_parameters = "failed"
-        $result.parameters.drive_letter_set = "$DriveLetter"
-        $result.parameters.drive_letter_used = "unchecked"
+        $result.general_log.check_set_options = "failed"
+        $result.set_options.drive_letter_set = "$DriveLetter"
+        $result.set_options.drive_letter_used = "unchecked"
         if ($SetOnline) {
             try {
                 Set-OperationalStatus -Disk $disk -Deactivate
@@ -650,12 +769,12 @@ if ($DriveLetter -is [char]) {
         Fail-Json -obj $result -message "Check if drive_letter value is used already on another partition on the target failed"
     }
     if (!$CheckLetter) {
-        $result.parameters.drive_letter_set = "$DriveLetter"
-        $result.parameters.drive_letter_used = "no"
+        $result.set_options.drive_letter_set = "$DriveLetter"
+        $result.set_options.drive_letter_used = "no"
     } else {
-        $result.general_log.check_parameters = "failed"
-        $result.parameters.drive_letter_set = "$DriveLetter"
-        $result.parameters.drive_letter_used = "yes"
+        $result.general_log.check_set_options = "failed"
+        $result.set_options.drive_letter_set = "$DriveLetter"
+        $result.set_options.drive_letter_used = "yes"
         if ($SetOnline) {
             try {
                 Set-OperationalStatus -Disk $disk -Deactivate
@@ -701,9 +820,9 @@ if ($DriveLetter -is [char]) {
             !(Test-Path $_)
         } | Get-Random
     } catch {
-        $result.general_log.check_parameters = "failed"
-        $result.parameters.drive_letter_set = "not_available"
-        $result.parameters.drive_letter_used = "no"
+        $result.general_log.check_set_options = "failed"
+        $result.set_options.drive_letter_set = "not_available"
+        $result.set_options.drive_letter_used = "no"
         if ($SetOnline) {
             try {
                 Set-OperationalStatus -Disk $disk -Deactivate
@@ -744,12 +863,12 @@ if ($DriveLetter -is [char]) {
     }
     if ($DriveLetter) {
         $DriveLetter = $DriveLetter.TrimEnd(":").ToLower()
-        $result.parameters.drive_letter_set = "$DriveLetter"
-        $result.parameters.drive_letter_used = "no"
+        $result.set_options.drive_letter_set = "$DriveLetter"
+        $result.set_options.drive_letter_used = "no"
     } else {
-        $result.general_log.check_parameters = "failed"
-        $result.parameters.drive_letter_set = "no_free_drive_letter_available"
-        $result.parameters.drive_letter_used = "yes"
+        $result.general_log.check_set_options = "failed"
+        $result.set_options.drive_letter_set = "no_free_drive_letter_available"
+        $result.set_options.drive_letter_used = "yes"
         if ($SetOnline) {
             try {
                 Set-OperationalStatus -Disk $disk -Deactivate
@@ -791,13 +910,11 @@ if ($DriveLetter -is [char]) {
 }
 # Check file system
 if ($FileSystem -eq "ntfs") {
-    $result.parameters.file_system = "$FileSystem"
     if ($Size -le 256000) {
-        $result.parameters.size = "$($Size)gb"
-        $result.parameters.allocation_unit_size = "$AllocUnitSize KB"
+        $result.set_options.size_file_system = "valid_size"
     } else {
-        $result.general_log.check_parameters = "failed"
-        $result.parameters.size = "$($Size)gb"
+        $result.general_log.check_set_options = "failed"
+        $result.set_options.size_file_system = "invalid_size"
         if ($SetOnline) {
             try {
                 Set-OperationalStatus -Disk $disk -Deactivate
@@ -834,56 +951,76 @@ if ($FileSystem -eq "ntfs") {
         } else {
             $result.change_log.writeable_status = "Disk was writeable already and need not to be set read-only"  
         }
-        Fail-Json -obj $result -message "Option size with value $Size GB is not a valid size for NTFS, the disk can not be not formatted with this file system"
+        Fail-Json -obj $result -message "Option size with value $($Size)gb is not a valid size for ntfs hence the disk can not be formatted with this file system"
     }
 } elseif ($FileSystem -eq "refs") {
-    $result.parameters.file_system = "$FileSystem"
-    if ($AllocUnitSize -ne 64) {
-        $result.parameters.size = "$($Size)gb"
-        $AllocUnitSize = 64
-        $result.parameters.allocation_unit_size = "$($AllocUnitSize)kb_adjusted_refs"                                                  
+    if ($Size -le 1208925819614650000000000) {
+        $result.set_options.size_file_system = "valid_size"
+        if ($AllocUnitSize -ne 64) {
+            $AllocUnitSize = 64
+            $result.set_options.allocation_unit_size = "$($AllocUnitSize)kb_adjusted_refs"                                  
+        }
     } else {
-        $result.parameters.size = "$($Size)gb"
-        $result.parameters.allocation_unit_size = "$($AllocUnitSize)_kb"   
+        $result.general_log.check_set_options = "failed"
+        $result.set_options.size_file_system = "invalid_size"
+        if ($SetOnline) {
+            try {
+                Set-OperationalStatus -Disk $disk -Deactivate
+            } catch {
+                $OPStatusFailed = $true
+            } finally {
+                if (-not $OPStatusFailed) {
+                    $result.general_log.set_operational_status = "successful"
+                    $result.change_log.operational_status = "Disk set online and now offline again"
+                    $result.changed = $true
+                } else {
+                    $result.general_log.set_operational_status = "failed"
+                    $result.change_log.operational_status = "Disk failed to set offline again"
+                }
+            }
+        } else {
+            $result.change_log.operational_status = "Disk was online already and need not to be set offline"  
+        }
+        if ($SetWriteable) {
+            try {
+                Set-DiskWriteable -Disk $disk -Deactivate
+            } catch {
+                $ROStatusFailed = $true
+            } finally {
+                if (-not $ROStatusFailed) {
+                    $result.general_log.set_writeable_status = "successful"
+                    $result.change_log.writeable_status = "Disk set writeable and now read-only again"
+                    $result.changed = $true
+                } else {
+                    $result.general_log.set_writeable_status = "failed"
+                    $result.change_log.writeable_status = "Disk failed to set read-only again"
+                }
+            }
+        } else {
+            $result.change_log.writeable_status = "Disk was writeable already and need not to be set read-only"  
+        }
+        Fail-Json -obj $result -message "Option size with value $($Size)gb is not a valid size for refs hence the disk can not be formatted with this file system"
     }
 }
-$result.general_log.check_parameters = "successful"
-
-# Check set switches
 # Check large frs
 if ($LargeFRS) {
-    $result.switches.large_frs = "enabled"
-    if ($FileSystem -ne "refs") {
-        $result.switches.large_frs = "enabled_activated_no_refs"
-    } else {
-        $result.switches.large_frs = "enabled_deactivated_refs"
+    if ($FileSystem -eq "refs") {
+        $result.set_options.large_frs = "disabled_refs"        
     }
-} else {
-    $result.switches.large_frs = "disabled"
 }
 # Check short names
 if ($ShortNames) {
-    $result.switches.short_names = "enabled"
-    if ($FileSystem -ne "refs") {
-        $result.switches.short_names = "enabled_activated_no_refs)"
-    } else {
-        $result.switches.short_names = "enabled_deactivated_refs"
+    if ($FileSystem -eq "refs") {
+        $result.set_options.short_names ="disabled_refs"
     }
-} else {
-    $result.switches.short_names = "disabled"
 }
 # Check integrity streams
 if ($IntegrityStreams) {
-    $result.switches.integrity_streams = "enabled"
-    if ($FileSystem -eq "refs") {
-        $result.switches.integrity_streams = "enabled_activated_no_ntfs"
-    } else {
-        $result.switches.integrity_streams = "enabled_deactivated_ntfs"
+    if ($FileSystem -eq "ntfs") {
+        $result.set_options.integrity_streams = "disabled_ntfs"
     }
-} else {
-    $result.switches.integrity_streams = "disabled"
 }
-$result.general_log.check_switches = "successful"
+$result.general_log.check_set_options = "successful"
 
 # Initialize / convert disk
 if ($DPartStyle -eq "RAW") {
