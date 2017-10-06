@@ -368,7 +368,7 @@ def main():
             umask=dict(type='str'),
         ),
         required_one_of=[['name', 'requirements']],
-        mutually_exclusive=[['name', 'requirements'], ['executable', 'virtualenv']],
+        mutually_exclusive=[['executable', 'virtualenv']],
         supports_check_mode=True,
     )
 
@@ -488,9 +488,9 @@ def main():
         if name:
             for pkg in name:
                 cmd += ' %s' % _get_full_name(pkg, version)
-        else:
-            if requirements:
-                cmd += ' -r %s' % requirements
+
+        if requirements:
+            cmd += ' -r %s' % requirements
 
         if module.check_mode:
             if extra_args or requirements or state == 'latest' or not name:
