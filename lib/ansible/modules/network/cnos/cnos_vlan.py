@@ -207,6 +207,7 @@ except:
 from ansible.module_utils.basic import AnsibleModule
 from collections import defaultdict
 
+
 def main():
     #
     # Define parameters for vlan creation entry
