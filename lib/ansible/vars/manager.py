@@ -319,16 +319,15 @@ class VariableManager:
                     data[group] = combine_vars(data[group], _plugins_play(group))
                 return data
 
-            # Merge as per precedence config
+            # Merge groups as per precedence config, if not implicit localhost
             # only allow to call the functions we want exposed
-            for entry in C.VARIABLE_PRECEDENCE:
-                if entry in self._ALLOWED:
-                    if host.implicit and not C.IMPLICIT_HAS_ALL and entry.startswith('all_'):
-                        continue
-                    display.debug('Calling %s to load vars for %s' % (entry, host.name))
-                    all_vars = combine_vars(all_vars, locals()[entry]())
-                else:
-                    display.warning('Ignoring unknown variable precedence entry: %s' % (entry))
+            if not host.implicit:
+                for entry in C.VARIABLE_PRECEDENCE:
+                    if entry in self._ALLOWED:
+                        display.debug('Calling %s to load vars for %s' % (entry, host.name))
+                        all_vars = combine_vars(all_vars, locals()[entry]())
+                    else:
+                        display.warning('Ignoring unknown variable precedence entry: %s' % (entry))
 
             # host vars, from inventory, inventory adjacent and play adjacent via plugins
             all_vars = combine_vars(all_vars, host.get_vars())

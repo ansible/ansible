@@ -1237,14 +1237,6 @@ HOST_KEY_CHECKING:
   ini:
   - {key: host_key_checking, section: defaults}
   type: boolean
-IMPLICIT_HAS_ALL:
-  name: implicit gets all vars
-  default: False
-  description: Toggles the availabilty of the vars from the 'all' group for the implicit localhost
-  env: [{name: ANSIBLE_IMPLICIT_ALL_VARS}]
-  ini:
-  - {key: implicit_all_vars, section: inventory}
-  type: boolean
 INVENTORY_ENABLED:
   name: Active Inventory plugins
   default: ['host_list', 'script', 'yaml', 'ini']
