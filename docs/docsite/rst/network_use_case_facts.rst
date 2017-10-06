@@ -113,7 +113,7 @@ The above inventory file defines the groups ``ios``, ``vyos`` and a "group of gr
 
 The inventory file can be used to define the credentials to log in with, there are various ways credentials could be supplied:
 
-FIXME Link to details regarding different ways to specify credentials (this should be in the main docs somewhere, if not then create it, maybe using a `:fieldtable:`
+FIXME Link to details regarding different ways to specify credentials (this should be in the main docs somewhere). This should just be a summary that links to the existing docs (``intro_inventory``, ``playbooks_best_practices.html#best-practices-for-variables-and-vaults``, ``ansible-playbook.rst``, etc)
 
 :Command line:
 
@@ -126,9 +126,21 @@ FIXME Link to details regarding different ways to specify credentials (this shou
 
     * Details
 
-  : ``ansible_ssh_pass``
-  
+  : ``ansible_ssh_pass``:
+
     * Details
+
+  : ``ansible_ssh_private_key_file``:
+
+    * Details
+
+:top-level:
+
+  * Details
+
+:provider:
+
+  * Details
 
 
 
@@ -139,19 +151,10 @@ FIXME Link to details regarding different ways to specify credentials (this shou
    FIXME Details and links to vault go here
 
 
-FIXME: ``ansible_connection=local``
-   
-   
-   This is where we explain what the above is doing
+* FIXME: ``ansible_connection=local``
 
-* FIXME Details about inventory
 
-    * What do we need to link to in main docs: ``:children``, what else?
-    * Host groups
-
-* FIXME Step though playbook
-
-  * Link to module docs for ios_facts, vyos_facts
+* FIXME Link to module docs ios_facts, vyos_facts, copy, debug
 
 Troubleshooting
 ---------------
