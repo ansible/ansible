@@ -2602,6 +2602,7 @@ class AnsibleModule(object):
             strings on python3, use encoding=None to turn decoding to text off.
         '''
 
+        shell = False
         if isinstance(args, list):
             if use_unsafe_shell:
                 args = " ".join([shlex_quote(x) for x in args])
@@ -2621,7 +2622,6 @@ class AnsibleModule(object):
             msg = "Argument 'args' to run_command must be list or string"
             self.fail_json(rc=257, cmd=args, msg=msg)
 
-        shell = False
         if use_unsafe_shell:
             if executable is None:
                 executable = os.environ.get('SHELL')
