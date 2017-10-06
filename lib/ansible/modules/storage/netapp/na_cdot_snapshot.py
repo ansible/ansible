@@ -186,8 +186,7 @@ class NetAppCDOTSnapshot(object):
             self.server.invoke_successfully(snapshot_create,
                                             enable_tunneling=True)
         except netapp_utils.zapi.NaApiError as e:
-            self.module.fail_json(msg='Error creating snapshot %s on %s: %s' % (
-                self.name, self.volume_name, to_native(e)),
+            self.module.fail_json(msg='Error creating snapshot %s on %s: %s' % (self.name, self.volume_name, to_native(e)),
                                   exception=traceback.format_exc())
 
     def delete_snapshot(self):
@@ -199,8 +198,7 @@ class NetAppCDOTSnapshot(object):
             self.server.invoke_successfully(snapshot_delete,
                                             enable_tunneling=True)
         except netapp_utils.zapi.NaApiError as e:
-            self.module.fail_json(msg='Error deleting snapshot %s on %s: %s' % (
-                self.name, self.volume_name, to_native(e)),
+            self.module.fail_json(msg='Error deleting snapshot %s on %s: %s' % (self.name, self.volume_name, to_native(e)),
                                   exception=traceback.format_exc())
 
     def apply(self):
