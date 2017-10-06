@@ -106,6 +106,7 @@ Ansible Changes By Release
 * Fix rpm_key taking the wrong 8 chars from the keyid (https://github.com/ansible/ansible/pull/31045)
 * chown errors now more informative
 * Fix for win_copy to copy a source file that has invalid windows characters in the filename, the dest still must be have valid windows characters (https://github.com/ansible/ansible/issues/31336#issuecomment-334649927)
+* Fix systemd module to not run daemon-reload in check mode.
 
 <a id="2.4"></a>
 
