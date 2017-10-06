@@ -377,7 +377,7 @@ hexlify()'ied result of:
 - hexlify()'ed string of the salt, followed by a newline ('\n')
 - hexlify()'ed string of the crypted HMAC, followed by a newline. The HMAC is:
 
-  - a `RFC2104 <https://www.ietf.org/rfc/rfc2104.txt>` style HMAC
+  - a `RFC2104 <https://www.ietf.org/rfc/rfc2104.txt>`_ style HMAC
 
     - inputs are:
 
@@ -402,6 +402,6 @@ hexlify()'ied result of:
       - the plaintext
 
         - the original plaintext
-        - padding up to the AES256 blocksize. (The data used for padding is based on `RFX5652 <https://tools.ietf.org/html/rfc5652#section-6.3>`)
+        - padding up to the AES256 blocksize. (The data used for padding is based on `RFX5652 <https://tools.ietf.org/html/rfc5652#section-6.3>`_)
 
 
