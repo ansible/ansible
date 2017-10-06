@@ -485,5 +485,5 @@ the code in ansible to trigger that failure.
         Extreme Programming (XP), Clean Coding.  Uncle Bob talks through how to benfit from this
    `"Why Most Unit Testing is Waste" http://rbcs-us.com/documents/Why-Most-Unit-Testing-is-Waste.pdf`
        An article warning against the costs of unit testing
-   `"A Response to “Why Most Unit Testing is Waste”" https://henrikwarne.com/2014/09/04/a-response-to-why-most-unit-testing-is-waste/` 
+   `'A Response to "Why Most Unit Testing is Waste"' https://henrikwarne.com/2014/09/04/a-response-to-why-most-unit-testing-is-waste/` 
        An response pointing to how to maintain the value of unit tests

@@ -19,7 +19,7 @@ structure matches that of ``lib/ansible/``
 Running Tests
 =============
 
-Unit tests can be run across the whole code base by doing:
+The Ansible unit tests can be run across the whole code base by doing:
 
 .. code:: shell
 
@@ -142,7 +142,6 @@ files that aren't themselves tests.
 
 Fixtures files
 ``````````````
-
 To mock out fetching results from devices, you can use ``fixtures`` to read in
 pre-generated data.
 
@@ -154,10 +153,19 @@ See `eos_banner test
 <https://github.com/ansible/ansible/blob/devel/test/units/modules/network/eos/test_eos_banner.py>`_
 for a practical example.
 
-Code Coverage
-`````````````
-Most ``ansible-test`` commands allow you to collect code coverage, this is particularly
-useful when to indicate where to extend testing.
+Code Coverage Online
+````````````````````
+
+`The online code coverage reports <https://codecov.io/gh/ansible/ansible>` are a good way
+to identify areas for testing improvement in Ansible.  By following red colours you can
+drill down through the reports to find files which have no tests at all.
+
+Code Coverage For New or Updated Code
+`````````````````````````````````````
+
+New code will be missing from the codecov.io coverage reports so local reporting is
+needed.  Most ``ansible-test`` commands allow you to collect code coverage, this is
+particularly useful when to indicate where to extend testing.
 
 To collect coverage data add the ``--coverage`` argument to your ``ansible-test`` command line:
 
