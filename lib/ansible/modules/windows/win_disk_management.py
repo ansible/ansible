@@ -208,7 +208,7 @@ msg:
     type: string
     sample: "No free drive_letter left on the target"
 option_values_passed:
-    description: 
+    description:
       - Dictionary containing all passed option values
       - Only in module output if logging option was invoked with value "verbose"
     returned: in verbose logging mode
@@ -512,7 +512,7 @@ set_options:
             type: string
             sample: "no"
         size_file_system:
-            description: Documents whether the passed value for option size is a valid disk size for the passed option value of file_system 
+            description: Documents whether the passed value for option size is a valid disk size for the passed option value of file_system
             returned: success or failed
             type: string
             sample: "valid_size"
