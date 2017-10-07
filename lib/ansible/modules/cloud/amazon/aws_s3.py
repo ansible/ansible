@@ -512,7 +512,7 @@ def main():
     argument_spec.update(
         dict(
             bucket=dict(required=True),
-            dest=dict(default=None),
+            dest=dict(default=None, type='path'),
             encrypt=dict(default=True, type='bool'),
             expiry=dict(default=600, type='int', aliases=['expiration']),
             headers=dict(type='dict'),
@@ -561,9 +561,6 @@ def main():
     rgw = module.params.get('rgw')
     src = module.params.get('src')
     ignore_nonexistent_bucket = module.params.get('ignore_nonexistent_bucket')
-
-    if dest:
-        dest = os.path.expanduser(dest)
 
     object_canned_acl = ["private", "public-read", "public-read-write", "aws-exec-read", "authenticated-read", "bucket-owner-read", "bucket-owner-full-control"]
     bucket_canned_acl = ["private", "public-read", "public-read-write", "authenticated-read"]

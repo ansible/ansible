@@ -326,7 +326,6 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout):
         # we'll reset back to the supplied value soon
         follow_redirects = module.params['follow_redirects']
         module.params['follow_redirects'] = False
-        dest = os.path.expanduser(dest)
         if os.path.isdir(dest):
             # first check if we are redirected to a file download
             _, redir_info = fetch_url(module, url, data=body,
