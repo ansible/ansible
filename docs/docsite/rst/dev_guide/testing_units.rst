@@ -2,9 +2,9 @@
 Unit Tests
 **********
 
-Unit tests are small isolated tests that target a specific library, or module.  Unit tests
+Unit tests are small isolated tests that target a specific library or module.  Unit tests
 in Ansible are currently the only way of driving tests from python within Ansible's
-continuous integration process which means that in some circumstances the tests may be a
+continuous integration process. This means that in some circumstances the tests may be a
 bit wider than just units.
 
 .. contents:: Topics
@@ -119,12 +119,12 @@ or as classes::
 Both methods work fine in most circumstances; the function based interface is simpler and
 quicker and so that's probably where you should start when you are just trying to add a
 few basic tests for a module.  The class based test allows more tidy set up and tear down
-of pre-requisites so if you have many test cases for your module you may want to refactor
+of pre-requisites, so if you have many test cases for your module you may want to refactor
 to use that.  Assertions using the simple assert function inside the tests will.
 
 A number of the unit test suites include functions that are shared
 between several modules, especially in the networking arena.  In these
-cases a file is created in the same directory which is then included
+cases a file is created in the same directory, which is then included
 directly.
 
 
@@ -163,8 +163,8 @@ drill down through the reports to find files which have no tests at all.
 Code Coverage For New or Updated Code
 `````````````````````````````````````
 
-New code will be missing from the codecov.io coverage reports so local reporting is
-needed.  Most ``ansible-test`` commands allow you to collect code coverage, this is
+New code will be missing from the codecov.io coverage reports, so local reporting is
+needed.  Most ``ansible-test`` commands allow you to collect code coverage; this is
 particularly useful when to indicate where to extend testing.
 
 To collect coverage data add the ``--coverage`` argument to your ``ansible-test`` command line:
