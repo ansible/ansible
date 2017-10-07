@@ -44,7 +44,7 @@ For advanced usage see the online help::
 
    ansible-test units --help
 
-You can also run tests in Ansible's continous integration system by opening a pull request which will run the full test suite 
+You can also run tests in Ansible's continuous integration system by opening a pull request which will run the full test suite 
 
 Installing dependencies
 =======================
@@ -84,7 +84,7 @@ Extending unit tests
 Structuring Unit Tests
 ``````````````````````
 
-Ansible drives unit tests through pytest
+Ansible drives unit tests through ``pytest``
 (https://docs.pytest.org/en/latest/) this means that tests can either
 be written as simple functions which are included in any file name
 like test_<something>.py.::
@@ -121,7 +121,12 @@ Both methods work fine in most circumstances; the function based interface is si
 quicker and so that's probably where you should start when you are just trying to add a
 few basic tests for a module.  The class based test allows more tidy set up and tear down
 of pre-requisites, so if you have many test cases for your module you may want to refactor
-to use that.  Assertions using the simple assert function inside the tests will.
+to use that.  
+
+Assertions using the simple ``assert`` function inside the tests will give give full
+information on the cause of the failure tracing back functions called during the
+assertion.  This means that plain asserts are recommended over other external assertion
+libraries.
 
 A number of the unit test suites include functions that are shared
 between several modules, especially in the networking arena.  In these
