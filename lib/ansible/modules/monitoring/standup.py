@@ -15,6 +15,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+from ansible.module_utils.basic import AnsibleModule
+import os
+import re
+import subprocess
+
+try:
+    import yaml
+
+    HAS_YAML = True
+except:
+    HAS_YAML = False
+    
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -146,18 +161,6 @@ result:
     returned: always
     sample: "Validation checks succeeded."
 '''
-
-from ansible.module_utils.basic import AnsibleModule
-import os
-import re
-import subprocess
-
-try:
-    import yaml
-
-    HAS_YAML = True
-except:
-    HAS_YAML = False
 
 global module
 
