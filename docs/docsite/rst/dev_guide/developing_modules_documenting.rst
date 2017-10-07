@@ -86,11 +86,11 @@ For new modules, the following block can be simply added into your module
    * ``metadata_version`` is the version of the ``ANSIBLE_METADATA`` schema, *not* the version of the module.
    * Promoting a module's ``status`` or ``supported_by`` status should only be done by members of the Ansible Core Team.
 
-.. note:: Pre-released metdata version
+.. note:: Pre-released metadata version
 
     During development of Ansible-2.3, modules had an initial version of the
     metadata.  This version was modified slightly after release to fix some
-    points of confusion.  You may occassionally see PRs for modules where the
+    points of confusion.  You may occasionally see PRs for modules where the
     ANSIBLE_METADATA doesn't look quite right because of this.  Module
     metadata should be fixed before checking it into the repository.
 

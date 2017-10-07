@@ -51,6 +51,7 @@ options:
   msg:
     description:
       - The text of the message to be displayed.
+      - The message must be less than 256 characters.
     default: Hello world!
 author:
 - Jon Hawkesworth (@jhawkesworth)

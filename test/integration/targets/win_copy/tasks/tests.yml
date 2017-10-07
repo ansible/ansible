@@ -26,6 +26,32 @@
   register: fail_missing_parent_dir
   failed_when: "'Destination directory ' + test_win_copy_path + '\\missing-dir does not exist' not in fail_missing_parent_dir.msg"
 
+- name: fail to copy an encrypted file without the password set
+  win_copy:
+    src: '{{role_path}}/files-different/vault/vault-file'
+    dest: '{{test_win_copy_path}}\file'
+  register: fail_copy_encrypted_file
+  ignore_errors: yes # weird failed_when doesn't work in this case
+
+- name: assert failure message when copying an encrypted file without the password set
+  assert:
+    that:
+    - fail_copy_encrypted_file|failed
+    - fail_copy_encrypted_file.msg == 'A vault password or secret must be specified to decrypt {{role_path}}/files-different/vault/vault-file'
+
+- name: fail to copy a directory with an encrypted file without the password
+  win_copy:
+    src: '{{role_path}}/files-different/vault'
+    dest: '{{test_win_copy_path}}'
+  register: fail_copy_directory_with_enc_file
+  ignore_errors: yes
+
+- name: assert failure message when copying a directory that contains an encrypted file without the password set
+  assert:
+    that:
+    - fail_copy_directory_with_enc_file|failed
+    - fail_copy_directory_with_enc_file.msg == 'A vault password or secret must be specified to decrypt {{role_path}}/files-different/vault/vault-file'
+
 - name: copy with content (check mode)
   win_copy:
     content: a
@@ -385,6 +411,37 @@
     dest: '{{test_win_copy_path}}\recursive-contents\foo.txt'
   register: fail_folder_to_file
   failed_when: "'object at parent directory path is already a file' not in fail_folder_to_file.msg"
+
+# https://github.com/ansible/ansible/issues/31336
+- name: create file with colon in the name
+  copy:
+    dest: '{{role_path}}/files-different/colon:file'
+    content: test
+  delegate_to: localhost
+
+- name: copy a file with colon as a source
+  win_copy:
+    src: '{{role_path}}/files-different/colon:file'
+    dest: '{{test_win_copy_path}}\colon.file'
+  register: copy_file_with_colon
+
+- name: get result of file with colon as a source
+  win_stat:
+    path: '{{test_win_copy_path}}\colon.file'
+  register: copy_file_with_colon_result
+
+- name: assert results of copy a file with colon as a source
+  assert:
+    that:
+    - copy_file_with_colon|changed
+    - copy_file_with_colon_result.stat.exists == True
+    - copy_file_with_colon_result.stat.checksum == "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3" 
+
+- name: remove file with colon in the name
+  file:
+    path: '{{role_path}}/files-different/colon:file'
+    state: absent
+  delegate_to: localhost
 
 - name: remove test folder after local to remote tests
   win_file:

@@ -132,12 +132,24 @@ def spawn_vcsim():
         '-httptest.serve',
         '%s:%s' % (hostname, port),
     ]
-    for x in cli_opts:
-        name = x[0]
-        default = x[1]
-        if request.args.get(name):
-            default = request.args.get(name)
-        cmd.append('-%s=%s' % (name, default))
+
+    # esx only allows certain arguments
+    if request.args.get('esx'):
+        cmd.append('-esx')
+        for x in [('vm', 1), ('ds', 1)]:
+            name = x[0]
+            default = x[1]
+            if request.args.get(name):
+                default = request.args.get(name)
+            cmd.append('-%s=%s' % (name, default))
+    else:
+        # use all other options as requested for vcenter
+        for x in cli_opts:
+            name = x[0]
+            default = x[1]
+            if request.args.get(name):
+                default = request.args.get(name)
+            cmd.append('-%s=%s' % (name, default))
     cmd = ' '.join(cmd)
     cmd += ' 2>&1 > vcsim.log'
 

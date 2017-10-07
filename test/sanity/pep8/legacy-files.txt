@@ -344,7 +344,6 @@ lib/ansible/modules/packaging/language/cpanm.py
 lib/ansible/modules/packaging/language/gem.py
 lib/ansible/modules/packaging/language/maven_artifact.py
 lib/ansible/modules/packaging/language/pear.py
-lib/ansible/modules/packaging/language/pip.py
 lib/ansible/modules/packaging/os/apk.py
 lib/ansible/modules/packaging/os/apt.py
 lib/ansible/modules/packaging/os/apt_key.py
@@ -362,7 +361,6 @@ lib/ansible/modules/packaging/os/pkgng.py
 lib/ansible/modules/packaging/os/pkgutil.py
 lib/ansible/modules/packaging/os/portage.py
 lib/ansible/modules/packaging/os/portinstall.py
-lib/ansible/modules/packaging/os/rhn_channel.py
 lib/ansible/modules/packaging/os/rpm_key.py
 lib/ansible/modules/packaging/os/sorcery.py
 lib/ansible/modules/packaging/os/svr4pkg.py
@@ -371,8 +369,6 @@ lib/ansible/modules/packaging/os/urpmi.py
 lib/ansible/modules/packaging/os/yum.py
 lib/ansible/modules/packaging/os/zypper.py
 lib/ansible/modules/packaging/os/zypper_repository.py
-lib/ansible/modules/remote_management/foreman/foreman.py
-lib/ansible/modules/remote_management/foreman/katello.py
 lib/ansible/modules/remote_management/stacki/stacki_host.py
 lib/ansible/modules/source_control/bzr.py
 lib/ansible/modules/source_control/hg.py

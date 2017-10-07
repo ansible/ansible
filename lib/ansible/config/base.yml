@@ -65,9 +65,14 @@ ANSIBLE_PIPELINING:
     - This can result in a very significant performance improvement when enabled.
     - "However this conflicts with privilege escalation (become). For example, when using 'sudo:' operations you must first
       disable 'requiretty' in /etc/sudoers on all managed hosts, which is why it is disabled by default."
-  env: [{name: ANSIBLE_PIPELINING}]
+  env:
+    - name: ANSIBLE_PIPELINING
+    - name: ANSIBLE_SSH_PIPELINING
   ini:
-  - {key: pipelining, section: connection}
+  - section: connection
+    key: pipelining
+  - section: ssh_connection
+    key: pipelining
   type: boolean
   yaml: {key: plugins.connection.pipelining}
 ANSIBLE_SSH_ARGS:
@@ -115,19 +120,6 @@ ANSIBLE_SSH_EXECUTABLE:
   - {key: ssh_executable, section: ssh_connection}
   yaml: {key: ssh_connection.ssh_executable}
   version_added: "2.2"
-ANSIBLE_SSH_PIPELINING:
-  # TODO: move to ssh plugin
-  default: False
-  description:
-    - Pipelining reduces the number of SSH operations required to execute a module on the remote server,
-      by executing many Ansible modules without actual file transfer.
-    - This can result in a very significant performance improvement when enabled.
-    - "However this conflicts with privilege escalation (become). For example, when using 'sudo:' operations you must first disable 'requiretty' in /etc/sudoers on all managed hosts, which is why it is disabled by default."
-  env: [{name: ANSIBLE_SSH_PIPELINING}]
-  ini:
-  - {key: pipelining, section: ssh_connection}
-  type: boolean
-  yaml: {key: ssh_connection.pipelining}
 ANSIBLE_SSH_RETRIES:
   # TODO: move to ssh plugin
   default: 0
@@ -1478,7 +1470,7 @@ YAML_FILENAME_EXTENSIONS:
   env:
     - name: ANSIBLE_YAML_FILENAME_EXT
   ini:
-    - section: yaml_valid_extensions
-      key: defaults
+    - section: defaults
+      key: yaml_valid_extensions
   type: list
 ...
