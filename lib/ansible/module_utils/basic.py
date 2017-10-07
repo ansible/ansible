@@ -1913,6 +1913,85 @@ class AnsibleModule(object):
         except ValueError:
             raise TypeError('%s cannot be converted to a Bit value' % type(value))
 
+    def _check_single_argument_type(self, wanted, field):
+        """Ensure a single parameter is of a requested type"""
+        if not callable(wanted):
+            if wanted is None:
+                # Mostly we want to default to str.
+                # For values set to None explicitly, return None instead as
+                # that allows a user to unset a parameter
+                if field is None:
+                    return None
+                wanted = 'str'
+            type_checker = self._CHECK_ARGUMENT_TYPES_DISPATCHER[wanted]
+        else:
+            # set the type_checker to the callable, and reset wanted to the callable's name (or type if it doesn't have one, ala MagicMock)
+            type_checker = wanted
+            wanted = getattr(wanted, '__name__', to_native(type(wanted)))
+
+        return type_checker(field)
+
+    def _check_argument_types(self, spec=None, param=None):
+        ''' ensure all arguments have the requested type '''
+
+        if spec is None:
+            spec = self.argument_spec
+        if param is None:
+            param = self.params
+
+        for (k, v) in spec.items():
+            wanted = v.get('type', None)
+            if k not in param:
+                continue
+            if param[k] is None:
+                continue
+
+            try:
+                param[k] = self._check_single_argument_type(wanted, param[k])
+            except KeyError:
+                self.fail_json(msg="implementation error: unknown type %s requested for %s" % (wanted, k))
+            except (TypeError, ValueError) as e:
+                self.fail_json(msg="argument %s is of type %s and we were unable to convert to %s: %s" %
+                               (k, type(param[k]), wanted, to_native(e)))
+
+    def _set_defaults(self, pre=True, spec=None, param=None):
+        if spec is None:
+            spec = self.argument_spec
+        if param is None:
+            param = self.params
+        for (k, v) in spec.items():
+            default = v.get('default', None)
+            if pre is True:
+                # this prevents setting defaults on required items
+                if default is not None and k not in param:
+                    param[k] = default
+            else:
+                # make sure things without a default still get set None
+                if k not in param:
+                    param[k] = default
+
+    def _set_fallbacks(self, spec=None, param=None):
+        if spec is None:
+            spec = self.argument_spec
+        if param is None:
+            param = self.params
+
+        for (k, v) in spec.items():
+            fallback = v.get('fallback', (None,))
+            fallback_strategy = fallback[0]
+            fallback_args = []
+            fallback_kwargs = {}
+            if k not in param and fallback_strategy is not None:
+                for item in fallback[1:]:
+                    if isinstance(item, dict):
+                        fallback_kwargs = item
+                    else:
+                        fallback_args = item
+                try:
+                    param[k] = fallback_strategy(*fallback_args, **fallback_kwargs)
+                except AnsibleFallbackNotFound:
+                    continue
+
     def _handle_options(self, argument_spec=None, params=None):
         ''' deal with options to create sub spec '''
         if argument_spec is None:
@@ -1966,84 +2045,18 @@ class AnsibleModule(object):
                     # handle multi level options (sub argspec)
                     self._handle_options(spec, param)
                 self._options_context.pop()
-
-    def _check_argument_types(self, spec=None, param=None):
-        ''' ensure all arguments have the requested type '''
-
-        if spec is None:
-            spec = self.argument_spec
-        if param is None:
-            param = self.params
-
-        for (k, v) in spec.items():
-            wanted = v.get('type', None)
-            if k not in param:
-                continue
-
-            value = param[k]
-            if value is None:
-                continue
-
-            if not callable(wanted):
-                if wanted is None:
-                    # Mostly we want to default to str.
-                    # For values set to None explicitly, return None instead as
-                    # that allows a user to unset a parameter
-                    if param[k] is None:
-                        continue
-                    wanted = 'str'
-                try:
-                    type_checker = self._CHECK_ARGUMENT_TYPES_DISPATCHER[wanted]
-                except KeyError:
-                    self.fail_json(msg="implementation error: unknown type %s requested for %s" % (wanted, k))
-            else:
-                # set the type_checker to the callable, and reset wanted to the callable's name (or type if it doesn't have one, ala MagicMock)
-                type_checker = wanted
-                wanted = getattr(wanted, '__name__', to_native(type(wanted)))
-
-            try:
-                param[k] = type_checker(value)
-            except (TypeError, ValueError) as e:
-                self.fail_json(msg="argument %s is of type %s and we were unable to convert to %s: %s" %
-                               (k, type(value), wanted, to_native(e)))
-
-    def _set_defaults(self, pre=True, spec=None, param=None):
-        if spec is None:
-            spec = self.argument_spec
-        if param is None:
-            param = self.params
-        for (k, v) in spec.items():
-            default = v.get('default', None)
-            if pre is True:
-                # this prevents setting defaults on required items
-                if default is not None and k not in param:
-                    param[k] = default
-            else:
-                # make sure things without a default still get set None
-                if k not in param:
-                    param[k] = default
-
-    def _set_fallbacks(self, spec=None, param=None):
-        if spec is None:
-            spec = self.argument_spec
-        if param is None:
-            param = self.params
-
-        for (k, v) in spec.items():
-            fallback = v.get('fallback', (None,))
-            fallback_strategy = fallback[0]
-            fallback_args = []
-            fallback_kwargs = {}
-            if k not in param and fallback_strategy is not None:
-                for item in fallback[1:]:
-                    if isinstance(item, dict):
-                        fallback_kwargs = item
-                    else:
-                        fallback_args = item
-                try:
-                    param[k] = fallback_strategy(*fallback_args, **fallback_kwargs)
-                except AnsibleFallbackNotFound:
-                    continue
+            # Defaulting the contents of a list to str is not something we've done before so not
+            # going to do it now.  It may be something we should do in a revised API, though
+            elif wanted == 'list' and v.get('elements', None) is not None:
+                elem_type = v['elements']
+                for idx, element in enumerate(params[k]):
+                    try:
+                        params[k][idx] = self._check_single_argument_type(elem_type, element)
+                    except KeyError:
+                        self.fail_json(msg="implementation error: unknown type %s requested for the elements of %s" % (elem_type, k))
+                    except (TypeError, ValueError) as e:
+                        self.fail_json(msg="list %s contains a %s which we were unable to convert to %s: %s" %
+                                       (k, type(element), elem_type, to_native(e)))
 
     def _load_params(self):
         ''' read the input and set the params attribute.
