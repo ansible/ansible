@@ -44,7 +44,8 @@ options:
         use can also list the following: C(installed), C(updates), C(available) and C(repos)."
   state:
     description:
-      - Whether to install (C(present) or C(installed), C(latest)), or remove (C(absent) or C(removed)) or (un)lock version of (C(locked) or C(unlocked)) a package.
+      - Whether to install (C(present) or C(installed), C(latest)), or remove (C(absent) or C(removed))
+        or (un)lock version of (C(locked) or C(unlocked)) a package.
     choices: [ absent, installed, latest, present, removed, locked, unlocked ]
     default: present
   enablerepo:
@@ -219,7 +220,7 @@ EXAMPLES = '''
   yum:
     list: ansible
   register: result
-  
+
 - name: Lock java at current version
   yum:
     name: "{{item}}"
