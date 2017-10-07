@@ -783,10 +783,10 @@ YAML string format::
     ansible-playbook arcade.yml --extra-vars '
     pacman: mrs
     ghosts:
-      - inky
-      - pinky
-      - clyde
-      - sue'
+    - inky
+    - pinky
+    - clyde
+    - sue'
 
 vars from a JSON or YAML file::
     ansible-playbook release.yml --extra-vars "@some_file.json"
