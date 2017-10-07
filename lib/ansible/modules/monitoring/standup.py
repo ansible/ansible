@@ -90,15 +90,15 @@ EXAMPLES = '''
 # A sample check. Multiple checks can be specified in a checks file.
 # Refer U(https://github.com/thomastk/ansible-module-standup/blob/master/README.md)
 # for complete documentation of checks YAML file syntax.
--  name: "Test db 1"
-      description: Check if mysql service is running
-      roles: db
-      command: ps -ef |grep mariadb|wc -l
-      heal: sudo service mariadb start
-      output_compare:
-         type: number
-         value: 3
-         operator: EQ
+- name: "Test db 1"
+  description: Check if mysql service is running
+  roles: db
+  command: ps -ef |grep mariadb|wc -l
+  heal: sudo service mariadb start
+  output_compare:
+     type: number
+     value: 3
+     operator: EQ
 '''
 
 RETURN = '''
