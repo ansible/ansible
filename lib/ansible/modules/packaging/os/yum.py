@@ -44,8 +44,8 @@ options:
         use can also list the following: C(installed), C(updates), C(available) and C(repos)."
   state:
     description:
-      - Whether to install (C(present) or C(installed), C(latest)), or remove (C(absent) or C(removed)) a package.
-    choices: [ absent, installed, latest, present, removed ]
+      - Whether to install (C(present) or C(installed), C(latest)), or remove (C(absent) or C(removed)) or (un)lock version of (C(locked) or C(unlocked)) a package.
+    choices: [ absent, installed, latest, present, removed, locked, unlocked ]
     default: present
   enablerepo:
     description:
@@ -219,6 +219,24 @@ EXAMPLES = '''
   yum:
     list: ansible
   register: result
+  
+- name: Lock java at current version
+  yum:
+    name: "{{item}}"
+    state: locked
+  with_items:
+    - java-1.7.0-openjdk
+    - java-1.7.0-openjdk-devel
+    - java-1.7.0-openjdk-headless
+
+- name: Unlock java version
+  yum:
+    name: "{{item}}"
+    state: unlocked
+  with_items:
+    - java-1.7.0-openjdk
+    - java-1.7.0-openjdk-devel
+    - java-1.7.0-openjdk-headless
 '''
 
 import os
@@ -890,6 +908,110 @@ def remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, in
 
     return res
 
+def is_locked(versionlock_output, pkg):
+    """ find package name in output of 'yum versionlock' as exact package name match, not a substring """
+    r_pkg_name_version = re.compile(r'(\d+:)?{0}\-\d+(\.\d+)+\-.*'.format(pkg))
+    for line in versionlock_output.splitlines():
+        if r_pkg_name_version.match(line):
+            return True
+    return False
+
+def lock(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, installroot='/'):
+
+    pkgs = []
+    res = {}
+    res['results'] = []
+    res['msg'] = ''
+    res['changed'] = False
+    res['rc'] = 0
+
+    cmd = yum_basecmd + ["versionlock", "list"]
+    rc, out, err = module.run_command(cmd)
+
+    for pkg in items:
+        if is_locked(out, pkg):
+            res['results'].append('%s is already locked' % pkg)
+        else:
+            pkgs.append(pkg)
+
+    if pkgs:
+        if module.check_mode:
+            module.exit_json(changed=True, results=res['results'], changes=dict(locked=pkgs))
+
+        cmd = yum_basecmd + ["versionlock", "add"] + pkgs
+        rc, out, err = module.run_command(cmd)
+
+        res['rc'] = rc
+        res['results'].append(out)
+        res['msg'] = err
+        res['changes'] = dict(locked=[])
+
+        if rc != 0:
+            module.fail_json(**res)
+
+        cmd = yum_basecmd + ["versionlock", "list"]
+        rc, out, err = module.run_command(cmd)
+
+        for pkg in pkgs:
+            if is_locked(out, pkg):
+                res['changes']['locked'].append(pkg)
+            else:
+                res['msg'] = 'failed to lock package {0}'.format(pkg)
+                module.fail_json(**res)
+
+        res['changed'] = True
+
+    return res
+
+def unlock(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, installroot='/'):
+
+    pkgs = []
+    res = {}
+    res['results'] = []
+    res['msg'] = ''
+    res['changed'] = False
+    res['rc'] = 0
+
+    cmd = yum_basecmd + ["versionlock", "list"]
+    rc, out, err = module.run_command(cmd)
+
+    for pkg in items:
+        if is_locked(out, pkg):
+            pkgs.append(pkg)
+        else:
+            res['msg'] = '{0} not locked'.format(pkg)
+
+    if pkgs:
+        if module.check_mode:
+            module.exit_json(changed=True, results=res['results'], changes=dict(unlocked=pkgs))
+
+        # run an actual yum transaction
+        cmd = yum_basecmd + ["versionlock", "delete"] + pkgs
+        rc, out, err = module.run_command(cmd)
+
+        res['rc'] = rc
+        res['results'].append(out)
+        res['msg'] = err
+        res['changes'] = dict(unlocked=[])
+
+        if rc != 0:
+            module.fail_json(**res)
+
+        cmd = yum_basecmd + ["versionlock", "list"]
+        rc, out, err = module.run_command(cmd)
+
+        for pkg in pkgs:
+            if is_locked(out, pkg):
+                res['msg'] = 'failed to unlock package {0}'.format(pkg)
+                module.fail_json(**res)
+            else:
+                res['msg'] = '{0} unlocked'.format(pkg)
+                res['changes']['unlocked'].append(pkg)
+
+        res['changed'] = True
+
+    return res
+
 
 def run_check_update(module, yum_basecmd):
     # run check-update to see if we have packages pending
@@ -1204,6 +1326,10 @@ def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
         res = install(module, pkgs, repoq, yum_basecmd, conf_file, en_repos, dis_repos, installroot=installroot, allow_downgrade=allow_downgrade)
     elif state in ['removed', 'absent']:
         res = remove(module, pkgs, repoq, yum_basecmd, conf_file, en_repos, dis_repos, installroot=installroot)
+    elif state == 'locked':
+        res = lock(module, pkgs, repoq, yum_basecmd, conf_file, en_repos, dis_repos, installroot=installroot)
+    elif state == 'unlocked':
+        res = unlock(module, pkgs, repoq, yum_basecmd, conf_file, en_repos, dis_repos, installroot=installroot)
     elif state == 'latest':
         if disable_gpg_check:
             yum_basecmd.append('--nogpgcheck')
@@ -1234,7 +1360,7 @@ def main():
             name=dict(type='list', aliases=['pkg']),
             exclude=dict(type='str'),
             # removed==absent, installed==present, these are accepted as aliases
-            state=dict(type='str', default='installed', choices=['absent', 'installed', 'latest', 'present', 'removed']),
+            state=dict(type='str', default='installed', choices=['absent', 'installed', 'latest', 'present', 'removed', 'locked', 'unlocked']),
             enablerepo=dict(type='str'),
             disablerepo=dict(type='str'),
             list=dict(type='str'),
