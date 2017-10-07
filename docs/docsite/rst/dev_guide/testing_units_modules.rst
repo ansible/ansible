@@ -8,13 +8,17 @@ Introduction
 ============
 
 This document explains why, how and when you should use unit tests for Ansible modules.
+The document doesn't apply to other parts of Ansible for which the recommendations are
+normally closer to the Python standard.  There is basic documentation for Ansible unit
+tests in the developer guide :doc:`testing_units`.
 
 What
 ----
 
-In the test/unit directory Ansible has a set of unit tests which primarily cover 
-Ansible internals but can also can cover Ansible modules.  There is basic documentation for
-unit tests in the `Ansible Developer Guide https://docs.ansible.com/ansible/devel/dev_guide/testing_units.html)`_.
+In the :file:`test/unit` directory Ansible has a set of unit tests which primarily cover the
+internals but can also can cover Ansible modules.  The structure of the unit tests matches
+the structure of the code base so the tests are in the :file:`test/unit/modules/` directory
+divided up according to groups of modules.
 
 For most modules integration tests can be used instead, but there are situations where
 cases cannot be verified using integration tests.  This means that Ansible unit test cases
