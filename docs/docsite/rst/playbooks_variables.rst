@@ -764,7 +764,7 @@ Passing Variables On The Command Line
 
 In addition to ``vars_prompt`` and ``vars_files``, it is possible to set variables at the
 command line using the ``--extra-vars`` (or ``-e``) argument.  Variables can be defined using
-either as a single quoted string (containing one or more variables), or by referencing a JSON 
+a single quoted string (containing one or more variables), or by referencing a JSON 
 or YAML file containing the variable definitions.  This is particularly useful when writing a 
 generic release playbook where you may want to pass in the version of the application to deploy.
 
@@ -791,7 +791,7 @@ YAML string format::
 vars from a JSON or YAML file::
     ansible-playbook release.yml --extra-vars "@some_file.json"
 
-This is useful, for, among other things, setting the hosts group or the user for the playbook.
+This is useful for, among other things, setting the hosts group or the user for the playbook.
 
 Example::
 
