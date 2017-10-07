@@ -216,7 +216,7 @@ EXAMPLES = '''
         flat: true
 '''
 
-RETURN='''
+RETURN = '''
 addresses:
   description: Mapping from the network device name to a list of IPv4 addresses in the container
   returned: when state is started or restarted
@@ -542,9 +542,6 @@ def main():
             config=dict(
                 type='dict',
             ),
-            description=dict(
-                type='str',
-            ),
             devices=dict(
                 type='dict',
             ),
@@ -585,7 +582,7 @@ def main():
                 type='str',
                 default='{}/.config/lxc/client.crt'.format(os.environ['HOME'])
             ),
-            trust_password=dict( type='str', no_log=True )
+            trust_password=dict(type='str', no_log=True)
         ),
         supports_check_mode=False,
     )
