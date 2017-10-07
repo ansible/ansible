@@ -3,8 +3,7 @@ import sys
 from ansible.compat.tests.mock import patch, Mock
 from ansible.compat.tests import unittest
 from ansible.module_utils import basic
-import json
-from ansible.module_utils._text import to_bytes
+from units.modules.utils import set_module_args
 
 base_modules_mock = Mock()
 nitro_service_mock = Mock()
@@ -28,11 +27,6 @@ base_modules_to_mock = {
 }
 
 nitro_base_patcher = patch.dict(sys.modules, base_modules_to_mock)
-
-
-def set_module_args(args):
-    args = json.dumps({'ANSIBLE_MODULE_ARGS': args})
-    basic._ANSIBLE_ARGS = to_bytes(args)
 
 
 class AnsibleExitJson(Exception):
