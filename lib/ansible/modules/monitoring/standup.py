@@ -104,13 +104,47 @@ EXAMPLES = '''
 RETURN = '''
 checks:
     description: The checks with results of running check and heal commands.
-    type: json
+    type: dict
+    returned: always
+    sample: { 
+        "checks": {
+            "Test db 1": {
+                "check": {
+                    "command": "ps -ef |grep mariadb|wc -l", 
+                    "description": "Check if mysql service is running", 
+                    "heal": "sudo service mariadb start", 
+                    "name": "Test db 1", 
+                    "output_compare": {
+                        "operator": "GT", 
+                        "type": "number", 
+                        "value": 2
+                    }, 
+                    "roles": "db"
+                }, 
+                "check_status": true, 
+                "cmd_output": {
+                    "output": "3", 
+                    "sys_status": 0
+                }, 
+                "command_ran": "ps -ef |grep mariadb|wc -l", 
+                "heal_output": null, 
+                "heal_ran": null, 
+                "healed": false, 
+                "last_error": null, 
+                "validated": true
+            }
+        }
+    }
 changed:
     description: Indicates if any heal steps are run successfully.
-    type: bool
+    type: boolean
+    returned: success
+    sample: True
 result:
     description: Note regarding the validation run.
-    type: str
+    type: string
+    returned: always
+    sample: "Validation checks succeeded."
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -203,9 +237,7 @@ class StandupCheck:
         self.check_status = None
         self.last_error = None
 
-        if 'name' not in check or \
-            'description' not in check or \
-            'command' not in check:
+        if 'name' not in check or 'description' not in check or 'command' not in check:
             self.last_error = "name,description and command are need in check specification."
             return
 
