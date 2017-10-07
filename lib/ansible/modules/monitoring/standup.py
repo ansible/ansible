@@ -106,31 +106,31 @@ checks:
     description: The checks with results of running check and heal commands.
     type: dict
     returned: always
-    sample: { 
+    sample: {
         "checks": {
             "Test db 1": {
                 "check": {
-                    "command": "ps -ef |grep mariadb|wc -l", 
-                    "description": "Check if mysql service is running", 
-                    "heal": "sudo service mariadb start", 
-                    "name": "Test db 1", 
+                    "command": "ps -ef |grep mariadb|wc -l",
+                    "description": "Check if mysql service is running",
+                    "heal": "sudo service mariadb start",
+                    "name": "Test db 1",
                     "output_compare": {
-                        "operator": "GT", 
-                        "type": "number", 
+                        "operator": "GT",
+                        "type": "number",
                         "value": 2
-                    }, 
+                    },
                     "roles": "db"
-                }, 
-                "check_status": true, 
+                },
+                "check_status": true,
                 "cmd_output": {
-                    "output": "3", 
+                    "output": "3",
                     "sys_status": 0
-                }, 
-                "command_ran": "ps -ef |grep mariadb|wc -l", 
-                "heal_output": null, 
-                "heal_ran": null, 
-                "healed": false, 
-                "last_error": null, 
+                },
+                "command_ran": "ps -ef |grep mariadb|wc -l",
+                "heal_output": null,
+                "heal_ran": null,
+                "healed": false,
+                "last_error": null,
                 "validated": true
             }
         }
