@@ -45,7 +45,18 @@ Use the ``ansible-test shell`` command to get an interactive shell in the same e
 Code Coverage
 =============
 
-Add the ``--coverage`` option to any test command to collect code coverage data.
+Code coverage reports make it easy to identify untested code for which more tests should
+be written.  Online reports are available but only cover the main ansible branches (see
+:doc:`testing`).  For new code local reports are needed.
+
+Add the ``--coverage`` option to any test command to collect code coverage data.  You may
+have to use ``--tox`` and ``--requirements`` option to ensure that the coverage module is
+available
+
+   ansible-test units --coverage apt
+   ansible-test integration --coverage aws_lambda --tox --requirements
+   ansible-test coverage html
+
 
 Reports can be generated in several different formats:
 
@@ -53,4 +64,7 @@ Reports can be generated in several different formats:
 * ``ansible-test coverage html`` - HTML report.
 * ``ansible-test coverage xml`` - XML report.
 
-To clear data between test runs, use the ``ansible-test coverage erase`` command.
+To clear data between test runs, use the ``ansible-test coverage erase`` command. For a full list of features see the online help::
+
+   ansible-test coverage --help
+

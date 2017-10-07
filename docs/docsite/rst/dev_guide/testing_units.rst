@@ -44,6 +44,7 @@ For advanced usage see the online help::
 
    ansible-test units --help
 
+You can also run tests in Ansible's continous integration system by opening a pull request which will run the full test suite 
 
 Installing dependencies
 =======================
@@ -153,19 +154,12 @@ See `eos_banner test
 <https://github.com/ansible/ansible/blob/devel/test/units/modules/network/eos/test_eos_banner.py>`_
 for a practical example.
 
-Code Coverage Online
-````````````````````
 
-`The online code coverage reports <https://codecov.io/gh/ansible/ansible>` are a good way
-to identify areas for testing improvement in Ansible.  By following red colours you can
-drill down through the reports to find files which have no tests at all.
-
-Code Coverage For New or Updated Code
-`````````````````````````````````````
-
-New code will be missing from the codecov.io coverage reports, so local reporting is
-needed.  Most ``ansible-test`` commands allow you to collect code coverage; this is
-particularly useful when to indicate where to extend testing.
+Code Coverage For New or Updated Unit Tests
+```````````````````````````````````````````
+New code will be missing from the codecov.io coverage reports (see :doc:`testing`), so
+local reporting is needed.  Most ``ansible-test`` commands allow you to collect code
+coverage; this is particularly useful when to indicate where to extend testing.
 
 To collect coverage data add the ``--coverage`` argument to your ``ansible-test`` command line:
 
@@ -182,15 +176,17 @@ Reports can be generated in several different formats:
 * ``ansible-test coverage html`` - HTML report.
 * ``ansible-test coverage xml`` - XML report.
 
-To clear data between test runs, use the ``ansible-test coverage erase`` command. For a full list of features see the online help::
-
-   ansible-test coverage --help
+To clear data between test runs, use the ``ansible-test coverage erase`` command.  See
+:doc:`testing_units_running_locally` for more information about generating coverage
+reports.
 
 
 .. seealso::
 
    :doc:`testing_units_modules`
        Special considerations for unit testing modules
+   :doc:`testing_running_locally`
+       Running tests locally including gathering and reporting coverage data
    `Python 3 documentation - 26.4. unittest — Unit testing framework <https://docs.python.org/3/library/unittest.html>`_
        The documentation of the unittest framework in python 3 
    `Python 2 documentation - 25.3. unittest — Unit testing framework <https://docs.python.org/3/library/unittest.html>`_

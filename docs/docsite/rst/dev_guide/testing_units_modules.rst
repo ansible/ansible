@@ -458,6 +458,8 @@ the code in Ansible to trigger that failure.
 
    :doc:`testing_units`
        Ansible unit tests documentation
+   :doc:`testing_running_locally`
+       Running tests locally including gathering and reporting coverage data
    :doc:`developing_modules`
        How to develop modules
    `Python 3 documentation - 26.4. unittest — Unit testing framework <https://docs.python.org/3/library/unittest.html>`_
