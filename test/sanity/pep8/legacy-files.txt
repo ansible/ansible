@@ -95,7 +95,6 @@ lib/ansible/modules/cloud/google/gcpubsub.py
 lib/ansible/modules/cloud/google/gcspanner.py
 lib/ansible/modules/cloud/lxc/lxc_container.py
 lib/ansible/modules/cloud/lxd/lxd_container.py
-lib/ansible/modules/cloud/lxd/lxd_profile.py
 lib/ansible/modules/cloud/misc/ovirt.py
 lib/ansible/modules/cloud/misc/rhevm.py
 lib/ansible/modules/cloud/misc/serverless.py
