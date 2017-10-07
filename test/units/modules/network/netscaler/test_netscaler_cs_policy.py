@@ -25,7 +25,8 @@ if sys.version_info[:2] != (2, 6):
     import requests
 
 
-from .netscaler_module import TestModule, nitro_base_patcher, set_module_args
+from units.modules.utils import set_module_args
+from .netscaler_module import TestModule, nitro_base_patcher
 
 
 class TestNetscalerCSPolicyModule(TestModule):

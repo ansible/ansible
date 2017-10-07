@@ -3,7 +3,6 @@ import sys
 from ansible.compat.tests.mock import patch, Mock
 from ansible.compat.tests import unittest
 from ansible.module_utils import basic
-from units.modules.utils import set_module_args
 
 base_modules_mock = Mock()
 nitro_service_mock = Mock()

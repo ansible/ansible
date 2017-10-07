@@ -25,7 +25,7 @@ import os
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch
 from ansible.module_utils import basic
-from units.modules.utils import set_module_args
+from units.modules.utils import AnsibleExitJson, AnsibleFailJson, TestModuleAnsible
 
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')

@@ -24,7 +24,8 @@ import json
 
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.aruba import aruba_config
-from .aruba_module import TestArubaModule, load_fixture, set_module_args
+from units.modules.utils import set_module_args
+from .aruba_module import TestArubaModule, load_fixture
 
 
 class TestArubaConfigModule(TestArubaModule):

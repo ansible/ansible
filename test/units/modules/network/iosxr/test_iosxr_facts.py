@@ -22,7 +22,8 @@ __metaclass__ = type
 import json
 
 from ansible.compat.tests.mock import patch
-from .iosxr_module import TestIosxrModule, load_fixture, set_module_args
+from units.modules.utils import set_module_args
+from .iosxr_module import TestIosxrModule, load_fixture
 from ansible.modules.network.iosxr import iosxr_facts
 
 

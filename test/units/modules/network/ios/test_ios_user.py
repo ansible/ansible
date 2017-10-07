@@ -23,7 +23,8 @@ import json
 
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.ios import ios_user
-from .ios_module import TestIosModule, load_fixture, set_module_args
+from units.modules.utils import set_module_args
+from .ios_module import TestIosModule, load_fixture
 
 
 class TestIosUserModule(TestIosModule):

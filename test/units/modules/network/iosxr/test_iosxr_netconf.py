@@ -21,7 +21,8 @@ __metaclass__ = type
 
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.iosxr import iosxr_netconf
-from .iosxr_module import TestIosxrModule, set_module_args
+from units.modules.utils import set_module_args
+from .iosxr_module import TestIosxrModule
 
 
 class TestIosxrNetconfModule(TestIosxrModule):

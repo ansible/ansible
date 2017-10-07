@@ -25,15 +25,14 @@ import json
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch
 from ansible.module_utils import basic
-from ansible.module_utils._text import to_bytes
+from units.modules.utils import set_module_args as _set_module_args
 
 
 def set_module_args(args):
     if 'provider' not in args:
         args['provider'] = {'transport': args.get('transport') or 'cli'}
 
-    args = json.dumps({'ANSIBLE_MODULE_ARGS': args})
-    basic._ANSIBLE_ARGS = to_bytes(args)
+    return _set_module_args(args)
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}

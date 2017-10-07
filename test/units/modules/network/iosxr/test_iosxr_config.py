@@ -24,7 +24,8 @@ import json
 
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.iosxr import iosxr_config
-from .iosxr_module import TestIosxrModule, load_fixture, set_module_args
+from units.modules.utils import set_module_args
+from .iosxr_module import TestIosxrModule, load_fixture
 
 
 class TestIosxrConfigModule(TestIosxrModule):

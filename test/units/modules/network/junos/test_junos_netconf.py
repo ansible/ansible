@@ -21,7 +21,8 @@ __metaclass__ = type
 
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.junos import junos_netconf
-from .junos_module import TestJunosModule, set_module_args
+from units.modules.utils import set_module_args
+from .junos_module import TestJunosModule
 
 
 class TestJunosCommandModule(TestJunosModule):

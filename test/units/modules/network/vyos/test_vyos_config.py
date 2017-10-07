@@ -24,7 +24,8 @@ import json
 
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.vyos import vyos_config
-from .vyos_module import TestVyosModule, load_fixture, set_module_args
+from units.modules.utils import set_module_args
+from .vyos_module import TestVyosModule, load_fixture
 
 
 class TestVyosConfigModule(TestVyosModule):

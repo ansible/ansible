@@ -21,6 +21,7 @@ from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch
 from ansible.module_utils import basic
 from ansible.module_utils._text import to_bytes
+from units.modules.utils import set_module_args as _set_module_args
 
 from nose.plugins.skip import SkipTest
 try:
@@ -31,19 +32,15 @@ except ImportError:
 
 
 def set_module_args(args):
-    set_module_args_custom_auth(args=args, auth={
-        'api_username': 'csproot',
-        'api_password': 'csproot',
-        'api_enterprise': 'csp',
-        'api_url': 'https://localhost:8443',
-        'api_version': 'v5_0'
-    })
-
-
-def set_module_args_custom_auth(args, auth):
-    args['auth'] = auth
-    args = json.dumps({'ANSIBLE_MODULE_ARGS': args})
-    basic._ANSIBLE_ARGS = to_bytes(args)
+    if 'auth' not in args:
+        args['auth'] = {
+            'api_username': 'csproot',
+            'api_password': 'csproot',
+            'api_enterprise': 'csp',
+            'api_url': 'https://localhost:8443',
+            'api_version': 'v5_0'
+        }
+    return _set_module_args(args)
 
 
 class AnsibleExitJson(Exception):

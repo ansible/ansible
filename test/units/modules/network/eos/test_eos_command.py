@@ -23,7 +23,8 @@ import json
 
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.eos import eos_command
-from .eos_module import TestEosModule, load_fixture, set_module_args
+from units.modules.utils import set_module_args
+from .eos_module import TestEosModule, load_fixture
 
 
 class TestEosCommandModule(TestEosModule):
