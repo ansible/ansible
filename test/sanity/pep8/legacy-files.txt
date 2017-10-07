@@ -62,7 +62,6 @@ lib/ansible/modules/cloud/azure/azure_rm_networkinterface.py
 lib/ansible/modules/cloud/azure/azure_rm_publicipaddress.py
 lib/ansible/modules/cloud/azure/azure_rm_publicipaddress_facts.py
 lib/ansible/modules/cloud/azure/azure_rm_storageaccount.py
-lib/ansible/modules/cloud/azure/azure_rm_storageblob.py
 lib/ansible/modules/cloud/azure/azure_rm_subnet.py
 lib/ansible/modules/cloud/azure/azure_rm_virtualmachine.py
 lib/ansible/modules/cloud/azure/azure_rm_virtualnetwork.py
@@ -79,7 +78,6 @@ lib/ansible/modules/cloud/docker/_docker.py
 lib/ansible/modules/cloud/docker/docker_container.py
 lib/ansible/modules/cloud/docker/docker_image.py
 lib/ansible/modules/cloud/docker/docker_image_facts.py
-lib/ansible/modules/cloud/docker/docker_login.py
 lib/ansible/modules/cloud/docker/docker_network.py
 lib/ansible/modules/cloud/google/gc_storage.py
 lib/ansible/modules/cloud/google/gcdns_record.py
