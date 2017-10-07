@@ -31,7 +31,7 @@ description:
       checks are specified in YAML format. A check contains a command that can be run on the host being verified, and,
       directives to evaluate the command output. Optionally, another command can be specified with a check to heal the
       state that the check verifies and it is run if the check fails.
-version_added: "2.4"
+version_added: "2.5"
 options:
     checks_file_path:
         description:
@@ -141,7 +141,8 @@ class StandupOutputCompare:
                 return
             self.type = opts['type']
         self.ref_value = None
-        if 'value' in opts: self.ref_value = opts['value']
+        if 'value' in opts:
+            self.ref_value = opts['value']
         self.operator = 'EQ'
         if 'operator' in opts:
             if opts['operator'] not in StandupOutputCompare.OPERATORS:
@@ -203,8 +204,8 @@ class StandupCheck:
         self.last_error = None
 
         if 'name' not in check or \
-                        'description' not in check or \
-                        'command' not in check:
+            'description' not in check or \
+            'command' not in check:
             self.last_error = "name,description and command are need in check specification."
             return
 
