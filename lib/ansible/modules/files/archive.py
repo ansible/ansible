@@ -175,7 +175,7 @@ def main():
     archive = False
     successes = []
 
-    for i, path in enumerate(paths):
+    for path in paths:
         path = os.path.expanduser(os.path.expandvars(path))
 
         # Expand any glob characters. If found, add the expanded glob to the
@@ -191,7 +191,7 @@ def main():
 
     # Only attempt to expand the exclude paths if it exists
     if exclude_paths:
-        for i, exclude_path in enumerate(exclude_paths):
+        for exclude_path in exclude_paths:
             exclude_path = os.path.expanduser(os.path.expandvars(exclude_path))
 
             # Expand any glob characters. If found, add the expanded glob to the

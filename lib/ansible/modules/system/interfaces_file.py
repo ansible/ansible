@@ -337,7 +337,7 @@ def write_changes(module, lines, dest):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            dest=dict(default='/etc/network/interfaces', required=False),
+            dest=dict(default='/etc/network/interfaces', required=False, type='path'),
             iface=dict(required=False),
             option=dict(required=False),
             value=dict(required=False),
@@ -348,8 +348,7 @@ def main():
         supports_check_mode=True
     )
 
-    dest = os.path.expanduser(module.params['dest'])
-
+    dest = module.params['dest']
     iface = module.params['iface']
     option = module.params['option']
     value = module.params['value']

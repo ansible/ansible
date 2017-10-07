@@ -178,7 +178,7 @@ def main():
         host=dict(),
         username=dict(),
         password=dict(no_log=True),
-        ssh_key_data=dict(no_log=True),
+        ssh_key_data=dict(no_log=True, type='path'),
         ssh_key_unlock=dict(no_log=True),
         authorize=dict(type='bool', default=False),
         authorize_password=dict(no_log=True),
@@ -223,7 +223,6 @@ def main():
 
             if params['ssh_key_data']:
                 filename = params['ssh_key_data']
-                filename = os.path.expanduser(filename)
                 if not os.path.exists(filename):
                     module.fail_json(msg='file not found: %s' % filename)
                 if os.path.isdir(filename):

@@ -353,7 +353,7 @@ def main():
             dest = dict(required=True),
             dest_port = dict(default=None, type='int'),
             delete = dict(default='no', type='bool'),
-            private_key = dict(default=None),
+            private_key = dict(type='path', default=None),
             rsync_path = dict(default=None),
             _local_rsync_path = dict(default='rsync', type='path'),
             _substitute_controller = dict(default='no', type='bool'),
@@ -467,7 +467,7 @@ def main():
     if is_rsh_needed(source, dest):
         ssh_cmd = [module.get_bin_path('ssh', required=True), '-S', 'none']
         if private_key is not None:
-            ssh_cmd.extend(['-i', os.path.expanduser(private_key) ])
+            ssh_cmd.extend(['-i', private_key])
         # If the user specified a port value
         # Note:  The action plugin takes care of setting this to a port from
         # inventory if the user didn't specify an explicit dest_port

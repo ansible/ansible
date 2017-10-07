@@ -221,9 +221,9 @@ class AzureRMStorageBlob(AzureRMModuleBase):
         self.module_arg_spec = dict(
             storage_account_name=dict(required=True, type='str', aliases=['account_name', 'storage_account']),
             blob=dict(type='str', aliases=['blob_name']),
-            blob_type=dict(type='str', default='block', choices=['block','page']),
+            blob_type=dict(type='str', default='block', choices=['block', 'page']),
             container=dict(required=True, type='str', aliases=['container_name']),
-            dest=dict(type='str'),
+            dest=dict(type='path'),
             force=dict(type='bool', default=False),
             resource_group=dict(required=True, type='str', aliases=['resource_group_name']),
             src=dict(type='str'),
@@ -296,7 +296,7 @@ class AzureRMStorageBlob(AzureRMModuleBase):
                 if self.src and self.src_is_valid():
                     if self.blob_obj and not self.force:
                         self.log("Cannot upload to {0}. Blob with that name already exists. "
-                            "Use the force option".format(self.blob))
+                                 "Use the force option".format(self.blob))
                     else:
                         self.upload_blob()
                 elif self.dest and self.dest_is_valid():
@@ -329,7 +329,7 @@ class AzureRMStorageBlob(AzureRMModuleBase):
         return self.results
 
     def get_container(self):
-        result  = dict()
+        result = {}
         container = None
         if self.container:
             try:
@@ -365,7 +365,7 @@ class AzureRMStorageBlob(AzureRMModuleBase):
                     content_language=blob.properties.content_settings.content_language,
                     content_disposition=blob.properties.content_settings.content_disposition,
                     cache_control=blob.properties.content_settings.cache_control,
-                    content_md5 =blob.properties.content_settings.content_md5
+                    content_md5=blob.properties.content_settings.content_md5
                 )
             )
         return result
@@ -443,8 +443,6 @@ class AzureRMStorageBlob(AzureRMModuleBase):
 
     def dest_is_valid(self):
         if not self.check_mode:
-            self.dest = os.path.expanduser(self.dest)
-            self.dest = os.path.expandvars(self.dest)
             if not os.path.basename(self.dest):
                 # dest is a directory
                 if os.path.isdir(self.dest):
