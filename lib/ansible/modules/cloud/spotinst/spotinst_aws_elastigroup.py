@@ -658,6 +658,43 @@ EXAMPLES = '''
       register: result
     - debug: var=result
 
+# In this example we create a basic group configuration with a network interface defined.
+# Each network interface must have a device index
+
+- hosts: localhost
+  tasks:
+    - name: create elastigroup
+      spotinst_aws_elastigroup:
+          state: present
+          risk: 100
+          availability_vs_cost: balanced
+          network_interfaces:
+            - associate_public_ip_address: true
+              device_index: 0
+          availability_zones:
+            - name: us-west-2a
+              subnet_id: subnet-2b68a15c
+          image_id: ami-f173cc91
+          key_pair: spotinst-oregon
+          max_size: 15
+          min_size: 0
+          target: 0
+          unit: instance
+          monitoring: True
+          name: ansible-group
+          on_demand_instance_type: c3.large
+          product: Linux/UNIX
+          load_balancers:
+            - test-lb-1
+          security_group_ids:
+            - sg-8f4b8fe9
+          spot_instance_types:
+            - c3.large
+          do_not_update:
+            - image_id
+            - target
+      register: result
+    - debug: var=result
 '''
 RETURN = '''
 ---
