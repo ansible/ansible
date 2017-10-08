@@ -150,7 +150,7 @@ def main():
             path = dict(type='list', elements='path', required=True),
             format = dict(choices=['gz', 'bz2', 'zip', 'tar'], default='gz', required=False),
             dest = dict(required=False, type='path'),
-            exclude_path = dict(type='list', elements='path', required=False),
+            exclude_path = dict(type='list', elements='path', required=False, default=[]),
             remove = dict(required=False, default=False, type='bool'),
         ),
         add_file_common_args=True,
