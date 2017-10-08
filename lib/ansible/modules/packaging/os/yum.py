@@ -42,6 +42,11 @@ options:
     description:
       - "Package name to run the equivalent of yum list <package> against. In addition to listing packages,
         use can also list the following: C(installed), C(updates), C(available) and C(repos)."
+  clean:
+    description:
+      - "Run yum clean <choice>"
+    choices: [ headers, packages, metadata, dbcache, plugins, expire-cache, rpmdb, all ]
+    default: all
   state:
     description:
       - Whether to install (C(present) or C(installed), C(latest)), or remove (C(absent) or C(removed)) a package.
@@ -219,6 +224,10 @@ EXAMPLES = '''
   yum:
     list: ansible
   register: result
+
+- name: Run 'yum clean all'
+  yum:
+    clean: all
 '''
 
 import os
@@ -891,6 +900,21 @@ def remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, in
     return res
 
 
+def clean(module, command='all'):
+    if command in ['headers', 'packages', 'metadata', 'dbcache', 'plugins', 'expire-cache', 'rpmdb', 'all']:
+        rc, out, err = module.run_command(['yum', 'clean', command])
+        res = {'rc': rc,
+               'results': out,
+               'msg': err}
+
+        if err:
+            module.fail_json(**res)
+        else:
+            res['changed'] = True
+
+        return res
+
+
 def run_check_update(module, yum_basecmd):
     # run check-update to see if we have packages pending
     rc, out, err = module.run_command(yum_basecmd + ['check-update'])
@@ -1238,6 +1262,8 @@ def main():
             enablerepo=dict(type='str'),
             disablerepo=dict(type='str'),
             list=dict(type='str'),
+            clean=dict(default='all', choices=['headers', 'packages', 'metadata', 'dbcache',
+                                               'plugins', 'expire-cache', 'rpmdb', 'all']),
             conf_file=dict(type='str'),
             disable_gpg_check=dict(type='bool', default=False),
             skip_broken=dict(type='bool', default=False),
@@ -1250,8 +1276,8 @@ def main():
             allow_downgrade=dict(type='bool', default=False),
             security=dict(type='bool', default=False),
         ),
-        required_one_of=[['name', 'list']],
-        mutually_exclusive=[['name', 'list']],
+        required_one_of=[['name', 'list', 'clean']],
+        mutually_exclusive=[['name', 'list', 'clean']],
         supports_check_mode=True,
     )
 
@@ -1273,6 +1299,8 @@ def main():
         results = {'results': list_stuff(module, repoquerybin, params['conf_file'],
                                          params['list'], params['installroot'],
                                          params['disablerepo'], params['enablerepo'])}
+    elif params['clean']:
+        results = clean(module, params['clean'])
     else:
         # If rhn-plugin is installed and no rhn-certificate is available on
         # the system then users will see an error message using the yum API.
