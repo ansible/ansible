@@ -87,7 +87,7 @@ Starting in Ansible version 1.4, password accepts a "chars" parameter to allow d
         - name: create a mysql user with a random password using many different char sets
           mysql_user:
             name: "{{ client }}"
-            password" "{{ lookup('password', '/tmp/passwordfile chars=ascii_letters,digits,hexdigits,punctuation') }}"
+            password: "{{ lookup('password', '/tmp/passwordfile chars=ascii_letters,digits,hexdigits,punctuation') }}"
             priv: "{{ client }}_{{ tier }}_{{ role }}.*:ALL"
 
         # (...)
