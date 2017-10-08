@@ -47,6 +47,7 @@ options:
       - "Run yum clean <choice>"
     choices: [ headers, packages, metadata, dbcache, plugins, expire-cache, rpmdb, all ]
     default: all
+    version_added: "2.5"
   state:
     description:
       - Whether to install (C(present) or C(installed), C(latest)), or remove (C(absent) or C(removed)) a package.
