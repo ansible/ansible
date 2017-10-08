@@ -2,7 +2,9 @@
 
 # Add valid uses of expanduser to this list
 WHITELIST='cloud/lxc/lxc_container.py
+cloud/rackspace/rax.py
 cloud/rackspace/rax_files_objects.py
+cloud/rackspace/rax_scaling_group.py
 database/mongodb/mongodb_parameter.py
 database/mongodb/mongodb_user.py
 database/postgresql/postgresql_db.py
@@ -15,17 +17,7 @@ web_infrastructure/ansible_tower/tower_host.py
 web_infrastructure/ansible_tower/tower_group.py
 web_infrastructure/jenkins_plugin.py'
 
-# Modules which need to be ported to get rid of expanduser.  See: https://github.com/ansible/ansible/projects/12
-GRANDFATHERED_NEED_PORTING='cloud/rackspace/rax.py
-cloud/rackspace/rax_scaling_group.py
-files/find.py
-files/archive.py'
-
 for FILE in $WHITELIST ; do
-    GREP_FORMAT_WHITELIST="$GREP_FORMAT_WHITELIST -e $FILE"
-done
-
-for FILE in $GRANDFATHERED_NEED_PORTING ; do
     GREP_FORMAT_WHITELIST="$GREP_FORMAT_WHITELIST -e $FILE"
 done
 

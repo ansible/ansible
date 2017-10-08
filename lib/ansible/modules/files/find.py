@@ -263,7 +263,7 @@ def statinfo(st):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            paths=dict(type='list', required=True, aliases=['name', 'path']),
+            paths=dict(type='list', elements='path', required=True, aliases=['name', 'path']),
             patterns=dict(type='list', default=['*'], aliases=['pattern']),
             contains=dict(type='str'),
             file_type=dict(type='str', default="file", choices=['any', 'directory', 'file', 'link']),
@@ -309,7 +309,6 @@ def main():
     msg = ''
     looked = 0
     for npath in params['paths']:
-        npath = os.path.expanduser(os.path.expandvars(npath))
         if os.path.isdir(npath):
             ''' ignore followlinks for python version < 2.6 '''
             for root, dirs, files in (sys.version_info < (2, 6, 0) and os.walk(npath)) or os.walk(npath, followlinks=params['follow']):

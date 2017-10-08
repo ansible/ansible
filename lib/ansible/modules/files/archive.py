@@ -147,10 +147,10 @@ from ansible.module_utils._text import to_native
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            path = dict(type='list', required=True),
+            path = dict(type='list', elements='path', required=True),
             format = dict(choices=['gz', 'bz2', 'zip', 'tar'], default='gz', required=False),
             dest = dict(required=False, type='path'),
-            exclude_path = dict(type='list', required=False),
+            exclude_path = dict(type='list', elements='path', required=False),
             remove = dict(required=False, default=False, type='bool'),
         ),
         add_file_common_args=True,
@@ -176,7 +176,6 @@ def main():
     successes = []
 
     for path in paths:
-        path = os.path.expanduser(os.path.expandvars(path))
 
         # Expand any glob characters. If found, add the expanded glob to the
         # list of expanded_paths, which might be empty.
@@ -192,7 +191,6 @@ def main():
     # Only attempt to expand the exclude paths if it exists
     if exclude_paths:
         for exclude_path in exclude_paths:
-            exclude_path = os.path.expanduser(os.path.expandvars(exclude_path))
 
             # Expand any glob characters. If found, add the expanded glob to the
             # list of expanded_paths, which might be empty.
