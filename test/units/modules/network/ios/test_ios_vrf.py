@@ -31,6 +31,8 @@ class TestIosVrfModule(TestIosModule):
     module = ios_vrf
 
     def setUp(self):
+        super(TestIosVrfModule, self).setUp()
+
         self.mock_get_config = patch('ansible.modules.network.ios.ios_vrf.get_config')
         self.get_config = self.mock_get_config.start()
 
@@ -41,6 +43,7 @@ class TestIosVrfModule(TestIosModule):
         self.exec_command = self.mock_exec_command.start()
 
     def tearDown(self):
+        super(TestIosVrfModule, self).tearDown()
         self.mock_get_config.stop()
         self.mock_load_config.stop()
         self.mock_exec_command.stop()

@@ -32,10 +32,12 @@ class TestCiscoWlcCommandModule(TestCiscoWlcModule):
     module = aireos_command
 
     def setUp(self):
+        super(TestCiscoWlcCommandModule, self).setUp()
         self.mock_run_commands = patch('ansible.modules.network.aireos.aireos_command.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
     def tearDown(self):
+        super(TestCiscoWlcCommandModule, self).tearDown()
         self.mock_run_commands.stop()
 
     def load_fixtures(self, commands=None):

@@ -44,10 +44,12 @@ class TestJunosCommandModule(TestJunosModule):
     module = junos_rpc
 
     def setUp(self):
+        super(TestJunosCommandModule, self).setUp()
         self.mock_send_request = patch('ansible.modules.network.junos.junos_rpc.send_request')
         self.send_request = self.mock_send_request.start()
 
     def tearDown(self):
+        super(TestJunosCommandModule, self).tearDown()
         self.mock_send_request.stop()
 
     def load_fixtures(self, commands=None, format='text', changed=False):

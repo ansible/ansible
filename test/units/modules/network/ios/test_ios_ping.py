@@ -31,10 +31,12 @@ class TestIosPingModule(TestIosModule):
     module = ios_ping
 
     def setUp(self):
+        super(TestIosPingModule, self).setUp()
         self.mock_run_commands = patch('ansible.modules.network.ios.ios_ping.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
     def tearDown(self):
+        super(TestIosPingModule, self).tearDown()
         self.mock_run_commands.stop()
 
     def load_fixtures(self, commands=None):

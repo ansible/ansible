@@ -30,10 +30,12 @@ class TestIronwareCommandModule(TestIronwareModule):
     module = ironware_command
 
     def setUp(self):
+        super(TestIronwareCommandModule, self).setUp()
         self.mock_run_commands = patch('ansible.modules.network.ironware.ironware_command.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
     def tearDown(self):
+        super(TestIronwareCommandModule, self).tearDown()
         self.mock_run_commands.stop()
 
     def load_fixtures(self, commands=None):

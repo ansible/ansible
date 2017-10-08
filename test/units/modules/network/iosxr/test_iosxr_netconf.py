@@ -30,6 +30,8 @@ class TestIosxrNetconfModule(TestIosxrModule):
     module = iosxr_netconf
 
     def setUp(self):
+        super(TestIosxrNetconfModule, self).setUp()
+
         self.mock_exec_command = patch('ansible.modules.network.iosxr.iosxr_netconf.exec_command')
         self.exec_command = self.mock_exec_command.start()
 
@@ -40,6 +42,7 @@ class TestIosxrNetconfModule(TestIosxrModule):
         self.load_config = self.mock_load_config.start()
 
     def tearDown(self):
+        super(TestIosxrNetconfModule, self).tearDown()
         self.mock_exec_command.stop()
         self.mock_get_config.stop()
         self.mock_load_config.stop()

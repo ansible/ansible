@@ -32,10 +32,13 @@ class TestIosCommandModule(TestIosModule):
     module = ios_command
 
     def setUp(self):
+        super(TestIosCommandModule, self).setUp()
+
         self.mock_run_commands = patch('ansible.modules.network.ios.ios_command.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
     def tearDown(self):
+        super(TestIosCommandModule, self).tearDown()
         self.mock_run_commands.stop()
 
     def load_fixtures(self, commands=None):

@@ -32,11 +32,13 @@ class TestEnosFacts(TestEnosModule):
     module = enos_facts
 
     def setUp(self):
+        super(TestEnosFacts, self).setUp()
         self.mock_run_commands = patch(
             'ansible.modules.network.enos.enos_facts.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
     def tearDown(self):
+        super(TestEnosFacts, self).tearDown()
         self.mock_run_commands.stop()
 
     def load_fixtures(self, commands=None):

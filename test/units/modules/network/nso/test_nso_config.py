@@ -22,7 +22,7 @@ import json
 
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.nso import nso_config
-from units.modules.utils import set_module_args
+from units.modules.utils import set_module_args, AnsibleFailJson
 from . import nso_module
 from .nso_module import MockResponse
 
@@ -51,7 +51,7 @@ class TestNsoConfig(nso_module.TestNsoModule):
             'username': 'user', 'password': 'password',
             'url': 'http://localhost:8080/jsonrpc', 'data': data
         })
-        with self.assertRaises(SystemExit):
+        with self.assertRaises(AnsibleFailJson):
             self.execute_module(changed=False, changes=[], diffs=[])
 
         self.assertEqual(0, len(calls))

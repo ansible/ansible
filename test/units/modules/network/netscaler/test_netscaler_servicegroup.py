@@ -70,12 +70,14 @@ class TestNetscalerServicegroupModule(TestModule):
         ))
 
     def setUp(self):
+        super(TestNetscalerServicegroupModule, self).setUp()
         self.nitro_base_patcher.start()
         self.nitro_specific_patcher.start()
 
         # Setup minimal required arguments to pass AnsibleModule argument parsing
 
     def tearDown(self):
+        super(TestNetscalerServicegroupModule, self).tearDown()
         self.nitro_base_patcher.stop()
         self.nitro_specific_patcher.stop()
 

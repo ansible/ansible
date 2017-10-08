@@ -19,8 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.iosxr import iosxr_command
 from units.modules.utils import set_module_args
@@ -32,10 +30,14 @@ class TestIosxrCommandModule(TestIosxrModule):
     module = iosxr_command
 
     def setUp(self):
+        super(TestIosxrCommandModule, self).setUp()
+
         self.mock_run_commands = patch('ansible.modules.network.iosxr.iosxr_command.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
     def tearDown(self):
+        super(TestIosxrCommandModule, self).tearDown()
+
         self.mock_run_commands.stop()
 
     def load_fixtures(self, commands=None):

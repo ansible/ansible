@@ -34,6 +34,8 @@ class TestIosLoggingModule(TestIosModule):
     module = ios_logging
 
     def setUp(self):
+        super(TestIosLoggingModule, self).setUp()
+
         self.mock_get_config = patch('ansible.modules.network.ios.ios_logging.get_config')
         self.get_config = self.mock_get_config.start()
 
@@ -41,6 +43,8 @@ class TestIosLoggingModule(TestIosModule):
         self.load_config = self.mock_load_config.start()
 
     def tearDown(self):
+        super(TestIosLoggingModule, self).tearDown()
+
         self.mock_get_config.stop()
         self.mock_load_config.stop()
 

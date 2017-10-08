@@ -30,6 +30,8 @@ class TestVyosStaticRouteModule(TestVyosModule):
     module = vyos_static_route
 
     def setUp(self):
+        super(TestVyosStaticRouteModule, self).setUp()
+
         self.mock_get_config = patch('ansible.modules.network.vyos.vyos_static_route.get_config')
         self.get_config = self.mock_get_config.start()
 
@@ -37,6 +39,8 @@ class TestVyosStaticRouteModule(TestVyosModule):
         self.load_config = self.mock_load_config.start()
 
     def tearDown(self):
+        super(TestVyosStaticRouteModule, self).tearDown()
+
         self.mock_get_config.stop()
         self.mock_load_config.stop()
 

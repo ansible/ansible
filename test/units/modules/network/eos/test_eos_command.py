@@ -32,10 +32,12 @@ class TestEosCommandModule(TestEosModule):
     module = eos_command
 
     def setUp(self):
+        super(TestEosCommandModule, self).setUp()
         self.mock_run_commands = patch('ansible.modules.network.eos.eos_command.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
     def tearDown(self):
+        super(TestEosCommandModule, self).tearDown()
         self.mock_run_commands.stop()
 
     def load_fixtures(self, commands=None, transport='cli'):

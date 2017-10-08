@@ -17,8 +17,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.eos import eos_banner
 from units.modules.utils import set_module_args
@@ -30,6 +28,8 @@ class TestEosBannerModule(TestEosModule):
     module = eos_banner
 
     def setUp(self):
+        super(TestEosBannerModule, self).setUp()
+
         self.mock_run_commands = patch('ansible.modules.network.eos.eos_banner.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
@@ -37,6 +37,8 @@ class TestEosBannerModule(TestEosModule):
         self.load_config = self.mock_load_config.start()
 
     def tearDown(self):
+        super(TestEosBannerModule, self).tearDown()
+
         self.mock_run_commands.stop()
         self.mock_load_config.stop()
 

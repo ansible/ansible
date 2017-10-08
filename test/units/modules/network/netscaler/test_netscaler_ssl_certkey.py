@@ -54,12 +54,14 @@ class TestNetscalerSSLCertkeyModule(TestModule):
         cls.nitro_specific_patcher.stop()
 
     def setUp(self):
+        super(TestNetscalerSSLCertkeyModule, self).setUp()
         self.nitro_base_patcher.start()
         self.nitro_specific_patcher.start()
 
         # Setup minimal required arguments to pass AnsibleModule argument parsing
 
     def tearDown(self):
+        super(TestNetscalerSSLCertkeyModule, self).tearDown()
         self.nitro_base_patcher.stop()
         self.nitro_specific_patcher.stop()
 

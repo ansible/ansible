@@ -31,6 +31,8 @@ class TestJunosConfigModule(TestJunosModule):
     module = junos_config
 
     def setUp(self):
+        super(TestJunosConfigModule, self).setUp()
+
         self.mock_get_config = patch('ansible.modules.network.junos.junos_config.get_configuration')
         self.get_config = self.mock_get_config.start()
 
@@ -56,6 +58,7 @@ class TestJunosConfigModule(TestJunosModule):
         self.send_request = self.mock_send_request.start()
 
     def tearDown(self):
+        super(TestJunosConfigModule, self).tearDown()
         self.mock_get_config.stop()
         self.mock_load_config.stop()
         self.mock_lock_configuration.stop()

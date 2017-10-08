@@ -32,10 +32,14 @@ class TestArubaCommandModule(TestArubaModule):
     module = aruba_command
 
     def setUp(self):
+        super(TestArubaCommandModule, self).setUp()
+
         self.mock_run_commands = patch('ansible.modules.network.aruba.aruba_command.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
     def tearDown(self):
+        super(TestArubaCommandModule, self).tearDown()
+
         self.mock_run_commands.stop()
 
     def load_fixtures(self, commands=None):

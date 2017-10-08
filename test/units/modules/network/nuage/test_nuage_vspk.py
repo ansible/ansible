@@ -30,7 +30,8 @@ except ImportError:
     raise SkipTest('Nuage Ansible modules requires the vspk and bambou python libraries')
 
 from ansible.compat.tests.mock import patch
-from .nuage_module import AnsibleExitJson, AnsibleFailJson, MockNuageConnection, TestNuageModule, set_module_args
+from units.modules.utils import set_module_args, AnsibleExitJson, AnsibleFailJson
+from .nuage_module import MockNuageConnection, TestNuageModule
 
 _LOOP_COUNTER = 0
 

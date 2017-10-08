@@ -32,11 +32,15 @@ class TestIosxrFacts(TestIosxrModule):
     module = iosxr_facts
 
     def setUp(self):
+        super(TestIosxrFacts, self).setUp()
+
         self.mock_run_commands = patch(
             'ansible.modules.network.iosxr.iosxr_facts.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
     def tearDown(self):
+        super(TestIosxrFacts, self).tearDown()
+
         self.mock_run_commands.stop()
 
     def load_fixtures(self, commands=None):

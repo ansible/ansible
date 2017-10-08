@@ -28,6 +28,8 @@ class TestIosBannerModule(TestIosModule):
     module = ios_banner
 
     def setUp(self):
+        super(TestIosBannerModule, self).setUp()
+
         self.mock_exec_command = patch('ansible.modules.network.ios.ios_banner.exec_command')
         self.exec_command = self.mock_exec_command.start()
 
@@ -35,6 +37,7 @@ class TestIosBannerModule(TestIosModule):
         self.load_config = self.mock_load_config.start()
 
     def tearDown(self):
+        super(TestIosBannerModule, self).tearDown()
         self.mock_exec_command.stop()
         self.mock_load_config.stop()
 

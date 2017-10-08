@@ -20,8 +20,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.ovs import openvswitch_port
 from units.modules.utils import set_module_args
@@ -76,6 +74,8 @@ class TestOpenVSwitchPortModule(TestOpenVSwitchModule):
     module = openvswitch_port
 
     def setUp(self):
+        super(TestOpenVSwitchPortModule, self).setUp()
+
         self.mock_run_command = (
             patch('ansible.module_utils.basic.AnsibleModule.run_command'))
         self.run_command = self.mock_run_command.start()
@@ -84,6 +84,8 @@ class TestOpenVSwitchPortModule(TestOpenVSwitchModule):
         self.get_bin_path = self.mock_get_bin_path.start()
 
     def tearDown(self):
+        super(TestOpenVSwitchPortModule, self).tearDown()
+
         self.mock_run_command.stop()
         self.mock_get_bin_path.stop()
 

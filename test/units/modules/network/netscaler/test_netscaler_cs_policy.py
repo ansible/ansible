@@ -59,10 +59,14 @@ class TestNetscalerCSPolicyModule(TestModule):
         ))
 
     def setUp(self):
+        super(TestNetscalerCSPolicyModule, self).setUp()
+
         self.nitro_base_patcher.start()
         self.nitro_specific_patcher.start()
 
     def tearDown(self):
+        super(TestNetscalerCSPolicyModule, self).tearDown()
+
         self.nitro_base_patcher.stop()
         self.nitro_specific_patcher.stop()
 
