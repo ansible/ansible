@@ -406,7 +406,6 @@ lib/ansible/modules/system/kernel_blacklist.py
 lib/ansible/modules/system/locale_gen.py
 lib/ansible/modules/system/lvg.py
 lib/ansible/modules/system/lvol.py
-lib/ansible/modules/system/modprobe.py
 lib/ansible/modules/system/ohai.py
 lib/ansible/modules/system/open_iscsi.py
 lib/ansible/modules/system/openwrt_init.py
