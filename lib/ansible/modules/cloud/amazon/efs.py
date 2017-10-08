@@ -1,18 +1,10 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -199,17 +191,21 @@ tags:
 
 '''
 
-import sys
 from time import sleep
 from time import time as timestamp
-from collections import defaultdict
 
 try:
     from botocore.exceptions import ClientError
-    import boto3
-    HAS_BOTO3 = True
 except ImportError as e:
-    HAS_BOTO3 = False
+    pass  # Taken care of by ec2.HAS_BOTO3
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import (HAS_BOTO3, boto3_conn, camel_dict_to_snake_dict,
+                                      ec2_argument_spec, get_aws_connection_info)
+
+
+def _index_by_key(key, items):
+    return dict((item[key], item) for item in items)
 
 
 class EFSConnection(object):
@@ -394,11 +390,8 @@ class EFSConnection(object):
                 lambda: len(self.get_mount_targets_in_state(fs_id, incomplete_states)),
                 0
             )
-
-            index_by_subnet_id = lambda items: dict((item['SubnetId'], item) for item in items)
-
-            current_targets = index_by_subnet_id(self.get_mount_targets(FileSystemId=fs_id))
-            targets = index_by_subnet_id(targets)
+            current_targets = _index_by_key('SubnetId', self.get_mount_targets(FileSystemId=fs_id))
+            targets = _index_by_key('SubnetId', targets)
 
             targets_to_create, intersection, targets_to_delete = dict_diff(current_targets,
                                                                            targets, True)
@@ -626,8 +619,6 @@ def main():
         result = camel_dict_to_snake_dict(result)
     module.exit_json(changed=changed, efs=result)
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()
