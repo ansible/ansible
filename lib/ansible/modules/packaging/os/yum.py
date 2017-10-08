@@ -46,7 +46,6 @@ options:
     description:
       - "Run yum clean <choice>"
     choices: [ headers, packages, metadata, dbcache, plugins, expire-cache, rpmdb, all ]
-    default: all
     version_added: "2.5"
   state:
     description:
@@ -1263,8 +1262,8 @@ def main():
             enablerepo=dict(type='str'),
             disablerepo=dict(type='str'),
             list=dict(type='str'),
-            clean=dict(default='all', choices=['headers', 'packages', 'metadata', 'dbcache',
-                                               'plugins', 'expire-cache', 'rpmdb', 'all']),
+            clean=dict(type='str', choices=['headers', 'packages', 'metadata', 'dbcache',
+                                            'plugins', 'expire-cache', 'rpmdb', 'all']),
             conf_file=dict(type='str'),
             disable_gpg_check=dict(type='bool', default=False),
             skip_broken=dict(type='bool', default=False),
