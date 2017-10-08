@@ -2,21 +2,11 @@
 # -*- coding: utf-8 -*-
 #
 # (c) 2016, René Moser <mail@renemoser.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
@@ -187,10 +177,9 @@ cloudstack_instance.volumes:
   sample: '[ { name: "ROOT-1369", type: "ROOT", size: 10737418240 }, { name: "data01, type: "DATADISK", size: 10737418240 } ]'
 '''
 
-import base64
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.cloudstack import AnsibleCloudStack, cs_argument_spec
 
-# import cloudstack common
-from ansible.module_utils.cloudstack import *
 
 class AnsibleCloudStackInstanceFacts(AnsibleCloudStack):
 
@@ -296,6 +285,6 @@ def main():
     cs_facts_result = dict(changed=False, ansible_facts=cs_instance_facts)
     module.exit_json(**cs_facts_result)
 
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()
