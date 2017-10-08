@@ -93,7 +93,7 @@ def main():
         argument_spec=dict(
             name=dict(required=True),
             state=dict(required=False, choices=['present', 'absent'], default='present'),
-            subdomains=dict(required=False, default=[]),
+            subdomains=dict(required=False, default=[], type='list'),
             login_name=dict(required=True),
             login_password=dict(required=True, no_log=True),
         ),
