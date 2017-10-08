@@ -142,8 +142,6 @@ try:
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
-    if __name__ != '__main__':
-        raise
 
 
 class AnsibleRouteTableException(Exception):
