@@ -759,3 +759,6 @@ class PyVmomi(object):
             self.current_vm_obj = vm
 
         return vm
+
+    def gather_facts(self, vm):
+        return gather_vm_facts(self.content, vm)
