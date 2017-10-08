@@ -385,8 +385,8 @@ class VariableManager:
                                 raise AnsibleFileNotFound("vars file %s was not found" % vars_file_item)
                     except (UndefinedError, AnsibleUndefinedVariable):
                         if host is not None and self._fact_cache.get(host.name, dict()).get('module_setup') and task is not None:
-                            raise AnsibleUndefinedVariable("an undefined variable was found when attempting to template the vars_files item '%s'" % vars_file_item,
-                                                           obj=vars_file_item)
+                            raise AnsibleUndefinedVariable("an undefined variable was found when attempting to template the vars_files item '%s'"
+                                                           % vars_file_item, obj=vars_file_item)
                         else:
                             # we do not have a full context here, and the missing variable could be because of that
                             # so just show a warning and continue
