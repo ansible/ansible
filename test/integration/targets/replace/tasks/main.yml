@@ -64,9 +64,9 @@
   replace:
     path: "{{ output_dir_test }}/pangrams.02.txt"
     before: 'promptly'
+    after: 'quilt'
     regexp: 'e'
     replace: '3'
-    after: 'quilt'
   register: replace_test2
 
 - name: validate after+before assertions
@@ -80,9 +80,9 @@
   replace:
     path: "{{ output_dir_test }}/pangrams.03.txt"
     before: 'quilt'
+    after: 'promptly'
     regexp: 'e'
     replace: '3'
-    after: 'promptly'
   register: replace_test3
 
 - command: "cat {{ output_dir_test }}/pangrams.03.txt"

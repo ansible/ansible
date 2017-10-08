@@ -96,7 +96,7 @@ options:
     version_added: "2.4"
 notes:
   - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
-  - As of Ansible 2.x, the combined use of C(before) and C(after) changed significantly. See
+  - As of Ansible 2.x, the combined use of I(before) and I(after) options was changed significantly. See
     U(https://github.com/ansible/ansible/issues/31354) for details.
   - Option I(follow) has been removed in Ansible 2.5, because this module modifies the contents of the file so I(follow=no) doesn't make sense.
 '''
@@ -248,7 +248,7 @@ def main():
 
     pattern = u''
     if params['after'] and params['before']:
-        pattern = u'%s(?P<subsection>.*?)%s' % (params['before'], params['after'])
+        pattern = u'%s(?P<subsection>.*?)%s' % (params['after'], params['before'])
     elif params['after']:
         pattern = u'%s(?P<subsection>.*)' % params['after']
     elif params['before']:
