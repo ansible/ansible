@@ -71,7 +71,7 @@ options:
   follow:
     description:
       - 'This flag indicates that filesystem links, if they exist, should be followed.'
-      - 'Previous to Ansible 2.5, this was C(yes) by default.'
+      - 'Previous to Ansible 2.5, this was C(no) by default.'
     type: bool
     default: 'yes'
     version_added: "1.8"
