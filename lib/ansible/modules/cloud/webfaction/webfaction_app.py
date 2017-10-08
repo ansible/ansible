@@ -82,7 +82,6 @@ options:
     machine:
         description:
             - The machine name to use (optional for accounts with only one machine)
-        default: False
 
 '''
 
@@ -116,7 +115,7 @@ def main():
             port_open=dict(required=False, type='bool', default=False),
             login_name=dict(required=True),
             login_password=dict(required=True, no_log=True),
-            machine=dict(required=False, default=False),
+            machine=dict(required=False, default=None),
         ),
         supports_check_mode=True
     )
