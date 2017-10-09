@@ -76,9 +76,7 @@ Function Copy-File($source, $dest) {
         }
 
         if (Test-Path -Path $dest -PathType Leaf) {
-            if (-not $check_mode) {
-                Remove-Item -Path $dest -Force -Recurse | Out-Null
-            }
+            Remove-Item -Path $dest -Force -Recurse -WhatIf:$check_mode | Out-Null
             $diff += "-$dest`n"
         }
 
