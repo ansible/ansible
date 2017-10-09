@@ -932,10 +932,10 @@ def main():
 
     # Deal with deprecated aliases
     if p['state'] == 'installed':
-        module.deprecate("State 'installed' is deprecated. Using state 'present' instead.", version=2.8)
+        module.deprecate("State 'installed' is deprecated. Using state 'present' instead.", version="2.9")
         p['state'] = 'present'
     if p['state'] == 'removed':
-        module.deprecate("State 'removed' is deprecated. Using state 'absent' instead.", version=2.8)
+        module.deprecate("State 'removed' is deprecated. Using state 'absent' instead.", version="2.9")
         p['state'] = 'absent'
 
     # Get the cache object
