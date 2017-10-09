@@ -223,6 +223,7 @@ import copy
 try:
     from zabbix_api import ZabbixAPI, ZabbixAPISubClass
 
+
     # Extend the ZabbixAPI
     # Since the zabbix-api python module too old (version 1.0, no higher version so far),
     # it does not support the 'hostinterface' api calls,
@@ -233,6 +234,7 @@ try:
         def __init__(self, server, timeout, user, passwd, **kwargs):
             ZabbixAPI.__init__(self, server, timeout=timeout, user=user, passwd=passwd)
             self.hostinterface = ZabbixAPISubClass(self, dict({"prefix": "hostinterface"}, **kwargs))
+
 
     HAS_ZABBIX_API = True
 except ImportError:
