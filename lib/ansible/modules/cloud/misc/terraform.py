@@ -87,7 +87,7 @@ import traceback
 
 from ansible.module_utils.basic import AnsibleModule
 
-APPLY_ARGS = ('apply', '-auto-approve=true')
+APPLY_ARGS = ('apply', '-no-color', '-auto-approve=true')
 
 
 def preflight_validation(module, bin_path, project_path, variables_file=None, plan_file=None):
@@ -101,10 +101,21 @@ def preflight_validation(module, bin_path, project_path, variables_file=None, pl
         module.fail_json(msg="Failed to validate Terraform configuration files:\r\n{0}".format(err))
 
 
-def build_plan(module, bin_path, project_path, variables_args):
+def _state_args(state_file):
+    if state_file and os.path.exists(state_file):
+        return ['-state', state_file]
+    if state_file and not os.path.exists(state_file):
+        module.fail_json(msg='Could not find state_file "{}", check the path and try again.'.format(state_file))
+    return []
+
+
+def build_plan(module, bin_path, project_path, variables_args, state_file):
     _, plan_path = tempfile.mkstemp(suffix='.tfplan')
 
-    rc, out, err = module.run_command([bin_path, 'plan', '-detailed-exitcode', '-out', plan_path] + variables_args, cwd=project_path)
+    command = [bin_path, 'plan', '-no-color', '-detailed-exitcode', '-out', plan_path]
+    command.extend(_state_args(state_file))
+
+    rc, out, err = module.run_command(command + variables_args, cwd=project_path)
 
     if rc == 0:
         # no changes
@@ -165,10 +176,10 @@ def main():
 
     if plan_file and os.path.exists(plan_file):
         command.append(plan_file)
-    if plan_file and not os.path.exists(plan_file):
+    elif plan_file and not os.path.exists(plan_file):
         module.fail_json(msg='Could not find plan_file "{}", check the path and try again.'.format(plan_file))
     else:
-        plan_file, needs_application = build_plan(module, command[0], project_path, variables_args)
+        plan_file, needs_application = build_plan(module, command[0], project_path, variables_args, state_file)
         command.append(plan_file)
 
     if needs_application and not module.check_mode:
@@ -179,7 +190,7 @@ def main():
         changed = False
         out, err = '', ''
 
-    rc, outputs_text, outputs_err = module.run_command([command[0], 'output', '-json'], cwd=project_path)
+    rc, outputs_text, outputs_err = module.run_command([command[0], 'output', '-no-color', '-json'] + _state_args(state_file), cwd=project_path)
     if rc != 0:
         module.fail_json(msg="Failure when getting Terraform outputs. Exited {}.\nstdout: {}\nstderr: {}".format(rc, outputs_text, outputs_err))
 
