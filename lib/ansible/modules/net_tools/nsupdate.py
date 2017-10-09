@@ -39,6 +39,11 @@ options:
         description:
             - Apply DNS modification on this server.
         required: true
+    port:
+        description:
+            - Use this TCP port when connecting to C(server).
+        default: 53
+        version_added: 2.5
     key_name:
         description:
             - Use TSIG key name to authenticate against DNS C(server)
@@ -195,7 +200,7 @@ class RecordManager(object):
     def __do_update(self, update):
         response = None
         try:
-            response = dns.query.tcp(update, self.module.params['server'], timeout=10)
+            response = dns.query.tcp(update, self.module.params['server'], timeout=10, port=self.module.params['port'])
         except (dns.tsig.PeerBadKey, dns.tsig.PeerBadSignature) as e:
             self.module.fail_json(msg='TSIG update error (%s): %s' % (e.__class__.__name__, to_native(e)))
         except (socket_error, dns.exception.Timeout) as e:
@@ -324,6 +329,7 @@ def main():
         argument_spec=dict(
             state=dict(required=False, default='present', choices=['present', 'absent'], type='str'),
             server=dict(required=True, type='str'),
+            port=dict(required=False, default=53, type='int'),
             key_name=dict(required=False, type='str'),
             key_secret=dict(required=False, type='str', no_log=True),
             key_algorithm=dict(required=False, default='hmac-md5', choices=tsig_algs, type='str'),
