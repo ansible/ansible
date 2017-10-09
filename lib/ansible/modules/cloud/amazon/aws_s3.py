@@ -396,6 +396,8 @@ def path_check(path):
 def option_in_extra_args(option):
     if '-' in option:
         temp_option = option.replace('-', '').lower()
+    else:
+        temp_option = option.lower()
 
     allowed_extra_args = {'acl': 'ACL', 'cachecontrol': 'CacheControl', 'contentdisposition': 'ContentDisposition',
                           'contentencoding': 'ContentEncoding', 'contentlanguage': 'ContentLanguage',
