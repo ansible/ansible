@@ -114,6 +114,7 @@ Ansible Changes By Release
 * added toggle for vars_plugin behaviour to execute relative to playbook, set default to revert to previous way.
 * Fix for win_copy to not remove destination file on change when in check mode (https://github.com/ansible/ansible/pull/31469)
 * Fix include_role usage of role_name (https://github.com/ansible/ansible/pull/31463)
+* Fix service nad package forcing a second run of the setup module to function (https://github.com/ansible/ansible/issues/31485)
 
 <a id="2.4"></a>
 
