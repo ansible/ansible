@@ -211,7 +211,7 @@ Try {
                 $safe_mode_secure = $safe_mode_password | ConvertTo-SecureString -AsPlainText -Force
                 Write-DebugLog "Installing domain controller..."
 
-                if ($type) {
+                if ($dc_type) {
                     $install_result = Install-ADDSDomainController -NoRebootOnCompletion -DomainName $dns_domain_name -Credential $domain_admin_cred -SafeModeAdministratorPassword $safe_mode_secure -ReadOnlyReplica:$true -SiteName $site -Force		
                 }
                 else {
