@@ -1,18 +1,10 @@
 #!/usr/bin/python
 # Copyright 2016 Jakub Jursa <jakub.jursa1@gmail.com>
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -77,13 +69,16 @@ RETURN = '''
 
 '''
 
+from distutils.version import StrictVersion
+
 try:
     import shade
     HAS_SHADE = True
 except ImportError:
     HAS_SHADE = False
 
-from distutils.version import StrictVersion
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
 
 
 def _needs_update(module, aggregate):
@@ -100,6 +95,7 @@ def _needs_update(module, aggregate):
 
     return False
 
+
 def _system_state_change(module, aggregate):
     state = module.params['state']
     if state == 'absent' and aggregate:
@@ -111,6 +107,7 @@ def _system_state_change(module, aggregate):
         return _needs_update(module, aggregate)
 
     return False
+
 
 def main():
     argument_spec = openstack_full_argument_spec(
@@ -158,7 +155,7 @@ def main():
         if state == 'present':
             if aggregate is None:
                 aggregate = cloud.create_aggregate(name=name,
-                    availability_zone=availability_zone)
+                                                   availability_zone=availability_zone)
                 if hosts:
                     for h in hosts:
                         cloud.add_host_to_aggregate(aggregate.id, h)
@@ -168,8 +165,8 @@ def main():
             else:
                 if _needs_update(module, aggregate):
                     if availability_zone is not None:
-                        aggregate = cloud.update_aggregate(aggregate.id,
-                            name=name, availability_zone=availability_zone)
+                        aggregate = cloud.update_aggregate(aggregate.id, name=name,
+                                                           availability_zone=availability_zone)
                     if metadata is not None:
                         metas = metadata
                         for i in (set(aggregate.metadata.keys()) - set(metadata.keys())):
@@ -177,7 +174,7 @@ def main():
                                 metas[i] = None
                         cloud.set_aggregate_metadata(aggregate.id, metas)
                     if hosts is not None:
-                        for i in (set(aggregate.hosts) - set (hosts)):
+                        for i in (set(aggregate.hosts) - set(hosts)):
                             cloud.remove_host_from_aggregate(aggregate.id, i)
                         for i in (set(hosts) - set(aggregate.hosts)):
                             cloud.add_host_to_aggregate(aggregate.id, i)
@@ -188,17 +185,15 @@ def main():
 
         elif state == 'absent':
             if aggregate is None:
-                changed=False
+                changed = False
             else:
                 cloud.delete_aggregate(aggregate.id)
-                changed=True
+                changed = True
             module.exit_json(changed=changed)
 
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.openstack import *
 if __name__ == '__main__':
     main()
