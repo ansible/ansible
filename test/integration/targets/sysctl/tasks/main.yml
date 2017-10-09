@@ -16,13 +16,18 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-- set_fact: output_dir_test={{output_dir}}/test_sysctl
+- set_fact:
+    output_dir_test: "{{ output_dir }}/test_sysctl"
 
 - name: make sure our testing sub-directory does not exist
-  file: path="{{ output_dir_test }}" state=absent
+  file:
+    path: "{{ output_dir_test }}"
+    state: absent
 
 - name: create our testing sub-directory
-  file: path="{{ output_dir_test }}" state=directory
+  file:
+    path: "{{ output_dir_test }}"
+    state: directory
 
 ##
 ## sysctl - file manipulation
@@ -30,23 +35,29 @@
 
 - name: copy the example conf to the test dir
   copy:
-      src: sysctl.conf
-      dest: "{{ output_dir_test }}"
+    src: sysctl.conf
+    dest: "{{ output_dir_test }}"
 
 - name: Set vm.swappiness to 5
   sysctl:
-      name: vm.swappiness
-      value: 5
-      state: present
-      reload: False
-      sysctl_file: "{{ output_dir_test }}/sysctl.conf"
+    name: vm.swappiness
+    value: 5
+    state: present
+    reload: False
+    sysctl_file: "{{ output_dir_test }}/sysctl.conf"
   register: sysctl_test0
-- debug: var=sysctl_test0
+
+- debug:
+    var: sysctl_test0
+    verbosity: 1
 
 - name: get file content
   shell: "cat {{ output_dir_test }}/sysctl.conf | egrep -v ^\\#"
   register: sysctl_content0
-- debug: var=sysctl_content0
+
+- debug:
+    var: sysctl_content0
+    verbosity: 1
 
 - name: Set vm.swappiness to 5 again
   sysctl:
@@ -60,11 +71,11 @@
 - name: validate results
   assert:
       that:
-          - 'sysctl_test0.changed is defined'
-          - 'sysctl_test1.changed is defined'
-          - 'sysctl_test0.changed'
-          - 'not sysctl_test1.changed'
-          - 'sysctl_content0.stdout_lines == ["vm.swappiness=5"]'
+        - 'sysctl_test0.changed is defined'
+        - 'sysctl_test1.changed is defined'
+        - 'sysctl_test0.changed'
+        - 'not sysctl_test1.changed'
+        - 'sysctl_content0.stdout_lines == ["vm.swappiness=5"]'
 
 ##
 ## sysctl - sysctl_set
@@ -72,12 +83,15 @@
 
 - name: set net.ipv4.ip_forward
   sysctl:
-      name: net.ipv4.ip_forward
-      value: 1
-      sysctl_set: yes
-      reload: False
+    name: net.ipv4.ip_forward
+    value: 1
+    sysctl_set: yes
+    reload: False
   register: sysctl_test2
-- debug: var=sysctl_test2
+
+- debug:
+    var: sysctl_test2
+    verbosity: 1
 
 - name: check with sysctl command
   shell: sysctl net.ipv4.ip_forward
@@ -85,10 +99,10 @@
 
 - name: validate results for test 2
   assert:
-      that:
-          - 'sysctl_test2.changed is defined'
-          - 'sysctl_test2.changed'
-          - 'sysctl_check2.stdout_lines == ["net.ipv4.ip_forward = 1"]'
+    that:
+      - sysctl_test2.changed is defined
+      - sysctl_test2.changed
+      - 'sysctl_check2.stdout_lines == ["net.ipv4.ip_forward = 1"]'
 
 - name: Try sysctl with no name
   sysctl:
@@ -101,8 +115,8 @@
 - name: validate nameless results
   assert:
     that:
-    - "sysctl_no_name|failed"
-    - "sysctl_no_name.msg == 'name can not be None'"
+      - sysctl_no_name | failed
+      - "sysctl_no_name.msg == 'name can not be None'"
 
 - name: Try sysctl with no value
   sysctl:
@@ -115,5 +129,5 @@
 - name: validate nameless results
   assert:
     that:
-    - "sysctl_no_value|failed"
-    - "sysctl_no_value.msg == 'value can not be None'"
+      - sysctl_no_value | failed
+      - "sysctl_no_value.msg == 'value can not be None'"
