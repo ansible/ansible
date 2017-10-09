@@ -51,6 +51,7 @@ options:
   read_only:
     description:
       - optional variable, if set to true, the domain controller will be promoted as a read only replica (default is False). 
+    version_added: "2.5"
   sitecode:
     description:
       - active directory site where the read only domain controller should be deployed, this option is required if read_only is set to true.
@@ -91,7 +92,8 @@ EXAMPLES = r'''
 - hosts: winclient
   gather_facts: no
   tasks:
-  - win_domain_controller:
+  - name: "Promote read only domain controller."
+    win_domain_controller:
       dns_domain_name: ansible.vagrant
       domain_admin_user: testguy@ansible.vagrant
       domain_admin_password: password123!
