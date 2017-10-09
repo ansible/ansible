@@ -383,15 +383,15 @@ def main():
     )
 
     if module.params['name'] is None:
-        module.fail_json(msg="name can not be None")
+        module.fail_json(msg="name cannot be None")
     if module.params['state'] == 'present' and module.params['value'] is None:
-        module.fail_json(msg="value can not be None")
+        module.fail_json(msg="value cannot be None")
 
     # In case of in-line params
     if module.params['name'] == '':
-        module.fail_json(msg="name can not be blank")
+        module.fail_json(msg="name cannot be blank")
     if module.params['state'] == 'present' and module.params['value'] == '':
-        module.fail_json(msg="value can not be blank")
+        module.fail_json(msg="value cannot be blank")
 
     result = SysctlModule(module)
 
