@@ -110,6 +110,7 @@ Ansible Changes By Release
 * fixed some parsing and selection issues with inventory manager, fixed minor bugs in yaml and constructed plugins
 * reverted implicit localhost getting vars from 'all' group
 * Fix the ping module documentation to reference win_ping instead of itself: https://github.com/ansible/ansible/pull/31444
+* Fix for ec2_win_password to allow blank key_passphrase again (https://github.com/ansible/ansible/pull/28791)
 
 <a id="2.4"></a>
 
