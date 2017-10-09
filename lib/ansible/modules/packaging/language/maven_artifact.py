@@ -470,7 +470,11 @@ def main():
         version_part = version
         if keep_name and version == 'latest':
             version_part = downloader.find_latest_version_available(artifact)
-        dest = posixpath.join(dest, "%s-%s.%s" % (artifact_id, version_part, extension))
+
+        if classifier:
+            dest = posixpath.join(dest, "%s-%s-%s.%s" % (artifact_id, version_part, classifier, extension))
+        else:
+            dest = posixpath.join(dest, "%s-%s.%s" % (artifact_id, version_part, extension))
         b_dest = to_bytes(dest, errors='surrogate_or_strict')
 
     if os.path.lexists(b_dest) and downloader.verify_md5(dest, downloader.find_uri_for_artifact(artifact) + '.md5'):
