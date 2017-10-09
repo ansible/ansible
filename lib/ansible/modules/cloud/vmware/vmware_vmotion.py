@@ -20,7 +20,8 @@ description:
       host, and/or its vmdks to another datastore using storage vMotion.
 version_added: 2.2
 author:
-- Bede Carroll (@bedecarroll)
+    - Bede Carroll (@bedecarroll)
+    - Olivier Boukili (@oboukili)
 notes:
     - Tested on vSphere 6.0
 requirements:
@@ -35,7 +36,6 @@ options:
     destination_host:
         description:
             - Name of the end host the VM should be running on (at least one of destination_host or destination_datastore is required)
-        required: False
         aliases: ['destination']
     destination_datastore:
         description:
