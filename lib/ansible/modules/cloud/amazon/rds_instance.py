@@ -599,14 +599,18 @@ def update_rds_tags(module, conn, db_instance=None):
     return changed
 
 
+# TODO: this is hand hackery;  we should find a way of pulling this info out of botocore.
+# probably it's the list of parameters included in create but missing in modify however
+# some parameters change name so this isn't trivial to do!
+
+rds_immutable_params = ['master_username', 'engine', 'db_name']
+
+
 def abort_on_impossible_changes(module, before_facts):
-    for immutable_key in ['master_username', 'engine', 'db_name']:
+    for immutable_key in rds_immutable_params:
         if immutable_key in module.params and module.params[immutable_key] is not None:
-            try:
-                keys_different = module.params[immutable_key] != before_facts[immutable_key]
-            except KeyError:
-                keys_different = False
-            if (keys_different):
+            before = before_facts.get(immutable_key)
+            if (module.params[immutable_key] != before):
                 module.fail_json(msg="Cannot modify parameter %s for instance %s" %
                                  (immutable_key, before_facts['db_instance_identifier']))
 
@@ -671,6 +675,12 @@ def prepare_changes_for_modify(module, before_facts):
     facts_to_change = will_change['after']
 
     # we have to filter down to the parameters handled by modify (e.g. not tags) and
+    for i in [ 'tags' ]:
+        try:
+            del(facts_to_change[i])
+        except KeyError:
+            pass
+
     # convert from fact format to the AWS call CamelCase format.
 
     params = snake_dict_to_cap_camel_dict(facts_to_change)

@@ -101,6 +101,8 @@ def instance_facts_diff(state_a, state_b):
     # FIXME: testing of deletion of parameters needs to be tested
     # properly.
 
+    # FIXME: can we use a static / test session rather than us-west-2.
+
     session = botocore.session.get_session()
     conn = session.create_client('rds', region_name='us-west-2')
     operations_model = conn._service_model.operation_model("CreateDBInstance")

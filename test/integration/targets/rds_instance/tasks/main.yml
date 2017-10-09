@@ -20,7 +20,7 @@
         aws_secret_key: '{{aws_secret_key}}'
         security_token: '{{security_token}}'
 
-    - name: fail to create rds instance in check mode
+    - name: do not create rds instance in check mode
       rds_instance:
         id:  "ansible-test-dont-create-youll-break-the-tests"
         wait_timeout: 1200
@@ -71,6 +71,7 @@
         wait_timeout: 1200
         wait: yes
         size: 5
+        db_name: actual_db
         db_instance_class: db.t2.micro
         engine: postgres
         master_username: hello
@@ -104,6 +105,57 @@
          - rds_instance_facts.db_instances[0].db_instance_class == "db.t2.micro"
          - rds_instance_facts.db_instances[0].engine == "postgres"
          - rds_instance_facts.db_instances[0].allocated_storage == 5
+
+    - name: fail to create rds instance with changed db name
+      rds_instance:
+        id: "{{ rds_instance_name }}"
+        wait_timeout: 1200
+        wait: yes
+        size: 5
+        db_name: cant_change_name_to_this
+        db_instance_class: db.t2.micro
+        engine: postgres
+        master_username: hello
+        master_user_password: "world123$$"
+        region: '{{ec2_region}}'
+        aws_access_key: '{{aws_access_key}}'
+        aws_secret_key: '{{aws_secret_key}}'
+        security_token: '{{security_token}}'
+      register: result
+      ignore_errors: true
+
+    - name: assert failure when trying to modify posgresql database name
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg.startswith("Cannot modify parameter db_name")'
+
+
+    - name: add tags to rds instance
+      rds_instance:
+        id: "{{ rds_instance_name }}"
+        wait_timeout: 1200
+        wait: yes
+        size: 5
+        db_name: actual_db
+        db_instance_class: db.t2.micro
+        engine: postgres
+        master_username: hello
+        master_user_password: "world123$$"
+        region: '{{ec2_region}}'
+        aws_access_key: '{{aws_access_key}}'
+        aws_secret_key: '{{aws_secret_key}}'
+        security_token: '{{security_token}}'
+        tags:
+           this: that
+           thee: thou
+           then: where
+      register: rds_instance
+
+    - name: check that tag modification worked
+      assert:
+        that: rds_instance|changed
+
 
     - name: snapshot instance
       rds_snapshot:

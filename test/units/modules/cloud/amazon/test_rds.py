@@ -323,11 +323,11 @@ def test_modify_should_return_false_in_changed_if_param_same():
     assert not mod_return["changed"], "modify return changed when should be false"
 
 
-class ExitCalledGood(Exception):
+class AnsibleExitJson(Exception):
     pass
 
 
-class FailCalledBad(Exception):
+class AnsibleFailJson(Exception):
     pass
 
 
@@ -355,14 +355,14 @@ def test_modify_should_do_no_changes_if_check_mode_set():
 
     module_double = MagicMock(ansible_module_template)
     module_double.params = params
-    module_double.exit_json.side_effect = ExitCalledGood
+    module_double.exit_json.side_effect = AnsibleExitJson
     module_double.check_mode = True
 
     passed = False
     try:
         with patch.object(time, 'sleep', sleeper_double):
             rds_i.modify_db_instance(module_double, rds_client_double, instance)
-    except ExitCalledGood:
+    except AnsibleExitJson:
         passed = True
 
     assert passed, "failed to call exit_json function"
@@ -710,3 +710,78 @@ def test_select_parameters_meta_should_select_relevant_parameters_for_call():
 
     assert len(params) < 2
     assert params['DBInstanceIdentifier'] == 'fakedb-too'
+
+def test_prepare_params_for_modify_should_ignore_params_modify_cant_handle():
+    before_facts = {
+        "port": 342,
+        "engine": "postgres",
+        "master_username": "hello",
+        "db_instance_class": "t1-pretty-small-really",
+        "force_password_update": True,
+        "db_instance_identifier": "fakedb-too",  # should not yet exist
+        "old_db_instance_identifier": "fakedb",  # should be currently existing
+        "allocated_storage": 5,
+        "storage_type": "gp2",
+        "apply_immediately": True,
+        "db_name": "dbname_stuck_like_this",
+    }
+    set_module_args({
+        "port": 342,
+        "engine": "postgres",
+        "master_username": "hello",
+        "db_instance_class": "t1-pretty-small-really",
+        "force_password_update": True,
+        "db_instance_identifier": "fakedb-too",  # should not yet exist
+        "old_db_instance_identifier": "fakedb",  # should be currently existing
+        "allocated_storage": 5,
+        "storage_type": "gp2",
+        "apply_immediately": True,
+        "db_name": "cant_update_to_this",
+        "tags": {"a": "b", "c": "d"},
+    })
+
+    module = rds_i.setup_module_object()
+
+    # immutable params should be blocked with an exception
+
+    with pytest.raises(SystemExit):
+        rds_i.prepare_params_for_modify(module, before_facts)
+
+    # tags shoudl be ignored (since they are updated in other ways)
+    set_module_args({
+        "port": 342,
+        "engine": "postgres",
+        "master_username": "hello",
+        "db_instance_class": "t1-pretty-small-really",
+        "force_password_update": True,
+        "db_instance_identifier": "fakedb-too",  # should not yet exist
+        "old_db_instance_identifier": "fakedb",  # should be currently existing
+        "allocated_storage": 5,
+        "storage_type": "gp2",
+        "apply_immediately": True,
+        "tags": {"a": "b", "c": "d"},
+    })
+
+    module = rds_i.setup_module_object()
+
+    #first time adding tags from none
+    params=rds_i.prepare_params_for_modify(module, before_facts)
+    assert 'Tags' not in params
+
+    #this time changing the tags
+    before_facts = {
+        "port": 342,
+        "engine": "postgres",
+        "master_username": "hello",
+        "db_instance_class": "t1-pretty-small-really",
+        "force_password_update": True,
+        "db_instance_identifier": "fakedb-too",  # should not yet exist
+        "old_db_instance_identifier": "fakedb",  # should be currently existing
+        "allocated_storage": 5,
+        "storage_type": "gp2",
+        "apply_immediately": True,
+        "db_name": "dbname_stuck_like_this",
+        "tags": {"a": "e", "c": "f"},
+    }
+    params=rds_i.prepare_params_for_modify(module, before_facts)
+    assert 'Tags' not in params
