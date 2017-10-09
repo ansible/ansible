@@ -165,6 +165,9 @@ class SysctlModule(object):
             self.write_file = True
         elif self.file_values[thisname] is None and self.args['state'] == "absent":
             self.changed = False
+        elif self.file_values[thisname] and self.args['state'] == "absent":
+            self.changed = True
+            self.write_file = True
         elif self.file_values[thisname] != self.args['value']:
             self.changed = True
             self.write_file = True
@@ -394,6 +397,6 @@ def main():
 
     module.exit_json(changed=result.changed)
 
-# import module snippets
+
 if __name__ == '__main__':
     main()
