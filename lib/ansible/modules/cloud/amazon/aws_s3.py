@@ -236,6 +236,37 @@ EXAMPLES = '''
     mode: delobj
 '''
 
+RETURN = '''
+msg:
+  description: msg indicating the status of the operation
+  returned: always
+  type: string
+  sample: PUT operation complete
+url:
+  description: url of the object
+  returned: (for put and geturl operations)
+  type: string
+  sample: https://my-bucket.s3.amazonaws.com/my-key.txt?AWSAccessKeyId=<access-key>&Expires=1506888865&Signature=<signature>
+expiry:
+  description: number of seconds the presigned url is valid for
+  returned: (for geturl operation)
+  type: int
+  sample: 600
+contents:
+  description: contents of the object as string
+  returned: (for getstr operation)
+  type: string
+  sample: "Hello, world!"
+s3_keys:
+  description: list of object keys
+  returned: (for list operation)
+  type: list
+  sample:
+  - prefix1/
+  - prefix1/key1
+  - prefix1/key2
+'''
+
 import os
 import traceback
 from ansible.module_utils.six.moves.urllib.parse import urlparse
