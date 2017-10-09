@@ -132,6 +132,9 @@ class PullCLI(CLI):
             self.options.dest = os.path.join('~/.ansible/pull', hostname)
         self.options.dest = os.path.expandvars(os.path.expanduser(self.options.dest))
 
+        if os.path.exists(self.options.dest) and not os.path.isdir(self.options.dest):
+            raise AnsibleOptionsError("%s is not a valid or accessible directory." % self.options.dest)
+
         if self.options.sleep:
             try:
                 secs = random.randint(0, int(self.options.sleep))
