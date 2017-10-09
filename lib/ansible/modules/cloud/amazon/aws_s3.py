@@ -400,7 +400,7 @@ def upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, heade
         if encrypt:
             extra['ServerSideEncryption'] = 'AES256'
         if metadata:
-            extra['Metadata'] = dict(metadata)
+            extra.update(metadata)
         s3.upload_file(Filename=src, Bucket=bucket, Key=obj, ExtraArgs=extra)
         for acl in module.params.get('permission'):
             s3.put_object_acl(ACL=acl, Bucket=bucket, Key=obj)
