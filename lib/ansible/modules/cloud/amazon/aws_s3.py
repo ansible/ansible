@@ -392,6 +392,20 @@ def path_check(path):
         return False
 
 
+def option_in_extra_args(option):
+    allowed_extra_args = ['ACL', 'CacheControl', 'ContentDisposition', 'ContentEncoding', 'ContentLanguage',
+                          'ContentType', 'Expires', 'GrantFullControl', 'GrantRead', 'GrantReadACP', 'GrantWriteACP',
+                          'Metadata', 'RequestPayer', 'ServerSideEncryption', 'StorageClass', 'SSECustomerAlgorithm',
+                          'SSECustomerKey', 'SSECustomerKeyMD5', 'SSEKMSKeyId', 'WebsiteRedirectLocation']
+    extra_args_with_hyphen = ['Cache-Control', 'Content-Disposition', 'Content-Encoding', 'Content-Language',
+                              'Content-Type', 'Website-Redirect-Location']
+
+    if option not in allowed_extra_args and option in extra_args_with_hyphen:
+        return option.replace('-', '')
+    elif option in allowed_extra_args:
+        return option
+
+
 def upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, headers):
     if module.check_mode:
         module.exit_json(msg="PUT operation skipped - running in check mode", changed=True)
@@ -400,7 +414,16 @@ def upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, heade
         if encrypt:
             extra['ServerSideEncryption'] = 'AES256'
         if metadata:
-            extra.update(metadata)
+            extra['Metadata'] = {}
+
+            # determine object metadata and extra arguments
+            for option in list(metadata.keys()):
+                extra_args_option = option_in_extra_args(option)
+                if extra_args_option:
+                    extra[extra_args_option] = metadata[option]
+                else:
+                    extra['Metadata'][option] = metadata[option]
+
         s3.upload_file(Filename=src, Bucket=bucket, Key=obj, ExtraArgs=extra)
         for acl in module.params.get('permission'):
             s3.put_object_acl(ACL=acl, Bucket=bucket, Key=obj)
