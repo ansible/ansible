@@ -378,6 +378,7 @@ import time
 import logging as log
 import traceback
 
+from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, HAS_BOTO3, camel_dict_to_snake_dict, get_aws_connection_info, AWSRetry
 
@@ -794,7 +795,7 @@ def create_autoscaling_group(connection, module):
         for k, v in tag.items():
             if k != 'propagate_at_launch':
                 asg_tags.append(dict(Key=k,
-                                     Value=str(v),
+                                     Value=to_native(v),
                                      PropagateAtLaunch=bool(tag.get('propagate_at_launch', True)),
                                      ResourceType='auto-scaling-group',
                                      ResourceId=group_name))
