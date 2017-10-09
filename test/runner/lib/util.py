@@ -208,6 +208,9 @@ def common_environment():
         'HTTPTESTER',
         'LD_LIBRARY_PATH',
         'SSH_AUTH_SOCK',
+        # MacOS High Sierra Compatibility
+        # http://sealiesoftware.com/blog/archive/2017/6/5/Objective-C_and_fork_in_macOS_1013.html
+        'OBJC_DISABLE_INITIALIZE_FORK_SAFETY',
     )
 
     env.update(pass_vars(required=required, optional=optional))
