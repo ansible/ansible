@@ -133,9 +133,8 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                 # check to see if this include is dynamic or static:
                 # 1. the user has set the 'static' option to false or true
                 # 2. one of the appropriate config options was set
-                if 'include_tasks' in task_ds:
-                    is_static = False
-                elif 'import_tasks' in task_ds:
+                is_static = False
+                if 'import_tasks' in task_ds:
                     is_static = True
                 elif t.static is not None:
                     display.deprecated("The use of 'static' has been deprecated. "
@@ -294,6 +293,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
 
                 #   1. the user has set the 'static' option to false or true
                 #   2. one of the appropriate config options was set
+                is_static = False
                 if 'import_role' in task_ds:
                     is_static = True
 
@@ -301,23 +301,6 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     display.deprecated("The use of 'static' for 'include_role' has been deprecated. "
                                        "Use 'import_role' for static inclusion, or 'include_role' for dynamic inclusion")
                     is_static = ir.static
-                else:
-                    display.debug('Determine if include_role is static')
-                    # Check to see if this include is dynamic or static:
-                    all_vars = variable_manager.get_vars(play=play, task=ir)
-                    templar = Templar(loader=loader, variables=all_vars)
-                    needs_templating = False
-                    for param in ir.args:
-                        if templar._contains_vars(ir.args[param]):
-                            if not templar.is_template(ir.args[param]):
-                                needs_templating = True
-                                break
-                    is_static = (
-                        C.DEFAULT_TASK_INCLUDES_STATIC or
-                        (use_handlers and C.DEFAULT_HANDLER_INCLUDES_STATIC) or
-                        (not needs_templating and ir.all_parents_static() and not ir.loop)
-                    )
-                    display.debug('Determined that if include_role static is %s' % str(is_static))
 
                 if is_static:
                     if ir.loop is not None:
@@ -328,6 +311,12 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
 
                     # we set a flag to indicate this include was static
                     ir.statically_loaded = True
+
+                    # template the role name now, if needed
+                    all_vars = variable_manager.get_vars(play=play, task=ir)
+                    templar = Templar(loader=loader, variables=all_vars)
+                    if templar._contains_vars(ir._role_name):
+                        ir._role_name = templar.template(ir._role_name)
 
                     # uses compiled list from object
                     blocks, _ = ir.get_block_list(variable_manager=variable_manager, loader=loader)
