@@ -260,10 +260,6 @@ class CLI(with_metaclass(ABCMeta, object)):
             vault_id_name, vault_id_value = CLI.split_vault_id(vault_id_slug)
             if vault_id_value in ['prompt', 'prompt_ask_vault_pass']:
 
-                # prompts cant/shouldnt work without a tty, so dont add prompt secrets
-                if not sys.stdin.isatty():
-                    continue
-
                 # --vault-id some_name@prompt_ask_vault_pass --vault-id other_name@prompt_ask_vault_pass will be a little
                 # confusing since it will use the old format without the vault id in the prompt
                 built_vault_id = vault_id_name or C.DEFAULT_VAULT_IDENTITY
