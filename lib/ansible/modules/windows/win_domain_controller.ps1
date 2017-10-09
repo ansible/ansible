@@ -215,7 +215,7 @@ Try {
                     $install_result = Install-ADDSDomainController -NoRebootOnCompletion -DomainName $dns_domain_name -Credential $domain_admin_cred -SafeModeAdministratorPassword $safe_mode_secure -ReadOnlyReplica:$true -SiteName $site -Force		
                 }
                 else {
-                    $install_result = Install-ADDSDomainController -NoRebootOnCompletion -DomainName $dns_domain_name -Credential $domain_admin_cred -SafeModeAdministratorPassword $safe_mode_secure
+                    $install_result = Install-ADDSDomainController -NoRebootOnCompletion -DomainName $dns_domain_name -Credential $domain_admin_cred -SafeModeAdministratorPassword $safe_mode_secure -Force
                 }
 
 
