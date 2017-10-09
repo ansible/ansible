@@ -15,7 +15,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'metadata_version': '1.0'}
+                    'metadata_version': '1.1'}
 
 DOCUMENTATION = '''
 ---
@@ -23,7 +23,7 @@ module: ssm_parameter_store
 short_description: Manage key-value pairs in aws parameter store.
 description:
   - Manage key-value pairs in aws parameter store.
-version_added: "2.4"
+version_added: "2.5"
 options:
   name:
     description:
