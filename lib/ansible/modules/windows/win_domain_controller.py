@@ -50,7 +50,7 @@ options:
       - password to be assigned to the local C(Administrator) user (required when C(state) is C(member_server))
   read_only:
     description:
-      - optional variable, is set to true, the domain controller will be promoted as a read only replica (default is False). 
+      - optional variable, if set to true, the domain controller will be promoted as a read only replica (default is False). 
   sitecode:
     description:
       - active directory site where the read only domain controller should be deployed, this option is required if read_only is set to true.
