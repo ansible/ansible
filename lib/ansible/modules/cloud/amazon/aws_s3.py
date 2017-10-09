@@ -237,6 +237,7 @@ EXAMPLES = '''
 '''
 
 import os
+import mimetypes
 import traceback
 from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ssl import SSLError
@@ -404,7 +405,7 @@ def option_in_extra_args(option):
                           'storageclass': 'StorageClass', 'ssecustomeralgorithm': 'SSECustomerAlgorithm', 'ssecustomerkey': 'SSECustomerKey',
                           'ssecustomerkeymd5': 'SSECustomerKeyMD5', 'ssekmskeyid': 'SSEKMSKeyId', 'websiteredirectlocation': 'WebsiteRedirectLocation'}
 
-    if temp_option in list(allowed_extra_args.keys()):
+    if temp_option in allowed_extra_args:
         return allowed_extra_args[temp_option]
 
 
@@ -421,10 +422,17 @@ def upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, heade
             # determine object metadata and extra arguments
             for option in list(metadata.keys()):
                 extra_args_option = option_in_extra_args(option)
-                if extra_args_option:
+                if extra_args_option is not None:
                     extra[extra_args_option] = metadata[option]
                 else:
                     extra['Metadata'][option] = metadata[option]
+
+        if 'ContentType' not in extra:
+            content_type = mimetypes.guess_type(src)[0]
+            if content_type is None:
+                # s3 default content type
+                content_type = 'binary/octet-stream'
+            extra['ContentType'] = content_type
 
         s3.upload_file(Filename=src, Bucket=bucket, Key=obj, ExtraArgs=extra)
         for acl in module.params.get('permission'):
