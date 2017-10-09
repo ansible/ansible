@@ -45,7 +45,10 @@ Create a file called ``fetch-facts.yml`` containing the following:
 .. code-block:: yaml
 
    - name: "Download switch configuration"
+     # Which group in the inventory file this applies to
      hosts: switches
+
+     # fixme
      gather_facts: no
 
      tasks:
@@ -107,13 +110,82 @@ Details
 Inventory
 +++++++++
 
-The ``inventory`` file is an INI-like configuration file that defines the mapping of hosts into groups
+The ``inventory`` file is an INI-like configuration file that defines the mapping of hosts into groups:
 
 The above inventory file defines the groups ``ios``, ``vyos`` and a "group of groups" called ``switches``. Further details about subgroups and inventory files can be found in the :ref:`Ansible inventory Group documentation <subgroups>`.
 
-The inventory file can be used to define the credentials to log in with, there are various ways credentials could be supplied:
+
+Credentials
+^^^^^^^^^^^
+
+Although there are many ways to supply credentials in Ansible in this case we are using ``ansible_user`` and ``ansible_ssh_pass`` as a simple example.
+
+
+.. warning:: Never store passwords in plain text
+
+   FIXME Details on why this is bad, links to existing vault docs (improve that example)
+
+ansible_connection
+^^^^^^^^^^^^^^^^^^
+
+* FIXME: ``ansible_connection=local``
+
+
+Playbook
+++++++++
+
+Gathering facts
+^^^^^^^^^^^^^^^
+
+* Link to module
+* Not about conditional keyword - link to docs
+* ``register``
+
+
+Debug
+^^^^^^
+
+* Reference ``RETURN`` sections of docs
+* Link to docs ``hostvars`` docs
+
+Writing to disk
+^^^^^^^^^^^^^^^
+
+* FIXME Link to module docs ios_facts, vyos_facts, copy, debug
+
+Troubleshooting
+---------------
+
+If you receive an error ``unable to open shell`` please follow the debug steps in :doc:`network_debug_troubleshooting`.
+
+
+See also
+
+* Network landing page
+* intro_inventory
+* playbooks_best_practices.html#best-practices-for-variables-and-vaults
+
+Fixme
+=====
+
+* Highlight the command to run in the console section - Look at Sphix documentatiom
+* Agreed: Hello world https://github.com/Dell-Networking/ansible-dellos-examples/blob/master/getfacts_os10.yaml
+
+* Add filename to code-blocks
+
+* Other examples
+
+  * https://pynet.twb-tech.com/blog/ansible/ansible-network-backup.html
+  * https://pynet.twb-tech.com/blog/automation/cisco-ios.html
+
+  * Using ``ansible_ssh_pass`` will not work for REST transports such as ``eapi``, ``nxapi`` - What do we here?
+
+
 
 FIXME Link to details regarding different ways to specify credentials (this should be in the main docs somewhere). This should just be a summary that links to the existing docs (``intro_inventory``, ``playbooks_best_practices.html#best-practices-for-variables-and-vaults``, ``ansible-playbook.rst``, etc)
+
+Somewhere in the main docs we need to list the different ways of authenticating
+
 
 :Command line:
 
@@ -129,7 +201,8 @@ FIXME Link to details regarding different ways to specify credentials (this shou
 
   :``ansible_ssh_pass``:
 
-    * Details
+    * Generally used along side ``ansible_user``.
+    * Not for REST transports such as `eapi`, `nxapi`.
     * Link to main docs
 
   :``ansible_ssh_private_key_file``:
@@ -137,49 +210,13 @@ FIXME Link to details regarding different ways to specify credentials (this shou
     * Details
     * Link to main docs
 
-:top-level:
+:top-level module options:
 
-  * Moving away from this
+  * As of Ansible 2.3 this is deprecated.
   * Link to main docs
 
-:provider:
+:``provider:`` argument to module:
 
   * This is OK
   * Link to main docs
 
-
-
-
-.. warning:: Never store passwords in plain text
-
-   FIXME Details on why this is bad, links to existing vault docs (improve that example)
-
-
-* FIXME: ``ansible_connection=local``
-
-
-* FIXME Link to module docs ios_facts, vyos_facts, copy, debug
-
-Troubleshooting
----------------
-
-If you receive an error ``unable to open shell`` please follow the debug steps in :doc:`network_debug_troubleshooting`_.
-
-Fixme
-=====
-
-* Highlight the command to run in the console section - Look at Sphix documentatiom
-* Agreed: Hello world https://github.com/Dell-Networking/ansible-dellos-examples/blob/master/getfacts_os10.yaml
-
-* Add filename to code-blocks
-
-* Troubleshooting link to http://docs.ansible.com/ansible/latest/network_debug_troubleshooting.html#unable-to-open-shell
-
-
-
-
-See also
-
-* Network landing page
-* intro_inventory
-* playbooks_best_practices.html#best-practices-for-variables-and-vaults
