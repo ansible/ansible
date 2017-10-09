@@ -394,10 +394,7 @@ def path_check(path):
 
 
 def option_in_extra_args(option):
-    if '-' in option:
-        temp_option = option.replace('-', '').lower()
-    else:
-        temp_option = option.lower()
+    temp_option = option.replace('-', '').lower()
 
     allowed_extra_args = {'acl': 'ACL', 'cachecontrol': 'CacheControl', 'contentdisposition': 'ContentDisposition',
                           'contentencoding': 'ContentEncoding', 'contentlanguage': 'ContentLanguage',
@@ -422,7 +419,7 @@ def upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, heade
             extra['Metadata'] = {}
 
             # determine object metadata and extra arguments
-            for option in list(metadata.keys()):
+            for option in metadata:
                 extra_args_option = option_in_extra_args(option)
                 if extra_args_option is not None:
                     extra[extra_args_option] = metadata[option]
