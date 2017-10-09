@@ -28,7 +28,7 @@ options:
       - Goal state of given stage/project
     required: false
     default: present
-  tf_bin_path:
+  binary_path:
     description:
       - The path of a terraform binary to use, relative to the 'service_path'
         unless you supply an absolute path.
@@ -38,10 +38,26 @@ options:
       - The path to the root of the Terraform directory with the
         vars.tf/main.tf/etc to use.
     required: true
-  plan:
+  plan_file:
     description:
       - The path to an existing Terraform plan file to apply. If this is not
         specified, Ansible will build a new TF plan and execute it.
+    required: false
+  state_file:
+    description:
+      - The path to an existing Terraform state file to use when building plan.
+        If this is not specified, the default `terraform.tfstate` will be used.
+      - This option is ignored when plan is specified.
+    required: false
+  variables_file:
+    description:
+      - The path to a variables file for Terraform to fill into the TF
+        configurations.
+    required: false
+  variables:
+    description:
+      - A group of key-values to override template variables or those in
+        variables files.
     required: false
   force_init:
     description:
@@ -64,15 +80,16 @@ EXAMPLES = """
 """
 
 RETURN = """
-service_name:
+outputs:
+  type: complex
+  description:
+  returned: on success
+  sample: '{"bukkit_arn": {"sensitive": false, "type": "string", "value": "arn:aws:s3:::tf-test-bukkit"}'
+stdout:
   type: string
-  description: Most
+  description: Full `terraform` command stdout, in case you want to display it or examine the event log
   returned: always
-  sample: my-fancy-service-dev
-state:
-  type: string
-  description: Whether the stack for the TF project is present/absent.
-  returned: always
+  sample: ''
 command:
   type: string
   description: Full `terraform` command built by this module, in case you want to re-run the command outside the module or debug a problem.
@@ -185,20 +202,21 @@ def main():
     if needs_application and not module.check_mode:
         rc, out, err = module.run_command(command, cwd=project_path)
         if rc != 0:
-            module.fail_json(msg="Failure when executing Terraform command. Exited {}.\nstdout: {}\nstderr: {}".format(rc, out, err))
+            module.fail_json(msg="Failure when executing Terraform command. Exited {}.\nstdout: {}\nstderr: {}".format(rc, out, err), command=' '.join(command))
     else:
         changed = False
         out, err = '', ''
 
-    rc, outputs_text, outputs_err = module.run_command([command[0], 'output', '-no-color', '-json'] + _state_args(state_file), cwd=project_path)
+    outputs_command = [command[0], 'output', '-no-color', '-json'] + _state_args(state_file)
+    rc, outputs_text, outputs_err = module.run_command(outputs_command, cwd=project_path)
     if rc != 0:
-        module.fail_json(msg="Failure when getting Terraform outputs. Exited {}.\nstdout: {}\nstderr: {}".format(rc, outputs_text, outputs_err))
+        module.fail_json(msg="Failure when getting Terraform outputs. Exited {}.\nstdout: {}\nstderr: {}".format(rc, outputs_text, outputs_err), command=' '.join(outputs_command))
 
     outputs = json.loads(outputs_text)
 
 
     # gather some facts about the deployment
-    module.exit_json(changed=changed, state='present', outputs=outputs, sdtout=out, stderr=err, command=command)
+    module.exit_json(changed=changed, state='present', outputs=outputs, sdtout=out, stderr=err, command=' '.join(command))
 
 
 if __name__ == '__main__':
