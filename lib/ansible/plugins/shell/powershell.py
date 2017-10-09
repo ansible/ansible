@@ -52,7 +52,7 @@ import re
 import shlex
 
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins.shell import ShellBase
 
 
@@ -1821,6 +1821,15 @@ class ShellModule(ShellBase):
     # env provider's limitations don't appear to be documented.
     safe_envkey = re.compile(r'^[\d\w_]{1,255}$')
 
+    _SHELL_EMBEDDED_PY_EOL = '\n'
+    _SHELL_REDIRECT_ALLNULL = '> /dev/null 2>&1'
+    _SHELL_AND = '&&'
+    _SHELL_OR = '||'
+    _SHELL_SUB_LEFT = '"`'
+    _SHELL_SUB_RIGHT = '`"'
+    _SHELL_GROUP_LEFT = '('
+    _SHELL_GROUP_RIGHT = ')'
+
     # TODO: add binary module support
 
     def assert_safe_env_key(self, key):
@@ -1880,8 +1889,6 @@ class ShellModule(ShellBase):
             return self._encode_script('''Remove-Item "%s" -Force;''' % path)
 
     def mkdtemp(self, basefile=None, system=False, mode=None, tmpdir=None):
-        # Windows does not have an equivalent for the system temp files, so
-        # the param is ignored
         basefile = self._escape(self._unquote(basefile))
         basetmpdir = tmpdir if tmpdir else self.get_option('remote_temp')
 
