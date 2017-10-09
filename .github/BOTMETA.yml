@@ -1097,6 +1097,8 @@ files:
     notify: dharmabumstead
   packaging/:
     # 'packaging' automatically added to labels
+  test/:
+    # 'test' is a component path, then 'test' label will be automatically added
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
