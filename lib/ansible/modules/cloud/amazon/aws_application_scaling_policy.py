@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: scaling_policy
+module: aws_application_scaling_policy
 short_description: Manage Application Auto Scaling Scaling Policies
 notes:
     - for details of the parameters and returns see
@@ -65,7 +65,7 @@ EXAMPLES = '''
 
 # Create scaling policy for ECS Service
 - name: scaling_policy
-  scaling_policy:
+  aws_application_scaling_policy:
   state: present
   policy_name: test_policy
   service_namespace: ecs
@@ -84,7 +84,7 @@ EXAMPLES = '''
 
 # Remove scalable target for ECS Service
 - name: scaling_policy
-  scaling_policy:
+  aws_application_scaling_policy:
     state: absent
     policy_name: test_policy
     policy_type: StepScaling
