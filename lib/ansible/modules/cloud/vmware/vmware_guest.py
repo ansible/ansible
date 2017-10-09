@@ -1111,7 +1111,7 @@ class PyVmomiHelper(PyVmomi):
 
         # Check for full path first in case it was already supplied
         if (self.params['folder'].startswith(dcpath + self.params['datacenter'] + '/vm') or
-            self.params['folder'].startswith(dcpath + '/' + self.params['datacenter'] + '/vm')):
+                self.params['folder'].startswith(dcpath + '/' + self.params['datacenter'] + '/vm')):
             fullpath = self.params['folder']
         elif (self.params['folder'].startswith('/vm/') or self.params['folder'] == '/vm'):
             fullpath = "%s%s%s" % (dcpath, self.params['datacenter'], self.params['folder'])
