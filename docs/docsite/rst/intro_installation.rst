@@ -257,9 +257,13 @@ your version of Python, you can get pip by::
 
    $ sudo easy_install pip
 
-Then install Ansible with [1]_::
+Then install Ansible with (Mac OSX El Capitan and later) [1]_::
 
-   $ sudo pip install ansible
+    $ pip install --user ansible
+
+Other systems::
+
+    $ sudo pip install ansible
 
 Or if you are looking for the latest development version::
 
