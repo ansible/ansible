@@ -465,6 +465,12 @@ class Host(object):
         if host['name'] != visible_name and host['name'] != host_name:
             return True
 
+        # The Zabbbix API returns an empty description as an empty string
+        if description is None:
+            description = ''
+        if host['description'] != description:
+            return True
+
         return False
 
     # link or clear template of the host
