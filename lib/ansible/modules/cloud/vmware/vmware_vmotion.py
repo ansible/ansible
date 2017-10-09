@@ -42,7 +42,7 @@ options:
             - Name of the end datastore the VM's vmdk should be moved on (at least one of destination_host or destination_datastore is required)
         required: False
         aliases: ['datastore']
-        version_added: 2.4
+        version_added: 2.5
 
 extends_documentation_fragment: vmware.documentation
 '''
@@ -91,7 +91,7 @@ running_host:
     sample: 'host1.example.com'
 datastores:
     description: List the datastores the virtual machine uses
-    returned: ['changed', 'success']
+    returned: changed or success
     type: list
     sample: '[datastore1]'
 
@@ -104,8 +104,8 @@ except ImportError:
     HAS_PYVMOMI = False
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import (connect_to_api, find_hostsystem_by_name, find_vm_by_name, find_datastore_by_name,
-                                         vmware_argument_spec, wait_for_task)
+from ansible.module_utils.vmware import (connect_to_api, find_hostsystem_by_name, find_vm_by_name,
+                                         find_datastore_by_name, vmware_argument_spec, wait_for_task)
 
 
 def migrate_vm(vm_object, host_object=None, datastore_object=None):
