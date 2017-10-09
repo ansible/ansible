@@ -1,12 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Kairo Araujo <kairo@kairo.eti.br>
-# GNU General Public License v3.0+ (see COPYING or
-# https://www.gnu.org/licenses/gpl-3.0.txt)
+# Copyright: (c) 2017, Kairo Araujo <kairo@kairo.eti.br>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
@@ -17,12 +15,14 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-author: Kairo Araujo (@kairoaraujo)
+author:
+  - Kairo Araujo (@kairoaraujo)
 module: aix_filesystem
-short_description: Configure LVM and NFS file systems for AIX.
+short_description: Configure LVM and NFS file systems for AIX
 description:
   - This module creates, removes, mount and unmount LVM and NFS file system for
-    AIX using C(/etc/filesystems). For LVM file systems is possible to resize a
+    AIX using C(/etc/filesystems).
+  - For LVM file systems is possible to resize a
     file system.
 version_added: "2.5"
 options:
@@ -30,44 +30,36 @@ options:
     description:
       - Specifies whether the file system is to be processed by the accounting
         subsystem.
-    choices: ["yes", "no"]
+    type: bool
     default: "no"
-    required: false
   attributes:
     description:
       - Specifies attributes for files system separated by comma.
     default: agblksize='4096',isnapshot='no'
-    required: false
   auto_mount:
     description:
       - File system is automatically mounted at system restart.
-    choices: ["yes", "no"]
+    type: bool
     default: "yes"
-    required: false
   device:
     description:
       - Logical volume (LV) device name or remote export device to create a NFS
         file system. It is used to create a file system on an already existing
         logical volume or the exported NFS file system.
-        If not mentioned a new logical volume name will be created following
+      - If not mentioned a new logical volume name will be created following
         AIX standards (LVM).
-    default: None
-    required: false
   fs_type:
     description:
       - Specifies the virtual file system type.
     default: jfs2
-    required: no
   permissions:
     description:
       - Set file system permissions. C(rw) (read-write) or C(ro) (read-only).
     choices: [rw, ro]
     default: rw
-    required: false
   mount_group:
     description:
       - Specifies the mount group.
-    required: false
   filesystem:
     description:
       - Specifies the mount point, which is the directory where the file system
@@ -76,34 +68,31 @@ options:
   nfs_server:
     description:
       - Specifies a Network File System (NFS) server.
-    default: None
-    required: false
   rm_mount_point:
     description:
       - Removes the mount point directory when used with state C(absent).
-    default: false
-    required: false
+    type: bool
+    default: "no"
   size:
     description:
       - Specifies the file system size.
-        For already C(present) it will be resized.
-        512-byte blocks, Megabytes or Gigabytes. If the value has M specified
+      - For already C(present) it will be resized.
+      - 512-byte blocks, Megabytes or Gigabytes. If the value has M specified
         it will be in Megabytes. If the value has G specified it will be in
         Gigabytes.
-        If no M or G the value will be 512-byte blocks.
-        If "+" is specified in begin of value, the value will be added. If "-"
+      - If no M or G the value will be 512-byte blocks.
+      - If "+" is specified in begin of value, the value will be added. If "-"
         is specified in begin of value, the value will be removed. If "+" or
         "-" is not specified, the total value will be the specified.
-        Size will respects the LVM AIX standards.
-    required: false
+      - Size will respects the LVM AIX standards.
   state:
     description:
       - Controls the file system state.
-        C(present) check if file system exists, creates or resize.
-        C(absent) removes existing file system if already C(unmounted).
-        C(mounted) checks if the file system is mounted or mount the file
+      - C(present) check if file system exists, creates or resize.
+      - C(absent) removes existing file system if already C(unmounted).
+      - C(mounted) checks if the file system is mounted or mount the file
         system.
-        C(unmounted) check if the file system is unmounted or unmount the file
+      - C(unmounted) check if the file system is unmounted or unmount the file
         system.
     choices: [present, absent, mounted, unmounted]
     default: present
@@ -111,7 +100,6 @@ options:
   vg:
     description:
       - Specifies an existing volume group (VG).
-    required: true
 notes:
   - For more C(attributes), please check "crfs" AIX manual.
 '''
@@ -122,42 +110,50 @@ EXAMPLES = '''
     device: testlv
     filesystem: /testfs
     state: present
+
 - name: Creating NFS filesystem from nfshost.
   aix_filesystem:
     device: /home/ftp
     nfs_server: nfshost
     filesystem: /home/ftp
     state: present
+
 - name: Creating a new file system without a previously logical volume.
   aix_filesystem:
     filesystem: /newfs
     size: 1G
     state: present
     vg: datavg
+
 - name: Unmounting /testfs.
   aix_filesystem:
     filesystem: /testfs
     state: unmounted
+
 - name: Resizing /mksysb to +512M.
   aix_filesystem:
     filesystem: /mksysb
     size: +512M
     state: present
+
 - name: Resizing /mksysb to 11G.
   aix_filesystem:
     filesystem: /mksysb
     size: 11G
     state: present
+
 - name: Resizing /mksysb to -2G.
   aix_filesystem:
     filesystem: /mksysb
     size: -2G
     state: present
+
 - name: Remove NFS filesystem /home/ftp.
   aix_filesystem:
     filesystem: /home/ftp
     rm_mount_point: yes
     state: absent
+
 - name: Remove /newfs.
   aix_filesystem:
     filesystem: /newfs
@@ -192,8 +188,7 @@ def _fs_exists(module, filesystem):
     :return: True or False.
     """
     lsfs_cmd = module.get_bin_path('lsfs', True)
-    rc, lsfs_out, err = module.run_command(
-        "%s -l %s" % (lsfs_cmd, filesystem))
+    rc, lsfs_out, err = module.run_command("%s -l %s" % (lsfs_cmd, filesystem))
     if rc == 1:
         if re.findall("No record matching", err):
             return False
@@ -263,8 +258,7 @@ def resize_fs(module, filesystem, size):
 
     chfs_cmd = module.get_bin_path('chfs', True)
     if not module.check_mode:
-        rc, chfs_out, err = module.run_command(
-            '%s -a size="%s" %s' % (chfs_cmd, size, filesystem))
+        rc, chfs_out, err = module.run_command('%s -a size="%s" %s' % (chfs_cmd, size, filesystem))
 
         if rc == 28:
             changed = False
@@ -353,10 +347,8 @@ def create_fs(
         # Creates a NFS file system.
         mknfsmnt_cmd = module.get_bin_path('mknfsmnt', True)
         if not module.check_mode:
-            rc, mknfsmnt_out, err = module.run_command(
-                '%s -f "%s" %s -h "%s" -t "%s" "%s" -w "bg"' % (
-                    mknfsmnt_cmd, filesystem, device, nfs_server, permissions,
-                    auto_mount))
+            rc, mknfsmnt_out, err = module.run_command('%s -f "%s" %s -h "%s" -t "%s" "%s" -w "bg"' % (
+                mknfsmnt_cmd, filesystem, device, nfs_server, permissions, auto_mount))
             if rc != 0:
                 module.fail_json(msg="Failed to run mknfsmnt.", rc=rc, err=err)
             else:
@@ -376,9 +368,7 @@ def create_fs(
         if not module.check_mode:
             rc, crfs_out, err = module.run_command(
                 "%s -v %s -m %s %s %s %s %s %s -p %s %s -a %s" % (
-                    crfs_cmd, fs_type, filesystem, vg, device, mount_group,
-                    auto_mount, account_subsystem, permissions, size,
-                    attributes))
+                    crfs_cmd, fs_type, filesystem, vg, device, mount_group, auto_mount, account_subsystem, permissions, size, attributes))
 
             if rc == 10:
                 module.exit_json(
@@ -411,8 +401,7 @@ def remove_fs(module, filesystem, rm_mount_point):
 
     rmfs_cmd = module.get_bin_path('rmfs', True)
     if not module.check_mode:
-        rc, rmfs_out, err = module.run_command(
-            "%s -r %s %s" % (rmfs_cmd, rm_mount_point, filesystem))
+        rc, rmfs_out, err = module.run_command("%s -r %s %s" % (rmfs_cmd, rm_mount_point, filesystem))
         if rc != 0:
             module.fail_json(msg="Failed to run rmfs.", rc=rc, err=err)
         else:
@@ -455,8 +444,7 @@ def unmount_fs(module, filesystem):
     unmount_cmd = module.get_bin_path('unmount', True)
 
     if not module.check_mode:
-        rc, unmount_out, err = module.run_command(
-            "%s %s" % (unmount_cmd, filesystem))
+        rc, unmount_out, err = module.run_command("%s %s" % (unmount_cmd, filesystem))
         if rc != 0:
             module.fail_json("Failed to run unmount.", rc=rc, err=err)
         else:
@@ -475,23 +463,20 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             account_subsystem=dict(type='bool', default=False),
-            attributes=dict(
-                type='list', default=['agblksize="4096"', 'isnapshot="no"']),
+            attributes=dict(type='list', default=['agblksize="4096"', 'isnapshot="no"']),
             auto_mount=dict(type='bool', default=True),
-            device=dict(type='str', default=None),
+            device=dict(type='str'),
             filesystem=dict(type='str', required=True),
-            fs_type=dict(type='str', default='jfs2', required=False),
+            fs_type=dict(type='str', default='jfs2'),
             permissions=dict(choices=['rw', 'ro'], default='rw'),
-            mount_group=dict(type='str', default=None),
-            nfs_server=dict(type='str', default=None),
+            mount_group=dict(type='str'),
+            nfs_server=dict(type='str'),
             rm_mount_point=dict(type='bool', default=False),
-            size=dict(type='str', default=None),
-            state=dict(
-                choices=['absent', 'present', 'mounted', 'unmounted'],
-                default='present'),
-            vg=dict(type='str')
+            size=dict(type='str'),
+            state=dict(choices=['absent', 'present', 'mounted', 'unmounted'], default='present'),
+            vg=dict(type='str'),
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
     )
 
     account_subsystem = module.params['account_subsystem']
@@ -508,92 +493,85 @@ def main():
     state = module.params['state']
     vg = module.params['vg']
 
+    result = dict(
+        changed=False,
+        msg='',
+        state=state
+    )
+
     if state == 'present':
-        changed = False
-        msg = ''
         fs_mounted = ismount(filesystem)
         fs_exists = _fs_exists(module, filesystem)
 
         # Check if fs is mounted or exists.
         if fs_mounted or fs_exists:
-            msg = "File system %s already exists." % filesystem
-            changed = False
+            result['msg'] = "File system %s already exists." % filesystem
+            result['changed'] = False
 
             # If parameter size was passed, resize fs.
             if size is not None:
-                changed, msg = resize_fs(module, filesystem, size)
+                result['changed'], result['msg'] = resize_fs(module, filesystem, size)
 
         # If fs doesn't exist, create it.
         else:
             # Check if fs will be a NFS device.
             if nfs_server is not None:
                 if device is None:
-                    changed = False
-                    msg = ''
-                    module.fail_json(
-                        msg='Parameter "device" is required when "nfs_server" '
-                            'is defined.')
+                    result['msg'] = 'Parameter "device" is required when "nfs_server" is defined.'
+
+                    module.fail_json(**result)
+
                 else:
                     # Create a fs from NFS export.
                     if _check_nfs_device(module, nfs_server, device):
-                        changed, msg = create_fs(
-                            module, fs_type, filesystem, vg, device, size,
-                            mount_group, auto_mount, account_subsystem,
-                            permissions, nfs_server, attributes)
+                        result['changed'], result['msg'] = create_fs(
+                            module, fs_type, filesystem, vg, device, size, mount_group, auto_mount, account_subsystem, permissions, nfs_server, attributes)
 
             if device is None:
                 if vg is None:
-                    changed = False
-                    msg = ''
-                    module.fail_json(
-                        msg='Parameter "vg" is required when a "device" is not'
-                            ' defined.')
+
+                    module.fail_json(**result)
+
                 else:
                     # Create a fs from
-                    changed, msg = create_fs(
-                        module, fs_type, filesystem, vg, device, size,
-                        mount_group, auto_mount, account_subsystem,
-                        permissions, nfs_server, attributes)
+                    result['changed'], result['msg'] = create_fs(
+                        module, fs_type, filesystem, vg, device, size, mount_group, auto_mount, account_subsystem, permissions, nfs_server, attributes)
 
             if device is not None and nfs_server is None:
                 # Create a fs from a previously lv device.
-                changed, msg = create_fs(
-                    module, fs_type, filesystem, vg, device, size, mount_group,
-                    auto_mount, account_subsystem, permissions, nfs_server,
-                    attributes)
+                result['changed'], result['msg'] = create_fs(
+                    module, fs_type, filesystem, vg, device, size, mount_group, auto_mount, account_subsystem, permissions, nfs_server, attributes)
 
     elif state == 'absent':
         if ismount(filesystem):
-            changed = False
-            msg = "File system %s mounted." % filesystem
+            result['msg'] = "File system %s mounted." % filesystem
+
         else:
             fs_status = _fs_exists(module, filesystem)
             if not fs_status:
-                changed = False
-                msg = "File system %s does not exist." % filesystem
+                result['msg'] = "File system %s does not exist." % filesystem
             else:
-                changed, msg = remove_fs(module, filesystem, rm_mount_point)
+                result['changed'], result['msg'] = remove_fs(module, filesystem, rm_mount_point)
 
     elif state == 'mounted':
         if ismount(filesystem):
-            changed = True
-            msg = "File system %s already mounted." % filesystem
+            result['changed'] = True
+            result['msg'] = "File system %s already mounted." % filesystem
         else:
-            changed, msg = mount_fs(module, filesystem)
+            result['changed'], result['msg'] = mount_fs(module, filesystem)
 
     elif state == 'unmounted':
         if not ismount(filesystem):
-            changed = False
-            msg = "File system %s already unmounted." % filesystem
+            result['changed'] = False
+            result['msg'] = "File system %s already unmounted." % filesystem
         else:
-            changed, msg = unmount_fs(module, filesystem)
+            result['changed'], result['msg'] = unmount_fs(module, filesystem)
 
     else:
-        changed = False
-        msg = ''
-        module.fail_json(msg="Unexpected state %s." % state)
+        result['msg'] = "Unexpected state %s." % state
+        module.fail_json(**result)
 
-    module.exit_json(changed=changed, msg=msg, state=state)
+    module.exit_json(**result)
 
 
 if __name__ == '__main__':
