@@ -4,12 +4,12 @@ Windows Frequently Asked Questions
 Here are some commonly asked questions in regards to Ansible and Windows and
 their answers.
 
-.. note:: These are questions around managing Windows servers with Ansible,
-    questions about Ansible itself can be found at the
-    `faq <http://docs.ansible.com/ansible/latest/faq.html>`_ page.
+.. note:: This document covers questions about managing Microsoft Windows servers with Ansible.
+    For questions about Ansible Core, please see the
+    `FAQ page <http://docs.ansible.com/ansible/latest/faq.html>`_.
 
-Does Ansible work with Windows XP and Server 2003
-`````````````````````````````````````````````````
+Does Ansible work with Windows XP and Server 2003?
+``````````````````````````````````````````````````
 Ansible does not support managing Windows XP hosts and Server 2003. The list of
 supported hosts are:
 
@@ -22,41 +22,25 @@ supported hosts are:
 * Windows 8.1
 * Windows 10
 
-There is also a requirement on the version of PowerShell that needs to be
-installed.
+Ansible also requires a specific version of PowerShell that needs to be
+installed - please see :doc:`windows_setup` for the lastest information.
 
-See :doc:`windows_setup` for more information.
-
-Can I Manage Windows Nano Server
-````````````````````````````````
-Windows Nano Server is not currently supported by Ansible right now. It does
+Can I Manage Windows Nano Server?
+`````````````````````````````````
+Windows Nano Server is not currently supported by Ansible, since it does
 not have access to the full .NET Framework that is used by the majority of the
-modules and internal components and so will fail on a lot of cases.
-
-Because it uses WinRM as a way to executing commands, it is technically
-possible to achieve but right now it isn't tested as part of the Ansible test
-suite.
+modules and internal components.
 
 Can Ansible run on Windows?
 ```````````````````````````
-No, Ansible cannot run on a Windows host and can only manage Windows hosts.
+No, Ansible cannot run on a Windows host and can only manage Windows hosts, but .
+you can run Ansible on the Windows Subsystem for Linux (WSL)
 
-.. Note:: Running Ansible from a Windows control machine directly is not a
-    goal of the project. Refrain from asking for this feature, as it limits
-    what technologies, features, and code we can use in the main project in the
-    future.
+.. note:: The Windows Subsystem for Linux is not supported by Microsoft or
+    Ansible and should not be used for production systems. 
 
-While not supported by either Ansible or Microsoft, a popular option for
-developers is to install Ansible with the Windows Subsystem for Linux (WSL).
-WSL is a tool primarily for developers and it allows a Windows host to run
-applications in a Linux environment.
-
-.. Note:: The Windows Subsystem for Linux is not supported by Microsoft or
-    Ansible and should not be used for production systems. It is primarily
-    designed for development purposes.
-
-Once WSL is installed and running, to install Ansible the following commands
-can be run in the bash terminal.
+To install Ansible on WSl, the following commands
+can be run in the bash terminal:
 
 .. code-block:: shell
 
@@ -64,7 +48,7 @@ can be run in the bash terminal.
     sudo apt-get install python-pyp git libffi-dev libssl-dev -y
     pip install ansible pywinrm
 
-To run Ansible from source instead of a release, simply uninstall the pip
+To run Ansible from source instead of a release on the WSL, simply uninstall the pip
 installed version and then clone the git repo.
 
 .. code-block:: shell
@@ -76,23 +60,19 @@ installed version and then clone the git repo.
     # to enable Ansible on login, run the following
     echo ". ~/ansible/hacking/env-setup -q' >> ~/.bashrc
 
-Can I use SSH keys to Authenticate?
+Can I use SSH keys to authenticate?
 ```````````````````````````````````
-Windows uses WinRM as the transport protocol which supports a wide range of
+Windows uses WinRM as the transport protocol. WinRM supports a wide range of
 authentication options. The closet option to SSH keys is to use the certificate
-authentication option which is when an X509 certificate is mapped to a local
-user.
+authentication option which maps an X509 certificate to a local user.
 
 The way that these certificates are generated and mapped to a user is different
-from the SSH implementation so please read the documentation about this to set
-it up correctly.
+from the SSH implementation; consult the :doc:`windows_winrm` documentation for 
+more information.
 
-See section about certificate authentication in :doc:`windows_winrm` for more
-info on how to set this up.
-
-I can run this command locally but it does not work under Ansible?
-``````````````````````````````````````````````````````````````````
-Ansible executes commands through WinRM and these processes are different from
+Why can run a command locally but it does not work under Ansible?
+`````````````````````````````````````````````````````````````````
+Ansible executes commands through WinRM. These processes are different from
 running a command locally in these ways:
 
 * Unless using an authentication option like CredSSP or Kerberos with
@@ -100,27 +80,28 @@ running a command locally in these ways:
   delegate the user's credentials to a network resource causing access is
   denied errors.
 
-* Each process over WinRM is run in an non-interactive process, any
+* Each process over WinRM is run in an non-interactive process. Any
   applications that rely on having an interactive session will not work.
 
 * When running through WinRM, Windows restricts access to internal Windows
-  API's like the Windows Update API and DPAPI which some installers and
+  APIs like the Windows Update API and DPAPI, which some installers and
   programs rely on.
 
 Some ways to bypass these restrictions are to:
 
-* Use ``become`` which runs a command as it would when run locally. This will
-  bypass all WinRM restrictions as Windows is unaware the process is running
-  under WinRM when become is used.
+* Use ``become``, which runs a command as it would when run locally. This will
+  bypass all WinRM restrictions because Windows is unaware the process is running
+  under WinRM when ``become`` is used. See the :doc:`become` documentation for more 
+  information.
 
 * Use a scheduled task, which can be created with ``win_scheduled_task``. Like
-  become it will bypass all WinRM restrictions but it can only be used to run
-  commands and not modules.
+  ``become``, it will bypass all WinRM restrictions, but it can only be used to run
+  commands, not modules.
 
 * Use ``win_psexec`` to run a command on the host. PSExec does not use WinRM
   and so will bypass any of the restrictions.
 
-* To access network resources without any of the workarounds above, an
+* To access network resources without any of these workarounds, an
   authentication option that supports credential delegation can be used. Both
   CredSSP and Kerberos with credential delegation enabled can support this.
 
@@ -129,20 +110,19 @@ See :doc:`become` more info on how to use become. The limitations section at
 
 This program won't install with Ansible
 ```````````````````````````````````````
-See `above question <http://docs.ansible.com/ansible/latest/windows_faq.html#i-can-run-this-command-locally-but-it-does-not-work-under-ansible>`_
-for more information around the limitations with WinRM.
+See `the question <http://docs.ansible.com/ansible/latest/windows_faq.html#i-can-run-this-command-locally-but-it-does-not-work-under-ansible>`_ for more information about WinRM limitations.
 
 What modules are available?
 ```````````````````````````
-Most of the Ansible modules in core Ansible are written for a combination of
+Most of the Ansible modules in Ansible Core are written for a combination of
 Linux/Unix machines and arbitrary web services. These modules are written in
-Python and do not work on Windows for various reasons.
+Python and most of them do not work on Windows.
 
 Because of this, there are dedicated Windows modules that are written in
-PowerShell and are meant to be run on Windows hosts which can be found
-`here <http://docs.ansible.com/list_of_windows_modules.html>`_.
+PowerShell and are meant to be run on Windows hosts. A list of this modules
+can be found `here <http://docs.ansible.com/list_of_windows_modules.html>`_.
 
-In addition, the following core modules/action-plugins work with Windows
+In addition, the following Ansible Core modules/action-plugins work with Windows:
 
 * add_host
 * assert
@@ -167,11 +147,11 @@ In addition, the following core modules/action-plugins work with Windows
 
 Can I run Python modules?
 `````````````````````````
-No, the WinRM connection protocol is set to use PowerShell modules and Python
+No, the WinRM connection protocol is set to use PowerShell modules, so Python
 modules will not work. A way to bypass this issue to use
 ``delegate_to: localhost`` to run a Python module on the Ansible controller.
 This is useful if during a playbook, an external service needs to be contacted
-and there is no module available for Windows to do so.
+and there is no equivalent Windows module available.
 
 Can I connect over SSH?
 ```````````````````````
@@ -184,8 +164,8 @@ developed within Ansible yet.
 There are future plans on adding this feature and this page will be updated
 once more information can be shared.
 
-Failed to connect to the host via ssh
-`````````````````````````````````````
+Why is connecting to the host via ssh failing?
+``````````````````````````````````````````````
 When trying to connect to a Windows host and the output error indicates that
 SSH was used, then this is an indication that the connection vars are not set
 properly or the host is not inheriting them correctly.
@@ -193,22 +173,22 @@ properly or the host is not inheriting them correctly.
 Make sure ``ansible_connection: winrm`` is set in the inventory for the Windows
 host.
 
-My Credentials are being Rejected
-`````````````````````````````````
+Why are my credentials are being rejected?
+``````````````````````````````````````````
 This can be due to a myriad of reasons unrelated to incorrect credentials.
 
 See HTTP 401/Credentials Rejected at :doc:`windows_setup` for a more detailed
 guide of this could mean.
 
-I am getting an error SSL CERTIFICATE_VERIFY_FAILED
-```````````````````````````````````````````````````
-When the Ansible controller is running on Python 2.7.9+ or an older Python that
-has backported SSLContext, e.g. Python 2.7.5 on RHEL 7, it will attempt to
-validate the certificate WinRM is using for a HTTPS connection. If the
-certificate cannot be validated, in the case of a self signed cert, it will
+Why am I getting an error SSL CERTIFICATE_VERIFY_FAILED?
+````````````````````````````````````````````````````````
+When the Ansible controller is running on Python 2.7.9+ or an older version of Python that
+has backported SSLContext (like Python 2.7.5 on RHEL 7), the controller will attempt to
+validate the certificate WinRM is using for an HTTPS connection. If the
+certificate cannot be validated (such as in the case of a self signed cert), it will
 fail the verification process.
 
-To ignore certificate validation add
+To ignore certificate validation, add
 ``ansible_winrm_server_cert_validation: ignore`` to inventory for the Windows
 host.
 
