@@ -2,19 +2,11 @@
 # coding: utf-8 -*-
 
 # Copyright (c) 2015, Jesse Keating <jlk@derpops.bike>
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -84,7 +76,6 @@ EXAMPLES = '''
 
 try:
     import shade
-    from shade import meta
     HAS_SHADE = True
 except ImportError:
     HAS_SHADE = False
@@ -97,13 +88,14 @@ _action_map = {'stop': 'SHUTOFF',
                'start': 'ACTIVE',
                'pause': 'PAUSED',
                'unpause': 'ACTIVE',
-               'lock': 'ACTIVE', # API doesn't show lock/unlock status
+               'lock': 'ACTIVE',  # API doesn't show lock/unlock status
                'unlock': 'ACTIVE',
                'suspend': 'SUSPENDED',
                'resume': 'ACTIVE',
                'rebuild': 'ACTIVE'}
 
 _admin_actions = ['pause', 'unpause', 'suspend', 'resume', 'lock', 'unlock']
+
 
 def _wait(timeout, cloud, server, action, module):
     """Wait for the server to reach the desired state for the given action."""
@@ -122,11 +114,13 @@ def _wait(timeout, cloud, server, action, module):
         if server.status == 'ERROR':
             module.fail_json(msg="Server reached ERROR state while attempting to %s" % action)
 
+
 def _system_state_change(action, status):
     """Check if system state would change."""
     if status == _action_map[action]:
         return False
     return True
+
 
 def main():
     argument_spec = openstack_full_argument_spec(
