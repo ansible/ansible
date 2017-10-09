@@ -1,5 +1,4 @@
 lib/ansible/modules/cloud/amazon/cloudtrail.py
-lib/ansible/modules/cloud/amazon/ec2_vpc_igw.py
 lib/ansible/modules/cloud/amazon/ec2_vpc_route_table.py
 lib/ansible/modules/cloud/amazon/ec2_win_password.py
 lib/ansible/modules/cloud/amazon/s3_sync.py
