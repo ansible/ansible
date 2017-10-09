@@ -118,11 +118,11 @@ def preflight_validation(module, bin_path, project_path, variables_file=None, pl
         module.fail_json(msg="Failed to validate Terraform configuration files:\r\n{0}".format(err))
 
 
-def _state_args(state_file):
+def _state_args(fail, state_file):
     if state_file and os.path.exists(state_file):
         return ['-state', state_file]
     if state_file and not os.path.exists(state_file):
-        module.fail_json(msg='Could not find state_file "{}", check the path and try again.'.format(state_file))
+        fail(msg='Could not find state_file "{}", check the path and try again.'.format(state_file))
     return []
 
 
@@ -130,7 +130,7 @@ def build_plan(module, bin_path, project_path, variables_args, state_file):
     _, plan_path = tempfile.mkstemp(suffix='.tfplan')
 
     command = [bin_path, 'plan', '-no-color', '-detailed-exitcode', '-out', plan_path]
-    command.extend(_state_args(state_file))
+    command.extend(_state_args(module.fail_json, state_file))
 
     rc, out, err = module.run_command(command + variables_args, cwd=project_path)
 
@@ -156,7 +156,6 @@ def main():
             variables=dict(type='dict'),
             variables_file=dict(type='path'),
             plan_file=dict(type='path'),
-            # TODO: implement statefile support
             state_file=dict(type='path'),
         ),
         supports_check_mode=True,
@@ -207,7 +206,7 @@ def main():
         changed = False
         out, err = '', ''
 
-    outputs_command = [command[0], 'output', '-no-color', '-json'] + _state_args(state_file)
+    outputs_command = [command[0], 'output', '-no-color', '-json'] + _state_args(module.fail_json, state_file)
     rc, outputs_text, outputs_err = module.run_command(outputs_command, cwd=project_path)
     if rc != 0:
         module.fail_json(msg="Failure when getting Terraform outputs. Exited {}.\nstdout: {}\nstderr: {}".format(rc, outputs_text, outputs_err), command=' '.join(outputs_command))
