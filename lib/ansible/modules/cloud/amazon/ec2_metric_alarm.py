@@ -1,18 +1,10 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
@@ -149,11 +141,14 @@ EXAMPLES = '''
 
 try:
     import boto.ec2.cloudwatch
-    from boto.ec2.cloudwatch import CloudWatchConnection, MetricAlarm
-    from boto.exception import BotoServerError
-    HAS_BOTO = True
+    from boto.ec2.cloudwatch import MetricAlarm
+    from boto.exception import BotoServerError, NoAuthHandlerFound
 except ImportError:
-    HAS_BOTO = False
+    pass  # Taken care of by ec2.HAS_BOTO
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import (AnsibleAWSError, HAS_BOTO, connect_to_aws, ec2_argument_spec,
+                                      get_aws_connection_info)
 
 
 def create_metric_alarm(connection, module):
@@ -309,7 +304,7 @@ def main():
     if region:
         try:
             connection = connect_to_aws(boto.ec2.cloudwatch, region, **aws_connect_params)
-        except (boto.exception.NoAuthHandlerFound, AnsibleAWSError) as e:
+        except (NoAuthHandlerFound, AnsibleAWSError) as e:
             module.fail_json(msg=str(e))
     else:
         module.fail_json(msg="region must be specified")
@@ -319,9 +314,6 @@ def main():
     elif state == 'absent':
         delete_metric_alarm(connection, module)
 
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

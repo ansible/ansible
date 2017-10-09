@@ -1,18 +1,10 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
@@ -162,15 +154,18 @@ task:
 '''
 
 import json
-import itertools
-import sys
+import traceback
+
 try:
-    import boto
+    import boto.exception
     import boto.iam
-    import boto.ec2
-    HAS_BOTO = True
+    import boto.iam.connection
 except ImportError:
-    HAS_BOTO = False
+    pass  # Taken care of by ec2.HAS_BOTO
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import (HAS_BOTO, boto_exception, connect_to_aws, ec2_argument_spec,
+                                      get_aws_connection_info)
 
 
 def _paginate(func, attr):
@@ -459,7 +454,6 @@ new_name=None):
                     error_msg = boto_exception(err)
                     if ('The group with name %s cannot be found.' % group) in error_msg:
                         module.fail_json(changed=False, msg="Group %s doesn't exist" % group)
-
 
     if len(remove_groups) > 0 or len(new_groups) > 0:
         changed = True
@@ -847,8 +841,6 @@ def main():
         module.exit_json(changed=changed, roles=role_list, role_result=role_result,
             instance_profile_result=instance_profile_result)
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()
