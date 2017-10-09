@@ -1096,7 +1096,6 @@ files:
     labels: docs_pull_request
     notify: dharmabumstead
   packaging/:
-    # 'packaging' automatically added to labels
   test/:
     # 'test' is a component path, then 'test' label will be automatically added
 macros:
