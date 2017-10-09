@@ -14,11 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
-import time
+import os.path
 import unittest
 
-from ansible.module_utils.basic import *
 from ansible.modules.network.cumulus import nclu
 
 
