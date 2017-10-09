@@ -128,7 +128,7 @@ Although there are many ways to supply credentials in Ansible in this case we ar
 ansible_connection
 ^^^^^^^^^^^^^^^^^^
 
-* FIXME: ``ansible_connection=local``
+Setting ``ansible_connection=local`` informs Ansible to execute the module on the controlling machine (i.e. the one executing Ansible). Without this Ansible would attempt to ssh onto the remote 
 
 
 Playbook
@@ -168,17 +168,15 @@ See also
 Fixme
 =====
 
-* Highlight the command to run in the console section - Look at Sphix documentatiom
+* Highlight the command to run in the console section - Look at Sphix documentation
 * Agreed: Hello world https://github.com/Dell-Networking/ansible-dellos-examples/blob/master/getfacts_os10.yaml
 
 * Add filename to code-blocks
 
 * Other examples
 
-  * https://pynet.twb-tech.com/blog/ansible/ansible-network-backup.html
-  * https://pynet.twb-tech.com/blog/automation/cisco-ios.html
 
-  * Using ``ansible_ssh_pass`` will not work for REST transports such as ``eapi``, ``nxapi`` - What do we here?
+* Using ``ansible_ssh_pass`` will not work for REST transports such as ``eapi``, ``nxapi`` - What do we here?
 
 
 
