@@ -44,7 +44,10 @@ For advanced usage see the online help::
 
    ansible-test units --help
 
-You can also run tests in Ansible's continuous integration system by opening a pull request which will run the full test suite 
+You can also run tests in Ansible's continuous integration system by opening a pull
+request.  This will automatically determine which tests to run based on the changes made
+in your pull request.
+
 
 Installing dependencies
 =======================

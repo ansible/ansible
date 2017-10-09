@@ -46,12 +46,13 @@ Code Coverage
 =============
 
 Code coverage reports make it easy to identify untested code for which more tests should
-be written.  Online reports are available but only cover the main ansible branches (see
+be written.  Online reports are available but only cover the ``devel`` branch (see
 :doc:`testing`).  For new code local reports are needed.
 
-Add the ``--coverage`` option to any test command to collect code coverage data.  You may
-have to use ``--tox`` and ``--requirements`` option to ensure that the coverage module is
-available
+Add the ``--coverage`` option to any test command to collect code coverage data.  If you
+aren't using the ``--tox`` or ``--docker`` options which create an isolated python
+environment then you may have to use the ``--requirements`` option to ensure that the
+correct version of the coverage module is installed
 
    ansible-test units --coverage apt
    ansible-test integration --coverage aws_lambda --tox --requirements

@@ -196,10 +196,11 @@ through the reports to find files which have no tests at all.  Adding both integ
 tests which show clearly how code should work, which verify important Ansible functions and which
 increase coverage in areas where there is none is a valuable way to help improve Ansible.
 
-The code coverage reports only cover the main branches of Ansible.  Pull requests and new code will
-be missing from the codecov.io coverage reports so local reporting is needed.  Most
-``ansible-test`` commands allow you to collect code coverage, this is particularly useful when to
-indicate where to extend testing. See :doc:`testing_running_locally` for more information. 
+The code coverage reports only cover the ``devel`` branch of Ansible where new feature
+development takes place.  Pull requests and new code will be missing from the codecov.io
+coverage reports so local reporting is needed.  Most ``ansible-test`` commands allow you
+to collect code coverage, this is particularly useful to indicate where to extend
+testing. See :doc:`testing_running_locally` for more information.
 
 
 Want to know more about testing?
