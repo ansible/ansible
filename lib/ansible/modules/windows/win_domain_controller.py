@@ -48,6 +48,12 @@ options:
   local_admin_password:
     description:
       - password to be assigned to the local C(Administrator) user (required when C(state) is C(member_server))
+  read_only:
+    description:
+      - optional variable, is set to true, the domain controller will be promoted as a read only replica (default is False). 
+  sitecode:
+    description:
+      - active directory site where the read only domain controller should be deployed, this option is required if read_only is set to true.
   state:
     description:
       - whether the target host should be a domain controller or a member server
@@ -79,6 +85,21 @@ EXAMPLES = r'''
       safe_mode_password: password123!
       state: domain_controller
       log_path: c:\ansible_win_domain_controller.txt
+
+# ensure a server is a read-only domain controller, if read_only is set to True, the sitecode variable is required.
+# if the read_only variable is not set it will default to false.
+- hosts: winclient
+  gather_facts: no
+  tasks:
+  - win_domain_controller:
+      dns_domain_name: ansible.vagrant
+      domain_admin_user: testguy@ansible.vagrant
+      domain_admin_password: password123!
+      safe_mode_password: password123!
+      state: domain_controller
+      log_path: c:\ansible_win_domain_controller.txt
+      read_only: True
+      sitecode: "london"
 
 # ensure a server is not a domain controller
 # note that without an action wrapper, in the case where a DC is demoted,

@@ -39,25 +39,25 @@ Function Write-DebugLog {
 
     Write-Debug $msg
 
-    if($log_path) {
+    if ($log_path) {
         Add-Content $log_path $msg
     }
 }
 
-$required_features = @("AD-Domain-Services","RSAT-ADDS")
+$required_features = @("AD-Domain-Services", "RSAT-ADDS")
 
 Function Get-MissingFeatures {
     Write-DebugLog "Checking for missing Windows features..."
 
     $features = @(Get-WindowsFeature $required_features)
 
-    If($features.Count -ne $required_features.Count) {
+    If ($features.Count -ne $required_features.Count) {
         Throw "One or more Windows features required for a domain controller are unavailable"
     }
 
     $missing_features = @($features | Where-Object InstallState -ne Installed)
     
-    return ,$missing_features # no, the comma's not a typo- allows us to return an empty array
+    return , $missing_features # no, the comma's not a typo- allows us to return an empty array
 }
 
 Function Ensure-FeatureInstallation {
@@ -66,7 +66,7 @@ Function Ensure-FeatureInstallation {
     Write-DebugLog "Ensuring required Windows features are installed..." 
     $feature_result = Install-WindowsFeature $required_features
 
-    If(-not $feature_result.Success) {
+    If (-not $feature_result.Success) {
         Exit-Json -message ("Error installing AD-Domain-Services and RSAT-ADDS features: {0}" -f ($feature_result | Out-String))
     }
 }
@@ -77,11 +77,11 @@ Function Get-DomainControllerDomain {
 
     $sys_cim = Get-WmiObject Win32_ComputerSystem
 
-    $is_dc = $sys_cim.DomainRole -in (4,5) # backup/primary DC
+    $is_dc = $sys_cim.DomainRole -in (4, 5) # backup/primary DC
     # this will be our workgroup or joined-domain if we're not a DC
     $domain = $sys_cim.Domain
 
-    Switch($is_dc) {
+    Switch ($is_dc) {
         $true { return $domain }
         Default { return $null }
     }
@@ -101,21 +101,27 @@ Function Create-Credential {
 Function Get-OperationMasterRoles {
     $assigned_roles = @((Get-ADDomainController -Server localhost).OperationMasterRoles)
 
-    Return ,$assigned_roles # no, the comma's not a typo- allows us to return an empty array
+    Return , $assigned_roles # no, the comma's not a typo- allows us to return an empty array
 }
 
 $result = @{
-    changed = $false
+    changed         = $false
     reboot_required = $false
 }
 
 $param = Parse-Args -arguments $args -supports_check_mode $true
 
 $dns_domain_name = Get-AnsibleParam $param "dns_domain_name"
-$safe_mode_password= Get-AnsibleParam $param "safe_mode_password"
+$safe_mode_password = Get-AnsibleParam $param "safe_mode_password"
 $domain_admin_user = Get-AnsibleParam $param "domain_admin_user" -failifempty $result
-$domain_admin_password= Get-AnsibleParam $param "domain_admin_password" -failifempty $result
-$local_admin_password= Get-AnsibleParam $param "local_admin_password"
+$domain_admin_password = Get-AnsibleParam $param "domain_admin_password" -failifempty $result
+$local_admin_password = Get-AnsibleParam $param "local_admin_password"
+
+$dc_type = Get-AnsibleParam $param "read_only" -default $false
+$site = "none"
+if (!$dc_type) {
+    $site = Get-AnsibleParam $param "sitecode" -failifempty $result
+}
 
 $state = Get-AnsibleParam $param "state" -validateset ("domain_controller", "member_server") -failifempty $result
 $log_path = Get-AnsibleParam $param "log_path"
@@ -125,27 +131,28 @@ $global:log_path = $log_path
 
 Try {
     # ensure target OS support; < 2012 doesn't have cmdlet support for DC promotion
-    If(-not (Get-Command Install-WindowsFeature -ErrorAction SilentlyContinue)) {
+    If (-not (Get-Command Install-WindowsFeature -ErrorAction SilentlyContinue)) {
         Fail-Json -message "win_domain_controller requires at least Windows Server 2012"
     }
 
     # validate args
-    If($state -eq "domain_controller") {
-        If(-not $dns_domain_name) {
+    If ($state -eq "domain_controller") {
+        If (-not $dns_domain_name) {
             Fail-Json -message "dns_domain_name is required when desired state is 'domain_controller'"
         }
 
-        If(-not $safe_mode_password) {
+        If (-not $safe_mode_password) {
             Fail-Json -message "safe_mode_password is required when desired state is 'domain_controller'"
         }
 
         # ensure that domain admin user is in UPN or down-level domain format (prevent hang from https://support.microsoft.com/en-us/kb/2737935)
-        If(-not $domain_admin_user.Contains("\") -and -not $domain_admin_user.Contains("@")) {
+        If (-not $domain_admin_user.Contains("\") -and -not $domain_admin_user.Contains("@")) {
             Fail-Json -message "domain_admin_user must be in domain\user or user@domain.com format"
         }
     }
-    Else { # member_server
-        If(-not $local_admin_password) {
+    Else {
+        # member_server
+        If (-not $local_admin_password) {
             Fail-Json -message "local_admin_password is required when desired state is 'member_server'"
         }
     }
@@ -154,7 +161,7 @@ Try {
 
     $current_dc_domain = Get-DomainControllerDomain
 
-    If($state -eq "member_server" -and -not $current_dc_domain) {
+    If ($state -eq "member_server" -and -not $current_dc_domain) {
         Exit-Json $result
     }
 
@@ -162,10 +169,10 @@ Try {
 
     $missing_features = Get-MissingFeatures
 
-    If($missing_features.Count -gt 0) {
+    If ($missing_features.Count -gt 0) {
         Write-DebugLog ("Missing Windows features ({0}), need to install" -f ($missing_features -join ", "))
         $result.changed = $true # we need to install features
-        If($_ansible_check_mode) {
+        If ($_ansible_check_mode) {
             # bail out here- we can't proceed without knowing the features are installed
             Write-DebugLog "check-mode, exiting early"
             Exit-Json $result
@@ -176,25 +183,25 @@ Try {
 
     $domain_admin_cred = Create-Credential -cred_user $domain_admin_user -cred_password $domain_admin_password
 
-    switch($state) {
+    switch ($state) {
         domain_controller {
-            If(-not $safe_mode_password) {
+            If (-not $safe_mode_password) {
                 Fail-Json -message "safe_mode_password is required for state=domain_controller"
             }
 
-            If($current_dc_domain) {
+            If ($current_dc_domain) {
                 # FUTURE: implement managed Remove/Add to change domains?
 
-                If($current_dc_domain -ne $dns_domain_name) {
+                If ($current_dc_domain -ne $dns_domain_name) {
                     Fail-Json "$(hostname) is a domain controller for domain $current_dc_domain; changing DC domains is not implemented"
                 }
             }
 
             # need to promote to DC
-            If(-not $current_dc_domain) {
+            If (-not $current_dc_domain) {
                 Write-DebugLog "Not currently a domain controller; needs promotion"
                 $result.changed = $true
-                If($_ansible_check_mode) {
+                If ($_ansible_check_mode) {
                     Write-DebugLog "check-mode, exiting early"
                     Fail-Json -message $result
                 }
@@ -204,13 +211,19 @@ Try {
                 $safe_mode_secure = $safe_mode_password | ConvertTo-SecureString -AsPlainText -Force
                 Write-DebugLog "Installing domain controller..."
 
-                $install_result = Install-ADDSDomainController -NoRebootOnCompletion -DomainName $dns_domain_name -Credential $domain_admin_cred -SafeModeAdministratorPassword $safe_mode_secure -Force
+                if ($type) {
+                    $install_result = Install-ADDSDomainController -NoRebootOnCompletion -DomainName $dns_domain_name -Credential $domain_admin_cred -SafeModeAdministratorPassword $safe_mode_secure -ReadOnlyReplica:$true -SiteName $site -Force		
+                }
+                else {
+                    $install_result = Install-ADDSDomainController -NoRebootOnCompletion -DomainName $dns_domain_name -Credential $domain_admin_cred -SafeModeAdministratorPassword $safe_mode_secure
+                }
+
 
                 Write-DebugLog "Installation completed, needs reboot..."
             }
         }
         member_server {
-            If(-not $local_admin_password) {
+            If (-not $local_admin_password) {
                 Fail-Json -message "local_admin_password is required for state=domain_controller"
             }
             # at this point we already know we're a DC and shouldn't be...
@@ -222,11 +235,11 @@ Try {
             $assigned_roles = Get-OperationMasterRoles
 
             # FUTURE: figure out a sane way to hand off roles automatically (designated recipient server, randomly look one up?)
-            If($assigned_roles.Count -gt 0) {
+            If ($assigned_roles.Count -gt 0) {
                 Fail-Json -message ("This domain controller has operation master role(s) ({0}) assigned; they must be moved to other DCs before demotion (see Move-ADDirectoryServerOperationMasterRole)" -f ($assigned_roles -join ", "))
             }
 
-            If($_ansible_check_mode) {
+            If ($_ansible_check_mode) {
                 Write-DebugLog "check-mode, exiting early"
                 Exit-Json $result
             }
@@ -251,5 +264,3 @@ Catch {
 
     Throw
 }
-
-
