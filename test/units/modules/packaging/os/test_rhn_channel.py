@@ -7,8 +7,8 @@ from ansible.module_utils.six.moves import xmlrpc_client
 from ansible.module_utils._text import to_bytes
 from ansible.modules.packaging.os import rhn_channel
 
-from .rhn_utils import (set_module_args, AnsibleExitJson, AnsibleFailJson,
-                        exit_json, fail_json, get_method_name, mock_request)
+from ..utils import (set_module_args, AnsibleExitJson, AnsibleFailJson,
+                     exit_json, fail_json, get_method_name, mock_request)
 
 
 class TestRhnChannel(unittest.TestCase):

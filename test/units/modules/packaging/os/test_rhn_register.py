@@ -7,8 +7,8 @@ from ansible.module_utils._text import to_native
 from ansible.module_utils.six.moves import xmlrpc_client
 from ansible.modules.packaging.os import rhn_register
 
-from .rhn_utils import (set_module_args, AnsibleExitJson, AnsibleFailJson,
-                        exit_json, fail_json, get_method_name, mock_request)
+from ..utils import (set_module_args, AnsibleExitJson, AnsibleFailJson,
+                     exit_json, fail_json, get_method_name, mock_request)
 
 
 SYSTEMID = """<?xml version="1.0"?>
