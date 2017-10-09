@@ -13,7 +13,24 @@ Gather facts
 Objective
 ---------
 
-I want to connect to a remote network device, download it's configuration and write it to a file
+I want to connect to a remote network device, download it's configuration and write it to a file.
+
+Prerequisites
+-------------
+
+* Ansible 2.3 (or higher) installed FIXMELINK
+* One or more network device compatible:
+
+  * Arista
+  * Cisco: ios, iosxr, nxos
+  * FIXME
+
+Audience
+--------
+
+* Basic Linux (comfortable on the command line)
+* Basic Network switch & router configuration knowledge (FIXME examples)
+
 
 Solution
 --------
@@ -128,7 +145,7 @@ Although there are many ways to supply credentials in Ansible in this case we ar
 ansible_connection
 ^^^^^^^^^^^^^^^^^^
 
-Setting ``ansible_connection=local`` informs Ansible to execute the module on the controlling machine (i.e. the one executing Ansible). Without this Ansible would attempt to ssh onto the remote 
+Setting ``ansible_connection=local`` informs Ansible to execute the module on the controlling machine (i.e. the one executing Ansible). Without this Ansible would attempt to ssh onto the remote
 
 
 Playbook
