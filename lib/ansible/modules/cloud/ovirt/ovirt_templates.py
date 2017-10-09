@@ -293,7 +293,7 @@ def main():
             ret = templates_module.action(
                 entity=template,
                 action='export',
-                action_condition=lambda t: export_template is None,
+                action_condition=lambda t: export_template is None or module.params['exclusive'],
                 wait_condition=lambda t: t is not None,
                 post_action=templates_module.post_export_action,
                 storage_domain=otypes.StorageDomain(id=export_service.get().id),
