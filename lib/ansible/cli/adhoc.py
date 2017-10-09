@@ -138,7 +138,7 @@ class AdHocCLI(CLI):
             raise AnsibleOptionsError(err)
 
         # Avoid modules that don't work with ad-hoc
-        if self.options.module_name in ('include', 'include_role'):
+        if self.options.module_name.startswith(('include', 'import_')):
             raise AnsibleOptionsError("'%s' is not a valid action for ad-hoc commands" % self.options.module_name)
 
         play_ds = self._play_ds(pattern, self.options.seconds, self.options.poll_interval)
