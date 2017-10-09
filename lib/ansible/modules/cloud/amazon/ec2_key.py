@@ -111,6 +111,25 @@ EXAMPLES = '''
     state: absent
 '''
 
+RETURN = '''
+key.fingerprint:
+    description: ssh public key fingerprint
+    returned: success
+    type: string
+    sample: "4a:ad:48:35:25:ef:38:08:8e:b1:77:61:ca:cf:df:65:4b:ce:39:62"
+key.name:
+    description: key name
+    returned: success
+    type: string
+    sample: mykey
+key.private_key:
+    description: generated ssh private key
+    returned: changed
+    type: string
+    sample: "-----BEGIN RSA PRIVATE KEY-----\nMIIEow...(many characters)...OAU\n-----END RSA PRIVATE KEY-----"
+'''
+
+
 try:
     import boto.ec2
     HAS_BOTO = True
