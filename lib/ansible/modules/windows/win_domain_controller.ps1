@@ -117,11 +117,12 @@ $domain_admin_user = Get-AnsibleParam $param "domain_admin_user" -failifempty $r
 $domain_admin_password = Get-AnsibleParam $param "domain_admin_password" -failifempty $result
 $local_admin_password = Get-AnsibleParam $param "local_admin_password"
 
-$dc_type = Get-AnsibleParam $param "read_only" -default $false
+$dc_type = Get-AnsibleParam $param "read_only" -type "bool" -default $false
 $site = "none"
-if (!$dc_type) {
+if ($dc_type) {
     $site = Get-AnsibleParam $param "sitecode" -failifempty $result
 }
+
 
 $state = Get-AnsibleParam $param "state" -validateset ("domain_controller", "member_server") -failifempty $result
 $log_path = Get-AnsibleParam $param "log_path"
@@ -217,7 +218,7 @@ Try {
                 else {
                     $install_result = Install-ADDSDomainController -NoRebootOnCompletion -DomainName $dns_domain_name -Credential $domain_admin_cred -SafeModeAdministratorPassword $safe_mode_secure -Force
                 }
-
+  
 
                 Write-DebugLog "Installation completed, needs reboot..."
             }
