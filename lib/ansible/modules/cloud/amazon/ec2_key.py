@@ -1,19 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
@@ -110,16 +102,13 @@ EXAMPLES = '''
     name: example
     state: absent
 '''
-
-try:
-    import boto.ec2
-    HAS_BOTO = True
-except ImportError:
-    HAS_BOTO = False
-
-from ansible.module_utils._text import to_bytes
 import random
 import string
+import time
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import HAS_BOTO, ec2_argument_spec, ec2_connect
+from ansible.module_utils._text import to_bytes
 
 
 def main():
@@ -127,10 +116,10 @@ def main():
     argument_spec.update(dict(
         name=dict(required=True),
         key_material=dict(required=False),
-        force = dict(required=False, type='bool', default=True),
-        state = dict(default='present', choices=['present', 'absent']),
-        wait = dict(type='bool', default=False),
-        wait_timeout = dict(default=300),
+        force=dict(required=False, type='bool', default=True),
+        state=dict(default='present', choices=['present', 'absent']),
+        wait=dict(type='bool', default=False),
+        wait_timeout=dict(default=300),
     )
     )
     module = AnsibleModule(
@@ -191,7 +180,7 @@ def main():
                 # find an unused name
                 test = 'empty'
                 while test:
-                    randomchars = [random.choice(string.ascii_letters + string.digits) for x in range(0,10)]
+                    randomchars = [random.choice(string.ascii_letters + string.digits) for x in range(0, 10)]
                     tmpkeyname = "ansible-" + ''.join(randomchars)
                     test = ec2.get_key_pair(tmpkeyname)
 
@@ -259,9 +248,6 @@ def main():
     else:
         module.exit_json(changed=changed, key=None)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

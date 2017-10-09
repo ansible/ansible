@@ -17,9 +17,7 @@ lib/ansible/modules/cloud/amazon/cloudfront_facts.py
 lib/ansible/modules/cloud/amazon/dynamodb_table.py
 lib/ansible/modules/cloud/amazon/ec2_ami_copy.py
 lib/ansible/modules/cloud/amazon/ec2_ami_find.py
-lib/ansible/modules/cloud/amazon/ec2_eip.py
 lib/ansible/modules/cloud/amazon/ec2_eni_facts.py
-lib/ansible/modules/cloud/amazon/ec2_key.py
 lib/ansible/modules/cloud/amazon/ec2_lc_facts.py
 lib/ansible/modules/cloud/amazon/ec2_metric_alarm.py
 lib/ansible/modules/cloud/amazon/ec2_scaling_policy.py
@@ -41,7 +39,6 @@ lib/ansible/modules/cloud/amazon/ecs_service.py
 lib/ansible/modules/cloud/amazon/ecs_service_facts.py
 lib/ansible/modules/cloud/amazon/ecs_task.py
 lib/ansible/modules/cloud/amazon/ecs_taskdefinition.py
-lib/ansible/modules/cloud/amazon/efs.py
 lib/ansible/modules/cloud/amazon/elasticache_subnet_group.py
 lib/ansible/modules/cloud/amazon/elb_instance.py
 lib/ansible/modules/cloud/amazon/elb_classic_lb.py
