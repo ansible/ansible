@@ -288,7 +288,7 @@ def create_or_update_role(connection, module):
     role = get_role(connection, module, params['RoleName'])
 
     role['attached_policies'] = get_attached_policy_list(connection, module, params['RoleName'])
-    module.exit_json(changed=changed, **camel_dict_to_snake_dict(role))
+    module.exit_json(changed=changed, role=camel_dict_to_snake_dict(role), **camel_dict_to_snake_dict(role))
 
 
 def destroy_role(connection, module):
