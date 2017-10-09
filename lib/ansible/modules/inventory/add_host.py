@@ -35,8 +35,10 @@ options:
 notes:
     - This module bypasses the play host loop and only runs once for all the hosts in the play, if you need it
       to iterate use a with\_ directive.
-    - This module is also supported for Windows targets.
+    - Windows targets are supported by this module.
     - The alias 'host' of the parameter 'name' is only available on >=2.4
+    - Since 2.4 the ``inventory_dir`` variable is now set to ``None`` instead of the 'global inventory source',
+      as you can now have multiple sources.  An example was added that shows how to partially restore the previous behaviour.
 author:
     - "Ansible Core Team"
     - "Seth Vidal"
@@ -71,4 +73,9 @@ EXAMPLES = '''
     hostname: "{{ new_ip }}"
     ansible_host: "{{ inventory_hostname }}"
     ansible_port: "{{ new_port }}"
+
+- name: Ensure inventory vars are set to the same value as the inventory_hostname has (close to pre 2.4 behaviour)
+  add_host:
+    hostname: charlie
+    inventory_dir: "{{inventory_dir}}"
 '''
