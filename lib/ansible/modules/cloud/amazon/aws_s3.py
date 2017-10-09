@@ -393,17 +393,19 @@ def path_check(path):
 
 
 def option_in_extra_args(option):
-    allowed_extra_args = ['ACL', 'CacheControl', 'ContentDisposition', 'ContentEncoding', 'ContentLanguage',
-                          'ContentType', 'Expires', 'GrantFullControl', 'GrantRead', 'GrantReadACP', 'GrantWriteACP',
-                          'Metadata', 'RequestPayer', 'ServerSideEncryption', 'StorageClass', 'SSECustomerAlgorithm',
-                          'SSECustomerKey', 'SSECustomerKeyMD5', 'SSEKMSKeyId', 'WebsiteRedirectLocation']
-    extra_args_with_hyphen = ['Cache-Control', 'Content-Disposition', 'Content-Encoding', 'Content-Language',
-                              'Content-Type', 'Website-Redirect-Location']
+    if '-' in option:
+        temp_option = option.replace('-', '').lower()
 
-    if option not in allowed_extra_args and option in extra_args_with_hyphen:
-        return option.replace('-', '')
-    elif option in allowed_extra_args:
-        return option
+    allowed_extra_args = {'acl': 'ACL', 'cachecontrol': 'CacheControl', 'contentdisposition': 'ContentDisposition',
+                          'contentencoding': 'ContentEncoding', 'contentlanguage': 'ContentLanguage',
+                          'contenttype': 'ContentType', 'expires': 'Expires', 'grantfullcontrol': 'GrantFullControl',
+                          'grantread': 'GrantRead', 'grantreadacp': 'GrantReadACP', 'grantwriteacp': 'GrantWriteACP',
+                          'metadata': 'Metadata', 'requestpayer': 'RequestPayer', 'serversideencryption': 'ServerSideEncryption',
+                          'storageclass': 'StorageClass', 'ssecustomeralgorithm': 'SSECustomerAlgorithm', 'ssecustomerkey': 'SSECustomerKey',
+                          'ssecustomerkeymd5': 'SSECustomerKeyMD5', 'ssekmskeyid': 'SSEKMSKeyId', 'websiteredirectlocation': 'WebsiteRedirectLocation'}
+
+    if temp_option in list(allowed_extra_args.keys()):
+        return allowed_extra_args[temp_option]
 
 
 def upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, headers):
