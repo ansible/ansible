@@ -122,6 +122,7 @@ Ansible Changes By Release
 * Fix for the rpm_key module when importing the first gpg key on a system (https://github.com/ansible/ansible/pull/31514)
 * Fix for aws_s3 metadata to use the correct parameters when uploading a file (https://github.com/ansible/ansible/issues/31232)
 * Fix for the yum module when installing from file/url crashes (https://github.com/ansible/ansible/pull/31529)
+* Improved error messaging for Windows become/runas when username is bogus (https://github.com/ansible/ansible/pull/31551)
 
 <a id="2.4"></a>
 
