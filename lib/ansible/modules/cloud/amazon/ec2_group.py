@@ -657,7 +657,7 @@ def main():
 
         if group_id and sg['GroupId'] == group_id:
             group = sg
-        elif groupName == name and (vpc_id is None or sg['VpcId'] == vpc_id):
+        elif groupName == name and (vpc_id is None or sg.get('VpcId') == vpc_id):
             group = sg
 
     # Ensure requested group is absent
