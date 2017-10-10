@@ -112,7 +112,11 @@ Basic lookup. Fails if example/test doesn't exist::
 
     password="{{ lookup('passwordstore', 'example/test')}}"
 
-Create pass with random 16 character password. If password exists just give the password::
+Return password if it exists, else return ``False``. Does not fail if password doesn't exist::
+
+    password="{{ lookup('passwordstore', 'example/test ok_if_missing=true')}}"
+
+Return password if it exists, else create pass with random 16 character password::
 
     password="{{ lookup('passwordstore', 'example/test create=true')}}"
 
@@ -124,7 +128,7 @@ Create password and overwrite the password if it exists. As a bonus, this module
 
     password="{{ lookup('passwordstore', 'example/test create=true overwrite=true')}}"
 
-Return the value for user in the KV pair user: username::
+Return the value for user in the KV pair 'user: username'::
 
     password="{{ lookup('passwordstore', 'example/test subkey=user')}}"
 

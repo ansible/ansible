@@ -144,7 +144,7 @@ class LookupModule(LookupBase):
                 raise AnsibleError(e)
             # check and convert values
             try:
-                for key in ['create', 'returnall', 'overwrite']:
+                for key in ['create', 'returnall', 'overwrite', 'ok_if_missing']:
                     if not isinstance(self.paramvals[key], bool):
                         self.paramvals[key] = util.strtobool(self.paramvals[key])
             except (ValueError, AssertionError) as e:
@@ -178,10 +178,10 @@ class LookupModule(LookupBase):
             if e.returncode == 1 and 'not in the password store' in e.output:
                 # if pass returns 1 and return string contains 'is not in the password store.'
                 # We need to determine if this is valid or Error.
-                if not self.paramvals['create']:
-                    raise AnsibleError('passname: {} not found, use create=True'.format(self.passname))
-                else:
+                if self.paramvals['create'] or self.paramvals['ok_if_missing']:
                     return False
+                else:
+                    raise AnsibleError('passname: {} not found, use create=True'.format(self.passname))
             else:
                 raise AnsibleError(e)
         return True
@@ -236,6 +236,7 @@ class LookupModule(LookupBase):
             'create': False,
             'returnall': False,
             'overwrite': False,
+            'ok_if_missing': False,
             'userpass': '',
             'length': 16,
         }
