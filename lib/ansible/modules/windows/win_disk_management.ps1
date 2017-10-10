@@ -1,6 +1,6 @@
 #!powershell
 #
-# Copyright 2017, Marc Tschapek <marc.tschapek@outlook.com>
+# Copyright 2017, Marc Tschapek <marc.tschapek@itelligencegroup.com>
 #
 # Ansible is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -77,30 +77,37 @@ if ($Logging -eq "verbose") {
 $SizeInteger = $false
 if ($Size -ne $null) {
     if (($Size.GetType()).Name -eq 'String') {
-        if ([int32]2147483647 -ge $Size) {
-            try {
-                [int32]$Size = [convert]::ToInt32($Size, 10)
-            } catch {
-                if ($Logging -eq "verbose") {
-                    $result.general_log.convert_validate_options = "failed"
+        if ($Size -match '^\d+$') {
+            if ([int32]2147483647 -ge $Size) {
+                try {
+                    [int32]$Size = [convert]::ToInt32($Size, 10)
+                } catch {
+                    if ($Logging -eq "verbose") {
+                        $result.general_log.convert_validate_options = "failed"
+                    }
+                    Fail-Json -obj $result -message "Failed to convert option variable size from string to int32: $($_.Exception.Message)"
                 }
-                Fail-Json -obj $result -message "Failed to convert option variable size from string to int32: $($_.Exception.Message)"
-            }
-            if ($Logging -eq "verbose") {
-                $result.change_log.convert_options.size = "Converted option variable from string to int32"
+                if ($Logging -eq "verbose") {
+                    $result.change_log.convert_options.size = "Converted option variable from string to int32"
+                }
+            } else {
+                try {
+                    [int64]$Size = [convert]::ToInt64($Size, 10)
+                } catch {
+                    if ($Logging -eq "verbose") {
+                        $result.general_log.convert_validate_options = "failed"
+                    }
+                    Fail-Json -obj $result -message "Failed to convert option variable size from string to int64: $($_.Exception.Message)"
+                }
+                if ($Logging -eq "verbose") {
+                    $result.change_log.convert_options.size = "Converted option variable from string to int64"
+                }
             }
         } else {
-            try {
-                [int64]$Size = [convert]::ToInt64($Size, 10)
-            } catch {
-                if ($Logging -eq "verbose") {
-                    $result.general_log.convert_validate_options = "failed"
-                }
-                Fail-Json -obj $result -message "Failed to convert option variable size from string to int64: $($_.Exception.Message)"
-            }
             if ($Logging -eq "verbose") {
-                $result.change_log.convert_options.size = "Converted option variable from string to int64"
+                $result.general_log.convert_validate_options = "failed"
             }
+            Fail-Json -obj $result -message "Failed to convert option variable size from string to integer because passed string is a non digit value"
         }
     } else {
         if ($Logging -eq "verbose") {
@@ -115,17 +122,24 @@ if ($Size -ne $null) {
 }
 
 if (($AllocUnitSize.GetType()).Name -eq 'String') {
-    try {
-        [int32]$AllocUnitSize = [convert]::ToInt32($AllocUnitSize, 10)
-    } catch {
+    if ($AllocUnitSize -match '^\d+$') {
+        try {
+            [int32]$AllocUnitSize = [convert]::ToInt32($AllocUnitSize, 10)
+        } catch {
+            if ($Logging -eq "verbose") {
+                $result.general_log.convert_validate_options = "failed"
+            }
+            Fail-Json -obj $result -message "Failed to convert option variable allocation_unit_size from string to int32: $($_.Exception.Message)"
+        }
+        if ($Logging -eq "verbose") {
+            $result.change_log.convert_options.allocation_unit_size = "Converted option variable from string to int32" 
+        }
+    } else {
         if ($Logging -eq "verbose") {
             $result.general_log.convert_validate_options = "failed"
         }
-        Fail-Json -obj $result -message "Failed to convert option variable allocation_unit_size from string to int32: $($_.Exception.Message)"
+        Fail-Json -obj $result -message "Failed to convert option variable allocation_unit_size from string to integer because passed string is a non digit value"
     }
-    if ($Logging -eq "verbose") {
-        $result.change_log.convert_options.allocation_unit_size = "Converted option variable from string to int32" 
-    }  
 } else {
     if ($Logging -eq "verbose") {
         $result.change_log.convert_options.allocation_unit_size = "No convertion of option variable needed"
@@ -135,16 +149,23 @@ if (($AllocUnitSize.GetType()).Name -eq 'String') {
 $NumberInteger = $false
 if ($Number -ne $null) {
     if (($Number.GetType()).Name -eq 'String') {
-        try {
-            [int32]$Number = [convert]::ToInt32($Number, 10)
-        } catch {
+        if ($Number -match '^\d+$') {
+            try {
+                [int32]$Number = [convert]::ToInt32($Number, 10)
+            } catch {
+                if ($Logging -eq "verbose") {
+                    $result.general_log.convert_validate_options = "failed"
+                }
+                Fail-Json -obj $result -message "Failed to convert option variable number from string to int32: $($_.Exception.Message)"
+            }
+            if ($Logging -eq "verbose") {
+                $result.change_log.convert_options.number = "Converted option variable from string to int32"
+            }
+        } else {
             if ($Logging -eq "verbose") {
                 $result.general_log.convert_validate_options = "failed"
             }
-            Fail-Json -obj $result -message "Failed to convert option variable number from string to int32: $($_.Exception.Message)"
-        }
-        if ($Logging -eq "verbose") {
-            $result.change_log.convert_options.number = "Converted option variable from string to int32"
+            Fail-Json -obj $result -message "Failed to convert option variable number from string to integer because passed string is a non digit value"
         }
     } else {
         if ($Logging -eq "verbose") {        
@@ -177,14 +198,13 @@ if ($DriveLetter -ne $null) {
         if ($Logging -eq "verbose") {        
             $result.general_log.convert_validate_options = "failed"
         }
-        Fail-Json -obj $result -message "Failed to convert option variable drive_letter from string to char because drive_letter value is no letter: $($_.Exception.Message)"
+        Fail-Json -obj $result -message "Failed to convert option variable drive_letter from string to char because drive_letter value is no letter"
     }
 } else {
     if ($Logging -eq "verbose") {
         $result.change_log.convert_options.drive_letter = "No drive_letter option used, no convertion needed"
     }
 }
-
 $result.general_log.convert_validate_options = "successful"
 
 # Show option values
