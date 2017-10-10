@@ -513,10 +513,11 @@ Sample output:
 The etcd Lookup
 ````````````````````
 
-When you need to query a value from an etcd server you can use etcd lookup. 
-Before version 2.5 you could interrogate localmachine by default or using environment variable you could interrogate a remote v1 server.
+You can you can use  the etcd lookup to query a value from an etcd server. 
 
-Since 2.5 this functionality has been improved by allowing to set the etcd host and version directly from you playbook
+Prior to Ansible version 2.5, you could interrogate localmachine by default or use an environment variable to query a remote version 1 server.
+
+Starting with Ansible version 2.5, you can set the etcd host and version directly from your playbook.
 
 ==============   =============================================================================
 Parameters       Values
