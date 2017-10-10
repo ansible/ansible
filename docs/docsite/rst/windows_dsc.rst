@@ -27,8 +27,8 @@ Why Use DSC?
 DSC and Ansible modules have a common goal which is to define and ensure the state of a
 resource. Because of
 this, resources like the DSC `File resource <https://docs.microsoft.com/en-us/powershell/dsc/fileresource>`_
- and Ansible ``win_file`` can be used to achieve the same result. Deciding which to use depends 
- on the scenario. 
+and Ansible ``win_file`` can be used to achieve the same result. Deciding which to use depends 
+on the scenario. 
 
 Reasons for using an Ansible module over a DSC resource:
 

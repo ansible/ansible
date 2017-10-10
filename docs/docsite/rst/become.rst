@@ -279,14 +279,14 @@ Prior to Ansible version 2.5, ``become`` only worked with a local or domain
 user account. Local service accounts like ``System`` or ``NetworkService``
 could not be used as ``become_user`` in these older versions. This restriction
 has been lifted since the 2.5 release of Ansible. The three service accounts
-that can be set under ``become_user`` are
+that can be set under ``become_user`` are:
 
 * System
 * NetworkService
 * LocalService
 
-Local service accounts do not have a password associated with its own account
-so the ``ansible_become_password`` is not required to be set and is ignored if
+Because local service accounts do not have passwords, the
+``ansible_become_password`` parameter is not required and is ignored if
 specified.
 
 Limitations
