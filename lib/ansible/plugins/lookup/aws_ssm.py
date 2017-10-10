@@ -48,7 +48,7 @@ class LookupModule(LookupBase):
 
         - name: Iterate over a parameter hierarchy
           debug: msg='key contains {{item.Name }} with value {{item.Value}} '
-          with_ssm:
+          with_aws_ssm:
             - '/TEST/test-list'
             - 'region=ap-southeast-2'
             - 'bypath'
