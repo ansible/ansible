@@ -62,7 +62,7 @@ options:
   size:
       description:
         - Size of the disk in gigabyte which will be selected
-        - If a size is defined the module will try to select the disk with this defined size
+        - If a size is defined the module will try to select the disk with this passed size
         - Data type can be int or string
       required: false
   partition_style_select:
@@ -91,7 +91,7 @@ options:
   number:
       description:
         - Number of the disk which will be selected
-        - If a number is defined the module will try to select the disk with this given number
+        - If a number is defined the module will try to select the disk with this passed number
         - Data type can be int or string
       required: false
   partition_style_set:
@@ -105,7 +105,7 @@ options:
   drive_letter:
       description:
         - Drive letter which will be set for the partition on selected disk
-        - If a drive letter is defined the module will try to set the partition on selected disk with this given drive letter
+        - If a drive letter is defined the module will try to set the partition on selected disk with this passed drive letter
       required: false
   file_system:
       description:
