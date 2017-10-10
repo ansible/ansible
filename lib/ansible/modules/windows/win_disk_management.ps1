@@ -286,11 +286,11 @@ function Set-OperationalStatus {
         )
 
         if (-not $Deactivate) {
-            Set-Disk -Number ($Disk.Number) -IsOffline $false | Out-Null
+            $null = Set-Disk -Number ($Disk.Number) -IsOffline $false
 
             return
         } else {
-            Set-Disk -Number ($Disk.Number) -IsOffline $true | Out-Null
+            $null = Set-Disk -Number ($Disk.Number) -IsOffline $true
 
             return
         }
@@ -303,9 +303,9 @@ function Set-DiskWriteable {
         )
 
         if (-not $Deactivate) {
-            Set-Disk -Number ($Disk.Number) -IsReadonly $false | Out-Null
+            $null = Set-Disk -Number ($Disk.Number) -IsReadonly $false
         } else {
-            Set-Disk -Number ($Disk.Number) -IsReadonly $true | Out-Null
+            $null = Set-Disk -Number ($Disk.Number) -IsReadonly $true
         }
 
         return
@@ -329,7 +329,7 @@ function Set-Initialized {
                 $PartitionStyle
         )
 
-        $Disk| Initialize-Disk -PartitionStyle $PartitionStyle -Confirm:$false | Out-Null
+        $null = $Disk| Initialize-Disk -PartitionStyle $PartitionStyle -Confirm:$false
 
         return
 }
@@ -340,7 +340,7 @@ function Convert-PartitionStyle {
                 $PartitionStyle
         )
 
-        Invoke-Expression "'Select Disk $($Disk.Number)','Convert $($PartitionStyle)' | diskpart" | Out-Null
+        $null = Invoke-Expression "'Select Disk $($Disk.Number)','Convert $($PartitionStyle)' | diskpart"
 
         return
 }
@@ -352,12 +352,12 @@ function Manage-ShellHWService {
 
         switch ($action) {
                 Stop {
-                    Stop-Service -Name ShellHWDetection | Out-Null
+                    $null = Stop-Service -Name ShellHWDetection
 
                     return
                 }
                 Start {
-                    Start-Service -Name ShellHWDetection | Out-Null
+                    $null = Start-Service -Name ShellHWDetection
 
                     return
                 }
@@ -421,7 +421,7 @@ function Create-Volume {
 
 # Rescan disks
 try {
-    Invoke-Expression '"rescan" | diskpart' | Out-Null
+    $null = Invoke-Expression '"rescan" | diskpart'
 } catch {
     $result.general_log.rescan_disks = "failed"
 }
