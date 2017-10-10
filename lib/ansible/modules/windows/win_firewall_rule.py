@@ -76,6 +76,13 @@ options:
       - The profile this rule applies to.
     default: 'domain,private,public'
     aliases: [ 'profile' ]
+  force:
+    description:
+    - Replace any existing rule by removing it first.
+    - This is no longer required in 2.4 as rules no longer need replacing when being modified.
+    - DEPRECATED in 2.4 and will be removed in 2.9.
+    default: 'no'
+    choices: [ 'no', 'yes' ]
 '''
 
 EXAMPLES = r'''
