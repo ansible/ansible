@@ -28,7 +28,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'network'}
 
-DOCUMENTATION = """
+DOCUMENTATION = '''
 ---
 module: enos_facts
 version_added: "2.5"
@@ -54,8 +54,9 @@ options:
         not be collected.
     required: false
     default: '!config'
-"""
-EXAMPLES = """
+
+'''
+EXAMPLES = '''
 Tasks: The following are examples of using the module enos_facts.
 ---
 - name: Test Enos Facts
@@ -94,8 +95,8 @@ cli:
     provider: "{{ cli }}"
     with_items: "{{enos_facts_data}}"
 
-"""
-RETURN = """
+'''
+RETURN = '''
 ansible_net_gather_subset:
   description: The list of fact subsets collected from the device
   returned: always
@@ -154,7 +155,8 @@ ansible_net_neighbors:
   description: The list of LLDP neighbors from the remote device
   returned: when interfaces is configured
   type: dict
-"""
+'''
+
 import re
 
 from enos import run_commands, enos_argument_spec, check_args
