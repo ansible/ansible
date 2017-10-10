@@ -45,6 +45,8 @@ def unfrackpath(path, follow=True, basedir=None):
 
     if basedir is None:
         basedir = os.getcwd()
+    elif os.path.isfile(basedir):
+        basedir = os.path.dirname(basedir)
 
     final_path = os.path.expanduser(os.path.expandvars(to_bytes(path, errors='surrogate_or_strict')))
 
