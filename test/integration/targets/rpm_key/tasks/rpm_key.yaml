@@ -101,3 +101,11 @@
 - name: confirm that signature check succeeded
   assert:
     that: "'rsa sha1 (md5) pgp md5 OK' in sl_check.stdout"
+
+- name: remove all keys from key ring
+  shell: "rpm -q  gpg-pubkey | xargs rpm -e"
+
+- name: add very first key on system
+  rpm_key:
+    state: present
+    key: https://download.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-7
