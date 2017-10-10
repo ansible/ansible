@@ -56,9 +56,7 @@ options:
     default: '!config'
 """
 EXAMPLES = """
-
 Tasks: The following are examples of using the module enos_facts.
-These are written in the main.yml file of the tasks directory.
 ---
 - name: Test Enos Facts
   enos_facts: provider={{ cli }}
@@ -213,8 +211,8 @@ class Default(FactsBase):
                 hosts = line.split()
                 hostname = hosts[1].strip('\"')
                 return hostname
-        else:
-            return "NA"
+            else:
+                return "NA"
 
     def parse_model(self, data):
         # match = re.search(r'^Cisco (.+) \(revision', data, re.M)
@@ -255,12 +253,12 @@ class Hardware(FactsBase):
     def parse_memtotal(self, data):
         match = re.search(r'^MemTotal:\s*(.*) kB', data, re.M | re.I)
         if match:
-            return int(match.group(1))/1024
+            return int(match.group(1)) / 1024
 
     def parse_memfree(self, data):
         match = re.search(r'^MemFree:\s*(.*) kB', data, re.M | re.I)
         if match:
-            return int(match.group(1))/1024
+            return int(match.group(1)) / 1024
 
         # if data:
         #    self.facts['filesystems'] = self.parse_filesystems(data)
@@ -388,7 +386,7 @@ class Interfaces(FactsBase):
             innerData['duplex'] = intfSplit[2].strip()
             innerData['operstatus'] = intfSplit[5].strip()
             interfaces[intfSplit[0].strip()] = innerData
-    return interfaces
+        return interfaces
 
     def parse_neighbors(self, neighbors):
         parsed = list()
