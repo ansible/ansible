@@ -2,6 +2,8 @@ from mock import patch, Mock, mock_open, call
 import json
 import os
 from copy import deepcopy
+import requests
+import requests_mock
 
 from ansible.compat.tests.unittest import TestCase
 from ansible.module_utils.fortios import API
@@ -21,6 +23,13 @@ else:
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 
+mock_cookie = Mock()
+mock_cookie.name = "ccsrftoken"
+mock_cookie.value = "ccsrftoken"
+session = requests.Session()
+adapter = requests_mock.Adapter()
+session.mount('mock', adapter)
+
 
 class APITest(TestCase):
 
@@ -29,33 +38,33 @@ class APITest(TestCase):
         self.default_object = json.load(open(fixture_path + "/interfaceDefaultObject.json"))['interface']
 
         self.mock_response = Mock()
-        mock_cookie = Mock()
-        mock_cookie.name = "ccsrftoken"
-        mock_cookie.value = "ccsrftoken"
+
         self.mock_response.cookies = [mock_cookie, ]
         self.mock_response.status_code = 200
         self.mock_response.content = json.dumps({"http_status": 200})
 
-        self.mock_get_response = deepcopy(self.mock_response)
-        self.mock_get_response.content = json.dumps(
-            {"results": self.default_current_config, "http_status": 200})
+        adapter.register_uri('GET', 'mock://test123.com', text=json.dumps({"results": self.default_current_config, "http_status": 200}), status_code=200)
+        adapter.register_uri('POST', 'mock://test123.com', text=json.dumps(
+            {"results": self.default_current_config, "http_status": 200}), status_code=200, cookies={mock_cookie.name: mock_cookie.value})
+        mock_object = session.get('mock://test123.com')
+        mock_post_object = session.post('mock://test123.com')
+        self.mock_get_response = mock_object
 
         self.get_patcher = patch("ansible.module_utils.fortios.requests.get")
         self.mock_get = self.get_patcher.start()
-        self.mock_get.return_value = self.mock_get_response
+        self.mock_get.return_value = mock_object
 
         self.post_patcher = patch("ansible.module_utils.fortios.requests.post")
         self.mock_post = self.post_patcher.start()
-        self.mock_post.return_value = self.mock_response
+        self.mock_post.return_value = mock_post_object
 
         self.put_patcher = patch("ansible.module_utils.fortios.requests.put")
         self.mock_put = self.put_patcher.start()
-        self.mock_put.return_value = self.mock_response
+        self.mock_put.return_value = mock_object
 
-        self.delete_patcher = patch(
-            "ansible.module_utils.fortios.requests.delete")
+        self.delete_patcher = patch("ansible.module_utils.fortios.requests.delete")
         self.mock_delete = self.delete_patcher.start()
-        self.mock_delete.return_value = self.mock_response
+        self.mock_delete.return_value = mock_object
 
         self.default_api_args = interface_api_args
         perm_objs = ["port%d" % i for i in range(1, 11)]
@@ -370,8 +379,10 @@ class APITest(TestCase):
     def test_get_argument_spec_list_endpoint_(self):
         final_spec = json.load(open(fixture_path + "/listArgumentSpec.json"))['interface_arg_spec']
 
-        mock_schema = Mock(content=json.dumps(json.load(open(fixture_path + "/interfaceSchema.json"))['interface_schema_response']))
-        self.mock_get.return_value = mock_schema
+        adapter.register_uri('GET', 'mock://test123.com', text=json.dumps(json.load(open(
+            fixture_path + "/interfaceSchema.json"))['interface_schema_response']), status_code=200,cookies=[mock_cookie, ])
+        mock_object = session.get('mock://test123.com')
+        self.mock_get.return_value = mock_object
 
         open_patcher = patch(b_open)
         m_open = open_patcher.start()
@@ -396,9 +407,11 @@ class APITest(TestCase):
         write_local_patcher.stop()
 
     def test_get_argument_spec_single_object_endpoint(self):
-        mock_schema = Mock(content=json.dumps(json.load(open(
-            fixture_path + "/systemGlobalSchemaResponse.json"))["system_global_schema_response"]))
-        self.mock_get.return_value = mock_schema
+        adapter.register_uri('GET', 'mock://test123.com', text=json.dumps(json.load(open(
+            fixture_path + "/systemGlobalSchemaResponse.json"))["system_global_schema_response"]), status_code=200,cookies=[mock_cookie, ])
+        mock_object = session.get('mock://test123.com')
+        self.mock_get.return_value = mock_object
+
         final_spec = json.load(open(fixture_path + "/systemGlobalArgSpec.json"))['system_global_arg_spec']
 
         open_patcher = patch(b_open)
@@ -463,7 +476,10 @@ class APITest(TestCase):
         expected_final_object = deepcopy(example_object)
         for i in self.fw_api._api_info['default_ignore_params']:
             del expected_final_object[i]
-        mock_object = Mock(content=json.dumps({'results': example_object}))
+
+
+        adapter.register_uri('GET', 'mock://test123.com', text=json.dumps({'results': example_object}), status_code=200,cookies=[mock_cookie, ])
+        mock_object = session.get('mock://test123.com')
         self.mock_get.return_value = mock_object
 
         open_patcher = patch(b_open)
@@ -520,9 +536,10 @@ class APITest(TestCase):
         self.mock_post.assert_has_calls([self.default_login_call])
 
     def test_apply_configuration_failure(self):
-        # raises a StopIteration error for reasons I don't understand
-        failed_response = deepcopy(self.mock_response)
-        failed_response.content = json.dumps({"http_status": 405})
+
+        adapter.register_uri('GET', 'mock://test123.com', text=json.dumps({"http_status": 405}), status_code=405,cookies=[mock_cookie, ])
+        mock_object = session.get('mock://test123.com')
+        failed_response = mock_object
 
         self.fw_api._update_config[0]['name'] = 'test1'
         self.fw_api._update_config[1]['name'] = 'test2'
@@ -532,8 +549,6 @@ class APITest(TestCase):
 
         self.mock_post.return_value = None
         self.mock_post.side_effect = [failed_response, failed_response]
-
-        self.fw_api._object_map = [None for i in self.default_current_config]
 
         self.fw_api._create_new_objects()
 
@@ -619,7 +634,11 @@ class APITest(TestCase):
 
     def test_apply_existing_and_new_objects(self):
         fw_policy_config = json.load(open(fixture_path + "/firewallCurrentConfig.json"))['firewall_policy']
-        self.mock_get_response.content = json.dumps({"results": fw_policy_config, "http_status": 200})
+
+        adapter.register_uri('GET', 'mock://test123.com', text=json.dumps({"results": fw_policy_config, "http_status": 200}), status_code=200,cookies=[mock_cookie, ])
+        mock_object = session.get('mock://test123.com')
+        self.mock_get.return_value = mock_object
+
         self.fw_api._update_config = json.load(open(fixture_path + "/firewallUpdateConfig.json"))['policies']
         self.fw_api._object_identifier = 'policyid'
 
@@ -653,7 +672,11 @@ class APITest(TestCase):
 
     def test_apply_configuration_delete_all_objects(self):
         firewall_config = json.load(open(fixture_path + "/firewallCurrentConfig.json"))['firewall_policy']
-        self.mock_get_response.content = json.dumps({"results": firewall_config, "http_status": 200})
+
+        adapter.register_uri('GET', 'mock://test123.com', text=json.dumps({"results": firewall_config, "http_status": 200}), status_code=200,cookies=[mock_cookie, ])
+        mock_object = session.get('mock://test123.com')
+        self.mock_get.return_value = mock_object
+
         self.fw_api._update_config = []
         self.fw_api.apply_configuration_to_endpoint()
 
