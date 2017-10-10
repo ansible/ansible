@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# Copyright (c) 2017, Thomas K. Theakanath <thomastk@gmail.com>
+# Copyright (c) 2017, Thomas Kurian Theakanath <thomastk@gmail.com>
 
 # This module is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@ try:
     HAS_YAML = True
 except:
     HAS_YAML = False
-    
+
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -38,7 +38,7 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-author: "Thomas Kurian Theakanath (thomastk@)"
+author: "Thomas Kurian Theakanath (@thomastk)"
 module: standup
 short_description: Runs a suite of checks to validate a host and heals state if needed.
 description:
@@ -119,37 +119,122 @@ EXAMPLES = '''
 RETURN = '''
 checks:
     description: The checks with results of running check and heal commands.
-    type: dict
+    type: complex
     returned: always
-    sample: {
-        "checks": {
-            "Test db 1": {
-                "check": {
-                    "command": "ps -ef |grep mariadb|wc -l",
-                    "description": "Check if mysql service is running",
-                    "heal": "sudo service mariadb start",
-                    "name": "Test db 1",
-                    "output_compare": {
-                        "operator": "GT",
-                        "type": "number",
-                        "value": 2
-                    },
-                    "roles": "db"
-                },
-                "check_status": true,
-                "cmd_output": {
-                    "output": "3",
-                    "sys_status": 0
-                },
-                "command_ran": "ps -ef |grep mariadb|wc -l",
-                "heal_output": null,
-                "heal_ran": null,
-                "healed": false,
-                "last_error": null,
-                "validated": true
-            }
-        }
-    }
+    contains:
+        checks:
+            description: the set of checks ran
+            returned: always
+            type: complex
+            contains:
+                _name_of_check:
+                    returned: always
+                    type: complex
+                    contains:
+                        check:
+                            returned: always
+                            type: complex
+                            contains:
+                                name:
+                                    description: name: name of check
+                                    returned: always
+                                    type: string
+                                    sample: Test db 1
+                                command:
+                                    description: the main check command
+                                    returned: always
+                                    type: string
+                                    sample: ps -ef |grep mariadb|wc -l
+                                description:
+                                    description: description of check
+                                    returned: always
+                                    type: string
+                                    sample: Check if mysql service is running
+                                heal:
+                                    description: command to heal a state which is optionally run if the check fails.
+                                    returned: always
+                                    type: string
+                                    sample: sudo service mariadb start
+                                output_compare:
+                                    type: complex
+                                    contains:
+                                        operator:
+                                            description: the operator for comparing value with the reference value
+                                            returned: always
+                                            type: string
+                                            sample: GT
+                                            choices: ['GE', 'EQ', 'GT', 'LE', 'LT']
+                                        type:
+                                            description: the type of comparison
+                                            returned: always
+                                            type: string
+                                            sample: number
+                                            choices: ['number','str']
+                                        value:
+                                            description: the value to compare the output with.
+                                            returned: always
+                                            type: string
+                                roles:
+                                    description: application roles that the check verifies.
+                                    returned: always
+                                    type: string
+                                    sample: db,web
+                        validated:
+                            description: Indicates if the check is validated for syntax.
+                            type: boolean
+                            returned: success
+                            sample: True
+                        check_status:
+                            description: the final status of running the check.
+                            returned: always
+                            type: boolean
+                            sample: True
+                        cmd_output:
+                            type: complex
+                            contains:
+                                output:
+                                    description: output of check command run.
+                                    returned: always
+                                    type: string
+                                    sample: 3
+                                sys_status:
+                                    description: system status of running check command.
+                                    returned: always
+                                    type: string
+                                    sample: 0
+                        command_ran:
+                            description: the check command that was resolved of any variables and run.
+                            returned: always
+                            type: string
+                            sample: ps -ef |grep mariadb|wc -l
+                        heal_ran:
+                            description: the heal command that was resolved of any variables and run.
+                            returned: always
+                            type: string
+                            sample: sudo service apache2 start
+                        heal_output:
+                            type: complex
+                            contains:
+                                output:
+                                    description: output of check command run.
+                                    returned: always
+                                    type: string
+                                    sample: Apache2 is running (pid 7992).
+                                sys_status:
+                                    description: system status of running check command.
+                                    returned: always
+                                    type: string
+                                    sample: 0
+                        healed:
+                            description: Indicates whether running of heal command fixed the state.
+                            type: boolean
+                            returned: success
+                            sample: False
+                        last_error:
+                            description: last error from running either check or heal command.
+                            returned: always
+                            type: string
+                            sample: null
 changed:
     description: Indicates if any heal steps are run successfully.
     type: boolean
@@ -163,7 +248,6 @@ result:
 '''
 
 global module
-
 
 # Class for comparing command outputs
 class StandupOutputCompare:
