@@ -534,13 +534,15 @@ Example usage::
     - hosts: localhost
       connection: local
       tasks:
-       - debug: msg="{{ lookup('etcd', 'foo') }} is a value from a locally running etcd"
+       - debug: 
+           msg: "{{ lookup('etcd', 'foo') }} is a value from a locally running etcd"
 
     # query a remote v2 etcd server
     # Note "url" option is new in Ansible 2.5
     - hosts: localhost
       connection: local
-       - debug: msg={{lookup('etcd','/tfm/network/config', url='http://192.168.1.21:2379' , version='v2')}}
+       - debug:
+           msg: {{lookup('etcd','/tfm/network/config', url='http://192.168.1.21:2379' , version='v2')}}
 
 
 .. _more_lookups:
