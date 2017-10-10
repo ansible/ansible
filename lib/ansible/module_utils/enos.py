@@ -71,7 +71,7 @@ def get_connection(module):
     return _CONNECTION
 
 
-def get_config(module, flags=[]):
+def get_config(module, flags=None):
     flags = [] if flags is None else flags
 
     passwords = module.params['passwords']
@@ -120,7 +120,7 @@ def run_commands(module, commands, check_rc=True):
     return responses
 
 
-def load_config(module, commands):
+def load_config(module, config):
     conn = get_connection(module)
     conn.edit_config(config)
 
