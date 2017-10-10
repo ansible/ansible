@@ -19,6 +19,7 @@ Ansible Changes By Release
 * added a few new magic vars corresponding to configuration/command line options:
   `ansible_diff_mode`, `ansible_inventory_sources`, `ansible_limit`, `ansible_run_tags` , `ansible_forks` and `ansible_skip_tags`
 * Updated the bundled copy of the six library to 1.11.0
+* Added support to `become` `NT AUTHORITY\System`, `NT AUTHORITY\LocalService`, and `NT AUTHORITY\NetworkService` on Windows hosts
 
 ### New Modules
 
