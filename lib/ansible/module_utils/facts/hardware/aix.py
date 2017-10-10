@@ -225,7 +225,7 @@ class AIXHardware(Hardware):
                 'state': field[1],
                 'type': ' '.join(field[2:]),
                 'attributes': device_attrs
-                }
+            }
 
         return device_facts
 
