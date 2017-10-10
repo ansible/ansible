@@ -237,6 +237,9 @@ The following are some ways to use ``become`` with an admin token:
   account is the default user called ``Administrator`` that is installed with
   Windows and not just a user under the local Administrators group.
 
+* Set the ``become_user`` to ``System`` which has full control over the
+  operating system.
+
 * Grant the privilege ``SeTcbPrivilege`` to the user Ansible connects with on
   WinRM. The privilege ``SeTcbPrivilege`` is a high-level privilege that grants
   full control over the operating system. No user is given this privilege by
@@ -269,15 +272,29 @@ The following are some ways to use ``become`` with an admin token:
       win_reboot:
       when: uac_result|changed
 
+Local Service Accounts
+----------------------
+
+Prior to Ansible version 2.5, ``become`` only worked with a local or domain
+user account. Local service accounts like ``System`` or ``NetworkService``
+could not be used as ``become_user`` in these older versions. This restriction
+has been lifted since the 2.5 release of Ansible. The three service accounts
+that can be set under ``become_user`` are
+
+* System
+* NetworkService
+* LocalService
+
+Local service accounts do not have a password associated with its own account
+so the ``ansible_become_password`` is not required to be set and is ignored if
+specified.
+
 Limitations
 -----------
 
 Be aware of the following limitations with ``become`` on Windows:
 
-* Running a task with ``async`` and ``become`` do not work.
-
-* Become does not currently work with local service accounts like
-  ``NT AUTHORITY\\SYSTEM``. 
+* Running a task with ``async`` and ``become`` does not work.
 
 * The become user logs on with an interactive session, so it must have the
   ability to do so on the Windows host. If it does not inherit the
