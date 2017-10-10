@@ -24,9 +24,12 @@ Ansible will not support Python 2.4 or 2.5 on the target hosts anymore. Going fo
 Inventory
 =========
 
-Inventory has been refactored to be implemented via plugins and now allows for multiple sources. This change is mostly transparent to users. 
+Inventory has been refactored to be implemented via plugins and now allows for multiple sources. This change is mostly transparent to users.
 
-One exception is the ``inventory_dir``, which is now a host variable; previously it could only have one value so it was set globally. This means you cannot use it early in plays anymore to determine ``hosts:`` or similar keywords.
+One exception is the ``inventory_dir``, which is now a host variable; previously it could only have one value so it was set globally.
+This means you can no longer use it early in plays to determine ``hosts:`` or similar keywords.
+This also changes the behaviour of ``add_hosts`` and the implicit localhost; 
+because they no longer automatically inherit the global value, they default to ``None``. See the module documentation for more information.
 
 The ``inventory_file`` remains unchanged, as it was always host specific.
 
