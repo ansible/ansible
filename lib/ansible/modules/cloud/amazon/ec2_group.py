@@ -759,7 +759,7 @@ def main():
                                 ips = ip_permission
                                 if vpc_id:
                                     [useridpair.update({'VpcId': vpc_id}) for useridpair in
-                                     ip_permission.get('UserIdGroupPairs')]
+                                     ip_permission.get('UserIdGroupPairs', [])]
                                 try:
                                     client.authorize_security_group_ingress(GroupId=group['GroupId'], IpPermissions=[ips])
                                 except botocore.exceptions.ClientError as e:
@@ -824,7 +824,7 @@ def main():
                                 ips = ip_permission
                                 if vpc_id:
                                     [useridpair.update({'VpcId': vpc_id}) for useridpair in
-                                     ip_permission.get('UserIdGroupPairs')]
+                                     ip_permission.get('UserIdGroupPairs', [])]
                                 try:
                                     client.authorize_security_group_egress(GroupId=group['GroupId'], IpPermissions=[ips])
                                 except botocore.exceptions.ClientError as e:
