@@ -117,6 +117,7 @@ Ansible Changes By Release
 * Fix service and package forcing a second run of the setup module to function (https://github.com/ansible/ansible/issues/31485)
 * Better error message when attempting to use include or import with /usr/bin/ansible (https://github.com/ansible/ansible/pull/31492/)
 * Fix `sysctl` module to remove etries when `state=absent` (https://github.com/ansible/ansible/issues/29920)
+* Fix for ec2_group to avoid trying to iterate over None (https://github.com/ansible/ansible/pull/31531)
 
 <a id="2.4"></a>
 
