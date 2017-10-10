@@ -473,10 +473,7 @@ class ConsulConfig(dict):
         scheme = 'http'
 
         if hasattr(self, 'url'):
-            try:
-                from urlparse import urlparse
-            except ImportError:
-                from urllib.parse import urlparse
+            from ansible.module_utils.six.moves.urllib.parse import urlparse
             o = urlparse(self.url)
             if o.hostname:
                 host = o.hostname
