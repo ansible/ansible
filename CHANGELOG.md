@@ -116,6 +116,7 @@ Ansible Changes By Release
 * Fix include_role usage of role_name (https://github.com/ansible/ansible/pull/31463)
 * Fix service and package forcing a second run of the setup module to function (https://github.com/ansible/ansible/issues/31485)
 * Better error message when attempting to use include or import with /usr/bin/ansible (https://github.com/ansible/ansible/pull/31492/)
+* Fix `sysctl` module to remove etries when `state=absent` (https://github.com/ansible/ansible/issues/29920)
 
 <a id="2.4"></a>
 
