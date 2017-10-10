@@ -171,11 +171,6 @@ lib/ansible/modules/monitoring/sensu_check.py
 lib/ansible/modules/monitoring/sensu_subscription.py
 lib/ansible/modules/monitoring/stackdriver.py
 lib/ansible/modules/monitoring/uptimerobot.py
-lib/ansible/modules/monitoring/zabbix_group.py
-lib/ansible/modules/monitoring/zabbix_host.py
-lib/ansible/modules/monitoring/zabbix_hostmacro.py
-lib/ansible/modules/monitoring/zabbix_maintenance.py
-lib/ansible/modules/monitoring/zabbix_screen.py
 lib/ansible/modules/network/a10/a10_server_axapi3.py
 lib/ansible/modules/network/a10/a10_virtual_server.py
 lib/ansible/modules/network/aos/aos_asn_pool.py

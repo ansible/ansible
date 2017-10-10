@@ -184,7 +184,7 @@ def create_maintenance(zbx, group_ids, host_ids, start_time, maintenance_type, p
                 "active_since": str(start_time),
                 "active_till": str(end_time),
                 "description": desc,
-                "timeperiods":  [{
+                "timeperiods": [{
                     "timeperiod_type": "0",
                     "start_date": str(start_time),
                     "period": str(period),
