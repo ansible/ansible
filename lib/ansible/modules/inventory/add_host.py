@@ -37,8 +37,8 @@ notes:
       to iterate use a with\_ directive.
     - Windows targets are supported by this module.
     - The alias 'host' of the parameter 'name' is only available on >=2.4
-    - Since 2.4 the ``inventory_dir`` variable is now set to ``None`` instead of the 'global inventory source',
-      as you can now have multiple sources.  An example was added that shows how to partially restore the previous behaviour.
+    - Since Ansible version 2.4, the ``inventory_dir`` variable is now set to ``None`` instead of the 'global inventory source',
+      because you can now have multiple sources.  An example was added that shows how to partially restore the previous behaviour.
 author:
     - "Ansible Core Team"
     - "Seth Vidal"
