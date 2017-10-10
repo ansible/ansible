@@ -121,6 +121,7 @@ Ansible Changes By Release
 * Fix for ec2_group for a possible KeyError bug (https://github.com/ansible/ansible/pull/31540)
 * Fix for the rpm_key module when importing the first gpg key on a system (https://github.com/ansible/ansible/pull/31514)
 * Fix for aws_s3 metadata to use the correct parameters when uploading a file (https://github.com/ansible/ansible/issues/31232)
+* Fix for the yum module when installing from file/url crashes (https://github.com/ansible/ansible/pull/31529)
 
 <a id="2.4"></a>
 
