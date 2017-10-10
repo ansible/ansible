@@ -80,14 +80,14 @@ class LookupModule(LookupBase):
         # check if option 'bypath' is specified, while still allowing to have a parameter with the same name
         if 'bypath' in terms[1:]:
             ssm_dict['Path'] = terms[0]
-            del terms[terms[1:].index('bypath')+1]
+            del terms[terms[1:].index('bypath') + 1]
         else:
             ssm_dict['Names'] = [terms[0]]
 
         # Option to return short parameter names in by path lookups
         if 'shortnames' in terms[1:]:
             lparams['shortnames'] = True
-            del terms[terms[1:].index('shortnames')+1]
+            del terms[terms[1:].index('shortnames') + 1]
 
         if len(terms) > 1:
             for param in terms[1:]:
@@ -123,14 +123,14 @@ class LookupModule(LookupBase):
                 paramlist.extend(response['Parameters'])
 
                 # Manual pagination, since boto doesnt support it yet for get_parameters_by_path
-                while response.has_key('NextToken'):
+                while 'NextToken' in response:
                     response = client.get_parameters_by_path(NextToken=response['NextToken'], **ssm_dict)
                     paramlist.extend(response['Parameters'])
 
                 # shortify parameter names. yes, this will return duplicate names with different values.
-                if lparams.has_key('shortnames'):
+                if 'shortnames' in lparams:
                     for x in paramlist:
-                        x['Name'] = x['Name'][ x['Name'].rfind('/')+1:]
+                        x['Name'] = x['Name'][x['Name'].rfind('/') + 1:]
 
                 if len(paramlist):
                     return paramlist
@@ -147,4 +147,3 @@ class LookupModule(LookupBase):
 
         except ClientError as e:
             raise AnsibleError("SSM lookup exception: {0}".format(e))
-
