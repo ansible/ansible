@@ -27,7 +27,7 @@ author:
     - "Werner Dijkerman"
 requirements:
     - "python >= 2.6"
-    - zabbix-api
+    - "zabbix-api >= 0.5.3"
 options:
     server_url:
         description:
