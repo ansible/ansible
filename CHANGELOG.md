@@ -119,6 +119,7 @@ Ansible Changes By Release
 * Fix `sysctl` module to remove etries when `state=absent` (https://github.com/ansible/ansible/issues/29920)
 * Fix for ec2_group to avoid trying to iterate over None (https://github.com/ansible/ansible/pull/31531)
 * Fix for ec2_group for a possible KeyError bug (https://github.com/ansible/ansible/pull/31540)
+* Fix for the rpm_key module when importing the first gpg key on a system (https://github.com/ansible/ansible/pull/31514)
 
 <a id="2.4"></a>
 
