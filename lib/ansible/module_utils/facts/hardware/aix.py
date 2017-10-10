@@ -42,12 +42,14 @@ class AIXHardware(Hardware):
         dmi_facts = self.get_dmi_facts()
         vgs_facts = self.get_vgs_facts()
         mount_facts = self.get_mount_facts()
+        devices_facts = self.get_device_facts()
 
         hardware_facts.update(cpu_facts)
         hardware_facts.update(memory_facts)
         hardware_facts.update(dmi_facts)
         hardware_facts.update(vgs_facts)
         hardware_facts.update(mount_facts)
+        hardware_facts.update(devices_facts)
 
         return hardware_facts
 
@@ -201,6 +203,31 @@ class AIXHardware(Hardware):
                                                       'options': fields[7],
                                                       'time': '%s %s %s' % (fields[4], fields[5], fields[6])})
         return mount_facts
+
+    def get_device_facts(self):
+        device_facts = {}
+        device_facts['devices'] = {}
+
+        lsdev_cmd = self.module.get_bin_path('lsdev', True)
+        lsattr_cmd = self.module.get_bin_path('lsattr', True)
+        rc, out_lsdev, err = self.module.run_command(lsdev_cmd)
+
+        for line in out_lsdev.splitlines():
+            field = line.split()
+
+            device_attrs = {}
+            rc, out_lsattr, err = self.module.run_command("%s -El %s" % (lsattr_cmd, field[0]))
+            for attr in out_lsattr.splitlines():
+                attr_field = attr.split()
+                device_attrs[attr_field[0]] = attr_field[1]
+
+            device_facts['devices'][field[0]] = {
+                'state': field[1],
+                'type': ' '.join(field[2:]),
+                'attributes': device_attrs
+                }
+
+        return device_facts
 
 
 class AIXHardwareCollector(HardwareCollector):
