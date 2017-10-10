@@ -38,8 +38,11 @@ options:
             obtained from
             GET /1.0/networks/<name>
             U(https://github.com/lxc/lxd/blob/master/doc/rest-api.md#get-16)
-            are different, they this module tries to apply the configurations.
+            are different, then this module tries to apply the configurations.
+          - If either ipv4.address or ipv6.address are not set in the config
+            a value of none will be defaulted.
         required: false
+        default: {'ipv4.address': none, 'ipv6.address': none}
     new_name:
         description:
           - A new name of a network.
@@ -163,7 +166,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.lxd import LXDClient, LXDClientException
 
 
-# NETWORKS_STATES is a list for states supported
+# NETWORKS_STATES is a list for states supported.
 NETWORKS_STATES = [
     'present', 'absent'
 ]
@@ -172,6 +175,12 @@ NETWORKS_STATES = [
 CONFIG_PARAMS = [
     'config', 'description'
 ]
+
+# NETWORKS_CONFIG_DEFAULTS is the default config deployed.
+NETWORKS_CONFIG_DEFAULTS = {
+    'ipv4.address': 'none',
+    'ipv6.address': 'none'
+}
 
 
 class LXDNetworkManagement(object):
@@ -205,6 +214,11 @@ class LXDNetworkManagement(object):
         self.config = {}
         for attr in CONFIG_PARAMS:
             param_val = self.module.params.get(attr, None)
+            if attr == 'config':
+                if param_val is None:
+                    param_val = {}
+                NETWORKS_CONFIG_DEFAULTS.update(param_val)
+                param_val = NETWORKS_CONFIG_DEFAULTS
             if param_val is not None:
                 self.config[attr] = param_val
 
