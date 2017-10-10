@@ -536,7 +536,7 @@ def main():
         trusted_service=dict(default=None, type='bool'),
         vm_reason=dict(default=None, type='bool'),
         host_reason=dict(default=None, type='bool'),
-        memory_policy=dict(default=None, choices=['disabled', 'server', 'desktop']),
+        memory_policy=dict(default=None, choices=['disabled', 'server', 'desktop'], aliases=['performance_preset']),
         rng_sources=dict(default=None, type='list'),
         spice_proxy=dict(default=None),
         fence_enabled=dict(default=None, type='bool'),
