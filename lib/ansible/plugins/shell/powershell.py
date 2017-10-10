@@ -957,12 +957,21 @@ Function Run($payload) {
     # NB: CreateProcessWithTokenW commandline maxes out at 1024 chars, must bootstrap via filesystem
     $temp = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), [System.IO.Path]::GetRandomFileName() + ".ps1")
     $exec_wrapper.ToString() | Set-Content -Path $temp
-    # allow (potentially unprivileged) target user access to the tempfile (NB: this likely won't work if traverse checking is enabled)
-    $acl = Get-Acl $temp
-    $acl.AddAccessRule($(New-Object System.Security.AccessControl.FileSystemAccessRule($username, "FullControl", "Allow")))
-    Set-Acl $temp $acl | Out-Null
+    $rc = 0
 
     Try {
+        # allow (potentially unprivileged) target user access to the tempfile (NB: this likely won't work if traverse checking is enabled)
+        $acl = Get-Acl $temp
+
+        Try {
+            $acl.AddAccessRule($(New-Object System.Security.AccessControl.FileSystemAccessRule($username, "FullControl", "Allow")))
+        }
+        Catch [System.Security.Principal.IdentityNotMappedException] {
+            throw "become_user '$username' is not recognized on this host"
+        }
+
+        Set-Acl $temp $acl | Out-Null
+
         $payload_string = $payload | ConvertTo-Json -Depth 99 -Compress
 
         $lp_command_line = New-Object System.Text.StringBuilder @("powershell.exe -NonInteractive -NoProfile -ExecutionPolicy Bypass -File $temp")
