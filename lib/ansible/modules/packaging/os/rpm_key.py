@@ -171,7 +171,7 @@ class RpmKey(object):
 
     def is_key_imported(self, keyid):
         cmd = self.rpm + ' -q  gpg-pubkey'
-        rc, _, _ = self.module.run_command(cmd, use_unsafe_shell=True)
+        rc, stdout, stderr = self.module.run_command(cmd)
         if rc != 0:  # No key is installed on system
             return False
         cmd += ' --qf "%{description}" | ' + self.gpg + ' --no-tty --batch --with-colons --fixed-list-mode -'
