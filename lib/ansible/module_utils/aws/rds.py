@@ -108,7 +108,6 @@ def instance_facts_diff(state_a, state_b):
     operations_model = conn._service_model.operation_model("CreateDBInstance")
     compare_keys = [xform_name(x) for x in operations_model.input_shape.members.keys()]
 
-    leave_if_null = ['maintenance_window', 'backup_retention']
     remove_if_null = []
     before = dict()
     after = dict()
@@ -119,7 +118,7 @@ def instance_facts_diff(state_a, state_b):
         old_port = None
 
     if old_port is not None:
-        state_a["port"]=old_port
+        state_a["port"] = old_port
 
     try:
         new_port = state_b.get("endpoint").get("port")
@@ -127,11 +126,11 @@ def instance_facts_diff(state_a, state_b):
         new_port = None
 
     if new_port is not None:
-        state_b["port"]=new_port
+        state_b["port"] = new_port
 
     for k in compare_keys:
         if state_a.get(k) != state_b.get(k):
-            if state_b.get(k) is None and not k in remove_if_null:
+            if state_b.get(k) is None and k not in remove_if_null:
                 pass
             else:
                 before[k] = state_a.get(k)

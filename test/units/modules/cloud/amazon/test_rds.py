@@ -711,6 +711,7 @@ def test_select_parameters_meta_should_select_relevant_parameters_for_call():
     assert len(params) < 2
     assert params['DBInstanceIdentifier'] == 'fakedb-too'
 
+
 def test_prepare_params_for_modify_should_ignore_params_modify_cant_handle():
     before_facts = {
         "port": 342,
@@ -764,11 +765,11 @@ def test_prepare_params_for_modify_should_ignore_params_modify_cant_handle():
 
     module = rds_i.setup_module_object()
 
-    #first time adding tags from none
-    params=rds_i.prepare_params_for_modify(module, before_facts)
+    # first time adding tags from none
+    params = rds_i.prepare_params_for_modify(module, before_facts)
     assert 'Tags' not in params
 
-    #this time changing the tags
+    # this time changing the tags
     before_facts = {
         "port": 342,
         "engine": "postgres",
@@ -783,5 +784,5 @@ def test_prepare_params_for_modify_should_ignore_params_modify_cant_handle():
         "db_name": "dbname_stuck_like_this",
         "tags": {"a": "e", "c": "f"},
     }
-    params=rds_i.prepare_params_for_modify(module, before_facts)
+    params = rds_i.prepare_params_for_modify(module, before_facts)
     assert 'Tags' not in params

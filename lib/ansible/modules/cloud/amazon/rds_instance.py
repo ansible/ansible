@@ -675,7 +675,7 @@ def prepare_changes_for_modify(module, before_facts):
     facts_to_change = will_change['after']
 
     # we have to filter down to the parameters handled by modify (e.g. not tags) and
-    for i in [ 'tags' ]:
+    for i in ['tags']:
         try:
             del(facts_to_change[i])
         except KeyError:
