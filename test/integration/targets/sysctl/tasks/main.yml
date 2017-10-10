@@ -79,6 +79,7 @@
   sysctl:
     name: kernel.panic
     value: 2
+    reload: no
     state: absent
     sysctl_file: "{{ output_dir_test }}/sysctl.conf"
   register: sysctl_test2
@@ -105,6 +106,7 @@
     name: kernel.panic
     value: 2
     state: absent
+    reload: no
     sysctl_file: "{{ output_dir_test }}/sysctl.conf"
   register: sysctl_test2_change_test
 
