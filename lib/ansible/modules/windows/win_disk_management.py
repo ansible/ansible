@@ -36,7 +36,7 @@ description:
    - size, allocation_unit_size, number, drive_letter.
    - If one of the values can not be converted the module will be canceled.
    - In order to find only one disk on the target you can use the size and/or number option for the search of the disk.
-   - If no size and number option value was defined and multiple disks were found on the target with the defined option values
+   - If no size and number option value was defined and multiple disks were found on the target based on the passed option values
    - the module will select the first disk found.
    - The module detects any existing volume and/or partition on the selected disk and will cancel the module in this case.
    - If you want to set a specific drive letter to the selected disk you can use the option drive_letter.
@@ -367,12 +367,12 @@ disk_selected:
             type: complex
             contains:
                 total_found_disks:
-                    description: Information about how many disks were found on the target with the passed disk options
+                    description: Information about how many same disks were found on the target based on the passed disk options
                     returned: always
                     type: string
                     sample: "2"
                 number:
-                    description: Information about which disk number was selected with passed option values
+                    description: Information about which disk number was selected based on the passed option values
                     returned: success or failed
                     type: string
                     sample: "1"
