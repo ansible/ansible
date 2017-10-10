@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Marc Tschapek <marc.tschapek@bitgroup.de>
+# (c) 2017, Marc Tschapek <marc.tschapek@itelligencegroup.com>
 #
 # This file is part of Ansible
 #
@@ -44,7 +44,7 @@ description:
    - If no drive_letter option value was defined the module will use a free drive letter on the target randomly.
    - If no free drive lettter is left on the target the module will be canceled.
    - If the selected disk size does not match with the passed value for option file_system (e.g. "ntfs") the module will be canceled.
-   - If option file_system is set to "refs" the option allocation_unit_size will be automatically adjusted to "64" (KB).
+   - If option file_system is set to "refs" the option allocation_unit_size will be automatically adjusted to "64" (kb).
    - The module recognizes whether the passed set options large_frs, integrity streams and short_names
    - are suitable with the passed file_system value. If they do not fit the set options will be automatically disabled.
    - If the disk is not yet initialized the module will initialize the disk (set partition style, online and writeable).
@@ -84,7 +84,7 @@ options:
         - online
   read_only:
       description:
-        - Read-only status of the disk which will be selected (true,yes=read-only, false,no=writeable)
+        - Read-only status of the disk which will be selected (true=read-only,false=writeable)
       required: false
       type: bool
       default: 'yes'
@@ -110,7 +110,7 @@ options:
   file_system:
       description:
         - File system which will be set on selected disk
-        - Maximum volume size for ntfs is 256gb, for refs 1208925819614650gb (1yobibyte)
+        - Maximum volume size for ntfs is 256gb, for refs 1208925819614650gb (1 yobibyte)
       required: false
       default: ntfs
       choices:
@@ -123,7 +123,7 @@ options:
       default: ansible_disk
   allocation_unit_size:
       description:
-        - Allocation Unit size which will be set for the file system on selected disk (possible values for file system NTFS 4,8,16,32,64KB; ReFs 64KB)
+        - Allocation Unit size which will be set for the file system on selected disk (possible values for file system ntfs 4,8,16,32,64kb;refs 64kb)
         - Data type can be int or string
       required: false
       default: 4
@@ -134,19 +134,19 @@ options:
         - 64
   large_frs:
       description:
-        - Switch to set Large FRS option for file system on selected disk, solely settable for NTFS file system
+        - Switch to set Large FRS option for file system on selected disk, solely settable for ntfs file system
       required: false
       type: bool
       default: 'no'
   short_names:
       description:
-        - Switch to set Short Names option for file system on selected disk, solely settable for NTFS file system
+        - Switch to set Short Names option for file system on selected disk, solely settable for ntfs file system
       required: false
       type: bool
       default: 'no'
   integrity_streams:
       description:
-        - Switch to set Integrity Streams option for file system on selected disk, solely settable for ReFs file system
+        - Switch to set Integrity Streams option for file system on selected disk, solely settable for refs file system
       required: false
       type: bool
       default: 'no'
