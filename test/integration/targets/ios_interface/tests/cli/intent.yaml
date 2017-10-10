@@ -61,43 +61,52 @@
       - "result.failed == true"
       - "'state eq(up)' in result.failed_conditions"
 
-- name: Check neighbors intent arguments
-  ios_interface:
-    name: Gi0/0
-    neighbors:
-    - port: eth0
-      host: netdev
+- name: Register show neighbors detail
+  ios_command:
+    commands:
+      - show lldp neighbors
     authorize: yes
-    provider: "{{ cli }}"
-  register: result
+  register: show_lldp_neighbors_result
 
-- assert:
-    that:
-      - "result.failed == false"
+- block:
+    - name: Check neighbors intent arguments
+      ios_interface:
+        name: Gi0/0
+        neighbors:
+          - port: eth0
+            host: netdev
+        authorize: yes
+        provider: "{{ cli }}"
+      register: result
 
-- name: Check neighbors intent arguments (failed condition)
-  ios_interface:
-    name: Gi0/0
-    neighbors:
-    - port: dummy_port
-      host: dummy_host
-    authorize: yes
-    provider: "{{ cli }}"
-  ignore_errors: yes
-  register: result
+    - assert:
+        that:
+          - "result.failed == false"
 
-- assert:
-    that:
-      - "result.failed == true"
-      - "'host dummy_host' in result.failed_conditions"
-      - "'port dummy_port' in result.failed_conditions"
+    - name: Check neighbors intent arguments (failed condition)
+      ios_interface:
+        name: Gi0/0
+        neighbors:
+          - port: dummy_port
+            host: dummy_host
+        authorize: yes
+        provider: "{{ cli }}"
+      ignore_errors: yes
+      register: result
+
+    - assert:
+        that:
+          - "result.failed == true"
+          - "'host dummy_host' in result.failed_conditions"
+          - "'port dummy_port' in result.failed_conditions"
+  when: '"netdev" in show_lldp_neighbors_result.stdout'
 
 - name: Aggregate config + intent (pass)
   ios_interface:
     aggregate:
-    - name: GigabitEthernet0/2
-      enabled: True
-      state: up
+      - name: GigabitEthernet0/2
+        enabled: True
+        state: up
     authorize: yes
     provider: "{{ cli }}"
   ignore_errors: yes
@@ -107,38 +116,40 @@
     that:
       - "result.failed == false"
 
-- name: Aggregate neighbors intent (pass)
-  ios_interface:
-    aggregate:
-    - name: Gi0/0
-      neighbors:
-      - port: eth0
-        host: netdev
-    authorize: yes
-    provider: "{{ cli }}"
-  ignore_errors: yes
-  register: result
+- block:
+    - name: Aggregate neighbors intent (pass)
+      ios_interface:
+        aggregate:
+          - name: Gi0/0
+            neighbors:
+              - port: eth0
+                host: netdev
+        authorize: yes
+        provider: "{{ cli }}"
+      ignore_errors: yes
+      register: result
 
-- assert:
-    that:
-      - "result.failed == false"
+    - assert:
+        that:
+          - "result.failed == false"
 
-- name: Aggregate neighbors intent (fail)
-  ios_interface:
-    aggregate:
-    - name: Gi0/0
-      neighbors:
-      - port: eth0
-        host: netdev
-      - port: dummy_port
-        host: dummy_host
-    authorize: yes
-    provider: "{{ cli }}"
-  ignore_errors: yes
-  register: result
+    - name: Aggregate neighbors intent (fail)
+      ios_interface:
+        aggregate:
+          - name: Gi0/0
+        neighbors:
+          - port: eth0
+            host: netdev
+          - port: dummy_port
+            host: dummy_host
+        authorize: yes
+        provider: "{{ cli }}"
+      ignore_errors: yes
+      register: result
 
-- assert:
-    that:
-      - "result.failed == true"
-      - "'host dummy_host' in result.failed_conditions"
-      - "'port dummy_port' in result.failed_conditions"
+    - assert:
+        that:
+          - "result.failed == true"
+          - "'host dummy_host' in result.failed_conditions"
+          - "'port dummy_port' in result.failed_conditions"
+  when: "'netdev' in show_lldp_neighbors_result.stdout"
