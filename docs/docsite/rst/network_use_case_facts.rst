@@ -7,8 +7,8 @@ Gathering facts from network devices
 .. contents:: Topics
 
 
-Gather facts
-============
+Overview
+========
 
 Objective
 ---------
@@ -19,11 +19,7 @@ Prerequisites
 -------------
 
 * Ansible 2.3 (or higher) installed FIXMELINK
-* One or more network device compatible:
-
-  * Arista
-  * Cisco: ios, iosxr, nxos
-  * FIXME
+* One or more network device compatible with Ansible FIXMELINK
 
 Audience
 --------
@@ -33,7 +29,7 @@ Audience
 
 
 Solution
---------
+=========
 
 Create an inventory file
 
@@ -65,7 +61,6 @@ Create a file called ``fetch-facts.yml`` containing the following:
      # Which group in the inventory file this applies to
      hosts: switches
 
-     # fixme
      gather_facts: no
 
      tasks:
@@ -109,7 +104,7 @@ Create a file called ``fetch-facts.yml`` containing the following:
 
 
 Run it
-++++++
+------
 
 .. code-block:: console
 
@@ -122,12 +117,12 @@ Run it
    cat /tmp/switch-facts
 
 Details
--------
+=======
 
 Inventory
-+++++++++
+---------
 
-The ``inventory`` file is an INI-like configuration file that defines the mapping of hosts into groups:
+The ``inventory`` file is an INI-like configuration file that defines the mapping of hosts into groups.
 
 The above inventory file defines the groups ``ios``, ``vyos`` and a "group of groups" called ``switches``. Further details about subgroups and inventory files can be found in the :ref:`Ansible inventory Group documentation <subgroups>`.
 
@@ -145,42 +140,48 @@ Although there are many ways to supply credentials in Ansible in this case we ar
 ansible_connection
 ^^^^^^^^^^^^^^^^^^
 
-Setting ``ansible_connection=local`` informs Ansible to execute the module on the controlling machine (i.e. the one executing Ansible). Without this Ansible would attempt to ssh onto the remote
+Setting ``ansible_connection=local`` informs Ansible to execute the module on the controlling machine (i.e. the one executing Ansible). Without this Ansible would attempt to ssh onto the remote and execute the Python script on the network device, which would fail as Python generally isn't available.
 
 
 Playbook
-++++++++
+--------
 
 Gathering facts
 ^^^^^^^^^^^^^^^
 
-* Link to module
-* Not about conditional keyword - link to docs
-* ``register``
+Here we use the ``_facts`` modules :ref:`ios_facts <ios_facts>` and :ref:`vyos_facts <vyos_facts>` to connect to the remote device. As the credentials are not explicitly specified Ansible uses the username and password from the inventory file.
+
+The data that the module returns is stored due to the use of the ``register:`` keyword into a variable called ``results_ios`` or ``results_vyos``.
+
+The return values (data returned by a module) are documented in the `Return Values` section of the module docs, in this case :ref:`ios_facts <ios_facts>` and :ref:`vyos_facts <vyos_facts>`.
+
+The task is conditionally run based on the group defined in the inventory file, for more information on the use of Conditionals in Ansible Playbooks see :ref:`the_when_statement`.
+
 
 
 Debug
-^^^^^^
+-----
 
-* Reference ``RETURN`` sections of docs
-* Link to docs ``hostvars`` docs
+Although these tasks are not needed to write data to disk, they are useful to demonstrate some methods of accessing facts about the given or a named host.
+
+More information on this can be found in :ref:`magic_variables_and_hostvars`.
 
 Writing to disk
-^^^^^^^^^^^^^^^
+---------------
 
 * FIXME Link to module docs ios_facts, vyos_facts, copy, debug
 
 Troubleshooting
----------------
+===============
 
 If you receive an error ``unable to open shell`` please follow the debug steps in :doc:`network_debug_troubleshooting`.
 
 
-See also
+.. seealso::
 
-* Network landing page
-* intro_inventory
-* playbooks_best_practices.html#best-practices-for-variables-and-vaults
+  * Network landing page
+  * intro_inventory
+  * playbooks_best_practices.html#best-practices-for-variables-and-vaults
 
 Fixme
 =====
@@ -195,6 +196,10 @@ Fixme
 
 * Using ``ansible_ssh_pass`` will not work for REST transports such as ``eapi``, ``nxapi`` - What do we here?
 
+* External updates needed
+
+  * Improve vault page and link between ``playbooks_best_practices.html#best-practices-for-variables-and-vaults``, ``ansible-playbook.rst``
+  * Link to network intro page table of Persistent connection and version_added table
 
 
 FIXME Link to details regarding different ways to specify credentials (this should be in the main docs somewhere). This should just be a summary that links to the existing docs (``intro_inventory``, ``playbooks_best_practices.html#best-practices-for-variables-and-vaults``, ``ansible-playbook.rst``, etc)
