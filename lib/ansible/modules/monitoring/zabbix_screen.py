@@ -68,6 +68,10 @@ options:
               The available states are: C(present) (default) and C(absent). If the screen(s) already exists, and the state is not C(absent), the screen(s)
               will just be updated as needed.
         required: true
+
+extends_documentation_fragment:
+    - validate_certs
+
 notes:
     - Too many concurrent updates to the same screen may cause Zabbix to return errors, see examples for a workaround if needed.
 '''
@@ -146,8 +150,8 @@ try:
     class ZabbixAPIExtends(ZabbixAPI):
         screenitem = None
 
-        def __init__(self, server, timeout, user, passwd, **kwargs):
-            ZabbixAPI.__init__(self, server, timeout=timeout, user=user, passwd=passwd)
+        def __init__(self, server, timeout, user, passwd, validate_certs, **kwargs):
+            ZabbixAPI.__init__(self, server, timeout=timeout, user=user, passwd=passwd, validate_certs=validate_certs)
             self.screenitem = ZabbixAPISubClass(self, dict({"prefix": "screenitem"}, **kwargs))
 
     HAS_ZABBIX_API = True
@@ -330,6 +334,7 @@ def main():
             login_password=dict(type='str', required=True, no_log=True),
             http_login_user=dict(type='str', required=False, default=None),
             http_login_password=dict(type='str', required=False, default=None, no_log=True),
+            validate_certs=dict(type='bool', required=False, default=True),
             timeout=dict(type='int', default=10),
             screens=dict(type='list', required=True)
         ),
@@ -344,13 +349,15 @@ def main():
     login_password = module.params['login_password']
     http_login_user = module.params['http_login_user']
     http_login_password = module.params['http_login_password']
+    validate_certs = module.params['validate_certs']
     timeout = module.params['timeout']
     screens = module.params['screens']
 
     zbx = None
     # login to zabbix
     try:
-        zbx = ZabbixAPIExtends(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password)
+        zbx = ZabbixAPIExtends(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password,
+                               validate_certs=validate_certs)
         zbx.login(login_user, login_password)
     except Exception as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)

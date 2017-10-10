@@ -70,6 +70,10 @@ options:
             - List of host groups to create or delete.
         required: true
         aliases: [ "host_group" ]
+
+extends_documentation_fragment:
+    - validate_certs
+
 notes:
     - Too many concurrent updates to the same group may cause Zabbix to return errors, see examples for a workaround if needed.
 '''
@@ -163,6 +167,7 @@ def main():
             login_password=dict(type='str', required=True, no_log=True),
             http_login_user=dict(type='str',required=False, default=None),
             http_login_password=dict(type='str',required=False, default=None, no_log=True),
+            validate_certs=dict(type='bool',required=False, default=True),
             host_groups=dict(type='list', required=True, aliases=['host_group']),
             state=dict(default="present", choices=['present','absent']),
             timeout=dict(type='int', default=10)
@@ -178,6 +183,7 @@ def main():
     login_password = module.params['login_password']
     http_login_user = module.params['http_login_user']
     http_login_password = module.params['http_login_password']
+    validate_certs = module.params['validate_certs']
     host_groups = module.params['host_groups']
     state = module.params['state']
     timeout = module.params['timeout']
@@ -186,7 +192,8 @@ def main():
 
     # login to zabbix
     try:
-        zbx = ZabbixAPI(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password)
+        zbx = ZabbixAPI(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password,
+                        validate_certs=validate_certs)
         zbx.login(login_user, login_password)
     except Exception as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
