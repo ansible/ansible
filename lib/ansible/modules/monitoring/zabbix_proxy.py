@@ -18,7 +18,7 @@
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -26,10 +26,10 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: zabbix_proxy
-short_description: Zabbix host creates/deletes/gets/updates
+short_description: Zabbix proxy creates/deletes/gets/updates
 description:
    - This module allows you to create, modify, get and delete Zabbix proxy entries.
-version_added: "2.4"
+version_added: "2.5"
 author:
     - "Alen Komic"
 requirements:
@@ -69,19 +69,19 @@ options:
         required: false
     status:
         description:
-            - Type of proxy.
+            - Type of proxy. (4 - active, 5 - passive)
         required: false
         choices: ['active', 'passive']
         default: "active"
     tls_connect:
         description:
-            - Connections to host.
+            - Connections to proxy.
         required: false
         choices: ['no_encryption','PSK','certificate']
         default: 'no_encryption'
     tls_accept:
         description:
-            - Connections from host.
+            - Connections from proxy.
         required: false
         choices: ['no_encryption','PSK','certificate']
         default: 'no_encryption'
@@ -103,9 +103,9 @@ options:
         required: false
     state:
         description:
-            - State of the host.
-            - On C(present), it will create if host does not exist or update the host if the associated data is different.
-            - On C(absent) will remove a host if it exists.
+            - State of the proxy.
+            - On C(present), it will create if proxy does not exist or update the proxy if the associated data is different.
+            - On C(absent) will remove a proxy if it exists.
         required: false
         choices: ['present', 'absent']
         default: "present"
@@ -208,6 +208,7 @@ class Proxy(object):
 
         final_interface = old_interface.copy()
         final_interface.update(new_interface)
+        final_interface = dict((k,str(v)) for k,v in final_interface.iteritems())
 
         if final_interface != old_interface:
             return final_interface
