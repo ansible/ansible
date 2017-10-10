@@ -56,12 +56,8 @@ import argparse
 import six
 import httplib2 as http
 from time import time
-from six.moves import configparser
-
-try:
-    from urlparse import urlparse
-except ImportError:
-    from urllib.parse import urlparse
+from ansible.module_utils.six.moves import configparser
+from ansible.module_utils.six.moves.urllib.parse import urlparse
 
 try:
     import json

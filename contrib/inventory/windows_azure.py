@@ -39,7 +39,7 @@ import re
 import sys
 import argparse
 import os
-from urlparse import urlparse
+from ansible.module_utils.six.moves.urllib.parse import urlparse
 from time import time
 try:
     import json
