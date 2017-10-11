@@ -73,6 +73,12 @@ options:
      required: false
      default: None
      version_added: "2.4"
+   metadata:
+     description:
+       - Metadata key/value pairs to associate with the volume.
+     required: false
+     default: None
+     version_added: "2.4"
 requirements:
      - "python >= 2.6"
      - "shade"
@@ -131,6 +137,9 @@ def _present_volume(module, cloud):
     if module.params['scheduler_hints']:
         volume_args['scheduler_hints'] = module.params['scheduler_hints']
 
+    if module.params['metadata']:
+        volume_args['metadata'] = module.params['metadata']
+
     volume = cloud.create_volume(
         wait=module.params['wait'], timeout=module.params['timeout'],
         **volume_args)
@@ -160,6 +169,7 @@ def main():
         snapshot_id=dict(default=None),
         volume=dict(default=None),
         state=dict(default='present', choices=['absent', 'present']),
+        metadata=dict(default=None, type='dict'),
         scheduler_hints=dict(default=None, type='dict')
     )
     module_kwargs = openstack_module_kwargs(
