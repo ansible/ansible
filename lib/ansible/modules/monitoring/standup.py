@@ -250,6 +250,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 global module
 
+
 # Class for comparing command outputs
 class StandupOutputCompare:
     COMPARE_TYPES = ['str', 'number']
