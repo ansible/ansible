@@ -17,6 +17,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 #
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -208,7 +210,7 @@ class Proxy(object):
 
         final_interface = old_interface.copy()
         final_interface.update(new_interface)
-        final_interface = dict((k,str(v)) for k,v in final_interface.items())
+        final_interface = dict((k, str(v)) for k, v in final_interface.items())
 
         if final_interface != old_interface:
             return final_interface
