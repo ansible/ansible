@@ -519,10 +519,10 @@ class VariableManager:
         templar = Templar(loader=self._loader, variables=vars_copy)
 
         items = []
-        if task.loop is not None:
-            if task.loop in lookup_loader:
+        if task.loop_with is not None:
+            if task.loop_with in lookup_loader:
                 try:
-                    loop_terms = listify_lookup_plugin_terms(terms=task.loop, templar=templar,
+                    loop_terms = listify_lookup_plugin_terms(terms=task.loop_with, templar=templar,
                                                              loader=self._loader, fail_on_undefined=True, convert_bare=False)
                     items = lookup_loader.get(task.loop, loader=self._loader, templar=templar).run(terms=loop_terms, variables=vars_copy)
                 except AnsibleUndefinedVariable:
@@ -530,7 +530,9 @@ class VariableManager:
                     # a dummy array for the later code so it doesn't fail
                     items = [None]
             else:
-                raise AnsibleError("Unexpected failure in finding the lookup named '%s' in the available lookup plugins" % task.loop)
+                raise AnsibleError("Failed to find the lookup named '%s' in the available lookup plugins" % task.loop_with)
+        elif task.loop is not None:
+            items = templar.template(task.loop)
         else:
             items = [None]
 
