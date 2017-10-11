@@ -16,7 +16,7 @@
     dest: '{{ management_ip }}'
     authorize: yes
   register: esp
-  
+ 
 - name: unexpected unsuccessful ping
   ios_ping: &invalid_ip
     dest: '10.255.255.250'
@@ -29,7 +29,6 @@
   ios_ping:
     <<: *valid_ip
     state: 'absent'
-    authorize: yes
   register: usp
   ignore_errors: yes
 
@@ -37,7 +36,6 @@
   ios_ping:
     <<: *invalid_ip
     state: 'absent'
-    authorize: yes
   register: eup
 
 - name: assert
