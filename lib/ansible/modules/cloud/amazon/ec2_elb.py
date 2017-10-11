@@ -94,6 +94,7 @@ post_tasks:
 """
 
 import time
+import re
 
 try:
     import boto
@@ -106,8 +107,37 @@ except ImportError:
     HAS_BOTO = False
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.cloud import CloudRetry
 from ansible.module_utils.ec2 import (AnsibleAWSError, HAS_BOTO, connect_to_aws, ec2_argument_spec,
                                       get_aws_connection_info)
+
+
+def _boto_exception_maybe():
+    """
+    Allow for boto exceptions to be retried.
+    """
+    if HAS_BOTO:
+        return boto.exception.BotoServerError
+    return type(None)
+
+
+class Retry(CloudRetry):
+    """ A retry class for ec2_elb while this module isn't using boto3 """
+    base_class = _boto_exception_maybe()
+
+    @staticmethod
+    def status_code_from_exception(error):
+        return error.error_code
+
+    @staticmethod
+    def found(response_code, catch_extra_error_codes=None):
+        retry_on = ['RequestLimitExceeded', 'Unavailable', 'ServiceUnavailable',
+                    'InternalFailure', 'InternalError', 'Throttling']
+        not_found = re.compile(r'^\w+.NotFound')
+        if response_code in retry_on or not_found.search(response_code):
+            return True
+        else:
+            return False
 
 
 class ElbManager:
@@ -122,6 +152,38 @@ class ElbManager:
         self.lbs = self._get_instance_lbs(ec2_elbs)
         self.changed = False
 
+    @Retry.backoff(tries=10, delay=10, backoff=1.5)
+    def retry_deregister(self, connection, instances):
+        connection.deregister_instances(instances)
+
+    @Retry.backoff(tries=10, delay=10, backoff=1.5)
+    def retry_register(self, connection, instances):
+        connection.register_instances(instances)
+
+    @Retry.backoff(tries=10, delay=10, backoff=1.5)
+    def retry_enable_zones(self, connection, zones):
+        connection.enable_zones(zones=zones)
+
+    @Retry.backoff(tries=10, delay=10, backoff=1.5)
+    def retry_get_lb_with_param(self, connection, marker=None):
+        return connection.get_all_load_balancers(marker=marker)
+
+    @Retry.backoff(tries=10, delay=10, backoff=1.5)
+    def retry_get_lb_without_param(self, connection):
+        return connection.get_all_load_balancers()
+
+    @Retry.backoff(tries=10, delay=10, backoff=1.5)
+    def retry_get_asg_instances(self, connection, instances):
+        return connection.get_all_autoscaling_instances(instances)
+
+    @Retry.backoff(tries=10, delay=10, backoff=1.5)
+    def retry_get_asg_groups(self, connection, autoscaling_groups):
+        return connection.get_all_groups(autoscaling_groups)
+
+    @Retry.backoff(tries=10, delay=10, backoff=1.5)
+    def retry_get_only_instances(self, connection, instance_ids):
+        return connection.get_only_instances(instance_ids=instance_ids)
+
     def deregister(self, wait, timeout):
         """De-register the instance from all ELBs and wait for the ELB
         to report it out-of-service"""
@@ -133,7 +195,7 @@ class ElbManager:
                 # balancer. Ignore it and try the next one.
                 continue
 
-            lb.deregister_instances([self.instance_id])
+            self.retry_deregister(lb, [self.instance_id])
 
             # The ELB is changing state in some way. Either an instance that's
             # InService is moving to OutOfService, or an instance that's
@@ -152,7 +214,7 @@ class ElbManager:
             if enable_availability_zone:
                 self._enable_availailability_zone(lb)
 
-            lb.register_instances([self.instance_id])
+            self.retry_register(lb, [self.instance_id])
 
             if wait:
                 self._await_elb_instance_state(lb, 'InService', initial_state, timeout)
@@ -179,7 +241,7 @@ class ElbManager:
         if instance.placement in lb.availability_zones:
             return False
 
-        lb.enable_zones(zones=instance.placement)
+        self.retry_enable_zones(lb, instance.placement)
 
         # If successful, the new zone will have been added to
         # lb.availability_zones
@@ -234,6 +296,7 @@ class ElbManager:
         # description, which is likely to be brittle.
         return (instance_state and 'pending' in instance_state.description)
 
+    @Retry.backoff(tries=10, delay=10, backoff=1.5)
     def _get_instance_health(self, lb):
         """
         Check instance health, should return status object or None under
@@ -266,14 +329,14 @@ class ElbManager:
         marker = None
         while True:
             try:
-                newelbs = elb.get_all_load_balancers(marker=marker)
+                newelbs = self.retry_get_lb_with_param(elb, marker=marker)
                 marker = newelbs.next_marker
                 elbs.extend(newelbs)
                 if not marker:
                     break
             except TypeError:
                 # Older version of boto do not allow for params
-                elbs = elb.get_all_load_balancers()
+                elbs = self.retry_get_lb_without_param(elb)
                 break
 
         if ec2_elbs:
@@ -295,7 +358,7 @@ class ElbManager:
         except (boto.exception.NoAuthHandlerFound, AnsibleAWSError) as e:
             self.module.fail_json(msg=str(e))
 
-        asg_instances = asg.get_all_autoscaling_instances([self.instance_id])
+        asg_instances = self.retry_get_asg_instances(asg, [self.instance_id])
         if len(asg_instances) > 1:
             self.module.fail_json(msg="Illegal state, expected one auto scaling group instance.")
 
@@ -304,7 +367,7 @@ class ElbManager:
         else:
             asg_name = asg_instances[0].group_name
 
-            asgs = asg.get_all_groups([asg_name])
+            asgs = self.retry_get_asg_groups(asg, [asg_name])
             if len(asg_instances) != 1:
                 self.module.fail_json(msg="Illegal state, expected one auto scaling group.")
 
@@ -318,7 +381,7 @@ class ElbManager:
             ec2 = connect_to_aws(boto.ec2, self.region, **self.aws_connect_params)
         except (boto.exception.NoAuthHandlerFound, AnsibleAWSError) as e:
             self.module.fail_json(msg=str(e))
-        return ec2.get_only_instances(instance_ids=[self.instance_id])[0]
+        return self.retry_get_only_instances(ec2, instance_ids=[self.instance_id])[0]
 
 
 def main():
