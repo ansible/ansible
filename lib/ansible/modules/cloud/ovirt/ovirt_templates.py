@@ -96,6 +96,14 @@ options:
             will be copied to the created template."
             - "This parameter is used only when C(state) I(present)."
         default: False
+    seal:
+        description:
+            - "'Sealing' is an operation that erases all machine-specific configurations from a filesystem:
+               This includes SSH keys, UDEV rules, MAC addresses, system ID, hostname, etc.
+               If I(true) subsequent virtual machines made from this template will avoid configuration inheritance."
+            - "This parameter is used only when C(state) I(present)."
+        default: False
+        version_added: "2.5"
 extends_documentation_fragment: ovirt
 '''
 
@@ -259,6 +267,7 @@ def main():
         image_provider=dict(default=None),
         image_disk=dict(default=None, aliases=['glance_image_disk_name']),
         template_image_disk_name=dict(default=None),
+        seal=dict(type='bool'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -282,6 +291,7 @@ def main():
             ret = templates_module.create(
                 result_state=otypes.TemplateStatus.OK,
                 clone_permissions=module.params['clone_permissions'],
+                seal=module.params['seal'],
             )
         elif state == 'absent':
             ret = templates_module.remove()
