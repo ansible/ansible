@@ -406,7 +406,7 @@ class AnsibleCloudStack(object):
                     return self.vm_default_nic
         self.fail_json(msg="No default IP address of VM '%s' found" % self.module.params.get('vm'))
 
-    def get_vm(self, key=None):
+    def get_vm(self, key=None, filter_zone=True):
         if self.vm:
             return self._get_by_key(key, self.vm)
 
@@ -418,7 +418,7 @@ class AnsibleCloudStack(object):
             'account': self.get_account(key='name'),
             'domainid': self.get_domain(key='id'),
             'projectid': self.get_project(key='id'),
-            'zoneid': self.get_zone(key='id'),
+            'zoneid': self.get_zone(key='id') if filter_zone else None,
         }
         vms = self.query_api('listVirtualMachines', **args)
         if vms:
