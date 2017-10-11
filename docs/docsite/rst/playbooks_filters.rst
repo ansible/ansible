@@ -421,6 +421,90 @@ filter::
 
 Use of the TextFSM filter requires the TextFSM library to be installed.
 
+Network XML filters
+```````````````````
+
+.. versionadded:: 2.5
+
+To convert the XML output of a network device command into structured JSON
+output, use the ``parse_xml`` filter::
+
+  {{ output | parse_xml('path/to/spec') }}
+
+The ``parse_xml`` filter will load the spec file and pass the command output
+through, it returning JSON output. The spec file is a YAML yaml that defines
+how to parse the XML output.
+
+The spec file should be valid formatted YAML. It defines how to parse the XML
+output and return JSON data.  Below is an example of a valid spec file that
+will parse the output from the ``show vlan | display xml`` command.::
+
+    ---
+    vars:
+      vlan:
+        vlan_id: "{{ item.vlan_id }}"
+        name: "{{ item.name }}"
+        desc: "{{ item.desc }}"
+        enabled: "{{ item.state.get('inactive') != 'inactive' }}"
+        state: "{% if item.state.get('inactive') == 'inactive'%} inactive {% else %} active {% endif %}"
+
+    keys:
+      vlans:
+        type: list
+        value: "{{ vlan }}"
+        top: configuration/vlans/vlan
+        items:
+          vlan_id: vlan-id
+          name: name
+          desc: description
+          state: ".[@inactive='inactive']"
+
+The spec file above will return a JSON data structure that is a list of hashes
+with the parsed VLAN information.
+
+The same command could be parsed into a hash by using the key and values
+directives.  Here is an example of how to parse the output into a hash
+value using the same ``show vlan | display xml`` command.::
+
+    ---
+    vars:
+      vlan:
+        key: "{{ item.vlan_id }}"
+        values:
+            vlan_id: "{{ item.vlan_id }}"
+            name: "{{ item.name }}"
+            desc: "{{ item.desc }}"
+            enabled: "{{ item.state.get('inactive') != 'inactive' }}"
+            state: "{% if item.state.get('inactive') == 'inactive'%} inactive {% else %} active {% endif %}"
+
+    keys:
+      vlans:
+        type: list
+        value: "{{ vlan }}"
+        top: configuration/vlans/vlan
+        items:
+          vlan_id: vlan-id
+          name: name
+          desc: description
+          state: ".[@inactive='inactive']"
+
+
+The example xml output from a network device shown below is used to identify the value of ``top`` and
+the key-value pairs under ``items`` in the spec file. The value of ``top`` is the xpath till
+inner-most container in xml hierarchy. The key under ``items`` is the name of variable and it's
+value is corresponding xpath with respect to xpath value in ``top``.::
+
+    <rpc-reply>
+      <configuration>
+        <vlans>
+          <vlan inactive="inactive">
+           <name>vlan-1</name>
+           <vlan-id>200</vlan-id>
+           <description>This is vlan-1</description>
+          </vlan>
+      </configuration>
+    </rpc-reply>
+
 .. _hash_filters:
 
 Hashing filters
