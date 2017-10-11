@@ -214,7 +214,6 @@ class Server():
 
     def do_EXEC(self, data):
         cmd = data.split(b'EXEC: ')[1]
-        display.display('Command executed: %s' % cmd, log_only=True)
         return self.connection.exec_command(cmd)
 
     def do_PUT(self, data):
