@@ -16,9 +16,11 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -29,7 +31,7 @@ module: zabbix_template
 short_description: create/delete zabbix template
 description:
     - create/delete zabbix template
-version_added: "2.4"
+version_added: "2.5"
 author:
     - "@sookido"
 requirements:
