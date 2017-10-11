@@ -24,7 +24,7 @@ Because ssh is the default protocol used in system administration and the protoc
 Enabling Connection Plugins
 +++++++++++++++++++++++++++
 
-Should you want to extend Ansible to support other transports (SNMP, Message bus, etc) it's as simple as dropping a custom plugin
+You can extend Ansible to support other transports (such as SNMP or message bus) by dropping a custom plugin
 into the ``connection_plugins`` directory.
 
 
@@ -34,8 +34,8 @@ Using Connection Plugins
 ++++++++++++++++++++++++
 
 The transport can be changed via :doc:`configuration <../config>`, in the command line (``-c``, ``--connection``), as a keyword (:ref:`connection`)
-in your play or by setting the a connection variable (:ref:`ansible_connection`), most often, in your inventory.
-For example, for windows machines you might want o use the :doc:`winrm <connection/winrm>` plugin instead.
+in your play, or by setting the a connection variable (:ref:`ansible_connection`), most often in your inventory.
+For example, for Windows machines you might want to use the :doc:`winrm <connection/winrm>` plugin.
 
 Most connection plugins can operate with a minimum configuration. By default they use the :ref:`inventory_hostname` and defaults to find the target host.
 
@@ -49,10 +49,6 @@ Plugins are self-documenting. Each plugin should document its configuration opti
     The default user name to log in as, most plugins defaul to the 'current user running Ansible'
 
 Each plugin might also have a specific version of a variable that overrides the general version. For example, :ref:`ansible_ssh_host` for the :doc:`ssh <connection/ssh>` plugin.
-
-
-You can extend Ansible to support other transports (such as SNMP or message bus) by dropping a custom plugin
-into the ``connection_plugins`` directory.
 
 .. _connection_plugin_list:
 
