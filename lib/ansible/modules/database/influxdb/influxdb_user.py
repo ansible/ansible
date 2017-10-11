@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
-# (c) 2017, Vitaliy Zhhuta <zhhuta () gmail.com> insipred by Kamil Szczygiel <kamil.szczygiel () intel.com> influxdb_database module
+# (c) 2017, Vitaliy Zhhuta <zhhuta () gmail.com>
+# insipred by Kamil Szczygiel <kamil.szczygiel () intel.com> influxdb_database module
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -18,7 +19,7 @@ module: influxdb_user
 short_description: Manage InfluxDB users
 description:
     - Manage InfluxDB users
-version_added: 2.4
+version_added: 2.5
 author: "Vitaliy Zhhuta (@zhhuta)"
 requirements:
     - "python >= 2.6"
@@ -115,8 +116,8 @@ def influxdb_argument_spec():
         login_username=dict(default='root', type='str'),
         login_password=dict(default='root', type='str', no_log=True),
         username=dict(required=True, type='str'),
-        password=dict(required=False, type='str',no_log=True),
-        admin=dict(default='False',type='str')
+        password=dict(required=False, type='str', no_log=True),
+        admin=dict(default='False', type='str')
     )
 
 
@@ -125,8 +126,6 @@ def connect_to_influxdb(module):
     port = module.params['port']
     username = module.params['login_username']
     password = module.params['login_password']
-
-
     client = InfluxDBClient(
         host=hostname,
         port=port,
