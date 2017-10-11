@@ -32,7 +32,7 @@ or in the ``ansible.cfg`` file:
 You will also need to configure other settings specific to each plugin. Consult the individual plugin documentation
 or the Ansible :doc:`configuration <../config>` for more details.
 
-You can add a custom cache plugins by either dropping it into a ``cache_plugins`` directory adjacent to your play or inside a role or by putting it in one of the directory sources configured in :doc:`ansible.cfg <../config>`.
+A custom cache plugins is enabled by dropping it into a ``cache_plugins`` directory adjacent to your play, inside a role, or by putting it in one of the directory sources configured in :doc:`ansible.cfg <../config>`.
 
 
 .. _using_cache:
@@ -40,7 +40,7 @@ You can add a custom cache plugins by either dropping it into a ``cache_plugins`
 Using Cache Plugins
 +++++++++++++++++++
 
-Use is automatic, nothing to do after you enabled the plugin.
+Cache plugins are used autoamtically once they are enabled.
 
 
 .. _cache_plugin_list:
