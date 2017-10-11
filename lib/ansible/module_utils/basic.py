@@ -2047,7 +2047,7 @@ class AnsibleModule(object):
                 self._options_context.pop()
             # Defaulting the contents of a list to str is not something we've done before so not
             # going to do it now.  It may be something we should do in a revised API, though
-            elif wanted == 'list' and v.get('elements', None) is not None:
+            elif wanted == 'list' and v.get('elements', None) is not None and isinstance(params[k], list):
                 elem_type = v['elements']
                 for idx, element in enumerate(params[k]):
                     try:
