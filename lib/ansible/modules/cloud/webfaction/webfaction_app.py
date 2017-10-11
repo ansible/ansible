@@ -154,6 +154,7 @@ def main():
             # Should check other parameters.
             module.exit_json(
                 changed=False,
+                result=existing_app,
             )
 
         if not module.check_mode:
