@@ -29,41 +29,32 @@ options:
   description:
     description:
       - Description of the security group.
-    required: false
-    default: null
   state:
     description:
       - State of the security group.
-    required: false
-    default: 'present'
-    choices: [ 'present', 'absent' ]
+    default: present
+    choices: [ present, absent ]
   domain:
     description:
       - Domain the security group is related to.
-    required: false
-    default: null
   account:
     description:
       - Account the security group is related to.
-    required: false
-    default: null
   project:
     description:
       - Name of the project the security group to be created in.
-    required: false
-    default: null
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-# Create a security group
-- local_action:
+- name: create a security group
+  local_action:
     module: cs_securitygroup
     name: default
     description: default security group
 
-# Remove a security group
-- local_action:
+- name: remove a security group
+  local_action:
     module: cs_securitygroup
     name: default
     state: absent
@@ -107,14 +98,9 @@ account:
   type: string
   sample: example account
 '''
-try:
-    from cs import CloudStackException
-except ImportError:
-    pass  # Handled in AnsibleCloudStack.__init__
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.cloudstack import AnsibleCloudStack, cs_argument_spec, cs_required_together
-
 
 
 class AnsibleCloudStackSecurityGroup(AnsibleCloudStack):
@@ -123,72 +109,66 @@ class AnsibleCloudStackSecurityGroup(AnsibleCloudStack):
         super(AnsibleCloudStackSecurityGroup, self).__init__(module)
         self.security_group = None
 
-
     def get_security_group(self):
         if not self.security_group:
 
-            args = {}
-            args['projectid'] = self.get_project(key='id')
-            args['account'] = self.get_account(key='name')
-            args['domainid'] = self.get_domain(key='id')
-            args['securitygroupname'] = self.module.params.get('name')
-
-            sgs = self.cs.listSecurityGroups(**args)
+            args = {
+                'projectid': self.get_project(key='id'),
+                'account': self.get_account(key='name'),
+                'domainid': self.get_domain(key='id'),
+                'securitygroupname': self.module.params.get('name'),
+            }
+            sgs = self.query_api('listSecurityGroups', **args)
             if sgs:
                 self.security_group = sgs['securitygroup'][0]
         return self.security_group
-
 
     def create_security_group(self):
         security_group = self.get_security_group()
         if not security_group:
             self.result['changed'] = True
 
-            args = {}
-            args['name'] = self.module.params.get('name')
-            args['projectid'] = self.get_project(key='id')
-            args['account'] = self.get_account(key='name')
-            args['domainid'] = self.get_domain(key='id')
-            args['description'] = self.module.params.get('description')
+            args = {
+                'name': self.module.params.get('name'),
+                'projectid': self.get_project(key='id'),
+                'account': self.get_account(key='name'),
+                'domainid': self.get_domain(key='id'),
+                'description': self.module.params.get('description'),
+            }
 
             if not self.module.check_mode:
-                res = self.cs.createSecurityGroup(**args)
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                res = self.query_api('createSecurityGroup', **args)
                 security_group = res['securitygroup']
 
         return security_group
-
 
     def remove_security_group(self):
         security_group = self.get_security_group()
         if security_group:
             self.result['changed'] = True
 
-            args = {}
-            args['name'] = self.module.params.get('name')
-            args['projectid'] = self.get_project(key='id')
-            args['account'] = self.get_account(key='name')
-            args['domainid'] = self.get_domain(key='id')
+            args = {
+                'name': self.module.params.get('name'),
+                'projectid': self.get_project(key='id'),
+                'account': self.get_account(key='name'),
+                'domainid': self.get_domain(key='id'),
+            }
 
             if not self.module.check_mode:
-                res = self.cs.deleteSecurityGroup(**args)
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                self.query_api('deleteSecurityGroup', **args)
 
         return security_group
-
 
 
 def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
-        name = dict(required=True),
-        description = dict(default=None),
-        state = dict(choices=['present', 'absent'], default='present'),
-        project = dict(default=None),
-        account = dict(default=None),
-        domain = dict(default=None),
+        name=dict(required=True),
+        description=dict(),
+        state=dict(choices=['present', 'absent'], default='present'),
+        project=dict(),
+        account=dict(),
+        domain=dict(),
     ))
 
     module = AnsibleModule(
@@ -197,20 +177,15 @@ def main():
         supports_check_mode=True
     )
 
-    try:
-        acs_sg = AnsibleCloudStackSecurityGroup(module)
+    acs_sg = AnsibleCloudStackSecurityGroup(module)
 
-        state = module.params.get('state')
-        if state in ['absent']:
-            sg = acs_sg.remove_security_group()
-        else:
-            sg = acs_sg.create_security_group()
+    state = module.params.get('state')
+    if state in ['absent']:
+        sg = acs_sg.remove_security_group()
+    else:
+        sg = acs_sg.create_security_group()
 
-        result = acs_sg.get_result(sg)
-
-    except CloudStackException as e:
-        module.fail_json(msg='CloudStackException: %s' % str(e))
-
+    result = acs_sg.get_result(sg)
     module.exit_json(**result)
 
 
