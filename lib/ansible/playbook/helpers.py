@@ -133,8 +133,9 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                 # check to see if this include is dynamic or static:
                 # 1. the user has set the 'static' option to false or true
                 # 2. one of the appropriate config options was set
-                is_static = False
-                if 'import_tasks' in task_ds:
+                if 'include_tasks' in task_ds:
+                    is_static = False
+                elif 'import_tasks' in task_ds:
                     is_static = True
                 elif t.static is not None:
                     display.deprecated("The use of 'static' has been deprecated. "
