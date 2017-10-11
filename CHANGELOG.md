@@ -124,6 +124,7 @@ Ansible Changes By Release
 * Fix for the yum module when installing from file/url crashes (https://github.com/ansible/ansible/pull/31529)
 * Improved error messaging for Windows become/runas when username is bogus (https://github.com/ansible/ansible/pull/31551)
 * Fix rollback feature in junos_config to now allow configuration rollback on device (https://github.com/ansible/ansible/pull/31424)
+* Remove command executed log from ansible-connection (https://github.com/ansible/ansible/pull/31581)
 
 <a id="2.4"></a>
 
