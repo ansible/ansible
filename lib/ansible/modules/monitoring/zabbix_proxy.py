@@ -208,7 +208,7 @@ class Proxy(object):
 
         final_interface = old_interface.copy()
         final_interface.update(new_interface)
-        final_interface = dict((k,str(v)) for k,v in final_interface.iteritems())
+        final_interface = dict((k,str(v)) for k,v in final_interface.items())
 
         if final_interface != old_interface:
             return final_interface
