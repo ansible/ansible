@@ -1,27 +1,27 @@
 Shell Plugins
 -------------
 
-Shell plugins work transparently to ensure that the basic commands Ansible runs are properly formated to work with the target machine.
+Shell plugins work transparently to ensure that the basic commands Ansible runs are properly formatted to work with the target machine.
 
 .. _enabling_shell:
 
 Enabling Shell Plugins
 ++++++++++++++++++++++
 
-You can add a custom shell plugins by either dropping it into a ``shell_plugins`` directory adjacent to your play or inside a role
+You can add a custom shell plugin by dropping it into a ``shell_plugins`` directory adjacent to your play, inside a role,
 or by putting it in one of the shell plugin directory sources configured in :doc:`ansible.cfg <../config>`.
 
-.. warning:: You should not alter the configuration for these plugins unless you have a restricted or exotic setup
-             in which the default ``/bin/sh`` is not a POSIX compatible shell or not availble for execution.
+.. warning:: You should not alter the configuration for these plugins unless you have a setup
+             in which the default ``/bin/sh`` is not a POSIX compatible shell or is not availble for execution.
 
 .. _using_shell:
 
 Using Shell Plugins
 +++++++++++++++++++
 
-You probably never need to do this, but aside from the defaul configuration settings in :doc:`../config`,
-you can use a 'connection variable' :ref:`ansible_shell_type` to select the plugin to use,
-you will also want to update the :ref:`ansible_executable` to match.
+In addition to the default configuration settings in :doc:`../config`,
+you can use a 'connection variable' :ref:`ansible_shell_type` to select the plugin to use. 
+In this case, you will also want to update the :ref:`ansible_executable` to match.
 
 .. seealso::
 
