@@ -34,9 +34,9 @@ This list also establishes the order in which each plugin tries to parse an inve
 Using Inventory Plugins
 +++++++++++++++++++++++
 
-The only thing a user has to do after enabling a plugin is providing an inventory source they can parse.
+The only requirement for using an iinventory plugin after it is enabled is to provide an inventory source to parse.
 Ansible will try to use the list of enabled inventory plugins, in order, against each inventory source provided.
-Once one succeeds at parsing a source, the rest will be skipped for that source.
+Once an inventory plugin succeeds at parsing a source, the any remaining inventory plugins will be skipped for that source.
 
 
 .. _inventory_plugin_list:
