@@ -36,7 +36,7 @@ One way of using lookups is to populate variables. These macros are evaluated ea
     tasks:
       - debug: msg="motd value is {{ motd_value }}"
 
-For more details and a complete list of lookup plugins available :doc:`plugins/lookup`
+For more details and a complete list of lookup plugins available, please see :doc:`plugins/lookup`.
 
 .. seealso::
 
