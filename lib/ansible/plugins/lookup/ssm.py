@@ -1,4 +1,5 @@
 # (c) 2016, Bill Wang <ozbillwang(at)gmail.com>
+# (c) 2017, Marat Bakeev <hawara(at)gmail.com>
 #
 # This file is part of Ansible
 #
@@ -21,6 +22,7 @@ __metaclass__ = type
 from ansible.module_utils.ec2 import HAS_BOTO3
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
+from ansible.module_utils.parsing.convert_bool import boolean
 
 try:
     from botocore.exceptions import ClientError
@@ -100,11 +102,11 @@ class LookupModule(LookupBase):
                     session[key] = value
 
                 # recurse or not
-                if key == "recursive" and value.lower() == "true":
+                if key == "recursive" and boolean(value):
                     ssm_dict['Recursive'] = True
 
                 # decrypt the value or not
-                if key == "decrypt" and value.lower() == "false":
+                if key == "decrypt" and boolean(value):
                     ssm_dict['WithDecryption'] = False
 
         if "aws_profile" in session:
@@ -127,7 +129,7 @@ class LookupModule(LookupBase):
                     response = client.get_parameters_by_path(NextToken=response['NextToken'], **ssm_dict)
                     paramlist.extend(response['Parameters'])
 
-                # shortify parameter names. yes, this will return duplicate names with different values.
+                # shorten parameter names. yes, this will return duplicate names with different values.
                 if 'shortnames' in lparams:
                     for x in paramlist:
                         x['Name'] = x['Name'][x['Name'].rfind('/') + 1:]
