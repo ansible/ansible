@@ -1,6 +1,9 @@
 ---
 - debug: msg="START TRANSPORT:{{ connection.transport }} nxos_acl sanity test"
 
+- set_fact: time_range="ans-range"
+  when: not (platform | match("N5K"))
+
 - name: "Setup: Cleanup possibly existing acl."
   nxos_acl: &remove
     name: TEST_ACL
@@ -17,8 +20,8 @@
     proto: tcp
     src: 1.1.1.1/24
     src_port_op: range
-    src_port1: 5
-    src_port2: 20
+    src_port1: 1900
+    src_port2: 1910
     ack: 'enable'
     dscp: 'af43'
     dest: any
@@ -29,7 +32,7 @@
     fin: 'enable'
     rst: 'enable'
     syn: 'enable'
-    time_range: 'ans-range'
+    time_range: "{{time_range|default(omit)}}"
     state: present
     provider: "{{ connection }}"
   register: result
