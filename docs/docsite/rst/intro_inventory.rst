@@ -82,10 +82,11 @@ In YAML:
 
 .. code-block:: yaml
 
-    hosts:
-      jumper:
-        ansible_port: 5555
-        ansible_host: 192.0.2.50
+    ...
+      hosts:
+        jumper:
+          ansible_port: 5555
+          ansible_host: 192.0.2.50
 
 In the above example, trying to ansible against the host alias "jumper" (which may not even be a real hostname) will contact 192.0.2.50 on port 5555.
 Note that this is using a feature of the inventory file to define some special variables.
