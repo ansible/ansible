@@ -11,7 +11,7 @@ Strategy plugins control the flow of play execution by handling task and host sc
 Enabling Strategy Plugins
 +++++++++++++++++++++++++
 
-Those shipped with Ansible are all enabled by default, you can enable a custom strategy by
+Strategy plugins shipped with Ansible are enabled by default. You can enable a custom strategy plugin by
 putting it in one of the lookup directory sources configured in :doc:`ansible.cfg <../config>`.
 
 
