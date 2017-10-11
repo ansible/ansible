@@ -158,7 +158,7 @@ def main():
     # Go to config mode
     output = output + cnos.waitForDeviceResponse("configure d\n", "(config)#", 2, remote_conn)
 
-    # Send commands one by one
+    # Send commands one by one to the device
     # with open(commandfile, "r") as f:
     f = open(commandfile, "r")
     for line in f:
