@@ -307,11 +307,11 @@ def make_rule_key(prefix, rule, group_id, cidr_ip):
 
 def add_rules_to_lookup(ipPermissions, group_id, prefix, dict):
     for rule in ipPermissions:
-        for groupGrant in rule.get('UserIdGroupPairs'):
+        for groupGrant in rule.get('UserIdGroupPairs', []):
             dict[make_rule_key(prefix, rule, group_id, groupGrant.get('GroupId'))] = (rule, groupGrant)
-        for ipv4Grants in rule.get('IpRanges'):
+        for ipv4Grants in rule.get('IpRanges', []):
             dict[make_rule_key(prefix, rule, group_id, ipv4Grants.get('CidrIp'))] = (rule, ipv4Grants)
-        for ipv6Grants in rule.get('Ipv6Ranges'):
+        for ipv6Grants in rule.get('Ipv6Ranges', []):
             dict[make_rule_key(prefix, rule, group_id, ipv6Grants.get('CidrIpv6'))] = (rule, ipv6Grants)
 
 
@@ -657,7 +657,7 @@ def main():
 
         if group_id and sg['GroupId'] == group_id:
             group = sg
-        elif groupName == name and (vpc_id is None or sg['VpcId'] == vpc_id):
+        elif groupName == name and (vpc_id is None or sg.get('VpcId') == vpc_id):
             group = sg
 
     # Ensure requested group is absent
@@ -759,7 +759,7 @@ def main():
                                 ips = ip_permission
                                 if vpc_id:
                                     [useridpair.update({'VpcId': vpc_id}) for useridpair in
-                                     ip_permission.get('UserIdGroupPairs')]
+                                     ip_permission.get('UserIdGroupPairs', [])]
                                 try:
                                     client.authorize_security_group_ingress(GroupId=group['GroupId'], IpPermissions=[ips])
                                 except botocore.exceptions.ClientError as e:
@@ -824,7 +824,7 @@ def main():
                                 ips = ip_permission
                                 if vpc_id:
                                     [useridpair.update({'VpcId': vpc_id}) for useridpair in
-                                     ip_permission.get('UserIdGroupPairs')]
+                                     ip_permission.get('UserIdGroupPairs', [])]
                                 try:
                                     client.authorize_security_group_egress(GroupId=group['GroupId'], IpPermissions=[ips])
                                 except botocore.exceptions.ClientError as e:

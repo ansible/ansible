@@ -587,7 +587,7 @@ class VaultLib:
                              (vault_secret_id, filename, e))
                 continue
         else:
-            msg = "Decryption failed (no vault secrets would found that could decrypt)"
+            msg = "Decryption failed (no vault secrets were found that could decrypt)"
             if filename:
                 msg += " on %s" % filename
             raise AnsibleVaultError(msg)

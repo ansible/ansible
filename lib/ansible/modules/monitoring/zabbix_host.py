@@ -300,7 +300,7 @@ class Host(object):
                 self._module.exit_json(changed=True)
             parameters = {'hostid': host_id, 'groups': group_ids, 'status': status, 'tls_connect': tls_connect,
                           'tls_accept': tls_accept}
-            if proxy_id:
+            if proxy_id >= 0:
                 parameters['proxy_hostid'] = proxy_id
             if visible_name:
                 parameters['name'] = visible_name
@@ -428,7 +428,7 @@ class Host(object):
 
     # check all the properties before link or clear template
     def check_all_properties(self, host_id, host_groups, status, interfaces, template_ids,
-                             exist_interfaces, host, proxy_id, visible_name):
+                             exist_interfaces, host, proxy_id, visible_name, host_name):
         # get the existing host's groups
         exist_host_groups = self.get_host_groups_by_host_id(host_id)
         if set(host_groups) != set(exist_host_groups):
@@ -448,10 +448,11 @@ class Host(object):
         if set(list(template_ids)) != set(exist_template_ids):
             return True
 
-        if host['proxy_hostid'] != proxy_id:
+        if int(host['proxy_hostid']) != int(proxy_id):
             return True
 
-        if host['name'] != visible_name:
+        # Check whether the visible_name has changed; Zabbix defaults to the technical hostname if not set.
+        if host['name'] != visible_name and host['name'] != host_name:
             return True
 
         return False
@@ -602,7 +603,7 @@ def main():
         if proxy:
             proxy_id = host.get_proxyid_by_proxy_name(proxy)
         else:
-            proxy_id = None
+            proxy_id = 0
 
         # get host id by host name
         zabbix_host_obj = host.get_host_by_host_name(host_name)
@@ -647,7 +648,7 @@ def main():
 
             if len(exist_interfaces) > interfaces_len:
                 if host.check_all_properties(host_id, host_groups, status, interfaces, template_ids,
-                                             exist_interfaces, zabbix_host_obj, proxy_id, visible_name):
+                                             exist_interfaces, zabbix_host_obj, proxy_id, visible_name, host_name):
                     host.link_or_clear_template(host_id, template_ids, tls_connect, tls_accept, tls_psk_identity,
                                                 tls_psk, tls_issuer, tls_subject)
                     host.update_host(host_name, group_ids, status, host_id,
@@ -660,7 +661,7 @@ def main():
                     module.exit_json(changed=False)
             else:
                 if host.check_all_properties(host_id, host_groups, status, interfaces, template_ids,
-                                             exist_interfaces_copy, zabbix_host_obj, proxy_id, visible_name):
+                                             exist_interfaces_copy, zabbix_host_obj, proxy_id, visible_name, host_name):
                     host.update_host(host_name, group_ids, status, host_id, interfaces, exist_interfaces, proxy_id,
                                      visible_name, tls_connect, tls_accept, tls_psk_identity, tls_psk, tls_issuer,
                                      tls_subject)

@@ -236,7 +236,39 @@ EXAMPLES = '''
     mode: delobj
 '''
 
+RETURN = '''
+msg:
+  description: msg indicating the status of the operation
+  returned: always
+  type: string
+  sample: PUT operation complete
+url:
+  description: url of the object
+  returned: (for put and geturl operations)
+  type: string
+  sample: https://my-bucket.s3.amazonaws.com/my-key.txt?AWSAccessKeyId=<access-key>&Expires=1506888865&Signature=<signature>
+expiry:
+  description: number of seconds the presigned url is valid for
+  returned: (for geturl operation)
+  type: int
+  sample: 600
+contents:
+  description: contents of the object as string
+  returned: (for getstr operation)
+  type: string
+  sample: "Hello, world!"
+s3_keys:
+  description: list of object keys
+  returned: (for list operation)
+  type: list
+  sample:
+  - prefix1/
+  - prefix1/key1
+  - prefix1/key2
+'''
+
 import os
+import mimetypes
 import traceback
 from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ssl import SSLError
@@ -392,6 +424,21 @@ def path_check(path):
         return False
 
 
+def option_in_extra_args(option):
+    temp_option = option.replace('-', '').lower()
+
+    allowed_extra_args = {'acl': 'ACL', 'cachecontrol': 'CacheControl', 'contentdisposition': 'ContentDisposition',
+                          'contentencoding': 'ContentEncoding', 'contentlanguage': 'ContentLanguage',
+                          'contenttype': 'ContentType', 'expires': 'Expires', 'grantfullcontrol': 'GrantFullControl',
+                          'grantread': 'GrantRead', 'grantreadacp': 'GrantReadACP', 'grantwriteacp': 'GrantWriteACP',
+                          'metadata': 'Metadata', 'requestpayer': 'RequestPayer', 'serversideencryption': 'ServerSideEncryption',
+                          'storageclass': 'StorageClass', 'ssecustomeralgorithm': 'SSECustomerAlgorithm', 'ssecustomerkey': 'SSECustomerKey',
+                          'ssecustomerkeymd5': 'SSECustomerKeyMD5', 'ssekmskeyid': 'SSEKMSKeyId', 'websiteredirectlocation': 'WebsiteRedirectLocation'}
+
+    if temp_option in allowed_extra_args:
+        return allowed_extra_args[temp_option]
+
+
 def upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, headers):
     if module.check_mode:
         module.exit_json(msg="PUT operation skipped - running in check mode", changed=True)
@@ -400,7 +447,23 @@ def upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, heade
         if encrypt:
             extra['ServerSideEncryption'] = 'AES256'
         if metadata:
-            extra['Metadata'] = dict(metadata)
+            extra['Metadata'] = {}
+
+            # determine object metadata and extra arguments
+            for option in metadata:
+                extra_args_option = option_in_extra_args(option)
+                if extra_args_option is not None:
+                    extra[extra_args_option] = metadata[option]
+                else:
+                    extra['Metadata'][option] = metadata[option]
+
+        if 'ContentType' not in extra:
+            content_type = mimetypes.guess_type(src)[0]
+            if content_type is None:
+                # s3 default content type
+                content_type = 'binary/octet-stream'
+            extra['ContentType'] = content_type
+
         s3.upload_file(Filename=src, Bucket=bucket, Key=obj, ExtraArgs=extra)
         for acl in module.params.get('permission'):
             s3.put_object_acl(ACL=acl, Bucket=bucket, Key=obj)
@@ -512,7 +575,7 @@ def main():
     argument_spec.update(
         dict(
             bucket=dict(required=True),
-            dest=dict(default=None),
+            dest=dict(default=None, type='path'),
             encrypt=dict(default=True, type='bool'),
             expiry=dict(default=600, type='int', aliases=['expiration']),
             headers=dict(type='dict'),
@@ -561,9 +624,6 @@ def main():
     rgw = module.params.get('rgw')
     src = module.params.get('src')
     ignore_nonexistent_bucket = module.params.get('ignore_nonexistent_bucket')
-
-    if dest:
-        dest = os.path.expanduser(dest)
 
     object_canned_acl = ["private", "public-read", "public-read-write", "aws-exec-read", "authenticated-read", "bucket-owner-read", "bucket-owner-full-control"]
     bucket_canned_acl = ["private", "public-read", "public-read-write", "authenticated-read"]

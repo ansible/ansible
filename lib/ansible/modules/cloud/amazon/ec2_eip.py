@@ -1,18 +1,10 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
@@ -72,6 +64,13 @@ options:
     required: False
     default: None
     version_added: "2.3"
+  allow_reassociation:
+    description:
+      -  Specify this option to allow an Elastic IP address that is already associated with another
+         network interface or instance to be re-associated with the specified instance or interface.
+    required: false
+    default: false
+    version_added: "2.5"
 extends_documentation_fragment:
     - aws
     - ec2
@@ -100,6 +99,12 @@ EXAMPLES = '''
   ec2_eip:
     device_id: eni-c8ad70f3
     ip: 93.184.216.119
+
+- name: associate an elastic IP with a device and allow reassociation
+  ec2_eip:
+    device_id: eni-c8ad70f3
+    public_ip: 93.184.216.119
+    allow_reassociation: yes
 
 - name: disassociate an elastic IP from an instance
   ec2_eip:
@@ -157,17 +162,19 @@ EXAMPLES = '''
 '''
 
 try:
-    import boto.ec2
-    HAS_BOTO = True
+    import boto.exception
 except ImportError:
-    HAS_BOTO = False
+    pass  # Taken care of by ec2.HAS_BOTO
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import HAS_BOTO, ec2_argument_spec, ec2_connect
 
 
 class EIPException(Exception):
     pass
 
 
-def associate_ip_and_device(ec2, address, private_ip_address, device_id, check_mode, isinstance=True):
+def associate_ip_and_device(ec2, address, private_ip_address, device_id, allow_reassociation, check_mode, isinstance=True):
     if address_is_associated_with_device(ec2, address, device_id, isinstance):
         return {'changed': False}
 
@@ -175,11 +182,20 @@ def associate_ip_and_device(ec2, address, private_ip_address, device_id, check_m
     if not check_mode:
         if isinstance:
             if address.domain == "vpc":
-                res = ec2.associate_address(device_id, allocation_id=address.allocation_id, private_ip_address=private_ip_address)
+                res = ec2.associate_address(device_id,
+                                            allocation_id=address.allocation_id,
+                                            private_ip_address=private_ip_address,
+                                            allow_reassociation=allow_reassociation)
             else:
-                res = ec2.associate_address(device_id, public_ip=address.public_ip, private_ip_address=private_ip_address)
+                res = ec2.associate_address(device_id,
+                                            public_ip=address.public_ip,
+                                            private_ip_address=private_ip_address,
+                                            allow_reassociation=allow_reassociation)
         else:
-            res = ec2.associate_address(network_interface_id=device_id, allocation_id=address.allocation_id, private_ip_address=private_ip_address)
+            res = ec2.associate_address(network_interface_id=device_id,
+                                        allocation_id=address.allocation_id,
+                                        private_ip_address=private_ip_address,
+                                        allow_reassociation=allow_reassociation)
         if not res:
             raise EIPException('association failed')
 
@@ -297,7 +313,7 @@ def find_device(ec2, module, device_id, isinstance=True):
 
 
 def ensure_present(ec2, module, domain, address, private_ip_address, device_id,
-                   reuse_existing_ip_allowed, check_mode, isinstance=True):
+                   reuse_existing_ip_allowed, allow_reassociation, check_mode, isinstance=True):
     changed = False
 
     # Return the EIP object since we've been given a public IP
@@ -315,13 +331,13 @@ def ensure_present(ec2, module, domain, address, private_ip_address, device_id,
                 if instance.vpc_id and len(instance.vpc_id) > 0 and domain is None:
                     raise EIPException("You must set 'in_vpc' to true to associate an instance with an existing ip in a vpc")
             # Associate address object (provided or allocated) with instance
-            assoc_result = associate_ip_and_device(ec2, address, private_ip_address, device_id,
-                                                 check_mode)
+            assoc_result = associate_ip_and_device(ec2, address, private_ip_address, device_id, allow_reassociation,
+                                                   check_mode)
         else:
             instance = find_device(ec2, module, device_id, isinstance=False)
             # Associate address object (provided or allocated) with instance
-            assoc_result = associate_ip_and_device(ec2, address, private_ip_address, device_id,
-                                                 check_mode, isinstance=False)
+            assoc_result = associate_ip_and_device(ec2, address, private_ip_address, device_id, allow_reassociation,
+                                                   check_mode, isinstance=False)
 
         if instance.vpc_id:
             domain = 'vpc'
@@ -339,10 +355,10 @@ def ensure_absent(ec2, domain, address, device_id, check_mode, isinstance=True):
     if device_id:
         if isinstance:
             return disassociate_ip_and_device(ec2, address, device_id,
-                                                check_mode)
+                                              check_mode)
         else:
             return disassociate_ip_and_device(ec2, address, device_id,
-                                                check_mode, isinstance=False)
+                                              check_mode, isinstance=False)
     # releasing address
     else:
         return release_address(ec2, address, check_mode)
@@ -359,6 +375,7 @@ def main():
         reuse_existing_ip_allowed=dict(required=False, type='bool',
                                        default=False),
         release_on_disassociation=dict(required=False, type='bool', default=False),
+        allow_reassociation=dict(type='bool', default=False),
         wait_timeout=dict(default=300),
         private_ip_address=dict(required=False, default=None, type='str')
     ))
@@ -382,6 +399,7 @@ def main():
     domain = 'vpc' if in_vpc else None
     reuse_existing_ip_allowed = module.params.get('reuse_existing_ip_allowed')
     release_on_disassociation = module.params.get('release_on_disassociation')
+    allow_reassociation = module.params.get('allow_reassociation')
 
     # Parameter checks
     if private_ip_address is not None and device_id is None:
@@ -408,7 +426,8 @@ def main():
         if state == 'present':
             if device_id:
                 result = ensure_present(ec2, module, domain, address, private_ip_address, device_id,
-                                    reuse_existing_ip_allowed, module.check_mode, isinstance=is_instance)
+                                        reuse_existing_ip_allowed, allow_reassociation,
+                                        module.check_mode, isinstance=is_instance)
             else:
                 if address:
                     changed = False
@@ -435,9 +454,6 @@ def main():
         result['warnings'] = warnings
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *  # noqa
-from ansible.module_utils.ec2 import *  # noqa
 
 if __name__ == '__main__':
     main()

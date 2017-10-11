@@ -58,20 +58,22 @@ Aliases: @{ ','.join(aliases) }@
 
 
 {% endif %}
-{% if requirements %}
-
-Requirements (on host that executes module)
--------------------------------------------
 
 {% if requirements %}
+{% set req = 'Requirements' %}
+{% if plugin_type == 'module' %}
+{% set req = req + ' (on host that executes module)' %}
+{% endif %}
+{% set req_len = req|length %}
+@{ req }@
+@{ '-' * req_len }@
+
 {% for req in requirements %}
   * @{ req | convert_symbols_to_format }@
 {% endfor %}
 
 {% endif %}
 
-
-{% endif %}
 {% if options -%}
 
 
@@ -87,6 +89,9 @@ Options
     <th class="head">required</th>
     <th class="head">default</th>
     <th class="head">choices</th>
+{% if plugin_type != 'module' %}
+    <th class="head">configuration</th>
+{% endif %}
     <th class="head">comments</th>
     </tr>
 {% for k in option_keys -%}
@@ -102,23 +107,48 @@ Options
 {% else %}
     <td>{% if v['choices'] -%}<ul>{% for choice in v.get('choices',[]) -%}<li>@{ choice }@</li>{% endfor -%}</ul>{% endif -%}</td>
 {% endif %}
+{% if plugin_type != 'module' %}
     <td>
+	{% if 'ini' in v %}
+	<div> ini entries:
+	{% for ini in v.get('ini') %}
+        <p>[@{ ini.section }@ ]<br>@{ ini.key}@ = @{ v['default']|default('VALUE') }@</p>
+	{% endfor %}
+	</div>
+	{% endif %}
+	{% if 'env' in v %}
+	{% for env in v.get('env') %}
+        <div>env:@{ env.name }@</div>
+	{% endfor %}
+	{% endif %}
+	{% if 'vars' in v %}
+	{% for myvar in v.get('vars') %}
+        <div>var: @{ myvar.name }@</div>
+	{% endfor %}
+	{% endif %}
+	</td>
+{% endif %}
+	<td>
 {% if v.description is string %}
         <div>@{ v.description | replace('\n', '\n    ') | html_ify }@</div>
 {% else %}
 {% for desc in v.description %}
-        <div>@{ desc | replace('\n', '\n    ') | html_ify }@</div>
+        <p>@{ desc | replace('\n', '\n    ') | html_ify }@</p>
 {% endfor %}
 {% endif %}
 {% if 'aliases' in v and v.aliases %}
         </br><div style="font-size: small;">aliases: @{ v.aliases|join(', ') }@</div>
 {% endif %}
+	</td>
+	</tr>
 {% else %}
-
     <tr>
     <td rowspan="2">@{ k }@<br/><div style="font-size: small;">{% if v['version_added'] -%} (added in @{v['version_added']}@){% endif -%}</div></td>
     <td>{% if v.get('required', False) -%}yes{% else -%}no{% endif -%}</td>
     <td></td>
+{% if plugin_type != 'module' %}
+    <td></td>
+{% endif %}
     <td></td>
     <td>
 {% for desc in v.description %}
@@ -187,7 +217,7 @@ Options
 Examples
 --------
 
- ::
+.. code-block:: yaml
 
 {% for example in examples %}
 {% if example['description'] %}@{ example['description'] | indent(4, True) }@{% endif %}
@@ -203,7 +233,7 @@ Examples
 Return Values
 -------------
 
-Common return values are documented :ref:`here <common_return_values>`, the following are the fields unique to this module:
+Common return values are documented :ref:`here <common_return_values>`, the following are the fields unique to this {{plugin_type}}:
 
 .. raw:: html
 
@@ -265,16 +295,12 @@ Common return values are documented :ref:`here <common_return_values>`, the foll
         <td align=center>@{ returndocs[entry].contains[sub].sample }@</td>
         </tr>
 {% endfor %}
-
         </table>
-    </td>
-    </tr>
+	</td></tr>
 {% endif %}
 {% endfor %}
-
     </table>
-    </br>
-    </br>
+    </br></br>
 {% endif %}
 
 
@@ -325,12 +351,13 @@ This module is flagged as **@{cur_state}@** which means that @{module_states[cur
 Maintenance Info
 ~~~~~~~~~~~~~~~~
 
-For more information about Red Hat's this support of this module, please
-refer to this `knowledge base article<https://access.redhat.com/articles/rhel-top-support-policies>`
+For more information about Red Hat's this support of this @{ plugin_type }@,
+please refer to this `knowledge base article<https://access.redhat.com/articles/rhel-top-support-policies>_`
 
 {% endif %}
 {% endif %}
 {% endif %}
 
-For help in developing on modules, should you be so inclined, please read :doc:`../../community`, :doc:`../../dev_guide/testing` and :doc:`../../dev_guide/developing_modules`.
+For help in developing, should you be so inclined, please read :doc:`../../community`,
+:doc:`../../dev_guide/testing` and {% if plugin_type == 'module' %}:doc:`../../dev_guide/developing_modules`{% else %}:doc:`../../dev_guide/developing_plugins`{% endif %}.
 

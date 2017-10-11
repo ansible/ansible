@@ -88,7 +88,11 @@ class InventoryModule(BaseFileInventoryPlugin):
             raise AnsibleParserError(e)
 
         if not data:
-            return False
+            raise AnsibleParserError('Parsed empty YAML file')
+        elif not isinstance(data, MutableMapping):
+            raise AnsibleParserError('YAML inventory has invalid structure, it should be a dictionary, got: %s' % type(data))
+        elif data.get('plugin'):
+            raise AnsibleParserError('Plugin configuration YAML file, not YAML inventory')
 
         # We expect top level keys to correspond to groups, iterate over them
         # to get host, vars and subgroups (which we iterate over recursivelly)

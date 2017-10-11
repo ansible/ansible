@@ -11,7 +11,6 @@ By default, Ansible ships with several plugins. The most commonly used are the '
 The basics of these connection types are covered in the :doc:`../intro_getting_started` section.  
 
 
-.. contents:: Topics
 
 .. _ssh_plugins:
 
@@ -20,34 +19,38 @@ ssh Plugins
 
 Because ssh is the default protocol used in system administration and the protocol most used in Ansible, ssh options are included in the command line tools. See :doc:`../ansible-playbook` for more details.
 
-
-.. _using_connection_plugins:
-
-Using Connection Plugins
-++++++++++++++++++++++++
-
-The transport can be changed via :doc:`configuration <../config>`, in the command line (``-c``, ``--connection``), as a keyword (:ref:`connection`)
-in your play or by setting the a connection variable (:ref:`ansible_connection`), most often, in your inventory.
-For example, for windows machines you might want o use the :doc:`winrm <connection/winrm>` plugin instead.
-
-Most connection plugins can operate with a minimum configuration. By default they use the :ref:`inventory_hostname` and defaults to find the target host.
-
-Plugins are self-documenting. Each plugin should document its configuration options. The following are connection variables common to most connection plugins:
-
-:ref:ansible_host
-    The name of the host to connect to, if different from the :ref:`inventory_hostname`.
-:ref:ansible_port
-    The ssh port number. For :doc:`ssh <connection/ssh>` and :doc:`paramiko <connection/paramiko>` the default value is 22.
-:ref:ansible_user
-    The default user name to use for log in. Most plugins default to the current user running Ansible.
-
-Each plugin might also have a specific version of a variable that overrides the general version. For example, :ref:`ansible_ssh_host` for the :doc:`ssh <connection/ssh>` plugin.
+.. _enabling_connection:
 
 Enabling Connection Plugins
 +++++++++++++++++++++++++++
 
 You can extend Ansible to support other transports (such as SNMP or message bus) by dropping a custom plugin
 into the ``connection_plugins`` directory.
+
+
+.. _using_connection:
+
+Using Connection Plugins
+++++++++++++++++++++++++
+
+The transport can be changed via :doc:`configuration <../config>`, in the command line (``-c``, ``--connection``), as a keyword (:ref:`connection`)
+in your play, or by setting the a connection variable (:ref:`ansible_connection`), most often in your inventory.
+For example, for Windows machines you might want to use the :doc:`winrm <connection/winrm>` plugin.
+
+Most connection plugins can operate with a minimum configuration. By default they use the :ref:`inventory_hostname` and defaults to find the target host.
+
+Plugins are self-documenting. Each plugin should document its configuration options. The following are connection variables common to most connection plugins:
+
+:ref:`ansible_host`
+    The name of the host to connect to, if different from the :ref:`inventory_hostname`.
+:ref:`ansible_port`
+    The ssh port number, for :doc:`ssh <connection/ssh>` and :doc:`paramiko <connection/paramiko>` it defaults to 22.
+:ref:`ansible_user`
+    The default user name to use for log in. Most plugins default to the 'current user running Ansible'.
+
+Each plugin might also have a specific version of a variable that overrides the general version. For example, :ref:`ansible_ssh_host` for the :doc:`ssh <connection/ssh>` plugin.
+
+.. _connection_plugin_list:
 
 Plugin List
 +++++++++++

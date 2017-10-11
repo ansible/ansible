@@ -22,7 +22,7 @@ from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum
 
 
-def _walk_dirs(topdir, loader, base_path=None, local_follow=False, trailing_slash_detector=None, checksum_check=False):
+def _walk_dirs(topdir, loader, decrypt=True, base_path=None, local_follow=False, trailing_slash_detector=None, checksum_check=False):
     """
     Walk a filesystem tree returning enough information to copy the files.
     This is similar to the _walk_dirs function in ``copy.py`` but returns
@@ -31,6 +31,7 @@ def _walk_dirs(topdir, loader, base_path=None, local_follow=False, trailing_slas
 
     :arg topdir: The directory that the filesystem tree is rooted at
     :arg loader: The self._loader object from ActionBase
+    :kwarg decrypt: Whether to decrypt a file encrypted with ansible-vault
     :kwarg base_path: The initial directory structure to strip off of the
         files for the destination directory.  If this is None (the default),
         the base_path is set to ``top_dir``.
@@ -101,7 +102,7 @@ def _walk_dirs(topdir, loader, base_path=None, local_follow=False, trailing_slas
 
                 if os.path.islink(filepath):
                     # Dereference the symlnk
-                    real_file = loader.get_real_file(os.path.realpath(filepath), decrypt=True)
+                    real_file = loader.get_real_file(os.path.realpath(filepath), decrypt=decrypt)
                     if local_follow and os.path.isfile(real_file):
                         # Add the file pointed to by the symlink
                         r_files['files'].append(
@@ -116,7 +117,7 @@ def _walk_dirs(topdir, loader, base_path=None, local_follow=False, trailing_slas
                         r_files['symlinks'].append({"src": os.readlink(filepath), "dest": dest_filepath})
                 else:
                     # Just a normal file
-                    real_file = loader.get_real_file(filepath, decrypt=True)
+                    real_file = loader.get_real_file(filepath, decrypt=decrypt)
                     r_files['files'].append(
                         {
                             "src": real_file,
@@ -340,6 +341,7 @@ class ActionModule(ActionBase):
         remote_src = boolean(self._task.args.get('remote_src', False), strict=False)
         local_follow = boolean(self._task.args.get('local_follow', False), strict=False)
         force = boolean(self._task.args.get('force', True), strict=False)
+        decrypt = boolean(self._task.args.get('decrypt', True), strict=False)
 
         result['src'] = source
         result['dest'] = dest
@@ -414,7 +416,7 @@ class ActionModule(ActionBase):
             result['operation'] = 'folder_copy'
 
             # Get a list of the files we want to replicate on the remote side
-            source_files = _walk_dirs(source, self._loader, local_follow=local_follow,
+            source_files = _walk_dirs(source, self._loader, decrypt=decrypt, local_follow=local_follow,
                                       trailing_slash_detector=self._connection._shell.path_has_trailing_slash,
                                       checksum_check=force)
 
@@ -430,7 +432,7 @@ class ActionModule(ActionBase):
 
             # If the local file does not exist, get_real_file() raises AnsibleFileNotFound
             try:
-                source_full = self._loader.get_real_file(source, decrypt=True)
+                source_full = self._loader.get_real_file(source, decrypt=decrypt)
             except AnsibleFileNotFound as e:
                 result['failed'] = True
                 result['msg'] = "could not find src=%s, %s" % (source_full, to_text(e))
@@ -473,6 +475,8 @@ class ActionModule(ActionBase):
                 symlinks=source_files['symlinks']
             )
         )
+        # src is not required for query, will fail path validation is src has unix allowed chars
+        query_args.pop('src', None)
 
         query_args.pop('content', None)
         query_return = self._execute_module(module_args=query_args, task_vars=task_vars)

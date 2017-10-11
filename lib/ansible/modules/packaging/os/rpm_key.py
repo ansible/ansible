@@ -170,11 +170,15 @@ class RpmKey(object):
         return stdout, stderr
 
     def is_key_imported(self, keyid):
-        cmd=self.rpm + ' -q  gpg-pubkey --qf "%{description}" | ' + self.gpg + ' --no-tty --batch --with-colons --fixed-list-mode -'
+        cmd = self.rpm + ' -q  gpg-pubkey'
+        rc, stdout, stderr = self.module.run_command(cmd)
+        if rc != 0:  # No key is installed on system
+            return False
+        cmd += ' --qf "%{description}" | ' + self.gpg + ' --no-tty --batch --with-colons --fixed-list-mode -'
         stdout, stderr = self.execute_command(cmd)
         for line in stdout.splitlines():
             if keyid in line.split(':')[4]:
-                    return True
+                return True
         return False
 
     def import_key(self, keyfile):
@@ -183,7 +187,7 @@ class RpmKey(object):
 
     def drop_key(self, keyid):
         if not self.module.check_mode:
-            self.execute_command([self.rpm, '--erase', '--allmatches', "gpg-pubkey-%s" % keyid[8:].lower()])
+            self.execute_command([self.rpm, '--erase', '--allmatches', "gpg-pubkey-%s" % keyid[-8:].lower()])
 
 
 def main():

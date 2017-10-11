@@ -322,13 +322,27 @@ def po_to_envra(po):
     return '%s:%s-%s-%s.%s' % (po.epoch, po.name, po.version, po.release, po.arch)
 
 
-def is_group_installed(name):
+def is_group_env_installed(name):
+    name_lower = name.lower()
+
     my = yum_base()
-    groups_list = my.doGroupLists()
-    for group in groups_list[0]:  # list of the installed groups on the first index
-        name_lower = name.lower()
+    if yum.__version__ >= '3.4':
+        groups_list = my.doGroupLists(return_evgrps=True)
+    else:
+        groups_list = my.doGroupLists()
+
+    # list of the installed groups on the first index
+    groups = groups_list[0]
+    for group in groups:
         if name_lower.endswith(group.name.lower()) or name_lower.endswith(group.groupid.lower()):
             return True
+
+    if yum.__version__ >= '3.4':
+        # list of the installed env_groups on the third index
+        envs = groups_list[2]
+        for env in envs:
+            if name_lower.endswith(env.name.lower()) or name_lower.endswith(env.environmentid.lower()):
+                return True
 
     return False
 
@@ -711,36 +725,46 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, i
         downgrade_candidate = False
 
         # check if pkgspec is installed (if possible for idempotence)
-        # localpkg
-        if spec.endswith('.rpm') and '://' not in spec:
-            # get the pkg name-v-r.arch
-            if not os.path.exists(spec):
+        if spec.endswith('.rpm'):
+            if '://' not in spec and not os.path.exists(spec):
                 res['msg'] += "No RPM file matching '%s' found on system" % spec
                 res['results'].append("No RPM file matching '%s' found on system" % spec)
                 res['rc'] = 127  # Ensure the task fails in with-loop
                 module.fail_json(**res)
 
-            envra = local_envra(spec)
+            if '://' in spec:
+                package = fetch_rpm_from_url(spec, module=module)
+            else:
+                package = spec
 
-            # look for them in the rpmdb
-            if is_installed(module, repoq, envra, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot):
-                # if they are there, skip it
-                continue
-            pkg = spec
-
-        # URL
-        elif '://' in spec:
-            # download package so that we can check if it's already installed
-            package = fetch_rpm_from_url(spec, module=module)
+            # most common case is the pkg is already installed
             envra = local_envra(package)
-            if is_installed(module, repoq, envra, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot):
-                # if it's there, skip it
+            installed_pkgs = is_installed(module, repoq, envra, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot)
+            if installed_pkgs:
+                res['results'].append('%s providing %s is already installed' % (installed_pkgs[0], package))
                 continue
+
+            (name, ver, rel, epoch, arch) = splitFilename(envra)
+            installed_pkgs = is_installed(module, repoq, name, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot)
+
+            # TODO support downgrade for rpm files
+            if len(installed_pkgs) == 1:
+                installed_pkg = installed_pkgs[0]
+                (cur_name, cur_ver, cur_rel, cur_epoch, cur_arch) = splitFilename(installed_pkg)
+                cur_epoch = cur_epoch or '0'
+                compare = compareEVR((cur_epoch, cur_ver, cur_rel), (epoch, ver, rel))
+
+                # compare > 0 (higher version is installed) or compare == 0 (exact version is installed)
+                if compare >= 0:
+                    continue
+            # else: if there are more installed packages with the same name, that would mean
+            # kernel, gpg-pubkey or like, so just let yum deal with it and try to install it
+
             pkg = package
 
         # groups
         elif spec.startswith('@'):
-            if is_group_installed(spec):
+            if is_group_env_installed(spec):
                 continue
 
             pkg = spec
@@ -846,7 +870,7 @@ def remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, in
 
     for pkg in items:
         if pkg.startswith('@'):
-            installed = is_group_installed(pkg)
+            installed = is_group_env_installed(pkg)
         else:
             installed = is_installed(module, repoq, pkg, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot)
 
@@ -879,7 +903,7 @@ def remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, in
         # at this point we check to see if the pkg is no longer present
         for pkg in pkgs:
             if pkg.startswith('@'):
-                installed = is_group_installed(pkg)
+                installed = is_group_env_installed(pkg)
             else:
                 installed = is_installed(module, repoq, pkg, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot)
 

@@ -1384,6 +1384,19 @@ PERSISTENT_COMMAND_TIMEOUT:
   ini:
   - {key: command_timeout, section: persistent_connection}
   type: int
+PLAYBOOK_VARS_ROOT:
+  name: playbook vars files root
+  default: top
+  version_added: "2.4.1"
+  description:
+    - This sets which playbook dirs will be used as a root to process vars plugins, which includes finding host_vars/group_vars
+    - The ``top`` option follows the traditional behaviour of using the top playbook in the chain to find the root directory.
+    - The ``bottom`` option follows the 2.4.0 behaviour of using the current playbook to find the root directory.
+    - The ``all`` option examines from the first parent to the current playbook.
+  env: [{name: ANSIBLE_PLAYBOOK_VARS_ROOT}]
+  ini:
+  - {key: playbook_vars_root, section: defaults}
+  choices: [ top, bottom, all ]
 RETRY_FILES_ENABLED:
   name: Retry files
   default: True
