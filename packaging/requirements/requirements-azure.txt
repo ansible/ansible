@@ -1,3 +1,4 @@
+cryptography>=1.3.4,<2.1  # cryptography 2.1 requires pip 8.1.2+
 packaging
 requests[security]
 azure-mgmt-compute>=2.0.0,<3
