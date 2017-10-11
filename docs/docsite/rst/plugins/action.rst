@@ -6,10 +6,19 @@ They usually execute automatically in the background doing prerequisite work bef
 
 The 'normal' action plugin is used for modules that do not already have an action plugin.
 
+.. _enabling_action:
+
 Enabling Action Plugins
 +++++++++++++++++++++++
 
 You can enable a custom action plugin by either dropping it into the ``action_plugins`` directory adjacent to your play, inside a role, or by putting it in one of the action plugin directory sources configured in :doc:`ansible.cfg <../config>`.
+
+.. _using_action:
+
+Using Action Plugins
++++++++++++++++++++++
+
+Action plugin are executed by default when an associated module is used; no action is required.
 
 .. seealso::
 
