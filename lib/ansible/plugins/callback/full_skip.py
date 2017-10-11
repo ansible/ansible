@@ -19,7 +19,9 @@ DOCUMENTATION = '''
       - set as stdout in configuation
 '''
 
+from ansible import constants as C
 from ansible.plugins.callback.default import CallbackModule as CallbackModule_default
+from ansible.playbook.task_include import TaskInclude
 
 
 class CallbackModule(CallbackModule_default):
@@ -33,6 +35,11 @@ class CallbackModule(CallbackModule_default):
     CALLBACK_TYPE = 'stdout'
     CALLBACK_NAME = 'full_skip'
 
+    def __init__(self):
+        self.outlines = []
+        self.itemlines = []
+        super(CallbackModule, self).__init__()
+
     def v2_runner_on_skipped(self, result):
         self.outlines = []
 
@@ -41,6 +48,31 @@ class CallbackModule(CallbackModule_default):
 
     def v2_runner_item_on_skipped(self, result):
         self.outlines = []
+
+    def v2_runner_item_on_ok(self, result):
+        delegated_vars = result._result.get('_ansible_delegated_vars', None)
+        self._clean_results(result._result, result._task.action)
+        if isinstance(result._task, TaskInclude):
+            return
+        elif result._result.get('changed', False):
+            msg = 'changed'
+            color = C.COLOR_CHANGED
+        else:
+            msg = 'ok'
+            color = C.COLOR_OK
+
+        if delegated_vars:
+            msg += ": [%s -> %s]" % (result._host.get_name(), delegated_vars['ansible_host'])
+        else:
+            msg += ": [%s]" % result._host.get_name()
+
+        msg += " => (item=%s)" % (self._get_item(result._result),)
+
+        msg2 = ""
+        if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
+            msg += " => %s" % self._dump_results(result._result)
+
+        self.itemlines.append((msg, color))
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
         self.display()
@@ -69,4 +101,7 @@ class CallbackModule(CallbackModule_default):
         self._display.banner(first)
         for line in rest:
             self._display.display(line)
+        for itemline in self.itemlines:
+            self._display.display(itemline[0], color=itemline[1])
         self.outlines = []
+        self.itemlines = []
