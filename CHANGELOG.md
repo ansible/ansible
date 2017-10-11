@@ -18,6 +18,9 @@ Ansible Changes By Release
 
 #### Removed Modules (previously deprecated):
 * accelerate
+* boundary_meter: There was no deprecation period for this but the hosted
+  service it relied on has gone away so the module has been removed.
+  https://github.com/ansible/ansible/issues/29387
 
 ### Minor Changes
 * added a few new magic vars corresponding to configuration/command line options:
