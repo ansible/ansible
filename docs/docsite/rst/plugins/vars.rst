@@ -24,8 +24,7 @@ You can activate a custom vars plugins by either dropping it into a ``vars_plugi
 Using Vars Plugins
 ++++++++++++++++++
 
-Ansible should use any enabled plugin automatically, users should not need to do anything extra.
-Of course, you should have the data and file structures the plugins expect for them to work.
+Vars plugins are used automatically after they are enabled.
 
 
 .. _vars_plugin_list:
