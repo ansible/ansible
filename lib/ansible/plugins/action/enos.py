@@ -39,11 +39,9 @@ import copy
 
 from ansible import constants as C
 from ansible.plugins.action.normal import ActionModule as _ActionModule
-from ansible.plugins.loader import connection_loader, module_loader
-from ansible.utils.path import unfrackpath
-from ansible.module_utils.basic import AnsibleFallbackNotFound
-from enos import enos_argument_spec
-from ansible.module_utils.six import iteritems
+from ansible.module_utils.enos import enos_provider_spec
+from ansible.module_utils.network_common import load_provider
+
 
 try:
     from __main__ import display
@@ -62,7 +60,7 @@ class ActionModule(_ActionModule):
                 msg='invalid connection specified, expected connection=local, '
                     'got %s' % self._play_context.connection
             )
-        provider = self.load_provider()
+        provider = load_provider(enos_provider_spec, self._task.args)
 
         pc = copy.deepcopy(self._play_context)
         pc.connection = 'network_cli'
@@ -83,21 +81,11 @@ class ActionModule(_ActionModule):
 
         socket_path = connection.run()
         display.vvvv('socket_path: %s' % socket_path, pc.remote_addr)
-        # while(socket_path is None and count < 2):
-        #    socket_path = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin).run()
-        #    count = count+1
-        # display.vvvv('Again socket_path: %s' % socket_path, pc.remote_addr)
         if not socket_path:
             return {'failed': True,
                     'msg': 'unable to open shell. Please see: ' +
                            'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell'}
 
-        # make sure we are in the right cli context which should be
-        # enable mode and not config module
-        # rc, out, err = connection.exec_command('prompt()')#'show run'
-        # if str(out).strip().endswith(')#'):
-        #    display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
-        #    connection.exec_command('exit')
         rc, out, err = connection.exec_command('prompt()')
         while str(out).strip().endswith(')#'):
             display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
@@ -112,30 +100,3 @@ class ActionModule(_ActionModule):
 
         result = super(ActionModule, self).run(tmp, task_vars)
         return result
-
-    def load_provider(self):
-        provider = self._task.args.get('provider', {})
-        for key, value in iteritems(enos_argument_spec):
-            if key != 'provider' and key not in provider:
-                if key in self._task.args:
-                    provider[key] = self._task.args[key]
-                elif 'fallback' in value:
-                    provider[key] = self._fallback(value['fallback'])
-                elif key not in provider:
-                    provider[key] = None
-        return provider
-
-    def _fallback(self, fallback):
-        strategy = fallback[0]
-        args = []
-        kwargs = {}
-
-        for item in fallback[1:]:
-            if isinstance(item, dict):
-                kwargs = item
-            else:
-                args = item
-        try:
-            return strategy(*args, **kwargs)
-        except AnsibleFallbackNotFound:
-            pass
