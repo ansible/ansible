@@ -5,13 +5,12 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-__metaclass__ = type
 
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -102,6 +101,7 @@ try:
     import ansible.module_utils.urls
     from influxdb import InfluxDBClient
     from influxdb import exceptions
+
     HAS_INFLUXDB = True
 except ImportError:
     HAS_INFLUXDB = False
@@ -169,8 +169,6 @@ def drop_user(module, client, username):
     module.exit_json(changed=True)
 
 
-
-
 def main():
     argument_spec = influxdb_argument_spec()
     argument_spec.update(
@@ -188,7 +186,6 @@ def main():
     username = module.params['username']
     password = module.params['password']
     admin = module.params['admin']
-
     client = connect_to_influxdb(module)
     user = find_user(module, client, username)
 
