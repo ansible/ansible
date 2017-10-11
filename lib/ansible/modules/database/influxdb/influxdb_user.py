@@ -99,7 +99,7 @@ RETURN = '''
 '''
 
 try:
-    import requests.exceptions
+    import ansible.module_utils.urls
     from influxdb import InfluxDBClient
     from influxdb import exceptions
     HAS_INFLUXDB = True
@@ -144,7 +144,7 @@ def find_user(module, client, username):
             if u_name['user'] == username:
                 name = u_name
                 break
-    except requests.exceptions.ConnectionError as e:
+    except ansible.module_utils.urls.ConnectionError as e:
         module.fail_json(msg=str(e))
     return name
 
@@ -153,7 +153,7 @@ def create_user(module, client, username, password, admin):
     if not module.check_mode:
         try:
             client.create_user(username, password, admin)
-        except requests.exceptions.ConnectionError as e:
+        except ansible.module_utils.urls.ConnectionError as e:
             module.fail_json(msg=str(e))
 
     module.exit_json(changed=True)
