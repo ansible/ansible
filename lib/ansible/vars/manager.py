@@ -522,9 +522,9 @@ class VariableManager:
         if task.loop_with is not None:
             if task.loop_with in lookup_loader:
                 try:
-                    loop_terms = listify_lookup_plugin_terms(terms=task.loop_with, templar=templar,
+                    loop_terms = listify_lookup_plugin_terms(terms=task.loop, templar=templar,
                                                              loader=self._loader, fail_on_undefined=True, convert_bare=False)
-                    items = lookup_loader.get(task.loop, loader=self._loader, templar=templar).run(terms=loop_terms, variables=vars_copy)
+                    items = lookup_loader.get(task.loop_with, loader=self._loader, templar=templar).run(terms=loop_terms, variables=vars_copy)
                 except AnsibleUndefinedVariable:
                     # This task will be skipped later due to this, so we just setup
                     # a dummy array for the later code so it doesn't fail
