@@ -18,9 +18,7 @@ You can enable a custom action plugin by either dropping it into the ``action_pl
 Using Action Plugins
 +++++++++++++++++++++
 
-No need to do anything, any module that has an associated action plugin will have it executed by default,
-you should see a note in the module documentation to this effect.
-
+Action plugin are executed by default when an associated module is used; no action is required.
 
 .. seealso::
 
