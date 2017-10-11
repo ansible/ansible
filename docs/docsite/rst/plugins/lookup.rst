@@ -4,21 +4,20 @@
 Lookup Plugins
 --------------
 
-Lookup plugins allow access of data in Ansible from outside sources,
-this can include reading the filesystem but also contacting external datastores and services.
-Like all templating, these plugins are evaluated on the Ansible control machine NOT on the target/remote.
+Lookup plugins allow Ansible to access data from outside sources.
+This can include reading the filesystem in addition to contacting external datastores and services.
+Like all templating, these plugins are evaluated on the Ansible control machine, not on the target/remote.
 
-These values are then made available using the standard templating system in Ansible,
+The data returned by a lookup plugin is made available using the standard templating system in Ansible,
 and are typically used to load variables or templates with information from those systems.
 
-Lookups are an Ansible specific extension to the Jinja2 templating language.
+Lookups are an Ansible-specific extension to the Jinja2 templating language.
 
 .. note::
    - Lookups are executed with a working directory relative to the role or play,
-     as opposed to local tasks which are executed relative the executed script.
-   - Since 1.9 you can pass wantlist=True to lookups to use in Jinja2 template "for" loops.
-   - This is considered an advanced feature, you should try to feel comfortable with Ansible plays before incorporating them.
-
+     as opposed to local tasks, which are executed relative the executed script.
+   - Since Ansible version 1.9, you can pass wantlist=True to lookups to use in Jinja2 template "for" loops.
+   - Lookup plugins are an advanced feature; to best leverage them you should have a good working knowledge of how to use Ansible plays.  
 
 .. warning::
    - Some lookups pass arguments to a shell. When using variables from a remote/untrusted source, use the `|quote` filter to ensure safe usage.
@@ -29,8 +28,7 @@ Lookups are an Ansible specific extension to the Jinja2 templating language.
 Enabling Lookup Plugins
 +++++++++++++++++++++++
 
-You can activate a custom lookup by either dropping it into a ``lookup_plugins`` directory adjacent to your play or inside a role
-or by putting it in one of the lookup directory sources configured in :doc:`ansible.cfg <../config>`.
+You can activate a custom lookup by either dropping it into a ``lookup_plugins`` directory adjacent to your play, inside a role, or by putting it in one of the lookup directory sources configured in :doc:`ansible.cfg <../config>`.
 
 
 .. _using_lookup:
@@ -38,17 +36,15 @@ or by putting it in one of the lookup directory sources configured in :doc:`ansi
 Using Lookup Plugins
 ++++++++++++++++++++
 
-Basically you can use them anywhere you can use templating in Ansible, in a play, vars file and, of course,
-in a Jinja2 template for the :doc:`template <../template_module>` module.
+Lookup plugins can be used anywhere you can use templating in Ansible: in a play, in variables file, or in a Jinja2 template for the :doc:`template <../template_module>` module.
 
 .. code-block:: yaml
 
   vars:
     file_contents: "{{lookup('file', 'path/to/file.txt')}}"
 
-Lookups are also an integral part of loops, whereever you see ``with_`` the part after the underscore is the name of a lookup.
-This is also the reason most lookups output lists and take lists as input.
-i.e. ``with_items`` uses the :doc:`items <lookup/items>` lookup:
+Lookups are an integral part of loops. Wherever you see ``with_``, the part after the underscore is the name of a lookup.
+This is also the reason most lookups output lists and take lists as input; for example, ``with_items`` uses the :doc:`items <lookup/items>` lookup:
 
 .. code-block:: yaml
 
@@ -57,7 +53,7 @@ i.e. ``with_items`` uses the :doc:`items <lookup/items>` lookup:
       debug: msg={{item}}
       with_items: [1, 2, 3]
 
-You can combine them with :doc:`../playbooks_filters`, :doc:`../playbooks_tests` and even each other to do some complex data generation and maniplulation:
+You can combine lookups with :doc:`../playbooks_filters`, :doc:`../playbooks_tests` and even each other to do some complex data generation and maniplulation. For example:
 
 .. code-block:: yaml
 
@@ -75,8 +71,7 @@ You can combine them with :doc:`../playbooks_filters`, :doc:`../playbooks_tests`
 Plugin List
 +++++++++++
 
-You can use ``ansible-doc -t lookup -l`` to see the list of available plugins,
-use ``ansible-doc -t lookup <plugin name>`` to see specific documents and examples.
+You can use ``ansible-doc -t lookup -l`` to see the list of available plugins. Use ``ansible-doc -t lookup <plugin name>`` to see specific documents and examples.
 
 
 .. toctree:: :maxdepth: 1
