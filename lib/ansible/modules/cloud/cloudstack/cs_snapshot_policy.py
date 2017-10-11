@@ -222,7 +222,7 @@ class AnsibleCloudStackSnapshotPolicy(AnsibleCloudStack):
             'account': self.get_account(key='name'),
             'domainid': self.get_domain(key='id'),
             'projectid': self.get_project(key='id'),
-            'virtualmachineid': self.get_vm(key='id'),
+            'virtualmachineid': self.get_vm(key='id', filter_zone=False),
             'type': self.module.params.get('volume_type'),
         }
         volumes = self.query_api('listVolumes', **args)
