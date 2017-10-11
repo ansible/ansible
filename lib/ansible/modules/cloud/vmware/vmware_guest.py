@@ -25,6 +25,7 @@ version_added: '2.2'
 author:
 - James Tanner (@jctanner) <tanner.jc@gmail.com>
 - Loic Blot (@nerzhul) <loic.blot@unix-experience.fr>
+- Philippe Dellaert (@pdellaert) <philippe@dellaert.org>
 notes:
 - Tested on vSphere 5.5 and 6.0
 requirements:
@@ -64,7 +65,7 @@ options:
     version_added: '2.3'
   folder:
     description:
-    - Destination folder, absolute or relative path to find an existing guest or create the new guest.
+    - Destination folder, absolute path to find an existing guest or create the new guest.
     - The folder should include the datacenter. ESX's datacenter is ha-datacenter
     - 'Examples:'
     - '   folder: /ha-datacenter/vm'
@@ -76,8 +77,6 @@ options:
     - '   folder: /folder1/datacenter1/vm'
     - '   folder: folder1/datacenter1/vm'
     - '   folder: /folder1/datacenter1/vm/folder2'
-    - '   folder: vm/folder2'
-    - '   folder: folder2'
     default: /vm
   hardware:
     description:
@@ -102,6 +101,13 @@ options:
     - ' - C(type) (string): Valid value is C(thin) (default: None).'
     - ' - C(datastore) (string): Datastore to use for the disk. If C(autoselect_datastore) is enabled, filter datastore selection.'
     - ' - C(autoselect_datastore) (bool): select the less used datastore.'
+  cdrom:
+    description:
+    - A CD-ROM configuration for the VM.
+    - 'Valid attributes are:'
+    - ' - C(type) (string): The type of CD-ROM, valid options are C(none), C(client) or C(iso). With C(none) the CD-ROM will be disconnected but present.'
+    - ' - C(iso_path) (string): The datastore path to the ISO file to use, in the form of C([datastore1] path/to/file.iso). Required if type is iso.'
+    version_added: '2.5'
   resource_pool:
     description:
     - Affect machine to the given resource pool.
@@ -209,6 +215,9 @@ EXAMPLES = r'''
       memory_mb: 512
       num_cpus: 1
       scsi: paravirtual
+    cdrom:
+      type: iso
+      iso_path: "[datastore1] livecd.iso"
     networks:
     - name: VM Network
       mac: aa:bb:dd:aa:00:14
@@ -357,6 +366,52 @@ class PyVmomiDeviceHelper(object):
             isinstance(device, vim.vm.device.ParaVirtualSCSIController) or \
             isinstance(device, vim.vm.device.VirtualBusLogicController) or \
             isinstance(device, vim.vm.device.VirtualLsiLogicSASController)
+
+    @staticmethod
+    def create_ide_controller():
+        ide_ctl = vim.vm.device.VirtualDeviceSpec()
+        ide_ctl.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
+        ide_ctl.device = vim.vm.device.VirtualIDEController()
+        ide_ctl.device.deviceInfo = vim.Description()
+        ide_ctl.device.busNumber = 0
+
+        return ide_ctl
+
+    @staticmethod
+    def create_cdrom(ide_ctl, cdrom_type, iso_path=None):
+        cdrom_spec = vim.vm.device.VirtualDeviceSpec()
+        cdrom_spec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
+        cdrom_spec.device = vim.vm.device.VirtualCdrom()
+        cdrom_spec.device.controllerKey = ide_ctl.device.key
+        cdrom_spec.device.key = -1
+        cdrom_spec.device.connectable = vim.vm.device.VirtualDevice.ConnectInfo()
+        cdrom_spec.device.connectable.allowGuestControl = True
+        cdrom_spec.device.connectable.startConnected = (cdrom_type != "none")
+        if cdrom_type in ["none", "client"]:
+            cdrom_spec.device.backing = vim.vm.device.VirtualCdrom.RemotePassthroughBackingInfo()
+        elif cdrom_type == "iso":
+            cdrom_spec.device.backing = vim.vm.device.VirtualCdrom.IsoBackingInfo(fileName=iso_path)
+
+        return cdrom_spec
+
+    @staticmethod
+    def is_equal_cdrom(vm_obj, cdrom_device, cdrom_type, iso_path):
+        if cdrom_type == "none":
+            return (isinstance(cdrom_device.backing, vim.vm.device.VirtualCdrom.RemotePassthroughBackingInfo) and
+                    cdrom_device.connectable.allowGuestControl and
+                    not cdrom_device.connectable.startConnected and
+                    (vm_obj.runtime.powerState != vim.VirtualMachinePowerState.poweredOn or not cdrom_device.connectable.connected))
+        elif cdrom_type == "client":
+            return (isinstance(cdrom_device.backing, vim.vm.device.VirtualCdrom.RemotePassthroughBackingInfo) and
+                    cdrom_device.connectable.allowGuestControl and
+                    cdrom_device.connectable.startConnected and
+                    (vm_obj.runtime.powerState != vim.VirtualMachinePowerState.poweredOn or cdrom_device.connectable.connected))
+        elif cdrom_type == "iso":
+            return (isinstance(cdrom_device.backing, vim.vm.device.VirtualCdrom.IsoBackingInfo) and
+                    cdrom_device.backing.fileName == iso_path and
+                    cdrom_device.connectable.allowGuestControl and
+                    cdrom_device.connectable.startConnected and
+                    (vm_obj.runtime.powerState != vim.VirtualMachinePowerState.poweredOn or cdrom_device.connectable.connected))
 
     def create_scsi_disk(self, scsi_ctl, disk_index=None):
         diskspec = vim.vm.device.VirtualDeviceSpec()
@@ -527,7 +582,7 @@ class PyVmomiHelper(PyVmomi):
         if vm_creation and self.params['guest_id'] is None:
             self.module.fail_json(msg="guest_id attribute is mandatory for VM creation")
 
-        if vm_obj is None or self.params['guest_id'] != vm_obj.summary.config.guestId:
+        if self.params['guest_id'] and (vm_obj is None or self.params['guest_id'] != vm_obj.summary.config.guestId):
             self.change_detected = True
             self.configspec.guestId = self.params['guest_id']
 
@@ -549,6 +604,76 @@ class PyVmomiHelper(PyVmomi):
             # memory_mb is mandatory for VM creation
             elif vm_creation and not self.params['template']:
                 self.module.fail_json(msg="hardware.memory_mb attribute is mandatory for VM creation")
+
+    def configure_cdrom(self, vm_obj):
+        # Configure the VM CD-ROM
+        if "cdrom" in self.params and self.params["cdrom"]:
+            if "type" not in self.params["cdrom"] or self.params["cdrom"]["type"] not in ["none", "client", "iso"]:
+                self.module.fail_json(msg="cdrom.type is mandatory")
+            if self.params["cdrom"]["type"] == "iso" and ("iso_path" not in self.params["cdrom"] or not self.params["cdrom"]["iso_path"]):
+                self.module.fail_json(msg="cdrom.iso_path is mandatory in case cdrom.type is iso")
+
+            if vm_obj and vm_obj.config.template:
+                # Changing CD-ROM settings on a template is not supported
+                return
+
+            cdrom_spec = None
+            cdrom_device = self.get_vm_cdrom_device(vm=vm_obj)
+            iso_path = self.params["cdrom"]["iso_path"] if "iso_path" in self.params["cdrom"] else None
+            if cdrom_device is None:
+                # Creating new CD-ROM
+                ide_device = self.get_vm_ide_device(vm=vm_obj)
+                if ide_device is None:
+                    # Creating new IDE device
+                    ide_device = self.device_helper.create_ide_controller()
+                    self.change_detected = True
+                    self.configspec.deviceChange.append(ide_device)
+                elif len(ide_device.device) > 3:
+                    self.module.fail_json(msg="hardware.cdrom specified for a VM or template which already has 4 IDE devices of which none are a cdrom")
+
+                cdrom_spec = self.device_helper.create_cdrom(ide_ctl=ide_device, cdrom_type=self.params["cdrom"]["type"], iso_path=iso_path)
+                if vm_obj and vm_obj.runtime.powerState == vim.VirtualMachinePowerState.poweredOn:
+                    cdrom_spec.device.connectable.connected = (self.params["cdrom"]["type"] != "none")
+
+            elif not self.device_helper.is_equal_cdrom(vm_obj=vm_obj, cdrom_device=cdrom_device, cdrom_type=self.params["cdrom"]["type"], iso_path=iso_path):
+                # Updating an existing CD-ROM
+                if self.params["cdrom"]["type"] in ["client", "none"]:
+                    cdrom_device.backing = vim.vm.device.VirtualCdrom.RemotePassthroughBackingInfo()
+                elif self.params["cdrom"]["type"] == "iso":
+                    cdrom_device.backing = vim.vm.device.VirtualCdrom.IsoBackingInfo(fileName=iso_path)
+                cdrom_device.connectable = vim.vm.device.VirtualDevice.ConnectInfo()
+                cdrom_device.connectable.allowGuestControl = True
+                cdrom_device.connectable.startConnected = (self.params["cdrom"]["type"] != "none")
+                if vm_obj and vm_obj.runtime.powerState == vim.VirtualMachinePowerState.poweredOn:
+                    cdrom_device.connectable.connected = (self.params["cdrom"]["type"] != "none")
+
+                cdrom_spec = vim.vm.device.VirtualDeviceSpec()
+                cdrom_spec.operation = vim.vm.device.VirtualDeviceSpec.Operation.edit
+                cdrom_spec.device = cdrom_device
+
+            if cdrom_spec:
+                self.change_detected = True
+                self.configspec.deviceChange.append(cdrom_spec)
+
+    def get_vm_cdrom_device(self, vm=None):
+        if vm is None:
+            return None
+
+        for device in vm.config.hardware.device:
+            if isinstance(device, vim.vm.device.VirtualCdrom):
+                return device
+
+        return None
+
+    def get_vm_ide_device(self, vm=None):
+        if vm is None:
+            return None
+
+        for device in vm.config.hardware.device:
+            if isinstance(device, vim.vm.device.VirtualIDEController):
+                return device
+
+        return None
 
     def get_vm_network_interfaces(self, vm=None):
         if vm is None:
@@ -1148,6 +1273,7 @@ class PyVmomiHelper(PyVmomi):
         self.configure_cpu_and_memory(vm_obj=vm_obj, vm_creation=True)
         self.configure_disks(vm_obj=vm_obj)
         self.configure_network(vm_obj=vm_obj)
+        self.configure_cdrom(vm_obj=vm_obj)
 
         # Find if we need network customizations (find keys in dictionary that requires customizations)
         network_changes = False
@@ -1265,6 +1391,7 @@ class PyVmomiHelper(PyVmomi):
         self.configure_cpu_and_memory(vm_obj=self.current_vm_obj)
         self.configure_disks(vm_obj=self.current_vm_obj)
         self.configure_network(vm_obj=self.current_vm_obj)
+        self.configure_cdrom(vm_obj=self.current_vm_obj)
         self.customize_customvalues(vm_obj=self.current_vm_obj)
 
         if self.params['annotation'] and self.current_vm_obj.config.annotation != self.params['annotation']:
@@ -1306,7 +1433,7 @@ class PyVmomiHelper(PyVmomi):
                 return {'changed': change_applied, 'failed': True, 'msg': task.info.error.msg}
 
         # Mark VM as Template
-        if self.params['is_template']:
+        if self.params['is_template'] and not self.current_vm_obj.config.template:
             self.current_vm_obj.MarkAsTemplate()
             change_applied = True
 
@@ -1352,6 +1479,7 @@ def main():
         folder=dict(type='str', default='/vm'),
         guest_id=dict(type='str'),
         disk=dict(type='list', default=[]),
+        cdrom=dict(type='dict', default={}),
         hardware=dict(type='dict', default={}),
         force=dict(type='bool', default=False),
         datacenter=dict(type='str', default='ha-datacenter'),
