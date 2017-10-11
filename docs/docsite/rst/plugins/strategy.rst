@@ -6,11 +6,21 @@ Strategy Plugins
 
 Strategy plugins control the flow of play execution by handling task and host scheduling.
 
+.. _enable_strategy:
 
 Enabling Strategy Plugins
 +++++++++++++++++++++++++
 
-Only one strategy plugin can be used in a play, but you can use different ones for each play in a playbook or Ansible run.
+Strategy plugins shipped with Ansible are enabled by default. You can enable a custom strategy plugin by
+putting it in one of the lookup directory sources configured in :doc:`ansible.cfg <../config>`.
+
+
+.. _using_strategy:
+
+Using Strategy Plugins
+++++++++++++++++++++++
+
+Only one strategy plugin can be used in a play, but you can use different ones for each play in a playbook or ansible run.
 The default is the :doc:`linear <strategy/linear>` plugin. You can change this default in Ansible :doc:`configuration <../config>` using an environment variable:
 
 .. code-block:: shell
@@ -38,6 +48,7 @@ You can also specify the strategy plugin in the play via the :ref:`strategy` key
       - name: restart_tomcat
         service: name=tomcat state=restarted
 
+.. _strategy_plugin_list:
 
 Plugin List
 +++++++++++

@@ -6,7 +6,8 @@ Inventory Plugins
 
 Inventory plugins allow users to point at data sources to compile the inventory of hosts that Ansible uses to target tasks, either via the ``-i /path/to/file`` and/or ``-i 'host1, host2`` command line parameters or from other configuration sources.
 
-.. _enabling_inventory_plugins:
+
+.. _enabling_inventory:
 
 Enabling Inventory Plugins
 ++++++++++++++++++++++++++
@@ -27,6 +28,18 @@ This list also establishes the order in which each plugin tries to parse an inve
    [inventory]
    enable_plugins = advanced_host_list, constructed, yaml
 
+
+.. _using_inventory:
+
+Using Inventory Plugins
++++++++++++++++++++++++
+
+The only requirement for using an inventory plugin after it is enabled is to provide an inventory source to parse.
+Ansible will try to use the list of enabled inventory plugins, in order, against each inventory source provided.
+Once an inventory plugin succeeds at parsing a source, the any remaining inventory plugins will be skipped for that source.
+
+
+.. _inventory_plugin_list:
 
 Plugin List
 +++++++++++

@@ -11,6 +11,9 @@ __metaclass__ = type
 DOCUMENTATION = '''
     name: openstack
     plugin_type: inventory
+    authors:
+      - Marco Vito Moscaritolo <marco@agavee.com>
+      - Jesse Keating <jesse.keating@rackspace.com>
     short_description: OpenStack inventory source
     description:
         - Get inventory hosts from OpenStack clouds

@@ -18,9 +18,8 @@ Lookup plugins allow access to outside data sources. Like all templating, these 
 Lookups and loops
 `````````````````
 
-Various *lookup plugins* allow additional ways to iterate over data.
-In :doc:`Loops <playbooks_loops>` you will learn how to use them to walk over collections of numerous types.
-However, they can also be used to pull in data from remote sources, such as shell commands or even key value stores.
+*lookup plugins* are a way to query external data sources, such as shell commands or even key value stores.
+
 Before Ansible 2.5, lookups were mostly used indirectly in ``with_<lookup`` constructes for looping, begining in 2.5
 we use them more explicitly as part of Jinja2 expressions fed into the ``loop`` keyword.
 
@@ -36,6 +35,8 @@ One way of using lookups is to populate variables. These macros are evaluated ea
       motd_value: "{{ lookup('file', '/etc/motd') }}"
     tasks:
       - debug: msg="motd value is {{ motd_value }}"
+
+For more details and a complete list of lookup plugins available, please see :doc:`plugins/lookup`.
 
 .. seealso::
 

@@ -70,6 +70,8 @@ You can also set this as an environment variable:
     export ANSIBLE_LOAD_CALLBACK_PLUGINS=1
 
 
+.. _callback_plugin_list:
+
 Plugin List
 +++++++++++
 
