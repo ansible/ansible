@@ -632,7 +632,10 @@ def main():
         # Next, we check to see if the key in the bucket exists. If it exists, it also returns key_matches md5sum check.
         keyrtn = key_check(module, s3, bucket, obj, version=version, validate=validate)
         if keyrtn is False:
-            module.fail_json(msg="Key %s with version id %s does not exist." % (obj, version))
+            if version:
+                module.fail_json(msg="Key %s with version id %s does not exist." % (obj, version))
+            else:
+                module.fail_json(msg="Key %s does not exist." % obj)
 
         # If the destination path doesn't exist or overwrite is True, no need to do the md5um etag check, so just download.
         # Compare the remote MD5 sum of the object with the local dest md5sum, if it already exists.
