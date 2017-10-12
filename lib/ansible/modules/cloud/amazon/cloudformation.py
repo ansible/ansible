@@ -47,7 +47,9 @@ options:
     description:
       - If state is "present", stack will be created.  If state is "present" and if stack exists and template has changed, it will be updated.
         If state is "absent", stack will be removed.
-    required: true
+    default: present
+    choices: [ present, absent ]
+    required: false
   template:
     description:
       - The local path of the cloudformation template.
