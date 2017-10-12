@@ -67,6 +67,7 @@ def load_fixture(name):
 
 
 class TestParameters(unittest.TestCase):
+
     def test_module_parameters(self):
         args = dict(
             commands=[
@@ -85,6 +86,10 @@ class TestParameters(unittest.TestCase):
 class TestManager(unittest.TestCase):
 
     def setUp(self):
+        self.mock_run_commands = patch('ansible.modules.network.f5.bigip_command.run_commands')
+        self.run_commands = self.mock_run_commands.start()
+        self.mock_execute_on_device = patch('ansible.modules.network.f5.bigip_command.ModuleManager.execute_on_device')
+        self.execute_on_device = self.mock_execute_on_device.start()
         self.spec = ArgumentSpec()
 
     def test_run_single_command(self, *args):
@@ -104,9 +109,28 @@ class TestManager(unittest.TestCase):
         )
         mm = ModuleManager(client)
 
-        # Override methods to force specific logic in the module to happen
-        mm.execute_on_device = Mock(return_value='foo')
-
         results = mm.exec_module()
 
         assert results['changed'] is True
+        self.assertEqual(self.run_commands.call_count, 0)
+        self.assertEqual(self.execute_on_device.call_count, 1)
+
+    def test_cli_command(self, *args):
+        set_module_args(dict(
+            commands=[
+                "show sys version"
+            ],
+            server='localhost',
+            user='admin',
+            password='password',
+            transport='cli'
+        ))
+        client = AnsibleF5Client(
+            argument_spec=self.spec.argument_spec,
+            supports_check_mode=self.spec.supports_check_mode,
+            f5_product_name=self.spec.f5_product_name
+        )
+        mm = ModuleManager(client)
+        results = mm.exec_module()
+        self.assertEqual(self.run_commands.call_count, 1)
+        self.assertEqual(self.execute_on_device.call_count, 0)
