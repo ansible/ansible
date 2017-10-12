@@ -262,12 +262,6 @@ class Hardware(FactsBase):
         if match:
             return int(match.group(1)) / 1024
 
-        # if data:
-        #    self.facts['filesystems'] = self.parse_filesystems(data)
-
-    # def parse_filesystems(self, data):
-        # return re.findall(r'^Directory of (\S+)/', data, re.M)
-
 
 class Config(FactsBase):
 
