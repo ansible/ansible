@@ -168,6 +168,7 @@ EXAMPLES = r'''
 
 import binascii
 import datetime
+import errno
 import math
 import os
 import re
@@ -558,15 +559,27 @@ def main():
                                 break
 
                         # Shutdown the client socket
-                        s.shutdown(socket.SHUT_RDWR)
-                        s.close()
+                        try:
+                            s.shutdown(socket.SHUT_RDWR)
+                        except socket.error as e:
+                            if e.errno != errno.ENOTCONN:
+                                raise
+                        # else, the server broke the connection on its end, assume it's not ready
+                        else:
+                            s.close()
                         if matched:
                             # Found our string, success!
                             break
                     else:
                         # Connection established, success!
-                        s.shutdown(socket.SHUT_RDWR)
-                        s.close()
+                        try:
+                            s.shutdown(socket.SHUT_RDWR)
+                        except socket.error as e:
+                            if e.errno != errno.ENOTCONN:
+                                raise
+                        # else, the server broke the connection on its end, assume it's not ready
+                        else:
+                            s.close()
                         break
 
             # Conditions not yet met, wait and try again
