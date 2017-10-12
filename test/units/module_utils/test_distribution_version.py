@@ -419,6 +419,26 @@ BUG_REPORT_URL="http://bugs.debian.org/"
         }
     },
     {
+        'name': "Ubuntu 10.04 guess",
+        'input':
+            {
+                '/etc/lsb-release': """DISTRIB_ID=Ubuntu
+DISTRIB_RELEASE=10.04
+DISTRIB_CODENAME=lucid
+DISTRIB_DESCRIPTION="Ubuntu 10.04.4 LTS
+"""
+            },
+        'platform.dist': ('Ubuntu', '10.04', 'lucid'),
+        'result':
+            {
+                'distribution': u'Ubuntu',
+                'distribution_major_version': u'10',
+                'distribution_release': u'lucid',
+                "os_family": "Debian",
+                'distribution_version': u'10.04'
+            }
+    },
+    {
         'name': "Ubuntu 14.04",
         'input': {
             '/etc/lsb-release': """DISTRIB_ID=Ubuntu

@@ -174,6 +174,9 @@ RESET_VARS = (
     'ansible_ssh_executable',
 )
 
+OPTION_FLAGS = ('connection', 'remote_user', 'private_key_file', 'verbosity', 'force_handlers', 'step', 'start_at_task', 'diff',
+                'ssh_common_args', 'docker_extra_args', 'sftp_extra_args', 'scp_extra_args', 'ssh_extra_args')
+
 
 class PlayContext(Base):
 
@@ -326,9 +329,8 @@ class PlayContext(Base):
         self.diff = boolean(options.diff, strict=False)
 
         #  general flags (should we move out?)
-        # for flag in ('connection', 'remote_user', 'private_key_file', 'verbosity', 'force_handlers', 'step', 'start_at_task', 'diff'):
         #  should only be 'non plugin' flags
-        for flag in ('connection', 'remote_user', 'private_key_file', 'verbosity', 'force_handlers', 'step', 'start_at_task', 'diff'):
+        for flag in OPTION_FLAGS:
             attribute = getattr(options, flag, False)
             if attribute:
                 setattr(self, flag, attribute)
@@ -588,9 +590,6 @@ class PlayContext(Base):
                 if not self.become_user:
                     raise AnsibleError(("The 'runas' become method requires a username "
                                         "(specify with the '--become-user' CLI arg, the 'become_user' keyword, or the 'ansible_become_user' variable)"))
-                if not self.become_pass:
-                    raise AnsibleError(("The 'runas' become method requires a password "
-                                       "(specify with the '-K' CLI arg or the 'ansible_become_password' variable)"))
                 becomecmd = cmd
 
             elif self.become_method == 'doas':

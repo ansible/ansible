@@ -29,6 +29,7 @@ gather_timeout: Allows you to set the timeout for the fact gathering plugin cont
 handlers: "A section with tasks that are treated as handlers, these won't get executed normally, only when notified. After each section of tasks is complete."
 hosts: "A list of groups, hosts or host pattern that translates into a list of hosts that are the play's target."
 ignore_errors: Boolean that allows you to ignore task failures and continue with play. It does not affect connection errors.
+loop: "Takes a list for the task to iterate over, saving each list element into the ``item`` variable (configurable via loop_control)"
 loop_control: "Several keys here allow you to modify/set loop behaviour in a task see http://docs.ansible.com/ansible/latest/playbooks_loops.html#loop-control for details."
 max_fail_percentage: can be used to abort the run after a given percentage of hosts in the current batch has failed.
 name: "It's a name, works mostly for documentation, in the case of tasks/handlers it can be an identifier."

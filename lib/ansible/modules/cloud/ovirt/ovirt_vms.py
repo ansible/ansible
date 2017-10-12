@@ -599,8 +599,14 @@ class VmsModule(BaseModule):
                     t for t in templates
                     if t.version.version_number == self.param('template_version')
                 ]
-            if templates:
-                template = templates[0]
+            if not templates:
+                raise ValueError(
+                    "Template with name '%s' and version '%s' was not found'" % (
+                        self.param('template'),
+                        self.param('template_version')
+                    )
+                )
+            template = templates[0]
 
         return template
 
@@ -640,6 +646,7 @@ class VmsModule(BaseModule):
         disk_attachments = self.__get_storage_domain_and_all_template_disks(template)
 
         return otypes.Vm(
+            id=self.param('id'),
             name=self.param('name'),
             cluster=otypes.Cluster(
                 name=self.param('cluster')
@@ -836,6 +843,17 @@ class VmsModule(BaseModule):
             timeout=self.param('timeout'),
         )
 
+    def _wait_for_vm_disks(self, vm_service):
+        disks_service = self._connection.system_service().disks_service()
+        for da in vm_service.disk_attachments_service().list():
+            disk_service = disks_service.disk_service(da.disk.id)
+            wait(
+                service=disk_service,
+                condition=lambda disk: disk.status == otypes.DiskStatus.OK,
+                wait=self.param('wait'),
+                timeout=self.param('timeout'),
+            )
+
     def wait_for_down(self, vm):
         """
         This function will first wait for the status DOWN of the VM.
@@ -877,8 +895,14 @@ class VmsModule(BaseModule):
         return True
 
     def __attach_disks(self, entity):
-        disks_service = self._connection.system_service().disks_service()
+        if not self.param('disks'):
+            return
 
+        vm_service = self._service.service(entity.id)
+        disks_service = self._connection.system_service().disks_service()
+        disk_attachments_service = vm_service.disk_attachments_service()
+
+        self._wait_for_vm_disks(vm_service)
         for disk in self.param('disks'):
             # If disk ID is not specified, find disk by name:
             disk_id = disk.get('id')
@@ -893,8 +917,8 @@ class VmsModule(BaseModule):
                 )
 
             # Attach disk to VM:
-            disk_attachments_service = self._service.service(entity.id).disk_attachments_service()
-            if get_entity(disk_attachments_service.attachment_service(disk_id)) is None:
+            disk_attachment = disk_attachments_service.attachment_service(disk_id)
+            if get_entity(disk_attachment) is None:
                 if not self._module.check_mode:
                     disk_attachments_service.add(
                         otypes.DiskAttachment(

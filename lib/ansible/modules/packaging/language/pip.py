@@ -286,7 +286,7 @@ def _get_pip(module, env=None, executable=None):
             else:
                 # For-else: Means that we did not break out of the loop
                 # (therefore, that pip was not found)
-                module.fail_json(msg='Unable to find any of %s to use.  pip' +
+                module.fail_json(msg='Unable to find any of %s to use.  pip'
                                      ' needs to be installed.' % ', '.join(candidate_pip_basenames))
         else:
             # If we're using a virtualenv we must use the pip from the

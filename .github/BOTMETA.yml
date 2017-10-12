@@ -154,22 +154,54 @@ files:
   $modules/cloud/amazon/sts_session_token.py: pwnall
   $modules/cloud/atomic/: krsacme
   $modules/cloud/azure/azure.py: jwhitbeck
-  $modules/cloud/azure/azure_rm_networkinterface.py: $team_azure
-  $modules/cloud/azure/azure_rm_networkinterface_facts.py: $team_azure
-  $modules/cloud/azure/azure_rm_publicipaddress.py: $team_azure
-  $modules/cloud/azure/azure_rm_publicipaddress_facts.py: $team_azure
-  $modules/cloud/azure/azure_rm_resourcegroup.py: $team_azure
-  $modules/cloud/azure/azure_rm_resourcegroup_facts.py: $team_azure
-  $modules/cloud/azure/azure_rm_securitygroup.py: $team_azure
-  $modules/cloud/azure/azure_rm_securitygroup_facts.py: $team_azure
-  $modules/cloud/azure/azure_rm_storageaccount.py: $team_azure
-  $modules/cloud/azure/azure_rm_storageaccount_facts.py: $team_azure
-  $modules/cloud/azure/azure_rm_storageblob.py: $team_azure
-  $modules/cloud/azure/azure_rm_subnet.py: $team_azure
-  $modules/cloud/azure/azure_rm_virtualmachine.py: $team_azure
-  $modules/cloud/azure/azure_rm_virtualmachineimage_facts.py: $team_azure
-  $modules/cloud/azure/azure_rm_virtualnetwork.py: $team_azure
-  $modules/cloud/azure/azure_rm_virtualnetwork_facts.py: $team_azure
+  $modules/cloud/azure/azure_rm_networkinterface.py:
+    ignored: chouseknecht
+    maintainers: $team_azure
+  $modules/cloud/azure/azure_rm_networkinterface_facts.py:
+    ignored: chouseknecht
+    maintainers: $team_azure
+  $modules/cloud/azure/azure_rm_publicipaddress.py:
+    ignored: chouseknecht
+    maintainers: $team_azure
+  $modules/cloud/azure/azure_rm_publicipaddress_facts.py:
+    ignored: chouseknecht
+    maintainers: $team_azure
+  $modules/cloud/azure/azure_rm_resourcegroup.py:
+    ignored: chouseknecht
+    maintainers: $team_azure
+  $modules/cloud/azure/azure_rm_resourcegroup_facts.py:
+    ignored: chouseknecht
+    maintainers: $team_azure
+  $modules/cloud/azure/azure_rm_securitygroup.py:
+    ignored: chouseknecht
+    maintainers: $team_azure
+  $modules/cloud/azure/azure_rm_securitygroup_facts.py:
+    ignored: chouseknecht
+    maintainers: $team_azure
+  $modules/cloud/azure/azure_rm_storageaccount.py:
+    ignored: chouseknecht
+    maintainers: $team_azure
+  $modules/cloud/azure/azure_rm_storageaccount_facts.py:
+    ignored: chouseknecht
+    maintainers: $team_azure
+  $modules/cloud/azure/azure_rm_storageblob.py:
+    ignored: chouseknecht
+    maintainers: $team_azure
+  $modules/cloud/azure/azure_rm_subnet.py:
+    ignored: chouseknecht
+    maintainers: $team_azure
+  $modules/cloud/azure/azure_rm_virtualmachine.py:
+    ignored: chouseknecht
+    maintainers: $team_azure
+  $modules/cloud/azure/azure_rm_virtualmachineimage_facts.py:
+    ignored: chouseknecht
+    maintainers: $team_azure
+  $modules/cloud/azure/azure_rm_virtualnetwork.py:
+    ignored: chouseknecht
+    maintainers: $team_azure
+  $modules/cloud/azure/azure_rm_virtualnetwork_facts.py:
+    ignored: chouseknecht
+    maintainers: $team_azure
   $modules/cloud/centurylink/: clc-runner
   $modules/cloud/cloudscale/cloudscale_server.py: gaudenz
   $modules/cloud/cloudstack/:
@@ -900,6 +932,9 @@ files:
   $module_utils/cloudengine.py:
     maintainers: QijunPan
     labels: networking
+  $module_utils/cloudstack.py:
+    maintainers: resmo
+    labels: cloudstack
   $module_utils/cnos_devicerules.py:
     maintainers: dkasberg amuraleedhar
     labels: networking
@@ -1046,6 +1081,12 @@ files:
     labels:
     - cloud
     - openstack
+  lib/ansible/plugins/filter/network.py:
+    maintainers: $team_networking
+    labels: networking
+  lib/ansible/plugins/lookup/dig:
+    maintainers: jpmens
+    labels: community
   lib/ansible/plugins/netconf/:
     maintainers: $team_networking
     labels: networking

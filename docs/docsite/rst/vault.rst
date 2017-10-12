@@ -129,7 +129,7 @@ To encrypt a string provided as a cli arg:
 
 Result::
 
-    some_foo: !vault |
+    the_secret: !vault |
           $ANSIBLE_VAULT;1.1;AES256
           62313365396662343061393464336163383764373764613633653634306231386433626436623361
           6134333665353966363534333632666535333761666131620a663537646436643839616531643561
@@ -377,7 +377,7 @@ hexlify()'ied result of:
 - hexlify()'ed string of the salt, followed by a newline ('\n')
 - hexlify()'ed string of the crypted HMAC, followed by a newline. The HMAC is:
 
-  - a `RFC2104 <https://www.ietf.org/rfc/rfc2104.txt>` style HMAC
+  - a `RFC2104 <https://www.ietf.org/rfc/rfc2104.txt>`_ style HMAC
 
     - inputs are:
 
@@ -402,6 +402,6 @@ hexlify()'ied result of:
       - the plaintext
 
         - the original plaintext
-        - padding up to the AES256 blocksize. (The data used for padding is based on `RFX5652 <https://tools.ietf.org/html/rfc5652#section-6.3>`)
+        - padding up to the AES256 blocksize. (The data used for padding is based on `RFX5652 <https://tools.ietf.org/html/rfc5652#section-6.3>`_)
 
 

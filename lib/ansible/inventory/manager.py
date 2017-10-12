@@ -177,7 +177,7 @@ class InventoryManager(object):
     def _setup_inventory_plugins(self):
         ''' sets up loaded inventory plugins for usage '''
 
-        inventory_loader = PluginLoader('InventoryModule', 'ansible.plugins.inventory', 'inventory_plugins', 'inventory_plugins')
+        inventory_loader = PluginLoader('InventoryModule', 'ansible.plugins.inventory', C.DEFAULT_INVENTORY_PLUGIN_PATH, 'inventory_plugins')
         display.vvvv('setting up inventory plugins')
 
         for name in C.INVENTORY_ENABLED:
@@ -190,7 +190,7 @@ class InventoryManager(object):
         if not self._inventory_plugins:
             raise AnsibleError("No inventory plugins available to generate inventory, make sure you have at least one whitelisted.")
 
-    def parse_sources(self, cache=True):
+    def parse_sources(self, cache=False):
         ''' iterate over inventory sources and parse each one to populate it'''
 
         self._setup_inventory_plugins()
@@ -214,7 +214,7 @@ class InventoryManager(object):
 
         self._inventory_plugins = []
 
-    def parse_source(self, source, cache=True):
+    def parse_source(self, source, cache=False):
         ''' Generate or update inventory for the source provided '''
 
         parsed = False

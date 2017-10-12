@@ -28,6 +28,12 @@ options:
       specified value. This is for simple values, for anything complex or with
       formatting please switch to the template module.
     version_added: "2.3"
+  decrypt:
+    description:
+    - This option controls the autodecryption of source files using vault.
+    type: bool
+    default: 'yes'
+    version_added: "2.5"
   dest:
     description:
     - Remote absolute path where the file should be copied to. If src is a

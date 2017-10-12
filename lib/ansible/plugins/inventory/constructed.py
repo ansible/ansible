@@ -10,11 +10,11 @@ DOCUMENTATION = '''
     version_added: "2.4"
     short_description: Uses Jinja2 to construct vars and groups based on existing inventory.
     description:
-        - Uses a YAML configuration file to define var expresisions and group conditionals
+        - Uses a YAML configuration file with a valid YAML or ``.config`` extension to define var expressions and group conditionals
         - The Jinja2 conditionals that qualify a host for membership.
         - The JInja2 exprpessions are calculated and assigned to the variables
         - Only variables already available from previous inventories or the fact cache can be used for templating.
-        - When `strict` is False, failed expressions will be ignored (assumes vars were missing).
+        - When ``strict`` is False, failed expressions will be ignored (assumes vars were missing).
     extends_documentation_fragment:
       - constructed
 '''
@@ -54,6 +54,9 @@ EXAMPLES = '''
 
 import os
 
+from collections import MutableMapping
+
+from ansible import constants as C
 from ansible.errors import AnsibleParserError
 from ansible.plugins.inventory import BaseInventoryPlugin
 from ansible.module_utils._text import to_native
@@ -75,7 +78,7 @@ class InventoryModule(BaseInventoryPlugin):
         if super(InventoryModule, self).verify_file(path):
             file_name, ext = os.path.splitext(path)
 
-            if not ext or ext == '.config':
+            if not ext or ext in ['.config'] + C.YAML_FILENAME_EXTENSIONS:
                 valid = True
 
         return valid
@@ -92,6 +95,8 @@ class InventoryModule(BaseInventoryPlugin):
 
         if not data:
             raise AnsibleParserError("%s is empty" % (to_native(path)))
+        elif not isinstance(data, MutableMapping):
+            raise AnsibleParserError('inventory source has invalid structure, it should be a dictionary, got: %s' % type(data))
         elif data.get('plugin') != self.NAME:
             raise AnsibleParserError("%s is not a constructed groups config file, plugin entry must be 'constructed'" % (to_native(path)))
 

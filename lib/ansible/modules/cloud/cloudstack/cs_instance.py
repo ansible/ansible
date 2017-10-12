@@ -2,21 +2,11 @@
 # -*- coding: utf-8 -*-
 #
 # (c) 2015, René Moser <mail@renemoser.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
@@ -416,8 +406,14 @@ instance_name:
 
 import base64
 
-# import cloudstack common
-from ansible.module_utils.cloudstack import *
+try:
+    from cs import CloudStackException
+except ImportError:
+    pass  # Handled in AnsibleCloudStack.__init__
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.cloudstack import (AnsibleCloudStack, CS_HYPERVISORS, cs_argument_spec,
+                                             cs_required_together)
 
 
 class AnsibleCloudStackInstance(AnsibleCloudStack):
@@ -1067,7 +1063,6 @@ def main():
 
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()

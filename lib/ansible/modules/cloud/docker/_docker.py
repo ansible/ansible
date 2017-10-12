@@ -516,11 +516,7 @@ EXAMPLES = '''
 import json
 import os
 import shlex
-try:
-    from urlparse import urlparse
-except ImportError:
-    # python3
-    from urllib.parse import urlparse
+from ansible.module_utils.six.moves.urllib.parse import urlparse
 
 try:
     import docker.client
