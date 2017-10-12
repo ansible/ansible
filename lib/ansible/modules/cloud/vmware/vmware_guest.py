@@ -113,6 +113,11 @@ options:
     - Affect machine to the given resource pool.
     - Resource pool should be child of the selected host parent.
     version_added: '2.3'
+  resource_pool_cluster_root:
+    description:
+    - Set the resource pool to the root of a cluster
+    type: bool
+    version_added: '2.5'
   wait_for_ip_address:
     description:
     - Wait until vCenter detects an IP address for the VM.
@@ -323,10 +328,9 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text
-from ansible.module_utils.vmware import (find_obj, gather_vm_facts, get_all_objs,
+from ansible.module_utils.vmware import (find_obj, gather_vm_facts, get_all_objs, find_cluster_by_name,
                                          compile_folder_path_for_object, serialize_spec,
                                          vmware_argument_spec, set_vm_power_state, PyVmomi)
-
 
 class PyVmomiDeviceHelper(object):
     """ This class is a helper to create easily VMWare Objects for PyVmomiHelper """
@@ -1198,17 +1202,23 @@ class PyVmomiHelper(PyVmomi):
         return root
 
     def get_resource_pool(self):
-
         resource_pool = None
-
         if self.params['esxi_hostname']:
             host = self.select_host()
             resource_pool = self.select_resource_pool_by_host(host)
+        elif self.params['resource_pool_cluster_root']:
+            if self.params['cluster'] is None:
+                self.module.fail_json(msg='resource_pool_cluster_root requires a cluster name')
+            else:
+                rp_cluster = find_cluster_by_name(self.content, self.params['cluster'])
+                if not rp_cluster:
+                    self.module.fail_json(msg="Failed to find a cluster named %(cluster)s" % self.params)
+                resource_pool = rp_cluster.resourcePool
         else:
             resource_pool = self.select_resource_pool_by_name(self.params['resource_pool'])
 
         if resource_pool is None:
-            self.module.fail_json(msg='Unable to find resource pool "%(resource_pool)s"' % self.params)
+            self.module.fail_json(msg='Unable to find resource pool, need esxi_hostname, resource_pool, or cluster and resource_pool_cluster_root')
 
         return resource_pool
 
@@ -1490,6 +1500,7 @@ def main():
         linked_clone=dict(type='bool', default=False),
         networks=dict(type='list', default=[]),
         resource_pool=dict(type='str'),
+        resource_pool_cluster_root=dict(type=bool, default=False),
         customization=dict(type='dict', default={}, no_log=True),
     )
 
@@ -1497,6 +1508,9 @@ def main():
                            supports_check_mode=True,
                            mutually_exclusive=[
                                ['cluster', 'esxi_hostname'],
+                           ],
+                           required_if=[
+                               ['resource_pool_cluster_root', True, ['cluster']],
                            ],
                            )
 
