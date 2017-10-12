@@ -29,23 +29,18 @@ options:
   domain:
     description:
       - Domain the instance is related to.
-    required: false
-    default: null
   account:
     description:
       - Account the instance is related to.
-    required: false
-    default: null
   project:
     description:
       - Project the instance is related to.
-    required: false
-    default: null
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-- cs_instance_facts:
+- name: gather instance facts
+  cs_instance_facts:
     name: web-vm-1
   delegate_to: localhost
 
@@ -187,36 +182,36 @@ class AnsibleCloudStackInstanceFacts(AnsibleCloudStack):
         super(AnsibleCloudStackInstanceFacts, self).__init__(module)
         self.instance = None
         self.returns = {
-            'group':                'group',
-            'hypervisor':           'hypervisor',
-            'instancename':         'instance_name',
-            'publicip':             'public_ip',
-            'passwordenabled':      'password_enabled',
-            'password':             'password',
-            'serviceofferingname':  'service_offering',
-            'isoname':              'iso',
-            'templatename':         'template',
-            'keypair':              'ssh_key',
+            'group': 'group',
+            'hypervisor': 'hypervisor',
+            'instancename': 'instance_name',
+            'publicip': 'public_ip',
+            'passwordenabled': 'password_enabled',
+            'password': 'password',
+            'serviceofferingname': 'service_offering',
+            'isoname': 'iso',
+            'templatename': 'template',
+            'keypair': 'ssh_key',
         }
         self.facts = {
             'cloudstack_instance': None,
         }
-
 
     def get_instance(self):
         instance = self.instance
         if not instance:
             instance_name = self.module.params.get('name')
 
-            args                = {}
-            args['account']     = self.get_account(key='name')
-            args['domainid']    = self.get_domain(key='id')
-            args['projectid']   = self.get_project(key='id')
+            args = {
+                'account': self.get_account(key='name'),
+                'domainid': self.get_domain(key='id'),
+                'projectid': self.get_project(key='id'),
+            }
             # Do not pass zoneid, as the instance name must be unique across zones.
-            instances = self.cs.listVirtualMachines(**args)
+            instances = self.query_api('listVirtualMachines', **args)
             if instances:
                 for v in instances['virtualmachine']:
-                    if instance_name.lower() in [ v['name'].lower(), v['displayname'].lower(), v['id'] ]:
+                    if instance_name.lower() in [v['name'].lower(), v['displayname'].lower(), v['id']]:
                         self.instance = v
                         break
         return self.instance
@@ -224,13 +219,14 @@ class AnsibleCloudStackInstanceFacts(AnsibleCloudStack):
     def get_volumes(self, instance):
         volume_details = []
         if instance:
-            args                = {}
-            args['account']     = instance.get('account')
-            args['domainid']    = instance.get('domainid')
-            args['projectid']   = instance.get('projectid')
-            args['virtualmachineid'] = instance['id']
+            args = {
+                'account': self.get_account(key='name'),
+                'domainid': self.get_domain(key='id'),
+                'projectid': self.get_project(key='id'),
+                'virtualmachineid': instance['id'],
+            }
 
-            volumes = self.cs.listVolumes(**args)
+            volumes = self.query_api('listVolumes', **args)
             if volumes:
                 for vol in volumes['volume']:
                     volume_details.append({'size': vol['size'], 'type': vol['type'], 'name': vol['name']})
@@ -242,7 +238,6 @@ class AnsibleCloudStackInstanceFacts(AnsibleCloudStack):
             self.module.fail_json(msg="Instance not found: %s" % self.module.params.get('name'))
         self.facts['cloudstack_instance'] = self.get_result(instance)
         return self.facts
-
 
     def get_result(self, instance):
         super(AnsibleCloudStackInstanceFacts, self).get_result(instance)
@@ -270,10 +265,10 @@ class AnsibleCloudStackInstanceFacts(AnsibleCloudStack):
 def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
-        name = dict(required=True),
-        domain = dict(default=None),
-        account = dict(default=None),
-        project = dict(default=None),
+        name=dict(required=True),
+        domain=dict(),
+        account=dict(),
+        project=dict(),
     ))
 
     module = AnsibleModule(
