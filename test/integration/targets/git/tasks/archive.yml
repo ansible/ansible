@@ -1,9 +1,9 @@
----
+- name: ARCHIVE | Clear checkout_dir
+  file:
+    state: absent
+    path: "{{ checkout_dir }}"
 
-- name: clear checkout_dir
-  file: state=absent path={{ checkout_dir }}
-
-- name: Archive repo using various archival format
+- name: ARCHIVE | Archive repo using various archival format
   git:
     repo: '{{ repo_format1 }}'
     dest: '{{ checkout_dir }}'
@@ -16,9 +16,9 @@
     - zip
 
 - assert:
-    that: "git_archive.results | map(attribute='changed') | unique | list == [true]"
+    that: git_archive.results | map(attribute='changed') | unique | list == [true]
 
-- name: Check if archive file is created or not
+- name: ARCHIVE | Check if archive file is created or not
   stat:
     path: '{{ checkout_dir }}/test_role.{{ item }}'
   register: archive_check
@@ -29,4 +29,4 @@
     - zip
 
 - assert:
-    that: "archive_check.results | map(attribute='stat.exists') | unique | list == [true]"
+    that: archive_check.results | map(attribute='stat.exists') | unique | list == [true]
