@@ -34,6 +34,23 @@ WRONG_RC=$?
 echo "rc was $WRONG_RC (1 is expected)"
 [ $WRONG_RC -eq 1 ]
 
+# tests related to https://github.com/ansible/ansible/issues/30993
+CMD='ansible-playbook -vvvvv --ask-vault-pass test_vault.yml'
+setsid sh -c "echo password|${CMD}" < /dev/null > log 2>&1 && :
+echo "cmd: ${CMD}"
+cat log
+
+setsid sh -c 'tty; ansible-vault --ask-vault-pass -vvvvv view ping_noop.yml' < /dev/null > log 2>&1
+setsid sh -c 'tty; echo passbhkjhword|ansible-playbook -vvvvv --ask-vault-pass ping_noop.yml' < /dev/null > log 2>&1
+ setsid sh -c 'tty; echo password |ansible-playbook -vvvvv --ask-vault-pass ping_noop.yml' < /dev/null > log 2>&1
+setsid sh -c 'tty; echo password|ansible-playbook -vvvvv --ask-vault-pass ping_noop.yml' < /dev/null > log 2>&1
+setsid sh -c 'tty; echo password |ansible-playbook -vvvvv --ask-vault-pass ping_noop.yml' < /dev/null > log 2>&1
+setsid sh -c 'tty; echo password|ansible-vault --ask-vault-pass -vvvvv view ping_noop.yml' < /dev/null > log 2>&1
+setsid sh -c 'tty; echo password|ansible-vault -vvvvv --ask-vault-pass encrypt bar.txt' < /dev/null > log 2>&1
+setsid sh -c 'tty; echo password|ansible-vault -vvvvv encrypt bar.txt' < /dev/null > log 2>&1
+setsid sh -c 'tty; echo password|ansible-vault -vvvvv view ping_noop.yml' < /dev/null > log 2>&1
+ setsid sh -c 'tty; ps -jp "$$"; echo test' < /dev/null > log 2>&1
+
 # old format
 ansible-vault view "$@" --vault-password-file vault-password-ansible format_1_0_AES.yml
 

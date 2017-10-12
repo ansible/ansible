@@ -46,6 +46,13 @@ class TestCliVersion(unittest.TestCase):
 
 
 class TestCliBuildVaultIds(unittest.TestCase):
+    def setUp(self):
+        self.tty_patcher = patch('ansible.cli.sys.stdin.isatty', return_value=True)
+        self.mock_isatty = self.tty_patcher.start()
+
+    def tearDown(self):
+        self.tty_patcher.stop()
+
     def test(self):
         res = cli.CLI.build_vault_ids(['foo@bar'])
         self.assertEqual(res, ['foo@bar'])
@@ -115,8 +122,14 @@ class TestCliSetupVaultSecrets(unittest.TestCase):
         self.tty_patcher = patch('ansible.cli.sys.stdin.isatty', return_value=True)
         self.mock_isatty = self.tty_patcher.start()
 
+        self.display_v_patcher = patch('ansible.cli.display.verbosity', return_value=6)
+        self.mock_display_v = self.display_v_patcher.start()
+        cli.display.verbosity = 5
+
     def tearDown(self):
         self.tty_patcher.stop()
+        self.display_v_patcher.stop()
+        cli.display.verbosity = 0
 
     def test(self):
         res = cli.CLI.setup_vault_secrets(None, None, auto_prompt=False)
@@ -144,7 +157,8 @@ class TestCliSetupVaultSecrets(unittest.TestCase):
 
         res = cli.CLI.setup_vault_secrets(loader=self.fake_loader,
                                           vault_ids=['prompt1@prompt'],
-                                          ask_vault_pass=True)
+                                          ask_vault_pass=True,
+                                          auto_prompt=False)
 
         self.assertIsInstance(res, list)
         matches = vault.match_secrets(res, ['prompt1'])
@@ -159,8 +173,11 @@ class TestCliSetupVaultSecrets(unittest.TestCase):
                                                     vault_id='prompt1')
         res = cli.CLI.setup_vault_secrets(loader=self.fake_loader,
                                           vault_ids=['prompt1@prompt'],
-                                          ask_vault_pass=True)
+                                          ask_vault_pass=True,
+                                          auto_prompt=False)
 
+        import pprint
+        pprint.pprint(res)
         self.assertIsInstance(res, list)
         self.assertEqual(len(res), 0)
         matches = vault.match_secrets(res, ['prompt1'])

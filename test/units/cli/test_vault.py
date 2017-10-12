@@ -32,6 +32,13 @@ from ansible.cli.vault import VaultCLI
 
 
 class TestVaultCli(unittest.TestCase):
+    def setUp(self):
+        self.tty_patcher = patch('ansible.cli.sys.stdin.isatty', return_value=False)
+        self.mock_isatty = self.tty_patcher.start()
+
+    def tearDown(self):
+        self.tty_patcher.stop()
+
     def test_parse_empty(self):
         cli = VaultCLI([])
         self.assertRaisesRegexp(errors.AnsibleOptionsError,

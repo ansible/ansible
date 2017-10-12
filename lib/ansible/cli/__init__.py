@@ -213,9 +213,13 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         # if an action needs an encrypt password (create_new_password=True) and we dont
         # have other secrets setup, then automatically add a password prompt as well.
-        if ask_vault_pass or (auto_prompt and not vault_ids):
-            id_slug = u'%s@%s' % (C.DEFAULT_VAULT_IDENTITY, u'prompt_ask_vault_pass')
-            vault_ids.append(id_slug)
+        # prompts cant/shouldnt work without a tty, so dont add prompt secrets
+        print('isatty: %s' % sys.stdin.isatty())
+        if not vault_ids:
+            if ask_vault_pass or (auto_prompt and sys.stdin.isatty()):
+
+                id_slug = u'%s@%s' % (C.DEFAULT_VAULT_IDENTITY, u'prompt_ask_vault_pass')
+                vault_ids.append(id_slug)
 
         return vault_ids
 
@@ -256,6 +260,7 @@ class CLI(with_metaclass(ABCMeta, object)):
                                         create_new_password,
                                         auto_prompt=auto_prompt)
 
+        print('build vault ids: %s' % vault_ids)
         for vault_id_slug in vault_ids:
             vault_id_name, vault_id_value = CLI.split_vault_id(vault_id_slug)
             if vault_id_value in ['prompt', 'prompt_ask_vault_pass']:
@@ -268,6 +273,7 @@ class CLI(with_metaclass(ABCMeta, object)):
                 # always gets the old format for Tower compatibility.
                 # ie, we used --ask-vault-pass, so we need to use the old vault password prompt
                 # format since Tower needs to match on that format.
+                print('Adding a vault password prompt for vault_id=%s' % built_vault_id)
                 prompted_vault_secret = PromptVaultSecret(prompt_formats=prompt_formats[vault_id_value],
                                                           vault_id=built_vault_id)
 
