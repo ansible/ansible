@@ -932,6 +932,9 @@ files:
   $module_utils/cloudengine.py:
     maintainers: QijunPan
     labels: networking
+  $module_utils/cloudstack.py:
+    maintainers: resmo
+    labels: cloudstack
   $module_utils/cnos_devicerules.py:
     maintainers: dkasberg amuraleedhar
     labels: networking
