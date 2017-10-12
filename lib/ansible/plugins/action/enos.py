@@ -80,17 +80,12 @@ class ActionModule(_ActionModule):
         connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
 
         socket_path = connection.run()
+        
         display.vvvv('socket_path: %s' % socket_path, pc.remote_addr)
         if not socket_path:
             return {'failed': True,
                     'msg': 'unable to open shell. Please see: ' +
                            'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell'}
-
-        rc, out, err = connection.exec_command('prompt()')
-        while str(out).strip().endswith(')#'):
-            display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
-            connection.exec_command('exit')
-            rc, out, err = connection.exec_command('prompt()')
 
         task_vars['ansible_socket'] = socket_path
 
