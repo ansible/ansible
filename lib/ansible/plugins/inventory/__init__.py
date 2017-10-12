@@ -61,8 +61,7 @@ class BaseInventoryPlugin(object):
     def verify_file(self, path):
         ''' Verify if file is usable by this plugin, base does minimal accessability check '''
 
-        b_path = to_bytes(path, errors='surrogate_or_strict')
-        return (os.path.exists(b_path) and os.access(b_path, os.R_OK))
+        return (os.path.exists(path) and os.access(path, os.R_OK))
 
     def get_cache_prefix(self, path):
         ''' create predictable unique prefix for plugin/inventory '''
