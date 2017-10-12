@@ -1,0 +1,126 @@
+- block:
+
+  - name: set connection information for all tasks
+    set_fact:
+      aws_connection_info: &aws_connection_info
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token }}"
+        region: "{{ aws_region }}"
+    no_log: yes
+
+  - name: create VPC
+    ec2_vpc_net:
+      cidr_block: 10.228.228.0/22
+      name: "{{ resource_prefix }}_vpc"
+      state: present
+      <<: *aws_connection_info
+    register: vpc
+
+  - name: create public subnet
+    ec2_vpc_subnet:
+      cidr: "{{ item.cidr }}"
+      az: "{{ aws_region}}{{ item.az }}"
+      vpc_id: "{{ vpc.vpc.id }}"
+      state: present
+      tags:
+        Public: "{{ item.public|string }}"
+        Name: "{{ item.public|ternary('public', 'private') }}-{{ item.az }}"
+      <<: *aws_connection_info
+    with_items:
+      - cidr: 10.228.228.0/24
+        az: "a"
+        public: "True"
+      - cidr: 10.228.229.0/24
+        az: "b"
+        public: "True"
+      - cidr: 10.228.230.0/24
+        az: "a"
+        public: "False"
+      - cidr: 10.228.231.0/24
+        az: "b"
+        public: "False"
+    register: subnets
+
+  - ec2_vpc_subnet_facts:
+      filters:
+        vpc-id: "{{ vpc.vpc.id }}"
+      <<: *aws_connection_info
+    register: vpc_subnets
+
+  - ec2_group:
+      name: my_alb_sec_group
+      state: present
+      vpc_id: "{{ vpc.vpc.id }}"
+      <<: *aws_connection_info
+    register: sec_group
+
+  - name: create ALB with no listeners
+    elb_application_lb:
+      name: my_alb
+      subnets: "{{ vpc_subnets|json_query('subnets[?tags.Public == `True`].id') }}"
+      security_groups: "{{ sec_group.group_id }}"
+      state: present
+      <<: *aws_connection_info
+    register: alb
+
+  - assert:
+      that:
+        - alb.changed
+
+  - name: re-create ALB with no listeners
+    elb_application_lb:
+      name: my_alb
+      subnets: "{{ vpc_subnets|json_query('subnets[?tags.Public == `True`].id') }}"
+      security_groups: "{{ sec_group.group_id }}"
+      state: present
+      <<: *aws_connection_info
+    register: alb
+
+  - assert:
+      that:
+        - not alb.changed
+
+  - name: destroy ALB with no listeners
+    elb_application_lb:
+      name: my_alb
+      state: absent
+      <<: *aws_connection_info
+    register: alb
+
+  - assert:
+      that:
+        - alb.changed
+
+  always:
+  #############################################################################
+  # TEAR DOWN STARTS HERE
+  #############################################################################
+  - name: destroy sec group
+    ec2_group:
+      name: "{{ sec_group.group_name }}"
+      state: absent
+      vpc_id: "{{ vpc.vpc.id }}"
+      <<: *aws_connection_info
+    ignore_errors: yes
+
+  - name: destroy subnets
+    ec2_vpc_subnet:
+      cidr: "{{ item.cidr }}"
+      vpc_id: "{{ vpc.vpc.id }}"
+      state: absent
+      <<: *aws_connection_info
+    with_items:
+      - cidr: 10.228.228.0/24
+      - cidr: 10.228.229.0/24
+      - cidr: 10.228.230.0/24
+      - cidr: 10.228.231.0/24
+    ignore_errors: yes
+
+  - name: destroy VPC
+    ec2_vpc_net:
+      cidr_block: 10.228.228.0/22
+      name: "{{ resource_prefix }}_vpc"
+      state: absent
+      <<: *aws_connection_info
+    ignore_errors: yes
