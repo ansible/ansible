@@ -57,7 +57,7 @@ options:
     description:
       - The desired action to take on the Kubernetes data.
     required: true
-    choices: [ absent, present, replace, update ]
+    choices: [ absent, present, replace, update, apply ]
     default: present
   url_password:
     description:
@@ -326,6 +326,46 @@ def k8s_update_resource(module, url, data, patch_operation):
     return True, body
 
 
+def getVersion(module, kind, body):
+    if not kind:
+        module.fail_json(msg="Invalid kind '%s' for resource version" % kind)
+        return None
+    if kind in ['ConfigMap', 'Service', 'Secret']:
+        name = 'resourceVersion'
+    else:
+        name = 'generation'
+
+    metadata = body.get('metadata', {})
+    version = metadata.get(name)
+    if not version:
+        module.fail_json(msg="Unable to retrieve %s for the existing resource. Metadata is %s" % (name, metadata))
+        return None
+    return version
+
+
+def k8s_apply_resource(module, url, data, patch_operation):
+    name = data.get('metadata', {}).get('name')
+    if name is None:
+        module.fail_json(msg="Missing a named resource in object metadata when trying to apply a resource")
+
+    info, body = api_request(module, url + '/' + name)
+    if info['status'] == 404:
+        # Create the resource
+        return k8s_create_resource(module, url, data)
+    elif info['status'] == 200:
+        # Update the resource
+        kind = data.get('kind')
+        old_version = getVersion(module, kind, body)
+        if not old_version:
+            return False, body
+        info, body = k8s_update_resource(module, url, data, patch_operation)
+        new_version = getVersion(module, kind, body)
+        return old_version != new_version, body
+
+    module.fail_json(msg="failed to apply the resource '%s' (Unknown status code %d): %s" % (name, info['status'], info['msg']), url=url)
+    return False, body
+
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -341,7 +381,7 @@ def main():
                                  choices=['JSON Patch', 'Merge Patch', 'Strategic Merge Patch']),
             file_reference=dict(type='str'),
             inline_data=dict(type='str'),
-            state=dict(type='str', default='present', choices=['absent', 'present', 'replace', 'update'])
+            state=dict(type='str', default='present', choices=['absent', 'present', 'replace', 'update', 'apply'])
         ),
         mutually_exclusive=(('file_reference', 'inline_data'),
                             ('url_username', 'insecure'),
@@ -411,6 +451,8 @@ def main():
             item_changed, item_body = k8s_replace_resource(module, url, item)
         elif state == 'update':
             item_changed, item_body = k8s_update_resource(module, url, item, patch_operation)
+        elif state == 'apply':
+            item_changed, item_body = k8s_apply_resource(module, url, item, patch_operation)
 
         changed |= item_changed
         body.append(item_body)
