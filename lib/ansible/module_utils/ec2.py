@@ -573,7 +573,7 @@ def get_ec2_security_group_ids_from_names(sec_group_list, ec2_connection, vpc_id
     return sec_group_id_list
 
 
-def hashable_policy(policy, policy_list):
+def _hashable_policy(policy, policy_list):
     """
         Takes a policy and returns a list, the contents of which are all hashable and sorted.
         Example input policy:
@@ -594,7 +594,7 @@ def hashable_policy(policy, policy_list):
     """
     if isinstance(policy, list):
         for each in policy:
-            tupleified = hashable_policy(each, [])
+            tupleified = _hashable_policy(each, [])
             if isinstance(tupleified, list):
                 tupleified = tuple(tupleified)
             policy_list.append(tupleified)
@@ -604,7 +604,7 @@ def hashable_policy(policy, policy_list):
         sorted_keys = list(policy.keys())
         sorted_keys.sort()
         for key in sorted_keys:
-            tupleified = hashable_policy(policy[key], [])
+            tupleified = _hashable_policy(policy[key], [])
             if isinstance(tupleified, list):
                 tupleified = tuple(tupleified)
             policy_list.append((key, tupleified))
@@ -646,7 +646,7 @@ def compare_policies(current_policy, new_policy):
     """ Compares the existing policy and the updated policy
         Returns True if there is a difference between policies.
     """
-    return set(hashable_policy(new_policy, [])) != set(hashable_policy(current_policy, []))
+    return set(_hashable_policy(new_policy, [])) != set(_hashable_policy(current_policy, []))
 
 
 def sort_json_policy_dict(policy_dict):
