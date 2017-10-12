@@ -20,6 +20,7 @@
   pip:
     name: pyvmomi
     state: latest
+  when: "{{ ansible_user_id == 'root' }}"
 
 - name: store the vcenter container ip
   set_fact:
