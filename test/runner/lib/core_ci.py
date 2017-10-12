@@ -32,10 +32,6 @@ AWS_ENDPOINTS = {
     'us-east-2': 'https://g5xynwbk96.execute-api.us-east-2.amazonaws.com',
 }
 
-PARALLELS_ENDPOINTS = (
-    'https://parallels-1.testing.ansible.com',
-)
-
 
 class AnsibleCoreCI(object):
     """Client for Ansible Core CI services."""
@@ -100,7 +96,7 @@ class AnsibleCoreCI(object):
                 self.ssh_key = SshKey(args)
                 self.port = 22
         elif self.platform in osx_platforms:
-            self.endpoints = tuple(PARALLELS_ENDPOINTS)
+            self.endpoints = self._get_parallels_endpoints()
             self.max_threshold = 6
 
             self.ssh_key = SshKey(args)
@@ -140,6 +136,27 @@ class AnsibleCoreCI(object):
             self.started = False
             self.instance_id = str(uuid.uuid4())
             self.endpoint = None
+
+    def _get_parallels_endpoints(self):
+        """
+        :rtype: tuple[str]
+        """
+        client = HttpClient(self.args, always=True)
+        display.info('Getting available endpoints...', verbosity=1)
+        sleep = 3
+
+        for _ in range(1, 10):
+            response = client.get('https://s3.amazonaws.com/ansible-ci-files/ansible-test/parallels-endpoints.txt')
+
+            if response.status_code == 200:
+                endpoints = tuple(response.response.splitlines())
+                display.info('Available endpoints (%d):\n%s' % (len(endpoints), '\n'.join(' - %s' % endpoint for endpoint in endpoints)), verbosity=1)
+                return endpoints
+
+            display.warning('HTTP %d error getting endpoints, trying again in %d seconds.' % (response.status_code, sleep))
+            time.sleep(sleep)
+
+        raise ApplicationError('Unable to get available endpoints.')
 
     def start(self):
         """Start instance."""
