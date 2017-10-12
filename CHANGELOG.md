@@ -54,6 +54,7 @@ Ansible Changes By Release
 * Use safe_load instead on load to read a yaml document
 * Fix for win_file to respect check mode when deleting directories
 * Include_role now complains about invalid arguments
+* Added socket conditions to ignore for wait_for, no need to error for closing already closed connection
 
 
 <a id="2.3.2"></a>
