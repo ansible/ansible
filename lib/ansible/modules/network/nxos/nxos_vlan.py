@@ -113,8 +113,7 @@ commands:
 import re
 
 from ansible.module_utils.nxos import get_config, load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec
-from ansible.module_utils.nxos import check_args as nxos_check_args
+from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -280,14 +279,6 @@ def apply_value_map(value_map, resource):
     return resource
 
 
-def check_args(module, warnings):
-    nxos_check_args(module, warnings)
-
-    for key in ('include_defaults', 'config', 'save'):
-        if module.params[key] is not None:
-            warnings.append('argument %s is no longer supported, ignoring value' % key)
-
-
 def main():
     argument_spec = dict(
         vlan_id=dict(required=False, type='str'),
@@ -298,11 +289,6 @@ def main():
         state=dict(choices=['present', 'absent'], default='present', required=False),
         admin_state=dict(choices=['up', 'down'], required=False),
         mode=dict(choices=['ce', 'fabricpath'], required=False),
-
-        # Deprecated in Ansible 2.4
-        include_defaults=dict(default=False),
-        config=dict(),
-        save=dict(type='bool', default=False)
     )
 
     argument_spec.update(nxos_argument_spec)
@@ -314,7 +300,7 @@ def main():
 
     warnings = list()
     check_args(module, warnings)
-    results = dict(changed=False, warnings=warnings)
+    results = dict(changed=False)
 
     vlan_range = module.params['vlan_range']
     vlan_id = module.params['vlan_id']
