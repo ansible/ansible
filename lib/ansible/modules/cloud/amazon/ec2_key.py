@@ -107,7 +107,7 @@ import string
 import time
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import HAS_BOTO, ec2_argument_spec, ec2_connect
+from ansible.module_utils.ec2 import HAS_BOTO, ec2_argument_spec, get_aws_connection_info, connect_to_aws
 from ansible.module_utils._text import to_bytes
 
 
@@ -139,7 +139,10 @@ def main():
 
     changed = False
 
-    ec2 = ec2_connect(module)
+    region, ec2_url, boto_params = get_aws_connection_info(module)
+    if not region:
+        module.fail_json(msg="Region must be provided.")
+    ec2 = connect_to_aws(module, region, **boto_params)
 
     # find the key if present
     key = ec2.get_key_pair(name)
