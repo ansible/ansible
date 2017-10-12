@@ -133,6 +133,10 @@ class ElbManager:
                 # balancer. Ignore it and try the next one.
                 continue
 
+            # The instance is not associated with any load balancer so nothing to do
+            if not self._get_instance_lbs():
+                return
+
             lb.deregister_instances([self.instance_id])
 
             # The ELB is changing state in some way. Either an instance that's
