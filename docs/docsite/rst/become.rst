@@ -208,7 +208,7 @@ Become and Windows
 Since Ansible 2.3, ``become`` can be used on Windows hosts through the
 ``runas`` method. Become on Windows uses the same inventory setup and
 invocation arguments as ``become`` on a non-Windows host, so the setup and
-variables names are the same as what is defined in this document.
+variable names are the same as what is defined in this document.
 
 While ``become`` can be used to assume the identity of another user, there are other uses for
 it with Windows hosts. One important use is to bypass some of the
@@ -227,24 +227,24 @@ and run commands that are not normally accessible in a WinRM session.
 Administrative Rights
 ---------------------
 
-Many tasks in Windows require administrative privileges to complete.
-Ansible will attempt to run a process as an administrator and fall back to a
-limited token if that fails.
+Many tasks in Windows require administrative privileges to complete. When using
+the ``runas`` become method, Ansible will automatically run the module with the
+full privileges of the remote user, unless User Account Control (UAC) Admin Approval
+Mode is enabled on the target hosts. When UAC is enabled, Ansible attempts to elevate
+module processes with administrative privileges, but uses a limited token if elevation
+fails.
 
-The following are some ways to use ``become`` with an admin token:
-
-* Set the ``become_user`` to the default local ``Administrator`` account. This
-  account is the default user called ``Administrator`` that is installed with
-  Windows and not just a user under the local Administrators group.
+There are several ways to use the ``runas`` become method with full privileges
+when UAC is enabled:
 
 * Set the ``become_user`` to ``System`` which has full control over the
   operating system.
 
-* Grant the privilege ``SeTcbPrivilege`` to the user Ansible connects with on
-  WinRM. The privilege ``SeTcbPrivilege`` is a high-level privilege that grants
+* Grant ``SeTcbPrivilege`` to the user Ansible connects with on
+  WinRM. ``SeTcbPrivilege`` is a high-level privilege that grants
   full control over the operating system. No user is given this privilege by
   default, and care should be taken if you grant this privilege to a user or group. 
-  For more information on this privilege, please see 
+  For more information on this privilege, please see
   `Act as part of the operating system <https://technet.microsoft.com/en-us/library/dn221957(v=ws.11).aspx>`_.
   You can use the below task to set this privilege on a Windows host::
 
@@ -256,7 +256,7 @@ The following are some ways to use ``become`` with an admin token:
 
 * Turn UAC off on the host and reboot before trying to become the user. UAC is
   a security protocol that is designed to run accounts with the
-  ``least privilege`` principal. You can turn UAC off by running the following
+  ``least privilege`` principle. You can turn UAC off by running the following
   tasks::
 
     - name: turn UAC off
