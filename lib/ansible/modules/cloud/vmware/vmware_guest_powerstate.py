@@ -64,6 +64,13 @@ options:
     - Date and time in string format at which specificed task needs to be performed.
     - "The required format for date and time - 'dd/mm/yyyy hh:mm'."
     - Scheduling task requires vCenter server. A standalone ESXi server does not support this option.
+  state_change_timeout:
+    description:
+    - If the C(state) is set to C(shutdown-guest), by default the module will return immediately after sending the shutdown signal.
+    - If this argument is set to a positive integer, the module will instead wait for the VM to reach the poweredoff state.
+    - The value sets a timeout in seconds for the module to wait for the state change.
+    default: 0
+    version_added: '2.6'
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -92,6 +99,18 @@ EXAMPLES = r'''
     scheduled_at: "09/01/2018 10:18"
   delegate_to: localhost
   register: deploy_at_schedule_datetime
+
+- name: Wait for the virtual machine to shutdown
+  vmware_guest_powerstate:
+    hostname: 192.0.2.44
+    username: administrator@vsphere.local
+    password: vmware
+    validate_certs: no
+    name: testvm_2
+    state: shutdown-guest
+    state_change_timeout: 200
+  delegate_to: localhost
+  register: deploy
 '''
 
 RETURN = r''' # '''
@@ -118,6 +137,7 @@ def main():
         folder=dict(type='str', default='/vm'),
         force=dict(type='bool', default=False),
         scheduled_at=dict(type='str'),
+        state_change_timeout=dict(type='int', default=0),
     )
 
     module = AnsibleModule(argument_spec=argument_spec,
@@ -182,7 +202,7 @@ def main():
                                      "given are invalid: %s" % (module.params.get('state'),
                                                                 to_native(e.msg)))
         else:
-            result = set_vm_power_state(pyv.content, vm, module.params['state'], module.params['force'])
+            result = set_vm_power_state(pyv.content, vm, module.params['state'], module.params['force'], module.params['state_change_timeout'])
     else:
         module.fail_json(msg="Unable to set power state for non-existing virtual machine : '%s'" % (module.params.get('uuid') or module.params.get('name')))
 
