@@ -71,57 +71,144 @@ EXAMPLES = '''
 import os
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import viewkeys
 
 
-def _get_dev_size(dev, module):
-    """ Return size in bytes of device. Returns int """
-    blockdev_cmd = module.get_bin_path("blockdev", required=True)
-    rc, devsize_in_bytes, err = module.run_command("%s %s %s" % (blockdev_cmd, "--getsize64", dev))
-    return int(devsize_in_bytes)
+class Filesystem(object):
+
+    GROW = None
+    MKFS = None
+    MKFS_FORCE_FLAGS = ''
+
+    def __init__(self, module):
+        self.module = module
+
+    @property
+    def fstype(self):
+        return type(self).__name__
+
+    def get_dev_size(self, dev):
+        """ Return size in bytes of device. Returns int """
+        blockdev_cmd = self.module.get_bin_path("blockdev", required=True)
+        _, devsize_in_bytes, _ = self.module.run_command("%s %s %s" % (blockdev_cmd, "--getsize64", dev), check_rc=True)
+        return int(devsize_in_bytes)
+
+    def get_fs_size(self, dev):
+        """ Return size in bytes of filesystem on device. Returns int """
+        raise NotImplementedError()
+
+    def create(self, opts, dev):
+        if self.module.check_mode:
+            return
+
+        mkfs = self.module.get_bin_path(self.MKFS, required=True)
+        if opts is None:
+            cmd = "%s %s '%s'" % (mkfs, self.MKFS_FORCE_FLAGS, dev)
+        else:
+            cmd = "%s %s %s '%s'" % (mkfs, self.MKFS_FORCE_FLAGS, opts, dev)
+        self.module.run_command(cmd, check_rc=True)
+
+    def grow(self, dev):
+        """Get dev and fs size and compare. Returns stdout of used command."""
+        devsize_in_bytes = self.get_dev_size(dev)
+        try:
+            fssize_in_bytes = self.get_fs_size(dev)
+        except NotImplementedError:
+            self.module.fail_json(changed=False, msg="module does not support resizing %s filesystem yet." % self.fstype)
+        fs_smaller = fssize_in_bytes < devsize_in_bytes
+
+        if self.module.check_mode and fs_smaller:
+            self.module.exit_json(changed=True, msg="Resizing filesystem %s on device %s" % (self.fstype, dev))
+        elif self.module.check_mode and not fs_smaller:
+            self.module.exit_json(changed=False, msg="%s filesystem is using the whole device %s" % (self.fstype, dev))
+        elif fs_smaller:
+            cmd = self.module.get_bin_path(self.GROW, required=True)
+            _, out, _ = self.module.run_command("%s %s" % (cmd, dev), check_rc=True)
+            return out
+        else:
+            self.module.exit_json(changed=False, msg="%s filesystem is using the whole device %s" % (self.fstype, dev))
 
 
-def _get_fs_size(fssize_cmd, dev, module):
-    """ Return size in bytes of filesystem on device. Returns int """
-    cmd = module.get_bin_path(fssize_cmd, required=True)
-    if 'tune2fs' == fssize_cmd:
+class Ext(Filesystem):
+    MKFS_FORCE_FLAGS = '-F'
+    GROW = 'resize2fs'
+
+    def get_fs_size(self, dev):
+        cmd = self.module.get_bin_path('tune2fs', required=True)
         # Get Block count and Block size
-        rc, size, err = module.run_command("%s %s %s" % (cmd, '-l', dev))
-        if rc == 0:
-            for line in size.splitlines():
-                if 'Block count:' in line:
-                    block_count = int(line.split(':')[1].strip())
-                elif 'Block size:' in line:
-                    block_size = int(line.split(':')[1].strip())
-                    break
-        else:
-            module.fail_json(msg="Failed to get block count and block size of %s with %s" % (dev, cmd), rc=rc, err=err)
-    elif 'xfs_growfs' == fssize_cmd:
-        # Get Block count and Block size
-        rc, size, err = module.run_command([cmd, '-n', dev])
-        if rc == 0:
-            for line in size.splitlines():
-                col = line.split('=')
-                if col[0].strip() == 'data':
-                    if col[1].strip() != 'bsize':
-                        module.fail_json(msg='Unexpected output format from xfs_growfs (could not locate "bsize")')
-                    if col[2].split()[1] != 'blocks':
-                        module.fail_json(msg='Unexpected output format from xfs_growfs (could not locate "blocks")')
-                    block_size = int(col[2].split()[0])
-                    block_count = int(col[3].split(',')[0])
-                    break
-        else:
-            module.fail_json(msg="Failed to get block count and block size of %s with %s" % (dev, cmd), rc=rc, err=err)
-    elif 'pvs' == fssize_cmd:
-        rc, size, err = module.run_command([cmd, '--noheadings', '-o', 'pv_size', '--units', 'b', dev])
-        if rc == 0:
-            block_count = int(size[:-1])
-            block_size = 1
-        else:
-            module.fail_json(msg="Failed to get block count and block size of %s with %s" % (dev, cmd), rc=rc, err=err)
-    else:
-        module.fail_json(changed=False, msg="module does not support resizing %s filesystem yet." % module.param['fstype'])
+        _, size, _ = self.module.run_command([cmd, '-l', dev], check_rc=True)
+        for line in size.splitlines():
+            if 'Block count:' in line:
+                block_count = int(line.split(':')[1].strip())
+            elif 'Block size:' in line:
+                block_size = int(line.split(':')[1].strip())
+                return block_size * block_count
 
-    return block_size * block_count
+
+class Ext2(Ext):
+    MKFS = 'mkfs.ext2'
+
+
+class Ext3(Ext):
+    MKFS = 'mkfs.ext3'
+
+
+class Ext4(Ext):
+    MKFS = 'mkfs.ext4'
+
+
+class XFS(Filesystem):
+    MKFS = 'mkfs.xfs'
+    MKFS_FORCE_FLAGS = '-f'
+    GROW = 'xfs_growfs'
+
+    def get_fs_size(self, dev):
+        cmd = self.module.get_bin_path('xfs_growfs', required=True)
+        _, size, _ = self.module.run_command([cmd, '-n', dev], check_rc=True)
+        for line in size.splitlines():
+            col = line.split('=')
+            if col[0].strip() == 'data':
+                if col[1].strip() != 'bsize':
+                    self.module.fail_json(msg='Unexpected output format from xfs_growfs (could not locate "bsize")')
+                if col[2].split()[1] != 'blocks':
+                    self.module.fail_json(msg='Unexpected output format from xfs_growfs (could not locate "blocks")')
+                block_size = int(col[2].split()[0])
+                block_count = int(col[3].split(',')[0])
+                return block_size * block_count
+
+
+class Reiserfs(Filesystem):
+    MKFS = 'mkfs.reiserfs'
+    MKFS_FORCE_FLAGS = '-f'
+
+
+class Btrfs(Filesystem):
+    MKFS = 'mkfs.btrfs'
+    MKFS_FORCE_FLAGS = '-f'
+
+
+class LVM(Filesystem):
+    MKFS = 'pvcreate'
+    MKFS_FORCE_FLAGS = '-f'
+    GROW = 'pvresize'
+
+    def get_fs_size(self, dev):
+        cmd = self.module.get_bin_path('pvs', required=True)
+        _, size, _ = self.module.run_command([cmd, '--noheadings', '-o', 'pv_size', '--units', 'b', dev], check_rc=True)
+        block_count = int(size[:-1])  # block size is 1
+        return block_count
+
+
+FILESYSTEMS = {
+    'ext2': Ext2,
+    'ext3': Ext3,
+    'ext4': Ext4,
+    'ext4dev': Ext4,
+    'reiserfs': Reiserfs,
+    'xfs': XFS,
+    'btrfs': Btrfs,
+    'LVM2_member': LVM,
+}
 
 
 def main():
@@ -130,69 +217,10 @@ def main():
     }
 
     # There is no "single command" to manipulate filesystems, so we map them all out and their options
-    fs_cmd_map = {
-        'ext2': {
-            'mkfs': 'mkfs.ext2',
-            'grow': 'resize2fs',
-            'grow_flag': None,
-            'force_flag': '-F',
-            'fsinfo': 'tune2fs',
-        },
-        'ext3': {
-            'mkfs': 'mkfs.ext3',
-            'grow': 'resize2fs',
-            'grow_flag': None,
-            'force_flag': '-F',
-            'fsinfo': 'tune2fs',
-        },
-        'ext4': {
-            'mkfs': 'mkfs.ext4',
-            'grow': 'resize2fs',
-            'grow_flag': None,
-            'force_flag': '-F',
-            'fsinfo': 'tune2fs',
-        },
-        'reiserfs': {
-            'mkfs': 'mkfs.reiserfs',
-            'grow': 'resize_reiserfs',
-            'grow_flag': None,
-            'force_flag': '-f',
-            'fsinfo': 'reiserfstune',
-        },
-        'ext4dev': {
-            'mkfs': 'mkfs.ext4',
-            'grow': 'resize2fs',
-            'grow_flag': None,
-            'force_flag': '-F',
-            'fsinfo': 'tune2fs',
-        },
-        'xfs': {
-            'mkfs': 'mkfs.xfs',
-            'grow': 'xfs_growfs',
-            'grow_flag': None,
-            'force_flag': '-f',
-            'fsinfo': 'xfs_growfs',
-        },
-        'btrfs': {
-            'mkfs': 'mkfs.btrfs',
-            'grow': 'btrfs',
-            'grow_flag': 'filesystem resize',
-            'force_flag': '-f',
-            'fsinfo': 'btrfs',
-        },
-        'LVM2_member': {
-            'mkfs': 'pvcreate',
-            'grow': 'pvresize',
-            'grow_flag': None,
-            'force_flag': '-f',
-            'fsinfo': 'pvs',
-        }
-    }
-
     module = AnsibleModule(
         argument_spec=dict(
             fstype=dict(required=True, aliases=['type'],
-                        choices=fs_cmd_map.keys() + friendly_names.keys()),
+                        choices=list(FILESYSTEMS.keys()) + list(friendly_names.keys())),
             dev=dict(required=True, aliases=['device']),
             opts=dict(),
             force=dict(type='bool', default=False),
@@ -213,67 +241,39 @@ def main():
     changed = False
 
     try:
-        _ = fs_cmd_map[fstype]
+        klass = FILESYSTEMS[fstype]
     except KeyError:
         module.fail_json(changed=False, msg="module does not support this filesystem (%s) yet." % fstype)
-
-    mkfscmd = fs_cmd_map[fstype]['mkfs']
-    force_flag = fs_cmd_map[fstype]['force_flag']
-    growcmd = fs_cmd_map[fstype]['grow']
-    fssize_cmd = fs_cmd_map[fstype]['fsinfo']
 
     if not os.path.exists(dev):
         module.fail_json(msg="Device %s not found." % dev)
 
     cmd = module.get_bin_path('blkid', required=True)
-
     rc, raw_fs, err = module.run_command("%s -c /dev/null -o value -s TYPE %s" % (cmd, dev))
+    # In case blkid isn't able to identify an existing filesystem, device is considered as empty,
+    # then this existing filesystem would be overwritten even if force isn't enabled.
     fs = raw_fs.strip()
 
-    if fs == fstype and not resizefs and not force:
-        module.exit_json(changed=False)
-    elif fs == fstype and resizefs:
-        # Get dev and fs size and compare
-        devsize_in_bytes = _get_dev_size(dev, module)
-        fssize_in_bytes = _get_fs_size(fssize_cmd, dev, module)
-        fs_smaller = fssize_in_bytes < devsize_in_bytes
+    filesystem = klass(module)
 
-        if module.check_mode and fs_smaller:
-            module.exit_json(changed=True, msg="Resizing filesystem %s on device %s" % (fstype, dev))
-        elif module.check_mode and not fs_smaller:
-            module.exit_json(changed=False, msg="%s filesystem is using the whole device %s" % (fstype, dev))
-        elif fs_smaller:
-            cmd = module.get_bin_path(growcmd, required=True)
-            rc, out, err = module.run_command("%s %s" % (cmd, dev))
-            # Sadly there is no easy way to determine if this has changed. For now, just say "true" and move on.
-            #  in the future, you would have to parse the output to determine this.
-            #  thankfully, these are safe operations if no change is made.
-            if rc == 0:
-                module.exit_json(changed=True, msg=out)
-            else:
-                module.fail_json(msg="Resizing filesystem %s on device '%s' failed" % (fstype, dev), rc=rc, err=err)
-        else:
-            module.exit_json(changed=False, msg="%s filesystem is using the whole device %s" % (fstype, dev))
+    same_fs = fs and FILESYSTEMS.get(fs) == FILESYSTEMS[fstype]
+    if same_fs and not resizefs and not force:
+        module.exit_json(changed=False)
+    elif same_fs and resizefs:
+        if not filesystem.GROW:
+            module.fail_json(changed=False, msg="module does not support resizing %s filesystem yet." % fstype)
+
+        out = filesystem.grow(dev)
+        # Sadly there is no easy way to determine if this has changed. For now, just say "true" and move on.
+        #  in the future, you would have to parse the output to determine this.
+        #  thankfully, these are safe operations if no change is made.
+        module.exit_json(changed=True, msg=out)
     elif fs and not force:
         module.fail_json(msg="'%s' is already used as %s, use force=yes to overwrite" % (dev, fs), rc=rc, err=err)
 
     # create fs
-
-    if module.check_mode:
-        changed = True
-    else:
-        mkfs = module.get_bin_path(mkfscmd, required=True)
-        cmd = None
-
-        if opts is None:
-            cmd = "%s %s '%s'" % (mkfs, force_flag, dev)
-        else:
-            cmd = "%s %s %s '%s'" % (mkfs, force_flag, opts, dev)
-        rc, _, err = module.run_command(cmd)
-        if rc == 0:
-            changed = True
-        else:
-            module.fail_json(msg="Creating filesystem %s on device '%s' failed" % (fstype, dev), rc=rc, err=err)
+    filesystem.create(opts, dev)
+    changed = True
 
     module.exit_json(changed=changed)
 
