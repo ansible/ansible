@@ -34,6 +34,8 @@ options:
     description:
       - Name of package to install/remove. To operate on several packages
         this can accept a comma separated.
+      - 'all' is also allowed with state install. It will install all packages
+        available on informed C(repository_path).
     required: true
   repository_path:
     description:
@@ -97,11 +99,6 @@ from ansible.module_utils.basic import AnsibleModule
 import os
 import re
 
-accept_license_param = {
-    True: '-Y',
-    'no': '',
-}
-
 
 def _check_new_pkg(module, package, repository_path):
     """
@@ -120,14 +117,19 @@ def _check_new_pkg(module, package, repository_path):
         if rc != 0:
             module.fail_json(msg="Failed to run installp.", rc=rc, err=err)
 
-        pkg_info = {}
-        for line in package_result.splitlines():
-            if re.findall(package, line):
-                pkg_name = line.split()[0].strip()
-                pkg_version = line.split()[1].strip()
-                pkg_info[pkg_name] = pkg_version
+        if package == 'all':
+            pkg_info = "All packages on dir"
+            return True, pkg_info
 
-                return True, pkg_info
+        else:
+            pkg_info = {}
+            for line in package_result.splitlines():
+                if re.findall(package, line):
+                    pkg_name = line.split()[0].strip()
+                    pkg_version = line.split()[1].strip()
+                    pkg_info[pkg_name] = pkg_version
+
+                    return True, pkg_info
 
         return False, None
 
@@ -219,6 +221,11 @@ def install(module, installp_cmd, packages, repository_path, accept_license):
     installed_pkgs = []
     not_found_pkgs = []
     already_installed_pkgs = {}
+
+    accept_license_param = {
+        True: '-Y',
+        False: '',
+    }
 
     # Validate if package exists on repository path.
     for package in packages:
