@@ -1,19 +1,6 @@
 # (c) 2016, Bill Wang <ozbillwang(at)gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -34,22 +21,22 @@ class LookupModule(LookupBase):
         '''
         # lookup sample:
         - name: lookup ssm parameter store in the current region
-          debug: msg="{{ lookup('ssm', 'Hello' ) }}"
+          debug: msg="{{ lookup('aws_ssm', 'Hello' ) }}"
 
         - name: lookup a key which doesn't exist, return ""
-          debug: msg="{{ lookup('ssm', 'NoKey') }}"
+          debug: msg="{{ lookup('aws_ssm', 'NoKey') }}"
 
         - name: lookup ssm parameter store in nominated region
-          debug: msg="{{ lookup('ssm', 'Hello', 'region=us-east-2' ) }}"
+          debug: msg="{{ lookup('aws_ssm', 'Hello', 'region=us-east-2' ) }}"
 
         - name: lookup ssm parameter store without decrypted
-          debug: msg="{{ lookup('ssm', 'Hello', 'decrypt=False' ) }}"
+          debug: msg="{{ lookup('aws_ssm', 'Hello', 'decrypt=False' ) }}"
 
         - name: lookup ssm parameter store in nominated aws profile
-          debug: msg="{{ lookup('ssm', 'Hello', 'aws_profile=myprofile' ) }}"
+          debug: msg="{{ lookup('aws_ssm', 'Hello', 'aws_profile=myprofile' ) }}"
 
         - name: lookup ssm parameter store with all options.
-          debug: msg="{{ lookup('ssm', 'Hello', 'decrypt=false', 'region=us-east-2', 'aws_profile=myprofile') }}"
+          debug: msg="{{ lookup('aws_ssm', 'Hello', 'decrypt=false', 'region=us-east-2', 'aws_profile=myprofile') }}"
         '''
 
         ret = {}
