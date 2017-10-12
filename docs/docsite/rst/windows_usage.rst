@@ -1,36 +1,33 @@
 Using Ansible and Windows
 =========================
-When using Ansible to manage Windows, a lot of the syntax and rules that apply
-for Unix/Linux hosts also apply to Windows. There are still some differences
-between the hosts when it comes to components like path separators and OS
-specific tasks. Details specific for Windows such as how to install programs,
-represent paths in YAML can be found on this page.
+When using Ansible to manage Windows, many of the syntax and rules that apply
+for Unix/Linux hosts also apply to Windows, but there are still some differences 
+when it comes to components like path separators and OS-specific tasks. 
+This document covers details specific to using Ansible for Windows.
 
 .. contents:: Topics
 
 Use Cases
 `````````
-Ansible can be used to orchestrate a multitude of tasks on Windows servers,
-below are some examples and info about common tasks.
+Ansible can be used to orchestrate a multitude of tasks on Windows servers. 
+Below are some examples and info about common tasks.
 
 Installing Programs
 -------------------
-There are three main ways that Ansible can be used to install programs which
-are:
+There are three main ways that Ansible can be used to install programs:
 
-* Using the ``win_chocolatey`` module sources the program data from an external
+* Using the ``win_chocolatey`` module. This sources the program data from an external
   chocolatey repository. Internal repositories can be used instead by setting
   the ``source`` option. 
 
-* Using the ``win_package`` module which installs a program from a
-  local/network path or URL
+* Using the ``win_package`` module. This installs a program from a
+  local/network path or URL.
 
-* Using the ``win_command`` or ``win_shell`` module to install it manually
+* Using the ``win_command`` or ``win_shell`` module to install manually.
 
-It is recommended to use the ``win_chocolatey`` module as all the logic to
-check if it is already installed and how to install it is done by Chocolatey.
+The ``win_chocolatey`` module is recommended since it has the most complete logic for checking to see if a program is already installed.
 
-Here are some examples of installing 7-Zip with all three options::
+Below are some examples of using all three options to install 7-Zip::
 
     # install/uninstall with chocolatey
     - name: ensure 7-Zip is installed using Chocolatey
@@ -78,24 +75,23 @@ Here are some examples of installing 7-Zip with all three options::
       win_command: C:\Windows\System32\msiexec.exe /x {23170F69-40C1-2702-1701-000001000000} /qn /norestart
       when: 7zip_installed.exists == True
 
-Some progam installers like Office, SQL Server require credential delegation or
+Some progam installers like Microsoft Office or SQL Server require credential delegation or
 access to components restricted by WinRM. The best method to bypass these
 issues is to use ``become`` with the task. With ``become``, Ansible will run
-the module like it would when running it locally. Unfortunately a lot of the
-installers are vague when it errors out over WinRM, the best bet is if it works
-locally and not through Ansible is to use become.
+the module as it would when running it locally. 
 
-Some installers restart the WinRM service, or cause it to become (temporarily)
-unavaible, making Ansible assume the system is unreachable.
+.. Note:: Many installers do not properly pass back error information over WinRM. In these cases, if the install has been verified to work locally the recommended method is to use become.
+
+.. Note:: Some installers restart the WinRM service or cause it to become temporarily unavailable, making Ansible assume the system is unreachable.
 
 Installing Updates
 ------------------
-The modules ``win_updates`` and ``win_hotfix`` can be used to install updates
+The ``win_updates`` and ``win_hotfix`` modules can be used to install updates
 or hotfixes on a host. The module ``win_updates`` is used to install multiple
-updates per a category while ``win_hotfix`` can be used to install a single
+updates per a category, while ``win_hotfix`` can be used to install a single
 update or hotfix file that has been downloaded locally.
 
-.. Note:: ``win_hotfix`` has a requirement on the DISM PowerShell cmdlets being
+.. Note:: The ``win_hotfix`` module has a requirement that the DISM PowerShell cmdlets are
     present. These cmdlets were only added by default on Windows Server 2012
     and newer and must be installed on older Windows hosts.
 
@@ -134,12 +130,12 @@ update or hotfix::
 
 Setup Users and Groups
 ----------------------
-Ansible can be used to create users and groups both locally and on a domain.
+Ansible can be used to create Windows users and groups both locally and on a domain.
 
 Local
 +++++
-The modules ``win_user``, ``win_group`` and ``win_group_membership`` manages
-users, groups and group memberships locally.
+The modules ``win_user``, ``win_group`` and ``win_group_membership`` manage
+Windows users, groups and group memberships locally.
 
 The following is an example of creating local accounts and groups that can
 access a folder locally::
@@ -208,38 +204,32 @@ are created::
 
 Running Commands
 ----------------
-In the case that there is no module that can complete a task that is required,
-a command or script can be run using the ``win_shell``/``win_command``/``raw``/
-``script`` modules. 
+In cases where there is no appropriate module available for a task,
+a command or script can be run using the ``win_shell``, ``win_command``, ``raw``, and ``script`` modules. 
 
-The ``raw`` module executes a low level command without any of the normal
+The ``raw`` module executes a low-level command without any of the normal
 wrappers that Ansible uses. Because of this, things like ``become``, ``async``
-and environment variables do not work and ``raw`` should be not be used unless
-required.
+and environment variables do not work.
 
 The ``script`` module executes a script from a local directory to the Ansible
-host on the Windows server. Like ``raw`` is currently does not support
-``become``, ``async`` and environment variables. It still has its uses if the
+host on the Windows server. Like ``raw``, ``script`` currently does not support
+``become``, ``async``, and environment variables, but can still be used if the
 script to be executed is located on the Ansible host and not the Windows host.
 
 The ``win_command`` module is used to execute a command which is either an
-executable or batch file while ``win_shell`` is used to execute command(s)
-within a shell. Further down has more details on the differences between the
-two.
+executable or batch file, while the ``win_shell`` module is used to execute commands within a shell.
 
-Command or Shell
-++++++++++++++++
-The modules ``win_shell`` and ``win_command`` are similar in the fact that they
-can be used to execute a command or commands. ``win_shell`` is run within a
-shell like process like ``PowerShell`` or ``cmd`` so it has access to shell
-operators like ``<``, ``>``, ``|``, ``;``, ``&&``, ``||`` and so on.
-Multi-lined commands can also be run in ``win_shell``.
+Choosing Command or Shell
++++++++++++++++++++++++++
+The ``win_shell`` and ``win_command`` modules can both be used to execute a command or commands.
+The ``win_shell`` module is run within a shell-like process like ``PowerShell`` or ``cmd``, so it has access to shell
+operators like ``<``, ``>``, ``|``, ``;``, ``&&``, and ``||``. Multi-lined commands can also be run in ``win_shell``.
 
-``win_command`` is different where it is meant to run an executable outside of
-a shell. It can still run a shell command like ``mkdir``, ``New-Item`` by
+The ``win_command`` is designed to be run as an executable outside of
+a shell. It can still run a shell command like ``mkdir`` or ``New-Item`` by
 running it with the ``cmd.exe`` or ``PowerShell.exe`` executable.
 
-Here are some examples of using ``win_command`` or ``win_shell``::
+Here are some examples of using ``win_command`` and ``win_shell``::
 
     - name: run a command under PowerShell
       win_shell: Get-Service -Name service | Stop-Service
@@ -265,38 +255,36 @@ Here are some examples of using ``win_command`` or ``win_shell``::
     - name: run a vbs script
       win_command: cscript.exe script.vbs
 
-.. Note:: Some commands like ``mkdir``, ``del``, ``copy`` are all commands that
+.. Note:: Some commands like ``mkdir``, ``del``, and ``copy`` are all commands that
     only exist in the CMD shell. To run them with ``win_command`` they must be
     prefixed with ``cmd.exe /c``.
 
 Argument Rules
 ++++++++++++++
 When running a command through ``win_command``, the standard Windows argument
-rules apply. 
-
-The rules can be simplified to the following points:
+rules apply:
 
 * Each argument is delimited by a white space, which can either be a space or a
-  tab
+  tab.
 
-* An argument can be surrounded by double quotes ``"``, anything inside these
-  quotes is interpreted as a single argument even if it contains whitespace
+* An argument can be surrounded by double quotes ``"``. Anything inside these
+  quotes is interpreted as a single argument even if it contains whitespace.
 
 * A double quote preceded by a backslash ``\`` is interpreted as just a double
-  quote ``"`` not as an argument delimiter
+  quote ``"`` and not as an argument delimiter.
 
-* Backslashes are interpreted literally unless it is immediately preceeds double
-  quotes, e.g. ``\`` == ``\`` and ``\"`` == ``"``
+* Backslashes are interpreted literally unless it immediately preceeds double
+  quotes; for example ``\`` == ``\`` and ``\"`` == ``"``
 
 * If an even number of backslashes is followed by a double quote, one
-  backslash is used in the argument for every pair and the double quote is
-  used as a string delimiter for the argument
+  backslash is used in the argument for every pair, and the double quote is
+  used as a string delimiter for the argument.
 
 * If an odd number of backslashes is followed by a double quote, one backslash
-  is used in the argument for every pair and the double quote is escaped and
-  made a literal double quote in the argument
+  is used in the argument for every pair, and the double quote is escaped and
+  made a literal double quote in the argument.
 
-Using the following rules, these are some examples of quoting::
+With those rules in mind, here are some examples of quoting::
 
     - win_command: C:\temp\executable.exe argument1 "argument 2" "C:\path\with space" "double \"quoted\""
 
@@ -319,19 +307,17 @@ Using the following rules, these are some examples of quoting::
     argv[1] = C:\no\space\path
     argv[2] = arg with end \ before end quote\"
 
-These rules can be further explored in greater depth by reading
-`escaping arguments <https://msdn.microsoft.com/en-us/library/17w5ykft(v=vs.85).aspx>`_.
+For more information, see `escaping arguments <https://msdn.microsoft.com/en-us/library/17w5ykft(v=vs.85).aspx>`_.
 
-Creating and Running Scheduled Task
------------------------------------
-As WinRM has a few restrictions in place that cause errors when running certain
-commands, one way to bypass these restrictions is to run a command through a
-scheduled task. Scheduled tasks is a Windows component that provides the
+Creating and Running a Scheduled Task
+-------------------------------------
+WinRM has some restrictions in place that cause errors when running certain
+commands. One way to bypass these restrictions is to run a command through a
+scheduled task. A scheduled task is a Windows component that provides the
 ability to run an executable on a schedule and under a different account.
 
-As of Ansible 2.5, the modules used to manipulate scheduled tasks have made it
-easier to create an adhoc task, run it and wait for completion. The following
-is an example of running a script as a scheduled task that deletes itself after
+Ansible version 2.5 added modules that make it easier to work with scheduled tasks in Windows. 
+The following is an example of running a script as a scheduled task that deletes itself after
 running::
 
     - name: create scheduled task to run a process
@@ -357,35 +343,34 @@ running::
       retries: 12
       delay: 10
 
-.. Note:: The modules used in the above example were updated/added in Anisble
-    2.5. While older versions can do this, this example will not work.
+.. Note:: The modules used in the above example were updated/added in Ansible
+    version 2.5.
 
 Path Formatting for Windows
 ```````````````````````````
-Windows is unlike a traditional POSIX operating system in many ways but one of
+Windows differs from a traditional POSIX operating system in many ways. One of
 the major changes is the shift from ``/`` as the path separator to ``\``. This
-can cause major issues with how playbooks are written as ``\`` can be seen as
-an escape character in certain situations.
+can cause major issues with how playbooks are written, since ``\`` is often used 
+as an escape character on POSIX systems.
 
-There are two ways of writting tasks in Ansible and each way have their own
-recommended way of dealing with path separators for Windows.
+Ansible allows two different styles of syntax; each deals with path separators for Windows differently:
 
 YAML Style
 ----------
-When using the YAML syntac for tasks, the rules are well-defined by the YAML
+When using the YAML syntax for tasks, the rules are well-defined by the YAML
 standard:
 
 * When using normal string (without quotes), YAML will not consider the
-  backslash an escape character
+  backslash an escape character.
 
 * When using single quotes ``'``, YAML will not consider the backslash an
-  escape character
+  escape character.
 
 * When using double quotes ``"``, the backslash is considered an escape
-  character and need to escaped with another backslash
+  character and needs to escaped with another backslash.
 
-.. Note:: It is recommended to only quote strings when it is absolutely
-    necessary or required by YAML and if quotes are required, use single quotes
+.. Note:: You should only quote strings when it is absolutely
+    necessary or required by YAML, and then use single quotes.
 
 The YAML specification considers the following `escape sequences <http://www.yaml.org/spec/current.html#id2517668>`_:
 
@@ -429,7 +414,7 @@ Legacy key=value Style
 ----------------------
 The legacy ``key=value`` syntax is used on the command line for adhoc commands,
 or inside playbooks. The use of this style is discouraged within playbooks
-because backslash need to be escaped and it makes playbooks harder to read.
+because backslash characters need to be escaped, and this makes playbooks harder to read.
 This syntax depends on the specific implementation in Ansible, and quoting
 (both single and double) does not have any effect on how it is parsed by
 Ansible.
@@ -476,27 +461,20 @@ The failing examples don't fail outright but will substitute ``\t`` with the
 
 Limitations
 ```````````
-Some things you cannot do, or do easily, with Ansible are:
+Some things you cannot do with Ansible and Windows are:
 
 * Upgrade PowerShell
 
 * Interact with the WinRM listeners
 
-This is because WinRM is reliant on the services being online and running
-during normal operations. If PowerShell was to be upgraded or the WinRM service
-was bounced then the connection will fail. This can technically be avoided
-by using ``async`` or a scheduled task but those methods are fragile if the
-process it runs breaks the underlying connection Ansible uses.
-
-These steps are best left to the bootstrapping process or before an image is
+Because WinRM is reliant on the services being online and running during normal operations, you cannot upgrade PowerShell or interact with WinRM listeners with Ansible. Both of these actions will cause the connection will fail. This can technically be avoided by using ``async`` or a scheduled task, but those methods are fragile if the process it runs breaks the underlying connection Ansible uses and are best left to the bootstrapping process or before an image is
 created.
 
 Developing Windows Modules
 ``````````````````````````
 Because Ansible modules for Windows are written in PowerShell, the development
-guides differ from the usual practice. Please see
-:doc:`dev_guide/developing_modules_general_windows` for more information about
-this topic.
+guides for Windows modules differ substantially from those for standard standard modules. Please see
+:doc:`dev_guide/developing_modules_general_windows` for more information.
 
 .. seealso::
 
