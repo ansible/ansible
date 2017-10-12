@@ -8,10 +8,10 @@ their answers.
     For questions about Ansible Core, please see the
     `FAQ page <http://docs.ansible.com/ansible/latest/faq.html>`_.
 
-Does Ansible work with Windows XP and Server 2003?
+Does Ansible work with Windows XP or Server 2003?
 ``````````````````````````````````````````````````
-Ansible does not support managing Windows XP hosts and Server 2003. The list of
-supported hosts are:
+Ansible does not support managing Windows XP or Server 2003 hosts. The
+supported operating system versions are:
 
 * Windows Server 2008
 * Windows Server 2008 R2
@@ -22,8 +22,8 @@ supported hosts are:
 * Windows 8.1
 * Windows 10
 
-Ansible also requires a specific version of PowerShell that needs to be
-installed - please see :doc:`windows_setup` for the lastest information.
+Ansible also has minimum PowerShell version requirements - please see 
+:doc:`windows_setup` for the lastest information.
 
 Can I Manage Windows Nano Server?
 `````````````````````````````````
@@ -33,13 +33,13 @@ modules and internal components.
 
 Can Ansible run on Windows?
 ```````````````````````````
-No, Ansible cannot run on a Windows host and can only manage Windows hosts, but .
-you can run Ansible on the Windows Subsystem for Linux (WSL)
+No, Ansible cannot run on a Windows host and can only manage Windows hosts, but
+Ansible can be run under the Windows Subsystem for Linux (WSL).
 
 .. note:: The Windows Subsystem for Linux is not supported by Microsoft or
     Ansible and should not be used for production systems. 
 
-To install Ansible on WSl, the following commands
+To install Ansible on WSL, the following commands
 can be run in the bash terminal:
 
 .. code-block:: shell
@@ -70,18 +70,18 @@ The way that these certificates are generated and mapped to a user is different
 from the SSH implementation; consult the :doc:`windows_winrm` documentation for 
 more information.
 
-Why can run a command locally but it does not work under Ansible?
+Why can I run a command locally that does not work under Ansible?
 `````````````````````````````````````````````````````````````````
 Ansible executes commands through WinRM. These processes are different from
 running a command locally in these ways:
 
 * Unless using an authentication option like CredSSP or Kerberos with
   credential delegation, the WinRM process does not have the ability to
-  delegate the user's credentials to a network resource causing access is
-  denied errors.
+  delegate the user's credentials to a network resource, causing ``Access is
+  Denied`` errors.
 
-* Each process over WinRM is run in an non-interactive process. Any
-  applications that rely on having an interactive session will not work.
+* All processes run under WinRM are in a non-interactive session. Applications 
+  that require an interactive session will not work.
 
 * When running through WinRM, Windows restricts access to internal Windows
   APIs like the Windows Update API and DPAPI, which some installers and
@@ -90,7 +90,7 @@ running a command locally in these ways:
 Some ways to bypass these restrictions are to:
 
 * Use ``become``, which runs a command as it would when run locally. This will
-  bypass all WinRM restrictions because Windows is unaware the process is running
+  bypass most WinRM restrictions, as Windows is unaware the process is running
   under WinRM when ``become`` is used. See the :doc:`become` documentation for more 
   information.
 
@@ -106,7 +106,7 @@ Some ways to bypass these restrictions are to:
   CredSSP and Kerberos with credential delegation enabled can support this.
 
 See :doc:`become` more info on how to use become. The limitations section at
-:doc:`windows_winrm` has more details around limitation of WinRM.
+:doc:`windows_winrm` has more details around WinRM limitations.
 
 This program won't install with Ansible
 ```````````````````````````````````````
