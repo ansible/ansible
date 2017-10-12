@@ -385,10 +385,13 @@ class StrategyModule(StrategyBase):
                     current_state = iterator.get_host_state(res._host)
                     if res.is_failed() and iterator.is_failed(res._host):
                         failed_hosts.append(res._host.name)
-                    elif any_errors_fatal and current_state.cur_always_task >= len(current_state._blocks[current_state.cur_block].always) and current_state != iterator.FAILED_NONE:
-                        failed_hosts.append(res._host.name)
                     elif res.is_unreachable():
                         unreachable_hosts.append(res._host.name)
+                    elif (any_errors_fatal and
+                          current_state.cur_always_task >= len(current_state._blocks[current_state.cur_block].always) and
+                          current_state != iterator.FAILED_NONE and
+                          not current_state.did_rescue):
+                        failed_hosts.append(res._host.name)
 
                 # if any_errors_fatal and we had an error, mark all hosts as failed
                 if any_errors_fatal and (len(failed_hosts) > 0 or len(unreachable_hosts) > 0):
