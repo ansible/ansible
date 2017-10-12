@@ -2,7 +2,9 @@
 %define ansible_version $VERSION
 
 %if 0%{?rhel} == 5
-%define __python /usr/bin/python26
+%define __python2 /usr/bin/python26
+%else 0%{?rhel} == 6
+%define __python2 /usr/bin/python2
 %endif
 
 Name:      %{name}
