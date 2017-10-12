@@ -1,2 +1,8 @@
+- name: install cryptography requirement
+  # preempt the installation of cryptography from requirements-azure.txt to limit the version installed
+  # requests[security] requires cryptography >= 1.3.4
+  # cryptography 2.1 requires pip 8.1.2+
+  command: pip install cryptography>=1.3.4,<2.1
+
 - pip:
     requirements: '{{ role_path }}/../../../../packaging/requirements/requirements-azure.txt'
