@@ -1,0 +1,52 @@
+- name: Remove existing test file
+  file:
+    path: '{{ dev }}'
+    state: absent
+
+- name: 'Create a "disk" file'
+  command: 'dd if=/dev/zero of={{ dev }} bs=1M count={{ fssize }}'
+
+- name: filesystem creation
+  filesystem:
+    dev: '{{ dev }}'
+    fstype: '{{ fstype }}'
+  register: fs_result
+
+- assert:
+    that:
+      - 'fs_result|changed'
+      - 'fs_result|success'
+
+- command: 'blkid -c /dev/null -o value -s UUID {{ dev }}'
+  register: uuid
+
+- name: "Check that filesystem isn't created if force isn't used"
+  filesystem:
+    dev: '{{ dev }}'
+    fstype: '{{ fstype }}'
+  register: fs2_result
+
+- command: 'blkid -c /dev/null -o value -s UUID {{ dev }}'
+  register: uuid2
+
+- assert:
+    that:
+      - 'not (fs2_result|changed)'
+      - 'fs2_result|success'
+      - 'uuid.stdout == uuid2.stdout'
+
+- name: Check that filesystem is recreated if force is used
+  filesystem:
+    dev: '{{ dev }}'
+    fstype: '{{ fstype }}'
+    force: yes
+  register: fs3_result
+
+- command: 'blkid -c /dev/null -o value -s UUID {{ dev }}'
+  register: uuid3
+
+- assert:
+    that:
+      - 'fs3_result|changed'
+      - 'fs3_result|success'
+      - 'uuid.stdout != uuid3.stdout'
