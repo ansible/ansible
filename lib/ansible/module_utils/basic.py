@@ -1754,7 +1754,15 @@ class AnsibleModule(object):
                             if len(overlap) == 1:
                                 (param[k],) = overlap
 
-                        if param[k] not in choices:
+                        if isinstance(param[k], SEQUENCETYPE):
+                            invalid = set(param[k]).difference(choices)
+                            if invalid:
+                                choices_str = ",".join([to_native(c) for c in choices])
+                                msg = "values of %s must be one of: %s, got: %s" % (k, choices_str, ','.join(invalid))
+                                if self._options_context:
+                                    msg += " found in %s" % " -> ".join(self._options_context)
+                                self.fail_json(msg=msg)
+                        elif param[k] not in choices:
                             choices_str = ",".join([to_native(c) for c in choices])
                             msg = "value of %s must be one of: %s, got: %s" % (k, choices_str, param[k])
                             if self._options_context:
