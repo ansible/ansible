@@ -1,3 +1,14 @@
+git_archive_extensions:
+  default:
+    - tar.gz
+    - tar
+    - tgz
+    - zip
+  RedHat6:
+    - tar
+    - zip
+
+
 checkout_dir: '{{ output_dir }}/git'
 repo_dir: '{{ output_dir }}/local_repos'
 repo_format1: 'https://github.com/jimi-c/test_role'
