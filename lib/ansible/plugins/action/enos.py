@@ -80,7 +80,7 @@ class ActionModule(_ActionModule):
         connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
 
         socket_path = connection.run()
-        
+
         display.vvvv('socket_path: %s' % socket_path, pc.remote_addr)
         if not socket_path:
             return {'failed': True,
