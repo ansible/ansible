@@ -126,6 +126,7 @@ Ansible Changes By Release
 * Fix rollback feature in junos_config to now allow configuration rollback on device (https://github.com/ansible/ansible/pull/31424)
 * Remove command executed log from ansible-connection (https://github.com/ansible/ansible/pull/31581)
 * Fix relative paths to be relative to config file when there is no playbook available
+* Fix Inventory plugins to use the configured inventory plugin path
 
 <a id="2.4"></a>
 
