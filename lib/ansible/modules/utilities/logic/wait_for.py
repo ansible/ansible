@@ -552,7 +552,8 @@ def main():
                         # Shutdown the client socket
                         try:
                             s.shutdown(socket.SHUT_RDWR)
-                        except socket.error as e:
+                        except socket.error:
+                            e = get_exception()
                             if e.errno != errno.ENOTCONN:
                                 raise
                         # else, the server broke the connection on its end, assume it's not ready
@@ -565,7 +566,8 @@ def main():
                         # Connection established, success!
                         try:
                             s.shutdown(socket.SHUT_RDWR)
-                        except socket.error as e:
+                        except socket.error:
+                            e = get_exception()
                             if e.errno != errno.ENOTCONN:
                                 raise
                         # else, the server broke the connection on its end, assume it's not ready
