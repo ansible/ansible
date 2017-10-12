@@ -74,6 +74,7 @@ from ansible.module_utils.vmware import HAS_PYVMOMI, connect_to_api, vmware_argu
 
 
 class VMwareLocalUserManager(object):
+
     def __init__(self, module):
         self.module = module
         self.content = connect_to_api(self.module)
@@ -103,14 +104,12 @@ class VMwareLocalUserManager(object):
         except Exception as e:
             self.module.fail_json(msg=str(e))
 
-
     def check_local_user_manager_state(self):
         user_account = self.find_user_account()
         if not user_account:
             return 'absent'
         else:
             return 'present'
-
 
     def find_user_account(self):
         searchStr = self.local_user_name
@@ -120,14 +119,12 @@ class VMwareLocalUserManager(object):
         user_account = self.content.userDirectory.RetrieveUserGroups(None, searchStr, None, None, exactMatch, findUsers, findGroups)
         return user_account
 
-
     def create_account_spec(self):
         account_spec = vim.host.LocalAccountManager.AccountSpecification()
         account_spec.id = self.local_user_name
         account_spec.password = self.local_user_password
         account_spec.description = self.local_user_description
         return account_spec
-
 
     def state_create_user(self):
         account_spec = self.create_account_spec()
@@ -151,7 +148,6 @@ class VMwareLocalUserManager(object):
         except vmodl.MethodFault as method_fault:
             self.module.fail_json(msg=method_fault.msg)
 
-
     def state_remove_user(self):
         try:
             self.content.accountManager.RemoveUser(self.local_user_name)
@@ -161,10 +157,8 @@ class VMwareLocalUserManager(object):
         except vmodl.MethodFault as method_fault:
             self.module.fail_json(msg=method_fault.msg)
 
-
     def state_exit_unchanged(self):
         self.module.exit_json(changed=False)
-
 
 
 def main():

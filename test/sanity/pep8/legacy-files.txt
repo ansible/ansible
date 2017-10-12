@@ -130,14 +130,6 @@ lib/ansible/modules/cloud/univention/udm_dns_zone.py
 lib/ansible/modules/cloud/univention/udm_group.py
 lib/ansible/modules/cloud/univention/udm_share.py
 lib/ansible/modules/cloud/univention/udm_user.py
-lib/ansible/modules/cloud/vmware/vca_fw.py
-lib/ansible/modules/cloud/vmware/vca_nat.py
-lib/ansible/modules/cloud/vmware/vca_vapp.py
-lib/ansible/modules/cloud/vmware/vmware_dvswitch.py
-lib/ansible/modules/cloud/vmware/vmware_local_user_manager.py
-lib/ansible/modules/cloud/vmware/vmware_migrate_vmk.py
-lib/ansible/modules/cloud/vmware/vmware_vmotion.py
-lib/ansible/modules/cloud/vmware/vsphere_copy.py
 lib/ansible/modules/cloud/vmware/vsphere_guest.py
 lib/ansible/modules/cloud/webfaction/webfaction_app.py
 lib/ansible/modules/cloud/webfaction/webfaction_db.py

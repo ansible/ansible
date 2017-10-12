@@ -82,6 +82,7 @@ def protocol_to_tuple(protocol):
             protocol.get_Other(),
             protocol.get_Any())
 
+
 def protocol_to_string(protocol):
     protocol = protocol_to_tuple(protocol)
     if protocol[0] is True:
@@ -95,6 +96,7 @@ def protocol_to_string(protocol):
     elif protocol[4] is True:
         return 'Any'
 
+
 def protocol_to_type(protocol):
     try:
         protocols = ProtocolsType()
@@ -102,6 +104,7 @@ def protocol_to_type(protocol):
         return protocols
     except AttributeError:
         raise VcaError("The value in protocol is not valid")
+
 
 def validate_fw_rules(fw_rules):
     for rule in fw_rules:
@@ -122,6 +125,7 @@ def validate_fw_rules(fw_rules):
 
     return fw_rules
 
+
 def fw_rules_to_dict(rules):
     fw_rules = list()
     for rule in rules:
@@ -140,6 +144,7 @@ def fw_rules_to_dict(rules):
         )
     return fw_rules
 
+
 def create_fw_rule(is_enable, description, policy, protocol, dest_port,
                    dest_ip, source_port, source_ip, enable_logging):
 
@@ -153,13 +158,14 @@ def create_fw_rule(is_enable, description, policy, protocol, dest_port,
                             SourceIp=source_ip,
                             EnableLogging=enable_logging)
 
+
 def main():
     argument_spec = vca_argument_spec()
     argument_spec.update(
         dict(
-            fw_rules = dict(required=True, type='list'),
-            gateway_name = dict(default='gateway'),
-            state = dict(default='present', choices=['present', 'absent'])
+            fw_rules=dict(required=True, type='list'),
+            gateway_name=dict(default='gateway'),
+            state=dict(default='present', choices=['present', 'absent'])
         )
     )
 

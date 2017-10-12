@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright 2015 Dag Wieers <dag@wieers.com>
+# Copyright (C): 2015, Dag Wieers <dag@wieers.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -54,7 +54,6 @@ options:
     description:
       - If C(no), SSL certificates will not be validated. This should only be
         set to C(no) when no other option exists.
-    required: false
     default: 'yes'
     choices: ['yes', 'no']
 
@@ -74,6 +73,7 @@ EXAMPLES = '''
     datastore: datastore1
     path: some/remote/file
   transport: local
+
 - vsphere_copy:
     host: vhost
     login: vuser
@@ -105,7 +105,7 @@ def vmware_path(datastore, datacenter, path):
     datacenter = datacenter.replace('&', '%26')
     if not path.startswith("/"):
         path = "/" + path
-    params = dict( dsName = datastore )
+    params = dict(dsName=datastore)
     if datacenter:
         params["dcPath"] = datacenter
     params = urlencode(params)
@@ -115,18 +115,18 @@ def vmware_path(datastore, datacenter, path):
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-            host = dict(required=True, aliases=[ 'hostname' ]),
-            login = dict(required=True, aliases=[ 'username' ]),
-            password = dict(required=True, no_log=True),
-            src = dict(required=True, aliases=[ 'name' ]),
-            datacenter = dict(required=True),
-            datastore = dict(required=True),
-            dest = dict(required=True, aliases=[ 'path' ]),
-            validate_certs = dict(required=False, default=True, type='bool'),
+        argument_spec=dict(
+            host=dict(required=True, aliases=['hostname']),
+            login=dict(required=True, aliases=['username']),
+            password=dict(required=True, no_log=True),
+            src=dict(required=True, aliases=['name']),
+            datacenter=dict(required=True),
+            datastore=dict(required=True),
+            dest=dict(required=True, aliases=['path']),
+            validate_certs=dict(default=True, type='bool'),
         ),
         # Implementing check-mode using HEAD is impossible, since size/date is not 100% reliable
-        supports_check_mode = False,
+        supports_check_mode=False,
     )
 
     host = module.params.get('host')
@@ -154,8 +154,8 @@ def main():
 
     try:
         r = open_url(url, data=data, headers=headers, method='PUT',
-                url_username=login, url_password=password, validate_certs=validate_certs,
-                force_basic_auth=True)
+                     url_username=login, url_password=password, validate_certs=validate_certs,
+                     force_basic_auth=True)
     except socket.error as e:
         if isinstance(e.args, tuple) and e[0] == errno.ECONNRESET:
             # VSphere resets connection if the file is in use and cannot be replaced
