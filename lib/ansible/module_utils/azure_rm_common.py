@@ -307,8 +307,8 @@ class AzureRMModuleBase(object):
             self.validate_tags(self.module.params['tags'])
 
         if not skip_exec:
-            res = self.exec_module(**self.module.params)
-            self.module.exit_json(**res)
+        res = self.exec_module(**self.module.params)
+        self.module.exit_json(**res)
 
     def check_client_version(self, client_type):
         # Ensure Azure modules are at least 2.0.0rc5.
@@ -818,3 +818,13 @@ class AzureRMModuleBase(object):
             self._containerservice_client = self.get_mgmt_svc_client(ContainerServiceClient,
                                                                      base_url=self._cloud_environment.endpoints.resource_manager)
         return self._containerservice_client
+
+    @property
+    def containerinstance_client(self):
+        self.log('Getting container instance client')
+        if not self._containerinstance_client:
+            self._containerinstance_client = ContainerInstanceClient(
+                self.azure_credentials,
+                self.subscription_id
+            )
+        return self._containerinstance_client
