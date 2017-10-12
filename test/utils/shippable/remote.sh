@@ -40,7 +40,9 @@ case "${test_platform}" in
         ci_endpoint="https://14blg63h2i.execute-api.us-east-1.amazonaws.com"
         ;;
     "osx")
-        ci_endpoint="https://osx.testing.ansible.com"
+        ci_endpoint=$(curl -s 'https://s3.amazonaws.com/ansible-ci-files/ansible-test/parallels-endpoints.txt' \
+                    | python -c "import random, sys; print(random.choice(sys.stdin.read().splitlines()))")
+
         ;;
     *)
         echo "unsupported platform: ${test_platform}"
