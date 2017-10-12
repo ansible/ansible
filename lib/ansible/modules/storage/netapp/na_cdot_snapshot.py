@@ -93,19 +93,6 @@ class NetAppCDOTSnapshot(object):
 
     def __init__(self):
 
-        self._size_unit_map = dict(
-            bytes=1,
-            b=1,
-            kb=1024,
-            mb=1024 ** 2,
-            gb=1024 ** 3,
-            tb=1024 ** 4,
-            pb=1024 ** 5,
-            eb=1024 ** 6,
-            zb=1024 ** 7,
-            yb=1024 ** 8
-        )
-
         self.argument_spec = netapp_utils.ontap_sf_host_argument_spec()
         self.argument_spec.update(dict(
             state=dict(required=True, choices=['present', 'absent']),
@@ -165,15 +152,8 @@ class NetAppCDOTSnapshot(object):
             snapshot_info = result.get_child_by_name(
                 'attributes-list').get_child_by_name(
                     'snapshot-info')
-            # check if snapshot name & volume match
-            returned_name = snapshot_info.get_child_content('name')
-            returned_volume = snapshot_info.get_child_content('volume')
-
-            if returned_name == self.name and returned_volume == self.volume_name:
-                return_value = {
-                    'name': self.name,
-                    'volume_name': self.volume_name,
-                }
+            # Put Snapshot Copy name into return_value to have a not-None return value when Snapshot already exists.
+            return_value = snapshot_info.get_child_content('name')
 
         return return_value
 
@@ -212,20 +192,18 @@ class NetAppCDOTSnapshot(object):
             if self.state == 'absent':
                 changed = True
 
-        else:
-            if self.state == 'present':
+        elif self.state == 'present':
                 changed = True
 
         if changed:
             if self.module.check_mode:
                 pass
-            else:
-                if self.state == 'present':
-                    if not snapshot_exists:
-                        self.create_snapshot()
 
-                elif self.state == 'absent':
-                    self.delete_snapshot()
+            elif self.state == 'present' and not snapshot_exists:
+                self.create_snapshot()
+
+            elif self.state == 'absent':
+                self.delete_snapshot()
 
         self.module.exit_json(changed=changed)
 
