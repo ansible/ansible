@@ -48,7 +48,8 @@ class TerminalBase(with_metaclass(ABCMeta, object)):
 
     #: compiled bytes regular expressions to remove ANSI codes
     ansi_re = [
-        re.compile(br'(\x1b\[\?1h\x1b=)'),
+		# see ECMA-48 Section 5.4 (Control Sequences)
+        re.compile(br'((?:\x9b|\x1b\x5b)[\x30-\x3f]*[\x20-\x2f]*[\x40-\x7e])'),
         re.compile(br'\x08.')
     ]
 
