@@ -115,7 +115,7 @@ class InventoryModule(BaseFileInventoryPlugin):
                         group_data[section] = {group_data[section]: None}
 
                     if not isinstance(group_data[section], MutableMapping):
-                        raise AnsibleParserError('Invalid %s entry for %s group, requires a dictionary, found %s instead.' %
+                        raise AnsibleParserError('Invalid "%s" entry for "%s" group, requires a dictionary, found "%s" instead.' %
                                                  (section, group, type(group_data[section])))
 
             if group_data.get('vars', False):
