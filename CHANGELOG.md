@@ -128,6 +128,9 @@ Ansible Changes By Release
 * Fix relative paths to be relative to config file when there is no playbook available (https://github.com/ansible/ansible/issues/31533)
 * Fix Inventory plugins to use the configured inventory plugin path (https://github.com/ansible/ansible/issues/31605)
 * Fix include task to be dynamic (https://github.com/ansible/ansible/issues/31593)
+* A couple fixes to the test process to account for new testing resources in
+  our ci system and an upstream cryptography update that didn't work with
+  pip-8.x
 
 <a id="2.4"></a>
 
