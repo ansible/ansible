@@ -31,6 +31,8 @@ short_description: A Windows disk management module
 description:
    - With the module you can select a disk on the target and manage it (e.g. initializing, partitioning, formatting).
    - To select the disk and to manage it you have several options which are all described in the documentation.
+   - To identify the options which are used to select a disk consider the "Select disk option" hint in the option description.
+   - To identify the options which are used to manage a disk consider the "Manage disk option" hint in the option description.
    - If you want to activate verbose logging output for the module you can use the option logging with value "verbose".
    - The values of the following options will be checked and converted if needed in the beginning of the module
    - size, allocation_unit_size, number, drive_letter.
@@ -61,12 +63,14 @@ author:
 options:
   size:
       description:
+        - Select disk option
         - Size of the disk in gigabyte which will be selected
         - If a size is defined the module will try to select the disk with this passed size
         - Data type can be int or string
       required: false
   partition_style_select:
       description:
+        - Select disk option
         - Partition style of the disk which will be selected
       required: false
       default: raw
@@ -76,6 +80,7 @@ options:
         - gpt
   operational_status:
       description:
+        - Select disk option
         - Operational Status of the disk which will be selected
       required: false
       default: offline
@@ -84,18 +89,21 @@ options:
         - online
   read_only:
       description:
+        - Select disk option
         - Read-only status of the disk which will be selected (true=read-only,false=writeable)
       required: false
       type: bool
       default: 'yes'
   number:
       description:
+        - Select disk option
         - Number of the disk which will be selected
         - If a number is defined the module will try to select the disk with this passed number
         - Data type can be int or string
       required: false
   partition_style_set:
       description:
+        - Manage disk option
         - Partition style which will be set on selected disk
       required: false
       default: gpt
@@ -104,11 +112,13 @@ options:
         - mbr
   drive_letter:
       description:
+        - Manage disk option
         - Drive letter which will be set for the partition on selected disk
         - If a drive letter is defined the module will try to set the partition on selected disk with this passed drive letter
       required: false
   file_system:
       description:
+        - Manage disk option
         - File system which will be set on selected disk
         - Maximum volume size for ntfs is 256gb, for refs 1208925819614650gb (1 yobibyte)
       required: false
@@ -118,11 +128,13 @@ options:
         - refs
   label:
       description:
+        - Manage disk option
         - File system label which should be set for the file system on found disk
       required: false
       default: ansible_disk
   allocation_unit_size:
       description:
+        - Manage disk option
         - Allocation Unit size which will be set for the file system on selected disk (possible values for file system ntfs 4,8,16,32,64kb;refs 64kb)
         - Data type can be int or string
       required: false
@@ -134,18 +146,21 @@ options:
         - 64
   large_frs:
       description:
+        - Manage disk option
         - Switch to set Large FRS option for file system on selected disk, solely settable for ntfs file system
       required: false
       type: bool
       default: 'no'
   short_names:
       description:
+        - Manage disk option
         - Switch to set Short Names option for file system on selected disk, solely settable for ntfs file system
       required: false
       type: bool
       default: 'no'
   integrity_streams:
       description:
+        - Manage disk option
         - Switch to set Integrity Streams option for file system on selected disk, solely settable for refs file system
       required: false
       type: bool
