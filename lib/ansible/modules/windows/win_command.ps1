@@ -18,6 +18,7 @@ $raw_command_line = Get-AnsibleParam -obj $params -name "_raw_params" -type "str
 $chdir = Get-AnsibleParam -obj $params -name "chdir" -type "path"
 $creates = Get-AnsibleParam -obj $params -name "creates" -type "path"
 $removes = Get-AnsibleParam -obj $params -name "removes" -type "path"
+$stdin = Get-AnsibleParam -obj $params -name "stdin" -type 'str"'
 
 $raw_command_line = $raw_command_line.Trim()
 
@@ -34,9 +35,19 @@ If($removes -and -not $(Test-Path -Path $removes)) {
     Exit-Json @{msg="skipped, since $removes does not exist";cmd=$raw_command_line;changed=$false;skipped=$true;rc=0}
 }
 
+$command_args = @{
+    command = $raw_command_line
+}
+if ($chdir) {
+    $command_args['working_directory'] = $chdir
+}
+if ($stdin) {
+    $command_args['stdin'] = $stdin
+}
+
 $start_datetime = [DateTime]::UtcNow
 try {
-    $command_result = Run-Command -command $raw_command_line -working_directory $chdir
+    $command_result = Run-Command @command_args
 } catch {
     $result.changed = $false
     try {
