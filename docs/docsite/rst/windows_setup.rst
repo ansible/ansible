@@ -9,10 +9,10 @@ Host Requirements
 For Ansible to communicate to a Windows host and use Windows modules, the
 Windows host must meet the following requirements:
 
-* The OS versions that are supported under Ansible fall under the same support
-  agreement as Microsoft. If running a desktop OS, it must be Windows 7, 8.1,
-  or 10. If running a server OS it must be Windows Server 2008, 2008 R2,
-  2012, 2012 R2, or 2016.
+* Ansible's supported Windows versions generally match those under current
+  and extended support from Microsoft. Supported desktop OSs include
+  Windows 7, 8.1, and 10, and supported server OSs are Windows Server 2008, 
+  2008 R2, 2012, 2012 R2, and 2016.
 
 * Ansible requires PowerShell 3.0 or newer and at least .NET 4.0 to be
   installed on the Windows host.
@@ -20,8 +20,8 @@ Windows host must meet the following requirements:
 * A WinRM listener should be created and activated. More details for this can be
   found below.
 
-.. Note:: While these are the base requirement, some Ansible modules have
-    additional requirements, such as a newer OS or the latest PowerShell
+.. Note:: While these are the base requirements for Ansible connectivity, some Ansible 
+    modules have additional requirements, such as a newer OS or PowerShell
     version. Please consult the module's documentation page
     to determine whether a host meets those requirements.
 
@@ -102,13 +102,13 @@ WinRM Setup
 ```````````
 Once Powershell has been upgraded to at least version 3.0, the final step is for the
 WinRM service to be configured so that Ansible can connect to it. There are two
-main components of the WinRM service that governs how Ansible can interace with
+main components of the WinRM service that governs how Ansible can interface with
 the Windows host: the ``listener`` and the ``service`` configuration settings.
 
-Details about each component can be read below but the script
+Details about each component can be read below, but the script
 `ConfigureRemotingForAnsible.ps1 <https://github.com/ansible/ansible/blob/devel/examples/scripts/ConfigureRemotingForAnsible.ps1>`_
-can be used to set up the basics. This script sets up both a HTTP and HTTPS
-listener with a self-signed certificate and enables the ``Basic``
+can be used to set up the basics. This script sets up both HTTP and HTTPS
+listeners with a self-signed certificate and enables the ``Basic``
 authentication option on the service.
 
 To use this script, run the following in PowerShell:
@@ -133,7 +133,7 @@ for these options are located at the top of the script itself.
 
 WinRM Listener
 --------------
-The WinRM services listens for requests on one or more ports. Each of these porsts must have a
+The WinRM services listens for requests on one or more ports. Each of these ports must have a
 listener created and configured.
 
 To view the current listeners that are running on the WinRM service, run the
@@ -181,7 +181,7 @@ the key options that are useful to understand are:
   this is changed, the host var ``ansible_winrm_path`` must be set to the same
   value.
 
-* ``CertificateThumbprint``: If running over a HTTPS listener, this is the
+* ``CertificateThumbprint``: If running over an HTTPS listener, this is the
   thumbprint of the certificate in the Windows Certificate Store that is used
   in the connection. To get the details of the certificate itself, run this
   command with the relevant certificate thumbprint in PowerShell:
@@ -291,7 +291,7 @@ This will output something like the following::
         MaxMemoryPerShellMB = 2147483647
         MaxShellsPerUser = 2147483647
 
-While a many of these options should rarely be changed, a few can easily impact
+While many of these options should rarely be changed, a few can easily impact
 the operations over WinRM and are useful to understand. Some of the important
 options are:
 
@@ -308,7 +308,7 @@ options are:
 * ``Service\Auth\CbtHardeningLevel``: Specifies whether channel binding tokens are
   not verified (None), verified but not required (Relaxed), or verified and
   required (Strict). CBT is only used when connecting with NTLM or Kerberos
-  over HTTPS. The downstream libraries that Ansible currently uses only supports
+  over HTTPS. The downstream libraries that Ansible currently uses only support
   passing the CBT with NTLM authentication. Using Kerberos with
   ``CbtHardeningLevel = Strict`` will result in a ``404`` error.
 
@@ -373,18 +373,18 @@ target Windows host::
     $session_option = New-PSSessionOption -SkipCACheck -SkipCNCheck -SkipRevocationCheck
     Invoke-Command -ComputerName server -UseSSL -ScriptBlock { ipconfig } -Credential $cred -SessionOption $session_option
 
-If this works fails, the issue is probably related to the WinRM setup. If it works, the issue may not be related to the WinRM setup; please continue reading for more troubleshooting suggestions.
+If this fails, the issue is probably related to the WinRM setup. If it works, the issue may not be related to the WinRM setup; please continue reading for more troubleshooting suggestions.
 
 HTTP 401/Credentials Rejected
 +++++++++++++++++++++++++++++
 A HTTP 401 error indicates the authentication process failed during the initial
 connection. Some things to check for this are:
 
-* Verify that the credentials are correct and set properly with
+* Verify that the credentials are correct and set properly in your inventory with
   ``ansible_user`` and ``ansible_password``
 
-* Enusre that the user is a member of the local Administrators group or has been explicitly
-  been granted access (a connection test with the ``winrs`` command can be used to 
+* Ensure that the user is a member of the local Administrators group or has been explicitly
+  granted access (a connection test with the ``winrs`` command can be used to 
   rule this out).
 
 * Make sure that the authentication option set by ``ansible_winrm_transport`` is enabled under
@@ -394,7 +394,7 @@ connection. Some things to check for this are:
   with ``ansible_winrm_message_encryption: auto`` to enable message encryption.
   If using another authentication option or if the installed pywinrm version cannot be
   upgraded, the ``Service\AllowUnencrypted`` can be set to ``true`` but this is
-  not recommended
+  only recommended for troubleshooting
 
 * Ensure the downstream packages ``pywinrm``, ``requests-ntlm``,
   ``requests-kerberos``, and/or ``requests-credssp`` are up to date using ``pip``.
@@ -412,29 +412,30 @@ These indicate an error has occured with the WinRM service. Some things
 to check for include:
 
 * Verify that the number of current open shells has not exceeded either
-  ``WinRsMaxShellsPerUser`` or any of the other Winrs settings haven't been
-  breached.
+  ``WinRsMaxShellsPerUser`` or any of the other Winrs quotas haven't been
+  exceeded.
 
-Time Out Errors
+Timeout Errors
 +++++++++++++++
 These usually indicate an error with the network connection where
 Ansible is unable to reach the host. Some things to check for include:
 
-* Make sur the firewall is not set to block the WinRM ports it is listening on.
-* Check that there is a WinRM listener enabled on the port and path set by the host vars.
-* Ensure that the ``winrm`` service is started and running on the Windows host.
+* Make sure the firewall is not set to block the configured WinRM listener ports
+* Ensure that a WinRM listener is enabled on the port and path set by the host vars
+* Ensure that the ``winrm`` service is running on the Windows host and configured for 
+  automatic start
 
 Connection Refused Errors
-+++++=+++++++++++++++++++
++++++++++++++++++++++++++
 These usually indicate an error when trying to communicate with the
 WinRM service on the host. Some things to check for:
 
 * Ensure that the WinRM service is up and running on the host. Use
   ``(Get-Service -Name winrm).Status`` to get the status of the service.
-* Check that the host Firewall is allowing traffic over the WinRM port. By default
+* Check that the host firewall is allowing traffic over the WinRM port. By default
   this is ``5985`` for HTTP and ``5986`` for HTTPS.
 
-Sometimes an installer may restart the WinRM service and cause this error. The
+Sometimes an installer may restart the WinRM or HTTP service and cause this error. The
 best way to deal with this is to use ``win_psexec`` from another
 Windows host.
 
