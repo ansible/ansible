@@ -34,7 +34,7 @@ options:
     description:
       - Name of package to install/remove. To operate on several packages
         this can accept a comma separated.
-      - 'all' is also allowed with state install. It will install all packages
+      - C(all) is also allowed with state install. It will install all packages
         available on informed C(repository_path).
     required: true
   repository_path:
