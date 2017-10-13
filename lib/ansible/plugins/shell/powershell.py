@@ -70,6 +70,26 @@ end {
 
     # TODO: handle binary modules
     # TODO: handle persistence
+    
+    $min_os_version = [version]$payload.min_os_version
+    if ($min_os_version -ne $null) {
+        $actual_os_version = [System.Environment]::OSVersion.Version
+        if ($actual_os_version -lt $min_os_version) {
+            $msg = "This module cannot run on this OS as it requires a minimum version of $min_os_version, actual was $actual_os_version"
+            Write-Output (ConvertTo-Json @{failed=$true;msg=$msg})
+            exit 1        
+        }    
+    }
+    
+    $min_ps_version = [version]$payload.min_ps_version
+    if ($min_ps_version -ne $null) {
+        $actual_ps_version = $PSVersionTable.PSVersion
+        if ($actual_ps_version -lt $min_ps_version) {
+            $msg = "This module cannot run as it requires a minimum PowerShell version of $min_ps_version, actual was $actual_ps_version"
+            Write-Output (ConvertTo-Json @{failed=$true;msg=$msg})
+            exit 1
+        }
+    }
 
     $actions = $payload.actions
 

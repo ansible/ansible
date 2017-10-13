@@ -623,7 +623,12 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
     elif b'from ansible.module_utils.' in b_module_data:
         module_style = 'new'
         module_substyle = 'python'
-    elif REPLACER_WINDOWS in b_module_data or re.search(b'#Requires \-Module', b_module_data, re.IGNORECASE):
+    elif REPLACER_WINDOWS in b_module_data:
+        module_style = 'new'
+        module_substyle = 'powershell'
+        b_module_data = b_module_data.replace(REPLACER_WINDOWS, b'#Requires -Module Ansible.ModuleUtils.Legacy.psm1')
+    elif re.search(b'#Requires \-Module', b_module_data, re.IGNORECASE)\
+            or re.search(b'#AnsibleRequires \-', b_module_data, re.IGNORECASE):
         module_style = 'new'
         module_substyle = 'powershell'
     elif REPLACER_JSONARGS in b_module_data:
@@ -785,16 +790,32 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
 
         lines = b_module_data.split(b'\n')
         module_names = set()
+        become_required = False
+        min_os_version = None
+        min_ps_version = None
+
 
         requires_module_list = re.compile(to_bytes(r'(?i)^#\s*requires\s+\-module(?:s?)\s*(Ansible\.ModuleUtils\..+)'))
+        requires_become = re.compile(to_bytes('(?i)^#\s*ansiblerequires.*\-become'))
+        requires_os_version = re.compile(to_bytes('(?i)^#\s*ansiblerequires.*\-osversion\s*(([0-9]+)\.([0-9]+))$'))
+        requires_ps_version = re.compile(to_bytes('(?i)^#\s*ansiblerequires.*\-psversion\s*(([0-9]+)\.([0-9]+))$'))
 
         for line in lines:
-            # legacy, equivalent to #Requires -Modules powershell
-            if REPLACER_WINDOWS in line:
-                module_names.add(b'Ansible.ModuleUtils.Legacy')
-            line_match = requires_module_list.match(line)
-            if line_match:
-                module_names.add(line_match.group(1))
+            module_util_line_match = requires_module_list.match(line)
+            if module_util_line_match:
+                module_names.add(module_util_line_match.group(1))
+
+            requires_become_match = requires_become.match(line)
+            if requires_become_match:
+                become_required = True
+
+            requires_os_version_match = requires_os_version.match(line)
+            if requires_os_version_match:
+                min_os_version = requires_os_version_match.group(1)
+
+            requires_ps_version_match = requires_ps_version.match(line)
+            if requires_ps_version_match:
+                min_ps_version = requires_ps_version_match.group(1)
 
         for m in set(module_names):
             m = to_text(m)
@@ -808,6 +829,15 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
                     )
                 )
             )
+
+        if become_required and 'become' not in exec_manifest["actions"]:
+            exec_manifest["actions"].insert(0, 'become')
+            exec_manifest["become_user"] = "SYSTEM"
+            exec_manifest["become_password"] = None
+            exec_manifest["become"] = to_text(base64.b64encode(to_bytes(become_wrapper)))
+
+        exec_manifest['min_os_version'] = min_os_version
+        exec_manifest['min_ps_version'] = min_ps_version
 
         # FUTURE: smuggle this back as a dict instead of serializing here; the connection plugin may need to modify it
         module_json = json.dumps(exec_manifest)
