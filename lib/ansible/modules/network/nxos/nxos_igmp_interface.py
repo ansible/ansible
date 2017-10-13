@@ -94,7 +94,7 @@ options:
         description:
             - Sets the frequency at which the software sends IGMP host query
               messages. Values can range from 1 to 18000 seconds.
-              he default is 125 seconds.
+              The default is 125 seconds.
         required: false
         default: null
     last_member_qrt:
