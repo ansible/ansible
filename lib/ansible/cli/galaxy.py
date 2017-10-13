@@ -91,6 +91,7 @@ class GalaxyCLI(CLI):
                                    help='Ignore errors and continue with the next specified role.')
             self.parser.add_option('-n', '--no-deps', dest='no_deps', action='store_true', default=False, help='Don\'t download roles listed as dependencies')
             self.parser.add_option('-r', '--role-file', dest='role_file', help='A file containing a list of roles to be imported')
+            self.parser.add_option('-t', '--token', dest='install_token', help='Token to allow installation from private repos')
         elif self.action == "remove":
             self.parser.set_usage("usage: %prog remove role1 role2 ...")
         elif self.action == "list":
@@ -389,7 +390,10 @@ class GalaxyCLI(CLI):
                     continue
 
             try:
-                installed = role.install()
+                if self.options.install_token:
+                    installed = role.install(access_token=self.options.install_token)
+                else:
+                    installed = role.install()
             except AnsibleError as e:
                 display.warning("- %s was NOT installed successfully: %s " % (role.name, str(e)))
                 self.exit_without_ignore()

@@ -198,11 +198,13 @@ class GalaxyRole(object):
 
         return False
 
-    def install(self):
+    def install(self, access_token=None):
         # the file is a tar, so open it that way and extract it
         # to the specified (or default) roles directory
         local_file = False
-
+        if access_token is not None:
+            parts = self.src.split("://")
+            self.src = parts[0] + "://" + access_token + "@" + parts[1]
         if self.scm:
             # create tar file from scm url
             tmp_file = RoleRequirement.scm_archive_role(**self.spec)
