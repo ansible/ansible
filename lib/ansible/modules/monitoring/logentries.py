@@ -85,9 +85,9 @@ def follow_log(module, le_path, logs, name=None, logtype=None):
 
         cmd = [le_path, 'follow', log]
         if name:
-            cmd.extend(['--name',name])
+            cmd.extend(['--name', name])
         if logtype:
-            cmd.extend(['--type',logtype])
+            cmd.extend(['--type', logtype])
         rc, out, err = module.run_command(' '.join(cmd))
 
         if not query_log_status(module, le_path, log):
@@ -99,6 +99,7 @@ def follow_log(module, le_path, logs, name=None, logtype=None):
         module.exit_json(changed=True, msg="followed %d log(s)" % (followed_count,))
 
     module.exit_json(changed=False, msg="logs(s) already followed")
+
 
 def unfollow_log(module, le_path, logs):
     """ Unfollows one or more logs if followed. """
@@ -125,13 +126,14 @@ def unfollow_log(module, le_path, logs):
 
     module.exit_json(changed=False, msg="logs(s) already unfollowed")
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            path = dict(required=True),
-            state = dict(default="present", choices=["present", "followed", "absent", "unfollowed"]),
-            name = dict(required=False, default=None, type='str'),
-            logtype = dict(required=False, default=None, type='str', aliases=['type'])
+        argument_spec=dict(
+            path=dict(required=True),
+            state=dict(default="present", choices=["present", "followed", "absent", "unfollowed"]),
+            name=dict(required=False, default=None, type='str'),
+            logtype=dict(required=False, default=None, type='str', aliases=['type'])
         ),
         supports_check_mode=True
     )

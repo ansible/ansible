@@ -148,7 +148,7 @@ class HostMacro(object):
     # update host macro
     def update_host_macro(self, host_macro_obj, macro_name, macro_value):
         host_macro_id = host_macro_obj['hostmacroid']
-        if host_macro_obj['macro'] == '{$'+macro_name+'}' and host_macro_obj['value'] == macro_value:
+        if host_macro_obj['macro'] == '{$' + macro_name + '}' and host_macro_obj['value'] == macro_value:
             self._module.exit_json(changed=False, result="Host macro %s already up to date" % macro_name)
         try:
             if self._module.check_mode:
@@ -168,6 +168,7 @@ class HostMacro(object):
             self._module.exit_json(changed=True, result="Successfully deleted host macro %s " % macro_name)
         except Exception as e:
             self._module.fail_json(msg="Failed to delete host macro %s: %s" % (macro_name, e))
+
 
 def main():
     module = AnsibleModule(
@@ -195,7 +196,7 @@ def main():
     http_login_user = module.params['http_login_user']
     http_login_password = module.params['http_login_password']
     host_name = module.params['host_name']
-    macro_name  = (module.params['macro_name']).upper()
+    macro_name = (module.params['macro_name']).upper()
     macro_value = module.params['macro_value']
     state = module.params['state']
     timeout = module.params['timeout']
