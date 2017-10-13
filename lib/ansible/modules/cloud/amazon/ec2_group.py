@@ -853,10 +853,7 @@ def main():
             default_egress_rule = 'out--1-None-None-' + group['GroupId'] + '-0.0.0.0/0'
             if default_egress_rule not in groupRules:
                 if not module.check_mode:
-                    ip_permission = [{'IpProtocol': '-1',
-                                      'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
-                                      }
-                                     ]
+                    ip_permission = [{'IpProtocol': '-1', 'IpRanges': [{'CidrIp': '0.0.0.0/0'}]}]
                     try:
                         client.authorize_security_group_egress(GroupId=group['GroupId'], IpPermissions=ip_permission)
                     except botocore.exceptions.ClientError as e:

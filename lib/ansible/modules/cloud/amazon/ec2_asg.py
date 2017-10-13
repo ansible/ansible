@@ -1372,5 +1372,6 @@ def main():
         changed = True
     module.exit_json(changed=changed, **asg_properties)
 
+
 if __name__ == '__main__':
     main()

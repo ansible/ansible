@@ -167,7 +167,7 @@ class ElbManager:
         found = False
         for lb in self.lbs:
             if lb.name == lbtest:
-                found=True
+                found = True
                 break
         return found
 
@@ -208,9 +208,7 @@ class ElbManager:
             elif self._is_instance_state_pending(instance_state):
                 # If it's pending, we'll skip further checks and continue waiting
                 pass
-            elif (awaited_state == 'InService'
-                  and instance_state.reason_code == "Instance"
-                  and time.time() >= wait_timeout):
+            elif (awaited_state == 'InService' and instance_state.reason_code == "Instance" and time.time() >= wait_timeout):
                 # If the reason_code for the instance being out of service is
                 # "Instance" this indicates a failure state, e.g. the instance
                 # has failed a health check or the ELB does not have the
@@ -218,9 +216,7 @@ class ElbManager:
                 # described in InstantState.description.
                 msg = ("The instance %s could not be put in service on %s."
                        " Reason: %s")
-                self.module.fail_json(msg=msg % (self.instance_id,
-                                                 lb,
-                                                 instance_state.description))
+                self.module.fail_json(msg=msg % (self.instance_id, lb, instance_state.description))
             time.sleep(1)
 
     def _is_instance_state_pending(self, instance_state):
@@ -326,7 +322,7 @@ def main():
     argument_spec.update(dict(
         state={'required': True},
         instance_id={'required': True},
-        ec2_elbs={'default': None, 'required': False, 'type':'list'},
+        ec2_elbs={'default': None, 'required': False, 'type': 'list'},
         enable_availability_zone={'default': True, 'required': False, 'type': 'bool'},
         wait={'required': False, 'default': True, 'type': 'bool'},
         wait_timeout={'required': False, 'default': 0, 'type': 'int'}
@@ -359,7 +355,7 @@ def main():
     if ec2_elbs is not None:
         for elb in ec2_elbs:
             if not elb_man.exists(elb):
-                msg="ELB %s does not exist" % elb
+                msg = "ELB %s does not exist" % elb
                 module.fail_json(msg=msg)
 
     if module.params['state'] == 'present':

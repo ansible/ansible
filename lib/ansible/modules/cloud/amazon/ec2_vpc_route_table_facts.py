@@ -75,12 +75,13 @@ def get_route_table_info(route_table):
     for association in route_table.associations:
         associations.append(association.__dict__)
 
-    route_table_info = {'id': route_table.id,
-                        'routes': routes,
-                        'associations': associations,
-                        'tags': route_table.tags,
-                        'vpc_id': route_table.vpc_id
-                        }
+    route_table_info = {
+        'id': route_table.id,
+        'routes': routes,
+        'associations': associations,
+        'tags': route_table.tags,
+        'vpc_id': route_table.vpc_id
+    }
 
     return route_table_info
 

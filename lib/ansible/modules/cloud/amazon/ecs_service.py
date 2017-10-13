@@ -308,13 +308,13 @@ class EcsServiceManager:
             cluster=cluster_name,
             services=[service_name])
         msg = ''
-        if len(response['failures'])>0:
+        if len(response['failures']) > 0:
             c = self.find_in_array(response['failures'], service_name, 'arn')
             msg += ", failure reason is " + c['reason']
-            if c and c['reason']=='MISSING':
+            if c and c['reason'] == 'MISSING':
                 return None
             # fall thru and look through found ones
-        if len(response['services'])>0:
+        if len(response['services']) > 0:
             c = self.find_in_array(response['services'], service_name)
             if c:
                 return c
@@ -426,7 +426,7 @@ def main():
 
         matching = False
         update = False
-        if existing and 'status' in existing and existing['status']=="ACTIVE":
+        if existing and 'status' in existing and existing['status'] == "ACTIVE":
             if service_mgr.is_matching_service(module.params, existing):
                 matching = True
                 results['service'] = service_mgr.jsonize(existing)
@@ -445,17 +445,20 @@ def main():
 
                 if update:
                     # update required
-                    response = service_mgr.update_service(module.params['name'],
+                    response = service_mgr.update_service(
+                        module.params['name'],
                         module.params['cluster'],
                         module.params['task_definition'],
                         loadBalancers,
                         module.params['desired_count'],
                         clientToken,
                         role,
-                        deploymentConfiguration)
+                        deploymentConfiguration
+                    )
                 else:
                     # doesn't exist. create it.
-                    response = service_mgr.create_service(module.params['name'],
+                    response = service_mgr.create_service(
+                        module.params['name'],
                         module.params['cluster'],
                         module.params['task_definition'],
                         loadBalancers,
@@ -464,7 +467,8 @@ def main():
                         role,
                         deploymentConfiguration,
                         module.params['placement_constraints'],
-                        module.params['placement_strategy'])
+                        module.params['placement_strategy']
+                    )
 
                 results['service'] = response
 
@@ -479,7 +483,7 @@ def main():
             del existing['deployments']
             del existing['events']
             results['ansible_facts'] = existing
-            if 'status' in existing and existing['status']=="INACTIVE":
+            if 'status' in existing and existing['status'] == "INACTIVE":
                 results['changed'] = False
             else:
                 if not module.check_mode:

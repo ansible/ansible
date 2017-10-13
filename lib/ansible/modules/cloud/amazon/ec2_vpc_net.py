@@ -154,9 +154,9 @@ def vpc_exists(module, vpc, name, cidr_block, multi):
     matched_vpc = None
 
     try:
-        matching_vpcs=vpc.get_all_vpcs(filters={'tag:Name' : name, 'cidr-block' : cidr_block})
+        matching_vpcs = vpc.get_all_vpcs(filters={'tag:Name': name, 'cidr-block': cidr_block})
     except Exception as e:
-        e_msg=boto_exception(e)
+        e_msg = boto_exception(e)
         module.fail_json(msg=e_msg)
 
     if multi:
@@ -186,7 +186,7 @@ def update_vpc_tags(vpc, module, vpc_obj, tags, name):
         else:
             return False
     except Exception as e:
-        e_msg=boto_exception(e)
+        e_msg = boto_exception(e)
         module.fail_json(msg=e_msg)
 
 
@@ -198,6 +198,7 @@ def update_dhcp_opts(connection, module, vpc_obj, dhcp_id):
         return True
     else:
         return False
+
 
 def get_vpc_values(vpc_obj):
 
@@ -213,20 +214,20 @@ def get_vpc_values(vpc_obj):
     else:
         return None
 
+
 def main():
-    argument_spec=ec2_argument_spec()
+    argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        name = dict(type='str', default=None, required=True),
-        cidr_block = dict(type='str', default=None, required=True),
-        tenancy = dict(choices=['default', 'dedicated'], default='default'),
-        dns_support = dict(type='bool', default=True),
-        dns_hostnames = dict(type='bool', default=True),
-        dhcp_opts_id = dict(type='str', default=None, required=False),
-        tags = dict(type='dict', required=False, default=None, aliases=['resource_tags']),
-        state = dict(choices=['present', 'absent'], default='present'),
-        multi_ok = dict(type='bool', default=False)
-    )
-    )
+        name=dict(type='str', default=None, required=True),
+        cidr_block=dict(type='str', default=None, required=True),
+        tenancy=dict(choices=['default', 'dedicated'], default='default'),
+        dns_support=dict(type='bool', default=True),
+        dns_hostnames=dict(type='bool', default=True),
+        dhcp_opts_id=dict(type='str', default=None, required=False),
+        tags=dict(type='dict', required=False, default=None, aliases=['resource_tags']),
+        state=dict(choices=['present', 'absent'], default='present'),
+        multi_ok=dict(type='bool', default=False)
+    ))
 
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -236,17 +237,17 @@ def main():
     if not HAS_BOTO:
         module.fail_json(msg='boto is required for this module')
 
-    name=module.params.get('name')
-    cidr_block=module.params.get('cidr_block')
-    tenancy=module.params.get('tenancy')
-    dns_support=module.params.get('dns_support')
-    dns_hostnames=module.params.get('dns_hostnames')
-    dhcp_id=module.params.get('dhcp_opts_id')
-    tags=module.params.get('tags')
-    state=module.params.get('state')
-    multi=module.params.get('multi_ok')
+    name = module.params.get('name')
+    cidr_block = module.params.get('cidr_block')
+    tenancy = module.params.get('tenancy')
+    dns_support = module.params.get('dns_support')
+    dns_hostnames = module.params.get('dns_hostnames')
+    dhcp_id = module.params.get('dhcp_opts_id')
+    tags = module.params.get('tags')
+    state = module.params.get('state')
+    multi = module.params.get('multi_ok')
 
-    changed=False
+    changed = False
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module)
 
@@ -298,7 +299,7 @@ def main():
                 connection.modify_vpc_attribute(vpc_obj.id, enable_dns_support=dns_support)
                 connection.modify_vpc_attribute(vpc_obj.id, enable_dns_hostnames=dns_hostnames)
         except BotoServerError as e:
-            e_msg=boto_exception(e)
+            e_msg = boto_exception(e)
             module.fail_json(msg=e_msg)
 
         if not module.check_mode:
@@ -306,7 +307,7 @@ def main():
             try:
                 vpc_obj = connection.get_all_vpcs(vpc_obj.id)[0]
             except BotoServerError as e:
-                e_msg=boto_exception(e)
+                e_msg = boto_exception(e)
                 module.fail_json(msg=e_msg)
 
         module.exit_json(changed=changed, vpc=get_vpc_values(vpc_obj))
@@ -325,7 +326,7 @@ def main():
             except BotoServerError as e:
                 e_msg = boto_exception(e)
                 module.fail_json(msg="%s. You may want to use the ec2_vpc_subnet, ec2_vpc_igw, "
-                "and/or ec2_vpc_route_table modules to ensure the other components are absent." % e_msg)
+                                     "and/or ec2_vpc_route_table modules to ensure the other components are absent." % e_msg)
 
         module.exit_json(changed=changed, vpc=get_vpc_values(vpc_obj))
 

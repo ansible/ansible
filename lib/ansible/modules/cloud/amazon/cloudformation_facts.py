@@ -188,14 +188,14 @@ class CloudFormationServiceManager:
 
     def list_stack_resources(self, stack_name):
         try:
-            func = partial(self.client.list_stack_resources,StackName=stack_name)
+            func = partial(self.client.list_stack_resources, StackName=stack_name)
             return self.paginated_response(func, 'StackResourceSummaries')
         except Exception as e:
             self.module.fail_json(msg="Error listing stack resources - " + str(e), exception=traceback.format_exc())
 
     def describe_stack_events(self, stack_name):
         try:
-            func = partial(self.client.describe_stack_events,StackName=stack_name)
+            func = partial(self.client.describe_stack_events, StackName=stack_name)
             return self.paginated_response(func, 'StackEvents')
         except Exception as e:
             self.module.fail_json(msg="Error describing stack events - " + str(e), exception=traceback.format_exc())
@@ -222,7 +222,7 @@ class CloudFormationServiceManager:
         Returns expanded response for paginated operations.
         The 'result_key' is used to define the concatenated results that are combined from each paginated response.
         '''
-        args=dict()
+        args = dict()
         if next_token:
             args['NextToken'] = next_token
         response = func(**args)
@@ -232,12 +232,14 @@ class CloudFormationServiceManager:
             return result
         return result + self.paginated_response(func, result_key, next_token)
 
+
 def to_dict(items, key, value):
     ''' Transforms a list of items to a Key/Value dictionary '''
     if items:
         return dict(zip([i[key] for i in items], [i[value] for i in items]))
     else:
         return dict()
+
 
 def main():
     argument_spec = ec2_argument_spec()
