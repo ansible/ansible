@@ -166,11 +166,12 @@ def do_grant(kms, keyarn, role_arn, granttypes, mode='grant', dry_run=True, clea
                 # we're granting and we recognize this statement ID.
 
                 if granttype in granttypes:
-                    invalid_entries = list(filter(lambda x: not x.startswith('arn:aws:iam::'), statement['Principal']['AWS']))
+                    invalid_entries = [item for item in statement['Principal']['AWS'] if not item.startswith('arn:aws:iam::')]
                     if clean_invalid_entries and invalid_entries:
                         # we have bad/invalid entries. These are roles that were deleted.
                         # prune the list.
-                        valid_entries = list(filter(lambda x: x.startswith('arn:aws:iam::'), statement['Principal']['AWS']))
+                        valid_entries = [item for item in statement['Principal']['AWS'] if item.startswith('arn:aws:iam::')]
+
                         statement['Principal']['AWS'] = valid_entries
                         had_invalid_entries = True
 
