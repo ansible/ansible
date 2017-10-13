@@ -104,6 +104,8 @@ import json
 import warnings
 warnings.simplefilter('ignore', requests.packages.urllib3.exceptions.SecurityWarning)
 
+from ansible.module_utils.basic import AnsibleModule
+
 
 # ===========================================
 # Icinga2 API class
@@ -133,7 +135,7 @@ class icinga2_api:
     def check_connection(self):
         ret = self.call_url('v1/status')
         if ret['code'] == 200:
-           return True
+            return True
         return False
 
     def exists(self, hostname):
@@ -142,8 +144,8 @@ class icinga2_api:
         }
         ret = self.call_url("v1/objects/hosts", data)
         if ret['code'] == 200:
-           if len(ret['data']['results']) == 1:
-               return True
+            if len(ret['data']['results']) == 1:
+                return True
         return False
 
     def create(self, hostname, data):
@@ -155,7 +157,7 @@ class icinga2_api:
         return ret
 
     def delete(self, hostname):
-        data = { "cascade": 1 }
+        data = {"cascade": 1}
         ret = self.call_url(
             url="v1/objects/hosts/" + hostname,
             data=data,
@@ -221,9 +223,9 @@ def main():
     name = module.params["name"]
     zone = module.params["zone"]
     template = []
-    template.append (name)
+    template.append(name)
     if module.params["template"]:
-        template.append (module.params["template"])
+        template.append(module.params["template"])
     check_command = module.params["check_command"]
     ip = module.params["ip"]
     display_name = module.params["display_name"]
