@@ -5,9 +5,9 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.1'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -42,7 +42,7 @@ options:
     description:
       - port used to connect too the Icinga2
     required: false
-    default: 5665        
+    default: 5665
   user:
     description:
       - the username used to authenticate with
@@ -53,7 +53,7 @@ options:
     required: true
   ssl_ca:
     description:
-      - the CA used for authenticaton 
+      - the CA used for authenticaton
     required: false
     default: None
   state:
@@ -90,14 +90,14 @@ options:
     default: <name>
   ip:
     description:
-      - the ip-addres of the host 
-    required: true     
+      - the ip-addres of the host
+    required: true
   variables:
     description:
       - list of variables
     required: false
     default: None
-    
+
 '''
 
 EXAMPLES = '''
@@ -109,10 +109,11 @@ EXAMPLES = '''
     state: present
     name: "{{ansible_fqdn }}"
     ip_address: "{{ ansible_default_ipv4.address }}"
-    
+
 '''
 
-import requests, json
+import requests
+import json
 import warnings
 warnings.simplefilter('ignore', requests.packages.urllib3.exceptions.SecurityWarning)
 
@@ -181,7 +182,7 @@ class icinga2_api:
             methode="POST"
         )
         return ret
-    
+
     def diff (self, hostname, data):
         ret = self.call_url (
             url="v1/objects/hosts/"+ hostname,
@@ -196,7 +197,7 @@ class icinga2_api:
             elif data['attrs'][key] != ic_data['attrs'][key]:
                 changed = True
         return changed
-    
+
 # ===========================================
 # Module execution.
 #
@@ -240,7 +241,7 @@ def main():
     if not display_name:
       display_name = name
     variables = module.params["variables"]
-    
+
     if not os.path.exists(ssl_ca):
         module.fail_json(msg="SSL ca cert can not be found")
 
@@ -266,7 +267,7 @@ def main():
             'templates': template,
         }
     }
-         
+
     if variables:
         data['attrs']['vars'].upatde(variables)
 
@@ -282,8 +283,7 @@ def main():
                         changed = True
                     else:
                         module.fail_json(msg="bad return code deleting host: %s" % (ret['data']))
-                except Exception:
-                    e = get_exception()
+                except Exception as e:
                     module.fail_json(msg="exception deleting host: " + str(e))
                 module.exit_json(changed=changed, name=name, data=data)
 
@@ -294,7 +294,7 @@ def main():
             if ret['code'] == 200:
                 changed = True
             else:
-                module.fail_json(msg="bad return code modifying host: %s" % (ret['data']))        
+                module.fail_json(msg="bad return code modifying host: %s" % (ret['data']))
 
         module.exit_json(changed=changed, name=name, data=data)
 
@@ -319,12 +319,11 @@ def main():
             if ret['code'] == 200:
                 changed = True
             else:
-                module.fail_json(msg="bad return code modifying host: %s" % (ret['data']))        
+                module.fail_json(msg="bad return code modifying host: %s" % (ret['data']))
 
         module.exit_json(changed=changed, name=name, data=data)
 
 
 # import module snippets
-from ansible.module_utils.basic import *
 if __name__ == '__main__':
     main()
