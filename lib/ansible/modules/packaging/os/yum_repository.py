@@ -74,7 +74,7 @@ options:
         not used. Use C(0) to turn off delta rpm processing. Local repositories
         (with file:// I(baseurl)) have delta rpms turned off by default.
   description:
-    required: false
+    required: true
     default: null
     description:
       - A human readable string describing the repository.
