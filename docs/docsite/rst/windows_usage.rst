@@ -80,10 +80,9 @@ access to components restricted by WinRM. The best method to bypass these
 issues is to use ``become`` with the task. With ``become``, Ansible will run
 the installer as if it were run interactively on the host.
 
-.. Note:: Many installers do not properly pass back error information over WinRM. In these cases, if the install has been verified to work locally the recommended method is to use become.
+.. Note:: Many installers do not properly pass back error information over WinRM. In these cases, if the install has been  verified to work locally the recommended method is to use become.
 
-.. Note:: Some installers restart the WinRM or HTTP services, or cause them to become temporarily unavailable, making
-Ansible assume the system is unreachable.
+.. Note:: Some installers restart the WinRM or HTTP services, or cause them to become temporarily unavailable, making Ansible assume the system is unreachable.
 
 Installing Updates
 ------------------
