@@ -297,7 +297,7 @@ def create_stack(module, stack_params, cfn):
     # 'disablerollback' and 'EnableTerminationProtection' only
     # apply on creation, not update.
     stack_params['DisableRollback'] = module.params['disable_rollback']
-    stack_params['EnableTerminationProtection'] = bool(module.params['termination_protection'])
+    stack_params['EnableTerminationProtection'] = bool(module.params.get('termination_protection'))
 
     try:
         cfn.create_stack(**stack_params)
@@ -589,8 +589,8 @@ def main():
             result = create_stack(module, stack_params, cfn)
         elif module.params.get('create_changeset'):
             result = create_changeset(module, stack_params, cfn)
-        elif module.params['termination_protection'] is not None:
-            update_termination_protection(module, cfn, stack_params['StackName'], module.params['termination_protection'])
+        elif module.params.get('termination_protection') is not None:
+            update_termination_protection(module, cfn, stack_params['StackName'], bool(module.params.get('termination_protection')))
         else:
             result = update_stack(module, stack_params, cfn)
 
