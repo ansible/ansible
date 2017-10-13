@@ -70,7 +70,7 @@ class KeycloakAPI(object):
                    'password': self.module.params.get('auth_password')}
 
         # Remove empty items, for instance missing client_secret
-        payload = {k: v for k, v in payload.items() if v is not None}
+        payload = dict((k, v) for k, v in payload.items() if v is not None)
 
         try:
             r = json.load(open_url(auth_url, method='POST',
