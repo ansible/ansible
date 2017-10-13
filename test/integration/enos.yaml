@@ -1,0 +1,11 @@
+- hosts: enos
+  gather_facts: no
+  connection: local
+
+  vars:
+    limit_to: "*"
+    debug: false
+
+  roles:
+        - { role: enos_facts, when: "limit_to in ['*', 'enos_facts']" }
+
