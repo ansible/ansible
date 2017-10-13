@@ -41,8 +41,10 @@ URL_CLIENTS = "{url}/admin/realms/{realm}/clients"
 URL_CLIENT_ROLES = "{url}/admin/realms/{realm}/clients/{id}/roles"
 URL_REALM_ROLES = "{url}/admin/realms/{realm}/roles"
 
+
 def camel(words):
     return words.split('_')[0] + ''.join(x.capitalize() or '_' for x in words.split('_')[1:])
+
 
 class KeycloakAPI(object):
     """ Keycloak API access; Keycloak uses OAuth 2.0 to protect its API, an access token for which
@@ -52,7 +54,6 @@ class KeycloakAPI(object):
         self.module = module
         self.token = None
         self._connect()
-
 
     def _connect(self):
         """ Obtains an access_token and saves it for use in API accesses
@@ -86,7 +87,6 @@ class KeycloakAPI(object):
         else:
             self.module.fail_json(msg='Could not obtain access token from %s' % auth_url)
 
-
     def get_clients(self, realm='master', filter=None):
         """ Obtains client representations for clients in a realm
 
@@ -105,7 +105,6 @@ class KeycloakAPI(object):
             self.module.fail_json(msg='Could not obtain list of clients for realm %s: %s'
                                       % (realm, str(e)))
 
-
     def get_client_by_clientid(self, client_id, realm='master'):
         """ Get client representation by clientId
         :param client_id: The clientId to be queried
@@ -117,7 +116,6 @@ class KeycloakAPI(object):
             return r[0]
         else:
             return None
-
 
     def get_client_by_id(self, id, realm='master'):
         """ Obtain client representatio by id
@@ -142,7 +140,6 @@ class KeycloakAPI(object):
             self.module.fail_json(msg='Could not obtain client %s for realm %s: %s'
                                       % (id, realm, str(e)))
 
-
     def update_client(self, id, clientrep, realm="master"):
         """ Update an existing client
         :param id: id (not clientId) of client to be updated in Keycloak
@@ -159,7 +156,6 @@ class KeycloakAPI(object):
             self.module.fail_json(msg='Could not update client %s in realm %s: %s'
                                       % (id, realm, str(e)))
 
-
     def create_client(self, clientrep, realm="master"):
         """ Create a client in keycloak
         :param clientrep: Client representation of client to be created. Must at least contain field clientId
@@ -174,7 +170,6 @@ class KeycloakAPI(object):
         except Exception as e:
             self.module.fail_json(msg='Could not create client %s in realm %s: %s'
                                       % (clientrep['clientId'], realm, str(e)))
-
 
     def delete_client(self, id, realm="master"):
         """ Delete a client from Keycloak

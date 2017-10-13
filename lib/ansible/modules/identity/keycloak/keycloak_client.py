@@ -245,7 +245,7 @@ options:
 
 extends_documentation_fragment:
     - keycloak
-    
+
 author:
     - Eike Frost (@eikef)
 '''
