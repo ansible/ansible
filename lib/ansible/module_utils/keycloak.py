@@ -132,7 +132,7 @@ class KeycloakAPI(object):
 
         except HTTPError as e:
             if e.code == 404:
-              return None
+                return None
             else:
                 self.module.fail_json(msg='Could not obtain client %s for realm %s: %s'
                                           % (id, realm, str(e)))
