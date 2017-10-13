@@ -105,6 +105,7 @@ statement_label = {
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import boto_exception
+from ansible.module_utils.six import string_types
 
 # import a class, we'll use a fully qualified path
 import ansible.module_utils.ec2
@@ -159,9 +160,9 @@ def do_grant(kms, keyarn, role_arn, granttypes, mode='grant', dry_run=True, clea
             if not isinstance(statement.get('Principal'), dict):
                 statement['Principal'] = dict()
 
-            if 'AWS' in statement['Principal'] and isinstance(statement['Principal']['AWS'], str):
+            if 'AWS' in statement['Principal'] and isinstance(statement['Principal']['AWS'], string_types):
                 # convert to list
-                statement['Principal']['AWS'] = list(statement['Principal']['AWS'])
+                statement['Principal']['AWS'] = [statement['Principal']['AWS']]
             if not isinstance(statement['Principal'].get('AWS'), list):
                 statement['Principal']['AWS'] = list()
 
