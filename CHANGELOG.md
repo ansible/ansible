@@ -27,8 +27,13 @@ Ansible Changes By Release
   `ansible_diff_mode`, `ansible_inventory_sources`, `ansible_limit`, `ansible_run_tags` , `ansible_forks` and `ansible_skip_tags`
 * Updated the bundled copy of the six library to 1.11.0
 * Added support to `become` `NT AUTHORITY\System`, `NT AUTHORITY\LocalService`, and `NT AUTHORITY\NetworkService` on Windows hosts
+* Added `aws_ssm` lookup plugin
 
 ### New Modules
+
+#### Cloud
+
+  * aws_ssm_parameter_store
 
 #### Windows
 
