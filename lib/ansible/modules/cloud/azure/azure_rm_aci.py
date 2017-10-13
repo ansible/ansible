@@ -286,25 +286,25 @@ def create_vm_diagnostics_instance(vmdiag):
     )
 
 
-def create_acs_dict(acs):
+def create_aci_dict(aci):
     '''
     Helper method to deserialize a ContainerService to a dict
     :param: acs: ContainerService or AzureOperationPoller with the Azure callback object
     :return: dict with the state on Azure
     '''
     results = dict(
-        id=acs.id,
-        name=acs.name,
-        location=acs.location,
-        tags=acs.tags,
-        orchestrator_profile=create_orchestrator_profile_dict(acs.orchestrator_profile),
-        master_profile=create_master_profile_dict(acs.master_profile),
-        linux_profile=create_linux_profile_dict(acs.linux_profile),
-        service_principal_profile=acs.service_principal_profile,
-        diagnostics_profile=create_diagnotstics_profile_dict(acs.diagnostics_profile),
-        provisioning_state=acs.provisioning_state,
-        agent_pool_profiles=create_agent_pool_profiles_dict(acs.agent_pool_profiles),
-        type=acs.type
+        id=aci.id,
+        name=aci.name,
+        tags=aci.tags,
+        location=aci.location,
+        type=aci.type,
+        ip_address=aci.ip_address,
+        restart_policy=aci.restart_policy,
+        state=aci.state,
+        provisioning_state=aci.provisioning_state,
+        image_registry_credentials=aci.image_registry_credentials,
+        volumes=aci.volumes,
+        os_type=aci.os_type
     )
     return results
 
@@ -452,7 +452,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
             if self.check_mode:
                 return self.results
 
-            self.results['state'] = self.create_update_acs()
+            self.results['state'] = self.create_update_aci()
             self.results['changed'] = True
 
             self.log("Creation / Update done")
@@ -462,7 +462,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
 
         return self.results
 
-    def create_update_acs(self):
+    def create_update_aci(self):
         '''
         Creates or updates a container service with the specified configuration of orchestrator, masters, and agents.
 
@@ -486,7 +486,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         except CloudError as exc:
             self.log('Error attempting to create the container instance.')
             self.fail("Error creating the ACS instance: {0}".format(str(exc)))
-        return response
+        return create_aci_dict(response)
 
     def delete_acs(self):
         '''
