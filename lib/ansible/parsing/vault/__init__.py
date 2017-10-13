@@ -303,14 +303,33 @@ class PromptVaultSecret(VaultSecret):
             raise AnsibleError("Passwords do not match")
 
 
-def get_file_vault_secret(filename=None, vault_id_name=None, encoding=None, loader=None):
+def script_is_client(filename):
+    '''Determine if a vault secret script is a client script that can be given --vault-id args'''
+
+    # if password script is 'something-client' or 'something-client.[sh|py|rb|etc]'
+    # script_name can still have '.' or could be entire filename if there is no ext
+    script_name, dummy = os.path.splitext(filename)
+
+    # TODO: for now, this is entirely based on filename
+    if script_name.endswith('-client'):
+        return True
+
+    return False
+
+
+def get_file_vault_secret(filename=None, vault_id=None, encoding=None, loader=None):
     this_path = os.path.realpath(os.path.expanduser(filename))
 
     if not os.path.exists(this_path):
         raise AnsibleError("The vault password file %s was not found" % this_path)
 
     if loader.is_executable(this_path):
-        # TODO: pass vault_id_name to script via cli
+        if script_is_client(filename):
+            display.vvvv('The vault password file %s is a client script.' % filename)
+            # TODO: pass vault_id_name to script via cli
+            return ClientScriptVaultSecret(filename=this_path, vault_id=vault_id,
+                                           encoding=encoding, loader=loader)
+        # just a plain vault password script. No args, returns a byte array
         return ScriptVaultSecret(filename=this_path, encoding=encoding, loader=loader)
 
     return FileVaultSecret(filename=this_path, encoding=encoding, loader=loader)
@@ -370,25 +389,89 @@ class ScriptVaultSecret(FileVaultSecret):
         if not self.loader.is_executable(filename):
             raise AnsibleVaultError("The vault password script %s was not executable" % filename)
 
+        command = self._build_command()
+
+        stdout, stderr, p = self._run(command)
+
+        self._check_results(stdout, stderr, p)
+
+        vault_pass = stdout.strip(b'\r\n')
+
+        empty_password_msg = 'Invalid vault password was provided from script (%s)' % filename
+        verify_secret_is_not_empty(vault_pass,
+                                   msg=empty_password_msg)
+
+        return vault_pass
+
+    def _run(self, command):
         try:
             # STDERR not captured to make it easier for users to prompt for input in their scripts
-            p = subprocess.Popen(filename, stdout=subprocess.PIPE)
+            p = subprocess.Popen(command, stdout=subprocess.PIPE)
         except OSError as e:
             msg_format = "Problem running vault password script %s (%s)." \
                 " If this is not a script, remove the executable bit from the file."
-            msg = msg_format % (filename, e)
+            msg = msg_format % (self.filename, e)
 
             raise AnsibleError(msg)
 
         stdout, stderr = p.communicate()
+        return stdout, stderr, p
 
-        if p.returncode != 0:
-            raise AnsibleError("Vault password script %s returned non-zero (%s): %s" % (filename, p.returncode, stderr))
+    def _check_results(self, stdout, stderr, popen):
+        if popen.returncode != 0:
+            raise AnsibleError("Vault password script %s returned non-zero (%s): %s" %
+                               (self.filename, popen.returncode, stderr))
 
-        vault_pass = stdout.strip(b'\r\n')
-        verify_secret_is_not_empty(vault_pass,
-                                   msg='Invalid vault password was provided from script (%s)' % filename)
-        return vault_pass
+    def _build_command(self):
+        return [self.filename]
+
+
+class ClientScriptVaultSecret(ScriptVaultSecret):
+    VAULT_ID_UNKNOWN_RC = 2
+
+    def __init__(self, filename=None, encoding=None, loader=None, vault_id=None):
+        super(ClientScriptVaultSecret, self).__init__(filename=filename,
+                                                      encoding=encoding,
+                                                      loader=loader)
+        self._vault_id = vault_id
+        display.vvvv('Executing vault password client script: %s --vault-id=%s' % (filename, vault_id))
+
+    def _run(self, command):
+        try:
+            p = subprocess.Popen(command,
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE)
+        except OSError as e:
+            msg_format = "Problem running vault password client script %s (%s)." \
+                " If this is not a script, remove the executable bit from the file."
+            msg = msg_format % (self.filename, e)
+
+            raise AnsibleError(msg)
+
+        stdout, stderr = p.communicate()
+        return stdout, stderr, p
+
+    def _check_results(self, stdout, stderr, popen):
+        if popen.returncode == self.VAULT_ID_UNKNOWN_RC:
+            raise AnsibleError('Vault password client script %s did not find a secret for vault-id=%s: %s' %
+                               (self.filename, self._vault_id, stderr))
+
+        if popen.returncode != 0:
+            raise AnsibleError("Vault password client script %s returned non-zero (%s) when getting secret for vault-id=%s: %s" %
+                               (self.filename, popen.returncode, self._vault_id, stderr))
+
+    def _build_command(self):
+        command = [self.filename]
+        if self._vault_id:
+            command.extend(['--vault-id', self._vault_id])
+
+        return command
+
+    def __repr__(self):
+        if self.filename:
+            return "%s(filename='%s', vault_id='%s')" % \
+                (self.__class__.__name__, self.filename, self._vault_id)
+        return "%s()" % (self.__class__.__name__)
 
 
 def match_secrets(secrets, target_vault_ids):

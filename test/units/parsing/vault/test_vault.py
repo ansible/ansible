@@ -233,6 +233,43 @@ class TestScriptVaultSecret(unittest.TestCase):
                                     secret.load)
 
 
+class TestScriptIsClient(unittest.TestCase):
+    def test_randomname(self):
+        filename = 'randomname'
+        res = vault.script_is_client(filename)
+        self.assertFalse(res)
+
+    def test_something_dash_client(self):
+        filename = 'something-client'
+        res = vault.script_is_client(filename)
+        self.assertTrue(res)
+
+    def test_something_dash_client_somethingelse(self):
+        filename = 'something-client-somethingelse'
+        res = vault.script_is_client(filename)
+        self.assertFalse(res)
+
+    def test_something_dash_client_py(self):
+        filename = 'something-client.py'
+        res = vault.script_is_client(filename)
+        self.assertTrue(res)
+
+    def test_full_path_something_dash_client_py(self):
+        filename = '/foo/bar/something-client.py'
+        res = vault.script_is_client(filename)
+        self.assertTrue(res)
+
+    def test_full_path_something_dash_client(self):
+        filename = '/foo/bar/something-client'
+        res = vault.script_is_client(filename)
+        self.assertTrue(res)
+
+    def test_full_path_something_dash_client_in_dir(self):
+        filename = '/foo/bar/something-client/but/not/filename'
+        res = vault.script_is_client(filename)
+        self.assertFalse(res)
+
+
 class TestGetFileVaultSecret(unittest.TestCase):
     def test_file(self):
         password = 'some password'
