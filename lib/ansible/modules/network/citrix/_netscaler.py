@@ -133,7 +133,7 @@ class netscaler(object):
         auth = base64.encodestring('%s:%s' % (self._nsc_user, self._nsc_pass)).replace('\n', '').strip()
         headers = {
             'Authorization': 'Basic %s' % auth,
-            'Content-Type' : 'application/x-www-form-urlencoded',
+            'Content-Type': 'application/x-www-form-urlencoded',
         }
 
         response, info = fetch_url(self.module, request_url, data=data_json, headers=headers)
@@ -173,14 +173,14 @@ def core(module):
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-            nsc_host = dict(required=True),
-            nsc_protocol = dict(default='https'),
-            user = dict(required=True),
-            password = dict(required=True, no_log=True),
-            action = dict(default='enable', choices=['enable','disable']),
-            name = dict(default=socket.gethostname()),
-            type = dict(default='server', choices=['service', 'server']),
+        argument_spec=dict(
+            nsc_host=dict(required=True),
+            nsc_protocol=dict(default='https'),
+            user=dict(required=True),
+            password=dict(required=True, no_log=True),
+            action=dict(default='enable', choices=['enable', 'disable']),
+            name=dict(default=socket.gethostname()),
+            type=dict(default='server', choices=['service', 'server']),
             validate_certs=dict(default='yes', type='bool'),
         )
     )

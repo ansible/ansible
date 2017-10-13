@@ -234,27 +234,27 @@ from ansible.module_utils.basic import AnsibleModule
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            state     = dict(default=None,  choices=['enabled', 'disabled', 'reloaded', 'reset']),
-            default   = dict(default=None,  aliases=['policy'], choices=['allow', 'deny', 'reject']),
-            logging   = dict(default=None,  choices=['on', 'off', 'low', 'medium', 'high', 'full']),
-            direction = dict(default=None,  choices=['in', 'incoming', 'out', 'outgoing', 'routed']),
-            delete    = dict(default=False, type='bool'),
-            route     = dict(default=False, type='bool'),
-            insert    = dict(default=None),
-            rule      = dict(default=None,  choices=['allow', 'deny', 'reject', 'limit']),
-            interface = dict(default=None,  aliases=['if']),
-            log       = dict(default=False, type='bool'),
-            from_ip   = dict(default='any', aliases=['src', 'from']),
-            from_port = dict(default=None),
-            to_ip     = dict(default='any', aliases=['dest', 'to']),
-            to_port   = dict(default=None,  aliases=['port']),
-            proto     = dict(default=None,  aliases=['protocol'], choices=['any', 'tcp', 'udp', 'ipv6', 'esp', 'ah']),
-            app       = dict(default=None,  aliases=['name']),
-            comment   = dict(default=None, type='str')
+        argument_spec=dict(
+            state=dict(default=None, choices=['enabled', 'disabled', 'reloaded', 'reset']),
+            default=dict(default=None, aliases=['policy'], choices=['allow', 'deny', 'reject']),
+            logging=dict(default=None, choices=['on', 'off', 'low', 'medium', 'high', 'full']),
+            direction=dict(default=None, choices=['in', 'incoming', 'out', 'outgoing', 'routed']),
+            delete=dict(default=False, type='bool'),
+            route=dict(default=False, type='bool'),
+            insert=dict(default=None),
+            rule=dict(default=None, choices=['allow', 'deny', 'reject', 'limit']),
+            interface=dict(default=None, aliases=['if']),
+            log=dict(default=False, type='bool'),
+            from_ip=dict(default='any', aliases=['src', 'from']),
+            from_port=dict(default=None),
+            to_ip=dict(default='any', aliases=['dest', 'to']),
+            to_port=dict(default=None, aliases=['port']),
+            proto=dict(default=None, aliases=['protocol'], choices=['any', 'tcp', 'udp', 'ipv6', 'esp', 'ah']),
+            app=dict(default=None, aliases=['name']),
+            comment=dict(default=None, type='str')
         ),
-        supports_check_mode = True,
-        mutually_exclusive = [['app', 'proto', 'logging']]
+        supports_check_mode=True,
+        mutually_exclusive=[['app', 'proto', 'logging']]
     )
 
     cmds = []
@@ -289,7 +289,7 @@ def main():
         # Convert version to numbers
         major = int(matches.group(1))
         minor = int(matches.group(2))
-        rev   = 0
+        rev = 0
         if matches.group(3) is not None:
             rev = int(matches.group(3))
 
@@ -304,7 +304,7 @@ def main():
     if len(commands) < 1:
         module.fail_json(msg="Not any of the command arguments %s given" % commands)
 
-    if(params['interface'] is not None and params['direction'] is None):
+    if params['interface'] is not None and params['direction'] is None:
         module.fail_json(msg="Direction must be specified when creating a rule on an interface")
 
     # Ensure ufw is available
@@ -319,8 +319,8 @@ def main():
         cmd = [[ufw_bin], [module.check_mode, '--dry-run']]
 
         if command == 'state':
-            states = { 'enabled': 'enable',  'disabled': 'disable',
-                       'reloaded': 'reload', 'reset': 'reset' }
+            states = {'enabled': 'enable', 'disabled': 'disable',
+                      'reloaded': 'reload', 'reset': 'reset'}
             execute(cmd + [['-f'], [states[value]]])
 
         elif command == 'logging':
@@ -343,9 +343,9 @@ def main():
             cmd.append([params['interface'], "on %s" % params['interface']])
             cmd.append([module.boolean(params['log']), 'log'])
 
-            for (key, template) in [('from_ip',   "from %s" ), ('from_port', "port %s" ),
-                                    ('to_ip',     "to %s"   ), ('to_port',   "port %s" ),
-                                    ('proto',     "proto %s"), ('app',       "app '%s'")]:
+            for (key, template) in [('from_ip', "from %s"), ('from_port', "port %s"),
+                                    ('to_ip', "to %s"), ('to_port', "port %s"),
+                                    ('proto', "proto %s"), ('app', "app '%s'")]:
 
                 value = params[key]
                 cmd.append([value, template % (value)])

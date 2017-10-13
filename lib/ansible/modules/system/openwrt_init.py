@@ -85,6 +85,7 @@ from ansible.module_utils._text import to_bytes, to_native
 module = None
 init_script = None
 
+
 # ===============================
 # Check if service is enabled
 def is_enabled():
@@ -94,21 +95,21 @@ def is_enabled():
     return False
 
 # ===========================================
-# Main control flow
+
 
 def main():
     global module, init_script
     # init
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(required=True, type='str', aliases=['service']),
-            state = dict(choices=['started', 'stopped', 'restarted', 'reloaded'], type='str'),
-            enabled = dict(type='bool'),
-            pattern = dict(required=False, default=None),
+        argument_spec=dict(
+            name=dict(required=True, type='str', aliases=['service']),
+            state=dict(choices=['started', 'stopped', 'restarted', 'reloaded'], type='str'),
+            enabled=dict(type='bool'),
+            pattern=dict(required=False, default=None),
         ),
         supports_check_mode=True,
         required_one_of=[['state', 'enabled']],
-        )
+    )
 
     # initialize
     service = module.params['name']
@@ -116,7 +117,7 @@ def main():
     rc = 0
     out = err = ''
     result = {
-        'name':  service,
+        'name': service,
         'changed': False,
     }
 
@@ -164,7 +165,7 @@ def main():
             if rc == 0:
                 lines = psout.split("\n")
                 for line in lines:
-                    if module.params['pattern'] in line and not "pattern=" in line:
+                    if module.params['pattern'] in line and "pattern=" not in line:
                         # so as to not confuse ./hacking/test-module
                         running = True
                         break
@@ -187,7 +188,7 @@ def main():
                 action = 'stop'
                 result['changed'] = True
         else:
-            action = module.params['state'][:-2] # remove 'ed' from restarted/reloaded
+            action = module.params['state'][:-2]  # remove 'ed' from restarted/reloaded
             result['state'] = 'started'
             result['changed'] = True
 
@@ -197,8 +198,8 @@ def main():
                 if rc != 0:
                     module.fail_json(msg="Unable to %s service %s: %s" % (action, service, err))
 
-
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

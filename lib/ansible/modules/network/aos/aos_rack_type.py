@@ -130,6 +130,7 @@ import json
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.aos import get_aos_session, find_collection_item, do_load_resource, check_aos_version, content_to_dict
 
+
 #########################################################
 # State Processing
 #########################################################
@@ -151,10 +152,11 @@ def rack_type_absent(module, aos, my_rack_type):
         except:
             module.fail_json(msg="An error occurred, while trying to delete the Rack Type")
 
-    module.exit_json( changed=True,
-                      name=my_rack_type.name,
-                      id=my_rack_type.id,
-                      value={} )
+    module.exit_json(changed=True,
+                     name=my_rack_type.name,
+                     id=my_rack_type.id,
+                     value={})
+
 
 def rack_type_present(module, aos, my_rack_type):
 
@@ -171,10 +173,11 @@ def rack_type_present(module, aos, my_rack_type):
     if my_rack_type.exists is False and 'content' not in margs.keys():
         module.fail_json(msg="'content' is mandatory for module that don't exist currently")
 
-    module.exit_json( changed=False,
-                      name=my_rack_type.name,
-                      id=my_rack_type.id,
-                      value=my_rack_type.value )
+    module.exit_json(changed=False,
+                     name=my_rack_type.name,
+                     id=my_rack_type.id,
+                     value=my_rack_type.value)
+
 
 #########################################################
 # Main Function
@@ -193,7 +196,7 @@ def rack_type(module):
 
     if margs['content'] is not None:
 
-        content = content_to_dict(module, margs['content'] )
+        content = content_to_dict(module, margs['content'])
 
         if 'display_name' in content.keys():
             item_name = content['display_name']
@@ -206,16 +209,16 @@ def rack_type(module):
     elif margs['id'] is not None:
         item_id = margs['id']
 
-    #----------------------------------------------------
+    # ----------------------------------------------------
     # Find Object if available based on ID or Name
-    #----------------------------------------------------
+    # ----------------------------------------------------
     my_rack_type = find_collection_item(aos.RackTypes,
-                                          item_name=item_name,
-                                          item_id=item_id)
+                                        item_name=item_name,
+                                        item_id=item_id)
 
-    #----------------------------------------------------
+    # ----------------------------------------------------
     # Proceed based on State value
-    #----------------------------------------------------
+    # ----------------------------------------------------
     if margs['state'] == 'absent':
 
         rack_type_absent(module, aos, my_rack_type)
@@ -224,18 +227,19 @@ def rack_type(module):
 
         rack_type_present(module, aos, my_rack_type)
 
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
             session=dict(required=True, type="dict"),
-            name=dict(required=False ),
-            id=dict(required=False ),
+            name=dict(required=False),
+            id=dict(required=False),
             content=dict(required=False, type="json"),
-            state=dict( required=False,
-                        choices=['present', 'absent'],
-                        default="present")
+            state=dict(required=False,
+                       choices=['present', 'absent'],
+                       default="present")
         ),
-        mutually_exclusive = [('name', 'id', 'content')],
+        mutually_exclusive=[('name', 'id', 'content')],
         required_one_of=[('name', 'id', 'content')],
         supports_check_mode=True
     )
@@ -244,6 +248,7 @@ def main():
     check_aos_version(module, '0.6.0')
 
     rack_type(module)
+
 
 if __name__ == "__main__":
     main()

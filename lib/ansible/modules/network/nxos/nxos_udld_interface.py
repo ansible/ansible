@@ -237,7 +237,7 @@ def get_commands_remove_udld_interface2(delta, interface, module, existing):
 def main():
     argument_spec = dict(
         mode=dict(choices=['enabled', 'disabled', 'aggressive'],
-                      required=True),
+                  required=True),
         interface=dict(type='str', required=True),
         state=dict(choices=['absent', 'present'], default='present'),
     )
@@ -245,7 +245,7 @@ def main():
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
-                                supports_check_mode=True)
+                           supports_check_mode=True)
 
     warnings = list()
     check_args(module, warnings)
@@ -265,14 +265,14 @@ def main():
     if state == 'present':
         if delta:
             command = get_commands_config_udld_interface1(delta, interface,
-                                                         module, existing)
+                                                          module, existing)
             commands.append(command)
     elif state == 'absent':
         common = set(proposed.items()).intersection(existing.items())
         if common:
             command = get_commands_remove_udld_interface1(
                 dict(common), interface, module, existing
-                )
+            )
             commands.append(command)
 
     cmds = flatten_list(commands)
@@ -297,11 +297,11 @@ def main():
                         commands = []
                         if state == 'present':
                             command = get_commands_config_udld_interface2(delta, interface,
-                                                                         module, existing)
+                                                                          module, existing)
                         elif state == 'absent':
                             command = get_commands_remove_udld_interface2(
                                 dict(common), interface, module, existing
-                                )
+                            )
                         commands.append(command)
 
                         cmds = flatten_list(commands)

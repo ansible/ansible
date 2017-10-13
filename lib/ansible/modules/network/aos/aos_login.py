@@ -91,6 +91,7 @@ try:
 except ImportError:
     HAS_AOS_PYEZ = False
 
+
 def aos_login(module):
 
     mod_args = module.params
@@ -111,6 +112,7 @@ def aos_login(module):
                      ansible_facts=dict(aos_session=aos.session),
                      aos_session=dict(aos_session=aos.session))
 
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -127,6 +129,7 @@ def main():
     check_aos_version(module, '0.6.1')
 
     aos_login(module)
+
 
 if __name__ == '__main__':
     main()

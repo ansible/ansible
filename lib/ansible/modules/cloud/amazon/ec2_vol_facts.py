@@ -92,11 +92,12 @@ def get_volume_info(volume):
             'device': attachment.device,
             'instance_id': attachment.instance_id,
             'status': attachment.status
-            },
+        },
         'tags': volume.tags
-        }
+    }
 
     return volume_info
+
 
 def list_ec2_volumes(connection, module):
 
@@ -116,11 +117,7 @@ def list_ec2_volumes(connection, module):
 
 def main():
     argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            filters = dict(default=None, type='dict')
-        )
-    )
+    argument_spec.update(dict(filters=dict(default=None, type='dict')))
 
     module = AnsibleModule(argument_spec=argument_spec)
 

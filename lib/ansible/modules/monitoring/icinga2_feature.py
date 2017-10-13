@@ -103,7 +103,7 @@ class Icinga2FeatureHelper:
                 change_applied = True
             # RC is not 0 for this already disabled feature, handle it as no change applied
             elif re.search("Cannot disable feature '%s'. Target file .* does not exist"
-                                             % self.module.params["name"]):
+                           % self.module.params["name"]):
                 change_applied = False
             else:
                 self.module.fail_json(msg="Fail to disable feature. Command returns %s" % out)
@@ -122,6 +122,7 @@ def main():
 
     module.run_command_environ_update = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C', LC_CTYPE='C')
     Icinga2FeatureHelper(module).manage()
+
 
 if __name__ == '__main__':
     main()

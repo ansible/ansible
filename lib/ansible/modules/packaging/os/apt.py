@@ -335,7 +335,7 @@ def package_status(m, pkgname, version, cache, state):
         # state fields not directly accessible from the
         # higher-level apt.package.Package object.
         pkg = cache[pkgname]
-        ll_pkg = cache._cache[pkgname] # the low-level package object
+        ll_pkg = cache._cache[pkgname]  # the low-level package object
     except KeyError:
         if state == 'install':
             try:
@@ -366,7 +366,7 @@ def package_status(m, pkgname, version, cache, state):
 
     try:
         package_is_installed = ll_pkg.current_state == apt_pkg.CURSTATE_INSTALLED
-    except AttributeError: # python-apt 0.7.X has very weak low-level object
+    except AttributeError:  # python-apt 0.7.X has very weak low-level object
         try:
             # might not be necessary as python-apt post-0.7.X should have current_state property
             package_is_installed = pkg.is_installed
@@ -618,7 +618,7 @@ def install_deb(m, debs, cache, force, install_recommends, allow_unauthenticated
         changed = retvals.get('changed', False)
 
     if pkgs_to_install:
-        options = ' '.join(["--%s"% x for x in dpkg_options.split(",")])
+        options = ' '.join(["--%s" % x for x in dpkg_options.split(",")])
         if m.check_mode:
             options += " --simulate"
         if force:
@@ -806,7 +806,7 @@ def download(module, deb):
             data = to_bytes(data, errors='surrogate_or_strict')
 
             if len(data) < 1:
-                break # End of file, break while loop
+                break  # End of file, break while loop
 
             f.write(data)
         f.close()

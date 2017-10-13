@@ -135,11 +135,12 @@ def sensu_subscription(module, path, name, state='present', backup=False):
 
 
 def main():
-    arg_spec = {'name':   {'type': 'str', 'required': True},
-                'path':   {'type': 'str', 'default': '/etc/sensu/conf.d/subscriptions.json'},
-                'state':  {'type': 'str', 'default': 'present', 'choices': ['present', 'absent']},
-                'backup': {'type': 'bool', 'default': 'no'},
-                }
+    arg_spec = {
+        'name': {'type': 'str', 'required': True},
+        'path': {'type': 'str', 'default': '/etc/sensu/conf.d/subscriptions.json'},
+        'state': {'type': 'str', 'default': 'present', 'choices': ['present', 'absent']},
+        'backup': {'type': 'bool', 'default': 'no'},
+    }
 
     module = AnsibleModule(argument_spec=arg_spec,
                            supports_check_mode=True)

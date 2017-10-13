@@ -167,6 +167,7 @@ import json
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.aos import get_aos_session, find_collection_item, do_load_resource, check_aos_version, content_to_dict
 
+
 def get_list_of_subnets(ip_pool):
     subnets = []
 
@@ -174,6 +175,7 @@ def get_list_of_subnets(ip_pool):
         subnets.append(subnet['network'])
 
     return subnets
+
 
 def create_new_ip_pool(ip_pool, name, subnets):
 
@@ -184,8 +186,9 @@ def create_new_ip_pool(ip_pool, name, subnets):
 
     ip_pool.datum = datum
 
-    ## Write to AOS
+    # Write to AOS
     return ip_pool.write()
+
 
 #########################################################
 # State Processing
@@ -198,7 +201,7 @@ def ip_pool_absent(module, aos, my_pool):
     if my_pool.exists is False:
         module.exit_json(changed=False, name=margs['name'], id='', value={})
 
-    ## Check if object is currently in Use or Not
+    # Check if object is currently in Use or Not
     # If in Use, return an error
     if my_pool.value:
         if my_pool.value['status'] != 'not_in_use':
@@ -213,10 +216,11 @@ def ip_pool_absent(module, aos, my_pool):
         except:
             module.fail_json(msg="An error occurred, while trying to delete the IP Pool")
 
-    module.exit_json( changed=True,
-                      name=my_pool.name,
-                      id=my_pool.id,
-                      value={} )
+    module.exit_json(changed=True,
+                     name=my_pool.name,
+                     id=my_pool.id,
+                     value={})
+
 
 def ip_pool_present(module, aos, my_pool):
 
@@ -248,20 +252,21 @@ def ip_pool_present(module, aos, my_pool):
             except:
                 module.fail_json(msg="An error occurred while trying to create a new IP Pool ")
 
-        module.exit_json( changed=True,
-                          name=my_pool.name,
-                          id=my_pool.id,
-                          value=my_pool.value )
+        module.exit_json(changed=True,
+                         name=my_pool.name,
+                         id=my_pool.id,
+                         value=my_pool.value)
 
     # if pool already exist, check if list of network is the same
     # if same just return the object and report change false
     if set(get_list_of_subnets(my_pool)) == set(margs['subnets']):
-        module.exit_json( changed=False,
-                          name=my_pool.name,
-                          id=my_pool.id,
-                          value=my_pool.value )
+        module.exit_json(changed=False,
+                         name=my_pool.name,
+                         id=my_pool.id,
+                         value=my_pool.value)
     else:
         module.fail_json(msg="ip_pool already exist but value is different, currently not supported to update a module")
+
 
 #########################################################
 # Main Function
@@ -280,7 +285,7 @@ def ip_pool(module):
 
     if margs['content'] is not None:
 
-        content = content_to_dict(module, margs['content'] )
+        content = content_to_dict(module, margs['content'])
 
         if 'display_name' in content.keys():
             item_name = content['display_name']
@@ -293,19 +298,19 @@ def ip_pool(module):
     elif margs['id'] is not None:
         item_id = margs['id']
 
-    #----------------------------------------------------
+    # ----------------------------------------------------
     # Find Object if available based on ID or Name
-    #----------------------------------------------------
+    # ----------------------------------------------------
     try:
         my_pool = find_collection_item(aos.IpPools,
-                            item_name=item_name,
-                            item_id=item_id)
+                                       item_name=item_name,
+                                       item_id=item_id)
     except:
         module.fail_json(msg="Unable to find the IP Pool based on name or ID, something went wrong")
 
-    #----------------------------------------------------
+    # ----------------------------------------------------
     # Proceed based on State value
-    #----------------------------------------------------
+    # ----------------------------------------------------
     if margs['state'] == 'absent':
 
         ip_pool_absent(module, aos, my_pool)
@@ -314,19 +319,20 @@ def ip_pool(module):
 
         ip_pool_present(module, aos, my_pool)
 
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
             session=dict(required=True, type="dict"),
-            name=dict(required=False ),
-            id=dict(required=False ),
+            name=dict(required=False),
+            id=dict(required=False),
             content=dict(required=False, type="json"),
-            state=dict( required=False,
-                        choices=['present', 'absent'],
-                        default="present"),
+            state=dict(required=False,
+                       choices=['present', 'absent'],
+                       default="present"),
             subnets=dict(required=False, type="list")
         ),
-        mutually_exclusive = [('name', 'id', 'content')],
+        mutually_exclusive=[('name', 'id', 'content')],
         required_one_of=[('name', 'id', 'content')],
         supports_check_mode=True
     )
@@ -335,6 +341,7 @@ def main():
     check_aos_version(module, '0.6.0')
 
     ip_pool(module)
+
 
 if __name__ == "__main__":
     main()

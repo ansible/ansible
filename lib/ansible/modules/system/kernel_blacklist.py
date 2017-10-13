@@ -118,6 +118,7 @@ class Blacklist(object):
 
         f.close()
 
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(

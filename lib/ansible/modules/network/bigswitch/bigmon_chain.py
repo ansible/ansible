@@ -80,8 +80,8 @@ def chain(module):
     controller = module.params['controller']
 
     rest = Rest(module,
-                {'content-type': 'application/json', 'Cookie': 'session_cookie='+access_token},
-                'https://'+controller+':8443/api/v1/data/controller/applications/bigchain')
+                {'content-type': 'application/json', 'Cookie': 'session_cookie=' + access_token},
+                'https://' + controller + ':8443/api/v1/data/controller/applications/bigchain')
 
     if None in (name, state, controller):
         module.fail_json(msg='parameter `name` is missing')
@@ -114,6 +114,7 @@ def chain(module):
             module.exit_json(changed=True)
         else:
             module.fail_json(msg="error deleting chain '{}': {}".format(name, response.json['description']))
+
 
 def main():
     module = AnsibleModule(

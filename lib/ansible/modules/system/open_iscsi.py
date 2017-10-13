@@ -263,23 +263,21 @@ def main():
 
     # load ansible module object
     module = AnsibleModule(
-        argument_spec = dict(
-
+        argument_spec=dict(
             # target
-            portal = dict(required=False, aliases=['ip']),
-            port = dict(required=False, default=3260),
-            target = dict(required=False, aliases=['name', 'targetname']),
-            node_auth = dict(required=False, default='CHAP'),
-            node_user = dict(required=False),
-            node_pass = dict(required=False, no_log=True),
+            portal=dict(required=False, aliases=['ip']),
+            port=dict(required=False, default=3260),
+            target=dict(required=False, aliases=['name', 'targetname']),
+            node_auth=dict(required=False, default='CHAP'),
+            node_user=dict(required=False),
+            node_pass=dict(required=False, no_log=True),
 
             # actions
-            login = dict(type='bool', aliases=['state']),
-            auto_node_startup = dict(type='bool', aliases=['automatic']),
-            discover = dict(type='bool', default=False),
-            show_nodes = dict(type='bool', default=False)
+            login=dict(type='bool', aliases=['state']),
+            auto_node_startup=dict(type='bool', aliases=['automatic']),
+            discover=dict(type='bool', default=False),
+            show_nodes=dict(type='bool', default=False)
         ),
-
         required_together=[['discover_user', 'discover_pass'],
                            ['node_user', 'node_pass']],
         supports_check_mode=True
@@ -307,7 +305,7 @@ def main():
 
     if discover:
         if portal is None:
-            module.fail_json(msg = "Need to specify at least the portal (ip) to discover")
+            module.fail_json(msg="Need to specify at least the portal (ip) to discover")
         elif check:
             nodes = cached
         else:
@@ -322,7 +320,7 @@ def main():
     if login is not None or automatic is not None:
         if target is None:
             if len(nodes) > 1:
-                module.fail_json(msg = "Need to specify a target")
+                module.fail_json(msg="Need to specify a target")
             else:
                 target = nodes[0]
         else:
@@ -333,7 +331,7 @@ def main():
                     check_target = True
                     break
             if not check_target:
-                module.fail_json(msg = "Specified target not found")
+                module.fail_json(msg="Specified target not found")
 
     if show_nodes:
         result['nodes'] = nodes

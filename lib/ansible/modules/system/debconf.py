@@ -104,7 +104,7 @@ def get_selections(module, pkg):
 
     for line in out.splitlines():
         (key, value) = line.split(':', 1)
-        selections[ key.strip('*').strip() ] = value.strip()
+        selections[key.strip('*').strip()] = value.strip()
 
     return selections
 
@@ -125,27 +125,28 @@ def set_selection(module, pkg, question, vtype, value, unseen):
 
     return module.run_command(cmd, data=data)
 
-def main():
 
+def main():
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(required=True, aliases=['pkg'], type='str'),
             question=dict(required=False, aliases=['setting', 'selection'], type='str'),
-            vtype=dict(required=False, type='str', choices=['string', 'password', 'boolean', 'select',  'multiselect', 'note', 'error', 'title',
-                                                            'text', 'seen']),
+            vtype=dict(required=False, type='str',
+                       choices=['string', 'password', 'boolean', 'select', 'multiselect',
+                                'note', 'error', 'title', 'text', 'seen']),
             value=dict(required=False, type='str', aliases=['answer']),
             unseen=dict(required=False, type='bool'),
         ),
-        required_together=(['question','vtype', 'value'],),
+        required_together=(['question', 'vtype', 'value'],),
         supports_check_mode=True,
     )
 
-    #TODO: enable passing array of options and/or debconf file from get-selections dump
-    pkg      = module.params["name"]
+    # TODO: enable passing array of options and/or debconf file from get-selections dump
+    pkg = module.params["name"]
     question = module.params["question"]
-    vtype    = module.params["vtype"]
-    value    = module.params["value"]
-    unseen   = module.params["unseen"]
+    vtype = module.params["vtype"]
+    value = module.params["value"]
+    unseen = module.params["unseen"]
 
     prev = get_selections(module, pkg)
 
@@ -156,7 +157,7 @@ def main():
         if vtype is None or value is None:
             module.fail_json(msg="when supplying a question you must supply a valid vtype and value")
 
-        if not question in prev or prev[question] != value:
+        if question not in prev or prev[question] != value:
             changed = True
 
     if changed:
@@ -165,7 +166,7 @@ def main():
             if rc:
                 module.fail_json(msg=e)
 
-        curr = { question: value }
+        curr = {question: value}
         if question in prev:
             prev = {question: prev[question]}
         else:

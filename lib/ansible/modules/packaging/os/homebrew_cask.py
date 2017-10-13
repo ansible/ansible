@@ -137,9 +137,9 @@ class HomebrewCask(object):
         -                   # dashes
     '''
 
-    INVALID_PATH_REGEX        = _create_regex_group(VALID_PATH_CHARS)
-    INVALID_BREW_PATH_REGEX   = _create_regex_group(VALID_BREW_PATH_CHARS)
-    INVALID_CASK_REGEX        = _create_regex_group(VALID_CASK_CHARS)
+    INVALID_PATH_REGEX = _create_regex_group(VALID_PATH_CHARS)
+    INVALID_BREW_PATH_REGEX = _create_regex_group(VALID_BREW_PATH_CHARS)
+    INVALID_CASK_REGEX = _create_regex_group(VALID_CASK_CHARS)
     # /class regexes ----------------------------------------------- }}}
 
     # class validations -------------------------------------------- {{{
@@ -184,10 +184,7 @@ class HomebrewCask(object):
         if brew_path is None:
             return True
 
-        return (
-            isinstance(brew_path, string_types)
-            and not cls.INVALID_BREW_PATH_REGEX.search(brew_path)
-        )
+        return isinstance(brew_path, string_types) and not cls.INVALID_BREW_PATH_REGEX.search(brew_path)
 
     @classmethod
     def valid_cask(cls, cask):
@@ -196,10 +193,7 @@ class HomebrewCask(object):
         if cask is None:
             return True
 
-        return (
-            isinstance(cask, string_types)
-            and not cls.INVALID_CASK_REGEX.search(cask)
-        )
+        return isinstance(cask, string_types) and not cls.INVALID_CASK_REGEX.search(cask)
 
     @classmethod
     def valid_state(cls, state):
@@ -212,13 +206,7 @@ class HomebrewCask(object):
         if state is None:
             return True
         else:
-            return (
-                isinstance(state, string_types)
-                and state.lower() in (
-                    'installed',
-                    'absent',
-                )
-            )
+            return isinstance(state, string_types) and state.lower() in ('installed', 'absent')
 
     @classmethod
     def valid_module(cls, module):
@@ -458,8 +446,8 @@ class HomebrewCask(object):
             raise HomebrewCaskException(self.message)
 
         opts = (
-            [self.brew_path, 'cask', 'install', self.current_cask]
-            + self.install_options
+            [self.brew_path, 'cask', 'install', self.current_cask] +
+            self.install_options
         )
 
         cmd = [opt for opt in opts if opt]
@@ -589,7 +577,7 @@ def main():
                        for install_option in p['install_options']]
 
     brew_cask = HomebrewCask(module=module, path=path, casks=casks,
-                             state=state,  update_homebrew=update_homebrew,
+                             state=state, update_homebrew=update_homebrew,
                              install_options=install_options)
     (failed, changed, message) = brew_cask.run()
     if failed:

@@ -97,6 +97,7 @@ import sys
 URPMI_PATH = '/usr/sbin/urpmi'
 URPME_PATH = '/usr/sbin/urpme'
 
+
 def query_package(module, name, root):
     # rpm -q returns 0 if the package is installed,
     # 1 if it is not installed
@@ -106,6 +107,7 @@ def query_package(module, name, root):
         return True
     else:
         return False
+
 
 def query_package_provides(module, name, root):
     # rpm -q returns 0 if the package is installed,
@@ -181,22 +183,23 @@ def install_packages(module, pkgspec, root, force=True, no_recommends=True):
     else:
         module.exit_json(changed=False)
 
+
 def root_option(root):
     if (root):
         return "--root=%s" % (root)
     else:
         return ""
 
+
 def main():
     module = AnsibleModule(
-        argument_spec     = dict(
-            state         = dict(default='installed', choices=['installed', 'removed', 'absent', 'present']),
-            update_cache  = dict(default=False, aliases=['update-cache'], type='bool'),
-            force         = dict(default=True, type='bool'),
-            no_recommends = dict(default=True, aliases=['no-recommends'], type='bool'),
-            package       = dict(aliases=['pkg', 'name'], required=True),
-            root          = dict(aliases=['installroot'])))
-
+        argument_spec=dict(
+            state=dict(default='installed', choices=['installed', 'removed', 'absent', 'present']),
+            update_cache=dict(default=False, aliases=['update-cache'], type='bool'),
+            force=dict(default=True, type='bool'),
+            no_recommends=dict(default=True, aliases=['no-recommends'], type='bool'),
+            package=dict(aliases=['pkg', 'name'], required=True),
+            root=dict(aliases=['installroot'])))
 
     if not os.path.exists(URPMI_PATH):
         module.fail_json(msg="cannot find urpmi, looking for %s" % (URPMI_PATH))
@@ -212,14 +215,16 @@ def main():
 
     packages = p['package'].split(',')
 
-    if p['state'] in [ 'installed', 'present' ]:
+    if p['state'] in ['installed', 'present']:
         install_packages(module, packages, root, force_yes, no_recommends_yes)
 
-    elif p['state'] in [ 'removed', 'absent' ]:
+    elif p['state'] in ['removed', 'absent']:
         remove_packages(module, packages, root)
+
 
 # import module snippets
 from ansible.module_utils.basic import *
+
 
 if __name__ == '__main__':
     main()

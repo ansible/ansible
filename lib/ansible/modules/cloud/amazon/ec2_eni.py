@@ -286,13 +286,14 @@ def get_eni_info(interface):
                       }
 
     if interface.attachment is not None:
-        interface_info['attachment'] = {'attachment_id': interface.attachment.id,
-                                        'instance_id': interface.attachment.instance_id,
-                                        'device_index': interface.attachment.device_index,
-                                        'status': interface.attachment.status,
-                                        'attach_time': interface.attachment.attach_time,
-                                        'delete_on_termination': interface.attachment.delete_on_termination,
-                                        }
+        interface_info['attachment'] = {
+            'attachment_id': interface.attachment.id,
+            'instance_id': interface.attachment.instance_id,
+            'device_index': interface.attachment.device_index,
+            'status': interface.attachment.status,
+            'attach_time': interface.attachment.attach_time,
+            'delete_on_termination': interface.attachment.delete_on_termination,
+        }
 
     return interface_info
 
@@ -567,15 +568,16 @@ def main():
         )
     )
 
-    module = AnsibleModule(argument_spec=argument_spec,
-                           mutually_exclusive=[
-                               ['secondary_private_ip_addresses', 'secondary_private_ip_address_count']
-                           ],
-                           required_if=([
-                               ('state', 'absent', ['eni_id']),
-                               ('attached', True, ['instance_id'])
-                           ])
-                           )
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        mutually_exclusive=[
+            ['secondary_private_ip_addresses', 'secondary_private_ip_address_count']
+        ],
+        required_if=([
+            ('state', 'absent', ['eni_id']),
+            ('attached', True, ['instance_id'])
+        ])
+    )
 
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')

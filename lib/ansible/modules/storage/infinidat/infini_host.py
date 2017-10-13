@@ -81,7 +81,7 @@ from ansible.module_utils.infinibox import HAS_INFINISDK, api_wrapper, get_syste
 @api_wrapper
 def get_host(module, system):
 
-    host  = None
+    host = None
 
     for h in system.hosts.to_list():
         if h.get_name() == module.params['name']:
@@ -124,10 +124,10 @@ def main():
     argument_spec = infinibox_argument_spec()
     argument_spec.update(
         dict(
-            name   = dict(required=True),
-            state  = dict(default='present', choices=['present', 'absent']),
-            wwns   = dict(type='list'),
-            volume = dict()
+            name=dict(required=True),
+            state=dict(default='present', choices=['present', 'absent']),
+            wwns=dict(type='list'),
+            volume=dict()
         )
     )
 
@@ -136,9 +136,9 @@ def main():
     if not HAS_INFINISDK:
         module.fail_json(msg='infinisdk is required for this module')
 
-    state  = module.params['state']
+    state = module.params['state']
     system = get_system(module)
-    host   = get_host(module, system)
+    host = get_host(module, system)
 
     if module.params['volume']:
         try:

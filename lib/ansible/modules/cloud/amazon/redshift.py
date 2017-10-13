@@ -236,12 +236,12 @@ from ansible.module_utils.ec2 import HAS_BOTO, connect_to_aws, ec2_argument_spec
 def _collect_facts(resource):
     """Transfrom cluster information to dict."""
     facts = {
-        'identifier'        : resource['ClusterIdentifier'],
-        'create_time'       : resource['ClusterCreateTime'],
-        'status'            : resource['ClusterStatus'],
-        'username'          : resource['MasterUsername'],
-        'db_name'           : resource['DBName'],
-        'availability_zone' : resource['AvailabilityZone'],
+        'identifier': resource['ClusterIdentifier'],
+        'create_time': resource['ClusterCreateTime'],
+        'status': resource['ClusterStatus'],
+        'username': resource['MasterUsername'],
+        'db_name': resource['DBName'],
+        'availability_zone': resource['AvailabilityZone'],
         'maintenance_window': resource['PreferredMaintenanceWindow'],
     }
 
@@ -263,11 +263,11 @@ def create_cluster(module, redshift):
     Returns:
     """
 
-    identifier   = module.params.get('identifier')
-    node_type    = module.params.get('node_type')
-    username     = module.params.get('username')
-    password     = module.params.get('password')
-    wait         = module.params.get('wait')
+    identifier = module.params.get('identifier')
+    node_type = module.params.get('node_type')
+    username = module.params.get('username')
+    password = module.params.get('password')
+    wait = module.params.get('wait')
     wait_timeout = module.params.get('wait_timeout')
 
     changed = True
@@ -282,7 +282,7 @@ def create_cluster(module, redshift):
               'number_of_nodes', 'publicly_accessible',
               'encrypted', 'elastic_ip'):
         if p in module.params:
-            params[ p ] = module.params.get( p )
+            params[p] = module.params.get(p)
 
     try:
         redshift.describe_clusters(identifier)['DescribeClustersResponse']['DescribeClustersResult']['Clusters'][0]
@@ -306,7 +306,7 @@ def create_cluster(module, redshift):
             while wait_timeout > time.time() and resource['ClusterStatus'] != 'available':
                 time.sleep(5)
                 if wait_timeout <= time.time():
-                    module.fail_json(msg = "Timeout waiting for resource %s" % resource.id)
+                    module.fail_json(msg="Timeout waiting for resource %s" % resource.id)
 
                 resource = redshift.describe_clusters(identifier)['DescribeClustersResponse']['DescribeClustersResult']['Clusters'][0]
 
@@ -364,7 +364,7 @@ def delete_cluster(module, redshift):
             while wait_timeout > time.time() and resource['ClusterStatus'] != 'deleting':
                 time.sleep(5)
                 if wait_timeout <= time.time():
-                    module.fail_json(msg = "Timeout waiting for resource %s" % resource.id)
+                    module.fail_json(msg="Timeout waiting for resource %s" % resource.id)
 
                 resource = redshift.describe_clusters(identifier)['DescribeClustersResponse']['DescribeClustersResult']['Clusters'][0]
 
@@ -382,8 +382,8 @@ def modify_cluster(module, redshift):
     redshift: authenticated redshift connection object
     """
 
-    identifier   = module.params.get('identifier')
-    wait         = module.params.get('wait')
+    identifier = module.params.get('identifier')
+    wait = module.params.get('wait')
     wait_timeout = module.params.get('wait_timeout')
 
     # Package up the optional parameters
@@ -418,7 +418,7 @@ def modify_cluster(module, redshift):
             while wait_timeout > time.time() and resource['ClusterStatus'] != 'available':
                 time.sleep(5)
                 if wait_timeout <= time.time():
-                    module.fail_json(msg = "Timeout waiting for resource %s" % resource.id)
+                    module.fail_json(msg="Timeout waiting for resource %s" % resource.id)
 
                 resource = redshift.describe_clusters(identifier)['DescribeClustersResponse']['DescribeClustersResult']['Clusters'][0]
 
@@ -432,33 +432,33 @@ def modify_cluster(module, redshift):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        command                             = dict(choices=['create', 'facts', 'delete', 'modify'], required=True),
-        identifier                          = dict(required=True),
-        node_type                           = dict(choices=['ds1.xlarge', 'ds1.8xlarge', 'ds2.xlarge', 'ds2.8xlarge', 'dc1.large', 'dc1.8xlarge',
-                                                            'dw1.xlarge', 'dw1.8xlarge', 'dw2.large', 'dw2.8xlarge'], required=False),
-        username                            = dict(required=False),
-        password                            = dict(no_log=True, required=False),
-        db_name                             = dict(require=False),
-        cluster_type                        = dict(choices=['multi-node', 'single-node', ], default='single-node'),
-        cluster_security_groups             = dict(aliases=['security_groups'], type='list'),
-        vpc_security_group_ids              = dict(aliases=['vpc_security_groups'], type='list'),
-        skip_final_cluster_snapshot         = dict(aliases=['skip_final_snapshot'], type='bool', default=False),
-        final_cluster_snapshot_identifier   = dict(aliases=['final_snapshot_id'], required=False),
-        cluster_subnet_group_name           = dict(aliases=['subnet']),
-        availability_zone                   = dict(aliases=['aws_zone', 'zone']),
-        preferred_maintenance_window        = dict(aliases=['maintance_window', 'maint_window']),
-        cluster_parameter_group_name        = dict(aliases=['param_group_name']),
-        automated_snapshot_retention_period = dict(aliases=['retention_period']),
-        port                                = dict(type='int'),
-        cluster_version                     = dict(aliases=['version'], choices=['1.0']),
-        allow_version_upgrade               = dict(aliases=['version_upgrade'], type='bool', default=True),
-        number_of_nodes                     = dict(type='int'),
-        publicly_accessible                 = dict(type='bool', default=False),
-        encrypted                           = dict(type='bool', default=False),
-        elastic_ip                          = dict(required=False),
-        new_cluster_identifier              = dict(aliases=['new_identifier']),
-        wait                                = dict(type='bool', default=False),
-        wait_timeout                        = dict(type='int', default=300),
+        command=dict(choices=['create', 'facts', 'delete', 'modify'], required=True),
+        identifier=dict(required=True),
+        node_type=dict(choices=['ds1.xlarge', 'ds1.8xlarge', 'ds2.xlarge', 'ds2.8xlarge', 'dc1.large', 'dc1.8xlarge',
+                                'dw1.xlarge', 'dw1.8xlarge', 'dw2.large', 'dw2.8xlarge'], required=False),
+        username=dict(required=False),
+        password=dict(no_log=True, required=False),
+        db_name=dict(require=False),
+        cluster_type=dict(choices=['multi-node', 'single-node', ], default='single-node'),
+        cluster_security_groups=dict(aliases=['security_groups'], type='list'),
+        vpc_security_group_ids=dict(aliases=['vpc_security_groups'], type='list'),
+        skip_final_cluster_snapshot=dict(aliases=['skip_final_snapshot'], type='bool', default=False),
+        final_cluster_snapshot_identifier=dict(aliases=['final_snapshot_id'], required=False),
+        cluster_subnet_group_name=dict(aliases=['subnet']),
+        availability_zone=dict(aliases=['aws_zone', 'zone']),
+        preferred_maintenance_window=dict(aliases=['maintance_window', 'maint_window']),
+        cluster_parameter_group_name=dict(aliases=['param_group_name']),
+        automated_snapshot_retention_period=dict(aliases=['retention_period']),
+        port=dict(type='int'),
+        cluster_version=dict(aliases=['version'], choices=['1.0']),
+        allow_version_upgrade=dict(aliases=['version_upgrade'], type='bool', default=True),
+        number_of_nodes=dict(type='int'),
+        publicly_accessible=dict(type='bool', default=False),
+        encrypted=dict(type='bool', default=False),
+        elastic_ip=dict(required=False),
+        new_cluster_identifier=dict(aliases=['new_identifier']),
+        wait=dict(type='bool', default=False),
+        wait_timeout=dict(type='int', default=300),
     ))
 
     required_if = [

@@ -246,8 +246,10 @@ from ansible.module_utils._text import to_native
 def is_running_service(service_status):
     return service_status['ActiveState'] in set(['active', 'activating'])
 
+
 def request_was_ignored(out):
     return '=' not in out and 'ignoring request' in out
+
 
 def parse_systemctl_show(lines):
     # The output of 'systemctl show' can contain values that span multiple lines. At first glance it
@@ -283,25 +285,24 @@ def parse_systemctl_show(lines):
                 k = None
     return parsed
 
-
 # ===========================================
-# Main control flow
+
 
 def main():
     # initialize
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(aliases=['unit', 'service']),
-            state = dict(choices=[ 'started', 'stopped', 'restarted', 'reloaded'], type='str'),
-            enabled = dict(type='bool'),
-            masked = dict(type='bool'),
-            daemon_reload = dict(type='bool', default=False, aliases=['daemon-reload']),
-            user = dict(type='bool', default=False),
-            no_block = dict(type='bool', default=False),
+        argument_spec=dict(
+            name=dict(aliases=['unit', 'service']),
+            state=dict(choices=['started', 'stopped', 'restarted', 'reloaded'], type='str'),
+            enabled=dict(type='bool'),
+            masked=dict(type='bool'),
+            daemon_reload=dict(type='bool', default=False, aliases=['daemon-reload']),
+            user=dict(type='bool', default=False),
+            no_block=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
         required_one_of=[['state', 'enabled', 'masked', 'daemon_reload']],
-        )
+    )
 
     systemctl = module.get_bin_path('systemctl', True)
     if module.params['user']:
@@ -312,7 +313,7 @@ def main():
     rc = 0
     out = err = ''
     result = {
-        'name':  unit,
+        'name': unit,
         'changed': False,
         'status': {},
     }
@@ -379,7 +380,6 @@ def main():
                         # some versions of system CAN mask/unmask non existing services, we only fail on missing if they don't
                         fail_if_missing(module, found, unit, msg='host')
 
-
         # Enable/disable service startup at boot if requested
         if module.params['enabled'] is not None:
 
@@ -438,7 +438,7 @@ def main():
                     if not is_running_service(result['status']):
                         action = 'start'
                     else:
-                        action = module.params['state'][:-2] # remove 'ed' from restarted/reloaded
+                        action = module.params['state'][:-2]  # remove 'ed' from restarted/reloaded
                     result['state'] = 'started'
 
                 if action:
@@ -450,7 +450,6 @@ def main():
             else:
                 # this should not happen?
                 module.fail_json(msg="Service is in unknown state", status=result['status'])
-
 
     module.exit_json(**result)
 

@@ -121,7 +121,7 @@ def find_needed_binaries(module):
 
     apt_key_bin = module.get_bin_path('apt-key', required=True)
 
-    ### FIXME: Is there a reason that gpg and grep are checked?  Is it just
+    # FIXME: Is there a reason that gpg and grep are checked?  Is it just
     # cruft or does the apt .deb package not require them (and if they're not
     # installed, /usr/bin/apt-key fails?)
     module.get_bin_path('gpg', required=True)
@@ -174,7 +174,7 @@ def all_keys(module, keyring, short_format):
     results = []
     lines = to_native(out).split('\n')
     for line in lines:
-        if (line.startswith("pub") or line.startswith("sub")) and not "expired" in line:
+        if (line.startswith("pub") or line.startswith("sub")) and "expired" not in line:
             tokens = line.split()
             code = tokens[1]
             (len_type, real_code) = code.split("/")
@@ -275,14 +275,14 @@ def main():
         mutually_exclusive=(('filename', 'keyserver', 'data', 'url'),),
     )
 
-    key_id          = module.params['id']
-    url             = module.params['url']
-    data            = module.params['data']
-    filename        = module.params['file']
-    keyring         = module.params['keyring']
-    state           = module.params['state']
-    keyserver       = module.params['keyserver']
-    changed         = False
+    key_id = module.params['id']
+    url = module.params['url']
+    data = module.params['data']
+    filename = module.params['file']
+    keyring = module.params['keyring']
+    state = module.params['state']
+    keyserver = module.params['keyserver']
+    changed = False
 
     fingerprint = short_key_id = key_id
     short_format = False
@@ -304,7 +304,7 @@ def main():
         if fingerprint and fingerprint in keys:
             module.exit_json(changed=False)
         elif fingerprint and fingerprint not in keys and module.check_mode:
-            ### TODO: Someday we could go further -- write keys out to
+            # TODO: Someday we could go further -- write keys out to
             # a temporary file and then extract the key id from there via gpg
             # to decide if the key is installed or not.
             module.exit_json(changed=True)
@@ -322,7 +322,7 @@ def main():
             changed = False
             keys2 = all_keys(module, keyring, short_format)
             if len(keys) != len(keys2):
-                changed=True
+                changed = True
 
             if fingerprint and fingerprint not in keys2:
                 module.fail_json(msg="key does not seem to have been added", id=key_id)

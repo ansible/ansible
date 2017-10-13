@@ -135,10 +135,8 @@ def ubuntu(module):
     req = get_url(module, url)
     reader = csv.reader(req, delimiter='\t')
     try:
-        ami, aki, ari, tag, serial = lookup_ubuntu_ami(reader, release, stream,
-            store, arch, region, virt)
-        module.exit_json(changed=False, ami=ami, aki=aki, ari=ari, tag=tag,
-            serial=serial)
+        ami, aki, ari, tag, serial = lookup_ubuntu_ami(reader, release, stream, store, arch, region, virt)
+        module.exit_json(changed=False, ami=ami, aki=aki, ari=ari, tag=tag, serial=serial)
     except KeyError:
         module.fail_json(msg="No matching AMI found")
 
@@ -162,8 +160,7 @@ def lookup_ubuntu_ami(table, release, stream, store, arch, region, virt):
         (actual_release, actual_stream, tag, serial,
             actual_store, actual_arch, actual_region, ami, aki, ari,
             actual_virt) = row
-        actual = (actual_release, actual_stream, actual_store, actual_arch,
-            actual_region, actual_virt)
+        actual = (actual_release, actual_stream, actual_store, actual_arch, actual_region, actual_virt)
         if actual == expected:
             # aki and ari are sometimes blank
             if aki == '':
@@ -184,15 +181,11 @@ def main():
     arg_spec = dict(
         distro=dict(required=True, choices=SUPPORTED_DISTROS),
         release=dict(required=True),
-        stream=dict(required=False, default='server',
-            choices=['desktop', 'server']),
-        store=dict(required=False, default='ebs',
-            choices=['ebs', 'ebs-io1', 'ebs-ssd', 'instance-store']),
-        arch=dict(required=False, default='amd64',
-            choices=['i386', 'amd64']),
+        stream=dict(required=False, default='server', choices=['desktop', 'server']),
+        store=dict(required=False, default='ebs', choices=['ebs', 'ebs-io1', 'ebs-ssd', 'instance-store']),
+        arch=dict(required=False, default='amd64', choices=['i386', 'amd64']),
         region=dict(required=False, default='us-east-1', choices=AWS_REGIONS),
-        virt=dict(required=False, default='paravirtual',
-            choices=['paravirtual', 'hvm']),
+        virt=dict(required=False, default='paravirtual', choices=['paravirtual', 'hvm']),
     )
     module = AnsibleModule(argument_spec=arg_spec)
     distro = module.params['distro']

@@ -325,16 +325,18 @@ def remove_routes(connection, vpn_connection_id, routes_to_remove):
 
 def create_filter(module_params, provided_filters):
     """ Creates a filter using the user-specified parameters and unmodifiable options that may have been specified in the task """
-    boto3ify_filter = {'cgw-config': 'customer-gateway-configuration',
-                       'static-routes-only': 'option.static-routes-only',
-                       'cidr': 'route.destination-cidr-block',
-                       'bgp': 'bgp-asn',
-                       'vpn': 'vpn-connection-id',
-                       'vgw': 'vpn-gateway-id',
-                       'tag-keys': 'tag-key',
-                       'tag-values': 'tag-value',
-                       'tags': 'tag',
-                       'cgw': 'customer-gateway-id'}
+    boto3ify_filter = {
+        'cgw-config': 'customer-gateway-configuration',
+        'static-routes-only': 'option.static-routes-only',
+        'cidr': 'route.destination-cidr-block',
+        'bgp': 'bgp-asn',
+        'vpn': 'vpn-connection-id',
+        'vgw': 'vpn-gateway-id',
+        'tag-keys': 'tag-key',
+        'tag-values': 'tag-value',
+        'tags': 'tag',
+        'cgw': 'customer-gateway-id'
+    }
 
     # unmodifiable options and their filter name counterpart
     param_to_filter = {"customer_gateway_id": "customer-gateway-id",
@@ -716,6 +718,7 @@ def main():
     facts_result = dict(changed=changed, **ec2_utils.camel_dict_to_snake_dict(response))
 
     module.exit_json(**facts_result)
+
 
 if __name__ == '__main__':
     main()

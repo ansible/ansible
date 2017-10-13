@@ -137,16 +137,13 @@ def user_action(module, iam, name, policy_name, skip, pdoc, state):
     policy_match = False
     changed = False
     try:
-        current_policies = [cp for cp in iam.get_all_user_policies(name).
-                                            list_user_policies_result.
-                                            policy_names]
+        current_policies = [cp for cp in iam.get_all_user_policies(name).list_user_policies_result.policy_names]
         matching_policies = []
         for pol in current_policies:
             '''
             urllib is needed here because boto returns url encoded strings instead
             '''
-            if urllib.parse.unquote(iam.get_user_policy(name, pol).
-                              get_user_policy_result.policy_document) == pdoc:
+            if urllib.parse.unquote(iam.get_user_policy(name, pol).get_user_policy_result.policy_document) == pdoc:
                 policy_match = True
                 matching_policies.append(pol)
 
@@ -167,9 +164,7 @@ def user_action(module, iam, name, policy_name, skip, pdoc, state):
                     changed = False
                     module.exit_json(changed=changed, msg="%s policy is already absent" % policy_name)
 
-        updated_policies = [cp for cp in iam.get_all_user_policies(name).
-                                            list_user_policies_result.
-                                            policy_names]
+        updated_policies = [cp for cp in iam.get_all_user_policies(name).list_user_policies_result.policy_names]
     except boto.exception.BotoServerError as err:
         error_msg = boto_exception(err)
         module.fail_json(changed=changed, msg=error_msg)
@@ -181,9 +176,7 @@ def role_action(module, iam, name, policy_name, skip, pdoc, state):
     policy_match = False
     changed = False
     try:
-        current_policies = [cp for cp in iam.list_role_policies(name).
-                                            list_role_policies_result.
-                                            policy_names]
+        current_policies = [cp for cp in iam.list_role_policies(name).list_role_policies_result.policy_names]
     except boto.exception.BotoServerError as e:
         if e.error_code == "NoSuchEntity":
             # Role doesn't exist so it's safe to assume the policy doesn't either
@@ -194,8 +187,7 @@ def role_action(module, iam, name, policy_name, skip, pdoc, state):
     try:
         matching_policies = []
         for pol in current_policies:
-            if urllib.parse.unquote(iam.get_role_policy(name, pol).
-                              get_role_policy_result.policy_document) == pdoc:
+            if urllib.parse.unquote(iam.get_role_policy(name, pol).get_role_policy_result.policy_document) == pdoc:
                 policy_match = True
                 matching_policies.append(pol)
 
@@ -219,9 +211,7 @@ def role_action(module, iam, name, policy_name, skip, pdoc, state):
                 else:
                     module.fail_json(msg=err.message)
 
-        updated_policies = [cp for cp in iam.list_role_policies(name).
-                                            list_role_policies_result.
-                                            policy_names]
+        updated_policies = [cp for cp in iam.list_role_policies(name).list_role_policies_result.policy_names]
     except boto.exception.BotoServerError as err:
         error_msg = boto_exception(err)
         module.fail_json(changed=changed, msg=error_msg)
@@ -232,19 +222,16 @@ def role_action(module, iam, name, policy_name, skip, pdoc, state):
 def group_action(module, iam, name, policy_name, skip, pdoc, state):
     policy_match = False
     changed = False
-    msg=''
+    msg = ''
     try:
-        current_policies = [cp for cp in iam.get_all_group_policies(name).
-                                            list_group_policies_result.
-                                            policy_names]
+        current_policies = [cp for cp in iam.get_all_group_policies(name).list_group_policies_result.policy_names]
         matching_policies = []
         for pol in current_policies:
-            if urllib.parse.unquote(iam.get_group_policy(name, pol).
-                              get_group_policy_result.policy_document) == pdoc:
+            if urllib.parse.unquote(iam.get_group_policy(name, pol).get_group_policy_result.policy_document) == pdoc:
                 policy_match = True
                 matching_policies.append(pol)
-                msg=("The policy document you specified already exists "
-                     "under the name %s." % pol)
+                msg = ("The policy document you specified already exists "
+                       "under the name %s." % pol)
         if state == 'present':
             # If policy document does not already exist (either it's changed
             # or the policy is not present) or if we're not skipping dupes then
@@ -263,9 +250,7 @@ def group_action(module, iam, name, policy_name, skip, pdoc, state):
                     module.exit_json(changed=changed,
                                      msg="%s policy is already absent" % policy_name)
 
-        updated_policies = [cp for cp in iam.get_all_group_policies(name).
-                                            list_group_policies_result.
-                                            policy_names]
+        updated_policies = [cp for cp in iam.get_all_group_policies(name).list_group_policies_result.policy_names]
     except boto.exception.BotoServerError as err:
         error_msg = boto_exception(err)
         module.fail_json(changed=changed, msg=error_msg)
@@ -317,7 +302,7 @@ def main():
             except Exception as e:
                 module.fail_json(msg='Failed to convert the policy into valid JSON: %s' % str(e))
     else:
-        pdoc=None
+        pdoc = None
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module)
 
@@ -343,8 +328,8 @@ def main():
         module.exit_json(changed=changed, role_name=name, policies=current_policies)
     elif iam_type == 'group':
         changed, group_name, current_policies, msg = group_action(module, iam, name,
-                                                           policy_name, skip, pdoc,
-                                                           state)
+                                                                  policy_name, skip, pdoc,
+                                                                  state)
         module.exit_json(changed=changed, group_name=name, policies=current_policies, msg=msg)
 
 

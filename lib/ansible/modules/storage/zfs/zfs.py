@@ -218,15 +218,15 @@ class Zfs(object):
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-            name =         dict(type='str', required=True),
-            state =        dict(type='str', required=True, choices=['present', 'absent']),
+        argument_spec=dict(
+            name=dict(type='str', required=True),
+            state=dict(type='str', required=True, choices=['present', 'absent']),
             # No longer used. Kept here to not interfere with zfs properties
-            createparent = dict(type='bool', required=False)
-            ),
+            createparent=dict(type='bool', required=False)
+        ),
         supports_check_mode=True,
         check_invalid_arguments=False
-        )
+    )
 
     state = module.params.pop('state')
     name = module.params.pop('name')

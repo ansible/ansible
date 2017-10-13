@@ -68,9 +68,9 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import (AnsibleAWSError,
-        ansible_dict_to_boto3_filter_list, boto3_conn,
-        boto3_tag_list_to_ansible_dict, camel_dict_to_snake_dict,
-        connect_to_aws, ec2_argument_spec, get_aws_connection_info)
+                                      ansible_dict_to_boto3_filter_list, boto3_conn,
+                                      boto3_tag_list_to_ansible_dict, camel_dict_to_snake_dict,
+                                      connect_to_aws, ec2_argument_spec, get_aws_connection_info)
 
 
 def list_ec2_eni_boto3(connection, module):
@@ -99,35 +99,38 @@ def get_eni_info(interface):
     # Private addresses
     private_addresses = []
     for ip in interface.private_ip_addresses:
-        private_addresses.append({ 'private_ip_address': ip.private_ip_address, 'primary_address': ip.primary })
+        private_addresses.append({'private_ip_address': ip.private_ip_address, 'primary_address': ip.primary})
 
-    interface_info = {'id': interface.id,
-                      'subnet_id': interface.subnet_id,
-                      'vpc_id': interface.vpc_id,
-                      'description': interface.description,
-                      'owner_id': interface.owner_id,
-                      'status': interface.status,
-                      'mac_address': interface.mac_address,
-                      'private_ip_address': interface.private_ip_address,
-                      'source_dest_check': interface.source_dest_check,
-                      'groups': dict((group.id, group.name) for group in interface.groups),
-                      'private_ip_addresses': private_addresses
-                      }
+    interface_info = {
+        'id': interface.id,
+        'subnet_id': interface.subnet_id,
+        'vpc_id': interface.vpc_id,
+        'description': interface.description,
+        'owner_id': interface.owner_id,
+        'status': interface.status,
+        'mac_address': interface.mac_address,
+        'private_ip_address': interface.private_ip_address,
+        'source_dest_check': interface.source_dest_check,
+        'groups': dict((group.id, group.name) for group in interface.groups),
+        'private_ip_addresses': private_addresses
+    }
 
     if hasattr(interface, 'publicDnsName'):
-        interface_info['association'] = {'public_ip_address': interface.publicIp,
-                                         'public_dns_name': interface.publicDnsName,
-                                         'ip_owner_id': interface.ipOwnerId
-                                         }
+        interface_info['association'] = {
+            'public_ip_address': interface.publicIp,
+            'public_dns_name': interface.publicDnsName,
+            'ip_owner_id': interface.ipOwnerId
+        }
 
     if interface.attachment is not None:
-        interface_info['attachment'] = {'attachment_id': interface.attachment.id,
-                                        'instance_id': interface.attachment.instance_id,
-                                        'device_index': interface.attachment.device_index,
-                                        'status': interface.attachment.status,
-                                        'attach_time': interface.attachment.attach_time,
-                                        'delete_on_termination': interface.attachment.delete_on_termination,
-                                        }
+        interface_info['attachment'] = {
+            'attachment_id': interface.attachment.id,
+            'instance_id': interface.attachment.instance_id,
+            'device_index': interface.attachment.device_index,
+            'status': interface.attachment.status,
+            'attach_time': interface.attachment.attach_time,
+            'delete_on_termination': interface.attachment.delete_on_termination,
+        }
 
     return interface_info
 
@@ -150,11 +153,7 @@ def list_eni(connection, module):
 
 def main():
     argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            filters = dict(default=None, type='dict')
-        )
-    )
+    argument_spec.update(dict(filters=dict(default=None, type='dict')))
 
     module = AnsibleModule(argument_spec=argument_spec)
 

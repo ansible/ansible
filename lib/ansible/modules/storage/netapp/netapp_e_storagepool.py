@@ -124,9 +124,7 @@ def select(predicate, iterable):
 class GroupBy(object):
     # python 2, 3 generic grouping.
     def __init__(self, iterable, key=None):
-        if key is None:
-            key = lambda x: x
-        self.keyfunc = key
+        self.keyfunc = key if key is not None else lambda x: x
         self.it = iter(iterable)
         self.tgtkey = self.currkey = self.currvalue = object()
 

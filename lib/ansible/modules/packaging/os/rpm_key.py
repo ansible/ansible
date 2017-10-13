@@ -92,7 +92,7 @@ class RpmKey(object):
 
         self.gpg = self.module.get_bin_path('gpg')
         if not self.gpg:
-            self.gpg = self.module.get_bin_path('gpg2',required=True)
+            self.gpg = self.module.get_bin_path('gpg2', required=True)
 
         if '://' in key:
             keyfile = self.fetch_key(key)
@@ -192,13 +192,13 @@ class RpmKey(object):
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
+        argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             key=dict(required=True, type='str'),
             validate_certs=dict(default='yes', type='bool'),
-            ),
+        ),
         supports_check_mode=True
-        )
+    )
 
     RpmKey(module)
 

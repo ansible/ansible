@@ -41,7 +41,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict()
+        argument_spec=dict()
     )
 
     facter_path = module.get_bin_path('facter', opt_dirs=['/opt/puppetlabs/bin'])

@@ -117,7 +117,7 @@ class Timezone(object):
             # running in the global zone where changing the timezone has no effect.
             zonename_cmd = module.get_bin_path('zonename')
             if zonename_cmd is not None:
-                (rc, stdout, _ ) = module.run_command(zonename_cmd)
+                (rc, stdout, _) = module.run_command(zonename_cmd)
                 if rc == 0 and stdout.strip() == 'global':
                     module.fail_json(msg='Adjusting timezone is not supported in Global Zone')
 
@@ -263,12 +263,12 @@ class SystemdTimezone(Timezone):
 
     regexps = dict(
         hwclock=re.compile(r'^\s*RTC in local TZ\s*:\s*([^\s]+)', re.MULTILINE),
-        name   =re.compile(r'^\s*Time ?zone\s*:\s*([^\s]+)', re.MULTILINE)
+        name=re.compile(r'^\s*Time ?zone\s*:\s*([^\s]+)', re.MULTILINE)
     )
 
     subcmds = dict(
         hwclock='set-local-rtc',
-        name   ='set-timezone'
+        name='set-timezone'
     )
 
     def __init__(self, module):
@@ -316,7 +316,7 @@ class NosystemdTimezone(Timezone):
     """
 
     conf_files = dict(
-        name   =None,  # To be set in __init__
+        name=None,  # To be set in __init__
         hwclock=None,  # To be set in __init__
         adjtime='/etc/adjtime'
     )
@@ -324,7 +324,7 @@ class NosystemdTimezone(Timezone):
     allow_no_file = dict()
 
     regexps = dict(
-        name   =None,  # To be set in __init__
+        name=None,  # To be set in __init__
         hwclock=re.compile(r'^UTC\s*=\s*([^\s]+)', re.MULTILINE),
         adjtime=re.compile(r'^(UTC|LOCAL)$', re.MULTILINE)
     )
@@ -334,32 +334,32 @@ class NosystemdTimezone(Timezone):
         # Validate given timezone
         if 'name' in self.value:
             tzfile = self._verify_timezone()
-            self.update_timezone  = self.module.get_bin_path('cp', required=True)
+            self.update_timezone = self.module.get_bin_path('cp', required=True)
             self.update_timezone += ' %s /etc/localtime' % tzfile
         self.update_hwclock = self.module.get_bin_path('hwclock', required=True)
         self.allow_no_file['hwclock'] = True  # Since this is only used for get values, file absense does not metter
         # Distribution-specific configurations
         if self.module.get_bin_path('dpkg-reconfigure') is not None:
             # Debian/Ubuntu
-            self.update_timezone       = self.module.get_bin_path('dpkg-reconfigure', required=True)
-            self.update_timezone      += ' --frontend noninteractive tzdata'
-            self.conf_files['name']    = '/etc/timezone'
+            self.update_timezone = self.module.get_bin_path('dpkg-reconfigure', required=True)
+            self.update_timezone += ' --frontend noninteractive tzdata'
+            self.conf_files['name'] = '/etc/timezone'
             self.allow_no_file['name'] = True
             self.conf_files['hwclock'] = '/etc/default/rcS'
-            self.regexps['name']       = re.compile(r'^([^\s]+)', re.MULTILINE)
-            self.tzline_format         = '%s\n'
+            self.regexps['name'] = re.compile(r'^([^\s]+)', re.MULTILINE)
+            self.tzline_format = '%s\n'
         else:
             # RHEL/CentOS
             if self.module.get_bin_path('tzdata-update') is not None:
-                self.update_timezone       = self.module.get_bin_path('tzdata-update', required=True)
+                self.update_timezone = self.module.get_bin_path('tzdata-update', required=True)
                 self.allow_no_file['name'] = True
             # else:
             #   self.update_timezone       = 'cp ...' <- configured above
             #   self.allow_no_file['name'] = False <- this is default behavior
-            self.conf_files['name']    = '/etc/sysconfig/clock'
+            self.conf_files['name'] = '/etc/sysconfig/clock'
             self.conf_files['hwclock'] = '/etc/sysconfig/clock'
-            self.regexps['name']       = re.compile(r'^ZONE\s*=\s*"?([^"\s]+)"?', re.MULTILINE)
-            self.tzline_format         = 'ZONE="%s"\n'
+            self.regexps['name'] = re.compile(r'^ZONE\s*=\s*"?([^"\s]+)"?', re.MULTILINE)
+            self.tzline_format = 'ZONE="%s"\n'
 
     def _allow_ioerror(self, err, key):
         # In some cases, even if the target file does not exist,
@@ -534,7 +534,7 @@ class DarwinTimezone(Timezone):
     """
 
     regexps = dict(
-        name   = re.compile(r'^\s*Time ?Zone\s*:\s*([^\s]+)', re.MULTILINE)
+        name=re.compile(r'^\s*Time ?Zone\s*:\s*([^\s]+)', re.MULTILINE)
     )
 
     def __init__(self, module):
@@ -557,7 +557,7 @@ class DarwinTimezone(Timezone):
         # Note: Skip the first line that contains the label 'Time Zones:'
         out = self.execute(self.systemsetup, '-listtimezones').splitlines()[1:]
         tz_list = list(map(lambda x: x.strip(), out))
-        if not tz in tz_list:
+        if tz not in tz_list:
             self.abort('given timezone "%s" is not available' % tz)
         return tz
 

@@ -372,6 +372,7 @@ def commit(changes, retry_interval, wait, wait_timeout):
             raise TimeoutError()
         return result
 
+
 # Shamelessly copied over from https://git.io/vgmDG
 IGNORE_CODE = 'Throttling'
 MAX_RETRIES = 5

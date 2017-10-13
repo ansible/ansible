@@ -203,8 +203,7 @@ def main():
         name_regex=dict(required=True),
         sort_order=dict(required=False, default='ascending', choices=['ascending', 'descending']),
         limit=dict(required=False, type='int'),
-    )
-    )
+    ))
 
     module = AnsibleModule(
         argument_spec=argument_spec,

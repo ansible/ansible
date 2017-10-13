@@ -97,28 +97,28 @@ from ansible.module_utils._text import to_native
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            database = dict(required=True),
-            key      = dict(required=False, default=None),
-            split    = dict(required=False, default=None),
-            fail_key = dict(required=False, type='bool', default=True),
+        argument_spec=dict(
+            database=dict(required=True),
+            key=dict(required=False, default=None),
+            split=dict(required=False, default=None),
+            fail_key=dict(required=False, type='bool', default=True),
         ),
-        supports_check_mode = True,
+        supports_check_mode=True,
     )
 
-    colon = [ 'passwd', 'shadow', 'group', 'gshadow' ]
+    colon = ['passwd', 'shadow', 'group', 'gshadow']
 
     database = module.params['database']
-    key      = module.params.get('key')
-    split    = module.params.get('split')
+    key = module.params.get('key')
+    split = module.params.get('split')
     fail_key = module.params.get('fail_key')
 
     getent_bin = module.get_bin_path('getent', True)
 
     if key is not None:
-        cmd = [ getent_bin, database, key ]
+        cmd = [getent_bin, database, key]
     else:
-        cmd = [ getent_bin, database ]
+        cmd = [getent_bin, database]
 
     if split is None and database in colon:
         split = ':'
@@ -130,7 +130,7 @@ def main():
 
     msg = "Unexpected failure!"
     dbtree = 'getent_%s' % database
-    results = { dbtree: {} }
+    results = {dbtree: {}}
 
     if rc == 0:
         for line in out.splitlines():

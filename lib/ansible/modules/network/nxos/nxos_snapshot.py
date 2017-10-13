@@ -333,6 +333,7 @@ def write_on_file(content, filename, module):
 
     return filepath
 
+
 def main():
     argument_spec = dict(
         action=dict(required=True, choices=['create', 'add', 'compare', 'delete', 'delete_all']),

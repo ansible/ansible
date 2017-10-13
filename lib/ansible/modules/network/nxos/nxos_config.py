@@ -448,7 +448,6 @@ def main():
                     'diff': {'before': str(base_config), 'after': str(running_config)}
                 })
 
-
     module.exit_json(**result)
 
 

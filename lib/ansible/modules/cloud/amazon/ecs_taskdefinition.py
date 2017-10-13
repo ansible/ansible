@@ -130,6 +130,7 @@ except ImportError:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import boto3_conn, camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info
 
+
 class EcsTaskManager:
     """Handles ECS Tasks"""
 
@@ -182,7 +183,7 @@ class EcsTaskManager:
     def describe_task_definitions(self, family):
         data = {
             "taskDefinitionArns": [],
-            "nextToken":  None
+            "nextToken": None
         }
 
         def fetch():
@@ -370,8 +371,8 @@ def main():
         if module.params['state'] == 'absent':
             if 'arn' in module.params and module.params['arn'] is not None:
                 task_to_describe = module.params['arn']
-            elif 'family' in module.params and module.params['family'] is not None and 'revision' in module.params and \
-                            module.params['revision'] is not None:
+            elif ('family' in module.params and module.params['family'] is not None and
+                    'revision' in module.params and module.params['revision'] is not None):
                 task_to_describe = module.params['family'] + ":" + str(module.params['revision'])
             else:
                 module.fail_json(msg="To use task definitions, an arn or family and revision must be specified")
@@ -391,6 +392,7 @@ def main():
                 results['changed'] = True
 
     module.exit_json(**results)
+
 
 if __name__ == '__main__':
     main()

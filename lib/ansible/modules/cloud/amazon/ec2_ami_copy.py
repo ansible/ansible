@@ -150,7 +150,6 @@ except ImportError:
     HAS_BOTO3 = False
 
 
-
 def copy_image(module, ec2):
     """
     Copies an AMI
@@ -177,8 +176,8 @@ def copy_image(module, ec2):
         if module.params.get('tags'):
             ec2.create_tags(
                 Resources=[image_id],
-                Tags=[{'Key' : k, 'Value': v} for k,v in module.params.get('tags').items()]
-                )
+                Tags=[{'Key': k, 'Value': v} for k, v in module.params.get('tags').items()]
+            )
 
         module.exit_json(changed=True, image_id=image_id)
     except WaiterError as we:

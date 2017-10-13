@@ -42,7 +42,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict()
+        argument_spec=dict()
     )
     cmd = ["/usr/bin/env", "ohai"]
     rc, out, err = module.run_command(cmd, check_rc=True)

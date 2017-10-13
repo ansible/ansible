@@ -136,6 +136,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.aos import get_aos_session, check_aos_version, find_collection_item
 from ansible.module_utils.pycompat24 import get_exception
 
+
 def create_blueprint(module, aos, name):
 
     margs = module.params
@@ -152,7 +153,7 @@ def create_blueprint(module, aos, name):
         exc = get_exception()
         msg = "Unable to create blueprint: %s" % exc.message
         if 'UNPROCESSABLE ENTITY' in exc.message:
-            msg+= ' (likely missing dependencies)'
+            msg += ' (likely missing dependencies)'
 
         module.fail_json(msg=msg)
 
@@ -176,6 +177,7 @@ def ensure_absent(module, aos, blueprint):
         module.exit_json(changed=True,
                          id=blueprint.id,
                          name=blueprint.name)
+
 
 def ensure_present(module, aos, blueprint):
     margs = module.params
@@ -211,13 +213,14 @@ def ensure_present(module, aos, blueprint):
             module.exit_json(changed=True,
                              name=margs['name'])
 
+
 def ensure_build_ready(module, aos, blueprint):
     margs = module.params
 
     if not blueprint.exists:
         module.fail_json(msg='blueprint %s does not exist' % blueprint.name)
 
-    if blueprint.await_build_ready(timeout=margs['timeout']*1000):
+    if blueprint.await_build_ready(timeout=margs['timeout'] * 1000):
         module.exit_json(contents=blueprint.contents)
     else:
         module.fail_json(msg='blueprint %s has build errors',
@@ -242,19 +245,19 @@ def aos_blueprint(module):
     elif margs['id'] is not None:
         item_id = margs['id']
 
-    #----------------------------------------------------
+    # ----------------------------------------------------
     # Find Object if available based on ID or Name
-    #----------------------------------------------------
+    # ----------------------------------------------------
     try:
         my_blueprint = find_collection_item(aos.Blueprints,
-                                        item_name=item_name,
-                                        item_id=item_id)
+                                            item_name=item_name,
+                                            item_id=item_id)
     except:
         module.fail_json(msg="Unable to find the Blueprint based on name or ID, something went wrong")
 
-    #----------------------------------------------------
+    # ----------------------------------------------------
     # Proceed based on State value
-    #----------------------------------------------------
+    # ----------------------------------------------------
     if margs['state'] == 'absent':
 
         ensure_absent(module, aos, my_blueprint)
@@ -273,15 +276,14 @@ def main():
         argument_spec=dict(
             session=dict(required=True, type="dict"),
             name=dict(required=False),
-            id=dict(required=False ),
-            state=dict(choices=[
-                'present', 'absent', 'build-ready'],
-                default='present'),
+            id=dict(required=False),
+            state=dict(choices=['present', 'absent', 'build-ready'],
+                       default='present'),
             timeout=dict(type="int", default=5),
             template=dict(required=False),
             reference_arch=dict(required=False)
         ),
-        mutually_exclusive = [('name', 'id')],
+        mutually_exclusive=[('name', 'id')],
         required_one_of=[('name', 'id')],
         supports_check_mode=True
     )
@@ -290,6 +292,7 @@ def main():
     check_aos_version(module, '0.6.0')
 
     aos_blueprint(module)
+
 
 if __name__ == '__main__':
     main()

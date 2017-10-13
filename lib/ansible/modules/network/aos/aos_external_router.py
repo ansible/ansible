@@ -155,12 +155,13 @@ from ansible.module_utils.aos import get_aos_session, find_collection_item, do_l
 def create_new_ext_router(module, my_ext_router, name, loopback, asn):
 
     # Create value
-    datum = dict(display_name=name, address=loopback, asn=asn )
+    datum = dict(display_name=name, address=loopback, asn=asn)
 
     my_ext_router.datum = datum
 
-    ## Write to AOS
+    # Write to AOS
     return my_ext_router.write()
+
 
 #########################################################
 # State Processing
@@ -174,7 +175,7 @@ def ext_router_absent(module, aos, my_ext_router):
         module.exit_json(changed=False,
                          name=margs['name'],
                          id=margs['id'],
-                         value={} )
+                         value={})
 
     # If not in check mode, delete External Router
     if not module.check_mode:
@@ -185,10 +186,11 @@ def ext_router_absent(module, aos, my_ext_router):
         except:
             module.fail_json(msg="An error occurred, while trying to delete the External Router")
 
-    module.exit_json( changed=True,
-                      name=my_ext_router.name,
-                      id=my_ext_router.id,
-                      value={} )
+    module.exit_json(changed=True,
+                     name=my_ext_router.name,
+                     id=my_ext_router.id,
+                     value={})
+
 
 def ext_router_present(module, aos, my_ext_router):
 
@@ -210,16 +212,15 @@ def ext_router_present(module, aos, my_ext_router):
                                                           my_ext_router,
                                                           margs['name'],
                                                           margs['loopback'],
-                                                          margs['asn'] )
+                                                          margs['asn'])
                 my_ext_router = my_new_ext_router
             except:
                 module.fail_json(msg="An error occurred while trying to create a new External Router")
 
-
-        module.exit_json( changed=True,
-                          name=my_ext_router.name,
-                          id=my_ext_router.id,
-                          value=my_ext_router.value )
+        module.exit_json(changed=True,
+                         name=my_ext_router.name,
+                         id=my_ext_router.id,
+                         value=my_ext_router.value)
 
     # if external Router already exist, check if loopback and ASN are the same
     # if same just return the object and report change false
@@ -249,10 +250,11 @@ def ext_router_present(module, aos, my_ext_router):
         if int(asn) != int(my_ext_router.value['asn']):
             module.fail_json(msg="my_ext_router already exist but ASN is different, currently not supported to update a module")
 
-    module.exit_json( changed=False,
-                      name=my_ext_router.name,
-                      id=my_ext_router.id,
-                      value=my_ext_router.value )
+    module.exit_json(changed=False,
+                     name=my_ext_router.name,
+                     id=my_ext_router.id,
+                     value=my_ext_router.value)
+
 
 #########################################################
 # Main Function
@@ -271,7 +273,7 @@ def ext_router(module):
 
     if margs['content'] is not None:
 
-        content = content_to_dict(module, margs['content'] )
+        content = content_to_dict(module, margs['content'])
 
         if 'display_name' in content.keys():
             item_name = content['display_name']
@@ -284,19 +286,19 @@ def ext_router(module):
     elif margs['id'] is not None:
         item_id = margs['id']
 
-    #----------------------------------------------------
+    # ----------------------------------------------------
     # Find Object if available based on ID or Name
-    #----------------------------------------------------
+    # ----------------------------------------------------
     try:
         my_ext_router = find_collection_item(aos.ExternalRouters,
-                            item_name=item_name,
-                            item_id=item_id)
+                                             item_name=item_name,
+                                             item_id=item_id)
     except:
         module.fail_json(msg="Unable to find the IP Pool based on name or ID, something went wrong")
 
-    #----------------------------------------------------
+    # ----------------------------------------------------
     # Proceed based on State value
-    #----------------------------------------------------
+    # ----------------------------------------------------
     if margs['state'] == 'absent':
 
         ext_router_absent(module, aos, my_ext_router)
@@ -305,20 +307,21 @@ def ext_router(module):
 
         ext_router_present(module, aos, my_ext_router)
 
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
             session=dict(required=True, type="dict"),
-            name=dict(required=False ),
-            id=dict(required=False ),
+            name=dict(required=False),
+            id=dict(required=False),
             content=dict(required=False, type="json"),
-            state=dict( required=False,
-                        choices=['present', 'absent'],
-                        default="present"),
+            state=dict(required=False,
+                       choices=['present', 'absent'],
+                       default="present"),
             loopback=dict(required=False),
             asn=dict(required=False)
         ),
-        mutually_exclusive = [('name', 'id', 'content')],
+        mutually_exclusive=[('name', 'id', 'content')],
         required_one_of=[('name', 'id', 'content')],
         supports_check_mode=True
     )
@@ -327,6 +330,7 @@ def main():
     check_aos_version(module, '0.6.0')
 
     ext_router(module)
+
 
 if __name__ == "__main__":
     main()
