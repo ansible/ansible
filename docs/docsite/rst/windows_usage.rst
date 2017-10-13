@@ -12,30 +12,30 @@ Use Cases
 Ansible can be used to orchestrate a multitude of tasks on Windows servers. 
 Below are some examples and info about common tasks.
 
-Installing Programs
+Installing Software
 -------------------
-There are three main ways that Ansible can be used to install programs:
+There are three main ways that Ansible can be used to install software:
 
-* Using the ``win_chocolatey`` module. This sources the program data from an external
-  chocolatey repository. Internal repositories can be used instead by setting
-  the ``source`` option. 
+* Using the ``win_chocolatey`` module. This sources the program data from the default
+  public `Chocolatey <https://chocolatey.org/>`_ repository. Internal repositories can 
+  be used instead by setting the ``source`` option. 
 
-* Using the ``win_package`` module. This installs a program from a
-  local/network path or URL.
+* Using the ``win_package`` module. This installs software using an MSI or .exe installer 
+  from a local/network path or URL.
 
-* Using the ``win_command`` or ``win_shell`` module to install manually.
+* Using the ``win_command`` or ``win_shell`` module to run an installer manually.
 
-The ``win_chocolatey`` module is recommended since it has the most complete logic for checking to see if a program is already installed.
+The ``win_chocolatey`` module is recommended since it has the most complete logic for checking to see if a package has already been installed and is up-to-date.
 
 Below are some examples of using all three options to install 7-Zip::
 
     # install/uninstall with chocolatey
-    - name: ensure 7-Zip is installed using Chocolatey
+    - name: ensure 7-Zip is installed via Chocolatey
       win_chocolatey:
         name: 7zip
         state: present
     
-    - name: ensure 7-Zip is uninstall using Chocolatey
+    - name: ensure 7-Zip is not installed via Chocolatey
       win_chocolatey:
         name: 7zip
         state: absent
@@ -46,12 +46,12 @@ Below are some examples of using all three options to install 7-Zip::
         url: http://www.7-zip.org/a/7z1701-x64.msi
         dest: C:\temp\7z.msi
 
-    - name: ensure 7-Zip is installed using win_package
+    - name: ensure 7-Zip is installed via win_package
       win_package:
         path: C:\temp\7z.msi
         state: present
     
-    - name: ensure 7-Zip is uninstall using win_package
+    - name: ensure 7-Zip is not installed via win_package
       win_package:
         path: C:\temp\7z.msi
         state: absent
@@ -67,28 +67,29 @@ Below are some examples of using all three options to install 7-Zip::
         name: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{23170F69-40C1-2702-1701-000001000000}
       register: 7zip_installed
     
-    - name: ensure 7-Zip is installed using win_command
+    - name: ensure 7-Zip is installed via win_command
       win_command: C:\Windows\System32\msiexec.exe /i C:\temp\7z.msi /qn /norestart
       when: 7zip_installed.exists == False
     
-    - name: ensure 7-Zip is uninstalled using win_command
+    - name: ensure 7-Zip is uninstalled via win_command
       win_command: C:\Windows\System32\msiexec.exe /x {23170F69-40C1-2702-1701-000001000000} /qn /norestart
       when: 7zip_installed.exists == True
 
-Some progam installers like Microsoft Office or SQL Server require credential delegation or
+Some installers like Microsoft Office or SQL Server require credential delegation or
 access to components restricted by WinRM. The best method to bypass these
 issues is to use ``become`` with the task. With ``become``, Ansible will run
-the module as it would when running it locally. 
+the installer as if it were run interactively on the host.
 
 .. Note:: Many installers do not properly pass back error information over WinRM. In these cases, if the install has been verified to work locally the recommended method is to use become.
 
-.. Note:: Some installers restart the WinRM service or cause it to become temporarily unavailable, making Ansible assume the system is unreachable.
+.. Note:: Some installers restart the WinRM or HTTP services, or cause them to become temporarily unavailable, making
+Ansible assume the system is unreachable.
 
 Installing Updates
 ------------------
 The ``win_updates`` and ``win_hotfix`` modules can be used to install updates
 or hotfixes on a host. The module ``win_updates`` is used to install multiple
-updates per a category, while ``win_hotfix`` can be used to install a single
+updates by category, while ``win_hotfix`` can be used to install a single
 update or hotfix file that has been downloaded locally.
 
 .. Note:: The ``win_hotfix`` module has a requirement that the DISM PowerShell cmdlets are
@@ -128,7 +129,7 @@ update or hotfix::
       win_reboot:
       when: hotfix_result.reboot_required
 
-Setup Users and Groups
+Set Up Users and Groups
 ----------------------
 Ansible can be used to create Windows users and groups both locally and on a domain.
 
@@ -138,9 +139,9 @@ The modules ``win_user``, ``win_group`` and ``win_group_membership`` manage
 Windows users, groups and group memberships locally.
 
 The following is an example of creating local accounts and groups that can
-access a folder locally::
+access a folder on the same host::
 
-    - name: create local group users will be members of
+    - name: create local group to contain new users
       win_group:
         name: LocalGroup
         description: Allow access to C:\Development folder
@@ -207,14 +208,13 @@ Running Commands
 In cases where there is no appropriate module available for a task,
 a command or script can be run using the ``win_shell``, ``win_command``, ``raw``, and ``script`` modules. 
 
-The ``raw`` module executes a low-level command without any of the normal
-wrappers that Ansible uses. Because of this, things like ``become``, ``async``
+The ``raw`` module simply executes a Powershell command remotely. Since ``raw``
+has none of the wrappers that Ansible typically uses, ``become``, ``async``
 and environment variables do not work.
 
-The ``script`` module executes a script from a local directory to the Ansible
-host on the Windows server. Like ``raw``, ``script`` currently does not support
-``become``, ``async``, and environment variables, but can still be used if the
-script to be executed is located on the Ansible host and not the Windows host.
+The ``script`` module executes a script from the Ansible controller on
+one or more Windows hosts. Like ``raw``, ``script`` currently does not support
+``become``, ``async``, or environment variables.
 
 The ``win_command`` module is used to execute a command which is either an
 executable or batch file, while the ``win_shell`` module is used to execute commands within a shell.
@@ -225,9 +225,9 @@ The ``win_shell`` and ``win_command`` modules can both be used to execute a comm
 The ``win_shell`` module is run within a shell-like process like ``PowerShell`` or ``cmd``, so it has access to shell
 operators like ``<``, ``>``, ``|``, ``;``, ``&&``, and ``||``. Multi-lined commands can also be run in ``win_shell``.
 
-The ``win_command`` is designed to be run as an executable outside of
-a shell. It can still run a shell command like ``mkdir`` or ``New-Item`` by
-running it with the ``cmd.exe`` or ``PowerShell.exe`` executable.
+The ``win_command`` module simply runs a process outside of a shell. It can still 
+run a shell command like ``mkdir`` or ``New-Item`` by passing the shell commands 
+to a shell executable like ``cmd.exe`` or ``PowerShell.exe``.
 
 Here are some examples of using ``win_command`` and ``win_shell``::
 
@@ -255,8 +255,8 @@ Here are some examples of using ``win_command`` and ``win_shell``::
     - name: run a vbs script
       win_command: cscript.exe script.vbs
 
-.. Note:: Some commands like ``mkdir``, ``del``, and ``copy`` are all commands that
-    only exist in the CMD shell. To run them with ``win_command`` they must be
+.. Note:: Some commands like ``mkdir``, ``del``, and ``copy`` only exist in
+    the CMD shell. To run them with ``win_command`` they must be
     prefixed with ``cmd.exe /c``.
 
 Argument Rules
@@ -360,7 +360,7 @@ YAML Style
 When using the YAML syntax for tasks, the rules are well-defined by the YAML
 standard:
 
-* When using normal string (without quotes), YAML will not consider the
+* When using a normal string (without quotes), YAML will not consider the
   backslash an escape character.
 
 * When using single quotes ``'``, YAML will not consider the backslash an
@@ -414,8 +414,8 @@ Legacy key=value Style
 ----------------------
 The legacy ``key=value`` syntax is used on the command line for adhoc commands,
 or inside playbooks. The use of this style is discouraged within playbooks
-because backslash characters need to be escaped, and this makes playbooks harder to read.
-This syntax depends on the specific implementation in Ansible, and quoting
+because backslash characters need to be escaped, making playbooks harder to read.
+The legacy syntax depends on the specific implementation in Ansible, and quoting
 (both single and double) does not have any effect on how it is parsed by
 Ansible.
 
@@ -467,7 +467,7 @@ Some things you cannot do with Ansible and Windows are:
 
 * Interact with the WinRM listeners
 
-Because WinRM is reliant on the services being online and running during normal operations, you cannot upgrade PowerShell or interact with WinRM listeners with Ansible. Both of these actions will cause the connection will fail. This can technically be avoided by using ``async`` or a scheduled task, but those methods are fragile if the process it runs breaks the underlying connection Ansible uses and are best left to the bootstrapping process or before an image is
+Because WinRM is reliant on the services being online and running during normal operations, you cannot upgrade PowerShell or interact with WinRM listeners with Ansible. Both of these actions will cause the connection to fail. This can technically be avoided by using ``async`` or a scheduled task, but those methods are fragile if the process it runs breaks the underlying connection Ansible uses, and are best left to the bootstrapping process or before an image is
 created.
 
 Developing Windows Modules
