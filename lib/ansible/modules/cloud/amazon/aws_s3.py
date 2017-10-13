@@ -599,6 +599,7 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
+        required_if=[('mode', 'put', ('src',))],
     )
 
     if module._name == 's3':
