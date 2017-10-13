@@ -84,12 +84,7 @@ Function Cast-Value($value, $type, $typeString, $name)
         }
         Else
         {
-            try {
-                $newValue = $value -as $type
-            } catch {
-                Fail-Json -obj $result -message "Fail, $value, $type, $name $($_.Exception.Message)"
-            }
-            
+            $newValue = $value -as $type   
             if ($newValue -eq $null)
             {
                 Add-Warning -obj $result -message "failed to cast property $name from '$value' of type $($originalType.FullName) to type $($type.FullName), the DSC engine may ignore this property with an invalid cast"
