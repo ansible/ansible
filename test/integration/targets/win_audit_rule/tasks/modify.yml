@@ -1,0 +1,172 @@
+#########################
+### modify check mode ###
+#########################
+- name: check mode modify audit policy directory
+  win_audit_rule:
+    path: "{{ test_audit_rule_folder }}"
+    user: "{{ test_audit_rule_user }}"
+    rights: "{{ test_audit_rule_new_rights }}"
+    state: present
+    audit_flags: "{{ test_audit_rule_audit_flags }}"
+  register: cm_modify_directory
+  check_mode: yes
+
+- name: check mode modify audit policy file
+  win_audit_rule:
+    path: "{{ test_audit_rule_file }}"
+    user: "{{ test_audit_rule_user }}"
+    rights: "{{ test_audit_rule_new_rights }}"
+    state: present
+    audit_flags: "{{ test_audit_rule_audit_flags }}"
+    inheritance_flags: none
+  register: cm_modify_file
+  check_mode: yes
+
+- name: check mode modify audit policy registry
+  win_audit_rule:
+    path: "{{ test_audit_rule_registry }}"
+    user: "{{ test_audit_rule_user }}"
+    rights: "{{ test_audit_rule_new_rights }}"
+    state: present
+    audit_flags: "{{ test_audit_rule_audit_flags }}"
+  register: cm_modify_registry
+  check_mode: yes
+
+- name: check mode modify get directory rule results
+  test_get_audit_rule:
+    path: "{{ test_audit_rule_folder }}"
+    user: "{{ test_audit_rule_user }}"
+    rights: "{{ test_audit_rule_new_rights }}"
+    audit_flags: "{{ test_audit_rule_audit_flags }}"
+  register: cm_modify_directory_results
+
+- name: check mode modify get file rule results
+  test_get_audit_rule:
+    path: "{{ test_audit_rule_file }}"
+    user: "{{ test_audit_rule_user }}"
+    rights: "{{ test_audit_rule_new_rights }}"
+    audit_flags: "{{ test_audit_rule_audit_flags }}"
+    inheritance_flags: none
+  register: cm_modify_file_results
+
+- name: check mode modify get REGISTRY rule results
+  test_get_audit_rule:
+    path: "{{ test_audit_rule_registry }}"
+    user: "{{ test_audit_rule_user }}"
+    rights: "{{ test_audit_rule_new_rights }}"
+    audit_flags: "{{ test_audit_rule_audit_flags }}"
+  register: cm_modify_registry_results
+
+- name: check mode modify assert that change is needed but rights still equal the original rights and not test_audit_rule_new_rights
+  assert:
+    that:
+    - cm_modify_directory | changed
+    - cm_modify_file | changed
+    - cm_modify_registry | changed
+    - not cm_modify_directory_results.matching_rule_found and cm_modify_directory_results.target_type == 'directory'
+    - not cm_modify_file_results.matching_rule_found and cm_modify_file_results.target_type == 'file'
+    - not cm_modify_registry_results.matching_rule_found and cm_modify_registry_results.target_type == 'registry'
+
+##############
+### modify ###
+##############
+- name: modify audit policy directory
+  win_audit_rule:
+    path: "{{ test_audit_rule_folder }}"
+    user: "{{ test_audit_rule_user }}"
+    rights: "{{ test_audit_rule_new_rights }}"
+    state: present
+    audit_flags: "{{ test_audit_rule_audit_flags }}"
+  register: modify_directory
+
+- name: modify audit policy file
+  win_audit_rule:
+    path: "{{ test_audit_rule_file }}"
+    user: "{{ test_audit_rule_user }}"
+    rights: "{{ test_audit_rule_new_rights }}"
+    state: present
+    audit_flags: "{{ test_audit_rule_audit_flags }}"
+    inheritance_flags: none
+  register: modify_file
+
+- name: modify audit policy registry
+  win_audit_rule:
+    path: "{{ test_audit_rule_registry }}"
+    user: "{{ test_audit_rule_user }}"
+    rights: "{{ test_audit_rule_new_rights }}"
+    state: present
+    audit_flags: "{{ test_audit_rule_audit_flags }}"
+  register: modify_registry
+
+- name: modify get directory rule results
+  test_get_audit_rule:
+    path: "{{ test_audit_rule_folder }}"
+    user: "{{ test_audit_rule_user }}"
+    rights: "{{ test_audit_rule_new_rights }}"
+    audit_flags: "{{ test_audit_rule_audit_flags }}"
+  register: modify_directory_results
+
+- name: modify get file rule results
+  test_get_audit_rule:
+    path: "{{ test_audit_rule_file }}"
+    user: "{{ test_audit_rule_user }}"
+    rights: "{{ test_audit_rule_new_rights }}"
+    audit_flags: "{{ test_audit_rule_audit_flags }}"
+    inheritance_flags: none
+  register: modify_file_results
+
+- name: modify get REGISTRY rule results
+  test_get_audit_rule:
+    path: "{{ test_audit_rule_registry }}"
+    user: "{{ test_audit_rule_user }}"
+    rights: "{{ test_audit_rule_new_rights }}"
+    audit_flags: "{{ test_audit_rule_audit_flags }}"
+  register: modify_registry_results
+
+- name: modify assert that the rules were modified and a change is detected
+  assert:
+    that:
+    - modify_directory | changed
+    - modify_file | changed
+    - modify_registry | changed
+    - modify_directory_results.matching_rule_found and modify_directory_results.target_type == 'directory'
+    - modify_file_results.matching_rule_found and modify_file_results.target_type == 'file'
+    - modify_registry_results.matching_rule_found and modify_registry_results.target_type == 'registry'
+
+#####################################
+### idempotent test modify a rule ###
+#####################################
+- name: idempotent modify audit policy directory
+  win_audit_rule:
+    path: "{{ test_audit_rule_folder }}"
+    user: "{{ test_audit_rule_user }}"
+    rights: "{{ test_audit_rule_new_rights }}"
+    state: present
+    audit_flags: "{{ test_audit_rule_audit_flags }}"
+  register: idem_modify_directory
+
+- name: idempotent modify audit policy file
+  win_audit_rule:
+    path: "{{ test_audit_rule_file }}"
+    user: "{{ test_audit_rule_user }}"
+    rights: "{{ test_audit_rule_new_rights }}"
+    state: present
+    audit_flags: "{{ test_audit_rule_audit_flags }}"
+    inheritance_flags: none
+  register: idem_modify_file
+
+- name: idempotent modify audit policy registry
+  win_audit_rule:
+    path: "{{ test_audit_rule_registry }}"
+    user: "{{ test_audit_rule_user }}"
+    rights: "{{ test_audit_rule_new_rights }}"
+    state: present
+    audit_flags: "{{ test_audit_rule_audit_flags }}"
+  register: idem_modify_registry
+
+- name: idempotent modify assert that and a change is not detected
+  assert:
+    that:
+    - not idem_modify_directory | changed and idem_modify_registry.target_type == 'directory'
+    - not idem_modify_file | changed and idem_modify_registry.target_type == 'file'
+    - not idem_modify_registry | changed and idem_modify_registry.target_type == 'registry'

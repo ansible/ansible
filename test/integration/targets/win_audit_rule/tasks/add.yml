@@ -1,0 +1,172 @@
+######################
+### check mode add ###
+######################
+- name: check mode ADD audit policy directory
+  win_audit_rule:
+    path: "{{ test_audit_rule_folder }}"
+    user: "{{ test_audit_rule_user }}"
+    rights: "{{ test_audit_rule_rights }}"
+    state: present
+    audit_flags: "{{ test_audit_rule_audit_flags }}"
+  register: check_mode_add_directory
+  check_mode: yes
+
+- name: check mode ADD audit policy file
+  win_audit_rule:
+    path: "{{ test_audit_rule_file }}"
+    user: "{{ test_audit_rule_user }}"
+    rights: "{{ test_audit_rule_rights }}"
+    state: present
+    audit_flags: "{{ test_audit_rule_audit_flags }}"
+    inheritance_flags: none
+  register: check_mode_add_file
+  check_mode: yes
+
+- name: check mode ADD audit policy registry
+  win_audit_rule:
+    path: "{{ test_audit_rule_registry }}"
+    user: "{{ test_audit_rule_user }}"
+    rights: "{{ test_audit_rule_rights }}"
+    state: present
+    audit_flags: "{{ test_audit_rule_audit_flags }}"
+  register: check_mode_add_registry
+  check_mode: yes
+
+- name: check mode ADD get directory results
+  test_get_audit_rule:
+    path: "{{ test_audit_rule_folder }}"
+    user: "{{ test_audit_rule_user }}"
+    rights: "{{ test_audit_rule_rights }}"
+    audit_flags: "{{ test_audit_rule_audit_flags }}"
+  register: check_mode_add_directory_results
+
+- name: check mode ADD get file results
+  test_get_audit_rule:
+    path: "{{ test_audit_rule_file }}"
+    user: "{{ test_audit_rule_user }}"
+    rights: "{{ test_audit_rule_rights }}"
+    audit_flags: "{{ test_audit_rule_audit_flags }}"
+    inheritance_flags: none
+  register: check_mode_add_file_results
+
+- name: check mode ADD get REGISTRY results
+  test_get_audit_rule:
+    path: "{{ test_audit_rule_registry }}"
+    user: "{{ test_audit_rule_user }}"
+    rights: "{{ test_audit_rule_rights }}"
+    audit_flags: "{{ test_audit_rule_audit_flags }}"
+  register: check_mode_add_registry_results
+
+- name: check mode ADD assert that a change is needed, but no change occurred to the audit rules
+  assert:
+    that:
+    - check_mode_add_directory | changed
+    - check_mode_add_file | changed
+    - check_mode_add_registry | changed
+    - not check_mode_add_directory_results.matching_rule_found and check_mode_add_directory_results.target_type == 'directory'
+    - not check_mode_add_file_results.matching_rule_found and check_mode_add_file_results.target_type == 'file'
+    - not check_mode_add_registry_results.matching_rule_found and check_mode_add_registry_results.target_type == 'registry'
+
+##################
+### add a rule ###
+##################
+- name: ADD audit policy directory
+  win_audit_rule:
+    path: "{{ test_audit_rule_folder }}"
+    user: "{{ test_audit_rule_user }}"
+    rights: "{{ test_audit_rule_rights }}"
+    state: present
+    audit_flags: "{{ test_audit_rule_audit_flags }}"
+  register: add_directory
+
+- name: ADD audit policy file
+  win_audit_rule:
+    path: "{{ test_audit_rule_file }}"
+    user: "{{ test_audit_rule_user }}"
+    rights: "{{ test_audit_rule_rights }}"
+    state: present
+    audit_flags: "{{ test_audit_rule_audit_flags }}"
+    inheritance_flags: none
+  register: check_mode_add_file
+
+- name: ADD audit policy registry
+  win_audit_rule:
+    path: "{{ test_audit_rule_registry }}"
+    user: "{{ test_audit_rule_user }}"
+    rights: "{{ test_audit_rule_rights }}"
+    state: present
+    audit_flags: "{{ test_audit_rule_audit_flags }}"
+  register: add_registry
+
+- name: ADD get directory results
+  test_get_audit_rule:
+    path: "{{ test_audit_rule_folder }}"
+    user: "{{ test_audit_rule_user }}"
+    rights: "{{ test_audit_rule_rights }}"
+    audit_flags: "{{ test_audit_rule_audit_flags }}"
+  register: add_directory_results
+
+- name: ADD get file results
+  test_get_audit_rule:
+    path: "{{ test_audit_rule_file }}"
+    user: "{{ test_audit_rule_user }}"
+    rights: "{{ test_audit_rule_rights }}"
+    audit_flags: "{{ test_audit_rule_audit_flags }}"
+    inheritance_flags: none
+  register: add_file_results
+
+- name: ADD get REGISTRY results
+  test_get_audit_rule:
+    path: "{{ test_audit_rule_registry }}"
+    user: "{{ test_audit_rule_user }}"
+    rights: "{{ test_audit_rule_rights }}"
+    audit_flags: "{{ test_audit_rule_audit_flags }}"
+  register: add_registry_results
+
+- name: ADD assert that the rules were added and a change is detected
+  assert:
+    that:
+    - add_directory | changed
+    - add_file | changed
+    - add_registry | changed
+    - add_directory_results.matching_rule_found and add_directory_results.target_type == 'directory'
+    - add_file_results.matching_rule_found and add_file_results.target_type == 'file'
+    - add_registry_results.matching_rule_found and add_registry_results.target_type == 'registry'
+
+#############################
+### idempotent add a rule ###
+#############################
+- name: idempotent ADD audit policy directory
+  win_audit_rule:
+    path: "{{ test_audit_rule_folder }}"
+    user: "{{ test_audit_rule_user }}"
+    rights: "{{ test_audit_rule_rights }}"
+    state: present
+    audit_flags: "{{ test_audit_rule_audit_flags }}"
+  register: add_directory_idempotent
+
+- name: idempotent ADD audit policy file
+  win_audit_rule:
+    path: "{{ test_audit_rule_file }}"
+    user: "{{ test_audit_rule_user }}"
+    rights: "{{ test_audit_rule_rights }}"
+    state: present
+    audit_flags: "{{ test_audit_rule_audit_flags }}"
+    inheritance_flags: none
+  register: add_file_idempotent
+
+- name: idempotent ADD audit policy registry idempotent
+  win_audit_rule:
+    path: "{{ test_audit_rule_registry }}"
+    user: "{{ test_audit_rule_user }}"
+    rights: "{{ test_audit_rule_rights }}"
+    state: present
+    audit_flags: "{{ test_audit_rule_audit_flags }}"
+  register: add_registry_idempotent
+
+- name: idempotent ADD assert that a change did not occur
+  assert:
+    that:
+    - not add_directory_idempotent | changed and add_directory_idempotent.target_type == 'directory'
+    - not add_file_idempotent | changed and add_file_idempotent.target_type == 'file'
+    - not add_registry_idempotent | changed and add_registry_idempotent.target_type == 'registry'

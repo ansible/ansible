@@ -28,30 +28,31 @@ options:
         'hklm:\software'.
     required: true
     aliases: [ dest, destination ]
-  identity_reference:
+  user:
     description:
       - The user or group to adjust rules for.
     required: true
   rights:
     description:
       - Comma seperated list of the rights desired. Only required for adding a rule.
-      - If C(path) is a file or directory, rights can be any right under MSDN
-        FileSystemRights U(https://msdn.microsoft.com/en-us/library/system.security.accesscontrol.filesystemrights(v=vs.110).aspx).
-      - If C(path) is a registry key, rights can be any right under MSDN
-        RegistryRights U(https://msdn.microsoft.com/en-us/library/system.security.accesscontrol.registryrights(v=vs.110).aspx).
+      - If I(path) is a file or directory, rights can be any right under MSDN
+        FileSystemRights U(https://msdn.microsoft.com/en-us/library/system.security.accesscontrol.filesystemrights.aspx).
+      - If I(path) is a registry key, rights can be any right under MSDN
+        RegistryRights U(https://msdn.microsoft.com/en-us/library/system.security.accesscontrol.registryrights.aspx).
     required: true
   inheritance_flags:
     description:
       - Defines what objects inside of a folder will inherit the settings.
+      - If you are setting a rule on a file, this value has to be changed to C(none).
       - For more information on the choices see MSDN PropagationFlags enumeration
-        at U(https://msdn.microsoft.com/en-us/library/system.security.accesscontrol.inheritanceflags(v=vs.110).aspx).
+        at U(https://msdn.microsoft.com/en-us/library/system.security.accesscontrol.inheritanceflags.aspx).
     default: "ContainerInherit,ObjectInherit"
     choices: [ ContainerInherit, ObjectInherit ]
   propagation_flags:
     description:
       - Propagation flag on the audit rules.
       - For more information on the choices see MSDN PropagationFlags enumeration
-        at U(https://msdn.microsoft.com/en-us/library/system.security.accesscontrol.propagationflags(v=vs.110).aspx).
+        at U(https://msdn.microsoft.com/en-us/library/system.security.accesscontrol.propagationflags.aspx).
     default: "None"
     choices: [ None, InherityOnly, NoPropagateInherit ]
   audit_flags:
@@ -63,37 +64,45 @@ options:
   state:
     description:
       - Whether the rule should be present or absent.
-      - For absent, only path, identity_reference, and state are required.
+      - For absent, only path, user, and state are required.
     default: present
     choices: [ present, absent ]
 '''
 
 EXAMPLES = r'''
-- name: add filesystem audit rule
+- name: add filesystem audit rule for a folder
   win_audit_rule:
     path: 'c:\inetpub\wwwroot\website'
-    identity_reference: 'BUILTIN\Users'
+    user: 'BUILTIN\Users'
     rights: 'write,delete,changepermissions'
     audit_flags: 'success,failure'
     inheritance_flags: 'ContainerInherit,ObjectInherit'
 
+- name: add filesystem audit rule for a file
+  win_audit_rule:
+    path: 'c:\inetpub\wwwroot\website\web.config'
+    user: 'BUILTIN\Users'
+    rights: write,delete,changepermissions
+    audit_flags: success,failure
+    inheritance_flags: None
+
 - name: add registry audit rule
   win_audit_rule:
     path: 'hklm:\software'
-    identity_reference: 'BUILTIN\Users'
+    user: 'BUILTIN\Users'
     rights: 'delete'
     audit_flags: 'success'
 
 - name: remove filesystem audit rule
   win_audit_rule:
     path: 'c:\inetpub\wwwroot\website'
-    identity_reference: 'BUILTIN\Users'
+    user: 'BUILTIN\Users'
     state: absent
 
 - name: remove registry audit rule
   win_audit_rule:
     path: 'hklm:\software'
-    identity_reference: 'BUILTIN\Users'
+    user: 'BUILTIN\Users'
     state: absent
 '''
 
@@ -107,7 +116,7 @@ current_audit_rules:
   sample: |
     {
       "audit_flags": "Success",
-      "identity_reference": "Everyone",
+      "user": "Everyone",
       "inheritance_flags": "False",
       "is_inherited": "False",
       "propagation_flags": "None",
