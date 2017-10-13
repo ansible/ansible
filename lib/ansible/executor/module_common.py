@@ -794,7 +794,6 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         min_os_version = None
         min_ps_version = None
 
-
         requires_module_list = re.compile(to_bytes(r'(?i)^#\s*requires\s+\-module(?:s?)\s*(Ansible\.ModuleUtils\..+)'))
         requires_become = re.compile(to_bytes('(?i)^#\s*ansiblerequires.*\-become'))
         requires_os_version = re.compile(to_bytes('(?i)^#\s*ansiblerequires.*\-osversion\s*(([0-9]+)\.([0-9]+))$'))
