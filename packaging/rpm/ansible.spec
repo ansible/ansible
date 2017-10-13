@@ -1,10 +1,6 @@
 %define name ansible
 %define ansible_version $VERSION
 
-%if 0%{?rhel} == 5
-%define __python /usr/bin/python26
-%endif
-
 Name:      %{name}
 Version:   %{ansible_version}
 Release:   1%{?dist}
@@ -18,19 +14,6 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 
 BuildArch: noarch
 
-# RHEL <=5
-%if 0%{?rhel} && 0%{?rhel} <= 5
-BuildRequires: python26-devel
-BuildRequires: python26-setuptools
-Requires: python26-PyYAML
-Requires: python26-paramiko
-Requires: python26-jinja2
-Requires: python26-keyczar
-Requires: python26-httplib2
-Requires: python26-setuptools
-Requires: python26-six
-%endif
-
 # RHEL == 6
 %if 0%{?rhel} == 6
 Requires: python-crypto
@@ -41,15 +24,19 @@ Requires: python-crypto
 Requires: python2-cryptography
 %endif
 
-# RHEL > 5
-%if 0%{?rhel} && 0%{?rhel} > 5
+# RHEL => 6
+%if 0%{?rhel} && 0%{?rhel} >= 6
 BuildRequires: python2-devel
 BuildRequires: python-setuptools
 Requires: PyYAML
 Requires: python-paramiko
 Requires: python-jinja2
+Requires: python-requests
 Requires: python-setuptools
 Requires: python-six
+Requires: python-jmespath
+Requires: python-netaddr
+Requires: python-dns
 %endif
 
 # FEDORA > 17
@@ -59,10 +46,12 @@ BuildRequires: python-setuptools
 Requires: PyYAML
 Requires: python-paramiko
 Requires: python-jinja2
-Requires: python-keyczar
-Requires: python-httplib2
+Requires: python-requests
 Requires: python-setuptools
 Requires: python-six
+Requires: python-jmespath
+Requires: python-netaddr
+Requires: python-dns
 %endif
 
 # SuSE/openSuSE
@@ -71,11 +60,13 @@ BuildRequires: python-devel
 BuildRequires: python-setuptools
 Requires: python-paramiko
 Requires: python-jinja2
-Requires: python-keyczar
 Requires: python-yaml
-Requires: python-httplib2
+Requires: python-requests
 Requires: python-setuptools
 Requires: python-six
+Requires: python-jmespath
+Requires: python-netaddr
+Requires: python-dns
 %endif
 
 Requires: sshpass
