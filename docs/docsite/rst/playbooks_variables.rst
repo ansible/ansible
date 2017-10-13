@@ -766,22 +766,22 @@ In addition to ``vars_prompt`` and ``vars_files``, it is possible to set variabl
 command line using the ``--extra-vars`` (or ``-e``) argument.  Variables can be defined using
 a single quoted string (containing one or more variables) using one of the formats below 
 
-key=value format:
-.. code-block:: none
+key=value format::
+
     ansible-playbook release.yml --extra-vars "version=1.23.45 other_variable=foo"
 
 .. note:: Values passed in using the ``key=value`` syntax are interpreted as strings.
           Use the JSON format if you need to pass in anything that shouldn't be a string (Booleans, integers, floats, lists etc).
 
 .. versionadded:: 1.2
-JSON string format:
-.. code-block:: none
+JSON string format::
+
     ansible-playbook release.yml --extra-vars '{"version":"1.23.45","other_variable":"foo"}'
     ansible-playbook arcade.yml --extra-vars '{"pacman":"mrs","ghosts":["inky","pinky","clyde","sue"]}'
 
 .. versionadded:: 1.3
-YAML string format:
-.. code-block:: none
+YAML string format::
+
     ansible-playbook release.yml --extra-vars '
     version: "1.23.45"
     other_variable: foo'
@@ -795,17 +795,18 @@ YAML string format:
     - sue'
 
 .. versionadded:: 1.3
-vars from a JSON or YAML file:
-.. code-block:: none
+vars from a JSON or YAML file::
+
     ansible-playbook release.yml --extra-vars "@some_file.json"
+
 This is useful for, among other things, setting the hosts group or the user for the playbook.
 
 Escaping quotes and other special characters:
 
 .. versionadded:: 1.2
 Ensure you're escaping quotes appropriately for both your markup (e.g. JSON), and for 
-the shell you're operating in.
-.. code-block:: none
+the shell you're operating in.::
+
     ansible-playbook arcade.yml --extra-vars "{\"name\":\"Conan O\'Brien\"}"
     ansible-playbook arcade.yml --extra-vars '{"name":"Conan O'\\\''Brien"}'
     ansible-playbook script.yml --extra-vars "{\"dialog\":\"He said \\\"I just can\'t get enough of those single and double-quotes"\!"\\\"\"}"
