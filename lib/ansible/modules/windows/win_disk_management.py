@@ -85,7 +85,7 @@ options:
         - Manage disk option
         - File system which will be set on selected disk
         - Maximum volume size for ntfs is 256gb, for refs 1208925819614650gb (1 yobibyte)
-        - If the disk size of the selected disk does not match with the passed value for option 
+        - If the disk size of the selected disk does not match with the passed value for option
         - file_system (e.g. "ntfs" over 256000gb) the module will be canceled
       required: false
       default: ntfs
