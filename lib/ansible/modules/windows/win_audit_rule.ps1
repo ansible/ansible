@@ -35,7 +35,7 @@ Function Get-CurrentAuditRules ($path) {
             rights = ($Obj | Select-Object -expand "*rights").ToString()
             audit_flags = $Obj.AuditFlags.ToString()
             is_inherited = $Obj.IsInherited.ToString()
-            inheritance_flags = $Obj.IsInherited.ToString()
+            inheritance_flags = $Obj.InheritanceFlags.ToString()
             propagation_flags = $Obj.PropagationFlags.ToString()
         }
     }
@@ -86,7 +86,9 @@ $ACL = Get-Acl $path -Audit
 If ($state -eq 'absent')
 {
     #Try and find an identity on the object that matches user
-    $ToRemove = ($ACL.Audit | Where-Object {$_.IdentityReference.Translate([System.Security.Principal.SecurityIdentifier]) -eq $SID}).IdentityReference
+    #We skip inherited items since we can't remove those
+    $ToRemove = ($ACL.Audit | Where-Object {$_.IdentityReference.Translate([System.Security.Principal.SecurityIdentifier]) -eq $SID -and
+    $_.IsInherited -eq $false}).IdentityReference
 
     #Exit with changed false if no identity is found
     If (-Not $ToRemove)
@@ -145,6 +147,8 @@ Else
     }
 
     #exit here if any existing rule matches defined rule since no change is needed
+    #if we need to ignore inherited rules in the future, this would be where to do it
+    #Just filter out inherited rules from $ACL.Audit
     Foreach ($group in $ACL.Audit)
     {
         If (

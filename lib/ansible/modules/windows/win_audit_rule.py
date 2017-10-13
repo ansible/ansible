@@ -51,6 +51,7 @@ options:
   propagation_flags:
     description:
       - Propagation flag on the audit rules.
+      - This value is ignored when the path type is a file.
       - For more information on the choices see MSDN PropagationFlags enumeration
         at U(https://msdn.microsoft.com/en-us/library/system.security.accesscontrol.propagationflags.aspx).
     default: "None"

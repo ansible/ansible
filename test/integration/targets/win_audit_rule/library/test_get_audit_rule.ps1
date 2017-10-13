@@ -32,7 +32,7 @@ Function Get-CurrentAuditRules ($path) {
             user = $Obj.IdentityReference.ToString()
             rights = ($Obj | Select-Object -expand "*rights").ToString()
             audit_flags = $Obj.AuditFlags.ToString()
-            is_inherited = $Obj.IsInherited.ToString()
+            is_inherited = $Obj.InheritanceFlags.ToString()
             inheritance_flags = $Obj.IsInherited.ToString()
             propagation_flags = $Obj.PropagationFlags.ToString()
         }
