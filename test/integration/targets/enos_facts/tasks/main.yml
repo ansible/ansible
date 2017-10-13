@@ -1,0 +1,7 @@
+# This contain sample show facts tasks
+---
+
+- name: Test Enos Facts
+  enos_facts: provider={{ cli }}
+  with_items: "{{enos_facts_data}}"
+# Completed file
