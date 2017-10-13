@@ -38,6 +38,7 @@ from fnmatch import fnmatch
 
 from ansible import __version__ as ansible_version
 from ansible.executor.module_common import REPLACER_WINDOWS
+from ansible.plugins.loader import fragment_loader
 from ansible.utils.plugin_docs import BLACKLIST, get_docstring
 
 from module_args import get_argument_spec
@@ -805,7 +806,7 @@ class ModuleValidator(Validator):
             if not errors and not traces:
                 with CaptureStd():
                     try:
-                        get_docstring(self.path, verbose=True)
+                        get_docstring(self.path, fragment_loader, verbose=True)
                     except AssertionError:
                         fragment = doc['extends_documentation_fragment']
                         self.reporter.error(
@@ -988,8 +989,8 @@ class ModuleValidator(Validator):
 
         with CaptureStd():
             try:
-                existing_doc, _, _, _ = get_docstring(self.base_module, verbose=True)
-                existing_options = existing_doc.get('options', {}) or {}
+                existing_doc, _, _, _ = get_docstring(self.base_module, fragment_loader, verbose=True)
+                existing_options = existing_doc.get('options', {})
             except AssertionError:
                 fragment = doc['extends_documentation_fragment']
                 self.reporter.warning(

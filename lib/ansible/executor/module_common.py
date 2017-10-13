@@ -305,10 +305,8 @@ if __name__ == '__main__':
     if PY3:
         ANSIBALLZ_PARAMS = ANSIBALLZ_PARAMS.encode('utf-8')
     try:
-        # There's a race condition with the controller removing the
-        # remote_tmpdir and this module executing under async.  So we cannot
-        # store this in remote_tmpdir (use system tempdir instead)
-        temp_path = tempfile.mkdtemp(prefix='ansible_')
+        # this temp path will be under the 'remote_tmp', in it's own subdir
+        temp_path = tempfile.mkdtemp(prefix='ansiballz_')
 
         zipped_mod = os.path.join(temp_path, 'ansible_modlib.zip')
         modlib = open(zipped_mod, 'wb')

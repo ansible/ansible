@@ -19,7 +19,7 @@ from collections import defaultdict
 from ansible import constants as C
 from ansible.plugins import get_plugin_class, MODULE_CACHE, PATH_CACHE, PLUGIN_PATH_CACHE
 from ansible.module_utils._text import to_text
-from ansible.parsing.plugin_docs import read_docstring
+from ansible.utils.plugin_docs import get_docstring
 
 try:
     from __main__ import display
@@ -209,14 +209,14 @@ class PluginLoader:
         if self.class_name:
             type_name = get_plugin_class(self.class_name)
 
-            # FIXME: expand from just connection and callback
-            if type_name in ('callback', 'connection', 'inventory', 'lookup'):
-                dstring = read_docstring(path, verbose=False, ignore_errors=False)
+            # FIXME: expand to other plugins, but never doc fragments
+            # if type name != 'module_doc_fragment':
+            if type_name in ('callback', 'connection', 'inventory', 'lookup', 'shell'):
+                dstring = get_docstring(path, fragment_loader, verbose=False, ignore_errors=True)[0]
 
-                if dstring.get('doc', False):
-                    if 'options' in dstring['doc'] and isinstance(dstring['doc']['options'], dict):
-                        C.config.initialize_plugin_configuration_definitions(type_name, name, dstring['doc']['options'])
-                        display.debug('Loaded config def from plugin (%s/%s)' % (type_name, name))
+                if 'options' in dstring and isinstance(dstring['options'], dict):
+                    C.config.initialize_plugin_configuration_definitions(type_name, name, dstring['options'])
+                    display.debug('Loaded config def from plugin (%s/%s)' % (type_name, name))
 
     def add_directory(self, directory, with_subdir=False):
         ''' Adds an additional directory to the search path '''
@@ -455,6 +455,14 @@ class PluginLoader:
             self._update_object(obj, name, path)
             yield obj
 
+# doc fragments first
+fragment_loader = PluginLoader(
+    'ModuleDocFragment',
+    'ansible.utils.module_docs_fragments',
+    os.path.join(os.path.dirname(__file__), 'module_docs_fragments'),
+    '',
+)
+
 action_loader = PluginLoader(
     'ActionModule',
     'ansible.plugins.action',
@@ -536,13 +544,6 @@ test_loader = PluginLoader(
     'ansible.plugins.test',
     C.DEFAULT_TEST_PLUGIN_PATH,
     'test_plugins'
-)
-
-fragment_loader = PluginLoader(
-    'ModuleDocFragment',
-    'ansible.utils.module_docs_fragments',
-    os.path.join(os.path.dirname(__file__), 'module_docs_fragments'),
-    '',
 )
 
 strategy_loader = PluginLoader(

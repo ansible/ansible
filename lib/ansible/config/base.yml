@@ -733,15 +733,6 @@ DEFAULT_MODULE_COMPRESSION:
   - {key: module_compression, section: defaults}
 # vars:
 #   - name: ansible_module_compression
-DEFAULT_MODULE_LANG:
-  name: Target language environment
-  default: "{{CONTROLER_LANG}}"
-  description: "Language locale setting to use for modules when they execute on the target, if empty it defaults to 'en_US.UTF-8'"
-  env: [{name: ANSIBLE_MODULE_LANG}]
-  ini:
-  - {key: module_lang, section: defaults}
-# vars:
-#   - name: ansible_module_lang
 DEFAULT_MODULE_NAME:
   name: Default adhoc module
   default: command
@@ -757,16 +748,6 @@ DEFAULT_MODULE_PATH:
   ini:
   - {key: library, section: defaults}
   type: pathspec
-DEFAULT_MODULE_SET_LOCALE:
-  name: Target locale
-  default: False
-  description: Controls if we set locale for modules when executing on the target.
-  env: [{name: ANSIBLE_MODULE_SET_LOCALE}]
-  ini:
-  - {key: module_set_locale, section: defaults}
-  type: boolean
-# vars:
-#   - name: ansible_module_locale
 DEFAULT_MODULE_UTILS_PATH:
   name: Module Utils Path
   description: Colon separated paths in which Ansible will search for Module utils files, which are shared by modules.
@@ -840,17 +821,6 @@ DEFAULT_REMOTE_PORT:
   - {key: remote_port, section: defaults}
   type: integer
   yaml: {key: defaults.remote_port}
-DEFAULT_REMOTE_TMP:
-  name: Target temporary directory
-  default: ~/.ansible/tmp
-  description:
-    - Temporary directory to use on targets when executing tasks.
-    - In some cases Ansible may still choose to use a system temporary dir to avoid permission issues.
-  env: [{name: ANSIBLE_REMOTE_TEMP}]
-  ini:
-  - {key: remote_tmp, section: defaults}
-  vars:
-    - name: ansible_remote_tmp
 DEFAULT_REMOTE_USER:
   name: Login/Remote User
   default:
