@@ -455,9 +455,8 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
         cmd.extend(['--reference', str(reference)])
     cmd.extend([repo, dest])
     module.run_command(cmd, check_rc=True, cwd=dest_dirname)
-    if bare:
-        if remote != 'origin':
-            module.run_command([git_path, 'remote', 'add', remote, repo], check_rc=True, cwd=dest)
+    if bare and remote != 'origin':
+        module.run_command([git_path, 'remote', 'add', remote, repo], check_rc=True, cwd=dest)
 
     if refspec:
         cmd = [git_path, 'fetch']
