@@ -220,11 +220,10 @@ def _create_or_update_bucket(connection, module, location):
             # only show changed if there was already a policy
             changed = bool(current_policy)
 
-        else:
-            changed = compare_policies(current_policy, policy)
+        elif compare_policies(current_policy, policy):
+            changed = True
             try:
-                if changed:
-                    bucket.set_policy(json.dumps(policy))
+                bucket.set_policy(json.dumps(policy))
                 current_policy = json.loads(to_native(bucket.get_policy()))
             except S3ResponseError as e:
                 module.fail_json(msg=e.message)
