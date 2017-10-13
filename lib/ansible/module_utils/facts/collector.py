@@ -236,8 +236,7 @@ def build_fact_id_to_collector_map(collectors_for_platform):
     return fact_id_to_collector_map, aliases_map
 
 
-def select_collector_classes(collector_names, all_fact_subsets, all_collector_classes):
-    # TODO: can be a set()
+def select_collector_classes(collector_names, all_fact_subsets):
     seen_collector_classes = set()
 
     selected_collector_classes = []
@@ -251,30 +250,14 @@ def select_collector_classes(collector_names, all_fact_subsets, all_collector_cl
 
     return selected_collector_classes
 
-    for candidate_collector_class in all_collector_classes:
-        candidate_collector_name = candidate_collector_class.name
-
-        if candidate_collector_name not in collector_names:
-            continue
-
-        collector_classes = all_fact_subsets.get(candidate_collector_name, [])
-
-        for collector_class in collector_classes:
-            if collector_class not in seen_collector_classes:
-                selected_collector_classes.append(collector_class)
-                seen_collector_classes.append(collector_class)
-
-    return selected_collector_classes
-
 
 def _get_requires_by_collector_name(collector_name, all_fact_subsets):
     required_facts = set()
 
     try:
         collector_classes = all_fact_subsets[collector_name]
-    except KeyError as e:
-        print(e)
-        raise CollectorNotFoundError('%s collector not found' % collector_name)
+    except KeyError:
+        raise CollectorNotFoundError('Fact collector "%s" not found' % collector_name)
     for collector_class in collector_classes:
         required_facts.update(collector_class.required_facts)
     return required_facts
@@ -349,7 +332,6 @@ def _solve_deps(collector_names, all_fact_subsets):
     solutions = collector_names.copy()
 
     while True:
-        print('unresolved: %s' % unresolved)
         unresolved = find_unresolved_requires(solutions, all_fact_subsets)
         if unresolved == set():
             break
@@ -413,7 +395,6 @@ def collector_classes_from_gather_subset(all_collector_classes=None,
     ordered_collector_names = [x[0] for x in ordered_deps]
 
     selected_collector_classes = select_collector_classes(ordered_collector_names,
-                                                          all_fact_subsets,
-                                                          all_collector_classes)
+                                                          all_fact_subsets)
 
     return selected_collector_classes

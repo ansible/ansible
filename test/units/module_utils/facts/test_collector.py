@@ -21,6 +21,7 @@ from __future__ import (absolute_import, division)
 __metaclass__ = type
 
 from collections import defaultdict
+import pprint
 
 # for testing
 from ansible.compat.tests import unittest
@@ -54,34 +55,22 @@ class TestFindCollectorsForPlatform(unittest.TestCase):
 
 
 class TestSelectCollectorNames(unittest.TestCase):
+
+    def _assert_equal_detail(self, obj1, obj2, msg=None):
+        msg = 'objects are not equal\n%s\n\n!=\n\n%s' % (pprint.pformat(obj1), pprint.pformat(obj2))
+        return self.assertEqual(obj1, obj2, msg)
+
     def test(self):
-        collector_names = set(['distribution', 'all_ipv4_addresses',
-                               'local', 'pkg_mgr'])
+        collector_names = ['distribution', 'all_ipv4_addresses',
+                           'local', 'pkg_mgr']
         all_fact_subsets = self._all_fact_subsets()
-        all_collector_classes = self._all_collector_classes()
         res = collector.select_collector_classes(collector_names,
-                                                 all_fact_subsets,
-                                                 all_collector_classes)
+                                                 all_fact_subsets)
 
         expected = [default_collectors.DistributionFactCollector,
                     default_collectors.PkgMgrFactCollector]
 
-        self.assertEqual(res, expected)
-
-    def test_reverse(self):
-        collector_names = set(['distribution', 'all_ipv4_addresses',
-                               'local', 'pkg_mgr'])
-        all_fact_subsets = self._all_fact_subsets()
-        all_collector_classes = self._all_collector_classes()
-        all_collector_classes.reverse()
-        res = collector.select_collector_classes(collector_names,
-                                                 all_fact_subsets,
-                                                 all_collector_classes)
-
-        expected = [default_collectors.DistributionFactCollector,
-                    default_collectors.PkgMgrFactCollector]
-
-        self.assertEqual(res, expected)
+        self._assert_equal_detail(res, expected)
 
     def test_default_collectors(self):
         platform_info = {'system': 'Generic'}
@@ -95,14 +84,16 @@ class TestSelectCollectorNames(unittest.TestCase):
         collector_names = collector.get_collector_names(valid_subsets=all_valid_subsets,
                                                         aliases_map=aliases_map,
                                                         platform_info=platform_info)
-        collector.select_collector_classes(collector_names,
-                                           all_fact_subsets,
-                                           default_collectors.collectors)
+        res = collector.select_collector_classes(collector_names,
+                                                 all_fact_subsets)
 
-    def _all_collector_classes(self):
-        return [default_collectors.DistributionFactCollector,
-                default_collectors.PkgMgrFactCollector,
-                default_collectors.LinuxNetworkCollector]
+        # assert the ordering is as expected, with required collectors before requiring collectors
+        self.assertTrue(res.index(default_collectors.PkgMgrFactCollector) >
+                        res.index(default_collectors.DistributionFactCollector))
+        self.assertTrue(res.index(default_collectors.ServiceMgrFactCollector) >
+                        res.index(default_collectors.DistributionFactCollector))
+        self.assertTrue(res.index(default_collectors.ServiceMgrFactCollector) >
+                        res.index(default_collectors.PlatformFactCollector))
 
     def _all_fact_subsets(self, data=None):
         all_fact_subsets = defaultdict(list)
