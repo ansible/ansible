@@ -78,29 +78,30 @@ import shlex
 import os
 import sys
 
-APT_PATH="/usr/bin/apt-get"
-RPM_PATH="/usr/bin/rpm"
+APT_PATH = "/usr/bin/apt-get"
+RPM_PATH = "/usr/bin/rpm"
+
 
 def query_package(module, name):
     # rpm -q returns 0 if the package is installed,
     # 1 if it is not installed
-    rc, out, err = module.run_command("%s -q %s" % (RPM_PATH,name))
-    if rc == 0:
-        return True
-    else:
-        return False
+    rc, out, err = module.run_command("%s -q %s" % (RPM_PATH, name))
+    return rc == 0
+
 
 def query_package_provides(module, name):
     # rpm -q returns 0 if the package is installed,
     # 1 if it is not installed
-    rc, out, err = module.run_command("%s -q --provides %s" % (RPM_PATH,name))
+    rc, out, err = module.run_command("%s -q --provides %s" % (RPM_PATH, name))
     return rc == 0
+
 
 def update_package_db(module):
     rc, out, err = module.run_command("%s update" % APT_PATH)
 
     if rc != 0:
         module.fail_json(msg="could not update package db: %s" % err)
+
 
 def remove_packages(module, packages):
 
@@ -111,7 +112,7 @@ def remove_packages(module, packages):
         if not query_package(module, package):
             continue
 
-        rc, out, err = module.run_command("%s -y remove %s" % (APT_PATH,package))
+        rc, out, err = module.run_command("%s -y remove %s" % (APT_PATH, package))
 
         if rc != 0:
             module.fail_json(msg="failed to remove %s: %s" % (package, err))
@@ -151,11 +152,10 @@ def install_packages(module, pkgspec):
 
 def main():
     module = AnsibleModule(
-        argument_spec    = dict(
-            state        = dict(default='installed', choices=['installed', 'removed', 'absent', 'present']),
-            update_cache = dict(default=False, aliases=['update-cache'], type='bool'),
-            package      = dict(aliases=['pkg', 'name'], required=True)))
-
+        argument_spec=dict(
+            state=dict(default='installed', choices=['installed', 'removed', 'absent', 'present']),
+            update_cache=dict(default=False, aliases=['update-cache'], type='bool'),
+            package=dict(aliases=['pkg', 'name'], required=True)))
 
     if not os.path.exists(APT_PATH) or not os.path.exists(RPM_PATH):
         module.fail_json(msg="cannot find /usr/bin/apt-get and/or /usr/bin/rpm")
@@ -167,14 +167,16 @@ def main():
 
     packages = p['package'].split(',')
 
-    if p['state'] in [ 'installed', 'present' ]:
+    if p['state'] in ['installed', 'present']:
         install_packages(module, packages)
 
-    elif p['state'] in [ 'removed', 'absent' ]:
+    elif p['state'] in ['removed', 'absent']:
         remove_packages(module, packages)
+
 
 # this is magic, see lib/ansible/module_common.py
 from ansible.module_utils.basic import *
+
 
 if __name__ == '__main__':
     main()

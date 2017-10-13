@@ -94,10 +94,7 @@ def main():
     # AnsibleModule will have split this into multiple items for us.
     # Try to spot where this has happened and fix it.
     for fragment in params['name']:
-        if (
-            re.search('^\d+(?:\.\d+)*', fragment)
-            and packages and re.search('@[^,]*$', packages[-1])
-        ):
+        if re.search('^\d+(?:\.\d+)*', fragment) and packages and re.search('@[^,]*$', packages[-1]):
             packages[-1] += ',' + fragment
         else:
             packages.append(fragment)
@@ -145,14 +142,11 @@ def ensure(module, state, packages, params):
     to_modify = filter(behaviour[state]['filter'], packages)
     if to_modify:
         rc, out, err = module.run_command(
-            [
-                'pkg', behaviour[state]['subcommand']
-            ]
-            + dry_run
-            + accept_licenses
-            + [
-                '-q', '--'
-            ] + to_modify
+            ['pkg', behaviour[state]['subcommand']] +
+            dry_run +
+            accept_licenses +
+            ['-q', '--'] +
+            to_modify
         )
         response['rc'] = rc
         response['results'].append(out)
@@ -175,6 +169,7 @@ def is_latest(module, package):
 
 
 from ansible.module_utils.basic import *
+
 
 if __name__ == '__main__':
     main()

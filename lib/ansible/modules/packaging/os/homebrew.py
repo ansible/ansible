@@ -180,9 +180,9 @@ class Homebrew(object):
         @                   # at-sign
     '''
 
-    INVALID_PATH_REGEX        = _create_regex_group(VALID_PATH_CHARS)
-    INVALID_BREW_PATH_REGEX   = _create_regex_group(VALID_BREW_PATH_CHARS)
-    INVALID_PACKAGE_REGEX     = _create_regex_group(VALID_PACKAGE_CHARS)
+    INVALID_PATH_REGEX = _create_regex_group(VALID_PATH_CHARS)
+    INVALID_BREW_PATH_REGEX = _create_regex_group(VALID_BREW_PATH_CHARS)
+    INVALID_PACKAGE_REGEX = _create_regex_group(VALID_PACKAGE_CHARS)
     # /class regexes ----------------------------------------------- }}}
 
     # class validations -------------------------------------------- {{{
@@ -227,10 +227,7 @@ class Homebrew(object):
         if brew_path is None:
             return True
 
-        return (
-            isinstance(brew_path, string_types)
-            and not cls.INVALID_BREW_PATH_REGEX.search(brew_path)
-        )
+        return isinstance(brew_path, string_types) and not cls.INVALID_BREW_PATH_REGEX.search(brew_path)
 
     @classmethod
     def valid_package(cls, package):
@@ -239,10 +236,7 @@ class Homebrew(object):
         if package is None:
             return True
 
-        return (
-            isinstance(package, string_types)
-            and not cls.INVALID_PACKAGE_REGEX.search(package)
-        )
+        return isinstance(package, string_types) and not cls.INVALID_PACKAGE_REGEX.search(package)
 
     @classmethod
     def valid_state(cls, state):
@@ -261,8 +255,8 @@ class Homebrew(object):
             return True
         else:
             return (
-                isinstance(state, string_types)
-                and state.lower() in (
+                isinstance(state, string_types) and
+                state.lower() in (
                     'installed',
                     'upgraded',
                     'head',
@@ -440,10 +434,7 @@ class Homebrew(object):
         ]
         rc, out, err = self.module.run_command(cmd)
         for line in out.split('\n'):
-            if (
-                re.search(r'Built from source', line)
-                or re.search(r'Poured from bottle', line)
-            ):
+            if re.search(r'Built from source', line) or re.search(r'Poured from bottle', line):
                 return True
 
         return False
@@ -575,11 +566,7 @@ class Homebrew(object):
         else:
             head = None
 
-        opts = (
-            [self.brew_path, 'install']
-            + self.install_options
-            + [self.current_package, head]
-        )
+        opts = [self.brew_path, 'install'] + self.install_options + [self.current_package, head]
         cmd = [opt for opt in opts if opt]
         rc, out, err = self.module.run_command(cmd)
 
@@ -627,11 +614,7 @@ class Homebrew(object):
             )
             raise HomebrewException(self.message)
 
-        opts = (
-            [self.brew_path, command]
-            + self.install_options
-            + [self.current_package]
-        )
+        opts = [self.brew_path, command] + self.install_options + [self.current_package]
         cmd = [opt for opt in opts if opt]
         rc, out, err = self.module.run_command(cmd)
 
@@ -646,10 +629,7 @@ class Homebrew(object):
             raise HomebrewException(self.message)
 
     def _upgrade_all_packages(self):
-        opts = (
-            [self.brew_path, 'upgrade']
-            + self.install_options
-        )
+        opts = [self.brew_path, 'upgrade'] + self.install_options
         cmd = [opt for opt in opts if opt]
         rc, out, err = self.module.run_command(cmd)
 
@@ -693,11 +673,7 @@ class Homebrew(object):
             )
             raise HomebrewException(self.message)
 
-        opts = (
-            [self.brew_path, 'uninstall']
-            + self.install_options
-            + [self.current_package]
-        )
+        opts = [self.brew_path, 'uninstall'] + self.install_options + [self.current_package]
         cmd = [opt for opt in opts if opt]
         rc, out, err = self.module.run_command(cmd)
 
@@ -738,11 +714,7 @@ class Homebrew(object):
             )
             raise HomebrewException(self.message)
 
-        opts = (
-            [self.brew_path, 'link']
-            + self.install_options
-            + [self.current_package]
-        )
+        opts = [self.brew_path, 'link'] + self.install_options + [self.current_package]
         cmd = [opt for opt in opts if opt]
         rc, out, err = self.module.run_command(cmd)
 
@@ -784,11 +756,7 @@ class Homebrew(object):
             )
             raise HomebrewException(self.message)
 
-        opts = (
-            [self.brew_path, 'unlink']
-            + self.install_options
-            + [self.current_package]
-        )
+        opts = [self.brew_path, 'unlink'] + self.install_options + [self.current_package]
         cmd = [opt for opt in opts if opt]
         rc, out, err = self.module.run_command(cmd)
 

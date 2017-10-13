@@ -233,7 +233,7 @@ class SourcesList(object):
         # Check for another "#" in the line and treat a part after it as a comment.
         i = line.find('#')
         if i > 0:
-            comment = line[i+1:].strip()
+            comment = line[i + 1:].strip()
             line = line[:i]
 
         # Split a source into substring to make sure that it is source spec.
@@ -482,12 +482,12 @@ def main():
             repo=dict(required=True),
             state=dict(choices=['present', 'absent'], default='present'),
             mode=dict(required=False, type='raw'),
-            update_cache = dict(aliases=['update-cache'], type='bool', default='yes'),
+            update_cache=dict(aliases=['update-cache'], type='bool', default='yes'),
             filename=dict(required=False, default=None),
             # this should not be needed, but exists as a failsafe
             install_python_apt=dict(required=False, default="yes", type='bool'),
-            validate_certs = dict(default='yes', type='bool'),
-            codename = dict(required=False),
+            validate_certs=dict(default='yes', type='bool'),
+            codename=dict(required=False),
         ),
         supports_check_mode=True,
     )
@@ -508,7 +508,7 @@ def main():
 
     if isinstance(distro, aptsources_distro.Distribution):
         sourceslist = UbuntuSourcesList(module,
-            add_ppa_signing_keys_callback=get_add_ppa_signing_key_callback(module))
+                                        add_ppa_signing_keys_callback=get_add_ppa_signing_key_callback(module))
     else:
         module.fail_json(msg='Module apt_repository is not supported on target.')
 
@@ -548,9 +548,11 @@ def main():
 
     module.exit_json(changed=changed, repo=repo, state=state, diff=diff)
 
+
 # import module snippets
 from ansible.module_utils.basic import *
 from ansible.module_utils.urls import *
+
 
 if __name__ == '__main__':
     main()
