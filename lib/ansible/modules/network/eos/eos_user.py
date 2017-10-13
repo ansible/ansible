@@ -180,7 +180,7 @@ def map_obj_to_commands(updates, module):
         if want['state'] == 'absent':
             commands.append('no username %s' % want['name'])
             continue
-        
+
         if needs_update('configured_password'):
             if update_password == 'always' or not have:
                 add('secret %s' % want['configured_password'])
@@ -190,7 +190,7 @@ def map_obj_to_commands(updates, module):
 
         if needs_update('privilege'):
             add('privilege %s' % want['privilege'])
-        
+
         if needs_update('sshkey'):
             add('sshkey %s' % want['sshkey'])
 
