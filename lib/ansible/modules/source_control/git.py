@@ -942,13 +942,13 @@ def create_archive(git_path, module, dest, archive, version, repo, result):
             result.update(changed=False)
             # Cleanup before exiting
             try:
-                shutil.remove(tempdir)
+                shutil.rmtree(tempdir)
             except OSError:
                 pass
         else:
             try:
                 shutil.move(new_archive, archive)
-                shutil.remove(tempdir)
+                shutil.rmtree(tempdir)
                 result.update(changed=True)
             except OSError as e:
                 module.fail_json(msg="Failed to move %s to %s" %
