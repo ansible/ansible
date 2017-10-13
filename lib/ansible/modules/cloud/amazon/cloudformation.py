@@ -380,7 +380,7 @@ def update_termination_protection(module, stack_params, cfn):
                 module.exit_json(
                     msg="Termination protection on stack {0} updated.".format(stack_params['StackName']), changed=True)
             except botocore.exceptions.ClientError as e:
-                module.fail_json(msg=to_native(e))
+                module.fail_json(msg=boto_exception(e), exception=traceback.format_exc())
         else:
             module.exit_json(msg="Termination protection setting on stack {0} is already the requested value"
                 .format(stack_params['StackName']), changed=False)
