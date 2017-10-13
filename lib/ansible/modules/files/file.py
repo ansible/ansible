@@ -58,7 +58,7 @@ options:
     required: false
     default: null
     description:
-      - path of the file to link to (applies only to C(state=link)). Will accept absolute,
+      - path of the file to link to (applies only to C(state=link) and C(state=hard)). Will accept absolute,
         relative and nonexisting paths. Relative paths are not expanded.
   recurse:
     required: false
