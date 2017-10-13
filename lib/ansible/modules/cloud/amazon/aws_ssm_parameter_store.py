@@ -1,25 +1,14 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'metadata_version': '1.1'}
 
 DOCUMENTATION = '''
 ---
-module: ssm_parameter_store
+module: aws_ssm_parameter_store
 short_description: Manage key-value pairs in aws parameter store.
 description:
   - Manage key-value pairs in aws parameter store.
@@ -78,25 +67,25 @@ requirements: [ botocore, boto3 ]
 
 EXAMPLES = '''
 - name: Create or update key/value pair in aws parameter store
-  ssm_parameter_store:
+  aws_ssm_parameter_store:
     name: "Hello"
     description: "This is your first key"
     value: "World"
 
 - name: Delete the key
-  ssm_parameter_store:
+  aws_ssm_parameter_store:
     name: "Hello"
     state: absent
 
 - name: Create or update secure key/value pair with default kms key (aws/ssm)
-  ssm_parameter_store:
+  aws_ssm_parameter_store:
     name: "Hello"
     description: "This is your first key"
     string_type: "SecureString"
     value: "World"
 
 - name: Create or update secure key/value pair with nominated kms key
-  ssm_parameter_store:
+  aws_ssm_parameter_store:
     name: "Hello"
     description: "This is your first key"
     string_type: "SecureString"
