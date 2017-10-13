@@ -43,9 +43,11 @@ if ($check_mode -or $diff_mode) {
     }
 }
 
-# Validate option variables
-if ($Size -lt 1) {
-    Fail-Json -obj $result -message "Size option value must be at least 1gb"
+# Validate option values
+if ($Size -ne $null) {
+    if ($Size -lt 1) {
+        Fail-Json -obj $result -message "Size option value must be at least 1gb"
+    }
 }
 if ([int32]2147483647 -lt $Number) {
     Fail-Json -obj $result -message "Number option must be of type int32"
