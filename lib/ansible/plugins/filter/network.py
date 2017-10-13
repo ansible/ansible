@@ -27,7 +27,7 @@ import json
 from collections import Mapping
 
 from ansible.module_utils.network_common import Template
-from ansible.module_utils.six import iteritems
+from ansible.module_utils.six import iteritems, string_types
 from ansible.errors import AnsibleError
 
 try:
@@ -76,6 +76,12 @@ def re_search(regex, value):
 
 
 def parse_cli(output, tmpl):
+    if not isinstance(output, string_types):
+        raise AnsibleError("parse_cli input should be a string, but was given a input of %s" % (type(output)))
+
+    if not os.path.exists(tmpl):
+        raise AnsibleError('unable to locate parse_cli template: %s' % tmpl)
+
     try:
         template = Template()
     except ImportError as exc:
@@ -216,8 +222,11 @@ def parse_cli_textfsm(value, template):
     if not HAS_TEXTFSM:
         raise AnsibleError('parse_cli_textfsm filter requires TextFSM library to be installed')
 
+    if not isinstance(value, string_types):
+        raise AnsibleError("parse_cli_textfsm input should be a string, but was given a input of %s" % (type(value)))
+
     if not os.path.exists(template):
-        raise AnsibleError('unable to locate parse_cli template: %s' % template)
+        raise AnsibleError('unable to locate parse_cli_textfsm template: %s' % template)
 
     try:
         template = open(template)
