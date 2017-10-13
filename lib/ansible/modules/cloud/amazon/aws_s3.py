@@ -103,6 +103,7 @@ options:
       - Force overwrite either locally on the filesystem or remotely with the object/key. Used with PUT and GET operations.
         Boolean or one of [always, never, different], true is equal to 'always' and false is equal to 'never', new in 2.0
     default: 'always'
+    aliases: ['force']
     version_added: "1.2"
   region:
     description:
