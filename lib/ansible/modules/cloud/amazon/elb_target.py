@@ -36,6 +36,15 @@ options:
       - Register or deregister the target.
     required: true
     choices: [ 'present', 'absent' ]
+  target_status:
+    description:
+      - Blocks and waits for the target status to equal given value
+    required: false
+  target_status_timeout:
+    description:
+      - Maximum time in seconds to wait for target_status change
+    required: false
+    default: 30
 extends_documentation_fragment:
     - aws
     - ec2
@@ -73,6 +82,7 @@ RETURN = '''
 '''
 
 import traceback
+from time import sleep
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import (boto3_conn, camel_dict_to_snake_dict,
                                       ec2_argument_spec, get_aws_connection_info)
@@ -131,6 +141,8 @@ def register_target(connection, module):
     target_group_arn = module.params.get("target_group_arn")
     target_id = module.params.get("target_id")
     target_port = module.params.get("target_port")
+    target_status = module.params.get("target_status")
+    target_status_timeout = module.params.get("target_status_timeout")
     changed = False
 
     if not target_group_arn:
@@ -145,12 +157,15 @@ def register_target(connection, module):
     except ClientError as e:
         module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
-    if target_description['TargetHealth']['Reason'] == "Target.NotRegistered":
-        try:
-            connection.register_targets(TargetGroupArn=target_group_arn, Targets=[target])
-            changed = True
-        except ClientError as e:
-            module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+    if 'Reason' in target_description['TargetHealth']:
+        if target_description['TargetHealth']['Reason'] == "Target.NotRegistered":
+            try:
+                connection.register_targets(TargetGroupArn=target_group_arn, Targets=[target])
+                changed = True
+                if target_status:
+                    target_status_check(connection, module, target_group_arn, target, target_status, target_status_timeout)
+            except ClientError as e:
+                module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     # Get all targets for the target group
     target_descriptions = describe_targets(connection, module, target_group_arn, [])
@@ -171,6 +186,8 @@ def deregister_target(connection, module):
     target_group_arn = module.params.get("target_group_arn")
     target_id = module.params.get("target_id")
     target_port = module.params.get("target_port")
+    target_status = module.params.get("target_status")
+    target_status_timeout = module.params.get("target_status_timeout")
     changed = False
 
     if not target_group_arn:
@@ -185,17 +202,33 @@ def deregister_target(connection, module):
     except ClientError as e:
         module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
-    if target_description['TargetHealth']['Reason'] != "Target.NotRegistered":
-        try:
-            connection.deregister_targets(TargetGroupArn=target_group_arn, Targets=[target])
-            changed = True
-        except ClientError as e:
-            module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+    if 'State' in target_description['TargetHealth']:
+        if target_description['TargetHealth']['State'] not in ['draining', 'unused']:
+            try:
+                connection.deregister_targets(TargetGroupArn=target_group_arn, Targets=[target])
+                changed = True
+                if target_status:
+                    target_status_check(connection, module, target_group_arn, target, target_status, target_status_timeout)
+
+            except ClientError as e:
+                module.fail_json(msg="Ohh parps", exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     # Get all targets for the target group
     target_descriptions = describe_targets(connection, module, target_group_arn, [])
 
     module.exit_json(changed=changed, target_health_descriptions=camel_dict_to_snake_dict(target_descriptions), target_group_arn=target_group_arn)
+
+
+def target_status_check(connection, module, target_group_arn, target, target_status, target_status_timeout):
+    retries = 0
+    while True:
+        health_state = describe_targets(connection, module, target_group_arn, [target])['TargetHealth']['State']
+        if health_state == target_status:
+            break
+        if retries >= target_status_timeout:
+            module.fail_json(msg='Status check timeout of {} exceeded, last status was {}: '.format(target_status_timeout, health_state))
+        sleep(1)
+        retries = retries + 1
 
 
 def main():
@@ -207,6 +240,8 @@ def main():
             target_group_name=dict(type='str'),
             target_id=dict(type='str', required=True),
             target_port=dict(type='int'),
+            target_status=dict(type='str'),
+            target_status_timeout=dict(type='int', default=60),
             state=dict(required=True, choices=['present', 'absent'], type='str'),
         )
     )
