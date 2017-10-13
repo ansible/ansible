@@ -203,7 +203,7 @@ EXAMPLES = '''
       Stack: ansible-cloudformation
 
 # Enable termination protection on a stack.
-# If the stack already exists, this will update it's termination protection
+# If the stack already exists, this will update its termination protection
 - name: enable termination protection during stack creation
   cloudformation:
     stack_name: my_stack
@@ -297,8 +297,7 @@ def create_stack(module, stack_params, cfn):
     # 'disablerollback' and 'EnableTerminationProtection' only
     # apply on creation, not update.
     stack_params['DisableRollback'] = module.params['disable_rollback']
-    stack_params['EnableTerminationProtection'] = bool(module.params.get(
-        'termination_protection'))
+    stack_params['EnableTerminationProtection'] = bool(module.params['termination_protection'])
 
     try:
         cfn.create_stack(**stack_params)
@@ -368,22 +367,21 @@ def update_stack(module, stack_params, cfn):
     return result
 
 
-def update_termination_protection(module, stack_params, cfn):
+def update_termination_protection(module, cfn, stack_name, desired_termination_protection_state):
     '''updates termination protection of a stack'''
-    stack = get_stack_facts(cfn, stack_params['StackName'])
+    stack = get_stack_facts(cfn, stack_name)
     if stack:
-        if stack['EnableTerminationProtection'] is not module.params['termination_protection']:
+        if stack['EnableTerminationProtection'] is not desired_termination_protection_state:
             try:
                 cfn.update_termination_protection(
-                    EnableTerminationProtection=module.params['termination_protection'],
-                    StackName=stack_params['StackName'])
-                module.exit_json(
-                    msg="Termination protection on stack {0} updated.".format(stack_params['StackName']), changed=True)
+                    EnableTerminationProtection=desired_termination_protection_state,
+                    StackName=stack_name)
+                module.exit_json(msg="Termination protection on stack {0} updated.".format(stack_name), changed=True)
             except botocore.exceptions.ClientError as e:
                 module.fail_json(msg=boto_exception(e), exception=traceback.format_exc())
         else:
-            module.exit_json(msg="Termination protection setting on stack {0} is already the requested value"
-                .format(stack_params['StackName']), changed=False)
+            module.exit_json(msg="Termination protection on stack {0} is already the requested value".format(stack_name),
+                changed=False)
 
 
 def stack_operation(cfn, stack_name, operation):
@@ -592,7 +590,7 @@ def main():
         elif module.params.get('create_changeset'):
             result = create_changeset(module, stack_params, cfn)
         elif module.params['termination_protection'] is not None:
-            update_termination_protection(module, stack_params, cfn)
+            update_termination_protection(module, cfn, stack_params['StackName'], module.params['termination_protection'])
         else:
             result = update_stack(module, stack_params, cfn)
 
