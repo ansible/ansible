@@ -764,18 +764,24 @@ Passing Variables On The Command Line
 
 In addition to ``vars_prompt`` and ``vars_files``, it is possible to set variables at the
 command line using the ``--extra-vars`` (or ``-e``) argument.  Variables can be defined using
-a single quoted string (containing one or more variables), or by referencing a JSON 
-or YAML file containing the variable definitions.  This is particularly useful when writing a 
-generic release playbook where you may want to pass in the version of the application to deploy.
+a single quoted string (containing one or more variables) using one of the formats below 
 
-key=value format::
+key=value format:
+.. code-block:: none
     ansible-playbook release.yml --extra-vars "version=1.23.45 other_variable=foo"
 
-JSON string format::
+.. note:: Values passed in using the ``key=value`` syntax are interpreted as strings.
+          Use the JSON format if you need to pass in anything that shouldn't be a string (Booleans, integers, floats, lists etc).
+
+.. versionadded:: 1.2
+JSON string format:
+.. code-block:: none
     ansible-playbook release.yml --extra-vars '{"version":"1.23.45","other_variable":"foo"}'
     ansible-playbook arcade.yml --extra-vars '{"pacman":"mrs","ghosts":["inky","pinky","clyde","sue"]}'
 
-YAML string format::
+.. versionadded:: 1.3
+YAML string format:
+.. code-block:: none
     ansible-playbook release.yml --extra-vars '
     version: "1.23.45"
     other_variable: foo'
@@ -788,42 +794,25 @@ YAML string format::
     - clyde
     - sue'
 
-vars from a JSON or YAML file::
+.. versionadded:: 1.3
+vars from a JSON or YAML file:
+.. code-block:: none
     ansible-playbook release.yml --extra-vars "@some_file.json"
-
 This is useful for, among other things, setting the hosts group or the user for the playbook.
-
-Example::
-
-    ---
-
-    - hosts: '{{ hosts }}'
-      remote_user: '{{ user }}'
-
-      tasks:
-         - ...
-
-    ansible-playbook release.yml --extra-vars "hosts=vipers user=starbuck"
 
 Escaping quotes and other special characters:
 
-If your variable definition string contains quotes (e.g. JSON), and especially if the 
-your variables' themselves contain quotes, you'll need to ensure you're escaping these 
-quotes appropriately for both your data format (JSON or YAML), and for the shell.  This 
-can lead to some very difficult to read definitions::
-
+.. versionadded:: 1.2
+Ensure you're escaping quotes appropriately for both your markup (e.g. JSON), and for 
+the shell you're operating in.
+.. code-block:: none
     ansible-playbook arcade.yml --extra-vars "{\"name\":\"Conan O\'Brien\"}"
     ansible-playbook arcade.yml --extra-vars '{"name":"Conan O'\\\''Brien"}'
     ansible-playbook script.yml --extra-vars "{\"dialog\":\"He said \\\"I just can\'t get enough of those single and double-quotes"\!"\\\"\"}"
 
+.. versionadded:: 1.3
 In these cases, it's probably best to use a JSON or YAML file contianing the variable 
 definitions.
-
-.. note:: Values passed in using the ``key=value`` syntax are interpreted as strings.
-          Use the JSON format if you need to pass in anything that shouldn't be a string (Booleans, integers, floats, lists etc).
-.. note:: JSON format isn't available prior to Ansible 1.2
-.. note:: YAML format isn't available prior to Ansible 1.3
-.. note:: @filename isn't available prior to Ansible 1.3
 
 .. _ansible_variable_precedence:
 
