@@ -57,22 +57,22 @@ options:
 
 '''
 EXAMPLES = '''
-Tasks: The following are examples of using the module enos_facts.
+#Tasks: The following are examples of using the module enos_facts.
 ---
 - name: Test Enos Facts
   enos_facts: provider={{ cli }}
   with_items: "{{enos_facts_data}}"
 
 vars:
-cli:
-  host: "{{ inventory_hostname }}"
-  port: 22
-  username: admin
-  password: admin
-  transport: cli
-  timeout: 30
-  authorize: True
-  auth_pass:
+  cli:
+    host: "{{ inventory_hostname }}"
+    port: 22
+    username: admin
+    password: admin
+    transport: cli
+    timeout: 30
+    authorize: True
+    auth_pass:
 
 ---
 # Collect all facts from the device
@@ -94,7 +94,6 @@ cli:
       - "!hardware"
     provider: "{{ cli }}"
     with_items: "{{enos_facts_data}}"
-
 '''
 RETURN = '''
 ansible_net_gather_subset:
@@ -499,4 +498,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
