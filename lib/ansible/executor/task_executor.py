@@ -486,6 +486,7 @@ class TaskExecutor:
             self._connection._play_context = self._play_context
 
         self._set_connection_options(variables, templar)
+        self._set_shell_options(variables, templar)
 
         # get handler
         self._handler = self._get_action_handler(connection=self._connection, templar=templar)
@@ -773,6 +774,15 @@ class TaskExecutor:
 
         # set options with 'templated vars' specific to this plugin
         self._connection.set_options(var_options=options)
+        self._set_shell_options(final_vars, templar)
+
+    def _set_shell_options(self, variables, templar):
+        option_vars = C.config.get_plugin_vars('shell', self._connection._shell._load_name)
+        options = {}
+        for k in option_vars:
+            if k in variables:
+                options[k] = templar.template(variables[k])
+        self._connection._shell.set_options(var_options=options)
 
     def _get_action_handler(self, connection, templar):
         '''

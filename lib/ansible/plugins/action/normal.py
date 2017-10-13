@@ -49,4 +49,8 @@ class ActionModule(ActionBase):
             if self._task.action == 'setup':
                 results['_ansible_verbose_override'] = True
 
+        if not wrap_async and (not self._task.until or results.get('finished', False)):
+            # remove a temporary path we created
+            self._remove_tmp_path(self._connection._shell.tempdir)
+
         return results

@@ -37,9 +37,25 @@ FILE_ATTRIBUTES = {
     'Z': 'compresseddirty',
 }
 
-# ansible modules can be written in any language.  To simplify
-# development of Python modules, the functions available here can
-# be used to do many common tasks
+PASS_VARS = {
+    'check_mode': 'check_mode',
+    'debug': '_debug',
+    'diff': '_diff',
+    'module_name': '_name',
+    'no_log': 'no_log',
+    'selinux_special_fs': '_selinux_special_fs',
+    'shell_executable': '_shell',
+    'socket': '_socket_path',
+    'syslog_facility': '_syslog_facility',
+    'verbosity': '_verbosity',
+    'version': 'ansible_version',
+}
+
+PASS_BOOLS = ('no_log', 'debug', 'diff')
+
+# Ansible modules can be written in any language.
+# The functions available here can be used to do many common tasks,
+# to simplify development of Python modules.
 
 import locale
 import os
@@ -90,7 +106,7 @@ NoneType = type(None)
 try:
     from collections.abc import KeysView
     SEQUENCETYPE = (Sequence, frozenset, KeysView)
-except:
+except ImportError:
     SEQUENCETYPE = (Sequence, frozenset)
 
 try:
@@ -826,10 +842,11 @@ class AnsibleModule(object):
         self._clean = {}
 
         self.aliases = {}
-        self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug', '_ansible_diff', '_ansible_verbosity',
-                              '_ansible_selinux_special_fs', '_ansible_module_name', '_ansible_version', '_ansible_syslog_facility',
-                              '_ansible_socket', '_ansible_shell_executable']
+        self._legal_inputs = ['_ansible_%s' % k for k in PASS_VARS]
         self._options_context = list()
+
+        # set tempdir to remote tmp
+        self.tempdir = os.environ.get('ANSIBLE_REMOTE_TEMP', None)
 
         if add_file_common_args:
             for k, v in FILE_COMMON_ARGUMENTS.items():
@@ -1634,44 +1651,17 @@ class AnsibleModule(object):
 
         for (k, v) in list(param.items()):
 
-            if k == '_ansible_check_mode' and v:
-                self.check_mode = True
-
-            elif k == '_ansible_no_log':
-                self.no_log = self.boolean(v)
-
-            elif k == '_ansible_debug':
-                self._debug = self.boolean(v)
-
-            elif k == '_ansible_diff':
-                self._diff = self.boolean(v)
-
-            elif k == '_ansible_verbosity':
-                self._verbosity = v
-
-            elif k == '_ansible_selinux_special_fs':
-                self._selinux_special_fs = v
-
-            elif k == '_ansible_syslog_facility':
-                self._syslog_facility = v
-
-            elif k == '_ansible_version':
-                self.ansible_version = v
-
-            elif k == '_ansible_module_name':
-                self._name = v
-
-            elif k == '_ansible_socket':
-                self._socket_path = v
-
-            elif k == '_ansible_shell_executable' and v:
-                self._shell = v
-
-            elif check_invalid_arguments and k not in legal_inputs:
+            if check_invalid_arguments and k not in legal_inputs:
                 unsupported_parameters.add(k)
+            elif k.startswith('_ansible_'):
+                # handle setting internal properties from internal ansible vars
+                key = k.replace('_ansible_', '')
+                if key in PASS_BOOLS:
+                    setattr(self, PASS_VARS[key], self.boolean(v))
+                else:
+                    setattr(self, PASS_VARS[key], v)
 
-            # clean up internal params:
-            if k.startswith('_ansible_'):
+                # clean up internal params:
                 del self.params[k]
 
         if unsupported_parameters:
@@ -2202,7 +2192,7 @@ class AnsibleModule(object):
         except:
             # we don't have access to the cwd, probably because of sudo.
             # Try and move to a neutral location to prevent errors
-            for cwd in [os.path.expandvars('$HOME'), tempfile.gettempdir()]:
+            for cwd in [self.tempdir, os.path.expandvars('$HOME'), tempfile.gettempdir()]:
                 try:
                     if os.access(cwd, os.F_OK | os.R_OK):
                         os.chdir(cwd)
