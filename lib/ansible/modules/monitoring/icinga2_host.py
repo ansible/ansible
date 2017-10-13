@@ -117,6 +117,7 @@ import json
 import warnings
 warnings.simplefilter('ignore', requests.packages.urllib3.exceptions.SecurityWarning)
 
+
 # ===========================================
 # Icinga2 API class
 #
@@ -127,12 +128,12 @@ class icinga2_api:
     password = None
     ssl_ca = None
 
-    def call_url (self, url, data = {}, methode = 'GET' ):
+    def call_url(self, url, data={}, methode='GET'):
         full_url = "https://" + self.server + ":" + str(self.port) + "/" + url
         headers = {
-                'Accept': 'application/json',
-                'X-HTTP-Method-Override': methode,
-                }
+            'Accept': 'application/json',
+            'X-HTTP-Method-Override': methode,
+        }
         r = requests.post(
             full_url,
             headers=headers,
@@ -140,7 +141,7 @@ class icinga2_api:
             data=json.dumps(data),
             verify=self.ssl_ca
         )
-        return { 'code': r.status_code, 'data': r.json() }
+        return {'code': r.status_code, 'data': r.json()}
 
     def check_connection(self):
         ret = self.call_url('v1/status')
@@ -148,44 +149,44 @@ class icinga2_api:
            return True
         return False
 
-    def exists (self, hostname):
+    def exists(self, hostname):
         data = {
-          "filter":  "match(\"" + hostname + "\", host.name)",
+            "filter": "match(\"" + hostname + "\", host.name)",
         }
-        ret = self.call_url ("v1/objects/hosts", data)
+        ret = self.call_url("v1/objects/hosts", data)
         if ret['code'] == 200:
            if len(ret['data']['results']) == 1:
-             return True
+               return True
         return False
 
-    def create (self, hostname, data):
-        ret = self.call_url (
-            url="v1/objects/hosts/"+ hostname,
+    def create(self, hostname, data):
+        ret = self.call_url(
+            url="v1/objects/hosts/" + hostname,
             data=data,
             methode="PUT"
         )
         return ret
 
-    def delete (self, hostname):
+    def delete(self, hostname):
         data = { "cascade": 1 }
-        ret = self.call_url (
-            url="v1/objects/hosts/"+ hostname,
+        ret = self.call_url(
+            url="v1/objects/hosts/" + hostname,
             data=data,
             methode="DELETE"
         )
         return ret
 
-    def modify (self, hostname, data):
-        ret = self.call_url (
-            url="v1/objects/hosts/"+ hostname,
+    def modify(self, hostname, data):
+        ret = self.call_url(
+            url="v1/objects/hosts/" + hostname,
             data=data,
             methode="POST"
         )
         return ret
 
-    def diff (self, hostname, data):
-        ret = self.call_url (
-            url="v1/objects/hosts/"+ hostname,
+    def diff(self, hostname, data):
+        ret = self.call_url(
+            url="v1/objects/hosts/" + hostname,
             data={},
             methode="GET"
         )
@@ -198,12 +199,13 @@ class icinga2_api:
                 changed = True
         return changed
 
+
 # ===========================================
 # Module execution.
 #
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
+        argument_spec=dict(
             server=dict(required=True),
             port=dict(default=5665, type='int'),
             user=dict(default=None),
@@ -231,15 +233,15 @@ def main():
     state = module.params["state"]
     name = module.params["name"]
     zone = module.params["zone"]
-    template=[]
+    template = []
     template.append (name)
     if module.params["template"]:
-        template.append(module.params["template"])
+        template.append (module.params["template"])
     check_command = module.params["check_command"]
     ip = module.params["ip"]
     display_name = module.params["display_name"]
     if not display_name:
-      display_name = name
+        display_name = name
     variables = module.params["variables"]
 
     if not os.path.exists(ssl_ca):
@@ -290,7 +292,7 @@ def main():
         elif icinga.diff(name, data):
             if module.check_mode:
                 module.exit_json(changed=False, name=name, data=data)
-            ret = icinga.modify(name,data)
+            ret = icinga.modify(name, data)
             if ret['code'] == 200:
                 changed = True
             else:
@@ -309,13 +311,12 @@ def main():
                         changed = True
                     else:
                         module.fail_json(msg="bad return code creating host: %s" % (ret['data']))
-                except Exception:
-                    e = get_exception()
+                except Exception as e:
                     module.fail_json(msg="exception creating host: " + str(e))
         elif icinga.diff(name, data):
             if module.check_mode:
                 module.exit_json(changed=False, name=name, data=data)
-            ret = icinga.modify(name,data)
+            ret = icinga.modify(name, data)
             if ret['code'] == 200:
                 changed = True
             else:
