@@ -138,4 +138,3 @@ def get_defaults_flag(module):
         return 'all'
     else:
         return 'full'
-
