@@ -102,9 +102,9 @@ def get_pool(module, system):
 @api_wrapper
 def create_pool(module, system):
     """Create Pool"""
-    name      = module.params['name']
-    size      = module.params['size']
-    vsize     = module.params['vsize']
+    name = module.params['name']
+    size = module.params['size']
+    vsize = module.params['vsize']
     ssd_cache = module.params['ssd_cache']
 
     if not module.check_mode:
@@ -126,10 +126,10 @@ def create_pool(module, system):
 @api_wrapper
 def update_pool(module, system, pool):
     """Update Pool"""
-    changed   = False
+    changed = False
 
-    size      = module.params['size']
-    vsize     = module.params['vsize']
+    size = module.params['size']
+    vsize = module.params['vsize']
     ssd_cache = module.params['ssd_cache']
 
     # Roundup the capacity to mimic Infinibox behaviour
@@ -167,11 +167,11 @@ def main():
     argument_spec = infinibox_argument_spec()
     argument_spec.update(
         dict(
-            name      = dict(required=True),
-            state     = dict(default='present', choices=['present', 'absent']),
-            size      = dict(),
-            vsize     = dict(),
-            ssd_cache = dict(type='bool', default=True)
+            name=dict(required=True),
+            state=dict(default='present', choices=['present', 'absent']),
+            size=dict(),
+            vsize=dict(),
+            ssd_cache=dict(type='bool', default=True)
         )
     )
 
@@ -194,9 +194,9 @@ def main():
         except:
             module.fail_json(msg='vsize (Virtual Capacity) should be defined in MB, GB, TB or PB units')
 
-    state  = module.params['state']
+    state = module.params['state']
     system = get_system(module)
-    pool   = get_pool(module, system)
+    pool = get_pool(module, system)
 
     if state == 'present' and not pool:
         create_pool(module, system)

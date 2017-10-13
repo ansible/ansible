@@ -116,11 +116,11 @@ def update_client(module, export):
 
     changed = False
 
-    client         = module.params['client']
-    access_mode    = module.params['access_mode']
+    client = module.params['client']
+    access_mode = module.params['access_mode']
     no_root_squash = module.params['no_root_squash']
 
-    client_list        = export.get_permissions()
+    client_list = export.get_permissions()
     client_not_in_list = True
 
     for index, item in enumerate(client_list):
@@ -154,7 +154,7 @@ def delete_client(module, export):
 
     changed = False
 
-    client      = module.params['client']
+    client = module.params['client']
     client_list = export.get_permissions()
 
     for index, item in enumerate(client_list):
@@ -175,11 +175,11 @@ def main():
     argument_spec = infinibox_argument_spec()
     argument_spec.update(
         dict(
-            client         = dict(required=True),
-            access_mode    = dict(choices=['RO', 'RW'], default='RW'),
-            no_root_squash = dict(type='bool', default='no'),
-            state          = dict(default='present', choices=['present', 'absent']),
-            export         = dict(required=True)
+            client=dict(required=True),
+            access_mode=dict(choices=['RO', 'RW'], default='RW'),
+            no_root_squash=dict(type='bool', default='no'),
+            state=dict(default='present', choices=['present', 'absent']),
+            export=dict(required=True)
         )
     )
 
@@ -190,8 +190,8 @@ def main():
     if not HAS_MUNCH:
         module.fail_json(msg='the python munch library is required for this module')
 
-    system     = get_system(module)
-    export     = get_export(module, system)
+    system = get_system(module)
+    export = get_export(module, system)
 
     if module.params['state'] == 'present':
         update_client(module, export)
