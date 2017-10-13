@@ -1,6 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
@@ -20,20 +22,6 @@ description:
 version_added: "2.5"
 author: "Jurgen Brand"
 options:
-            server=dict(required=True),
-            port=dict(default=5665, type='int'),
-            user=dict(default=None),
-            password=dict(default=None, no_log=True),
-            ssl_ca=dict(default=None, type='path'),
-            state=dict(default="present", choices=["absent", "present"]),
-            name=dict(required=True, aliases=['host']),
-            zone=dict(default=None),
-            template=dict(default=None),
-            check_command=dict(default="hostalive"),
-            display_name=dict(default=None),
-            ip=dict(required=True),
-            variables=dict(type='dict', default=None),
-
   server:
     description:
       - the host name or ip-address of the Icinga2 host
@@ -109,7 +97,6 @@ EXAMPLES = '''
     state: present
     name: "{{ansible_fqdn }}"
     ip_address: "{{ ansible_default_ipv4.address }}"
-
 '''
 
 import requests
