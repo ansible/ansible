@@ -60,15 +60,15 @@ switch ($ItemType)
 {
     ([Microsoft.Win32.RegistryKey]) {
         $rights = [System.Security.AccessControl.RegistryRights]$rights
-        $results.target_type = 'registry'
+        $result.path_type = 'registry'
     }
     ([System.IO.FileInfo]) {
         $rights = [System.Security.AccessControl.FileSystemRights]$rights
-        $results.target_type = 'file'
+        $result.path_type = 'file'
     }
     ([System.IO.DirectoryInfo]) {
         $rights = [System.Security.AccessControl.FileSystemRights]$rights
-        $results.target_type = 'directory'
+        $result.path_type = 'directory'
     }
 }
 

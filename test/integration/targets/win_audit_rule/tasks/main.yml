@@ -5,8 +5,8 @@
 
 - name: create temporary file to test with
   win_file:
-    path: "{{ test_audit_rule_folder }}"
-    state: file
+    path: "{{ test_audit_rule_file }}"
+    state: touch
 
 - name: create temporary registry key to test with
   win_regedit:

@@ -61,6 +61,23 @@ Catch {
     Fail-Json -obj $result -message "Failed to lookup the identity ($user) - $($_.exception.message)"
 }
 
+#get the path type
+$ItemType = (Get-Item $path).GetType()
+switch ($ItemType)
+{
+    ([Microsoft.Win32.RegistryKey]) {
+        $registry = $true
+        $result.path_type = 'registry'
+    }
+    ([System.IO.FileInfo]) {
+        $file = $true
+        $result.path_type = 'file'
+    }
+    ([System.IO.DirectoryInfo]) {
+        #$directory = $true
+        $result.path_type = 'directory'
+    }
+}
 
 #Get current acl/audit rules on the target
 $ACL = Get-Acl $path -Audit
@@ -92,23 +109,6 @@ If ($state -eq 'absent')
 
 Else
 {
-    $ItemType = (Get-Item $path).GetType()
-    switch ($ItemType)
-    {
-        ([Microsoft.Win32.RegistryKey]) {
-            $registry = $true
-            $result.target_type = 'registry'
-        }
-        ([System.IO.FileInfo]) {
-            $file = $true
-            $result.target_type = 'file'
-        }
-        ([System.IO.DirectoryInfo]) {
-            #$directory = $true
-            $result.target_type = 'directory'
-        }
-    }
-
     If ($registry)
     {
         $PossibleRights = [System.Enum]::GetNames([System.Security.AccessControl.RegistryRights])
@@ -148,7 +148,7 @@ Else
     Foreach ($group in $ACL.Audit)
     {
         If (
-            ($group | Select-Object -expand "*Rights") -eq $NewAccessRule.FileSystemRights -and
+            ($group | Select-Object -expand "*Rights") -eq ($NewAccessRule | Select-Object -expand "*Rights") -and
             $group.AuditFlags -eq $NewAccessRule.AuditFlags -and
             $group.IdentityReference.Translate([System.Security.Principal.SecurityIdentifier]) -eq $SID -and
             $group.InheritanceFlags -eq $NewAccessRule.InheritanceFlags -and

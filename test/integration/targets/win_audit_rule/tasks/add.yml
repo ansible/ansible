@@ -8,7 +8,7 @@
     rights: "{{ test_audit_rule_rights }}"
     state: present
     audit_flags: "{{ test_audit_rule_audit_flags }}"
-  register: check_mode_add_directory
+  register: directory
   check_mode: yes
 
 - name: check mode ADD audit policy file
@@ -19,7 +19,7 @@
     state: present
     audit_flags: "{{ test_audit_rule_audit_flags }}"
     inheritance_flags: none
-  register: check_mode_add_file
+  register: file
   check_mode: yes
 
 - name: check mode ADD audit policy registry
@@ -29,7 +29,7 @@
     rights: "{{ test_audit_rule_rights }}"
     state: present
     audit_flags: "{{ test_audit_rule_audit_flags }}"
-  register: check_mode_add_registry
+  register: registry
   check_mode: yes
 
 - name: check mode ADD get directory results
@@ -38,7 +38,7 @@
     user: "{{ test_audit_rule_user }}"
     rights: "{{ test_audit_rule_rights }}"
     audit_flags: "{{ test_audit_rule_audit_flags }}"
-  register: check_mode_add_directory_results
+  register: directory_results
 
 - name: check mode ADD get file results
   test_get_audit_rule:
@@ -47,7 +47,7 @@
     rights: "{{ test_audit_rule_rights }}"
     audit_flags: "{{ test_audit_rule_audit_flags }}"
     inheritance_flags: none
-  register: check_mode_add_file_results
+  register: file_results
 
 - name: check mode ADD get REGISTRY results
   test_get_audit_rule:
@@ -55,17 +55,17 @@
     user: "{{ test_audit_rule_user }}"
     rights: "{{ test_audit_rule_rights }}"
     audit_flags: "{{ test_audit_rule_audit_flags }}"
-  register: check_mode_add_registry_results
+  register: registry_results
 
 - name: check mode ADD assert that a change is needed, but no change occurred to the audit rules
   assert:
     that:
-    - check_mode_add_directory | changed
-    - check_mode_add_file | changed
-    - check_mode_add_registry | changed
-    - not check_mode_add_directory_results.matching_rule_found and check_mode_add_directory_results.target_type == 'directory'
-    - not check_mode_add_file_results.matching_rule_found and check_mode_add_file_results.target_type == 'file'
-    - not check_mode_add_registry_results.matching_rule_found and check_mode_add_registry_results.target_type == 'registry'
+    - directory | changed
+    - file | changed
+    - registry | changed
+    - not directory_results.matching_rule_found and directory_results.path_type == 'directory'
+    - not file_results.matching_rule_found and file_results.path_type == 'file'
+    - not registry_results.matching_rule_found and registry_results.path_type == 'registry'
 
 ##################
 ### add a rule ###
@@ -77,7 +77,7 @@
     rights: "{{ test_audit_rule_rights }}"
     state: present
     audit_flags: "{{ test_audit_rule_audit_flags }}"
-  register: add_directory
+  register: directory
 
 - name: ADD audit policy file
   win_audit_rule:
@@ -87,7 +87,7 @@
     state: present
     audit_flags: "{{ test_audit_rule_audit_flags }}"
     inheritance_flags: none
-  register: check_mode_add_file
+  register: file
 
 - name: ADD audit policy registry
   win_audit_rule:
@@ -96,7 +96,7 @@
     rights: "{{ test_audit_rule_rights }}"
     state: present
     audit_flags: "{{ test_audit_rule_audit_flags }}"
-  register: add_registry
+  register: registry
 
 - name: ADD get directory results
   test_get_audit_rule:
@@ -104,7 +104,7 @@
     user: "{{ test_audit_rule_user }}"
     rights: "{{ test_audit_rule_rights }}"
     audit_flags: "{{ test_audit_rule_audit_flags }}"
-  register: add_directory_results
+  register: directory_results
 
 - name: ADD get file results
   test_get_audit_rule:
@@ -113,7 +113,7 @@
     rights: "{{ test_audit_rule_rights }}"
     audit_flags: "{{ test_audit_rule_audit_flags }}"
     inheritance_flags: none
-  register: add_file_results
+  register: file_results
 
 - name: ADD get REGISTRY results
   test_get_audit_rule:
@@ -121,17 +121,17 @@
     user: "{{ test_audit_rule_user }}"
     rights: "{{ test_audit_rule_rights }}"
     audit_flags: "{{ test_audit_rule_audit_flags }}"
-  register: add_registry_results
+  register: registry_results
 
 - name: ADD assert that the rules were added and a change is detected
   assert:
     that:
-    - add_directory | changed
-    - add_file | changed
-    - add_registry | changed
-    - add_directory_results.matching_rule_found and add_directory_results.target_type == 'directory'
-    - add_file_results.matching_rule_found and add_file_results.target_type == 'file'
-    - add_registry_results.matching_rule_found and add_registry_results.target_type == 'registry'
+    - directory | changed
+    - file | changed
+    - registry | changed
+    - directory_results.matching_rule_found and directory_results.path_type == 'directory'
+    - file_results.matching_rule_found and file_results.path_type == 'file'
+    - registry_results.matching_rule_found and registry_results.path_type == 'registry'
 
 #############################
 ### idempotent add a rule ###
@@ -143,7 +143,7 @@
     rights: "{{ test_audit_rule_rights }}"
     state: present
     audit_flags: "{{ test_audit_rule_audit_flags }}"
-  register: add_directory_idempotent
+  register: directory
 
 - name: idempotent ADD audit policy file
   win_audit_rule:
@@ -153,7 +153,7 @@
     state: present
     audit_flags: "{{ test_audit_rule_audit_flags }}"
     inheritance_flags: none
-  register: add_file_idempotent
+  register: file
 
 - name: idempotent ADD audit policy registry idempotent
   win_audit_rule:
@@ -162,11 +162,11 @@
     rights: "{{ test_audit_rule_rights }}"
     state: present
     audit_flags: "{{ test_audit_rule_audit_flags }}"
-  register: add_registry_idempotent
+  register: registry
 
 - name: idempotent ADD assert that a change did not occur
   assert:
     that:
-    - not add_directory_idempotent | changed and add_directory_idempotent.target_type == 'directory'
-    - not add_file_idempotent | changed and add_file_idempotent.target_type == 'file'
-    - not add_registry_idempotent | changed and add_registry_idempotent.target_type == 'registry'
+    - not directory | changed and directory.path_type == 'directory'
+    - not file | changed and file.path_type == 'file'
+    - not registry | changed and registry.path_type == 'registry'

@@ -122,4 +122,10 @@ current_audit_rules:
       "propagation_flags": "None",
       "rights": "Delete"
     }
+path_type:
+  description:
+    - The type of I(path) being targetted.
+    - Will be one of file, directory, registry.
+  returned: always
+  type: string
 '''
