@@ -86,6 +86,7 @@ if [ ${start_instance} ]; then
         start --id "${instance_id}" "${test_auth}" "${test_platform}" "${test_version}" ${args}
 fi
 
+pip install pip --upgrade
 pip install "${source_root}" --upgrade
 pip install -r "${source_root}/test/utils/shippable/remote-requirements.txt" --upgrade
 pip list
