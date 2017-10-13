@@ -36,42 +36,6 @@ description:
       If you do not specify a setting, usually a sensible default is chosen.
 
 options:
-    auth_keycloak_url:
-        description:
-            - URL to the Keycloak instance.
-        required: true
-
-    auth_client_id:
-        description:
-            - OpenID Connect I(client_id) to authenticate to the API with.
-        required: true
-
-    auth_realm:
-        description:
-            - Keycloak realm name to authenticate to for API access.
-        required: true
-
-    auth_client_secret:
-        description:
-            - Client Secret to use in conjunction with I(auth_client_id) (if required).
-        required: false
-
-    auth_username:
-        description:
-            - Username to authenticate for API access with.
-        required: true
-
-    auth_password:
-        description:
-            - Password to authenticate for API access with.
-        required: true
-
-    validate_certs:
-        description:
-            - Verify TLS certificates (do not disable this in production).
-        required: false
-        default: True
-
     state:
         description:
             - State of the client
@@ -279,6 +243,9 @@ options:
               settings; an example is given in the examples section.
         required: false
 
+extends_documentation_fragment:
+    - keycloak
+    
 author:
     - Eike Frost (@eikef)
 '''
@@ -306,7 +273,7 @@ EXAMPLES = '''
     client_id: test
     state: absent
 
-- name: Create or update a Keycloak client (with examples for many settings both SAML and OIDC)
+- name: Create or update a Keycloak client (with all the bells and whistles)
   local_action:
     module: keycloak_client
     auth_client_id: admin-cli
