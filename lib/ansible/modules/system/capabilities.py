@@ -64,7 +64,7 @@ EXAMPLES = '''
 from ansible.module_utils.basic import AnsibleModule
 
 
-OPS = ( '=', '-', '+' )
+OPS = ('=', '-', '+')
 
 
 class CapabilitiesModule(object):
@@ -73,20 +73,20 @@ class CapabilitiesModule(object):
     distribution = None
 
     def __init__(self, module):
-        self.module         = module
-        self.path           = module.params['path'].strip()
-        self.capability     = module.params['capability'].strip().lower()
-        self.state          = module.params['state']
-        self.getcap_cmd     = module.get_bin_path('getcap', required=True)
-        self.setcap_cmd     = module.get_bin_path('setcap', required=True)
-        self.capability_tup = self._parse_cap(self.capability, op_required=self.state=='present')
+        self.module = module
+        self.path = module.params['path'].strip()
+        self.capability = module.params['capability'].strip().lower()
+        self.state = module.params['state']
+        self.getcap_cmd = module.get_bin_path('getcap', required=True)
+        self.setcap_cmd = module.get_bin_path('setcap', required=True)
+        self.capability_tup = self._parse_cap(self.capability, op_required=self.state == 'present')
 
         self.run()
 
     def run(self):
 
         current = self.getcap(self.path)
-        caps = [ cap[0] for cap in current ]
+        caps = [cap[0] for cap in current]
 
         if self.state == 'present' and self.capability_tup not in current:
             # need to add capability
@@ -96,7 +96,7 @@ class CapabilitiesModule(object):
                 # remove from current cap list if it's already set (but op/flags differ)
                 current = list(filter(lambda x: x[0] != self.capability_tup[0], current))
                 # add new cap with correct op/flags
-                current.append( self.capability_tup )
+                current.append(self.capability_tup)
                 self.module.exit_json(changed=True, state=self.state, msg='capabilities changed', stdout=self.setcap(self.path, current))
         elif self.state == 'absent' and self.capability_tup[0] in caps:
             # need to remove capability
@@ -130,13 +130,13 @@ class CapabilitiesModule(object):
                     cap_group = cap.split(',')
                     cap_group[-1], op, flags = self._parse_cap(cap_group[-1])
                     for subcap in cap_group:
-                        rval.append( ( subcap, op, flags ) )
+                        rval.append((subcap, op, flags))
                 else:
                     rval.append(self._parse_cap(cap))
         return rval
 
     def setcap(self, path, caps):
-        caps = ' '.join([ ''.join(cap) for cap in caps ])
+        caps = ' '.join([''.join(cap) for cap in caps])
         cmd = "%s '%s' %s" % (self.setcap_cmd, caps, path)
         rc, stdout, stderr = self.module.run_command(cmd)
         if rc != 0:
@@ -161,16 +161,16 @@ class CapabilitiesModule(object):
         return (cap, op, flags)
 
 # ==============================================================
-# main
+
 
 def main():
 
     # defining module
     module = AnsibleModule(
-        argument_spec = dict(
-            path = dict(aliases=['key'], required=True),
-            capability = dict(aliases=['cap'], required=True),
-            state = dict(default='present', choices=['present', 'absent']),
+        argument_spec=dict(
+            path=dict(aliases=['key'], required=True),
+            capability=dict(aliases=['cap'], required=True),
+            state=dict(default='present', choices=['present', 'absent']),
         ),
         supports_check_mode=True
     )

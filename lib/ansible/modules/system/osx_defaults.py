@@ -120,6 +120,7 @@ class OSXDefaultsException(Exception):
     pass
 # /exceptions -------------------------------------------------------------- }}}
 
+
 # class MacDefaults -------------------------------------------------------- {{{
 class OSXDefaults(object):
 

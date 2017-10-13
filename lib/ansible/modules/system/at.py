@@ -140,7 +140,7 @@ def create_tempfile(command):
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
+        argument_spec=dict(
             command=dict(required=False,
                          type='str'),
             script_file=dict(required=False,
@@ -166,12 +166,12 @@ def main():
 
     at_cmd = module.get_bin_path('at', True)
 
-    command        = module.params['command']
-    script_file    = module.params['script_file']
-    count          = module.params['count']
-    units          = module.params['units']
-    state          = module.params['state']
-    unique         = module.params['unique']
+    command = module.params['command']
+    script_file = module.params['script_file']
+    count = module.params['count']
+    units = module.params['units']
+    state = module.params['state']
+    unique = module.params['unique']
 
     if (state == 'present') and (not count or not units):
         module.fail_json(msg="present state requires count and units")

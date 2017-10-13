@@ -176,7 +176,7 @@ def main():
                        type='str'),
             direct=dict(required=False, default=False, type='bool'),
             config_source=dict(required=False, default=None, type='str')
-            ),
+        ),
         supports_check_mode=True
     )
 

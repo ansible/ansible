@@ -203,16 +203,18 @@ decimal_point = re.compile(r"(\d+)")
 def mkversion(major, minor, patch):
     return (1000 * 1000 * int(major)) + (1000 * int(minor)) + int(patch)
 
+
 def parse_lvs(data):
     lvs = []
     for line in data.splitlines():
         parts = line.strip().split(';')
         lvs.append({
-            'name': parts[0].replace('[','').replace(']',''),
+            'name': parts[0].replace('[', '').replace(']', ''),
             'size': int(decimal_point.match(parts[1]).group(1)),
             'active': (parts[2][4] == 'a')
         })
     return lvs
+
 
 def parse_vgs(data):
     vgs = []
@@ -259,7 +261,7 @@ def main():
     version_found = get_lvm_version(module)
     if version_found is None:
         module.fail_json(msg="Failed to get LVM version number")
-    version_yesopt = mkversion(2, 2, 99) # First LVM with the "--yes" option
+    version_yesopt = mkversion(2, 2, 99)  # First LVM with the "--yes" option
     if version_found >= version_yesopt:
         yesopt = "--yes"
     else:
@@ -307,7 +309,7 @@ def main():
             size_opt = 'l'
             size_unit = ''
 
-        if not '%' in size:
+        if '%' not in size:
             # LVCREATE(8) -L --size option unit
             if size[-1].lower() in 'bskmgtpe':
                 size_unit = size[-1].lower()
@@ -373,7 +375,7 @@ def main():
     msg = ''
     if this_lv is None:
         if state == 'present':
-            ### create LV
+            # create LV
             lvcreate_cmd = module.get_bin_path("lvcreate", required=True)
             if snapshot is not None:
                 cmd = "%s %s %s -%s %s%s -s -n %s %s %s/%s" % (lvcreate_cmd, test_opt, yesopt, size_opt, size, size_unit, snapshot, opts, vg, lv)
@@ -386,7 +388,7 @@ def main():
                 module.fail_json(msg="Creating logical volume '%s' failed" % lv, rc=rc, err=err)
     else:
         if state == 'absent':
-            ### remove LV
+            # remove LV
             if not force:
                 module.fail_json(msg="Sorry, no removal of logical volume %s without force=yes." % (this_lv['name']))
             lvremove_cmd = module.get_bin_path("lvremove", required=True)
@@ -400,12 +402,12 @@ def main():
             pass
 
         elif size_opt == 'l':
-            ### Resize LV based on % value
+            # Resize LV based on % value
             tool = None
             size_free = this_vg['free']
             if size_whole == 'VG' or size_whole == 'PVS':
                 size_requested = size_percent * this_vg['size'] / 100
-            else: # size_whole == 'FREE':
+            else:  # size_whole == 'FREE':
                 size_requested = size_percent * this_vg['free'] / 100
             if '+' in size:
                 size_requested += this_lv['size']
@@ -415,7 +417,7 @@ def main():
                 else:
                     module.fail_json(
                         msg="Logical Volume %s could not be extended. Not enough free space left (%s%s required / %s%s available)" %
-                            (this_lv['name'], (size_requested -  this_lv['size']), unit, size_free, unit)
+                            (this_lv['name'], (size_requested - this_lv['size']), unit, size_free, unit)
                     )
             elif shrink and this_lv['size'] > size_requested + this_vg['ext_size']:  # more than an extent too large
                 if size_requested == 0:
@@ -433,7 +435,7 @@ def main():
                     module.fail_json(msg="Unable to resize %s to %s%s" % (lv, size, size_unit), rc=rc, err=err, out=out)
                 elif rc == 0:
                     changed = True
-                    msg="Volume %s resized to %s%s" % (this_lv['name'], size_requested, unit)
+                    msg = "Volume %s resized to %s%s" % (this_lv['name'], size_requested, unit)
                 elif "matches existing size" in err:
                     module.exit_json(changed=False, vg=vg, lv=this_lv['name'], size=this_lv['size'])
                 elif "not larger than existing size" in err:
@@ -442,7 +444,7 @@ def main():
                     module.fail_json(msg="Unable to resize %s to %s%s" % (lv, size, size_unit), rc=rc, err=err)
 
         else:
-            ### resize LV based on absolute values
+            # resize LV based on absolute values
             tool = None
             if int(size) > this_lv['size']:
                 tool = module.get_bin_path("lvextend", required=True)

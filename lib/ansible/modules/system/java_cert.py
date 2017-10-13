@@ -131,16 +131,18 @@ import os
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
 
+
 def check_cert_present(module, executable, keystore_path, keystore_pass, alias):
     ''' Check if certificate with alias is present in keystore
         located at keystore_path '''
     test_cmd = ("%s -noprompt -list -keystore '%s' -storepass '%s' "
-                "-alias '%s'")%(executable, keystore_path, keystore_pass, alias)
+                "-alias '%s'") % (executable, keystore_path, keystore_pass, alias)
 
     (check_rc, _, _) = module.run_command(test_cmd)
     if check_rc == 0:
         return True
     return False
+
 
 def import_cert_url(module, executable, url, port, keystore_path, keystore_pass, alias):
     ''' Import certificate from URL into keystore located at keystore_path '''
@@ -152,7 +154,7 @@ def import_cert_url(module, executable, url, port, keystore_path, keystore_pass,
     proxy_opts = ''
     if https_proxy is not None:
         (proxy_host, proxy_port) = https_proxy.split(':')
-        proxy_opts = ("-J-Dhttps.proxyHost=%s -J-Dhttps.proxyPort=%s")%(proxy_host, proxy_port)
+        proxy_opts = ("-J-Dhttps.proxyHost=%s -J-Dhttps.proxyPort=%s") % (proxy_host, proxy_port)
 
         if no_proxy is not None:
             # For Java's nonProxyHosts property, items are separated by '|',
@@ -162,13 +164,13 @@ def import_cert_url(module, executable, url, port, keystore_path, keystore_pass,
 
             # The property name is http.nonProxyHosts, there is no
             # separate setting for HTTPS.
-            proxy_opts += (" -J-Dhttp.nonProxyHosts='%s'")%(non_proxy_hosts)
+            proxy_opts += (" -J-Dhttp.nonProxyHosts='%s'") % (non_proxy_hosts)
 
-    fetch_cmd = ("%s -printcert -rfc -sslserver %s %s:%d")%(executable, proxy_opts, url, port)
+    fetch_cmd = ("%s -printcert -rfc -sslserver %s %s:%d") % (executable, proxy_opts, url, port)
 
     import_cmd = ("%s -importcert -noprompt -keystore '%s' "
-                  "-storepass '%s' -alias '%s'")%(executable, keystore_path,
-                                                  keystore_pass, alias)
+                  "-storepass '%s' -alias '%s'") % (executable, keystore_path,
+                                                    keystore_pass, alias)
 
     if module.check_mode:
         module.exit_json(changed=True)
@@ -180,23 +182,24 @@ def import_cert_url(module, executable, url, port, keystore_path, keystore_pass,
     (import_rc, import_out, import_err) = module.run_command(import_cmd,
                                                              data=fetch_out,
                                                              check_rc=False)
-    diff = {'before': '\n', 'after': '%s\n'%alias}
+    diff = {'before': '\n', 'after': '%s\n' % alias}
     if import_rc == 0:
         return module.exit_json(changed=True, msg=import_out,
-                                rc=import_rc, cmd=import_cmd, stdout=import_out,
-                                diff=diff)
+                                rc=import_rc, cmd=import_cmd,
+                                stdout=import_out, diff=diff)
     else:
         return module.fail_json(msg=import_out, rc=import_rc, cmd=import_cmd,
                                 error=import_err)
+
 
 def import_cert_path(module, executable, path, keystore_path, keystore_pass, alias):
     ''' Import certificate from path into keystore located on
         keystore_path as alias '''
     import_cmd = ("%s -importcert -noprompt -keystore '%s' "
-                  "-storepass '%s' -file '%s' -alias '%s'")%(executable,
-                                                             keystore_path,
-                                                             keystore_pass,
-                                                             path, alias)
+                  "-storepass '%s' -file '%s' -alias '%s'") % (executable,
+                                                               keystore_path,
+                                                               keystore_pass,
+                                                               path, alias)
 
     if module.check_mode:
         module.exit_json(changed=True)
@@ -205,13 +208,14 @@ def import_cert_path(module, executable, path, keystore_path, keystore_pass, ali
     (import_rc, import_out, import_err) = module.run_command(import_cmd,
                                                              check_rc=False)
 
-    diff = {'before': '\n', 'after': '%s\n'%alias}
+    diff = {'before': '\n', 'after': '%s\n' % alias}
     if import_rc == 0:
         return module.exit_json(changed=True, msg=import_out,
                                 rc=import_rc, cmd=import_cmd, stdout=import_out,
                                 error=import_err, diff=diff)
     else:
         return module.fail_json(msg=import_out, rc=import_rc, cmd=import_cmd)
+
 
 def import_pkcs12_path(module, executable, path, keystore_path, keystore_pass, pkcs12_pass, pkcs12_alias, alias):
     ''' Import pkcs12 from path into keystore located on
@@ -228,7 +232,7 @@ def import_pkcs12_path(module, executable, path, keystore_path, keystore_pass, p
     (import_rc, import_out, import_err) = module.run_command(import_cmd,
                                                              check_rc=False)
 
-    diff = {'before': '\n', 'after': '%s\n'%alias}
+    diff = {'before': '\n', 'after': '%s\n' % alias}
     if import_rc == 0:
         return module.exit_json(changed=True, msg=import_out,
                                 rc=import_rc, cmd=import_cmd, stdout=import_out,
@@ -240,7 +244,7 @@ def import_pkcs12_path(module, executable, path, keystore_path, keystore_pass, p
 def delete_cert(module, executable, keystore_path, keystore_pass, alias):
     ''' Delete certificate identified with alias from keystore on keystore_path '''
     del_cmd = ("%s -delete -keystore '%s' -storepass '%s' "
-               "-alias '%s'")%(executable, keystore_path, keystore_pass, alias)
+               "-alias '%s'") % (executable, keystore_path, keystore_pass, alias)
 
     if module.check_mode:
         module.exit_json(changed=True)
@@ -248,17 +252,19 @@ def delete_cert(module, executable, keystore_path, keystore_pass, alias):
     # Delete SSL certificate from keystore
     (del_rc, del_out, del_err) = module.run_command(del_cmd, check_rc=True)
 
-    diff = {'before': '%s\n'%alias, 'after': None}
+    diff = {'before': '%s\n' % alias, 'after': None}
 
     return module.exit_json(changed=True, msg=del_out,
                             rc=del_rc, cmd=del_cmd, stdout=del_out,
                             error=del_err, diff=diff)
 
+
 def test_keytool(module, executable):
     ''' Test if keytool is actuall executable or not '''
-    test_cmd = "%s"%(executable)
+    test_cmd = "%s" % executable
 
     module.run_command(test_cmd, check_rc=True)
+
 
 def test_keystore(module, keystore_path):
     ''' Check if we can access keystore as file or not '''
@@ -266,10 +272,11 @@ def test_keystore(module, keystore_path):
         keystore_path = ''
 
     if not os.path.exists(keystore_path) and not os.path.isfile(keystore_path):
-        ## Keystore doesn't exist we want to create it
+        # Keystore doesn't exist we want to create it
         return module.fail_json(changed=False,
                                 msg="Module require existing keystore at keystore_path '%s'"
                                 % (keystore_path))
+
 
 def main():
     argument_spec = dict(
@@ -317,7 +324,7 @@ def main():
     if path and not cert_alias:
         module.fail_json(changed=False,
                          msg="Using local path import from %s requires alias argument."
-                         %(keystore_path))
+                         % keystore_path)
 
     test_keytool(module, executable)
 
@@ -346,6 +353,7 @@ def main():
                                 keystore_pass, cert_alias)
 
     module.exit_json(changed=False)
+
 
 if __name__ == "__main__":
     main()

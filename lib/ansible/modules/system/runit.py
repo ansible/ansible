@@ -114,44 +114,38 @@ def _load_dist_subclass(cls, *args, **kwargs):
 
     return super(cls, subclass).__new__(subclass)
 
+
 class Sv(object):
     """
     Main class that handles daemontools, can be subclassed and overridden in case
     we want to use a 'derivative' like encore, s6, etc
     """
 
-
-    #def __new__(cls, *args, **kwargs):
-    #    return _load_dist_subclass(cls, args, kwargs)
-
-
-
     def __init__(self, module):
-        self.extra_paths = [ ]
+        self.extra_paths = []
         self.report_vars = ['state', 'enabled', 'svc_full', 'src_full', 'pid', 'duration', 'full_state']
 
-        self.module         = module
+        self.module = module
 
-        self.name           = module.params['name']
-        self.service_dir    = module.params['service_dir']
-        self.service_src    = module.params['service_src']
-        self.enabled        = None
-        self.full_state     = None
-        self.state          = None
-        self.pid            = None
-        self.duration       = None
+        self.name = module.params['name']
+        self.service_dir = module.params['service_dir']
+        self.service_src = module.params['service_src']
+        self.enabled = None
+        self.full_state = None
+        self.state = None
+        self.pid = None
+        self.duration = None
 
-        self.svc_cmd        = module.get_bin_path('sv', opt_dirs=self.extra_paths)
-        self.svstat_cmd     = module.get_bin_path('sv', opt_dirs=self.extra_paths)
-        self.svc_full = '/'.join([ self.service_dir, self.name ])
-        self.src_full = '/'.join([ self.service_src, self.name ])
+        self.svc_cmd = module.get_bin_path('sv', opt_dirs=self.extra_paths)
+        self.svstat_cmd = module.get_bin_path('sv', opt_dirs=self.extra_paths)
+        self.svc_full = '/'.join([self.service_dir, self.name])
+        self.src_full = '/'.join([self.service_src, self.name])
 
         self.enabled = os.path.lexists(self.svc_full)
         if self.enabled:
             self.get_status()
         else:
             self.state = 'stopped'
-
 
     def enable(self):
         if os.path.exists(self.src_full):
@@ -163,7 +157,7 @@ class Sv(object):
             self.module.fail_json(msg="Could not find source for service to enable (%s)." % self.src_full)
 
     def disable(self):
-        self.execute_command([self.svc_cmd,'force-stop',self.src_full])
+        self.execute_command([self.svc_cmd, 'force-stop', self.src_full])
         try:
             os.unlink(self.svc_full)
         except OSError as e:
@@ -241,17 +235,17 @@ class Sv(object):
         return states
 
 # ===========================================
-# Main control flow
+
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(required=True),
-            state = dict(choices=['started', 'stopped', 'restarted', 'killed', 'reloaded', 'once']),
-            enabled = dict(required=False, type='bool'),
-            dist = dict(required=False, default='runit'),
-            service_dir = dict(required=False, default='/var/service'),
-            service_src = dict(required=False, default='/etc/sv'),
+        argument_spec=dict(
+            name=dict(required=True),
+            state=dict(choices=['started', 'stopped', 'restarted', 'killed', 'reloaded', 'once']),
+            enabled=dict(required=False, type='bool'),
+            dist=dict(required=False, default='runit'),
+            service_dir=dict(required=False, default='/var/service'),
+            service_src=dict(required=False, default='/etc/sv'),
         ),
         supports_check_mode=True,
     )
@@ -279,7 +273,7 @@ def main():
     if state is not None and state != sv.state:
         changed = True
         if not module.check_mode:
-            getattr(sv,state)()
+            getattr(sv, state)()
 
     module.exit_json(changed=changed, sv=sv.report())
 

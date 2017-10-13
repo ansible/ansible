@@ -172,26 +172,26 @@ class Service(object):
         return load_platform_subclass(Service, args, kwargs)
 
     def __init__(self, module):
-        self.module         = module
-        self.name           = module.params['name']
-        self.state          = module.params['state']
-        self.sleep          = module.params['sleep']
-        self.pattern        = module.params['pattern']
-        self.enable         = module.params['enabled']
-        self.runlevel       = module.params['runlevel']
-        self.changed        = False
-        self.running        = None
-        self.crashed        = None
-        self.action         = None
-        self.svc_cmd        = None
+        self.module = module
+        self.name = module.params['name']
+        self.state = module.params['state']
+        self.sleep = module.params['sleep']
+        self.pattern = module.params['pattern']
+        self.enable = module.params['enabled']
+        self.runlevel = module.params['runlevel']
+        self.changed = False
+        self.running = None
+        self.crashed = None
+        self.action = None
+        self.svc_cmd = None
         self.svc_initscript = None
-        self.svc_initctl    = None
-        self.enable_cmd     = None
-        self.arguments      = module.params.get('arguments', '')
-        self.rcconf_file    = None
-        self.rcconf_key     = None
-        self.rcconf_value   = None
-        self.svc_change     = False
+        self.svc_initctl = None
+        self.enable_cmd = None
+        self.arguments = module.params.get('arguments', '')
+        self.rcconf_file = None
+        self.rcconf_key = None
+        self.rcconf_value = None
+        self.svc_change = False
 
     # ===========================================
     # Platform specific methods (must be replaced by subclass).
@@ -314,7 +314,7 @@ class Service(object):
             self.running = False
             lines = psout.split("\n")
             for line in lines:
-                if self.pattern in line and not "pattern=" in line:
+                if self.pattern in line and "pattern=" not in line:
                     # so as to not confuse ./hacking/test-module
                     self.running = True
                     break
@@ -325,7 +325,7 @@ class Service(object):
         # Find out if state has changed
         if not self.running and self.state in ["started", "running", "reloaded"]:
             self.svc_change = True
-        elif self.running and self.state in ["stopped","reloaded"]:
+        elif self.running and self.state in ["stopped", "reloaded"]:
             self.svc_change = True
         elif self.state == "restarted":
             self.svc_change = True
@@ -418,7 +418,7 @@ class Service(object):
             self.module.atomic_move(tmp_rcconf_file, self.rcconf_file)
 
 # ===========================================
-# Subclass: Linux
+
 
 class LinuxService(Service):
     """
@@ -432,23 +432,23 @@ class LinuxService(Service):
 
     def get_service_tools(self):
 
-        paths = [ '/sbin', '/usr/sbin', '/bin', '/usr/bin' ]
-        binaries = [ 'service', 'chkconfig', 'update-rc.d', 'rc-service', 'rc-update', 'initctl', 'systemctl', 'start', 'stop', 'restart', 'insserv' ]
-        initpaths = [ '/etc/init.d' ]
+        paths = ['/sbin', '/usr/sbin', '/bin', '/usr/bin']
+        binaries = ['service', 'chkconfig', 'update-rc.d', 'rc-service', 'rc-update', 'initctl', 'systemctl', 'start', 'stop', 'restart', 'insserv']
+        initpaths = ['/etc/init.d']
         location = dict()
 
         for binary in binaries:
             location[binary] = self.module.get_bin_path(binary, opt_dirs=paths)
 
         for initdir in initpaths:
-            initscript = "%s/%s" % (initdir,self.name)
+            initscript = "%s/%s" % (initdir, self.name)
             if os.path.isfile(initscript):
                 self.svc_initscript = initscript
 
         def check_systemd():
 
             # tools must be installed
-            if location.get('systemctl',False):
+            if location.get('systemctl', False):
 
                 # this should show if systemd is the boot init system
                 # these mirror systemd's own sd_boot test http://www.freedesktop.org/software/systemd/man/sd_booted.html
@@ -483,7 +483,7 @@ class LinuxService(Service):
             self.upstart_version = LooseVersion('0.0.0')
             try:
                 version_re = re.compile(r'\(upstart (.*)\)')
-                rc,stdout,stderr = self.module.run_command('%s version' % location['initctl'])
+                rc, stdout, stderr = self.module.run_command('%s version' % location['initctl'])
                 if rc == 0:
                     res = version_re.search(stdout)
                     if res:
@@ -497,7 +497,7 @@ class LinuxService(Service):
             # service is managed by OpenRC
             self.svc_cmd = location['rc-service']
             self.enable_cmd = location['rc-update']
-            return # already have service start/stop tool too!
+            return  # already have service start/stop tool too!
 
         elif self.svc_initscript:
             # service is managed by with SysV init scripts
@@ -612,7 +612,7 @@ class LinuxService(Service):
         # if we have decided the service is managed by upstart, we check for some additional output...
         if self.svc_initctl and self.running is None:
             # check the job status by upstart response
-            initctl_rc, initctl_status_stdout, initctl_status_stderr = self.execute_command("%s status %s %s" % (self.svc_initctl, self.name, self.arguments ))
+            initctl_rc, initctl_status_stdout, initctl_status_stderr = self.execute_command("%s status %s %s" % (self.svc_initctl, self.name, self.arguments))
             if "stop/waiting" in initctl_status_stdout:
                 self.running = False
             elif "start/running" in initctl_status_stdout:
@@ -663,7 +663,6 @@ class LinuxService(Service):
                 self.running = True
 
         return self.running
-
 
     def service_enable(self):
 
@@ -746,10 +745,10 @@ class LinuxService(Service):
             if 'chkconfig --add %s' % self.name in err:
                 self.execute_command("%s --add %s" % (self.enable_cmd, self.name))
                 (rc, out, err) = self.execute_command("%s --list %s" % (self.enable_cmd, self.name))
-            if not self.name in out:
+            if self.name not in out:
                 self.module.fail_json(msg="service %s does not support chkconfig" % self.name)
-            #TODO: look back on why this is here
-            #state = out.split()[-1]
+            # TODO: look back on why this is here
+            # state = out.split()[-1]
 
             # Check if we're already in the correct state
             if "3:%s" % action in out and "5:%s" % action in out:
@@ -822,7 +821,7 @@ class LinuxService(Service):
                     klinks = glob.glob('/etc/rc?.d/K??' + self.name)
                     if not klinks:
                         if not self.module.check_mode:
-                            (rc, out, err) = self.execute_command("%s %s defaults"  % (self.enable_cmd, self.name))
+                            (rc, out, err) = self.execute_command("%s %s defaults" % (self.enable_cmd, self.name))
                             if rc != 0:
                                 if err:
                                     self.module.fail_json(msg=err)
@@ -832,7 +831,7 @@ class LinuxService(Service):
                     action = 'disable'
 
                 if not self.module.check_mode:
-                    (rc, out, err) = self.execute_command("%s %s %s"  % (self.enable_cmd, self.name, action))
+                    (rc, out, err) = self.execute_command("%s %s %s" % (self.enable_cmd, self.name, action))
                     if rc != 0:
                         if err:
                             self.module.fail_json(msg=err)
@@ -905,7 +904,6 @@ class LinuxService(Service):
 
         return (rc, out, err)
 
-
     def service_control(self):
 
         # Decide what command to run
@@ -975,7 +973,7 @@ class LinuxService(Service):
         return(rc_state, stdout, stderr)
 
 # ===========================================
-# Subclass: FreeBSD
+
 
 class FreeBsdService(Service):
     """
@@ -1010,7 +1008,7 @@ class FreeBsdService(Service):
         else:
             self.rcconf_value = "NO"
 
-        rcfiles = [ '/etc/rc.conf','/etc/rc.conf.local', '/usr/local/etc/rc.conf' ]
+        rcfiles = ['/etc/rc.conf', '/etc/rc.conf.local', '/usr/local/etc/rc.conf']
         for rcfile in rcfiles:
             if os.path.isfile(rcfile):
                 self.rcconf_file = rcfile
@@ -1019,7 +1017,7 @@ class FreeBsdService(Service):
         try:
             rcvars = shlex.split(stdout, comments=True)
         except:
-            #TODO: add a warning to the output with the failure
+            # TODO: add a warning to the output with the failure
             pass
 
         if not rcvars:
@@ -1038,7 +1036,7 @@ class FreeBsdService(Service):
         if self.rcconf_key is None:
             self.module.fail_json(msg="unable to determine rcvar", stdout=stdout, stderr=stderr)
 
-        if self.sysrc_cmd: # FreeBSD >= 9.2
+        if self.sysrc_cmd:  # FreeBSD >= 9.2
 
             rc, current_rcconf_value, stderr = self.execute_command("%s -n %s" % (self.sysrc_cmd, self.rcconf_key))
             # it can happen that rcvar is not set (case of a system coming from the ports collection)
@@ -1053,24 +1051,23 @@ class FreeBsdService(Service):
                 if self.module.check_mode:
                     self.module.exit_json(changed=True, msg="changing service enablement")
 
-                rc, change_stdout, change_stderr = self.execute_command("%s %s=\"%s\"" % (self.sysrc_cmd, self.rcconf_key, self.rcconf_value ) )
+                rc, change_stdout, change_stderr = self.execute_command("%s %s=\"%s\"" % (self.sysrc_cmd, self.rcconf_key, self.rcconf_value))
                 if rc != 0:
                     self.module.fail_json(msg="unable to set rcvar using sysrc", stdout=change_stdout, stderr=change_stderr)
 
                 # sysrc does not exit with code 1 on permission error => validate successful change using service(8)
                 rc, check_stdout, check_stderr = self.execute_command("%s %s %s" % (self.svc_cmd, self.name, "enabled"))
-                if self.enable != (rc == 0): # rc = 0 indicates enabled service, rc = 1 indicates disabled service
+                if self.enable != (rc == 0):  # rc = 0 indicates enabled service, rc = 1 indicates disabled service
                     self.module.fail_json(msg="unable to set rcvar: sysrc did not change value", stdout=change_stdout, stderr=change_stderr)
 
             else:
                 self.changed = False
 
-        else: # Legacy (FreeBSD < 9.2)
+        else:  # Legacy (FreeBSD < 9.2)
             try:
                 return self.service_enable_rcconf()
             except Exception:
                 self.module.fail_json(msg='unable to set rcvar')
-
 
     def service_control(self):
 
@@ -1089,7 +1086,7 @@ class FreeBsdService(Service):
         return ret
 
 # ===========================================
-# Subclass: OpenBSD
+
 
 class OpenBsdService(Service):
     """
@@ -1240,7 +1237,7 @@ class OpenBsdService(Service):
         self.changed = True
 
 # ===========================================
-# Subclass: NetBSD
+
 
 class NetBsdService(Service):
     """
@@ -1255,10 +1252,10 @@ class NetBsdService(Service):
     distribution = None
 
     def get_service_tools(self):
-        initpaths = [ '/etc/rc.d' ]  # better: $rc_directories - how to get in here? Run: sh -c '. /etc/rc.conf ; echo $rc_directories'
+        initpaths = ['/etc/rc.d']  # better: $rc_directories - how to get in here? Run: sh -c '. /etc/rc.conf ; echo $rc_directories'
 
         for initdir in initpaths:
-            initscript = "%s/%s" % (initdir,self.name)
+            initscript = "%s/%s" % (initdir, self.name)
             if os.path.isfile(initscript):
                 self.svc_initscript = initscript
 
@@ -1271,12 +1268,12 @@ class NetBsdService(Service):
         else:
             self.rcconf_value = "NO"
 
-        rcfiles = [ '/etc/rc.conf' ]  # Overkill?
+        rcfiles = ['/etc/rc.conf']  # Overkill?
         for rcfile in rcfiles:
             if os.path.isfile(rcfile):
                 self.rcconf_file = rcfile
 
-        self.rcconf_key = "%s" % string.replace(self.name,"-","_")
+        self.rcconf_key = "%s" % string.replace(self.name, "-", "_")
 
         return self.service_enable_rcconf()
 
@@ -1298,7 +1295,8 @@ class NetBsdService(Service):
         return self.execute_command("%s %s" % (self.svc_cmd, self.action), daemonize=True)
 
 # ===========================================
-# Subclass: SunOS
+
+
 class SunOSService(Service):
     """
     This is the SunOS Service manipulation class - it uses the svcadm
@@ -1406,7 +1404,6 @@ class SunOSService(Service):
 
         self.changed = True
 
-
     def service_control(self):
         status = self.get_sunos_svcs_status()
 
@@ -1434,7 +1431,7 @@ class SunOSService(Service):
         return self.execute_command("%s %s %s" % (self.svcadm_cmd, subcmd, self.name))
 
 # ===========================================
-# Subclass: AIX
+
 
 class AIX(Service):
     """
@@ -1467,7 +1464,6 @@ class AIX(Service):
 
         if not self.refresh_cmd:
             self.module.fail_json(msg='unable to find refresh binary')
-
 
     def get_service_status(self):
         status = self.get_aix_src_status()
@@ -1507,20 +1503,19 @@ class AIX(Service):
         else:
             return self.execute_command("%s -s %s" % (srccmd, self.name))
 
-
 # ===========================================
-# Main control flow
+
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(required=True),
-            state = dict(choices=['running', 'started', 'stopped', 'restarted', 'reloaded']),
-            sleep = dict(required=False, type='int', default=None),
-            pattern = dict(required=False, default=None),
-            enabled = dict(type='bool'),
-            runlevel = dict(required=False, default='default'),
-            arguments = dict(aliases=['args'], default=''),
+        argument_spec=dict(
+            name=dict(required=True),
+            state=dict(choices=['running', 'started', 'stopped', 'restarted', 'reloaded']),
+            sleep=dict(required=False, type='int', default=None),
+            pattern=dict(required=False, default=None),
+            enabled=dict(type='bool'),
+            runlevel=dict(required=False, default='default'),
+            arguments=dict(aliases=['args'], default=''),
         ),
         supports_check_mode=True,
         required_one_of=[['state', 'enabled']],
@@ -1594,12 +1589,13 @@ def main():
     else:
         # as we may have just bounced the service the service command may not
         # report accurate state at this moment so just show what we ran
-        if service.module.params['state'] in ['started','restarted','running','reloaded']:
+        if service.module.params['state'] in ['started', 'restarted', 'running', 'reloaded']:
             result['state'] = 'started'
         else:
             result['state'] = 'stopped'
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

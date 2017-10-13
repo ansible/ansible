@@ -68,6 +68,7 @@ LOCALE_NORMALIZATION = {
 # location module specific support methods.
 #
 
+
 def is_available(name, ubuntuMode):
     """Check if the given locale is available on the system. This is done by
     checking either :
@@ -89,11 +90,13 @@ def is_available(name, ubuntuMode):
     fd.close()
     return False
 
+
 def is_present(name):
     """Checks if the given locale is currently installed."""
     output = Popen(["locale", "-a"], stdout=PIPE).communicate()[0]
     output = to_native(output)
     return any(fix_case(name) == fix_case(line) for line in output.splitlines())
+
 
 def fix_case(name):
     """locale -a might return the encoding in either lower or upper case.
@@ -101,6 +104,7 @@ def fix_case(name):
     for s, r in LOCALE_NORMALIZATION.items():
         name = name.replace(s, r)
     return name
+
 
 def replace_line(existing_line, new_line):
     """Replaces lines in /etc/locale.gen"""
@@ -114,6 +118,7 @@ def replace_line(existing_line, new_line):
         f.write("".join(lines))
     finally:
         f.close()
+
 
 def set_locale(name, enabled=True):
     """ Sets the state of the locale. Defaults to enabled. """
@@ -133,6 +138,7 @@ def set_locale(name, enabled=True):
     finally:
         f.close()
 
+
 def apply_change(targetState, name):
     """Create or remove locale.
 
@@ -140,7 +146,7 @@ def apply_change(targetState, name):
     targetState -- Desired state, either present or absent.
     name -- Name including encoding such as de_CH.UTF-8.
     """
-    if targetState=="present":
+    if targetState == "present":
         # Create locale.
         set_locale(name, enabled=True)
     else:
@@ -148,8 +154,9 @@ def apply_change(targetState, name):
         set_locale(name, enabled=False)
 
     localeGenExitValue = call("locale-gen")
-    if localeGenExitValue!=0:
-        raise EnvironmentError(localeGenExitValue, "locale.gen failed to execute, it returned "+str(localeGenExitValue))
+    if localeGenExitValue != 0:
+        raise EnvironmentError(localeGenExitValue, "locale.gen failed to execute, it returned " + str(localeGenExitValue))
+
 
 def apply_change_ubuntu(targetState, name):
     """Create or remove locale.
@@ -158,7 +165,7 @@ def apply_change_ubuntu(targetState, name):
     targetState -- Desired state, either present or absent.
     name -- Name including encoding such as de_CH.UTF-8.
     """
-    if targetState=="present":
+    if targetState == "present":
         # Create locale.
         # Ubuntu's patched locale-gen automatically adds the new locale to /var/lib/locales/supported.d/local
         localeGenExitValue = call(["locale-gen", name])
@@ -181,18 +188,18 @@ def apply_change_ubuntu(targetState, name):
         # Please provide a patch if you know how to avoid regenerating the locales to keep!
         localeGenExitValue = call(["locale-gen", "--purge"])
 
-    if localeGenExitValue!=0:
-        raise EnvironmentError(localeGenExitValue, "locale.gen failed to execute, it returned "+str(localeGenExitValue))
+    if localeGenExitValue != 0:
+        raise EnvironmentError(localeGenExitValue, "locale.gen failed to execute, it returned " + str(localeGenExitValue))
 
 # ==============================================================
-# main
+
 
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(required=True),
-            state = dict(choices=['present','absent'], default='present'),
+        argument_spec=dict(
+            name=dict(required=True),
+            state=dict(choices=['present', 'absent'], default='present'),
         ),
         supports_check_mode=True
     )
@@ -218,7 +225,7 @@ def main():
         prev_state = "present"
     else:
         prev_state = "absent"
-    changed = (prev_state!=state)
+    changed = (prev_state != state)
 
     if module.check_mode:
         module.exit_json(changed=changed)
