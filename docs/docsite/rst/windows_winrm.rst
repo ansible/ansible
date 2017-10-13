@@ -594,7 +594,8 @@ When setting up the inventory, the following variables are required::
 Using the variables above, Ansible will connect to the Windows host with Basic
 authentication through HTTPS. If ``ansible_user`` has a UPN value like
 ``username@MY.DOMAIN.COM`` then the authentication option will automatically attempt
-to use Kerberos unless an ``ansible_winrm_transport`
+to use Kerberos unless ``ansible_winrm_transport`` has been set to something other than
+``kerberos``.
 
 As of Ansible 2.0, the following custom inventory variables are also supported
 for additional configuration of WinRM connections:
