@@ -183,3 +183,22 @@
   assert:
     that:
       - "pip_install_venv.changed"
+
+# https://github.com/ansible/ansible/issues/25122
+- name: ensure is a fresh virtualenv
+  file:
+    state: absent
+    name: "{{ output_dir }}/pipenv"
+
+- name: install requirements file into virtual + chdir
+  pip:
+   name: q
+   chdir: "{{ output_dir }}/"
+   virtualenv: "pipenv"
+   state: present
+  register: venv_chdir
+
+- name: make sure fresh virtualenv + chdir report changed
+  assert:
+    that:
+      - "venv_chdir.changed"
