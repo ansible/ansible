@@ -47,3 +47,4 @@ Ansible, Inc. releases a new major release of Ansible approximately every two mo
    porting_guides
    python_3_support
    release_and_maintenance
+   windows
