@@ -161,7 +161,6 @@ from ansible.module_utils.ec2 import (get_aws_connection_info, ec2_argument_spec
                                       camel_dict_to_snake_dict, AWSRetry, boto3_tag_list_to_ansible_dict)
 
 
-
 class CloudFormationServiceManager:
     """Handles CloudFormation Services"""
 
