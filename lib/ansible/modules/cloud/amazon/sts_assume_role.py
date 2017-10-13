@@ -47,7 +47,7 @@ options:
     default: null
   mfa_serial_number:
     description:
-      - he identification number of the MFA device that is associated with the user who is making the AssumeRole call.
+      - The identification number of the MFA device that is associated with the user who is making the AssumeRole call.
     required: false
     default: null
   mfa_token:

@@ -102,7 +102,7 @@ Function Fail-Json($obj, $message = $null)
 
 # Helper function to add warnings, even if the warnings attribute was
 # not already set up. This is a convenience for the module developer
-# so he does not have to check for the attribute prior to adding.
+# so they do not have to check for the attribute prior to adding.
 Function Add-Warning($obj, $message)
 {
     if (-not $obj.ContainsKey("warnings")) {
@@ -116,7 +116,7 @@ Function Add-Warning($obj, $message)
 
 # Helper function to add deprecations, even if the deprecations attribute was
 # not already set up. This is a convenience for the module developer
-# so he does not have to check for the attribute prior to adding.
+# so they do not have to check for the attribute prior to adding.
 Function Add-DeprecationWarning($obj, $message, $version = $null)
 {
     if (-not $obj.ContainsKey("deprecations")) {

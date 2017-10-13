@@ -25,7 +25,7 @@ description:
   because you lack the authority to make it so, or because not everyone
   agrees to a common approach.
 - If you cannot automate a specific step, but the step is non-blocking,
-  sending out an email to the responsible party to make him perform his
+  sending out an email to the responsible party to make them perform their
   part of the bargain is an elegant way to put the responsibility in
   someone else's lap.
 - Of course sending out a mail can be equally useful as a way to notify
