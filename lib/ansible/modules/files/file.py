@@ -219,7 +219,7 @@ def main():
                 appears_binary = True
         except:
             pass
-        res_args = dict( path=path, changed=False, appears_binary=appears_binary )
+        res_args = dict(path=path, changed=False, appears_binary=appears_binary)
 
     prev_state = get_state(b_path)
 
@@ -283,17 +283,6 @@ def main():
             if os.path.islink(b_path):
                 os.unlink(b_path)
                 open(b_path, 'w').close()
-            if validate:
-                # if we have a mode, make sure we set it on the temporary
-                # file source as some validations may require it
-                # FIXME: should we do the same for owner/group here too?
-                if mode is not None:
-                    module.set_mode_if_different(src, mode, False)
-                if "%s" not in validate:
-                    module.fail_json(msg="validate must contain %%s: %s" % (validate))
-                (rc, out, err) = module.run_command(validate % src)
-                if rc != 0:
-                    module.fail_json(msg="failed to validate", exit_status=rc, stdout=out, stderr=err)
 
     if state == 'absent':
         if state_change:
@@ -308,9 +297,9 @@ def main():
                         os.unlink(b_path)
                     except Exception as e:
                         module.fail_json(path=path, msg="unlinking failed: %s " % to_native(e))
-            res_args = dict( path=path, changed=True, diff=diff )
+            res_args = dict(path=path, changed=True, diff=diff)
         else:
-            res_args = dict( path=path, changed=False )
+            res_args = dict(path=path, changed=False)
 
     elif state == 'file':
 
@@ -327,7 +316,7 @@ def main():
             module.fail_json(path=path, msg='file (%s) is %s, cannot continue' % (path, prev_state))
 
         changed = module.set_fs_attributes_if_different(file_args, changed, diff, expand=False)
-        res_args = dict( path=path, changed=changed, diff=diff )
+        res_args = dict(path=path, changed=changed, diff=diff)
 
     elif state == 'directory':
         if follow and prev_state == 'link':
@@ -337,7 +326,7 @@ def main():
 
         if prev_state == 'absent':
             if module.check_mode:
-                res_args = dict( changed=True, diff=diff )
+                res_args = dict(changed=True, diff=diff)
             changed = True
             curpath = ''
 
@@ -375,7 +364,7 @@ def main():
         if recurse:
             changed |= recursive_set_attributes(module, to_bytes(file_args['path'], errors='surrogate_or_strict'), follow, file_args)
 
-        res_args = dict( path=path, changed=changed, diff=diff )
+        res_args = dict(path=path, changed=changed, diff=diff)
 
     elif state in ('link', 'hard'):
 
@@ -423,7 +412,7 @@ def main():
             changed = True
             if os.path.exists(b_path):
                 if state == 'hard' and os.stat(b_path).st_ino == os.stat(b_src).st_ino:
-                    res_args = dict( path=path, changed=False )
+                    res_args = dict(path=path, changed=False)
                 elif not force:
                     module.fail_json(dest=path, src=src, msg='Cannot link, different hard link exists at destination')
         else:
@@ -460,10 +449,10 @@ def main():
                     module.fail_json(path=path, msg='Error while linking: %s' % to_native(e, nonstring='simplerepr'))
 
         if module.check_mode and not os.path.exists(b_path):
-            res_args = dict( dest=path, src=src, changed=changed, diff=diff )
+            res_args = dict(dest=path, src=src, changed=changed, diff=diff)
 
         changed = module.set_fs_attributes_if_different(file_args, changed, diff, expand=False)
-        res_args = dict( dest=path, src=src, changed=changed, diff=diff )
+        res_args = dict(dest=path, src=src, changed=changed, diff=diff)
 
     elif state == 'touch':
         if not module.check_mode:
@@ -491,7 +480,7 @@ def main():
                         os.remove(b_path)
                 raise e
 
-        res_args = dict( dest=path, changed=True, diff=diff )
+        res_args = dict(dest=path, changed=True, diff=diff)
 
     if backup_file:
         res_args['backup_file'] = backup_file
