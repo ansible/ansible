@@ -131,6 +131,7 @@ import time
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.aos import get_aos_session, find_collection_item, do_load_resource, check_aos_version, content_to_dict
 
+
 #########################################################
 # State Processing
 #########################################################
@@ -154,10 +155,11 @@ def logical_device_absent(module, aos, my_logical_dev):
         except:
             module.fail_json(msg="An error occurred, while trying to delete the Logical Device")
 
-    module.exit_json( changed=True,
-                      name=my_logical_dev.name,
-                      id=my_logical_dev.id,
-                      value={} )
+    module.exit_json(changed=True,
+                     name=my_logical_dev.name,
+                     id=my_logical_dev.id,
+                     value={})
+
 
 def logical_device_present(module, aos, my_logical_dev):
 
@@ -174,10 +176,11 @@ def logical_device_present(module, aos, my_logical_dev):
     if my_logical_dev.exists is False and 'content' not in margs.keys():
         module.fail_json(msg="'content' is mandatory for module that don't exist currently")
 
-    module.exit_json( changed=False,
-                      name=my_logical_dev.name,
-                      id=my_logical_dev.id,
-                      value=my_logical_dev.value )
+    module.exit_json(changed=False,
+                     name=my_logical_dev.name,
+                     id=my_logical_dev.id,
+                     value=my_logical_dev.value)
+
 
 #########################################################
 # Main Function
@@ -196,7 +199,7 @@ def logical_device(module):
 
     if margs['content'] is not None:
 
-        content = content_to_dict(module, margs['content'] )
+        content = content_to_dict(module, margs['content'])
 
         if 'display_name' in content.keys():
             item_name = content['display_name']
@@ -209,16 +212,16 @@ def logical_device(module):
     elif margs['id'] is not None:
         item_id = margs['id']
 
-    #----------------------------------------------------
+    # ----------------------------------------------------
     # Find Object if available based on ID or Name
-    #----------------------------------------------------
+    # ----------------------------------------------------
     my_logical_dev = find_collection_item(aos.LogicalDevices,
                                           item_name=item_name,
                                           item_id=item_id)
 
-    #----------------------------------------------------
+    # ----------------------------------------------------
     # Proceed based on State value
-    #----------------------------------------------------
+    # ----------------------------------------------------
     if margs['state'] == 'absent':
 
         logical_device_absent(module, aos, my_logical_dev)
@@ -227,18 +230,19 @@ def logical_device(module):
 
         logical_device_present(module, aos, my_logical_dev)
 
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
             session=dict(required=True, type="dict"),
-            name=dict(required=False ),
-            id=dict(required=False ),
+            name=dict(required=False),
+            id=dict(required=False),
             content=dict(required=False, type="json"),
-            state=dict( required=False,
-                        choices=['present', 'absent'],
-                        default="present")
+            state=dict(required=False,
+                       choices=['present', 'absent'],
+                       default="present")
         ),
-        mutually_exclusive = [('name', 'id', 'content')],
+        mutually_exclusive=[('name', 'id', 'content')],
         required_one_of=[('name', 'id', 'content')],
         supports_check_mode=True
     )
@@ -247,6 +251,7 @@ def main():
     check_aos_version(module, '0.6.0')
 
     logical_device(module)
+
 
 if __name__ == "__main__":
     main()

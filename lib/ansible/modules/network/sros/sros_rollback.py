@@ -108,6 +108,7 @@ def invoke(name, *args, **kwargs):
     if func:
         return func(*args, **kwargs)
 
+
 def sanitize_config(lines):
     commands = list()
     for line in lines:
@@ -118,6 +119,7 @@ def sanitize_config(lines):
         commands.append(line)
     return commands
 
+
 def present(module, commands):
     setters = set()
     for key, value in module.argument_spec.items():
@@ -126,6 +128,7 @@ def present(module, commands):
             if setter not in setters:
                 setters.add(setter)
             invoke(setter, module, commands)
+
 
 def absent(module, commands):
     config = get_config(module)
@@ -138,9 +141,11 @@ def absent(module, commands):
     if 'local-max-checkpoints' in config:
         commands.append('configure system rollback no remote-max-checkpoints')
 
+
 def set_rollback_location(module, commands):
     value = module.params['rollback_location']
     commands.append('configure system rollback rollback-location "%s"' % value)
+
 
 def set_local_max_checkpoints(module, commands):
     value = module.params['local_max_checkpoints']
@@ -148,19 +153,23 @@ def set_local_max_checkpoints(module, commands):
         module.fail_json(msg='local_max_checkpoints must be between 1 and 50')
     commands.append('configure system rollback local-max-checkpoints %s' % value)
 
+
 def set_remote_max_checkpoints(module, commands):
     value = module.params['remote_max_checkpoints']
     if not 1 <= value <= 50:
         module.fail_json(msg='remote_max_checkpoints must be between 1 and 50')
     commands.append('configure system rollback remote-max-checkpoints %s' % value)
 
+
 def set_rescue_location(module, commands):
     value = module.params['rescue_location']
     commands.append('configure system rollback rescue-location "%s"' % value)
 
+
 def get_device_config(module):
     contents = get_config(module)
     return NetworkConfig(indent=4, contents=contents)
+
 
 def main():
     """ main entry point for module execution
@@ -193,7 +202,7 @@ def main():
     configobjs = candidate.difference(config)
 
     if configobjs:
-        #commands = dumps(configobjs, 'lines')
+        # commands = dumps(configobjs, 'lines')
         commands = dumps(configobjs, 'commands')
         commands = sanitize_config(commands.split('\n'))
 

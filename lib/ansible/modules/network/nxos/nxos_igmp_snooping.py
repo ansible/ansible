@@ -266,7 +266,7 @@ def main():
     if state == 'present':
         delta = dict(
             set(proposed.items()).difference(existing.items())
-            )
+        )
         if delta:
             command = config_igmp_snooping(delta, existing)
             if command:
@@ -275,7 +275,7 @@ def main():
         proposed = get_igmp_snooping_defaults()
         delta = dict(
             set(proposed.items()).difference(existing.items())
-            )
+        )
         if delta:
             command = config_igmp_snooping(delta, existing, default=True)
             if command:
@@ -291,6 +291,7 @@ def main():
         results['commands'] = cmds
 
     module.exit_json(**results)
+
 
 if __name__ == '__main__':
     main()

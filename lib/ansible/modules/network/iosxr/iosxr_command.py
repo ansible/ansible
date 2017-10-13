@@ -161,6 +161,7 @@ def parse_commands(module, warnings):
             )
     return commands
 
+
 def main():
     spec = dict(
         commands=dict(type='list', required=True),
@@ -209,7 +210,6 @@ def main():
         failed_conditions = [item.raw for item in conditionals]
         msg = 'One or more conditional statements have not be satisfied'
         module.fail_json(msg=msg, failed_conditions=failed_conditions)
-
 
     result = {
         'changed': False,

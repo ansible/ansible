@@ -126,6 +126,7 @@ def map_obj_to_commands(updates, module):
 
     return commands
 
+
 def map_config_to_obj(module):
     output = run_commands(module, ['show banner %s' % module.params['banner']])
     obj = {'banner': module.params['banner'], 'state': 'absent'}
@@ -144,6 +145,7 @@ def map_config_to_obj(module):
         obj['state'] = 'present'
     return obj
 
+
 def map_params_to_obj(module):
     text = module.params['text']
     if text:
@@ -154,6 +156,7 @@ def map_params_to_obj(module):
         'text': text,
         'state': module.params['state']
     }
+
 
 def main():
     """ main entry point for module execution
@@ -193,6 +196,7 @@ def main():
         result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

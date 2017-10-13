@@ -223,7 +223,6 @@ from ansible.module_utils.netcfg import NetworkConfig, dumps
 from ansible.module_utils._text import to_native
 
 
-
 def get_candidate(module):
     candidate = NetworkConfig(indent=1)
     if module.params['src']:
@@ -232,6 +231,7 @@ def get_candidate(module):
         parents = module.params['parents'] or list()
         candidate.add(module.params['lines'], parents=parents)
     return candidate
+
 
 def run(module, result):
     match = module.params['match']
@@ -272,6 +272,7 @@ def run(module, result):
         if not module.check_mode:
             module.config.save_config()
         result['changed'] = True
+
 
 def main():
     """ main entry point for module execution
@@ -314,7 +315,6 @@ def main():
     check_args(module)
 
     config = None
-
 
     if module.params['backup']:
         result['__backup__'] = get_config(module)

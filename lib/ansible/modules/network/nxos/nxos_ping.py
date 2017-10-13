@@ -110,7 +110,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def get_summary(results_list, reference_point):
-    summary_string = results_list[reference_point+1]
+    summary_string = results_list[reference_point + 1]
     summary_list = summary_string.split(',')
 
     summary = dict(
@@ -119,7 +119,7 @@ def get_summary(results_list, reference_point):
         packet_loss=summary_list[2].split('packet')[0].strip(),
     )
 
-    if 'bytes from' not in results_list[reference_point-2]:
+    if 'bytes from' not in results_list[reference_point - 2]:
         ping_pass = False
     else:
         ping_pass = True
@@ -168,7 +168,7 @@ def get_ping_results(command, module):
         splitted_ping = ping.split('\n')
         reference_point = get_statistics_summary_line(splitted_ping)
         summary, ping_pass = get_summary(splitted_ping, reference_point)
-        rtt = get_rtt(splitted_ping, summary['packet_loss'], reference_point+2)
+        rtt = get_rtt(splitted_ping, summary['packet_loss'], reference_point + 2)
 
     return (summary, rtt, ping_pass)
 

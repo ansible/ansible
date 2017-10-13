@@ -288,7 +288,7 @@ class BigIpGtmFactsPools(BigIpGtmFactsCommon):
 
     def format_member_facts(self, pool):
         result = []
-        if not 'items' in pool.membersReference:
+        if 'items' not in pool.membersReference:
             return dict(members=[])
         for member in pool.membersReference['items']:
             member_facts = self.format_string_facts(member)
@@ -389,12 +389,13 @@ class BigIpGtmFactsVirtualServers(BigIpGtmFactsCommon):
 
     def format_virtual_server_facts(self, server):
         result = []
-        if not 'items' in server.virtualServersReference:
+        if 'items' not in server.virtualServersReference:
             return dict(virtual_servers=[])
         for server in server.virtualServersReference['items']:
             server_facts = self.format_string_facts(server)
             result.append(server_facts)
         return dict(virtual_servers=result)
+
 
 class BigIpGtmFactsManager(object):
     def __init__(self, *args, **kwargs):

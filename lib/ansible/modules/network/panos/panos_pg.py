@@ -101,7 +101,7 @@ EXAMPLES = '''
     vulnerability: "default"
 '''
 
-RETURN='''
+RETURN = '''
 # Default return values
 '''
 

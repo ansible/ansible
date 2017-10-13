@@ -146,6 +146,7 @@ def validate_ports(module, ports):
         if 'service_group' not in item:
             item['service_group'] = ''
 
+
 def main():
     argument_spec = a10_argument_spec()
     argument_spec.update(url_argument_spec())
