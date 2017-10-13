@@ -5,6 +5,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from copy import deepcopy
+
 from ansible.parsing.dataloader import DataLoader
 from ansible.vars.manager import strip_internal_keys
 
@@ -90,7 +92,6 @@ class TaskResult:
         if self._result.get('_ansible_no_log', False):
             result._result = {"censored": "the output has been hidden due to the fact that 'no_log: true' was specified for this result"}
         elif self._result:
-            from copy import deepcopy
             result._result = deepcopy(self._result)
 
             # actualy remove
