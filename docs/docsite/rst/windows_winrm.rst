@@ -1,6 +1,6 @@
 Windows Remote Management
 =========================
-Unlike Linux/Unix machine which use SSH by default, Windows machines are
+Unlike Linux/Unix hosts, which use SSH by default, Windows hosts are
 configured with WinRM. This topic covers how to configure and use WinRM with Ansible.
 
 .. contents:: Topics
@@ -8,10 +8,10 @@ configured with WinRM. This topic covers how to configure and use WinRM with Ans
 What is WinRM?
 ``````````````
 WinRM is a management protocol used by Windows to remotely communicate with
-another server. It is a SOAP-based protocol that communicates over HTTP and is
+another server. It is a SOAP-based protocol that communicates over HTTP/HTTPS, and is
 included in all recent Windows operating systems. Since Windows
 Server 2012, WinRM has been enabled by default, but in most cases extra
-configuration is be required to use WinRM with Ansible.
+configuration is required to use WinRM with Ansible.
 
 Ansible uses the `pywinrm <https://github.com/diyan/pywinrm>`_ package to
 communicate with Windows servers over WinRM. It is not installed by default
@@ -25,7 +25,8 @@ with the Ansible package, but can be installed by running the following::
 Authentication Options
 ``````````````````````
 When connecting to a Windows host, there are several different options that can be used
-when authentication with an account.
+when authentication with an account. The authentication type may be set on inventory 
+hosts or groups with the ``ansible_winrm_transport`` variable.
 
 The following matrix is a high level overview of the options:
 
@@ -45,13 +46,10 @@ The following matrix is a high level overview of the options:
 
 Basic
 -----
-Basic authentication is one of the simplest authentication options to use but is
-also the most insecure. This is because the username and password are
-base64 encoded, and if the network traffic is not over TLS then it can be
-decoded by anyone.
-
-Basic authentication can only be used for local accounts and has no native message encryption
-support unless it is used over TLS.
+Basic authentication is one of the simplest authentication options to use, but is
+also the most insecure. This is because the username and password are simply
+base64 encoded, and if a secure channel is not in use (eg, HTTPS) then it can be
+decoded by anyone. Basic authentication can only be used for local accounts (not domain accounts).
 
 The following example shows host vars configured for basic authentication::
 
@@ -86,19 +84,19 @@ be enabled by running the following in PowerShell:
 
     Set-Item -Path WSMan:\localhost\Service\Auth\Certificate -Value $true
 
-.. Note:: Encrypted private key's cannot be used as the urllib3 library that
-    is used by Ansible for WinRM does not support this functionality as of yet.
+.. Note:: Encrypted private keys cannot be used as the urllib3 library that
+    is used by Ansible for WinRM does not support this functionality.
 
 Generate a Certificate
 ++++++++++++++++++++++
-Before mapping a certificate to a local user it first needs to be generated.
+A certificate must be generated before it can be mapped to a local user.
 This can be done using one of the following methods:
 
-* With OpenSSL
-* With PowerShell by using the ``New-SelfSignedCertificate`` cmdlet
-* With Active Directory Certificate Services
+* OpenSSL
+* PowerShell, using the ``New-SelfSignedCertificate`` cmdlet
+* Active Directory Certificate Services
 
-Active Directory Certificate is beyond of scope in this documentation but may be
+Active Directory Certificate Services is beyond of scope in this documentation but may be
 the best option to use when running in a domain environment. For more information, 
 see the `Active Directory Certificate Services documentation <https://technet.microsoft.com/en-us/library/cc732625(v=ws.11).aspx>`_.
 
@@ -132,7 +130,7 @@ To generate a certificate with ``New-SelfSignedCertificate``:
 
 .. code-block:: powershell
 
-    # set the name of the local user that will have the key mapped to
+    # set the name of the local user that will have the key mapped
     $username = "username"
     $output_path = "C:\temp"
 
@@ -164,7 +162,7 @@ Import a Certificate to the Certificate Store
 +++++++++++++++++++++++++++++++++++++++++++++
 Once a certificate has been generated, the issuing certificate needs to be
 imported into the ``Trusted Root Certificate Authorities`` of the
-``LocalMachine`` store and the client certificate public key must be present
+``LocalMachine`` store, and the client certificate public key must be present
 in the ``Trusted People`` folder of the ``LocalMachine`` store. For this example,
 both the issuing certificate and public key are the same.
 
@@ -203,7 +201,7 @@ The code to import the client certificate public key is:
 
 Mapping a Certificate to an Account
 +++++++++++++++++++++++++++++++++++
-Once the certificate has been imported it needs to be mapped to the local user account.
+Once the certificate has been imported, it needs to be mapped to the local user account.
 
 This can be done with the following PowerShell command:
 
@@ -234,9 +232,9 @@ NTLM
 ----
 NTLM is an older authentication mechanism used by Microsoft that can support
 both local and domain accounts. NTLM is enabled by default on the WinRM
-service, so no actions are required before using it.
+service, so no setup is required before using it.
 
-This is easiest authentication protocol to use and is more secure than
+NTLM is the easiest authentication protocol to use and is more secure than
 ``Basic`` authentication. If running in a domain environment, ``Kerberos`` should be used
 instead of NTLM. 
 
@@ -287,7 +285,7 @@ There are some extra host variables that can be set::
 
 Installing the Kerberos Library
 +++++++++++++++++++++++++++++++
-Some system dependencies that must be installed prior to using Kerberos. The below script lists the dependencies based on the distro:
+Some system dependencies that must be installed prior to using Kerberos. The script below lists the dependencies based on the distro:
 
 .. code-block:: shell
 
@@ -381,14 +379,14 @@ host system path. To specify a different location or binary name, set the
 
 Manual Kerberos Ticket Management
 +++++++++++++++++++++++++++++++++
-To manually management Kerberos tickets, the ``kinit`` binary is used. To
+To manually manage Kerberos tickets, the ``kinit`` binary is used. To
 obtain a new ticket the following command is used:
 
 .. code-block:: shell
 
     kinit username@MY.DOMAIN.COM
 
-.. Note:: The domain part has to be fully qualified and must be in upper case.
+.. Note:: The domain must match the configured Kerberos realm exactly, and must be in upper case.
 
 To see what tickets (if any) have been acquired, use the following command:
 
@@ -404,8 +402,8 @@ To destroy all the tickets that have been acquired, use the following command:
 
 Troubleshooting Kerberos
 ++++++++++++++++++++++++
-Kerberos is higly reliant on the environment setup being correct for it to
-work. If problems are occuring, check the following:
+Kerberos is reliant on a properly-configured environment to
+work. To troubleshoot Kerberos issues, ensure that:
 
 * The hostname set for the Windows host is the FQDN and not an IP address.
 
@@ -414,12 +412,12 @@ work. If problems are occuring, check the following:
   with ``nslookup``. The same name should be returned when using ``nslookup``
   on the IP address.
 
-* The Anisble host's clock is synchronised with the domain controller. Kerberos
+* The Ansible host's clock is synchronized with the domain controller. Kerberos
   is time sensitive, and a little clock drift can cause the ticket generation
   process to fail.
 
-* Check the real fully qualified domain name for the domain is configured in
-  the ``krb5.conf`` file. To check, this run::
+* Ensure that the fully qualified domain name for the domain is configured in
+  the ``krb5.conf`` file. To check this, run::
 
     kinit -C username@MY.DOMAIN.COM
     klist
@@ -451,9 +449,9 @@ To use CredSSP authentication, the host vars are configured like so::
 
 There are some extra host variables that can be set as shown below::
 
-    ansible_winrm_credssp_disable_tlsv1_2: when true will not use TLS 1.2 in the CredSSP auth process
+    ansible_winrm_credssp_disable_tlsv1_2: when true, will not use TLS 1.2 in the CredSSP auth process
 
-CredSSP authentication is not enabled by default on a Windows host but can
+CredSSP authentication is not enabled by default on a Windows host, but can
 be enabled by running the following in PowerShell:
 
 .. code-block:: powershell
@@ -472,13 +470,13 @@ The ``requests-credssp`` wrapper can be installed using ``pip``:
 CredSSP and TLS 1.2
 +++++++++++++++++++
 By default the ``requests-credssp`` library is configured to authenticate over
-a TLS 1.2 protocol. TLS 1.2 is installed and enabled by default for Windows Server 2012
+the TLS 1.2 protocol. TLS 1.2 is installed and enabled by default for Windows Server 2012
 and Windows 8 and more recent releases. 
 
 There are two ways that older hosts can be used with CredSSP:
 
-* Install and enable a hotfix to enable TLS 1.2 support. This is the
-  recommended when using Server 2008 R2 and Windows 7.
+* Install and enable a hotfix to enable TLS 1.2 support (recommended
+  for Server 2008 R2 and Windows 7).
 
 * Set ``ansible_winrm_credssp_disable_tlsv1_2=True`` in the inventory to run
   over TLS 1.0. This is the only option when connecting to Windows Server 2008, which 
@@ -488,7 +486,7 @@ To enable TLS 1.2 support on Server 2008 R2 and Windows 7, the optional update
 `KRB3080079 <https://support.microsoft.com/en-us/help/3080079/update-to-add-rds-support-for-tls-1.1-and-tls-1.2-in-windows-7-or-windows-server-2008-r2>`_
 needs to be installed. 
 
-Once this is installed and the host is rebooted, run the following
+Once the update has been applied and the Windows host rebooted, run the following
 PowerShell commands to enable TLS 1.2:
 
 .. code-block:: powershell
@@ -505,13 +503,12 @@ PowerShell commands to enable TLS 1.2:
 
 Set CredSSP Certificate
 +++++++++++++++++++++++
-CredSSP works by encrypting the credentials through the TLS protocol and uses a self signed certificate by default. The ``CertificateThumbprint`` option under the WinRM service configuration can be used to specify the thumbprint of
+CredSSP works by encrypting the credentials through the TLS protocol and uses a self-signed certificate by default. The ``CertificateThumbprint`` option under the WinRM service configuration can be used to specify the thumbprint of
 another certificate.
 
-.. Note:: This certificate thumbprint is different from and independent of the WinRM listener
-    thumbprint. The message transport is still sent over the WinRM listener, but all the TLS 
-    encryption processes are done with the certificate set by the service level certificate of that
-    thumbprint.
+.. Note:: This certificate configuration is independent of the WinRM listener
+    certificate. With CredSSP, message transport still occurs over the WinRM listener, 
+    but the TLS-encrypted messages inside the channel use the service-level certificate.
 
 To explicitly set the certificate to use for CredSSP:
 
@@ -526,27 +523,26 @@ To explicitly set the certificate to use for CredSSP:
 
 Non-Administrator Accounts
 ``````````````````````````
-WinRM is configured by default to only allow accounts in the local
-``Administrators`` group to run over WinRM. This restriction can be removed by
-running the following command:
+WinRM is configured by default to only allow connections from accounts in the local
+``Administrators`` group. This can be changed by running:
 
 .. code-block:: powershell
 
     winrm configSDDL default
 
-In the box displayed after running the above, the new user/group must have the
-``Read`` and ``Execute`` permissions for it to work.
+This will display an ACL editor, where new users or groups may be added. To run commands
+over WinRM, users and groups must have at least the ``Read`` and ``Execute`` permissions 
+enabled.
 
-While non-administrator accounts can be used with WinRM, there is a lot less
-that can be done with these accounts so it is not a common use case and has not been tested
-with modules.
+While non-administrative accounts can be used with WinRM, most typical server administration
+tasks require some level of administrative access, so the utility is usually limited.
 
 WinRM Encryption
 ````````````````
 By default WinRM will fail to work when running over an unencrypted channel.
 The WinRM protocol considers the channel to be encrypted if using TLS over HTTP
 (HTTPS) or using message level encryption. Using WinRM with TLS is the
-recommended option as it works with all authentication options but requires
+recommended option as it works with all authentication options, but requires
 a certificate to be created and used on the WinRM listener.
 
 The ``ConfigureRemotingForAnsible.ps1`` creates a self-signed certificate and
@@ -561,18 +557,18 @@ encryption uses the more secure TLS protocol instead. If both transport and
 message encryption is required, set ``ansible_winrm_message_encryption=always``
 in the host vars.
 
-A last resort is to disable the encryption check on the Windows host. This
-should only be used for developmental and debugging purposes as anything sent
-from Ansible can viewed by anyone on the network. To disable the encryption,
-check that the following command can be run in PowerShell:
+A last resort is to disable the encryption requirement on the Windows host. This
+should only be used for development and debugging purposes, as anything sent
+from Ansible can viewed by anyone on the network. To disable the encryption
+requirement, run the following from PowerShell on the target host:
 
 .. code-block:: powershell
 
     Set-Item -Path WSMan:\localhost\Service\AllowUnencrypted -Value $true
 
 .. Note:: Do not disable the encryption check unless it is
-    absolutey required. Doing so will leave sensitive information like
-    credentials and secret files viewable by anyone on the network.
+    absolutely required. Doing so could allow sensitive information like
+    credentials and files to be intercepted by others on the network.
 
 Inventory Options
 `````````````````
@@ -581,19 +577,24 @@ username, password, and connection type of the remote hosts. These variables
 are most easily set up in the inventory, but can be set on the ``host_vars``/
 ``group_vars`` level.
 
-When setting the inventory, the following variables are required to be set::
+When setting up the inventory, the following variables are required::
 
-    # it is suggested that tese be encrypted with ansible-vault:
+    # it is suggested that these be encrypted with ansible-vault:
     # ansible-vault edit group_vars/windows.yml
     
-    ansible_user: Administrator
-    ansible_password: SecretPasswordGoesHere
     ansible_connection: winrm
 
+    # may also be passed on the command-line via --user
+    ansible_user: Administrator
+    
+    # may also be supplied at runtime with --ask-pass
+    ansible_password: SecretPasswordGoesHere
+
+
 Using the variables above, Ansible will connect to the Windows host with Basic
-authentication through HTTPS. If ``ansible_user`` has a SPN value like
-``username@MY.DOMAIN.COM`` then the authentication option will be over
-Kerberos.
+authentication through HTTPS. If ``ansible_user`` has a UPN value like
+``username@MY.DOMAIN.COM`` then the authentication option will automatically attempt
+to use Kerberos unless an ``ansible_winrm_transport`
 
 As of Ansible 2.0, the following custom inventory variables are also supported
 for additional configuration of WinRM connections:
@@ -638,7 +639,7 @@ for additional configuration of WinRM connections:
   message encryption. ``always`` means message encryption will always be used
   and ``never`` means message encryption will never be used
 
-* ``ansible_winrm_*``: Any additional keywork arguments supported by
+* ``ansible_winrm_*``: Any additional keyword arguments supported by
   ``winrm.Protocol`` may be provided in place of ``*``
 
 In addtion, there are also specific variables that need to be set
@@ -661,7 +662,7 @@ Due to the design of the WinRM protocol , there are a few limitations
 when using WinRM that can cause issues when creating playbooks for Ansible.
 These include:
 
-* Credentials are not delegated on every authentication transport, which causes
+* Credentials are not delegated for most authentication types, which causes
   authentication errors when accessing network resources or installing certain
   programs.
 
