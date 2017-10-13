@@ -343,7 +343,7 @@ def tsort(dep_map):
 
     return sorted_list
 
-import pprint
+
 def _solve_deps(collector_names, all_fact_subsets):
     unresolved = collector_names.copy()
     solutions = collector_names.copy()
@@ -357,7 +357,6 @@ def _solve_deps(collector_names, all_fact_subsets):
         new_names = resolve_requires(unresolved, all_fact_subsets)
         solutions.update(new_names)
 
-    pprint.pprint(('solutions', solutions))
     return solutions
 
 
