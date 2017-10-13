@@ -174,8 +174,8 @@ class TestNuageVSPKModule(TestNuageModule):
 
     def tearDown(self):
         super(TestNuageVSPKModule, self).tearDown()
-        for patch in self.patches:
-            patch.stop()
+        for mock in self.patches:
+            mock.stop()
 
     def test_certificate_auth(self):
         set_module_args(
