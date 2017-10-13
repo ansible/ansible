@@ -1,4 +1,5 @@
 # (c) 2016, Bill Wang <ozbillwang(at)gmail.com>
+# (c) 2017, Marat Bakeev <hawara(at)gmail.com>
 #
 # This file is part of Ansible
 #
@@ -21,6 +22,7 @@ __metaclass__ = type
 from ansible.module_utils.ec2 import HAS_BOTO3
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
+from ansible.module_utils.parsing.convert_bool import boolean
 
 try:
     from botocore.exceptions import ClientError
@@ -50,18 +52,44 @@ class LookupModule(LookupBase):
 
         - name: lookup ssm parameter store with all options.
           debug: msg="{{ lookup('ssm', 'Hello', 'decrypt=false', 'region=us-east-2', 'aws_profile=myprofile') }}"
+
+        - name: return a dictionary of ssm parameters from a hierarchy path
+          debug: msg="{{ lookup('ssm', '/PATH/to/params', 'region=ap-southeast-2', 'bypath', 'recursive=true' ) }}"
+
+        - name: return a dictionary of ssm parameters from a hierarchy path with shortened names (param instead of /PATH/to/param)
+          debug: msg="{{ lookup('ssm', '/PATH/to/params', 'region=ap-southeast-2', 'shortnames', 'bypath', 'recursive=true' ) }}"
+
+        - name: Iterate over a parameter hierarchy
+          debug: msg='key contains {{item.Name }} with value {{item.Value}} '
+          with_ssm:
+            - '/TEST/test-list'
+            - 'region=ap-southeast-2'
+            - 'bypath'
+
         '''
 
         ret = {}
         response = {}
         session = {}
         ssm_dict = {}
+        lparams = {}
 
         if not HAS_BOTO3:
             raise AnsibleError('botocore and boto3 are required.')
 
         ssm_dict['WithDecryption'] = True
-        ssm_dict['Names'] = [terms[0]]
+
+        # check if option 'bypath' is specified, while still allowing to have a parameter with the same name
+        if 'bypath' in terms[1:]:
+            ssm_dict['Path'] = terms[0]
+            del terms[terms[1:].index('bypath') + 1]
+        else:
+            ssm_dict['Names'] = [terms[0]]
+
+        # Option to return short parameter names in by path lookups
+        if 'shortnames' in terms[1:]:
+            lparams['shortnames'] = True
+            del terms[terms[1:].index('shortnames') + 1]
 
         if len(terms) > 1:
             for param in terms[1:]:
@@ -73,8 +101,12 @@ class LookupModule(LookupBase):
                 if key == "region" or key == "aws_profile":
                     session[key] = value
 
+                # recurse or not
+                if key == "recursive" and boolean(value):
+                    ssm_dict['Recursive'] = True
+
                 # decrypt the value or not
-                if key == "decrypt" and value.lower() == "false":
+                if key == "decrypt" and boolean(value):
                     ssm_dict['WithDecryption'] = False
 
         if "aws_profile" in session:
@@ -86,13 +118,34 @@ class LookupModule(LookupBase):
             client = boto3.client('ssm')
 
         try:
-            response = client.get_parameters(**ssm_dict)
+            # Lookup by path
+            if 'Path' in ssm_dict:
+                response = client.get_parameters_by_path(**ssm_dict)
+                paramlist = list()
+                paramlist.extend(response['Parameters'])
+
+                # Manual pagination, since boto doesnt support it yet for get_parameters_by_path
+                while 'NextToken' in response:
+                    response = client.get_parameters_by_path(NextToken=response['NextToken'], **ssm_dict)
+                    paramlist.extend(response['Parameters'])
+
+                # shorten parameter names. yes, this will return duplicate names with different values.
+                if 'shortnames' in lparams:
+                    for x in paramlist:
+                        x['Name'] = x['Name'][x['Name'].rfind('/') + 1:]
+
+                if len(paramlist):
+                    return paramlist
+                else:
+                    return None
+            # Lookup by parameter name
+            else:
+                response = client.get_parameters(**ssm_dict)
+                ret.update(response)
+                if ret['Parameters']:
+                    return [ret['Parameters'][0]['Value']]
+                else:
+                    return None
+
         except ClientError as e:
             raise AnsibleError("SSM lookup exception: {0}".format(e))
-
-        ret.update(response)
-
-        if ret['Parameters']:
-            return [ret['Parameters'][0]['Value']]
-        else:
-            return None
