@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#-*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 # (c) 2013, Yeukhon Wong <yeukhon@acm.org>
 # (c) 2014, Nate Coraor <nate@bx.psu.edu>
@@ -231,17 +231,18 @@ class Hg(object):
 
 # ===========================================
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            repo = dict(required=True, aliases=['name']),
-            dest = dict(type='path'),
-            revision = dict(default=None, aliases=['version']),
-            force = dict(default='no', type='bool'),
-            purge = dict(default='no', type='bool'),
-            update = dict(default='yes', type='bool'),
-            clone = dict(default='yes', type='bool'),
-            executable = dict(default=None),
+        argument_spec=dict(
+            repo=dict(required=True, aliases=['name']),
+            dest=dict(type='path'),
+            revision=dict(default=None, aliases=['version']),
+            force=dict(default='no', type='bool'),
+            purge=dict(default='no', type='bool'),
+            update=dict(default='yes', type='bool'),
+            clone=dict(default='yes', type='bool'),
+            executable=dict(default=None),
         ),
     )
     repo = module.params['repo']
@@ -305,6 +306,7 @@ def main():
     if before != after or cleaned:
         changed = True
     module.exit_json(before=before, after=after, changed=changed, cleaned=cleaned)
+
 
 if __name__ == '__main__':
     main()

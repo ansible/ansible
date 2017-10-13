@@ -141,9 +141,10 @@ class Bzr(object):
 
 # ===========================================
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
+        argument_spec=dict(
             dest=dict(required=True, type='path'),
             name=dict(required=True, aliases=['parent']),
             version=dict(default='head'),
@@ -152,10 +153,10 @@ def main():
         )
     )
 
-    dest    = module.params['dest']
-    parent  = module.params['name']
+    dest = module.params['dest']
+    parent = module.params['name']
     version = module.params['version']
-    force   = module.params['force']
+    force = module.params['force']
     bzr_path = module.params['executable'] or module.get_bin_path('bzr', True)
 
     bzrconfig = os.path.join(dest, '.bzr', 'branch', 'branch.conf')
