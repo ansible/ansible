@@ -181,6 +181,7 @@ def main():
         argument_spec=dict(
             state=dict(choices=['file', 'directory', 'link', 'hard', 'touch', 'absent'], default=None),
             path=dict(aliases=['dest', 'name'], required=True, type='path'),
+            backup=dict(type='bool', default=False),
             original_basename=dict(required=False),  # Internal use only, for recursive ops
             recurse=dict(default=False, type='bool'),
             force=dict(required=False, default=False, type='bool'),
@@ -199,7 +200,9 @@ def main():
     diff_peek = params['diff_peek']
     src = params['src']
     b_src = to_bytes(src, errors='surrogate_or_strict')
+    validate = module.params.get('validate', None)
     follow = params['follow']
+    backup = module.params['backup']
 
     # modify source as we later reload and pass, specially relevant when used by other modules.
     path = params['path']
@@ -216,7 +219,7 @@ def main():
                 appears_binary = True
         except:
             pass
-        module.exit_json(path=path, changed=False, appears_binary=appears_binary)
+        res_args = dict( path=path, changed=False, appears_binary=appears_binary )
 
     prev_state = get_state(b_path)
 
@@ -264,11 +267,33 @@ def main():
             'after': {'path': path},
             }
 
+    backup_file = None
     state_change = False
     if prev_state != state:
         diff['before']['state'] = prev_state
         diff['after']['state'] = state
         state_change = True
+
+        # if checksum_src != checksum_path or os.path.islink(b_path):
+        if not module.check_mode:
+            if backup:
+                if os.path.exists(b_path):
+                    backup_file = module.backup_local(path)
+            # allow for conversion from symlink.
+            if os.path.islink(b_path):
+                os.unlink(b_path)
+                open(b_path, 'w').close()
+            if validate:
+                # if we have a mode, make sure we set it on the temporary
+                # file source as some validations may require it
+                # FIXME: should we do the same for owner/group here too?
+                if mode is not None:
+                    module.set_mode_if_different(src, mode, False)
+                if "%s" not in validate:
+                    module.fail_json(msg="validate must contain %%s: %s" % (validate))
+                (rc, out, err) = module.run_command(validate % src)
+                if rc != 0:
+                    module.fail_json(msg="failed to validate", exit_status=rc, stdout=out, stderr=err)
 
     if state == 'absent':
         if state_change:
@@ -283,9 +308,9 @@ def main():
                         os.unlink(b_path)
                     except Exception as e:
                         module.fail_json(path=path, msg="unlinking failed: %s " % to_native(e))
-            module.exit_json(path=path, changed=True, diff=diff)
+            res_args = dict( path=path, changed=True, diff=diff )
         else:
-            module.exit_json(path=path, changed=False)
+            res_args = dict( path=path, changed=False )
 
     elif state == 'file':
 
@@ -302,7 +327,7 @@ def main():
             module.fail_json(path=path, msg='file (%s) is %s, cannot continue' % (path, prev_state))
 
         changed = module.set_fs_attributes_if_different(file_args, changed, diff, expand=False)
-        module.exit_json(path=path, changed=changed, diff=diff)
+        res_args = dict( path=path, changed=changed, diff=diff )
 
     elif state == 'directory':
         if follow and prev_state == 'link':
@@ -312,7 +337,7 @@ def main():
 
         if prev_state == 'absent':
             if module.check_mode:
-                module.exit_json(changed=True, diff=diff)
+                res_args = dict( changed=True, diff=diff )
             changed = True
             curpath = ''
 
@@ -350,7 +375,7 @@ def main():
         if recurse:
             changed |= recursive_set_attributes(module, to_bytes(file_args['path'], errors='surrogate_or_strict'), follow, file_args)
 
-        module.exit_json(path=path, changed=changed, diff=diff)
+        res_args = dict( path=path, changed=changed, diff=diff )
 
     elif state in ('link', 'hard'):
 
@@ -398,7 +423,7 @@ def main():
             changed = True
             if os.path.exists(b_path):
                 if state == 'hard' and os.stat(b_path).st_ino == os.stat(b_src).st_ino:
-                    module.exit_json(path=path, changed=False)
+                    res_args = dict( path=path, changed=False )
                 elif not force:
                     module.fail_json(dest=path, src=src, msg='Cannot link, different hard link exists at destination')
         else:
@@ -435,10 +460,10 @@ def main():
                     module.fail_json(path=path, msg='Error while linking: %s' % to_native(e, nonstring='simplerepr'))
 
         if module.check_mode and not os.path.exists(b_path):
-            module.exit_json(dest=path, src=src, changed=changed, diff=diff)
+            res_args = dict( dest=path, src=src, changed=changed, diff=diff )
 
         changed = module.set_fs_attributes_if_different(file_args, changed, diff, expand=False)
-        module.exit_json(dest=path, src=src, changed=changed, diff=diff)
+        res_args = dict( dest=path, src=src, changed=changed, diff=diff )
 
     elif state == 'touch':
         if not module.check_mode:
@@ -466,7 +491,12 @@ def main():
                         os.remove(b_path)
                 raise e
 
-        module.exit_json(dest=path, changed=True, diff=diff)
+        res_args = dict( dest=path, changed=True, diff=diff )
+
+    if backup_file:
+        res_args['backup_file'] = backup_file
+
+    module.exit_json(**res_args)
 
     module.fail_json(path=path, msg='unexpected position reached')
 
