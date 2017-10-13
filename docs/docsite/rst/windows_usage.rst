@@ -129,7 +129,7 @@ update or hotfix::
       when: hotfix_result.reboot_required
 
 Set Up Users and Groups
-----------------------
+-----------------------
 Ansible can be used to create Windows users and groups both locally and on a domain.
 
 Local
