@@ -189,101 +189,6 @@ except ImportError:
     pass
 
 
-def create_agent_pool_profile_instance(agentpoolprofile):
-    '''
-    Helper method to serialize a dict to a ContainerServiceAgentPoolProfile
-    :param: agentpoolprofile: dict with the parameters to setup the ContainerServiceAgentPoolProfile
-    :return: ContainerServiceAgentPoolProfile
-    '''
-    return ContainerServiceAgentPoolProfile(
-        name=agentpoolprofile['name'],
-        count=agentpoolprofile['count'],
-        dns_prefix=agentpoolprofile['dns_prefix'],
-        vm_size=agentpoolprofile['vm_size']
-    )
-
-
-def create_orch_platform_instance(orchestrator):
-    '''
-    Helper method to serialize a dict to a ContainerServiceOrchestratorProfile
-    :param: orchestrator: dict with the parameters to setup the ContainerServiceOrchestratorProfile
-    :return: ContainerServiceOrchestratorProfile
-    '''
-    return ContainerServiceOrchestratorProfile(
-        orchestrator_type=orchestrator,
-    )
-
-
-def create_service_principal_profile_instance(spnprofile):
-    '''
-    Helper method to serialize a dict to a ContainerServiceServicePrincipalProfile
-    :param: spnprofile: dict with the parameters to setup the ContainerServiceServicePrincipalProfile
-    :return: ContainerServiceServicePrincipalProfile
-    '''
-    return ContainerServiceServicePrincipalProfile(
-        client_id=spnprofile[0]['client_id'],
-        secret=spnprofile[0]['client_secret']
-    )
-
-
-def create_linux_profile_instance(linuxprofile):
-    '''
-    Helper method to serialize a dict to a ContainerServiceLinuxProfile
-    :param: linuxprofile: dict with the parameters to setup the ContainerServiceLinuxProfile
-    :return: ContainerServiceLinuxProfile
-    '''
-    return ContainerServiceLinuxProfile(
-        admin_username=linuxprofile[0]['admin_username'],
-        ssh=create_ssh_configuration_instance(linuxprofile[0]['ssh_key'])
-    )
-
-
-def create_ssh_configuration_instance(sshconf):
-    '''
-    Helper method to serialize a dict to a ContainerServiceSshConfiguration
-    :param: sshconf: dict with the parameters to setup the ContainerServiceSshConfiguration
-    :return: ContainerServiceSshConfiguration
-    '''
-    listssh = []
-    key = ContainerServiceSshPublicKey(key_data=str(sshconf))
-    listssh.append(key)
-    return ContainerServiceSshConfiguration(
-        public_keys=listssh
-    )
-
-
-def create_master_profile_instance(masterprofile):
-    '''
-    Helper method to serialize a dict to a ContainerServiceMasterProfile
-    :param: masterprofile: dict with the parameters to setup the ContainerServiceMasterProfile
-    :return: ContainerServiceMasterProfile
-    '''
-    return ContainerServiceMasterProfile(
-        count=masterprofile[0]['count'],
-        dns_prefix=masterprofile[0]['dns_prefix']
-    )
-
-
-def create_diagnostics_profile_instance(diagprofile):
-    '''
-    Helper method to serialize a dict to a ContainerServiceDiagnosticsProfile
-    :param: diagprofile: dict with the parameters to setup the ContainerServiceDiagnosticsProfile
-    :return: ContainerServiceDiagnosticsProfile
-    '''
-    return ContainerServiceDiagnosticsProfile(
-        vm_diagnostics=create_vm_diagnostics_instance(diagprofile)
-    )
-
-
-def create_vm_diagnostics_instance(vmdiag):
-    '''
-    Helper method to serialize a dict to a ContainerServiceVMDiagnostics
-    :param: vmdiag: dict with the parameters to setup the ContainerServiceVMDiagnostics
-    :return: ContainerServiceVMDiagnostics
-    '''
-    return ContainerServiceVMDiagnostics(
-        enabled=vmdiag
-    )
 
 
 def create_aci_dict(aci):
@@ -309,74 +214,6 @@ def create_aci_dict(aci):
     return results
 
 
-def create_linux_profile_dict(linuxprofile):
-    '''
-    Helper method to deserialize a ContainerServiceLinuxProfile to a dict
-    :param: linuxprofile: ContainerServiceLinuxProfile with the Azure callback object
-    :return: dict with the state on Azure
-    '''
-    results = dict(
-        ssh_key=linuxprofile.ssh.public_keys[0].key_data,
-        admin_username=linuxprofile.admin_username
-    )
-    return results
-
-
-def create_master_profile_dict(masterprofile):
-    '''
-    Helper method to deserialize a ContainerServiceMasterProfile to a dict
-    :param: masterprofile: ContainerServiceMasterProfile with the Azure callback object
-    :return: dict with the state on Azure
-    '''
-    results = dict(
-        count=masterprofile.count,
-        fqdn=masterprofile.fqdn,
-        dns_prefix=masterprofile.dns_prefix
-    )
-    return results
-
-
-def create_diagnotstics_profile_dict(diagnosticsprofile):
-    '''
-    Helper method to deserialize a ContainerServiceVMDiagnostics to a dict
-    :param: diagnosticsprofile: ContainerServiceVMDiagnostics with the Azure callback object
-    :return: dict with the state on Azure
-    '''
-    results = dict(
-        vm_diagnostics=diagnosticsprofile.vm_diagnostics.enabled
-    )
-    return results
-
-
-def create_orchestrator_profile_dict(orchestratorprofile):
-    '''
-    Helper method to deserialize a ContainerServiceOrchestratorProfile to a dict
-    :param: orchestratorprofile: ContainerServiceOrchestratorProfile with the Azure callback object
-    :return: dict with the state on Azure
-    '''
-    results = dict(
-        orchestrator_type=str(orchestratorprofile.orchestrator_type)
-    )
-    return results
-
-
-def create_agent_pool_profiles_dict(agentpoolprofiles):
-    '''
-    Helper method to deserialize a ContainerServiceAgentPoolProfile to a dict
-    :param: agentpoolprofiles: ContainerServiceAgentPoolProfile with the Azure callback object
-    :return: dict with the state on Azure
-    '''
-    results = []
-    for profile in agentpoolprofiles:
-        result = dict(
-            count=profile.count,
-            vm_size=profile.vm_size,
-            name=profile.name,
-            dns_prefix=profile.dns_prefix,
-            fqdn=profile.fqdn
-        )
-        results.append(result)
-    return results
 
 
 class AzureRMContainerInstance(AzureRMModuleBase):
@@ -413,10 +250,6 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         self.location = None
         self.tags = None
         self.state = None
-        self.orchestration_platform = None
-        self.master_profile = None
-        self.linux_profile = None
-        self.agent_pool_profiles = None
         self.service_principal = None
         self.diagnostics_profile = None
 
@@ -447,7 +280,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         # Check if the ACS instance already present in the RG
         if self.state == 'present':
 
-            self.log("Need to Create / Update the ACS instance")
+            self.log("Need to Create / Update the ACI instance")
 
             if self.check_mode:
                 return self.results
@@ -457,8 +290,8 @@ class AzureRMContainerInstance(AzureRMModuleBase):
 
             self.log("Creation / Update done")
         elif self.state == 'absent':
-            self.delete_acs()
-            self.log("ACS instance deleted")
+            self.delete_aci()
+            self.log("ACI instance deleted")
 
         return self.results
 
@@ -488,19 +321,18 @@ class AzureRMContainerInstance(AzureRMModuleBase):
             self.fail("Error creating the ACS instance: {0}".format(str(exc)))
         return create_aci_dict(response)
 
-    def delete_acs(self):
+    def delete_aci(self):
         '''
-        Deletes the specified container service in the specified subscription and resource group.
+        Deletes the specified container instance in the specified subscription and resource group.
         The operation does not delete other resources created as part of creating a container service,
         including storage accounts, VMs, and availability sets.
         All the other resources created with the container service are part of the same resource group and can be deleted individually.
 
         :return: True
         '''
-        self.log("Deleting the ACS instance {0}".format(self.name))
+        self.log("Deleting the ACI instance {0}".format(self.name))
         try:
-            poller = self.containerinstance_client.container_services.delete(self.resource_group, self.name)
-            self.get_poller_result(poller)
+            response = self.containerinstance_client.container_groups.delete(self.resource_group, self.name)
         except CloudError as e:
             self.log('Error attempting to delete the ACS instance.')
             self.fail("Error deleting the ACS instance: {0}".format(str(e)))
