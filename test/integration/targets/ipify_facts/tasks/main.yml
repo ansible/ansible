@@ -29,7 +29,7 @@
     timeout: 30
     validate_certs: "{{ validate_certs }}"
   register: external_ip
-- debug: var="{{ external_ip }}"
+- debug: var=external_ip
 
 - name: check if task was successful
   assert:
