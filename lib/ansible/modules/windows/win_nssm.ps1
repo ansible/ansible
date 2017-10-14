@@ -536,7 +536,7 @@ Function Nssm-Update-Extra-Environment
 
     $env_vars_string = Convert-Hash $env_vars
 
-    $cmd = "get ""$name"" appEnvironmentExtra ""$env_vars_string"""
+    $cmd = "get ""$name"" AppEnvironmentExtra"
     $results = Nssm-Invoke $cmd
 
     if ($LastExitCode -ne 0)
@@ -553,9 +553,9 @@ Function Nssm-Update-Extra-Environment
     - The services current environment variables does not match the desired environment variables.
     - env_vars is not an empty hashtable
     #>
-    If (($env_vars -ne $current_env_vars) -and ($env_vars.Count -gt 0)) 
+    If (((Convert-Hash $env_vars) -ne (Convert-Hash $current_env_vars)) -and ($env_vars.Count -gt 0)) 
     {
-        $cmd = "set ""$name"" appEnvironmentExtra ""$env_vars_string"""
+        $cmd = "set ""$name"" AppEnvironmentExtra ""$env_vars_string"""
         $results = Nssm-Invoke $cmd
 
         if ($LastExitCode -ne 0)
@@ -566,6 +566,28 @@ Function Nssm-Update-Extra-Environment
         }
 
         $result.changed_by = "update-environment"
+        $result.previous_environment = (Convert-Hash $current_env_vars)
+        $result.changed = $true
+    }
+
+    <# 
+    Reset appEnvironmentExtra if there are currently environment variables in the service, but 
+    none were passed to the function.
+    #>
+    If (($current_env_vars.Count -ne 0 ) -and ($env_vars.Count -eq 0))
+    {
+        $cmd = "reset ""$name"" AppEnvironmentExtra"
+        $results = Nssm-Invoke $cmd
+
+        if ($LastExitCode -ne 0)
+        {
+            $result.nssm_error_cmd = $cmd
+            $result.nssm_error_log = "$results"
+            Throw "Error updating environment variables for service ""$name"""
+        }
+
+        $result.changed_by = "update-environment"
+        $result.previous_environment = $current_env_vars
         $result.changed = $true
     }
 }
@@ -753,7 +775,7 @@ Function NssmProcedure
     Nssm-Update-Dependencies -name $name -dependencies $dependencies
     Nssm-Update-Credentials -name $name -user $user -password $password
     Nssm-Update-StartMode -name $name -mode $startMode
-    Nssm-Update-Extra-Environment -name $name -env_var_hash $appEnvironmentExtra
+    Nssm-Update-Extra-Environment -name $name -env_vars $appEnvironmentExtra
 }
 
 Try
