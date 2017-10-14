@@ -234,7 +234,9 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
     b_dest = to_bytes(dest, errors='surrogate_or_strict')
     if not os.path.exists(b_dest):
         if not create:
-            module.fail_json(rc=257, msg='Destination %s does not exist !' % dest)
+            if not module.check_mode:
+                module.fail_json(rc=257, msg='Destination %s does not exist !' % dest)
+            module.warn('Destination %s does not exist.' % dest)
         b_destpath = os.path.dirname(b_dest)
         if not os.path.exists(b_destpath) and not module.check_mode:
             os.makedirs(b_destpath)
