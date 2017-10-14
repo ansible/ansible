@@ -9,7 +9,7 @@
 $params = Parse-Args -arguments $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
-# these are your module parameters
+# module parameters
 $path = Get-AnsibleParam -obj $params -name "path" -type "path" -failifempty $true -aliases "destination","dest"
 $user = Get-AnsibleParam -obj $params -name "user" -type "str" -failifempty $true
 $rights = Get-AnsibleParam -obj $params -name "rights" -type "list"
@@ -26,7 +26,12 @@ If (-not (Test-Path -Path $path) )
 
 #function get current audit rules and convert to hashtable
 Function Get-CurrentAuditRules ($path) {
-    $ACL = Get-Acl -Path $path -Audit
+    Try {
+        $ACL = Get-Acl $path -Audit
+    }
+    Catch {
+        Return "Unable to retrieve the ACL on $Path"
+    }
 
     $HT = Foreach ($Obj in $ACL.Audit)
     {
@@ -52,7 +57,6 @@ $result = @{
     current_audit_rules = Get-CurrentAuditRules $path
 }
 
-
 #Make sure identity is valid and can be looked up
 Try {
     $SID = Convert-ToSid $user
@@ -65,22 +69,18 @@ Catch {
 $ItemType = (Get-Item $path).GetType()
 switch ($ItemType)
 {
-    ([Microsoft.Win32.RegistryKey]) {
-        $registry = $true
-        $result.path_type = 'registry'
-    }
-    ([System.IO.FileInfo]) {
-        $file = $true
-        $result.path_type = 'file'
-    }
-    ([System.IO.DirectoryInfo]) {
-        #$directory = $true
-        $result.path_type = 'directory'
-    }
+    ([Microsoft.Win32.RegistryKey]) {$registry = $true;  $result.path_type = 'registry'}
+    ([System.IO.FileInfo]) {$file = $true;  $result.path_type = 'file'}
+    ([System.IO.DirectoryInfo]) {$result.path_type = 'directory'}
 }
 
 #Get current acl/audit rules on the target
-$ACL = Get-Acl $path -Audit
+Try {
+    $ACL = Get-Acl $path -Audit
+}
+Catch {
+    Fail-Json -obj $result -message "Unable to retrieve the ACL on $Path -  $($_.Exception.Message)"
+}
 
 #configure acl object to remove the specified user
 If ($state -eq 'absent')
@@ -100,7 +100,7 @@ If ($state -eq 'absent')
     #update the ACL object if identity found
     Try
     {
-        $ACL.PurgeAuditRules($ToRemove)
+        $ToRemove | ForEach-Object { $ACL.PurgeAuditRules($_) }
     }
     Catch
     {
@@ -149,7 +149,7 @@ Else
     #exit here if any existing rule matches defined rule since no change is needed
     #if we need to ignore inherited rules in the future, this would be where to do it
     #Just filter out inherited rules from $ACL.Audit
-    Foreach ($group in $ACL.Audit)
+    Foreach ($group in $ACL.Audit | Where-Object {$_.IsInherited -eq $false})
     {
         If (
             ($group | Select-Object -expand "*Rights") -eq ($NewAccessRule | Select-Object -expand "*Rights") -and
@@ -164,10 +164,13 @@ Else
         }
     }
 
-    #try and set the acl object
+    #try and set the acl object. AddAuditRule allows for multiple entries to exist under the same
+    #identity...so if someone wanted success: write and failure: delete for example, that setup would be
+    #possible. The alternative is SetAuditRule which would instead modify an existing rule and not allow
+    #for setting the above example.
     Try
     {
-        $ACL.SetAuditRule($NewAccessRule)
+        $ACL.AddAuditRule($NewAccessRule)
     }
     Catch
     {

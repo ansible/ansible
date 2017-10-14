@@ -17,6 +17,8 @@ description:
   - Used to apply audit rules to files, folders or registry keys.
   - Once applied, it will begin recording the user who performed the operation defined into the Security
     Log in the Event viewer.
+  - The behavior is designed to ignore inherited rules since those cannot be adjusted without first disabling
+    the inheritance behavior. It will still print inherited rules in the output though for debugging purposes.
 version_added: "2.5"
 author:
   - Noah Sparks (@nwsparks)
@@ -25,7 +27,7 @@ options:
     description:
       - Path to the file, folder, or registry key.
       - Registry paths should be in Powershell format, beginning with an abbreviation for the root
-        'hklm:\software'.
+        such as, 'hklm:\software'.
     required: true
     aliases: [ dest, destination ]
   user:
@@ -42,7 +44,7 @@ options:
     required: true
   inheritance_flags:
     description:
-      - Defines what objects inside of a folder will inherit the settings.
+      - Defines what objects inside of a folder or registry key will inherit the settings.
       - If you are setting a rule on a file, this value has to be changed to C(none).
       - For more information on the choices see MSDN PropagationFlags enumeration
         at U(https://msdn.microsoft.com/en-us/library/system.security.accesscontrol.inheritanceflags.aspx).
@@ -64,8 +66,9 @@ options:
     choices: [ Success, Failure ]
   state:
     description:
-      - Whether the rule should be present or absent.
-      - For absent, only path, user, and state are required.
+      - Whether the rule should be C(present) or C(absent).
+      - For absent, only I(path), I(user), and I(state) are required.
+      - Specifying state: C(absent) will remove all rules matching the defined I(user).
     default: present
     choices: [ present, absent ]
 '''
