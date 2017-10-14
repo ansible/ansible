@@ -55,7 +55,8 @@ class ActionModule(ActionBase):
             elif 'var' in self._task.args:
                 var = self._task.args['var']
                 try:
-                    templar_func = lambda v: self._templar.template(v, convert_bare=True, fail_on_undefined=True, bare_deprecated=False)
+                    def templar_func(v):
+                        return self._templar.template(v, convert_bare=True, fail_on_undefined=True, bare_deprecated=False)
                     if isinstance(var, dict):
                         results = dict((k, templar_func(v)) for k, v in var.items())
                     elif isinstance(var, list):
