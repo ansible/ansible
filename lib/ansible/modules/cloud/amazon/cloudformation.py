@@ -392,11 +392,7 @@ def update_termination_protection(module, cfn, stack_name, desired_termination_p
 
 def boto_supports_termination_protection(cfn):
     '''termination protection was added in botocore 1.7.18'''
-    try:
-        getattr(cfn, "update_termination_protection")
-        return True
-    except AttributeError:
-        return False
+    return hasattr(cfn, "update_termination_protection")
 
 
 def stack_operation(cfn, stack_name, operation):
