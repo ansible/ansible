@@ -226,7 +226,7 @@ class KubernetesAnsibleModule(AnsibleModule):
                 self.exit_json(**return_attributes)
             else:
                 self.helper.log('Existing:')
-                self.helper.log(existing.to_str(), indent=4)
+                self.helper.log(existing.to_str())
                 self.helper.log('\nDifferences:')
                 self.helper.log(json.dumps(diff, indent=4))
             # Differences exist between the existing obj and requested params
