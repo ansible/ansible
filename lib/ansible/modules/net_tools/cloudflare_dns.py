@@ -473,8 +473,10 @@ class CloudflareAPI(object):
         content = params['value']
         search_record = params['record']
         if params['type'] == 'SRV':
-            content = str(params['weight']) + '\t' + str(params['port']) + '\t' + params['value']
-            search_record = params['service'] + '.' + params['proto'] + '.' + params['record']
+            if params['value']:
+                content = str(params['weight']) + '\t' + str(params['port']) + '\t' + params['value']
+            if params['record']:
+                search_record = params['service'] + '.' + params['proto'] + '.' + params['record']
         if params['solo']:
             search_value = None
         else:
@@ -615,17 +617,8 @@ def main():
         ),
         supports_check_mode = True,
         required_if = ([
-            ('state','present',['record','type']),
-            ('type','MX',['priority','value']),
-            ('type','SRV',['port','priority','proto','service','value','weight']),
-            ('type','A',['value']),
-            ('type','AAAA',['value']),
-            ('type','CNAME',['value']),
-            ('type','TXT',['value']),
-            ('type','NS',['value']),
-            ('type','SPF',['value'])
-        ]
-        ),
+            ('state','present',['record','type','value']),
+        ]),
         required_one_of = (
             [['record','value','type']]
         )
@@ -637,6 +630,12 @@ def main():
     # sanity checks
     if cf_api.is_solo and cf_api.state == 'absent':
         module.fail_json(msg="solo=true can only be used with state=present")
+
+    if cf_api.type == 'SRV':
+        if not ((cf_api.weight and cf_api.port and cf_api.value) or (not cf_api.weight and not cf_api.port and not cf_api.value)):
+            module.fail_json(msg="For SRV records the params weight, port and value all need to be defined, or not at all.")
+        elif not ((cf_api.service and cf_api.proto and cf_api.record) or (not cf_api.service and not cf_api.proto and not cf_api.record)):
+            module.fail_json(msg="For SRV records the params proto, service and record all need to be defined, or not at all.")
 
     # perform add, delete or update (only the TTL can be updated) of one or
     # more records
