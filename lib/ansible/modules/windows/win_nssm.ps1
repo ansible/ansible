@@ -37,6 +37,8 @@ $appParameters = Get-AnsibleParam -obj $params -name "app_parameters" -type "str
 $appParametersFree  = Get-AnsibleParam -obj $params -name "app_parameters_free_form" -type "str"
 $startMode = Get-AnsibleParam -obj $params -name "start_mode" -type "str" -default "auto" -validateset "auto","manual","disabled" -resultobj $result
 
+$appEnvironmentExtra = Get-AnsibleParam -obj $params -name "environment" -type "dict" -default @{}
+
 $stdoutFile = Get-AnsibleParam -obj $params -name "stdout_file" -type "str"
 $stderrFile = Get-AnsibleParam -obj $params -name "stderr_file" -type "str"
 $dependencies = Get-AnsibleParam -obj $params -name "dependencies" -type "str"
@@ -478,6 +480,88 @@ Function Nssm-Update-Dependencies
         }
 
         $result.changed_by = "update-dependencies"
+        $result.changed = $true
+    }
+}
+
+Function Convert-Hash
+{
+    <#
+    Convert a hash into a variable length string of KEY=VALUE seperated by spaces
+
+    Input:
+    {
+        key1: value1,
+        key2: value2
+    }
+
+    Output:
+    "key1=value1 key2=value2"
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)]
+        [hashtable]$hash
+    )
+
+    return ($hash.GetEnumerator() | % { "$($_.Key)=$($_.Value)" }) -join " "
+}
+
+Function Convert-Array-to-Hash
+{
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)]
+        [array]$array
+    )
+
+    $hash = @{}
+
+    foreach ($element in $array)
+    {
+        if ([string]::IsNullOrWhiteSpace($element))
+        {
+            $key, $value = $element -split"="
+            $hash.add($key, $value)
+        }
+    }
+    return $hash
+}
+
+Function Nssm-Update-Extra-Environment
+{
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$name,
+        [Parameter(Mandatory=$true)]
+        [hashtable]$env_var_hash
+    )
+
+    $cmd = "get ""$name"" appEnvironmentExtra ""$env_var_string"""
+    $results = Nssm-Invoke $cmd
+
+    $env_var_string = Convert-Hash $env_var_hash
+
+    if ($LastExitCode -ne 0)
+    {
+        $result.nssm_error_cmd = $cmd
+        $result.nssm_error_log = "$results"
+        Throw "Error updating environment variables for service ""$name"""
+    }
+
+    If ("Do a thing") {
+        $cmd = "set ""$name"" appEnvironmentExtra ""$env_var_string"""
+        $results = Nssm-Invoke $cmd
+
+        if ($LastExitCode -ne 0)
+        {
+            $result.nssm_error_cmd = $cmd
+            $result.nssm_error_log = "$results"
+            Throw "Error updating environment variables for service ""$name"""
+        }
+
+        $result.changed_by = "update-environment"
         $result.changed = $true
     }
 }
