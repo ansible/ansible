@@ -774,12 +774,14 @@ key=value format::
           Use the JSON format if you need to pass in anything that shouldn't be a string (Booleans, integers, floats, lists etc).
 
 .. versionadded:: 1.2
+
 JSON string format::
 
     ansible-playbook release.yml --extra-vars '{"version":"1.23.45","other_variable":"foo"}'
     ansible-playbook arcade.yml --extra-vars '{"pacman":"mrs","ghosts":["inky","pinky","clyde","sue"]}'
 
 .. versionadded:: 1.3
+
 YAML string format::
 
     ansible-playbook release.yml --extra-vars '
@@ -795,6 +797,7 @@ YAML string format::
     - sue'
 
 .. versionadded:: 1.3
+
 vars from a JSON or YAML file::
 
     ansible-playbook release.yml --extra-vars "@some_file.json"
@@ -804,6 +807,7 @@ This is useful for, among other things, setting the hosts group or the user for 
 Escaping quotes and other special characters:
 
 .. versionadded:: 1.2
+
 Ensure you're escaping quotes appropriately for both your markup (e.g. JSON), and for 
 the shell you're operating in.::
 
@@ -812,6 +816,7 @@ the shell you're operating in.::
     ansible-playbook script.yml --extra-vars "{\"dialog\":\"He said \\\"I just can\'t get enough of those single and double-quotes"\!"\\\"\"}"
 
 .. versionadded:: 1.3
+
 In these cases, it's probably best to use a JSON or YAML file contianing the variable 
 definitions.
 
