@@ -53,9 +53,10 @@ class ActionModule(ActionBase):
                 result['msg'] = self._task.args['msg']
 
             elif 'var' in self._task.args:
+                var = self._task.args['var']
                 try:
-                    results = self._templar.template(self._task.args['var'], convert_bare=True, fail_on_undefined=True, bare_deprecated=False)
-                    if results == self._task.args['var']:
+                    results = self._templar.template(var, convert_bare=True, fail_on_undefined=True, bare_deprecated=False)
+                    if results == var:
                         # if results is not str/unicode type, raise an exception
                         if not isinstance(results, string_types):
                             raise AnsibleUndefinedVariable
@@ -64,11 +65,11 @@ class ActionModule(ActionBase):
                 except AnsibleUndefinedVariable:
                     results = "VARIABLE IS NOT DEFINED!"
 
-                if isinstance(self._task.args['var'], (list, dict)):
+                if isinstance(var, (list, dict)):
                     # If var is a list or dict, use the type as key to display
-                    result[to_text(type(self._task.args['var']))] = results
+                    result[to_text(type(var))] = results
                 else:
-                    result[self._task.args['var']] = results
+                    result[var] = results
             else:
                 result['msg'] = 'Hello world!'
 
