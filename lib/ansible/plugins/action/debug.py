@@ -30,6 +30,19 @@ class ActionModule(ActionBase):
     TRANSFERS_FILES = False
     VALID_ARGS = frozenset(('msg', 'var', 'verbosity'))
 
+    def _run_templar(self, value):
+        try:
+            result = self._templar.template(value, convert_bare=True, fail_on_undefined=True, bare_deprecated=False)
+            if result == value:
+                # if result is not str/unicode type, raise an exception
+                if not isinstance(result, string_types):
+                    raise AnsibleUndefinedVariable
+                # If var name is same as result, try to template it
+                result = self._templar.template("{{" + result + "}}", convert_bare=True, fail_on_undefined=True)
+            return result
+        except AnsibleUndefinedVariable:
+            return 'VARIABLE IS NOT DEFINED!'
+
     def run(self, tmp=None, task_vars=None):
         if task_vars is None:
             task_vars = dict()
@@ -54,30 +67,12 @@ class ActionModule(ActionBase):
 
             elif 'var' in self._task.args:
                 var = self._task.args['var']
-                try:
-                    def templar_func(v):
-                        return self._templar.template(v, convert_bare=True, fail_on_undefined=True, bare_deprecated=False)
-                    if isinstance(var, dict):
-                        result.update((k, templar_func(v)) for k, v in var.items())
-                    elif isinstance(var, list):
-                        result.update((v, templar_func(v)) for v in var)
-                    else:
-                        results = templar_func(var)
-                        if results == var:
-                            # if results is not str/unicode type, raise an exception
-                            if not isinstance(results, string_types):
-                                raise AnsibleUndefinedVariable
-                            # If var name is same as result, try to template it
-                            results = self._templar.template("{{" + results + "}}", convert_bare=True, fail_on_undefined=True)
-                        result[var] = results
-                except AnsibleUndefinedVariable:
-                    results = "VARIABLE IS NOT DEFINED!"
-
-                    if isinstance(var, (list, dict)):
-                        # If var is a list or dict, use the type as key to display
-                        result[to_text(type(var).__name__)] = results
-                    else:
-                        result[var] = results
+                if isinstance(var, dict):
+                    result.update((k, self._run_templar(v)) for k, v in var.items())
+                elif isinstance(var, list):
+                    result.update((v, self._run_templar(v)) for v in var)
+                else:
+                    result[var] = self._run_templar(var)
             else:
                 result['msg'] = 'Hello world!'
 
