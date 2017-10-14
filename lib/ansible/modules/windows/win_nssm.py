@@ -94,6 +94,9 @@ options:
       - auto
       - manual
       - disabled
+  environment:
+    description:
+      - Add extra environemnt variables to the service's default environment
 author:
   - "Adam Keech (@smadam813)"
   - "George Frank (@georgefrank)"
