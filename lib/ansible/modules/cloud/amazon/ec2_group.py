@@ -682,8 +682,7 @@ def main():
         if group:
             # existing group
             if group['Description'] != description:
-                module.fail_json(
-                    msg="Group description does not match existing group. ec2_group does not support this case.")
+                module.warn("Group description does not match existing group.")
 
         # if the group doesn't exist, create it now
         else:
