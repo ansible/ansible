@@ -4,11 +4,14 @@
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 ANSIBLE_METADATA = '''
-metadata_version: '1.0'
+metadata_version: '1.1'
 status:
     - preview
-supported_by': 'community'
+supported_by: core
 '''
 
 DOCUMENTATION = '''
@@ -25,39 +28,28 @@ options:
         description:
             - Name of the service.
         aliases: ['service']
-        type: string
     state:
-        required: false
-        type: choice
-        default: null
         choices: [ 'started', 'stopped', 'restarted', 'reloaded' ]
         description:
             - C(started)/C(stopped) are idempotent actions that will not run commands unless necessary.
               Not all init scripts support C(restarted) nor C(reloaded) natively, so these will both trigger a stop and start as needed.
     enabled:
-        required: false
         type: boolean
         choices: [ "yes", "no" ]
-        default: null
         description:
             - Whether the service should start on boot. B(At least one of state and enabled are required.)
     sleep:
-        required: false
-        type: number
+        type: integer
         default: 1
         description:
             - If the service is being C(restarted) or C(reloaded) then sleep this many seconds between the stop and start command.
               This helps to workaround badly behaving services.
     pattern:
-        required: false
-        type: string
         description:
             - A substring to look for as would be found in the output of the I(ps) command as a stand-in for a status result.
             - If the string is found, the service will be assumed to be running.
             - This option is mainly for use with init scripts that don't support the 'status' option.
     runlevels:
-        required: false
-        default: null
         type: list
         description:
             - The runlevels this script should be enabled/disabled from.
@@ -74,7 +66,6 @@ options:
             - This is useful with badly written init scripts or deamons,
               which commonly manifests as the task hanging as it is still holding the tty
               or the service dying when the task is over as the connection closes the session.
-        requried: false
         default: no
 notes:
     - One option other than name is required.
@@ -94,10 +85,6 @@ RETURN = '''
 # defaults
 '''
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
-
-import os
 from time import sleep
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.service import sysv_is_enabled, get_sysv_script, sysv_exists, fail_if_missing, get_ps, daemonize
@@ -120,27 +107,31 @@ def main():
         required_one_of=[['state', 'enabled']],
     )
 
-    service = module.params['name']
+    name = module.params['name']
     action = module.params['state']
+    enabled = module.params['enabled']
     runlevels = module.params['runlevels']
     arguments = module.params['arguments']
+    pattern = module.params['pattern']
+    sleep_for = module.params['sleep']
     rc = 0
     out = err = ''
     result = {
-        'name':  service,
+        'name': name,
         'changed': False,
         'status': {},
     }
 
     # ensure service exists, get script name
     fail_if_missing(module, sysv_exists(name), name)
-    script = get_sysv_script(service)
+    script = get_sysv_script(name)
 
     # locate binaries for service management
     paths = ['/sbin', '/usr/sbin', '/bin', '/usr/bin']
     binaries = ['chkconfig', ' update-rc.d', 'insserv', 'service']
     initpaths = ['/etc/init.d']
 
+    location = {}
     for binary in binaries:
         location[binary] = module.get_bin_path(binary, opt_dirs=paths)
 
@@ -157,7 +148,7 @@ def main():
     #    pass
     else:
         # just check links ourselves
-        is_enabled = sysv_is_enabled(service, runlevels)
+        is_enabled = sysv_is_enabled(name, runlevels)
 
     # figure out started status, everyone does it different!
     is_started = False
@@ -195,7 +186,7 @@ def main():
 
                 if not worked:
                     for is_started in ['run', 'start', 'active']:
-                        if stared in cleanout and not "not " in cleanout:
+                        if 'started' in cleanout and "not " not in cleanout:
                             is_started = True
                             worked = True
                             break
@@ -231,12 +222,12 @@ def main():
 
         def runme(doit):
 
-            cmd = "%s %s %s %s" % (script, doit, service, module.params['arguments'])
+            cmd = "%s %s %s %s" % (script, doit, name, module.params['arguments'])
             # how to run
             if module.params['daemonize']:
                 rc, out, err = daemonize(cmd)
             else:
-                rc, out, err = self.run_command(cmd)
+                rc, out, err = module.run_command(cmd)
             # FIXME: ERRORS
 
         if action == 'restart':
