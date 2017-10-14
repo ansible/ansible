@@ -68,7 +68,7 @@ options:
     description:
       - Whether the rule should be C(present) or C(absent).
       - For absent, only I(path), I(user), and I(state) are required.
-      - Specifying state: C(absent) will remove all rules matching the defined I(user).
+      - Specifying C(absent) will remove all rules matching the defined I(user).
     default: present
     choices: [ present, absent ]
 '''
