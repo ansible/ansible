@@ -519,11 +519,7 @@ Function Convert-Array-to-Hash
 
     foreach ($element in $array)
     {
-        if ([string]::IsNullOrWhiteSpace($element))
-        {
-            $key, $value = $element -split"="
-            $hash.add($key, $value)
-        }
+        $hash = $hash + (ConvertFrom-StringData $element)
     }
     return $hash
 }
@@ -535,13 +531,13 @@ Function Nssm-Update-Extra-Environment
         [Parameter(Mandatory=$true)]
         [string]$name,
         [Parameter(Mandatory=$true)]
-        [hashtable]$env_var_hash
+        [hashtable]$env_vars
     )
 
-    $cmd = "get ""$name"" appEnvironmentExtra ""$env_var_string"""
-    $results = Nssm-Invoke $cmd
+    $env_vars_string = Convert-Hash $env_vars
 
-    $env_var_string = Convert-Hash $env_var_hash
+    $cmd = "get ""$name"" appEnvironmentExtra ""$env_vars_string"""
+    $results = Nssm-Invoke $cmd
 
     if ($LastExitCode -ne 0)
     {
@@ -550,8 +546,16 @@ Function Nssm-Update-Extra-Environment
         Throw "Error updating environment variables for service ""$name"""
     }
 
-    If ("Do a thing") {
-        $cmd = "set ""$name"" appEnvironmentExtra ""$env_var_string"""
+    $current_env_vars = Convert-Array-to-Hash $results
+
+    <# 
+    Update the appEnvironmentExtra values if:
+    - The services current environment variables does not match the desired environment variables.
+    - env_vars is not an empty hashtable
+    #>
+    If (($env_vars -ne $current_env_vars) -and ($env_vars.Count -gt 0)) 
+    {
+        $cmd = "set ""$name"" appEnvironmentExtra ""$env_vars_string"""
         $results = Nssm-Invoke $cmd
 
         if ($LastExitCode -ne 0)
