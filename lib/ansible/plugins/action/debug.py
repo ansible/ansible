@@ -55,12 +55,13 @@ class ActionModule(ActionBase):
             elif 'var' in self._task.args:
                 var = self._task.args['var']
                 try:
+                    templar_func = lambda v: self._templar.template(v, convert_bare=True, fail_on_undefined=True, bare_deprecated=False)
                     if isinstance(var, dict):
-                        results = dict((k, self._templar.template(v, convert_bare=True, fail_on_undefined=True, bare_deprecated=False)) for k, v in var.items())
+                        results = dict((k, templar_func(v)) for k, v in var.items())
                     elif isinstance(var, list):
-                        results = dict((v, self._templar.template(v, convert_bare=True, fail_on_undefined=True, bare_deprecated=False)) for v in var)
+                        results = dict((v, templar_func(v)) for v in var)
                     else:
-                        results = self._templar.template(var, convert_bare=True, fail_on_undefined=True, bare_deprecated=False)
+                        results = templar_func(var)
                         if results == var:
                             # if results is not str/unicode type, raise an exception
                             if not isinstance(results, string_types):
