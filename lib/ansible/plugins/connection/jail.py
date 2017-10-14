@@ -36,6 +36,7 @@ import os
 import os.path
 import subprocess
 import traceback
+import ansible.constants as C
 
 from ansible.errors import AnsibleError
 from ansible.module_utils.six.moves import shlex_quote
