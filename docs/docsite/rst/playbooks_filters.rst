@@ -432,11 +432,12 @@ output, use the ``parse_xml`` filter::
   {{ output | parse_xml('path/to/spec') }}
 
 The ``parse_xml`` filter will load the spec file and pass the command output
-through, it returning JSON output. The spec file is a YAML yaml that defines
-how to parse the XML output.
+through formatted as JSON. 
 
 The spec file should be valid formatted YAML. It defines how to parse the XML
-output and return JSON data.  Below is an example of a valid spec file that
+output and return JSON data.  
+
+Below is an example of a valid spec file that
 will parse the output from the ``show vlan | display xml`` command.::
 
     ---
