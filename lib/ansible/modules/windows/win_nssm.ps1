@@ -749,6 +749,7 @@ Function NssmProcedure
     Nssm-Update-Dependencies -name $name -dependencies $dependencies
     Nssm-Update-Credentials -name $name -user $user -password $password
     Nssm-Update-StartMode -name $name -mode $startMode
+    Nssm-Update-Extra-Environment -name $name -env_var_hash $appEnvironmentExtra
 }
 
 Try
