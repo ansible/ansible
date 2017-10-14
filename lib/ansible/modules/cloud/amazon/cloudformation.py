@@ -297,7 +297,11 @@ def create_stack(module, stack_params, cfn):
     # 'disablerollback' and 'EnableTerminationProtection' only
     # apply on creation, not update.
     stack_params['DisableRollback'] = module.params['disable_rollback']
-    stack_params['EnableTerminationProtection'] = bool(module.params.get('termination_protection'))
+    if module.params.get('termination_protection') is not None:
+        if boto_supports_termination_protection(cfn):
+            stack_params['EnableTerminationProtection'] = bool(module.params.get('termination_protection'))
+        else:
+            module.fail_json(msg="termination_protection parameter requires botocore >= 1.7.18")
 
     try:
         cfn.create_stack(**stack_params)
@@ -369,6 +373,8 @@ def update_stack(module, stack_params, cfn):
 
 def update_termination_protection(module, cfn, stack_name, desired_termination_protection_state):
     '''updates termination protection of a stack'''
+    if not boto_supports_termination_protection(cfn):
+        module.fail_json(msg="termination_protection parameter requires botocore >= 1.7.18")
     stack = get_stack_facts(cfn, stack_name)
     if stack:
         if stack['EnableTerminationProtection'] is not desired_termination_protection_state:
@@ -382,6 +388,15 @@ def update_termination_protection(module, cfn, stack_name, desired_termination_p
         else:
             module.exit_json(msg="Termination protection on stack {0} is already the requested value".format(stack_name),
                 changed=False)
+
+
+def boto_supports_termination_protection(cfn):
+    '''termination protection was added in botocore 1.7.18'''
+    try:
+        getattr(cfn, "update_termination_protection")
+        return True
+    except AttributeError:
+        return False
 
 
 def stack_operation(cfn, stack_name, operation):
@@ -570,7 +585,8 @@ def main():
     cfn.describe_stacks = backoff_wrapper(cfn.describe_stacks)
     cfn.list_stack_resources = backoff_wrapper(cfn.list_stack_resources)
     cfn.delete_stack = backoff_wrapper(cfn.delete_stack)
-    cfn.update_termination_protection = backoff_wrapper(cfn.update_termination_protection)
+    if boto_supports_termination_protection(cfn):
+        cfn.update_termination_protection = backoff_wrapper(cfn.update_termination_protection)
 
     stack_info = get_stack_facts(cfn, stack_params['StackName'])
 
