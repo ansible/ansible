@@ -58,9 +58,9 @@ class ActionModule(ActionBase):
                     def templar_func(v):
                         return self._templar.template(v, convert_bare=True, fail_on_undefined=True, bare_deprecated=False)
                     if isinstance(var, dict):
-                        results = dict((k, templar_func(v)) for k, v in var.items())
+                        result.update((k, templar_func(v)) for k, v in var.items())
                     elif isinstance(var, list):
-                        results = dict((v, templar_func(v)) for v in var)
+                        result.update((v, templar_func(v)) for v in var)
                     else:
                         results = templar_func(var)
                         if results == var:
@@ -69,14 +69,15 @@ class ActionModule(ActionBase):
                                 raise AnsibleUndefinedVariable
                             # If var name is same as result, try to template it
                             results = self._templar.template("{{" + results + "}}", convert_bare=True, fail_on_undefined=True)
+                        result[var] = results
                 except AnsibleUndefinedVariable:
                     results = "VARIABLE IS NOT DEFINED!"
 
-                if isinstance(var, (list, dict)):
-                    # If var is a list or dict, use the type as key to display
-                    result[to_text(type(var).__name__)] = results
-                else:
-                    result[var] = results
+                    if isinstance(var, (list, dict)):
+                        # If var is a list or dict, use the type as key to display
+                        result[to_text(type(var).__name__)] = results
+                    else:
+                        result[var] = results
             else:
                 result['msg'] = 'Hello world!'
 
