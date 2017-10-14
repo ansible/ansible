@@ -99,10 +99,16 @@ EXAMPLES = '''
     ip_address: "{{ ansible_default_ipv4.address }}"
 '''
 
-import requests
+try:
+    import requests
+    HAS_REQUESTS = True
+except ImportError:
+    HAS_REQUESTS = False
+
 import json
 import warnings
 warnings.simplefilter('ignore', requests.packages.urllib3.exceptions.SecurityWarning)
+import os
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -235,6 +241,9 @@ def main():
 
     if not os.path.exists(ssl_ca):
         module.fail_json(msg="SSL ca cert can not be found")
+
+    if not HAS_REQUESTS:
+        module.fail_json(msg='requests is required for this module')
 
     try:
         icinga = icinga2_api()
