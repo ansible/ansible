@@ -67,7 +67,7 @@ class ActionModule(ActionBase):
 
                 if isinstance(var, (list, dict)):
                     # If var is a list or dict, use the type as key to display
-                    result[to_text(type(var))] = results
+                    result[to_text(type(var).__name__)] = results
                 else:
                     result[var] = results
             else:
