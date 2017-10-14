@@ -68,9 +68,9 @@ class ActionModule(ActionBase):
             elif 'var' in self._task.args:
                 var = self._task.args['var']
                 if isinstance(var, dict):
-                    result.update((k, self._run_templar(v)) for k, v in var.items())
+                    result['var'] = dict((k, self._run_templar(v)) for k, v in var.items())
                 elif isinstance(var, list):
-                    result.update((v, self._run_templar(v)) for v in var)
+                    result['var'] = dict((v, self._run_templar(v)) for v in var)
                 else:
                     result[var] = self._run_templar(var)
             else:
