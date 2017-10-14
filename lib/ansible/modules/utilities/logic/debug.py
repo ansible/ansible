@@ -27,12 +27,13 @@ options:
   msg:
     description:
       - The customized message that is printed. If omitted, prints a generic
-        message.
+        message. It may also be a list or dictionary of messages.
     required: false
     default: "Hello world!"
   var:
     description:
-      - A variable name to debug.  Mutually exclusive with the 'msg' option.
+      - A variable name to debug.  Mutually exclusive with the 'msg' option. It may also be
+        a list or dictionary of variable names
   verbosity:
     description:
       - A number that controls when the debug is run, if you set to 3 it will only run debug when -vvv or above
@@ -66,4 +67,16 @@ EXAMPLES = '''
   debug:
     var: hostvars[inventory_hostname]
     verbosity: 4
+
+- name: Display a list of messages
+  debug:
+    msg:
+    - "The default IP address is {{ ansible_default_ipv4.address }}"
+    - "The default gateway is {{ ansible_default_ipv4.gateway }}"
+
+- name: Display a dict of variables
+  debug:
+    var:
+      ip: ansible_default_ipv4.address
+      gateway: ansible_default_ipv4.gateway
 '''
