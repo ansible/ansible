@@ -92,7 +92,7 @@ EXAMPLES = '''
 - name: Add host to icinga
   icinga_host:
     icinga_server: "icinga.example.com"
-    icinga_user: "anisble
+    icinga_user: "anisble"
     icinga_pass: "mypassword"
     state: present
     name: "{{ansible_fqdn }}"
@@ -116,7 +116,7 @@ from ansible.module_utils.urls import fetch_url, url_argument_spec
 class icinga2_api:
     module = None
 
-    def call_url(self, path, data={}, method='GET'):
+    def call_url(self, path, data='', method='GET'):
         headers = {
             'Accept': 'application/json',
             'X-HTTP-Method-Override': method,
@@ -125,9 +125,9 @@ class icinga2_api:
         rsp, info = fetch_url(module=self.module, url=url, data=data, headers=headers, method=method)
         body = ''
         if rsp:
-          body = json.loads(rsp.read())
+            body = json.loads(rsp.read())
         if info['status'] >= 400:
-          body = info['body']
+            {body = info['body']
         return {'code': info['status'], 'data': body}
 
     def check_connection(self):
@@ -206,7 +206,7 @@ def main():
         ip=dict(required=True),
         variables=dict(type='dict', default=None),
     )
-    
+
     # Define the main module
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -305,4 +305,3 @@ def main():
 # import module snippets
 if __name__ == '__main__':
     main()
-
