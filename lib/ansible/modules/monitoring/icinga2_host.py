@@ -70,7 +70,7 @@ options:
     description:
       - the command used to check if the host is alive
     required: false
-    default "hostalive"
+    default: "hostalive"
   display_name:
     description:
       - the name used to display the host
@@ -93,50 +93,42 @@ EXAMPLES = '''
   icinga_host:
     icinga_server: "icinga.example.com"
     icinga_user: "anisble
-    icinga_pass: ""mypassword"
+    icinga_pass: "mypassword"
     state: present
     name: "{{ansible_fqdn }}"
     ip_address: "{{ ansible_default_ipv4.address }}"
 '''
 
-try:
-    import requests
-    HAS_REQUESTS = True
-except ImportError:
-    HAS_REQUESTS = False
+RETURN = '''
+#
+'''
 
 import json
-import warnings
-warnings.simplefilter('ignore', requests.packages.urllib3.exceptions.SecurityWarning)
 import os
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url, url_argument_spec
 
 
 # ===========================================
 # Icinga2 API class
 #
 class icinga2_api:
-    server = None
-    port = None
-    user = None
-    password = None
-    ssl_ca = None
+    module = None
 
-    def call_url(self, url, data={}, methode='GET'):
-        full_url = "https://" + self.server + ":" + str(self.port) + "/" + url
+    def call_url(self, path, data={}, method='GET'):
         headers = {
             'Accept': 'application/json',
-            'X-HTTP-Method-Override': methode,
+            'X-HTTP-Method-Override': method,
         }
-        r = requests.post(
-            full_url,
-            headers=headers,
-            auth=(self.user, self.password),
-            data=json.dumps(data),
-            verify=self.ssl_ca
-        )
-        return {'code': r.status_code, 'data': r.json()}
+        url = self.module.params.get("url") + "/" + path
+        rsp, info = fetch_url(module=self.module, url=url, data=data, headers=headers, method=method)
+        body = ''
+        if rsp:
+          body = json.loads(rsp.read())
+        if info['status'] >= 400:
+          body = info['body']
+        return {'code': info['status'], 'data': body}
 
     def check_connection(self):
         ret = self.call_url('v1/status')
@@ -148,7 +140,10 @@ class icinga2_api:
         data = {
             "filter": "match(\"" + hostname + "\", host.name)",
         }
-        ret = self.call_url("v1/objects/hosts", data)
+        ret = self.call_url(
+            path="v1/objects/hosts",
+            data=self.module.jsonify(data)
+        )
         if ret['code'] == 200:
             if len(ret['data']['results']) == 1:
                 return True
@@ -156,34 +151,33 @@ class icinga2_api:
 
     def create(self, hostname, data):
         ret = self.call_url(
-            url="v1/objects/hosts/" + hostname,
-            data=data,
-            methode="PUT"
+            path="v1/objects/hosts/" + hostname,
+            data=self.module.jsonify(data),
+            method="PUT"
         )
         return ret
 
     def delete(self, hostname):
         data = {"cascade": 1}
         ret = self.call_url(
-            url="v1/objects/hosts/" + hostname,
-            data=data,
-            methode="DELETE"
+            path="v1/objects/hosts/" + hostname,
+            data=self.module.jsonify(data),
+            method="DELETE"
         )
         return ret
 
     def modify(self, hostname, data):
         ret = self.call_url(
-            url="v1/objects/hosts/" + hostname,
-            data=data,
-            methode="POST"
+            path="v1/objects/hosts/" + hostname,
+            data=self.module.jsonify(data),
+            method="POST"
         )
         return ret
 
     def diff(self, hostname, data):
         ret = self.call_url(
-            url="v1/objects/hosts/" + hostname,
-            data={},
-            methode="GET"
+            path="v1/objects/hosts/" + hostname,
+            method="GET"
         )
         changed = False
         ic_data = ret['data']['results'][0]
@@ -199,32 +193,26 @@ class icinga2_api:
 # Module execution.
 #
 def main():
+    # use the predefined argument spec for url
+    argument_spec = url_argument_spec()
+    # add our own arguments
+    argument_spec.update(
+        state=dict(default="present", choices=["absent", "present"]),
+        name=dict(required=True, aliases=['host']),
+        zone=dict(default=None),
+        template=dict(default=None),
+        check_command=dict(default="hostalive"),
+        display_name=dict(default=None),
+        ip=dict(required=True),
+        variables=dict(type='dict', default=None),
+    )
+    
+    # Define the main module
     module = AnsibleModule(
-        argument_spec=dict(
-            server=dict(required=True),
-            port=dict(default=5665, type='int'),
-            user=dict(default=None),
-            password=dict(default=None, no_log=True),
-            ssl_ca=dict(default=None, type='path'),
-            state=dict(default="present", choices=["absent", "present"]),
-            name=dict(required=True, aliases=['host']),
-            zone=dict(default=None),
-            template=dict(default=None),
-            check_command=dict(default="hostalive"),
-            display_name=dict(default=None),
-            ip=dict(required=True),
-            variables=dict(type='dict', default=None),
-        ),
+        argument_spec=argument_spec,
         supports_check_mode=True
     )
 
-    server = module.params["server"]
-    port = module.params["port"]
-    if port < 0 or port > 65535:
-        module.fail_json(msg="port must be a valid unix port number (0-65535)")
-    user = module.params["user"]
-    password = module.params["password"]
-    ssl_ca = module.params["ssl_ca"]
     state = module.params["state"]
     name = module.params["name"]
     zone = module.params["zone"]
@@ -239,19 +227,9 @@ def main():
         display_name = name
     variables = module.params["variables"]
 
-    if not os.path.exists(ssl_ca):
-        module.fail_json(msg="SSL ca cert can not be found")
-
-    if not HAS_REQUESTS:
-        module.fail_json(msg='requests is required for this module')
-
     try:
         icinga = icinga2_api()
-        icinga.server = server
-        icinga.port = port
-        icinga.user = user
-        icinga.password = password
-        icinga.ssl_ca = ssl_ca
+        icinga.module = module
         icinga.check_connection()
     except Exception as e:
         module.fail_json(msg="unable to connect to Icinga. Exception message: %s" % (e))
@@ -259,6 +237,7 @@ def main():
     data = {
         'attrs': {
             'address': ip,
+            'display_name': display_name,
             'check_command': check_command,
             'zone': zone,
             'vars': {
@@ -269,7 +248,7 @@ def main():
     }
 
     if variables:
-        data['attrs']['vars'].upatde(variables)
+        data['attrs']['vars'].update(variables)
 
     changed = False
     if icinga.exists(name):
@@ -326,3 +305,4 @@ def main():
 # import module snippets
 if __name__ == '__main__':
     main()
+
