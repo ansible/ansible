@@ -23,6 +23,8 @@ $ErrorActionPreference = "Stop"
 # WANT_JSON
 # POWERSHELL_COMMON
 
+#Requires -Module Ansible.ModuleUtils.HashUtils
+
 $params = Parse-Args $args
 
 $result = @{
@@ -484,46 +486,6 @@ Function Nssm-Update-Dependencies
     }
 }
 
-Function Convert-Hash
-{
-    <#
-    Convert a hash into a variable length string of KEY=VALUE seperated by spaces
-
-    Input:
-    {
-        key1: value1,
-        key2: value2
-    }
-
-    Output:
-    "key1=value1 key2=value2"
-    #>
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory=$true)]
-        [hashtable]$hash
-    )
-
-    return ($hash.GetEnumerator() | % { "$($_.Key)=$($_.Value)" }) -join " "
-}
-
-Function Convert-Array-to-Hash
-{
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory=$true)]
-        [array]$array
-    )
-
-    $hash = @{}
-
-    foreach ($element in $array)
-    {
-        $hash = $hash + (ConvertFrom-StringData $element)
-    }
-    return $hash
-}
-
 Function Nssm-Update-Extra-Environment
 {
     [CmdletBinding()]
@@ -534,7 +496,7 @@ Function Nssm-Update-Extra-Environment
         [hashtable]$env_vars
     )
 
-    $env_vars_string = Convert-Hash $env_vars
+    $env_vars_string = Convert-HashToString $env_vars
 
     $cmd = "get ""$name"" AppEnvironmentExtra"
     $results = Nssm-Invoke $cmd
@@ -546,14 +508,14 @@ Function Nssm-Update-Extra-Environment
         Throw "Error updating environment variables for service ""$name"""
     }
 
-    $current_env_vars = Convert-Array-to-Hash $results
+    $current_env_vars = Convert-ArrayToHash $results
 
     <# 
     Update the appEnvironmentExtra values if:
     - The services current environment variables does not match the desired environment variables.
     - env_vars is not an empty hashtable
     #>
-    If (((Convert-Hash $env_vars) -ne (Convert-Hash $current_env_vars)) -and ($env_vars.Count -gt 0)) 
+    If (((Convert-HashToString $env_vars) -ne (Convert-HashToString $current_env_vars)) -and ($env_vars.Count -gt 0)) 
     {
         $cmd = "set ""$name"" AppEnvironmentExtra ""$env_vars_string"""
         $results = Nssm-Invoke $cmd
@@ -566,7 +528,7 @@ Function Nssm-Update-Extra-Environment
         }
 
         $result.changed_by = "update-environment"
-        $result.previous_environment = (Convert-Hash $current_env_vars)
+        $result.previous_environment = $current_env_vars
         $result.changed = $true
     }
 
