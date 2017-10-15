@@ -51,7 +51,7 @@ options:
   purge_subnets:
     version_added: "2.3"
     description:
-      - "Purge existing subnets that are not found in subnets."
+      - "Purge existing subnets that are not found in subnets. Ignored unless the subnets option is supplied."
     required: false
     default: 'true'
     aliases: []
