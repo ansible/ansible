@@ -25,6 +25,7 @@
           ap-northeast-1: ami-2a69be4c
           ap-south-1: ami-4fc58420
           sa-east-1: ami-f1344b9d
+          cn-north-1: ami-fba67596
 
     - name: create a VPC to work in
       ec2_vpc_net:
@@ -211,7 +212,7 @@
     - name: set image id fact for deletion later
       set_fact:
         ec2_ami_image_id: "{{ result.image_id }}"
-        ec2_ami_snapshot: "{{ result.block_device_mapping['/dev/xvda'].snapshot_id }}"
+        ec2_ami_snapshot: "{{ result.block_device_mappings[0].ebs.snapshot_id }}"
 
     # ============================================================
 
