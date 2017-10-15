@@ -95,6 +95,7 @@ options:
       - manual
       - disabled
   environment:
+    version_added: "2.5.0"
     description:
       - Add extra environemnt variables to the service's default environment
 author:
