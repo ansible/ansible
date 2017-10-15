@@ -67,6 +67,14 @@
     that:
     - command_util.data == 'success'
 
+- name: call module with Hash tests
+  hash_utils_test:
+  register: hash_tests
+
+- assert:
+    that:
+    - hash_tests.data == 'success'
+
 - name: remove testing folder
   win_file:
     path: C:\ansible testing
