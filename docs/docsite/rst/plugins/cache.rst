@@ -40,7 +40,7 @@ A custom cache plugin is enabled by dropping it into a ``cache_plugins`` directo
 Using Cache Plugins
 +++++++++++++++++++
 
-Cache plugins are used autoamtically once they are enabled.
+Cache plugins are used automatically once they are enabled.
 
 
 .. _cache_plugin_list:
@@ -72,7 +72,7 @@ Use ``ansible-doc -t cache <plugin name>`` to see specific documentation and exa
        Ansible Strategy plugins
    :doc:`vars`
        Ansible Vars plugins
-   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+   `User Mailing List <https://groups.google.com/forum/#!forum/ansible-devel>`_
        Have a question?  Stop by the google group!
-   `irc.freenode.net <http://irc.freenode.net>`_
+   `webchat.freenode.net <https://webchat.freenode.net>`_
        #ansible IRC chat channel
