@@ -1,4 +1,4 @@
-# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2017 whitequark <whitequark@whitequark.org>
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -11,7 +11,8 @@ DOCUMENTATION = '''
     type: stdout
     short_description: suppresses tasks if all hosts skipped
     description:
-      - Use this plugin when you dont care about any output for tasks that were completly skipped
+      - Use this plugin when you don't want to see any output for tasks that did not
+        actually run any commands.
     version_added: "2.4"
     extends_documentation_fragment:
       - default_callback
@@ -22,51 +23,73 @@ DOCUMENTATION = '''
 from ansible.plugins.callback.default import CallbackModule as CallbackModule_default
 
 
+def _filter(level, meth):
+    fn = getattr(CallbackModule_default, meth)
+
+    def wrapped(self, *args, **kwargs):
+        if self._display.verbosity >= level:
+            self.flush()
+            fn(self, *args, **kwargs)
+
+    return wrapped
+
+
+def _flush(meth):
+    return _filter(0, meth)
+
+
+def _quash(meth):
+    return _filter(1, meth)
+
+
+def _annul(meth):
+    fn = getattr(CallbackModule_default, meth)
+
+    def wrapped(self, *args, **kwargs):
+        self._task = None
+        fn(self, *args, **kwargs)
+
+    return wrapped
+
+
 class CallbackModule(CallbackModule_default):
 
     '''
-    This is the default callback interface, which simply prints messages
-    to stdout when new callback events are received.
+    This is a callback interface that is identical to the default interface
+    except that it does not print any messages about skipped tasks.
     '''
 
     CALLBACK_VERSION = 2.0
     CALLBACK_TYPE = 'stdout'
     CALLBACK_NAME = 'full_skip'
 
-    def v2_runner_on_skipped(self, result):
-        self.outlines = []
+    def __init__(self):
+        self._task = None
+        super(CallbackModule, self).__init__()
 
-    def v2_playbook_item_on_skipped(self, result):
-        self.outlines = []
-
-    def v2_runner_item_on_skipped(self, result):
-        self.outlines = []
-
-    def v2_runner_on_failed(self, result, ignore_errors=False):
-        self.display()
-        super(CallbackModule, self).v2_runner_on_failed(result, ignore_errors)
+    def flush(self):
+        if self._task is not None:
+            self._print_task_banner(self._task)
+        self._task = None
 
     def v2_playbook_on_task_start(self, task, is_conditional):
-        self.outlines = []
-        self.outlines.append("TASK [%s]" % task.get_name().strip())
-        if self._display.verbosity >= 2:
-            path = task.get_path()
-            if path:
-                self.outlines.append("task path: %s" % path)
+        if self._play.strategy != 'free':
+            self._task = task
 
-    def v2_playbook_item_on_ok(self, result):
-        self.display()
-        super(CallbackModule, self).v2_playbook_item_on_ok(result)
+    v2_playbook_on_include = _flush('v2_playbook_on_include')
+    v2_playbook_on_stats = _annul('v2_playbook_on_stats')
 
-    def v2_runner_on_ok(self, result):
-        self.display()
-        super(CallbackModule, self).v2_runner_on_ok(result)
+    v2_runner_on_ok = _flush('v2_runner_on_ok')
+    v2_runner_on_failed = _flush('v2_runner_on_failed')
+    v2_runner_on_unreachable = _flush('v2_runner_on_unreachable')
+    v2_runner_on_skipped = _quash('v2_runner_on_skipped')
 
-    def display(self):
-        if len(self.outlines) == 0:
-            return
-        (first, rest) = self.outlines[0], self.outlines[1:]
-        self._display.banner(first)
-        for line in rest:
-            self._display.display(line)
-        self.outlines = []
+    v2_runner_item_on_ok = _flush('v2_runner_item_on_ok')
+    v2_runner_item_on_failed = _flush('v2_runner_item_on_failed')
+    v2_runner_item_on_skipped = _quash('v2_runner_item_on_skipped')
+
+    v2_playbook_on_cleanup_task_start = _annul('v2_playbook_on_cleanup_task_start')
+    v2_playbook_on_handler_task_start = _annul('v2_playbook_on_handler_task_start')
+
+    v2_playbook_on_no_hosts_matched = _flush('v2_playbook_on_no_hosts_matched')
+    v2_playbook_on_no_hosts_remaining = _annul('v2_playbook_on_no_hosts_remaining')
