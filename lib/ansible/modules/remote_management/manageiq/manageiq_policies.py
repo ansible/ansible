@@ -222,9 +222,11 @@ class ManageIQPolicies(object):
         for profile in profiles:
             assigned = profile.get('name') in assigned_profiles_set
 
-            if assigned and action == 'unassign':
-                profiles_to_post.append(profile)
-            elif (not assigned) and action == 'assign':
+            if ((action == 'unassign' and assigned) or
+                (action == 'assign' and not assigned)):
+                # add/update the policy profile href field
+                # [{name: STR}, ...] => [{name: STR, href: STR}, ...]
+                profile = self.query_profile_href(profile)
                 profiles_to_post.append(profile)
 
         return profiles_to_post
@@ -237,12 +239,14 @@ class ManageIQPolicies(object):
         if not profiles_to_post:
             return dict(
                 changed=False,
-                msg="Profiles already {action}ed, nothing to do".format(action=action))
+                msg="Profiles {profiles} already {action}ed, nothing to do".format(
+                    action=action,
+                    profiles=profiles))
 
         # try to assign or unassign profiles to resource
         url = '{resource_url}/policy_profiles'.format(resource_url=self.resource_url)
         try:
-            response = self.client.post(url, action=action, resources=profiles)
+            response = self.client.post(url, action=action, resources=profiles_to_post)
         except Exception as e:
             msg = "Failed to {action} profile: {error}".format(
                 action=action,
@@ -260,7 +264,9 @@ class ManageIQPolicies(object):
         # successfully changed all needed profiles
         return dict(
             changed=True,
-            msg="Successfully {action}ed profiles".format(action=action))
+            msg="Successfully {action}ed profiles: {profiles}".format(
+                action=action,
+                profiles=profiles))
 
 
 def main():
@@ -304,10 +310,6 @@ def main():
         current_profiles = manageiq_policies.query_resource_profiles()
         res_args = dict(changed=False, profiles=current_profiles)
     else:
-        # add/update the policy profile href field
-        # [{name: STR}, ...] => [{name: STR, href: STR}, ...]
-        policy_profiles = [manageiq_policies.query_profile_href(profile) for profile in policy_profiles]
-
         # assign or unassign the profiles
         res_args = manageiq_policies.assign_or_unassign_profiles(policy_profiles, action)
 
