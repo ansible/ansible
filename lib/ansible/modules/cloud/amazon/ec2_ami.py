@@ -667,8 +667,6 @@ def main():
         resource = boto3_conn(module, conn_type='resource', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_kwargs)
     except botocore.exceptions.NoRegionError:
         module.fail_json(msg=("Region must be specified as a parameter in AWS_DEFAULT_REGION environment variable or in boto configuration file."))
-    except (botocore.exceptions.NoCredentialsError, botocore.exceptions.ProfileNotFound) as e:
-        module.fail_json(msg="Unable to establish connection - " + str(e), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     if module.params.get('state') == 'absent':
         deregister_image(module, connection)
