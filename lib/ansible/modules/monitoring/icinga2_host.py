@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: icinga2_hosts
+module: icinga2_host
 short_description: Manage a host in Icinga2
 description:
    - "Add or remove a host to Icinga2 through the API"
@@ -21,28 +21,64 @@ description:
 version_added: "2.5"
 author: "Jurgen Brand"
 options:
-  server:
+  url:
     description:
-      - the host name or ip-address of the Icinga2 host
+      - HTTP, HTTPS, or FTP URL in the form (http|https|ftp)://[user[:pass]]@host.domain[:port]/path
     required: true
-  port:
+  force:
     description:
-      - port used to connect too the Icinga2
-    required: false
-    default: 5665
-  user:
+      - If C(yes) and C(dest) is not a directory, will download the file every
+        time and replace the file if the contents change. If C(no), the file
+        will only be downloaded if the destination does not exist. Generally
+        should be C(yes) only for small local files.
+      - Prior to 0.6, this module behaved as if C(yes) was the default.
+    version_added: '0.7'
+    default: 'no'
+    type: bool
+    aliases: [ thirsty ]
+  use_proxy:
     description:
-      - the username used to authenticate with
-    required: true
-  password:
+      - if C(no), it will not use a proxy, even if one is defined in
+        an environment variable on the target hosts.
+    default: 'yes'
+    type: bool
+  validate_certs:
     description:
-      - The password used to authenticate with.
-    required: true
-  ssl_ca:
+      - If C(no), SSL certificates will not be validated. This should only be used
+        on personally controlled sites using self-signed certificates.
+    default: 'yes'
+    type: bool
+  url_username:
     description:
-      - the CA used for authenticaton
-    required: false
-    default: None
+      - The username for use in HTTP basic authentication.
+      - This parameter can be used without C(url_password) for sites that allow empty passwords.
+    version_added: '1.6'
+  url_password:
+    description:
+        - The password for use in HTTP basic authentication.
+        - If the C(url_username) parameter is not specified, the C(url_password) parameter will not be used.
+    version_added: '1.6'
+  force_basic_auth:
+    version_added: '2.0'
+    description:
+      - httplib2, the library used by the uri module only sends authentication information when a webservice
+        responds to an initial request with a 401 status. Since some basic auth services do not properly
+        send a 401, logins will fail. This option forces the sending of the Basic authentication header
+        upon initial request.
+    default: 'no'
+    type: bool
+  client_cert:
+    description:
+      - PEM formatted certificate chain file to be used for SSL client
+        authentication. This file can also include the key as well, and if
+        the key is included, C(client_key) is not required.
+    version_added: '2.4'
+  client_key:
+    description:
+      - PEM formatted file that contains your private key to be used for SSL
+        client authentication. If C(client_cert) contains both the certificate
+        and key, this option is not required.
+    version_added: '2.4'
   state:
     description:
       - Apply feature state.
