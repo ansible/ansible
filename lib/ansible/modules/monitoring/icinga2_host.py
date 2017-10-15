@@ -127,7 +127,7 @@ class icinga2_api:
         if rsp:
             body = json.loads(rsp.read())
         if info['status'] >= 400:
-            {body = info['body']
+            body = info['body']
         return {'code': info['status'], 'data': body}
 
     def check_connection(self):
