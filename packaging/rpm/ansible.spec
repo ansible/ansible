@@ -3,8 +3,6 @@
 
 %if 0%{?rhel} == 5
 %define __python2 /usr/bin/python26
-%else 0%{?rhel} == 6
-%define __python2 /usr/bin/python2
 %endif
 
 Name:      %{name}
@@ -16,6 +14,7 @@ License:   GPLv3+
 Group:     Development/Libraries
 Source:    http://releases.ansible.com/ansible/%{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
+%{!?__python2: %global __python2 /usr/bin/python2.6}
 %{!?python_sitelib: %global python_sitelib %(%{__python2} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")}
 
 BuildArch: noarch
