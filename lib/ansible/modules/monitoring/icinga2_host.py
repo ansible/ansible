@@ -14,11 +14,10 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: icinga2_hosts
-
 short_description: Manage a host in Icinga2
 description:
-   - Add or remove a host to Icinga2 through the API
-   - ( see https://www.icinga.com/docs/icinga2/latest/doc/12-icinga2-api/ )
+   - "Add or remove a host to Icinga2 through the API"
+   - "( see https://www.icinga.com/docs/icinga2/latest/doc/12-icinga2-api/ )"
 version_added: "2.5"
 author: "Jurgen Brand"
 options:
@@ -85,7 +84,6 @@ options:
       - list of variables
     required: false
     default: None
-
 '''
 
 EXAMPLES = '''
