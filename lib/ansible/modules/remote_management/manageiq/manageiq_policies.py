@@ -43,7 +43,7 @@ options:
     default: null
   resource_type:
     description:
-      - the relevant resource type in manageiq
+      - the type of the resource to which the profile should be [un]assigned
     required: true
     choices: ['provider', 'host', 'vm', 'blueprint', 'category', 'cluster',
         'data store', 'group', 'resource pool', 'service', 'service template',
@@ -51,13 +51,13 @@ options:
     default: null
   resource_name:
     description:
-      - the relevant resource name in manageiq
+      - the name of the resource to which the profile should be [un]assigned
     required: true
     default: null
 '''
 
 EXAMPLES = '''
-- name: Create new policy_profile for a provider in ManageIQ
+- name: Assign new policy_profile for a provider in ManageIQ
   manageiq_policies:
     resource_name: 'EngLab'
     resource_type: 'provider'
@@ -69,7 +69,7 @@ EXAMPLES = '''
       password: 'smartvm'
       verify_ssl: False
 
-- name: Remove a policy_profile for a provider in ManageIQ
+- name: Unassign a policy_profile for a provider in ManageIQ
   manageiq_policies:
     state: absent
     resource_name: 'EngLab'
@@ -124,7 +124,7 @@ class ManageIQPolicies(object):
         """ Add or Update the policy_profile href field
 
         Example:
-            [{name: STR}, ...] => [{name: STR, href: STR}, ...]
+            {name: STR, ...} => {name: STR, href: STR}
         """
         resource = self.manageiq.find_collection_resource_or_fail(
             "policy_profiles", **profile)
@@ -222,10 +222,9 @@ class ManageIQPolicies(object):
         for profile in profiles:
             assigned = profile.get('name') in assigned_profiles_set
 
-            if ((action == 'unassign' and assigned) or
-                (action == 'assign' and not assigned)):
+            if (action == 'unassign' and assigned) or (action == 'assign' and not assigned):
                 # add/update the policy profile href field
-                # [{name: STR}, ...] => [{name: STR, href: STR}, ...]
+                # {name: STR, ...} => {name: STR, href: STR}
                 profile = self.query_profile_href(profile)
                 profiles_to_post.append(profile)
 
