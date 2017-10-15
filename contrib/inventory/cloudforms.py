@@ -186,7 +186,7 @@ class CloudFormsInventory(object):
         try:
             cache_path = os.path.expanduser(config.get('cache', 'path'))
         except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
-            cache_path = '.'
+            cache_path = '/tmp'
         (script, ext) = os.path.splitext(os.path.basename(__file__))
         self.cache_path_hosts = cache_path + "/%s.hosts" % script
         self.cache_path_inventory = cache_path + "/%s.inventory" % script
