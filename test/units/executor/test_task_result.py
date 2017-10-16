@@ -138,3 +138,12 @@ class TestTaskResult(unittest.TestCase):
         # test with failed_when in result
         tr = TaskResult(mock_host, mock_task, dict(failed_when_result=True))
         self.assertTrue(tr.is_failed())
+
+    def test_task_result_no_log(self):
+        mock_host = MagicMock()
+        mock_task = MagicMock()
+
+        # no_log should remove secrets
+        tr = TaskResult(mock_host, mock_task, dict(_ansible_no_log=True, secret='DONTSHOWME'))
+        clean = tr.clean_copy()
+        self.assertTrue('secret' not in clean._result)
