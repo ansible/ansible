@@ -103,6 +103,10 @@ options:
         default: 10
         version_added: "2.1"
         required: false
+
+extends_documentation_fragment:
+    - zabbix
+
 notes:
     - Useful for setting hosts in maintenance mode before big update,
       and removing maintenance window after update.
@@ -305,6 +309,7 @@ def main():
             host_groups=dict(type='list', required=False, default=None, aliases=['host_group']),
             login_user=dict(type='str', required=True),
             login_password=dict(type='str', required=True, no_log=True),
+            validate_certs=dict(type='bool', required=False, default=True),
             http_login_user=dict(type='str', required=False, default=None),
             http_login_password=dict(type='str', required=False, default=None, no_log=True),
             name=dict(type='str', required=True),
@@ -325,6 +330,7 @@ def main():
     login_password = module.params['login_password']
     http_login_user = module.params['http_login_user']
     http_login_password = module.params['http_login_password']
+    validate_certs = module.params['validate_certs']
     minutes = module.params['minutes']
     name = module.params['name']
     desc = module.params['desc']
@@ -338,7 +344,8 @@ def main():
         maintenance_type = 1
 
     try:
-        zbx = ZabbixAPI(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password)
+        zbx = ZabbixAPI(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password,
+                        validate_certs=validate_certs)
         zbx.login(login_user, login_password)
     except BaseException as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
