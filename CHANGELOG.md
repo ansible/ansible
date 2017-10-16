@@ -1,6 +1,14 @@
 Ansible Changes By Release
 ==========================
 
+<a id="2.4.2"></a>
+
+## 2.4.2 "Dancing Days" - TBD
+
+### Bugfixes
+
+* Fix formatting typo in panos_security_rule.py docs. (https://github.com/ansible/ansible/commit/c0fc797a06451d2fe1ac4fc077fc64f3a1666447)
+
 <a id="2.4.1"></a>
 
 ## 2.4.1 "Dancing Days" - 2017-10-25
