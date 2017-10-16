@@ -41,7 +41,7 @@ options:
   marker:
     description:
       - The marker line template.
-        "{mark}" will be replaced with the values in marker_begin 
+        "{mark}" will be replaced with the values in marker_begin
         (default="BEGIN") and marker_end (default="END").
     default: '# {mark} ANSIBLE MANAGED BLOCK'
   block:
@@ -82,11 +82,13 @@ options:
     description: 
       - This will be inserted at {mark} in the opening ansible block marker.
     default: 'BEGIN'
+    version_added: "2.5"
   marker_end:
     required: false
     description: 
       - This will be inserted at {mark} in the closing ansible block marker.
     default: 'END'
+    version_added: "2.5"
 
 notes:
   - This module supports check mode.
