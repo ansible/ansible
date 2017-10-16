@@ -78,7 +78,7 @@ options:
        - Metadata key/value pairs to associate with the volume.
      required: false
      default: None
-     version_added: "2.4"
+     version_added: "2.5"
 requirements:
      - "python >= 2.6"
      - "shade"
