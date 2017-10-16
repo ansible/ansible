@@ -165,11 +165,11 @@ def main():
             server_url=dict(type='str', required=True, aliases=['url']),
             login_user=dict(type='str', required=True),
             login_password=dict(type='str', required=True, no_log=True),
-            http_login_user=dict(type='str',required=False, default=None),
-            http_login_password=dict(type='str',required=False, default=None, no_log=True),
-            validate_certs=dict(type='bool',required=False, default=True),
+            http_login_user=dict(type='str', required=False, default=None),
+            http_login_password=dict(type='str', required=False, default=None, no_log=True),
+            validate_certs=dict(type='bool', required=False, default=True),
             host_groups=dict(type='list', required=True, aliases=['host_group']),
-            state=dict(default="present", choices=['present','absent']),
+            state=dict(default="present", choices=['present', 'absent']),
             timeout=dict(type='int', default=10)
         ),
         supports_check_mode=True

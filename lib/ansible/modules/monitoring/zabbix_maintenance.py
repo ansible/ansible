@@ -184,7 +184,7 @@ def create_maintenance(zbx, group_ids, host_ids, start_time, maintenance_type, p
                 "active_since": str(start_time),
                 "active_till": str(end_time),
                 "description": desc,
-                "timeperiods":  [{
+                "timeperiods": [{
                     "timeperiod_type": "0",
                     "start_date": str(start_time),
                     "period": str(period),
@@ -208,7 +208,7 @@ def update_maintenance(zbx, maintenance_id, group_ids, host_ids, start_time, mai
                 "active_since": str(start_time),
                 "active_till": str(end_time),
                 "description": desc,
-                "timeperiods":  [{
+                "timeperiods": [{
                     "timeperiod_type": "0",
                     "start_date": str(start_time),
                     "period": str(period),
@@ -380,11 +380,11 @@ def main():
             module.fail_json(msg="Failed to check maintenance %s existence: %s" % (name, error))
 
         if maintenance and (
-            sorted(group_ids) != sorted(maintenance["groupids"])
-            or sorted(host_ids) != sorted(maintenance["hostids"])
-            or str(maintenance_type) != maintenance["maintenance_type"]
-            or str(int(start_time)) != maintenance["active_since"]
-            or str(int(start_time + period)) != maintenance["active_till"]
+            sorted(group_ids) != sorted(maintenance["groupids"]) or
+            sorted(host_ids) != sorted(maintenance["hostids"]) or
+            str(maintenance_type) != maintenance["maintenance_type"] or
+            str(int(start_time)) != maintenance["active_since"] or
+            str(int(start_time + period)) != maintenance["active_till"]
         ):
             if module.check_mode:
                 changed = True
