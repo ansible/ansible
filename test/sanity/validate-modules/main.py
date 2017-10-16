@@ -987,7 +987,11 @@ class ModuleValidator(Validator):
         strict_ansible_version = StrictVersion(should_be)
 
         for option, details in options.items():
-            names = [option] + details.get('aliases', [])
+            try:
+                names = [option] + details.get('aliases', [])
+            except AttributeError:
+                # Reporting of this syntax error will be handled by schema validation.
+                continue
 
             if any(name in existing_options for name in names):
                 continue
