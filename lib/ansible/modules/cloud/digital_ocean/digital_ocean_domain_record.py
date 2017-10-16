@@ -143,7 +143,7 @@ name:
     type: string
     sample: "www"
 data:
-    description: Variable data depending on record type. For example, the data value for an A record would be the IPv4 address to which the domain will be mapped. For a CAA record, it would contain the domain name of the CA being granted permission to issue certificates.
+    description: Variable data depending on record type.
     returned: when record is created
     type: string
     sample: "192.168.0.1"
@@ -236,7 +236,7 @@ def get_matching_record(module, rest):
     payload = build_payload(module)
 
     # look for exactly the same record
-    if len(records) > 0:
+    if records:
         for record in records:
             record_id = record['id']
             del record['id']
@@ -248,7 +248,7 @@ def get_matching_record(module, rest):
 
 def create_record(module, rest, domain):
     payload = build_payload(module)
-    record, record_id = get_matching_record(module, rest)
+    record, _ = get_matching_record(module, rest)
 
     if record is None:
         payload['data'] = normalize_data(payload)
@@ -261,7 +261,7 @@ def create_record(module, rest, domain):
             changed = True
             return changed, json['domain_record']
         else:
-            module.fail_json(msg='Error creating domain record [%(status_code)s: %(json)s]'.format(status_code, json))
+            module.fail_json(msg='Error creating domain record [%(status_code)s: %(json)s]' % {'status_code': status_code, 'json': json})
     else:
         changed = False
         result = "Record has been already created"
@@ -294,9 +294,7 @@ def build_payload(module):
     return payload
 
 
-def delete_record(module, rest):
-    domain = module.params.get('domain').lower()
-
+def delete_record(module, rest, domain):
     record, record_id = get_matching_record(module, rest)
 
     if record:
