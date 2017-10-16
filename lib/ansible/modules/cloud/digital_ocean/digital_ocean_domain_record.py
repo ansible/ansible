@@ -240,7 +240,8 @@ def get_matching_record(module, rest):
         for record in records:
             record_id = record['id']
             del record['id']
-            if cmp(record, payload) == 0:
+            # python3 does not have cmp so let's use the official workaround
+            if (record > payload) - (record < payload) == 0:
                 return record, record_id
 
     return None, None
@@ -297,7 +298,7 @@ def build_payload(module):
 def delete_record(module, rest, domain):
     record, record_id = get_matching_record(module, rest)
 
-    if record:
+    if record is None:
         changed = False
         return changed, record
     else:
