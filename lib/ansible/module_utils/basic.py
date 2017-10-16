@@ -2538,6 +2538,7 @@ class AnsibleModule(object):
         # sadly there are some situations where we cannot ensure atomicity, but only if
         # the user insists and we get the appropriate error we update the file unsafely
         try:
+            out_dest = in_src = None
             try:
                 out_dest = open(dest, 'wb')
                 in_src = open(src, 'rb')
