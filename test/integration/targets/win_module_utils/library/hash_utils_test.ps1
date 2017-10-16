@@ -1,5 +1,6 @@
 #!powershell
 
+#Requires -Module Ansible.ModuleUtils.Legacy
 #Requires -Module Ansible.ModuleUtils.HashUtils
 
 Function Assert-Equals($actual, $expected) {
