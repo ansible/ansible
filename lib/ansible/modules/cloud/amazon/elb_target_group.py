@@ -339,6 +339,7 @@ def wait_for_status(connection, module, target_group_arn, targets, status):
 def create_or_update_target_group(connection, module):
 
     changed = False
+    new_target_group = False
     params = dict()
     params['Name'] = module.params.get("name")
     params['Protocol'] = module.params.get("protocol").upper()
