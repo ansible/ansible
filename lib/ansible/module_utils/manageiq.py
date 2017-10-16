@@ -37,13 +37,19 @@ except ImportError:
 
 
 def manageiq_argument_spec():
-    return dict(
+    options = dict(
         url=dict(default=os.environ.get('MIQ_URL', None)),
         username=dict(default=os.environ.get('MIQ_USERNAME', None)),
         password=dict(default=os.environ.get('MIQ_PASSWORD', None), no_log=True),
         token=dict(default=os.environ.get('MIQ_TOKEN', None), no_log=True),
         verify_ssl=dict(default=True, type='bool'),
         ca_bundle_path=dict(required=False, default=None),
+    )
+
+    return dict(
+        manageiq_connection=dict(type='dict',
+                                 default=dict(verify_ssl=False),
+                                 options=options),
     )
 
 
