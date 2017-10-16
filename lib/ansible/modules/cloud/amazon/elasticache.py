@@ -208,6 +208,8 @@ class ElastiCacheManager(object):
             else:
                 msg = "'%s' is currently deleting. Cannot create."
                 self.module.fail_json(msg=msg % self.name)
+        if self.zone is None:
+            self.zone = ''
 
         kwargs = dict(CacheClusterId=self.name,
                       NumCacheNodes=self.num_nodes,
@@ -496,7 +498,7 @@ def main():
         cache_subnet_group=dict(default=""),
         cache_security_groups=dict(default=[], type='list'),
         security_group_ids=dict(default=[], type='list'),
-        zone=dict(default=""),
+        zone=dict(),
         wait=dict(default=True, type='bool'),
         hard_modify=dict(type='bool')
     ))
