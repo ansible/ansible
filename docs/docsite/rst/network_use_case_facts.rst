@@ -18,14 +18,14 @@ I want to connect to a remote network device, download it's configuration and wr
 Prerequisites
 -------------
 
-* Ansible 2.3 (or higher) installed FIXMELINK
+* Ansible 2.3 (or higher) installed :doc:`intro_installation`
 * One or more network device compatible with Ansible FIXMELINK
 
 Audience
 --------
 
 * Basic Linux (comfortable on the command line)
-* Basic Network switch & router configuration knowledge (FIXME examples)
+* Basic Network switch & router configuration knowledge
 
 
 Solution
@@ -103,6 +103,8 @@ Create a file called ``fetch-facts.yml`` containing the following:
            dest: /tmp/switch-facts
 
 
+FIXME: Use ``_config`` to download full configuration and write to disk?
+
 Run it
 ------
 
@@ -135,12 +137,12 @@ Although there are many ways to supply credentials in Ansible in this case we ar
 
 .. warning:: Never store passwords in plain text
 
-   FIXME Details on why this is bad, links to existing vault docs (improve that example)
+   Passwords should never be stored in plain text. The "Vault" feature of Ansible allows keeping sensitive data such as passwords or keys in encrypted files, rather than as plaintext in your playbooks or roles. These vault files can then be distributed or placed in source control. The :doc:`playbooks_vault` contains further information.
 
 ansible_connection
 ^^^^^^^^^^^^^^^^^^
 
-Setting ``ansible_connection=local`` informs Ansible to execute the module on the controlling machine (i.e. the one executing Ansible). Without this Ansible would attempt to ssh onto the remote and execute the Python script on the network device, which would fail as Python generally isn't available.
+Setting ``ansible_connection=local`` informs Ansible to execute the module on the controlling machine (i.e. the one executing Ansible). Without this Ansible would attempt to ssh onto the remote and execute the Python script on the network device, which would fail as Python generally isn't available on network devices.
 
 
 Playbook
@@ -149,13 +151,13 @@ Playbook
 Gathering facts
 ^^^^^^^^^^^^^^^
 
-Here we use the ``_facts`` modules :ref:`ios_facts <ios_facts>` and :ref:`vyos_facts <vyos_facts>` to connect to the remote device. As the credentials are not explicitly specified Ansible uses the username and password from the inventory file.
+Here we use the ``_facts`` modules :ref:`ios_facts <ios_facts>` and :ref:`vyos_facts <vyos_facts>` to connect to the remote device. As the credentials are not explicitly passed via module arguments, Ansible uses the username and password from the inventory file.
 
 The data that the module returns is stored due to the use of the ``register:`` keyword into a variable called ``results_ios`` or ``results_vyos``.
 
 The return values (data returned by a module) are documented in the `Return Values` section of the module docs, in this case :ref:`ios_facts <ios_facts>` and :ref:`vyos_facts <vyos_facts>`.
 
-The task is conditionally run based on the group defined in the inventory file, for more information on the use of Conditionals in Ansible Playbooks see :ref:`the_when_statement`.
+The task is conditionally run based on the group defined in the inventory file, for more information on the use of conditionals in Ansible Playbooks see :ref:`the_when_statement`.
 
 
 
@@ -201,6 +203,11 @@ Fixme
   * Improve vault page and link between ``playbooks_best_practices.html#best-practices-for-variables-and-vaults``, ``ansible-playbook.rst``
   * Link to network intro page table of Persistent connection and version_added table
 
+
+New page: Auth & Proxy
+----------------------
+
+This section needs moving to a new page, just made notes here while I was developing this:
 
 FIXME Link to details regarding different ways to specify credentials (this should be in the main docs somewhere). This should just be a summary that links to the existing docs (``intro_inventory``, ``playbooks_best_practices.html#best-practices-for-variables-and-vaults``, ``ansible-playbook.rst``, etc)
 
