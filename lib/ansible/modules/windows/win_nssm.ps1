@@ -23,8 +23,6 @@ $ErrorActionPreference = "Stop"
 # WANT_JSON
 # POWERSHELL_COMMON
 
-#Requires -Module Ansible.ModuleUtils.HashUtils
-
 $params = Parse-Args $args
 
 $result = @{
@@ -484,6 +482,58 @@ Function Nssm-Update-Dependencies
         $result.changed_by = "update-dependencies"
         $result.changed = $true
     }
+}
+
+Function Convert-HashToString
+{
+    <#
+    Convert a hash into a variable length string of KEY=VALUE seperated by spaces
+
+    Input:
+    {
+        key1: value1,
+        key2: value2
+    }
+
+    Output:
+    "key1=value1 key2=value2"
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)]
+        [hashtable]$hash
+    )
+
+    return ($hash.GetEnumerator() | % { "$($_.Key)=$($_.Value)" }) -join " "
+}
+
+Function Convert-ArrayToHash
+{
+    <#
+    Converts an array with key=value elements into a hashtable
+
+    Input:
+    ["key1=value1", "key2=value2"]
+
+    Output:
+    {
+        key1: value1,
+        key2: value2
+    }
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)]
+        [array]$array
+    )
+
+    $hash = @{}
+
+    foreach ($element in $array)
+    {
+        $hash = $hash + (ConvertFrom-StringData $element)
+    }
+    return $hash
 }
 
 Function Nssm-Update-Extra-Environment
