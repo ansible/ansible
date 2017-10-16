@@ -120,8 +120,9 @@ To connect to AWS, you should use `get_aws_connection_info` and then `boto3_conn
 These functions handle some of the more esoteric connection options, such as security tokens and
 boto profiles.
 
-Some boto services require that the region is specified. You should check for the region parameter
-if required.
+Most AWS services require that the region is specified in some way. However, boto3 can detect
+region from configuration file - in such a case, Ansible will think `region` is not
+set, but boto3 will work fine - so we need to handle when boto3 can't detect the region.
 
 #### boto
 
@@ -146,10 +147,10 @@ exception handling like in boto.  Instead, an `AuthFailure` exception will be th
 
 ```python
 region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-if region:
+try:
     connection = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_params)
-else:
-    module.fail_json(msg="region must be specified")
+except botocore.exceptions.NoRegionError:
+    module.fail_json(msg="Region must be set in parameters, environment variables or boto3 configuration")
 ```
 
 ### Exception Handling for boto
