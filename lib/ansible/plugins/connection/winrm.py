@@ -263,7 +263,7 @@ class Connection(ConnectionBase):
             display.vvvvv('WINRM CONNECT: transport=%s endpoint=%s' % (transport, endpoint), host=self._winrm_host)
             try:
                 winrm_kwargs = self._winrm_kwargs.copy()
-                if self.connection_timeout: # allows plugins like win_reboot to override the timeout
+                if self.connection_timeout:  # allows plugins like win_reboot to override the timeout
                     winrm_kwargs['operation_timeout_sec'] = self.connection_timeout
                     winrm_kwargs['read_timeout_sec'] = self.connection_timeout + 1
                     self.connection_timeout = None

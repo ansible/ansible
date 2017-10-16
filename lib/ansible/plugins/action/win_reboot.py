@@ -155,7 +155,6 @@ class ActionModule(ActionBase):
                     self._connection._set_connection_timeout_override(connect_timeout)
                 except AttributeError:
                     display.warning("Connection plugin does not allow the connection timeout to be overridden")
-                    pass
 
                 # try and get uptime
                 try:
