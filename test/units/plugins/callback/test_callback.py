@@ -93,16 +93,6 @@ class TestCallbackDumpResults(unittest.TestCase):
         self.assertFalse('SENTINEL' in json_out)
         self.assertTrue('LEFTIN' in json_out)
 
-    def test_no_log(self):
-        cb = CallbackBase()
-        result = {'item': 'some_item',
-                  '_ansible_no_log': True,
-                  'some_secrets': 'SENTINEL'}
-        json_out = cb._dump_results(result)
-        self.assertFalse('SENTINEL' in json_out)
-        self.assertTrue('no_log' in json_out)
-        self.assertTrue('output has been hidden' in json_out)
-
     def test_exception(self):
         cb = CallbackBase()
         result = {'item': 'some_item LEFTIN',
