@@ -41,7 +41,8 @@ options:
   marker:
     description:
       - The marker line template.
-        "{mark}" will be replaced with the values in marker_begin (default: BEGIN) and marker_end (default: END).
+        "{mark}" will be replaced with the values in marker_begin 
+        (default="BEGIN") and marker_end (default="END").
     default: '# {mark} ANSIBLE MANAGED BLOCK'
   block:
     description:
@@ -78,14 +79,15 @@ options:
     type: bool
     default: 'no'
   marker_begin:
-    required: false
-    description: 'This will be inserted at {mark} in the opening ansible block marker."
+    description: 
+      - This will be inserted at {mark} in the opening ansible block marker.
     default: 'BEGIN'
   marker_end:
     required: false
-    description: 'This will be inserted at {mark} in the closing ansible block marker."
+    description: 
+      - This will be inserted at {mark} in the closing ansible block marker.
     default: 'END'
-      
+
 notes:
   - This module supports check mode.
   - When using 'with_*' loops be aware that if you do not set a unique mark the block will be overwritten on each iteration.
