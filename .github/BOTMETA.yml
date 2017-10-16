@@ -1146,8 +1146,8 @@ macros:
   team_netapp: hulquest lmprice broncofan
   team_netscaler: chiradeep giorgos-nikolopoulos
   team_netvisor: Qalthos amitsi gundalow privateip
-  team_networking: Qalthos ganeshrn gundalow privateip rcarrillocruz trishnaguha
-  team_nxos: GGabriele jedelman8 mikewiebe privateip rahushen rcarrillocruz trishnaguha
+  team_networking: Qalthos ganeshrn gundalow privateip rcarrillocruz trishnaguha kedarX
+  team_nxos: GGabriele jedelman8 mikewiebe privateip rahushen rcarrillocruz trishnaguha kedarX
   team_openstack: emonty j2sol juliakreger rcarrillocruz shrews thingee dagnello
   team_openswitch: Qalthos gundalow privateip
   team_rabbitmq: chrishoffman manuel-sousa hyperized
