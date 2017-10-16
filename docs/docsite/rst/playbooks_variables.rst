@@ -817,7 +817,7 @@ the shell you're operating in.::
 
 .. versionadded:: 1.3
 
-In these cases, it's probably best to use a JSON or YAML file contianing the variable 
+In these cases, it's probably best to use a JSON or YAML file containing the variable 
 definitions.
 
 .. _ansible_variable_precedence:
