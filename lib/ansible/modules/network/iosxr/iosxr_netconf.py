@@ -92,17 +92,23 @@ def map_obj_to_commands(updates, module):
 
             if 'netconf_port' in have:
                 commands.append('no ssh server netconf port %s' % have['netconf_port'])
-            if 'netconf_vrf' in have:
-                commands.append('no ssh server netconf vrf %s' % have['netconf_vrf'])
+
+            if want['netconf_vrf']:
+                for vrf in have['netconf_vrf']:
+                    if vrf == want['netconf_vrf']:
+                        commands.append('no ssh server netconf vrf %s' % vrf)
+            else:
+                for vrf in have['netconf_vrf']:
+                    commands.append('no ssh server netconf vrf %s' % vrf)
     else:
         if have['state'] == 'absent':
             commands.append('netconf-yang agent ssh')
 
-        if want['netconf_port'] != have.get('netconf_port'):
+        if want['netconf_port'] is not None and (want['netconf_port'] != have.get('netconf_port')):
             commands.append(
                 'ssh server netconf port %s' % want['netconf_port']
             )
-        if want['netconf_vrf'] != have.get('netconf_vrf'):
+        if want['netconf_vrf'] is not None and (want['netconf_vrf'] not in have['netconf_vrf']):
             commands.append(
                 'ssh server netconf vrf %s' % want['netconf_vrf']
             )
@@ -129,17 +135,18 @@ def map_config_to_obj(module):
 
     ssh_config = get_config(module, flags=['ssh server'])
     ssh_config = [config_line for config_line in (line.strip() for line in ssh_config.splitlines()) if config_line]
-
+    obj['netconf_vrf'] = []
     for config in ssh_config:
         if 'netconf port' in config:
             obj.update({'netconf_port': parse_port(config)})
         if 'netconf vrf' in config:
-            obj.update({'netconf_vrf': parse_vrf(config)})
-    if 'ssh' in netconf_config or 'netconf_port' in obj or 'netconf_vrf' in obj:
+            obj['netconf_vrf'].append(parse_vrf(config))
+    if 'ssh' in netconf_config or 'netconf_port' in obj or obj['netconf_vrf']:
         obj.update({'state': 'present'})
 
     if 'ssh' in netconf_config and 'netconf_port' not in obj:
         obj.update({'netconf_port': 830})
+
     return obj
 
 
@@ -189,7 +196,10 @@ def main():
 
     if commands:
         if not module.check_mode:
-            load_config(module, commands, result['warnings'], commit=True)
+            diff = load_config(module, commands, result['warnings'], commit=True)
+            if diff:
+                if module._diff:
+                    result['diff'] = {'prepared': diff}
             exec_command(module, 'exit')
         result['changed'] = True
 
