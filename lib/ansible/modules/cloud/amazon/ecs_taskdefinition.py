@@ -129,6 +129,7 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import boto3_conn, camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils._text import to_text
 
 class EcsTaskManager:
     """Handles ECS Tasks"""
@@ -241,11 +242,9 @@ def main():
     task_mgr = EcsTaskManager(module)
     results = dict(changed=False)
 
-    if isinstance(module.params.get('containers'), list):
-        for container in module.params['containers']:
-            if 'environment' in container:
-                for environment in container['environment']:
-                    environment['value'] = str(environment['value'])
+    for container in module.params.get('containers', []):
+        for environment in container.get('environment', []):
+            environment['value'] = to_text(environment['value'])
 
     if module.params['state'] == 'present':
         if 'containers' not in module.params or not module.params['containers']:
