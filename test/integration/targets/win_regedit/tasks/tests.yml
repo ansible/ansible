@@ -471,9 +471,9 @@
   win_shell: |
     &reg.exe load HKLM\ANSIBLE C:\Users\Default\NTUSER.dat > $null
     Test-Path -Path HKLM:\ANSIBLE\NewKey
-    [GC]::Collect() > $null
-    &reg.exe unload HKLM\ANSIBLE > $null
   register: new_key_in_hive_result_check
+
+- win_command: reg.exe unload HKLM\ANSIBLE
 
 - name: assert result of create new key in loaded hive (check mode)
   assert:
@@ -492,9 +492,9 @@
   win_shell: |
     &reg.exe load HKLM\ANSIBLE C:\Users\Default\NTUSER.dat > $null
     Test-Path -Path HKLM:\ANSIBLE\NewKey
-    [GC]::Collect() > $null
-    &reg.exe unload HKLM\ANSIBLE > $null
   register: new_key_in_hive_result
+
+- win_command: reg.exe unload HKLM\ANSIBLE
 
 - name: assert result of create new key in loaded hive
   assert:
@@ -532,9 +532,9 @@
     if ($prop) {
       $prop.TestProp
     }
-    [GC]::Collect() > $null
-    &reg.exe unload HKLM\ANSIBLE > $null
   register: new_prop_in_hive_result_check
+
+- win_command: reg.exe unload HKLM\ANSIBLE
 
 - name: assert result of set hive key property (check mode)
   assert:
@@ -559,9 +559,9 @@
     if ($prop) {
       $prop.TestProp
     }
-    [GC]::Collect() > $null
-    &reg.exe unload HKLM\ANSIBLE > $null
   register: new_prop_in_hive_result
+
+- win_command: reg.exe unload HKLM\ANSIBLE
 
 - name: assert result of set hive key property
   assert:
@@ -600,9 +600,9 @@
     if ($prop) {
       $prop.TestProp
     }
-    [GC]::Collect() > $null
-    &reg.exe unload HKLM\ANSIBLE > $null
   register: remove_prop_in_hive_result_check
+
+- win_command: reg.exe unload HKLM\ANSIBLE
 
 - name: assert result of remove hive key property (check mode)
   assert:
@@ -625,9 +625,9 @@
     if ($prop) {
       $prop.TestProp
     }
-    [GC]::Collect() > $null
-    &reg.exe unload HKLM\ANSIBLE > $null
   register: remove_prop_in_hive_result
+
+- win_command: reg.exe unload HKLM\ANSIBLE
 
 - name: assert result of remove hive key property
   assert:
@@ -661,9 +661,9 @@
   win_shell: |
     &reg.exe load HKLM\ANSIBLE C:\Users\Default\NTUSER.dat > $null
     Test-Path -Path HKLM:\ANSIBLE\NewKey
-    [GC]::Collect() > $null
-    &reg.exe unload HKLM\ANSIBLE > $null
   register: remove_key_in_hive_result_check
+
+- win_command: reg.exe unload HKLM\ANSIBLE
 
 - name: assert result of removekey in loaded hive (check mode)
   assert:
@@ -683,9 +683,9 @@
   win_shell: |
     &reg.exe load HKLM\ANSIBLE C:\Users\Default\NTUSER.dat > $null
     Test-Path -Path HKLM:\ANSIBLE\NewKey
-    [GC]::Collect() > $null
-    &reg.exe unload HKLM\ANSIBLE > $null
   register: remove_key_in_hive_result
+
+- win_command: reg.exe unload HKLM\ANSIBLE
 
 - name: assert result of remove key in loaded hive
   assert:
