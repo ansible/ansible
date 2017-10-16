@@ -156,7 +156,6 @@ Ansible Changes By Release
 
 #### New Inventory scripts:
 - lxd
-* In the `pkg5` module, return variable `rc` was renamed to `pkg_rc`.
 
 #### New: Tests
 - any : true if any element is true
