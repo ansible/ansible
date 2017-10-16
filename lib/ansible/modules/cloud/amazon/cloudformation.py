@@ -125,8 +125,7 @@ requirements: [ boto3, botocore>=1.4.57 ]
 '''
 
 EXAMPLES = '''
-# Basic task example
-- name: launch ansible cloudformation example
+- name: create a cloudformation stack
   cloudformation:
     stack_name: "ansible-cloudformation"
     state: "present"
@@ -142,54 +141,29 @@ EXAMPLES = '''
       Stack: "ansible-cloudformation"
 
 # Basic role example
-- name: launch ansible cloudformation example
+- name: create a stack, specify role that cloudformation assumes
   cloudformation:
     stack_name: "ansible-cloudformation"
     state: "present"
     region: "us-east-1"
     disable_rollback: true
     template: "roles/cloudformation/files/cloudformation-example.json"
-    template_parameters:
-      KeyName: "jmartin"
-      DiskType: "ephemeral"
-      InstanceType: "m1.small"
-      ClusterSize: 3
-    tags:
-      Stack: "ansible-cloudformation"
+    role_arn: 'arn:aws:iam::123456789012:role/cloudformation-iam-role'
 
-# Removal example
-- name: tear down old deployment
+- name: delete a stack
   cloudformation:
     stack_name: "ansible-cloudformation-old"
     state: "absent"
 
-# Use a template from a URL
-- name: launch ansible cloudformation example
+# Create a stack, pass in template from a URL, disable rollback if stack creation fails,
+# pass in some parameters to the template, provide tags for resources created
+- name: create a stack, pass in the template via an URL
   cloudformation:
     stack_name: "ansible-cloudformation"
     state: present
     region: us-east-1
     disable_rollback: true
     template_url: https://s3.amazonaws.com/my-bucket/cloudformation.template
-  args:
-    template_parameters:
-      KeyName: jmartin
-      DiskType: ephemeral
-      InstanceType: m1.small
-      ClusterSize: 3
-    tags:
-      Stack: ansible-cloudformation
-
-# Use a template from a URL, and assume a role to execute
-- name: launch ansible cloudformation example with role assumption
-  cloudformation:
-    stack_name: "ansible-cloudformation"
-    state: present
-    region: us-east-1
-    disable_rollback: true
-    template_url: https://s3.amazonaws.com/my-bucket/cloudformation.template
-    role_arn: 'arn:aws:iam::123456789012:role/cloudformation-iam-role'
-  args:
     template_parameters:
       KeyName: jmartin
       DiskType: ephemeral
