@@ -26,6 +26,7 @@ class ActionModule(ActionBase):
     TRANSFERS_FILES = False
 
     DEFAULT_REBOOT_TIMEOUT = 600
+    DEFAULT_CONNECT_TIMEOUT = 5
     DEFAULT_PRE_REBOOT_DELAY = 2
     DEFAULT_POST_REBOOT_DELAY = 0
     DEFAULT_TEST_COMMAND = 'whoami'
@@ -85,12 +86,15 @@ class ActionModule(ActionBase):
         deprecated_args = {
             'shutdown_timeout': '2.5',
             'shutdown_timeout_sec': '2.5',
-            'connection_timeout': '2.5',
-            'connection_timeout_sec': '2.5',
         }
         for arg, version in deprecated_args.items():
             if self._task.args.get(arg) is not None:
                 display.warning("Since Ansible %s, %s is no longer used with win_reboot" % (arg, version))
+
+        if self._task.args.get('connect_timeout') is not None:
+            connect_timeout = int(self._task.args.get('connect_timeout', self.DEFAULT_CONNECT_TIMEOUT))
+        else:
+            connect_timeout = int(self._task.args.get('connect_timeout_sec', self.DEFAULT_CONNECT_TIMEOUT))
 
         if self._task.args.get('reboot_timeout') is not None:
             reboot_timeout = int(self._task.args.get('reboot_timeout', self.DEFAULT_REBOOT_TIMEOUT))
@@ -146,10 +150,11 @@ class ActionModule(ActionBase):
             # keep on checking system uptime with short connection responses
             def check_uptime():
                 display.vvv("attempting to get system uptime")
-                # call connection reset between runs if it's there
+                # override connection timeout from defaults to custom value
                 try:
-                    self._connection._reset()
+                    self._connection._set_connection_timeout_override(connect_timeout)
                 except AttributeError:
+                    display.warning("Connection plugin does not allow the connection timeout to be overridden")
                     pass
 
                 # try and get uptime
@@ -162,6 +167,12 @@ class ActionModule(ActionBase):
                     raise Exception("uptime is still greater than before")
 
             self.do_until_success_or_timeout(check_uptime, reboot_timeout, what_desc="reboot uptime check success")
+
+            # reset the connection to clear the custom connection timeout
+            try:
+                self._connection._reset()
+            except AttributeError:
+                pass
 
             # finally run test command to ensure everything is working
             def run_test_command():

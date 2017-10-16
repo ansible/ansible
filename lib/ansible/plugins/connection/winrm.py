@@ -146,6 +146,7 @@ class Connection(ConnectionBase):
 
         self.protocol = None
         self.shell_id = None
+        self.connection_timeout = None
         self.delegate = None
         self._shell_type = 'powershell'
 
@@ -261,7 +262,12 @@ class Connection(ConnectionBase):
                     self._kerb_auth(self._winrm_user, self._winrm_pass)
             display.vvvvv('WINRM CONNECT: transport=%s endpoint=%s' % (transport, endpoint), host=self._winrm_host)
             try:
-                protocol = Protocol(endpoint, transport=transport, **self._winrm_kwargs)
+                winrm_kwargs = self._winrm_kwargs.copy()
+                if self.connection_timeout: # allows plugins like win_reboot to override the timeout
+                    winrm_kwargs['operation_timeout_sec'] = self.connection_timeout
+                    winrm_kwargs['read_timeout_sec'] = self.connection_timeout + 1
+                    self.connection_timeout = None
+                protocol = Protocol(endpoint, transport=transport, **winrm_kwargs)
 
                 # open the shell from connect so we know we're able to talk to the server
                 if not self.shell_id:
@@ -370,6 +376,13 @@ class Connection(ConnectionBase):
         self.protocol = None
         self.shell_id = None
         self._connect()
+
+    def _set_connection_timeout_override(self, timeout):
+        # used by win_reboot to temporarily override the connection timeout, it is only
+        # overridden on the first reset, all subsequent calls to self._reset() will revert
+        # the timeout back to the normal host_var settings
+        self.connection_timeout = timeout
+        self._reset()
 
     def _create_raw_wrapper_payload(self, cmd, environment=None):
         environment = {} if environment is None else environment

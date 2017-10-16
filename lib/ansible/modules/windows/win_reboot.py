@@ -43,7 +43,6 @@ options:
   connect_timeout:
     description:
     - Maximum seconds to wait for a single successful TCP connection to the WinRM endpoint before trying again
-    - This option has been deprecated in Ansible 2.5 as the win_reboot behaviour has changed
     default: 5
     aliases: [ connect_timeout_sec ]
   test_command:
