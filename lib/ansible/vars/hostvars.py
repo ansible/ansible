@@ -23,6 +23,7 @@ import collections
 
 from jinja2.runtime import Undefined
 
+from ansible.module_utils._text import to_bytes
 from ansible.template import Templar
 
 STATIC_VARS = [
@@ -85,7 +86,7 @@ class HostVars(collections.Mapping):
 
     def __getitem__(self, host_name):
         data = self.raw_get(host_name)
-        sha1_hash = sha1(str(data).encode('utf-8')).hexdigest()
+        sha1_hash = sha1(to_bytes(data)).hexdigest()
         if sha1_hash not in self._cached_result:
             templar = Templar(variables=data, loader=self._loader)
             self._cached_result[sha1_hash] = templar.template(data, fail_on_undefined=False, static_vars=STATIC_VARS)
