@@ -72,7 +72,7 @@ options:
         aliases: [ "host_group" ]
 
 extends_documentation_fragment:
-    - validate_certs
+    - zabbix
 
 notes:
     - Too many concurrent updates to the same group may cause Zabbix to return errors, see examples for a workaround if needed.

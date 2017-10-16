@@ -70,7 +70,7 @@ options:
         required: true
 
 extends_documentation_fragment:
-    - validate_certs
+    - zabbix
 
 notes:
     - Too many concurrent updates to the same screen may cause Zabbix to return errors, see examples for a workaround if needed.

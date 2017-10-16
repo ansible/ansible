@@ -78,7 +78,7 @@ options:
         default: 10
 
 extends_documentation_fragment:
-    - validate_certs
+    - zabbix
 '''
 
 EXAMPLES = '''

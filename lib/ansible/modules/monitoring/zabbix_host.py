@@ -163,7 +163,7 @@ options:
         version_added: "2.0"
 
 extends_documentation_fragment:
-    - validate_certs
+    - zabbix
 '''
 
 EXAMPLES = '''

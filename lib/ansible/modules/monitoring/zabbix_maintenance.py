@@ -105,7 +105,7 @@ options:
         required: false
 
 extends_documentation_fragment:
-    - validate_certs
+    - zabbix
 
 notes:
     - Useful for setting hosts in maintenance mode before big update,
