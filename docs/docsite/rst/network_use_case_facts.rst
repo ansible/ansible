@@ -242,8 +242,12 @@ Somewhere in the main docs we need to list the different ways of authenticating
   * As of Ansible 2.3 this is deprecated.
   * Link to main docs
 
-:``provider:`` argument to module:
+:``provider``: argument to module:
 
   * This is OK
   * Link to main docs
 
+:Env variables:
+
+  * ``ANSIBLE_NET_USERNAME``
+  * ``ANSIBLE_NET_PASSWORD``
