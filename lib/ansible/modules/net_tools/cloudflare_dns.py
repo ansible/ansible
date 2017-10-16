@@ -473,7 +473,8 @@ class CloudflareAPI(object):
         content = params['value']
         search_record = params['record']
         if params['type'] == 'SRV':
-            content = str(params['weight']) + '\t' + str(params['port']) + '\t' + params['value']
+            if not (params['value'] is None or params['value'] == ''):
+                content = str(params['weight']) + '\t' + str(params['port']) + '\t' + params['value']
             search_record = params['service'] + '.' + params['proto'] + '.' + params['record']
         if params['solo']:
             search_value = None
@@ -616,21 +617,19 @@ def main():
         ),
         supports_check_mode=True,
         required_if=([
-            ('state', 'present', ['record', 'type']),
-            ('type', 'MX', ['priority', 'value']),
-            ('type', 'SRV', ['port', 'priority', 'proto', 'service', 'value', 'weight']),
-            ('type', 'A', ['value']),
-            ('type', 'AAAA', ['value']),
-            ('type', 'CNAME', ['value']),
-            ('type', 'TXT', ['value']),
-            ('type', 'NS', ['value']),
-            ('type', 'SPF', ['value'])
+            ('state', 'present', ['record', 'type', 'value']),
+            ('state', 'absent', ['record']),
+            ('type', 'SRV', ['proto', 'service']),
         ]
         ),
-        required_one_of=(
-            [['record', 'value', 'type']]
-        )
     )
+
+    if module.params['type'] == 'SRV':
+        if not ((module.params['weight'] is not None and module.params['port'] is not None
+                 and not (module.params['value'] is None or module.params['value'] == ''))
+                or (module.params['weight'] is None and module.params['port'] is None
+                    and (module.params['value'] is None or module.params['value'] == ''))):
+            module.fail_json(msg="For SRV records the params weight, port and value all need to be defined, or not at all.")
 
     changed = False
     cf_api = CloudflareAPI(module)
