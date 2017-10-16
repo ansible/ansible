@@ -471,6 +471,7 @@
   win_shell: |
     &reg.exe load HKLM\ANSIBLE C:\Users\Default\NTUSER.dat > $null
     Test-Path -Path HKLM:\ANSIBLE\NewKey
+    exit 0
   register: new_key_in_hive_result_check
 
 - win_command: reg.exe unload HKLM\ANSIBLE
@@ -492,6 +493,7 @@
   win_shell: |
     &reg.exe load HKLM\ANSIBLE C:\Users\Default\NTUSER.dat > $null
     Test-Path -Path HKLM:\ANSIBLE\NewKey
+    exit 0
   register: new_key_in_hive_result
 
 - win_command: reg.exe unload HKLM\ANSIBLE
@@ -532,6 +534,7 @@
     if ($prop) {
       $prop.TestProp
     }
+    exit 0
   register: new_prop_in_hive_result_check
 
 - win_command: reg.exe unload HKLM\ANSIBLE
@@ -559,6 +562,7 @@
     if ($prop) {
       $prop.TestProp
     }
+    exit 0
   register: new_prop_in_hive_result
 
 - win_command: reg.exe unload HKLM\ANSIBLE
@@ -600,6 +604,7 @@
     if ($prop) {
       $prop.TestProp
     }
+    exit 0
   register: remove_prop_in_hive_result_check
 
 - win_command: reg.exe unload HKLM\ANSIBLE
@@ -625,6 +630,7 @@
     if ($prop) {
       $prop.TestProp
     }
+    exit 0
   register: remove_prop_in_hive_result
 
 - win_command: reg.exe unload HKLM\ANSIBLE
@@ -661,6 +667,7 @@
   win_shell: |
     &reg.exe load HKLM\ANSIBLE C:\Users\Default\NTUSER.dat > $null
     Test-Path -Path HKLM:\ANSIBLE\NewKey
+    exit 0
   register: remove_key_in_hive_result_check
 
 - win_command: reg.exe unload HKLM\ANSIBLE
@@ -683,6 +690,7 @@
   win_shell: |
     &reg.exe load HKLM\ANSIBLE C:\Users\Default\NTUSER.dat > $null
     Test-Path -Path HKLM:\ANSIBLE\NewKey
+    exit 0
   register: remove_key_in_hive_result
 
 - win_command: reg.exe unload HKLM\ANSIBLE
