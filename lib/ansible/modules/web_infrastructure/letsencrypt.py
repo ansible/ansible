@@ -211,7 +211,7 @@ def get_cert_days(module, cert_file):
 
     openssl_bin = module.get_bin_path('openssl', True)
     openssl_cert_cmd = [openssl_bin, "x509", "-in", cert_file, "-noout", "-text"]
-    _, out, _ = module.run_command(openssl_cert_cmd, check_rc=True)
+    _, out, _ = module.run_command(openssl_cert_cmd, check_rc=True, environ_update=dict(LANG='C'))
     try:
         not_after_str = re.search(r"\s+Not After\s*:\s+(.*)", out.decode('utf8')).group(1)
         not_after = datetime.fromtimestamp(time.mktime(time.strptime(not_after_str, '%b %d %H:%M:%S %Y %Z')))
@@ -351,7 +351,7 @@ class ACMEAccount(object):
         and public exponent of the key
         '''
         openssl_keydump_cmd = [self._openssl_bin, "rsa", "-in", key, "-noout", "-text"]
-        _, out, _ = self.module.run_command(openssl_keydump_cmd, check_rc=True)
+        _, out, _ = self.module.run_command(openssl_keydump_cmd, check_rc=True, environ_update=dict(LANG='C'))
 
         pub_hex, pub_exp = re.search(
             r"modulus:\n\s+00:([a-f0-9\:\s]+?)\npublicExponent: ([0-9]+)",
@@ -537,7 +537,7 @@ class ACMEClient(object):
         Parse the CSR and return the list of requested domains
         '''
         openssl_csr_cmd = [self._openssl_bin, "req", "-in", self.csr, "-noout", "-text"]
-        _, out, _ = self.module.run_command(openssl_csr_cmd, check_rc=True)
+        _, out, _ = self.module.run_command(openssl_csr_cmd, check_rc=True, environ_update=dict(LANG='C'))
 
         domains = set([])
         common_name = re.search(r"Subject:.*? CN\s?=\s?([^\s,;/]+)", out.decode('utf8'))
@@ -706,7 +706,7 @@ class ACMEClient(object):
         https://tools.ietf.org/html/draft-ietf-acme-acme-02#section-6.5
         '''
         openssl_csr_cmd = [self._openssl_bin, "req", "-in", self.csr, "-outform", "DER"]
-        _, out, _ = self.module.run_command(openssl_csr_cmd, check_rc=True)
+        _, out, _ = self.module.run_command(openssl_csr_cmd, check_rc=True, environ_update=dict(LANG='C'))
 
         new_cert = {
             "resource": "new-cert",
