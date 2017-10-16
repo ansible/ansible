@@ -31,6 +31,7 @@ options:
     description:
     - Maximum seconds to wait for shutdown to occur
     - Increase this timeout for very slow hardware, large update applications, etc
+    - This option has been removed since Ansible 2.5 as the win_reboot behaviour has changed
     default: 600
     aliases: [ shutdown_timeout_sec ]
   reboot_timeout:
@@ -42,6 +43,7 @@ options:
   connect_timeout:
     description:
     - Maximum seconds to wait for a single successful TCP connection to the WinRM endpoint before trying again
+    - This option has been deprecated in Ansible 2.5 as the win_reboot behaviour has changed
     default: 5
     aliases: [ connect_timeout_sec ]
   test_command:
@@ -70,7 +72,6 @@ EXAMPLES = r'''
 
 # Reboot a slow machine that might have lots of updates to apply
 - win_reboot:
-    shutdown_timeout: 3600
     reboot_timeout: 3600
 '''
 
