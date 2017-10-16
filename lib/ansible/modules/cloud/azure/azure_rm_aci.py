@@ -183,12 +183,10 @@ try:
         ContainerServiceDiagnosticsProfile, ContainerServiceSshPublicKey,
         ContainerServiceVMDiagnostics
     )
-    from azure.mgmt.containerinstance.models import ( ContainerGroup, Container, ResourceRequirements, ResourceRequests )
+    from azure.mgmt.containerinstance.models import (ContainerGroup, Container, ResourceRequirements, ResourceRequests)
 except ImportError:
     # This is handled in azure_rm_common
     pass
-
-
 
 
 def create_aci_dict(aci):
@@ -212,8 +210,6 @@ def create_aci_dict(aci):
         os_type=aci.os_type
     )
     return results
-
-
 
 
 class AzureRMContainerInstance(AzureRMModuleBase):
@@ -256,8 +252,8 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         self.results = dict(changed=False, state=dict())
 
         super(AzureRMContainerInstance, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                                      supports_check_mode=True,
-                                                      supports_tags=True)
+                                                       supports_check_mode=True,
+                                                       supports_tags=True)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
@@ -312,7 +308,13 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         # self.log("agent_pool_profiles : {0}".format(parameters.agent_pool_profiles))
         # self.log("vm_diagnostics : {0}".format(parameters.diagnostics_profile.vm_diagnostics))
 
-        parameters = ContainerGroup(self.location, None, [Container("testvm10", "dockiot/ansible", ResourceRequirements(ResourceRequests(1.5, 1)))], None, None, None, "linux")
+        parameters = ContainerGroup(self.location,
+                                    None,
+                                    [Container("testvm10", "dockiot/ansible", ResourceRequirements(ResourceRequests(1.5, 1)))],
+                                    None,
+                                    None,
+                                    None,
+                                    "linux")
 
         try:
             response = self.containerinstance_client.container_groups.create_or_update(self.resource_group, self.name, parameters)
@@ -355,9 +357,9 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         except CloudError as e:
             self.log('Did not find the ACS instance.')
         if found is True:
-            return create_acs_dict(response)
-        else:
-            return False
+            return create_aci_dict(response)
+
+        return False
 
 
 def main():
