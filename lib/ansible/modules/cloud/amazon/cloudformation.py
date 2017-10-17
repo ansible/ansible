@@ -382,12 +382,8 @@ def update_termination_protection(module, cfn, stack_name, desired_termination_p
                 cfn.update_termination_protection(
                     EnableTerminationProtection=desired_termination_protection_state,
                     StackName=stack_name)
-                module.exit_json(msg="Termination protection on stack {0} updated.".format(stack_name), changed=True)
             except botocore.exceptions.ClientError as e:
                 module.fail_json(msg=boto_exception(e), exception=traceback.format_exc())
-        else:
-            module.exit_json(msg="Termination protection on stack {0} is already the requested value".format(stack_name),
-                changed=False)
 
 
 def boto_supports_termination_protection(cfn):
@@ -601,9 +597,10 @@ def main():
             result = create_stack(module, stack_params, cfn)
         elif module.params.get('create_changeset'):
             result = create_changeset(module, stack_params, cfn)
-        elif module.params.get('termination_protection') is not None:
-            update_termination_protection(module, cfn, stack_params['StackName'], bool(module.params.get('termination_protection')))
         else:
+            if module.params.get('termination_protection') is not None:
+                update_termination_protection(module, cfn, stack_params['StackName'],
+                                              bool(module.params.get('termination_protection')))
             result = update_stack(module, stack_params, cfn)
 
         # format the stack output
