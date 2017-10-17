@@ -192,7 +192,7 @@ class CloudFormationServiceManager:
                 return response
             self.module.fail_json(msg="Error describing stack(s) - an empty response was returned")
         except Exception as e:
-            if 'does not exist' in e.message:
+            if 'does not exist' in e.response['Error']['Message']:
                 # missing stack, don't bail.
                 return {}
             self.module.fail_json(msg="Error describing stack - " + to_native(e), exception=traceback.format_exc())
