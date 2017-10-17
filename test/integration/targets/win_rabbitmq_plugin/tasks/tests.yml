@@ -2,6 +2,10 @@
   win_chocolatey:
     name: rabbitmq
     state: present
+  retries: 3
+  delay: 3
+  register: result
+  until: result.rc == 0
 
 - name: Ensure that rabbitmq_management plugin disabled
   win_rabbitmq_plugin:
