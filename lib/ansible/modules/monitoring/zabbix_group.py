@@ -29,42 +29,12 @@ requirements:
     - "python >= 2.6"
     - zabbix-api
 options:
-    server_url:
-        description:
-            - Url of Zabbix server, with protocol (http or https).
-              C(url) is an alias for C(server_url).
-        required: true
-        aliases: [ "url" ]
-    login_user:
-        description:
-            - Zabbix user name.
-        required: true
-    login_password:
-        description:
-            - Zabbix user password.
-        required: true
-    http_login_user:
-        description:
-            - Basic Auth login
-        required: false
-        default: None
-        version_added: "2.1"
-    http_login_password:
-        description:
-            - Basic Auth password
-        required: false
-        default: None
-        version_added: "2.1"
     state:
         description:
             - Create or delete host group.
         required: false
         default: "present"
         choices: [ "present", "absent" ]
-    timeout:
-        description:
-            - The timeout of API request(seconds).
-        default: 10
     host_groups:
         description:
             - List of host groups to create or delete.
