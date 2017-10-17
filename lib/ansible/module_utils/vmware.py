@@ -34,7 +34,6 @@ except ImportError:
 from ansible.module_utils._text import to_text
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils.six import integer_types, iteritems, string_types
-from ansible.module_utils._text import to_text
 
 
 class TaskError(Exception):
