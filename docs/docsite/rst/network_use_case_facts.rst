@@ -1,8 +1,8 @@
 .. network-example-facts:
 
-************************************
-Gathering facts from network devices
-************************************
+*******************************
+Network getting started example
+*******************************
 
 .. contents:: Topics
 
@@ -13,7 +13,11 @@ Overview
 Objective
 ---------
 
-I want to connect to a remote network device, download it's configuration and write it to a file.
+I want to understand how Ansible can be used to connect to multiple network devices.
+
+This is not for production use, it's more to demonstrate the different areas that need to be considered and provide a foundation level knowledge.
+
+Future examples FIXMELINK will build on this knowledge.
 
 Prerequisites
 -------------
@@ -64,6 +68,7 @@ Create a file called ``fetch-facts.yml`` containing the following:
      gather_facts: no
 
      tasks:
+
        - name: Gather facts (ios)
          ios_facts:
          register: result_ios
