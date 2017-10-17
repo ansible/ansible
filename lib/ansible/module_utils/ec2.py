@@ -230,7 +230,7 @@ def get_aws_connection_info(module, boto3=False):
                     module.fail_json(msg="boto is required for this module. Please install boto and try again")
             elif HAS_BOTO3:
                 # here we don't need to make an additional call, will default to 'us-east-1' if the below evaluates to None.
-                region = botocore.session.get_session().get_config_variable('region')
+                region = botocore.session.Session(profile=profile_name).get_config_variable('region')
             else:
                 module.fail_json(msg="Boto3 is required for this module. Please install boto3 and try again")
 
