@@ -466,6 +466,7 @@ files:
   $modules/network/interface/: $team_networking
   $modules/network/ios/: privateip rcarrillocruz kedarX
   $modules/network/iosxr/: privateip rcarrillocruz kedarX
+  $modules/network/ironware/: paulquack
   $modules/network/junos/: Qalthos ganeshrn
   $modules/network/layer2/: $team_networking
   $modules/network/layer3/: $team_networking
@@ -963,6 +964,9 @@ files:
   $module_utils/iosxr.py:
     maintainers: $team_networking
     labels: networking
+  $module_utils/ironware.py:
+    maintainers: paulquack
+    labels: networking
   $module_utils/junos.py:
     maintainers: $team_networking
     labels: networking
@@ -1046,6 +1050,9 @@ files:
   lib/ansible/plugins/action/ios:
     maintainers: $team_networking
     labels: networking
+  lib/ansible/plugins/action/ironware:
+    maintainers: paulquack
+    labels: networking
   lib/ansible/plugins/action/junos:
     maintainers: $team_networking
     labels: networking
@@ -1063,6 +1070,9 @@ files:
     labels: networking
   lib/ansible/plugins/cliconf/:
     maintainers: $team_networking
+    labels: networking
+  lib/ansible/plugins/cliconf/ironware.py:
+    maintainers: paulquack
     labels: networking
   lib/ansible/plugins/connection/netconf.py:
     maintainers: $team_networking
@@ -1110,6 +1120,9 @@ files:
     labels: networking
   lib/ansible/plugins/terminal/iosxr.py:
     maintainers: $team_networking
+    labels: networking
+  lib/ansible/plugins/terminal/ironware.py:
+    maintainers: paulquack
     labels: networking
   lib/ansible/plugins/terminal/junos.py:
     maintainers: $team_networking
