@@ -100,7 +100,7 @@ class NowInventory(object):
         if cache_dir:
             cache_file = os.path.join(cache_dir, name)
             if os.path.exists(cache_file):
-                cache_max_age = int(os.environ.get('SN_CACHE_MAX_AGE'))
+                cache_max_age = os.environ.get('SN_CACHE_MAX_AGE')
                 if not cache_max_age:
                     if config.has_option('defaults', 'cache_max_age'):
                         cache_max_age = config.getint('defaults',
@@ -108,7 +108,7 @@ class NowInventory(object):
                     else:
                         cache_max_age = 0
                 cache_stat = os.stat(cache_file)
-                if (cache_stat.st_mtime + cache_max_age) >= time.time():
+                if (cache_stat.st_mtime + int(cache_max_age)) >= time.time():
                     with open(cache_file) as cache:
                         return json.load(cache)
         return default
