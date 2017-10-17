@@ -31,33 +31,6 @@ options:
         required: false
         default: present
         choices: [ "present", "absent" ]
-    server_url:
-        description:
-            - Url of Zabbix server, with protocol (http or https).
-              C(url) is an alias for C(server_url).
-        required: true
-        default: null
-        aliases: [ "url" ]
-    login_user:
-        description:
-            - Zabbix user name.
-        required: true
-    login_password:
-        description:
-            - Zabbix user password.
-        required: true
-    http_login_user:
-        description:
-            - Basic Auth login
-        required: false
-        default: None
-        version_added: "2.1"
-    http_login_password:
-        description:
-            - Basic Auth password
-        required: false
-        default: None
-        version_added: "2.1"
     host_names:
         description:
             - Hosts to manage maintenance window for.
@@ -97,12 +70,6 @@ options:
             - Type of maintenance. With data collection, or without.
         required: false
         default: "true"
-    timeout:
-        description:
-            - The timeout of API request (seconds).
-        default: 10
-        version_added: "2.1"
-        required: false
 
 extends_documentation_fragment:
     - zabbix
