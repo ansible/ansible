@@ -3,7 +3,6 @@
 
 # Copyright IBM Corp. 2017
 # Author(s): Andreas Nafpliotis <nafpliot@de.ibm.com>
-
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # Ansible is distributed in the hope that it will be useful,
@@ -13,6 +12,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -80,7 +82,7 @@ try:
 except ImportError:
     HAS_PYVMOMI = False
 
-from ansible.module_utils.vmware import *
+from ansible.module_utils.vmware import vmware_argument_spec, connect_to_api, get_all_objs, wait_for_task
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import open_url
 from ansible.module_utils.six.moves.urllib.error import HTTPError
