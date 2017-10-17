@@ -24,7 +24,7 @@ from copy import deepcopy
 from ansible.parsing.dataloader import DataLoader
 from ansible.vars.manager import strip_internal_keys
 
-_IGNORE = ('changed', 'failed', 'skipped')
+_IGNORE = ('failed', 'skipped')
 
 
 class TaskResult:
