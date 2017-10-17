@@ -218,7 +218,10 @@ class CallbackBase(AnsiblePlugin):
 
     def _clean_results(self, result, task_name):
         ''' removes data from results for display '''
-        pass
+        if task_name in ['debug']:
+            for remove_key in ('invocation'):
+                if remove_key in result:
+                    del result[remove_key]
 
     def set_play_context(self, play_context):
         pass
