@@ -14,9 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -24,8 +24,8 @@ module: vmware_cfg_backup
 short_description: Backup / Restore / Reset ESXi host configuration
 description:
     - Backup / Restore / Reset ESXi host configuration
-version_added: "2.3"
-author: 
+version_added: "2.5"
+author:
     - Andreas Nafpliotis (@nafpliot-ibm)
 notes:
     - Tested on ESXi 6.0
@@ -79,9 +79,9 @@ try:
     HAS_PYVMOMI = True
 except ImportError:
     HAS_PYVMOMI = False
-    
+
 from ansible.module_utils.vmware import *
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import open_url
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 
@@ -119,7 +119,7 @@ class VMwareConfigurationBackup(object):
 
         url = self.host.configManager.firmwareSystem.QueryFirmwareConfigUploadURL()
         url = url.replace('*', self.hostname)
-        #find manually the url if there is a redirect because urllib2 -per RFC- doesn't do automatic redirects for PUT requests
+        # find manually the url if there is a redirect because urllib2 -per RFC- doesn't do automatic redirects for PUT requests
         try:
             request = open_url(url=url, method='HEAD', validate_certs=self.validate_certs)
         except HTTPError as e:
