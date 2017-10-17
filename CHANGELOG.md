@@ -118,6 +118,8 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/31092)
 * Fix win_find failing on files it can't access, change behaviour to be more
   like the find module (https://github.com/ansible/ansible/issues/31898)
+* Amended tracking of 'changed'
+  https://github.com/ansible/ansible/pull/31812
 
 <a id="2.4.1"></a>
 
