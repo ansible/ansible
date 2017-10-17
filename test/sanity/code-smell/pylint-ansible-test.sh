@@ -6,6 +6,7 @@ pylint --max-line-length=160 --reports=n ./*.py ./*/*.py ./*/*/*.py \
     --jobs 2 \
     --rcfile /dev/null \
     --function-rgx '[a-z_][a-z0-9_]{2,40}$' \
+    --method-rgx '[a-z_][a-z0-9_]{2,40}$' \
     -d unused-import \
     -d too-few-public-methods \
     -d too-many-arguments \
