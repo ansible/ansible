@@ -38,7 +38,7 @@ options:
   parents:
     description:
       - The ordered set of parents that uniquely identify the section
-        the commands should be checked against.  If you do not specify the parents argument, the commands are checked against the set of top
+        the commands should be checked against.  If you omit the parents argument, the commands are checked against the set of top
         level or global commands.
     required: false
     default: null
@@ -47,7 +47,7 @@ options:
       - Specifies the source path to the file that contains the configuration
         or configuration template to load.  The path to the source file can
         either be the full path on the Ansible control host or a relative
-        path from the playbook or role root dir.  This argument is mutually
+        path from the playbook or role root directory.  This argument is mutually
         exclusive with I(lines).
     required: false
     default: null
@@ -63,7 +63,7 @@ options:
   after:
     description:
       - The ordered set of commands to append to the end of the command
-        stack if a change needs to be made.  As with I(before), the playbook desinger can use this to append a set of commands to be
+        stack if a change needs to be made.  As with I(before), the playbook designer can use this to append a set of commands to be
         executed after the command set.
     required: false
     default: null
@@ -75,7 +75,7 @@ options:
         match to I(strict), command lines matched by respect
         to position.  If you set match to I(exact), command lines
         must be an equal match.  Finally, if you set match to I(none), the
-        module does  not attempt to compare the source configuration with
+        module does not attempt to compare the source configuration with
         the running configuration on the remote device.
     required: false
     default: line
@@ -181,6 +181,11 @@ saved:
   type: bool
   sample: True
 
+backup_path:
+  description: The full path to the backup file
+  returned: when backup is yes
+  type: string
+  sample: /playbooks/ansible/backup/dellos6_config.2016-07-16@22:28:34
 """
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.dellos6 import get_config, get_sublevel_config, Dellos6NetworkConfig
