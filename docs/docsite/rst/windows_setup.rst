@@ -232,7 +232,7 @@ Delete WinRM Listener
 +++++++++++++++++++++
 To remove a WinRM listener:
 
-.. code-block: powershell
+.. code-block:: powershell
 
     # remove all listeners
     Remove-Item -Path WSMan:\localhost\Listener\* -Recurse -Force
