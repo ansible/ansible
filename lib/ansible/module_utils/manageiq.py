@@ -48,7 +48,7 @@ def manageiq_argument_spec():
 
     return dict(
         manageiq_connection=dict(type='dict',
-                                 default=dict(verify_ssl=False),
+                                 default=dict(verify_ssl=True),
                                  options=options),
     )
 
