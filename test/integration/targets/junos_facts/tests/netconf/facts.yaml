@@ -86,7 +86,7 @@
 - assert:
     that:
       - "result.changed == false"
-      - "'\"data\" : \"{{ inventory_hostname_short }}\"' in result['ansible_facts']['ansible_net_config']"
+      - "'{{ inventory_hostname_short }}' == '{{ result['ansible_facts']['ansible_net_config']['configuration'][0]['system'][0]['host-name'][0]['data'] }}' "
 
 - name: Collect config facts from device in text format
   junos_facts:
