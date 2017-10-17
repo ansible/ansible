@@ -1,20 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
@@ -76,121 +63,75 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ucs import UcsConnection, ucs_argument_spec
 
 
-def _argument_mo():
-    return dict(
-        mac_list=dict(required=True, type='list'),
-        org_dn=dict(type='str', default='org-root'),
-    )
-
-
-def _argument_custom():
-    return dict(
-        state=dict(default='present',
-                   choices=['present', 'absent'],
-                   type='str'),
-    )
-
-
-def _argument_connection():
-    return dict(
-        # UcsHandle
-        login_handle=dict(type='dict'),
-    )
-
-
-def _ansible_module_create():
+def main():
     argument_spec = ucs_argument_spec
-    argument_spec.update(_argument_mo())
-    argument_spec.update(_argument_custom())
-    argument_spec.update(_argument_connection())
+    argument_spec.update(mac_list=dict(required=True, type='list'),
+                         org_dn=dict(type='str', default='org-root'),
+                         state=dict(default='present', choices=['present', 'absent'], type='str'),
+                         login_handle=dict(type='dict'))
+    module = AnsibleModule(argument_spec,
+                           supports_check_mode=True)
+    conn = UcsConnection(module)
+    login_handle = conn.login()
 
-    return AnsibleModule(argument_spec,
-                         supports_check_mode=True)
-
-
-def _get_mo_params(params):
-    args = {}
-    for key in _argument_mo():
-        if params.get(key) is None:
-            continue
-        args[key] = params.get(key)
-    return args
-
-
-def setup_macpool(login_handle, module):
-    from ucsmsdk.mometa.macpool.MacpoolPool import MacpoolPool
-    from ucsmsdk.mometa.macpool.MacpoolBlock import MacpoolBlock
-
-    ansible = module.params
-    args_mo = _get_mo_params(ansible)
-
-    changed = False
-
-    for mac in args_mo['mac_list']:
-        exists = False
-        dn = args_mo['org_dn'] + '/mac-pool-' + mac['name']
-        mo = login_handle.query_dn(dn)
-        if mo:
-            # check top-level mo props
-            kwargs = {}
-            kwargs['assignment_order'] = mac['order']
-            if (mo.check_prop_match(**kwargs)):
-                # top-level props match, check next level props
-                if(mac['to'] != '' and mac['from'] != ''):
-                    block_dn = dn + '/block-' + mac['from'] + '-' + mac['to']
-                    mo_1 = login_handle.query_dn(block_dn)
-                    if mo_1:
-                        exists = True
-                else:
-                    exists = True
-
-        if ansible['state'] == 'absent':
-            if exists:
-                changed = True
-                if not module.check_mode:
-                    login_handle.remove_mo(mo)
-                    login_handle.commit()
-        else:
-            if not exists:
-                changed = True
-                if not module.check_mode:
-                    # create if mo does not already exist
-                    if 'description' not in mac:
-                        mac['description'] = ''
-                    mo = MacpoolPool(parent_mo_or_dn=args_mo['org_dn'],
-                                     name=mac['name'],
-                                     descr=mac['description'],
-                                     assignment_order=mac['order'])
-
-                    if(mac['to'] != '' and mac['from'] != ''):
-                        mo_1 = MacpoolBlock(parent_mo_or_dn=mo,
-                                            to=mac['to'],
-                                            r_from=mac['from'])
-                    login_handle.add_mo(mo, True)
-                    login_handle.commit()
-
-    return changed
-
-
-def setup(login_handle, module):
     result = {}
     err = False
 
     try:
-        result['changed'] = setup_macpool(login_handle, module)
+        from ucsmsdk.mometa.macpool.MacpoolPool import MacpoolPool
+        from ucsmsdk.mometa.macpool.MacpoolBlock import MacpoolBlock
+
+        changed = False
+
+        for mac in module.params['mac_list']:
+            exists = False
+            dn = module.params['org_dn'] + '/mac-pool-' + mac['name']
+            mo = login_handle.query_dn(dn)
+            if mo:
+                # check top-level mo props
+                kwargs = {}
+                kwargs['assignment_order'] = mac['order']
+                if (mo.check_prop_match(**kwargs)):
+                    # top-level props match, check next level props
+                    if(mac['to'] != '' and mac['from'] != ''):
+                        block_dn = dn + '/block-' + mac['from'] + '-' + mac['to']
+                        mo_1 = login_handle.query_dn(block_dn)
+                        if mo_1:
+                            exists = True
+                    else:
+                        exists = True
+
+            if module.params['state'] == 'absent':
+                if exists:
+                    changed = True
+                    if not module.check_mode:
+                        login_handle.remove_mo(mo)
+                        login_handle.commit()
+            else:
+                if not exists:
+                    changed = True
+                    if not module.check_mode:
+                        # create if mo does not already exist
+                        if 'description' not in mac:
+                            mac['description'] = ''
+                        mo = MacpoolPool(parent_mo_or_dn=module.params['org_dn'],
+                                         name=mac['name'],
+                                         descr=mac['description'],
+                                         assignment_order=mac['order'])
+
+                        if(mac['to'] != '' and mac['from'] != ''):
+                            mo_1 = MacpoolBlock(parent_mo_or_dn=mo,
+                                                to=mac['to'],
+                                                r_from=mac['from'])
+                        login_handle.add_mo(mo, True)
+                        login_handle.commit()
+
+        result['changed'] = changed
     except Exception as e:
         err = True
         result['msg'] = "setup error: %s " % str(e)
         result['changed'] = False
 
-    return result, err
-
-
-def main():
-    module = _ansible_module_create()
-    conn = UcsConnection(module)
-    login_handle = conn.login()
-    result, err = setup(login_handle, module)
     conn.logout()
     if err:
         module.fail_json(**result)

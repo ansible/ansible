@@ -73,5 +73,4 @@ options:
     - UcsHandle object to interact with Cisco UCS Manager.
       A single connection handle can be used across multiple modules rather than making a connection each time for each module.
     type: UcsHandle
-    required: no
 '''
