@@ -243,7 +243,7 @@ if ($state -eq "present") {
     if (-not (Test-Path -path $path)) {
         # the key doesn't exist, create it so the next steps work
         try {
-            New-Item -Path $path -Type directory -Force -WhatIf:$check_mode
+            $null = New-Item -Path $path -Type directory -Force -WhatIf:$check_mode
         } catch {
             Fail-Json $result "failed to create registry key at $($path): $($_.Exception.Message)"
         }
@@ -330,7 +330,7 @@ $key_prefix[$path]
         if ($delete_key -and $name -eq $null) {
             # the clear_key flag is set and name is null so delete the entire key
             try {
-                Remove-Item -Path $path -Force -Recurse -WhatIf:$check_mode
+                $null = Remove-Item -Path $path -Force -Recurse -WhatIf:$check_mode
             } catch {
                 Fail-Json $result "failed to delete registry key at $($path): $($_.Exception.Message)"
             }
