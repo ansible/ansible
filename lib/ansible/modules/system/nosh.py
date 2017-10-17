@@ -15,6 +15,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: nosh
+author:
+    - "Thomas Caravia"
+version_added: "2.5"
 short_description:  Manage services with nosh.
 description:
     - Controls services on remote hosts using the nosh toolset.
@@ -96,7 +99,7 @@ service_path:
     type: string
     sample: "/var/sv/sshd"
 status:
-    description: a dictionary with the key=value pairs returned by `system-control show-json SERVICE` or {"Loaded" : False} if the service is not loaded
+    description: a dictionary with the key=value pairs returned by `system-control show-json SERVICE` or Loaded=False if the service is not loaded
     returned: success
     type: complex
     contains: {
