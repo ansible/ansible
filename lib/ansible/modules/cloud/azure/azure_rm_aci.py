@@ -72,6 +72,18 @@ options:
             - Valid azure location. Defaults to location of the resource group.
         default: resource_group location
         required: false
+    registry_login_server:
+        description:
+            - The container image registry login server.
+        required: false
+    registry_username:
+        description:
+            - The username to log in container image registry server.
+        required: false
+    registry_password:
+        description:
+            - The password to log in container image registry server.
+        required: false
     service_principal:
         description:
             - The service principal suboptions.
@@ -128,7 +140,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.containerinstance.models import (ContainerGroup, Container, ResourceRequirements, ResourceRequests)
+    from azure.mgmt.containerinstance.models import (ContainerGroup, Container, ResourceRequirements, ResourceRequests, ImageRegistryCredential)
     from azure.mgmt.containerinstance import ContainerInstanceManagementClient
 except ImportError:
     # This is handled in azure_rm_common
@@ -205,6 +217,21 @@ class AzureRMContainerInstance(AzureRMModuleBase):
                 type='str',
                 required=False
             ),
+            registry_login_server=dict(
+                type='str',
+                required=False,
+                default=None
+            ),
+            registry_username=dict(
+                type='str',
+                required=False,
+                default=None
+            ),
+            registry_password=dict(
+                type='str',
+                required=False,
+                default=None
+            ),
             service_principal=dict(
                 type='list',
                 required=False
@@ -278,10 +305,17 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         # self.log("agent_pool_profiles : {0}".format(parameters.agent_pool_profiles))
         # self.log("vm_diagnostics : {0}".format(parameters.diagnostics_profile.vm_diagnostics))
 
+        credentials = None
+
+        if self.registry_login_server is not None:
+            credentials = ImageRegistryCredential(self.registry_login_server,
+                                                  self.registry_username,
+                                                  self.registry_password)
+
         parameters = ContainerGroup(self.location,
                                     None,
                                     [Container(self.name, self.image, ResourceRequirements(ResourceRequests(self.memory, self.cpu)))],
-                                    None,
+                                    credentials,
                                     None,
                                     None,
                                     self.os_type)
