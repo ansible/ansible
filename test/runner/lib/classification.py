@@ -23,6 +23,10 @@ from lib.import_analysis import (
     get_python_module_utils_imports,
 )
 
+from lib.powershell_import_analysis import (
+    get_powershell_module_utils_imports,
+)
+
 from lib.config import (
     TestConfig,
     IntegrationConfig,
@@ -122,6 +126,7 @@ class PathMapper(object):
         self.compile_targets = list(walk_compile_targets())
         self.units_targets = list(walk_units_targets())
         self.sanity_targets = list(walk_sanity_targets())
+        self.powershell_targets = [t for t in self.sanity_targets if os.path.splitext(t.path)[1] == '.ps1']
 
         self.compile_paths = set(t.path for t in self.compile_targets)
         self.units_modules = set(t.module for t in self.units_targets if t.module)
@@ -143,6 +148,7 @@ class PathMapper(object):
         self.integration_dependencies = analyze_integration_target_dependencies(self.integration_targets)
 
         self.python_module_utils_imports = {}  # populated on first use to reduce overhead when not needed
+        self.powershell_module_utils_imports = {}  # populated on first use to reduce overhead when not needed
 
     def get_dependent_paths(self, path):
         """
@@ -154,6 +160,9 @@ class PathMapper(object):
         if path.startswith('lib/ansible/module_utils/'):
             if ext == '.py':
                 return self.get_python_module_utils_usage(path)
+
+            if ext == '.psm1':
+                return self.get_powershell_module_utils_usage(path)
 
         if path.startswith('test/integration/targets/'):
             return self.get_integration_target_usage(path)
@@ -181,6 +190,22 @@ class PathMapper(object):
             name = name[:-9]
 
         return sorted(self.python_module_utils_imports[name])
+
+    def get_powershell_module_utils_usage(self, path):
+        """
+        :type path: str
+        :rtype: list[str]
+        """
+        if not self.powershell_module_utils_imports:
+            display.info('Analyzing powershell module_utils imports...')
+            before = time.time()
+            self.powershell_module_utils_imports = get_powershell_module_utils_imports(self.powershell_targets)
+            after = time.time()
+            display.info('Processed %d powershell module_utils in %d second(s).' % (len(self.powershell_module_utils_imports), after - before))
+
+        name = os.path.splitext(os.path.basename(path))[0]
+
+        return sorted(self.powershell_module_utils_imports[name])
 
     def get_integration_target_usage(self, path):
         """
@@ -263,10 +288,8 @@ class PathMapper(object):
             return minimal
 
         if path.startswith('lib/ansible/module_utils/'):
-            if ext in ('.ps1', '.psm1'):
-                return {
-                    'windows-integration': self.integration_all_target,
-                }
+            if ext == '.psm1':
+                return minimal  # already expanded using get_dependent_paths
 
             if ext == '.py':
                 return minimal  # already expanded using get_dependent_paths
