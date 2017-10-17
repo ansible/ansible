@@ -32,12 +32,14 @@ options:
   aws_secret_key:
     description:
       - AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+        If the server has an IAM role then the role's temporary key is used.
     required: false
     default: null
     aliases: [ 'ec2_secret_key', 'secret_key' ]
   aws_access_key:
     description:
       - AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+        If the server has an IAM role then the role's temporary key is used.
     required: false
     default: null
     aliases: [ 'ec2_access_key', 'access_key' ]
@@ -79,7 +81,7 @@ notes:
     C(AWS_SECRET_ACCESS_KEY) or C(AWS_SECRET_KEY) or C(EC2_SECRET_KEY),
     C(AWS_SECURITY_TOKEN) or C(EC2_SECURITY_TOKEN),
     C(AWS_REGION) or C(EC2_REGION)
-  - Ansible uses the boto configuration file (typically ~/.boto) if no
+  - Ansible uses the boto configuration file (typically ~/.boto or ~/.aws) if no
     credentials are provided. See http://boto.readthedocs.org/en/latest/boto_config_tut.html
   - C(AWS_REGION) or C(EC2_REGION) can be typically be used to specify the
     AWS region, when required, but this can also be configured in the boto config file
