@@ -8,6 +8,7 @@ Ansible Changes By Release
 ### Bugfixes
 
 * Fix formatting typo in panos_security_rule.py docs. (https://github.com/ansible/ansible/commit/c0fc797a06451d2fe1ac4fc077fc64f3a1666447)
+* Fix rpm spec file to build on RHEL6 without EPEL packages (https://github.com/ansible/ansible/pull/31653)
 
 <a id="2.4.1"></a>
 
