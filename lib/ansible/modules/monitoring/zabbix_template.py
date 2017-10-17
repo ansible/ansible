@@ -36,30 +36,8 @@ author:
     - "@sookido"
 requirements:
     - "python >= 2.6"
-    - zabbix-api
+    - "zabbix-api >= 0.5.3"
 options:
-    server_url:
-        description:
-            - Url of Zabbix server, with protocol (http or https).
-        required: true
-    login_user:
-        description:
-            - name of user to login to zabbix
-        required: true
-    login_password:
-        description:
-            - password for user to login to zabbix
-        required: true
-    http_login_user:
-        description:
-            - Basic Auth login
-        required: false
-        default: None
-    http_login_password:
-        description:
-            - Basic Auth password
-        required: false
-        default: None
     template_name:
         description:
             - Name of zabbix template
@@ -87,11 +65,9 @@ options:
         required: false
         choices: [ present, absent]
         default: "present"
-    timeout:
-        description:
-            - The timeout of API request (seconds).
-        required: false
-        default: 10
+
+extends_documentation_fragment:
+    - zabbix
 '''
 
 EXAMPLES = '''
@@ -212,6 +188,7 @@ def main():
             http_login_user=dict(type='str', required=False, default=None),
             http_login_password=dict(type='str', required=False,
                                      default=None, no_log=True),
+            validate_certs=dict(type='bool', required=False, default=True),
             template_name=dict(type='str', required=True),
             template_groups=dict(type='list', required=True),
             link_templates=dict(type='list', required=False),
@@ -233,6 +210,7 @@ def main():
     login_password = module.params['login_password']
     http_login_user = module.params['http_login_user']
     http_login_password = module.params['http_login_password']
+    validate_certs = module.params['validate_certs']
     template_name = module.params['template_name']
     template_groups = module.params['template_groups']
     link_templates = module.params['link_templates']
@@ -246,7 +224,7 @@ def main():
     # login to zabbix
     try:
         zbx = ZabbixAPI(server_url, timeout=timeout,
-                        user=http_login_user, passwd=http_login_password)
+                        user=http_login_user, passwd=http_login_password, validate_certs=validate_certs)
         zbx.login(login_user, login_password)
     except Exception as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
