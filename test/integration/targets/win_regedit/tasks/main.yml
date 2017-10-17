@@ -1,12 +1,6 @@
 ---
-- name: make sure testing keys are removed before test
-  win_regedit:
-    path: '{{item}}'
-    delete_key: yes
-    state: absent
-  with_items:
-  - '{{test_win_regedit_local_key}}'
-  - '{{test_win_regedit_classes_key}}'
+- name: make sure we start on a blank state
+  include_tasks: cleanup.yml
 
 - block:
   - name: run tests for each property type
@@ -81,10 +75,4 @@
 
   always:
   - name: make sure testing keys are removed after test
-    win_regedit:
-      path: '{{item}}'
-      delete_key: yes
-      state: absent
-    with_items:
-    - '{{test_win_regedit_local_key}}'
-    - '{{test_win_regedit_classes_key}}'
+    include_tasks: cleanup.yml
