@@ -76,6 +76,8 @@ class ActionModule(ActionBase):
         # out now so we know the file name we need to transfer to the remote,
         # and everything else is an argument to the script which we need later
         # to append to the remote command
+        # FIXME: If the path to the script has a space in it, this silently fails to do anything
+        # This code makes a bad assumption by splitting on spaces.
         parts = self._task.args.get('_raw_params', '').strip().split()
         source = parts[0]
         args = ' '.join(parts[1:])
@@ -96,6 +98,10 @@ class ActionModule(ActionBase):
         env_dict = dict()
         env_string = self._compute_environment_string(env_dict)
         script_cmd = ' '.join([env_string, tmp_src, args])
+
+        if self._play_context.check_mode:
+            return dict(changed=True)
+
         script_cmd = self._connection._shell.wrap_for_exec(script_cmd)
 
         exec_data = None
