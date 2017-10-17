@@ -20,13 +20,18 @@
 ## prep
 ##
 
-- set_fact: output_dir_test={{output_dir}}/test_script
+- set_fact:
+    output_dir_test: "{{ output_dir }}/test_script"
 
 - name: make sure our testing sub-directory does not exist
-  file: path="{{ output_dir_test }}" state=absent
+  file:
+    path: "{{ output_dir_test }}"
+    state: absent
 
 - name: create our testing sub-directory
-  file: path="{{ output_dir_test }}" state=directory
+  file:
+    path: "{{ output_dir_test }}"
+    state: directory
 
 ##
 ## script
@@ -44,35 +49,42 @@
       - "script_result0.stdout == 'win'"
 
 # creates
-
 - name: verify that afile.txt is absent
-  file: path={{output_dir_test}}/afile.txt state=absent
+  file:
+    path: "{{ output_dir_test }}/afile.txt"
+    state: absent
 
 - name: create afile.txt with create_afile.sh via command
-  script: create_afile.sh {{output_dir_test | expanduser}}/afile.txt creates={{output_dir_test | expanduser}}/afile.txt
+  script: create_afile.sh {{ output_dir_test | expanduser }}/afile.txt
+  args:
+    creates: "{{ output_dir_test | expanduser }}/afile.txt"
 
 - name: verify that afile.txt is present
-  file: path={{output_dir_test}}/afile.txt state=file
+  file:
+    path: "{{ output_dir_test }}/afile.txt"
+    state: file
 
 # removes
-
 - name: remove afile.txt with remote_afile.sh via command
-  script: remove_afile.sh {{output_dir_test | expanduser}}/afile.txt removes={{output_dir_test | expanduser}}/afile.txt
+  script: remove_afile.sh {{ output_dir_test | expanduser }}/afile.txt
+  args:
+    removes: "{{ output_dir_test | expanduser }}/afile.txt"
   register: script_result1
 
 - name: verify that afile.txt is absent
-  file: path={{output_dir_test}}/afile.txt state=absent
+  file:
+    path: "{{ output_dir_test }}/afile.txt"
+    state: absent
   register: script_result2
 
 - name: assert that the file was removed by the script
   assert:
     that:
-      - "script_result1|changed"
+      - script_result1 | changed
       - "script_result2.state == 'absent'"
 
 # async
 - name: test task failure with async param
-
   script: /some/script.sh
   async: 2
   ignore_errors: true
