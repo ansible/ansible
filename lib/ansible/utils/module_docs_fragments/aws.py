@@ -63,6 +63,11 @@ options:
     default: null
     aliases: []
     version_added: "1.6"
+  region:
+    description:
+      - The AWS region to use.
+    required: false
+    default: null
 requirements:
   - "python >= 2.6"
   - boto
