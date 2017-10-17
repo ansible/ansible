@@ -29,31 +29,6 @@ requirements:
     - "python >= 2.6"
     - "zabbix-api >= 0.5.3"
 options:
-    server_url:
-        description:
-            - Url of Zabbix server, with protocol (http or https).
-        required: true
-        aliases: [ "url" ]
-    login_user:
-        description:
-            - Zabbix user name, used to authenticate against the server.
-        required: true
-    login_password:
-        description:
-            - Zabbix user password.
-        required: true
-    http_login_user:
-        description:
-            - Basic Auth login
-        required: false
-        default: None
-        version_added: "2.1"
-    http_login_password:
-        description:
-            - Basic Auth password
-        required: false
-        default: None
-        version_added: "2.1"
     host_name:
         description:
             - Name of the host in Zabbix.
@@ -99,10 +74,6 @@ options:
         required: false
         choices: ['present', 'absent']
         default: "present"
-    timeout:
-        description:
-            - The timeout of API request (seconds).
-        default: 10
     proxy:
         description:
             - The name of the Zabbix Proxy to be used
