@@ -26,11 +26,29 @@ options:
         description:
             - Name of a resource group where the Container Services exists or will be created.
         required: true
-    name:
+    group_name:
         description:
-            - Name of the Container instance.
+            - Name of the container Group
         required: true
         default: null
+    name:
+        description:
+            - Name of the container instance.
+        required: true
+        default: null
+    image:
+        description:
+            - Image to be used to create container instance.
+        required: true
+        default: null
+    os:
+        description:
+            - Operating System
+        choices:
+            - linux
+            - windows
+        default: linux
+        required: false
     state:
         description:
             - Assert the state of the ACS. Use 'present' to create or update an ACS and 'absent' to delete it.
@@ -184,6 +202,7 @@ try:
         ContainerServiceVMDiagnostics
     )
     from azure.mgmt.containerinstance.models import (ContainerGroup, Container, ResourceRequirements, ResourceRequests)
+    from azure.mgmt.containerinstance import ContainerInstanceManagementClient
 except ImportError:
     # This is handled in azure_rm_common
     pass
@@ -224,6 +243,20 @@ class AzureRMContainerInstance(AzureRMModuleBase):
             name=dict(
                 type='str',
                 required=True
+            ),
+            group_name=dict(
+                type='str',
+                required=True
+            ),
+            image=dict(
+                type='str',
+                required=True
+            ),
+            os=dict(
+                type='str',
+                required=False,
+                default='linux',
+                choices=['linux', 'windows']
             ),
             state=dict(
                 type='str',
@@ -310,14 +343,15 @@ class AzureRMContainerInstance(AzureRMModuleBase):
 
         parameters = ContainerGroup(self.location,
                                     None,
-                                    [Container("testvm10", "dockiot/ansible", ResourceRequirements(ResourceRequests(1.5, 1)))],
+                                    [Container(self.name, self.image, ResourceRequirements(ResourceRequests(1.5, 1)))],
                                     None,
                                     None,
                                     None,
-                                    "linux")
+                                    self.os)
 
         try:
-            response = self.containerinstance_client.container_groups.create_or_update(self.resource_group, self.name, parameters)
+            client = ContainerInstanceManagementClient(self.azure_credentials, self.subscription_id)
+            response = client.container_groups.create_or_update(self.resource_group, self.group_name, parameters)
         except CloudError as exc:
             self.log('Error attempting to create the container instance.')
             self.fail("Error creating the ACS instance: {0}".format(str(exc)))
@@ -334,7 +368,8 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         '''
         self.log("Deleting the ACI instance {0}".format(self.name))
         try:
-            response = self.containerinstance_client.container_groups.delete(self.resource_group, self.name)
+            client = ContainerInstanceManagementClient(self.azure_credentials, self.subscription_id)
+            response = client.delete(self.resource_group, self.name)
         except CloudError as e:
             self.log('Error attempting to delete the ACS instance.')
             self.fail("Error deleting the ACS instance: {0}".format(str(e)))
