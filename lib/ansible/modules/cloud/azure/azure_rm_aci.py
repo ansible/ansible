@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_aci
 version_added: "2.4"
-short_description: Manage an Azure Container Instance (ACS).
+short_description: Manage an Azure Container Instance (ACI).
 description:
     - Create, update and delete an Azure Container Instance.
 
@@ -97,104 +97,29 @@ author:
 '''
 
 EXAMPLES = '''
-    - name: Create an azure container services instance running Kubernetes
-      azure_rm_acs:
-        name: acctestcontservice1
+    - name: Create an azure container instance
+      azure_rm_aci:
+        group_name: testinstancegroup
+        name: testinstance
         location: eastus
         resource_group: Testing
-        orchestration_platform: Kubernetes
-        master_profile:
-            - count: 3
-              dns_prefix: acsk8smasterdns
-        linux_profile:
-            - admin_username: azureuser
-              ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAA...
-        service_principal:
-            - client_id: "cf72ca99-f6b9-4004-b0e0-bee10c521948"
-              client_secret: "mySPNp@ssw0rd!"
-        agent_pool_profiles:
-            - name: default
-              count: 5
-              dns_prefix: acsk8sagent
-              vm_size: Standard_D2_v2
-        diagnostics_profile: false
+        image: contoso/testimage
         tags:
             Environment: Production
 
-    - name: Create an azure container services instance running DCOS
-      azure_rm_acs:
-        name: acctestcontservice2
-        location: eastus
-        resource_group: Testing
-        orchestration_platform: DCOS
-        master_profile:
-            - count: 3
-              dns_prefix: acsdcosmasterdns
-        linux_profile:
-            - admin_username: azureuser
-              ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAA...
-        agent_pool_profiles:
-            - name: default
-              count: 5
-              dns_prefix: acscdcosagent
-              vm_size: Standard_D2_v2
-        diagnostics_profile: false
-        tags:
-            Environment: Production
-
-    - name: Create an azure container services instance running Swarm
-      azure_rm_acs:
-        name: acctestcontservice3
-        location: eastus
-        resource_group: Testing
-        orchestration_platform: Swarm
-        master_profile:
-            - count: 3
-              dns_prefix: acsswarmmasterdns
-        linux_profile:
-            - admin_username: azureuser
-              ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAA...
-        agent_pool_profiles:
-            - name: default
-              count: 5
-              dns_prefix: acsswarmagent
-              vm_size: Standard_D2_v2
-        diagnostics_profile: false
-        tags:
-            Environment: Production
-
-# Deletes the specified container service in the specified subscription and resource group.
-# The operation does not delete other resources created as part of creating a container service,
-# including storage accounts, VMs, and availability sets. All the other resources created with the container
-# service are part of the same resource group and can be deleted individually.
-    - name: Remove an azure container services instance
-      azure_rm_acs:
-        name: acctestcontservice3
+    - name: Delete existing azure container instance
+      azure_rm_aci:
+        group_name: testinstancegroup
+        name: testinstance
         location: eastus
         resource_group: Testing
         state: absent
-        orchestration_platform: Swarm
-        master_profile:
-            - count: 1
-              dns_prefix: acstestingmasterdns5
-        linux_profile:
-            - admin_username: azureuser
-              ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAA...
-        service_principal:
-            - client_id: 7fb4173c-3ca3-4d5b-87f8-1daac941207a
-              client_secret: MPNSuM1auUuITefiLGBrpZZnLMDKBLw2
-        agent_pool_profiles:
-            - name: default
-              count: 4
-              dns_prefix: acctestagent15
-              vm_size: Standard_A0
-        diagnostics_profile: false
         tags:
-            Ansible: azure_rm_acs
+            Environment: Production
 '''
 RETURN = '''
 state:
-    description: Current state of the azure container service
+    description: Current state of the azure instance
     returned: always
     type: dict
 '''
@@ -213,7 +138,7 @@ except ImportError:
 def create_aci_dict(aci):
     '''
     Helper method to deserialize a ContainerService to a dict
-    :param: acs: ContainerService or AzureOperationPoller with the Azure callback object
+    :param: aci: Container
     :return: dict with the state on Azure
     '''
     results = dict(
@@ -318,7 +243,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         if not self.location:
             self.location = resource_group.location
 
-        # Check if the ACS instance already present in the RG
+        # Check if the ACI instance already present in the RG
         if self.state == 'present':
 
             self.log("Need to Create / Update the ACI instance")
@@ -340,9 +265,9 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         '''
         Creates or updates a container service with the specified configuration of orchestrator, masters, and agents.
 
-        :return: deserialized ACS instance state dictionary
+        :return: deserialized ACI instance state dictionary
         '''
-        self.log("Creating / Updating the ACS instance {0}".format(self.name))
+        self.log("Creating / Updating the ACI instance {0}".format(self.name))
 
         # self.log("orchestrator_profile : {0}".format(parameters.orchestrator_profile))
         # self.log("service_principal_profile : {0}".format(parameters.service_principal_profile))
@@ -366,7 +291,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
             response = client.container_groups.create_or_update(self.resource_group, self.group_name, parameters)
         except CloudError as exc:
             self.log('Error attempting to create the container instance.')
-            self.fail("Error creating the ACS instance: {0}".format(str(exc)))
+            self.fail("Error creating the ACI instance: {0}".format(str(exc)))
         return create_aci_dict(response)
 
     def delete_aci(self):
@@ -383,26 +308,26 @@ class AzureRMContainerInstance(AzureRMModuleBase):
             client = ContainerInstanceManagementClient(self.azure_credentials, self.subscription_id)
             response = client.container_groups.delete(self.resource_group, self.group_name)
         except CloudError as e:
-            self.log('Error attempting to delete the ACS instance.')
-            self.fail("Error deleting the ACS instance: {0}".format(str(e)))
+            self.log('Error attempting to delete the ACI instance.')
+            self.fail("Error deleting the ACI instance: {0}".format(str(e)))
 
         return True
 
-    def get_acs(self):
+    def get_aci(self):
         '''
         Gets the properties of the specified container service.
 
-        :return: deserialized ACS instance state dictionary
+        :return: deserialized ACI instance state dictionary
         '''
-        self.log("Checking if the ACS instance {0} is present".format(self.name))
+        self.log("Checking if the ACI instance {0} is present".format(self.name))
         found = False
         try:
             response = self.containerinstance_client.container_services.get(self.resource_group, self.name)
             found = True
             self.log("Response : {0}".format(response))
-            self.log("ACS instance : {0} found".format(response.name))
+            self.log("ACI instance : {0} found".format(response.name))
         except CloudError as e:
-            self.log('Did not find the ACS instance.')
+            self.log('Did not find the ACI instance.')
         if found is True:
             return create_aci_dict(response)
 
