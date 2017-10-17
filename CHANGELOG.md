@@ -10,6 +10,8 @@ Ansible Changes By Release
 * Fix formatting typo in panos_security_rule.py docs. (https://github.com/ansible/ansible/commit/c0fc797a06451d2fe1ac4fc077fc64f3a1666447)
 * Fix rpm spec file to build on RHEL6 without EPEL packages (https://github.com/ansible/ansible/pull/31653)
 * Keep hosts in play vars if inside of a rescue task (https://github.com/ansible/ansible/pull/31710)
+* Fix wait_for module to treat broken connections as unready so that the connection continues to be retried:
+  https://github.com/ansible/ansible/pull/28839
 
 <a id="2.4.1"></a>
 
