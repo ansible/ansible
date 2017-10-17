@@ -24,34 +24,44 @@ description:
 options:
     resource_group:
         description:
-            - Name of a resource group where the Container Services exists or will be created.
+            - Name of resource group.
         required: true
     group_name:
         description:
-            - Name of the container Group
+            - The name of the container group.
         required: true
         default: null
     name:
         description:
-            - Name of the container instance.
+            - The name of the container instance.
         required: true
         default: null
     image:
         description:
-            - Image to be used to create container instance.
+            - The container image name.
         required: true
         default: null
-    os:
+    os_type:
         description:
-            - Operating System
+            - The OS type of containers.
         choices:
             - linux
             - windows
         default: linux
         required: false
+    memory:
+        description:
+            - The required memory of the containers in GB.
+        default: 1.5
+        required: false
+    cpu:
+        description:
+            - The required number of CPU cores of the containers.
+        default: 1
+        required: false
     state:
         description:
-            - Assert the state of the ACS. Use 'present' to create or update an ACS and 'absent' to delete it.
+            - Assert the state of the ACI. Use 'present' to create or update an ACI and 'absent' to delete it.
         default: present
         choices:
             - absent
@@ -244,7 +254,17 @@ class AzureRMContainerInstance(AzureRMModuleBase):
                 type='str',
                 required=True
             ),
-            os=dict(
+            memory=dict(
+                type='float',
+                required=False,
+                default=1.5
+            ),
+            cpu=dict(
+                type='int',
+                required=False,
+                default=1
+            ),
+            os_type=dict(
                 type='str',
                 required=False,
                 default='linux',
@@ -335,11 +355,11 @@ class AzureRMContainerInstance(AzureRMModuleBase):
 
         parameters = ContainerGroup(self.location,
                                     None,
-                                    [Container(self.name, self.image, ResourceRequirements(ResourceRequests(1.5, 1)))],
+                                    [Container(self.name, self.image, ResourceRequirements(ResourceRequests(self.memory, self.cpu)))],
                                     None,
                                     None,
                                     None,
-                                    self.os)
+                                    self.os_type)
 
         try:
             client = ContainerInstanceManagementClient(self.azure_credentials, self.subscription_id)
