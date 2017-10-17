@@ -26,6 +26,11 @@ options:
         description:
             - Name of resource group.
         required: true
+    group_name:
+        description:
+            - Name of the container Group
+        required: true
+        default: null
     name:
         description:
             - The name of the container group.
