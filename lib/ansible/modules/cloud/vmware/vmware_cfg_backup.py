@@ -4,13 +4,8 @@
 # Copyright IBM Corp. 2017
 # Author(s): Andreas Nafpliotis <nafpliot@de.ibm.com>
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 # Ansible is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -30,7 +25,8 @@ short_description: Backup / Restore / Reset ESXi host configuration
 description:
     - Backup / Restore / Reset ESXi host configuration
 version_added: "2.3"
-author: Andreas Nafpliotis
+author: 
+    - Andreas Nafpliotis (@nafpliot-ibm)
 notes:
     - Tested on ESXi 6.0
     - Works only for ESXi hosts
@@ -44,17 +40,15 @@ options:
             - The destination where the ESXi configuration bundle will be saved. The I(dest) can be a folder or a file.
             - If I(dest) is a folder, the backup file will be saved in the folder with the default filename generated from the ESXi server.
             - If I(dest) is a file, the backup file will be saved with that filename. The file extension will always be .tgz.
-        required: False
     src:
         description:
             - The file containing the ESXi configuration that will be restored
-        required: False
     state:
         description:
             - If C(saved), the .tgz backup bundle will be saved in I(dest).
             - If C(absent), the host configuration will be resetted to default values.
             - If C(loaded), the backup file in I(src) will be loaded to the ESXi host rewriting the hosts settings.
-        choices: ['saved', 'absent', 'loaded']
+        choices: [saved, absent, loaded]
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -85,6 +79,11 @@ try:
     HAS_PYVMOMI = True
 except ImportError:
     HAS_PYVMOMI = False
+    
+from ansible.module_utils.vmware import *
+from ansible.module_utils.basic import *
+from ansible.module_utils.urls import open_url
+from ansible.module_utils.six.moves.urllib.error import HTTPError
 
 
 class VMwareConfigurationBackup(object):
@@ -160,12 +159,9 @@ class VMwareConfigurationBackup(object):
             filename = url.rsplit('/', 1)[1]
             self.dest = os.path.join(self.dest, filename)
         else:
-            try:
-                file_extension = self.dest.rsplit('.', 1)[1]
-                if file_extension != "tgz":
-                    self.dest += ".tgz"
-            except:
-                self.dest += ".tgz"
+            filename, file_extension = os.path.splitext(self.dest)
+            if file_extension != ".tgz":
+                self.dest = filename + ".tgz"
         try:
             request = open_url(url=url, validate_certs=self.validate_certs)
             with open(self.dest, "wb") as file:
@@ -208,10 +204,6 @@ def main():
     vmware_cfg_backup = VMwareConfigurationBackup(module)
     vmware_cfg_backup.process_state()
 
-from ansible.module_utils.vmware import *
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import open_url
-from ansible.module_utils.six.moves.urllib.error import HTTPError
 
 if __name__ == '__main__':
     main()
