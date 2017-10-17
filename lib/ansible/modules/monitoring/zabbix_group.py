@@ -29,13 +29,13 @@ requirements:
     - "python >= 2.6"
     - zabbix-api
 options:
-   state:
+    state:
         description:
             - Create or delete host group.
         required: false
         default: "present"
         choices: [ "present", "absent" ]
-   host_groups:
+    host_groups:
         description:
             - List of host groups to create or delete.
         required: true
