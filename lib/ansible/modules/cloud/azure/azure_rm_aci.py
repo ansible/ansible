@@ -293,7 +293,13 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         if not self.location:
             self.location = resource_group.location
 
-        # Check if the ACI instance already present in the RG
+        response = self.get_aci()
+
+        if not response:
+            self.log("Container instance doesn't exist yet")
+        else:
+            self.log("Container instance already exists")
+
         if self.state == 'present':
 
             self.log("Need to Create / Update the ACI instance")
@@ -384,7 +390,8 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         self.log("Checking if the ACI instance {0} is present".format(self.name))
         found = False
         try:
-            response = self.containerinstance_client.container_services.get(self.resource_group, self.name)
+            client = ContainerInstanceManagementClient(self.azure_credentials, self.subscription_id)
+            response = client.container_groups.get(self.resource_group, self.group_name)
             found = True
             self.log("Response : {0}".format(response))
             self.log("ACI instance : {0} found".format(response.name))
