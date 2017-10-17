@@ -253,7 +253,7 @@ def get_inventory(instances):
 def get_project_zone_list(params):
     """Get list of all zones for particular project (Worker process)"""
 
-    project, cache_dir, refresh_cache  = params
+    project, cache_dir, refresh_cache = params
     zone_list = []
     log.info('Retrieving zone list from project: %s', project)
 
@@ -379,6 +379,7 @@ def get_cached_data(cache_dir, project=None, zone=None):
 
     return cached_data
 
+
 def store_cache(data, cache_dir, project=None, zone=None):
 
     data_dir = cache_dir
@@ -399,6 +400,7 @@ def store_cache(data, cache_dir, project=None, zone=None):
 
     with open(data_file, 'w') as json_file:
         json.dump(data, json_file)
+
 
 def main(args):
 
