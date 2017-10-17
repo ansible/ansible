@@ -48,6 +48,7 @@
       - "script_result0.stderr == ''"
       - "script_result0.stdout == 'win'"
 
+
 # creates
 - name: verify that afile.txt is absent
   file:
@@ -58,32 +59,64 @@
   script: create_afile.sh {{ output_dir_test | expanduser }}/afile.txt
   args:
     creates: "{{ output_dir_test | expanduser }}/afile.txt"
+  register: _create_test1
 
+- name: Check state of created file
+  stat:
+    path: "{{ output_dir_test | expanduser }}/afile.txt"
+  register: _create_stat1
+
+- name: Run create_afile.sh again to ensure it is skipped
+  script: create_afile.sh {{ output_dir_test | expanduser }}/afile.txt
+  args:
+    creates: "{{ output_dir_test | expanduser }}/afile.txt"
+  register: _create_test2
+
+- name: Assert that script report a change, file was created, second run was skipped
+  assert:
+    that:
+      - _create_test1 | changed
+      - _create_stat1.stat.exists
+      - _create_test2 | skipped
+
+
+# removes
 - name: verify that afile.txt is present
   file:
     path: "{{ output_dir_test }}/afile.txt"
     state: file
 
-# removes
 - name: remove afile.txt with remote_afile.sh via command
   script: remove_afile.sh {{ output_dir_test | expanduser }}/afile.txt
   args:
     removes: "{{ output_dir_test | expanduser }}/afile.txt"
-  register: script_result1
+  register: _remove_test1
 
+- name: Check state of removed file
+  stat:
+    path: "{{ output_dir_test | expanduser }}/afile.txt"
+  register: _remove_stat1
+
+- name: Run remote_afile.sh again to enure it is skipped
+  script: remove_afile.sh {{ output_dir_test | expanduser }}/afile.txt
+  args:
+    removes: "{{ output_dir_test | expanduser }}/afile.txt"
+  register: _remove_test2
+
+- name: Assert that script report a change, file was removed, second run was skipped
+  assert:
+    that:
+      - _remove_test1 | changed
+      - not _remove_stat1.stat.exists
+      - _remove_test2 | skipped
+
+
+# async
 - name: verify that afile.txt is absent
   file:
     path: "{{ output_dir_test }}/afile.txt"
     state: absent
-  register: script_result2
 
-- name: assert that the file was removed by the script
-  assert:
-    that:
-      - script_result1 | changed
-      - "script_result2.state == 'absent'"
-
-# async
 - name: test task failure with async param
   script: /some/script.sh
   async: 2
@@ -93,5 +126,73 @@
 - name: assert task with async param failed
   assert:
     that:
-      - script_result3|failed
+      - script_result3 | failed
       - script_result3.msg == "async is not supported for this task."
+
+
+# check mode
+- name: Run script to create a file in check mode
+  script: create_afile.sh {{ output_dir_test | expanduser }}/afile2.txt
+  check_mode: yes
+  register: _check_mode_test
+
+- debug:
+    var: _check_mode_test
+    verbosity: 2
+
+- name: Get state of file created by script
+  stat:
+    path: "{{ output_dir_test | expanduser }}/afile2.txt"
+  register: _afile_stat
+
+- debug:
+    var: _afile_stat
+    verbosity: 2
+
+- name: Assert that a change was reported but the script did make changes
+  assert:
+    that:
+      - _check_mode_test | changed
+      - not _afile_stat.stat.exists
+
+- name: Run script to create a file
+  script: create_afile.sh {{ output_dir_test | expanduser }}/afile2.txt
+
+- name: Run script to create a file in check mode with 'creates' argument
+  script: create_afile.sh {{ output_dir_test | expanduser }}/afile2.txt
+  args:
+    creates: "{{ output_dir_test | expanduser }}/afile2.txt"
+  register: _check_mode_test2
+  check_mode: yes
+
+- debug:
+    var: _check_mode_test2
+    verbosity: 2
+
+- name: Assert that task was skipped and mesage was returned
+  assert:
+    that:
+      - _check_mode_test2 | skipped
+      - '_check_mode_test2.msg == "skipped, since {{ output_dir_test | expanduser }}/afile2.txt exists"'
+
+- name: Remove afile2.txt
+  file:
+    path: "{{ output_dir_test | expanduser }}/afile2.txt"
+    state: absent
+
+- name: Run script to remove a file in check mode with 'removes' argument
+  script: remove_afile.sh {{ output_dir_test | expanduser }}/afile2.txt
+  args:
+    removes: "{{ output_dir_test | expanduser }}/afile2.txt"
+  register: _check_mode_test3
+  check_mode: yes
+
+- debug:
+    var: _check_mode_test3
+    verbosity: 2
+
+- name: Assert that task was skipped and message was returned
+  assert:
+    that:
+      - _check_mode_test3 | skipped
+      - '_check_mode_test3.msg == "skipped, since {{ output_dir_test | expanduser }}/afile2.txt does not exist"'
