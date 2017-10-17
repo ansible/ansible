@@ -32,23 +32,25 @@ precedence, least to higher):
 Usage:
     gce_googleapiclient.py [--project=PROJECT]... [--zone=ZONE]...
         [--billing-account=ACCOUNT_NAME] [--config=CONFIG_FILE]
-        [--num-threads=NUM_THREADS] [--timeout=TIMEOUT]
+        [--num-threads=NUM_THREADS] [--timeout=TIMEOUT] [--cache-dir=CACHE_DIR]
         [options]
 
 Arguments:
-    -b ACCOUNT_NAME --billing-account=ACCOUNT_NAME  The billing account associated with the projects you want to get
-                                                information. It is only needed to get the list of the projects
-                                                (when --project parameter isn' set)
-    -c CONFIG_FILE --config=CONFIG_FILE         Path to the config file (see docoptcfg docs) [default: ./gce_googleapiclient.ini]
-    -p PROJECT --project PROJECT                Google Cloud projects to search for instances
-    -t NUM_THREADS --num-threads=NUM_THREADS    Enable multi-threading, set it to NUM_THREADS [default: 4]
-    -z ZONE --zone ZONE                         Google Cloud zones to search for instances
-    --timeout TIMEOUT                           Length of timeout in seconds for worker threads [default: 3600]
+    -b, --billing-account ACCOUNT_NAME  The billing account associated with the projects you want to
+                                        get information. It is only needed to get the list of the
+                                        projects (when --project parameter isn't set)
+    -c, --config CONFIG_FILE            Path to the config file [default: ./gce_googleapiclient.ini]
+    -p, --project PROJECT               Google Cloud projects to search for instances
+    -t, --num-threads NUM_THREADS       Enable multi-threading, set it to NUM_THREADS [default: 4]
+    -z, --zone ZONE                     Google Cloud zones to search for instances
+    --timeout TIMEOUT                   Length of timeout in seconds for worker threads [default: 3600]
+    --cache-dir CACHE_DIR               Directory where cache should be stored [default: .gce_cache/]
 
 Options:
-    -d --debug                                  Set debugging level to DEBUG on log file
-    -h --help                                   Prints the application help
-    -l --list                                   Needed by Ansible, but actually doesn't change anything
+    -d, --debug                         Set debugging level to DEBUG on log file
+    -h, --help                          Prints the application help
+    -l, --list                          Needed by Ansible, but actually doesn't change anything
+    --refresh-cache                     Force refresh of cache by making API requests
 
 Setting multiple values parameters:
     Some parameters can have multiple values (ZONE and PROJECT) and to set them
@@ -59,11 +61,10 @@ Setting multiple values parameters:
 
 2. Environment variables:
     $ (...) GCE_ZONE0=zone1 GCE_ZONE1=zone2 (...) ./gce_googleapiclient.py
-        Obs: from docoptcfg documentation "(...) can set PREFIX_KEY=one,
-    PREFIX_KEY0=two, and so on (up to 99 is supported). They can also start at
-    1: PREFIX_KEY=one, PREFIX_KEY1=two, PREFIX_KEY2=three. They can even skip
-    the integer-less variable and do PREFIX_KEY0=one, PREFIX_KEY1=two and so
-    on. The first variable must start either integer-less or with 0."
+        Obs: from docoptcfg documentation "(...) can set PREFIX_KEY=one, PREFIX_KEY0=two, and so on
+    (up to 99 is supported). They can also start at 1: PREFIX_KEY=one, PREFIX_KEY1=two,
+    PREFIX_KEY2=three. They can even skip the integer-less variable and do PREFIX_KEY0=one,
+    PREFIX_KEY1=two and so on. The first variable must start either integer-less or with 0."
 
 3. Config ini file:
     [gce_googleapiclient.py]
@@ -76,21 +77,17 @@ Setting multiple values parameters:
 
 from __future__ import print_function
 
-from sys import version_info, stderr
-
 import collections
 import json
 import logging as log
 import multiprocessing as mp
 import signal
+import os
+import sys
+import time
+import shutil
 
 from Crypto import Random
-
-if version_info < (3, 0):
-    import Queue as queue
-else:
-    import queue
-
 
 from docoptcfg import DocoptcfgFileError
 from docoptcfg import docoptcfg
@@ -104,33 +101,23 @@ from oauth2client.client import GoogleCredentials
 ENV_PREFIX = 'GCE_'
 API_VERSION = 'v1'
 
+CACHE_EXPIRATION = 3600  # 1h (60 * 60s)
+
 
 class GCloudAPI(object):
     """
     Class for handling the access to Google Cloud API.
     """
     def __init__(self, api_version=API_VERSION):
-        # type: (str) -> None
-        """
-        Initialize Google Cloud API wrapper.
-
-        :param str api_version: api version used to connect
-        """
 
         self.credentials = GoogleCredentials.get_application_default()
         self.api_version = api_version
-        self.services = {}  # type: Dict[str, Any]
+        self.services = {}
 
         for service_type in ['compute', 'cloudbilling']:
             self.get_service(service_type)
 
     def get_service(self, service_name):
-        # type: (str) -> Any
-        """
-        Get service object; initialize if not initialized yet.
-
-        :param str service_name: name of the service object to get
-        """
 
         if service_name not in self.services:
             self.services[service_name] = discovery.build(serviceName=service_name,
@@ -144,38 +131,44 @@ GCAPI = GCloudAPI()
 
 
 def signal_handler():  # pragma: no cover
-    # type: () -> None
     """Signal handler for all worker processes, allowing clean CTRL-C"""
 
     signal.signal(signal.SIGINT, signal.SIG_IGN)
     signal.signal(signal.SIGHUP, signal.SIG_IGN)
     # when forking using multiprocessing, this is required to re-init random seed
-    Random.atfork()  # type: ignore
+    Random.atfork()
 
 
-def get_all_billing_projects(billing_account_name):
+def get_all_billing_projects(billing_account_name, cache_dir, refresh_cache=True):
+
     project_ids = []
 
     # pylint: disable=no-member
     service = GCAPI.get_service('cloudbilling')
 
-    request = service.billingAccounts().projects().list(name=billing_account_name)
+    if refresh_cache or is_cache_expired(cache_dir):
+        request = service.billingAccounts().projects().list(name=billing_account_name)
 
-    while request is not None:
-        response = request.execute()
+        while request is not None:
+            response = request.execute()
 
-        # pylint: disable=no-member
-        request = service.billingAccounts().projects().list_next(previous_request=request,
-                                                                 previous_response=response)
+            # pylint: disable=no-member
+            request = service.billingAccounts().projects().list_next(previous_request=request,
+                                                                     previous_response=response)
 
-        for project_billing_info in response['projectBillingInfo']:
-            if project_billing_info['billingEnabled']:
-                project_ids.append(project_billing_info['projectId'])
+            for project_billing_info in response['projectBillingInfo']:
+                if project_billing_info['billingEnabled']:
+                    project_ids.append(project_billing_info['projectId'])
+
+        store_cache(data=project_ids, cache_dir=cache_dir)
+    else:
+        project_ids = get_cached_data(cache_dir)
 
     return project_ids
 
 
 def get_hostvars(instance):
+
     hostvars = {
         'gce_name': instance['name'],
         'gce_id': instance['id'],
@@ -190,6 +183,7 @@ def get_hostvars(instance):
 
     hostvars['gce_metadata'] = {}
     for md in instance['metadata'].get('items', []):
+        # escaping '{' and '}' because ansible/jinja2 doesnt seem to like it
         hostvars['gce_metadata'][md['key']] = md['value'].replace('{', '\{').replace('}', '\}')
 
     if 'items' in instance['tags']:
@@ -221,6 +215,7 @@ def get_hostvars(instance):
 
 
 def get_inventory(instances):
+
     inventory = collections.defaultdict(list)
     inventory['_meta'] = collections.defaultdict(
         lambda: collections.defaultdict(dict))
@@ -255,81 +250,174 @@ def get_inventory(instances):
     return inventory
 
 
-def get_project_zone_list(project):
-    # type: (str) -> Tuple[str, List[str]]
+def get_project_zone_list(params):
     """Get list of all zones for particular project (Worker process)"""
 
-    project = project
-    zones = []
-    log.info('Retrieving list of zones of project: %s', project)
+    project, cache_dir, refresh_cache  = params
+    zone_list = []
+    log.info('Retrieving zone list from project: %s', project)
 
     service = GCAPI.get_service('compute')
 
-    try:
-        request = service.zones().list(project=project)
+    if refresh_cache or is_cache_expired(cache_dir, project):
+        try:
+            request = service.zones().list(project=project)
 
-        while request is not None:
-            response = request.execute()
+            while request is not None:
+                response = request.execute()
 
-            for zone in response['items']:
-                zones.append(zone['name'])
+                for zone in response['items']:
+                    zone_list.append(zone['name'])
 
-            request = service.zones().list_next(previous_request=request,
-                                                previous_response=response)
+                request = service.zones().list_next(previous_request=request,
+                                                    previous_response=response)
 
-    except HttpError as exception:
-        log.warn('Could not retrieve list of zones on project: %s', project)
-        log.warn(exception)
+        except HttpError as exception:
+            log.warn('Could not retrieve list of zones on project: %s', project)
+            log.warn(exception)
+        store_cache(zone_list, cache_dir, project)
+    else:
+        log.info('Using cached zone list for project: %s', project)
+        zone_list = get_cached_data(cache_dir, project=project)
 
-    return project, zones
+    return project, zone_list
 
 
-def get_project_zone_instances(project_zone):
-    # type: (Tuple[str, str]) -> List[str]
+def get_project_zone_instances(params):
     """Get list of all instances for particular project/zone (Worker process)"""
 
-    project, zone = project_zone
+    project, zone, cache_dir, refresh_cache = params
     instance_list = []
 
     service = GCAPI.get_service('compute')
 
-    try:
-        # pylint: disable=no-member
-        request = service.instances().list(project=project, zone=zone)
-
-        while request is not None:
-            response = request.execute()
-            instance_list.extend(response.get('items', []))
-
+    if refresh_cache or is_cache_expired(cache_dir, project, zone):
+        try:
             # pylint: disable=no-member
-            request = service.instances().list_next(previous_request=request,
-                                                    previous_response=response)
+            request = service.instances().list(project=project, zone=zone)
 
-    except HttpError as exception:
-        log.warn('Could not retrieve list of instances of project/zone: %s/%s',
-                 project,
-                 zone)
-        log.warn(str(exception))
+            while request is not None:
+                response = request.execute()
+                instance_list.extend(response.get('items', []))
+
+                # pylint: disable=no-member
+                request = service.instances().list_next(previous_request=request,
+                                                        previous_response=response)
+
+        except HttpError as exception:
+            log.warn('Could not retrieve list of instances of project/zone: %s/%s',
+                     project,
+                     zone)
+            log.warn(str(exception))
+
+        store_cache(data=instance_list, cache_dir=cache_dir, project=project, zone=zone)
+
+    else:
+        log.info('Using cached instances for project/zone: %s/%s', project, zone)
+        instance_list = get_cached_data(cache_dir=cache_dir, project=project, zone=zone)
 
     return instance_list
 
 
+def is_cache_expired(cache_dir, project=None, zone=None):
+
+    expired = True
+    data_dir = cache_dir
+    data_file = os.path.join(data_dir, 'projects.json')
+
+    if project:
+        data_dir = os.path.join(data_dir, project)
+        data_file = os.path.join(data_dir, 'zones.json')
+        if zone:
+            data_dir = os.path.join(data_dir, zone)
+            data_file = os.path.join(data_dir, 'instances.json')
+
+    if os.path.exists(data_file) and CACHE_EXPIRATION > time.time() - os.stat(data_file).st_mtime:
+        expired = False
+    else:
+        log.info("Cache expired. Purging: %s, %s", data_file, data_dir)
+        purge_cache(cache_dir=cache_dir, project=project, zone=zone)
+
+    return expired
+
+
+def purge_cache(cache_dir, project=None, zone=None):
+
+    data_dir = cache_dir
+    data_file = os.path.join(data_dir, 'projects.json')
+
+    if project:
+        data_dir = os.path.join(data_file, project)
+        data_file = os.path.join(data_file, 'zones.json')
+        if zone:
+            data_dir = os.path.join(data_dir, zone)
+            data_file = os.path.join(data_dir, 'instances.json')
+
+    if os.path.exists(data_file):
+        log.info("Purging file: %s", data_file)
+        os.remove(data_file)
+
+    if os.path.exists(data_dir):
+        log.info("Purging dir: %s", data_dir)
+        shutil.rmtree(data_dir)
+
+
+def get_cached_data(cache_dir, project=None, zone=None):
+
+    data_dir = cache_dir
+    data_file = os.path.join(data_dir, 'projects.json')
+
+    if project:
+        project_dir = os.path.join(data_dir, project)
+        data_file = os.path.join(project_dir, 'zones.json')
+        if zone:
+            zone_dir = os.path.join(project_dir, zone)
+            data_file = os.path.join(zone_dir, 'instances.json')
+
+    with open(data_file, 'r') as json_file:
+        cached_data = json.load(json_file)
+
+    return cached_data
+
+def store_cache(data, cache_dir, project=None, zone=None):
+
+    data_dir = cache_dir
+    data_file = os.path.join(data_dir, 'projects.json')
+
+    if project:
+        data_dir = os.path.join(data_dir, project)
+        data_file = os.path.join(data_dir, 'zones.json')
+
+        if zone:
+            data_dir = os.path.join(data_dir, zone)
+            data_file = os.path.join(data_dir, 'instances.json')
+
+    if not os.path.exists(data_dir):
+        os.mkdir(data_dir)
+
+    log.info("storing cache '%s'", data_file)
+
+    with open(data_file, 'w') as json_file:
+        json.dump(data, json_file)
+
 def main(args):
 
-    if not args['--debug']:
-        log.basicConfig(level=log.ERROR)
+    if args['--debug']:
+        log.getLogger().setLevel(log.DEBUG)
 
     project_list = args['--project']
     zone_list = args['--zone']
     billing_account_name = args['--billing-account']
     num_threads = int(args['--num-threads'])
     timeout = int(args['--timeout'])
+    cache_dir = args['--cache-dir']
+    refresh_cache = bool(args['--refresh-cache'])
 
     if not project_list and not billing_account_name:
         print("ERROR: You didn't specified any project (parameter: --project) which means you want"
               "all projects. However, to get the list of all projects, we need the billing account"
               "name (parameter: --billing-account, format: billingAccounts/XXXXXX-XXXXXX-XXXXXX)",
-              file=stderr)
+              file=sys.stderr)
         exit(1)
 
     if num_threads < 1:
@@ -338,36 +426,42 @@ def main(args):
     pool_workers = mp.Pool(num_threads, signal_handler)
 
     if not project_list:
-        project_list = get_all_billing_projects(billing_account_name)
+        project_list = get_all_billing_projects(billing_account_name, cache_dir, refresh_cache)
 
     if zone_list:
         project_zone_list = [
-            (project, zone)
+            (project, zone, cache_dir, refresh_cache)
             for project in project_list
             for zone in zone_list
         ]
     else:
+        param_list = [
+            (project, cache_dir, refresh_cache)
+            for project in project_list
+        ]
+
         project_zone_list = [
-            (project_name, zone)
+            (project_name, zone, cache_dir, refresh_cache)
             for project_name, zone_list in pool_workers.map_async(get_project_zone_list,
-                                                                  project_list).get(timeout)
+                                                                  param_list).get(timeout)
             for zone in zone_list
         ]
 
     instance_list = []
 
-    for zone_instances in pool_workers.map_async(get_project_zone_instances,
-                                                 project_zone_list).get(timeout):
-        instance_list.extend(zone_instances)
+    for project_zone_instances in pool_workers.map_async(get_project_zone_instances,
+                                                         project_zone_list).get(timeout):
+
+        instance_list.extend(project_zone_instances)
 
     inventory_json = get_inventory(instance_list)
     print(json.dumps(inventory_json,
                      sort_keys=True,
                      indent=2))
 
-if __name__ == "__main__":
-    log.basicConfig(filename='gce_googleapiclient.log', level=log.DEBUG)
 
+if __name__ == "__main__":
+    log.basicConfig(filename='gce_googleapiclient.log', level=log.ERROR)
     try:
         ARGS = docoptcfg(__doc__,
                          config_option='--config',
