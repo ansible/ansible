@@ -193,14 +193,6 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.containerservice.models import (
-        ContainerService, ContainerServiceOrchestratorProfile, ContainerServiceCustomProfile,
-        ContainerServiceServicePrincipalProfile, ContainerServiceMasterProfile,
-        ContainerServiceAgentPoolProfile, ContainerServiceWindowsProfile,
-        ContainerServiceLinuxProfile, ContainerServiceSshConfiguration,
-        ContainerServiceDiagnosticsProfile, ContainerServiceSshPublicKey,
-        ContainerServiceVMDiagnostics
-    )
     from azure.mgmt.containerinstance.models import (ContainerGroup, Container, ResourceRequirements, ResourceRequests)
     from azure.mgmt.containerinstance import ContainerInstanceManagementClient
 except ImportError:
@@ -369,7 +361,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         self.log("Deleting the ACI instance {0}".format(self.name))
         try:
             client = ContainerInstanceManagementClient(self.azure_credentials, self.subscription_id)
-            response = client.delete(self.resource_group, self.name)
+            response = client.container_groups.delete(self.resource_group, self.group_name)
         except CloudError as e:
             self.log('Error attempting to delete the ACS instance.')
             self.fail("Error deleting the ACS instance: {0}".format(str(e)))
