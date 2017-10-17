@@ -67,6 +67,18 @@ options:
             - absent
             - present
         required: false
+    ip_address:
+        description:
+            - The IP address type of the container group.
+        choices:
+            - public
+        required: false
+        default: None
+    port:
+        description:
+            - Port exposed by container.
+        default: 80
+        required: false
     location:
         description:
             - Valid azure location. Defaults to location of the resource group.
@@ -140,7 +152,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.containerinstance.models import (ContainerGroup, Container, ResourceRequirements, ResourceRequests, ImageRegistryCredential)
+    from azure.mgmt.containerinstance.models import (ContainerGroup, Container, ResourceRequirements, ResourceRequests, ImageRegistryCredential, IpAddress)
     from azure.mgmt.containerinstance import ContainerInstanceManagementClient
 except ImportError:
     # This is handled in azure_rm_common
@@ -216,6 +228,17 @@ class AzureRMContainerInstance(AzureRMModuleBase):
             location=dict(
                 type='str',
                 required=False
+            ),
+            ip_address=dict(
+                type='str',
+                required=False,
+                default=None,
+                choices=['public']
+            ),
+            port=dict(
+                type='int',
+                required=False,
+                default=80
             ),
             registry_login_server=dict(
                 type='str',
@@ -312,12 +335,17 @@ class AzureRMContainerInstance(AzureRMModuleBase):
                                                   self.registry_username,
                                                   self.registry_password)
 
+        ip_address = None
+
+        if self.ip_address is not None:
+                ip_address = IpAddress([self.port], self.ip_address)
+
         parameters = ContainerGroup(self.location,
                                     None,
                                     [Container(self.name, self.image, ResourceRequirements(ResourceRequests(self.memory, self.cpu)))],
                                     credentials,
                                     None,
-                                    None,
+                                    ip_address,
                                     self.os_type)
 
         try:
