@@ -337,12 +337,12 @@ def handle_state(module, result, service_path):
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(required=True),
-            state = dict(choices=['started', 'stopped', 'reset', 'restarted', 'reloaded'], type='str'),
-            enabled = dict(type='bool'),
-            preset = dict(type='bool'),
-            user = dict(type='bool'),
+        argument_spec=dict(
+            name=dict(required=True),
+            state=dict(choices=['started', 'stopped', 'reset', 'restarted', 'reloaded'], type='str'),
+            enabled=dict(type='bool'),
+            preset=dict(type='bool'),
+            user=dict(type='bool'),
         ),
         supports_check_mode=True,
         mutually_exclusive=[['enabled', 'preset']],
