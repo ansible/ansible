@@ -67,7 +67,7 @@ options:
             - 'https://www.zabbix.com/documentation/3.2/manual/api/reference/host/object#host_inventory'
         required: false
         default: None
-        version_added: '2.4'
+        version_added: '2.5'
     status:
         description:
             - Monitoring status of the host.
@@ -528,6 +528,7 @@ class Host(object):
             self._zapi.host.update(request_str)
         except Exception as e:
             self._module.fail_json(msg="Failed to set inventory to host: %s" % e)
+
 
 def main():
     module = AnsibleModule(
