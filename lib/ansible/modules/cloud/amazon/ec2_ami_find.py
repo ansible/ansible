@@ -148,6 +148,7 @@ options:
       - Root device type to match (e.g. ebs, instance-store).
     default: null
     required: false
+    version_added: "2.5"
   no_result_action:
     description:
       - What to do when no results are found.
