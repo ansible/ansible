@@ -26,6 +26,7 @@
                 "ec2:DeleteSnapshot",
                 "ec2:DeleteSubnet",
                 "ec2:DeleteVpc",
+                "ec2:DeleteTags",
                 "ec2:DeregisterImage",
                 "ec2:Describe*",
                 "ec2:DisassociateAddress",

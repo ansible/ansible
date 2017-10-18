@@ -1,0 +1,162 @@
+---
+# A Note about ec2 environment variable name preference:
+#  - EC2_URL -> AWS_URL
+#  - EC2_ACCESS_KEY -> AWS_ACCESS_KEY_ID -> AWS_ACCESS_KEY
+#  - EC2_SECRET_KEY -> AWS_SECRET_ACCESS_KEY -> AWX_SECRET_KEY
+#  - EC2_REGION -> AWS_REGION
+#
+
+# - include: ../../setup_ec2/tasks/common.yml module_name: ec2_vpc_subnet
+
+- block:
+
+    # ============================================================
+    - name: create a VPC
+      ec2_vpc_net:
+        name: "{{ resource_prefix }}-vpc"
+        state: present
+        cidr_block: "10.232.232.128/26"
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        tags:
+          Name: "{{ resource_prefix }}-vpc"
+          Description: "Created by ansible-test"
+      register: vpc_result
+
+    - name: create subnet (expected changed=true)
+      ec2_vpc_subnet:
+        cidr: "10.232.232.128/28"
+        az: "{{ ec2_region }}a"
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        tags:
+          Name: '{{ec2_vpc_subnet_name}}'
+          Description: '{{ec2_vpc_subnet_description}}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        state: present
+      register: vpc_subnet_create
+
+    - name: assert creation happened (expected changed=true)
+      assert:
+        that:
+           - 'vpc_subnet_create'
+           - 'vpc_subnet_create.subnet.id.startswith("subnet-")'
+           - '"Name" in vpc_subnet_create.subnet.tags and vpc_subnet_create.subnet.tags["Name"] == ec2_vpc_subnet_name'
+           - '"Description" in vpc_subnet_create.subnet.tags and vpc_subnet_create.subnet.tags["Description"] == ec2_vpc_subnet_description'
+
+    - name: recreate subnet (expected changed=false)
+      ec2_vpc_subnet:
+        cidr: "10.232.232.128/28"
+        az: "{{ ec2_region }}a"
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        tags:
+          Name: '{{ec2_vpc_subnet_name}}'
+          Description: '{{ec2_vpc_subnet_description}}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        state: present
+      register: vpc_subnet_recreate
+
+    - name: assert recreation changed nothing (expected changed=true)
+      assert:
+        that:
+           - 'not vpc_subnet_recreate.changed'
+           - 'vpc_subnet_recreate.subnet.id.startswith("subnet-")'
+           - '"Name" in vpc_subnet_recreate.subnet.tags and vpc_subnet_recreate.subnet.tags["Name"] == ec2_vpc_subnet_name'
+           - '"Description" in vpc_subnet_recreate.subnet.tags and vpc_subnet_recreate.subnet.tags["Description"] == ec2_vpc_subnet_description'
+
+    - name: add a tag (expected changed=true)
+      ec2_vpc_subnet:
+        cidr: "10.232.232.128/28"
+        az: "{{ ec2_region }}a"
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        tags:
+          Name: '{{ec2_vpc_subnet_name}}'
+          Description: '{{ec2_vpc_subnet_description}}'
+          AnotherTag: SomeValue
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        state: present
+      register: vpc_subnet_add_a_tag
+
+    - name: assert tag addition happened (expected changed=true)
+      assert:
+        that:
+           - 'vpc_subnet_add_a_tag.changed'
+           - '"Name" in vpc_subnet_add_a_tag.subnet.tags and vpc_subnet_add_a_tag.subnet.tags["Name"] == ec2_vpc_subnet_name'
+           - '"Description" in vpc_subnet_add_a_tag.subnet.tags and vpc_subnet_add_a_tag.subnet.tags["Description"] == ec2_vpc_subnet_description'
+           - '"AnotherTag" in vpc_subnet_add_a_tag.subnet.tags and vpc_subnet_add_a_tag.subnet.tags["AnotherTag"] == "SomeValue"'
+
+    # We may want to change this behaviour by adding purge_tags to the module
+    # and setting it to false by default
+    - name: remove tags (expected changed=true)
+      ec2_vpc_subnet:
+        cidr: "10.232.232.128/28"
+        az: "{{ ec2_region }}a"
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        tags:
+          AnotherTag: SomeValue
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        state: present
+      register: vpc_subnet_remove_tags
+
+    - name: assert tag removal happened (expected changed=true)
+      assert:
+        that:
+           - 'vpc_subnet_remove_tags.changed'
+           - '"Name" not in vpc_subnet_remove_tags.subnet.tags'
+           - '"Description" not in vpc_subnet_remove_tags.subnet.tags'
+           - '"AnotherTag" in vpc_subnet_remove_tags.subnet.tags and vpc_subnet_remove_tags.subnet.tags["AnotherTag"] == "SomeValue"'
+
+    - name: test state=absent (expected changed=true)
+      ec2_vpc_subnet:
+        cidr: "10.232.232.128/28"
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        state: absent
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+      register: result
+
+    - name: assert state=absent (expected changed=true)
+      assert:
+        that:
+           - 'result.changed'
+
+  always:
+
+    ################################################
+    # TEARDOWN STARTS HERE
+    ################################################
+
+    - name: tidy up subnet
+      ec2_vpc_subnet:
+        cidr: "10.232.232.128/28"
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        state: absent
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+
+    - name: tidy up VPC
+      ec2_vpc_net:
+        name: "{{ resource_prefix }}-vpc"
+        state: absent
+        cidr_block: "10.232.232.128/26"
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
