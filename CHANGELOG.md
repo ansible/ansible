@@ -55,6 +55,7 @@ Ansible Changes By Release
 * Fix for win_file to respect check mode when deleting directories
 * Include_role now complains about invalid arguments
 * Added socket conditions to ignore for wait_for, no need to error for closing already closed connection
+* Updated hostname module to work on newer RHEL7 releases
 
 
 <a id="2.3.2"></a>
