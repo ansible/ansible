@@ -130,6 +130,7 @@ Ansible Changes By Release
 * A couple fixes to the test process to account for new testing resources in
   our ci system and an upstream cryptography update that didn't work with
   pip-8.x
+* Document backup_path in a few dellos modules and vyos_config
 
 <a id="2.4"></a>
 
