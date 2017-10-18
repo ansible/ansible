@@ -584,6 +584,7 @@ Ansible Changes By Release
   * nuage_vpsk
 - panos
   * panos_sag
+  * panos_query_rules
 - purestorage
   * purefa_hg
   * purefa_host
