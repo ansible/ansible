@@ -13,12 +13,20 @@ Ansible Changes By Release
 * Fix wait_for module to treat broken connections as unready so that the connection continues to be retried:
   https://github.com/ansible/ansible/pull/28839
 * Python3 fixes:
-  * windows_azure, clc_firewall_policy, and ce_template modules fixed for imports of urllib which changed between Python2 and Python3
-  * lookup plugin for consul_kv.py fixed for imports of urllib
+  * windows_azure, clc_firewall_policy, and ce_template modules fixed for
+    imports of urllib which changed between Python2 and Python3 lookup plugin
+    for consul_kv.py fixed for imports of urllib
+    (https://github.com/ansible/ansible/issues/31240)
+  * Make internal hashing of hostvars use bytes on both python2 and python3
+    (https://github.com/ansible/ansible/pull/31788)
 * Fix logging inside of KubernetesAnsibleModule() to not use
   self.helper.logging.  the Ansible builtin log() method will strip out
   parameters marked no_log and will not log if no_log was set in the playbook.
   self.helper.log() circumvents that (https://github.com/ansible/ansible/pull/31789)
+* Correct task results display so that it more closely matches what was present
+  in 2.3.x and previous.
+* Warn when a group has a bad key (Should be one of vars, children, or hosts)
+  https://github.com/ansible/ansible/pull/31495
 
 <a id="2.4.1"></a>
 
