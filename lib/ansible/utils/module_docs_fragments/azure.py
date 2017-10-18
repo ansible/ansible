@@ -73,7 +73,7 @@ requirements:
 
 notes:
     - For authentication with Azure you can pass parameters, set environment variables, use a profile stored
-      in ~/.azure/credentials or be logged using AzureCLI. 
+      in ~/.azure/credentials or login your AzureCLI. 
       Authentication is possible using a service principal or Active Directory user.
       To authenticate via service principal, pass subscription_id, client_id, secret and tenant or set environment
       variables AZURE_SUBSCRIPTION_ID, AZURE_CLIENT_ID, AZURE_SECRET and AZURE_TENANT.
