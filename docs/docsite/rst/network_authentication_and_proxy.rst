@@ -1,4 +1,4 @@
-.. network-authentication-and-proxt:
+.. network-authentication-and-proxy:
 
 *******************************
 Network getting started example
@@ -9,6 +9,103 @@ Network getting started example
 
 Overview
 ========
+
+This page will explains the different ways you can authentication against the various network modules (LINKTONETWORKMODULEINDEXPAGE).
+
+As Ansible is a flexible tool there are a number of different ways this can be achieved, the pros and cons will be detailed.
+
+
+.. network-types-of-connections:
+
+Types of connection
+===================
+
+The types of authentication depend on the transport (the way Ansible communicates) to the remote device.
+
+
+:cli (ssh based):
+
+  * What is this
+  * Most common
+  * Other stuff
+
+:eAPI:
+
+  * Arista EOS specific
+  * Over HTTP(S)
+
+:NXAPI:
+
+  * Cisco NX-OS specific
+  * Over HTTP(S)
+
+:Other stuff:
+
+  * Goes
+  * Here
+
+
+
+.. network-platform-connections:
+
+Network Platforms
+=================
+
+FIXME: Table of platforms and connections available, may need to include version added.
+
+
+
+
+.. network-connection-auth-matrix
+
+Authentication methods available on each connection type
+========================================================
+
+
+                                        CLI, eAPI/NXAPI  F5 Notes
+Command line: (``--user`` & ``-k``)     Y    Y           ?
+top-level                               Y    Y           X  Deprecated
+
+
+
+Best practice
+=============
+
+Wherever possible use the standard Ansible way, that is do not use ``provider:`` (or the even older top-level) arguments.
+
+FIXME Show correct way
+FIXME Link to network-getting-started
+
+
+
+
+REST (eAPI, NXAPI)
+==================
+
+Currently (2.4) has to use provider
+
+
+
+
+
+
+Other types
+===========
+
+
+
+
+
+FIXME Show other types
+
+FIXME add links to ansible(-playbook) commandline arguments
+
+
+
+
+
+
+
 
 FIXME Explain types of connection
 
