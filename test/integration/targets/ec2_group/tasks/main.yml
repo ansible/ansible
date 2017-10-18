@@ -192,7 +192,7 @@
            - 'result.group_id.startswith("sg-")'
 
     # ============================================================
-    - name: test state=present different description raises error
+    - name: test state=present different description (expected changed=false)
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}CHANGED'
@@ -204,11 +204,11 @@
       ignore_errors: true
       register: result
 
-    - name: assert matching group with non-matching description raises error
+    - name: assert state=present (expected changed=false)
       assert:
         that:
-           - 'result.failed'
-           - '"Group description does not match existing group. ec2_group does not support this case." in result.msg'
+           - 'not result.changed'
+           - 'result.group_id.startswith("sg-")'
 
     # ============================================================
     - name: test state=present (expected changed=false)
