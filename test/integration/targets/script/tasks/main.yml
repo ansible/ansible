@@ -149,7 +149,7 @@
     var: _afile_stat
     verbosity: 2
 
-- name: Assert that a change was reported but the script did make changes
+- name: Assert that a change was reported but the script did not make changes
   assert:
     that:
       - _check_mode_test | changed
