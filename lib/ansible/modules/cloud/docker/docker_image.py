@@ -430,7 +430,7 @@ class ImageManager(DockerBaseClass):
             if not self.check_mode:
                 status = None
                 try:
-                    for line in self.client.push(repository, tag=tag, stream=True,  decode=True):
+                    for line in self.client.push(repository, tag=tag, stream=True, decode=True):
                         self.log(line, pretty_print=True)
                         if line.get('errorDetail'):
                             raise Exception(line['errorDetail']['message'])
@@ -486,8 +486,8 @@ class ImageManager(DockerBaseClass):
                 except Exception as exc:
                     self.fail("Error: failed to tag image - %s" % str(exc))
                 self.results['image'] = self.client.find_image(name=repo, tag=repo_tag)
-                if push:
-                    self.push_image(repo, repo_tag)
+        if push:
+            self.push_image(repo, repo_tag)
 
     def build_image(self):
         '''
