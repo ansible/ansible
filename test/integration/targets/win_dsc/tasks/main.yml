@@ -25,5 +25,10 @@
     win_file:
       path: '{{test_win_dsc_folder}}'
       state: absent
+  
+  - name: remove custom DSC resource folder
+    win_file:
+      path: C:\Program Files\WindowsPowerShell\Modules\xTestDsc
+      state: absent
 
   when: powershell_version.stdout_lines[0]|int >= 5
