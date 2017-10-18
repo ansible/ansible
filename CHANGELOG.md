@@ -12,6 +12,9 @@ Ansible Changes By Release
 * Keep hosts in play vars if inside of a rescue task (https://github.com/ansible/ansible/pull/31710)
 * Fix wait_for module to treat broken connections as unready so that the connection continues to be retried:
   https://github.com/ansible/ansible/pull/28839
+* Python3 fixes:
+  * windows_azure, clc_firewall_policy, and ce_template modules fixed for imports of urllib which changed between Python2 and Python3
+  * lookup plugin for consul_kv.py fixed for imports of urllib
 
 <a id="2.4.1"></a>
 
