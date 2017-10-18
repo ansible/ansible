@@ -16,6 +16,7 @@ from lib.util import (
     SubprocessError,
     run_command,
     display,
+    find_executable,
 )
 
 from lib.ansible_util import (
@@ -63,7 +64,8 @@ class PylintTest(SanitySingleVersion):
         paths = sorted(i.path for i in targets.include if (os.path.splitext(i.path)[1] == '.py' or i.path.startswith('bin/')) and i.path not in skip_paths_set)
 
         cmd = [
-            'pylint',
+            'python%s' % args.python_version,
+            find_executable('pylint'),
             '--jobs', '0',
             '--reports', 'n',
             '--max-line-length', '160',
