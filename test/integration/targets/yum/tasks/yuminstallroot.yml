@@ -40,9 +40,6 @@
   failed_when: False
   register: rpm_result
 
-- debug: var=yum_result
-- debug: var=rpm_result
-
 - name: verify installation of sos
   assert:
     that:
