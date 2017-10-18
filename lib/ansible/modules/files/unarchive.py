@@ -117,6 +117,14 @@ EXAMPLES = r'''
     src: https://example.com/example.zip
     dest: /usr/local/bin
     remote_src: yes
+
+- name: Unarchive a file with extra options
+- unarchive:
+    src: /tmp/foo.zip
+    dest: /usr/local/bin
+    extra_opts:
+      - --transform
+      - s/^xxx/yyy/
 '''
 
 import binascii
