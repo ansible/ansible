@@ -74,12 +74,10 @@ Create a file called ``fetch-facts.yml`` containing the following:
        # Collect data
         - name: Gather facts (ios)
           ios_facts:
-          register: result_ios
           when: "'ios' in group_names"
 
         - name: Gather facts (vyos)
           vyos_facts:
-          register: result_vyos
           when: "'vyos' in group_names"
 
         ###
@@ -89,7 +87,8 @@ Create a file called ``fetch-facts.yml`` containing the following:
           debug:
             msg: "The hostname is {{ ansible_net_hostname }} and the OS is {{ ansible_net_version }}"
 
-        - debug:
+        - name: Display facts from a specific host
+          debug:
             var: hostvars['vyos01.example.net']
 
         - name: Write facts to disk using a template
@@ -123,7 +122,7 @@ Create a file called ``fetch-facts.yml`` containing the following:
           register: backup_ios
           when: "'ios' in group_names"
 
-        - name: backup switch (vyos)
+        - name: Backup switch (vyos)
           vyos_config:
             backup: yes
           register: backup_vyos
@@ -161,6 +160,15 @@ Run it
 
    cat /tmp/switch-facts
    find /tmp/backups
+
+If you receive an error ``unable to open shell`` ensure that the ssh fingerprints are in ``~/.ssh/known_hosts``, this can be achieved by doing using ``ssh-keyscan`` to pre-populate the ``known_hosts`` file.
+
+.. code-block:: shell
+
+   ssh-keyscan ios01.example.net
+   ssh-keyscan vyos01.example.net
+
+If `ansible-playbook` still fails, please follow the debug steps in :doc:`network_debug_troubleshooting`.
 
 Details
 =======
