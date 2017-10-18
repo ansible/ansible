@@ -31,7 +31,7 @@ group and host vars will appy, including connection vars, which includes the ``a
 This will also affect ``delegate_to: localhost`` and ``local_action``, the latter being an alias to the former.
 
 .. note::
-  - This host is not part of any group nor will use any group vars (direct of rom ``group_vars``) unless explicitly added, however it will use ``host_vars``.
+  - This host is not targetable via any group, however it will use vars from ``host_vars`` and from the 'all' group.
   - This implicit host also gets triggered by using ``127.0.0.1`` or ``::1`` as they are the IPv4 and IPv6 representations of 'localhost'.
   - Even though there are many ways to create it, there will only ever be ONE implicit localhost, using the name first used to create it.
   - Having ``connection: local`` does NOT trigger an implicit localhost, you are just changing the connection for the ``inventory_hostname``.
