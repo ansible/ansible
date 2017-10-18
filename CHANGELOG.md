@@ -138,7 +138,7 @@ Ansible Changes By Release
   if a file could not be opened.  Fix will return a nice error message instead:
   https://github.com/ansible/ansible/issues/31786
 * Fix ansible-doc and ansible-console module-path option (https://github.com/ansible/ansible/pull/31744)
-
+* Fix for hostname module on RHEL 7.5 (https://github.com/ansible/ansible/issues/31811)
 
 ### Known Bugs
 * Implicit localhost is getting ansible_connection from all:vars instead of
