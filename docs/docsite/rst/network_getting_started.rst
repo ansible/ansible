@@ -1,4 +1,4 @@
-.. network-example-facts:
+.. network-getting-started-example:
 
 *******************************
 Network getting started example
@@ -25,6 +25,8 @@ Prerequisites
 * Ansible 2.3 (or higher) installed :doc:`intro_installation`
 * One or more network device compatible with Ansible FIXMELINK
 
+.. FIXME FUTURE Gundalow - Once created we will link to the connection table here (which platforms support network_cli & credentials through inventory)
+
 Audience
 --------
 
@@ -35,7 +37,7 @@ Audience
 Solution
 =========
 
-Create an inventory file
+Create an inventory file.
 
 
 **Inventory file**
@@ -173,6 +175,7 @@ Credentials
 
 Although there are many ways to supply credentials in Ansible in this case we are using ``ansible_user`` and ``ansible_ssh_pass`` as a simple example.
 
+.. FIXME FUTURE Gundalow - Link to network auth & proxy page (to be written)
 
 .. warning:: Never store passwords in plain text
 
@@ -241,52 +244,3 @@ Fixme
 
   * Improve vault page and link between ``playbooks_best_practices.html#best-practices-for-variables-and-vaults``, ``ansible-playbook.rst``
   * Link to network intro page table of Persistent connection and version_added table
-
-
-New page: Auth & Proxy
-----------------------
-
-This section needs moving to a new page, just made notes here while I was developing this:
-
-FIXME Link to details regarding different ways to specify credentials (this should be in the main docs somewhere). This should just be a summary that links to the existing docs (``intro_inventory``, ``playbooks_best_practices.html#best-practices-for-variables-and-vaults``, ``ansible-playbook.rst``, etc)
-
-Somewhere in the main docs we need to list the different ways of authenticating
-
-
-:Command line:
-
-  * Using ``--user`` (``-u``) and ``--ask-pass`` (``-k``).
-  * Note: This only works if all devices use the same credentials
-
-:Inventory file:
-
-  :``ansible_user``:
-
-    * Details
-    * Link to main docs
-
-  :``ansible_ssh_pass``:
-
-    * Generally used along side ``ansible_user``.
-    * Not for REST transports such as `eapi`, `nxapi`.
-    * Link to main docs
-
-  :``ansible_ssh_private_key_file``:
-
-    * Details
-    * Link to main docs
-
-:top-level module options:
-
-  * As of Ansible 2.3 this is deprecated.
-  * Link to main docs
-
-:``provider``: argument to module:
-
-  * This is OK
-  * Link to main docs
-
-:Env variables:
-
-  * ``ANSIBLE_NET_USERNAME``
-  * ``ANSIBLE_NET_PASSWORD``
