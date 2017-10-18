@@ -37,13 +37,8 @@ else
     )
 fi
 
-retry.py pip install tox --disable-pip-version-check
-
 for version in "${python_versions[@]}"; do
-    # clean up between test runs until we switch from --tox to --docker
-    rm -rf ~/.ansible/{cp,pc,tmp}/
-
     # shellcheck disable=SC2086
-    ansible-test network-integration --color -v --retry-on-error "${target}" --tox --python "${version}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} \
-        "${platforms[@]}"
+    ansible-test network-integration --color -v --retry-on-error "${target}" --docker default --python "${version}" \
+        ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} "${platforms[@]}"
 done

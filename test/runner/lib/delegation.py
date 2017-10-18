@@ -189,7 +189,12 @@ def delegate_docker(args, exclude, require):
     with tempfile.NamedTemporaryFile(prefix='ansible-source-', suffix='.tgz') as local_source_fd:
         try:
             if not args.explain:
-                lib.pytar.create_tarfile(local_source_fd.name, '.', lib.pytar.ignore)
+                if args.docker_keep_git:
+                    tar_filter = lib.pytar.AllowGitTarFilter()
+                else:
+                    tar_filter = lib.pytar.DefaultTarFilter()
+
+                lib.pytar.create_tarfile(local_source_fd.name, '.', tar_filter)
 
             if util_image:
                 util_options = [

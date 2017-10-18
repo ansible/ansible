@@ -582,6 +582,10 @@ def add_extra_docker_options(parser, integration=True):
                         dest='docker_pull',
                         help='do not explicitly pull the latest docker images')
 
+    docker.add_argument('--docker-keep-git',
+                        action='store_true',
+                        help='transfer git related files into the docker container')
+
     if not integration:
         return
 

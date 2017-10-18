@@ -161,7 +161,7 @@ class ManagePosixCI(object):
             remote_source_path = os.path.join(remote_source_dir, os.path.basename(local_source_fd.name))
 
             if not self.core_ci.args.explain:
-                lib.pytar.create_tarfile(local_source_fd.name, '.', lib.pytar.ignore)
+                lib.pytar.create_tarfile(local_source_fd.name, '.', lib.pytar.DefaultTarFilter())
 
             self.upload(local_source_fd.name, remote_source_dir)
             self.ssh('rm -rf ~/ansible && mkdir ~/ansible && cd ~/ansible && tar oxzf %s' % remote_source_path)
