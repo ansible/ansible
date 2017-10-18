@@ -84,7 +84,7 @@ Ansible Changes By Release
 * reduced normal error redundancy and verbosity, display on increased and when needed
 * Give an informative error instead of a traceback if include_vars dir is file instead of directory (https://github.com/ansible/ansible/pull/31157)
 * Fix monit module's version check for color support (https://github.com/ansible/ansible/pull/31212)
-* Max `elasticsearch_plugin` module work with both 2.x and 5.x (https://github.com/ansible/ansible/issues/21989)
+* Make `elasticsearch_plugin` module work with both 2.x and 5.x (https://github.com/ansible/ansible/issues/21989)
 * Fix for become on Windows to handle ignored errors (https://github.com/ansible/ansible/issues/30468)
 * Fix removal of newlines when writing SELinux config (https://github.com/ansible/ansible/issues/30618)
 * clarified extension requirement for constructed inv plugin
@@ -130,7 +130,10 @@ Ansible Changes By Release
 * A couple fixes to the test process to account for new testing resources in
   our ci system and an upstream cryptography update that didn't work with
   pip-8.x
-* Document backup_path in a few dellos modules and vyos_config
+* Document backup_path in a few dellos modules and vyos_config (https://github.com/ansible/ansible/issues/31844)
+* Fix for vmware_vm_facts with dangling inaccessible VM which don't have MAC addresses (https://github.com/ansible/ansible/pull/31629)
+* Fix for win_regedit sending extra data that could confuse ansible's result parsing (https://github.com/ansible/ansible/pull/31813)
+
 
 <a id="2.4"></a>
 
