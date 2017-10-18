@@ -42,7 +42,7 @@ Roles expect files to be in certain directory names. Roles must include at least
 Other YAML files may be included in certain directories. For example, it is common practice to have platform-specific tasks included from the ``tasks/main.yml`` file::
 
     # roles/example/tasks/main.yml
-    - name: added in 2.4, previouslly you used 'include'
+    - name: added in 2.4, previously you used 'include'
       import_tasks: redhat.yml
       when: ansible_os_platform|lower == 'redhat'
     - import_tasks: debian.yml
