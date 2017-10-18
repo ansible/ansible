@@ -123,6 +123,11 @@ filtered:
   returned: always
   type: list
   sample: ['...', '...']
+backup_path:
+  description: The full path to the backup file
+  returned: when backup is yes
+  type: string
+  sample: /playbooks/ansible/backup/vyos_config.2016-07-16@22:28:34
 """
 import re
 
