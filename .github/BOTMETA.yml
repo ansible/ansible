@@ -910,6 +910,11 @@ files:
   $module_utils/aireos.py:
     maintainers: jmighion
     labels: networking
+  $module_utils/azure_rm_common.py:
+    maintainers: $team_azure
+    labels:
+      - azure
+      - cloud
   $module_utils/eos.py:
     maintainers: $team_networking
     labels: networking
@@ -1003,6 +1008,9 @@ files:
     labels: networking
   $module_utils/ovirt.py:
     maintainers: joshainglis karmab machacekondra
+    labels:
+      - ovirt
+      - cloud
   $module_utils/sros.py:
     maintainers: $team_networking
     labels: networking
@@ -1091,6 +1099,11 @@ files:
     labels:
     - cloud
     - openstack
+  lib/ansible/plugins/inventory/ovirt4.py:
+    maintainers: machacekondra
+    labels:
+      - ovirt
+      - cloud
   lib/ansible/plugins/filter/network.py:
     maintainers: $team_networking
     labels: networking
