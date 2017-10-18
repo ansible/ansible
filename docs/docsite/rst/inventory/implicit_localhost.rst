@@ -3,7 +3,7 @@
 Implicit 'localhost'
 ====================
 
-When you try to use a 'localhost' and you don't have it defined in inventory, Ansible will create an implicit one for you.::
+When you try to reference a ``localhost`` and you don't have it defined in inventory, Ansible will create an implicit one for you.::
 
     - hosts: all
       tasks:
@@ -23,12 +23,15 @@ This host is defined with specific connection vars equivalent to this in an inve
         ansible_connection: local
         ansible_python_interpreter: "{{ansible_playbook_python}}"
 
-This ensures that the proper connection and Python are used to execute your tasks locally,
-you can of course override this and use any specific settings you want by specifying a 'localhost' type host in your inventory.
-At that point you are responsible for using the correct connection and/or python for this host, this affects ``delegate_to`` and ``local_action``.
+This ensures that the proper connection and Python are used to execute your tasks locally.
+You can override the built-in implicit version by creating a ``localhost`` host entry in your inventory.
+
+At that point, all implicit behaviors are ignored, the ``localhost`` in inventory is treated just like any other host,
+group and host vars will appy, including connection vars, which includes the ``ansible_python_interpreter`` setting.
+This will also affect ``delegate_to: localhost`` and ``local_action``, the latter being an alias to the former.
 
 .. note::
-  - This host is not part of any group nor will use any group_vars unless explicitly added, however it will use host_vars/.
+  - This host is not part of any group nor will use any group vars (direct of rom ``group_vars``) unless explicitly added, however it will use ``host_vars``.
   - This implicit host also gets triggered by using ``127.0.0.1`` or ``::1`` as they are the IPv4 and IPv6 representations of 'localhost'.
   - Even though there are many ways to create it, there will only ever be ONE implicit localhost, using the name first used to create it.
-  - Having ``connection: local`` does NOT trigger an implicit localhost, you are just changing the connection for the inventory_hostname.
+  - Having ``connection: local`` does NOT trigger an implicit localhost, you are just changing the connection for the ``inventory_hostname``.
