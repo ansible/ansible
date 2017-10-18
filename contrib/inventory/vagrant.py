@@ -76,14 +76,7 @@ def get_ssh_config():
 def list_running_boxes():
     output = subprocess.check_output(["vagrant", "status"]).split('\n')
 
-    boxes = []
-
-    for line in output:
-        matcher = re.search("([^\s]+)[\s]+running \(.+", line)
-        if matcher:
-            boxes.append(matcher.group(1))
-
-    return boxes
+    return [matcher.group(1) for matcher in map(lambda x: re.search("([^\s]+)[\s]+running \(.+", x), output) if matcher]
 
 
 # get the ssh config for a single box
@@ -103,6 +96,7 @@ def get_a_ssh_config(box_name):
             host_config['identityfile'] = id
 
     return dict((v, host_config[k]) for k, v in _ssh_to_ansible)
+
 
 # List out servers that vagrant has running
 # ------------------------------
