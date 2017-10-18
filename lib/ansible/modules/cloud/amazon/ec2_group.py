@@ -682,8 +682,8 @@ def main():
         if group:
             # existing group
             if group['Description'] != description:
-                module.fail_json(
-                    msg="Group description does not match existing group. ec2_group does not support this case.")
+                module.warn("Group description does not match existing group. Descriptions cannot be changed without deleting "
+                            "and re-creating the security group. Try using state=absent to delete, then rerunning this task.")
 
         # if the group doesn't exist, create it now
         else:
