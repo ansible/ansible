@@ -27,6 +27,9 @@ Ansible Changes By Release
   in 2.3.x and previous.
 * Warn when a group has a bad key (Should be one of vars, children, or hosts)
   https://github.com/ansible/ansible/pull/31495
+* Use controller configured ansible_shell_executable to run commands in the module
+  (https://github.com/ansible/ansible/pull/31361)
+
 
 <a id="2.4.1"></a>
 
