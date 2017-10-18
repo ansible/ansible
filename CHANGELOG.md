@@ -15,6 +15,10 @@ Ansible Changes By Release
 * Python3 fixes:
   * windows_azure, clc_firewall_policy, and ce_template modules fixed for imports of urllib which changed between Python2 and Python3
   * lookup plugin for consul_kv.py fixed for imports of urllib
+* Fix logging inside of KubernetesAnsibleModule() to not use
+  self.helper.logging.  the Ansible builtin log() method will strip out
+  parameters marked no_log and will not log if no_log was set in the playbook.
+  self.helper.log() circumvents that (https://github.com/ansible/ansible/pull/31789)
 
 <a id="2.4.1"></a>
 
