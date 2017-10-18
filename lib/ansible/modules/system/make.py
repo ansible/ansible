@@ -37,6 +37,12 @@ options:
     description:
       - cd into this directory before running make
     required: true
+  file:
+    description:
+      - Use file as a Makefile
+    required: false
+    default: none
+    version_added: 2.5
 '''
 
 EXAMPLES = '''
@@ -57,6 +63,12 @@ EXAMPLES = '''
     params:
       NUM_THREADS: 4
       BACKEND: lapack
+
+# Pass a file as a Makefile
+- make:
+    chdir: /home/ubuntu/cool-project
+    target: all
+    file: /some-project/Makefile
 '''
 
 # TODO: Disabled the RETURN as it was breaking docs building. Someone needs to
@@ -103,6 +115,7 @@ def main():
             target=dict(required=False, default=None, type='str'),
             params=dict(required=False, default=None, type='dict'),
             chdir=dict(required=True, default=None, type='path'),
+            file=dict(required=False, default=None, type='path')
         ),
     )
     # Build up the invocation of `make` we are going to use
@@ -113,7 +126,10 @@ def main():
     else:
         make_parameters = []
 
-    base_command = [make_path, make_target]
+    if module.params['file'] is not None:
+        base_command = [make_path, "--file", module.params['file'], make_target]
+    else:
+        base_command = [make_path, make_target]
     base_command.extend(make_parameters)
 
     # Check if the target is already up to date
@@ -144,7 +160,8 @@ def main():
         stderr=err,
         target=module.params['target'],
         params=module.params['params'],
-        chdir=module.params['chdir']
+        chdir=module.params['chdir'],
+        file=module.params['file']
     )
 
 
