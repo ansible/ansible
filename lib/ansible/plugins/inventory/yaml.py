@@ -133,7 +133,7 @@ class InventoryModule(BaseFileInventoryPlugin):
                         hosts, port = self._parse_host(host_pattern)
                         self.populate_host_vars(hosts, group_data['hosts'][host_pattern] or {}, group, port)
                 else:
-                    self.display.warn('Skipping unexpected key (%s) in group (%s), only "vars", "children" and "hosts" are valid' % (key, group))
+                    self.display.warning('Skipping unexpected key (%s) in group (%s), only "vars", "children" and "hosts" are valid' % (key, group))
 
     def _parse_host(self, host_pattern):
         '''
