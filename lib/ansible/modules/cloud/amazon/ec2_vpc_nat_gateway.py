@@ -215,7 +215,6 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import (ec2_argument_spec, get_aws_connection_info, boto3_conn,
                                       camel_dict_to_snake_dict, HAS_BOTO3)
 
-
 DRY_RUN_GATEWAYS = [
     {
         "nat_gateway_id": "nat-123456789",
@@ -234,21 +233,9 @@ DRY_RUN_GATEWAYS = [
     }
 ]
 
-DRY_RUN_ALLOCATION_UNCONVERTED = {
-    'Addresses': [
-        {
-            'PublicIp': '55.55.55.55',
-            'Domain': 'vpc',
-            'AllocationId': 'eipalloc-1234567'
-        }
-    ]
-}
-
-DRY_RUN_MSGS = 'DryRun Mode:'
-
 
 def get_nat_gateways(client, subnet_id=None, nat_gateway_id=None,
-                     states=None, check_mode=False):
+                     states=None):
     """Retrieve a list of NAT Gateways
     Args:
         client (botocore.client.EC2): Boto3 client
@@ -307,22 +294,11 @@ def get_nat_gateways(client, subnet_id=None, nat_gateway_id=None,
         ]
 
     try:
-        if not check_mode:
-            gateways = client.describe_nat_gateways(**params)['NatGateways']
-            if gateways:
-                for gw in gateways:
-                    existing_gateways.append(camel_dict_to_snake_dict(gw))
-            gateways_retrieved = True
-        else:
-            gateways_retrieved = True
-            if nat_gateway_id:
-                if DRY_RUN_GATEWAYS[0]['nat_gateway_id'] == nat_gateway_id:
-                    existing_gateways = DRY_RUN_GATEWAYS
-            elif subnet_id:
-                if DRY_RUN_GATEWAYS[0]['subnet_id'] == subnet_id:
-                    existing_gateways = DRY_RUN_GATEWAYS
-            err_msg = '{0} Retrieving gateways'.format(DRY_RUN_MSGS)
-
+        gateways = client.describe_nat_gateways(**params)['NatGateways']
+        if gateways:
+            for gw in gateways:
+                existing_gateways.append(camel_dict_to_snake_dict(gw))
+        gateways_retrieved = True
     except botocore.exceptions.ClientError as e:
         err_msg = str(e)
 
@@ -375,12 +351,15 @@ def wait_for_status(client, wait_timeout, nat_gateway_id, status,
     states = ['pending', 'failed', 'available', 'deleting', 'deleted']
     err_msg = ""
 
+    if check_mode:
+        return True, err_msg, DRY_RUN_GATEWAYS[0]
+
     while wait_timeout > time.time():
         try:
             gws_retrieved, err_msg, nat_gateways = (
                 get_nat_gateways(
                     client, nat_gateway_id=nat_gateway_id,
-                    states=states, check_mode=check_mode
+                    states=states
                 )
             )
             if gws_retrieved and nat_gateways:
@@ -414,8 +393,7 @@ def wait_for_status(client, wait_timeout, nat_gateway_id, status,
     return status_achieved, err_msg, nat_gateway
 
 
-def gateway_in_subnet_exists(client, subnet_id, allocation_id=None,
-                             check_mode=False):
+def gateway_in_subnet_exists(client, subnet_id, allocation_id=None):
     """Retrieve all NAT Gateways for a subnet.
     Args:
         subnet_id (str): The subnet_id the nat resides in.
@@ -459,7 +437,7 @@ def gateway_in_subnet_exists(client, subnet_id, allocation_id=None,
     states = ['available', 'pending']
     gws_retrieved, _, gws = (
         get_nat_gateways(
-            client, subnet_id, states=states, check_mode=check_mode
+            client, subnet_id, states=states
         )
     )
     if not gws_retrieved:
@@ -476,15 +454,11 @@ def gateway_in_subnet_exists(client, subnet_id, allocation_id=None,
     return gateways, allocation_id_exists
 
 
-def get_eip_allocation_id_by_address(client, eip_address, check_mode=False):
+def get_eip_allocation_id_by_address(client, eip_address):
     """Release an EIP from your EIP Pool
     Args:
         client (botocore.client.EC2): Boto3 client
         eip_address (str): The Elastic IP Address of the EIP.
-
-    Kwargs:
-        check_mode (bool): if set to true, do not run anything and
-            falsify the results.
 
     Basic Usage:
         >>> client = boto3.client('ec2')
@@ -501,20 +475,11 @@ def get_eip_allocation_id_by_address(client, eip_address, check_mode=False):
     allocation_id = None
     err_msg = ""
     try:
-        if not check_mode:
-            allocations = client.describe_addresses(**params)['Addresses']
-            if len(allocations) == 1:
-                allocation = allocations[0]
-            else:
-                allocation = None
+        allocations = client.describe_addresses(**params)['Addresses']
+        if len(allocations) == 1:
+            allocation = allocations[0]
         else:
-            dry_run_eip = (
-                DRY_RUN_ALLOCATION_UNCONVERTED['Addresses'][0]['PublicIp']
-            )
-            if dry_run_eip == eip_address:
-                allocation = DRY_RUN_ALLOCATION_UNCONVERTED['Addresses'][0]
-            else:
-                allocation = None
+            allocation = None
         if allocation:
             if allocation.get('Domain') != 'vpc':
                 err_msg = (
@@ -684,7 +649,7 @@ def create(client, subnet_id, allocation_id, client_token=None,
         else:
             result = DRY_RUN_GATEWAYS[0]
             result['create_time'] = datetime.datetime.utcnow()
-            result['nat_gateway_addresses'][0]['Allocation_id'] = allocation_id
+            result['nat_gateway_addresses'][0]['allocation_id'] = allocation_id
             result['subnet_id'] = subnet_id
 
         success = True
@@ -777,7 +742,7 @@ def pre_create(client, subnet_id, allocation_id=None, eip_address=None,
 
     if not allocation_id and not eip_address:
         existing_gateways, allocation_id_exists = (
-            gateway_in_subnet_exists(client, subnet_id, check_mode=check_mode)
+            gateway_in_subnet_exists(client, subnet_id)
         )
 
         if len(existing_gateways) > 0 and if_exist_do_not_create:
@@ -802,7 +767,7 @@ def pre_create(client, subnet_id, allocation_id=None, eip_address=None,
         if eip_address and not allocation_id:
             allocation_id, err_msg = (
                 get_eip_allocation_id_by_address(
-                    client, eip_address, check_mode=check_mode
+                    client, eip_address
                 )
             )
             if not allocation_id:
@@ -812,7 +777,7 @@ def pre_create(client, subnet_id, allocation_id=None, eip_address=None,
 
         existing_gateways, allocation_id_exists = (
             gateway_in_subnet_exists(
-                client, subnet_id, allocation_id, check_mode=check_mode
+                client, subnet_id, allocation_id
             )
         )
         if len(existing_gateways) > 0 and (allocation_id_exists or if_exist_do_not_create):
@@ -887,7 +852,7 @@ def remove(client, nat_gateway_id, wait=False, wait_timeout=0,
         exist, _, gw = (
             get_nat_gateways(
                 client, nat_gateway_id=nat_gateway_id,
-                states=states, check_mode=check_mode
+                states=states
             )
         )
         if exist and len(gw) == 1:
@@ -919,7 +884,7 @@ def remove(client, nat_gateway_id, wait=False, wait_timeout=0,
                     )
 
     except botocore.exceptions.ClientError as e:
-        err_msg = str(e)
+        return False, True, str(e), results
 
     if release_eip:
         eip_released, eip_err = (
