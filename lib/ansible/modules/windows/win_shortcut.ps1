@@ -5,7 +5,7 @@
 
 # Based on: http://powershellblogger.com/2016/01/create-shortcuts-lnk-or-url-files-with-powershell/
 
-#Requires -Module Ansible.ModuleUtils.Legacy.psm1
+#Requires -Module Ansible.ModuleUtils.Legacy
 
 $ErrorActionPreference = "Stop"
 
