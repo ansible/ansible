@@ -58,7 +58,7 @@ options:
         a change needs to be made.  This allows the playbook designer
         the opportunity to perform configuration commands prior to pushing
         any changes without affecting how the set of commands are matched
-        against the system
+        against the system.
     required: false
     default: null
   after:
