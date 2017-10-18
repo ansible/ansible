@@ -63,6 +63,8 @@ options:
     inventory_zabbix:
         description:
             - Add Facts for a zabbix inventory (e.g. Tag) (see example below).
+            - Please review the interface documentation for more information on the supported properties
+            - 'https://www.zabbix.com/documentation/3.2/manual/api/reference/host/object#host_inventory'
         required: false
         default: None
         version_added: '2.4'
@@ -166,7 +168,7 @@ EXAMPLES = '''
       - Example template2
     status: enabled
     state: present
-    inventory_mode: automatic
+    inventory_mode: manual
     inventory_zabbix:
       tag: "{{ your_tag }}"
       alias: "{{ your_alias }}"
