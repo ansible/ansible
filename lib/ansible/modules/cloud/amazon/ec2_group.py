@@ -682,7 +682,8 @@ def main():
         if group:
             # existing group
             if group['Description'] != description:
-                module.warn("Group description does not match existing group. Descriptions cannot be changed without deleting and re-creating the security group. Try using state=absent to delete, then rerunning this task.")
+                module.warn("Group description does not match existing group. Descriptions cannot be changed without deleting "
+                            "and re-creating the security group. Try using state=absent to delete, then rerunning this task.")
 
         # if the group doesn't exist, create it now
         else:
