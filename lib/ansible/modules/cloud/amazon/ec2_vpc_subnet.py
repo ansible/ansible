@@ -133,8 +133,11 @@ def subnet_exists(conn, module, subnet_id):
 def create_subnet(conn, module, vpc_id, cidr, az, check_mode):
     if check_mode:
         return
+    params = dict(VpcId=vpc_id, CidrBlock=cidr)
+    if az:
+        params['AvailabilityZone'] = az
     try:
-        new_subnet = get_subnet_info(conn.create_subnet(VpcId=vpc_id, CidrBlock=cidr, AvailabilityZone=az))
+        new_subnet = get_subnet_info(conn.create_subnet(**params))
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, msg="Couldn't create subnet")
     # Sometimes AWS takes its time to create a subnet and so using

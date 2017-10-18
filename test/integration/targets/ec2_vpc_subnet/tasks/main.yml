@@ -16,10 +16,10 @@
         name: "{{ resource_prefix }}-vpc"
         state: present
         cidr_block: "10.232.232.128/26"
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        region: '{{ec2_region}}'
+        aws_access_key: '{{ aws_access_key }}'
+        aws_secret_key: '{{ aws_secret_key }}'
+        security_token: '{{ security_token }}'
         tags:
           Name: "{{ resource_prefix }}-vpc"
           Description: "Created by ansible-test"
@@ -33,10 +33,10 @@
         tags:
           Name: '{{ec2_vpc_subnet_name}}'
           Description: '{{ec2_vpc_subnet_description}}'
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        region: '{{ec2_region}}'
+        aws_access_key: '{{ aws_access_key }}'
+        aws_secret_key: '{{ aws_secret_key }}'
+        security_token: '{{ security_token }}'
         state: present
       register: vpc_subnet_create
 
@@ -56,10 +56,10 @@
         tags:
           Name: '{{ec2_vpc_subnet_name}}'
           Description: '{{ec2_vpc_subnet_description}}'
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        region: '{{ec2_region}}'
+        aws_access_key: '{{ aws_access_key }}'
+        aws_secret_key: '{{ aws_secret_key }}'
+        security_token: '{{ security_token }}'
         state: present
       register: vpc_subnet_recreate
 
@@ -80,10 +80,10 @@
           Name: '{{ec2_vpc_subnet_name}}'
           Description: '{{ec2_vpc_subnet_description}}'
           AnotherTag: SomeValue
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        region: '{{ec2_region}}'
+        aws_access_key: '{{ aws_access_key }}'
+        aws_secret_key: '{{ aws_secret_key }}'
+        security_token: '{{ security_token }}'
         state: present
       register: vpc_subnet_add_a_tag
 
@@ -104,10 +104,10 @@
         vpc_id: "{{ vpc_result.vpc.id }}"
         tags:
           AnotherTag: SomeValue
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        region: '{{ec2_region}}'
+        aws_access_key: '{{ aws_access_key }}'
+        aws_secret_key: '{{ aws_secret_key }}'
+        security_token: '{{ security_token }}'
         state: present
       register: vpc_subnet_remove_tags
 
@@ -124,10 +124,10 @@
         cidr: "10.232.232.128/28"
         vpc_id: "{{ vpc_result.vpc.id }}"
         state: absent
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        region: '{{ec2_region}}'
+        aws_access_key: '{{ aws_access_key }}'
+        aws_secret_key: '{{ aws_secret_key }}'
+        security_token: '{{ security_token }}'
       register: result
 
     - name: assert state=absent (expected changed=true)
@@ -135,6 +135,37 @@
         that:
            - 'result.changed'
 
+    - name: create subnet without AZ
+      ec2_vpc_subnet:
+        cidr: "10.232.232.128/28"
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        state: present
+        region: '{{ec2_region}}'
+        aws_access_key: '{{ aws_access_key }}'
+        aws_secret_key: '{{ aws_secret_key }}'
+        security_token: '{{ security_token }}'
+      register: subnet_without_az
+
+    - name: check that subnet without AZ works fine
+      assert:
+        that:
+           - 'subnet_without_az.changed'
+
+    - name: remove subnet without AZ
+      ec2_vpc_subnet:
+        cidr: "10.232.232.128/28"
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        state: absent
+        region: '{{ec2_region}}'
+        aws_access_key: '{{ aws_access_key }}'
+        aws_secret_key: '{{ aws_secret_key }}'
+        security_token: '{{ security_token }}'
+      register: result
+
+    - name: assert state=absent (expected changed=true)
+      assert:
+        that:
+           - 'result.changed'
   always:
 
     ################################################
@@ -146,17 +177,17 @@
         cidr: "10.232.232.128/28"
         vpc_id: "{{ vpc_result.vpc.id }}"
         state: absent
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        region: '{{ec2_region}}'
+        aws_access_key: '{{ aws_access_key }}'
+        aws_secret_key: '{{ aws_secret_key }}'
+        security_token: '{{ security_token }}'
 
     - name: tidy up VPC
       ec2_vpc_net:
         name: "{{ resource_prefix }}-vpc"
         state: absent
         cidr_block: "10.232.232.128/26"
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        region: '{{ec2_region}}'
+        aws_access_key: '{{ aws_access_key }}'
+        aws_secret_key: '{{ aws_secret_key }}'
+        security_token: '{{ security_token }}'
