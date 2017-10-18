@@ -49,7 +49,7 @@ options:
     description:
       - The type of DNS record to create
     required: true
-    choices: [ 'A', 'CNAME', 'MX', 'AAAA', 'TXT', 'PTR', 'SRV', 'SPF', 'NS', 'SOA' ]
+    choices: [ 'A', 'CNAME', 'MX', 'AAAA', 'TXT', 'PTR', 'SRV', 'SPF', 'CAA', 'NS', 'SOA' ]
   alias:
     description:
       - Indicates if this is an alias record.
@@ -292,6 +292,17 @@ EXAMPLES = '''
       weight: 100
       health_check: "d994b780-3150-49fd-9205-356abdd42e75"
 
+# Add a CAA record (RFC 6844):
+- route53:
+      state: present
+      zone: example.com
+      record: example.com
+      type: CAA
+      value:
+        - 0 issue "ca.example.net"
+        - 0 issuewild ";"
+        - 0 iodef "mailto:security@example.com"
+
 '''
 
 import time
@@ -398,7 +409,7 @@ def main():
         hosted_zone_id=dict(required=False, default=None),
         record=dict(required=True),
         ttl=dict(required=False, type='int', default=3600),
-        type=dict(choices=['A', 'CNAME', 'MX', 'AAAA', 'TXT', 'PTR', 'SRV', 'SPF', 'NS', 'SOA'], required=True),
+        type=dict(choices=['A', 'CNAME', 'MX', 'AAAA', 'TXT', 'PTR', 'SRV', 'SPF', 'CAA', 'NS', 'SOA'], required=True),
         alias=dict(required=False, type='bool'),
         alias_hosted_zone_id=dict(required=False),
         alias_evaluate_target_health=dict(required=False, type='bool', default=False),
