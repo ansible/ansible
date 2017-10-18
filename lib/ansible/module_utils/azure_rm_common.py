@@ -289,7 +289,7 @@ class AzureRMModuleBase(object):
                                                          self.credentials['password'],
                                                          tenant=tenant,
                                                          cloud_environment=self._cloud_environment)
-        
+
         elif self.credentials.get('credentials') is not None:
             self.azure_credentials = self.credentials.get('credentials')
 
