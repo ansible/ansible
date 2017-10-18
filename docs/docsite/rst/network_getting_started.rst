@@ -15,17 +15,19 @@ Objective
 
 I want to understand how Ansible can be used to connect to multiple network devices.
 
-This is not for production use, it's more to demonstrate the different areas that need to be considered and provide a foundation level knowledge.
+.. FIXME FUTURE Gundalow - Link to examples index once created
 
-Future examples FIXMELINK will build on this knowledge.
+.. note:: Examples, not production code
+   This is not for production use, it's more to demonstrate the different areas that need to be considered and provide a foundation level knowledge.
 
 Prerequisites
 -------------
 
 * Ansible 2.3 (or higher) installed :doc:`intro_installation`
-* One or more network device compatible with Ansible FIXMELINK
+* One or more network device compatible with Ansible
 
 .. FIXME FUTURE Gundalow - Once created we will link to the connection table here (which platforms support network_cli & credentials through inventory)
+.. FIXME FUTURE Gundalow -  Using ``ansible_ssh_pass`` will not work for REST transports such as ``eapi``, ``nxapi`` - Once documented in above FIXME add details her
 
 Audience
 --------
@@ -81,7 +83,7 @@ Create a file called ``fetch-facts.yml`` containing the following:
           when: "'vyos' in group_names"
 
         ###
-        # Demonstrate variables
+        # Demo variables
         #
         - name: Display some facts
           debug:
@@ -158,6 +160,7 @@ Run it
    vyos01.example.net         : ok=6    changed=2    unreachable=0    failed=0
 
    cat /tmp/switch-facts
+   find /tmp/backups
 
 Details
 =======
@@ -186,12 +189,13 @@ ansible_connection
 
 Setting ``ansible_connection=local`` informs Ansible to execute the module on the controlling machine (i.e. the one executing Ansible). Without this Ansible would attempt to ssh onto the remote and execute the Python script on the network device, which would fail as Python generally isn't available on network devices.
 
+.. FIXME FUTURE Gundalow - Once the new connection types are defined (in 2.5) we will need to update this.
 
 Playbook
 --------
 
-Gathering facts
-^^^^^^^^^^^^^^^
+Collect data
+^^^^^^^^^^^^
 
 Here we use the ``_facts`` modules :ref:`ios_facts <ios_facts>` and :ref:`vyos_facts <vyos_facts>` to connect to the remote device. As the credentials are not explicitly passed via module arguments, Ansible uses the username and password from the inventory file.
 
@@ -202,18 +206,21 @@ The return values (data returned by a module) are documented in the `Return Valu
 The task is conditionally run based on the group defined in the inventory file, for more information on the use of conditionals in Ansible Playbooks see :ref:`the_when_statement`.
 
 
-
-Debug
------
+Demo variables
+--------------
 
 Although these tasks are not needed to write data to disk, they are useful to demonstrate some methods of accessing facts about the given or a named host.
 
 More information on this can be found in :ref:`magic_variables_and_hostvars`.
 
-Writing to disk
----------------
+Get running configuration
+-------------------------
 
-* FIXME Link to module docs ios_facts, vyos_facts, copy, debug
+The :ref:`ios_config <ios_config>` and :ref:`vyos_config <vyos_config>` modules have a ``backup:`` option that when set will cause the module to create a full backup of the current ``running-config`` from the remote device before any changes are made. The backup file is written to the ``backup`` folder in the playbook root directory. If the directory does not exist, it is created.
+
+To demonstrate how we can move the backup file to a different location we ``register`` the result and use the ``backup_path`` return value as source location to move the file into ``/tmp/backups/`` directory which we have created.
+
+Note that when using variables from tasks in this way we use  double quotes (``"``) and double curly-brackets (``{{...}}`` to tell Ansible that this is a variable.
 
 Troubleshooting
 ===============
@@ -227,20 +234,3 @@ If you receive an error ``unable to open shell`` please follow the debug steps i
   * intro_inventory
   * playbooks_best_practices.html#best-practices-for-variables-and-vaults
 
-Fixme
-=====
-
-* Highlight the command to run in the console section - Look at Sphix documentation
-* Agreed: Hello world https://github.com/Dell-Networking/ansible-dellos-examples/blob/master/getfacts_os10.yaml
-
-* Add filename to code-blocks
-
-* Other examples
-
-
-* Using ``ansible_ssh_pass`` will not work for REST transports such as ``eapi``, ``nxapi`` - What do we here?
-
-* External updates needed
-
-  * Improve vault page and link between ``playbooks_best_practices.html#best-practices-for-variables-and-vaults``, ``ansible-playbook.rst``
-  * Link to network intro page table of Persistent connection and version_added table
