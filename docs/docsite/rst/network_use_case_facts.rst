@@ -62,53 +62,87 @@ Create a file called ``fetch-facts.yml`` containing the following:
 .. code-block:: yaml
 
    - name: "Download switch configuration"
-     # Which group in the inventory file this applies to
      hosts: switches
-
      gather_facts: no
 
      tasks:
+       ###
+       # Collect data
+        - name: Gather facts (ios)
+          ios_facts:
+          register: result_ios
+          when: "'ios' in group_names"
 
-       - name: Gather facts (ios)
-         ios_facts:
-         register: result_ios
-         when: "'ios' in group_names"
+        - name: Gather facts (vyos)
+          vyos_facts:
+          register: result_vyos
+          when: "'vyos' in group_names"
 
-       - name: Gather facts (vyos)
-         vyos_facts:
-         register: result_vyos
-         when: "'vyos' in group_names"
+        ###
+        # Demonstrate variables
+        #
+        - name: Display some facts
+          debug:
+            msg: "The hostname is {{ ansible_net_hostname }} and the OS is {{ ansible_net_version }}"
 
-       - name: Display some facts
-         debug:
-           msg: "The hostname is {{ ansible_net_hostname }} and the OS is {{ ansible_net_version }}"
+        - debug:
+            var: hostvars['vyos01.example.net']
 
-       - name: Show how to get a fact from a specific host
-         debug:
-           var: hostvars['vyos01.example.net']
+        - name: Write facts to disk using a template
+          copy:
+            content: |
+              IOS device info:
+                {% for host in groups['ios'] %}
+                Hostname: {{ hostvars[host].ansible_net_version }}
+                Version: {{ hostvars[host].ansible_net_version }}
+                Model: {{ hostvars[host].ansible_net_model }}
+                Serial: {{ hostvars[host].ansible_net_serialnum }}
+                {% endfor %}
 
-       - name: Write to disk
-         copy:
-           content: |
-             IOS device info:
-               {% for host in groups['ios'] %}
-               Hostname: {{ hostvars[host].ansible_net_version }}
-               Version: {{ hostvars[host].ansible_net_version }}
-               Model: {{ hostvars[host].ansible_net_model }}
-               Serial: {{ hostvars[host].ansible_net_serialnum }}
-               {% endfor %}
+              VyOS device info:
+                {% for host in groups['vyos'] %}
+                Hostname: {{ hostvars[host].ansible_net_version }}
+                Version: {{ hostvars[host].ansible_net_version }}
+                Model: {{ hostvars[host].ansible_net_model }}
+                Serial: {{ hostvars[host].ansible_net_serialnum }}
+                {% endfor %}
+            dest: /tmp/switch-facts
+          run_once: yes
 
-             VyOS device info:
-               {% for host in groups['vyos'] %}
-               Hostname: {{ hostvars[host].ansible_net_version }}
-               Version: {{ hostvars[host].ansible_net_version }}
-               Model: {{ hostvars[host].ansible_net_model }}
-               Serial: {{ hostvars[host].ansible_net_serialnum }}
-               {% endfor %}
-           dest: /tmp/switch-facts
+        ###
+        # Get running configuration
+        #
 
+        - name: Backup switch (ios)
+          ios_config:
+            backup: yes
+          register: backup_ios
+          when: "'ios' in group_names"
 
-FIXME: Use ``_config`` to download full configuration and write to disk?
+        - name: backup switch (vyos)
+          vyos_config:
+            backup: yes
+          register: backup_vyos
+          when: "'vyos' in group_names"
+
+        - name: Create backup dir
+          file:
+            path: "/tmp/backups/{{ inventory_hostname }}"
+            state: directory
+            recurse: yes
+
+        - name: Copy backup files into /tmp/backups/ (ios)
+          copy:
+            src: "{{ backup_ios.backup_path }}"
+            dest: "/tmp/backups/{{ inventory_hostname }}/{{ inventory_hostname }}.bck"
+          when: "'ios' in group_names"
+
+        - name: Copy backup files into /tmp/backups/ (vyos)
+          copy:
+            src: "{{ backup_vyos.backup_path }}"
+            dest: "/tmp/backups/{{ inventory_hostname }}/{{ inventory_hostname }}.bck"
+          when: "'vyos' in group_names"
+
 
 Run it
 ------
@@ -118,8 +152,8 @@ Run it
    ansible-playbook -i inventory fetch-facts.yml
    <snip>
    PLAY RECAP
-   ios01.example.net          : ok=3    changed=0    unreachable=0    failed=0
-   vyos01.example.net         : ok=3    changed=0    unreachable=0    failed=0
+   ios01.example.net          : ok=7    changed=2    unreachable=0    failed=0
+   vyos01.example.net         : ok=6    changed=2    unreachable=0    failed=0
 
    cat /tmp/switch-facts
 
