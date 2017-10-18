@@ -296,7 +296,7 @@ class AzureRMModuleBase(object):
         if not self.azure_credentials:
             self.fail("Failed to authenticate with provided credentials. Some attributes were missing. "
                       "Credentials must include client_id, secret and tenant or ad_user and password or "
-                      "be logged using AzureCLI.")
+                      "be logged in using AzureCLI.")
 
         # common parameter validation
         if self.module.params.get('tags'):
