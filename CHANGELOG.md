@@ -108,7 +108,6 @@ Ansible Changes By Release
 * Fix for win_copy to copy a source file that has invalid windows characters in the filename, the dest still must be have valid windows characters (https://github.com/ansible/ansible/issues/31336#issuecomment-334649927)
 * Fix systemd module to not run daemon-reload in check mode.
 * fixed some parsing and selection issues with inventory manager, fixed minor bugs in yaml and constructed plugins
-* reverted implicit localhost getting vars from 'all' group
 * Fix the ping module documentation to reference win_ping instead of itself: https://github.com/ansible/ansible/pull/31444
 * Fix for ec2_win_password to allow blank key_passphrase again (https://github.com/ansible/ansible/pull/28791)
 * added toggle for vars_plugin behaviour to execute relative to playbook, set default to revert to previous way.
