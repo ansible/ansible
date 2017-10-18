@@ -52,7 +52,7 @@ class ActionModule(ActionBase):
     def do_until_success_or_timeout(self, what, timeout, what_desc, fail_sleep=1):
         max_end_time = datetime.utcnow() + timedelta(seconds=timeout)
 
-        e = None
+        e = ""
         while datetime.utcnow() < max_end_time:
             try:
                 what()
