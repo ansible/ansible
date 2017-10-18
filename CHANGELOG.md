@@ -133,7 +133,16 @@ Ansible Changes By Release
 * Document backup_path in a few dellos modules and vyos_config (https://github.com/ansible/ansible/issues/31844)
 * Fix for vmware_vm_facts with dangling inaccessible VM which don't have MAC addresses (https://github.com/ansible/ansible/pull/31629)
 * Fix for win_regedit sending extra data that could confuse ansible's result parsing (https://github.com/ansible/ansible/pull/31813)
+* Fix git module to correctly cleanup temporary dirs (https://github.com/ansible/ansible/pull/31541)
+* Fix for modules which use atomic_move() to rename files raising an exception
+  if a file could not be opened.  Fix will return a nice error message instead:
+  https://github.com/ansible/ansible/issues/31786
+* Fix ansible-doc and ansible-console module-path option (https://github.com/ansible/ansible/pull/31744)
 
+
+### Known Bugs
+* Implicit localhost is getting ansible_connection from all:vars instead of
+  from the implicit localhost definition (https://github.com/ansible/ansible/issues/31420)
 
 <a id="2.4"></a>
 
