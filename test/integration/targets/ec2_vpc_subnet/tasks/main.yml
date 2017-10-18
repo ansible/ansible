@@ -16,7 +16,7 @@
         name: "{{ resource_prefix }}-vpc"
         state: present
         cidr_block: "10.232.232.128/26"
-        region: '{{ec2_region}}'
+        region: '{{ ec2_region }}'
         aws_access_key: '{{ aws_access_key }}'
         aws_secret_key: '{{ aws_secret_key }}'
         security_token: '{{ security_token }}'
@@ -33,7 +33,7 @@
         tags:
           Name: '{{ec2_vpc_subnet_name}}'
           Description: '{{ec2_vpc_subnet_description}}'
-        region: '{{ec2_region}}'
+        region: '{{ ec2_region }}'
         aws_access_key: '{{ aws_access_key }}'
         aws_secret_key: '{{ aws_secret_key }}'
         security_token: '{{ security_token }}'
@@ -56,7 +56,7 @@
         tags:
           Name: '{{ec2_vpc_subnet_name}}'
           Description: '{{ec2_vpc_subnet_description}}'
-        region: '{{ec2_region}}'
+        region: '{{ ec2_region }}'
         aws_access_key: '{{ aws_access_key }}'
         aws_secret_key: '{{ aws_secret_key }}'
         security_token: '{{ security_token }}'
@@ -80,7 +80,7 @@
           Name: '{{ec2_vpc_subnet_name}}'
           Description: '{{ec2_vpc_subnet_description}}'
           AnotherTag: SomeValue
-        region: '{{ec2_region}}'
+        region: '{{ ec2_region }}'
         aws_access_key: '{{ aws_access_key }}'
         aws_secret_key: '{{ aws_secret_key }}'
         security_token: '{{ security_token }}'
@@ -104,7 +104,7 @@
         vpc_id: "{{ vpc_result.vpc.id }}"
         tags:
           AnotherTag: SomeValue
-        region: '{{ec2_region}}'
+        region: '{{ ec2_region }}'
         aws_access_key: '{{ aws_access_key }}'
         aws_secret_key: '{{ aws_secret_key }}'
         security_token: '{{ security_token }}'
@@ -124,7 +124,7 @@
         cidr: "10.232.232.128/28"
         vpc_id: "{{ vpc_result.vpc.id }}"
         state: absent
-        region: '{{ec2_region}}'
+        region: '{{ ec2_region }}'
         aws_access_key: '{{ aws_access_key }}'
         aws_secret_key: '{{ aws_secret_key }}'
         security_token: '{{ security_token }}'
@@ -177,7 +177,7 @@
         cidr: "10.232.232.128/28"
         vpc_id: "{{ vpc_result.vpc.id }}"
         state: absent
-        region: '{{ec2_region}}'
+        region: '{{ ec2_region }}'
         aws_access_key: '{{ aws_access_key }}'
         aws_secret_key: '{{ aws_secret_key }}'
         security_token: '{{ security_token }}'
@@ -187,7 +187,7 @@
         name: "{{ resource_prefix }}-vpc"
         state: absent
         cidr_block: "10.232.232.128/26"
-        region: '{{ec2_region}}'
+        region: '{{ ec2_region }}'
         aws_access_key: '{{ aws_access_key }}'
         aws_secret_key: '{{ aws_secret_key }}'
         security_token: '{{ security_token }}'
