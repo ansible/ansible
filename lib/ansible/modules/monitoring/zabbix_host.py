@@ -60,6 +60,12 @@ options:
         required: false
         default: None
         version_added: '2.1'
+    inventory_zabbix:
+        description:
+            - Add Facts for a zabbix inventory (e.g.: Tag)
+        required: false
+        default: None
+        version_added: '2.4'
     status:
         description:
             - Monitoring status of the host.
@@ -500,6 +506,18 @@ class Host(object):
         except Exception as e:
             self._module.fail_json(msg="Failed to set inventory_mode to host: %s" % e)
 
+    def update_inventory_zabbix(self, host_id, inventory):
+
+        if not inventory:
+            return
+
+        request_str = {'hostid': host_id, 'inventory': inventory}
+        try:
+            if self._module.check_mode:
+                self._module.exit_json(changed=True)
+            self._zapi.host.update(request_str)
+        except Exception as e:
+            self._module.fail_json(msg="Failed to set inventory to host: %s" % e)
 
 def main():
     module = AnsibleModule(
@@ -522,6 +540,7 @@ def main():
             tls_psk=dict(type='str', required=False),
             tls_issuer=dict(type='str', required=False),
             tls_subject=dict(type='str', required=False),
+            inventory_zabbix=dict(required=False, type='dict'),
             timeout=dict(type='int', default=10),
             interfaces=dict(type='list', required=False),
             force=dict(type='bool', default=True),
@@ -553,6 +572,7 @@ def main():
     tls_psk = module.params['tls_psk']
     tls_issuer = module.params['tls_issuer']
     tls_subject = module.params['tls_subject']
+    inventory_zabbix = module.params['inventory_zabbix']
     status = module.params['status']
     state = module.params['state']
     timeout = module.params['timeout']
@@ -662,6 +682,7 @@ def main():
                     host.link_or_clear_template(host_id, template_ids, tls_connect, tls_accept, tls_psk_identity,
                                                 tls_psk, tls_issuer, tls_subject)
                     host.update_inventory_mode(host_id, inventory_mode)
+                    host.update_inventory_zabbix(host_id, inventory_zabbix)
                     module.exit_json(changed=True,
                                      result="Successfully update host %s (%s) and linked with template '%s'"
                                             % (host_name, ip, link_templates))
@@ -690,6 +711,7 @@ def main():
         host.link_or_clear_template(host_id, template_ids, tls_connect, tls_accept, tls_psk_identity,
                                     tls_psk, tls_issuer, tls_subject)
         host.update_inventory_mode(host_id, inventory_mode)
+        host.update_inventory_zabbix(host_id, inventory_zabbix)
         module.exit_json(changed=True, result="Successfully added host %s (%s) and linked with template '%s'" % (
             host_name, ip, link_templates))
 
