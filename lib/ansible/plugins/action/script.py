@@ -100,7 +100,9 @@ class ActionModule(ActionBase):
         script_cmd = ' '.join([env_string, tmp_src, args])
 
         if self._play_context.check_mode:
-            return dict(changed=True)
+            result['changed'] = True
+            self._remove_tmp_path(tmp)
+            return result
 
         script_cmd = self._connection._shell.wrap_for_exec(script_cmd)
 
