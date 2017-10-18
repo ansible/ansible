@@ -148,29 +148,22 @@ $resourcename = Get-AnsibleParam -obj $params -name "resource_name" -type "str" 
 $module_version = Get-AnsibleParam -obj $params -name "module_version" -type "str" -default "latest"
 
 #From Ansible 2.3 onwards, params is now a Hash Array
-$Attributes = $params.GetEnumerator() | 
-    Where-Object {
-        $_.key -ne "resource_name" -and
-        $_.key -ne "module_version" -and
-        $_.key -notlike "_ansible_*"
+$Attributes = @{}
+foreach ($param in $params.GetEnumerator())
+{
+    if ($param.Name -notin @("resource_name", "module_version") -and $param.Name -notlike "_ansible_*")
+    {
+        $Attributes[$param.Name] = $param.Value
     }
+}
 
-if (!($Attributes))
+if ($Attributes.Count -eq 0)
 {
     Fail-Json -obj $result -message "No attributes specified"
 }
 
 #Always return some basic info
-$result["resource_name"] = $resourcename
-$result["reboot_required"] = $null
-
-# Build Attributes Hashtable for DSC Resource Propertys
-$Attrib = @{}
-foreach ($key in $Attributes)
-{
-    $result[$key.name] = $key.value
-    $Attrib.Add($Key.Key,$Key.Value)
-}
+$result["reboot_required"] = $false
 
 $Config = @{
    Name = ($resourcename)
@@ -222,7 +215,7 @@ try {
 catch {}
 
 #Convert params to correct datatype and inject
-foreach ($attribute in $attrib.GetEnumerator())
+foreach ($attribute in $Attributes.GetEnumerator())
 {
     $key = $attribute.Name.Replace("item_name", "name")
     $value = $attribute.Value
@@ -236,7 +229,7 @@ foreach ($attribute in $attrib.GetEnumerator())
             #We need to construct a cred object. At this point keyvalue is the username, so grab the password
             $PropUserNameValue = $value
             $PropPassword = $key.Replace("_username","_password")
-            $PropPasswordValue = $attrib.$PropPassword
+            $PropPasswordValue = $Attributes.$PropPassword
 
             $KeyValue = New-Object System.Management.Automation.PSCredential ($PropUserNameValue, ($PropPasswordValue | ConvertTo-SecureString -AsPlainText -Force))
             $config.Property.Add($key.Replace("_username",""),$KeyValue)

@@ -135,18 +135,14 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-resource_name:
-    description: The name of the invoked resource
-    returned: always
-    type: string
-    sample: windowsfeature
 module_version:
     description: The version of the dsc resource/module used.
     returned: success
     type: string
     sample: "1.0.1"
 reboot_required:
-    description: flag returned from the DSC engine indicating whether or not the machine requires a reboot for the invoked changes to take effect
+    description: Flag returned from the DSC engine indicating whether or not
+      the machine requires a reboot for the invoked changes to take effect.
     returned: always
     type: boolean
     sample: True
