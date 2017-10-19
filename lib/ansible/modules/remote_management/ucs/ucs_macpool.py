@@ -34,7 +34,6 @@ options:
     - first_addr (First MAC address in the MAC addresses block)
     - last_addr (Last MAC address in the MAC addresses block)
     required: yes
-    type: list
   org_dn:
     description:
     - Org dn (distinguished name)
