@@ -38,7 +38,7 @@ options:
         default: null
     profile:
         description:
-            - Security profile found in ~/.azure/credentials file.
+            - Security profile found in C(~/.azure/credentials) file.
         required: false
         default: null
     subscription_id:
@@ -73,15 +73,15 @@ requirements:
 
 notes:
     - For authentication with Azure you can pass parameters, set environment variables, use a profile stored
-      in ~/.azure/credentials or login with Azure CLI.
+      in C(~/.azure/credentials) or login with Azure CLI.
       Authentication is possible using a service principal or Active Directory user.
-      To authenticate via service principal, pass subscription_id, client_id, secret and tenant or set environment
-      variables AZURE_SUBSCRIPTION_ID, AZURE_CLIENT_ID, AZURE_SECRET and AZURE_TENANT.
-    - To authenticate via Active Directory user, pass ad_user and password, or set AZURE_AD_USER and
-      AZURE_PASSWORD in the environment.
-    - "Alternatively, credentials can be stored in ~/.azure/credentials. This is an ini file containing
-      a [default] section and the following keys: subscription_id, client_id, secret and tenant or
-      subscription_id, ad_user and password. It is also possible to add additional profiles. Specify the profile
-      by passing profile or setting AZURE_PROFILE in the environment."
+      To authenticate via service principal, pass C(subscription_id), C(client_id), C(secret) and C(tenant) or set environment
+      variables C(AZURE_SUBSCRIPTION_ID), C(AZURE_CLIENT_ID), C(AZURE_SECRET) and C(AZURE_TENANT).
+    - To authenticate via Active Directory user, pass C(ad_user) and C(password), or set C(AZURE_AD_USER) and
+      C(AZURE_PASSWORD) in the environment.
+    - "Alternatively, credentials can be stored in C(~/.azure/credentials). This is an ini file containing
+      a [default] section and the following keys: C(subscription_id), C(client_id), C(secret) and C(tenant) or
+      C(subscription_id), C(ad_user) and C(password). It is also possible to add additional profiles. Specify the profile
+      by passing profile or setting C(AZURE_PROFILE) in the environment."
     - Use 'az login' to login with Azure CLI.
     '''
