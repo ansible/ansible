@@ -240,12 +240,22 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_bytes
 
 
-def get_stack_events(cfn, stack_name):
+def get_stack_events(cfn, stack_name, token_filter=None):
     '''This event data was never correct, it worked as a side effect. So the v2.3 format is different.'''
     ret = {'events':[], 'log':[]}
 
     try:
-        events = cfn.describe_stack_events(StackName=stack_name)
+        pg = cfn.get_paginator(
+                'describe_stack_events'
+            ).paginate(
+                StackName=stack_name
+            )
+        if token_filter is not None:
+            events = list(pg.search(
+                "StackEvents[?ClientRequestToken == '{}']".format(token_filter)
+            ))
+        else:
+            events = list(pg)
     except (botocore.exceptions.ValidationError, botocore.exceptions.ClientError) as err:
         error_msg = boto_exception(err)
         if 'does not exist' in error_msg:
@@ -255,7 +265,7 @@ def get_stack_events(cfn, stack_name):
         ret['log'].append('Unknown error: ' + str(error_msg))
         return ret
 
-    for e in events.get('StackEvents', []):
+    for e in events:
         eventline = 'StackEvent {ResourceType} {LogicalResourceId} {ResourceStatus}'.format(**e)
         ret['events'].append(eventline)
 
@@ -368,7 +378,7 @@ def boto_supports_termination_protection(cfn):
     return hasattr(cfn, "update_termination_protection")
 
 
-def stack_operation(cfn, stack_name, operation):
+def stack_operation(cfn, stack_name, operation, op_token):
     '''gets the status of a stack while it is created/updated/deleted'''
     existed = []
     while True:
@@ -379,15 +389,15 @@ def stack_operation(cfn, stack_name, operation):
             # If the stack previously existed, and now can't be found then it's
             # been deleted successfully.
             if 'yes' in existed or operation == 'DELETE': # stacks may delete fast, look in a few ways.
-                ret = get_stack_events(cfn, stack_name)
+                ret = get_stack_events(cfn, stack_name, op_token)
                 ret.update({'changed': True, 'output': 'Stack Deleted'})
                 return ret
             else:
                 return {'changed': True, 'failed': True, 'output': 'Stack Not Found', 'exception': traceback.format_exc()}
-        ret = get_stack_events(cfn, stack_name)
+        ret = get_stack_events(cfn, stack_name, op_token)
         if not stack:
             if 'yes' in existed or operation == 'DELETE': # stacks may delete fast, look in a few ways.
-                ret = get_stack_events(cfn, stack_name)
+                ret = get_stack_events(cfn, stack_name, op_token)
                 ret.update({'changed': True, 'output': 'Stack Deleted'})
                 return ret
             else:
