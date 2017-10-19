@@ -29,7 +29,7 @@ Ansible Changes By Release
   https://github.com/ansible/ansible/pull/31495
 * Use controller configured ansible_shell_executable to run commands in the module
   (https://github.com/ansible/ansible/pull/31361)
-
+* Add documentation about writing unittests for Ansible
 
 <a id="2.4.1"></a>
 
