@@ -13,6 +13,7 @@ from lib.util import (
     display,
     raw_command,
     find_pip,
+    get_docker_completion,
 )
 
 from lib.delegation import (
@@ -631,8 +632,7 @@ def complete_docker(prefix, parsed_args, **_):
     """
     del parsed_args
 
-    with open('test/runner/completion/docker.txt', 'r') as completion_fd:
-        images = completion_fd.read().splitlines()
+    images = sorted(get_docker_completion().keys())
 
     return [i for i in images if i.startswith(prefix)]
 

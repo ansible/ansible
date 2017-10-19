@@ -19,6 +19,21 @@ except ImportError:
     from abc import ABCMeta
     ABC = ABCMeta('ABC', (), {})
 
+DOCKER_COMPLETION = {}
+
+
+def get_docker_completion():
+    """
+    :rtype: dict[str, str]
+    """
+    if not DOCKER_COMPLETION:
+        with open('test/runner/completion/docker.txt', 'r') as completion_fd:
+            images = completion_fd.read().splitlines()
+
+        DOCKER_COMPLETION.update(dict((i.split('@')[0], i) for i in images))
+
+    return DOCKER_COMPLETION
+
 
 def is_shippable():
     """
@@ -503,6 +518,8 @@ def docker_qualify_image(name):
     """
     if not name or any((c in name) for c in ('/', ':')):
         return name
+
+    name = get_docker_completion().get(name, name)
 
     return 'ansible/ansible:%s' % name
 
