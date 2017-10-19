@@ -34,7 +34,7 @@ options:
   ipv6_cidr:
     description:
       - "The IPv6 CIDR block for the subnet. The VPC must have a /56 block assigned and this value must be a valid IPv6 /64 that falls in the VPC range."
-      - "Required if I(assign_ipv6_on_create=true)"
+      - "Required if I(assign_instances_ipv6=true)"
     required: false
     default: null
     version_added: "2.5"
@@ -61,7 +61,7 @@ options:
     required: false
     default: false
     version_added: "2.4"
-  assign_ipv6_on_create:
+  assign_instances_ipv6:
     description:
       - "Specify true to indicate that instances launched into the subnet should be automatically assigned an IPv6 address."
     required: false
@@ -360,16 +360,14 @@ def ensure_map_public(conn, module, subnet, map_public, check_mode):
         module.fail_json_aws(e, msg="Couldn't modify subnet attribute")
 
 
-def ensure_assign_ipv6_on_create(conn, module, subnet, assign_ipv6_on_create, check_mode):
+def ensure_assign_ipv6_on_create(conn, module, subnet, assign_instances_ipv6, check_mode):
     if check_mode:
         return
 
     try:
-        conn.modify_subnet_attribute(SubnetId=subnet['id'], AssignIpv6AddressOnCreation={'Value': assign_ipv6_on_create})
-    except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Couldn't set assign-ipv6-address-on-creation attribute to {0}: {1}"
-                         .format(assign_ipv6_on_create, e.message), exception=traceback.format_exc(),
-                         **camel_dict_to_snake_dict(e.response))
+        conn.modify_subnet_attribute(SubnetId=subnet['id'], AssignIpv6AddressOnCreation={'Value': assign_instances_ipv6})
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Couldn't modify subnet attribute")
 
 
 def disassociate_ipv6_cidr(conn, module, subnet):
@@ -378,10 +376,9 @@ def disassociate_ipv6_cidr(conn, module, subnet):
 
     try:
         conn.disassociate_subnet_cidr_block(AssociationId=subnet['ipv6_association_id'])
-    except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Couldn't disassociate ipv6 cidr block id {0} from subnet {1}: {2}"
-                         .format(subnet['ipv6_association_id'], subnet['id'], e.message),
-                         exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Couldn't disassociate ipv6 cidr block id {0} from subnet {1}: {2}"
+                             .format(subnet['ipv6_association_id'], subnet['id']))
 
 
 def ensure_ipv6_cidr_block(conn, module, subnet, ipv6_cidr, check_mode):
@@ -396,10 +393,9 @@ def ensure_ipv6_cidr_block(conn, module, subnet, ipv6_cidr, check_mode):
                                                      'vpc-id': subnet['vpc_id']})
 
         try:
-            check_subnets = get_subnet_info(conn.describe_subnets(Filters=filters))
-        except botocore.exceptions.ClientError as e:
-            module.fail_json(msg=e.message, exception=traceback.format_exc(),
-                             **camel_dict_to_snake_dict(e.response))
+            check_subnets = get_subnet_info(describe_subnets_with_backoff(conn, Filters=filters))
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            module.fail_json_aws(e, msg="Couldn't get subnet info")
 
         if check_subnets and check_subnets[0]['ipv6_cidr_block']:
             module.fail_json(msg="Cannot associate {0} to {1}. IPv6 block is already in use on {2}"
@@ -410,9 +406,8 @@ def ensure_ipv6_cidr_block(conn, module, subnet, ipv6_cidr, check_mode):
 
         try:
             associate_resp = conn.associate_subnet_cidr_block(SubnetId=subnet['id'], Ipv6CidrBlock=ipv6_cidr)
-        except botocore.exceptions.ClientError as e:
-            module.fail_json(msg="Couldn't associate {0} to {1}: {2}".format(ipv6_cidr, subnet['id'], e.message),
-                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            module.fail_json_aws(e, msg="Couldn't associate {0} to {1}: {2}".format(ipv6_cidr, subnet['id'], e.message))
 
         if associate_resp.get('Ipv6CidrBlockAssociation', {}).get('AssociationId'):
             subnet['ipv6_association_id'] = associate_resp['Ipv6CidrBlockAssociation']['AssociationId']
@@ -426,7 +421,7 @@ def ensure_ipv6_cidr_block(conn, module, subnet, ipv6_cidr, check_mode):
 def get_matching_subnet(conn, module, vpc_id, cidr):
     filters = ansible_dict_to_boto3_filter_list({'vpc-id': vpc_id, 'cidr-block': cidr})
     try:
-        subnets = get_subnet_info(conn.describe_subnets(Filters=filters))
+        subnets = get_subnet_info(describe_subnets_with_backoff(conn, Filters=filters))
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, msg="Couldn't get matching subnet")
 
@@ -437,7 +432,7 @@ def get_matching_subnet(conn, module, vpc_id, cidr):
 
 
 def ensure_subnet_present(conn, module):
-    subnet = get_matching_subnet(conn, module.params['vpc_id'], module.params['cidr'])
+    subnet = get_matching_subnet(conn, module, module.params['vpc_id'], module.params['cidr'])
     changed = False
     if subnet is None:
         if not module.check_mode:
@@ -459,18 +454,17 @@ def ensure_subnet_present(conn, module):
         ensure_map_public(conn, module, subnet, module.params['map_public'], module.check_mode)
         changed = True
 
-    if module.params['assign_ipv6_on_create'] != subnet.get('assign_ipv6_address_on_creation'):
-        ensure_assign_ipv6_on_create(conn, module, subnet, module.params['assign_ipv6_on_create'], module.check_mode)
+    if module.params['assign_instances_ipv6'] != subnet.get('assign_ipv6_address_on_creation'):
+        ensure_assign_ipv6_on_create(conn, module, subnet, module.params['assign_instances_ipv6'], module.check_mode)
         changed = True
 
     if module.params['tags'] != subnet['tags']:
         changed = ensure_tags(conn, module, subnet, module.params['tags'], module.params['purge_tags'])
 
     try:
-        subnet = get_subnet_info(conn.describe_subnets(SubnetIds=[subnet['id']]))
-    except botocore.exceptions.ClientError as e:
-        module.fail_json(msg=e.message, exception=traceback.format_exc(),
-                         **camel_dict_to_snake_dict(e.response))
+        subnet = get_subnet_info(describe_subnets_with_backoff(conn, SubnetIds=[subnet['id']]))
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Couldn't get subnet info")
 
     return {
         'changed': changed,
@@ -479,7 +473,7 @@ def ensure_subnet_present(conn, module):
 
 
 def ensure_subnet_absent(conn, module):
-    subnet = get_matching_subnet(conn, module.params['vpc_id'], module.params['cidr'])
+    subnet = get_matching_subnet(conn, module, module.params['vpc_id'], module.params['cidr'])
     if subnet is None:
         return {'changed': False}
 
@@ -502,19 +496,19 @@ def main():
             tags=dict(default={}, required=False, type='dict', aliases=['resource_tags']),
             vpc_id=dict(default=None, required=True),
             map_public=dict(default=False, required=False, type='bool'),
-            assign_ipv6_on_create=dict(default=False, required=False, type='bool'),
+            assign_instances_ipv6=dict(default=False, required=False, type='bool'),
             wait=dict(type='bool', default=True),
             wait_timeout=dict(type='int', default=300, required=False),
             purge_tags=dict(default=False, type='bool')
         )
     )
 
-    required_if = [('assign_ipv6_on_create', True, ['ipv6_cidr'])]
+    required_if = [('assign_instances_ipv6', True, ['ipv6_cidr'])]
 
     module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True, required_if=required_if)
 
-    if module.params.get('assign_ipv6_on_create') and not module.params.get('ipv6_cidr'):
-        module.fail_json(msg="assign_ipv6_on_create is True but ipv6_cidr is None or an empty string")
+    if module.params.get('assign_instances_ipv6') and not module.params.get('ipv6_cidr'):
+        module.fail_json(msg="assign_instances_ipv6 is True but ipv6_cidr is None or an empty string")
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
 
