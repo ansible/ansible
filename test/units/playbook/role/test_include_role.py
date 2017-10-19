@@ -23,20 +23,12 @@ from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch
 
 from ansible.playbook import Play
+from ansible.playbook.role_include import IncludeRole
 from ansible.playbook.task import Task
 from ansible.vars.manager import VariableManager
 
 from units.mock.loader import DictDataLoader
 from units.mock.path import mock_unfrackpath_noop
-
-
-def flatten_tasks(tasks):
-    for task in tasks:
-        if isinstance(task, Task):
-            yield task
-        else:
-            for t in flatten_tasks(task.block):
-                yield t
 
 
 class TestIncludeRole(unittest.TestCase):
@@ -97,8 +89,21 @@ class TestIncludeRole(unittest.TestCase):
     def tearDown(self):
         pass
 
+    def flatten_tasks(self, tasks):
+        for task in tasks:
+            if isinstance(task, IncludeRole):
+                blocks, handlers = task.get_block_list(loader=self.loader)
+                for block in blocks:
+                    for t in self.flatten_tasks(block.block):
+                        yield t
+            elif isinstance(task, Task):
+                yield task
+            else:
+                for t in self.flatten_tasks(task.block):
+                    yield t
+
     def get_tasks_vars(self, play, tasks):
-        for task in flatten_tasks(tasks):
+        for task in self.flatten_tasks(tasks):
             role = task._role
             if not role:
                 continue
