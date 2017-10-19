@@ -481,17 +481,17 @@ class PathMapper(object):
 
         if path.startswith('test/runner/requirements/'):
             if name in (
-                'integration',
-                'network-integration',
-                'windows-integration',
+                    'integration',
+                    'network-integration',
+                    'windows-integration',
             ):
                 return {
                     name: self.integration_all_target,
                 }
 
             if name in (
-                'sanity',
-                'units',
+                    'sanity',
+                    'units',
             ):
                 return {
                     name: 'all',
