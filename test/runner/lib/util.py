@@ -3,6 +3,7 @@
 from __future__ import absolute_import, print_function
 
 import errno
+import filecmp
 import inspect
 import os
 import pipes
@@ -89,7 +90,7 @@ def find_pip(path=None, version=None):
     our_python = os.path.realpath(python_bin)
     pip_python = os.path.realpath(shebang[2:])
 
-    if our_python != pip_python:
+    if our_python != pip_python and not filecmp.cmp(our_python, pip_python, False):
         raise ApplicationError('Current interpreter "%s" does not match "%s" interpreter "%s".' % (our_python, pip, pip_python))
 
     return pip
