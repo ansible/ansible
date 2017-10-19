@@ -61,7 +61,24 @@
                 "rds:RemoveTagsFromResource"
             ],
             "Resource": [
-                "arn:aws:rds:{{aws_region}}:{{aws_account}}:pg:*"
+                "arn:aws:rds:{{aws_region}}:{{aws_account}}:pg:ansible-test*"
+            ]
+        },
+        {
+            "Sid": "AllowRDSSubnetGroupManagement",
+            "Effect": "Allow",
+            "Action": [
+                "rds:DescribeDBSubnetGroups",
+                "rds:DescribeDBSubnets",
+                "rds:CreateDBSubnetGroup",
+                "rds:DeleteDBSubnetGroup",
+                "rds:ModifyDBSubnetGroup",
+                "rds:ListTagsForResource",
+                "rds:AddTagsToResource",
+                "rds:RemoveTagsFromResource"
+            ],
+            "Resource": [
+                "arn:aws:rds:{{aws_region}}:{{aws_account}}:subgrp:ansible-test*"
             ]
         }
     ]
