@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: junos_scp
-version_added: "2.X"
+version_added: "2.5"
 author: "Christian Giese (@GIC-de)"
 short_description: Transfer files from or to remote devices running Junos
 description:
