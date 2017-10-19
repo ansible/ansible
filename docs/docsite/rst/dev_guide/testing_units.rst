@@ -14,7 +14,7 @@ Available Tests
 
 Unit tests can be found in `test/units
 <https://github.com/ansible/ansible/tree/devel/test/units>`_. Notice that the directory
-structure of the tests matches that of ``lib/ansible/``
+structure of the tests matches that of ``lib/ansible/``.
 
 Running Tests
 =============
@@ -52,7 +52,7 @@ in your pull request.
 Installing dependencies
 =======================
 
-``ansible-test`` has a number of dependencies , for ``units`` tests we suggest using ``tox``
+``ansible-test`` has a number of dependencies. For ``units`` tests we suggest using ``tox``.
 
 The dependencies can be installed using the ``--requirements`` argument, which will
 install all the required dependencies needed for unit tests. For example:
