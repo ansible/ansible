@@ -87,9 +87,11 @@ Extending unit tests
 Structuring Unit Tests
 ``````````````````````
 
-Ansible drives unit tests through `pytest <https://docs.pytest.org/en/latest/>`_ this
-means that tests can either be written as simple functions which are included in any file
-name like ``test_<something>.py``.::
+Ansible drives unit tests through `pytest <https://docs.pytest.org/en/latest/>`_. This
+means that tests can either be written a simple functions which are included in any file
+name like ``test_<something>.py`` or as classes. 
+
+Here is an example of a function::
 
   #this function will be called simply because it is called test_*()
 
@@ -99,7 +101,7 @@ name like ``test_<something>.py``.::
       c = 33
       assert a + b = c
     
-or as classes::
+Here is an example of a class::
 
   import unittest:
       
@@ -135,7 +137,7 @@ modules, especially in the networking arena.  In these cases a file is created i
 directory, which is then included directly.
 
 
-module test case common code
+Module test case common code
 ````````````````````````````
 
 Keep common code as specific as possible within the `test/units/` directory structure. For
@@ -151,7 +153,7 @@ Fixtures files
 ``````````````
 
 To mock out fetching results from devices, or provide other complex datastructures that
-come from external libraries you can use ``fixtures`` to read in pre-generated data.
+come from external libraries, you can use ``fixtures`` to read in pre-generated data.
 
 Text files live in ``test/units/modules/network/PLATFORM/fixtures/``
 
