@@ -155,7 +155,8 @@ def install_yang(module, device, update):
                 _argument_name = argument_name[:-1].replace("_", "-")
                 rpc_kwargs[_argument_name] = []
                 for src in argument:
-                    scp.put(src)    # upload file
+                    # upload file
+                    scp.put(src)
                     _filename = os.path.basename(src)
                     rpc_kwargs[_argument_name].append(_filename)
 
@@ -166,6 +167,7 @@ def install_yang(module, device, update):
     else:
         reply = device.rpc.request_yang_add(**rpc_kwargs)
     return reply.text
+
 
 def main():
     """ Main entry point for Ansible module execution
