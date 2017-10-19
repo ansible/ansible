@@ -12,7 +12,7 @@ try:
 except:
     pass  # it is assumed that calling modules will detect and provide an appropriate nice error.
 
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, boto3_tag_list_to_ansible_dict
 
 DEFAULT_PORTS = {
     'aurora': 3306,
@@ -54,12 +54,17 @@ def get_db_instance(conn, instancename):
             return None
         else:
             raise
-    return response['DBInstances'][0]
+    instance = response['DBInstances'][0]
+    tags = conn.list_tags_for_resource(ResourceName=instance['DBInstanceArn']).get('TagList', [])
+    instance['Tags'] = boto3_tag_list_to_ansible_dict(tags)
+    return instance
 
 
 def instance_to_facts(instance):
+    if not instance:
+        return instance
     assert 'DBInstanceIdentifier' in instance, "instance argument was not a valid instance"
-    d = camel_dict_to_snake_dict(instance)
+    d = camel_dict_to_snake_dict(instance, ignore_list=['Tags'])
     return d
 
 

@@ -228,6 +228,10 @@ options:
     description:
       - tags dict to apply to a resource.  If None then tags are ignored.  Use {} to set to empty.
     required: false
+  tags:
+    purge_tags:
+      - whether to remove existing tags that aren't passed in the C(tags) parameter
+    default: no
 extends_documentation_fragment:
     - aws
     - ec2
@@ -444,6 +448,7 @@ def create_db_instance(module, conn):
 
     instance_id = module.params.get('db_instance_identifier')
     params['DBInstanceIdentifier'] = instance_id
+    params['Tags'] = ansible_dict_to_boto3_tag_list(params.get('Tags', {}))
 
     changed = False
     instance = get_db_instance(conn, instance_id)
@@ -462,7 +467,7 @@ def create_db_instance(module, conn):
     else:
         resource = get_db_instance(conn, instance_id)
 
-    return dict(changed=changed, instance=resource, response=response)
+    return dict(changed=changed, instance=instance_to_facts(resource), response=response)
 
 
 def replicate_db_instance(module, conn):
@@ -498,7 +503,7 @@ def replicate_db_instance(module, conn):
     else:
         resource = get_db_instance(conn, instance_id)
 
-    return dict(changed=changed, instance=resource, response=response)
+    return dict(changed=changed, instance=instance_to_facts(resource), response=response)
 
 
 def delete_db_instance(module, conn):
@@ -552,7 +557,7 @@ def delete_db_instance(module, conn):
     except Exception as e:
             module.fail_json_aws(e, msg="waiting for rds deletion to complete")
 
-    return dict(changed=True, response=response, instance=instance)
+    return dict(changed=True, response=response, instance=instance_to_facts(instance))
 
 
 def update_rds_tags(module, conn, db_instance=None):
@@ -573,7 +578,7 @@ def update_rds_tags(module, conn, db_instance=None):
     tags = module.params.get('tags')
     if tags is None:
         tags = {}
-    purge_tags = True  # For now - might make this a parameter
+    purge_tags = module.params.get('purge_tags')
     changed = False
 
     tags_need_modify, tags_to_delete = compare_aws_tags(current_tags, tags, purge_tags)
@@ -818,7 +823,7 @@ def modify_db_instance(module, conn, before_instance):
     # changed = not not diff  # "not not" casts from dict to boolean!
 
     # boto3 modify_db_instance can't modify tags directly
-    return dict(changed=True, instance=return_instance, diff=diff)
+    return dict(changed=True, instance=instance_to_facts(return_instance), diff=diff)
 
 
 def get_instance_to_work_on(module, conn):
@@ -868,7 +873,7 @@ def promote_db_instance(module, conn):
     else:
         instance = get_db_instance(conn, instance_id)
 
-    return dict(changed=changed, instance=instance)
+    return dict(changed=changed, instance=instance_to_facts(instance))
 
 
 def reboot_db_instance(module, conn):
@@ -889,7 +894,7 @@ def reboot_db_instance(module, conn):
     else:
         instance = get_db_instance(conn, instance_id)
 
-    return dict(changed=True, instance=instance)
+    return dict(changed=True, instance=instance_to_facts(instance))
 
 
 def restore_db_instance(module, conn):
@@ -914,7 +919,7 @@ def restore_db_instance(module, conn):
     else:
         instance = get_db_instance(conn, instance_id)
 
-    return dict(changed=changed, instance=instance)
+    return dict(changed=changed, instance=instance_to_facts(instance))
 
 
 def validate_parameters(module):
@@ -1021,8 +1026,7 @@ argument_spec = dict(
     # RDS absent / delete only variables
     final_db_snapshot_identifier=dict(),
     skip_final_snapshot=dict(type='bool'),
-
-    # FIXME: add a purge_tags option using compare_aws_tags()
+    purge_tags=dict(type='bool', default=False)
 )
 
 # FIXME allocated_storage should be required if state=present and engine is not aurora
