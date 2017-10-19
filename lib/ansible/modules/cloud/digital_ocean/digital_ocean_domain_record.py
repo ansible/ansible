@@ -40,7 +40,7 @@ options:
   type:
     description:
      - The type of record you would like to create.
-    choices: [ A, AAA, CNAME, NS, TXT, MX, SRV ]
+    choices: [ A, AAAA, CNAME, NS, TXT, MX, SRV ]
     required: false
     default: A
   data:
