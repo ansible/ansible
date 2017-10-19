@@ -30,7 +30,8 @@ class TerminalModule(TerminalBase):
     terminal_stdout_re = [
         re.compile(br"[\r\n]?(?:\([^\)]+\)){,5}(?:>|#) ?$"),
         re.compile(br"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
-        re.compile(br"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
+        re.compile(br"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$"),
+        re.compile(br"(?:new|confirm) password:")
     ]
 
     terminal_stderr_re = [
@@ -40,6 +41,7 @@ class TerminalModule(TerminalBase):
         re.compile(br"invalid input", re.I),
         re.compile(br"(?:incomplete|ambiguous) command", re.I),
         re.compile(br"connection timed out", re.I),
+        re.compile(br"the new password was not confirmed", re.I),
         re.compile(br"[^\r\n]+ not found", re.I),
         re.compile(br"'[^']' +returned error code: ?\d+"),
         re.compile(br"[^\r\n]\/bin\/(?:ba)?sh")
