@@ -15,7 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -30,8 +33,10 @@ description:
       Installation/configuration instructions for the gce* modules can
       be found at U(https://docs.ansible.com/ansible/guide_gce.html).
 requirements:
-- "python >= 2.6"
-- "apache-libcloud >= 0.17.0"
+  - 'python >= 2.6'
+  - 'google-api-python-client >= 1.6.2'
+  - 'google-auth >= 1.0.0'
+  - 'google-auth-httplib2 >= 0.0.2'
 author:
 - "Nikolaos Kakouros (@tterranigma) <tterranigma@gmail.com>"
 options:
@@ -77,10 +82,7 @@ options:
         default: "present"
 notes:
 - GCE does not support updating routes. This module "emulates" updating by deleting an existing route and then creating a new one.
-- This module's underlying library does not support VPNs as next hops.
-- Although this module supports check mode, there is one case when check_mode will report inconsistent results.
-  This is when you try to create a route that hides the address space of an existing network/subnet in GCE.
-  Check mode will report the tasks as successful while in reality it would have failed.
+- This module does not yet support VPNs as next hops.
 '''
 
 EXAMPLES = '''
@@ -185,150 +187,252 @@ next_hop_resource:
 ################################################################################
 
 try:
-    # import libcloud
-    from libcloud import __version__ as LIBCLOUD_VERSION
-    from libcloud.compute.types import Provider
-    from libcloud.compute.providers import Provider
-    from libcloud.common.google import ResourceNotFoundError
-
-    HAS_LIBCLOUD = True
+    from ast import literal_eval
+    HAS_PYTHON26 = True
 except ImportError:
-    HAS_LIBCLOUD = False
+    HAS_PYTHON26 = False
+
+# Ansible
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.gcp import get_google_api_client, GCPUtils
 
 # module specific imports
 import re
-from distutils.version import LooseVersion
 from sys import version_info
 
-# import module snippets
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.gce import gce_connect
+try:
+    from netaddr import AddrFormatError, IPNetwork, IPRange, IPAddress
+    HAS_NETADDR = True
+except ImportError:
+    HAS_NETADDR = False
 
 
 ################################################################################
 # Constants
 ################################################################################
 
-# ex_create_route was introduced in libcloud 0.17.0
-MINIMUM_LIBCLOUD_VERSION = '0.17.0'
-
-try:
-    PROVIDER = Provider.GCE
-except NameError:
-    # libcloud may not have been successfully imported. In that case, execution
-    # will stop after check_libs() has been called.
-    pass
+UA_PRODUCT = 'ansible-gce_route'
+UA_VERSION = '0.0.1'
+GCE_API_VERSION = 'v1'
 
 
 ################################################################################
 # Functions
 ################################################################################
 
-def check_libcloud(module):
-    # Apache libcloud needs to be installed and at least the minimum version.
-    if not HAS_LIBCLOUD:
+def check_python(module):
+    if not HAS_PYTHON26:
         module.fail_json(
-            msg='This module requires Apache libcloud %s or greater' % MINIMUM_LIBCLOUD_VERSION,
-            changed=False
-        )
-    elif LooseVersion(LIBCLOUD_VERSION) < MINIMUM_LIBCLOUD_VERSION:
+            msg="GCE module requires python's 'ast' module, python v2.6+")
+
+    if not HAS_NETADDR:
         module.fail_json(
-            msg='This module requires Apache libcloud %s or greater' % MINIMUM_LIBCLOUD_VERSION,
-            changed=False
-        )
+            msg="The gce_route module requires python-netaddr be installed on the ansible controller")
 
 
-# global (declared as global to avoid calling ex_get_node() both here and in main())
-next_hop_node = None
+def get_resources(module, client, cparams):
 
+    params = module.params
 
-def check_parameter_format(module, gce_connection):
-    # All the below checks are performed to allow check_mode to give reliable results.
-    # Otherwise, we could handle the exceptions raised by libcloud and skip doing
-    # duplicate work here.
+    # A dict to store resources retrieved from GCE. A value of 'None' means that
+    # no resource was found.
+    resources = {
+        'instances': None,
+        'route': None,
+        'network': None,
+    }
 
-    msg = ''
-
-    # Starts with lowercase letter, contains only lowercase letters, nubmers, hyphens,
-    # cannot be empty, cannot end with hyphen. Taken directly for GCE error responses.
+    # INSTANCE
+    # Starts with lowercase letter, contains only lowercase letters, nubmers,
+    # hyphens, cannot be empty, cannot end with hyphen. Taken directly for GCE
+    # error responses.
     name_regexp = r"^(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?)$"
 
-    # single ipaddr regexp. Using a regexp to avoid loading extra python dependencies (ipaddr)
-    ipaddr_regexp = r"^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$"
+    # Although we repeat this check in `check_parameter_format()`, we are also
+    # doing it here on order to contact GCE only if necessary and save some
+    # time.
+    if re.match(name_regexp, params['next_hop']):
+        resources['instances'] = client.instances().aggregatedList(
+            project=cparams['project_id'],
+            filter="name eq %s" % params['next_hop'],
+            maxResults=1
+        ).execute()
 
-    # cidr range regexp. Using a regexp to avoid loading extra python dependencies (ipaddr)
-    cidr_regexp = r"^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$"
+    # NETWORK
+    req = client.networks().get(project=cparams['project_id'], network=params['network'])
+    resources['network'] = GCPUtils.execute_api_client_req(req, client=client, raise_404=False)
 
-    # check the route rule name.
-    matches = re.match(name_regexp, module.params['name'])
+    # SUBNETS
+    resources['subnets'] = client.subnetworks().aggregatedList(
+        project=cparams['project_id'],
+        filter="network eq %s" % resources['network']['selfLink']
+    ).execute()
+
+    # ROUTE
+    req = client.routes().get(project=cparams['project_id'], route=params['name'])
+    resources['route'] = GCPUtils.execute_api_client_req(req, client=client, raise_404=False)
+
+    return resources
+
+
+def check_parameter_format(module, resources):
+    # All the below checks are performed to allow check_mode to give reliable
+    # results. Otherwise, we could handle the exceptions raised by libcloud and
+    # skip doing duplicate work here.
+
+    params = module.params
+
+    # The (potential) error message
+    msg = ''
+
+    # Starts with lowercase letter, contains only lowercase letters, numbers,
+    # hyphens, cannot be empty, cannot end with hyphen. Taken directly for GCE
+    # error responses.
+    name_regexp = r"^(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?)$"
+
+    # check: route name.
+    matches = re.match(name_regexp, params['name'])
     if not matches:
         msg = "Route names must start with a lowercase letter, can contain only lowercase letters, " \
             + "numbers and hyphens, cannot end with a hyphen and cannot be empty."
 
-    # check length of description (must be less than 2048 characters)
+    # check: description (length must be less than 2048 characters)
     if version_info < (3,):
-        description_length = len(unicode(module.params['description'], "utf-8"))  # pylint: disable=E0602
+        description_length = len(unicode(params['description'], "utf-8"))  # pylint: disable=E0602
     else:
-        description_length = len(module.params['description'])
+        description_length = len(params['description'])
 
     if description_length > 2048:
         msg = "Description must be less thatn 2048 characters in length."
 
-    # check instance tags for valid tags
-    if module.params['instance_tags']:
-        for tag in module.params['instance_tags']:
+    # check: instance tags
+    # We are also converting a single tag from string to list.
+    if not isinstance(params['instance_tags'], list):
+        params['instance_tags'] = [params['instance_tags']]
+
+    if params['instance_tags']:
+        for tag in params['instance_tags']:
             matches = re.match(name_regexp, tag)
 
             if not matches:
                 msg = "Instance tags must start with a lowercase letter, can contain only lowercase letters, " \
                     + "numbers and hyphens, cannot end with a hyphen and cannot be empty."
 
-    # Check if the destination is a valid cidr or addr. Any of the two regexes is enough
-    matches = re.match(ipaddr_regexp, module.params['destination'])
-    matches = re.match(cidr_regexp, module.params['destination']) or matches
+    # check: destination (must be a valid cidr or addr)
+    try:
+        IPNetwork(params['destination'])
+    except AddrFormatError:
+        msg = "destination must be a valid IP address or cidr range, '%s' is invalid" % params['destination']
 
-    if not matches:
-        msg = "destination must be a valid IP address or cidr range, '%s' is invalid" % module.params['destination']
+    # check: destination (should not hide existing network/subnet range)
+    if check_cidr_masking(params, resources):
+        msg = "The given destination %s hides the reserved address space for a network/subnet." % params['destination']
 
-    # priority should be a number between 0 and 65535 (2bytes)
-    if not (0 <= int(module.params['priority']) < 2**16):
-        msg = "Priority must be in the range [0-4294967295], %s given" % module.params['priority']
+    # check: priority (should be a number between 0 and 65535 (2bytes))
+    if not (0 <= int(params['priority']) < 2**16):
+        msg = "Priority must be in the range [0-4294967295], %s given" % params['priority']
 
-    # check the three different possibilities for next_hop
-    # case 1: 'default'
-    if module.params['next_hop'] == 'default':
-        # No actual check, but we replace 'default' with None, because libcloud expects it this way.
-        module.params['next_hop'] = None
-    # case 2: potential instance name
-    elif re.match(name_regexp, module.params['next_hop']):
-        try:
-            global next_hop_node
-            next_hop_node = gce_connection.ex_get_node(module.params['next_hop'])
-        except ResourceNotFoundError:
+    # check: next_hop (three different possibilities)
+    # TODO: add support for nextHopVpnTunnel - 4th possibility
+    # case 1/3: 'default'
+    if params['next_hop'] == 'default':
+        pass
+    # case 2/3: potential instance name
+    elif re.match(name_regexp, params['next_hop']):
+        found = False
+
+        # Check if given instance name exists in the instances list loaded from
+        # GCE. When we loaded the resource from GCE, we used a filter to return
+        # only instances with the same name as the one supplied by the user. As
+        # instance names are unique, we expect at most one positive result.
+        # "Positive" here means to have an "instances" key in one of the 'items'
+        # in the resources['instances'] dict (the "instances" key is set only
+        # when an instance is found).
+        for result in resources['instances']['items']:
+            if 'instances' in resources['instances']['items'][result]:
+                found = True
+                params['next_hop_instance_url'] = resources['instances']['items'][result]['instances'][0]['selfLink']
+        if not found:
             msg = 'next_hop is a valid instance name but no node with this name exists'
-    # case 3: ip address. This is the last valid case. If matching it fails, then
-    # user has supplied garbage in the next_hop option.
-    elif not re.match(ipaddr_regexp, module.params['next_hop']):
-        msg = 'next_hop is invalid'
+    # case 3/3: ip address. This is the last valid case. If matching it fails, then
+    # the user has supplied garbage in the next_hop option.
+    else:
+        try:
+            # If the user supplies sth like `123`, IPAddress will still succeed
+            # and consider it the ip 0.0.0.123. So, we check for a dot first.
+            if params['next_hop'].find('.') == -1:
+                raise AddrFormatError
+
+            IPAddress(params['next_hop'], version=4).__str__()
+
+        except AddrFormatError:
+            msg = 'next_hop is invalid'
 
     # exit
     if msg:
         module.fail_json(msg=msg, changed=False)
 
 
-# global network (declared as global to avoid calling ex_get_network() both here and in main())
-network = None
+def check_cidr_masking(params, resources):
+    # We want an IPRange object to use the IPNetwork.__contains__ method.
+    dest_range = IPNetwork(params['destination'])
+    dest_range = IPRange(dest_range.first, dest_range.last)
+
+    overlap = False
+
+    # Legacy network
+    if 'IPv4Range' in resources['network']:
+        net = IPNetwork('10.240.0.0/16')
+        overlap |= net.__contains__(dest_range)
+
+    # Custom / Auto mode networks
+    subnets = (subnet for region in resources['subnets']['items'] for subnet in resources['subnets']['items'][region]['subnetworks'])
+    for subnet in subnets:
+        net = IPNetwork(subnet['ipCidrRange'])
+        overlap |= net.__contains__(dest_range)
+
+        if 'secondaryIpRanges' in subnet:
+            for secondary_range in subnet['secondaryIpRanges']:
+                net = IPNetwork(secondary_range['ipCidrRange'])
+                overlap |= net.__contains__(dest_range)
+
+    return overlap
 
 
-def check_network_exists(gce_connection, module):
-    try:
-        global network
-        network = gce_connection.ex_get_network(module.params['network'])
-    except ResourceNotFoundError:
-        module.fail_json(
-            msg="No network '%s' found." % module.params['network'],
-            changed=False
-        )
+def check_network_exists(module, resources):
+
+    params = module.params
+    msg = ''
+
+    if resources['network'] is None:
+        msg = 'No network %s was found' % params['network']
+
+    if msg:
+        module.fail_json(msg=msg, changed=False)
+    else:
+        params['network_url'] = resources['network']['selfLink']
+
+
+def format_next_hop(module):
+    next_hop = {}
+    params = module.params
+
+    # DEFAULT GATEWAY
+    if params['next_hop'] == 'default':
+        next_hop['nextHopGateway'] = 'global/gateways/default-internet-gateway'
+
+    # IP ADDRESS
+    elif re.match(r"^[1-9](.*)$", params['next_hop']):
+        # in re.match() we check for the first character to see if
+        # it is a number. If it is, it cannot be a valid instance
+        # name. Since we have already checked for garbage values in
+        # check_parameter_format(), it cannot be but an IP address.
+        next_hop['nextHopIp'] = params['next_hop']
+    # INSTANCE NAME
+    else:
+        next_hop['nextHopInstance'] = params['next_hop_instance_url']
+
+    return next_hop
 
 
 ################################################################################
@@ -343,7 +447,7 @@ def main():
             name=dict(required=True),
             description=dict(default=''),
             network=dict(default='default'),
-            destination=dict(required=True),
+            destination=dict(required=True, aliases=['destRange']),
             priority=dict(default=500, type='int'),
             instance_tags=dict(default=[], type='list', aliases=['tags']),
             next_hop=dict(default='default'),
@@ -352,214 +456,151 @@ def main():
         supports_check_mode=True
     )
 
-    check_libcloud(module)
+    params = module.params
 
-    gce = gce_connect(module, PROVIDER)
+    check_python(module)
 
-    check_parameter_format(module, gce)
+    client, cparams = get_google_api_client(module, 'compute',
+                                            user_agent_product=UA_PRODUCT,
+                                            user_agent_version=UA_VERSION,
+                                            api_version=GCE_API_VERSION)
 
-    check_network_exists(gce, module)
+    resources = get_resources(module, client, cparams)
 
-    params = {
-        'name': module.params['name'],
-        'description': module.params['description'],
-        'network': module.params['network'],
-        'destination': module.params['destination'],
-        'priority': module.params['priority'],
-        'instance_tags': module.params['instance_tags'],
-        'next_hop': module.params['next_hop'],
-        'state': module.params['state'],
-    }
+    check_parameter_format(module, resources)
+
+    check_network_exists(module, resources)
+
+    # This will hold any response values grom GCE after inserting a route. The
+    # response according to GCE docs is a `GlobalOperations` resource.
+    glob_ops = {}
+
+    # This will hold the next_hop setting in a way that GCE expectes it to be.
+    next_hop = {}
 
     if params['state'] == 'present':
-        try:
-            # below the gce_ prefix in variables means stuff on Google Cloud
-            # We are wrapping every gce. method in try-except as there are exceptions
-            # that can happen such as timeouts that are not under our contorl.
-            gce_route = gce.ex_get_route(params['name'])
+        # NEW ROUTE
+        if resources['route'] is None:
 
-        # this is a new rule
-        except ResourceNotFoundError:
             if not module.check_mode:
-                if params['next_hop'] is None or re.match(r"^[1-9](.*)$", params['next_hop']):
-                    # in re.match() we checked for the first character to see if it is a number. If it is,
-                    # it is not a valid instance name. Since we have already checked for garbage values
-                    # in check_parameter_format(), it cannot be but an IP address.
-                    node = params['next_hop']
-                else:
-                    # When next_hop is an instance name, libcloud wants us to pass
-                    # an instance object (GCENode). In this case,the next_hop_node
-                    # global will have already been set in check_parameter_format().
-                    node = next_hop_node
 
-                # network is a global, the object of the params['network'], set in check_network_exists()
-                try:
-                    gce_route = gce.ex_create_route(name=params['name'], dest_range=params['destination'],
-                                                    priority=params['priority'], network=network, tags=params['instance_tags'],
-                                                    next_hop=node, description=params['description'])
-                    changed = True
+                next_hop = format_next_hop(module)
 
-                except Exception as e:
-                    # This exception is important in order to handle the case when the route
-                    # masks the address space of a network/subnet.
-                    # TODO perform the check before reaching here to better support check_mode.
-                    module.fail_json(
-                        msg=str(e),
-                        changed=False
-                    )
+                body = {
+                    "destRange": params['destination'],
+                    "name": params['name'],
+                    "network": params['network_url'],
+                    "priority": params['priority'],
+                    "tags": params['instance_tags'],
+                    "description": params['description'],
+                }
 
-        # We are wrapping every gce method in try-except as there are exceptions
-        # that can happen such as timeouts that are not under our contorl.
-        except Exception as e:
-            module.fail_json(
-                msg=str(e),
-                changed=False
-            )
+                body.update(next_hop)
 
-        # Existing route, check if anything has changed
+                glob_ops = client.routes().insert(project=cparams['project_id'], body=body).execute()
+                changed = True
+
+        # EXISTING ROUTE
         else:
             # check: description
-            if gce_route.extra['description'] != params['description']:
+            if resources['route']['description'] != params['description']:
                 changed = True
-                gce_route.description = params['description']
-            # make sure gce_route.description gets set even if the conditional above failed
-            gce_route.description = params['description']
 
             # check: network
-            # extract the network name from the network resource uri (eg projects/myproject/global/networks/*default*)
-            gce_network = re.search(r'^.*/([a-zA-Z0-9-]+)$', gce_route.network).group(1)
+            # extract the network name from the network resource uri
+            # (eg projects/myproject/global/networks/*default*)
+            # TODO: use GCPUtils.parse_gcp_url
+            gce_network = re.search(r'^.*/([a-zA-Z0-9-]+)$', resources['route']['network']).group(1)
             if gce_network != params['network']:
-                # network is a global, the object of the params['network'], set in check_network_exists()
-                gce_route.network = network
                 changed = True
-            else:
-                gce_route.network = network  # replace the network resource uri with the object
 
             # check: destination
-            if gce_route.dest_range != params['destination']:
-                gce_route.dest_range = params['destination']
+            if resources['route']['destRange'] != params['destination']:
                 changed = True
 
             # check: priority
-            if gce_route.priority != int(params['priority']):
-                gce_route.priority = params['priority']
+            if resources['route']['priority'] != int(params['priority']):
                 changed = True
 
             # check: instance_tags
-            # tags might not be set in the project; cast them to an empty list
-            gce_route.tags = gce_route.tags or []
-            if gce_route.tags != params['instance_tags']:
-                if isinstance(params['instance_tags'], list):
-                    if sorted(gce_route.tags) != sorted(params['instance_tags']):
-                        gce_route.tags = params['instance_tags']
-                        changed = True
-                else:
-                    gce_route.tags = params['instance_tags']
-                    changed = True
+            # Tags might not be set in the project; cast them to an empty list
+            resources['route']['tags'] = resources['route']['tags'] or []  # pylint: disable=E1137
+
+            # params['instance_tags'] will always be a list at this point. We
+            # are converting to unordered sets for the comparison.
+            if set(resources['route']['tags']) != set(params['instance_tags']):
+                changed = True
 
             # check: next_hop
-            # next_hop can be either None, ip address or instaance name
-            if params['next_hop'] is None:  # If next_hop is None, ie the default
-                try:
-                    # if the gce_route is also the default, the 'nextHopGateway' key will be set.
-                    # if not, other keys will exist and the below will raise an exception.
-                    gce_route.extra['nextHopGateway']
-                # Using KeyError exceptions instead of "if 'key' in dict" to keep consinstency
-                # in the order in which checks are performed.
-                except KeyError:
-                    changed = True
-                    # Put values into the gce_route object directly for simplicity)
-                    # instead of carrying the 'extra' array around that would make life
-                    # harder when calling ex_create_route() below.
-                    gce_route.next_hop = None
-                else:
-                    # Due to the above comment, we have to set gce_route.next_hop evenif
-                    # nothing change. We could avoid doing the same thing twice, but
-                    # leaving here it as it is for clarity. Below, we remove redundancy.
-                    gce_route.next_hop = None
-            elif re.match(r"^[1-9](.*)$", params['next_hop']):  # next_hop is an IP address
-                # We checked for the first character to see if it is a number. If it,
-                # it is not a valid instance name. Since we have already checked for grabage values
-                # in check_parameter_format(), it cannot be but an IP address.
-                try:
-                    # the key nextHopIp is set when the next hop on GCE is an IP address
-                    gce_route.extra['nextHopIp']
-                except KeyError:
-                    changed = True
-                else:
-                    if gce_route.extra['nextHopIp'] != params['next_hop']:
-                        changed = True
-                gce_route.next_hop = params['next_hop']
-            else:  # next_hop is an instance name (last case of the three possible for next_hop)
-                try:
-                    # We extract the instance name from the instance resource uri
-                    # (eg projects/myproject/zones/europe-west1-b/instances/my-instance).
-                    instance = re.search(r'^.*/([a-zA-Z0-9-]+)$', gce_route.extra['nextHopInstance']).group(1)
-                except KeyError:
-                    changed = True
-                    # When next_hop is an instance name, libcloud wants us to pass
-                    # an instance object (GCENode). In this case,the next_hop_node
-                    # global will have already been set in check_parameter_format().
-                else:
-                    if instance != params['next_hop']:
-                        changed = True
-                gce_route.next_hop = next_hop_node
+            next_hop_changed = False
+            next_hop = format_next_hop(module)
+
+            # The resource will have either a nextHopGateway, a nextHopIp or
+            # nextHopInstance key.
+            if 'nextHopGateway' in resources['route']:
+                # This key has only one possible value, the default gateway. If
+                # the user supplied `next_hop: default` we have a match.
+                if params['next_hop'] != 'default':
+                    next_hop_changed = True
+
+            elif 'nextHopIp' in resources['route']:
+                if resources['route']['nextHopIp'] != params['next_hop']:
+                    next_hop_changed = True
+
+            elif 'nextHopInstance' in resources['route']:
+                if 'next_hop_instance_url' not in params:
+                    # If the user has not set the next_hop to an instance, this
+                    # key will not exist (it is set in check_params by us if
+                    # next_hop is found to be an instance).
+                    next_hop_changed = True
+                elif resources['route']['nextHopInstance'] != params['next_hop_instance_url']:
+                    next_hop_changed = True
+
+            if next_hop_changed:
+                changed = True
 
             if changed and not module.check_mode:
-                # GCE does not allow modifying routes. We delete and create a new one
-                try:
-                    gce.ex_destroy_route(gce_route)
-                    gce_route = gce.ex_create_route(name=gce_route.name, dest_range=gce_route.dest_range,
-                                                    priority=gce_route.priority, network=gce_route.network, tags=gce_route.tags,
-                                                    next_hop=gce_route.next_hop, description=gce_route.description)
-                except Exception as e:
-                    module.fail_json(
-                        msg=str(e),
-                        changed=False
-                    )
+                # GCE does not allow modifying routes. We delete the old routes
+                # and create a new one.
+
+                # Delete the route. Using GCPUtils.execute_api_client_req to
+                # poll for completeness of the delete operation. Without it,
+                # the `insert` would happen to fast.
+                del_req = client.routes().delete(project=cparams['project_id'], route=params['name'])
+                GCPUtils.execute_api_client_req(del_req, client=client, raw=False)
+
+                # Create the `new` route.
+                body = {
+                    "destRange": params['destination'],
+                    "name": params['name'],
+                    "network": params['network_url'],
+                    "priority": params['priority'],
+                    "tags": params['instance_tags'],
+                    "description": params['description'],
+                }
+
+                body.update(next_hop)
+                glob_ops = client.routes().insert(project=cparams['project_id'], body=body).execute()
 
     elif params['state'] == 'absent':
-        try:
-            gce_route = gce.ex_get_route(params['name'])
-        except ResourceNotFoundError:
-            pass
-        except Exception as e:
-            module.fail_json(
-                msg=str(e),
-                changed=False
-            )
-        else:
-            if not module.check_mode:
-                try:
-                    gce.ex_destroy_route(gce_route)
-                    changed = True
-                except Exception as e:
-                    module.fail_json(
-                        msg=str(e),
-                        changed=False
-                    )
+        del_req = client.routes().delete(project=cparams['project_id'], route=params['name'])
+        glob_ops = GCPUtils.execute_api_client_req(del_req, client=client, raise_404=False)
 
-    # revert original value of next_hop because, maybe, we have replaced it with an object
-    params['next_hop'] = module.params.get('next_hop')
+        # If there is nothing to delete, `resp` will be None. If there was
+        # sth deleted, there will something returned in the response.
+        if glob_ops is not None:
+            changed = True
 
+    # Update ansible output with useful bits
     json_output = {'changed': changed}
     json_output.update(params)
+    json_output.update(next_hop)
     json_output['priority'] = int(params['priority'])
+    if bool(glob_ops):
+        json_output['glob_ops'] = glob_ops
 
-    # add extra return values
-    extra = dict()
-    extra['self_Link'] = gce_route.extra['selfLink']
-    extra['creation_time'] = gce_route.extra['creationTimestamp']
-
-    if 'nextHopInstance' in gce_route.extra:
-        extra['next_hop_resource'] = gce_route.extra['nextHopInstance']
-    if 'nextHopIp' in gce_route.extra:
-        extra['next_hop_resource'] = gce_route.extra['nextHopIp']
-    if 'nextHopGateway' in gce_route.extra:
-        extra['next_hop_resource'] = gce_route.extra['nextHopGateway']
-    if 'warnings' in gce_route.extra:
-        extra['warnings'] = gce_route.extra.extra['warnings']
-    json_output.update(extra)
+    # Unset some duplicate keys
+    json_output.pop('next_hop_instance_url', None)
 
     module.exit_json(**json_output)
 
