@@ -1,4 +1,7 @@
-#!/usr/bin/python
+# (c) 2017 Red Hat, Inc.
+#
+# This file is part of Ansible
+
 
 class FilterModule(object):
     def filters(self):
