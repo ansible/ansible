@@ -45,11 +45,11 @@ class BaseInventoryPlugin(object):
 
     TYPE = 'generator'
 
-    def __init__(self, cache=None):
+    def __init__(self):
 
         self.inventory = None
         self.display = display
-        self.cache = cache
+        self._cache = {}
 
     def parse(self, inventory, loader, path, cache=True):
         ''' Populates self.groups from the given data. Raises an error on any parse failure.  '''
@@ -160,10 +160,9 @@ class BaseFileInventoryPlugin(BaseInventoryPlugin):
 
     TYPE = 'storage'
 
-    def __init__(self, cache=None):
+    def __init__(self):
 
-        # file based inventories are always local so no need for cache
-        super(BaseFileInventoryPlugin, self).__init__(cache=None)
+        super(BaseFileInventoryPlugin, self).__init__()
 
 
 # Helper methods

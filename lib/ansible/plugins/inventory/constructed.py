@@ -58,6 +58,7 @@ from collections import MutableMapping
 
 from ansible import constants as C
 from ansible.errors import AnsibleParserError
+from ansible.plugins.cache import FactCache
 from ansible.plugins.inventory import BaseInventoryPlugin
 from ansible.module_utils._text import to_native
 from ansible.utils.vars import combine_vars
@@ -71,6 +72,8 @@ class InventoryModule(BaseInventoryPlugin):
     def __init__(self):
 
         super(InventoryModule, self).__init__()
+
+        self._cache = FactCache()
 
     def verify_file(self, path):
 
@@ -86,7 +89,7 @@ class InventoryModule(BaseInventoryPlugin):
     def parse(self, inventory, loader, path, cache=False):
         ''' parses the inventory file '''
 
-        super(InventoryModule, self).parse(inventory, loader, path, cache=True)
+        super(InventoryModule, self).parse(inventory, loader, path, cache=cache)
 
         try:
             data = self.loader.load_from_file(path)
@@ -107,8 +110,8 @@ class InventoryModule(BaseInventoryPlugin):
 
                 # get available variables to templar
                 hostvars = inventory.hosts[host].get_vars()
-                if host in inventory.cache:  # adds facts if cache is active
-                    hostvars = combine_vars(hostvars, inventory.cache[host])
+                if host in self._cache:  # adds facts if cache is active
+                    hostvars = combine_vars(hostvars, self._cache[host])
 
                 # create composite vars
                 self._set_composite_vars(data.get('compose'), hostvars, host, strict=strict)
