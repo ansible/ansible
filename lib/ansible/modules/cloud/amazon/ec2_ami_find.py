@@ -143,6 +143,12 @@ options:
       - Virtualization type to match (e.g. hvm).
     default: null
     required: false
+  root_device_type:
+    description:
+      - Root device type to match (e.g. ebs, instance-store).
+    default: null
+    required: false
+    version_added: "2.5"
   no_result_action:
     description:
       - What to do when no results are found.
@@ -354,6 +360,7 @@ def main():
     owner = module.params.get('owner')
     platform = module.params.get('platform')
     product_code = module.params.get('product_code')
+    root_device_type = module.params.get('root_device_type')
     sort = module.params.get('sort')
     sort_tag = module.params.get('sort_tag')
     sort_order = module.params.get('sort_order')
@@ -382,6 +389,8 @@ def main():
         filter['platform'] = platform
     if product_code:
         filter['product-code'] = product_code
+    if root_device_type:
+        filter['root_device_type'] = root_device_type
     if virtualization_type:
         filter['virtualization_type'] = virtualization_type
 
