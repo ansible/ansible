@@ -79,6 +79,10 @@ EXAMPLES = """
 """
 
 RETURN = """
+changed:
+  description: always true
+  returned: always
+  type: bool
 """
 
 from ansible.module_utils.basic import AnsibleModule
