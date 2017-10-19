@@ -165,7 +165,7 @@ def install_yang(module, device, update):
         reply = device.rpc.request_yang_update(**rpc_kwargs)
     else:
         reply = device.rpc.request_yang_add(**rpc_kwargs)
-    return reply.findtext(".//output")
+    return reply.text
 
 def main():
     """ Main entry point for Ansible module execution
