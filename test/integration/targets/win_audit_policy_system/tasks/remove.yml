@@ -6,38 +6,28 @@
     category: "{{ category }}"
     audit_type: none
   check_mode: yes
-  register: cm_disable_category
+  register: category
 
 - name: check mode disable subcategory
   win_audit_policy_system:
     subcategory: "{{ subcategory }}"
     audit_type: none
   check_mode: yes
-  register: cm_disable_subcategory
-
-- name: check mode get current status category
-  test_get_audit_policy:
-    category: "{{ category }}"
-  register: cm_disable_category_results
-
-- name: check mode get current status subcategory
-  test_get_audit_policy:
-    subcategory: "{{ subcategory }}"
-  register: cm_disable_subcategory_results
+  register: subcategory
 
 - name: check mode assert that changed is true
   assert:
     that:
-      - cm_disable_category | changed
-      - cm_disable_subcategory | changed
+      - category | changed
+      - subcategory | changed
 
 - name: check mode assert that audit_type is still "success" (old value)
   assert:
     that:
       - item == "success"
   with_items:
-    - "{{ cm_disable_subcategory_results.current_audit_policy.values() | list }}"
-    - "{{ cm_disable_category_results.current_audit_policy.values() | list | unique }}"
+    - "{{ subcategory.current_audit_policy.values() | list }}"
+    - "{{ category.current_audit_policy.values() | list | unique }}"
 
 ######################
 ### disable policy ###
@@ -47,37 +37,27 @@
   win_audit_policy_system:
     category: "{{ category }}"
     audit_type: none
-  register: disable_category
+  register: category
 
 - name: disable subcategory
   win_audit_policy_system:
     subcategory: "{{ subcategory }}"
     audit_type: none
-  register: disable_subcategory
-
-- name: get current status category
-  test_get_audit_policy:
-    category: "{{ category }}"
-  register: disable_category_results
-
-- name: get current status subcategory
-  test_get_audit_policy:
-    subcategory: "{{ subcategory }}"
-  register: disable_subcategory_results
+  register: subcategory
 
 - name: assert that changed is true
   assert:
     that:
-      - disable_category | changed
-      - disable_subcategory | changed
+      - category | changed
+      - subcategory | changed
 
 - name: assert that audit_type is "no auditing"
   assert:
     that:
       - item == "no auditing"
   with_items:
-    - "{{ disable_subcategory_results.current_audit_policy.values() | list }}"
-    - "{{ disable_category_results.current_audit_policy.values() | list | unique }}"
+    - "{{ subcategory.current_audit_policy.values() | list }}"
+    - "{{ category.current_audit_policy.values() | list | unique }}"
 
 ##########################
 ### idempotent disable ###
@@ -87,34 +67,24 @@
   win_audit_policy_system:
     category: "{{ category }}"
     audit_type: none
-  register: idem_disable_category
+  register: category
 
 - name: idem disable subcategory
   win_audit_policy_system:
     subcategory: "{{ subcategory }}"
     audit_type: none
-  register: idem_disable_subcategory
-
-- name: idem get current status category
-  test_get_audit_policy:
-    category: "{{ category }}"
-  register: idem_disable_category_results
-
-- name: idem get current status subcategory
-  test_get_audit_policy:
-    subcategory: "{{ subcategory }}"
-  register: idem_disable_subcategory_results
+  register: subcategory
 
 - name: idem assert that changed is false
   assert:
     that:
-      - not idem_disable_category | changed
-      - not idem_disable_subcategory | changed
+      - not category | changed
+      - not subcategory | changed
 
 - name: assert that audit_type is "no auditing"
   assert:
     that:
       - item == "no auditing"
   with_items:
-    - "{{ idem_disable_subcategory_results.current_audit_policy.values() | list }}"
-    - "{{ idem_disable_category_results.current_audit_policy.values() | list | unique }}"
+    - "{{ subcategory.current_audit_policy.values() | list }}"
+    - "{{ category.current_audit_policy.values() | list | unique }}"

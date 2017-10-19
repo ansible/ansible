@@ -11,7 +11,6 @@
     audit_type: none
 
 - block:
-    - include_tasks: backup_restore.yml
     - include_tasks: add.yml
     - include_tasks: remove.yml
   always:
@@ -23,7 +22,3 @@
     win_audit_policy_system:
       subcategory: "{{ subcategory }}"
       audit_type: none
-  - name: CLEANUP delete backup file
-    win_file:
-      path: "{{ backup_path }}"
-      state: absent
