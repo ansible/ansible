@@ -26,7 +26,6 @@ from ansible.errors import AnsibleError
 from ansible.inventory.group import Group
 from ansible.inventory.host import Host
 from ansible.module_utils.six import iteritems
-from ansible.plugins.cache import FactCache
 from ansible.utils.vars import combine_vars
 from ansible.utils.path import basedir
 
@@ -61,9 +60,6 @@ class InventoryData(object):
         for group in ('all', 'ungrouped'):
             self.add_group(group)
         self.add_child('all', 'ungrouped')
-
-        # prime cache
-        self.cache = FactCache()
 
     def serialize(self):
         data = dict()
