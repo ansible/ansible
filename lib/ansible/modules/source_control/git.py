@@ -1161,14 +1161,6 @@ def main():
 
         create_archive(git_path, module, dest, archive, version, repo, result)
 
-    # cleanup the wrapper script
-    if ssh_wrapper:
-        try:
-            os.remove(ssh_wrapper)
-        except OSError:
-            # No need to fail if the file already doesn't exist
-            pass
-
     module.exit_json(**result)
 
 
