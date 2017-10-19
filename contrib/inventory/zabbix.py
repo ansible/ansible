@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # (c) 2013, Greg Buehler
-#
+# Updates 2016 by tony@nieuwenborg.nl
 # This file is part of Ansible,
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -27,9 +27,18 @@ Returns hosts and hostgroups from Zabbix Server.
 If you want to run with --limit against a host group with space in the
 name, use asterisk. For example --limit="Linux*servers".
 
+Metadata:
+- ansible_host: IP found in host info, or macro {$ANSIBLE_HOST} if set.
+- ansible_port: macro {$ANSIBLE_PORT} if set, otherwise 22
+- templates: list of templates used by host
+
+Notes:
+- disabled hosts are skipped.
+- group_all is the group containing all hosts
+
 Configuration is read from `zabbix.ini`.
 
-Tested with Zabbix Server 2.0.6 and 3.2.3.
+Tested with Zabbix Server 2.0.6 and 3.2.9.
 """
 
 from __future__ import print_function
@@ -86,18 +95,36 @@ class ZabbixInventory(object):
         }
 
     def get_host(self, api, name):
-        data = {'ansible_ssh_host': name}
+        data = {}
         return data
 
     def get_list(self, api):
-        hostsData = api.host.get({'output': 'extend', 'selectGroups': 'extend'})
+        hostsData = api.host.get({'output': 'extend', 'selectGroups': 'extend',  'selectInterfaces':'extend', 'selectMacros': 'extend', 'selectParentTemplates': 'extend' })
 
         data = {}
         data[self.defaultgroup] = self.hoststub()
+        data['_meta'] = {'hostvars': self.meta}
 
         for host in hostsData:
+            #print(host)
+            if 0 == host['status']:
+                break
             hostname = host['name']
+            ip = host['interfaces'][0]['ip']
+            port = 22
+
+            for m in host['macros']:
+                if m['macro'] == '{$ANSIBLE_PORT}':
+                    port = m['value']
+                else:
+                    if m['macro'] == '{$ANSIBLE_HOST}':
+                        ip = m['value']
+
             data[self.defaultgroup]['hosts'].append(hostname)
+            data['_meta']['hostvars'][hostname] = { 'ansible_host' : ip, 'ansible_port' : port } 
+            data['_meta']['hostvars'][hostname]['templates'] = []
+            for t in host['parentTemplates']:
+                data['_meta']['hostvars'][hostname]['templates'].append(t['name'])
 
             for group in host['groups']:
                 groupname = group['name']
@@ -107,14 +134,11 @@ class ZabbixInventory(object):
 
                 data[groupname]['hosts'].append(hostname)
 
-        # Prevents Ansible from calling this script for each server with --host
-        data['_meta'] = {'hostvars': self.meta}
-
         return data
 
     def __init__(self):
 
-        self.defaultgroup = 'group_all'
+    self.defaultgroup = 'group_all'
         self.zabbix_server = None
         self.zabbix_username = None
         self.zabbix_password = None
@@ -148,3 +172,4 @@ class ZabbixInventory(object):
             sys.exit(1)
 
 ZabbixInventory()
+
