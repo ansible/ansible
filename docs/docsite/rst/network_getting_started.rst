@@ -25,6 +25,8 @@ Prerequisites
 
 * Ansible 2.3 (or higher) installed :doc:`intro_installation`
 * One or more network device compatible with Ansible
+* Basic understanding of YAML :doc:`YAMLSyntax`
+* Basic understanding of Jinja2 Templates :doc:`playbooks_templating`
 
 .. FIXME FUTURE Gundalow - Once created we will link to the connection table here (which platforms support network_cli & credentials through inventory)
 .. FIXME FUTURE Gundalow -  Using ``ansible_ssh_pass`` will not work for REST transports such as ``eapi``, ``nxapi`` - Once documented in above FIXME add details her
