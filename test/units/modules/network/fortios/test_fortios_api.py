@@ -34,8 +34,10 @@ session.mount('mock', adapter)
 class APITest(TestCase):
 
     def setUp(self):
-        self.default_current_config = json.load(open(fixture_path + "/interfaceCurrentConfig.json"))['interface']
-        self.default_object = json.load(open(fixture_path + "/interfaceDefaultObject.json"))['interface']
+        self.default_current_config = json.load(
+            open(fixture_path + "/interfaceCurrentConfig.json"))['interface']
+        self.default_object = json.load(
+            open(fixture_path + "/interfaceDefaultObject.json"))['interface']
 
         self.mock_response = Mock()
 
@@ -43,7 +45,8 @@ class APITest(TestCase):
         self.mock_response.status_code = 200
         self.mock_response.content = json.dumps({"http_status": 200})
 
-        adapter.register_uri('GET', 'mock://test123.com', text=json.dumps({"results": self.default_current_config, "http_status": 200}), status_code=200)
+        adapter.register_uri('GET', 'mock://test123.com', text=json.dumps(
+            {"results": self.default_current_config, "http_status": 200}), status_code=200)
         adapter.register_uri('POST', 'mock://test123.com', text=json.dumps(
             {"results": self.default_current_config, "http_status": 200}), status_code=200, cookies={mock_cookie.name: mock_cookie.value})
         mock_object = session.get('mock://test123.com')
@@ -62,7 +65,8 @@ class APITest(TestCase):
         self.mock_put = self.put_patcher.start()
         self.mock_put.return_value = mock_object
 
-        self.delete_patcher = patch("ansible.module_utils.fortios.requests.delete")
+        self.delete_patcher = patch(
+            "ansible.module_utils.fortios.requests.delete")
         self.mock_delete = self.delete_patcher.start()
         self.mock_delete.return_value = mock_object
 
@@ -96,7 +100,8 @@ class APITest(TestCase):
         self.default_url = "https://" + self.default_ip + ":%d" % self.default_port
         self.default_endpoint_url = self.default_url + \
             "/api/v2/" + self.default_endpoint_str
-        self.default_update_config = json.load(open(fixture_path + "/interfaceUpdateConfig.json"))["interfaces"]
+        self.default_update_config = json.load(
+            open(fixture_path + "/interfaceUpdateConfig.json"))["interfaces"]
         self.default_params = {
             "conn_params": self.default_conn_params,
             "print_current_config": False,
@@ -114,7 +119,8 @@ class APITest(TestCase):
         self.get_arg_spec_patcher = patch(
             "ansible.module_utils.fortios.API._get_argument_spec")
         self.mock_get_arg_spec = self.get_arg_spec_patcher.start()
-        self.mock_get_arg_spec.return_value = json.load(open(fixture_path + "/listArgumentSpec.json"))['interface_arg_spec']
+        self.mock_get_arg_spec.return_value = json.load(
+            open(fixture_path + "/listArgumentSpec.json"))['interface_arg_spec']
 
         self.get_default_object_original = API._get_default_object
         self.get_default_object_patcher = patch(
@@ -377,10 +383,11 @@ class APITest(TestCase):
         assert not self.fw_api._configurations_match(current, update)
 
     def test_get_argument_spec_list_endpoint_(self):
-        final_spec = json.load(open(fixture_path + "/listArgumentSpec.json"))['interface_arg_spec']
+        final_spec = json.load(
+            open(fixture_path + "/listArgumentSpec.json"))['interface_arg_spec']
 
         adapter.register_uri('GET', 'mock://test123.com', text=json.dumps(json.load(open(
-            fixture_path + "/interfaceSchema.json"))['interface_schema_response']), status_code=200,cookies=[mock_cookie, ])
+            fixture_path + "/interfaceSchema.json"))['interface_schema_response']), status_code=200, cookies=[mock_cookie, ])
         mock_object = session.get('mock://test123.com')
         self.mock_get.return_value = mock_object
 
@@ -408,11 +415,12 @@ class APITest(TestCase):
 
     def test_get_argument_spec_single_object_endpoint(self):
         adapter.register_uri('GET', 'mock://test123.com', text=json.dumps(json.load(open(
-            fixture_path + "/systemGlobalSchemaResponse.json"))["system_global_schema_response"]), status_code=200,cookies=[mock_cookie, ])
+            fixture_path + "/systemGlobalSchemaResponse.json"))["system_global_schema_response"]), status_code=200, cookies=[mock_cookie, ])
         mock_object = session.get('mock://test123.com')
         self.mock_get.return_value = mock_object
 
-        final_spec = json.load(open(fixture_path + "/systemGlobalArgSpec.json"))['system_global_arg_spec']
+        final_spec = json.load(
+            open(fixture_path + "/systemGlobalArgSpec.json"))['system_global_arg_spec']
 
         open_patcher = patch(b_open)
         m_open = open_patcher.start()
@@ -443,7 +451,8 @@ class APITest(TestCase):
             "ansible.module_utils.fortios.API._get_argument_spec", self.get_arg_spec_original)
         self.get_arg_spec_patcher.start()
 
-        list_argument_spec = json.load(open(fixture_path + "/listArgumentSpec.json"))['interface_arg_spec']
+        list_argument_spec = json.load(
+            open(fixture_path + "/listArgumentSpec.json"))['interface_arg_spec']
 
         m_open = mock_open(read_data=json.dumps(
             {self.default_endpoint_str: {'arg_spec': list_argument_spec}}))
@@ -472,13 +481,14 @@ class APITest(TestCase):
         write_local_patcher.stop()
 
     def test_get_default_object_from_endpoint(self):
-        example_object = json.load(open(fixture_path + "/interfaceDefaultObject.json"))['interface']
+        example_object = json.load(
+            open(fixture_path + "/interfaceDefaultObject.json"))['interface']
         expected_final_object = deepcopy(example_object)
         for i in self.fw_api._api_info['default_ignore_params']:
             del expected_final_object[i]
 
-
-        adapter.register_uri('GET', 'mock://test123.com', text=json.dumps({'results': example_object}), status_code=200,cookies=[mock_cookie, ])
+        adapter.register_uri('GET', 'mock://test123.com', text=json.dumps(
+            {'results': example_object}), status_code=200, cookies=[mock_cookie, ])
         mock_object = session.get('mock://test123.com')
         self.mock_get.return_value = mock_object
 
@@ -537,7 +547,8 @@ class APITest(TestCase):
 
     def test_apply_configuration_failure(self):
 
-        adapter.register_uri('GET', 'mock://test123.com', text=json.dumps({"http_status": 405}), status_code=405,cookies=[mock_cookie, ])
+        adapter.register_uri('GET', 'mock://test123.com', text=json.dumps(
+            {"http_status": 405}), status_code=405, cookies=[mock_cookie, ])
         mock_object = session.get('mock://test123.com')
         failed_response = mock_object
 
@@ -603,7 +614,8 @@ class APITest(TestCase):
         self.mock_put.assert_has_calls(calls)
 
     def test_remove_policy_from_current_config(self):
-        fw_policy_config = json.load(open(fixture_path + "/firewallCurrentConfig.json"))['firewall_policy']
+        fw_policy_config = json.load(
+            open(fixture_path + "/firewallCurrentConfig.json"))['firewall_policy']
         self.fw_api._fortigate_current_config = fw_policy_config
         self.fw_api._object_identifier = 'policyid'
 
@@ -633,13 +645,16 @@ class APITest(TestCase):
         assert self.fw_api._fortigate_current_config == supplied_config
 
     def test_apply_existing_and_new_objects(self):
-        fw_policy_config = json.load(open(fixture_path + "/firewallCurrentConfig.json"))['firewall_policy']
+        fw_policy_config = json.load(
+            open(fixture_path + "/firewallCurrentConfig.json"))['firewall_policy']
 
-        adapter.register_uri('GET', 'mock://test123.com', text=json.dumps({"results": fw_policy_config, "http_status": 200}), status_code=200,cookies=[mock_cookie, ])
+        adapter.register_uri('GET', 'mock://test123.com', text=json.dumps(
+            {"results": fw_policy_config, "http_status": 200}), status_code=200, cookies=[mock_cookie, ])
         mock_object = session.get('mock://test123.com')
         self.mock_get.return_value = mock_object
 
-        self.fw_api._update_config = json.load(open(fixture_path + "/firewallUpdateConfig.json"))['policies']
+        self.fw_api._update_config = json.load(
+            open(fixture_path + "/firewallUpdateConfig.json"))['policies']
         self.fw_api._object_identifier = 'policyid'
 
         modified_update = deepcopy(fw_policy_config)
@@ -671,9 +686,11 @@ class APITest(TestCase):
         self.mock_post.assert_has_calls(post_calls)
 
     def test_apply_configuration_delete_all_objects(self):
-        firewall_config = json.load(open(fixture_path + "/firewallCurrentConfig.json"))['firewall_policy']
+        firewall_config = json.load(
+            open(fixture_path + "/firewallCurrentConfig.json"))['firewall_policy']
 
-        adapter.register_uri('GET', 'mock://test123.com', text=json.dumps({"results": firewall_config, "http_status": 200}), status_code=200,cookies=[mock_cookie, ])
+        adapter.register_uri('GET', 'mock://test123.com', text=json.dumps(
+            {"results": firewall_config, "http_status": 200}), status_code=200, cookies=[mock_cookie, ])
         mock_object = session.get('mock://test123.com')
         self.mock_get.return_value = mock_object
 
@@ -695,8 +712,10 @@ class APITest(TestCase):
             None,
             None,
         ]
-        self.fw_api._fortigate_current_config = [{'policyid': 4}, {'policyid': 1}, {'policyid': 2}, {'policyid': 5}, {'policyid': 3}]
-        self.fw_api._existing_object_ids = [k['policyid'] for k in self.fw_api._fortigate_current_config]
+        self.fw_api._fortigate_current_config = [{'policyid': 4}, {
+            'policyid': 1}, {'policyid': 2}, {'policyid': 5}, {'policyid': 3}]
+        self.fw_api._existing_object_ids = [k['policyid']
+                                            for k in self.fw_api._fortigate_current_config]
 
         self.fw_api._delete_unused_objects()
         calls = []
@@ -716,12 +735,14 @@ class APITest(TestCase):
     def test_process_schema_single_object_endpoint(self):
         arg_spec = self.fw_api._process_schema(json.load(open(
             fixture_path + "/systemGlobalSchemaResponse.json"))["system_global_schema_response"]['results'])
-        assert arg_spec == json.load(open(fixture_path + "/systemGlobalArgSpec.json"))['system_global_arg_spec']
+        assert arg_spec == json.load(
+            open(fixture_path + "/systemGlobalArgSpec.json"))['system_global_arg_spec']
 
     def test_process_schema_list_object_endpoint(self):
         arg_spec = self.fw_api._process_schema(json.load(open(
             fixture_path + "/interfaceSchema.json"))["interface_schema_response"]['results'])
-        assert arg_spec == json.load(open(fixture_path + "/listArgumentSpec.json"))['interface_arg_spec']
+        assert arg_spec == json.load(
+            open(fixture_path + "/listArgumentSpec.json"))['interface_arg_spec']
 
     def test_check_mode(self):
         self.fw_api._check_mode = True
