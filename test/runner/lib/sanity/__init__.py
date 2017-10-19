@@ -83,7 +83,7 @@ def command_sanity(args):
         if isinstance(test, SanityMultipleVersion):
             versions = SUPPORTED_PYTHON_VERSIONS
         else:
-            versions = None,
+            versions = (None,)
 
         for version in versions:
             if args.python and version and version != args.python:
