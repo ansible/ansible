@@ -85,6 +85,10 @@ options:
     - ' - C(memory_mb) (integer): Amount of memory in MB.'
     - ' - C(num_cpus) (integer): Number of CPUs.'
     - ' - C(scsi) (string): Valid values are C(buslogic), C(lsilogic), C(lsilogicsas) and C(paravirtual) (default).'
+       - ' - C(video_card) (dictionary):'
+      '   -  C(video_memory_kb) (integer): amount of video memory in KB.'
+      '   -  C(enable_3d) (boolean): whether the 3d support shall be enabled or not.'
+      '   -  C(num_displays) (integer): number of displays to use.'
   guest_id:
     description:
     - Set the guest ID (Debian, RHEL, Windows...).
@@ -604,6 +608,23 @@ class PyVmomiHelper(PyVmomi):
             # memory_mb is mandatory for VM creation
             elif vm_creation and not self.params['template']:
                 self.module.fail_json(msg="hardware.memory_mb attribute is mandatory for VM creation")
+q
+            if 'video_card' in self.params['hardware']:
+                videocard = vim.vm.device.VirtualVideoCard()
+                videocard.useAutoDetect = False
+                if 'video_memory_kb' in self.params['hardware']['video_card']:
+                    videocard.videoRamSizeInKB = int(self.params['hardware']['video_card']['video_memory_kb'])
+                if 'enable_3d' in self.params['hardware']['video_card']:
+                    videocard.enable3DSupport = self.params['hardware']['video_card']['enable_3d']
+                if 'num_displays' in self.params['hardware']['video_card']:
+                    videocard.numDisplays = int(self.params['hardware']['video_card']['num_displays'])
+
+                vdevicespec = vim.vm.device.VirtualDeviceSpec()
+                vdevicespec.device = videocard
+                vdevicespec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
+                self.configspec.deviceChange.append(vdevicespec)
+                self.change_detected = True
+                #TODO: add a check on vm_obj !
 
     def configure_cdrom(self, vm_obj):
         # Configure the VM CD-ROM
