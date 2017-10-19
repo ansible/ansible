@@ -203,7 +203,7 @@ def main():
             login_user=dict(default="postgres"),
             login_password=dict(default="", no_log=True),
             login_host=dict(default=""),
-            db=dict(required=True),
+            db=dict(required=True, aliases=['database']),
             port=dict(default='5432'),
             lang=dict(required=True),
             state=dict(default="present", choices=["absent", "present"]),

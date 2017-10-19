@@ -126,7 +126,7 @@ def main():
             login_password=dict(default="", no_log=True),
             login_host=dict(default=""),
             port=dict(default="5432"),
-            db=dict(required=True),
+            db=dict(required=True, aliases=['database']),
             ext=dict(required=True, aliases=['name']),
             state=dict(default="present", choices=["absent", "present"]),
         ),
