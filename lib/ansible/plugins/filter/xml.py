@@ -20,18 +20,26 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.errors import AnsibleError
-from lxml import etree
+
+try:
+    from lxml import etree
+    HAS_LXML = True
+except ImportError:
+    HAS_LXML = False
 
 parser = etree.XMLParser(remove_blank_text=True)
 
 
 def xml_findtext(data, expr):
-    try:
-        xml = etree.XML(data, parser=parser)
-        result = xml.findtext(expr)
-    except Exception as ex:
-        raise AnsibleError('xml error: ' + str(ex))
-    return result
+    if not HAS_LXML:
+        raise AnsibleError('lxml is required but does not appear to be installed.')
+    else:
+        try:
+            xml = etree.XML(data, parser=parser)
+            result = xml.findtext(expr)
+        except Exception as ex:
+            raise AnsibleError('xml error: ' + str(ex))
+        return result
 
 
 class FilterModule(object):
