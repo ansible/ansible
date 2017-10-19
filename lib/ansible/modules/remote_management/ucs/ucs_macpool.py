@@ -34,7 +34,6 @@ options:
     - first_addr (First MAC address in the MAC addresses block)
     - last_addr (Last MAC address in the MAC addresses block)
     required: yes
-    type: list
   org_dn:
     description:
     - Org dn (distinguished name)
@@ -65,7 +64,7 @@ RETURN = r'''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ucs import UCSModule, ucs_argument_spec
+from ansible.module_utils.remote_management.ucs import UCSModule, ucs_argument_spec
 
 
 def main():
