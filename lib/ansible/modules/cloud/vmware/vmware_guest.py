@@ -85,10 +85,10 @@ options:
     - ' - C(memory_mb) (integer): Amount of memory in MB.'
     - ' - C(num_cpus) (integer): Number of CPUs.'
     - ' - C(scsi) (string): Valid values are C(buslogic), C(lsilogic), C(lsilogicsas) and C(paravirtual) (default).'
-       - ' - C(video_card) (dictionary):'
-       - '   -  C(video_memory_kb) (integer): amount of video memory in KB.'
-       - '   -  C(enable_3d) (boolean): whether the 3d support shall be enabled or not.'
-       - '   -  C(num_displays) (integer): number of displays to use.'
+    - ' - C(video_card) (dictionary):'
+    - '   -  C(video_memory_kb) (integer): amount of video memory in KB.'
+    - '   -  C(enable_3d) (boolean): whether the 3d support shall be enabled or not.'
+    - '   -  C(num_displays) (integer): number of displays to use.'
   guest_id:
     description:
     - Set the guest ID (Debian, RHEL, Windows...).
@@ -624,7 +624,7 @@ class PyVmomiHelper(PyVmomi):
                 vdevicespec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
                 self.configspec.deviceChange.append(vdevicespec)
                 self.change_detected = True
-                #TODO: add a check on vm_obj !
+                # TODO: add a check on vm_obj !
 
     def configure_cdrom(self, vm_obj):
         # Configure the VM CD-ROM
