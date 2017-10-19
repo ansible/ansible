@@ -899,7 +899,7 @@ class PyVmomiHelper(PyVmomi):
                 vdevicespec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
                 self.configspec.deviceChange.append(vdevicespec)
                 self.change_detected = True
-                #TODO: add a check on vm_obj !
+                # TODO: add a check on vm_obj !
 
             if 'video_card' in self.params['hardware']:
                 videocard = vim.vm.device.VirtualVideoCard()
