@@ -84,6 +84,21 @@ EXAMPLES = """
     - /var/yang/demo/demo_translate.py
     update: true
 """
+
+RETURN = """
+msg:
+  description: the output of `request system yang ...` command
+  returned: when updated or installed
+  type: string
+updated:
+  description: present only if yang module was updated instead of installed
+  returned: when updated
+  type: string
+changed:
+  description: true if yang module was updated or installed
+  returned: always
+  type: bool
+"""
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.junos import junos_argument_spec, get_param
 from ansible.module_utils.pycompat24 import get_exception
