@@ -629,27 +629,7 @@ def camel(words):
     return ''.join(capitalize_with_abbrevs(x) or '_' for x in words.split('_'))
 
 
-def snake_dict_to_cap_camel_dict(snake_dict):
-    """ like snake_dict_to_camel_dict but capitalize the first word too """
-
-    def camelize(complex_type):
-        if complex_type is None:
-            return
-        new_type = type(complex_type)()
-        if isinstance(complex_type, dict):
-            for key in complex_type:
-                new_type[camel(key)] = camelize(complex_type[key])
-        elif isinstance(complex_type, list):
-            for i in range(len(complex_type)):
-                new_type.append(camelize(complex_type[i]))
-        else:
-            return complex_type
-        return new_type
-
-    return camelize(snake_dict)
-
-
-def prepare_params_for_modify(module, before_facts):
+def prepare_params_for_modify(module, connection, before_facts):
     """extract parameters from module and convert to format for modify_db_instance call
 
     Select those parameters we want, convert them to AWS CamelCase, change a few from
@@ -658,7 +638,7 @@ def prepare_params_for_modify(module, before_facts):
 
     abort_on_impossible_changes(module, before_facts)
 
-    params = prepare_changes_for_modify(module, before_facts)
+    params = prepare_changes_for_modify(module, connection, before_facts)
 
     if len(params) == 0:
         return None
@@ -668,13 +648,13 @@ def prepare_params_for_modify(module, before_facts):
     return params
 
 
-def prepare_changes_for_modify(module, before_facts):
+def prepare_changes_for_modify(module, connection, before_facts):
     """
     Select those parameters which are interesting and which we want to change.
     """
 
     force_password_update = module.params.get('force_password_update')
-    will_change = instance_facts_diff(before_facts, module.params)
+    will_change = instance_facts_diff(connection, before_facts, module.params)
     if not will_change:
         return {}
     facts_to_change = will_change['after']
@@ -688,7 +668,7 @@ def prepare_changes_for_modify(module, before_facts):
 
     # convert from fact format to the AWS call CamelCase format.
 
-    params = snake_dict_to_cap_camel_dict(facts_to_change)
+    params = snake_dict_to_camel_dict(facts_to_change, capitalize_first=True)
 
     if facts_to_change.get('db_security_groups'):
         params['DBSecurityGroups'] = facts_to_change.get('db_security_groups').split(',')
@@ -700,9 +680,15 @@ def prepare_changes_for_modify(module, before_facts):
     except KeyError:
         pass
 
+    # You can specify 9.6 when creating a DB and get 9.6.2
+    # We should ignore version if the requested version is
+    # a prefix of the current version
+    if will_change['before'].get('engine_version').startwith(will_change['after'].get('engine_version')):
+        del(facts_to_change['engine_version'])
+
     # modify_db_instance does not cope with DBSubnetGroup not moving VPC!
     try:
-        if (before_facts['db_subnet_group_name'] == params.get('DBSubnetGroupName')):
+        if before_facts['db_subnet_group_name'] == params.get('DBSubnetGroupName'):
             del(params['DBSubnetGroupName'])
     except KeyError:
         pass
@@ -754,7 +740,7 @@ def modify_db_instance(module, conn, before_instance):
     ))
 
     before_facts = instance_to_facts(before_instance)
-    call_params = prepare_params_for_modify(module, before_facts)
+    call_params = prepare_params_for_modify(module, conn, before_facts)
 
     if not call_params:
         return dict(changed=False, instance=before_facts)

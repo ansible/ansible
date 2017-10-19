@@ -85,7 +85,7 @@ def snapshot_to_facts(snapshot):
     return d
 
 
-def instance_facts_diff(state_a, state_b):
+def instance_facts_diff(connection, state_a, state_b):
     """compare two fact dictionaries for rds instances
 
     This function takes two dictionaries of facts related to an RDS
@@ -106,11 +106,7 @@ def instance_facts_diff(state_a, state_b):
     # FIXME: testing of deletion of parameters needs to be tested
     # properly.
 
-    # FIXME: can we use a static / test session rather than us-west-2.
-
-    session = botocore.session.get_session()
-    conn = session.create_client('rds', region_name='us-west-2')
-    operations_model = conn._service_model.operation_model("CreateDBInstance")
+    operations_model = connection._service_model.operation_model("CreateDBInstance")
     compare_keys = [xform_name(x) for x in operations_model.input_shape.members.keys()]
 
     remove_if_null = []
@@ -129,6 +125,18 @@ def instance_facts_diff(state_a, state_b):
         new_port = state_b.get("endpoint").get("port")
     except AttributeError:
         new_port = None
+
+    state_a['db_subnet_group_name'] = state_a.get('db_subnet_group', {}).get('db_subnet_group_name')
+    if state_a['db_subnet_group_name']:
+        del(state_a['db_subnet_group'])
+
+    state_a['db_parameter_group_name'] = state_a.get('db_parameter_group', {}).get('db_parameter_group_name')
+    if state_a['db_parameter_group_name']:
+        del(state_a['db_parameter_group'])
+
+    state_a['vpc_security_group_ids'] = [sg['vpc_security_group_id'] for sg in state_a.get('vpc_security_groups')]
+    if state_a['vpc_security_group_ids']:
+        del(state_a['vpc_security_groups'])
 
     if new_port is not None:
         state_b["port"] = new_port
