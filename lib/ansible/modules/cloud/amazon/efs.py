@@ -490,7 +490,7 @@ class EFSConnection(object):
 
 def iterate_all(attr, map_method, **kwargs):
     """
-     Method creates iterator from boto result set
+     Method creates iterator from result set
     """
     args = dict((key, value) for (key, value) in kwargs.items() if value is not None)
     wait = 1

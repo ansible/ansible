@@ -144,13 +144,6 @@ from ansible.module_utils.ec2 import (boto3_conn, ec2_argument_spec, get_aws_con
 import traceback
 
 try:
-    import boto
-    import boto.ec2
-    HAS_BOTO = True
-except ImportError:
-    HAS_BOTO = False
-
-try:
     import boto3
     from botocore.exceptions import ClientError, NoCredentialsError, NoRegionError, WaiterError
     HAS_BOTO3 = True
@@ -213,8 +206,6 @@ def main():
 
     module = AnsibleModule(argument_spec=argument_spec)
 
-    if not HAS_BOTO:
-        module.fail_json(msg='boto required for this module')
     # TODO: Check botocore version
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
 

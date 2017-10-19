@@ -36,7 +36,7 @@ author:
     - "Stephane Maarek (@simplesteph)"
     - "Zac Blazic (@zacblazic)"
 
-requirements: [ json, boto, botocore, boto3 ]
+requirements: [ json, botocore, boto3 ]
 options:
     state:
         description:
@@ -267,14 +267,7 @@ DEPLOYMENT_CONFIGURATION_TYPE_MAP = {
 
 
 try:
-    import boto
     import botocore
-    HAS_BOTO = True
-except ImportError:
-    HAS_BOTO = False
-
-try:
-    import boto3
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
@@ -289,13 +282,10 @@ class EcsServiceManager:
     def __init__(self, module):
         self.module = module
 
-        try:
-            region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-            if not region:
-                module.fail_json(msg="Region must be specified as a parameter, in EC2_REGION or AWS_REGION environment variables or in boto configuration file")
-            self.ecs = boto3_conn(module, conn_type='client', resource='ecs', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-        except boto.exception.NoAuthHandlerFound as e:
-            self.module.fail_json(msg="Can't authorize connection - %s" % str(e))
+        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
+        if not region:
+            module.fail_json(msg="Region must be specified as a parameter, in EC2_REGION or AWS_REGION environment variables or in boto configuration file")
+        self.ecs = boto3_conn(module, conn_type='client', resource='ecs', region=region, endpoint=ec2_url, **aws_connect_kwargs)
 
     def find_in_array(self, array_of_services, service_name, field_name='serviceArn'):
         for c in array_of_services:
@@ -402,9 +392,6 @@ def main():
                            ],
                            required_together=[['load_balancers', 'role']]
                            )
-
-    if not HAS_BOTO:
-        module.fail_json(msg='boto is required.')
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 is required.')

@@ -22,7 +22,7 @@ description:
     - Creates or terminates ecs clusters.
 version_added: "2.0"
 author: Mark Chance(@Java1Guy)
-requirements: [ boto, boto3 ]
+requirements: [ boto3 ]
 options:
     state:
         description:
@@ -104,12 +104,6 @@ status:
 import time
 
 try:
-    import boto
-    HAS_BOTO = True
-except ImportError:
-    HAS_BOTO = False
-
-try:
     import boto3
     HAS_BOTO3 = True
 except ImportError:
@@ -125,14 +119,12 @@ class EcsClusterManager:
     def __init__(self, module):
         self.module = module
 
-        try:
-            # self.ecs = boto3.client('ecs')
-            region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-            if not region:
-                module.fail_json(msg="Region must be specified as a parameter, in EC2_REGION or AWS_REGION environment variables or in boto configuration file")
-            self.ecs = boto3_conn(module, conn_type='client', resource='ecs', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-        except boto.exception.NoAuthHandlerFound as e:
-            self.module.fail_json(msg="Can't authorize connection - %s" % str(e))
+        # self.ecs = boto3.client('ecs')
+        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
+        if not region:
+            module.fail_json(msg="Region must be specified as a parameter, in EC2_REGION or AWS_REGION environment variables or in boto configuration file")
+        self.ecs = boto3_conn(module, conn_type='client', resource='ecs',
+                              region=region, endpoint=ec2_url, **aws_connect_kwargs)
 
     def find_in_array(self, array_of_clusters, cluster_name, field_name='clusterArn'):
         for c in array_of_clusters:
@@ -175,9 +167,6 @@ def main():
     required_together = (['state', 'name'])
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True, required_together=required_together)
-
-    if not HAS_BOTO:
-        module.fail_json(msg='boto is required.')
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 is required.')
