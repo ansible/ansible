@@ -502,7 +502,8 @@ def main():
     else:
         stack_params['NotificationARNs'] = []
 
-    if module.params['stack_policy'] is not None:
+    # can't check the policy when verifying.
+    if module.params['stack_policy'] is not None and not module.check_mode:
         stack_params['StackPolicyBody'] = open(module.params['stack_policy'], 'r').read()
 
     if module.params['changeset_name'] is not None:
