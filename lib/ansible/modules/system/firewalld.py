@@ -169,7 +169,7 @@ try:
         fw.start()
         fw_offline = True
 
-except ImportError as e:
+except ImportError:
     import_failure = True
 
 
