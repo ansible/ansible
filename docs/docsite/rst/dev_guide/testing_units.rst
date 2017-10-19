@@ -13,8 +13,8 @@ Available Tests
 ===============
 
 Unit tests can be found in `test/units
-<https://github.com/ansible/ansible/tree/devel/test/units>`_, notice that the directory
-structure matches that of ``lib/ansible/``
+<https://github.com/ansible/ansible/tree/devel/test/units>`_. Notice that the directory
+structure of the tests matches that of ``lib/ansible/``
 
 Running Tests
 =============
@@ -87,10 +87,9 @@ Extending unit tests
 Structuring Unit Tests
 ``````````````````````
 
-Ansible drives unit tests through ``pytest``
-(https://docs.pytest.org/en/latest/) this means that tests can either
-be written as simple functions which are included in any file name
-like test_<something>.py.::
+Ansible drives unit tests through `pytest <https://docs.pytest.org/en/latest/>`_ this
+means that tests can either be written as simple functions which are included in any file
+name like ``test_<something>.py``.::
 
   #this function will be called simply because it is called test_*()
 
@@ -120,21 +119,20 @@ or as classes::
         c = -13
         assert self.a - self.b = c
 
-Both methods work fine in most circumstances; the function based interface is simpler and
+Both methods work fine in most circumstances; the function-based interface is simpler and
 quicker and so that's probably where you should start when you are just trying to add a
-few basic tests for a module.  The class based test allows more tidy set up and tear down
+few basic tests for a module.  The class-based test allows more tidy set up and tear down
 of pre-requisites, so if you have many test cases for your module you may want to refactor
 to use that.  
 
 Assertions using the simple ``assert`` function inside the tests will give give full
-information on the cause of the failure tracing back functions called during the
+information on the cause of the failure with a trace-back of functions called during the
 assertion.  This means that plain asserts are recommended over other external assertion
 libraries.
 
-A number of the unit test suites include functions that are shared
-between several modules, especially in the networking arena.  In these
-cases a file is created in the same directory, which is then included
-directly.
+A number of the unit test suites include functions that are shared between several
+modules, especially in the networking arena.  In these cases a file is created in the same
+directory, which is then included directly.
 
 
 module test case common code
@@ -151,8 +149,9 @@ files that aren't themselves tests.
 
 Fixtures files
 ``````````````
-To mock out fetching results from devices, you can use ``fixtures`` to read in
-pre-generated data.
+
+To mock out fetching results from devices, or provide other complex datastructures that
+come from external libraries you can use ``fixtures`` to read in pre-generated data.
 
 Text files live in ``test/units/modules/network/PLATFORM/fixtures/``
 
@@ -161,6 +160,9 @@ Data is loaded using the ``load_fixture`` method
 See `eos_banner test
 <https://github.com/ansible/ansible/blob/devel/test/units/modules/network/eos/test_eos_banner.py>`_
 for a practical example.
+
+If you are simulating APIs you may find that python placebo is useful.  See
+doc:`testing_units_modules` for more information.
 
 
 Code Coverage For New or Updated Unit Tests

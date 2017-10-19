@@ -42,30 +42,39 @@ Advantages include:
 * Unit tests can easily substitute system functions allowing testing of software that
   would be impractical.  For example the ``sleep()`` function can be replaced and we check
   that a ten minute sleep was called without actually waiting ten minutes.
+* Unit tests are run on various different pyton variants, both python 2 and 3 and can
+  relatively easily and quickly be set up to cover most code paths.  This allows us to
+  ensure that the code behaves in the same way on different python versions.
 
 There are also some potential disadvantages of unit tests. Unit tests don't normally
-test actual useful valuable features of software, instead just internal implementation
+directly test actual useful valuable features of software, instead just internal
+implementation
 
 * Unit tests that test the internal, non-visible features of software may make
   refactoring difficult if those internal features have to change (see also naming in How
   below)
 * Even if the internal feature is working correctly it is possible that there will be a
-  problem between the internal code and the actual result delivered to the user
+  problem between the internal code tested and the actual result delivered to the user
 
-Normally the Ansible integration tests (which are written in Ansible YAML) are a better
-option for most module tests.  If those tests already test a feature and run acceptably
-quickly then there may be little point in providing a unit test as well.
+Normally the Ansible integration tests (which are written in Ansible YAML) provide better
+testing for most module functionality.  If those tests already test a feature and run
+acceptably quickly then there may be little point in providing a unit test covering the
+same area as well.
 
 When To Use Unit Tests
 ======================
 
-There are a number of situations where unit tests are a better choice than integration tests. For
-example, testing things which are impossible, slow or very difficult to test with
-integration tests, such as:
+There are a number of situations where unit tests are a better choice than integration
+tests. For example, testing things which are impossible, slow or very difficult to test
+with integration tests, such as:
     
 * Forcing rare / strange / random situations that can't be forced, such as specific network
   failures and exceptions
 * Extensive testing of slow configuration APIs 
+* Situations where the integration tests cannot be run as part of the main Ansible
+  continuous integraiton running in Shippable.
+
+
 
 Providing quick feedback
 ------------------------
@@ -264,13 +273,16 @@ Module argument processing
 
 There are two problems with running the main function of a module:  
 
-* It can be difficult to set up the arguments correctly so that the module will get them
-  as parameters.
-* All modules finish by calling either the ``module.fail_json`` or
+* Since the module is supposed to accept arguments on ``STDIN`` it is a bit difficult to
+  set up the arguments correctly so that the module will get them as parameters.
+* All modules should finish by calling either the ``module.fail_json`` or
   ``module.exit_json``, but these won't work correctly in a testing environment.
 
 Passing Arguments
 -----------------
+
+.. This section should be updated once https://github.com/ansible/ansible/pull/31456 is
+   closed since the function below will be provided in a library file.
 
 To pass arguments to a module correctly, use a function that stores the
 parameters in a special string variable.  Module creation and argument processing is
@@ -297,9 +309,13 @@ variable is set it will be treated as if the input came on ``STDIN`` to the modu
 Handling exit correctly
 -----------------------
 
-The ``module.exit_json()`` function won't work properly in a testing environment since it will . This can
-be mitigated by replacing it (and module.fail_json) with a function that raises an
-exception::
+.. This section should be updated once https://github.com/ansible/ansible/pull/31456 is
+   closed since the exit and failure functions below will be provided in a library file.
+
+The ``module.exit_json()`` function won't work properly in a testing environment since it
+will attempt to exit the program having put out error information to ``STDOUT`` where it
+is difficult to examine. This can be mitigated by replacing it (and module.fail_json) with
+a function that raises an exception::
 
     def exit_json(*args, **kwargs):
         if 'changed' not in kwargs:
@@ -328,7 +344,12 @@ Running the main function
 If you do want to run the actual main function of a module you must import the module, set
 the arguments as above, set up the appropriate exit exception and then run the module::
 
-    def test_main_function(self):
+    # This test is based around pytest's features for individual test functions
+    import pytest
+    import ansible.modules.module.group.my_modulle as my_module
+
+    def test_main_function(monkeypatch):
+        monkeypatch.setattr(my_module.AnsibleModule, "exit_json", fake_exit_json)
         set_module_args({
             'activationkey': 'key',
             'username': 'user',
@@ -349,7 +370,7 @@ Here is a simple mock of AnsibleModule.run_command::
             run_command.return_value = 0, '', ''  # successful execution, no output
                 with self.assertRaises(AnsibleExitJson) as result:
                     self.module.main()
-                self.assertFalse(result.exception.args[0]['changed'])  # assert module returns changed=True
+                self.assertFalse(result.exception.args[0]['changed'])
         # Check that run_command has been called
         run_command.assert_called_once_with('/usr/bin/command args')
         self.assertEqual(run_command.call_count, 1)
@@ -491,18 +512,24 @@ This now makes it possible to run tests against the module initiation function::
         with self.assertRaises(AnsibleFailJson) as result:
              self.module.setup_json
 
+See also ``test/units/module_utils/aws/test_rds.py``
+
 Note that the argument_spec dictionary is visible in a module variable. This has
 advantages, both in allowing explicit testing of the arguments and in allowing the easy
 creation of module objects for testing.
 
-See also ``test/units/module_utils/aws/test_rds.py``
+The same restructuring technique can be valuable for testing other specific bits of
+functionality, for example the part of the module which queries the object the module
+configures.
 
 Traps for maintaining Python 2 compatibility
 ============================================
 
-If you use the ``mock`` library from the Python 2.6 standard library, a number of the assert 
-functions are missing but will return as if successful.  This means that test cases should *not* 
-use functions marked as _new_ in the python 3 documentation.
+If you use the ``mock`` library from the Python 2.6 standard library, a number of the
+assert functions are missing but will return as if successful (since mock functions always
+seem to be successful).  This means that test cases should take great care *not* use
+functions marked as _new_ in the python 3 documentation since the tests will likely always
+succeed even if the code is broken when run on older python versions.
 
 A helpful development approach to this should be to ensure that all of the tests have been
 run under 2.6 and each assertion in the test cases has been checked to work by breaking
