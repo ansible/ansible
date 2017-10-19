@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: junos_yang
-version_added: "2.X"
+version_added: "2.5"
 author: "Christian Giese (@GIC-de)"
 short_description: Install custom YANG modules on devices running Junos
 description:
@@ -88,7 +88,6 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.junos import junos_argument_spec, get_param
 from ansible.module_utils.pycompat24 import get_exception
 
-from lxml import etree
 import os
 
 try:
@@ -129,7 +128,7 @@ def connect(module):
 
 def install_yang(module, device, update):
     if module.check_mode:
-        return
+        return "skipped installation because of check mode"
 
     rpc_kwargs = {"package": module.params['package']}
 
@@ -151,7 +150,7 @@ def install_yang(module, device, update):
         reply = device.rpc.request_yang_update(**rpc_kwargs)
     else:
         reply = device.rpc.request_yang_add(**rpc_kwargs)
-    return str(etree.tostring(reply))
+    return reply.findtext(".//output")
 
 def main():
     """ Main entry point for Ansible module execution
@@ -190,12 +189,12 @@ def main():
         # already installed
         if module.params['update']:
             # update module
-            result['xml'] = install_yang(module, device, update=True)
+            result['msg'] = install_yang(module, device, update=True)
             result['changed'] = True
             result['updated'] = True
     else:
         # install module
-        result['xml'] = install_yang(module, device, update=False)
+        result['msg'] = install_yang(module, device, update=False)
         result['changed'] = True
 
     try:
