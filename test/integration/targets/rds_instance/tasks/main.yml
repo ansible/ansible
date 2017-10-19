@@ -1,5 +1,65 @@
 - block:
 
+  #################################
+  # PREREQUISITES FOR VPC BASED DBs
+  #################################
+
+    - name: create vpc
+      ec2_vpc_net:
+        name: "{{ resource_prefix }}-vpc"
+        state: present
+        cidr_block: "10.232.232.128/26"
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        tags:
+          Name: "{{ resource_prefix }}-vpc"
+          Description: "Created by ansible-test"
+      register: vpc_result
+
+    - name: create some subnets
+      ec2_vpc_subnet:
+        state: present
+        cidr: "{{ item.cidr }}"
+        az: "{{ ec2_region}}{{ item.az }}"
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+      with_items:
+        - az: a
+          cidr: "10.232.232.128/28"
+        - az: b
+          cidr: "10.232.232.144/28"
+      register: vpc_subnets
+
+    - debug:
+        msg: "{{ vpc_subnets.results|json_query('[].subnet.id') }}"
+
+    - name: create db subnet group
+      rds_subnet_group:
+        name: "{{ resource_prefix }}-subnet-group"
+        description: "{{ resource_prefix }}-subnet-group"
+        subnets: "{{ vpc_subnets.results|json_query('[].subnet.id') }}"
+        state: present
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+
+    - name: create db parameter group
+      rds_param_group:
+        name: "{{ resource_prefix }}-parameter-group"
+        description: "{{ resource_prefix }}-parameter-group"
+        state: present
+        engine: postgres9.6
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+
     # important in case we restart the tests after a fail.
     - name: ensure instance we are going to create is not present so create test is valid
       rds_instance:
@@ -77,6 +137,9 @@
         master_username: hello
         master_user_password: "world123$$"
         region: '{{ec2_region}}'
+        tags:
+          TagOne: hello
+          TagTwo: world
         aws_access_key: '{{aws_access_key}}'
         aws_secret_key: '{{aws_secret_key}}'
         security_token: '{{security_token}}'
@@ -84,7 +147,10 @@
 
     - name: check that create instance worked
       assert:
-        that: rds_instance|changed
+        that:
+          - rds_instance|changed
+          - "'TagOne' in rds_instance.instance.tags and rds_instance.instance.tags.TagOne == 'hello'"
+          - "'TagTwo' in rds_instance.instance.tags and rds_instance.instance.tags.TagTwo == 'world'"
 
     - name: show instance details
       debug:
@@ -154,7 +220,45 @@
 
     - name: check that tag modification worked
       assert:
-        that: rds_instance|changed
+        that:
+          - rds_instance|changed
+          - "'TagOne' in rds_instance.instance.tags and rds_instance.instance.tags.TagOne == 'hello'"
+          - "'TagTwo' in rds_instance.instance.tags and rds_instance.instance.tags.TagTwo == 'world'"
+          - "'this' in rds_instance.instance.tags and rds_instance.instance.tags.this == 'that'"
+          - "'thee' in rds_instance.instance.tags and rds_instance.instance.tags.thee == 'thou'"
+          - "'then' in rds_instance.instance.tags and rds_instance.instance.tags.then == 'where'"
+
+
+    - name: add tags to rds instance and purge tags
+      rds_instance:
+        id: "{{ rds_instance_name }}"
+        wait_timeout: 1200
+        wait: yes
+        size: 5
+        db_name: actual_db
+        db_instance_class: db.t2.micro
+        engine: postgres
+        master_username: hello
+        master_user_password: "world123$$"
+        region: '{{ec2_region}}'
+        aws_access_key: '{{aws_access_key}}'
+        aws_secret_key: '{{aws_secret_key}}'
+        security_token: '{{security_token}}'
+        purge_tags: yes
+        tags:
+           this: that
+           thee: thou
+           then: where
+      register: rds_instance
+
+    - name: check that tag purging worked
+      assert:
+        that:
+          - rds_instance|changed
+          - "'this' in rds_instance.instance.tags and rds_instance.instance.tags.this == 'that'"
+          - "'thee' in rds_instance.instance.tags and rds_instance.instance.tags.thee == 'thou'"
+          - "'then' in rds_instance.instance.tags and rds_instance.instance.tags.then == 'where'"
+
 
 
     - name: snapshot instance
@@ -320,7 +424,97 @@
         aws_secret_key: '{{aws_secret_key}}'
         security_token: '{{security_token}}'
 
+    - name: create DB in subnet group
+      rds_instance:
+        id: "{{ rds_instance_name }}"
+        wait_timeout: 1200
+        wait: yes
+        size: 5
+        db_name: actual_db
+        db_instance_class: db.t2.micro
+        db_subnet_group_name: "{{ resource_prefix }}-subnet-group"
+        db_parameter_group_name: "{{ resource_prefix }}-parameter-group"
+        engine: postgres
+        master_username: hello
+        master_user_password: "world123$$"
+        region: '{{ec2_region}}'
+        aws_access_key: '{{aws_access_key}}'
+        aws_secret_key: '{{aws_secret_key}}'
+        security_token: '{{security_token}}'
+      register: rds_instance
+
+    - name: recreate DB in subnet group
+      rds_instance:
+        id: "{{ rds_instance_name }}"
+        wait_timeout: 1200
+        wait: yes
+        size: 5
+        db_name: actual_db
+        db_instance_class: db.t2.micro
+        db_subnet_group_name: "{{ resource_prefix }}-subnet-group"
+        db_parameter_group_name: "{{ resource_prefix }}-parameter-group"
+        engine: postgres
+        master_username: hello
+        master_user_password: "world123$$"
+        region: '{{ec2_region}}'
+        aws_access_key: '{{aws_access_key}}'
+        aws_secret_key: '{{aws_secret_key}}'
+        security_token: '{{security_token}}'
+      register: rds_instance
+
+    - name: assert that second run didn't change
+      assert:
+        that:
+          - rds_instance.changed
+
   always:
+    - name: tidy up subnets
+      ec2_vpc_subnet:
+        state: absent
+        cidr: "{{ item.cidr }}"
+        az: "{{ ec2_region}}{{ item.az }}"
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+      with_items:
+        - az: a
+          cidr: "10.232.232.128/28"
+        - az: b
+          cidr: "10.232.232.144/28"
+      ignore_errors: true
+
+    - name: tidy up VPC
+      ec2_vpc_net:
+        name: "{{ resource_prefix }}-vpc"
+        state: absent
+        cidr_block: "10.232.232.128/26"
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+      ignore_errors: true
+
+    - name: delete rds subnet groups
+      rds_subnet_group:
+        name: "{{ resource_prefix }}-subnet-group"
+        state: absent
+        region: '{{ec2_region}}'
+        aws_access_key: '{{aws_access_key}}'
+        aws_secret_key: '{{aws_secret_key}}'
+        security_token: '{{security_token}}'
+      ignore_errors: true
+
+    - name: delete rds parameter group
+      rds_param_group:
+        name: "{{ resource_prefix }}-parameter-group"
+        state: absent
+        region: '{{ec2_region}}'
+        aws_access_key: '{{aws_access_key}}'
+        aws_secret_key: '{{aws_secret_key}}'
+        security_token: '{{security_token}}'
+      ignore_errors: true
 
     - name: delete rds instance
       rds_instance:
