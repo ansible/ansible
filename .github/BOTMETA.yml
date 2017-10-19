@@ -204,9 +204,7 @@ files:
     maintainers: $team_azure
   $modules/cloud/centurylink/: clc-runner
   $modules/cloud/cloudscale/cloudscale_server.py: gaudenz
-  $modules/cloud/cloudstack/:
-    labels: cloudstack
-    maintainers: resmo
+  $modules/cloud/cloudstack/: resmo
   $modules/cloud/digital_ocean/: BondAnthony
   $modules/cloud/digital_ocean/digital_ocean.py: alukovenko zbal
   $modules/cloud/digital_ocean/digital_ocean_domain.py: alukovenko mgregson
@@ -439,16 +437,12 @@ files:
   $modules/net_tools/omapi_host.py: nerzhul
   $modules/net_tools/snmp_facts.py: ogenstad
   $modules/network/a10/: ericchou1 mischapeters
-  $modules/network/aci/:
-    labels: aci
-    maintainers: dagwieers schunduri jmcgill298
+  $modules/network/aci/: $team_aci
   $modules/network/aireos/: jmighion
   $modules/network/aos/: dgarros jeremyschulman
   $modules/network/aruba/: jmighion
   $modules/network/asa/: ogenstad
-  $modules/network/avi/:
-    labels: avi
-    maintainers: $team_avi
+  $modules/network/avi/: $team_avi
   $modules/network/bigswitch/: jayakody tedelhourani vuile
   $modules/network/citrix/netscaler.py: $team_ansible
   $modules/network/cloudengine/: QijunPan
@@ -459,7 +453,6 @@ files:
   $modules/network/eos/: privateip trishnaguha
   $modules/network/f5/:
     ignored: Etienne-Carriere mhite mryanlam perzizzle srvg wojtek0806
-    labels: f5
     maintainers: caphrim007
   $modules/network/fortios/: bjolivot
   $modules/network/illumos/: xen0l
@@ -575,6 +568,7 @@ files:
   $modules/remote_management/ipmi/: cloudnull
   $modules/remote_management/manageiq/: $team_manageiq
   $modules/remote_management/stacki/stacki_host.py: bbyhuy bsanders
+  $modules/remote_management/ucs/: $team_ucs
   $modules/remote_management/wakeonlan.py: dagwieers
   $modules/source_control/bzr.py: andreparames
   $modules/source_control/git.py: $team_ansible
@@ -903,7 +897,7 @@ files:
     maintainers: ericchou1 mischapeters
     labels: networking
   $module_utils/aci.py:
-    maintainers: dagwieers schunduri jmcgill298
+    maintainers: $team_aci
     labels:
     - aci
     - networking
@@ -1009,8 +1003,11 @@ files:
   $module_utils/ovirt.py:
     maintainers: joshainglis karmab machacekondra
     labels:
-      - ovirt
-      - cloud
+    - cloud
+    - ovirt
+  $module_utils/remote_management/ucs:
+    maintainers: $team_ucs
+    labels: ucs
   $module_utils/sros.py:
     maintainers: $team_networking
     labels: networking
@@ -1165,6 +1162,7 @@ files:
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
+  team_aci: dagwieers jmcgill298 schunduri 
   team_ansible: []
   team_avi: ericsysmin grastogi23 khaltore
   team_azure: haroldwongms nitzmahone tstringer
@@ -1180,6 +1178,7 @@ macros:
   team_rabbitmq: chrishoffman manuel-sousa hyperized
   team_rhn: alikins barnabycourt flossware vritant
   team_tower: ghjm jlaska matburt wwitzel3
+  team_ucs: dsoper2 johnamcdonough vallard vvb
   team_vmware: dagwieers dav1x jctanner nerzhul akasurde
   team_windows: dagwieers jborean93 jhawkesworth
   team_ipa: Nosmoht akasurde
