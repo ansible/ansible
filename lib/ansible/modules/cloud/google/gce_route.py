@@ -25,7 +25,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: gce_route
-version_added: "2.4"
+version_added: "2.5"
 short_description: Create or Destroy GCE routes
 description:
     - This module can create and destroy Google Compute Engine routes
