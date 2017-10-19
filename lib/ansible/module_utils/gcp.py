@@ -389,7 +389,7 @@ def get_google_api_auth(module, scopes=None, user_agent_product='ansible-python-
     scopes = [] if scopes is None else scopes
 
     if not HAS_GOOGLE_API_LIB:
-        module.fail_json(msg="Please install google-api-python-client library")
+        module.fail_json(msg="Please install the google-api-python-client and google_auth_httplib2 libraries")
     if not scopes:
         scopes = GCP_DEFAULT_SCOPES
     try:
