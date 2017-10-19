@@ -122,9 +122,12 @@ class TestIncludeRole(unittest.TestCase):
         ), loader=self.loader, variable_manager=self.var_manager)
 
         tasks = play.compile()
+        tested = False
         for role, task_vars in self.get_tasks_vars(play, tasks):
+            tested = True
             self.assertEqual(task_vars.get('l3_variable'), 'l3-main')
             self.assertEqual(task_vars.get('test_variable'), 'l3-main')
+        self.assertTrue(tested)
 
     @patch('ansible.playbook.role.definition.unfrackpath',
            mock_unfrackpath_noop)
@@ -140,9 +143,12 @@ class TestIncludeRole(unittest.TestCase):
             loader=self.loader, variable_manager=self.var_manager)
 
         tasks = play.compile()
+        tested = False
         for role, task_vars in self.get_tasks_vars(play, tasks):
+            tested = True
             self.assertEqual(task_vars.get('l3_variable'), 'l3-alt')
             self.assertEqual(task_vars.get('test_variable'), 'l3-alt')
+        self.assertTrue(tested)
 
     @patch('ansible.playbook.role.definition.unfrackpath',
            mock_unfrackpath_noop)
@@ -165,7 +171,9 @@ class TestIncludeRole(unittest.TestCase):
         ), loader=self.loader, variable_manager=self.var_manager)
 
         tasks = play.compile()
+        expected_roles = ['l1', 'l2', 'l3']
         for role, task_vars in self.get_tasks_vars(play, tasks):
+            expected_roles.remove(role)
             # Outer-most role must not have variables from inner roles yet
             if role == 'l1':
                 self.assertEqual(task_vars.get('l1_variable'), 'l1-main')
@@ -184,6 +192,9 @@ class TestIncludeRole(unittest.TestCase):
                 self.assertEqual(task_vars.get('l2_variable'), 'l2-main')
                 self.assertEqual(task_vars.get('l3_variable'), 'l3-main')
                 self.assertEqual(task_vars.get('test_variable'), 'l3-main')
+            else:
+                self.fail()
+        self.assertFalse(expected_roles)
 
     @patch('ansible.playbook.role.definition.unfrackpath',
            mock_unfrackpath_noop)
@@ -206,7 +217,9 @@ class TestIncludeRole(unittest.TestCase):
         ), loader=self.loader, variable_manager=self.var_manager)
 
         tasks = play.compile()
+        expected_roles = ['l1', 'l2', 'l3']
         for role, task_vars in self.get_tasks_vars(play, tasks):
+            expected_roles.remove(role)
             # Outer-most role must not have variables from inner roles yet
             if role == 'l1':
                 self.assertEqual(task_vars.get('l1_variable'), 'l1-alt')
@@ -225,3 +238,6 @@ class TestIncludeRole(unittest.TestCase):
                 self.assertEqual(task_vars.get('l2_variable'), 'l2-alt')
                 self.assertEqual(task_vars.get('l3_variable'), 'l3-alt')
                 self.assertEqual(task_vars.get('test_variable'), 'l3-alt')
+            else:
+                self.fail()
+        self.assertFalse(expected_roles)
