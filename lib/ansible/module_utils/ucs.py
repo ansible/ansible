@@ -45,33 +45,32 @@ ucs_argument_spec = dict(
 )
 
 
-class UcsConnection():
+class UCSModule():
 
     def __init__(self, module):
         self.module = module
-        self.handle = None
+        self.result = {}
         if not HAS_UCSMSDK:
             self.module.fail_json(msg='ucsmsdk is required for this module')
+        self.login()
+
+    def __del__(self):
+        self.logout()
 
     def login(self):
-        handle = self.module.params.get('login_handle')
-        if handle:
-            return handle
-
         from ucsmsdk.ucshandle import UcsHandle
-        results = {}
+
+        # use_proxy=yes (default) and proxy=None (default) should be using the system defined proxy
+        # use_proxy=yes (default) and proxy=value should use the provided proxy
+        # use_proxy=no (user) should not be using a proxy
+        if self.module.params['use_proxy']:
+            proxy = self.module.params['proxy']
+        else:
+            # force no proxy to be used.  Note that proxy=None in UcsHandle will
+            # use the system proxy so we must set to something else
+            proxy = {}
+
         try:
-            if self.module.params['use_proxy']:
-                # force use of the system defined proxy (env variable defined)
-                proxy = None
-            else:
-                if self.module.params['proxy']:
-                    # use the specified proxy
-                    proxy = self.module.params['proxy']
-                else:
-                    # force no proxy to be used.  Note that proxy=None will
-                    # use the system proxy so we must set to something else
-                    proxy = {}
             handle = UcsHandle(ip=self.module.params['hostname'],
                                username=self.module.params['username'],
                                password=self.module.params['password'],
@@ -80,19 +79,12 @@ class UcsConnection():
                                proxy=proxy)
             handle.login()
         except Exception as e:
-            results['msg'] = str(e)
-            self.module.fail_json(**results)
-        self.handle = handle
-        return handle
+            self.result['msg'] = str(e)
+            self.module.fail_json(**self.result)
+        self.login_handle = handle
 
     def logout(self):
-        handle = self.module.params.get('login_handle')
-        if handle:
-            # we used a pre-existing handle from a task.
-            # do not logout
-            return False
-
-        if self.handle:
-            self.handle.logout()
+        if self.login_handle:
+            self.login_handle.logout()
             return True
         return False

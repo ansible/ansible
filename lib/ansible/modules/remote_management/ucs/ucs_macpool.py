@@ -27,9 +27,14 @@ options:
     default: present
   mac_list:
     description:
-    - List of MAC pools specifying the name of the pool, order of addresses,
-      and MAC address block from/to.
+    - List of MAC pools which contain the following properties
+    - name (Name of the MAC pool (required))
+    - descr (Description for the MAC pool)
+    - order (Assignment order which is default or sequential)
+    - first_addr (First MAC address in the MAC addresses block)
+    - last_addr (Last MAC address in the MAC addresses block)
     required: yes
+    type: list
   org_dn:
     description:
     - Org dn (distinguished name)
@@ -50,8 +55,8 @@ EXAMPLES = r'''
     password: password
     mac_list:
       - name: mac-A
-        from: 00:25:B5:00:66:00
-        to: 00:25:B5:00:67:F3
+        first_addr: 00:25:B5:00:66:00
+        last_addr: 00:25:B5:00:67:F3
         order: sequential
 '''
 
@@ -60,42 +65,41 @@ RETURN = r'''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ucs import UcsConnection, ucs_argument_spec
+from ansible.module_utils.ucs import UCSModule, ucs_argument_spec
 
 
 def main():
     argument_spec = ucs_argument_spec
     argument_spec.update(mac_list=dict(required=True, type='list'),
                          org_dn=dict(type='str', default='org-root'),
-                         state=dict(default='present', choices=['present', 'absent'], type='str'),
-                         login_handle=dict(type='dict'))
+                         state=dict(default='present', choices=['present', 'absent'], type='str'))
     module = AnsibleModule(argument_spec,
                            supports_check_mode=True)
-    conn = UcsConnection(module)
-    login_handle = conn.login()
+    ucs = UCSModule(module)
 
-    result = {}
     err = False
 
+    from ucsmsdk.mometa.macpool.MacpoolPool import MacpoolPool
+    from ucsmsdk.mometa.macpool.MacpoolBlock import MacpoolBlock
+
+    changed = False
     try:
-        from ucsmsdk.mometa.macpool.MacpoolPool import MacpoolPool
-        from ucsmsdk.mometa.macpool.MacpoolBlock import MacpoolBlock
-
-        changed = False
-
         for mac in module.params['mac_list']:
             exists = False
             dn = module.params['org_dn'] + '/mac-pool-' + mac['name']
-            mo = login_handle.query_dn(dn)
+            mo = ucs.login_handle.query_dn(dn)
             if mo:
                 # check top-level mo props
                 kwargs = {}
-                kwargs['assignment_order'] = mac['order']
+                if 'order' in mac:
+                    kwargs['assignment_order'] = mac['order']
+                if 'descr' in mac:
+                    kwargs['descr'] = mac['descr']
                 if (mo.check_prop_match(**kwargs)):
-                    # top-level props match, check next level props
-                    if(mac['to'] != '' and mac['from'] != ''):
-                        block_dn = dn + '/block-' + mac['from'] + '-' + mac['to']
-                        mo_1 = login_handle.query_dn(block_dn)
+                    # top-level props match, check next level mo/props
+                    if(mac['last_addr'] != '' and mac['first_addr'] != ''):
+                        block_dn = dn + '/block-' + mac['first_addr'].upper() + '-' + mac['last_addr'].upper()
+                        mo_1 = ucs.login_handle.query_dn(block_dn)
                         if mo_1:
                             exists = True
                     else:
@@ -103,15 +107,16 @@ def main():
 
             if module.params['state'] == 'absent':
                 if exists:
-                    changed = True
                     if not module.check_mode:
-                        login_handle.remove_mo(mo)
-                        login_handle.commit()
+                        ucs.login_handle.remove_mo(mo)
+                        ucs.login_handle.commit()
+                    changed = True
             else:
                 if not exists:
-                    changed = True
                     if not module.check_mode:
                         # create if mo does not already exist
+                        if 'order' not in mac:
+                            mac['order'] = 'default'
                         if 'description' not in mac:
                             mac['description'] = ''
                         mo = MacpoolPool(parent_mo_or_dn=module.params['org_dn'],
@@ -119,23 +124,22 @@ def main():
                                          descr=mac['description'],
                                          assignment_order=mac['order'])
 
-                        if(mac['to'] != '' and mac['from'] != ''):
+                        if(mac['last_addr'] != '' and mac['first_addr'] != ''):
                             mo_1 = MacpoolBlock(parent_mo_or_dn=mo,
-                                                to=mac['to'],
-                                                r_from=mac['from'])
-                        login_handle.add_mo(mo, True)
-                        login_handle.commit()
+                                                to=mac['last_addr'],
+                                                r_from=mac['first_addr'])
+                        ucs.login_handle.add_mo(mo, True)
+                        ucs.login_handle.commit()
+                    changed = True
 
-        result['changed'] = changed
     except Exception as e:
         err = True
-        result['msg'] = "setup error: %s " % str(e)
-        result['changed'] = False
+        ucs.result['msg'] = "setup error: %s " % str(e)
 
-    conn.logout()
+    ucs.result['changed'] = changed
     if err:
-        module.fail_json(**result)
-    module.exit_json(**result)
+        module.fail_json(**ucs.result)
+    module.exit_json(**ucs.result)
 
 
 if __name__ == '__main__':
