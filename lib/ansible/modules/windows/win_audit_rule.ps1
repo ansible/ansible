@@ -139,8 +139,7 @@ Else
 
         If ($file -and $inheritance_flags -ne 'none')
         {
-            Add-Warning -obj $result -message "The target type is a file. inheritance_flags will be changed to none"
-            $inheritance_flags = 'none'
+            Fail-Json -obj $result -message "The target type is a file. inheritance_flags must be changed to 'none'"
         }
 
         $NewAccessRule = New-Object System.Security.AccessControl.FileSystemAuditRule($user,$rights,$inheritance_flags,$propagation_flags,$audit_flags)
