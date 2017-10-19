@@ -102,6 +102,10 @@ options:
                     - The required number of CPU cores of the containers.
                 default: 1
                 required: false
+            ports:
+                description:
+                    - List of ports exposed within the container group.
+                required: false
 
 extends_documentation_fragment:
     - azure
@@ -143,7 +147,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.containerinstance.models import (ContainerGroup, Container, ResourceRequirements, ResourceRequests, ImageRegistryCredential, IpAddress)
+    from azure.mgmt.containerinstance.models import (ContainerGroup, Container, ResourceRequirements, ResourceRequests, ImageRegistryCredential, IpAddress, Port, ContainerPort)
     from azure.mgmt.containerinstance import ContainerInstanceManagementClient
 except ImportError:
     # This is handled in azure_rm_common
@@ -200,7 +204,6 @@ def create_aci_dict(aci):
         tags=aci.tags,
         location=aci.location,
         type=aci.type,
-        ip_address=aci.ip_address,
         restart_policy=aci.restart_policy,
         state=aci.state,
         provisioning_state=aci.provisioning_state,
@@ -208,6 +211,13 @@ def create_aci_dict(aci):
         volumes=aci.volumes,
         os_type=aci.os_type
     )
+
+    if aci.ip_address:
+        results['ip_address'] = dict(
+                type=aci.ip_address.type,
+                ip=aci.ip_address.ip,
+                ports=[]
+            )
 
     results['containers'] = []
     if aci.containers:
@@ -251,10 +261,9 @@ class AzureRMContainerInstance(AzureRMModuleBase):
                 default=None,
                 choices=['public']
             ),
-            port=dict(
-                type='int',
-                required=False,
-                default=80
+            ports=dict(
+                type='list',
+                required=False
             ),
             registry_login_server=dict(
                 type='str',
@@ -282,6 +291,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         self.location = None
         self.tags = None
         self.state = None
+        self.ip_address = None
 
         self.containers = None
 
@@ -368,7 +378,12 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         ip_address = None
 
         if self.ip_address is not None:
-                ip_address = IpAddress([self.port], self.ip_address)
+            # get list of ports
+            if self.ports:
+                ports = []
+                for port in self.ports:
+                    ports.append(Port(port))
+                ip_address = IpAddress(ports, self.ip_address)
 
         containers = []
 
@@ -377,11 +392,19 @@ class AzureRMContainerInstance(AzureRMModuleBase):
             image = container_def.get("image")
             memory = container_def.get("memory")
             cpu = container_def.get("cpu")
+            ports = []
+
+            port_list = container_def.get("ports")
+            if port_list:
+                for port in port_list:
+                    ports.append(ContainerPort(port))
+
+
             if cpu is None:
                 cpu = 1
             if memory is None:
                 memory = 1.5
-            containers.append(Container(name, image, ResourceRequirements(ResourceRequests(memory, cpu))))
+            containers.append(Container(name, image, ResourceRequirements(ResourceRequests(memory, cpu)), None, ports))
 
         parameters = ContainerGroup(self.location,
                                     None,
@@ -402,10 +425,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
 
     def delete_aci(self):
         '''
-        Deletes the specified container instance in the specified subscription and resource group.
-        The operation does not delete other resources created as part of creating a container service,
-        including storage accounts, VMs, and availability sets.
-        All the other resources created with the container service are part of the same resource group and can be deleted individually.
+        Deletes the specified container group instance in the specified subscription and resource group.
 
         :return: True
         '''
