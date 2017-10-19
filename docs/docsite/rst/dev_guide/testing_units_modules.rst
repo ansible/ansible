@@ -36,15 +36,14 @@ Advantages include:
 
 * Most unit tests are much faster than most Ansible integration tests.  The complete suite
   of unit tests can be run regularly by a developer on their local system.
-* Unit tests can be run by developers who don't have access to system which the module is
-  designed to work on allowing a level of verification that changes to core functions
+* Unit tests can be run by developers who don't have access to the system which the module is
+  designed to work on, allowing a level of verification that changes to core functions
   haven't broken module expectations.
 * Unit tests can easily substitute system functions allowing testing of software that
-  would be impractical.  For example the ``sleep()`` function can be replaced and we check
+  would be impractical.  For example, the ``sleep()`` function can be replaced and we check
   that a ten minute sleep was called without actually waiting ten minutes.
-* Unit tests are run on various different pyton variants, both python 2 and 3 and can
-  relatively easily and quickly be set up to cover most code paths.  This allows us to
-  ensure that the code behaves in the same way on different python versions.
+* Unit tests are run on different Python versions. This allows us to
+  ensure that the code behaves in the same way on different Python versions.
 
 There are also some potential disadvantages of unit tests. Unit tests don't normally
 directly test actual useful valuable features of software, instead just internal
@@ -57,9 +56,8 @@ implementation
   problem between the internal code tested and the actual result delivered to the user
 
 Normally the Ansible integration tests (which are written in Ansible YAML) provide better
-testing for most module functionality.  If those tests already test a feature and run
-acceptably quickly then there may be little point in providing a unit test covering the
-same area as well.
+testing for most module functionality.  If those tests already test a feature and perform
+well there may be little point in providing a unit test covering the same area as well.
 
 When To Use Unit Tests
 ======================
@@ -85,8 +83,8 @@ Example:
   test run can last for well over an hour.  All 16 of the unit tests
   complete execution in less than 2 seconds.
 
-The time a developer can save by being able to run the code in a unit test makes it worth
-creating a unit test when bug fixing a module even if those tests do not often identify
+The time saving provided by being able to run the code in a unit test makes it worth
+creating a unit test when bug fixing a module, even if those tests do not often identify
 problems later.  As a basic goal, every module should have at least one unit test which
 will give quick feedback in easy cases without having to wait for the integration tests to
 complete.
@@ -134,8 +132,7 @@ There are a number of techniques for unit testing modules.  Beware that most
 modules without unit tests are structured in a way that makes testing quite difficult and
 can lead to very complicated tests which need more work than the code.  Effectively using unit
 tests may lead you to restructure your code. This is often a good thing and leads
-to better code overall. Good restructuring will make your code into clearer and more
-easily understood functions.
+to better code overall. Good restructuring can make your code clearer and easier to understand.
 
 
 Naming unit tests
@@ -198,8 +195,8 @@ above, either by throwing an exception or ensuring that they haven't been called
 API definition with unit test cases
 -----------------------------------
 
-Normally API interaction is best tested with function tests defined in Ansible's
-integration testing section which run against the actual API.  There are several cases
+API interaction is usually best tested with the function tests defined in Ansible's
+integration testing section, which run against the actual API.  There are several cases
 where the unit tests are likely to work better.
 
 Defining a module against an API specification
@@ -237,7 +234,7 @@ This is then used to create a list of states::
         simple_instance_list('available', {}),
     ]
     
-These states are then used as returns from a mock object to ensure that the await function
+These states are then used as returns from a mock object to ensure that the ``await`` function
 waits through all of the states that would mean the RDS instance has not yet completed
 configuration::
 
@@ -245,15 +242,15 @@ configuration::
                         await_pending=1)
    assert(len(sleeper_double.mock_calls) > 5), "await_pending didn't wait enough"
 
-By doing this we check that the await function will keep waiting through
-various strange states that it would be impossible to reliably trigger through the
+By doing this we check that the ``await`` function will keep waiting through
+potentially unusual that it would be impossible to reliably trigger through the
 integration tests but which happen unpredictably in reality.
 
 Defining a module to work against multiple API versions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This case is especially important for modules interacting with many different versions of
-software; for example, package installation modules which might be expected to work with
+software; for example, package installation modules that might be expected to work with
 many different operating system versions.
 
 By using previously stored data from various versions of an API we can ensure that the
@@ -286,7 +283,7 @@ Passing Arguments
 
 To pass arguments to a module correctly, use a function that stores the
 parameters in a special string variable.  Module creation and argument processing is
-handled through the AnsibleModule object in the basic section of the utilities.  Normally
+handled through the AnsibleModule object in the basic section of the utilities. Normally
 this accepts input on ``STDIN``, which is not convenient for unit testing. When the special
 variable is set it will be treated as if the input came on ``STDIN`` to the module.::
 
@@ -313,7 +310,7 @@ Handling exit correctly
    closed since the exit and failure functions below will be provided in a library file.
 
 The ``module.exit_json()`` function won't work properly in a testing environment since it
-will attempt to exit the program having put out error information to ``STDOUT`` where it
+writes error information to ``STDOUT`` upon exit, where it
 is difficult to examine. This can be mitigated by replacing it (and module.fail_json) with
 a function that raises an exception::
 
@@ -364,7 +361,8 @@ Handling calls to external executables
 Module must use AnsibleModule.run_command in order to execute an external command. This
 method needs to be mocked:
 
-Here is a simple mock of AnsibleModule.run_command::
+Here is a simple mock of AnsibleModule.run_command (taken from test/units/modules/packaging/os/test_rhn_register.py and
+test/units/modules/packaging/os/rhn_utils.py)::
 
         with patch.object(basic.AnsibleModule, 'run_command') as run_command:
             run_command.return_value = 0, '', ''  # successful execution, no output
@@ -376,8 +374,6 @@ Here is a simple mock of AnsibleModule.run_command::
         self.assertEqual(run_command.call_count, 1)
         self.assertFalse(run_command.called)
 
-These examples were taken from test/units/modules/packaging/os/test_rhn_register.py and
-test/units/modules/packaging/os/rhn_utils.py.
 
 A Complete Example
 ------------------
@@ -518,21 +514,18 @@ Note that the argument_spec dictionary is visible in a module variable. This has
 advantages, both in allowing explicit testing of the arguments and in allowing the easy
 creation of module objects for testing.
 
-The same restructuring technique can be valuable for testing other specific bits of
-functionality, for example the part of the module which queries the object the module
-configures.
+The same restructuring technique can be valuable for testing other functionality, such as the part of the module which queries the object that the module configures.
 
 Traps for maintaining Python 2 compatibility
 ============================================
 
 If you use the ``mock`` library from the Python 2.6 standard library, a number of the
-assert functions are missing but will return as if successful (since mock functions always
-seem to be successful).  This means that test cases should take great care *not* use
-functions marked as _new_ in the python 3 documentation since the tests will likely always
-succeed even if the code is broken when run on older python versions.
+assert functions are missing but will return as if successful.  This means that test cases should take great care *not* use
+functions marked as _new_ in the Python 3 documentation, since the tests will likely always
+succeed even if the code is broken when run on older versions of Python.
 
 A helpful development approach to this should be to ensure that all of the tests have been
-run under 2.6 and each assertion in the test cases has been checked to work by breaking
+run under Python 2.6 and that each assertion in the test cases has been checked to work by breaking
 the code in Ansible to trigger that failure.
 
 .. seealso::
