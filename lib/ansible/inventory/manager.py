@@ -24,6 +24,8 @@ import os
 import re
 import itertools
 
+from copy import deepcopy
+
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.inventory.data import InventoryData
@@ -256,7 +258,12 @@ class InventoryManager(object):
                 # initialize
                 if plugin.verify_file(source):
                     try:
-                        plugin.parse(self._inventory, self._loader, source, cache=cache)
+                        # in case plugin fails 1/2 way we dont want partial inventory
+                        inventory = deepcopy(self._inventory)
+                        plugin.parse(inventory, self._loader, source, cache=cache)
+
+                        # plugin worked! so lets use the more complete inventory
+                        self._inventory = inventory
                         parsed = True
                         display.vvv('Parsed %s inventory source with %s plugin' % (to_native(source), plugin_name))
                         break

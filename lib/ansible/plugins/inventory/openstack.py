@@ -151,9 +151,9 @@ class InventoryModule(BaseInventoryPlugin):
             self._config_data = {}
 
         source_data = None
-        if cache and cache_key in inventory.cache:
+        if cache and cache_key in self._cache:
             try:
-                source_data = inventory.cache[cache_key]
+                source_data = self._cache[cache_key]
             except KeyError:
                 pass
 
@@ -189,7 +189,7 @@ class InventoryModule(BaseInventoryPlugin):
             source_data = cloud_inventory.list_hosts(
                 expand=expand_hostvars, fail_on_cloud_config=fail_on_errors)
 
-            inventory.cache[cache_key] = source_data
+            self._cache[cache_key] = source_data
 
         self._populate_from_source(source_data)
 
