@@ -111,75 +111,78 @@ EXAMPLES = '''
 RETURN = '''
 name:
     description: the name of the created rule
-    returned: success
+    returned: Always.
     type: string
     sample: ids-route
 
 description:
     description: the description of the route
-    returned: success
+    returned: Always.
     type: string
     sample: As given in the task definition.
 
 network:
     description: the network the route applied to
-    returned: success
+    returned: Always.
+    type: string
+    sample: custom-net1
+
+network_url:
+    description: the network resource uri for the network specified
+    returned: Always.
     type: string
     sample: custom-net1
 
 destination:
     description: packet destination the route applied to
-    returned: success
+    returned: Always.
     type: string
     sample: 10.200.0.0/20
 
 priority:
     description: priority of the route
-    returned: success
+    returned: Always.
     type: int
     sample: 700
 
 instance_tags:
     description: tags of instances the route applied to
-    returned: success
+    returned: Always.
     type: list
     sample: [vpn, ids]
 
 next_hop:
     description: where the route delivers traffic to
-    returned: success
+    returned: Always.
     type: string
     sample:
         - 10.138.0.13
         - vpn_instance
         - default
 
+nextHopInstance:
+    description: the resource uri for the next_hop instance specified
+    returned: I(state) == 'present' and I(next_hop) is a valid instance name
+    type: string
+    sample: https://www.googleapis.com/compute/v1/projects/myproject/zones/europe-west1-b/instances/my-instance
+
+nextHopIp:
+    description: the ip address of the next_hop
+    returned: I(state) == 'present' and I(next_hop) is an IP address
+    type: string
+    sample: 10.0.0.12
+
+nextHopGateway:
+    description: the resource uri for the default gateway
+    returned: I(state) == 'present' and I(next_hop) == 'default'
+    type: string
+    sample: https://www.googleapis.com/compute/v1/projects/myproject/global/gateways/default-internet-gateway
+
 state:
     description: whether the route is present or absent
-    returned: success
+    returned: Always.
     type: string
     sample: present
-
-self_link:
-    description: route resource uri on GCE
-    returned: success
-    type: string
-    sample: https://www.googleapis.com/compute/v1/projects/myproject/global/routes/myroute
-
-creation_time:
-    description: route creation/update timestamp
-    returned: success
-    type: string
-    sample: '2017-06-28T10:59:59.698-07:00'
-
-next_hop_resource:
-    description: a resource uri or the IP address of the next hop
-    returned: success
-    type: string
-    sample:
-        - https://www.googleapis.com/compute/v1/projects/myproject/zones/europe-west1-b/instances/my-instance
-        - https://www.googleapis.com/compute/v1/projects/myproject/global/gateways/default-internet-gateway
-        - 10.132.0.0
 '''
 
 ################################################################################
@@ -277,8 +280,7 @@ def get_resources(module, client, cparams):
 
 def check_parameter_format(module, resources):
     # All the below checks are performed to allow check_mode to give reliable
-    # results. Otherwise, we could handle the exceptions raised by libcloud and
-    # skip doing duplicate work here.
+    # results.
 
     params = module.params
 
