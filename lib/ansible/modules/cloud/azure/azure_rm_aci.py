@@ -26,19 +26,9 @@ options:
         description:
             - Name of resource group.
         required: true
-    group_name:
-        description:
-            - The name of the container group.
-        required: true
-        default: null
     name:
         description:
-            - The name of the container instance.
-        required: true
-        default: null
-    image:
-        description:
-            - The container image name.
+            - The name of the container group.
         required: true
         default: null
     os_type:
@@ -48,16 +38,6 @@ options:
             - linux
             - windows
         default: linux
-        required: false
-    memory:
-        description:
-            - The required memory of the containers in GB.
-        default: 1.5
-        required: false
-    cpu:
-        description:
-            - The required number of CPU cores of the containers.
-        default: 1
         required: false
     state:
         description:
@@ -96,19 +76,31 @@ options:
         description:
             - The password to log in container image registry server.
         required: false
-    service_principal:
+    containers:
         description:
-            - The service principal suboptions.
+            - List of containers.
         required: false
         default: null
         suboptions:
-            client_id:
+            name:
                 description:
-                    - The ID for the Service Principal.
+                    - The name of the container instance.
+                required: true
+                default: null
+            image:
+                description:
+                    - The container image name.
+                required: true
+                default: null
+            memory:
+                description:
+                    - The required memory of the containers in GB.
+                default: 1.5
                 required: false
-            client_secret:
+            cpu:
                 description:
-                    - The secret password associated with the service principal.
+                    - The required number of CPU cores of the containers.
+                default: 1
                 required: false
 
 extends_documentation_fragment:
@@ -123,8 +115,7 @@ author:
 EXAMPLES = '''
     - name: Create an azure container instance
       azure_rm_aci:
-        group_name: testinstancegroup
-        name: testinstance
+        name: testinstancegroup
         location: eastus
         resource_group: Testing
         image: contoso/testimage
@@ -133,7 +124,7 @@ EXAMPLES = '''
 
     - name: Delete existing azure container instance
       azure_rm_aci:
-        group_name: testinstancegroup
+        name: testinstancegroup
         name: testinstance
         location: eastus
         resource_group: Testing
@@ -158,6 +149,44 @@ except ImportError:
     # This is handled in azure_rm_common
     pass
 
+def create_container_dict_from_obj(container):
+    '''
+    Create a dict from an instance of a Container.
+
+    :param rule: Container
+    :return: dict
+    '''
+    results = dict(
+        name=container.name,
+        image=container.image,
+        memory=container.resources.requests.memory_in_gb,
+        cpu=container.resources.requests.cpu
+        # command (list of str)
+        # ports (list of ContainerPort)
+        # environment_variables (list of EnvironmentVariable)
+        # resources (ResourceRequirements)
+        # volume mounts (list of VolumeMount)
+    )
+
+    if container.instance_view is not None:
+        # instance_view (ContainerPropertiesInstanceView)
+        results["instance_restart_count"]=container.instance_view.restart_count
+        if container.instance_view.current_state:
+            results["instance_current_state"]=container.instance_view.current_state.state
+            results["instance_current_start_time"]=container.instance_view.current_state.start_time
+            results["instance_current_exit_code"]=container.instance_view.current_state.exit_code
+            results["instance_current_finish_time"]=container.instance_view.current_state.finish_time
+            results["instance_current_detail_status"]=container.instance_view.current_state.detail_status
+        if container.instance_view.previous_state:
+            results["instance_previous_state"]=container.instance_view.previous_state.state
+            results["instance_previous_start_time"]=container.instance_view.previous_state.start_time
+            results["instance_previous_exit_code"]=container.instance_view.previous_state.exit_code
+            results["instance_previous_finish_time"]=container.instance_view.previous_state.finish_time
+            results["instance_previous_detail_status"]=container.instance_view.previous_state.detail_status
+        # events (list of ContainerEvent)
+    return results
+
+
 
 def create_aci_dict(aci):
     '''
@@ -179,8 +208,13 @@ def create_aci_dict(aci):
         volumes=aci.volumes,
         os_type=aci.os_type
     )
-    return results
 
+    results['containers'] = []
+    if aci.containers:
+        for container in aci.containers:
+            results['containers'].append(create_container_dict_from_obj(container))
+
+    return results
 
 class AzureRMContainerInstance(AzureRMModuleBase):
     """Configuration class for an Azure RM container instance resource"""
@@ -194,24 +228,6 @@ class AzureRMContainerInstance(AzureRMModuleBase):
             name=dict(
                 type='str',
                 required=True
-            ),
-            group_name=dict(
-                type='str',
-                required=True
-            ),
-            image=dict(
-                type='str',
-                required=True
-            ),
-            memory=dict(
-                type='float',
-                required=False,
-                default=1.5
-            ),
-            cpu=dict(
-                type='int',
-                required=False,
-                default=1
             ),
             os_type=dict(
                 type='str',
@@ -255,9 +271,9 @@ class AzureRMContainerInstance(AzureRMModuleBase):
                 required=False,
                 default=None
             ),
-            service_principal=dict(
+            containers=dict(
                 type='list',
-                required=False
+                required=True
             )
         )
 
@@ -266,8 +282,8 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         self.location = None
         self.tags = None
         self.state = None
-        self.service_principal = None
-        self.diagnostics_profile = None
+
+        self.containers = None
 
         self.results = dict(changed=False, state=dict())
 
@@ -296,10 +312,27 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         response = self.get_aci()
 
         if not response:
-            self.log("Container instance doesn't exist yet")
+            self.log("Container Group doesn't exist")
+
+            if self.state == 'absent':
+                self.log("Nothing to delete")
+            else:
+                to_be_updated = True
         else:
             self.log("Container instance already exists")
 
+            if self.state == 'absent':
+                self.delete_aci()
+                self.results['changed'] = True
+                self.log("ACI instance deleted")
+            elif self.state == 'present':
+                self.log("Need to check if container group has to be deleted or may be updated")
+                to_be_updated = self.check_need_update(response)
+                if to_be_updated:
+                    self.log('Deleting ACI instance before update')
+                    self.delete_aci()
+
+                
         if self.state == 'present':
 
             self.log("Need to Create / Update the ACI instance")
@@ -307,13 +340,13 @@ class AzureRMContainerInstance(AzureRMModuleBase):
             if self.check_mode:
                 return self.results
 
-            self.results['state'] = self.create_update_aci()
-            self.results['changed'] = True
+            if to_be_updated:
+                self.results['state'] = self.create_update_aci()
+                self.results['changed'] = True
+            else:
+                self.results['state'] = response;
 
             self.log("Creation / Update done")
-        elif self.state == 'absent':
-            self.delete_aci()
-            self.log("ACI instance deleted")
 
         return self.results
 
@@ -324,15 +357,6 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         :return: deserialized ACI instance state dictionary
         '''
         self.log("Creating / Updating the ACI instance {0}".format(self.name))
-
-        # self.log("orchestrator_profile : {0}".format(parameters.orchestrator_profile))
-        # self.log("service_principal_profile : {0}".format(parameters.service_principal_profile))
-        # self.log("linux_profile : {0}".format(parameters.linux_profile))
-        # self.log("ssh from yaml : {0}".format(results.get('linux_profile')[0]))
-        # self.log("ssh : {0}".format(parameters.linux_profile.ssh))
-        # self.log("master_profile : {0}".format(parameters.master_profile))
-        # self.log("agent_pool_profiles : {0}".format(parameters.agent_pool_profiles))
-        # self.log("vm_diagnostics : {0}".format(parameters.diagnostics_profile.vm_diagnostics))
 
         credentials = None
 
@@ -346,9 +370,22 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         if self.ip_address is not None:
                 ip_address = IpAddress([self.port], self.ip_address)
 
+        containers = []
+
+        for container_def in self.containers:
+            name = container_def.get("name")
+            image = container_def.get("image")
+            memory = container_def.get("memory")
+            cpu = container_def.get("cpu")
+            if cpu is None:
+                cpu = 1
+            if memory is None:
+                memory = 1.5
+            containers.append(Container(name, image, ResourceRequirements(ResourceRequests(memory, cpu))))
+
         parameters = ContainerGroup(self.location,
                                     None,
-                                    [Container(self.name, self.image, ResourceRequirements(ResourceRequests(self.memory, self.cpu)))],
+                                    containers,
                                     credentials,
                                     None,
                                     ip_address,
@@ -356,7 +393,8 @@ class AzureRMContainerInstance(AzureRMModuleBase):
 
         try:
             client = ContainerInstanceManagementClient(self.azure_credentials, self.subscription_id)
-            response = client.container_groups.create_or_update(self.resource_group, self.group_name, parameters)
+            response = client.container_groups.create_or_update(self.resource_group, self.name, parameters)
+
         except CloudError as exc:
             self.log('Error attempting to create the container instance.')
             self.fail("Error creating the ACI instance: {0}".format(str(exc)))
@@ -374,7 +412,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         self.log("Deleting the ACI instance {0}".format(self.name))
         try:
             client = ContainerInstanceManagementClient(self.azure_credentials, self.subscription_id)
-            response = client.container_groups.delete(self.resource_group, self.group_name)
+            response = client.container_groups.delete(self.resource_group, self.name)
         except CloudError as e:
             self.log('Error attempting to delete the ACI instance.')
             self.fail("Error deleting the ACI instance: {0}".format(str(e)))
@@ -391,7 +429,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         found = False
         try:
             client = ContainerInstanceManagementClient(self.azure_credentials, self.subscription_id)
-            response = client.container_groups.get(self.resource_group, self.group_name)
+            response = client.container_groups.get(self.resource_group, self.name)
             found = True
             self.log("Response : {0}".format(response))
             self.log("ACI instance : {0} found".format(response.name))
@@ -402,6 +440,35 @@ class AzureRMContainerInstance(AzureRMModuleBase):
 
         return False
 
+    def check_need_update(self, cg):
+
+        if self.location.lower() != cg["location"].lower():
+            self.log('Location has changed -- need to delete')
+            return True
+        if self.os_type.lower() != cg["os_type"].lower():
+            self.log('OS Type has changed -- need to delete')
+            return True
+
+        # check if container list has changed
+        if len(cg["containers"]) != len(self.containers):
+            self.log('Number of containers has changed -- need to delete')
+            return True
+
+        for i in range(len(self.containers)):
+            if cg["containers"][i]["image"] != self.containers[i]["image"]:
+                self.log('Container image has changed -- need to delete')
+                return True
+            if cg["containers"][i]["memory"] != self.containers[i]["memory"]:
+                self.log('Container memory has changed -- need to delete')
+                return True
+            if cg["containers"][i]["name"] != self.containers[i]["name"]:
+                self.log('Container name has changed -- need to delete')
+                return True
+                
+            
+        self.log('No need to update')
+
+        return False
 
 def main():
     """Main execution"""
