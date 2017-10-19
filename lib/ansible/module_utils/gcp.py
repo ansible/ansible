@@ -624,7 +624,7 @@ class GCPUtils(object):
                     complete = True
                     if op_resp['operationType'] == 'delete':
                         # don't wait for the delete
-                        return True
+                        return op_resp
                     elif op_resp['operationType'] in ['insert', 'update', 'patch']:
                         # TODO(supertom): Isolate 'build-new-request' stuff.
                         resource_name_singular = GCPUtils.get_entity_name_from_resource_name(
