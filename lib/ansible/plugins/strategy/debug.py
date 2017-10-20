@@ -95,24 +95,45 @@ class StrategyModule(LinearStrategyModule):
     def _need_debug(self, results):
         return reduce(lambda total, res: res.is_failed() or res.is_unreachable() or total, results, False)
 
+    def _load_included_file(self, included_file, iterator, is_handler=False):
 
-class Debugger(cmd.Cmd):
+        prev_host_state = iterator.get_host_state(self.curr_host)
+
+        while True:
+            ret = super(StrategyModule, self)._load_included_file(included_file, iterator, is_handler=is_handler)
+            if not ret:
+                next_action = NextAction()
+                dbg = DebuggerForInclude(self, included_file, next_action)
+                dbg.cmdloop()
+
+                if next_action.result == NextAction.REDO:
+                    for name, value in dbg.scope.items():
+                        setattr(included_file, '_%s' % name, value)
+
+                    # rollback host state
+                    self.curr_tqm.clear_failed_hosts()
+                    iterator._host_states[self.curr_host.name] = prev_host_state
+                    self._tqm._stats.failures[self.curr_host.name] -= 1
+
+                    # redo
+                    continue
+                elif next_action.result == NextAction.CONTINUE:
+                    break
+                elif next_action.result == NextAction.EXIT:
+                    exit(1)
+
+            return ret
+
+
+class _Debugger(cmd.Cmd):
     prompt = '(debug) '  # debugger
     prompt_continuous = '> '  # multiple lines
 
-    def __init__(self, strategy_module, results, next_action):
-        # cmd.Cmd is old-style class
+    def __init__(self, next_action):
         cmd.Cmd.__init__(self)
-
         self.intro = "Debugger invoked"
-        self.scope = {}
-        self.scope['task'] = strategy_module.curr_task
-        self.scope['vars'] = strategy_module.curr_task_vars
-        self.scope['host'] = strategy_module.curr_host
-        self.scope['result'] = results[0]._result
-        self.scope['results'] = results  # for debug of this debugger
         self.next_action = next_action
-        self.undoc_header = "Available variables: %s" % (', '.join(self.scope.keys()))
+        self.scope = {}
 
     def cmdloop(self):
         try:
@@ -179,3 +200,31 @@ class Debugger(cmd.Cmd):
             self.execute(line)
         except:
             pass
+
+
+class Debugger(_Debugger):
+
+    def __init__(self, strategy_module, results, next_action):
+        # cmd.Cmd is old-style class
+        _Debugger.__init__(self, next_action)
+
+        self.scope['task'] = strategy_module.curr_task
+        self.scope['vars'] = strategy_module.curr_task_vars
+        self.scope['host'] = strategy_module.curr_host
+        self.scope['result'] = results[0]._result
+        self.scope['results'] = results  # for debug of this debugger
+        self.undoc_header = "Available variables: %s" % (', '.join(self.scope.keys()))
+
+
+class DebuggerForInclude(_Debugger):
+
+    def __init__(self, strategy_module, included_file, next_action):
+        # cmd.Cmd is old-style class
+        _Debugger.__init__(self, next_action)
+
+        self.scope['args'] = included_file._args
+        self.scope['task'] = included_file._task
+        self.scope['hosts'] = included_file._hosts
+        self.scope['filename'] = included_file._filename
+        self.scope['is_role'] = included_file._is_role
+        self.undoc_header = "Available variables: %s" % (', '.join(self.scope.keys()))
