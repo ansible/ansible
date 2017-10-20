@@ -73,7 +73,7 @@ EXAMPLES = '''
     - pinky@acme.com
     telephonenumber:
     - '+555123456'
-    sshpubkeyfp:
+    sshpubkey:
     - ssh-rsa ....
     - ssh-dsa ....
     ipa_host: ipa.example.com
