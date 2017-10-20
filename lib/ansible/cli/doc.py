@@ -98,7 +98,7 @@ class DocCLI(CLI):
         elif plugin_type == 'vars':
             loader = vars_loader
         elif plugin_type == 'inventory':
-            loader = PluginLoader('InventoryModule', 'ansible.plugins.inventory', 'inventory_plugins', 'inventory_plugins')
+            loader = PluginLoader('InventoryModule', 'ansible.plugins.inventory', C.DEFAULT_INVENTORY_PLUGIN_PATH, 'inventory_plugins')
         else:
             loader = module_loader
 
