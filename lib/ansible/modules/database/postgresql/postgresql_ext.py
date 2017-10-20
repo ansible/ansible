@@ -82,6 +82,7 @@ except ImportError:
 else:
     postgresqldb_found = True
 
+import ansible.module_utils.postgres as pgutils
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 
@@ -120,17 +121,17 @@ def ext_create(cursor, ext):
 #
 
 def main():
+
+    argument_spec = pgutils.postgres_common_argument_spec()
+    argument_spec.update(dict(
+        db=dict(required=True),
+        ext=dict(required=True, aliases=['name']),
+        state=dict(default="present", choices=["absent", "present"]),
+    ))
+
     module = AnsibleModule(
-        argument_spec=dict(
-            login_user=dict(default="postgres"),
-            login_password=dict(default="", no_log=True),
-            login_host=dict(default=""),
-            port=dict(default="5432"),
-            db=dict(required=True),
-            ext=dict(required=True, aliases=['name']),
-            state=dict(default="present", choices=["absent", "present"]),
-        ),
-        supports_check_mode = True
+        argument_spec=argument_spec,
+        supports_check_mode=True
     )
 
     if not postgresqldb_found:
