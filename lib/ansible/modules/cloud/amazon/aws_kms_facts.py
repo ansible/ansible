@@ -347,7 +347,9 @@ def key_matches_filters(key, filters):
         return all([key_matches_filter(key, filtr) for filtr in filters.items()])
 
 
-def get_key_details(connection, module, key_id, tokens=[]):
+def get_key_details(connection, module, key_id, tokens=None):
+    if not tokens:
+        tokens = []
     try:
         result = get_kms_metadata_with_backoff(connection, key_id)['KeyMetadata']
     except botocore.exceptions.ClientError as e:
