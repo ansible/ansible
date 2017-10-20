@@ -172,6 +172,8 @@ def install_command_requirements(args):
         for cloud_platform in get_cloud_platforms(args):
             commands.append(generate_pip_install(pip, '%s.cloud.%s' % (args.command, cloud_platform)))
 
+    commands = [cmd for cmd in commands if cmd]
+
     # only look for changes when more than one requirements file is needed
     detect_pip_changes = len(commands) > 1
 
