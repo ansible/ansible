@@ -7,7 +7,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -33,7 +32,7 @@ options:
         default: null
     state:
         description:
-            - Assert the state of the ACR. Use 'present' to create or update an ACS and 'absent' to delete it.
+            - Assert the state of the ACR. Use 'present' to create or update an ACR and 'absent' to delete it.
         default: present
         choices:
             - absent
@@ -76,8 +75,10 @@ EXAMPLES = '''
         location: eastus
         resource_group: testrg
         state: present
-        sku: Standard
+        admin_user_enabled: True
+        sku: Premium
         tags:
+            Release: beta1
             Environment: Production
 
 # Deletes the specified container registry in the specified subscription and resource group.
@@ -89,7 +90,7 @@ EXAMPLES = '''
         state: absent
         sku: Standard
         tags:
-            Ansible: azure_rm_acs
+            Ansible: azure_rm_acr
 '''
 RETURN = '''
 state:
@@ -99,24 +100,37 @@ state:
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
+from enum import Enum
 
 try:
     from msrestazure.azure_exceptions import CloudError
     from azure.mgmt.containerregistry.models import (
-         Registry, RegistryUpdateParameters, StorageAccountProperties,
-         Sku, SkuName, SkuTier, ProvisioningState, PasswordName,
-         WebhookCreateParameters, WebhookUpdateParameters,
-         WebhookAction, WebhookStatus
+        Registry,
+        RegistryUpdateParameters,
+        StorageAccountProperties,
+        Sku,
+        SkuName,
+        SkuTier,
+        ProvisioningState,
+        PasswordName,
+        WebhookCreateParameters,
+        WebhookUpdateParameters,
+        WebhookAction,
+        WebhookStatus
     )
-except ImportError:
+    from azure.mgmt.containerregistry import ContainerRegistryManagementClient
+    import azure.mgmt.storage
+except ImportError as exc:
     # This is handled in azure_rm_common
+    print("import error {0}".format(str(exc)) + u'\n')
+
     pass
 
 
 def create_acr_dict(registry):
     '''
     Helper method to deserialize a ContainerRegistry to a dict
-    :param: acs: ContainerService or AzureOperationPoller with the Azure callback object
+    :param: acr: return object from Azure rest API call
     :return: dict with the state on Azure
     '''
     results = dict(
@@ -130,12 +144,11 @@ def create_acr_dict(registry):
     )
     return results
 
+class Actions:
+    NoAction, Create, Update = range(3)
 
 class AzureRMContainerRegistry(AzureRMModuleBase):
     """Configuration class for an Azure RM container registry resource"""
-    container_registry_mgmt_client = self.create_mgmt_client(
-            azure.mgmt.containerregistry.ContainerRegistryManagementClient
-        )
 
     def __init__(self):
         self.module_arg_spec = dict(
@@ -175,7 +188,8 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
         self.tags = None
         self.state = None
         self.sku = None
-
+        self.tags = None
+        self._containerregistry_mgmt_client = None
 
         self.results = dict(changed=False, state=dict())
 
@@ -186,13 +200,13 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
     def exec_module(self, **kwargs):
         """Main module execution method"""
 
+
         for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
-
+            
         resource_group = None
         response = None
-        results = dict()
-        to_be_updated = False
+        to_do = Actions.NoAction
 
         try:
             resource_group = self.get_resource_group(self.resource_group)
@@ -203,44 +217,32 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
 
         # Check if the ACR instance already present in the RG
         if self.state == 'present':
-
-            if not self.service_principal:
-                self.fail('service_principal should be specified')
-            if not self.service_principal[0].get('client_id'):
-                self.fail('service_principal.client_id should be specified')
-            if not self.service_principal[0].get('client_secret'):
-                self.fail('service_principal.client_secret should be specified')
-
             response = self.get_acr()
             self.results['state'] = response
-            if not response:
-                to_be_updated = True
 
+            if not response:
+                to_do = Actions.Create
             else:
                 self.log('Results : {0}'.format(response))
-                update_tags, response['tags'] = self.update_tags(response['tags'])
-
                 if response['provisioning_state'] == "Succeeded":
-                    if update_tags:
-                        to_be_updated = True
+                    to_do = Actions.Update
+                else:
+                    to_do = Actions.NoAction
 
-            if to_be_updated:
-                self.log("Need to Create / Update the ACR instance")
+            self.log("Create / Update the ACR instance")
+            if self.check_mode:
+                return self.results
 
-                if self.check_mode:
-                    return self.results
-
-                self.results['state'] = self.create_update_acr()
-                self.results['changed'] = True
-
-                self.log("Creation / Update done")
+            self.results['state'] = self.create_update_acr(to_do)
+            self.results['changed'] = True
+            self.log("Action done")
         elif self.state == 'absent':
             self.delete_acr()
-            self.log("ACS instance deleted")
+            self.log("ACR instance deleted")
 
         return self.results
 
-    def create_update_acr(self):
+    def create_update_acr(self, to_do):
         '''
         Creates or updates a container registry.
 
@@ -248,27 +250,36 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
         '''
         self.log("Creating / Updating the ACR instance {0}".format(self.name))
 
-        # self.log("orchestrator_profile : {0}".format(parameters.orchestrator_profile))
-        # self.log("service_principal_profile : {0}".format(parameters.service_principal_profile))
-        # self.log("linux_profile : {0}".format(parameters.linux_profile))
-        # self.log("ssh from yaml : {0}".format(results.get('linux_profile')[0]))
-        # self.log("ssh : {0}".format(parameters.linux_profile.ssh))
-        # self.log("master_profile : {0}".format(parameters.master_profile))
-        # self.log("agent_pool_profiles : {0}".format(parameters.agent_pool_profiles))
-        # self.log("vm_diagnostics : {0}".format(parameters.diagnostics_profile.vm_diagnostics))
-
         try:
-            registry = container_registry_mgmt_client.registries.create(
-                resource_group_name=self.resource_group,
-                registry_name=self.name,
-                registry=Registry(
-                    location=self.location,
-                    sku=Sku(
-                        name=self.sku
-                    ),
-                    admin_user_enabled=self.admin_user_enabled
-                )
-            ).result()
+            if to_do != Actions.NoAction:
+                if to_do == Actions.Create:
+                    poller = self.containerregistry_mgmt_client.registries.create(
+                        resource_group_name=self.resource_group,
+                        registry_name=self.name,
+                        registry=Registry(
+                            location=self.location,
+                            sku=Sku(
+                                name=self.sku
+                            ),
+                            tags=self.tags,
+                            admin_user_enabled=self.admin_user_enabled
+                        )
+                    )
+                else:
+                    poller = self.containerregistry_mgmt_client.registries.update(
+                        resource_group_name=self.resource_group,
+                        registry_name=self.name,
+                        registry_update_parameters=RegistryUpdateParameters(
+                            sku=Sku(
+                                name=self.sku
+                            ),
+                            tags=self.tags,
+                            admin_user_enabled=self.admin_user_enabled
+                        )
+                    )
+                response = self.get_poller_result(poller)
+            else:
+                response = None
         except CloudError as exc:
             self.log('Error attempting to create the ACR instance.')
             self.fail("Error creating the ACR instance: {0}".format(str(exc)))
@@ -282,10 +293,10 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
         '''
         self.log("Deleting the ACR instance {0}".format(self.name))
         try:
-            container_registry_mgmt_client.registries.delete(self.resource_group, self.name).wait()
+            self.containerregistry_mgmt_client.registries.delete(self.resource_group, self.name).wait()
         except CloudError as e:
-            self.log('Error attempting to delete the ACS instance.')
-            self.fail("Error deleting the ACS instance: {0}".format(str(e)))
+            self.log('Error attempting to delete the ACR instance.')
+            self.fail("Error deleting the ACR instance: {0}".format(str(e)))
 
         return True
 
@@ -298,7 +309,7 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
         self.log("Checking if the ACR instance {0} is present".format(self.name))
         found = False
         try:
-            response = container_registry_mgmt_client.registries.get(self.resource_group, self.name)
+            response = self.containerregistry_mgmt_client.registries.get(self.resource_group, self.name)
             found = True
             self.log("Response : {0}".format(response))
             self.log("ACR instance : {0} found".format(response.name))
@@ -308,11 +319,20 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
             return create_acr_dict(response)
         else:
             return False
-
+    
+    @property
+    def containerregistry_mgmt_client(self):
+        self.log('Getting container registry mgmt client')
+        if not self._containerregistry_mgmt_client:
+            self._containerregistry_mgmt_client = ContainerRegistryManagementClient(
+                self.azure_credentials,
+                self.subscription_id
+            )
+        return self._containerregistry_mgmt_client
 
 def main():
     """Main execution"""
-    AzureRMContainerService()
+    AzureRMContainerRegistry()
 
 if __name__ == '__main__':
     main()
