@@ -254,7 +254,6 @@ def main():
                                               .ISOLATION_LEVEL_AUTOCOMMIT)
         cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
     except Exception:
-        e = get_exception()
         module.fail_json(msg="unable to connect to database: %s" % to_native(e), exception=traceback.format_exc())
 
     try:
@@ -269,23 +268,19 @@ def main():
             try:
                 changed = tablespace_delete(cursor, tablespace)
             except SQLParseError:
-                e = get_exception()
-                module.fail_json(msg=str(e))
+                module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
         elif state == "present":
             try:
                 changed = tablespace_create(cursor, tablespace, location, owner)
             except SQLParseError:
-                e = get_exception()
-                module.fail_json(msg=str(e))
+                module.fail_json(msg=to_native(e), exception=traceback.format_exc())
     except NotSupportedError:
-        e = get_exception()
-        module.fail_json(msg=str(e))
+        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
     except SystemExit:
         # Avoid catching this on Python 2.4
         raise
     except Exception:
-        e = get_exception()
         module.fail_json(msg="Database query failed: %s" % to_native(e), exception=traceback.format_exc())
 
     module.exit_json(changed=changed, tablespace=tablespace)
