@@ -151,6 +151,7 @@ except ImportError:
 else:
     postgresqldb_found = True
 
+import ansible.module_utils.postgres as pgutils
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 
@@ -198,21 +199,20 @@ def lang_drop(cursor, lang, cascade):
     return True
 
 def main():
+    argument_spec = pgutils.postgres_common_argument_spec()
+    argument_spec.update(dict(
+        db=dict(required=True),
+        lang=dict(required=True),
+        state=dict(default="present", choices=["absent", "present"]),
+        trust=dict(type='bool', default='no'),
+        force_trust=dict(type='bool', default='no'),
+        cascade=dict(type='bool', default='no'),
+        fail_on_drop=dict(type='bool', default='yes'),
+    ))
+
     module = AnsibleModule(
-        argument_spec=dict(
-            login_user=dict(default="postgres"),
-            login_password=dict(default="", no_log=True),
-            login_host=dict(default=""),
-            db=dict(required=True),
-            port=dict(default='5432'),
-            lang=dict(required=True),
-            state=dict(default="present", choices=["absent", "present"]),
-            trust=dict(type='bool', default='no'),
-            force_trust=dict(type='bool', default='no'),
-            cascade=dict(type='bool', default='no'),
-            fail_on_drop=dict(type='bool', default='yes'),
-        ),
-        supports_check_mode = True
+        argument_spec=argument_spec,
+        supports_check_mode=True
     )
 
     db = module.params["db"]
