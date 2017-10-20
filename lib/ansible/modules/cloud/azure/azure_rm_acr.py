@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2017 Julien Stroheker, <juliens@microsoft.com>
+# Copyright (c) 2017 Yawei Wang, <yaweiw@microsoft.com>
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -234,7 +234,11 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
                 return self.results
 
             self.results['state'] = self.create_update_acr(to_do)
-            self.results['changed'] = True
+            if to_do != Action.NoAction
+                self.results['changed'] = True
+            else:
+                self.results['changed'] = False
+
             self.log("Action done")
         elif self.state == 'absent':
             self.delete_acr()
