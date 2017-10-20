@@ -362,6 +362,7 @@ from ansible.module_utils.docker_common import HAS_DOCKER_PY_2
 from ansible.module_utils.docker_common import DockerBaseClass
 from ansible.module_utils.docker_common import AnsibleDockerClient
 from ansible.module_utils.basic import human_to_bytes
+from ansible.module_utils._text import to_text
 
 from distutils.version import LooseVersion
 
@@ -711,7 +712,7 @@ class DockerServiceManager():
         ds.container_labels = task_template_data['ContainerSpec'].get('Labels', {})
         mode = raw_data['Spec']['Mode']
         if 'Replicated' in mode.keys():
-            ds.mode = unicode('replicated', 'utf-8')
+            ds.mode = to_text('replicated', encoding='utf-8')
             ds.replicas = mode['Replicated']['Replicas']
         elif 'Global' in mode.keys():
             ds.mode = 'global'
