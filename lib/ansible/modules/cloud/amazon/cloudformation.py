@@ -253,7 +253,7 @@ def get_stack_events(cfn, stack_name, token_filter=None):
         )
         if token_filter is not None:
             events = list(pg.search(
-                "StackEvents[?ClientRequestToken == '{}']".format(token_filter)
+                "StackEvents[?ClientRequestToken == '{0}']".format(token_filter)
             ))
         else:
             events = list(pg)
