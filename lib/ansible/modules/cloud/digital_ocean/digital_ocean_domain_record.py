@@ -50,7 +50,7 @@ options:
     default: None
   name:
     description:
-     - Required for C(A, AAA, CNAME, TXT, SRV) records. The host name, alias, or service being defined by the record.
+     - Required for C(A, AAAA, CNAME, TXT, SRV) records. The host name, alias, or service being defined by the record.
     required: false
     default: "@"
   priority:
