@@ -157,6 +157,17 @@ def _count_newlines_from_end(in_str):
         return i
 
 
+def tests_as_filters_warning(func):
+    def wrapper(*args, **kwargs):
+        display.deprecated(
+            'Using tests as filters is deprecated. Instead of using `result|%(name)s` instead use '
+            '`result is %(name)s`' % dict(name=func.__name__),
+            version='2.9'
+        )
+        return func(*args, **kwargs)
+    return wrapper
+
+
 class AnsibleContext(Context):
     '''
     A custom context, which intercepts resolve() calls and sets a flag
@@ -283,7 +294,9 @@ class Templar:
         self._filters = dict()
         for fp in plugins:
             self._filters.update(fp.filters())
-        self._filters.update(self._get_tests())
+
+        for name, func in self._get_tests().items():
+            self._filters[name] = tests_as_filters_warning(func)
 
         return self._filters.copy()
 
