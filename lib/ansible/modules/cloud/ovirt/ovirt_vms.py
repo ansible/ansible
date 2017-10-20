@@ -47,7 +47,8 @@ options:
                When C(state) is I(registered) and the unregistered VM's name
                belongs to an already registered in engine VM in the same DC
                then we fail to register the unregistered template."
-            - "I(present) and I(running) are equal states."
+            - "I(present) state will create/update VM and don't change its state if it already exists."
+            - "I(running) state will create/update VM and start it."
             - "I(next_run) state updates the VM and if the VM has next run configuration it will be rebooted."
             - "Please check I(notes) to more detailed description of states."
             - "I(registered) is supported since 2.4"
@@ -1226,7 +1227,7 @@ def main():
             )
 
             # Run the VM if it was just created, else don't run it:
-            if state == 'running' or vm is None:
+            if state == 'running':
                 initialization = _get_initialization(sysprep, cloud_init, cloud_init_nics)
                 ret = vms_module.action(
                     action='start',
