@@ -36,13 +36,13 @@ EXAMPLES = r'''
   win_owner:
     path: C:\apache
     user: apache
-    recurse: True
+    recurse: yes
 
 - name: Set the owner of root directory
   win_owner:
     path: C:\apache
     user: SYSTEM
-    recurse: False
+    recurse: no
 '''
 
 RETURN = r'''
