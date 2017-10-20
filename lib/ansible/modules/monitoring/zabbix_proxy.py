@@ -110,7 +110,7 @@ EXAMPLES = '''
     login_password: password
     proxy_name: ExampleProxy
     description: ExampleProxy
-    status: 5
+    status: active
     state: present
     interface:
         type: 0
