@@ -36,31 +36,8 @@ author:
     - "Alen Komic"
 requirements:
     - "python >= 2.6"
-    - zabbix-api
+    - "zabbix-api >= 0.5.3"
 options:
-    server_url:
-        description:
-            - Url of Zabbix server, with protocol (http or https).
-        required: true
-        aliases: [ "url" ]
-    login_user:
-        description:
-            - Zabbix user name, used to authenticate against the server.
-        required: true
-    login_password:
-        description:
-            - Zabbix user password.
-        required: true
-    http_login_user:
-        description:
-            - Basic Auth login
-        required: false
-        default: None
-    http_login_password:
-        description:
-            - Basic Auth password
-        required: false
-        default: None
     proxy_name:
         description:
             - Name of the proxy in Zabbix.
@@ -119,6 +96,9 @@ options:
             - U(https://www.zabbix.com/documentation/3.2/manual/api/reference/proxy/object#proxy_interface)
         required: false
         default: {}
+
+extends_documentation_fragment:
+    - zabbix
 '''
 
 EXAMPLES = '''
@@ -130,7 +110,7 @@ EXAMPLES = '''
     login_password: password
     proxy_name: ExampleProxy
     description: ExampleProxy
-    status: 5
+    status: active
     state: present
     interface:
         type: 0
@@ -260,6 +240,7 @@ def main():
             http_login_user=dict(type='str', required=False, default=None),
             http_login_password=dict(type='str', required=False,
                                      default=None, no_log=True),
+            validate_certs=dict(type='bool', required=False, default=True),
             status=dict(default="active", choices=['active', 'passive']),
             state=dict(default="present", choices=['present', 'absent']),
             description=dict(type='str', required=False),
@@ -287,6 +268,7 @@ def main():
     login_password = module.params['login_password']
     http_login_user = module.params['http_login_user']
     http_login_password = module.params['http_login_password']
+    validate_certs = module.params['validate_certs']
     proxy_name = module.params['proxy_name']
     description = module.params['description']
     status = module.params['status']
@@ -322,7 +304,8 @@ def main():
     try:
         zbx = ZabbixAPI(server_url, timeout=timeout,
                         user=http_login_user,
-                        passwd=http_login_password)
+                        passwd=http_login_password,
+                        validate_certs=validate_certs)
         zbx.login(login_user, login_password)
     except Exception as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
