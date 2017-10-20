@@ -120,6 +120,8 @@ Ansible Changes By Release
   like the find module (https://github.com/ansible/ansible/issues/31898)
 * Amended tracking of 'changed'
   https://github.com/ansible/ansible/pull/31812
+* Fix label assignment in ovirt_host_networks
+  (https://github.com/ansible/ansible/pull/31973)
 
 <a id="2.4.1"></a>
 
