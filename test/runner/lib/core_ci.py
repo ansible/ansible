@@ -8,6 +8,7 @@ import traceback
 import uuid
 import errno
 import time
+import shutil
 
 from lib.http import (
     HttpClient,
@@ -160,6 +161,11 @@ class AnsibleCoreCI(object):
 
     def start(self):
         """Start instance."""
+        if self.started:
+            display.info('Skipping started %s/%s instance %s.' % (self.platform, self.version, self.instance_id),
+                         verbosity=1)
+            return
+
         if is_shippable():
             return self.start_shippable()
 
@@ -289,11 +295,6 @@ class AnsibleCoreCI(object):
 
     def _start(self, auth):
         """Start instance."""
-        if self.started:
-            display.info('Skipping started %s/%s instance %s.' % (self.platform, self.version, self.instance_id),
-                         verbosity=1)
-            return
-
         display.info('Initializing new %s/%s instance %s.' % (self.platform, self.version, self.instance_id), verbosity=1)
 
         if self.platform == 'windows':
@@ -413,6 +414,13 @@ class AnsibleCoreCI(object):
 
         config = json.loads(data)
 
+        return self.load(config)
+
+    def load(self, config):
+        """
+        :type config: dict[str, str]
+        :rtype: bool
+        """
         self.instance_id = config['instance_id']
         self.endpoint = config['endpoint']
         self.started = True
@@ -424,15 +432,22 @@ class AnsibleCoreCI(object):
         if self.args.explain:
             return
 
+        config = self.save()
+
         make_dirs(os.path.dirname(self.path))
 
         with open(self.path, 'w') as instance_fd:
-            config = dict(
-                instance_id=self.instance_id,
-                endpoint=self.endpoint,
-            )
-
             instance_fd.write(json.dumps(config, indent=4, sort_keys=True))
+
+    def save(self):
+        """
+        :rtype: dict[str, str]
+        """
+        return dict(
+            platform_version='%s/%s' % (self.platform, self.version),
+            instance_id=self.instance_id,
+            endpoint=self.endpoint,
+        )
 
     @staticmethod
     def _create_http_error(response):
@@ -472,20 +487,33 @@ class CoreHttpError(HttpError):
 
 class SshKey(object):
     """Container for SSH key used to connect to remote instances."""
+    KEY_NAME = 'id_rsa'
+    PUB_NAME = 'id_rsa.pub'
+
     def __init__(self, args):
         """
         :type args: EnvironmentConfig
         """
-        tmp = os.path.expanduser('~/.ansible/test/')
+        cache_dir = 'test/cache'
 
-        self.key = os.path.join(tmp, 'id_rsa')
-        self.pub = os.path.join(tmp, 'id_rsa.pub')
+        self.key = os.path.join(cache_dir, self.KEY_NAME)
+        self.pub = os.path.join(cache_dir, self.PUB_NAME)
 
-        if not os.path.isfile(self.pub):
+        if not os.path.isfile(self.key) or not os.path.isfile(self.pub):
+            base_dir = os.path.expanduser('~/.ansible/test/')
+
+            key = os.path.join(base_dir, self.KEY_NAME)
+            pub = os.path.join(base_dir, self.PUB_NAME)
+
             if not args.explain:
-                make_dirs(tmp)
+                make_dirs(base_dir)
 
-            run_command(args, ['ssh-keygen', '-q', '-t', 'rsa', '-N', '', '-f', self.key])
+            if not os.path.isfile(key) or not os.path.isfile(pub):
+                run_command(args, ['ssh-keygen', '-q', '-t', 'rsa', '-N', '', '-f', key])
+
+            if not args.explain:
+                shutil.copy2(key, self.key)
+                shutil.copy2(pub, self.pub)
 
         if args.explain:
             self.pub_contents = None

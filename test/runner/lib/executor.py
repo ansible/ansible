@@ -323,30 +323,23 @@ def command_network_integration(args):
         )
 
     all_targets = tuple(walk_network_integration_targets(include_hidden=True))
-    internal_targets = command_integration_filter(args, all_targets)
-    platform_targets = set(a for t in internal_targets for a in t.aliases if a.startswith('network/'))
+    internal_targets = command_integration_filter(args, all_targets, init_callback=network_init)
 
     if args.platform:
+        configs = dict((config['platform_version'], config) for config in args.metadata.instance_config)
         instances = []  # type: list [lib.thread.WrappedThread]
-
-        # generate an ssh key (if needed) up front once, instead of for each instance
-        SshKey(args)
 
         for platform_version in args.platform:
             platform, version = platform_version.split('/', 1)
-            platform_target = 'network/%s/' % platform
+            config = configs.get(platform_version)
 
-            if platform_target not in platform_targets and 'network/basics/' not in platform_targets:
-                display.warning('Skipping "%s" because selected tests do not target the "%s" platform.' % (
-                    platform_version, platform))
+            if not config:
                 continue
 
-            instance = lib.thread.WrappedThread(functools.partial(network_run, args, platform, version))
+            instance = lib.thread.WrappedThread(functools.partial(network_run, args, platform, version, config))
             instance.daemon = True
             instance.start()
             instances.append(instance)
-
-        install_command_requirements(args)
 
         while any(instance.is_alive() for instance in instances):
             time.sleep(1)
@@ -359,22 +352,71 @@ def command_network_integration(args):
         if not args.explain:
             with open(filename, 'w') as inventory_fd:
                 inventory_fd.write(inventory)
-    else:
-        install_command_requirements(args)
 
     command_integration_filtered(args, internal_targets, all_targets)
 
 
-def network_run(args, platform, version):
+def network_init(args, internal_targets):
+    """
+    :type args: NetworkIntegrationConfig
+    :type internal_targets: tuple[IntegrationTarget]
+    """
+    if not args.platform:
+        return
+
+    if args.metadata.instance_config is not None:
+        return
+
+    platform_targets = set(a for t in internal_targets for a in t.aliases if a.startswith('network/'))
+
+    instances = []  # type: list [lib.thread.WrappedThread]
+
+    # generate an ssh key (if needed) up front once, instead of for each instance
+    SshKey(args)
+
+    for platform_version in args.platform:
+        platform, version = platform_version.split('/', 1)
+        platform_target = 'network/%s/' % platform
+
+        if platform_target not in platform_targets and 'network/basics/' not in platform_targets:
+            display.warning('Skipping "%s" because selected tests do not target the "%s" platform.' % (
+                platform_version, platform))
+            continue
+
+        instance = lib.thread.WrappedThread(functools.partial(network_start, args, platform, version))
+        instance.daemon = True
+        instance.start()
+        instances.append(instance)
+
+    while any(instance.is_alive() for instance in instances):
+        time.sleep(1)
+
+    args.metadata.instance_config = [instance.wait_for_result() for instance in instances]
+
+
+def network_start(args, platform, version):
     """
     :type args: NetworkIntegrationConfig
     :type platform: str
     :type version: str
     :rtype: AnsibleCoreCI
     """
-
     core_ci = AnsibleCoreCI(args, platform, version, stage=args.remote_stage)
     core_ci.start()
+
+    return core_ci.save()
+
+
+def network_run(args, platform, version, config):
+    """
+    :type args: NetworkIntegrationConfig
+    :type platform: str
+    :type version: str
+    :type config: dict[str, str]
+    :rtype: AnsibleCoreCI
+    """
+    core_ci = AnsibleCoreCI(args, platform, version, stage=args.remote_stage, persist=False)
+    core_ci.load(config)
     core_ci.wait()
 
     manage = ManageNetworkCI(core_ci)
@@ -431,18 +473,19 @@ def command_windows_integration(args):
         raise ApplicationError('Use the --windows option or provide an inventory file (see %s.template).' % filename)
 
     all_targets = tuple(walk_windows_integration_targets(include_hidden=True))
-    internal_targets = command_integration_filter(args, all_targets)
+    internal_targets = command_integration_filter(args, all_targets, init_callback=windows_init)
 
     if args.windows:
+        configs = dict((config['platform_version'], config) for config in args.metadata.instance_config)
         instances = []  # type: list [lib.thread.WrappedThread]
 
         for version in args.windows:
-            instance = lib.thread.WrappedThread(functools.partial(windows_run, args, version))
+            config = configs['windows/%s' % version]
+
+            instance = lib.thread.WrappedThread(functools.partial(windows_run, args, version, config))
             instance.daemon = True
             instance.start()
             instances.append(instance)
-
-        install_command_requirements(args)
 
         while any(instance.is_alive() for instance in instances):
             time.sleep(1)
@@ -455,16 +498,36 @@ def command_windows_integration(args):
         if not args.explain:
             with open(filename, 'w') as inventory_fd:
                 inventory_fd.write(inventory)
-    else:
-        install_command_requirements(args)
 
-    try:
-        command_integration_filtered(args, internal_targets, all_targets)
-    finally:
-        pass
+    command_integration_filtered(args, internal_targets, all_targets)
 
 
-def windows_run(args, version):
+def windows_init(args, internal_targets):  # pylint: disable=locally-disabled, unused-argument
+    """
+    :type args: WindowsIntegrationConfig
+    :type internal_targets: tuple[IntegrationTarget]
+    """
+    if not args.windows:
+        return
+
+    if args.metadata.instance_config is not None:
+        return
+
+    instances = []  # type: list [lib.thread.WrappedThread]
+
+    for version in args.windows:
+        instance = lib.thread.WrappedThread(functools.partial(windows_start, args, version))
+        instance.daemon = True
+        instance.start()
+        instances.append(instance)
+
+    while any(instance.is_alive() for instance in instances):
+        time.sleep(1)
+
+    args.metadata.instance_config = [instance.wait_for_result() for instance in instances]
+
+
+def windows_start(args, version):
     """
     :type args: WindowsIntegrationConfig
     :type version: str
@@ -472,6 +535,19 @@ def windows_run(args, version):
     """
     core_ci = AnsibleCoreCI(args, 'windows', version, stage=args.remote_stage)
     core_ci.start()
+
+    return core_ci.save()
+
+
+def windows_run(args, version, config):
+    """
+    :type args: WindowsIntegrationConfig
+    :type version: str
+    :type config: dict[str, str]
+    :rtype: AnsibleCoreCI
+    """
+    core_ci = AnsibleCoreCI(args, 'windows', version, stage=args.remote_stage, persist=False)
+    core_ci.load(config)
     core_ci.wait()
 
     manage = ManageWindowsCI(core_ci)
@@ -525,10 +601,11 @@ def windows_inventory(remotes):
     return inventory
 
 
-def command_integration_filter(args, targets):
+def command_integration_filter(args, targets, init_callback=None):
     """
     :type args: IntegrationConfig
     :type targets: collections.Iterable[IntegrationTarget]
+    :type init_callback: (IntegrationConfig, tuple[IntegrationTarget]) -> None
     :rtype: tuple[IntegrationTarget]
     """
     targets = tuple(target for target in targets if 'hidden/' not in target.aliases)
@@ -550,6 +627,9 @@ def command_integration_filter(args, targets):
 
     if args.start_at and not any(t.name == args.start_at for t in internal_targets):
         raise ApplicationError('Start at target matches nothing: %s' % args.start_at)
+
+    if init_callback:
+        init_callback(args, internal_targets)
 
     cloud_init(args, internal_targets)
 

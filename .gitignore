@@ -67,6 +67,7 @@ results.xml
 coverage.xml
 /test/units/cover-html
 /test/integration/targets/*/backup/
+/test/cache/*
 # Development
 /test/develop
 venv
