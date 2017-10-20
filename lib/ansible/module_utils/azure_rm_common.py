@@ -26,10 +26,13 @@ import traceback
 
 from os.path import expanduser
 
-from ansible.release import __version__ as ansible_version
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves import configparser
 import ansible.module_utils.six.moves.urllib.parse as urlparse
+try:
+    from ansible.release import __version__ as ansible_version
+except ImportError:
+    ansible_version = 'unknown'
 
 AZURE_COMMON_ARGS = dict(
     cli_default_profile=dict(type='bool'),
@@ -65,7 +68,7 @@ AZURE_COMMON_REQUIRED_IF = [
     ('log_mode', 'file', ['log_path'])
 ]
 
-ANSIBLE_USER_AGENT = 'Ansible/{}'.format(ansible_version)
+ANSIBLE_USER_AGENT = 'Ansible/{0}'.format(ansible_version)
 
 CIDR_PATTERN = re.compile("(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1"
                           "[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))")
@@ -178,7 +181,7 @@ AZURE_PKG_VERSIONS = {
         'expected_version': '0.32.0',
         'installed_version': web_client_version
     },
-}
+} if HAS_AZURE else {}
 
 
 AZURE_MIN_RELEASE = '2.0.0'
@@ -301,11 +304,11 @@ class AzureRMModuleBase(object):
 
     def check_client_version(self, client_type):
         # Ensure Azure modules are at least 2.0.0rc5.
-        package_version = AZURE_PKG_VERSIONS[client_type.__name__]
-        if package_version:
-            client_name = package_version['package_name']
-            client_version = package_version['installed_version']
-            expected_version = package_version['expected_version']
+        package_version = AZURE_PKG_VERSIONS.get(client_type.__name__, None)
+        if package_version is not None:
+            client_name = package_version.get('package_name')
+            client_version = package_version.get('installed_version')
+            expected_version = package_version.get('expected_version')
             if Version(client_version) < Version(expected_version):
                 self.fail("Installed {0} client version is {1}. The supported version is {2}. Try "
                           "`pip install azure>={3} --upgrade`".format(client_name, client_version, expected_version,
@@ -713,8 +716,8 @@ class AzureRMModuleBase(object):
         if api_version:
             client = client_type(self.azure_credentials,
                                  self.subscription_id,
-                                 api_version,
-                                 base_url)
+                                 api_version=api_version,
+                                 base_url=base_url)
         else:
             client = client_type(self.azure_credentials,
                                  self.subscription_id,
@@ -729,8 +732,8 @@ class AzureRMModuleBase(object):
         self.log('Getting storage client...')
         if not self._storage_client:
             self._storage_client = self.get_mgmt_svc_client(StorageManagementClient,
-                                                            self._cloud_environment.endpoints.resource_manager,
-                                                            '2017-06-01')
+                                                            base_url=self._cloud_environment.endpoints.resource_manager,
+                                                            api_version='2017-06-01')
         return self._storage_client
 
     @property
@@ -738,8 +741,8 @@ class AzureRMModuleBase(object):
         self.log('Getting network client')
         if not self._network_client:
             self._network_client = self.get_mgmt_svc_client(NetworkManagementClient,
-                                                            self._cloud_environment.endpoints.resource_manager,
-                                                            '2017-06-01')
+                                                            base_url=self._cloud_environment.endpoints.resource_manager,
+                                                            api_version='2017-06-01')
         return self._network_client
 
     @property
@@ -747,8 +750,8 @@ class AzureRMModuleBase(object):
         self.log('Getting resource manager client')
         if not self._resource_client:
             self._resource_client = self.get_mgmt_svc_client(ResourceManagementClient,
-                                                             self._cloud_environment.endpoints.resource_manager,
-                                                             '2017-05-10')
+                                                             base_url=self._cloud_environment.endpoints.resource_manager,
+                                                             api_version='2017-05-10')
         return self._resource_client
 
     @property
@@ -756,8 +759,8 @@ class AzureRMModuleBase(object):
         self.log('Getting compute client')
         if not self._compute_client:
             self._compute_client = self.get_mgmt_svc_client(ComputeManagementClient,
-                                                            self._cloud_environment.endpoints.resource_manager,
-                                                            '2017-03-30')
+                                                            base_url=self._cloud_environment.endpoints.resource_manager,
+                                                            api_version='2017-03-30')
         return self._compute_client
 
     @property
@@ -765,14 +768,14 @@ class AzureRMModuleBase(object):
         self.log('Getting dns client')
         if not self._dns_client:
             self._dns_client = self.get_mgmt_svc_client(DnsManagementClient,
-                                                        self._cloud_environment.endpoints.resource_manager)
+                                                        base_url=self._cloud_environment.endpoints.resource_manager)
         return self._dns_client
 
     @property
     def web_client(self):
         self.log('Getting web client')
         if not self._web_client:
-            self._web_client = self.get_mgmt_svc_client(WebSiteManagementClient, self.base_url)
+            self._web_client = self.get_mgmt_svc_client(WebSiteManagementClient, base_url=self.base_url)
         return self._web_client
 
     @property
