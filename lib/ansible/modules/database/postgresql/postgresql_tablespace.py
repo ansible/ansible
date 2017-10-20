@@ -112,8 +112,11 @@ tablespace:
 '''
 
 # import module snippets
+import traceback
+import ansible.module_utils.postgres as pgutils
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.database import pg_quote_identifier
+from ansible.module_utils.database import SQLParseError, pg_quote_identifier
+from ansible.module_utils._text import to_native
 
 try:
     import psycopg2
@@ -200,19 +203,17 @@ def tablespace_matches(cursor, tablespace, location, owner):
 
 
 def main():
+    argument_spec = pgutils.postgres_common_argument_spec()
+    argument_spec.update(dict(
+        tablespace=dict(required=True, aliases=['name']),
+        location=dict(required=True),
+        owner=dict(default=""),
+        database=dict(default="postgres"),
+        state=dict(default="present", choices=["absent", "present"]),
+    ))
+
     module = AnsibleModule(
-        argument_spec=dict(
-            login_user=dict(default="postgres"),
-            login_password=dict(default=""),
-            login_host=dict(default=""),
-            login_unix_socket=dict(default=""),
-            port=dict(default="5432"),
-            tablespace=dict(required=True, aliases=['name']),
-            location=dict(required=True),
-            owner=dict(default=""),
-            database=dict(default="postgres"),
-            state=dict(default="present", choices=["absent", "present"]),
-        ),
+        argument_spec=argument_spec,
         supports_check_mode=True
     )
 
@@ -253,7 +254,7 @@ def main():
                                               .extensions
                                               .ISOLATION_LEVEL_AUTOCOMMIT)
         cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    except Exception:
+    except Exception as e:
         module.fail_json(msg="unable to connect to database: %s" % to_native(e), exception=traceback.format_exc())
 
     try:
@@ -267,20 +268,20 @@ def main():
         if state == "absent":
             try:
                 changed = tablespace_delete(cursor, tablespace)
-            except SQLParseError:
+            except SQLParseError as e:
                 module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
         elif state == "present":
             try:
                 changed = tablespace_create(cursor, tablespace, location, owner)
-            except SQLParseError:
+            except SQLParseError as e:
                 module.fail_json(msg=to_native(e), exception=traceback.format_exc())
-    except NotSupportedError:
+    except NotSupportedError as e:
         module.fail_json(msg=to_native(e), exception=traceback.format_exc())
     except SystemExit:
         # Avoid catching this on Python 2.4
         raise
-    except Exception:
+    except Exception as e:
         module.fail_json(msg="Database query failed: %s" % to_native(e), exception=traceback.format_exc())
 
     module.exit_json(changed=changed, tablespace=tablespace)
