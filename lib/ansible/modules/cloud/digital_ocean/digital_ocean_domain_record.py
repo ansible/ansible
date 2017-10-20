@@ -115,7 +115,7 @@ EXAMPLES = '''
     domain: example.com
     type: A
     name: www
-    ip: 127.0.0.1
+    data: 127.0.0.1
 
 - name: Create MX record with priority 10 for example.com
   digital_ocean_domain_record:
