@@ -3,14 +3,14 @@
 ########################
 - name: check mode enable category
   win_audit_policy_system:
-    category: "{{ category }}"
+    category: "{{ category_name }}"
     audit_type: success
   check_mode: yes
   register: category
 
 - name: check mode enable subcategory
   win_audit_policy_system:
-    subcategory: "{{ subcategory }}"
+    subcategory: "{{ subcategory_name }}"
     audit_type: success
   check_mode: yes
   register: subcategory
@@ -41,13 +41,13 @@
 
 - name: enable category
   win_audit_policy_system:
-    category: "{{ category }}"
+    category: "{{ category_name }}"
     audit_type: success
   register: category
 
 - name: enable subcategory
   win_audit_policy_system:
-    subcategory: "{{ subcategory }}"
+    subcategory: "{{ subcategory_name }}"
     audit_type: success
   register: subcategory
 
@@ -71,13 +71,13 @@
 
 - name: idem enable category
   win_audit_policy_system:
-    category: "{{ category }}"
+    category: "{{ category_name }}"
     audit_type: success
   register: category
 
 - name: idem enable subcategory
   win_audit_policy_system:
-    subcategory: "{{ subcategory }}"
+    subcategory: "{{ subcategory_name }}"
     audit_type: success
   register: subcategory
 
