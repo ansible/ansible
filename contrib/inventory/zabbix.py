@@ -138,7 +138,7 @@ class ZabbixInventory(object):
 
     def __init__(self):
 
-    self.defaultgroup = 'group_all'
+        self.defaultgroup = 'group_all'
         self.zabbix_server = None
         self.zabbix_username = None
         self.zabbix_password = None
