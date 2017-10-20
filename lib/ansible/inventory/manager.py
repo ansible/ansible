@@ -85,11 +85,12 @@ def split_host_pattern(pattern):
 
     if isinstance(pattern, list):
         return list(itertools.chain(*map(split_host_pattern, pattern)))
+    elif not isinstance(pattern, string_types):
+        pattern = to_native(pattern)
 
     # If it's got commas in it, we'll treat it as a straightforward
     # comma-separated list of patterns.
-
-    elif ',' in pattern:
+    if ',' in pattern:
         patterns = re.split('\s*,\s*', pattern)
 
     # If it doesn't, it could still be a single pattern. This accounts for
