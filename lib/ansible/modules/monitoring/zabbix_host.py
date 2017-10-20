@@ -686,7 +686,7 @@ def main():
                     module.exit_json(changed=False)
             else:
                 if host.check_all_properties(host_id, host_groups, status, interfaces, template_ids,
-                                             exist_interfaces_copy, zabbix_host_obj, proxy_id, visible_name, host_name):
+                                             exist_interfaces_copy, zabbix_host_obj, proxy_id, visible_name, description, host_name):
                     host.update_host(host_name, group_ids, status, host_id, interfaces, exist_interfaces, proxy_id,
                                      visible_name, description, tls_connect, tls_accept, tls_psk_identity, tls_psk, tls_issuer,
                                      tls_subject)
