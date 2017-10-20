@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -24,7 +24,7 @@ module: aws_kms_facts
 short_description: Gather facts about AWS KMS keys
 description:
     - Gather facts about AWS KMS keys including tags and grants
-version_added: "2.4"
+version_added: "2.5"
 author: "Will Thames (@willthames)"
 options:
   filters:
@@ -131,7 +131,35 @@ keys:
       type: list
       returned: always
       sample:
-        "{\n  \"Version\" : \"2012-10-17\",\n  \"Id\" : \"auto-ebs-2\",\n  \"Statement\" : [ {\n    \"Sid\" : \"Allow access through EBS for all principals in the account that are authorized to use EBS\",\n    \"Effect\" : \"Allow\",\n    \"Principal\" : {\n      \"AWS\" : \"*\"\n    },\n    \"Action\" : [ \"kms:Encrypt\", \"kms:Decrypt\", \"kms:ReEncrypt*\", \"kms:GenerateDataKey*\", \"kms:CreateGrant\", \"kms:DescribeKey\" ],\n    \"Resource\" : \"*\",\n    \"Condition\" : {\n      \"StringEquals\" : {\n        \"kms:CallerAccount\" : \"111111111111\",\n        \"kms:ViaService\" : \"ec2.ap-southeast-2.amazonaws.com\"\n      }\n    }\n  }, {\n    \"Sid\" : \"Allow direct access to key metadata to the account\",\n    \"Effect\" : \"Allow\",\n    \"Principal\" : {\n      \"AWS\" : \"arn:aws:iam::111111111111:root\"\n    },\n    \"Action\" : [ \"kms:Describe*\", \"kms:Get*\", \"kms:List*\", \"kms:RevokeGrant\" ],\n    \"Resource\" : \"*\"\n  } ]\n}"
+        Version: "2012-10-17"
+        Id: "auto-ebs-2"
+        Statement:
+        - Sid: "Allow access through EBS for all principals in the account that are authorized to use EBS"
+          Effect: "Allow"
+          Principal:
+            AWS: "*"
+          Action:
+          - "kms:Encrypt"
+          - "kms:Decrypt"
+          - "kms:ReEncrypt*"
+          - "kms:GenerateDataKey*"
+          - "kms:CreateGrant"
+          - "kms:DescribeKey"
+          Resource: "*"
+          Condition:
+            StringEquals:
+              kms:CallerAccount: "111111111111"
+              kms:ViaService: "ec2.ap-southeast-2.amazonaws.com"
+        - Sid: "Allow direct access to key metadata to the account"
+          Effect: "Allow"
+          Principal:
+            AWS: "arn:aws:iam::111111111111:root"
+          Action:
+          - "kms:Describe*"
+          - "kms:Get*"
+          - "kms:List*"
+          - "kms:RevokeGrant"
+          Resource: "*"
     grants:
       description: list of grants associated with a key
       type: complex
