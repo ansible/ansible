@@ -67,6 +67,11 @@ options:
               C(AzureUSGovernment)), or a metadata discovery endpoint URL (required for Azure Stack). Can also be set via credential file profile or
               the C(AZURE_CLOUD_ENVIRONMENT) environment variable.
         default: AzureCloud
+    cli_default_profile:
+        description:
+            - Set to C(true), when login with Azure CLI
+        required: false
+        default: null
 requirements:
     - "python >= 2.7"
     - "azure >= 2.0.0"
@@ -83,5 +88,6 @@ notes:
       a [default] section and the following keys: C(subscription_id), C(client_id), C(secret) and C(tenant) or
       C(subscription_id), C(ad_user) and C(password). It is also possible to add additional profiles. Specify the profile
       by passing profile or setting C(AZURE_PROFILE) in the environment."
-    - Use 'az login' to login with Azure CLI.
+    - Use 'az login' to login with Azure CLI. Set the I(cli_default_profile) flag to C(true) in the playbook, the azure resource module
+      can use Azure CLI credentials.
     '''
