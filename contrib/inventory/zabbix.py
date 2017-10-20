@@ -99,14 +99,14 @@ class ZabbixInventory(object):
         return data
 
     def get_list(self, api):
-        hostsData = api.host.get({'output': 'extend', 'selectGroups': 'extend',  'selectInterfaces':'extend', 'selectMacros': 'extend', 'selectParentTemplates': 'extend' })
+        hostsData = api.host.get({'output': 'extend', 'selectGroups': 'extend', 'selectInterfaces': 'extend',
+                                 'selectMacros': 'extend', 'selectParentTemplates': 'extend'})
 
         data = {}
         data[self.defaultgroup] = self.hoststub()
         data['_meta'] = {'hostvars': self.meta}
 
         for host in hostsData:
-            #print(host)
             if 0 == host['status']:
                 break
             hostname = host['name']
@@ -121,7 +121,7 @@ class ZabbixInventory(object):
                         ip = m['value']
 
             data[self.defaultgroup]['hosts'].append(hostname)
-            data['_meta']['hostvars'][hostname] = { 'ansible_host' : ip, 'ansible_port' : port } 
+            data['_meta']['hostvars'][hostname] = {'ansible_host': ip, 'ansible_port': port}
             data['_meta']['hostvars'][hostname]['templates'] = []
             for t in host['parentTemplates']:
                 data['_meta']['hostvars'][hostname]['templates'].append(t['name'])
@@ -172,4 +172,3 @@ class ZabbixInventory(object):
             sys.exit(1)
 
 ZabbixInventory()
-
