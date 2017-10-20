@@ -6,6 +6,8 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys F23C5A6CF475977595C
 
 RUN apt-get update -y && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl \
     gcc \
     git \
     libffi-dev \
@@ -14,6 +16,7 @@ RUN apt-get update -y && \
     locales \
     make \
     openssh-client \
+    openssl \
     python2.6-dev \
     python2.7-dev \
     python3.5-dev \
