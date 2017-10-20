@@ -217,6 +217,7 @@ except ImportError:
 else:
     postgresqldb_found = True
 
+import ansible.module_utils.postgres as pgutils
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import pg_quote_identifier, SQLParseError
 from ansible.module_utils._text import to_bytes, to_native
@@ -706,28 +707,26 @@ def get_valid_flags_by_version(cursor):
 
 
 def main():
+    argument_spec = pgutils.postgres_common_argument_spec()
+    argument_spec.update(dict(
+        user=dict(required=True, aliases=['name']),
+        password=dict(default=None, no_log=True),
+        state=dict(default="present", choices=["absent", "present"]),
+        priv=dict(default=None),
+        db=dict(default=''),
+        fail_on_user=dict(type='bool', default='yes'),
+        role_attr_flags=dict(default=''),
+        encrypted=dict(type='bool', default='no'),
+        no_password_changes=dict(type='bool', default='no'),
+        expires=dict(default=None),
+        ssl_mode=dict(default='prefer', choices=[
+            'disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
+        ssl_rootcert=dict(default=None),
+        conn_limit=dict(default=None)
+    ))
+
     module = AnsibleModule(
-        argument_spec=dict(
-            login_user=dict(default="postgres"),
-            login_password=dict(default="", no_log=True),
-            login_host=dict(default=""),
-            login_unix_socket=dict(default=""),
-            user=dict(required=True, aliases=['name']),
-            password=dict(default=None, no_log=True),
-            state=dict(default="present", choices=["absent", "present"]),
-            priv=dict(default=None),
-            db=dict(default=''),
-            port=dict(default='5432'),
-            fail_on_user=dict(type='bool', default='yes'),
-            role_attr_flags=dict(default=''),
-            encrypted=dict(type='bool', default='no'),
-            no_password_changes=dict(type='bool', default='no'),
-            expires=dict(default=None),
-            ssl_mode=dict(default='prefer', choices=[
-                          'disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
-            ssl_rootcert=dict(default=None),
-            conn_limit=dict(default=None)
-        ),
+        argument_spec=argument_spec,
         supports_check_mode=True
     )
 
