@@ -105,6 +105,7 @@ except ImportError:
 else:
     postgresqldb_found = True
 
+import ansible.module_utils.postgres as pgutils
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import SQLParseError, pg_quote_identifier
 from ansible.module_utils._text import to_native
@@ -177,19 +178,17 @@ def schema_matches(cursor, schema, owner):
 #
 
 def main():
+    argument_spec = pgutils.postgres_common_argument_spec()
+    argument_spec.update(dict(
+        schema=dict(required=True, aliases=['name']),
+        owner=dict(default=""),
+        database=dict(default="postgres"),
+        state=dict(default="present", choices=["absent", "present"]),
+    ))
+
     module = AnsibleModule(
-        argument_spec=dict(
-            login_user=dict(default="postgres"),
-            login_password=dict(default="", no_log=True),
-            login_host=dict(default=""),
-            login_unix_socket=dict(default=""),
-            port=dict(default="5432"),
-            schema=dict(required=True, aliases=['name']),
-            owner=dict(default=""),
-            database=dict(default="postgres"),
-            state=dict(default="present", choices=["absent", "present"]),
-        ),
-        supports_check_mode = True
+        argument_spec=argument_spec,
+        supports_check_mode=True
     )
 
     if not postgresqldb_found:
