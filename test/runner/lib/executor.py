@@ -13,6 +13,7 @@ import textwrap
 import functools
 import shutil
 import stat
+import pipes
 import random
 import string
 import atexit
@@ -162,30 +163,78 @@ def install_command_requirements(args):
         if args.junit:
             packages.append('junit-xml')
 
-    extras = []
+    commands = [generate_pip_install(args.command, packages=packages)]
 
     if isinstance(args, IntegrationConfig):
-        extras += ['cloud.%s' % cp for cp in get_cloud_platforms(args)]
+        for cloud_platform in get_cloud_platforms(args):
+            commands.append(generate_pip_install('%s.cloud.%s' % (args.command, cloud_platform)))
 
-    cmd = generate_pip_install(args.command, packages, extras)
+    # only look for changes when more than one requirements file is needed
+    detect_pip_changes = len(commands) > 1
 
-    if not cmd:
-        return
+    # first pass to install requirements, changes expected unless environment is already set up
+    changes = run_pip_commands(args, commands, detect_pip_changes)
 
-    try:
-        run_command(args, cmd)
-    except SubprocessError as ex:
-        if ex.status != 2:
-            raise
+    if not changes:
+        return  # no changes means we can stop early
 
-        # If pip is too old it won't understand the arguments we passed in, so we'll need to upgrade it.
+    # second pass to check for conflicts in requirements, changes are not expected here
+    changes = run_pip_commands(args, commands, detect_pip_changes)
 
-        # Installing "coverage" on ubuntu 16.04 fails with the error:
-        # AttributeError: 'Requirement' object has no attribute 'project_name'
-        # See: https://bugs.launchpad.net/ubuntu/xenial/+source/python-pip/+bug/1626258
-        # Upgrading pip works around the issue.
-        run_command(args, ['pip', 'install', '--upgrade', 'pip'])
-        run_command(args, cmd)
+    if not changes:
+        return  # no changes means no conflicts
+
+    raise ApplicationError('Conflicts detected in requirements. The following commands reported changes during verification:\n%s' %
+                           '\n'.join((' '.join(pipes.quote(c) for c in cmd) for cmd in changes)))
+
+
+def run_pip_commands(args, commands, detect_pip_changes=False):
+    """
+    :type args: EnvironmentConfig
+    :type commands: list[list[str]]
+    :type detect_pip_changes: bool
+    :rtype: list[list[str]]
+    """
+    changes = []
+
+    after_list = pip_list(args) if detect_pip_changes else None
+
+    for cmd in commands:
+        if not cmd:
+            continue
+
+        before_list = after_list
+
+        try:
+            run_command(args, cmd)
+        except SubprocessError as ex:
+            if ex.status != 2:
+                raise
+
+            # If pip is too old it won't understand the arguments we passed in, so we'll need to upgrade it.
+
+            # Installing "coverage" on ubuntu 16.04 fails with the error:
+            # AttributeError: 'Requirement' object has no attribute 'project_name'
+            # See: https://bugs.launchpad.net/ubuntu/xenial/+source/python-pip/+bug/1626258
+            # Upgrading pip works around the issue.
+            run_command(args, ['pip', 'install', '--upgrade', 'pip'])
+            run_command(args, cmd)
+
+        after_list = pip_list(args) if detect_pip_changes else None
+
+        if before_list != after_list:
+            changes.append(cmd)
+
+    return changes
+
+
+def pip_list(args):
+    """
+    :type args: EnvironmentConfig
+    :rtype: str
+    """
+    stdout, _ = run_command(args, ['pip', 'list'], capture=True, always=True)
+    return stdout
 
 
 def generate_egg_info(args):

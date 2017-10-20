@@ -255,6 +255,8 @@ def parse_args():
                                      targets=walk_network_integration_targets,
                                      config=NetworkIntegrationConfig)
 
+    add_extra_docker_options(network_integration, integration=False)
+
     network_integration.add_argument('--platform',
                                      metavar='PLATFORM',
                                      action='append',
@@ -271,6 +273,8 @@ def parse_args():
     windows_integration.set_defaults(func=command_windows_integration,
                                      targets=walk_windows_integration_targets,
                                      config=WindowsIntegrationConfig)
+
+    add_extra_docker_options(windows_integration, integration=False)
 
     windows_integration.add_argument('--windows',
                                      metavar='VERSION',
