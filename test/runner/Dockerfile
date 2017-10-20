@@ -13,6 +13,7 @@ RUN apt-get update -y && \
     libxslt1-dev \
     locales \
     make \
+    openssh-client \
     python2.6-dev \
     python2.7-dev \
     python3.5-dev \
