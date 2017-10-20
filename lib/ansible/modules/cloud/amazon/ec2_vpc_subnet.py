@@ -378,7 +378,7 @@ def disassociate_ipv6_cidr(conn, module, subnet):
         conn.disassociate_subnet_cidr_block(AssociationId=subnet['ipv6_association_id'])
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, msg="Couldn't disassociate ipv6 cidr block id {0} from subnet {1}: {2}"
-                             .format(subnet['ipv6_association_id'], subnet['id']))
+                             .format(subnet['ipv6_association_id'], subnet['id'], e.message))
 
 
 def ensure_ipv6_cidr_block(conn, module, subnet, ipv6_cidr, check_mode):
