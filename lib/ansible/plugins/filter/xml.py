@@ -23,16 +23,15 @@ from ansible.errors import AnsibleError
 
 try:
     from lxml import etree
+    parser = etree.XMLParser(remove_blank_text=True)
     HAS_LXML = True
 except ImportError:
     HAS_LXML = False
 
-parser = etree.XMLParser(remove_blank_text=True)
-
 
 def xml_findtext(data, expr):
     if not HAS_LXML:
-        raise AnsibleError('lxml is required but does not appear to be installed.')
+        raise AnsibleError('The lxml module is required but does not appear to be installed.')
     else:
         try:
             xml = etree.XML(data, parser=parser)
