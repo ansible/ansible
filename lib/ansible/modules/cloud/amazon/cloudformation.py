@@ -312,6 +312,7 @@ def create_changeset(module, stack_params, cfn):
     if module.params['changeset_name'] is not None:
         stack_params['ChangeSetName'] = module.params['changeset_name']
 
+    # changesets don't accept ClientRequestToken parameters
     stack_params.pop('ClientRequestToken', None)
 
     try:
@@ -444,6 +445,7 @@ def build_changeset_name(stack_params):
 def check_mode_changeset(module, stack_params, cfn):
     """Create a change set, describe it and delete it before returning check mode outputs."""
     stack_params['ChangeSetName'] = build_changeset_name(stack_params)
+    # changesets don't accept ClientRequestToken parameters
     stack_params.pop('ClientRequestToken', None)
 
     try:
