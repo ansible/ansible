@@ -302,7 +302,7 @@ def create_subnet(conn, module, vpc_id, cidr, ipv6_cidr=None, az=None):
         timer = time.time() + wait_timeout
         while time.time() < timer:
             time.sleep(pause)
-            subnet = subnet_exists(conn, subnet['id'])
+            subnet = subnet_exists(conn, module, subnet['id'])
             if subnet:
                 return subnet
 
@@ -407,7 +407,7 @@ def ensure_ipv6_cidr_block(conn, module, subnet, ipv6_cidr, check_mode):
         try:
             associate_resp = conn.associate_subnet_cidr_block(SubnetId=subnet['id'], Ipv6CidrBlock=ipv6_cidr)
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-            module.fail_json_aws(e, msg="Couldn't associate {0} to {1}: {2}".format(ipv6_cidr, subnet['id'], e.message))
+            module.fail_json_aws(e, msg="Couldn't associate ipv6 cidr {0} to {1}: {2}".format(ipv6_cidr, subnet['id'], e.message))
 
         if associate_resp.get('Ipv6CidrBlockAssociation', {}).get('AssociationId'):
             subnet['ipv6_association_id'] = associate_resp['Ipv6CidrBlockAssociation']['AssociationId']
@@ -436,8 +436,7 @@ def ensure_subnet_present(conn, module):
     changed = False
     if subnet is None:
         if not module.check_mode:
-            subnet = create_subnet(conn, module, module.params['vpc_id'], module.params['cidr'],
-                                   ipv6_cidr=module.params['ipv6_cidr'], az=module.params['az'])
+            subnet = create_subnet(conn, module, module.params['vpc_id'], module.params['cidr'], az=module.params['az'])
         changed = True
         # Subnet will be None when check_mode is true
         if subnet is None:
@@ -461,10 +460,7 @@ def ensure_subnet_present(conn, module):
     if module.params['tags'] != subnet['tags']:
         changed = ensure_tags(conn, module, subnet, module.params['tags'], module.params['purge_tags'])
 
-    try:
-        subnet = get_subnet_info(describe_subnets_with_backoff(conn, SubnetIds=[subnet['id']]))
-    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-        module.fail_json_aws(e, msg="Couldn't get subnet info")
+    subnet = get_matching_subnet(conn, module, module.params['vpc_id'], module.params['cidr'])
 
     return {
         'changed': changed,
@@ -491,7 +487,7 @@ def main():
         dict(
             az=dict(default='', required=False),
             cidr=dict(default=None, required=True),
-            ipv6_cidr=dict(default=None, required=False),
+            ipv6_cidr=dict(default='', required=False),
             state=dict(default='present', choices=['present', 'absent']),
             tags=dict(default={}, required=False, type='dict', aliases=['resource_tags']),
             vpc_id=dict(default=None, required=True),
@@ -511,14 +507,7 @@ def main():
         module.fail_json(msg="assign_instances_ipv6 is True but ipv6_cidr is None or an empty string")
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-
-    if region:
-        try:
-            connection = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_params)
-        except (botocore.exceptions.NoCredentialsError, botocore.exceptions.ProfileNotFound) as e:
-            module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-    else:
-        module.fail_json(msg="region must be specified")
+    connection = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_params)
 
     state = module.params.get('state')
 
