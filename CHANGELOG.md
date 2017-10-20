@@ -38,6 +38,7 @@ Ansible Changes By Release
 #### Windows
 
   * win_scheduled_task_stat
+  * win_audit_rule
 
 
 <a id="2.4"></a>
