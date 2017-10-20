@@ -240,7 +240,7 @@ def pip_list(args, pip):
     :type pip: str
     :rtype: str
     """
-    stdout, _ = run_command(args, [pip, 'list'], capture=True, always=True)
+    stdout, _ = run_command(args, [pip, 'list'], capture=True)
     return stdout
 
 
