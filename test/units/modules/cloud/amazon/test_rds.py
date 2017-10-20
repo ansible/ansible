@@ -218,7 +218,8 @@ def test_modify_should_change_instance_and_return_changed_if_param_changes():
     print("rds calls:\n" + str(rds_client_double.mock_calls))
     print("module calls:\n" + str(module_double.mock_calls))
 
-    mod_db_fn.assert_called_once(), "modify called more than once which shoudn't be needed"
+    assert len(mod_db_fn.call_args_list) > 0, "modify wasn't called when should have been"
+    assert len(mod_db_fn.call_args_list) < 2, "modify called more than once which shoudn't be needed"
     mod_db_fn.assert_called_with(DBInstanceIdentifier='fakedb', DBPortNumber=342,
                                  NewDBInstanceIdentifier='fakedb-too', StorageType='gp',
                                  ApplyImmediately=True)
@@ -288,7 +289,8 @@ def test_modify_should_modify_new_db_and_ignore_old_param_if_new_exists_and_old_
     print("rds calls:\n" + str(rds_client_double.mock_calls))
     print("module calls:\n" + str(module_double.mock_calls))
 
-    mod_db_fn.assert_called_once(), "modify called more than once which shoudn't be needed"
+    assert len(mod_db_fn.call_args_list) > 0, "modify wasn't called when should have been"
+    assert len(mod_db_fn.call_args_list) < 2, "modify called more than once which shoudn't be needed"
     mod_db_fn.assert_called_with(DBInstanceIdentifier='fakedb', DBPortNumber=342,
                                  StorageType='gp')
     assert mod_return["changed"], "modify failed to return changed"
@@ -560,7 +562,8 @@ def test_update_rds_tags_should_delete_if_empty_tags():
     tag_update_return = rds_i.update_rds_tags(module_double, rds_client_double, db_instance=my_instance)
 
     mk_tag_fn.assert_not_called()
-    rm_tag_fn.assert_called_once()
+    assert len(rm_tag_fn.call_args_list) > 0, "remove_tags_from_resource wasn't called when should have been"
+    assert len(rm_tag_fn.call_args_list) < 2, "remove_tags_from_resource called more than once which shoudn't be needed"
 
     args = rm_tag_fn.call_args
     assert args[1]["ResourceName"] == 'arn:aws:rds:us-east-1:1234567890:db:fakedb'
@@ -592,7 +595,13 @@ def test_update_rds_tags_should_blank_if_called_with_no_tags():
     tag_update_return = rds_i.update_rds_tags(module_double, rds_client_double, db_instance=my_instance)
 
     mk_tag_fn.assert_not_called()
-    rm_tag_fn.assert_called_with(ResourceName='arn:aws:rds:us-east-1:1234567890:db:fakedb', TagKeys=['oldtagb', 'oldtagc'])
+    rm_call_args_list = rm_tag_fn.call_args_list
+    assert len(rm_call_args_list) > 0, "remove_tags_from_resource wasn't called when should have been"
+    assert len(rm_call_args_list) < 2, "remove_tags_from_resource called more than once which shoudn't be needed"
+    assert rm_call_args_list[0][1]["ResourceName"] == 'arn:aws:rds:us-east-1:1234567890:db:fakedb'
+    assert 'oldtagb' in rm_call_args_list[0][1]["TagKeys"]
+    assert 'oldtagc' in rm_call_args_list[0][1]["TagKeys"]
+    assert len(rm_call_args_list[0][1]["TagKeys"]) == 2, "extraneous tag removed which shouldnt be there"
     assert tag_update_return is True
 
 
@@ -655,7 +664,8 @@ def test_given_apply_immediately_and_wait_modify_should_call_await_function():
     print("rds calls:\n" + str(rds_client_double.mock_calls))
     print("module calls:\n" + str(module_double.mock_calls))
 
-    mod_db_fn.assert_called_once(), "modify called more than once which shoudn't be needed"
+    assert len(mod_db_fn.call_args_list) > 0, "modify wasn't called when should have been"
+    assert len(mod_db_fn.call_args_list) < 2, "modify called more than once which shoudn't be needed"
     mod_db_fn.assert_called_with(DBInstanceIdentifier='fakedb', DBPortNumber=342,
                                  NewDBInstanceIdentifier='fakedb-too', StorageType='gp',
                                  ApplyImmediately=True)

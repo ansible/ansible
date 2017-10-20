@@ -48,7 +48,6 @@ options:
   state:
     description:
       - Describes the desired state of the database instance. N.B. restarted is allowed as an alias for rebooted.
-    required: false
     default: present
     choices: [ 'present', 'absent', 'rebooted' ]
   db_instance_identifier:
@@ -60,7 +59,6 @@ options:
   source_db_instance_identifier:
     description:
       - Name of the database when sourcing from a replica
-    required: false
   replica:
     description:
     - whether or not a database is a read replica
@@ -68,7 +66,6 @@ options:
   engine:
     description:
       - The type of database. Used only when state=present.
-    required: false
     choices: [ 'mariadb', 'MySQL', 'oracle-se1', 'oracle-se2', 'oracle-se', 'oracle-ee', 'sqlserver-ee',
                 sqlserver-se', 'sqlserver-ex', 'sqlserver-web', 'postgres', 'aurora']
   allocated_storage:
@@ -104,85 +101,67 @@ options:
     description:
       - Name of the DB parameter group to associate with this instance. If omitted
       - then the RDS default DBParameterGroup will be used.
-    required: false
   license_model:
     description:
       - The license model for this DB instance.
-    required: false
     choices:  [ 'license-included', 'bring-your-own-license', 'general-public-license', 'postgresql-license' ]
   multi_az:
     description:
       - Specifies if this is a Multi-availability-zone deployment. Can not be used in conjunction with zone parameter.
     choices: [ "yes", "no" ]
-    required: false
   iops:
     description:
       - Specifies the number of IOPS for the instance. Must be an integer greater than 1000.
-    required: false
   db_security_groups:
     description: Comma separated list of one or more security groups.
-    required: false
   vpc_security_group_ids:
     description: Comma separated list of one or more vpc security group ids. Also requires I(subnet) to be specified.
     aliases:
       - security_groups
-    required: false
   port:
     description: Port number that the DB instance uses for connections.
-    required: false
     default: 3306 for mysql, 1521 for Oracle, 1433 for SQL Server, 5432 for PostgreSQL.
   auto_minor_version_upgrade:
     description: Indicates that minor version upgrades should be applied automatically.
-    required: false
-    default: no
+    default: "no"
     choices: [ "yes", "no" ]
   option_group_name:
     description: The name of the option group to use. If not specified then the default option group is used.
-    required: false
   preferred_maintenance_window:
     description:
        - "Maintenance window in format of ddd:hh24:mi-ddd:hh24:mi (Example: Mon:22:00-Mon:23:15). "
        - "If not specified then AWS will assign a random maintenance window."
-    required: false
   preferred_backup_window:
     description:
        - "Backup window in format of hh24:mi-hh24:mi (Example: 04:00-05:45). If not specified "
        - "then AWS will assign a random backup window."
-    required: false
   backup_retention_period:
     description:
        - "Number of days backups are retained. Set to 0 to disable backups. Default is 1 day. "
        - "Valid range: 0-35."
-    required: false
   availability_zone:
     description:
       - availability zone in which to launch the instance.
-    required: false
     aliases: ['aws_zone', 'ec2_zone']
   db_subnet_group_name:
     description:
       - VPC subnet group. If specified then a VPC instance is created.
-    required: false
     aliases: ['subnet']
   final_db_snapshot_identifier:
     description:
       - Name of snapshot to take when state=absent - if no snapshot name is provided then no
         snapshot is taken.
-    required: false
   db_snapshot_identifier:
     description:
       - Name of snapshot to use when restoring a database with state=present
         snapshot is taken.
-    required: false
   snapshot:
     description:
       - snapshot provides a default for either final_db_snapshot_identifier or db_snapshot_identifier
         allowing the same parameter to be used for both backup and restore.
-    required: false
   wait:
     description:
       - Wait for the database to enter the desired state.
-    required: false
     default: "no"
     choices: [ "yes", "no" ]
   wait_timeout:
@@ -193,43 +172,37 @@ options:
     description:
       - If enabled, the modifications will be applied as soon as possible rather
       - than waiting for the next preferred maintenance window.
-    default: no
+    default: "no"
     choices: [ "yes", "no" ]
   force_failover:
     description:
       - Used only when state=rebooted. If enabled, the reboot is done using a MultiAZ failover.
-    required: false
     default: "no"
     choices: [ "yes", "no" ]
   force_password_update:
     description:
-      - Whether to try to update the DB password for an existing database. There is no API method to
-        determine whether or not a password will be updated, and it causes problems with later operations
-        if a password is updated unnecessarily.
+      - Whether to try to update the DB password for an existing database. There is no API method
+        to determine whether or not a password needs to be updated, and it causes problems with
+        later operations if a password is updated unnecessarily.
     default: "no"
     choices: [ "yes", "no" ]
   old_db_instance_identifier:
     description:
       - Name to rename an instance from.
-    required: false
   character_set_name:
     description:
       - Associate the DB instance with a specified character set.
-    required: false
   publicly_accessible:
     description:
       - explicitly set whether the resource should be publicly accessible or not.
-    required: false
   cluster:
     description:
       -  The identifier of the DB cluster that the instance will belong to.
-    required: false
   tags:
     description:
       - tags dict to apply to a resource.  If None then tags are ignored.  Use {} to set to empty.
-    required: false
-  tags:
-    purge_tags:
+  purge_tags:
+    description:
       - whether to remove existing tags that aren't passed in the C(tags) parameter
     default: no
 extends_documentation_fragment:
@@ -335,7 +308,7 @@ import time
 import traceback
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict, AWSRetry
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, AWSRetry, snake_dict_to_camel_dict
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict, compare_aws_tags
 from ansible.module_utils.aws.rds import get_db_instance, instance_to_facts, instance_facts_diff
 from ansible.module_utils.aws.rds import DEFAULT_PORTS, DB_ENGINES, LICENSE_MODELS
