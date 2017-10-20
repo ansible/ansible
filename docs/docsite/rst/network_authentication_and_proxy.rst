@@ -62,10 +62,15 @@ Authentication methods available on each connection type
 ========================================================
 
 
-                                        CLI, eAPI/NXAPI  F5 Notes
-Command line: (``--user`` & ``-k``)     Y    Y           ?
-top-level                               Y    Y           X  Deprecated
-
++-------------------------+-----+-------------------+----+-------+
+|                         | CLI | Rest (eAPI/NXAPI) | F5 | Notes |
++-------------------------+-----+-------------------+----+-------+
+| Command line            |     |                   |    |       |
+|                         |     |                   |    |       |
+| (``--user`` & ``-k``)   |     |                   |    |       |
++-------------------------+-----+-------------------+----+-------+
+| Top-level               |     |                   |    |       |
++-------------------------+-----+-------------------+----+-------+
 
 
 Best practice
@@ -74,9 +79,13 @@ Best practice
 Wherever possible use the standard Ansible way, that is do not use ``provider:`` (or the even older top-level) arguments.
 
 FIXME Show correct way
+
 FIXME Link to network-getting-started
 
+CLI (SSH)
+=========
 
+FIXME Details of ssh keys with passphrases and not using ssh-agent
 
 
 REST (eAPI, NXAPI)
