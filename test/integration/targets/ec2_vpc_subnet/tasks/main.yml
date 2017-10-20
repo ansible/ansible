@@ -71,6 +71,29 @@
            - '"Name" in vpc_subnet_recreate.subnet.tags and vpc_subnet_recreate.subnet.tags["Name"] == ec2_vpc_subnet_name'
            - '"Description" in vpc_subnet_recreate.subnet.tags and vpc_subnet_recreate.subnet.tags["Description"] == ec2_vpc_subnet_description'
 
+    - name: add invalid ipv6 block to subnet (expected failed)
+      ec2_vpc_subnet:
+        cidr: "10.232.232.128/28"
+        az: "{{ ec2_region }}a"
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        ipv6_cidr: 2001:db8::/64
+        tags:
+          Name: '{{ec2_vpc_subnet_name}}'
+          Description: '{{ec2_vpc_subnet_description}}'
+        region: '{{ec2_region}}'
+        aws_access_key: '{{ aws_access_key }}'
+        aws_secret_key: '{{ aws_secret_key }}'
+        security_token: '{{ security_token }}'
+        state: present
+      register: vpc_subnet_ipv6_failed
+      ignore_errors: yes
+
+    - name: assert failure happened (expected failed)
+      assert:
+        that:
+           - 'vpc_subnet_ipv6_failed.failed'
+           - "'Couldn\\'t associate ipv6 cidr' in vpc_subnet_ipv6_failed.msg"
+
     - name: add a tag (expected changed=true)
       ec2_vpc_subnet:
         cidr: "10.232.232.128/28"
@@ -95,8 +118,6 @@
            - '"Description" in vpc_subnet_add_a_tag.subnet.tags and vpc_subnet_add_a_tag.subnet.tags["Description"] == ec2_vpc_subnet_description'
            - '"AnotherTag" in vpc_subnet_add_a_tag.subnet.tags and vpc_subnet_add_a_tag.subnet.tags["AnotherTag"] == "SomeValue"'
 
-    # We may want to change this behaviour by adding purge_tags to the module
-    # and setting it to false by default
     - name: remove tags (expected changed=true)
       ec2_vpc_subnet:
         cidr: "10.232.232.128/28"
@@ -109,6 +130,7 @@
         aws_secret_key: '{{ aws_secret_key }}'
         security_token: '{{ security_token }}'
         state: present
+        purge_tags: true
       register: vpc_subnet_remove_tags
 
     - name: assert tag removal happened (expected changed=true)
