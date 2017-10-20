@@ -96,6 +96,10 @@ output:
     sample: App is up-to-date
 '''
 
+try:
+    import botocore
+except ImportError:
+    pass  # handled by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
@@ -174,8 +178,11 @@ def main():
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
 
     if region:
-        ebs = boto3_conn(module, conn_type='client', resource='elasticbeanstalk',
-                         region=region, endpoint=ec2_url, **aws_connect_params)
+        try:
+            ebs = boto3_conn(module, conn_type='client', resource='elasticbeanstalk',
+                             region=region, endpoint=ec2_url, **aws_connect_params)
+        except botocore.exceptions.ProfileNotFound as e:
+            module.fail_json(msg=str(e))
     else:
         module.fail_json(msg='region must be specified')
 
