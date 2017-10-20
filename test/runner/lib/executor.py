@@ -252,12 +252,11 @@ def generate_egg_info(args):
     run_command(args, ['python', 'setup.py', 'egg_info'], capture=args.verbosity < 3)
 
 
-def generate_pip_install(pip, command, packages=None, extras=None):
+def generate_pip_install(pip, command, packages=None):
     """
     :type pip: str
     :type command: str
     :type packages: list[str] | None
-    :type extras: list[str] | None
     :rtype: list[str] | None
     """
     constraints = 'test/runner/requirements/constraints.txt'
@@ -265,15 +264,8 @@ def generate_pip_install(pip, command, packages=None, extras=None):
 
     options = []
 
-    requirements_list = [requirements]
-
-    if extras:
-        for extra in extras:
-            requirements_list.append('test/runner/requirements/%s.%s.txt' % (command, extra))
-
-    for requirements in requirements_list:
-        if os.path.exists(requirements) and os.path.getsize(requirements):
-            options += ['-r', requirements]
+    if os.path.exists(requirements) and os.path.getsize(requirements):
+        options += ['-r', requirements]
 
     if packages:
         options += packages
