@@ -86,7 +86,7 @@ EXAMPLES = """
 """
 
 RETURN = """
-msg:
+output:
   description: the output of `request system yang ...` command
   returned: when updated or installed
   type: string
@@ -160,8 +160,8 @@ def install_yang(module, device, update):
                     _filename = os.path.basename(src)
                     rpc_kwargs[_argument_name].append(_filename)
 
-    # install YANG via SSH instead of NETCONF becuase schema will change
-    device.timeout = 300    # set timeout to 5 minutes
+    # set timeout to 5 minutes and install YANG module (request system yang ...)
+    device.timeout = 300
     if update:
         reply = device.rpc.request_yang_update(**rpc_kwargs)
     else:
@@ -206,12 +206,12 @@ def main():
         # already installed
         if module.params['update']:
             # update module
-            result['msg'] = install_yang(module, device, update=True)
+            result['output'] = install_yang(module, device, update=True)
             result['changed'] = True
             result['updated'] = True
     else:
         # install module
-        result['msg'] = install_yang(module, device, update=False)
+        result['output'] = install_yang(module, device, update=False)
         result['changed'] = True
 
     try:
