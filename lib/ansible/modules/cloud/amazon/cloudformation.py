@@ -247,10 +247,10 @@ def get_stack_events(cfn, stack_name, token_filter=None):
 
     try:
         pg = cfn.get_paginator(
-                'describe_stack_events'
-            ).paginate(
-                StackName=stack_name
-            )
+            'describe_stack_events'
+        ).paginate(
+            StackName=stack_name
+        )
         if token_filter is not None:
             events = list(pg.search(
                 "StackEvents[?ClientRequestToken == '{}']".format(token_filter)
