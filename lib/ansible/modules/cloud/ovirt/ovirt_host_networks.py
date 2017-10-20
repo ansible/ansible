@@ -194,6 +194,7 @@ class HostNetworksModule(BaseModule):
         update = False
         bond = self._module.params['bond']
         networks = self._module.params['networks']
+        labels = self._module.params['labels']
         nic = get_entity(nic_service)
 
         if nic is None:
@@ -208,6 +209,12 @@ class HostNetworksModule(BaseModule):
                     sorted(get_link_name(self._connection, s) for s in nic.bonding.slaves)
                 )
             )
+
+        # Check if labels need to be updated on interface/bond:
+        if labels:
+            net_labels = nic_service.network_labels_service().list()
+            if sorted(labels) != sorted([lbl.id for lbl in net_labels]):
+                return True
 
         if not networks:
             return update
@@ -307,7 +314,7 @@ def main():
                 ] if bond else None,
                 modified_labels=[
                     otypes.NetworkLabel(
-                        name=str(name),
+                        id=str(name),
                         host_nic=otypes.HostNic(
                             name=bond.get('name') if bond else interface
                         ),
