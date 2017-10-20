@@ -213,6 +213,8 @@ requirements:
 
 RETURN = '''
 ansible_swarm_service:
+  returned: always
+  type: dict
   description:
   - Dictionary of variables representing the current state of the service.
     Matches the module parameters format.
@@ -251,12 +253,14 @@ ansible_swarm_service:
     "restart_policy_window": 30
   }'
 changes:
+  returned: always
   description:
   - List of changed service attributes if a service has been altered,
     [] otherwhise
   type: list
   sample: ['container_labels', 'replicas']
 rebuilt:
+  returned: always
   description:
   - True if the service has been recreated (removed and created)
   type: bool
