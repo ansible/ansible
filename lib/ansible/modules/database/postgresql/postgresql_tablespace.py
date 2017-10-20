@@ -26,7 +26,7 @@ module: postgresql_tablespace
 short_description: Add or remove PostgreSQL tablespace from a remote host.
 description:
    - Add or remove PostgreSQL tablespace from a remote host.
-version_added: "2.4"
+version_added: "2.5"
 options:
   name:
     description:
