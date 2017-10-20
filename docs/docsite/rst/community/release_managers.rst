@@ -1,8 +1,16 @@
 Release Managers
 ================
 
-The release manager's (RM's) duty is to coordinate between developers, docs, and Tower to ensure
-a smooth release.
+.. contents:: Topics
+
+The release manager's purpose is to ensure a smooth release.  To achieve that goal, they need to
+coordinate between:
+
+* Developers with Commit privileges on the `Ansible github repository <https://github.com/ansible/ansible/>`_
+* Contributors without commit privileges
+* The community
+* Ansible documentation team
+* Ansible Tower team
 
 
 Pre-releases: What and Why

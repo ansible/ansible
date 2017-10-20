@@ -13,8 +13,16 @@
    In addition to this doc there's a few "templates" that I've linked to hat should come into the
    repo too (template for release announcement email, etc)
 
+   Talked with dharmabumstead in a Public IRC meeting and it sounds like having a separate area that
+   is only pointed to by the docs is best.  We'll either need to figure out how to build that
+   separate area or convert this to another format (Links are hard to cut and paste directly from
+   rst.  We either need to build these docs or move to a different format.
+
+
 Release Manager Process
 =======================
+
+.. contents:: Topics
 
 This document describes the step-by-step procedures for creating a release.
 
@@ -22,7 +30,7 @@ This document describes the step-by-step procedures for creating a release.
 Cherry-picking
 --------------
 
-* Create and populate a ``2.X.Y Blockers`` Github Project for each release (major or minor release).
+* Create and populate a ``2.X.Y Blockers`` GitHub Project for each release (major or minor release).
   Use it to track the blocker bugs for release.
 
     * Use the `2.4.1 Blocker project <https://github.com/ansible/ansible/projects/11>`_ as a template.
@@ -48,17 +56,17 @@ Pre beta1
 * Coordinate with Project Manager about syncing open PRs from the Roadmap blocker.  Roadmap blocker
   will have mainly features and higher level cards.
 
-   * Decide which open ones are to be punted vs finished.
-   * If to be finished one has a single PR, copy over.
-   * If to be finished one has multiple PRs, ask feature owner what the PRs are and move them all
-     over to the bug
+    * Decide which open ones are to be punted vs finished.
+    * If to be finished one has a single PR, copy over.
+    * If to be finished one has multiple PRs, ask feature owner what the PRs are and move them all
+      over to the bug
 
-* Get the permissions you will need:
+* Get the permissions you will need. Have jimi-c create you a user on the master mirror which is:
 
-   * Able to ssh and sudo on ``74.207.229.77`` (master mirror)
-   * Ops in ``#ansible``
-   * Access to http://jenkins.testing.ansible.com/
-   * Able to post to ``ansible-announce``, ``ansible-project``, and ``ansible-devel`` mailing lists
+    * Able to ssh and sudo on ``74.207.229.77`` (master mirror)
+    * Has Ops in ``#ansible``
+    * Has access to https://jenkins.testing.ansible.com/
+    * Able to post to ``ansible-announce``, ``ansible-project``, and ``ansible-devel`` mailing lists
 
 
 .. _first_release:
