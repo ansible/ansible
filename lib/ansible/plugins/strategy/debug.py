@@ -112,6 +112,7 @@ class Debugger(cmd.Cmd):
         self.scope['result'] = results[0]._result
         self.scope['results'] = results  # for debug of this debugger
         self.next_action = next_action
+        self.undoc_header = "Available variables: %s" % (', '.join(self.scope.keys()))
 
     def cmdloop(self):
         try:
