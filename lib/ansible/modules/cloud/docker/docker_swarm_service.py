@@ -370,7 +370,6 @@ EXAMPLES = '''
 from ansible.module_utils.docker_common import HAS_DOCKER_PY_2
 from ansible.module_utils.docker_common import DockerBaseClass
 from ansible.module_utils.docker_common import AnsibleDockerClient
-from ansible.module_utils.docker_common import docker_version
 from ansible.module_utils.basic import human_to_bytes
 
 from distutils.version import LooseVersion
@@ -379,6 +378,7 @@ try:
     from docker import utils
     from docker import types
     from docker.utils.types import Ulimit
+    from ansible.module_utils.docker_common import docker_version
 except:
     # missing docker-py handled in ansible.module_utils.docker
     pass
