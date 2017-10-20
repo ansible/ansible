@@ -4,15 +4,15 @@
 #
 #   - Comments begin with the '#' character
 #   - Blank lines are ignored
-#   - Top level entries are assumed to be groups, start with 'all' to have a full hierchy
+#   - Top level entries are assumed to be groups, start with 'all' to have a full hierarchy
 #   - Hosts must be specified in a group's hosts:
 #     and they must be a key (: terminated)
 #   - groups can have children, hosts and vars keys
-#   - Anything defined under a hosts is assumed to be a var
-#   - You can enter hostnames or ip addresses
-#   - A hostname/ip can be a member of multiple groups
+#   - Anything defined under a host is assumed to be a var
+#   - You can enter hostnames or IP addresses
+#   - A hostname/IP can be a member of multiple groups
 
-# Ex 1: Ungrouped hosts, put in 'all' or 'ungrouped' group
+# Ex 1: Ungrouped hosts, put them in 'all' or 'ungrouped' group
 ##all:
 ##  hosts:
 ##      green.example.com:
