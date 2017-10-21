@@ -441,7 +441,7 @@ options:
     description:
       - If C(yes), the VM will be update with new value.
       - Cause of the operations of the API and security reasons, I have disabled the update of the following parameters
-      - C(net, virtio, ide, sata, scsi). Per example updating C(net) update the MAC address and C(virtio) create always new disk...
+      - C(virtio, ide, sata, scsi). Per example updating C(virtio) create always new disk...
     default: "no"
     choices: [ "yes", "no" ]
     required: false
@@ -817,8 +817,6 @@ def create_vm(module, proxmox, vmid, newid, node, name, memory, cpu, cores, sock
             del kwargs['scsi']
         if 'ide' in kwargs:
             del kwargs['ide']
-        if 'net' in kwargs:
-            del kwargs['net']
 
     # Convert all dict in kwargs to elements. For hostpci[n], ide[n], net[n], numa[n], parallel[n], sata[n], scsi[n], serial[n], virtio[n]
     for k in kwargs.keys():
