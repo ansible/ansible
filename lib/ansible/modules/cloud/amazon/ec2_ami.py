@@ -138,31 +138,21 @@ extends_documentation_fragment:
 EXAMPLES = '''
 # Basic AMI Creation
 - ec2_ami:
-    aws_access_key: xxxxxxxxxxxxxxxxxxxxxxx
-    aws_secret_key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
     instance_id: i-xxxxxx
     wait: yes
     name: newtest
     tags:
       Name: newtest
       Service: TestService
-  register: image
 
 # Basic AMI Creation, without waiting
 - ec2_ami:
-    aws_access_key: xxxxxxxxxxxxxxxxxxxxxxx
-    aws_secret_key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-    region: xxxxxx
     instance_id: i-xxxxxx
     wait: no
     name: newtest
-  register: image
 
 # AMI Registration from EBS Snapshot
 - ec2_ami:
-    aws_access_key: xxxxxxxxxxxxxxxxxxxxxxx
-    aws_secret_key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-    region: xxxxxx
     name: newtest
     state: present
     architecture: x86_64
@@ -174,12 +164,9 @@ EXAMPLES = '''
         snapshot_id: snap-xxxxxxxx
         delete_on_termination: true
         volume_type: gp2
-  register: image
 
 # AMI Creation, with a custom root-device size and another EBS attached
 - ec2_ami:
-    aws_access_key: xxxxxxxxxxxxxxxxxxxxxxx
-    aws_secret_key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
     instance_id: i-xxxxxx
     name: newtest
     device_mapping:
@@ -191,12 +178,9 @@ EXAMPLES = '''
           size: YYY
           delete_on_termination: false
           volume_type: gp2
-  register: image
 
 # AMI Creation, excluding a volume attached at /dev/sdb
 - ec2_ami:
-    aws_access_key: xxxxxxxxxxxxxxxxxxxxxxx
-    aws_secret_key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
     instance_id: i-xxxxxx
     name: newtest
     device_mapping:
@@ -206,31 +190,21 @@ EXAMPLES = '''
           volume_type: gp2
         - device_name: /dev/sdb
           no_device: yes
-  register: image
 
 # Deregister/Delete AMI (keep associated snapshots)
 - ec2_ami:
-    aws_access_key: xxxxxxxxxxxxxxxxxxxxxxx
-    aws_secret_key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-    region: xxxxxx
     image_id: "{{ instance.image_id }}"
     delete_snapshot: False
     state: absent
 
 # Deregister AMI (delete associated snapshots too)
 - ec2_ami:
-    aws_access_key: xxxxxxxxxxxxxxxxxxxxxxx
-    aws_secret_key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-    region: xxxxxx
     image_id: "{{ instance.image_id }}"
     delete_snapshot: True
     state: absent
 
 # Update AMI Launch Permissions, making it public
 - ec2_ami:
-    aws_access_key: xxxxxxxxxxxxxxxxxxxxxxx
-    aws_secret_key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-    region: xxxxxx
     image_id: "{{ instance.image_id }}"
     state: present
     launch_permissions:
@@ -238,9 +212,6 @@ EXAMPLES = '''
 
 # Allow AMI to be launched by another account
 - ec2_ami:
-    aws_access_key: xxxxxxxxxxxxxxxxxxxxxxx
-    aws_secret_key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-    region: xxxxxx
     image_id: "{{ instance.image_id }}"
     state: present
     launch_permissions:
