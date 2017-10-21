@@ -259,6 +259,7 @@ def main():
         match = re.search(section_re, contents)
         if match:
             section = match.group('subsection')
+            indices = [match.start('subsection'), match.end('subsection')]
         else:
             res_args['msg'] = 'Pattern for before/after params did not match the given file: %s' % pattern
             res_args['changed'] = False
@@ -271,7 +272,7 @@ def main():
 
     if result[1] > 0 and section != result[0]:
         if pattern:
-            result = (contents.replace(section, result[0]), result[1])
+            result = (contents[:indices[0]] + result[0] + contents[indices[1]:], result[1])
         msg = '%s replacements made' % result[1]
         changed = True
         if module._diff:
