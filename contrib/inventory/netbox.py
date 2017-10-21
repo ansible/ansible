@@ -22,6 +22,7 @@ import sys
 import yaml
 import argparse
 import requests
+
 try:
     import json
 except ImportError:
@@ -48,39 +49,6 @@ def cli_arguments():
 
 
 # Utils.
-def reduce_path(source_dict, key_path):
-    for key in key_path:
-        if isinstance(source_dict.get(key), dict) and len(key_path) > 1:
-            source_dict = source_dict.get(key)
-            key_path = key_path[1:]
-            reduce_path(source_dict, key_path)
-        else:
-            return source_dict[key]
-
-
-def get_value_by_path(source_dict, key_path, ignore_key_error=False):
-    """Get key value from nested dict by path.
-
-    Args:
-        source_dict: The dict that we look into.
-        key_path: The path of key in dot notion. e.g. "parent_dict.child_dict.key_name"
-        ignore_key_error: Ignore KeyError if the key not found in provided path.
-
-    Returns:
-        If key found in provided path, it will be returned.
-        If not, None will be returned.
-    """
-
-    try:
-        key_output = reduce_path(source_dict, key_path)
-    except KeyError as key_name:
-        if ignore_key_error:
-            key_output = None
-        else:
-            sys.exit("The key %s is not found. Please remember, Python is case sensitive." % key_name)
-    return key_output
-
-
 def open_yaml_file(yaml_file):
     """Open YAML file.
 
@@ -119,14 +87,10 @@ class NetboxAsInventory(object):
         self.host = script_args.host
 
         # Script configuration.
-        main_config_key = "netbox"
-        script_config = script_config_data.get(main_config_key)
-        if script_config:
-            self.api_url = script_config["main"].get('api_url')
-            self.group_by = script_config.setdefault("group_by", {})
-            self.hosts_vars = script_config.setdefault("hosts_vars", {})
-        else:
-            sys.exit("The key '%s' is not found in config file." % main_config_key)
+        self.script_config = script_config_data
+        self.api_url = self._config(["main", "api_url"])
+        self.group_by = self._config(["group_by"], default={})
+        self.hosts_vars = self._config(["hosts_vars"], default={})
 
         # Get value based on key.
         self.key_map = {
@@ -135,6 +99,66 @@ class NetboxAsInventory(object):
             "custom": "value",
             "ip": "address"
         }
+
+    def _get_value_by_path(self, source_dict, key_path,
+                           ignore_key_error=False, default=""):
+        """Get key value from nested dict by path.
+
+        Args:
+            source_dict: The dict that we look into.
+            key_path: A list has the path of key. e.g. [parent_dict, child_dict, key_name].
+            ignore_key_error: Ignore KeyError if the key is not found in provided path.
+            default: Set default value if the key is not found in provided path.
+
+        Returns:
+            If key is found in provided path, it will be returned.
+            If ignore_key_error is True, None will be returned.
+            If default is defined and key is not found, default will be returned.
+        """
+
+        key_value = ""
+        try:
+            # Reduce key path, where it get value value from nested dict.
+            # a replacement for buildin reduce function.
+            for key in key_path:
+                if isinstance(source_dict.get(key), dict) and len(key_path) > 1:
+                    source_dict = source_dict.get(key)
+                    key_path = key_path[1:]
+                    self._get_value_by_path(source_dict, key_path,
+                                            ignore_key_error=ignore_key_error, default=default)
+                else:
+                    key_value = source_dict[key]
+
+        # How to set the key value, if the key was not found.
+        except KeyError as key_name:
+            if default:
+                key_value = default
+            elif not default and ignore_key_error:
+                key_value = None
+            elif not key_value and not ignore_key_error:
+                sys.exit("The key %s is not found. Please remember, Python is case sensitive." % key_name)
+        return key_value
+
+    def _config(self, key_path, default=""):
+        """Get value from config var.
+
+        Args:
+            key_path: A list has the path of the key.
+            default: Default value if the key is not found.
+
+        Returns:
+            The value of the key from config file or the default value.
+        """
+        config = self.script_config.setdefault("netbox", {})
+        value = self._get_value_by_path(config, key_path, ignore_key_error=True, default=default)
+
+        if value:
+            key_value = value
+
+        else:
+            sys.exit("The key '%s' is not found in config file." % ".".join(key_path))
+
+        return key_value
 
     @staticmethod
     def get_hosts_list(api_url, specific_host=None):
@@ -221,7 +245,7 @@ class NetboxAsInventory(object):
                 # The groups that will be used to group hosts in the inventory.
                 for group in groups_categories[category]:
                     # Try to get group value. If the section not found in netbox, this also will print error message.
-                    group_value = get_value_by_path(data_dict, [group, key_name])
+                    group_value = self._get_value_by_path(data_dict, [group, key_name])
                     inventory_dict = self.add_host_to_group(server_name, group_value, inventory_dict)
 
         # If no groups in "group_by" section, the host will go to catch-all group.
@@ -265,7 +289,7 @@ class NetboxAsInventory(object):
                     # This is because "custom_fields" has more than 1 type.
                     # Values inside "custom_fields" could be a key:value or a dict.
                     if isinstance(data_dict.get(var_data), dict):
-                        var_value = get_value_by_path(data_dict, [var_data, key_name], ignore_key_error=True)
+                        var_value = self._get_value_by_path(data_dict, [var_data, key_name], ignore_key_error=True)
                     else:
                         var_value = data_dict.get(var_data)
 
@@ -347,6 +371,7 @@ def main():
     netbox = NetboxAsInventory(args, config_data)
     ansible_inventory = netbox.generate_inventory()
     netbox.print_inventory_json(ansible_inventory)
+
 
 # Run main.
 if __name__ == "__main__":
