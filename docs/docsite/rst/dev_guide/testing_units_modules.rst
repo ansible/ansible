@@ -2,6 +2,8 @@
 Unit Testing Ansible Modules
 ****************************
 
+.. highlight:: python
+
 .. contents:: Topics
 
 Introduction
