@@ -42,7 +42,7 @@ options:
     description:
       - The target architecture of the image to register
     required: false
-    default: null
+    default: x86_64
   kernel_id:
     version_added: "2.3"
     description:
@@ -54,7 +54,7 @@ options:
     description:
       - The virtualization type of the image to register
     required: false
-    default: null
+    default: hvm
   root_device_name:
     version_added: "2.3"
     description:
@@ -70,7 +70,7 @@ options:
   wait_timeout:
     description:
       - How long before wait gives up, in seconds.
-    default: 300
+    default: 900
   state:
     description:
       - Create or deregister/delete AMI.
