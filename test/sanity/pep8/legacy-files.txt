@@ -206,7 +206,6 @@ lib/ansible/modules/network/eos/eos_eapi.py
 lib/ansible/modules/network/eos/eos_facts.py
 lib/ansible/modules/network/eos/eos_system.py
 lib/ansible/modules/network/eos/eos_user.py
-lib/ansible/modules/network/f5/bigip_gtm_facts.py
 lib/ansible/modules/network/f5/bigip_virtual_server.py
 lib/ansible/modules/network/fortios/fortios_config.py
 lib/ansible/modules/network/fortios/fortios_ipv4_policy.py
