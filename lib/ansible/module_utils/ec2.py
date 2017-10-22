@@ -401,8 +401,6 @@ def camel_dict_to_snake_dict(camel_dict, reversible=False, ignore_list=()):
         return checked_list
 
     snake_dict = {}
-    if ignore_list is None:
-        ignore_list = []
     for k, v in camel_dict.items():
         if isinstance(v, dict) and k not in ignore_list:
             snake_dict[_camel_to_snake(k, reversible=reversible)] = camel_dict_to_snake_dict(v, reversible)
