@@ -39,10 +39,6 @@ $result = @{
     changed = $false
 }
 
-if ($source) {
-    $source = $source.Tolower()
-}
-
 if ($upgrade)
 {
     Add-DeprecationWarning -obj $result -message "Parameter upgrade=yes is replaced with state=latest" -version 2.6
