@@ -291,6 +291,7 @@ def handle_enabled(module, result, service_path):
             result['enabled'] = not enabled
             result['preset'] = not preset
 
+
 def handle_state(module, result, service_path):
     """Set service running state as needed.
 
