@@ -154,8 +154,8 @@ class LookupModule(LookupBase):
 
             # Set PASSWORD_STORE_DIR if passwordstore is set
             if self.paramvals['passwordstore']:
-                if os.path.isdir(self.paramvals['passwordstore']):
-                    os.environ['PASSWORD_STORE_DIR'] = self.paramvals['passwordstore']
+                if os.path.isdir(os.path.expanduser(self.paramvals['passwordstore'])):
+                    os.environ['PASSWORD_STORE_DIR'] = os.path.expanduser(self.paramvals['passwordstore'])
                 else:
                     raise AnsibleError('Passwordstore directory \'{}\' does not exist'.format(self.paramvals['passwordstore']))
 
