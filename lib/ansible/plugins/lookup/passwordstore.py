@@ -21,9 +21,6 @@ DOCUMENTATION = """
       passwordstore:
         description: location of the password store
         default: '~/.password-store'
-      directory:
-        description: directory of the password store
-        default: null
         env:
           - name: PASSWORD_STORE_DIR
       create:
@@ -155,12 +152,12 @@ class LookupModule(LookupBase):
                 else:
                     raise AnsibleError("{} is not a correct value for length".format(self.paramvals['length']))
 
-            # Set PASSWORD_STORE_DIR if directory is set
-            if self.paramvals['directory']:
-                if os.path.isdir(self.paramvals['directory']):
-                    os.environ['PASSWORD_STORE_DIR'] = self.paramvals['directory']
+            # Set PASSWORD_STORE_DIR if passwordstore is set
+            if self.paramvals['passwordstore']:
+                if os.path.isdir(self.paramvals['passwordstore']):
+                    os.environ['PASSWORD_STORE_DIR'] = self.paramvals['passwordstore']
                 else:
-                    raise AnsibleError('Passwordstore directory \'{}\' does not exist'.format(self.paramvals['directory']))
+                    raise AnsibleError('Passwordstore directory \'{}\' does not exist'.format(self.paramvals['passwordstore']))
 
     def check_pass(self):
         try:
@@ -232,7 +229,7 @@ class LookupModule(LookupBase):
         result = []
         self.paramvals = {
             'subkey': 'password',
-            'directory': variables.get('passwordstore'),
+            'passwordstore': variables.get('passwordstore'),
             'create': False,
             'returnall': False,
             'overwrite': False,
