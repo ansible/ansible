@@ -76,8 +76,6 @@ extends_documentation_fragment:
     - ec2
 author: "Rick Mendes (@rickmendes) <rmendes@illumina.com>"
 notes:
-   - This module will return C(public_ip) on success, which will contain the
-     public IP address associated with the device.
    - There may be a delay between the time the EIP is assigned and when
      the cloud instance is reachable via the new address. Use wait_for and
      pause to delay further playbook execution until the instance is reachable,
@@ -131,10 +129,6 @@ EXAMPLES = '''
   debug:
     msg: "Allocated IP is {{ eip.public_ip }}"
 
-- name: another way of allocating an elastic IP without associating it to anything
-  ec2_eip:
-    state: 'present'
-
 - name: provision new instances with ec2
   ec2:
     keypair: mykey
@@ -159,6 +153,19 @@ EXAMPLES = '''
 - name: output the IP
   debug:
     msg: "Allocated IP inside a VPC is {{ eip.public_ip }}"
+'''
+
+RETURN = '''
+allocation_id:
+  description: allocation_id of the elastic ip
+  returned: on success
+  type: string
+  sample: eipalloc-51aa3a6c
+public_ip:
+  description: an elastic ip address
+  returned: on success
+  type: string
+  sample: 52.88.159.209
 '''
 
 try:
