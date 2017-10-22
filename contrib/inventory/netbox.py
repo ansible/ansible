@@ -295,7 +295,7 @@ class NetboxAsInventory(object):
 
                     if var_value:
                         # Remove CIDR from IP address.
-                        if host_vars.get("ip") and var_data in host_vars["ip"].values():
+                        if "ip" in host_vars and var_data in host_vars["ip"].values():
                             var_value = var_value.split("/")[0]
                         # Add var to host dict.
                         host_vars_dict.update({var_name: var_value})
@@ -330,7 +330,7 @@ class NetboxAsInventory(object):
 
         inventory_dict = dict()
         netbox_hosts_list = self.get_hosts_list(self.api_url, self.host)
-        if isinstance(netbox_hosts_list, dict) and netbox_hosts_list.get("results"):
+        if isinstance(netbox_hosts_list, dict) and "results" in netbox_hosts_list:
             netbox_hosts_list = netbox_hosts_list["results"]
 
         if netbox_hosts_list:
