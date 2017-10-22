@@ -26,7 +26,8 @@ EXPECTED_SNAKIFICATION = {
     'AllUpperButPLURALs': 'all_upper_but_plurals',
     'TargetGroupARNs': 'target_group_arns',
     'HTTPEndpoints': 'http_endpoints',
-    'PLURALs': 'plurals'
+    'PLURALs': 'plurals',
+    'DBInstanceIdentifier': 'db_instance_identifier'
 }
 
 EXPECTED_REVERSIBLE = {
@@ -55,6 +56,13 @@ class SnakeToCamelTestCase(unittest.TestCase):
     def test_snake_to_camel_reversed(self):
         for (k, v) in EXPECTED_REVERSIBLE.items():
             self.assertEqual(_snake_to_camel(v, capitalize_first=True), k)
+
+    # this fails with AssertionError: 'DbInstanceIdentifier' != 'DBInstanceIdentifier'
+    # making function unusable for function call conversion
+
+    # def test_snake_to_camel_reversed(self):
+    #     for (k, v) in {'DBInstanceIdentifier': 'db_instance_identifier'}.items():
+    #         self.assertEqual(_snake_to_camel(v, capitalize_first=True), k)
 
 
 class CamelToSnakeAndBackTestCase(unittest.TestCase):

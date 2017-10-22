@@ -58,7 +58,9 @@
                 "rds:ModifyDBParameterGroup",
                 "rds:ListTagsForResource",
                 "rds:AddTagsToResource",
-                "rds:RemoveTagsFromResource"
+                "rds:RemoveTagsFromResource",
+                "rds:CreateDBInstance",
+                "ModifyDBInstance"
             ],
             "Resource": [
                 "arn:aws:rds:{{aws_region}}:{{aws_account}}:pg:ansible-test*"
@@ -75,7 +77,9 @@
                 "rds:ModifyDBSubnetGroup",
                 "rds:ListTagsForResource",
                 "rds:AddTagsToResource",
-                "rds:RemoveTagsFromResource"
+                "rds:RemoveTagsFromResource",
+                "rds:CreateDBInstance",
+                "ModifyDBInstance"
             ],
             "Resource": [
                 "arn:aws:rds:{{aws_region}}:{{aws_account}}:subgrp:ansible-test*"

@@ -37,7 +37,7 @@ import time
 import datetime
 import copy
 import json
-import botocore.session
+botocore = pytest.importorskip("botocore")
 boto3 = pytest.importorskip("boto3")
 boto = pytest.importorskip("boto")
 
@@ -187,6 +187,22 @@ ansible_module_template = AnsibleAWSModule(argument_spec=rds_i.argument_spec, re
 #    basic._ANSIBLE_ARGS = to_bytes('{ "ANSIBLE_MODULE_ARGS": { "id":"fred", "port": 342} }')
 
 
+def prepare_rds_operations_model_for_diff(client_mock):
+    """make a botocore client mock ready to give the RDS keys
+
+    we want to get an accurate operations model out of botocore
+    which unfortunately means instatiating a real connection which
+    means test cases might fail if we don't have the setup to
+    connect to AWS!  We use this in a mock object anyway since we
+    don't want to actually change anything on an RDS during a unit
+    test.
+    """
+    session = botocore.session.get_session()
+    example_conn = session.create_client('rds', region_name='us-west-2')
+    operations_model = example_conn._service_model.operation_model("CreateDBInstance")
+    client_mock._service_model.operation_model.return_value = operations_model
+
+
 def test_modify_should_change_instance_and_return_changed_if_param_changes():
     params = {
         "port": 342,
@@ -196,11 +212,13 @@ def test_modify_should_change_instance_and_return_changed_if_param_changes():
         "allocated_storage": 5,
         "storage_type": "gp",
         "apply_immediately": True,
-        "master_username": None
+        "master_username": None,
     }
 
     rds_client_double = MagicMock()
+    prepare_rds_operations_model_for_diff(rds_client_double)
     rds_instance_entry_mock = rds_client_double.describe_db_instances.return_value.__getitem__.return_value.__getitem__
+    rds_client_double.list_tags_for_resource.return_value = {'Taglist': []}
 
     instance = describe_rds_return['DBInstances'][0]
     new_instance = describe_rds_new_return['DBInstances'][0]
@@ -211,9 +229,14 @@ def test_modify_should_change_instance_and_return_changed_if_param_changes():
 
     module_double = MagicMock(ansible_module_template)
     module_double.params = params
+    module_double.check_mode = False
 
     with patch.object(time, 'sleep', sleeper_double):
         mod_return = rds_i.modify_db_instance(module_double, rds_client_double, instance)
+
+    assert module_double.fail_json.call_count == 0, "fail_json was called unexpectedly during function"
+    assert module_double.fail_json_aws.call_count == 0, "fail_json_aws was called unexpectedly during function"
+    assert module_double.exit_json.call_count == 0, "exit_json was called unexpectedly during function"
 
     print("rds calls:\n" + str(rds_client_double.mock_calls))
     print("module calls:\n" + str(module_double.mock_calls))
@@ -223,12 +246,11 @@ def test_modify_should_change_instance_and_return_changed_if_param_changes():
     mod_db_fn.assert_called_with(DBInstanceIdentifier='fakedb', DBPortNumber=342,
                                  NewDBInstanceIdentifier='fakedb-too', StorageType='gp',
                                  ApplyImmediately=True)
-    module_double.fail_json.assert_not_called()
     assert mod_return["changed"], "modify failed to return changed"
 
 
-# FIXME - make a more interesting set of changes here.
 def test_modify_should_retry_state_failures():
+    # FIXME - make a more interesting set of changes here.
     params = {
         "port": 342,
         "force_password_update": True,
@@ -238,6 +260,7 @@ def test_modify_should_retry_state_failures():
     }
 
     rds_client_double = MagicMock()
+    prepare_rds_operations_model_for_diff(rds_client_double)
     rds_client_double.describe_db_instances.return_value = describe_rds_new_return
     mod_db_fn = rds_client_double.modify_db_instance
 
@@ -255,14 +278,19 @@ def test_modify_should_retry_state_failures():
     with patch.object(time, 'sleep', sleeper_double):
         mod_return = rds_i.modify_db_instance(module_double, rds_client_double, instance)
 
+    assert module_double.fail_json.call_count == 0
+    assert module_double.fail_json_aws.call_count == 0
+
     print("rds calls:\n" + str(rds_client_double.mock_calls))
     print("module calls:\n" + str(module_double.mock_calls))
 
     mod_db_fn.assert_called_with(DBInstanceIdentifier='fakedb-too', DBPortNumber=342,
                                  StorageType='gp')
-    module_double.fail_json.assert_not_called()
-    module_double.fail_json_aws.assert_not_called()
     assert mod_return["changed"], "modify failed to return changed"
+
+
+# FIXME: testing of deletion of parameters needs to be tested
+# properly.
 
 
 def test_modify_should_modify_new_db_and_ignore_old_param_if_new_exists_and_old_doesnt():
@@ -276,6 +304,7 @@ def test_modify_should_modify_new_db_and_ignore_old_param_if_new_exists_and_old_
     }
 
     rds_client_double = MagicMock()
+    prepare_rds_operations_model_for_diff(rds_client_double)
     rds_instance_entry_mock = rds_client_double.describe_db_instances.return_value.__getitem__.return_value.__getitem__
     rds_instance_entry_mock.return_value = describe_rds_return['DBInstances'][0]
     mod_db_fn = rds_client_double.modify_db_instance
@@ -307,6 +336,7 @@ def test_modify_should_return_false_in_changed_if_param_same():
     }
 
     rds_client_double = MagicMock()
+    prepare_rds_operations_model_for_diff(rds_client_double)
     rds_instance_entry_mock = rds_client_double.describe_db_instances.return_value.__getitem__.return_value.__getitem__
     my_instance = copy.deepcopy(describe_rds_return['DBInstances'][0])
     my_instance['DBInstanceIdentifier'] = 'fakedb-too'
@@ -346,6 +376,7 @@ def test_modify_should_do_no_changes_if_check_mode_set():
     }
 
     rds_client_double = MagicMock()
+    prepare_rds_operations_model_for_diff(rds_client_double)
     rds_instance_entry_mock = rds_client_double.describe_db_instances.return_value.__getitem__.return_value.__getitem__
 
     instance = describe_rds_return['DBInstances'][0]
@@ -423,10 +454,14 @@ def test_modify_should_do_no_changes_if_check_mode_set():
 #     #if we have the same name we leave it
 
 
+fake_connection_with_ops = MagicMock()
+prepare_rds_operations_model_for_diff(fake_connection_with_ops)
+
+
 def test_diff_should_be_true_if_something_changed():
     instance_before = {"endpoint": {"port": 342}, "port": 111, "iops": 1234, "id": "fred"}
     instance_after = {"endpoint": {"port": 342}, "port": 342, "iops": 3924, "id": "fred"}
-    diff = rds.instance_facts_diff(instance_before, instance_after)
+    diff = rds.instance_facts_diff(fake_connection_with_ops, instance_before, instance_after)
     print("diff:\n" + str(diff))
     assert(not not diff)
 
@@ -434,7 +469,7 @@ def test_diff_should_be_true_if_something_changed():
 def test_diff_should_be_true_if_only_the_port_changed():
     params_a = {"endpoint": {"port": 342}}
     params_b = {"endpoint": {"port": 345}}
-    diff = rds.instance_facts_diff(params_a, params_b)
+    diff = rds.instance_facts_diff(fake_connection_with_ops, params_a, params_b)
     print("diff:\n" + str(diff))
     assert(not not diff)
 
@@ -449,6 +484,7 @@ def simple_instance_list(status, pending):
 def test_await_should_wait_till_not_pending():
     sleeper_double = MagicMock()
     rds_client_double = MagicMock()
+    rds_client_double.list_tags_for_resource.return_value = {'Taglist': []}
     rds_client_double.describe_db_instances.side_effect = [
         simple_instance_list('rebooting', {"a": "b", "c": "d"}),
         simple_instance_list('available', {"c": "d", "e": "f"}),
@@ -483,6 +519,7 @@ db_instance_gone_error = ClientError(error_response, operation_name)
 def test_await_should_wait_for_delete_and_handle_none():
     sleeper_double = MagicMock()
     rds_client_double = MagicMock()
+    rds_client_double.list_tags_for_resource.return_value = {'Taglist': []}
     rds_client_double.describe_db_instances.side_effect = MagicMock(side_effect=[
         simple_instance_list('rebooting', {"a": "b", "c": "d"}),
         simple_instance_list('available', {"a": "b", "c": "d"}),
@@ -515,6 +552,7 @@ def test_update_rds_tags_should_check_then_add_and_remove_appropriate_tags():
     params = {
         "tags": dict(newtaga="avalue", oldtagb="bvalue"),
         "db_instance_identifier": "fakedb-too",
+        "purge_tags": True,
     }
     rds_client_double = MagicMock()
 
@@ -543,6 +581,7 @@ def test_update_rds_tags_should_delete_if_empty_tags():
     params = {
         "tags": {},
         "db_instance_identifier": "fakedb-too",
+        "purge_tags": True,
     }
     rds_client_double = MagicMock()
     mk_tag_fn = rds_client_double.add_tags_to_resource
@@ -573,9 +612,10 @@ def test_update_rds_tags_should_delete_if_empty_tags():
 
 
 # in the case you don't want to change anything then you should not call update_tags
-def test_update_rds_tags_should_blank_if_called_with_no_tags():
+def test_update_rds_tags_should_blank_if_called_with_no_tags_and_purge_tags_set():
     params = {
         "db_instance_identifier": "fakedb-too",
+        "purge_tags": True,
     }
     rds_client_double = MagicMock()
     mk_tag_fn = rds_client_double.add_tags_to_resource
@@ -633,6 +673,7 @@ def test_camel_should_convert_varied_variables_correctly():
     assert rds_i.camel('multi_az') == 'MultiAZ'
     assert rds_i.camel('vpc_security_group_ids') == 'VpcSecurityGroupIds'
     assert rds_i.camel('db_name') == 'DBName'
+    assert rds_i.camel('db_instance_id') == 'DBInstanceId'
     assert rds_i.camel('tde_credential_arn') == 'TdeCredentialArn'
     assert rds_i.camel('performance_insights_kms_key_id') == 'PerformanceInsightsKMSKeyId'
 
@@ -649,6 +690,10 @@ def test_given_apply_immediately_and_wait_modify_should_call_await_function():
     }
 
     rds_client_double = MagicMock()
+    rds_client_double.list_tags_for_resource.return_value = {'Taglist': []}
+
+    prepare_rds_operations_model_for_diff(rds_client_double)
+
     rds_instance_entry_mock = rds_client_double.describe_db_instances.return_value.__getitem__.return_value.__getitem__
     rds_instance_entry_mock.return_value = describe_rds_return['DBInstances'][0]
     mod_db_fn = rds_client_double.modify_db_instance
@@ -680,8 +725,8 @@ class LogCalledGood(Exception):
 
 def test_major_functions_should_log_at_least_once():
     for i in [rds_i.create_db_instance, rds_i.replicate_db_instance,
-              rds_i.delete_db_instance, rds_i.update_rds_tags, rds_i.modify_db_instance,
-              rds_i.promote_db_instance, rds_i.reboot_db_instance,
+              rds_i.ensure_absent_db_instance, rds_i.update_rds_tags, rds_i.modify_db_instance,
+              rds_i.promote_db_instance, rds_i.ensure_rebooted_db_instance,
               rds_i.restore_db_instance]:
         instance_double = MagicMock()
         rds_client_double = MagicMock()
@@ -690,7 +735,7 @@ def test_major_functions_should_log_at_least_once():
         rds_i.main_logger.module = module_double
         passed = False
         try:
-            if i is rds_i.modify_db_instance:
+            if i is rds_i.modify_db_instance or i is rds_i.update_rds_tags or i is rds_i.promote_db_instance:
                 i(module_double, rds_client_double, instance_double)
             else:
                 i(module_double, rds_client_double)
@@ -723,19 +768,7 @@ def test_select_parameters_meta_should_select_relevant_parameters_for_call():
 
 
 def test_prepare_params_for_modify_should_ignore_params_modify_cant_handle():
-    before_facts = {
-        "port": 342,
-        "engine": "postgres",
-        "master_username": "hello",
-        "db_instance_class": "t1-pretty-small-really",
-        "force_password_update": True,
-        "db_instance_identifier": "fakedb-too",  # should not yet exist
-        "old_db_instance_identifier": "fakedb",  # should be currently existing
-        "allocated_storage": 5,
-        "storage_type": "gp2",
-        "apply_immediately": True,
-        "db_name": "dbname_stuck_like_this",
-    }
+    instance = describe_rds_return['DBInstances'][0]
     set_module_args({
         "port": 342,
         "engine": "postgres",
@@ -756,13 +789,13 @@ def test_prepare_params_for_modify_should_ignore_params_modify_cant_handle():
     # immutable params should be blocked with an exception
 
     with pytest.raises(SystemExit):
-        rds_i.prepare_params_for_modify(module, before_facts)
+        rds_i.prepare_params_for_modify(module, fake_connection_with_ops, instance)
 
-    # tags shoudl be ignored (since they are updated in other ways)
+    # tags should be ignored (since they are updated in other ways)
     set_module_args({
         "port": 342,
         "engine": "postgres",
-        "master_username": "hello",
+        "master_username": "fakeuser",
         "db_instance_class": "t1-pretty-small-really",
         "force_password_update": True,
         "db_instance_identifier": "fakedb-too",  # should not yet exist
@@ -776,23 +809,37 @@ def test_prepare_params_for_modify_should_ignore_params_modify_cant_handle():
     module = rds_i.setup_module_object()
 
     # first time adding tags from none
-    params = rds_i.prepare_params_for_modify(module, before_facts)
+    params = rds_i.prepare_params_for_modify(module, fake_connection_with_ops, instance)
     assert 'Tags' not in params
 
     # this time changing the tags
-    before_facts = {
-        "port": 342,
-        "engine": "postgres",
-        "master_username": "hello",
-        "db_instance_class": "t1-pretty-small-really",
-        "force_password_update": True,
-        "db_instance_identifier": "fakedb-too",  # should not yet exist
-        "old_db_instance_identifier": "fakedb",  # should be currently existing
-        "allocated_storage": 5,
-        "storage_type": "gp2",
-        "apply_immediately": True,
-        "db_name": "dbname_stuck_like_this",
-        "tags": {"a": "e", "c": "f"},
-    }
-    params = rds_i.prepare_params_for_modify(module, before_facts)
+    instance['Tags'] = {'TagList': [{"Key": "oldtagb", "Value": "bvalue"},
+                                    {"Key": "oldtagc", "Value": "cvalue"}, ]}
+
+    params = rds_i.prepare_params_for_modify(module, fake_connection_with_ops, instance)
     assert 'Tags' not in params
+
+
+def test_fixup_return_values():
+    instance = describe_rds_return['DBInstances'][0]
+
+    ret1 = dict(instance=instance, changed=True)
+    rds_i.fixup_return_values(ret1)
+    assert ret1['instance']['db_instance_identifier'] == 'fakedb'
+    assert ret1['instance']['engine'] == 'postgres'
+
+    ret2 = dict(instance=None, changed=True)
+    rds_i.fixup_return_values(ret2)
+    assert ret2['changed'] is True
+    assert 'instance' not in ret2
+
+    ret3 = dict(changed=True)
+    rds_i.fixup_return_values(ret3)
+    assert ret3['changed'] is True
+    assert 'instance' not in ret3
+
+    ret4 = dict(instance=instance, changed=True)
+    del(ret4['instance']['Engine'])
+    rds_i.fixup_return_values(ret4)
+    assert ret4['instance']['db_instance_identifier'] == 'fakedb'
+    assert 'engine' not in ret4['instance']

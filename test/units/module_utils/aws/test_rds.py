@@ -9,7 +9,11 @@ from ansible.module_utils.aws.rds import get_db_instance, instance_to_facts, get
 import unittest
 import datetime
 import copy
+import pytest
 from dateutil.tz import tzutc
+botocore = pytest.importorskip("botocore")
+boto3 = pytest.importorskip("boto3")
+boto = pytest.importorskip("boto")
 
 
 class FakeResource():
@@ -128,6 +132,13 @@ class FakeResource():
                     u'Port': 5432,
                     u'DBInstanceIdentifier': 'fakeDBIDstring'}]}
 
+    def list_tags_for_resource(self, ResourceName=None):
+        return {'Taglist': []}
+
+    session = botocore.session.get_session()
+    example_conn = session.create_client('rds', region_name='us-west-2')
+    _service_model = example_conn._service_model
+
 
 db_id_key = 'db_instance_identifier'
 
@@ -167,11 +178,11 @@ class RDSUtilsTestCase(unittest.TestCase):
     def test_diff_should_compare_important_rds_attributes(self):
         conn = FakeResource()
         db_inst = instance_to_facts(get_db_instance(conn, "fakeDBIDstring"))
-        assert len(instance_facts_diff(db_inst, db_inst)
+        assert len(instance_facts_diff(conn, db_inst, db_inst)
                    ) == 0, "comparison of identical instances shows difference!"
-        assert not (instance_facts_diff(db_inst, db_inst)
+        assert not (instance_facts_diff(conn, db_inst, db_inst)
                     ), "comparsion of identical instances is not false!"
         bigger_inst = copy.deepcopy(db_inst)
         bigger_inst["allocated_storage"] = db_inst["allocated_storage"] + 5
-        assert len(instance_facts_diff(db_inst, bigger_inst)
+        assert len(instance_facts_diff(conn, db_inst, bigger_inst)
                    ) > 0, "comparison of differing instances is empty!"

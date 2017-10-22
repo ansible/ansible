@@ -308,7 +308,7 @@ import time
 import traceback
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict, AWSRetry, snake_dict_to_camel_dict
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, AWSRetry
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict, compare_aws_tags
 from ansible.module_utils.aws.rds import get_db_instance, instance_to_facts, instance_facts_diff
 from ansible.module_utils.aws.rds import DEFAULT_PORTS, DB_ENGINES, LICENSE_MODELS
@@ -317,6 +317,26 @@ try:
     from botocore import xform_name
 except ImportError:
     pass  # caught by imported AnsibleAWSModule
+
+
+# NOTE ON DATA STRUCTURES AND NAMING:
+
+# We use raw dictionaries in two variants as our main data structures.  One format is the
+# snake_case formatted facts dictionaries whilst the other is the CamelCased AWS parameter
+# dictionaries.  We try to keep data for as long as reasonable in the format it arrived
+# in.
+#
+#   - Generally AWS CamelCased formatted dictionaries of instance data are named instance*
+#   - Generally Ansible snake_case formatted dictionaries of facts about instaces are named fact*
+#
+# the one exception is that our final return is in fact format but the return parameter
+# with the instance facts is called "instance".
+#
+# Dicts are chosen rather than than objects becuase
+#   - they match with use elsewhere (AWS returns a dict, facts are passed in dicts)
+#   - they are somewhat simpler to manipluate in many cases
+#
+
 
 # Q is a simple logging framework NOT suitable for production use but handy in development.
 # try:
@@ -385,6 +405,14 @@ main_logger = the_logger()
 
 
 def await_resource(conn, instance_id, status, module, await_pending=None):
+    """wait for a resource to change into a given status
+
+    Await resource repeatedly polls an RDS waiting for it to change
+    into a given status or disappear.
+
+    N.B. If the resource disappears it will return None and this mightn
+    happen while awaiting _any_ state.
+    """
     wait_timeout = module.params.get('wait_timeout') + time.time()
     # Refresh the resource immediately in case we just changed it's state;
     # should we sleep first?
@@ -436,11 +464,11 @@ def create_db_instance(module, conn):
             module.fail_json_aws(e, msg="trying to create instance")
 
     if module.params.get('wait'):
-        resource = await_resource(conn, instance_id, 'available', module)
+        instance = await_resource(conn, instance_id, 'available', module)
     else:
-        resource = get_db_instance(conn, instance_id)
+        instance = get_db_instance(conn, instance_id)
 
-    return dict(changed=changed, instance=instance_to_facts(resource), response=response)
+    return dict(changed=changed, instance=instance, response=response)
 
 
 def replicate_db_instance(module, conn):
@@ -472,75 +500,15 @@ def replicate_db_instance(module, conn):
             module.fail_json_aws(e, msg="trying to create read replica of instance")
 
     if module.params.get('wait'):
-        resource = await_resource(conn, instance_id, 'available', module)
+        instance = await_resource(conn, instance_id, 'available', module)
     else:
-        resource = get_db_instance(conn, instance_id)
+        instance = get_db_instance(conn, instance_id)
 
-    return dict(changed=changed, instance=instance_to_facts(resource), response=response)
-
-
-def delete_db_instance(module, conn):
-    main_logger.log(30, "delete_db_instance called")
-    try:
-        del(module.params['storage_type'])
-    except KeyError:
-        pass
-
-    params = select_parameters_meta(module, conn, 'DeleteDBInstance')
-    instance_id = module.params.get('db_instance_identifier')
-    snapshot = module.params.get('final_db_snapshot_identifier')
-
-    result = get_db_instance(conn, instance_id)
-    if not result:
-        return dict(changed=False)
-    if result['DBInstanceStatus'] == 'deleting':
-        return dict(changed=False)
-    if snapshot:
-        params["SkipFinalSnapshot"] = False
-        params["FinalDBSnapshotIdentifier"] = snapshot
-        del(module.params['snapshot'])
-    else:
-        params["SkipFinalSnapshot"] = True
-    if module.check_mode:
-        module.exit_json(changed=True, delete_db_instance_params=params)
-
-    # FIXME: it's possible to get "trying to delete instance: An error occurred
-    # (InvalidDBInstanceState) when calling the DeleteDBInstance operation:
-    # Cannot delete DB Instance with a read replica still creating",
-
-    # our call should retry here.
-
-    try:
-        response = conn.delete_db_instance(**params)
-        instance = result
-    except Exception as e:
-        module.fail_json_aws(e, msg="trying to delete instance")
-
-    # If we're not waiting for a delete to complete then we're all done
-    # so just return
-    if not module.params.get('wait'):
-        return dict(changed=True, response=response)
-    try:
-        instance = await_resource(conn, instance_id, 'deleted', module)
-    except botocore.exceptions.ClientError as e:
-        if e.code == 'DBInstanceNotFound':
-            return dict(changed=True)
-        else:
-            module.fail_json_aws(e, msg="waiting for rds deletion to complete")
-    except Exception as e:
-            module.fail_json_aws(e, msg="waiting for rds deletion to complete")
-
-    return dict(changed=True, response=response, instance=instance_to_facts(instance))
+    return dict(changed=changed, instance=instance, response=response)
 
 
-def update_rds_tags(module, conn, db_instance=None):
+def update_rds_tags(module, conn, db_instance):
     main_logger.log(30, "update_rds_tags called")
-    # FIXME
-    # If we get no db_instance we should go collect one; not needed
-    # now - we currently inherit the one modify ends up with
-
-    # FIXME2 unify with ec2_group tag handling logic somehow.
-    assert db_instance is not None
 
     db_instance_arn = db_instance['DBInstanceArn']
 
@@ -555,6 +523,7 @@ def update_rds_tags(module, conn, db_instance=None):
     changed = False
 
     tags_need_modify, tags_to_delete = compare_aws_tags(current_tags, tags, purge_tags)
+
     if tags_to_delete:
         if module.check_mode:
             module.exit_json(changed=True, remove_tags_from_resource_params=tags_to_delete)
@@ -601,21 +570,42 @@ def camel(words):
 
     return ''.join(capitalize_with_abbrevs(x) or '_' for x in words.split('_'))
 
+# Ideally this should be merged with the function in the ec2 utilities but that
+# doesn't handle e.g. DBInstanceIdentifer correctly so can't be used here.
 
-def prepare_params_for_modify(module, connection, before_facts):
+
+def snake_dict_to_cap_camel_dict(snake_dict):
+    """ like snake_dict_to_camel_dict but capitalize the first word too """
+
+    def camelize(complex_type):
+        if complex_type is None:
+            return
+        new_type = type(complex_type)()
+        if isinstance(complex_type, dict):
+            for key in complex_type:
+                new_type[camel(key)] = camelize(complex_type[key])
+        elif isinstance(complex_type, list):
+            for i in range(len(complex_type)):
+                new_type.append(camelize(complex_type[i]))
+        else:
+            return complex_type
+        return new_type
+
+    return camelize(snake_dict)
+
+
+def prepare_params_for_modify(module, connection, instance):
     """extract parameters from module and convert to format for modify_db_instance call
 
     Select those parameters we want, convert them to AWS CamelCase, change a few from
     the naming used in the create call to the naming used in the modify call.
     """
-
+    before_facts = instance_to_facts(instance)
     abort_on_impossible_changes(module, before_facts)
 
     params = prepare_changes_for_modify(module, connection, before_facts)
-
     if len(params) == 0:
         return None
-
     params.update(prepare_call_settings_for_modify(module, before_facts))
 
     return params
@@ -625,23 +615,20 @@ def prepare_changes_for_modify(module, connection, before_facts):
     """
     Select those parameters which are interesting and which we want to change.
     """
-
     force_password_update = module.params.get('force_password_update')
     will_change = instance_facts_diff(connection, before_facts, module.params)
     if not will_change:
         return {}
     facts_to_change = will_change['after']
 
-    # we have to filter down to the parameters handled by modify (e.g. not tags) and
-    for i in ['tags']:
-        try:
-            del(facts_to_change[i])
-        except KeyError:
-            pass
+    # modify can't handle tags
+    try:
+        del(facts_to_change['tags'])
+    except KeyError:
+        pass
 
     # convert from fact format to the AWS call CamelCase format.
-
-    params = snake_dict_to_camel_dict(facts_to_change, capitalize_first=True)
+    params = snake_dict_to_cap_camel_dict(facts_to_change)
 
     if facts_to_change.get('db_security_groups'):
         params['DBSecurityGroups'] = facts_to_change.get('db_security_groups').split(',')
@@ -656,7 +643,9 @@ def prepare_changes_for_modify(module, connection, before_facts):
     # You can specify 9.6 when creating a DB and get 9.6.2
     # We should ignore version if the requested version is
     # a prefix of the current version
-    if will_change['before'].get('engine_version').startwith(will_change['after'].get('engine_version')):
+    engine_version = will_change['before'].get('engine_version')
+    after_engine_version = will_change['after'].get('engine_version')
+    if engine_version is not None and engine_version.startwith(after_engine_version):
         del(facts_to_change['engine_version'])
 
     # modify_db_instance does not cope with DBSubnetGroup not moving VPC!
@@ -698,25 +687,22 @@ def wait_for_new_instance_id(conn, after_instance_id):
     return after_instance
 
 
-def modify_db_instance(module, conn, before_instance):
+def modify_db_instance(module, conn, instance):
     """make aws call to modify a DB instance, gathering needed parameters and returning if changed
 
     old_db_instance_identifier may be given as an argument to the module but it must be deleted by
     the time we get here if we are not to use it.
 
     """
-
     apply_immediately = module.params.get('apply_immediately')
     wait = module.params.get('wait')
     main_logger.log(30, "modify_db_instance called; wait is {0}, apply_imm. is {1}".format(
         wait, apply_immediately
     ))
 
-    before_facts = instance_to_facts(before_instance)
-    call_params = prepare_params_for_modify(module, conn, before_facts)
-
+    call_params = prepare_params_for_modify(module, conn, instance)
     if not call_params:
-        return dict(changed=False, instance=before_facts)
+        return dict(changed=False, instance=instance)
 
     return_instance = None
 
@@ -725,24 +711,24 @@ def modify_db_instance(module, conn, before_instance):
         main_logger.log(20, "calling boto3conn.modify_db_instance with params {0} ".format(
             repr(call_params)
         ))
-        response = conn.modify_db_instance(**call_params)
-        return response['DBInstance']
+        return conn.modify_db_instance(**call_params)
 
     if module.check_mode:
         module.exit_json(changed=True, modify_db_instance_params=call_params)
     try:
-        return_instance = modify_the_instance(**call_params)
+        response = modify_the_instance(**call_params)
     except botocore.exceptions.ClientError as e:
         module.fail_json_aws(e, msg="trying to modify RDS instance")
+    return_instance = response['DBInstance']
 
     # Why can this happen? I do not know, go ask your dad.
     # Better safe than sorry, however.
     if return_instance is None:
-        return_instance = before_instance
+        module.fail_json(msg="modify failed to return modified instance, please verify manually")
 
     if not apply_immediately:
         main_logger.log(90, "apply_immediately not set so nothing to wait for - return changed")
-        ret_val = dict(changed=True, instance=instance_to_facts(return_instance))
+        ret_val = dict(changed=True, instance=return_instance)
         if wait:
             ret_val["warning"] = ["wait was given but since apply_immediately was not given there's nothing to wait for"]
         return ret_val
@@ -764,28 +750,33 @@ def modify_db_instance(module, conn, before_instance):
             # before rebooting so let's wait until we see it rebooting
             # before we check whether to 'wait'
             return_instance = await_resource(conn, new_id, 'rebooting', module)
+            if return_instance is None:
+                module.fail_json(msg="instance disappeared during modify - possibly network error??")
     else:
         # SLIGHTLY DOUBTFUL: We have a race condition here where, if we are unlucky, the
         # name of the instance set to change without apply_immediately _could_ change
         # before we return.  The user is responsible to know that though so should be
         # fine.
-        instance_id_now = before_instance['DBInstanceIdentifier']
+        instance_id_now = instance['DBInstanceIdentifier']
 
     if wait:
         main_logger.log(90, "about to wait for instance reconfigure to complete")
         return_instance = await_resource(conn, instance_id_now, 'available', module,
                                          await_pending=apply_immediately)
+        if return_instance is None:
+            module.fail_json(msg="instance disappeared during modify - possibly network error??")
     else:
         main_logger.log(90, "not waiting for update of rds config")
 
-    diff = instance_facts_diff(before_instance, return_instance)
+    # FIXME: make diff visible; possibly implement diff option
+    diff = instance_facts_diff(conn, instance, return_instance)
     # changed = not not diff  # "not not" casts from dict to boolean!
-
     # boto3 modify_db_instance can't modify tags directly
-    return dict(changed=True, instance=instance_to_facts(return_instance), diff=diff)
+    return dict(changed=True, instance=return_instance, diff=diff)
 
 
 def get_instance_to_work_on(module, conn):
+    """based on module arguments find an unambiguous instance we can work on"""
     instance_id = module.params.get('db_instance_identifier')
     old_instance_id = module.params.get('old_db_instance_identifier')
     before_instance = None
@@ -805,16 +796,11 @@ def get_instance_to_work_on(module, conn):
     return instance
 
 
-def promote_db_instance(module, conn):
+def promote_db_instance(module, conn, instance):
     main_logger.log(30, "promote_db_instance called")
     params = select_parameters_meta(module, conn, 'PromoteReadReplica')
-    instance_id = module.params.get('db_instance_identifier')
 
-    result = get_db_instance(conn, instance_id)
-    if not result:
-        module.fail_json(msg="DB Instance %s does not exist" % instance_id)
-
-    if result.get('replication_source'):
+    if instance.get('ReadReplicaSourceDBInstanceIdentifier'):
         if module.check_mode:
             module.exit_json(changed=True, promote_read_replica_params=params)
         try:
@@ -828,32 +814,9 @@ def promote_db_instance(module, conn):
         changed = False
 
     if module.params.get('wait'):
-        instance = await_resource(conn, instance_id, 'available', module)
-    else:
-        instance = get_db_instance(conn, instance_id)
+        instance = await_resource(conn, instance["DBInstanceIdentifier"], 'available', module)
 
-    return dict(changed=changed, instance=instance_to_facts(instance))
-
-
-def reboot_db_instance(module, conn):
-    main_logger.log(30, "reboot_db_instance called")
-    params = select_parameters_meta(module, conn, 'RebootDBInstance')
-    instance_id = module.params.get('db_instance_identifier')
-    instance = get_db_instance(conn, instance_id)
-    if module.check_mode:
-        module.exit_json(changed=True, reboot_db_instance_params=params)
-    try:
-        response = conn.reboot_db_instance(**params)
-        instance = response['DBInstance']
-    except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Failed to reboot instance: %s " % str(e),
-                         exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-    if module.params.get('wait'):
-        instance = await_resource(conn, instance_id, 'available', module)
-    else:
-        instance = get_db_instance(conn, instance_id)
-
-    return dict(changed=True, instance=instance_to_facts(instance))
+    return dict(changed=changed, instance=instance)
 
 
 def restore_db_instance(module, conn):
@@ -878,7 +841,81 @@ def restore_db_instance(module, conn):
     else:
         instance = get_db_instance(conn, instance_id)
 
-    return dict(changed=changed, instance=instance_to_facts(instance))
+    return dict(changed=changed, instance=instance)
+
+
+def ensure_absent_db_instance(module, conn):
+    main_logger.log(30, "delete_db_instance called")
+    try:
+        del(module.params['storage_type'])
+    except KeyError:
+        pass
+
+    params = select_parameters_meta(module, conn, 'DeleteDBInstance')
+    instance_id = module.params.get('db_instance_identifier')
+    snapshot = module.params.get('final_db_snapshot_identifier')
+
+    instance = get_db_instance(conn, instance_id)
+    if not instance:
+        return dict(changed=False)
+    if instance['DBInstanceStatus'] == 'deleting':
+        return dict(changed=False)
+    if snapshot:
+        params["SkipFinalSnapshot"] = False
+        params["FinalDBSnapshotIdentifier"] = snapshot
+        del(module.params['snapshot'])
+    else:
+        params["SkipFinalSnapshot"] = True
+    if module.check_mode:
+        module.exit_json(changed=True, delete_db_instance_params=params)
+
+    # FIXME: it's possible to get "trying to delete instance: An error occurred
+    # (InvalidDBInstanceState) when calling the DeleteDBInstance operation:
+    # Cannot delete DB Instance with a read replica still creating",
+
+    # our call should retry here.
+
+    try:
+        response = conn.delete_db_instance(**params)
+    except Exception as e:
+        module.fail_json_aws(e, msg="trying to delete instance")
+
+    # If we're not waiting for a delete to complete then we're all done
+    # so just return
+    if not module.params.get('wait'):
+        return dict(changed=True, response=response)
+    try:
+        instance = await_resource(conn, instance_id, 'deleted', module)
+    except botocore.exceptions.ClientError as e:
+        if e.response['Error']['Code'] == 'DBInstanceNotFound':
+            return dict(changed=True)
+        else:
+            module.fail_json_aws(e, msg="waiting for rds deletion to complete")
+    except Exception as e:
+            module.fail_json_aws(e, msg="waiting for rds deletion to complete")
+
+    return dict(changed=True, response=response, instance=instance)
+
+
+def ensure_rebooted_db_instance(module, conn):
+    main_logger.log(30, "reboot_db_instance called")
+    params = select_parameters_meta(module, conn, 'RebootDBInstance')
+    instance_id = module.params.get('db_instance_identifier')
+    instance = get_db_instance(conn, instance_id)
+    if module.check_mode:
+        module.exit_json(changed=True, reboot_db_instance_params=params)
+    try:
+        response = conn.reboot_db_instance(**params)
+        instance = response['DBInstance']
+    except botocore.exceptions.ClientError as e:
+        module.fail_json(msg="Failed to reboot instance: %s " % str(e),
+                         exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+    if module.params.get('wait'):
+        instance = await_resource(conn, instance_id, 'available', module)
+    else:
+        instance = get_db_instance(conn, instance_id)
+
+    return dict(changed=True, instance=instance)
 
 
 def validate_parameters(module):
@@ -1070,12 +1107,14 @@ should try to be careful.
 """
 
 
-def ensure_rds_state(module, conn):
+def ensure_present_db_instance(module, conn):
     """ensures RDS instance exists and is correctly configured"""
     changed = False
     instance = get_instance_to_work_on(module, conn)
 
-    # FIXME : restart instance if it's stopped.
+    # TODO : Restart instance if it's stopped.
+    # TODO : We throw away the response from AWS; we should probably expose
+    #        the last one recieved.
 
     if instance is None and module.params.get('source_db_instance_identifier'):
         replicate_return_dict = replicate_db_instance(module, conn)
@@ -1086,41 +1125,52 @@ def ensure_rds_state(module, conn):
         instance = restore_return_dict['instance']
         changed = True
 
-    # tags update first so we don't have to guess what the
-    # database name is as it changes at a random time in future.
-    # ensure_db_state handles tags for new databases but not old.
     if instance is None:
         return_dict = create_db_instance(module, conn)
     else:
         if instance.get('replication_source') and not module.params.get('source_db_instance_identifier'):
-            promote_db_instance(module, conn)
+            return_dict = promote_db_instance(module, conn, instance)
+        # tags update before modify so we don't have to guess what the database name is as
+        # it changes at a random time in future.
         if update_rds_tags(module, conn, instance):
             changed = True
         return_dict = modify_db_instance(module, conn, instance)
+        # if Tags are updated but otherwise unmodified need to refresh instance info.
+        if changed and not return_dict["changed"]:
+            return_dict['instance'] = get_instance_to_work_on(module, conn)
+            return_dict['changed'] = True
 
-    if changed:
-        return_dict['changed'] = True
     return return_dict
+
+
+def fixup_return_values(return_dict):
+    try:
+        # order is important here - some can be missing but we still
+        # want the earlier ones
+        instance = instance_to_facts(return_dict["instance"])
+        if instance is None:
+            del(return_dict["instance"])
+            return
+        return_dict["instance"] = instance
+        return_dict['id'] = instance['db_instance_identifier']
+        return_dict['engine'] = instance['engine']
+        # TODO: add endpoint url
+    except KeyError:
+        pass
 
 
 def run_task(module, conn):
     """run all actual changes to the rds"""
     if module.params['state'] == 'stopped':
-        module.fail_json(msg="FIXME: stopped state is not yet implemented")
+        module.fail_json(msg="TODO: stopped state is not yet implemented")
     if module.params['state'] == 'absent':
-        return delete_db_instance(module, conn)
+        return_dict = ensure_absent_db_instance(module, conn)
     if module.params['state'] in ['rebooted', 'restarted']:
-        return reboot_db_instance(module, conn)
+        return_dict = ensure_rebooted_db_instance(module, conn)
     if module.params['state'] == 'present':
-        return_dict = ensure_rds_state(module, conn)
-    try:
-        instance = return_dict['instance']
-        return_dict['id'] = instance['db_instance_identifier']
-        return_dict['engine'] = instance['engine']
-        # FIXME: add endpoint url
-    except KeyError:
-        pass
+        return_dict = ensure_present_db_instance(module, conn)
 
+    fixup_return_values(return_dict)
     return return_dict
 
 

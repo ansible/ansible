@@ -47,6 +47,16 @@ LICENSE_MODELS = [
 
 
 def get_db_instance(conn, instancename):
+    """return AWS format DB instance
+
+    This function connects to AWS and retrieves the information about
+    the instance in directly in the standard AWS format.
+    """
+    # FIXME: currently this makes two API calls, one for the instance and
+    # one for the tags.  This mostly make sense since the object we get
+    # back is close to what we want to call a create with, but for
+    # efficiency we should maybe put an option to not make the tags call in
+    # the case where we throw that data away.
     try:
         response = conn.describe_db_instances(DBInstanceIdentifier=instancename)
     except botocore.exceptions.ClientError as e:
@@ -55,8 +65,10 @@ def get_db_instance(conn, instancename):
         else:
             raise
     instance = response['DBInstances'][0]
+
     tags = conn.list_tags_for_resource(ResourceName=instance['DBInstanceArn']).get('TagList', [])
     instance['Tags'] = boto3_tag_list_to_ansible_dict(tags)
+
     return instance
 
 
@@ -102,12 +114,10 @@ def instance_facts_diff(connection, state_a, state_b):
     parameters are missing they will not be considered to show a
     difference.
     """
-
-    # FIXME: testing of deletion of parameters needs to be tested
-    # properly.
-
     operations_model = connection._service_model.operation_model("CreateDBInstance")
     compare_keys = [xform_name(x) for x in operations_model.input_shape.members.keys()]
+
+    assert len(compare_keys) > 1
 
     remove_if_null = []
     before = dict()
@@ -134,9 +144,11 @@ def instance_facts_diff(connection, state_a, state_b):
     if state_a['db_parameter_group_name']:
         del(state_a['db_parameter_group'])
 
-    state_a['vpc_security_group_ids'] = [sg['vpc_security_group_id'] for sg in state_a.get('vpc_security_groups')]
-    if state_a['vpc_security_group_ids']:
-        del(state_a['vpc_security_groups'])
+    before_groups = state_a.get('vpc_security_groups')
+    if before_groups is not None:
+        state_a['vpc_security_group_ids'] = [sg['vpc_security_group_id'] for sg in before_groups]
+        if state_a['vpc_security_group_ids']:
+            del(state_a['vpc_security_groups'])
 
     if new_port is not None:
         state_b["port"] = new_port
