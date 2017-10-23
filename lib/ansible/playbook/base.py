@@ -16,7 +16,7 @@ from jinja2.exceptions import UndefinedError
 from ansible import constants as C
 from ansible.module_utils.six import iteritems, string_types, with_metaclass
 from ansible.module_utils.parsing.convert_bool import boolean
-from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable
+from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable, AnsibleAssertionError
 from ansible.module_utils._text import to_text, to_native
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.parsing.dataloader import DataLoader
@@ -209,7 +209,8 @@ class Base(with_metaclass(BaseMeta, object)):
     def load_data(self, ds, variable_manager=None, loader=None):
         ''' walk the input datastructure and assign any values '''
 
-        assert ds is not None, 'ds (%s) should not be None but it is.' % ds
+        if ds is not None:
+            raise AnsibleAssertionError('ds (%s) should not be None but it is.' % ds)
 
         # cache the datastructure internally
         setattr(self, '_ds', ds)
@@ -547,7 +548,8 @@ class Base(with_metaclass(BaseMeta, object)):
         and extended.
         '''
 
-        assert isinstance(data, dict), 'data (%s) should be a dict but is a %s' % (data, type(data))
+        if not isinstance(data, dict):
+            raise AnsibleAssertionError('data (%s) should be a dict but is a %s' % (data, type(data)))
 
         for (name, attribute) in iteritems(self._valid_attrs):
             if name in data:

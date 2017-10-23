@@ -8,7 +8,7 @@ import multiprocessing
 import random
 
 from ansible import constants as C
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils.six import text_type
 from ansible.module_utils._text import to_text, to_bytes
 
@@ -67,7 +67,8 @@ def random_password(length=DEFAULT_PASSWORD_LENGTH, chars=C.DEFAULT_PASSWORD_CHA
     :kwarg chars: The characters to choose from.  The default is all ascii
         letters, ascii digits, and these symbols ``.,:-_``
     '''
-    assert isinstance(chars, text_type), '%s (%s) is not a text_type' % (chars, type(chars))
+    if not isinstance(chars, text_type):
+        raise AnsibleAssertionError('%s (%s) is not a text_type' % (chars, type(chars)))
 
     random_generator = random.SystemRandom()
     return u''.join(random_generator.choice(chars) for dummy in range(length))

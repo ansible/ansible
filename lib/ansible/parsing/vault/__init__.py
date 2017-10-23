@@ -71,7 +71,7 @@ try:
 except ImportError:
     pass
 
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible import constants as C
 from ansible.module_utils.six import PY3, binary_type
 # Note: on py2, this zip is izip not the list based zip() builtin
@@ -722,7 +722,10 @@ class VaultEditor:
                         fh.write(data)
                     fh.write(data[:file_len % chunk_len])
 
-                    assert fh.tell() == file_len  # FIXME remove this assert once we have unittests to check its accuracy
+                    # FIXME remove this assert once we have unittests to check its accuracy
+                    if fh.tell() != file_len:
+                        raise AnsibleAssertionError()
+
                     os.fsync(fh)
 
     def _shred_file(self, tmp_path):

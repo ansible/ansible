@@ -42,7 +42,7 @@ from jinja2.runtime import Context, StrictUndefined
 from jinja2.utils import concat as j2_concat
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleUndefinedVariable
+from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleUndefinedVariable, AnsibleAssertionError
 from ansible.module_utils.six import string_types, text_type
 from ansible.module_utils._text import to_native, to_text, to_bytes
 from ansible.plugins.loader import filter_loader, lookup_loader, test_loader
@@ -387,7 +387,8 @@ class Templar:
         are being changed.
         '''
 
-        assert isinstance(variables, dict), "the type of 'variables' should be a dict but was a %s" % (type(variables))
+        if not isinstance(variables, dict):
+            raise AnsibleAssertionError("the type of 'variables' should be a dict but was a %s" % (type(variables)))
         self._available_variables = variables
         self._cached_result = {}
 
