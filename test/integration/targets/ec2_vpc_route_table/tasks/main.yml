@@ -42,11 +42,13 @@
         public: "False"
     register: subnets
 
+
   - ec2_vpc_subnet_facts:
       filters:
         vpc-id: "{{ vpc.vpc.id }}"
       <<: *aws_connection_info
     register: vpc_subnets
+
 
   - name: create IGW
     ec2_vpc_igw:
@@ -62,7 +64,6 @@
       <<: *aws_connection_info
     register: nat_gateway
 
-
   - name: create public route table
     ec2_vpc_route_table:
       vpc_id: "{{ vpc.vpc.id }}"
@@ -75,9 +76,12 @@
   - name: assert that public route table has an id
     assert:
       that:
-        - create_public_table.changed
+        # - create_public_table.changed
         - "create_public_table.route_table.id.startswith('rtb-')"
         - "'Public' in create_public_table.route_table.tags and create_public_table.route_table.tags['Public'] == 'true'"
+        - create_public_table.route_table.routes|length == 1
+        - create_public_table.route_table.associations|length == 0
+
 
   - name: recreate public route table
     ec2_vpc_route_table:
@@ -93,6 +97,7 @@
       that:
         - not recreate_public_route_table.changed
 
+
   - name: add a route to public route table
     ec2_vpc_route_table:
       vpc_id: "{{ vpc.vpc.id }}"
@@ -104,6 +109,13 @@
         gateway_id: igw
       <<: *aws_connection_info
     register: add_routes
+
+  - name: assert route table contains new route
+    assert:
+      that:
+        - add_routes.changed
+        - add_routes.route_table.routes|length == 2
+
 
   - name: add subnets to public route table
     ec2_vpc_route_table:
@@ -118,6 +130,11 @@
       <<: *aws_connection_info
     register: add_subnets
 
+  - name: assert route table contains subnets
+    assert:
+      that:
+        - add_subnets.changed
+        - add_subnets.route_table.associations|length == 2
 
   - name: add a route to public route table
     ec2_vpc_route_table:
@@ -147,7 +164,8 @@
       that:
         - not no_purge_routes.changed
         - no_purge_routes.route_table.routes|length == 2
-      # FIXME: - no_purge_routes.route_table.associations|length == 2
+        - no_purge_routes.route_table.associations|length == 2
+
 
   - name: rerun with purge_subnets set to false
     ec2_vpc_route_table:
@@ -158,51 +176,58 @@
       purge_subnets: no
       routes:
       - dest: 0.0.0.0/0
+        gateway_id: igw
       <<: *aws_connection_info
     register: no_purge_subnets
 
   - name: assert route table still has subnets
     assert:
       that:
-      # FIXME: - not no_purge_subnets.changed
+        - not no_purge_subnets.changed
         - no_purge_subnets.route_table.routes|length == 2
-      # FIXME: - no_purge_subnets.route_table.associations|length == 2
+        - no_purge_subnets.route_table.associations|length == 2
 
-#  FIXME: purge_tags doesn't exist yet
-#
-#  - name: rerun with purge_tags not set (implicitly false)
-#    ec2_vpc_route_table:
-#      vpc_id: "{{ vpc.vpc.id }}"
-#      routes:
-#      - dest: 0.0.0.0/0
-#      subnets: "{{ vpc_subnets|json_query('subnets[?tags.Public == `True`].id') }}"
-#      <<: *aws_connection_info
-#    register: no_purge_tags
-#
-#  - name: assert route table still has tags
-#    assert:
-#      that:
-#        - not no_purge_tags.changed
-#        - "'Public' in no_purge_tags.route_table.tags and no_purge_tags.route_table.tags['Public'] == 'true'"
+
+  - name: rerun with purge_tags not set (implicitly false)
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      region: "{{ aws_region }}"
+      routes:
+      - dest: 0.0.0.0/0
+        gateway_id: igw
+      lookup: id
+      route_table_id: "{{ create_public_table.route_table.id }}"
+      subnets: "{{ vpc_subnets|json_query('subnets[?tags.Public == `True`].id') }}"
+      <<: *aws_connection_info
+    register: no_purge_tags
+
+  - name: assert route table still has tags
+    assert:
+      that:
+        - not no_purge_tags.changed
+        - "'Public' in no_purge_tags.route_table.tags and no_purge_tags.route_table.tags['Public'] == 'true'"
+
 
   - name: purge subnets
     ec2_vpc_route_table:
       vpc_id: "{{ vpc.vpc.id }}"
       routes:
       - dest: 0.0.0.0/0
+        gateway_id: igw
+      subnets: []
       tags:
         Public: "true"
         Name: "Public route table"
       <<: *aws_connection_info
     register: purge_subnets
 
-# FIXME: this doesn't currently work but with no associations present difficult to see why not
-#  - name: assert purge subnets worked
-#    assert:
-#      that:
-#        - purge_subnets.changed
-#      # FIXME:  - purge_subnets.route_table.associations|length == 0
-#        - purge_subnets.route_table.id == create_public_table.route_table.id
+  - name: assert purge subnets worked
+    assert:
+      that:
+        - purge_subnets.changed
+        - purge_subnets.route_table.associations|length == 0
+        - purge_subnets.route_table.id == create_public_table.route_table.id
+
 
   - name: purge routes
     ec2_vpc_route_table:
@@ -211,24 +236,25 @@
         Public: "true"
         Name: "Public route table"
       <<: *aws_connection_info
+      routes: []
     register: purge_routes
 
   - name: assert purge routes worked
     assert:
       that:
         - purge_routes.changed
-        # FIXME: purge_routes does work but the result is not up to date and returns
-        # the route - a wait period might help
-        # - purge_routes.route_table.routes|length == 1
+        - purge_routes.route_table.routes|length == 1
         - purge_routes.route_table.id == create_public_table.route_table.id
+
 
   - name: update tags
     ec2_vpc_route_table:
       vpc_id: "{{ vpc.vpc.id }}"
       route_table_id: "{{ create_public_table.route_table.id }}"
       lookup: id
-      # FIXME: purge_tags: yes
+      purge_tags: yes
       tags:
+        Name: Public route table
         Updated: new_tag
       <<: *aws_connection_info
     register: update_tags
@@ -238,14 +264,24 @@
       that:
         - update_tags.changed
         - "'Updated' in update_tags.route_table.tags and update_tags.route_table.tags['Updated'] == 'new_tag'"
-      # FIXME: - "'Public' not in update_tags.route_table.tags"
+        - "'Public' not in update_tags.route_table.tags"
+
+
+  - name: create NAT GW
+    ec2_vpc_nat_gateway:
+      if_exist_do_not_create: yes
+      wait: yes
+      subnet_id: "{{ subnets.results[0].subnet.id }}"
+      <<: *aws_connection_info
+    register: nat_gateway
+
 
   - name: create private route table
     ec2_vpc_route_table:
       vpc_id: "{{ vpc.vpc.id }}"
       tags:
-        Public: no
-        Name: private route table
+        Public: "false"
+        Name: "Private route table"
       routes:
       - gateway_id: "{{ nat_gateway.nat_gateway_id }}"
         dest: 0.0.0.0/0
@@ -260,12 +296,14 @@
         - create_private_table.route_table.id != create_public_table.route_table.id
         - "'Public' in create_private_table.route_table.tags"
 
-  - name: destroy public route table
+
+  - name: destroy public route table by tags
     ec2_vpc_route_table:
-      route_table_id: "{{ create_public_table.route_table.id }}"
-      lookup: id
-      vpc_id: "{{ vpc.vpc.id }}"  # FIXME: why is this required?
+      vpc_id: "{{ vpc.vpc.id }}"
       state: absent
+      tags:
+        Updated: new_tag
+        Name: Public route table
       <<: *aws_connection_info
     register: destroy_table
 
@@ -274,46 +312,76 @@
       that:
         - destroy_table.changed
 
-# FIXME: this currently throws an exception
-#  - name: redestroy public route table
-#    ec2_vpc_route_table:
-#      route_table_id: "{{ create_public_table.route_table.id }}"
-#      lookup: id
-#      state: absent
-#      <<: *aws_connection_info
-#    register: redestroy_table
-#
-#  - name: assert redestroy table worked
-#    assert:
-#      that:
-#        - not redestroy_table.changed
+  - name: redestroy public route table
+    ec2_vpc_route_table:
+      route_table_id: "{{ create_public_table.route_table.id }}"
+      lookup: id
+      state: absent
+      <<: *aws_connection_info
+    register: redestroy_table
 
-#  FIXME: After boto3 port, test updating NAT gateway
-#
-#  - name: destroy NAT GW
-#    ec2_vpc_nat_gateway:
-#      vpc_id: "{{ vpc.vpc.id }}"
-#      state: absent
-#      wait: yes
-#      release_eip: yes
-#      <<: *aws_connection_info
-#    register: nat_gateway
-#
-#  - name: create NAT GW
-#    ec2_vpc_nat_gateway:
-#      vpc_id: "{{ vpc.vpc.id }}"
-#      if_exist_do_not_create: yes
-#      <<: *aws_connection_info
-#    register: nat_gateway
+  - name: assert redestroy table worked
+    assert:
+      that:
+        - not redestroy_table.changed
 
-  always:
+  - name: destroy NAT GW
+    ec2_vpc_nat_gateway:
+      state: absent
+      wait: yes
+      release_eip: yes
+      subnet_id: "{{ subnets.results[0].subnet.id }}"
+      nat_gateway_id: "{{ nat_gateway.nat_gateway_id }}"
+      <<: *aws_connection_info
+    register: nat_gateway
+
+  - name: show route table facts
+    ec2_vpc_route_table_facts:
+      filters:
+        route-table-id: "{{ create_private_table.route_table.id }}"
+      <<: *aws_connection_info
+
+  - name: create NAT GW
+    ec2_vpc_nat_gateway:
+      if_exist_do_not_create: yes
+      wait: yes
+      subnet_id: "{{ subnets.results[0].subnet.id }}"
+      <<: *aws_connection_info
+    register: nat_gateway
+
+  - name: show route table facts
+    ec2_vpc_route_table_facts:
+      filters:
+        route-table-id: "{{ create_private_table.route_table.id }}"
+      <<: *aws_connection_info
+
+  - name: recreate private route table with new NAT GW
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      region: "{{ aws_region }}"
+      tags:
+        Public: "false"
+        Name: "Private route table"
+      routes:
+      - nat_gateway_id: "{{ nat_gateway.nat_gateway_id }}"
+        dest: 0.0.0.0/0
+      subnets: "{{ vpc_subnets|json_query('subnets[?tags.Public == `False`].id') }}"
+      <<: *aws_connection_info
+    register: recreate_private_table
+
+  - name: assert creating private route table worked
+    assert:
+      that:
+        - recreate_private_table.changed
+        - recreate_private_table.route_table.id != create_public_table.route_table.id
+
+- always:
   #############################################################################
   # TEAR DOWN STARTS HERE
   #############################################################################
   - name: destroy route tables
     ec2_vpc_route_table:
       route_table_id: "{{ item.route_table.id }}"
-      vpc_id: "{{ vpc.vpc.id }}"  # FIXME: why is this required?
       lookup: id
       state: absent
       <<: *aws_connection_info
