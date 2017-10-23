@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_aci
-version_added: "2.4"
+version_added: "2.5"
 short_description: Manage an Azure Container Instance (ACI).
 description:
     - Create, update and delete an Azure Container Instance.
