@@ -117,24 +117,26 @@ author:
 '''
 
 EXAMPLES = '''
-    - name: Create an azure container instance
-      azure_rm_aci:
-        name: testinstancegroup
-        location: eastus
-        resource_group: Testing
-        image: contoso/testimage
-        tags:
-            Environment: Production
-
-    - name: Delete existing azure container instance
-      azure_rm_aci:
-        name: testinstancegroup
-        name: testinstance
-        location: eastus
-        resource_group: Testing
-        state: absent
-        tags:
-            Environment: Production
+  - name: Create sample container group
+    azure_rm_aci:
+    resource_group: testrg
+    name: mynewcontainergroup
+    os_type: linux
+    ip_address: public
+    ports:
+      - 80
+      - 81
+    containers:
+      - name: mycontainer1
+        image: httpd
+        memory: 1.5
+        ports:
+          - 80
+      - name: mycontainer2
+        image: httpd
+        memory: 1.5
+        ports:
+          - 81
 '''
 RETURN = '''
 state:
@@ -147,11 +149,19 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.containerinstance.models import (ContainerGroup, Container, ResourceRequirements, ResourceRequests, ImageRegistryCredential, IpAddress, Port, ContainerPort)
+    from azure.mgmt.containerinstance.models import (ContainerGroup,
+                                                     Container,
+                                                     ResourceRequirements,
+                                                     ResourceRequests,
+                                                     ImageRegistryCredential,
+                                                     IpAddress,
+                                                     Port,
+                                                     ContainerPort)
     from azure.mgmt.containerinstance import ContainerInstanceManagementClient
 except ImportError:
     # This is handled in azure_rm_common
     pass
+
 
 def create_container_dict_from_obj(container):
     '''
@@ -174,22 +184,21 @@ def create_container_dict_from_obj(container):
 
     if container.instance_view is not None:
         # instance_view (ContainerPropertiesInstanceView)
-        results["instance_restart_count"]=container.instance_view.restart_count
+        results["instance_restart_count"] = container.instance_view.restart_count
         if container.instance_view.current_state:
-            results["instance_current_state"]=container.instance_view.current_state.state
-            results["instance_current_start_time"]=container.instance_view.current_state.start_time
-            results["instance_current_exit_code"]=container.instance_view.current_state.exit_code
-            results["instance_current_finish_time"]=container.instance_view.current_state.finish_time
-            results["instance_current_detail_status"]=container.instance_view.current_state.detail_status
+            results["instance_current_state"] = container.instance_view.current_state.state
+            results["instance_current_start_time"] = container.instance_view.current_state.start_time
+            results["instance_current_exit_code"] = container.instance_view.current_state.exit_code
+            results["instance_current_finish_time"] = container.instance_view.current_state.finish_time
+            results["instance_current_detail_status"] = container.instance_view.current_state.detail_status
         if container.instance_view.previous_state:
-            results["instance_previous_state"]=container.instance_view.previous_state.state
-            results["instance_previous_start_time"]=container.instance_view.previous_state.start_time
-            results["instance_previous_exit_code"]=container.instance_view.previous_state.exit_code
-            results["instance_previous_finish_time"]=container.instance_view.previous_state.finish_time
-            results["instance_previous_detail_status"]=container.instance_view.previous_state.detail_status
+            results["instance_previous_state"] = container.instance_view.previous_state.state
+            results["instance_previous_start_time"] = container.instance_view.previous_state.start_time
+            results["instance_previous_exit_code"] = container.instance_view.previous_state.exit_code
+            results["instance_previous_finish_time"] = container.instance_view.previous_state.finish_time
+            results["instance_previous_detail_status"] = container.instance_view.previous_state.detail_status
         # events (list of ContainerEvent)
     return results
-
 
 
 def create_aci_dict(aci):
@@ -213,11 +222,9 @@ def create_aci_dict(aci):
     )
 
     if aci.ip_address:
-        results['ip_address'] = dict(
-                type=aci.ip_address.type,
-                ip=aci.ip_address.ip,
-                ports=[]
-            )
+        results['ip_address'] = dict(type=aci.ip_address.type,
+                                     ip=aci.ip_address.ip,
+                                     ports=[])
 
     results['containers'] = []
     if aci.containers:
@@ -225,6 +232,7 @@ def create_aci_dict(aci):
             results['containers'].append(create_container_dict_from_obj(container))
 
     return results
+
 
 class AzureRMContainerInstance(AzureRMModuleBase):
     """Configuration class for an Azure RM container instance resource"""
@@ -342,7 +350,6 @@ class AzureRMContainerInstance(AzureRMModuleBase):
                     self.log('Deleting ACI instance before update')
                     self.delete_aci()
 
-                
         if self.state == 'present':
 
             self.log("Need to Create / Update the ACI instance")
@@ -354,7 +361,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
                 self.results['state'] = self.create_update_aci()
                 self.results['changed'] = True
             else:
-                self.results['state'] = response;
+                self.results['state'] = response
 
             self.log("Creation / Update done")
 
@@ -382,7 +389,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
             if self.ports:
                 ports = []
                 for port in self.ports:
-                    ports.append(Port(port))
+                    ports.append(Port(port, "TCP"))
                 ip_address = IpAddress(ports, self.ip_address)
 
         containers = []
@@ -398,7 +405,6 @@ class AzureRMContainerInstance(AzureRMModuleBase):
             if port_list:
                 for port in port_list:
                     ports.append(ContainerPort(port))
-
 
             if cpu is None:
                 cpu = 1
@@ -484,11 +490,10 @@ class AzureRMContainerInstance(AzureRMModuleBase):
             if cg["containers"][i]["name"] != self.containers[i]["name"]:
                 self.log('Container name has changed -- need to delete')
                 return True
-                
-            
-        self.log('No need to update')
 
+        self.log('No need to update')
         return False
+
 
 def main():
     """Main execution"""
