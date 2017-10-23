@@ -78,8 +78,8 @@ options:
         - Manage disk option.
         - File system which will be set on selected disk.
         - Maximum volume size for ntfs is 256gb, for refs 1208925819614650gb (1 yobibyte).
-        - If the disk size of the selected disk does not match with the passed value for option.
-        file_system (e.g. "ntfs" over 256000gb) the module will be canceled.
+        - If the disk size of the selected disk does not match with the passed value for option
+          file_system (e.g. "ntfs" over 256000gb) the module will be canceled.
       default: ntfs
       choices:
         - ntfs
@@ -131,17 +131,17 @@ notes:
   - To identify the options which are used to manage a disk consider the "Manage disk option" hint in the option description.
   - In order to find only one disk on the target you can use the size and/or number option for the search of the disk.
   - If no size and number option value was defined and multiple disks were found on the target based on the passed option values
-  the module will select the first disk found.
+    the module will select the first disk found.
   - The module detects any existing volume and/or partition on the selected disk and will cancel the module in this case.
   - If the disk is not yet initialized the module will initialize the disk (set partition style, online and writeable).
   - If the disk is initialized already the script will try to set the disk to "online" and "writeable" (read-only eq. false)
-  if it's not the state of the disk already.
+    if it's not the state of the disk already.
   - Further in this case it will convert the partition style of the disk to the selected partition style if needed.
   - The script will stop and start the service "ShellHWService" again in order to avoid disk management GUI messages.
   - If the script fails with an error and the operational status was set from "offline" to "online" before the script will try to set the disk to
-  operational status "offline" again but will not be canceled if set "offline" again fails.
+    operational status "offline" again but will not be canceled if set "offline" again fails.
   - If the script fails with an error and the writeable status was set from "read-only" to "writeable" before the script will try to set the disk to
-  writeable status "read-only" again but will not be canceled if set "read-only" again fails.
+    writeable status "read-only" again but will not be canceled if set "read-only" again fails.
   - If you use the --diff option you will get detailed information about the changes on the target.
   - If you use the --check option nothing will be changed on the target but you will get information what would be changed.
 '''
