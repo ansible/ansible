@@ -718,7 +718,6 @@ class AzureRMModuleBase(object):
 
         return self.get_poller_result(poller)
 
-<<<<<<< HEAD
     def get_mgmt_svc_client(self, client_type, base_url=None, api_version=None):
         self.log('Getting management service client {0}'.format(client_type.__name__))
         self.check_client_version(client_type)
@@ -740,25 +739,13 @@ class AzureRMModuleBase(object):
 
         return client
 
-=======
->>>>>>> undone azure-rm-common
     @property
     def storage_client(self):
         self.log('Getting storage client...')
         if not self._storage_client:
-<<<<<<< HEAD
             self._storage_client = self.get_mgmt_svc_client(StorageManagementClient,
                                                             base_url=self._cloud_environment.endpoints.resource_manager,
                                                             api_version='2017-06-01')
-=======
-            self.check_client_version('storage', storage_client_version, AZURE_EXPECTED_VERSIONS['storage_client_version'])
-            self._storage_client = StorageManagementClient(
-                self.azure_credentials,
-                self.subscription_id,
-                base_url=self._cloud_environment.endpoints.resource_manager,
-                api_version='2017-06-01'
-            )
->>>>>>> undone azure-rm-common
         return self._storage_client
 
     @property
@@ -770,19 +757,9 @@ class AzureRMModuleBase(object):
     def network_client(self):
         self.log('Getting network client')
         if not self._network_client:
-<<<<<<< HEAD
             self._network_client = self.get_mgmt_svc_client(NetworkManagementClient,
                                                             base_url=self._cloud_environment.endpoints.resource_manager,
                                                             api_version='2017-06-01')
-=======
-            self.check_client_version('network', network_client_version, AZURE_EXPECTED_VERSIONS['network_client_version'])
-            self._network_client = NetworkManagementClient(
-                self.azure_credentials,
-                self.subscription_id,
-                base_url=self._cloud_environment.endpoints.resource_manager,
-                api_version='2017-06-01'
-            )
->>>>>>> undone azure-rm-common
         return self._network_client
 
     @property
