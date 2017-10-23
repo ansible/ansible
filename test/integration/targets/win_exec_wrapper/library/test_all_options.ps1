@@ -1,7 +1,7 @@
 #!powershell
 
-#Requires -Module Ansible.ModuleUtils.Legacy.psm1
-#Requires -Module Ansible.ModuleUtils.SID.psm1
+#Requires -Module Ansible.ModuleUtils.Legacy
+#Requires -Module Ansible.ModuleUtils.SID
 #Requires -Version 3.0
 #AnsibleRequires -OSVersion 6
 #AnsibleRequires -Become

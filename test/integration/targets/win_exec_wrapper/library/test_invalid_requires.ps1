@@ -1,6 +1,6 @@
 #!powershell
 
-#Requires -Module Ansible.ModuleUtils.Legacy.psm1
+#Requires -Module Ansible.ModuleUtils.Legacy
 # Requires -Version 20
 # AnsibleRequires -OSVersion 20
 
