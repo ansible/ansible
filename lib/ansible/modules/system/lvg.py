@@ -10,7 +10,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.2',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -35,7 +35,7 @@ options:
     required: false
   pesize:
     description:
-    - The size of the physical extent. The value must be either a power of 2 of at least 1 sector (where the sector size is the largest sector size of the PVs currently used in the VG), or at least 128KiB
+    - The size of the physical extent. The value must be either a power of 2 of at least 1 sector, or at least 128KiB
     - Size[m|UNIT]
     default: 4
     required: false
