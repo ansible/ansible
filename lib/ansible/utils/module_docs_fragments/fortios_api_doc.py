@@ -28,7 +28,7 @@ notes:
     the path where the playbook is executed. Additionally, default objects and argument specifications (including options,
     suboptions, and expected values) are saved locally wherever the playbook is executed.
   - Module is written to take input of a desired end config of the device. As such, if an object in the configuration
-    is missing from that file, it will be DELETED from the device. It is recommended to use print_current_config = true
+    is missing from that file, it will be DELETED from the device. It is recommended to use I(print_current_config: true)
     for onboarding devices with existing configuration.
   - The module determines whether an existing configuration matches the proposed configuration by checking each key - value
     pair in the proposal against the existing configuration. Any keys not found in the proposed configuration are assumed
@@ -42,7 +42,7 @@ options:
     suboptions:
       fortigate_username:
         description:
-          - Specifies username for Fortigate connection.
+          - Specifies username for Fortigate connection. User must have both read and write privileges for the specified endpoint to modify configuration.
         required: true
         type: str
       fortigate_password:
@@ -57,19 +57,18 @@ options:
         type: str
       port:
         description:
-          - Specifies port for firewall connection.
+          - Specifies port for firewall connection. The default port will be based on the connection type, e.g. 80 for http or 443 for https.
         required: false
         type: int
-        default: 80 or 443
       verify:
         description:
-          - Verify SSL certificate, must be located in conn_params dict.
+          - Verify SSL certificate.
         required: false
         type: boolean
         default: true
       secure:
         description:
-          - Use secure (HTTPS) communication, must be located in conn_params dict.
+          - Use secure (HTTPS) communication.
         required: false
         type: boolean
         default: true
@@ -82,7 +81,7 @@ options:
   print_current_config:
     description:
       - Runs playbook in check mode and generates JSON file with the current configuration,
-        named as api-path-CurrentConfig.json in the folder playbook was run from.
+        named as C(api-path-CurrentConfig.json) in the folder playbook was run from.
     required: false
     type: boolean
     default: false

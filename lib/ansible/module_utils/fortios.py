@@ -56,8 +56,8 @@ fortios_argument_spec = dict(
     file_mode=dict(type='bool', default=False),
     config_file=dict(type='path'),
     host=dict(),
-    username=dict(),
-    password=dict(type='str', no_log=True),
+    username=dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
+    password=dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
     timeout=dict(type='int', default=60),
     vdom=dict(type='str'),
     backup=dict(type='bool', default=False),
@@ -90,27 +90,22 @@ def backup(module, running_config):
         try:
             os.mkdir(backup_path)
         except:
-            module.fail_json(
-                msg="Can't create directory {0} Permission denied ?".format(backup_path))
+            module.fail_json(msg="Can't create directory {0} Permission denied ?".format(backup_path))
     tstamp = time.strftime("%Y-%m-%d@%H:%M:%S", time.localtime(time.time()))
     if 0 < len(backup_filename):
         filename = '%s/%s' % (backup_path, backup_filename)
     else:
-        filename = '%s/%s_config.%s' % (backup_path,
-                                        module.params['host'], tstamp)
+        filename = '%s/%s_config.%s' % (backup_path, module.params['host'], tstamp)
     try:
         open(filename, 'w').write(running_config)
     except:
-        module.fail_json(
-            msg="Can't create backup file {0} Permission denied ?".format(filename))
+        module.fail_json(msg="Can't create backup file {0} Permission denied ?".format(filename))
 
 
 class AnsibleFortios(object):
-
     def __init__(self, module):
         if not HAS_PYFG:
-            module.fail_json(
-                msg='Could not import the python library pyFG required by this module')
+            module.fail_json(msg='Could not import the python library pyFG required by this module')
 
         self.result = {
             'changed': False,
@@ -127,8 +122,7 @@ class AnsibleFortios(object):
             timeout = self.module.params['timeout']
             vdom = self.module.params['vdom']
 
-            self.forti_device = FortiOS(
-                host, username=username, password=password, timeout=timeout, vdom=vdom)
+            self.forti_device = FortiOS(host, username=username, password=password, timeout=timeout, vdom=vdom)
 
             try:
                 self.forti_device.open()
@@ -160,8 +154,7 @@ class AnsibleFortios(object):
                                       exception=traceback.format_exc())
 
         # set configs in object
-        self.result[
-            'running_config'] = self.forti_device.running_config.to_text()
+        self.result['running_config'] = self.forti_device.running_config.to_text()
         self.candidate_config = self.forti_device.candidate_config
 
         # backup if needed
@@ -191,8 +184,7 @@ class AnsibleFortios(object):
                     # Something's wrong (rollback is automatic)
                     self.forti_device.close()
                     error_list = self.get_error_infos(e)
-                    self.module.fail_json(
-                        msg_error_list=error_list, msg="Unable to commit change, check your args, the error was %s" % e.message)
+                    self.module.fail_json(msg_error_list=error_list, msg="Unable to commit change, check your args, the error was %s" % e.message)
 
                 self.forti_device.close()
         self.module.exit_json(**self.result)
@@ -210,14 +202,12 @@ class AnsibleFortios(object):
                 error_code = error[0]
                 error_string = error[1]
                 error_type = fortios_error_codes.get(error_code, "unknown")
-                error_list.append(
-                    dict(error_code=error_code, error_type=error_type, error_string=error_string))
+                error_list.append(dict(error_code=error_code, error_type=error_type, error_string=error_string))
 
         return error_list
 
     def get_empty_configuration_block(self, block_name, block_type):
         return FortiConfig(block_name, block_type)
-
 
 fortios_api_argument_spec = dict(
     conn_params=dict(
