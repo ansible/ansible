@@ -718,12 +718,34 @@ class AzureRMModuleBase(object):
 
         return self.get_poller_result(poller)
 
+    def get_mgmt_svc_client(self, client_type, base_url=None, api_version=None):
+        self.log('Getting management service client {0}'.format(client_type.__name__))
+        self.check_client_version(client_type)
+        if api_version:
+            client = client_type(self.azure_credentials,
+                                 self.subscription_id,
+                                 api_version=api_version,
+                                 base_url=base_url)
+        else:
+            client = client_type(self.azure_credentials,
+                                 self.subscription_id,
+                                 base_url=base_url)
+
+        # Add user agent for Ansible
+        client.config.add_user_agent(ANSIBLE_USER_AGENT)
+        # Add user agent when running from Cloud Shell
+        if CLOUDSHELL_USER_AGENT_KEY in os.environ:
+            client.config.add_user_agent(os.environ[CLOUDSHELL_USER_AGENT_KEY])
+
+        return client
+
     @property
     def storage_client(self):
         self.log('Getting storage client...')
         if not self._storage_client:
             self._storage_client = self.get_mgmt_svc_client(StorageManagementClient,
                                                             base_url=self._cloud_environment.endpoints.resource_manager,
+                                                            api_version='2017-06-01')
         return self._storage_client
 
     @property
@@ -735,13 +757,9 @@ class AzureRMModuleBase(object):
     def network_client(self):
         self.log('Getting network client')
         if not self._network_client:
-            self.check_client_version('network', network_client_version, AZURE_EXPECTED_VERSIONS['network_client_version'])
-            self._network_client = NetworkManagementClient(
-                self.azure_credentials,
-                self.subscription_id,
-                base_url=self._cloud_environment.endpoints.resource_manager,
-                api_version='2017-06-01'
-            )
+            self._network_client = self.get_mgmt_svc_client(NetworkManagementClient,
+                                                            base_url=self._cloud_environment.endpoints.resource_manager,
+                                                            api_version='2017-06-01')
         return self._network_client
 
     @property
