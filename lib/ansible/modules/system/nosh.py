@@ -18,9 +18,10 @@ module: nosh
 author:
     - "Thomas Caravia"
 version_added: "2.5"
-short_description:  Manage services with nosh.
+short_description:  Manage services with nosh
 description:
-    - Controls services on remote hosts using the nosh toolset.
+    - Control running and enabled state for system-wide or user services.
+    - BSD and Linux systems are supported.
 options:
     name:
         required: true
@@ -30,7 +31,7 @@ options:
         required: false
         choices: [ started, stopped, reset, restarted, reloaded ]
         description:
-            - C(Started)/C(stopped) are idempotent actions that will not run
+            - C(started)/C(stopped) are idempotent actions that will not run
               commands unless necessary.
               C(restarted) will always bounce the service.
               C(reloaded) will send a SIGHUP or start the service.
@@ -40,24 +41,27 @@ options:
         required: false
         choices: [ "yes", "no" ]
         description:
-            - Whether the service is enabled or not, independently of *.preset file
-              preference or running state. Mutually exclusive with C(preset). Will take
-              effect prior to the C(reset) state.
+            - Enable or disable the service, independently of C(*.preset) file
+              preference or running state. Mutually exclusive with I(preset). Will take
+              effect prior to I(state=reset).
     preset:
         required: false
         choices: [ "yes", "no" ]
-        default: no
         description:
             - Enable or disable the service according to local preferences in *.preset files.
-              Mutually exclusive with C(enabled). Only has an effect if set to true. Will take
-              effect prior to the C(reset) state.
+              Mutually exclusive with I(enabled). Only has an effect if set to true. Will take
+              effect prior to I(state=reset).
     user:
         required: false
-        default: no
+        default: 'no'
         choices: [ "yes", "no" ]
         description:
-            - Run system-control talking to the service manager of the calling user, rather than
-              the service manager of the system.
+            - Run system-control talking to the calling user's service manager, rather than
+              the system-wide service manager.
+requirements:
+    - A system with an active nosh service manager, see Notes for further information.
+notes:
+    - Information on the nosh utilities suite may be found at U(https://jdebp.eu/Softwares/nosh/).
 '''
 
 EXAMPLES = '''
@@ -83,8 +87,22 @@ EXAMPLES = '''
 - name: for package installers, set nginx running state according to local enable settings, preset and reset
   nosh: name=nginx preset=True state=reset
 
-- name: reboot the host if nosh is the system manager, would need a "wait_for*" step at least, not recommended as-is
+- name: reboot the host if nosh is the system manager, would need a "wait_for*" task at least, not recommended as-is
   nosh: name=reboot state=started
+
+- name: using conditionals with the module facts
+  tasks:
+    - name: obtain information on tinydns service
+      nosh: name=tinydns
+      register: result
+
+    - name: fail if service not loaded
+      fail: msg="The {{ result.name }} service is not loaded"
+      when: not result.status
+
+    - name: fail if service is running
+      fail: msg="The {{ result.name }} service is running"
+      when: result.status and result.status['DaemontoolsEncoreState'] == "running"
 '''
 
 RETURN = '''
@@ -98,8 +116,23 @@ service_path:
     returned: success
     type: string
     sample: "/var/sv/sshd"
+enabled:
+    description: whether the service is enabled at system bootstrap
+    returned: success
+    type: boolean
+    sample: True
+preset:
+    description: whether the enabled status reflects the one set in the relevant C(*.preset) file
+    returned: success
+    type: boolean
+    sample: False
+state:
+    description: service process run state, C(None) if the service is not loaded and will not be started
+    returned: if state option is used
+    type: string
+    sample: "reloaded"
 status:
-    description: a dictionary with the key=value pairs returned by `system-control show-json SERVICE` or Loaded=False if the service is not loaded
+    description: a dictionary with the key=value pairs returned by `system-control show-json` or C(None) if the service is not loaded
     returned: success
     type: complex
     contains: {
@@ -152,6 +185,11 @@ status:
                 "../sshdgenkeys"
             ]
         }
+user:
+    description: whether the user-level service manager is called
+    returned: success
+    type: boolean
+    sample: False
 '''
 
 
@@ -217,14 +255,14 @@ def handle_enabled(module, result, service_path):
     These options are set to "mutually exclusive" but the explicit 'enabled' option will
     have priority if the check is bypassed.
     """
-    enabled = service_is_enabled(module, service_path)
+
+    # computed prior in control flow
+    preset = result['preset']
+    enabled = result['enabled']
 
     # preset, effect only if option set to true (no reverse preset)
     if module.params['preset']:
         action = 'preset'
-        preset = enabled is service_is_preset_enabled(module, service_path)
-        result['preset'] = preset
-        result['enabled'] = enabled
 
         # run preset if needed
         if preset != module.params['preset']:
@@ -243,8 +281,6 @@ def handle_enabled(module, result, service_path):
         else:
             action = 'disable'
 
-        result['enabled'] = enabled
-
         # change enable/disable if needed
         if enabled != module.params['enabled']:
             result['changed'] = True
@@ -253,6 +289,7 @@ def handle_enabled(module, result, service_path):
                 if rc != 0:
                     module.fail_json(msg="Unable to %s service %s: %s" % (action, service_path, out + err))
             result['enabled'] = not enabled
+            result['preset'] = not preset
 
 
 def handle_state(module, result, service_path):
@@ -264,28 +301,25 @@ def handle_state(module, result, service_path):
     """
     # default to desired state, no action
     result['state'] = module.params['state']
+    state = module.params['state']
     action = None
 
-    # case for enabled/preset + reset + check_mode: use anticipated enabled status
-    # otherwise test real enabled status
-    if module.check_mode and (module.params['enabled'] is not None or module.params['preset']):
-        enabled = result['enabled']
-    else:
-        enabled = service_is_enabled(module, service_path)
+    # computed prior in control flow, possibly modified by handle_enabled()
+    enabled = result['enabled']
 
     # service not loaded -> not started by manager, no status information
     if not service_is_loaded(module, service_path):
-        if module.params['state'] in ['started', 'restarted', 'reloaded']:
+        if state in ['started', 'restarted', 'reloaded']:
             action = 'start'
             result['state'] = 'started'
-        elif module.params['state'] == 'reset':
+        elif state == 'reset':
             if enabled:
                 action = 'start'
                 result['state'] = 'started'
             else:
-                result['state'] = 'stopped'
+                result['state'] = None
         else:
-            result['state'] = 'stopped'
+            result['state'] = None
 
     # service is loaded
     else:
@@ -293,14 +327,14 @@ def handle_state(module, result, service_path):
         result['status'] = get_service_status(module, service_path)
         running = service_is_running(result['status'])
 
-        if module.params['state'] == 'started':
+        if state == 'started':
             if not running:
                 action = 'start'
-        elif module.params['state'] == 'stopped':
+        elif state == 'stopped':
             if running:
                 action = 'stop'
         # reset = start/stop according to enabled status
-        elif module.params['state'] == 'reset':
+        elif state == 'reset':
             if enabled is not running:
                 if running:
                     action = 'stop'
@@ -309,14 +343,14 @@ def handle_state(module, result, service_path):
                     action = 'start'
                     result['state'] = 'started'
         # start if not running, 'service' module constraint
-        elif module.params['state'] == 'restarted':
+        elif state == 'restarted':
             if not running:
                 action = 'start'
                 result['state'] = 'started'
             else:
                 action = 'condrestart'
         # start if not running, 'service' module constraint
-        elif module.params['state'] == 'reloaded':
+        elif state == 'reloaded':
             if not running:
                 action = 'start'
                 result['state'] = 'started'
@@ -342,7 +376,7 @@ def main():
             state=dict(choices=['started', 'stopped', 'reset', 'restarted', 'reloaded'], type='str'),
             enabled=dict(type='bool'),
             preset=dict(type='bool'),
-            user=dict(type='bool'),
+            user=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
         mutually_exclusive=[['enabled', 'preset']],
@@ -354,12 +388,17 @@ def main():
     result = {
         'name': service,
         'changed': False,
-        'status': {},
+        'status': None,
     }
 
     # check service can be found (or fail) and get path
     service_path = get_service_path(module, service)
+
+    # get preliminary service facts
     result['service_path'] = service_path
+    result['user'] = module.params['user']
+    result['enabled'] = service_is_enabled(module, service_path)
+    result['preset'] = result['enabled'] is service_is_preset_enabled(module, service_path)
 
     # set enabled state, service need not be loaded
     if module.params['enabled'] is not None or module.params['preset']:
@@ -372,8 +411,6 @@ def main():
     # get final service status if possible
     if service_is_loaded(module, service_path):
         result['status'] = get_service_status(module, service_path)
-    else:
-        result['status'] = {'Loaded': False}
 
     module.exit_json(**result)
 
