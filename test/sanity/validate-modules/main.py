@@ -635,13 +635,41 @@ class ModuleValidator(Validator):
                         line=import_line
                     )
 
-    def _find_ps_replacers(self):
-        ps_module_util_template = '#Requires -Module Ansible.ModuleUtils.'
-        if ps_module_util_template not in self.text and REPLACER_WINDOWS not in self.text:
+    def _validate_ps_replacers(self):
+        # loop all (for/else + error)
+        # get module list for each
+        # check "shape" of each module name
+
+        module_requires = r'(?im)^#\s*requires\s+\-module(?:s?)\s*(Ansible\.ModuleUtils\..+)'
+        found_requires = False
+
+        for req_stmt in re.finditer(module_requires, self.text):
+            found_requires = True
+            # this will bomb on dictionary format - "don't do that"
+            module_list = [x.strip() for x in req_stmt.group(1).split(',')]
+            if len(module_list) > 1:
+                self.reporter.error(
+                    path=self.object_path,
+                    code=210,
+                    msg='Ansible.ModuleUtils requirements do not support multiple modules per statement: "%s"' % req_stmt.group(0)
+                )
+                continue
+
+            module_name = module_list[0]
+
+            if module_name.lower().endswith('.psm1'):
+                self.reporter.error(
+                    path=self.object_path,
+                    code=211,
+                    msg='Module #Requires should not end in .psm1: "%s"' % module_name
+                )
+
+        # also accept the legacy #POWERSHELL_COMMON replacer signal
+        if not found_requires and REPLACER_WINDOWS not in self.text:
             self.reporter.error(
                 path=self.object_path,
                 code=207,
-                msg='"%s" not found in module' % ps_module_util_template
+                msg='No Ansible.ModuleUtils module requirements/imports found'
             )
 
     def _find_ps_docs_py_file(self):
@@ -1087,7 +1115,7 @@ class ModuleValidator(Validator):
             self._ensure_imports_below_docs(doc_info, first_callable)
 
         if self._powershell_module():
-            self._find_ps_replacers()
+            self._validate_ps_replacers()
             self._find_ps_docs_py_file()
 
         self._check_for_gpl3_header()
