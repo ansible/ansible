@@ -44,7 +44,7 @@ options:
     description:
       - Maximum time in seconds to wait for target_status change
     required: false
-    default: 30
+    default: 60
 extends_documentation_fragment:
     - aws
     - ec2
