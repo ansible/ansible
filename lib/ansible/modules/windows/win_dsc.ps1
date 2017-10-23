@@ -6,6 +6,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
+#Requires -Version 5
 
 $ErrorActionPreference = "Stop"
 
@@ -135,12 +136,6 @@ Function Parse-DscProperty($name, $value, $resourceProp)
     $newValue = Cast-Value -value $value -type $propertyType -typeString $propertyTypeString -name $name
 
     return ,$newValue
-}
-
-#Check that we're on at least Powershell version 5
-if ($PSVersionTable.PSVersion.Major -lt 5)
-{
-    Fail-Json -obj $Result -message "This module only runs on Powershell version 5 or higher"
 }
 
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
