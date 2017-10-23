@@ -78,6 +78,7 @@ def test_basic_s3_stack(maybe_sleep, placeboify):
     params = {
         'StackName': 'ansible-test-basic-yaml',
         'TemplateBody': basic_yaml_tpl,
+        'ClientRequestToken': '3faf3fb5-b289-41fc-b940-44151828f6cf',
     }
     m = FakeModule(disable_rollback=False)
     result = cfn_module.create_stack(m, params, connection)
