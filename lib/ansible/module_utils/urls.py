@@ -506,7 +506,7 @@ class RequestWithMethod(urllib_request.Request):
             return urllib_request.Request.get_method(self)
 
 
-def RedirectHandlerFactory(follow_redirects=None, validate_certs=True):
+def RedirectHandlerFactory(follow_redirects=None, validate_certs=True, ca_path=None):
     """This is a class factory that closes over the value of
     ``follow_redirects`` so that the RedirectHandler class has access to
     that value without having to use globals, and potentially cause problems
@@ -521,7 +521,7 @@ def RedirectHandlerFactory(follow_redirects=None, validate_certs=True):
         """
 
         def redirect_request(self, req, fp, code, msg, hdrs, newurl):
-            handler = maybe_add_ssl_handler(newurl, validate_certs)
+            handler = maybe_add_ssl_handler(newurl, validate_certs, ca_path)
             if handler:
                 urllib_request._opener.add_handler(handler)
 
@@ -601,9 +601,10 @@ class SSLValidationHandler(urllib_request.BaseHandler):
     '''
     CONNECT_COMMAND = "CONNECT %s:%s HTTP/1.0\r\nConnection: close\r\n"
 
-    def __init__(self, hostname, port):
+    def __init__(self, hostname, port, ca_path):
         self.hostname = hostname
         self.port = port
+        self.ca_path = ca_path
 
     def get_ca_certs(self):
         # tries to find a valid CA cert in one of the
@@ -613,32 +614,36 @@ class SSLValidationHandler(urllib_request.BaseHandler):
         paths_checked = []
 
         system = to_text(platform.system(), errors='surrogate_or_strict')
-        # build a list of paths to check for .crt/.pem files
-        # based on the platform type
-        paths_checked.append('/etc/ssl/certs')
-        if system == u'Linux':
-            paths_checked.append('/etc/pki/ca-trust/extracted/pem')
-            paths_checked.append('/etc/pki/tls/certs')
-            paths_checked.append('/usr/share/ca-certificates/cacert.org')
-        elif system == u'FreeBSD':
-            paths_checked.append('/usr/local/share/certs')
-        elif system == u'OpenBSD':
-            paths_checked.append('/etc/ssl')
-        elif system == u'NetBSD':
-            ca_certs.append('/etc/openssl/certs')
-        elif system == u'SunOS':
-            paths_checked.append('/opt/local/etc/openssl/certs')
 
-        # fall back to a user-deployed cert in a standard
-        # location if the OS platform one is not available
-        paths_checked.append('/etc/ansible')
+        if self.ca_path:
+            paths_checked.append(self.ca_path)
+        else:
+            # build a list of paths to check for .crt/.pem files
+            # based on the platform type
+            paths_checked.append('/etc/ssl/certs')
+            if system == u'Linux':
+                paths_checked.append('/etc/pki/ca-trust/extracted/pem')
+                paths_checked.append('/etc/pki/tls/certs')
+                paths_checked.append('/usr/share/ca-certificates/cacert.org')
+            elif system == u'FreeBSD':
+                paths_checked.append('/usr/local/share/certs')
+            elif system == u'OpenBSD':
+                paths_checked.append('/etc/ssl')
+            elif system == u'NetBSD':
+                ca_certs.append('/etc/openssl/certs')
+            elif system == u'SunOS':
+                paths_checked.append('/opt/local/etc/openssl/certs')
+
+            # fall back to a user-deployed cert in a standard
+            # location if the OS platform one is not available
+            paths_checked.append('/etc/ansible')
 
         tmp_fd, tmp_path = tempfile.mkstemp()
         to_add_fd, to_add_path = tempfile.mkstemp()
         to_add = False
 
         # Write the dummy ca cert if we are running on Mac OS X
-        if system == u'Darwin':
+        if system == u'Darwin' and self.ca_path is None:
             os.write(tmp_fd, b_DUMMY_CA_CERT)
             # Default Homebrew path for OpenSSL certs
             paths_checked.append('/usr/local/etc/openssl')
@@ -668,6 +673,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
 
         if not to_add:
             to_add_path = None
+
         return (tmp_path, to_add_path, paths_checked)
 
     def validate_proxy_response(self, response, valid_codes=None):
@@ -786,7 +792,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
     https_request = http_request
 
 
-def maybe_add_ssl_handler(url, validate_certs):
+def maybe_add_ssl_handler(url, validate_certs, ca_path):
     # FIXME: change the following to use the generic_urlparse function
     #        to remove the indexed references for 'parsed'
     parsed = urlparse(url)
@@ -807,12 +813,12 @@ def maybe_add_ssl_handler(url, validate_certs):
             port = 443
         # create the SSL validation handler and
         # add it to the list of handlers
-        return SSLValidationHandler(hostname, port)
+        return SSLValidationHandler(hostname, port, ca_path)
 
 
 def open_url(url, data=None, headers=None, method=None, use_proxy=True,
              force=False, last_mod_time=None, timeout=10, validate_certs=True,
-             url_username=None, url_password=None, http_agent=None,
+             ca_path=None, url_username=None, url_password=None, http_agent=None,
              force_basic_auth=False, follow_redirects='urllib2',
              client_cert=None, client_key=None, cookies=None):
     '''
@@ -821,7 +827,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
     Does not require the module environment
     '''
     handlers = []
-    ssl_handler = maybe_add_ssl_handler(url, validate_certs)
+    ssl_handler = maybe_add_ssl_handler(url, validate_certs, ca_path)
     if ssl_handler:
         handlers.append(ssl_handler)
 
@@ -906,7 +912,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
     if hasattr(socket, 'create_connection') and CustomHTTPSHandler:
         handlers.append(CustomHTTPSHandler)
 
-    handlers.append(RedirectHandlerFactory(follow_redirects, validate_certs))
+    handlers.append(RedirectHandlerFactory(follow_redirects, validate_certs, ca_path))
 
     # add some nicer cookie handling
     if cookies is not None:
@@ -1022,6 +1028,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
 
     # Get validate_certs from the module params
     validate_certs = module.params.get('validate_certs', True)
+    ca_path = module.params.get('ca_path', None)
 
     username = module.params.get('url_username', '')
     password = module.params.get('url_password', '')
@@ -1040,7 +1047,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     try:
         r = open_url(url, data=data, headers=headers, method=method,
                      use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout,
-                     validate_certs=validate_certs, url_username=username,
+                     validate_certs=validate_certs, ca_path=ca_path, url_username=username,
                      url_password=password, http_agent=http_agent, force_basic_auth=force_basic_auth,
                      follow_redirects=follow_redirects, client_cert=client_cert,
                      client_key=client_key, cookies=cookies)
