@@ -548,14 +548,14 @@ def main():
     zone_id = None
     endpoints = []
     argument_spec = dict(
-        manageiq_connection=dict(required=True, type='dict',
-                                 options=manageiq_argument_spec()),
         state=dict(choices=['absent', 'present'], default='present'),
         name=dict(required=True),
         zone=dict(default='default'),
         provider_region=dict(),
         type=dict(choices=supported_providers().keys()),
     )
+    # add the manageiq connection arguments to the arguments
+    argument_spec.update(manageiq_argument_spec())
     # add the endpoint arguments to the arguments
     argument_spec.update(endpoint_list_spec())
 

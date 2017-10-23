@@ -283,19 +283,21 @@ class ManageIQUser(object):
 
 
 def main():
+    argument_spec = dict(
+        userid=dict(required=True, type='str'),
+        name=dict(),
+        password=dict(no_log=True),
+        group=dict(),
+        email=dict(),
+        state=dict(choices=['absent', 'present'], default='present'),
+        update_password=dict(choices=['always', 'on_create'],
+                             default='always'),
+    )
+    # add the manageiq connection arguments to the arguments
+    argument_spec.update(manageiq_argument_spec())
+
     module = AnsibleModule(
-        argument_spec=dict(
-            manageiq_connection=dict(required=True, type='dict',
-                                     options=manageiq_argument_spec()),
-            userid=dict(required=True, type='str'),
-            name=dict(),
-            password=dict(no_log=True),
-            group=dict(),
-            email=dict(),
-            state=dict(choices=['absent', 'present'], default='present'),
-            update_password=dict(choices=['always', 'on_create'],
-                                 default='always'),
-        ),
+        argument_spec=argument_spec,
     )
 
     userid = module.params['userid']
