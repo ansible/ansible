@@ -27,3 +27,5 @@ To get started, select one of the following topics.
    repomerge
    developing_releases
    ../committer_guidelines
+   module_utils
+   module_utils/basic
