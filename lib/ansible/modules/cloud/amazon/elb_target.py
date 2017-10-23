@@ -211,7 +211,7 @@ def deregister_target(connection, module):
                     target_status_check(connection, module, target_group_arn, target, target_status, target_status_timeout)
 
             except ClientError as e:
-                module.fail_json(msg="Ohh parps", exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     # Get all targets for the target group
     target_descriptions = describe_targets(connection, module, target_group_arn, [])
