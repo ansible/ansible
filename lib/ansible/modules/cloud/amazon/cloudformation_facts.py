@@ -188,7 +188,7 @@ class CloudFormationServiceManager:
             kwargs = {'StackName': stack_name} if stack_name else {}
             func = partial(self.client.describe_stacks, **kwargs)
             response = self.paginated_response(func, 'Stacks')
-            if response:
+            if response is not None:
                 return response
             self.module.fail_json(msg="Error describing stack(s) - an empty response was returned")
         except Exception as e:
