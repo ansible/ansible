@@ -44,7 +44,7 @@ AZURE_COMMON_ARGS = dict(
     ad_user=dict(type='str', no_log=True),
     password=dict(type='str', no_log=True),
     cloud_environment=dict(type='str'),
-    debug=dict(type='bool', default=True),
+    # debug=dict(type='bool', default=False),
 )
 
 AZURE_CREDENTIAL_ENV_MAPPING = dict(
@@ -247,7 +247,7 @@ class AzureRMModuleBase(object):
 
         self.check_mode = self.module.check_mode
         self.facts_module = facts_module
-        self.debug = self.module.params.get('debug')
+        # self.debug = self.module.params.get('debug')
 
         # authenticate
         self.credentials = self._get_credentials(self.module.params)
@@ -297,11 +297,7 @@ class AzureRMModuleBase(object):
                                                          self.credentials['password'],
                                                          tenant=tenant,
                                                          cloud_environment=self._cloud_environment)
-        
-        elif self.credentials.get('credentials') is not None:
-            self.azure_credentials = self.credentials.get('credentials')
-
-        if not self.azure_credentials:
+        else:
             self.fail("Failed to authenticate with provided credentials. Some attributes were missing. "
                       "Credentials must include client_id, secret and tenant or ad_user and password or "
                       "be logged using AzureCLI.")
@@ -340,13 +336,14 @@ class AzureRMModuleBase(object):
         self.module.fail_json(msg=msg, **kwargs)
 
     def log(self, msg, pretty_print=False):
+        pass
         # Use only during module development
-        if self.debug:
-            log_file = open('/src/azure_rm.log', 'a')
-            if pretty_print:
-                log_file.write(json.dumps(msg, indent=4, sort_keys=True))
-            else:
-                log_file.write(msg + u'\n')
+        # if self.debug:
+        #     log_file = open('azure_rm.log', 'a')
+        #     if pretty_print:
+        #         log_file.write(json.dumps(msg, indent=4, sort_keys=True))
+        #     else:
+        #         log_file.write(msg + u'\n')
 
     def validate_tags(self, tags):
         '''
@@ -431,7 +428,6 @@ class AzureRMModuleBase(object):
             self.fail("Error retrieving resource group {0} - {1}".format(resource_group, str(exc)))
 
     def _get_azure_cli_profile(self):
-        self.log("_get_azure_cli_profile")
         if not HAS_AZURE_CLI_CORE:
             self.fail("Do you have azure-cli-core installed? Try `pip install 'azure-cli-core' --upgrade`")
         try:
@@ -465,7 +461,6 @@ class AzureRMModuleBase(object):
         return None
 
     def _get_env_credentials(self):
-        self.log("_get_env_credentials")
         env_credentials = dict()
         for attribute, env_variable in AZURE_CREDENTIAL_ENV_MAPPING.items():
             env_credentials[attribute] = os.environ.get(env_variable, None)
@@ -483,7 +478,6 @@ class AzureRMModuleBase(object):
         return None
 
     def _get_credentials(self, params):
-        self.log("_get_credentials")
         # Get authentication credentials.
         # Precedence: module parameters-> environment variables-> default profile in ~/.azure/credentials.
 
@@ -724,6 +718,7 @@ class AzureRMModuleBase(object):
 
         return self.get_poller_result(poller)
 
+<<<<<<< HEAD
     def get_mgmt_svc_client(self, client_type, base_url=None, api_version=None):
         self.log('Getting management service client {0}'.format(client_type.__name__))
         self.check_client_version(client_type)
@@ -745,13 +740,25 @@ class AzureRMModuleBase(object):
 
         return client
 
+=======
+>>>>>>> undone azure-rm-common
     @property
     def storage_client(self):
         self.log('Getting storage client...')
         if not self._storage_client:
+<<<<<<< HEAD
             self._storage_client = self.get_mgmt_svc_client(StorageManagementClient,
                                                             base_url=self._cloud_environment.endpoints.resource_manager,
                                                             api_version='2017-06-01')
+=======
+            self.check_client_version('storage', storage_client_version, AZURE_EXPECTED_VERSIONS['storage_client_version'])
+            self._storage_client = StorageManagementClient(
+                self.azure_credentials,
+                self.subscription_id,
+                base_url=self._cloud_environment.endpoints.resource_manager,
+                api_version='2017-06-01'
+            )
+>>>>>>> undone azure-rm-common
         return self._storage_client
 
     @property
@@ -763,9 +770,19 @@ class AzureRMModuleBase(object):
     def network_client(self):
         self.log('Getting network client')
         if not self._network_client:
+<<<<<<< HEAD
             self._network_client = self.get_mgmt_svc_client(NetworkManagementClient,
                                                             base_url=self._cloud_environment.endpoints.resource_manager,
                                                             api_version='2017-06-01')
+=======
+            self.check_client_version('network', network_client_version, AZURE_EXPECTED_VERSIONS['network_client_version'])
+            self._network_client = NetworkManagementClient(
+                self.azure_credentials,
+                self.subscription_id,
+                base_url=self._cloud_environment.endpoints.resource_manager,
+                api_version='2017-06-01'
+            )
+>>>>>>> undone azure-rm-common
         return self._network_client
 
     @property
