@@ -270,18 +270,19 @@ class ManageIQPolicies(object):
 
 def main():
     actions = {'present': 'assign', 'absent': 'unassign', 'list': 'list'}
+    argument_spec = dict(
+        policy_profiles=dict(type='list'),
+        resource_name=dict(required=True, type='str'),
+        resource_type=dict(required=True, type='str',
+                           choices=manageiq_entities().keys()),
+        state=dict(required=False, type='str',
+                   choices=['present', 'absent', 'list'], default='present'),
+    )
+    # add the manageiq connection arguments to the arguments
+    argument_spec.update(manageiq_argument_spec())
 
     module = AnsibleModule(
-        argument_spec=dict(
-            manageiq_connection=dict(required=True, type='dict',
-                                     options=manageiq_argument_spec()),
-            policy_profiles=dict(type='list'),
-            resource_name=dict(required=True, type='str'),
-            resource_type=dict(required=True, type='str',
-                               choices=manageiq_entities().keys()),
-            state=dict(required=False, type='str',
-                       choices=['present', 'absent', 'list'], default='present'),
-        ),
+        argument_spec=argument_spec,
         required_if=[
             ('state', 'present', ['policy_profiles']),
             ('state', 'absent', ['policy_profiles'])
