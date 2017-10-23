@@ -606,7 +606,7 @@ class VmsModule(BaseModule):
                         self.param('template_version')
                     )
                 )
-            template = sorted(templates,key=lambda t: t.version.version_number)[-1]
+            template = sorted(templates, key=lambda t: t.version.version_number, reverse=True)[0]
 
         return template
 
