@@ -143,7 +143,7 @@ class NowInventory(object):
         '''
 
         # Ignore empty group names
-        if group == '' or group == None:
+        if group == '' or group is None:
             return
 
         group = group.lower()
