@@ -1105,7 +1105,7 @@ DEFAULT_VAULT_IDENTITY:
 DEFAULT_VAULT_ENCRYPT_IDENTITY:
   name: Vault id to use for encryption
   default:
-  description: 'The vault of of the vault secret to use for encryption if not otherwise specified'
+  description: 'The vault_id to use for encrypting by default. If multiple vault_ids are provided, this specifies which to use for encryption. The --encrypt-vault-id cli option overrides the configured value.'
   env: [{name: ANSIBLE_VAULT_ENCRYPT_IDENTITY}]
   ini:
   - {key: vault_encrypt_identity, section: defaults}
