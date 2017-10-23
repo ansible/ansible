@@ -94,6 +94,7 @@ requirements:
 EXAMPLES = '''
 - name: Create default A record for example.com
   digital_ocean_domain_record:
+    oauth_token: xxxx
     state: present
     domain: example.com
     type: A
@@ -102,6 +103,7 @@ EXAMPLES = '''
 
 - name: Create A record for www
   digital_ocean_domain_record:
+    oauth_token: xxxx
     state: present
     domain: example.com
     type: A
@@ -110,6 +112,7 @@ EXAMPLES = '''
 
 - name: Update A record for www based on name/type/data
   digital_ocean_domain_record:
+    oauth_token: xxxx
     state: present
     domain: example.com
     type: A
@@ -119,9 +122,10 @@ EXAMPLES = '''
 
 - name: Update A record for www based on record_id
   digital_ocean_domain_record:
+    oauth_token: xxxx
     state: present
     domain: example.com
-    record_id:
+    record_id: 123456
     type: A
     name: www
     data: 127.0.0.2
@@ -129,6 +133,7 @@ EXAMPLES = '''
 
 - name: Remove www record based on name/type/data
   digital_ocean_domain_record:
+    oauth_token: xxxx
     state: absent
     domain: example.com
     type: A
@@ -137,12 +142,14 @@ EXAMPLES = '''
 
 - name: Remove www record based on record_id
   digital_ocean_domain_record:
+    oauth_token: xxxx
     state: absent
     domain: example.com
     record_id: 1234567
 
 - name: Create MX record with priority 10 for example.com
   digital_ocean_domain_record:
+    oauth_token: xxxx
     state: present
     domain: example.com
     type: MX
@@ -303,7 +310,7 @@ class DigitalOceanDomainRecordManager(DigitalOceanHelper, object):
 
     def __create_record(self):
         # before data comparison, we need to make sure that
-        # the payload['data'] does not normalized, but
+        # the payload['data'] is not normalized, but
         # during create/update digitalocean expects normalized data
         self.payload['data'] = self.__normalize_data()
 
@@ -361,7 +368,7 @@ class DigitalOceanDomainRecordManager(DigitalOceanHelper, object):
 
     def __update_record(self, record_id):
         # before data comparison, we need to make sure that
-        # the payload['data'] does not normalized, but
+        # the payload['data'] is not normalized, but
         # during create/update digitalocean expects normalized data
         self.payload['data'] = self.__normalize_data()
 
