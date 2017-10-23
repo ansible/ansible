@@ -20,6 +20,9 @@ DOCUMENTATION = '''
     notes:
         - It takes the place of the previously hardcoded INI inventory.
         - To function it requires being whitelisted in configuration.
+        - Variable values are processed by Python's ast.literal_eval function (U(https://docs.python.org/2/library/ast.html#ast.literal_eval))
+          which could cause the value to change in some cases. See the Examples for proper quoting to prevent changes. Another option would be
+          to use the yaml format for inventory source which processes the values correctly.
 '''
 
 EXAMPLES = '''
@@ -40,6 +43,7 @@ EXAMPLES = '''
       [apache]
       tomcat1
       tomcat2 myvar=34 # host specific vars override group vars
+      tomcat3 mysecret="'03#pa33w0rd'" # proper quoting to prevent value changes
 
       [nginx]
       jenkins1
