@@ -16,6 +16,8 @@ To get started, select one of the following topics.
    :maxdepth: 1
 
    overview_architecture
+   module_utils
+   module_utils/basic
    developing_modules
    developing_modules_general
    developing_modules_general_windows
