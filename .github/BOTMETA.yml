@@ -534,7 +534,7 @@ files:
   $modules/packaging/os/openbsd_pkg.py: eest
   $modules/packaging/os/opkg.py: skinp
   $modules/packaging/os/package.py: $team_ansible
-  $modules/packaging/os/pacman.py: elasticdog indrajitr
+  $modules/packaging/os/pacman.py: indrajitr
   $modules/packaging/os/pkg5.py: mavit
   $modules/packaging/os/pkg5_publisher.py: mavit
   $modules/packaging/os/pkgin.py: L2G jasperla szinck troy2914
