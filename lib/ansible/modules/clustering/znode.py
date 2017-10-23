@@ -111,7 +111,7 @@ except ImportError:
     KAZOO_INSTALLED = False
 
 from ansible.module_utils.basic import AnsibleModule
-
+from ansible.module_utils._text import to_bytes
 
 def main():
     module = AnsibleModule(
@@ -238,7 +238,7 @@ class KazooCommandProxy():
             else:
                 return True, {'changed': False, 'msg': 'No changes were necessary.', 'znode': path, 'value': value}
         else:
-            self.zk.create(path, value, makepath=True)
+            self.zk.create(path, to_bytes(value), makepath=True)
             return True, {'changed': True, 'msg': 'Created a new znode.', 'znode': path, 'value': value}
 
     def _wait(self, path, timeout, interval=5):
