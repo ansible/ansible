@@ -35,7 +35,7 @@ If you are using a script instead of a flat file, ensure that it is marked as ex
 
 This is something you may wish to do if using Ansible from a continuous integration system like Jenkins.
 
-The :option:`--vault-password-file <ansible-vault --vault-password-file>` option can also be used with the :ref:`ansible-pull` command if you wish, though this would require distributing the keys to your nodes, so understand the implications -- vault is more intended for push mode.
+The :option:`--vault-password-file <ansible-pull --vault-password-file>` option can also be used with the :ref:`ansible-pull` command if you wish, though this would require distributing the keys to your nodes, so understand the implications -- vault is more intended for push mode.
 
 
 .. _single_encrypted_variable:
