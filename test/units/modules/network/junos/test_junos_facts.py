@@ -88,6 +88,17 @@ class TestJunosCommandModule(TestJunosModule):
         self.assertEqual(facts['ansible_net_hostname'], 'vsrx01')
         self.assertTrue('ansible_net_interfaces' not in facts)
 
+    def test_junos_get_facts_subset_config_json(self):
+        self.get_config.return_value = load_fixture('get_configuration_rpc_reply_json.txt')
+        set_module_args(dict(gather_subset='config', config_format='json'))
+        result = self.execute_module(format='xml')
+        facts = result['ansible_facts']
+
+        self.assertTrue('ansible_net_config' in facts)
+        self.assertTrue('configuration' in facts['ansible_net_config'])
+        self.assertEqual(facts['ansible_net_hostname'], 'vsrx01')
+        self.assertTrue('ansible_net_interfaces' not in facts)
+
     def test_junos_get_facts_subset_list(self):
         set_module_args(dict(gather_subset=['hardware', 'interfaces']))
         result = self.execute_module(format='xml')

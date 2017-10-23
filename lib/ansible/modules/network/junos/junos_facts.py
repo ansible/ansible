@@ -56,6 +56,7 @@ requirements:
 notes:
   - Ensure I(config_format) used to retrieve configuration from device
     is supported by junos version running on device.
+  - With I(config_format = json), configuration in the results will be a dictionary(and not a JSON string)
   - This module requires the netconf system service be enabled on
     the remote device being managed.
   - Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
@@ -155,7 +156,7 @@ class Config(FactsBase):
             config = self.get_text(reply, 'configuration-text')
 
         elif config_format == 'json':
-            config = str(reply.text).strip()
+            config = self.module.from_json(reply.text.strip())
 
         elif config_format == 'set':
             config = self.get_text(reply, 'configuration-set')
@@ -370,7 +371,6 @@ def main():
         else:
             warnings += ['junos-eznc is required to gather old style facts but does not appear to be installed. '
                          'It can be installed using `pip  install junos-eznc`']
-
     module.exit_json(ansible_facts=ansible_facts, warnings=warnings)
 
 
