@@ -107,8 +107,8 @@ class ZabbixInventory(object):
         data['_meta'] = {'hostvars': self.meta}
 
         for host in hostsData:
-            if 0 == host['status']:
-                break
+            if host['status'] != "0":
+                continue
             hostname = host['name']
             ip = host['interfaces'][0]['ip']
             port = 22
