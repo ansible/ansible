@@ -40,6 +40,7 @@ import json
 import re
 import configparser
 import time
+import itertools
 from cookielib import LWPCookieJar
 
 
@@ -141,12 +142,12 @@ class NowInventory(object):
                         2. non-alphanumerical characters to '_'
         '''
 
+        # Ignore empty group names
+        if group == '' or group == None:
+            return
+
         group = group.lower()
         group = re.sub('\W', '_', group)
-
-        # Ignore empty group names
-        if group == '':
-            return
 
         self.inventory.setdefault(group, {'hosts': []})
         self.inventory[group]['hosts'].append(target)
@@ -163,18 +164,20 @@ class NowInventory(object):
 
         table = 'cmdb_ci_server'
         base_fields = [
-            'name', 'host_name', 'fqdn', 'ip_address', 'sys_class_name'
+            u'name', u'host_name', u'fqdn', u'ip_address', u'sys_class_name'
         ]
-        base_groups = ['sys_class_name']
+        base_groups = [u'sys_class_name']
         options = "?sysparm_exclude_reference_link=true&sysparm_display_value=true"
 
         columns = list(
             set(base_fields + base_groups + self.fields + self.groups))
+        # columns = itertools.combinations(base_fields, base_groups, self.fields, self.groups)
         path = '/api/now/table/' + table + options + \
             "&sysparm_fields=" + ','.join(columns)
 
         # Default, mandatory group 'sys_class_name'
         groups = list(set(base_groups + self.groups))
+        # groups = itertools.combinations(base_groups, self.groups)
 
         content = self._invoke('GET', path, None)
 
@@ -250,6 +253,7 @@ def main(args):
 
     if not groups and config.has_option('config', 'groups'):
         groups = config.get('config', 'groups')
+        groups = groups.encode('utf-8').replace('\n', '\n\t')
     if isinstance(groups, str):
         groups = groups.split(',')
 
@@ -257,6 +261,7 @@ def main(args):
     fields = os.environ.get("SN_FIELDS", [])
     if not fields and config.has_option('config', 'fields'):
         fields = config.get('config', 'fields')
+        fields = fields.encode('utf-8').replace('\n', '\n\t')
     if isinstance(fields, str):
         fields = fields.split(',')
 
