@@ -240,7 +240,7 @@ def main():
             target_group_name=dict(type='str'),
             target_id=dict(type='str', required=True),
             target_port=dict(type='int'),
-            target_status=dict(choices=['initial', 'healthy', 'unhealthy', 'unused', 'draining'], type='str'),
+            target_status=dict(choices=['initial', 'healthy', 'unhealthy', 'unused', 'draining', 'unavailable'], type='str'),
             target_status_timeout=dict(type='int', default=60),
             state=dict(required=True, choices=['present', 'absent'], type='str'),
         )
