@@ -33,21 +33,14 @@ class ActionModule(ActionBase):
     DEFAULT_REBOOT_MESSAGE = 'Reboot initiated by Ansible.'
 
     def get_system_uptime(self):
-        uptime_command = '''
-            Add-Type -Namespace Ansible -Name Uptime -MemberDefinition @'
-            [DllImport("kernel32.dll", SetLastError=true)]
-            public static extern UInt64 GetTickCount64();
-            '@
-            [Ansible.Uptime]::GetTickCount64()'''
+        uptime_command = "(Get-WmiObject -ClassName Win32_OperatingSystem).LastBootUpTime"
         (rc, stdout, stderr) = self._connection.exec_command(uptime_command)
 
-        if rc == 0:
-            uptime = int(stdout.strip())
-        else:
+        if rc != 0:
             raise Exception("win_reboot: failed to get host uptime info, rc: %d, stdout: %s, stderr: %s"
                             % (rc, stdout, stderr))
 
-        return uptime
+        return stdout
 
     def do_until_success_or_timeout(self, what, timeout, what_desc, fail_sleep=1):
         max_end_time = datetime.utcnow() + timedelta(seconds=timeout)
@@ -162,8 +155,8 @@ class ActionModule(ActionBase):
                 except Exception as e:
                     raise e
 
-                if current_uptime > before_uptime:
-                    raise Exception("uptime is still greater than before")
+                if current_uptime == before_uptime:
+                    raise Exception("uptime has not changed")
 
             self.do_until_success_or_timeout(check_uptime, reboot_timeout, what_desc="reboot uptime check success")
 
@@ -181,7 +174,6 @@ class ActionModule(ActionBase):
                 if rc != 0:
                     raise Exception('test command failed')
 
-            # FUTURE: ensure that a reboot has actually occurred by watching for change in last boot time fact
             # FUTURE: add a stability check (system must remain up for N seconds) to deal with self-multi-reboot updates
 
             self.do_until_success_or_timeout(run_test_command, reboot_timeout, what_desc="post-reboot test command success")

@@ -31,7 +31,7 @@ options:
     description:
     - Maximum seconds to wait for shutdown to occur
     - Increase this timeout for very slow hardware, large update applications, etc
-    - This option has been removed since Ansible 2.5 as the win_reboot behaviour has changed
+    - This option has been removed since Ansible 2.5 as the win_reboot behavior has changed
     default: 600
     aliases: [ shutdown_timeout_sec ]
   reboot_timeout:
