@@ -3,13 +3,14 @@
 
 # (c) 2013, Alexander Bulimov <lazywolf0@gmail.com>
 # based on lvol module by Jeroen Hoekx <jeroen.hoekx@dsquare.be>
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# GNU General Public License v3.0+ (see COPYING or
+# https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
+ANSIBLE_METADATA = {'metadata_version': '1.2',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -34,7 +35,8 @@ options:
     required: false
   pesize:
     description:
-    - The size of the physical extent in megabytes. Must be a power of 2.
+    - The size of the physical extent. The value must be either a power of 2 of at least 1 sector (where the sector size is the largest sector size of the PVs currently used in the VG), or at least 128KiB
+    - Size[m|UNIT]
     default: 4
     required: false
   pv_options:
@@ -72,6 +74,12 @@ EXAMPLES = '''
     pvs: /dev/sda1
     pesize: 32
 
+# Create a volume group on top of /dev/sda1 with physical extent size = 1280k.
+- lvg:
+    vg: vg.services2
+    pvs: /dev/sda2
+    pesize: 1280k
+
 # Create or resize a volume group on top of /dev/sdb1 and /dev/sdc5.
 # If, for example, we already have VG vg.services on top of /dev/sdb1,
 # this VG will be extended by /dev/sdc5.  Or if vg.services was created on
@@ -102,14 +110,18 @@ def parse_vgs(data):
         })
     return vgs
 
+
 def find_mapper_device_name(module, dm_device):
     dmsetup_cmd = module.get_bin_path('dmsetup', True)
     mapper_prefix = '/dev/mapper/'
-    rc, dm_name, err = module.run_command("%s info -C --noheadings -o name %s" % (dmsetup_cmd, dm_device))
+    rc, dm_name, err = module.run_command(
+        "%s info -C --noheadings -o name %s" % (dmsetup_cmd, dm_device))
     if rc != 0:
-        module.fail_json(msg="Failed executing dmsetup command.", rc=rc, err=err)
+        module.fail_json(
+            msg="Failed executing dmsetup command.", rc=rc, err=err)
     mapper_device = mapper_prefix + dm_name.rstrip()
     return mapper_device
+
 
 def parse_pvs(module, data):
     pvs = []
@@ -124,12 +136,13 @@ def parse_pvs(module, data):
         })
     return pvs
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
+        argument_spec=dict(
             vg=dict(required=True),
             pvs=dict(type='list'),
-            pesize=dict(type='int', default=4),
+            pesize=dict(type='str', default='4'),
             pv_options=dict(default=''),
             vg_options=dict(default=''),
             state=dict(choices=["absent", "present"], default='present'),
@@ -151,33 +164,39 @@ def main():
     elif state == 'present':
         module.fail_json(msg="No physical volumes given.")
 
-    # LVM always uses real paths not symlinks so replace symlinks with actual path
+    # LVM always uses real paths not symlinks so replace symlinks with actual
+    # path
     for idx, dev in enumerate(dev_list):
         dev_list[idx] = os.path.realpath(dev)
 
-    if state=='present':
-        ### check given devices
+    if state == 'present':
+        # check given devices
         for test_dev in dev_list:
             if not os.path.exists(test_dev):
-                module.fail_json(msg="Device %s not found."%test_dev)
+                module.fail_json(msg="Device %s not found." % test_dev)
 
-        ### get pv list
+        # get pv list
         pvs_cmd = module.get_bin_path('pvs', True)
-        rc,current_pvs,err = module.run_command("%s --noheadings -o pv_name,vg_name --separator ';'" % pvs_cmd)
+        rc, current_pvs, err = module.run_command(
+            "%s --noheadings -o pv_name,vg_name --separator ';'" % pvs_cmd)
         if rc != 0:
-            module.fail_json(msg="Failed executing pvs command.",rc=rc, err=err)
+            module.fail_json(
+                msg="Failed executing pvs command.", rc=rc, err=err)
 
-        ### check pv for devices
+        # check pv for devices
         pvs = parse_pvs(module, current_pvs)
-        used_pvs = [ pv for pv in pvs if pv['name'] in dev_list and pv['vg_name'] and pv['vg_name'] != vg ]
+        used_pvs = [pv for pv in pvs if pv['name']
+                    in dev_list and pv['vg_name'] and pv['vg_name'] != vg]
         if used_pvs:
-            module.fail_json(msg="Device %s is already in %s volume group."%(used_pvs[0]['name'],used_pvs[0]['vg_name']))
+            module.fail_json(msg="Device %s is already in %s volume group." % (
+                used_pvs[0]['name'], used_pvs[0]['vg_name']))
 
     vgs_cmd = module.get_bin_path('vgs', True)
-    rc,current_vgs,err = module.run_command("%s --noheadings -o vg_name,pv_count,lv_count --separator ';'" % vgs_cmd)
+    rc, current_vgs, err = module.run_command(
+        "%s --noheadings -o vg_name,pv_count,lv_count --separator ';'" % vgs_cmd)
 
     if rc != 0:
-        module.fail_json(msg="Failed executing vgs command.",rc=rc, err=err)
+        module.fail_json(msg="Failed executing vgs command.", rc=rc, err=err)
 
     changed = False
 
@@ -192,42 +211,50 @@ def main():
 
     if this_vg is None:
         if state == 'present':
-            ### create VG
+            # create VG
             if module.check_mode:
                 changed = True
             else:
-                ### create PV
+                # create PV
                 pvcreate_cmd = module.get_bin_path('pvcreate', True)
                 for current_dev in dev_list:
-                    rc,_,err = module.run_command([pvcreate_cmd] + pvoptions + ['-f', str(current_dev)])
+                    rc, _, err = module.run_command(
+                        [pvcreate_cmd] + pvoptions + ['-f', str(current_dev)])
                     if rc == 0:
                         changed = True
                     else:
-                        module.fail_json(msg="Creating physical volume '%s' failed" % current_dev, rc=rc, err=err)
+                        module.fail_json(
+                            msg="Creating physical volume '%s' failed" % current_dev, rc=rc, err=err)
                 vgcreate_cmd = module.get_bin_path('vgcreate')
-                rc,_,err = module.run_command([vgcreate_cmd] + vgoptions + ['-s', str(pesize), vg] + dev_list)
+                rc, _, err = module.run_command(
+                    [vgcreate_cmd] + vgoptions + ['-s', pesize, vg] + dev_list)
                 if rc == 0:
                     changed = True
                 else:
-                    module.fail_json(msg="Creating volume group '%s' failed"%vg, rc=rc, err=err)
+                    module.fail_json(
+                        msg="Creating volume group '%s' failed" % vg, rc=rc, err=err)
     else:
         if state == 'absent':
             if module.check_mode:
                 module.exit_json(changed=True)
             else:
                 if this_vg['lv_count'] == 0 or force:
-                    ### remove VG
+                    # remove VG
                     vgremove_cmd = module.get_bin_path('vgremove', True)
-                    rc,_,err = module.run_command("%s --force %s" % (vgremove_cmd, vg))
+                    rc, _, err = module.run_command(
+                        "%s --force %s" % (vgremove_cmd, vg))
                     if rc == 0:
                         module.exit_json(changed=True)
                     else:
-                        module.fail_json(msg="Failed to remove volume group %s"%(vg),rc=rc, err=err)
+                        module.fail_json(
+                            msg="Failed to remove volume group %s" % (vg), rc=rc, err=err)
                 else:
-                    module.fail_json(msg="Refuse to remove non-empty volume group %s without force=yes"%(vg))
+                    module.fail_json(
+                        msg="Refuse to remove non-empty volume group %s without force=yes" % (vg))
 
-        ### resize VG
-        current_devs = [ os.path.realpath(pv['name']) for pv in pvs if pv['vg_name'] == vg ]
+        # resize VG
+        current_devs = [os.path.realpath(pv['name'])
+                        for pv in pvs if pv['vg_name'] == vg]
         devs_to_remove = list(set(current_devs) - set(dev_list))
         devs_to_add = list(set(dev_list) - set(current_devs))
 
@@ -237,31 +264,37 @@ def main():
             else:
                 if devs_to_add:
                     devs_to_add_string = ' '.join(devs_to_add)
-                    ### create PV
+                    # create PV
                     pvcreate_cmd = module.get_bin_path('pvcreate', True)
                     for current_dev in devs_to_add:
-                        rc,_,err = module.run_command([pvcreate_cmd] + pvoptions + ['-f', str(current_dev)])
+                        rc, _, err = module.run_command(
+                            [pvcreate_cmd] + pvoptions + ['-f', str(current_dev)])
                         if rc == 0:
                             changed = True
                         else:
-                            module.fail_json(msg="Creating physical volume '%s' failed"%current_dev, rc=rc, err=err)
-                    ### add PV to our VG
+                            module.fail_json(
+                                msg="Creating physical volume '%s' failed" % current_dev, rc=rc, err=err)
+                    # add PV to our VG
                     vgextend_cmd = module.get_bin_path('vgextend', True)
-                    rc,_,err = module.run_command("%s %s %s" % (vgextend_cmd, vg, devs_to_add_string))
+                    rc, _, err = module.run_command(
+                        "%s %s %s" % (vgextend_cmd, vg, devs_to_add_string))
                     if rc == 0:
                         changed = True
                     else:
-                        module.fail_json(msg="Unable to extend %s by %s."%(vg, devs_to_add_string),rc=rc,err=err)
+                        module.fail_json(msg="Unable to extend %s by %s." % (
+                            vg, devs_to_add_string), rc=rc, err=err)
 
-                ### remove some PV from our VG
+                # remove some PV from our VG
                 if devs_to_remove:
                     devs_to_remove_string = ' '.join(devs_to_remove)
                     vgreduce_cmd = module.get_bin_path('vgreduce', True)
-                    rc,_,err = module.run_command("%s --force %s %s" % (vgreduce_cmd, vg, devs_to_remove_string))
+                    rc, _, err = module.run_command(
+                        "%s --force %s %s" % (vgreduce_cmd, vg, devs_to_remove_string))
                     if rc == 0:
                         changed = True
                     else:
-                        module.fail_json(msg="Unable to reduce %s by %s."%(vg, devs_to_remove_string),rc=rc,err=err)
+                        module.fail_json(msg="Unable to reduce %s by %s." % (
+                            vg, devs_to_remove_string), rc=rc, err=err)
 
     module.exit_json(changed=changed)
 
