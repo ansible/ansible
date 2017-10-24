@@ -131,6 +131,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 _PCS_CLUSTER_DOWN = "Error: cluster is not currently running on this node"
 
+
 def get_cluster_status(module):
     cmd = "pcs cluster status"
     rc, out, err = module.run_command(cmd)
@@ -139,9 +140,8 @@ def get_cluster_status(module):
     else:
         return 'online'
 
+
 class DockerResource:
-
-
     def __init__(self, module):
         self.module = module
         self.changed = False
@@ -277,7 +277,7 @@ def main():
             force_kill=dict(required=False, default=True, type='bool'),
             allow_pull=dict(required=False, default=True, type='bool'),
         ),
-            supports_check_mode=False,
+        supports_check_mode=False,
     )
 
     cluster_state = get_cluster_status(module)
