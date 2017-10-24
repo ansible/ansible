@@ -74,7 +74,13 @@ notes:
       judgement.
    -  To sanitize any variables passed to the shell module, you should use
       "{{ var | quote }}" instead of just "{{ var }}" to make sure they don't include evil things like semicolons.
-   - For Windows targets, use the M(win_shell) module instead.
+   -  For Windows targets, use the M(win_shell) module instead.
+   -  If you are experiencing odd locale issues, try changing the C(module_lang) configuration parameter in C(ansible.cfg). For example:
+
+        C(module_lang = en_US.UTF-8)
+        C(module_lang = zh_CN.UTF-8)
+        C(module_lang = ru_RU.UTF-8)
+
 requirements: [ ]
 author:
     - Ansible Core Team
