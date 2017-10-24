@@ -408,7 +408,7 @@ def network_run(args, platform, version, config):
     :type config: dict[str, str]
     :rtype: AnsibleCoreCI
     """
-    core_ci = AnsibleCoreCI(args, platform, version, stage=args.remote_stage, persist=False)
+    core_ci = AnsibleCoreCI(args, platform, version, stage=args.remote_stage, load=False)
     core_ci.load(config)
     core_ci.wait()
 
@@ -539,7 +539,7 @@ def windows_run(args, version, config):
     :type config: dict[str, str]
     :rtype: AnsibleCoreCI
     """
-    core_ci = AnsibleCoreCI(args, 'windows', version, stage=args.remote_stage, persist=False)
+    core_ci = AnsibleCoreCI(args, 'windows', version, stage=args.remote_stage, load=False)
     core_ci.load(config)
     core_ci.wait()
 

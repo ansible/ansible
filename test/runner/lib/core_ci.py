@@ -36,13 +36,14 @@ AWS_ENDPOINTS = {
 
 class AnsibleCoreCI(object):
     """Client for Ansible Core CI services."""
-    def __init__(self, args, platform, version, stage='prod', persist=True, name=None):
+    def __init__(self, args, platform, version, stage='prod', persist=True, load=True, name=None):
         """
         :type args: EnvironmentConfig
         :type platform: str
         :type version: str
         :type stage: str
         :type persist: bool
+        :type load: bool
         :type name: str
         """
         self.args = args
@@ -107,7 +108,7 @@ class AnsibleCoreCI(object):
 
         self.path = os.path.expanduser('~/.ansible/test/instances/%s-%s' % (self.name, self.stage))
 
-        if persist and self._load():
+        if persist and load and self._load():
             try:
                 display.info('Checking existing %s/%s instance %s.' % (self.platform, self.version, self.instance_id),
                              verbosity=1)
@@ -126,7 +127,7 @@ class AnsibleCoreCI(object):
 
                 self.instance_id = None
                 self.endpoint = None
-        else:
+        elif not persist:
             self.instance_id = None
             self.endpoint = None
             self._clear()
