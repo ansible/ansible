@@ -40,6 +40,9 @@ options:
       - The list of subnets that should be associated with the network ACL.
       - Must be specified as a list
       - Each subnet can be specified as subnet ID, or its tagged name.
+        If names are used, they must not contain dashes '-', or
+        the new or updated NACLs won't be associated with the subnet or
+        subnets.
     required: false
   egress:
     description:
@@ -76,7 +79,7 @@ EXAMPLES = '''
     vpc_id: vpc-12345678
     name: prod-dmz-nacl
     region: ap-southeast-2
-    subnets: ['prod-dmz-1', 'prod-dmz-2']
+    subnets: ['prod_dmz_1', 'prod_dmz_2']
     tags:
       CostCode: CC1234
       Project: phoenix
@@ -99,8 +102,8 @@ EXAMPLES = '''
     name: prod-dmz-nacl
     region: ap-southeast-2
     subnets:
-      - prod-dmz-1
-      - prod-dmz-2
+      - prod_dmz_1
+      - prod_dmz_2
     tags:
       CostCode: CC1234
       Project: phoenix
