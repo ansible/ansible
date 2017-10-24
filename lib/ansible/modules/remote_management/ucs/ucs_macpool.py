@@ -96,7 +96,7 @@ def main():
                     kwargs['descr'] = mac['descr']
                 if (mo.check_prop_match(**kwargs)):
                     # top-level props match, check next level mo/props
-                    if(mac['last_addr'] != '' and mac['first_addr'] != ''):
+                    if 'last_addr' in mac and 'first_addr' in mac:
                         block_dn = dn + '/block-' + mac['first_addr'].upper() + '-' + mac['last_addr'].upper()
                         mo_1 = ucs.login_handle.query_dn(block_dn)
                         if mo_1:
@@ -116,14 +116,14 @@ def main():
                         # create if mo does not already exist
                         if 'order' not in mac:
                             mac['order'] = 'default'
-                        if 'description' not in mac:
-                            mac['description'] = ''
+                        if 'descr' not in mac:
+                            mac['descr'] = ''
                         mo = MacpoolPool(parent_mo_or_dn=module.params['org_dn'],
                                          name=mac['name'],
-                                         descr=mac['description'],
+                                         descr=mac['descr'],
                                          assignment_order=mac['order'])
 
-                        if(mac['last_addr'] != '' and mac['first_addr'] != ''):
+                        if 'last_addr' in mac and 'first_addr' in mac:
                             mo_1 = MacpoolBlock(parent_mo_or_dn=mo,
                                                 to=mac['last_addr'],
                                                 r_from=mac['first_addr'])
