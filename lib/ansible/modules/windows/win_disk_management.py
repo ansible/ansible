@@ -182,7 +182,7 @@ changed:
     description: Whether anything was changed.
     returned: always
     type: boolean
-    sample: True
+    sample: true
 msg:
     description: Possible error message on failure.
     returned: failed
