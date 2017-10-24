@@ -68,11 +68,12 @@ class TestNetworkParseFilter(unittest.TestCase):
 
     def test_parse_xml_validate_input(self):
         spec_file_path = os.path.join(fixture_path, 'show_vlans_xml_spec.yml')
+        output = 10
 
         with self.assertRaises(Exception) as e:
             parse_xml(output_xml, 'junk_path')
         self.assertEqual("unable to locate parse_cli template: junk_path", str(e.exception))
 
         with self.assertRaises(Exception) as e:
-            parse_xml(10, spec_file_path)
-        self.assertEqual("parse_xml works on string input, but given input of : <type 'int'>", str(e.exception))
+            parse_xml(output, spec_file_path)
+        self.assertEqual("parse_xml works on string input, but given input of : %s" % type(output), str(e.exception))
