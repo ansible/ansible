@@ -56,4 +56,6 @@ options:
       - yes
       - no
     version_added: 2.0
+notes:
+  - For more information on using Ansible to manage F5 Networks devices see U(https://www.ansible.com/ansible-f5).
 '''

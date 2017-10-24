@@ -49,4 +49,6 @@ options:
             - The module will not save the configuration on the netscaler node if it made no changes.
         type: bool
         default: true
+notes:
+  - For more information on using Ansible to manage Citrix NetScaler Network devices see U(https://www.ansible.com/ansible-netscaler).
 '''

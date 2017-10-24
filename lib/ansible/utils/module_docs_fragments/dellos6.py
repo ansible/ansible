@@ -62,4 +62,6 @@ options:
             console freezes before continuing. For example when saving
             configurations.
         default: 10
+notes:
+  - For more information on using Ansible to manage Dell EMC Network devices see U(https://www.ansible.com/ansible-dell-networking).
 """

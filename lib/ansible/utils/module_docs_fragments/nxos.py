@@ -95,5 +95,6 @@ options:
         met either by individual arguments or values in this dict.
     required: false
     default: null
-
+notes:
+  - For more information on using Ansible to manage Cisco devices see U(https://www.ansible.com/ansible-cisco).
 """

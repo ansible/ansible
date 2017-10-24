@@ -95,4 +95,6 @@ options:
             does nothing. If the value is not specified in the task, the value of
             environment variable C(ANSIBLE_NET_AUTH_PASS) will be used instead.
         default: none
+notes:
+  - For more information on using Ansible to manage Cisco devices see U(https://www.ansible.com/ansible-cisco).
 """
