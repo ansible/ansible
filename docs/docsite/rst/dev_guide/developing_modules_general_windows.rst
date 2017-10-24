@@ -60,6 +60,72 @@ is the order to favour when writing modules:
 - COM objects through ``New-Object -ComObject`` cmdlet
 - Calls to native executables like ``Secedit.exe``
 
+PowerShell modules support a small subset of the ``#Requires`` options built
+into PowerShell as well as some Ansible specific requirements specified by
+``#AnsibleRequires``. These statements can be placed at any point in the script
+but are most commonly near the top and are used to easily state the
+requirements of the module without writting any of the checks. Each requires
+statement must be on its own line but there can be multiple requires statements
+in one script. These are the checks that can be used within Ansible modules:
+
+- ``#Requires -Module Ansible.ModuleUtils.<module_util>``: Added in Ansible 2.4, specifies a module_util to load in for the module execution.
+- ``#Requires -Version x.y``: Added in Ansible 2.5, specifies the version of PowerShell that is required by the module. The module will fail if this requirement is not met.
+- ``#AnsibleRequires -OSVersion x.y``: Added in Ansible 2.5, specified the OS build version that is required by the module and will fail if this requirement is not met. The actual OS version is derived from ``[Environment]::OSVersion.Version``.
+- ``#AnsibleRequires -Become``: Added in Ansible 2.5, forces the exec runner to run the module with ``become`` which is primarily used to bypass WinRM restrictions. If ``ansible_become_user`` is not specified then the ``SYSTEM`` account is used instead.
+
+
+Windows module utilities
+========================
+
+Like Python modules, PowerShell modules also provide a number of module
+utilities that provide helper functions within PowerShell. These module_utils
+can be imported by adding the following line to a PowerShell module:
+
+.. code-block:: powershell
+
+    #Requires -Module Ansible.ModuleUtils.Legacy
+
+This will import the module_util at ``./lib/ansible/module_utils/powershell/Ansible.ModuleUtils.Legacy.psm1``
+and all of its functions can be called like normal. The following is a list of
+module_utils that are packaged with Ansible and a general description of what
+they do:
+
+- ArgvParser: Utiliy used to convert a list of arguments to an escaped string compliant with the Windows argument parsing rules
+- CamelConversion: Utility used to convert camelCase strings/lists/dicts to snake_case
+- CommandUtil: Utility used to execute a Windows process and return the stdout/stderr and rc as separate objects
+- Legacy: General definitions and helper utilities for Ansible module
+- SID: Utilities used to convert a user or group to a Windows SID and vice versa
+
+For more details on any specific module utility and the functions that are
+expected, please see the source code.
+
+PowerShell module utilities can be stored outside of the standard Ansible
+distribution for use with custom modules. Custom module_utils are placed in a
+folder called ``module_utils`` located in root folder of the playbook or role
+directory.
+
+The below example is a role structure that contains two custom module_utils
+called ``Ansible.ModuleUtils.ModuleUtil1`` and
+``Ansible.ModuleUtils.ModuleUtil2``::
+
+    meta/
+      main.yml
+    defaults/
+      main.yml
+    module_utils/
+      Ansible.ModuleUtils.ModuleUtil1.psm1
+      Ansible.ModuleUtils.ModuleUtil2.psm1
+    tasks/
+      main.yml
+
+Each module_util must contain at least one function and at the bottom on the
+file must contain a list of functions, aliases and cmdlets to export for use
+in a module. This can be a blanket export by using ``*`` like so:
+
+.. code-block:: powershell
+
+    Export-ModuleMember -Alias * -Function * -Cmdlet *
+
 
 Windows playbook module testing
 ===============================
