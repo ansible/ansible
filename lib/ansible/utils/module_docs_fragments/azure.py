@@ -69,7 +69,7 @@ options:
         default: AzureCloud
     cli_default_profile:
         description:
-            - Set to C(true), when login with Azure CLI
+            - Whether login with Azure CLI.
         required: false
         default: null
 requirements:
