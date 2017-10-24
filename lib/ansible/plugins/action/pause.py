@@ -47,7 +47,7 @@ def timeout_handler(signum, frame):
 class ActionModule(ActionBase):
     ''' pauses execution for a length or time, or until input is received '''
 
-    PAUSE_TYPES = ['seconds', 'minutes', 'prompt', '']
+    PAUSE_TYPES = ['seconds', 'minutes', 'prompt', 'echo', '']
     BYPASS_HOST_LOOP = True
 
     def run(self, tmp=None, task_vars=None):
@@ -60,6 +60,8 @@ class ActionModule(ActionBase):
         duration_unit = 'minutes'
         prompt = None
         seconds = None
+        echo = True
+        echo_prompt = ''
         result.update(dict(
             changed=False,
             rc=0,
@@ -68,11 +70,25 @@ class ActionModule(ActionBase):
             start=None,
             stop=None,
             delta=None,
+            echo=echo
         ))
 
         # Is 'args' empty, then this is the default prompted pause
         if self._task.args is None or len(self._task.args.keys()) == 0:
             prompt = "[%s]\nPress enter to continue:" % self._task.get_name().strip()
+        # Should keystrokes be echoed to stdout?
+        if 'echo' in self._task.args:
+            echo = self._task.args['echo']
+            if not type(echo) == bool:
+                result['failed'] = True
+                result['msg'] = "'%s' is not a valid setting for 'echo'." % self._task.args['echo']
+                return result
+
+            # Add a note saying the output is hidden if echo is disabled
+            if not echo:
+                echo_prompt = ' (output is hidden)'
+
+            prompt = "%s%s:" % ('Press enter to continue', echo_prompt)
 
         # Are 'minutes' or 'seconds' keys that exist in 'args'?
         elif 'minutes' in self._task.args or 'seconds' in self._task.args:
@@ -140,10 +156,11 @@ class ActionModule(ActionBase):
                     old_settings = termios.tcgetattr(fd)
                     tty.setraw(fd)
 
-                    # Enable ECHO since tty.setraw() disables it
-                    new_settings = termios.tcgetattr(fd)
-                    new_settings[3] = new_settings[3] | termios.ECHO
-                    termios.tcsetattr(fd, termios.TCSANOW, new_settings)
+                    if echo:
+                        # Enable ECHO since tty.setraw() disables it
+                        new_settings = termios.tcgetattr(fd)
+                        new_settings[3] = new_settings[3] | termios.ECHO
+                        termios.tcsetattr(fd, termios.TCSANOW, new_settings)
 
                     # flush the buffer to make sure no previous key presses
                     # are read in below

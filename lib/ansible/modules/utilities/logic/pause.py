@@ -40,6 +40,12 @@ options:
       - Optional text to use for the prompt message.
     required: false
     default: null
+  echo:
+    description:
+      - Contols whether or not keyboard input is shown when typing.
+    required: false
+    default: 'yes'
+    choices: ['yes', 'no']
 author: "Tim Bielawa (@tbielawa)"
 notes:
       - Starting in 2.2,  if you specify 0 or negative for minutes or seconds, it will wait for 1 second, previously it would wait indefinitely.
@@ -57,6 +63,11 @@ EXAMPLES = '''
 # A helpful reminder of what to look out for post-update.
 - pause:
     prompt: "Make sure org.foo.FooOverload exception is not present"
+
+# Do not echo output
+- pause:
+    prompt: "Enter a secret"
+    echo: no
 '''
 
 RETURN = '''
@@ -85,4 +96,9 @@ stdout:
   returned: always
   type: string
   sample: Paused for 0.04 minutes
+echo:
+  description: Value of echo setting
+  returned: always
+  type: bool
+  sample: true
 '''
