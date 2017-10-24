@@ -166,6 +166,7 @@ import tempfile
 import textwrap
 import time
 import traceback
+import locale
 from datetime import datetime
 
 from ansible.module_utils.basic import AnsibleModule
@@ -791,6 +792,9 @@ def main():
 
     # AnsibleModule() changes the locale, so change it back to C because we rely on time.strptime() when parsing certificate dates.
     module.run_command_environ_update = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C', LC_CTYPE='C')
+
+    # Force locale to "C" - if user running ansible has other locale, it can break cert days parsing
+    locale.setlocale(locale.LC_ALL, "C")
 
     cert_days = get_cert_days(module, module.params['dest'])
     if cert_days < module.params['remaining_days']:
