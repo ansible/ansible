@@ -233,6 +233,8 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
 
             self.log("ACR instance created or updated")
         elif self.state == 'absent':
+            if self.check_mode:
+                return self.results
             self.delete_acr()
             self.log("ACR instance deleted")
 
