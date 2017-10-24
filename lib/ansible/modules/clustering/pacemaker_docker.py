@@ -100,32 +100,23 @@ requirements:
 '''
 EXAMPLES = '''
 ---
-- name: Set cluster Online
-  hosts: localhost
-  gather_facts: no
-  tasks:
-    - name: Create Docker resource
-      pacemaker_docker:
-        resource: "docker-resource-2"
-        docker_name: "happy-docker-resource-2"
-        image: 'alpine:latest'
-        command: "ping myservice.mydomain.com" 
-        group: "happy-docker-group"
-        run_opts: '-p 80:80'
-        before: "docker-resource-1"
-        state: created
+# Create a  docker resource
+- name: Create Docker resource
+  pacemaker_docker:
+    resource: "docker-resource-2"
+    docker_name: "happy-docker-resource-2"
+    image: 'alpine:latest'
+    command: "ping myservice.mydomain.com"
+    group: "happy-docker-group"
+    run_opts: '-p 80:80'
+    before: "docker-resource-1"
+    state: created
 '''
 
 RETURN = '''
 changed:
-    description: True if the cluster state has changed
+    description: True if the action is performed successfuly and made the change
     type: bool
-    returned: always
-out:
-    description: The output of the current state of the cluster. It return a
-                 list of the nodes state.
-    type: string
-    sample: 'out: [["  overcloud-controller-0", " Online"]]}'
     returned: always
 rc:
     description: exit code of the module
@@ -138,7 +129,7 @@ import time
 from ansible.module_utils.basic import AnsibleModule
 
 
-_PCS_CLUSTER_DOWN="Error: cluster is not currently running on this node"
+_PCS_CLUSTER_DOWN = "Error: cluster is not currently running on this node"
 
 def get_cluster_status(module):
     cmd = "pcs cluster status"
@@ -149,6 +140,7 @@ def get_cluster_status(module):
         return 'online'
 
 class DockerResource:
+
 
     def __init__(self, module):
         self.module = module
@@ -208,21 +200,16 @@ class DockerResource:
         else:
             docker_name = self.docker_name
 
-        cmd = "pcs resource create %s ocf:heartbeat:docker name=%s image=%s run_cmd='%s' %s" % (self.resource,
-            docker_name,
-            self.image,
-            self.command,
-            opts_list,
-            )
+        cmd = "pcs resource create %s ocf:heartbeat:docker name=%s image=%s run_cmd='%s' %s" % (self.resource, docker_name, self.image, self.command, opts_list)
         rc, out, err = self.module.run_command(cmd)
-        
+
         if rc == 0:
             self.module.exit_json(changed=True, rc=rc, stdout=out, stderr=err)
         elif "already exists" in err:
             self.module.exit_json(changed=False, msg="The resource '%s' already exists" % self.resource)
         else:
             self.module.fail_json(rc=rc, stdout=out, stderr=err)
-    
+
     def delete_res(self):
         res_status = self.get_res_status()
         if "absent" in res_status:
@@ -271,6 +258,7 @@ class DockerResource:
         else:
             self.module.fail_json(rc=rc, stdout=out, stderr=err)
 
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -307,6 +295,6 @@ def main():
         docker_resource.restart_res()
     else:
         docker_resource.manage_res()
-        
+
 if __name__ == '__main__':
     main()
