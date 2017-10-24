@@ -101,6 +101,9 @@ Each role in the file will have one or more of the following attributes:
    name:
      Download the role to a specific name. Defaults to the Galaxy name when downloading from Galaxy, otherwise it defaults
      to the name of the repository.
+   remote_path:
+     Within the given repository, download the role found at this path. If not specified, will download from the root
+     directory of the repository.
 
 Use the following example as a guide for specifying roles in *requirements.yml*:
 
@@ -116,6 +119,12 @@ Use the following example as a guide for specifying roles in *requirements.yml*:
     - src: https://github.com/bennojoy/nginx
       version: master
       name: nginx_role
+
+    # from GitHub, downloading from a specific directory within the repository
+    - src: https://github.com/example/monolith
+      version: master
+      name: special-role
+      remote_path: roles/special-role
 
     # from a webserver, where the role is packaged in a tar.gz
     - src: https://some.webserver.example.com/files/master.tar.gz

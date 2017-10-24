@@ -38,6 +38,7 @@ VALID_SPEC_KEYS = [
     'scm',
     'src',
     'version',
+    'remote_path',
 ]
 
 try:
@@ -182,7 +183,7 @@ class RoleRequirement(RoleDefinition):
         return role
 
     @staticmethod
-    def scm_archive_role(src, scm='git', name=None, version='HEAD'):
+    def scm_archive_role(src, scm='git', name=None, version='HEAD', remote_path=None):
         if scm not in ['hg', 'git']:
             raise AnsibleError("- scm %s is not currently supported" % scm)
         tempdir = tempfile.mkdtemp()
@@ -212,13 +213,18 @@ class RoleRequirement(RoleDefinition):
             archive_cmd = ['hg', 'archive', '--prefix', "%s/" % name]
             if version:
                 archive_cmd.extend(['-r', version])
+            if remote_path is not None:
+                archive_cmd.extend(['-I', remote_path])
             archive_cmd.append(temp_file.name)
+
         if scm == 'git':
             archive_cmd = ['git', 'archive', '--prefix=%s/' % name, '--output=%s' % temp_file.name]
-            if version:
-                archive_cmd.append(version)
+            if not version:
+                version = 'HEAD'
+            if remote_path is not None:
+                archive_cmd.append("%s:%s" % (version, remote_path))
             else:
-                archive_cmd.append('HEAD')
+                archive_cmd.append(version)
 
         with open('/dev/null', 'w') as devnull:
             popen = subprocess.Popen(archive_cmd, cwd=os.path.join(tempdir, name),

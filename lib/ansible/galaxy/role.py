@@ -49,7 +49,7 @@ class GalaxyRole(object):
     META_INSTALL = os.path.join('meta', '.galaxy_install_info')
     ROLE_DIRS = ('defaults', 'files', 'handlers', 'meta', 'tasks', 'templates', 'vars', 'tests')
 
-    def __init__(self, galaxy, name, src=None, version=None, scm=None, path=None):
+    def __init__(self, galaxy, name, src=None, version=None, scm=None, path=None, remote_path=None):
 
         self._metadata = None
         self._install_info = None
@@ -64,6 +64,7 @@ class GalaxyRole(object):
         self.version = version
         self.src = src or name
         self.scm = scm
+        self.remote_path = remote_path
 
         if path is not None:
             if self.name not in path:
@@ -353,7 +354,8 @@ class GalaxyRole(object):
            'scm': 'git',
            'src': 'http://git.example.com/repos/repo.git',
            'version': 'v1.0',
-           'name': 'repo'
+           'name': 'repo',
+           'remote_path': 'roles'
         }
         """
-        return dict(scm=self.scm, src=self.src, version=self.version, name=self.name)
+        return dict(scm=self.scm, src=self.src, version=self.version, name=self.name, remote_path=self.remote_path)
