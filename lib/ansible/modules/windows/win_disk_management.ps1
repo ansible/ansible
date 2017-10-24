@@ -37,8 +37,6 @@ if ($check_mode -or $diff_mode) {
     $result += @{ 
         change_log = @{
         }
-        set_options = @{
-        }
     }
 }
 
