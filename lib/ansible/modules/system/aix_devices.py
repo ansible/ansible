@@ -143,8 +143,14 @@ def _check_device_attr(module, device, attr):
     lsattr_cmd = module.get_bin_path("lsattr", True)
     rc, lsattr_out, err = module.run_command("%s -El %s -a %s" % (lsattr_cmd, device, attr))
 
+    hide_attrs = ['delalias4', 'delalias6']
+
     if rc == 255:
-        current_param = None
+
+        if attr in hide_attrs:
+            current_param = ''
+        else:
+            current_param = None
 
         return current_param
 
@@ -289,6 +295,11 @@ def main():
 
     if state == 'present':
         if attributes:
+            # validate attributes
+            for attr in attributes:
+                if len(attr.split('=')) < 3:
+                    module.fail_json(msg="attributes format is attribute_name=value.", err="Attribute in wrong format %s" % attr)
+
             # change attributes on device
             device_status, device_state = _check_device(module, device)
             if device_status:
