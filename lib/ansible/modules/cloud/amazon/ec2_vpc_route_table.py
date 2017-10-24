@@ -122,6 +122,106 @@ EXAMPLES = '''
     state: absent
 '''
 
+RETURN = '''
+route_table:
+  description: Route Table result
+  returned: always
+  type: complex
+  contains:
+    associations:
+      description: List of subnets associated with the route table
+      returned: always
+      type: complex
+      contains:
+        main:
+          description: Whether this is the main route table
+          returned: always
+          type: bool
+          sample: false
+        route_table_association_id:
+          description: ID of association between route table and subnet
+          returned: always
+          type: string
+          sample: rtbassoc-ab47cfc3
+        route_table_id:
+          description: ID of the route table
+          returned: always
+          type: string
+          sample: rtb-bf779ed7
+        subnet_id:
+          description: ID of the subnet
+          returned: always
+          type: string
+          sample: subnet-82055af9
+    id:
+      description: ID of the route table (same as route_table_id for backwards compatibility)
+      returned: always
+      type: string
+      sample: rtb-bf779ed7
+    propagating_vgws:
+      description: List of Virtual Private Gateways propagating routes
+      returned: always
+      type: list
+      sample: []
+    route_table_id:
+      description: ID of the route table
+      returned: always
+      type: string
+      sample: rtb-bf779ed7
+    routes:
+      description: List of routes in the route table
+      returned: always
+      type: complex
+      contains:
+        destination_cidr_block:
+          description: CIDR block of destination
+          returned: always
+          type: string
+          sample: 10.228.228.0/22
+        gateway_id:
+          description: ID of the gateway
+          returned: when gateway is local or internet gateway
+          type: string
+          sample: local
+        instance_id:
+          description: ID of a NAT instance
+          returned: when the route is via an EC2 instance
+          type: string
+          sample: i-abcd123456789
+        instance_owner_id:
+          description: AWS account owning the NAT instance
+          returned: when the route is via an EC2 instance
+          type: string
+          sample: 123456789012
+        nat_gateway_id:
+          description: ID of the NAT gateway
+          returned: when the route is via a NAT gateway
+          type: string
+          sample: local
+        origin:
+          description: mechanism through which the route is in the table
+          returned: always
+          type: string
+          sample: CreateRouteTable
+        state:
+          description: state of the route
+          returned: always
+          type: string
+          sample: active
+    tags:
+      description: Tags applied to the route table
+      returned: always
+      type: dict
+      sample:
+        Name: Public route table
+        Public: 'true'
+    vpc_id:
+      description: ID for the VPC in which the route lives
+      returned: always
+      type: string
+      sample: vpc-6e2d2407
+'''
+
 import re
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import ec2_argument_spec, boto3_conn, get_aws_connection_info
@@ -369,7 +469,6 @@ def ensure_routes(connection, module, route_table, route_specs, propagating_vgw_
                                         **route_spec)
             except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                 module.fail_json_aws(e, msg="Couldn't create route")
-
 
     return {'changed': bool(changed)}
 
