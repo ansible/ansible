@@ -30,6 +30,8 @@ Ansible Changes By Release
 * Use controller configured ansible_shell_executable to run commands in the module
   (https://github.com/ansible/ansible/pull/31361)
 * Add documentation about writing unittests for Ansible
+* Fix bugs in get_url/uri's SNI and TLS version handling when used on systems
+  that have Python-2.7.9+ and urllib3 installed.
 
 <a id="2.4.1"></a>
 
