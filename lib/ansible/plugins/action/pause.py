@@ -140,6 +140,11 @@ class ActionModule(ActionBase):
                     old_settings = termios.tcgetattr(fd)
                     tty.setraw(fd)
 
+                    # Enable ECHO since tty.setraw() disables it
+                    new_settings = termios.tcgetattr(fd)
+                    new_settings[3] = new_settings[3] | termios.ECHO
+                    termios.tcsetattr(fd, termios.TCSANOW, new_settings)
+
                     # flush the buffer to make sure no previous key presses
                     # are read in below
                     termios.tcflush(stdin, termios.TCIFLUSH)
