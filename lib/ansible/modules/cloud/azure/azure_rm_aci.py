@@ -54,10 +54,9 @@ options:
             - public
         required: false
         default: None
-    port:
+    ports:
         description:
-            - Port exposed by container.
-        default: 80
+            - List of ports exposed within the container group.
         required: false
     location:
         description:
@@ -304,6 +303,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         self.containers = None
 
         self.results = dict(changed=False, state=dict())
+        self.mgmt_client = None
 
         super(AzureRMContainerInstance, self).__init__(derived_arg_spec=self.module_arg_spec,
                                                        supports_check_mode=True,
@@ -319,6 +319,8 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         response = None
         results = dict()
         to_be_updated = False
+
+        self.mgmt_client = ContainerInstanceManagementClient(self.azure_credentials, self.subscription_id)
 
         try:
             resource_group = self.get_resource_group(self.resource_group)
@@ -348,7 +350,8 @@ class AzureRMContainerInstance(AzureRMModuleBase):
                 to_be_updated = self.check_need_update(response)
                 if to_be_updated:
                     self.log('Deleting ACI instance before update')
-                    self.delete_aci()
+                    if not self.check:
+                        self.delete_aci()
 
         if self.state == 'present':
 
@@ -375,12 +378,12 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         '''
         self.log("Creating / Updating the ACI instance {0}".format(self.name))
 
-        credentials = None
+        registry_credentials = None
 
         if self.registry_login_server is not None:
-            credentials = ImageRegistryCredential(self.registry_login_server,
-                                                  self.registry_username,
-                                                  self.registry_password)
+            registry_credentials = ImageRegistryCredential(self.registry_login_server,
+                                                           self.registry_username,
+                                                           self.registry_password)
 
         ip_address = None
 
@@ -397,8 +400,8 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         for container_def in self.containers:
             name = container_def.get("name")
             image = container_def.get("image")
-            memory = container_def.get("memory")
-            cpu = container_def.get("cpu")
+            memory = container_def.get("memory", 1.5)
+            cpu = container_def.get("cpu", 1)
             ports = []
 
             port_list = container_def.get("ports")
@@ -406,23 +409,19 @@ class AzureRMContainerInstance(AzureRMModuleBase):
                 for port in port_list:
                     ports.append(ContainerPort(port))
 
-            if cpu is None:
-                cpu = 1
-            if memory is None:
-                memory = 1.5
             containers.append(Container(name, image, ResourceRequirements(ResourceRequests(memory, cpu)), None, ports))
 
-        parameters = ContainerGroup(self.location,
-                                    None,
-                                    containers,
-                                    credentials,
-                                    None,
-                                    ip_address,
-                                    self.os_type)
+        parameters = ContainerGroup(location=self.location,
+                                    tags=self.tags,
+                                    containers=containers,
+                                    image_registry_credentials=registry_credentials,
+                                    restart_policy=None,
+                                    ip_address=ip_address,
+                                    os_type=self.os_type,
+                                    volumes=None)
 
         try:
-            client = ContainerInstanceManagementClient(self.azure_credentials, self.subscription_id)
-            response = client.container_groups.create_or_update(self.resource_group, self.name, parameters)
+            response = self.mgmt_client.container_groups.create_or_update(self.resource_group, self.name, parameters)
 
         except CloudError as exc:
             self.log('Error attempting to create the container instance.')
@@ -437,8 +436,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         '''
         self.log("Deleting the ACI instance {0}".format(self.name))
         try:
-            client = ContainerInstanceManagementClient(self.azure_credentials, self.subscription_id)
-            response = client.container_groups.delete(self.resource_group, self.name)
+            response = self.mgmt_client.container_groups.delete(self.resource_group, self.name)
         except CloudError as e:
             self.log('Error attempting to delete the ACI instance.')
             self.fail("Error deleting the ACI instance: {0}".format(str(e)))
@@ -454,8 +452,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         self.log("Checking if the ACI instance {0} is present".format(self.name))
         found = False
         try:
-            client = ContainerInstanceManagementClient(self.azure_credentials, self.subscription_id)
-            response = client.container_groups.get(self.resource_group, self.name)
+            response = self.mgmt_client.container_groups.get(self.resource_group, self.name)
             found = True
             self.log("Response : {0}".format(response))
             self.log("ACI instance : {0} found".format(response.name))
