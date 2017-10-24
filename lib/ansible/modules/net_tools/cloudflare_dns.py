@@ -369,7 +369,8 @@ class CloudflareAPI(object):
 
         if content:
             try:
-                result = json.loads(content)
+                resp_json = content.decode('utf-8')
+                result = json.loads(resp_json)
             except json.JSONDecodeError:
                 error_msg += "; Failed to parse API response: {0}".format(content)
 
