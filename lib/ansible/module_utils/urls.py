@@ -171,28 +171,30 @@ except ImportError:
 # Exclude insecure ssl protocols if possible
 
 if HAS_SSL:
-    # If we can't find extra tls methods, ssl.PROTOCOL_TLSv1 is sufficient
-    PROTOCOL = ssl.PROTOCOL_TLSv1
-if not HAS_SSLCONTEXT and HAS_SSL:
-    try:
-        import ctypes
-        import ctypes.util
-    except ImportError:
-        # python 2.4 (likely rhel5 which doesn't have tls1.1 support in its openssl)
-        pass
+    if HAS_SSLCONTEXT:
+        PROTOCOL = ssl.PROTOCOL_TLSv1_2
     else:
-        libssl_name = ctypes.util.find_library('ssl')
-        libssl = ctypes.CDLL(libssl_name)
-        for method in ('TLSv1_1_method', 'TLSv1_2_method'):
-            try:
-                libssl[method]
-                # Found something - we'll let openssl autonegotiate and hope
-                # the server has disabled sslv2 and 3.  best we can do.
-                PROTOCOL = ssl.PROTOCOL_SSLv23
-                break
-            except AttributeError:
-                pass
-        del libssl
+        # If we can't find extra tls methods, ssl.PROTOCOL_TLSv1 is sufficient
+        PROTOCOL = ssl.PROTOCOL_TLSv1
+        try:
+            import ctypes
+            import ctypes.util
+        except ImportError:
+            # python 2.4 (likely rhel5 which doesn't have tls1.1 support in its openssl)
+            pass
+        else:
+            libssl_name = ctypes.util.find_library('ssl')
+            libssl = ctypes.CDLL(libssl_name)
+            for method in ('TLSv1_1_method', 'TLSv1_2_method'):
+                try:
+                    libssl[method]
+                    # Found something - we'll let openssl autonegotiate and hope
+                    # the server has disabled sslv2 and 3.  best we can do.
+                    PROTOCOL = ssl.PROTOCOL_SSLv23
+                    break
+                except AttributeError:
+                    pass
+            del libssl
 
 
 LOADED_VERIFY_LOCATIONS = set()
