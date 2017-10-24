@@ -269,7 +269,10 @@ class InventoryManager(object):
                         display.vvv('Parsed %s inventory source with %s plugin' % (to_native(source), plugin_name))
                         break
                     except AnsibleParserError as e:
-                        display.debug('%s did not meet %s requirements' % (to_native(source), plugin_name))
+                        display.debug('%s was not parsable by %s' % (to_native(source), plugin_name))
+                        failures.append({'src': source, 'plugin': plugin_name, 'exc': e})
+                    except Exception as e:
+                        display.debug('%s failed to parse %s' % (plugin_name, to_native(source)))
                         failures.append({'src': source, 'plugin': plugin_name, 'exc': e})
                 else:
                     display.debug('%s did not meet %s requirements' % (to_native(source), plugin_name))
@@ -287,7 +290,6 @@ class InventoryManager(object):
                         for fail in failures:
                             display.warning('\n* Failed to parse %s with %s plugin: %s' % (to_native(fail['src']), fail['plugin'], to_native(fail['exc'])))
                             display.vvv(fail['exc'].tb)
-
         if not parsed:
             display.warning("Unable to parse %s as an inventory source" % to_native(source))
 
