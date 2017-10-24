@@ -136,6 +136,8 @@ extends_documentation_fragment:
 # Thank you to iAcquire for sponsoring development of this module.
 
 EXAMPLES = '''
+# Note: These examples do not set authentication details, see the AWS Guide for details.
+
 # Basic AMI Creation
 - ec2_ami:
     instance_id: i-xxxxxx
