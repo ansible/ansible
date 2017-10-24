@@ -66,4 +66,6 @@ options:
             used to authenticate the SSH session. If the value is not specified in
             the task, the value of environment variable C(ANSIBLE_NET_SSH_KEYFILE)
             will be used instead.
+notes:
+  - For more information on using Ansible to manage Juniper network devices see U(https://www.ansible.com/ansible-juniper).
 """
