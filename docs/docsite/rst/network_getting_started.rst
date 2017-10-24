@@ -27,6 +27,10 @@ Prerequisites
 * One or more network device compatible with Ansible
 * Basic understanding of YAML :doc:`YAMLSyntax`
 * Basic understanding of Jinja2 Templates :doc:`playbooks_templating`
+* Basic Linux (comfortable on the command line)
+* Basic Network switch & router configuration knowledge
+
+
 
 .. FIXME FUTURE Gundalow - Once created we will link to the connection table here (which platforms support network_cli & credentials through inventory)
 .. FIXME FUTURE Gundalow -  Using ``ansible_ssh_pass`` will not work for REST transports such as ``eapi``, ``nxapi`` - Once documented in above FIXME add details her
@@ -34,8 +38,7 @@ Prerequisites
 Audience
 --------
 
-* Basic Linux (comfortable on the command line)
-* Basic Network switch & router configuration knowledge
+* Network administrator or System administrator who wants to understand how to use Ansible to manage Network devices.
 
 
 Solution
