@@ -101,6 +101,31 @@ variable named:
 
 Security groups are comma-separated in 'ec2_security_group_ids' and
 'ec2_security_group_names'.
+
+When destination_format and destination_format_tags are specified
+the destination_format can be built from the instance tags and attributes.
+The behavior will first check the user defined tags, then proceed to
+check instance attributes, and finally if neither are found 'nil' will
+be used instead.
+
+'my_instance': {
+    'region': 'us-east-1',             # attribute
+    'availability_zone': 'us-east-1a', # attribute
+    'private_dns_name': '172.31.0.1',  # attribute
+    'ec2_tag_deployment': 'blue',      # tag
+    'ec2_tag_clusterid': 'ansible',    # tag
+    'ec2_tag_Name': 'webserver',       # tag
+    ...
+}
+
+Inside of the ec2.ini file the following settings are specified:
+...
+destination_format: {0}-{1}-{2}-{3}
+destination_format_tags: Name,clusterid,deployment,private_dns_name
+...
+
+These settings would produce a destination_format as the following:
+'webserver-ansible-blue-172.31.0.1'
 '''
 
 # (c) 2012, Peter Sankauskas
@@ -858,8 +883,22 @@ class Ec2Inventory(object):
             return
 
         # Select the best destination address
+        # When destination_format and destination_format_tags are specified
+        # the following code will attempt to find the instance tags first,
+        # then the instance attributes next, and finally if neither are found
+        # assign nil for the desired destination format attribute.
         if self.destination_format and self.destination_format_tags:
-            dest = self.destination_format.format(*[getattr(instance, 'tags').get(tag, '') for tag in self.destination_format_tags])
+            dest_vars = []
+            inst_tags = getattr(instance, 'tags')
+            for tag in self.destination_format_tags:
+                if tag in inst_tags:
+                    dest_vars.append(inst_tags[tag])
+                elif hasattr(instance, tag):
+                    dest_vars.append(getattr(instance, tag))
+                else:
+                    dest_vars.append('nil')
+
+            dest = self.destination_format.format(*dest_vars)
         elif instance.subnet_id:
             dest = getattr(instance, self.vpc_destination_variable, None)
             if dest is None:
