@@ -20,7 +20,7 @@ $ReadOnly = Get-AnsibleParam -obj $params -name "read_only" -type "bool" -defaul
 $Number = Get-AnsibleParam -obj $params -name "number" -type "int"
 # Set attributes partition
 $SetPartitionStyle = Get-AnsibleParam -obj $params -name "partition_style_set" -type "str" -default "gpt" -ValidateSet "gpt","mbr"
-$DriveLetter = Get-AnsibleParam -obj $params -name "drive_letter" -type "str" -ValidateSet "a","b","c","d","e","f","g","h","i","j","k","m","n","o","p","q","r","s","t","u","v","w","x","y","z"
+$DriveLetter = Get-AnsibleParam -obj $params -name "drive_letter" -type "str" -ValidateSet "a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z"
 # Set attributes file system
 $FileSystem = Get-AnsibleParam -obj $params -name "file_system" -type "str" -default "ntfs" -ValidateSet "ntfs","refs"
 $Label = Get-AnsibleParam -obj $params -name "label" -type "str" -default "ansible_disk"
@@ -457,7 +457,7 @@ if ($DriveLetter -ne $null) {
     # Use defined drive letter
     try {
         $CheckLetter = Get-ChildItem Function:[$DriveLetter]: | Foreach-Object {
-            Test-Path $_
+            Test-Path -Path $_ -IsValid
         }
     } catch {
         if ($SetOnline) {
@@ -540,8 +540,8 @@ if ($DriveLetter -ne $null) {
 } else {
     # Use random drive letter
     try {
-        $DriveLetter = Get-ChildItem Function:[a-z]: -name | Where-Object {
-            !(Test-Path $_)
+        $DriveLetter = Get-ChildItem Function:[a-z]: -Name | Where-Object {
+            !(Test-Path -Path $_ -IsValid)
         } | Get-Random
     } catch {
         if ($SetOnline) {
