@@ -52,8 +52,8 @@ The primary advantage of using ``include*`` statements is looping. When a loop i
 
 Using ``include*`` does have some limitations when compared to ``import*`` statements:
 
-* Tags which only exist inside a dynamic include will not show up in --list-tags output.
-* Tasks which only exist inside a dynamic include will not show up in --list-tasks output.
+* Tags which only exist inside a dynamic include will not show up in ``--list-tags`` output.
+* Tasks which only exist inside a dynamic include will not show up in ``--list-tasks`` output.
 * You cannot use ``notify`` to trigger a handler name which comes from inside a dynamic include (see note below).
 * You cannot use ``--start-at-task`` to begin execution at a task inside a dynamic include.
 

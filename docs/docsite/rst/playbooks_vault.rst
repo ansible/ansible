@@ -3,9 +3,9 @@ Using Vault in playbooks
 
 .. contents:: Topics
 
-New in Ansible 1.5, "Vault" is a feature of ansible that allows keeping sensitive data such as passwords or keys in encrypted files, rather than as plaintext in your playbooks or roles. These vault files can then be distributed or placed in source control.
+Added in Ansible 1.5, "Vault" is a feature of ansible that allows keeping sensitive data such as passwords or keys in encrypted files, rather than as plaintext in your playbooks or roles. These vault files can then be distributed or placed in source control.
 
-To enable this feature, a command line tool, `ansible-vault` is used to edit files, and a command line flag `--ask-vault-pass` or `--vault-password-file` is used. Alternately, you may specify the location of a password file or command Ansible to always prompt for the password in your ansible.cfg file. These options require no command line flag usage.
+To enable this feature, a command line tool, :ref:`ansible-vault` is used to edit files, and a command line flag :option:`--ask-vault-pass <ansible-vault --ask-vault-pass>` or :option:`--vault-password-file <ansible-vault --vault-password-file>` is used. You can also modify your ``ansible.cfg`` file to specify the location of a password file or configure Ansible to always prompt for the password. These options require no command line flag usage.
 
 For best practices advice, refer to :ref:`best_practices_for_variables_and_vaults`.
 
@@ -35,7 +35,7 @@ If you are using a script instead of a flat file, ensure that it is marked as ex
 
 This is something you may wish to do if using Ansible from a continuous integration system like Jenkins.
 
-(The `--vault-password-file` option can also be used with the :ref:`ansible-pull` command if you wish, though this would require distributing the keys to your nodes, so understand the implications -- vault is more intended for push mode).
+The :option:`--vault-password-file <ansible-pull --vault-password-file>` option can also be used with the :ref:`ansible-pull` command if you wish, though this would require distributing the keys to your nodes, so understand the implications -- vault is more intended for push mode.
 
 
 .. _single_encrypted_variable:
@@ -66,6 +66,6 @@ Using encrypt_string
 ````````````````````
 
 This command will output a string in the above format ready to be included in a YAML file.
-The string to encrypt can be provided via stdin, command line args, or via an interactive prompt.
+The string to encrypt can be provided via stdin, command line arguments, or via an interactive prompt.
 
 See :ref:`encrypt_string_for_use_in_yaml`.
