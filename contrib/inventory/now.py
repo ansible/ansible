@@ -44,7 +44,7 @@ from cookielib import LWPCookieJar
 
 
 class NowInventory(object):
-    def __init__(self, hostname, username, password, fields=None, groups=None):
+    def __init__(self, hostname, username, password, fields=None, groups=None, selection=None):
         self.hostname = hostname
 
         # requests session
@@ -71,11 +71,17 @@ class NowInventory(object):
         if groups is None:
             groups = []
 
+        if selection is None:
+            selection = []
+
         # extra fields (table columns)
         self.fields = fields
 
         # extra groups (table columns)
         self.groups = groups
+
+        # selection order
+        self.selection = selection
 
         # initialize inventory
         self.inventory = {'_meta': {'hostvars': {}}}
@@ -184,11 +190,13 @@ class NowInventory(object):
                         2. fqdn
                         3. host_name
 
-                        TODO: environment variable configuration flags to modify selection order
                         '''
             target = None
-            selection = ['host_name', 'fqdn', 'ip_address']
 
+            selection = self.selection
+
+            if not selection:
+                selection = ['host_name', 'fqdn', 'ip_address']
             for k in selection:
                 if record[k] != '':
                     target = record[k]
@@ -245,6 +253,15 @@ def main(args):
     if not password and config.has_option('auth', 'password'):
         password = config.get('auth', 'password')
 
+    # SN_SEL_ORDER
+    selection = os.environ.get("SN_SEL_ORDER", [])
+
+    if not selection and config.has_option('config', 'selection_order'):
+        selection = config.get('config', 'selection_order')
+        selection = selection.encode('utf-8').replace('\n', '\n\t')
+    if isinstance(selection, str):
+        selection = selection.split(',')
+
     # SN_GROUPS
     groups = os.environ.get("SN_GROUPS", [])
 
@@ -256,6 +273,7 @@ def main(args):
 
     # SN_FIELDS
     fields = os.environ.get("SN_FIELDS", [])
+
     if not fields and config.has_option('config', 'fields'):
         fields = config.get('config', 'fields')
         fields = fields.encode('utf-8').replace('\n', '\n\t')
@@ -267,7 +285,8 @@ def main(args):
         username=username,
         password=password,
         fields=fields,
-        groups=groups)
+        groups=groups,
+        selection=selection)
     inventory.generate()
     print(inventory.json())
 
