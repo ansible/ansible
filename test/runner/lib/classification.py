@@ -367,6 +367,9 @@ class PathMapper(object):
 
             return minimal
 
+        if path.startswith('test/cache/'):
+            return minimal
+
         if path.startswith('test/compile/'):
             return {
                 'compile': 'all',
