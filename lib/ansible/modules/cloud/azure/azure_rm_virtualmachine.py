@@ -606,7 +606,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             admin_password=dict(type='str', no_log=True),
             ssh_password_enabled=dict(type='bool', default=True),
             ssh_public_keys=dict(type='list'),
-            image=dict(type='dict'),
+            image=dict(),
             storage_account_name=dict(type='str', aliases=['storage_account']),
             storage_container_name=dict(type='str', aliases=['storage_container'], default='vhds'),
             storage_blob_name=dict(type='str', aliases=['storage_blob']),
@@ -689,6 +689,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         data_disk_requested_vhd_uri = None
         disable_ssh_password = None
         vm_dict = None
+        image_reference = None
+        custom_image = False
 
         resource_group = self.get_resource_group(self.resource_group)
         if not self.location:
@@ -718,13 +720,32 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         self.fail(msg)
 
             if self.image:
-                if not self.image.get('publisher') or not self.image.get('offer') or not self.image.get('sku') \
-                   or not self.image.get('version'):
-                    self.fail("parameter error: expecting image to contain publisher, offer, sku and version keys.")
-                image_version = self.get_image_version()
-                if self.image['version'] == 'latest':
-                    self.image['version'] = image_version.name
-                    self.log("Using image version {0}".format(self.image['version']))
+                if isinstance(self.image, str):
+                    custom_image = True
+                    vm_image = self.get_vm_image()
+                    image_reference = ImageReference(
+                        id=vm_image.id
+                    )
+                    self.log("Using custom image id {0}".format(vm_image.id))
+                elif isinstance(self.image, dict):
+                    if not self.image.get('publisher') or not self.image.get('offer') or not self.image.get('sku') \
+                       or not self.image.get('version'):
+                        self.error("parameter error: expecting image to contain publisher, offer, sku and version keys.")
+
+                    marketplace_image = self.get_marketplace_image_version()
+                    if self.image['version'] == 'latest':
+                        self.image['version'] = marketplace_image.name
+                        self.log("Using image version {0}".format(self.image['version']))
+
+                    image_reference = ImageReference(
+                        publisher=self.image['publisher'],
+                        offer=self.image['offer'],
+                        sku=self.image['sku'],
+                        version=self.image['version']
+                    )
+                else:
+                    self.error("parameter error: expecting image to be either a string with an image name or dict with "
+                               "a markplace image details")
 
             if self.plan:
                 if not self.plan.get('name') or not self.plan.get('product') or not self.plan.get('publisher'):
@@ -841,7 +862,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         if disable_ssh_password and not self.ssh_public_keys:
                             self.fail("Parameter error: ssh_public_keys required when disabling SSH password.")
 
-                    if not self.image:
+                    if not image_reference:
                         self.fail("Parameter error: an image is required when creating a virtual machine.")
 
                     # Get defaults
@@ -869,12 +890,15 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     nics = [NetworkInterfaceReference(id=id) for id in network_interfaces]
 
                     # os disk
-                    if not self.managed_disk_type:
-                        managed_disk = None
-                        vhd = VirtualHardDisk(uri=requested_vhd_uri)
-                    else:
+                    if self.managed_disk_type:
                         vhd = None
                         managed_disk = ManagedDiskParameters(storage_account_type=self.managed_disk_type)
+                    elif custom_image:
+                        vhd = None
+                        managed_disk = None
+                    else:
+                        vhd = VirtualHardDisk(uri=requested_vhd_uri)
+                        managed_disk = None
 
                     plan = None
                     if self.plan:
@@ -899,12 +923,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                 create_option=DiskCreateOptionTypes.from_image,
                                 caching=self.os_disk_caching,
                             ),
-                            image_reference=ImageReference(
-                                publisher=self.image['publisher'],
-                                offer=self.image['offer'],
-                                sku=self.image['sku'],
-                                version=self.image['version'],
-                            ),
+                            image_reference=image_reference,
                         ),
                         network_profile=NetworkProfile(
                             network_interfaces=nics
@@ -1349,7 +1368,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             except Exception as exc:
                 self.fail("Error deleting blob {0}:{1} - {2}".format(container_name, blob_name, str(exc)))
 
-    def get_image_version(self):
+    def get_marketplace_image_version(self):
         try:
             versions = self.compute_client.virtual_machine_images.list(self.location,
                                                                        self.image['publisher'],
@@ -1371,6 +1390,18 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                                                       self.image['offer'],
                                                                       self.image['sku'],
                                                                       self.image['version']))
+
+    def get_vm_image(self):
+        try:
+            vm_images = self.compute_client.images.list()
+        except Exception as exc:
+            self.fail("Error fetching custom images from subscription - {0}".format(str(exc)))
+
+        for vm_image in vm_images:
+            if vm_image.name == self.image:
+                return vm_image
+
+        self.fail("Error could not find image with name {0}".format(self.image))
 
     def get_storage_account(self, name):
         try:
