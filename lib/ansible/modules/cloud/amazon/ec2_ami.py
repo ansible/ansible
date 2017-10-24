@@ -616,7 +616,11 @@ def main():
             launch_permissions=dict(type='dict')
         )
     )
-    module = AnsibleModule(argument_spec=argument_spec)
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        required_if=[('state', 'present', ('name',)),
+                     ('state', 'absent', ('image_id',))]
+    )
 
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
@@ -627,9 +631,6 @@ def main():
         module.fail_json(msg="Error while connecting to aws: %s" % str(e))
 
     if module.params.get('state') == 'absent':
-        if not module.params.get('image_id'):
-            module.fail_json(msg='image_id needs to be an ami image to registered/delete')
-
         deregister_image(module, ec2)
 
     elif module.params.get('state') == 'present':
@@ -640,8 +641,6 @@ def main():
         # Changed is always set to true when provisioning new AMI
         if not module.params.get('instance_id') and not module.params.get('device_mapping'):
             module.fail_json(msg='instance_id or device_mapping (register from ebs snapshot) parameter is required for new image')
-        if not module.params.get('name'):
-            module.fail_json(msg='name parameter is required for new image')
         create_image(module, ec2)
 
 
