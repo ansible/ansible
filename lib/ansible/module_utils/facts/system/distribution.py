@@ -491,7 +491,9 @@ class Distribution(object):
         darwin_facts['distribution'] = 'MacOSX'
         rc, out, err = self.module.run_command("/usr/bin/sw_vers -productVersion")
         data = out.split()[-1]
-        darwin_facts['distribution_version'] = data
+        if data:
+            darwin_facts['distribution_major_version'] = data.split('.')[0]
+            darwin_facts['distribution_version'] = data
         return darwin_facts
 
     def get_distribution_FreeBSD(self):
