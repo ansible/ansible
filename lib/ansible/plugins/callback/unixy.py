@@ -1,23 +1,23 @@
-# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2017, Allyson Bowles <@akatch>
+# Copyright: (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+DOCUMENTATION = '''
+    callback: unixy
+    type: stdout
+    short_description: condensed Ansible output
+    version_added: 2.5
+    description:
+      - Consolidated Ansible output in the style of *NIX startup logs
+    extends_documentation_fragment:
+      - default_callback
+    requirements:
+      - set as stdout in configuration
+'''
 
 from ansible.plugins.callback import CallbackBase
 from ansible.utils.color import colorize, hostcolor
@@ -44,12 +44,8 @@ class CallbackModule(CallbackBase):
     CALLBACK_TYPE = 'stdout'
     CALLBACK_NAME = 'unixy'
 
-    #def _get_task_banner(self, task):
-
     def _run_is_verbose(self, result):
-        return ((self._display.verbosity > 0
-                or '_ansible_verbose_always' in result._result)
-                and '_ansible_verbose_override' not in result._result)
+        return ((self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result)
 
     def _get_task_display_name(self, task):
         self.task_display_name = None
@@ -200,4 +196,3 @@ class CallbackModule(CallbackBase):
         if (self._display.verbosity > 2 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
             msg += "Result was: %s" % self._dump_results(result._result)
         self._display.display(msg, color=C.COLOR_DEBUG)
-
