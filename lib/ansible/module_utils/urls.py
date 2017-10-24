@@ -698,13 +698,10 @@ class SSLValidationHandler(urllib_request.BaseHandler):
         return True
 
     def _make_context(self, to_add_ca_cert_path):
-        if HAS_SSLCONTEXT:
-            context = create_default_context()
-        elif HAS_URLLIB3_PYOPENSSLCONTEXT:
+        if HAS_URLLIB3_PYOPENSSLCONTEXT:
             context = PyOpenSSLContext(PROTOCOL)
         else:
-            raise NotImplementedError('Host libraries are too old to support creating an sslcontext')
-
+            context = create_default_context()
         if to_add_ca_cert_path:
             context.load_verify_locations(to_add_ca_cert_path)
         return context
@@ -713,11 +710,8 @@ class SSLValidationHandler(urllib_request.BaseHandler):
         tmp_ca_cert_path, to_add_ca_cert_path, paths_checked = self.get_ca_certs()
         https_proxy = os.environ.get('https_proxy')
         context = None
-        try:
+        if HAS_SSLCONTEXT or HAS_URLLIB3_PYOPENSSLCONTEXT:
             context = self._make_context(to_add_ca_cert_path)
-        except Exception:
-            # We'll make do with no context below
-            pass
 
         # Detect if 'no_proxy' environment variable is set and if our URL is included
         use_proxy = self.detect_no_proxy(req.get_full_url())
