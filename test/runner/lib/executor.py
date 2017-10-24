@@ -953,7 +953,7 @@ def command_units(args):
 
     for version in SUPPORTED_PYTHON_VERSIONS:
         # run all versions unless version given, in which case run only that version
-        if args.python and version != args.python:
+        if args.python and version != args.python_version:
             continue
 
         env = ansible_environment(args)
@@ -1013,7 +1013,7 @@ def command_compile(args):
 
     for version in COMPILE_PYTHON_VERSIONS:
         # run all versions unless version given, in which case run only that version
-        if args.python and version != args.python:
+        if args.python and version != args.python_version:
             continue
 
         display.info('Compile with Python %s' % version)
@@ -1281,12 +1281,16 @@ def get_integration_local_filter(args, targets):
                             % (skip.rstrip('/'), ', '.join(skipped)))
 
     if args.python_version.startswith('3'):
-        skip = 'skip/python3/'
-        skipped = [target.name for target in targets if skip in target.aliases]
-        if skipped:
-            exclude.append(skip)
-            display.warning('Excluding tests marked "%s" which are not yet supported on python 3: %s'
-                            % (skip.rstrip('/'), ', '.join(skipped)))
+        python_version = 3
+    else:
+        python_version = 2
+
+    skip = 'skip/python%d/' % python_version
+    skipped = [target.name for target in targets if skip in target.aliases]
+    if skipped:
+        exclude.append(skip)
+        display.warning('Excluding tests marked "%s" which are not supported on python %d: %s'
+                        % (skip.rstrip('/'), python_version, ', '.join(skipped)))
 
     return exclude
 
@@ -1307,13 +1311,26 @@ def get_integration_docker_filter(args, targets):
             display.warning('Excluding tests marked "%s" which require --docker-privileged to run under docker: %s'
                             % (skip.rstrip('/'), ', '.join(skipped)))
 
+    python_version = 2  # images are expected to default to python 2 unless otherwise specified
+
     if args.docker.endswith('py3'):
-        skip = 'skip/python3/'
-        skipped = [target.name for target in targets if skip in target.aliases]
-        if skipped:
-            exclude.append(skip)
-            display.warning('Excluding tests marked "%s" which are not yet supported on python 3: %s'
-                            % (skip.rstrip('/'), ', '.join(skipped)))
+        python_version = 3  # docker images ending in 'py3' are expected to default to python 3
+
+    if args.docker.endswith(':default'):
+        python_version = 3  # docker images tagged 'default' are expected to default to python 3
+
+    if args.python:  # specifying a numeric --python option overrides the default python
+        if args.python.startswith('3'):
+            python_version = 3
+        elif args.python.startswith('2'):
+            python_version = 2
+
+    skip = 'skip/python%d/' % python_version
+    skipped = [target.name for target in targets if skip in target.aliases]
+    if skipped:
+        exclude.append(skip)
+        display.warning('Excluding tests marked "%s" which are not supported on python %d: %s'
+                        % (skip.rstrip('/'), python_version, ', '.join(skipped)))
 
     return exclude
 
@@ -1334,8 +1351,17 @@ def get_integration_remote_filter(args, targets):
     skipped = [target.name for target in targets if skip in target.aliases]
     if skipped:
         exclude.append(skip)
-        display.warning('Excluding tests marked "%s" which are not yet supported on %s: %s'
+        display.warning('Excluding tests marked "%s" which are not supported on %s: %s'
                         % (skip.rstrip('/'), platform, ', '.join(skipped)))
+
+    python_version = 2  # remotes are expected to default to python 2
+
+    skip = 'skip/python%d/' % python_version
+    skipped = [target.name for target in targets if skip in target.aliases]
+    if skipped:
+        exclude.append(skip)
+        display.warning('Excluding tests marked "%s" which are not supported on python %d: %s'
+                        % (skip.rstrip('/'), python_version, ', '.join(skipped)))
 
     return exclude
 

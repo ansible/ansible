@@ -102,10 +102,10 @@ def delegate_tox(args, exclude, require):
     :type require: list[str]
     """
     if args.python:
-        versions = args.python,
+        versions = args.python_version,
 
-        if args.python not in SUPPORTED_PYTHON_VERSIONS:
-            raise ApplicationError('tox does not support Python version %s' % args.python)
+        if args.python_version not in SUPPORTED_PYTHON_VERSIONS:
+            raise ApplicationError('tox does not support Python version %s' % args.python_version)
     else:
         versions = SUPPORTED_PYTHON_VERSIONS
 
