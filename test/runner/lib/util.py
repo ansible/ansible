@@ -2,16 +2,22 @@
 
 from __future__ import absolute_import, print_function
 
+import atexit
 import errno
 import filecmp
 import inspect
+import json
 import os
 import pipes
 import pkgutil
-import shutil
-import subprocess
+import random
 import re
+import shutil
+import stat
+import string
+import subprocess
 import sys
+import tempfile
 import time
 
 try:
@@ -21,6 +27,8 @@ except ImportError:
     ABC = ABCMeta('ABC', (), {})
 
 DOCKER_COMPLETION = {}
+
+coverage_path = ''  # pylint: disable=locally-disabled, invalid-name
 
 
 def get_docker_completion():
@@ -146,6 +154,104 @@ def find_executable(executable, cwd=None, path=None, required=True):
         display.warning(message)
 
     return match
+
+
+def intercept_command(args, cmd, target_name, capture=False, env=None, data=None, cwd=None, python_version=None, path=None):
+    """
+    :type args: TestConfig
+    :type cmd: collections.Iterable[str]
+    :type target_name: str
+    :type capture: bool
+    :type env: dict[str, str] | None
+    :type data: str | None
+    :type cwd: str | None
+    :type python_version: str | None
+    :type path: str | None
+    :rtype: str | None, str | None
+    """
+    if not env:
+        env = common_environment()
+
+    cmd = list(cmd)
+    inject_path = get_coverage_path(args)
+    config_path = os.path.join(inject_path, 'injector.json')
+    version = python_version or args.python_version
+    interpreter = find_executable('python%s' % version, path=path)
+    coverage_file = os.path.abspath(os.path.join(inject_path, '..', 'output', '%s=%s=%s=%s=coverage' % (
+        args.command, target_name, args.coverage_label or 'local-%s' % version, 'python-%s' % version)))
+
+    env['PATH'] = inject_path + os.pathsep + env['PATH']
+    env['ANSIBLE_TEST_PYTHON_VERSION'] = version
+    env['ANSIBLE_TEST_PYTHON_INTERPRETER'] = interpreter
+
+    config = dict(
+        python_interpreter=interpreter,
+        coverage_file=coverage_file if args.coverage else None,
+    )
+
+    if not args.explain:
+        with open(config_path, 'w') as config_fd:
+            json.dump(config, config_fd, indent=4, sort_keys=True)
+
+    return run_command(args, cmd, capture=capture, env=env, data=data, cwd=cwd)
+
+
+def get_coverage_path(args):
+    """
+    :type args: TestConfig
+    :rtype: str
+    """
+    global coverage_path  # pylint: disable=locally-disabled, global-statement, invalid-name
+
+    if coverage_path:
+        return os.path.join(coverage_path, 'coverage')
+
+    prefix = 'ansible-test-coverage-'
+    tmp_dir = '/tmp'
+
+    if args.explain:
+        return os.path.join(tmp_dir, '%stmp' % prefix, 'coverage')
+
+    src = os.path.abspath(os.path.join(os.getcwd(), 'test/runner/injector/'))
+
+    coverage_path = tempfile.mkdtemp('', prefix, dir=tmp_dir)
+    os.chmod(coverage_path, stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
+
+    shutil.copytree(src, os.path.join(coverage_path, 'coverage'))
+    shutil.copy('.coveragerc', os.path.join(coverage_path, 'coverage', '.coveragerc'))
+
+    for root, dir_names, file_names in os.walk(coverage_path):
+        for name in dir_names + file_names:
+            os.chmod(os.path.join(root, name), stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
+
+    for directory in 'output', 'logs':
+        os.mkdir(os.path.join(coverage_path, directory))
+        os.chmod(os.path.join(coverage_path, directory), stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
+
+    atexit.register(cleanup_coverage_dir)
+
+    return os.path.join(coverage_path, 'coverage')
+
+
+def cleanup_coverage_dir():
+    """Copy over coverage data from temporary directory and purge temporary directory."""
+    output_dir = os.path.join(coverage_path, 'output')
+
+    for filename in os.listdir(output_dir):
+        src = os.path.join(output_dir, filename)
+        dst = os.path.join(os.getcwd(), 'test', 'results', 'coverage')
+        shutil.copy(src, dst)
+
+    logs_dir = os.path.join(coverage_path, 'logs')
+
+    for filename in os.listdir(logs_dir):
+        random_suffix = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(8))
+        new_name = '%s.%s.log' % (os.path.splitext(os.path.basename(filename))[0], random_suffix)
+        src = os.path.join(logs_dir, filename)
+        dst = os.path.join(os.getcwd(), 'test', 'results', 'logs', new_name)
+        shutil.copy(src, dst)
+
+    shutil.rmtree(coverage_path)
 
 
 def run_command(args, cmd, capture=False, env=None, data=None, cwd=None, always=False, stdin=None, stdout=None,

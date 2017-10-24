@@ -14,6 +14,7 @@ from lib.util import (
     SubprocessError,
     ApplicationError,
     run_command,
+    intercept_command,
 )
 
 from lib.core_ci import (
@@ -51,7 +52,7 @@ class ManageWindowsCI(object):
 
         for _ in range(1, 120):
             try:
-                run_command(self.core_ci.args, cmd, env=env)
+                intercept_command(self.core_ci.args, cmd, 'ping', env=env)
                 return
             except SubprocessError:
                 sleep(10)
@@ -93,7 +94,7 @@ class ManageNetworkCI(object):
 
         for _ in range(1, 90):
             try:
-                run_command(self.core_ci.args, cmd, env=env)
+                intercept_command(self.core_ci.args, cmd, 'ping', env=env)
                 return
             except SubprocessError:
                 sleep(10)

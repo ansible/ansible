@@ -15,6 +15,7 @@ from lib.sanity import (
 from lib.util import (
     SubprocessError,
     run_command,
+    intercept_command,
     remove_tree,
 )
 
@@ -23,7 +24,6 @@ from lib.ansible_util import (
 )
 
 from lib.executor import (
-    intercept_command,
     generate_pip_install,
 )
 
