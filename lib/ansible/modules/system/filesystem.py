@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 author:
 - Alexander Bulimov (@abulimov)
 module: filesystem
-short_description: Makes a filesystem on block device
+short_description: Makes a filesystem
 description:
   - This module creates a filesystem.
 version_added: "1.2"
@@ -27,10 +27,11 @@ options:
     - Filesystem type to be created.
     - reiserfs support was added in 2.2.
     - lvm support was added in 2.5.
+    - since 2.5, I(dev) can be an image file.
     required: yes
   dev:
     description:
-    - Target block device.
+    - Target path to device or image file.
     required: yes
   force:
     description:
@@ -69,6 +70,7 @@ EXAMPLES = '''
 '''
 
 import os
+import stat
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import viewkeys
@@ -110,7 +112,14 @@ class Filesystem(object):
 
     def grow(self, dev):
         """Get dev and fs size and compare. Returns stdout of used command."""
-        devsize_in_bytes = self.get_dev_size(dev)
+        statinfo = os.stat(dev)
+        if stat.S_ISBLK(statinfo.st_mode):
+            devsize_in_bytes = self.get_dev_size(dev)
+        elif os.path.isfile(dev):
+            devsize_in_bytes = os.path.getsize(dev)
+        else:
+            self.module.fail_json(changed=False, msg="Target device not supported: %r." % dev)
+
         try:
             fssize_in_bytes = self.get_fs_size(dev)
         except NotImplementedError:
