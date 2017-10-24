@@ -246,13 +246,15 @@ def parse_cli_textfsm(value, template):
 
 def _extract_param(template, root, attrs, value):
 
+    key = None
     when = attrs.get('when')
     conditional = "{%% if %s %%}True{%% else %%}False{%% endif %%}" % when
     param_to_xpath_map = attrs['items']
 
-    key = value.get('key', None)
-    if key:
-        value = value['values']
+    if isinstance(value, Mapping):
+        key = value.get('key', None)
+        if key:
+            value = value['values']
 
     entries = dict() if key else list()
 
@@ -263,8 +265,8 @@ def _extract_param(template, root, attrs, value):
             fields = element.findall(param_xpath)
             tags = param_xpath.split('/')
 
-            # check if xpath ends with attribute assign
-            # attribute key/value dict to param value in case attribute matches
+            # check if xpath ends with attribute.
+            # If yes set attribute key/value dict to param value in case attribute matches
             # else if it is a normal xpath assign matched element text value.
             if len(tags) and tags[-1].endswith(']'):
                 if fields:
@@ -283,8 +285,11 @@ def _extract_param(template, root, attrs, value):
                 else:
                     item_dict[param] = None
 
-        for item_key, item_value in iteritems(value):
-            entry[item_key] = template(item_value, {'item': item_dict})
+        if isinstance(value, Mapping):
+            for item_key, item_value in iteritems(value):
+                entry[item_key] = template(item_value, {'item': item_dict})
+        else:
+            entry = template(value, {'item': item_dict})
 
         if key:
             expanded_key = template(key, {'item': item_dict})
@@ -329,11 +334,7 @@ def parse_xml(output, tmpl):
             pass
 
         if 'items' in attrs:
-            if isinstance(value, Mapping):
-                obj[name] = _extract_param(template, root, attrs, value)
-            else:
-                pass
-
+            obj[name] = _extract_param(template, root, attrs, value)
         else:
             obj[name] = value
 

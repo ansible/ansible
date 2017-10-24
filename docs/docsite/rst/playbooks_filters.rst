@@ -340,7 +340,7 @@ output, use the ``parse_cli`` filter::
   {{ output | parse_cli('path/to/spec') }}
 
 The ``parse_cli`` filter will load the spec file and pass the command output
-through, it returning JSON output.  The spec file is a YAML yaml that defines
+through, it returning JSON output.  The spec file is a YAML that defines
 how to parse the CLI output.
 
 The spec file should be valid formatted YAML.  It defines how to parse the CLI
@@ -357,7 +357,6 @@ will parse the output from the ``show vlan`` command.::
 
     keys:
       vlans:
-        type: list
         value: "{{ vlan }}"
         items: "^(?P<vlan_id>\\d+)\\s+(?P<name>\\w+)\\s+(?P<state>active|act/lshut|suspended)"
       state_static:
@@ -382,7 +381,6 @@ value using the same ``show vlan`` command.::
 
     keys:
       vlans:
-        type: list
         value: "{{ vlan }}"
         items: "^(?P<vlan_id>\\d+)\\s+(?P<name>\\w+)\\s+(?P<state>active|act/lshut|suspended)"
       state_static:
@@ -432,7 +430,7 @@ output, use the ``parse_xml`` filter::
   {{ output | parse_xml('path/to/spec') }}
 
 The ``parse_xml`` filter will load the spec file and pass the command output
-through formatted as JSON. 
+through formatted as JSON.
 
 The spec file should be valid formatted YAML. It defines how to parse the XML
 output and return JSON data.  
@@ -451,7 +449,6 @@ will parse the output from the ``show vlan | display xml`` command.::
 
     keys:
       vlans:
-        type: list
         value: "{{ vlan }}"
         top: configuration/vlans/vlan
         items:
@@ -480,7 +477,6 @@ value using the same ``show vlan | display xml`` command.::
 
     keys:
       vlans:
-        type: list
         value: "{{ vlan }}"
         top: configuration/vlans/vlan
         items:
@@ -490,10 +486,17 @@ value using the same ``show vlan | display xml`` command.::
           state: ".[@inactive='inactive']"
 
 
-The example xml output from a network device shown below is used to identify the value of ``top`` and
-the key-value pairs under ``items`` in the spec file. The value of ``top`` is the xpath till
-inner-most container in xml hierarchy. The key under ``items`` is the name of variable and it's
-value is corresponding xpath with respect to xpath value in ``top``.::
+The value of ``top`` is the relatvie XPath till inner-most container in xml heirarchy.
+From the example xml output given below the value of ``top`` is ``configuration/vlans/vlan`` which
+is a relative XPath expression wrt to root node (ie. rpc-reply)
+
+ ``items`` is a dictionary, of key-value pairs that map user-defined names to XPath expressions
+ that select elements. The Xpath expression is relative XPath wrt. value of XPath in ``top``.
+For example the ``vlan_id`` in spec file is user defined name and it's value ``vlan-id`` is the
+relative XPath wrt. value of XPath in ``top``
+
+Attributes of xml tags can be extracted using XPath expressions, the value of ``state`` in spec
+is a XPath expression to get the attributes of ``vlan`` tag in output xml.::
 
     <rpc-reply>
       <configuration>
@@ -503,8 +506,11 @@ value is corresponding xpath with respect to xpath value in ``top``.::
            <vlan-id>200</vlan-id>
            <description>This is vlan-1</description>
           </vlan>
+        </vlans>
       </configuration>
     </rpc-reply>
+
+.. note:: To get more details on supported XPath expression, check https://docs.python.org/2/library/xml.etree.elementtree.html#xpath-support
 
 .. _hash_filters:
 
