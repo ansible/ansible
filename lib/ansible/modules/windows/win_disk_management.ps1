@@ -6,7 +6,7 @@
 #Requires -Module Ansible.ModuleUtils.Legacy.psm1
 
 $ErrorActionPreference = "Stop"
-Set-StrictMode -Version 2
+Set-StrictMode -Version 2.0
 
 $params = Parse-Args -arguments $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
