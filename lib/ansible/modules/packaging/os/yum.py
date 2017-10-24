@@ -747,16 +747,20 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, i
             (name, ver, rel, epoch, arch) = splitFilename(envra)
             installed_pkgs = is_installed(module, repoq, name, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot)
 
-            # TODO support downgrade for rpm files
             if len(installed_pkgs) == 1:
                 installed_pkg = installed_pkgs[0]
                 (cur_name, cur_ver, cur_rel, cur_epoch, cur_arch) = splitFilename(installed_pkg)
                 cur_epoch = cur_epoch or '0'
                 compare = compareEVR((cur_epoch, cur_ver, cur_rel), (epoch, ver, rel))
 
-                # compare > 0 (higher version is installed) or compare == 0 (exact version is installed)
-                if compare >= 0:
+                # compare > 0 -> higher version is installed
+                # compare == 0 -> exact version is installed
+                # compare < 0 -> lower version is installed
+                if compare > 0 and allow_downgrade:
+                    downgrade_candidate = True
+                elif compare >= 0:
                     continue
+
             # else: if there are more installed packages with the same name, that would mean
             # kernel, gpg-pubkey or like, so just let yum deal with it and try to install it
 
