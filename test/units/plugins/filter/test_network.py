@@ -43,15 +43,12 @@ class TestNetworkParseFilter(unittest.TestCase):
     def test_parse_xml_to_dict(self):
         spec_file_path = os.path.join(fixture_path, 'show_vlans_xml_with_key_spec.yml')
         parsed = parse_xml(output_xml, spec_file_path)
-        expected = {'vlans':
-                        {
-                            'test-4': {'name': 'test-4', 'enabled': False, 'state': 'inactive', 'interface': None, 'vlan_id': 400, 'desc': 'test vlan-4'},
-                            'test-3': {'name': 'test-3', 'enabled': True, 'state': 'active', 'interface': 'em3.0', 'vlan_id': 300, 'desc': 'test vlan-3'},
-                            'test-1': {'name': 'test-1', 'enabled': True, 'state': 'active', 'interface': None, 'vlan_id': 100, 'desc': None},
-                            'test-5': {'name': 'test-5', 'enabled': False, 'state': 'inactive', 'interface': 'em5.0', 'vlan_id': 500, 'desc': 'test vlan-5'},
-                            'test-2': {'name': 'test-2', 'enabled': True, 'state': 'active', 'interface': None, 'vlan_id': None, 'desc': None}
-                        }
-        }
+        expected = {'vlans': {'test-4': {'name': 'test-4', 'enabled': False, 'state': 'inactive', 'interface': None, 'vlan_id': 400, 'desc': 'test vlan-4'},
+                              'test-3': {'name': 'test-3', 'enabled': True, 'state': 'active', 'interface': 'em3.0', 'vlan_id': 300, 'desc': 'test vlan-3'},
+                              'test-1': {'name': 'test-1', 'enabled': True, 'state': 'active', 'interface': None, 'vlan_id': 100, 'desc': None},
+                              'test-5': {'name': 'test-5', 'enabled': False, 'state': 'inactive', 'interface': 'em5.0', 'vlan_id': 500, 'desc': 'test vlan-5'},
+                              'test-2': {'name': 'test-2', 'enabled': True, 'state': 'active', 'interface': None, 'vlan_id': None, 'desc': None}}
+                    }
         self.assertEqual(parsed, expected)
 
     def test_parse_xml_with_condition_spec(self):

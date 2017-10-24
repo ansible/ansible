@@ -490,8 +490,8 @@ The value of ``top`` is the relatvie XPath till inner-most container in xml heir
 From the example xml output given below the value of ``top`` is ``configuration/vlans/vlan`` which
 is a relative XPath expression wrt to root node (ie. rpc-reply)
 
- ``items`` is a dictionary, of key-value pairs that map user-defined names to XPath expressions
- that select elements. The Xpath expression is relative XPath wrt. value of XPath in ``top``.
+``items`` is a dictionary, of key-value pairs that map user-defined names to XPath expressions
+that select elements. The Xpath expression is relative XPath wrt. value of XPath in ``top``.
 For example the ``vlan_id`` in spec file is user defined name and it's value ``vlan-id`` is the
 relative XPath wrt. value of XPath in ``top``
 
