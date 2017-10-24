@@ -1,0 +1,50 @@
+ - name: Create an ACR
+   azure_rm_acr:
+     name: "acr{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+     resource_group: "{{ resource_group }}"
+     location: eastus2
+     state: present
+     admin_user_enabled: True
+     sku: Premium
+     tags:
+         Release: beta1
+         Environment: Production
+   register: output
+
+ - name: Assert the ACR instance is well created
+   assert:
+     that:
+       - output.changed
+       - output.state.admin_user_enabled
+       - output.state.location == 'eastus2'
+       - output.state.sku == 'Premium'
+       - output.state.tags['Environment'] == 'Production'
+       - output.state.tags['Release'] == 'beta1'
+       - output.state.provisioning_state == 'Succeeded'
+
+ - name: Update the ACS instance sku, tags and admin_user_enabled
+   azure_rm_acr:
+     name: "acr{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+     resource_group: "{{ resource_group }}"
+     location: eastus2
+     admin_user_enabled: False
+     sku: Standard
+     tags:
+         NewTag: newtag
+         Release: beta1
+         Environment: Production
+   register: output
+
+ - name: Assert the ACS instance is well updated
+   assert:
+     that:
+       - output.changed
+       - output.state.admin_user_enabled == False
+       - output.state.sku == 'Standard'
+       - output.state.tags['NewTag'] == 'newtag'
+
+ - name: Delete an ACR
+   azure_rm_acr:
+     name: "acr{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+     resource_group: "{{ resource_group }}"
+     state: absent

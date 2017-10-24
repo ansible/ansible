@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_acr
-version_added: "2.4"
+version_added: "2.5"
 short_description: Manage an Azure Container Registry (ACR).
 description:
     - Create, update and delete an Azure Container Registry.
@@ -85,12 +85,8 @@ EXAMPLES = '''
     - name: Remove an azure container registry
       azure_rm_acr:
         name: testacr2
-        location: eastus
         resource_group: testrg
         state: absent
-        sku: Standard
-        tags:
-            Ansible: azure_rm_acr
 '''
 RETURN = '''
 state:
@@ -185,7 +181,6 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
         self.resource_group = None
         self.name = None
         self.location = None
-        self.tags = None
         self.state = None
         self.sku = None
         self.tags = None
@@ -208,10 +203,7 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
         response = None
         to_do = Actions.NoAction
 
-        try:
-            resource_group = self.get_resource_group(self.resource_group)
-        except CloudError:
-            self.fail('resource group {} not found'.format(self.resource_group))
+        resource_group = self.get_resource_group(self.resource_group)
         if not self.location:
             self.location = resource_group.location
 
@@ -239,7 +231,7 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
             else:
                 self.results['changed'] = False
 
-            self.log("Action done")
+            self.log("ACR instance created or updated")
         elif self.state == 'absent':
             self.delete_acr()
             self.log("ACR instance deleted")
