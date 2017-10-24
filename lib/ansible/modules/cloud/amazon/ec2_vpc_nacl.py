@@ -40,8 +40,9 @@ options:
       - The list of subnets that should be associated with the network ACL.
       - Must be specified as a list
       - Each subnet can be specified as subnet ID, or its tagged name.
-        If names are used, they must not contain dashes '-'. Otherwise
-        the new or updated NACLs won't be associated with the(se) subnets.
+        If names are used, they must not contain dashes '-', or
+        the new or updated NACLs won't be associated with the subnet or
+        subnets.
     required: false
   egress:
     description:
