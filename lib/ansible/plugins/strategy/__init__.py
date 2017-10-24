@@ -850,19 +850,20 @@ class StrategyBase:
         group = self._inventory.groups[group_name]
         for parent_group_name in parent_group_names:
             parent_group = self._inventory.groups[parent_group_name]
-            parent_group.add_child_group(group)
+            new = parent_group.add_child_group(group)
+            if new and not changed:
+                changed = True
 
-        if real_host.name not in group.get_hosts():
-            group.add_host(real_host)
-            changed = True
+        if real_host not in group.get_hosts():
+            changed = group.add_host(real_host)
 
-        if group_name not in host.get_groups():
-            real_host.add_group(group)
-            changed = True
+        if group not in real_host.get_groups():
+            changed = real_host.add_group(group)
 
         if changed:
             self._inventory.reconcile_inventory()
 
+        result_item['changed'] = changed
         return changed
 
     def _copy_included_file(self, included_file):
