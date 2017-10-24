@@ -40,7 +40,6 @@ import json
 import re
 import configparser
 import time
-import itertools
 from cookielib import LWPCookieJar
 
 
@@ -171,13 +170,11 @@ class NowInventory(object):
 
         columns = list(
             set(base_fields + base_groups + self.fields + self.groups))
-        # columns = itertools.combinations(base_fields, base_groups, self.fields, self.groups)
         path = '/api/now/table/' + table + options + \
             "&sysparm_fields=" + ','.join(columns)
 
         # Default, mandatory group 'sys_class_name'
         groups = list(set(base_groups + self.groups))
-        # groups = itertools.combinations(base_groups, self.groups)
 
         content = self._invoke('GET', path, None)
 
