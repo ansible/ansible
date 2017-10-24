@@ -19,11 +19,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import absolute_import
-
-from itertools import product
-
-from ansible.module_utils.basic import AnsibleModule
-
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
@@ -40,8 +36,8 @@ description:
   - See the "zfs allow" section of C(zfs(1M)) for detailed explanations of options. This module attempts to adhere to
     the behavior of the command line tool as much as possible.
 requirements:
-  - A ZFS/OpenZFS implementation that supports delegation with `zfs allow`, including: Solaris >= 10, illumos (all
-    versions), FreeBSD >= 8.0R, ZFS on Linux >= 0.7.0
+  - "A ZFS/OpenZFS implementation that supports delegation with `zfs allow`, including: Solaris >= 10, illumos (all
+    versions), FreeBSD >= 8.0R, ZFS on Linux >= 0.7.0."
 version_added: "2.5"
 options:
   name:
@@ -111,6 +107,11 @@ EXAMPLES = '''
 # changed/state/msg/stdout
 RETURN = '''
 '''
+
+from itertools import product
+
+from ansible.module_utils.basic import AnsibleModule
+
 
 
 class ZfsDelegateAdmin(object):
