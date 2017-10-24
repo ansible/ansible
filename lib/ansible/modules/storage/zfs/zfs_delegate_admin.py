@@ -44,23 +44,19 @@ options:
     description:
       - File system or volume name e.g. C(rpool/myfs)
     required: true
-    type: str
   state:
     description:
       - Whether to allow (C(present)), or unallow (C(absent)) a permission. When set to C(present), at least one
         "entity" param of I(users), I(groups), or I(everyone) are required. When set to C(absent), removes permissions
         from the specified entities, or removes all permissions if no entity params are specified.
     required: true
-    type: str
     choices: [present, absent]
   users:
     description:
       - List of users to whom permission(s) should be granted
-    type: list
   groups:
     description:
       - List of groups to whom permission(s) should be granted
-    type: list
   everyone:
     description:
       - Apply permissions to everyone.
@@ -69,7 +65,6 @@ options:
   permissions:
     description:
       - The list of permission(s) to delegate (required if C(state) is C(present))
-    type: list
     choices: ['allow','clone','create','destroy',...]
   local:
     description:
@@ -111,7 +106,6 @@ RETURN = '''
 from itertools import product
 
 from ansible.module_utils.basic import AnsibleModule
-
 
 
 class ZfsDelegateAdmin(object):
