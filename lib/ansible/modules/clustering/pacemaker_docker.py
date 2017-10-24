@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: pacemaker_docker
 short_description: Manage docker resources in a pacemaker cluster
-version_added: "2.4"
+version_added: "2.5"
 author: "Chafik Belhaoues (@africanzoe)"
 description:
    - This module can create|delete|manage|unmanage a docker resource within a
