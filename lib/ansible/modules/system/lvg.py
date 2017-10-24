@@ -73,7 +73,7 @@ EXAMPLES = '''
     pvs: /dev/sda1
     pesize: 32
 
-# Create a volume group on with extent size specifiend in kB (1280k).
+# Create a volume group on with extent size specified in kB (1280k).
 - lvg:
     vg: vg.services2
     pvs: /dev/sda2
