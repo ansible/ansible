@@ -10,6 +10,8 @@
                 "ec2:AllocateAddress",
                 "ec2:AssociateAddress",
                 "ec2:AssociateRouteTable",
+                "ec2:AssociateVpcCidrBlock",
+                "ec2:AssociateSubnetCidrBlock",
                 "ec2:CreateImage",
                 "ec2:AttachInternetGateway",
                 "ec2:CreateInternetGateway",
