@@ -289,6 +289,7 @@ class AzureRMModuleBase(object):
                                                          self.credentials['password'],
                                                          tenant=tenant,
                                                          cloud_environment=self._cloud_environment)
+        
         else:
             self.fail("Failed to authenticate with provided credentials. Some attributes were missing. "
                       "Credentials must include client_id, secret and tenant or ad_user and password or "
