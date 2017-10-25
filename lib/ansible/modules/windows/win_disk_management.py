@@ -87,12 +87,12 @@ options:
   label:
       description:
         - Manage disk option.
-        - File system label which should be set for the file system on found disk.
+        - File system label which should be set for the file system on the selected disk.
       default: ansible_disk
   allocation_unit_size:
       description:
         - Manage disk option.
-        - Allocation Unit size which will be set for the file system on selected disk (possible values for file system ntfs 4,8,16,32,64kb;refs 64kb).
+        - Allocation unit size which will be set for the file system on selected disk (possible values for file system ntfs 4,8,16,32,64kb;refs 64kb).
         - If option file_system is set to "refs" the allocation unit size will be automatically adjusted to "64" (kb).
       default: 4
       choices:
@@ -143,7 +143,7 @@ notes:
   - If the script fails with an error and the writeable status was set from "read-only" to "writeable" before the script will try to set the disk to
     writeable status "read-only" again but will not be canceled if set "read-only" again fails.
   - If you use the --diff option you will get detailed information about the changes on the target.
-  - If you use the --check option nothing will be changed on the target but you will get information what would be changed.
+  - If you use the --check option nothing will be changed on the target but you will get information what would be changed (contains -diff).
 '''
 
 EXAMPLES = r'''
@@ -214,7 +214,7 @@ change_log:
             type: string
             sample: "Partition style mbr (partition_style_select) was converted to gpt (partition_style_set)"
         partitioning:
-            description: Detailed information about partition creation on the found disk.
+            description: Detailed information about partition creation on the selected disk.
             returned: success or failed
             type: string
             sample: "Initial partition Basic was created successfully on partition style gpt"
