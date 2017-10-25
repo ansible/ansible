@@ -486,14 +486,14 @@ value using the same ``show vlan | display xml`` command.::
           state: ".[@inactive='inactive']"
 
 
-The value of ``top`` is the relatvie XPath till inner-most container in xml heirarchy.
+The value of ``top`` is the relative XPath till inner-most container in xml heirarchy.
 From the example xml output given below the value of ``top`` is ``configuration/vlans/vlan`` which
-is a relative XPath expression wrt to root node (ie. rpc-reply)
+is a relative XPath expression with respect to root node (ie. rpc-reply)
 
 ``items`` is a dictionary, of key-value pairs that map user-defined names to XPath expressions
-that select elements. The Xpath expression is relative XPath wrt. value of XPath in ``top``.
+that select elements. The Xpath expression is relative XPath with respect to value of XPath in ``top``.
 For example the ``vlan_id`` in spec file is user defined name and it's value ``vlan-id`` is the
-relative XPath wrt. value of XPath in ``top``
+relative XPath with respect to value of XPath in ``top``
 
 Attributes of xml tags can be extracted using XPath expressions, the value of ``state`` in spec
 is a XPath expression to get the attributes of ``vlan`` tag in output xml.::

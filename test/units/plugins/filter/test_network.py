@@ -18,6 +18,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+import sys
 
 from ansible.compat.tests import unittest
 from ansible.plugins.filter.network import parse_xml
@@ -30,6 +31,7 @@ with open(os.path.join(fixture_path, 'show_vlans_xml_output.txt')) as f:
 
 class TestNetworkParseFilter(unittest.TestCase):
 
+    @unittest.skipIf(sys.version_info[:2] == (2, 6), 'XPath expression not supported in this version')
     def test_parse_xml_to_list_of_dict(self):
         spec_file_path = os.path.join(fixture_path, 'show_vlans_xml_spec.yml')
         parsed = parse_xml(output_xml, spec_file_path)
@@ -40,6 +42,7 @@ class TestNetworkParseFilter(unittest.TestCase):
                               {'name': 'test-5', 'enabled': False, 'state': 'inactive', 'interface': 'em5.0', 'vlan_id': 500, 'desc': 'test vlan-5'}]}
         self.assertEqual(parsed, expected)
 
+    @unittest.skipIf(sys.version_info[:2] == (2, 6), 'XPath expression not supported in this version')
     def test_parse_xml_to_dict(self):
         spec_file_path = os.path.join(fixture_path, 'show_vlans_xml_with_key_spec.yml')
         parsed = parse_xml(output_xml, spec_file_path)
@@ -51,6 +54,7 @@ class TestNetworkParseFilter(unittest.TestCase):
                     }
         self.assertEqual(parsed, expected)
 
+    @unittest.skipIf(sys.version_info[:2] == (2, 6), 'XPath expression not supported in this version')
     def test_parse_xml_with_condition_spec(self):
         spec_file_path = os.path.join(fixture_path, 'show_vlans_xml_with_condition_spec.yml')
         parsed = parse_xml(output_xml, spec_file_path)

@@ -262,7 +262,12 @@ def _extract_param(template, root, attrs, value):
         entry = dict()
         item_dict = dict()
         for param, param_xpath in iteritems(param_to_xpath_map):
-            fields = element.findall(param_xpath)
+            fields = None
+            try:
+                fields = element.findall(param_xpath)
+            except:
+                display.warning("Failed to evaluate value of '%s' with XPath '%s'.\nUnexpected error: %s." % (param, param_xpath, traceback.format_exc()))
+
             tags = param_xpath.split('/')
 
             # check if xpath ends with attribute.
