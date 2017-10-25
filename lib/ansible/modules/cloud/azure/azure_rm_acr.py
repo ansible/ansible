@@ -11,7 +11,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = '''
 ---
 module: azure_rm_acr
@@ -123,20 +122,24 @@ except ImportError as exc:
     pass
 
 
-def create_acr_dict(registry):
+def create_acr_dict(registry, credentials):
     '''
     Helper method to deserialize a ContainerRegistry to a dict
     :param: acr: return object from Azure rest API call
     :return: dict with the state on Azure
     '''
     results = dict(
-        id=registry.id,
-        name=registry.name,
-        location=registry.location,
-        admin_user_enabled=registry.admin_user_enabled,
-        sku=registry.sku.name,
-        provisioning_state=registry.provisioning_state,
-        tags=registry.tags
+        id=registry.id if registry != None else "",
+        name=registry.name if registry != None else "",
+        location=registry.location if registry != None else "",
+        admin_user_enabled=registry.admin_user_enabled if registry != None else "",
+        sku=registry.sku.name if registry != None else "",
+        provisioning_state=registry.provisioning_state if registry != None else "",
+        password_name=credentials.passwords[0].name.value if credentials != None else "",
+        password_value=credentials.passwords[0].value if credentials != None else "",
+        password2_name=credentials.passwords[1].name.value if credentials != None else "",
+        password2_value=credentials.passwords[1].value if credentials != None else "",
+        tags=registry.tags if registry != None else ""
     )
     return results
 
@@ -249,39 +252,53 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
         self.log("Creating / Updating the ACR instance {0}".format(self.name))
 
         try:
+            name_status = self.containerregistry_mgmt_client.registries.check_name_availability(self.name)
+ 
             if to_do != Actions.NoAction:
                 if to_do == Actions.Create:
-                    poller = self.containerregistry_mgmt_client.registries.create(
-                        resource_group_name=self.resource_group,
-                        registry_name=self.name,
-                        registry=Registry(
-                            location=self.location,
-                            sku=Sku(
-                                name=self.sku
-                            ),
-                            tags=self.tags,
-                            admin_user_enabled=self.admin_user_enabled
+                    if name_status.name_available:
+                        poller = self.containerregistry_mgmt_client.registries.create(
+                            resource_group_name=self.resource_group,
+                            registry_name=self.name,
+                            registry=Registry(
+                                location=self.location,
+                                sku=Sku(
+                                    name=self.sku
+                                ),
+                                tags=self.tags,
+                                admin_user_enabled=self.admin_user_enabled
+                            )
                         )
-                    )
+                    else:
+                        raise Exception("Invalid registry name. reason: " + name_status.reason + " message: " + name_status.message)
                 else:
-                    poller = self.containerregistry_mgmt_client.registries.update(
-                        resource_group_name=self.resource_group,
-                        registry_name=self.name,
-                        registry_update_parameters=RegistryUpdateParameters(
-                            sku=Sku(
-                                name=self.sku
-                            ),
-                            tags=self.tags,
-                            admin_user_enabled=self.admin_user_enabled
+                    if name_status.reason == "AlreadyExists":
+                        poller = self.containerregistry_mgmt_client.registries.update(
+                            resource_group_name=self.resource_group,
+                            registry_name=self.name,
+                            registry_update_parameters=RegistryUpdateParameters(
+                                sku=Sku(
+                                    name=self.sku
+                                ),
+                                tags=self.tags,
+                                admin_user_enabled=self.admin_user_enabled
+                            )
                         )
-                    )
+                    else:
+                        raise Exception("Update registry failed as registry '" + self.name + "' doesn't exist.")
                 response = self.get_poller_result(poller)
+                if self.admin_user_enabled:
+                    credentials = self.containerregistry_mgmt_client.registries.list_credentials(self.resource_group, self.name)
+                else:
+                    self.log('Cannot perform credential operations as admin user is disabled')
+                    credentials = None
             else:
                 response = None
-        except CloudError as exc:
-            self.log('Error attempting to create the ACR instance.')
-            self.fail("Error creating the ACR instance: {0}".format(str(exc)))
-        return create_acr_dict(response)
+                credentials = None
+        except (CloudError, Exception) as exc:
+            self.log('Error attempting to create / update the ACR instance.')
+            self.fail("Error creating / updating the ACR instance: {0}".format(str(exc)))
+        return create_acr_dict(response, credentials)
 
     def delete_acr(self):
         '''
@@ -314,7 +331,8 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
         except CloudError as e:
             self.log('Did not find the ACR instance.')
         if found is True:
-            return create_acr_dict(response)
+            credentials = self.containerregistry_mgmt_client.registries.list_credentials(self.resource_group, self.name)
+            return create_acr_dict(response, credentials)
         else:
             return False
     
