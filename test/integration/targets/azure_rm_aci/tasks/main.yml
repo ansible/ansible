@@ -1,0 +1,45 @@
+- name: Create sample container group
+  azure_rm_aci:
+    resource_group: "{{ resource_group }}"
+    name: "aci{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+    os_type: linux
+    ip_address: public
+    ports:
+      - 80
+    containers:
+      - name: mycontainer1
+        image: httpd
+        memory: 1.5
+        ports:
+          - 80
+          - 81
+      - name: mycontainer2
+        image: httpd
+        memory: 1.5
+  register: output
+
+- name: Assert the ACI instance is well created
+  assert:
+    that:
+      - output.changed
+      - output.state.provisioning_state == 'Creating'
+
+- name: Remove ACI instance
+  azure_rm_aci:
+    resource_group: "{{ resource_group }}"
+    name: "aci{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+    os_type: linux
+    ip_address: public
+    ports:
+      - 80
+    containers:
+      - name: mycontainer1
+        image: httpd
+        memory: 1.5
+        ports:
+          - 80
+          - 81
+      - name: mycontainer2
+        image: httpd
+        memory: 1.5
+    state: absent
