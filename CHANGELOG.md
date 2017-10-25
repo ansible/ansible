@@ -124,6 +124,8 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/31973)
 * Fix fencing and kuma usage in ovirt_cluster module
   (https://github.com/ansible/ansible/pull/32190)
+* Fix failure during upgrade due to NON_RESPONSIVE state for ovirt_hosts module
+  (https://github.com/ansible/ansible/pull/32192)
 
 <a id="2.4.1"></a>
 
