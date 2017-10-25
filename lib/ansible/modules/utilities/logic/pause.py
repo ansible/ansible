@@ -46,6 +46,7 @@ options:
     required: false
     default: 'yes'
     choices: ['yes', 'no']
+    version_added: 2.4
 author: "Tim Bielawa (@tbielawa)"
 notes:
       - Starting in 2.2,  if you specify 0 or negative for minutes or seconds, it will wait for 1 second, previously it would wait indefinitely.
