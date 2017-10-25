@@ -247,7 +247,7 @@ To make a final major release
 * Ping ``@nitzmahone`` or ``@jlaska`` or ``@gmainwaring`` to create an ansible2.X 
   PPA for major-version-pinned releases
 * In the ``devel`` branch edit :file:`packaging/release/vars/versions.yml` -- Update the release
-  date
+  date.  Version numbers should be listed in descending order.
 * In both ``devel`` and ``stable-2.4`` branch edit release status in
   :file:`docs/docsite/rst/release_and_maintenance.rst`
 
@@ -258,6 +258,10 @@ To make a final major release
   * Everything older is ``Unsupported (end of life)``
 
 * Steps 4-6 of the :ref:`beta1 <first_release>` section
+  When inputting the information for the release.yml, be sure to specify:
+
+  * Is this a final release (not a beta/rc)? [no]: yes
+
 * Additional final release Sanity checks
 
    * :file:`RELEASES.txt`
