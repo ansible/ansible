@@ -25,6 +25,7 @@
                 "ec2:DeleteNatGateway",
                 "ec2:DeleteSnapshot",
                 "ec2:DeleteSubnet",
+                "ec2:DeleteTags",
                 "ec2:DeleteVpc",
                 "ec2:DeregisterImage",
                 "ec2:Describe*",
@@ -51,7 +52,9 @@
                 "ec2:RevokeSecurityGroupEgress",
                 "ec2:RevokeSecurityGroupIngress",
                 "ec2:RunInstances",
-                "ec2:TerminateInstances"
+                "ec2:TerminateInstances",
+                "ec2:UpdateSecurityGroupRuleDescriptionsIngress",
+                "ec2:UpdateSecurityGroupRuleDescriptionsEgress"
             ],
             "Resource": [
                 "arn:aws:ec2:{{aws_region}}::image/*",
