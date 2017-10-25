@@ -49,12 +49,8 @@
     - instance.name == "instance-vm"
     - instance.state == "Running"
 
-- name: install jq
-  package:
-    name: jq
-
 - name: setup find the routers name
-  shell: cs listRouters listall=true networkid="{{ net.id }}" zone="{{ cs_common_zone_adv }}" | jq ".router[].name" | tr -d '"'
+  shell: cs listRouters listall=true networkid="{{ net.id }}" zone="{{ cs_common_zone_adv }}"
   args:
     chdir: "{{ playbook_dir }}"
   register: router
@@ -63,7 +59,10 @@
     var: router.stdout
 
 - set_fact:
-    router_name: "{{ router.stdout }}"
+    router_json: "{{ router.stdout | from_json }}"
+
+- set_fact:
+    router_name: "{{ router_json.router[0].name }}"
 
 - name: test router started
   cs_router:
