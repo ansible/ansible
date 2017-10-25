@@ -5,11 +5,15 @@
 # Copyright (c) 2013 Matt Hite <mhite@hotmail.com>
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: bigip_facts
 short_description: Collect facts from F5 BIG-IP devices
@@ -73,26 +77,28 @@ options:
 extends_documentation_fragment: f5
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Collect BIG-IP facts
   bigip_facts:
-      server: "lb.mydomain.com"
-      user: "admin"
-      password: "secret"
-      include: "interface,vlan"
+    server: lb.mydomain.com
+    user: admin
+    password: secret
+    include: interface,vlan
   delegate_to: localhost
 '''
-
-try:
-    from suds import MethodNotFound, WebFault
-except ImportError:
-    bigsuds_found = False
-else:
-    bigsuds_found = True
 
 import fnmatch
 import re
 import traceback
+
+try:
+    from suds import MethodNotFound, WebFault
+except ImportError:
+    pass  # Handle via f5_utils.bigsuds_found
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.f5_utils import bigip_api, bigsuds_found, f5_argument_spec
+from ansible.module_utils.six.moves import map, zip
 
 
 class F5(object):
@@ -959,6 +965,9 @@ class Nodes(object):
     def get_address(self):
         return self.api.LocalLB.NodeAddressV2.get_address(nodes=self.nodes)
 
+    def get_name(self):
+        return [x[x.rfind('/') + 1:] for x in self.nodes]
+
     def get_connection_limit(self):
         return self.api.LocalLB.NodeAddressV2.get_connection_limit(nodes=self.nodes)
 
@@ -1518,7 +1527,7 @@ def generate_rule_dict(f5, regex):
 
 def generate_node_dict(f5, regex):
     nodes = Nodes(f5.get_api(), regex)
-    fields = ['address', 'connection_limit', 'description', 'dynamic_ratio',
+    fields = ['name', 'address', 'connection_limit', 'description', 'dynamic_ratio',
               'monitor_instance', 'monitor_rule', 'monitor_status',
               'object_status', 'rate_limit', 'ratio', 'session_status']
     return generate_dict(nodes, fields)
@@ -1640,7 +1649,7 @@ def main():
                       'pool', 'provision', 'rule', 'self_ip', 'software',
                       'system_info', 'traffic_group', 'trunk',
                       'virtual_address', 'virtual_server', 'vlan')
-    include_test = map(lambda x: x in valid_includes, include)
+    include_test = (x in valid_includes for x in include)
     if not all(include_test):
         module.fail_json(msg="value of include must be one or more of: %s, got: %s" % (",".join(valid_includes), ",".join(include)))
 
@@ -1709,9 +1718,6 @@ def main():
 
     module.exit_json(**result)
 
-# include magic from lib/ansible/module_common.py
-from ansible.module_utils.basic import *
-from ansible.module_utils.f5_utils import *
 
 if __name__ == '__main__':
     main()
