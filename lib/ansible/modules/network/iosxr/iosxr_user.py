@@ -87,7 +87,8 @@ options:
         only accepts base64 decoded files, so this will be decoded and uploaded
         to the node. Do note that this requires an OpenSSL public key file,
         PuTTy generated files will not work! Mutually exclusive with 
-        public_key_contents.
+        public_key_contents. If used with multiple users in aggregates, then the 
+        same key file is used for all users.
   public_key_contents:
     version_added: "2.5"
     description:
@@ -96,7 +97,8 @@ options:
         only accepts base64 decoded files, so this will be decoded and uploaded
         to the node. Do note that this requires an OpenSSL public key file,
         PuTTy generated files will not work! Mutually exclusive with 
-        public_key.
+        public_key.If used with multiple users in aggregates, then the 
+        same key file is used for all users.
 requirements:
   - base64 when using I(public_key_contents) or I(public_key)
   - paramiko when using I(public_key_contents) or I(public_key)
@@ -318,12 +320,17 @@ def copy_key_to_node(module, base64keyfile):
     src = base64keyfile
     dst = '/harddisk:/publickey_%s.b64' % (name)
 
-    user = module.params['username']  # Why do I need to do this? I want to leave these out and use the ones similar to {{ ansible_host }} 
-    node = module.params['host']  # Why do I need to do this? I want to leave these out and use the ones similar to {{ ansible_host }}
+    user = module.params['username'] or module.params['provider']['username']
+    node = module.params['host'] or module.params['provider']['host']
+    password = module.params['password'] or module.params['provider']['password']
+    ssh_keyfile = module.params['ssh_keyfile'] or module.params['provider']['ssh_keyfile']
 
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(node, username=user, allow_agent=True)
+    if not ssh_keyfile:
+        ssh.connect(node, username=user, password=password)
+    else:
+        ssh.connect(node, username=user, allow_agent=True)
     sftp = ssh.open_sftp()
     sftp.put(src, dst)
     sftp.close()
@@ -333,12 +340,17 @@ def copy_key_to_node(module, base64keyfile):
 def addremovekey(module, command):
     """ Add or remove key based on command
     """
-    user = module.params['username']  # Why do I need to do this? I want to leave these out and use the ones similar to {{ ansible_host }}
-    node = module.params['host']  # Why do I need to do this? I want to leave these out and use the ones similar to {{ ansible_host }}
+    user = module.params['username'] or module.params['provider']['username']
+    node = module.params['host'] or module.params['provider']['host']
+    password = module.params['password'] or module.params['provider']['password']
+    ssh_keyfile = module.params['ssh_keyfile'] or module.params['provider']['ssh_keyfile']
 
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(node, username=user, allow_agent=True)
+    if not ssh_keyfile:
+        ssh.connect(node, username=user, password=password)
+    else:
+        ssh.connect(node, username=user, allow_agent=True)
     ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command('%s \r' % (command))
     readmsg = ssh_stdout.read(100)  # We need to read a bit to actually apply for some reason
     if ('already' in readmsg) or ('removed' in readmsg) or ('really' in readmsg):
