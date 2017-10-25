@@ -1038,9 +1038,9 @@ class PyVmomiHelper(PyVmomi):
             cluster = self.cache.get_cluster(self.params['cluster'])
             if not cluster:
                 self.module.fail_json(msg='Failed to find cluster "%(cluster)s"' % self.params)
-            hostsystems = [x for x in cluster.host]
+            hostsystems = [x for x in cluster.host if x.runtime.connectionState == 'connected' and not x.runtime.inMaintenanceMode]
             if not hostsystems:
-                self.module.fail_json(msg='No hosts found in cluster "%(cluster)s. Maybe you lack the right privileges ?"' % self.params)
+                self.module.fail_json(msg='No connected (which are not in maintenance) hosts found in cluster "%(cluster)s"' % self.params)
             # TODO: add a policy to select host
             hostsystem = hostsystems[0]
         else:
