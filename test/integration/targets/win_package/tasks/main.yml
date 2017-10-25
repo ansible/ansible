@@ -28,8 +28,8 @@
   # - { id: '{{test_win_package_exe_id}}', args: '/S' }
 
 - block:
-  #- name: run tests for expected failures
-  #  include_tasks: failure_tests.yml
+  - name: run tests for expected failures
+    include_tasks: failure_tests.yml
 
   - name: run tests for local and URL msi files
     include_tasks: msi_tests.yml
