@@ -250,6 +250,12 @@ To make a final major release
   date
 * In both ``devel`` and ``stable-2.4`` branch edit release status in
   :file:`docs/docsite/rst/release_and_maintenance.rst`
+
+  * devel status is ``In development``.  Update the Latest Version.
+  * Current and N-1 status is ``Supported (bug **and** security fixes)``
+  * N-2 is ``Supported (**only** security fixes)``
+  * Everything older is ``Unsupported (end of life)``
+
 * Steps 4-6 of the :ref:`beta1 <first_release>` section
 * Additional final release Sanity checks
 
