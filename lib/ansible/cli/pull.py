@@ -67,6 +67,8 @@ class PullCLI(CLI):
                                  "look for a playbook based on the host's fully-qualified domain name,"
                                  'on the host hostname and finally a playbook named *local.yml*.', }
 
+    SKIP_INVENTORY_DEFAULTS = True
+
     def _get_inv_cli(self):
 
         inv_opts = ''
@@ -76,9 +78,6 @@ class PullCLI(CLI):
                     inv_opts += " -i '%s' " % ','.join(inv)
                 elif ',' in inv or os.path.exists(inv):
                     inv_opts += ' -i %s ' % inv
-
-        if not inv_opts:
-            inv_opts = " -i localhost, "
 
         return inv_opts
 
@@ -124,9 +123,6 @@ class PullCLI(CLI):
                                help='submodules will track the latest changes. This is equivalent to specifying the --remote flag to git submodule update')
         self.parser.add_option("--check", default=False, dest='check', action='store_true',
                                help="don't make any changes; instead, try to predict some of the changes that may occur")
-
-        # for pull we don't want a default
-        self.parser.set_defaults(inventory=None)
 
         super(PullCLI, self).parse()
 
@@ -174,6 +170,8 @@ class PullCLI(CLI):
         # Attempt to use the inventory passed in as an argument
         # It might not yet have been downloaded so use localhost as default
         inv_opts = self._get_inv_cli()
+        if not inv_opts:
+            inv_opts = " -i localhost, "
 
         # FIXME: enable more repo modules hg/svn?
         if self.options.module_name == 'git':
