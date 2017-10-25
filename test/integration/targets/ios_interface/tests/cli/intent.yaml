@@ -4,6 +4,7 @@
 - name: Run show version
   ios_command:
     commands: show version
+    authorize: yes
   register: show_version_result
 
 - name: Set test interface to GigabitEthernet0/2 if we are on Cisco IOS
