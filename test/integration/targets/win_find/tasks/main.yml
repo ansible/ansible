@@ -43,17 +43,17 @@
     )
     foreach ($file in $normal_files) {
         New-Item -Path "{{win_find_dir}}\$file" -ItemType File
-        Set-Content -Path "{{win_find_dir}}\$file" -Value $normal_content -NoNewLine
+        [System.IO.File]::WriteAllText("{{win_find_dir}}\$file", $normal_content)
     }
 
     New-Item -Path "{{win_find_dir}}\single\small.ps1" -ItemType File
-    Set-Content -Path "{{win_find_dir}}\single\small.ps1" -Value "a" -NoNewLine
+    [System.IO.File]::WriteAllText("{{win_find_dir}}\single\small.ps1", "a")
 
     New-Item -Path "{{win_find_dir}}\date\new.ps1" -ItemType File
-    Set-Content -Path "{{win_find_dir}}\date\new.ps1" -Value "random text for new date" -NoNewLine
+    [System.IO.File]::WriteAllText("{{win_find_dir}}\date\new.ps1", "random text for new date")
 
     New-Item -Path "{{win_find_dir}}\date\old.ps1" -ItemType File
-    Set-Content -Path "{{win_find_dir}}\date\old.ps1" -Value "random text for old date" -NoNewLine
+    [System.IO.File]::WriteAllText("{{win_find_dir}}\date\old.ps1", "random text for old date")
 
     New-Item -Path "{{win_find_dir}}\single\large.ps1" -ItemType File
     Set-Content -Path "{{win_find_dir}}\single\large.ps1" -Value ('abcdefghijklmnopqrstuvwxyz' * 10000)
