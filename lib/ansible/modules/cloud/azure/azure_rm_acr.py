@@ -252,10 +252,9 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
         self.log("Creating / Updating the ACR instance {0}".format(self.name))
 
         try:
-            name_status = self.containerregistry_mgmt_client.registries.check_name_availability(self.name)
- 
             if to_do != Actions.NoAction:
                 if to_do == Actions.Create:
+                    name_status = self.containerregistry_mgmt_client.registries.check_name_availability(self.name)
                     if name_status.name_available:
                         poller = self.containerregistry_mgmt_client.registries.create(
                             resource_group_name=self.resource_group,
@@ -272,7 +271,8 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
                     else:
                         raise Exception("Invalid registry name. reason: " + name_status.reason + " message: " + name_status.message)
                 else:
-                    if name_status.reason == "AlreadyExists":
+                    registry = self.containerregistry_mgmt_client.registries.get(self.resource_group, self.name)
+                    if registry != None:
                         poller = self.containerregistry_mgmt_client.registries.update(
                             resource_group_name=self.resource_group,
                             registry_name=self.name,
