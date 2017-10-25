@@ -35,7 +35,7 @@ $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "prese
 $application = Get-AnsibleParam -obj $params -name "application" -type "str"
 $appParameters = Get-AnsibleParam -obj $params -name "app_parameters" -type "str"
 $appParametersFree  = Get-AnsibleParam -obj $params -name "app_parameters_free_form" -type "str"
-$startMode = Get-AnsibleParam -obj $params -name "start_mode" -type "str" -default "auto" -validateset "auto","manual","disabled" -resultobj $result
+$startMode = Get-AnsibleParam -obj $params -name "start_mode" -type "str" -default "auto" -validateset "auto","delayed","manual","disabled" -resultobj $result
 
 $stdoutFile = Get-AnsibleParam -obj $params -name "stdout_file" -type "str"
 $stderrFile = Get-AnsibleParam -obj $params -name "stderr_file" -type "str"
@@ -502,7 +502,7 @@ Function Nssm-Update-StartMode
         Throw "Error updating start mode for service ""$name"""
     }
 
-    $modes=@{"auto" = "SERVICE_AUTO_START"; "manual" = "SERVICE_DEMAND_START"; "disabled" = "SERVICE_DISABLED"}
+    $modes=@{"auto" = "SERVICE_AUTO_START"; "delayed" = "SERVICE_DELAYED_AUTO_START"; "manual" = "SERVICE_DEMAND_START"; "disabled" = "SERVICE_DISABLED"}
     $mappedMode = $modes.$mode
     if ($results -cnotlike $mappedMode) {
         $cmd = "set ""$name"" Start $mappedMode"
