@@ -81,9 +81,9 @@ options:
     version_added: "2.5"
   purge_tags:
     description:
-      - Whether or not to remove tags that do not appear in the I(tags) list. Defaults to false.
+      - Whether or not to remove tags that do not appear in the I(tags) list. Defaults to true.
     required: false
-    default: false
+    default: true
     version_added: "2.5"
 extends_documentation_fragment:
     - aws
@@ -382,11 +382,12 @@ def disassociate_ipv6_cidr(conn, module, subnet):
 
 
 def ensure_ipv6_cidr_block(conn, module, subnet, ipv6_cidr, check_mode):
-    if check_mode:
-        return
+    changed = False
 
     if subnet['ipv6_association_id'] and not ipv6_cidr:
-        disassociate_ipv6_cidr(conn, module, subnet)
+        if not check_mode:
+            disassociate_ipv6_cidr(conn, module, subnet)
+        changed = True
 
     if ipv6_cidr:
         filters = ansible_dict_to_boto3_filter_list({'ipv6-cidr-block-association.ipv6-cidr-block': ipv6_cidr,
@@ -398,14 +399,17 @@ def ensure_ipv6_cidr_block(conn, module, subnet, ipv6_cidr, check_mode):
             module.fail_json_aws(e, msg="Couldn't get subnet info")
 
         if check_subnets and check_subnets[0]['ipv6_cidr_block']:
-            module.fail_json(msg="Cannot associate {0} to {1}. IPv6 block is already in use on {2}"
-                             .format(ipv6_cidr, subnet['id'], check_subnets[0]['id']))
+            module.fail_json(msg="The IPv6 CIDR '{0}' conflicts with another subnet".format(ipv6_cidr))
 
         if subnet['ipv6_association_id']:
-            disassociate_ipv6_cidr(conn, module, subnet)
+            if not check_mode:
+                disassociate_ipv6_cidr(conn, module, subnet)
+            changed = True
 
         try:
-            associate_resp = conn.associate_subnet_cidr_block(SubnetId=subnet['id'], Ipv6CidrBlock=ipv6_cidr)
+            if not check_mode:
+                associate_resp = conn.associate_subnet_cidr_block(SubnetId=subnet['id'], Ipv6CidrBlock=ipv6_cidr)
+            changed = True
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e, msg="Couldn't associate ipv6 cidr {0} to {1}".format(ipv6_cidr, subnet['id']))
 
@@ -416,6 +420,8 @@ def ensure_ipv6_cidr_block(conn, module, subnet, ipv6_cidr, check_mode):
                 subnet['ipv6_cidr_block_association_set'][0] = camel_dict_to_snake_dict(associate_resp['Ipv6CidrBlockAssociation'])
             else:
                 subnet['ipv6_cidr_block_association_set'].append(camel_dict_to_snake_dict(associate_resp['Ipv6CidrBlockAssociation']))
+
+    return changed
 
 
 def get_matching_subnet(conn, module, vpc_id, cidr):
@@ -436,7 +442,7 @@ def ensure_subnet_present(conn, module):
     changed = False
     if subnet is None:
         if not module.check_mode:
-            subnet = create_subnet(conn, module, module.params['vpc_id'], module.params['cidr'], az=module.params['az'])
+            subnet = create_subnet(conn, module, module.params['vpc_id'], module.params['cidr'], ipv6_cidr=module.params['ipv6_cidr'], az=module.params['az'])
         changed = True
         # Subnet will be None when check_mode is true
         if subnet is None:
@@ -446,8 +452,8 @@ def ensure_subnet_present(conn, module):
             }
 
     if module.params['ipv6_cidr'] != subnet.get('ipv6_cidr_block'):
-        ensure_ipv6_cidr_block(conn, module, subnet, module.params['ipv6_cidr'], module.check_mode)
-        changed = True
+        if ensure_ipv6_cidr_block(conn, module, subnet, module.params['ipv6_cidr'], module.check_mode):
+            changed = True
 
     if module.params['map_public'] != subnet['map_public_ip_on_launch']:
         ensure_map_public(conn, module, subnet, module.params['map_public'], module.check_mode)
@@ -458,7 +464,8 @@ def ensure_subnet_present(conn, module):
         changed = True
 
     if module.params['tags'] != subnet['tags']:
-        changed = ensure_tags(conn, module, subnet, module.params['tags'], module.params['purge_tags'])
+        if ensure_tags(conn, module, subnet, module.params['tags'], module.params['purge_tags']):
+            changed = True
 
     subnet = get_matching_subnet(conn, module, module.params['vpc_id'], module.params['cidr'])
 
@@ -495,7 +502,7 @@ def main():
             assign_instances_ipv6=dict(default=False, required=False, type='bool'),
             wait=dict(type='bool', default=True),
             wait_timeout=dict(type='int', default=300, required=False),
-            purge_tags=dict(default=False, type='bool')
+            purge_tags=dict(default=True, type='bool')
         )
     )
 
