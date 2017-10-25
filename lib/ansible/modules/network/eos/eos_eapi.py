@@ -260,7 +260,7 @@ def map_obj_to_commands(updates, module, warnings):
         else:
             add('protocol unix-socket')
 
-    if needs_update('state'):
+    if needs_update('state') and not needs_update('vrf'):
         if want['state'] == 'stopped':
             add('shutdown')
         elif want['state'] == 'started':
