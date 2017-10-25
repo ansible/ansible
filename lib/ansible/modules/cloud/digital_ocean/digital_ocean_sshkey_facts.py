@@ -47,7 +47,7 @@ EXAMPLES = '''
     pubkey: "{{ item.public_key }}"
   with_items: "{{ ssh_keys|json_query(ssh_pubkey) }}"
   vars:
-    ssh_pubkey: "[?name=='ansible_crtl']"
+    ssh_pubkey: "[?name=='ansible_ctrl']"
 
 - debug:
     msg: "{{ pubkey }}"
