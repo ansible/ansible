@@ -40,7 +40,9 @@ options:
     default: filter
   state:
     description:
-      - Whether the rule should be absent or present.
+      - Whether the rule or chain should be absent or present.
+      - If absent, the chain is deleted only if the other other parameters used are chain and (optionally) table. If there are parameters other than these used, only the rule will be deleted.
+      - If present, the chain is created if it does not exist.
     choices: [ absent, present ]
     default: present
   action:
@@ -317,6 +319,11 @@ EXAMPLES = '''
 - iptables:
     chain: INPUT
     policy: DROP
+
+# Delete the user-defined chain WHITELIST
+- iptables:
+    chain: WHITELIST
+    state: absent
 '''
 
 import re
@@ -474,6 +481,22 @@ def get_chain_policy(iptables_path, module, params):
     return None
 
 
+def create_chain(iptables_path, module, params):
+    cmd = push_arguments(iptables_path, '-N', params, make_rule=False)
+    module.run_command(cmd, check_rc=True)
+
+
+def check_chain_present(iptables_path, module, params):
+    cmd = push_arguments(iptables_path, '-L', params, make_rule=False)
+    rc, _, __ = module.run_command(cmd, check_rc=False)
+    return (rc == 0)
+
+
+def delete_chain(iptables_path, module, params):
+    cmd = push_arguments(iptables_path, '-X', params, make_rule=False)
+    module.run_command(cmd, check_rc=True)
+
+
 def main():
     module = AnsibleModule(
         supports_check_mode=True,
@@ -553,40 +576,54 @@ def main():
         if changed and not module.check_mode:
             set_chain_policy(iptables_path, module, module.params)
 
+    # Delete the chain
+    elif (args['state'] == 'absent') and not args['rule']:
+        chain_is_present = check_chain_present(iptables_path, module, module.params)
+        args['changed'] = chain_is_present
+        if args['changed'] is False:
+            module.exit_json(**args)
+        delete_chain(iptables_path, module, module.params)
+
     else:
         insert = (module.params['action'] == 'insert')
         rule_is_present = check_present(iptables_path, module, module.params)
+        chain_is_present = check_chain_present(iptables_path, module, module.params)
         should_be_present = (args['state'] == 'present')
 
         # Check if target is up to date
-        args['changed'] = (rule_is_present != should_be_present)
+        args['changed'] = (rule_is_present != should_be_present and \
+                           chain_is_present != should_be_present)
         if args['changed'] is False:
             # Target is already up to date
             module.exit_json(**args)
 
         # Check only; don't modify
         if not module.check_mode:
-            if should_be_present:
-                if insert:
-                    insert_rule(iptables_path, module, module.params)
-                else:
-                    append_rule(iptables_path, module, module.params)
-            else:
-                insert = (module.params['action'] == 'insert')
-                rule_is_present = check_present(iptables_path, module, module.params)
-                should_be_present = (args['state'] == 'present')
-
-                # Check if target is up to date
-                args['changed'] = (rule_is_present != should_be_present)
-
-                if args['changed'] and not module.check_mode:
-                    if should_be_present:
-                        if insert:
-                            insert_rule(iptables_path, module, module.params)
-                        else:
-                            append_rule(iptables_path, module, module.params)
+            # Create the chain if it does not exist
+            if should_be_present and (chain_is_present is False):
+                create_chain(iptables_path, module, module.params)
+            if args['rule']:
+                if should_be_present:
+                    if insert:
+                        insert_rule(iptables_path, module, module.params)
                     else:
-                        remove_rule(iptables_path, module, module.params)
+                        append_rule(iptables_path, module, module.params)
+                elif:
+                    insert = (module.params['action'] == 'insert')
+                    rule_is_present = check_present(iptables_path, module, module.params)
+                    should_be_present = (args['state'] == 'present')
+
+                    # Check if target is up to date
+                    args['changed'] = (rule_is_present != should_be_present)
+
+                    if args['changed'] and not module.check_mode:
+                        if should_be_present:
+                            if insert:
+                                insert_rule(iptables_path, module, module.params)
+                            else:
+                                append_rule(iptables_path, module, module.params)
+                        else:
+                            remove_rule(iptables_path, module, module.params)
 
     module.exit_json(**args)
 
