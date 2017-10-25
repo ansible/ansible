@@ -189,7 +189,7 @@ When using the 'persistent' cache, inventory plugins can also use the configured
 Inventory plugins normally only execute at the start of a run, before playbooks/plays and roles are found,
 but they can be 're-executed' via the `meta: refresh_inventory` task, which will clear out the existing inventory and rebuild it.
 
-For examples on how to implement a connection plug in, see the source code here:
+For examples on how to implement an inventory plug in, see the source code here:
 `lib/ansible/plugins/inventory <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/inventory>`_.
 
 .. _developing_lookup_plugins:
