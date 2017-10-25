@@ -26,11 +26,6 @@ options:
         description:
             - Name of resource group.
         required: true
-    group_name:
-        description:
-            - The name of the container group.
-        required: true
-        default: null
     name:
         description:
             - The name of the container group.
@@ -43,16 +38,6 @@ options:
             - linux
             - windows
         default: linux
-        required: false
-    memory:
-        description:
-            - The required memory of the containers in GB.
-        default: 1.5
-        required: false
-    cpu:
-        description:
-            - The required number of CPU cores of the containers.
-        default: 1
         required: false
     state:
         description:
