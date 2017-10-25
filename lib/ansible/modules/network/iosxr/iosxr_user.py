@@ -16,7 +16,9 @@ DOCUMENTATION = """
 ---
 module: iosxr_user
 version_added: "2.4"
-author: "Trishna Guha (@trishnaguha), Sebastiaan van Doesselaar (@sebasdoes)"
+author: 
+  - "Trishna Guha (@trishnaguha)"
+  - "Sebastiaan van Doesselaar (@sebasdoes)"
 short_description: Manage the aggregate of local users on Cisco IOS XR device
 description:
   - This module provides declarative management of the local usernames
@@ -77,14 +79,27 @@ options:
         in the device active configuration
     default: present
     choices: ['present', 'absent']
-  publickeyfile:
+  public_key:
     version_added: "2.5"
     description:
-      - Configures the path to the public keyfile to upload to the IOS-XR node.
+      - Configures the contents of the public keyfile to upload to the IOS-XR node.
         This enables users to login using the accompanying private key. IOS-XR
         only accepts base64 decoded files, so this will be decoded and uploaded
         to the node. Do note that this requires an OpenSSL public key file,
-        PuTTy generated files will not work!
+        PuTTy generated files will not work! Mutually exclusive with 
+        public_key_contents.
+  public_key_contents:
+    version_added: "2.5"
+    description:
+      - Configures the contents of the public keyfile to upload to the IOS-XR node.
+        This enables users to login using the accompanying private key. IOS-XR
+        only accepts base64 decoded files, so this will be decoded and uploaded
+        to the node. Do note that this requires an OpenSSL public key file,
+        PuTTy generated files will not work! Mutually exclusive with 
+        public_key.
+requirements:
+  - base64 when using I(public_key_contents) or I(public_key)
+  - paramiko when using I(public_key_contents) or I(public_key)
 """
 
 EXAMPLES = """
@@ -113,7 +128,7 @@ EXAMPLES = """
   iosxr_user:
     name: netop
     state: present
-    publickeyfile: '/home/netop/.ssh/id_rsa.pub'
+    public_key_contents: "{{ lookup('file', '/home/netop/.ssh/id_rsa.pub' }}"
 """
 
 RETURN = """
@@ -272,33 +287,33 @@ def map_params_to_obj(module):
 def convert_key_to_base64(module):
     """ IOS-XR only accepts base64 decoded files, this converts the public key to a temp file.
     """
-    key = module.params['publickeyfile']
-    file = open(key, 'r')
-    readfile = file.read()
-    splitfile = readfile.split()[1]
+    if module.params['public_key_contents']:
+        key = module.params['public_key_contents']
+    elif module.params['public_key']:
+        readfile = open(module.params['public_key'], 'r')
+        key = readfile.read()
+    splitfile = key.split()[1]
 
     base64key = b64decode(splitfile)
     base64file = open('/tmp/publickey_%s.b64' % (module.params['name']), 'w')
     base64file.write(base64key)
-
-    file.close()
     base64file.close()
 
     return '/tmp/publickey_%s.b64' % (module.params['name'])
 
 
 def copy_key_to_node(module, base64keyfile):
-    """ Copy key to IOS-XR node.
+    """ Copy key to IOS-XR node. We use SFTP because older IOS-XR versions don't handle SCP very well.
     """
     src = base64keyfile
     dst = '/harddisk:/publickey_%s.b64' % (module.params['name'])
 
-    user = module.params['username']
-    server = module.params['host']
+    user = module.params['username']  # Why do I need to do this? I want to leave these out and use the ones similar to {{ ansible_host }} 
+    node = module.params['host']  # Why do I need to do this? I want to leave these out and use the ones similar to {{ ansible_host }}
 
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(server, username=user, allow_agent=True)
+    ssh.connect(node, username=user, allow_agent=True)
     sftp = ssh.open_sftp()
     sftp.put(src, dst)
     sftp.close()
@@ -308,12 +323,12 @@ def copy_key_to_node(module, base64keyfile):
 def addremovekey(module, command):
     """ Add or remove key based on command
     """
-    user = module.params['username']
-    server = module.params['host']
+    user = module.params['username']  # Why do I need to do this? I want to leave these out and use the ones similar to {{ ansible_host }}
+    node = module.params['host']  # Why do I need to do this? I want to leave these out and use the ones similar to {{ ansible_host }}
 
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(server, username=user, allow_agent=True)
+    ssh.connect(node, username=user, allow_agent=True)
     ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command('%s \r' % (command))
     readmsg = ssh_stdout.read(100)  # We need to read a bit to actually apply for some reason
     if ('already' in readmsg) or ('removed' in readmsg) or ('really' in readmsg):
@@ -333,7 +348,8 @@ def main():
         configured_password=dict(no_log=True),
         update_password=dict(default='always', choices=['on_create', 'always']),
 
-        publickeyfile=dict(),
+        public_key=dict(),
+        public_key_contents=dict(),
 
         group=dict(aliases=['role']),
         state=dict(default='present', choices=['present', 'absent'])
@@ -351,13 +367,13 @@ def main():
 
     argument_spec.update(element_spec)
     argument_spec.update(iosxr_argument_spec)
-    mutually_exclusive = [('name', 'aggregate')]
+    mutually_exclusive = [('name', 'aggregate'),('public_key','public_key_contents')]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
-    if module.params['publickeyfile']:
+    if (module.params['public_key_contents'] or module.params['public_key']):
         if not HAS_B64:
             module.fail_json(
                 msg='library base64 is required but does not appear to be '
@@ -403,7 +419,7 @@ def main():
             load_config(module, commands, result['warnings'], commit=True)
         result['changed'] = True
 
-    if module.params['state'] == 'present' and module.params['publickeyfile'] and not module.params['aggregate']:
+    if module.params['state'] == 'present' and (module.params['public_key_contents'] or module.params['public_key']) and not module.params['aggregate']:
         if not module.check_mode:
             key = convert_key_to_base64(module)
             copy_key_to_node(module, key)
@@ -417,7 +433,7 @@ def main():
         if not module.check_mode:
             commandtodo = "admin crypto key zeroize authentication rsa all"
             addremove = addremovekey(module, commandtodo)
-    elif (module.params['purge'] is True and module.params['aggregate']) or (module.params['state'] == 'absent' and module.params['aggregate']) or (module.params['state'] == 'present' and module.params['publickeyfile'] and module.params['aggregate']):
+    elif (module.params['purge'] is True and module.params['aggregate']) or (module.params['state'] == 'absent' and module.params['aggregate']) or (module.params['state'] == 'present' and (module.params['public_key_contents'] or module.params['public_key']) and module.params['aggregate']):
         warnings.append('Adding or removing keys with aggregate users is impossible at the moment.')
 
     module.exit_json(**result)

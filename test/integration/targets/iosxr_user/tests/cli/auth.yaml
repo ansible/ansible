@@ -29,7 +29,7 @@
     iosxr_user:
       name: auth_user
       state: present
-      publickeyfile: "{{output_dir}}/public.pub"
+      public_key_contents: "{{ lookup('file', \"{{ output_dir }}/public.pub\") }}"
 
   - name: test login with private key
     expect:
@@ -41,7 +41,7 @@
     iosxr_user:
       name: auth_user
       state: present
-      publickeyfile: "{{output_dir}}/public2.pub"
+      public_key_contents: "{{ lookup('file', \"{{ output_dir }}/public2.pub\") }}"
 
  - name: test login with invalid private key (should fail)
     expect:
