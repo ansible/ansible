@@ -41,7 +41,9 @@ options:
   state:
     description:
       - Whether the rule or chain should be absent or present.
-      - If absent, the chain is deleted only if the other other parameters used are chain and (optionally) table. If there are parameters other than these used, only the rule will be deleted.
+      - If absent, the chain is deleted only if the other parameters
+        used are chain and (optionally) table. If there are parameters
+        other than these used, only the rule will be deleted.
       - If present, the chain is created if it does not exist.
     choices: [ absent, present ]
     default: present
