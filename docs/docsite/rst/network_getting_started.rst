@@ -13,41 +13,40 @@ Overview
 Objective
 ---------
 
-I want to understand how Ansible can be used to connect to multiple network devices.
+This example shows how Ansible can be used to connect to and manage multiple network devices.
 
 .. FIXME FUTURE Gundalow - Link to examples index once created
 
-.. note:: Examples, not production code
-   This is not for production use, it's more to demonstrate the different areas that need to be considered and provide a foundation level knowledge.
+.. note:: This example is for educational purposes only and is not intended for production use.
+
+Audience
+--------
+
+* This example is intended for network or system administrators who want to understand how to use Ansible to manage network devices.
+
 
 Prerequisites
 -------------
 
-* Ansible 2.3 (or higher) installed :doc:`intro_installation`
-* One or more network device compatible with Ansible
-* Basic understanding of YAML :doc:`YAMLSyntax`
-* Basic understanding of Jinja2 Templates :doc:`playbooks_templating`
-* Basic Linux (comfortable on the command line)
-* Basic Network switch & router configuration knowledge
+This example requires the following:
 
+* Ansible 2.3 (or higher) installed. See :doc:`intro_installation` for more information.
+* One or more network devices that are compatible with Ansible.
+* Basic understanding of YAML :doc:`YAMLSyntax`.
+* Basic understanding of Jinja2 Templates. See :doc:`playbooks_templating` for more information.
+* Basic Linux command line use.
+* Basic knowledge of network switch & router configurations.
 
 
 .. FIXME FUTURE Gundalow - Once created we will link to the connection table here (which platforms support network_cli & credentials through inventory)
 .. FIXME FUTURE Gundalow -  Using ``ansible_ssh_pass`` will not work for REST transports such as ``eapi``, ``nxapi`` - Once documented in above FIXME add details her
 
-Audience
---------
-
-* Network administrator or System administrator who wants to understand how to use Ansible to manage Network devices.
-
-
 Solution
 =========
 
-Create an inventory file.
+In this example, we will create an inventory file containing some network switches, then run a playbook to connect to the network devices and return some information about them.
 
-
-**Inventory file**
+**Create an inventory file**
 
 Create a file called ``inventory``, containing:
 
@@ -64,7 +63,7 @@ Create a file called ``inventory``, containing:
    vyos01.example.net ansible_connection=local ansible_user=admin ansible_ssh_pass=admin
 
 
-**Playbook**
+**Create a playbook**
 
 Create a file called ``fetch-facts.yml`` containing the following:
 
@@ -152,8 +151,8 @@ Create a file called ``fetch-facts.yml`` containing the following:
           when: "'vyos' in group_names"
 
 
-Run it
-------
+Run the playbook
+----------------
 
 .. code-block:: console
 
@@ -189,18 +188,18 @@ The above inventory file defines the groups ``ios``, ``vyos`` and a "group of gr
 Credentials
 ^^^^^^^^^^^
 
-Although there are many ways to supply credentials in Ansible in this case we are using ``ansible_user`` and ``ansible_ssh_pass`` as a simple example.
+Although there are many ways to supply credentials in Ansible, in this example we are using ``ansible_user`` and ``ansible_ssh_pass`` for simplicity.
 
 .. FIXME FUTURE Gundalow - Link to network auth & proxy page (to be written)
 
 .. warning:: Never store passwords in plain text
 
-   Passwords should never be stored in plain text. The "Vault" feature of Ansible allows keeping sensitive data such as passwords or keys in encrypted files, rather than as plaintext in your playbooks or roles. These vault files can then be distributed or placed in source control. The :doc:`playbooks_vault` contains further information.
+   Passwords should never be stored in plain text. The "Vault" feature of Ansible allows keeping sensitive data such as passwords or keys in encrypted files, rather than as plaintext in your playbooks or roles. These vault files can then be distributed or placed in source control. See :doc:`playbooks_vault` for more information.
 
 ansible_connection
 ^^^^^^^^^^^^^^^^^^
 
-Setting ``ansible_connection=local`` informs Ansible to execute the module on the controlling machine (i.e. the one executing Ansible). Without this Ansible would attempt to ssh onto the remote and execute the Python script on the network device, which would fail as Python generally isn't available on network devices.
+Setting ``ansible_connection=local`` informs Ansible to execute the module on the controlling machine (the machine executing Ansible). Without this setting, Ansible would attempt to use ssh to connect to the remote and execute the Python script on the network device, which would fail because Python generally isn't available on network devices.
 
 .. FIXME FUTURE Gundalow - Once the new connection types are defined (in 2.5) we will need to update this.
 
@@ -222,7 +221,7 @@ The task is conditionally run based on the group defined in the inventory file, 
 Demo variables
 --------------
 
-Although these tasks are not needed to write data to disk, they are useful to demonstrate some methods of accessing facts about the given or a named host.
+Although these tasks are not needed to write data to disk, they are useful to demonstrate some methods of accessing facts about the given devices or a named host.
 
 More information on this can be found in :ref:`magic_variables_and_hostvars`.
 
