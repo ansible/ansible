@@ -25,6 +25,37 @@
       that:
         - results.failed
 
+  - name: create user with private key
+    iosxr_user:
+      name: auth_user
+      state: present
+      publickeyfile: "{{output_dir}}/public.pub"
+
+  - name: test login with private key
+    expect:
+      command: "ssh auth_user@{{ ansible_ssh_host }} -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i {{output_dir}}/private show version"
+    responses:
+      (?i)passphrase: 'pass123'
+
+  - name: change private key for user
+    iosxr_user:
+      name: auth_user
+      state: present
+      publickeyfile: "{{output_dir}}/public2.pub"
+
+ - name: test login with invalid private key (should fail)
+    expect:
+      command: "ssh auth_user@{{ ansible_ssh_host }} -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i {{output_dir}}/private show version"
+      responses:
+        (?i)password: "pass123"
+    ignore_errors: yes
+    register: results
+
+  - name: check that attempt failed
+    assert:
+      that:
+        - results.failed
+
   always:
   - name: delete user
     iosxr_user:

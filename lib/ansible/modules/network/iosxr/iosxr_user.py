@@ -321,7 +321,7 @@ def addremovekey(module, command):
     ssh_stdout.read(1)  # We need to read a bit to actually apply for some reason
     ssh.close()
 
-    return command
+    return readmsg
 
 
 def main():
@@ -403,20 +403,22 @@ def main():
             load_config(module, commands, result['warnings'], commit=True)
         result['changed'] = True
 
-    if module.params['state'] == 'present' and module.params['publickeyfile']:
+    if module.params['state'] == 'present' and module.params['publickeyfile'] and not module.params['aggregate']:
         if not module.check_mode:
             key = convert_key_to_base64(module)
             copy_key_to_node(module, key)
-            command = "admin crypto key import authentication rsa username %s harddisk:/publickey_%s.b64" % (module.params['name'], module.params['name'])
-            addremove = addremovekey(module, command)
-    elif module.params['state'] == 'absent':
+            commandtodo = "admin crypto key import authentication rsa username %s harddisk:/publickey_%s.b64" % (module.params['name'], module.params['name'])
+            addremove = addremovekey(module, commandtodo)
+    elif module.params['state'] == 'absent' and not module.params['aggregate']:
         if not module.check_mode:
-            command = "admin crypto key zeroize authentication rsa username %s" % (module.params['name'])
-            addremove = addremovekey(module, command)
-    elif module.params['purge'] is True:
+            commandtodo = "admin crypto key zeroize authentication rsa username %s" % (module.params['name'])
+            addremove = addremovekey(module, commandtodo)
+    elif module.params['purge'] is True and not module.params['aggregate']:
         if not module.check_mode:
-            command = "admin crypto key zeroize authentication rsa all"
-            addremove = addremovekey(module, command)
+            commandtodo = "admin crypto key zeroize authentication rsa all"
+            addremove = addremovekey(module, commandtodo)
+    elif (module.params['purge'] is True and module.params['aggregate']) or (module.params['state'] == 'absent' and module.params['aggregate']) or (module.params['state'] == 'present' and module.params['publickeyfile'] and module.params['aggregate']):
+        warnings.append('Adding or removing keys with aggregate users is impossible at the moment.')
 
     module.exit_json(**result)
 
