@@ -1,6 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# This module is proudly sponsored by CGI (www.cgi.com) and
+# KPN (www.kpn.com).
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -125,12 +127,13 @@ options:
 EXAMPLES = '''
 - name: Add host to icinga
   icinga_host:
-    icinga_server: "icinga.example.com"
-    icinga_user: "anisble"
-    icinga_pass: "mypassword"
+    url: "https://icinga2.example.co,m"
+    url_username: "ansible"
+    url_password: "a_secret"
     state: present
-    name: "{{ansible_fqdn }}"
-    ip_address: "{{ ansible_default_ipv4.address }}"
+    name: "{{ ansible_fqdn }}"
+    ip: "{{ ansible_default_ipv4.address }}"
+  delegate_to: 127.0.0.1
 '''
 
 RETURN = '''
@@ -298,7 +301,6 @@ def main():
                         module.fail_json(msg="bad return code deleting host: %s" % (ret['data']))
                 except Exception as e:
                     module.fail_json(msg="exception deleting host: " + str(e))
-                module.exit_json(changed=changed, name=name, data=data)
 
         elif icinga.diff(name, data):
             if module.check_mode:
@@ -308,8 +310,6 @@ def main():
                 changed = True
             else:
                 module.fail_json(msg="bad return code modifying host: %s" % (ret['data']))
-
-        module.exit_json(changed=changed, name=name, data=data)
 
     else:
         if state == "present":
@@ -324,16 +324,8 @@ def main():
                         module.fail_json(msg="bad return code creating host: %s" % (ret['data']))
                 except Exception as e:
                     module.fail_json(msg="exception creating host: " + str(e))
-        elif icinga.diff(name, data):
-            if module.check_mode:
-                module.exit_json(changed=False, name=name, data=data)
-            ret = icinga.modify(name, data)
-            if ret['code'] == 200:
-                changed = True
-            else:
-                module.fail_json(msg="bad return code modifying host: %s" % (ret['data']))
 
-        module.exit_json(changed=changed, name=name, data=data)
+    module.exit_json(changed=changed, name=name, data=data)
 
 
 # import module snippets
