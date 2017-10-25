@@ -608,7 +608,7 @@ def main():
                         insert_rule(iptables_path, module, module.params)
                     else:
                         append_rule(iptables_path, module, module.params)
-                elif:
+                else:
                     insert = (module.params['action'] == 'insert')
                     rule_is_present = check_present(iptables_path, module, module.params)
                     should_be_present = (args['state'] == 'present')
