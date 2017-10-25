@@ -204,9 +204,7 @@ files:
     maintainers: $team_azure
   $modules/cloud/centurylink/: clc-runner
   $modules/cloud/cloudscale/cloudscale_server.py: gaudenz
-  $modules/cloud/cloudstack/:
-    labels: cloudstack
-    maintainers: resmo
+  $modules/cloud/cloudstack/: resmo
   $modules/cloud/digital_ocean/: BondAnthony
   $modules/cloud/digital_ocean/digital_ocean.py: alukovenko zbal
   $modules/cloud/digital_ocean/digital_ocean_domain.py: alukovenko mgregson
@@ -417,11 +415,12 @@ files:
   $modules/monitoring/stackdriver.py: bwhaley
   $modules/monitoring/statusio_maintenance.py: bhcopeland
   $modules/monitoring/uptimerobot.py: nate-kingsley
-  $modules/monitoring/zabbix_group.py: cove eikef harrisongu
-  $modules/monitoring/zabbix_host.py: cove eikef harrisongu D3DeFi
-  $modules/monitoring/zabbix_hostmacro.py: cave eikef
-  $modules/monitoring/zabbix_maintenance.py: abulimov eikef
-  $modules/monitoring/zabbix_screen.py: cove eikef harrisongu
+  $modules/monitoring/zabbix: eikef
+  $modules/monitoring/zabbix/zabbix_group.py: cove harrisongu
+  $modules/monitoring/zabbix/zabbix_host.py: cove harrisongu D3DeFi
+  $modules/monitoring/zabbix/zabbix_hostmacro.py: cave
+  $modules/monitoring/zabbix/zabbix_maintenance.py: abulimov
+  $modules/monitoring/zabbix/zabbix_screen.py: cove harrisongu
   $modules/net_tools/basics/get_url.py: jpmens
   $modules/net_tools/basics/slurp.py: $team_ansible
   $modules/net_tools/basics/uri.py: $team_ansible
@@ -439,16 +438,12 @@ files:
   $modules/net_tools/omapi_host.py: nerzhul
   $modules/net_tools/snmp_facts.py: ogenstad
   $modules/network/a10/: ericchou1 mischapeters
-  $modules/network/aci/:
-    labels: aci
-    maintainers: dagwieers schunduri jmcgill298
+  $modules/network/aci/: $team_aci
   $modules/network/aireos/: jmighion
   $modules/network/aos/: dgarros jeremyschulman
   $modules/network/aruba/: jmighion
   $modules/network/asa/: ogenstad
-  $modules/network/avi/:
-    labels: avi
-    maintainers: $team_avi
+  $modules/network/avi/: $team_avi
   $modules/network/bigswitch/: jayakody tedelhourani vuile
   $modules/network/citrix/netscaler.py: $team_ansible
   $modules/network/cloudengine/: QijunPan
@@ -459,13 +454,13 @@ files:
   $modules/network/eos/: privateip trishnaguha
   $modules/network/f5/:
     ignored: Etienne-Carriere mhite mryanlam perzizzle srvg wojtek0806
-    labels: f5
     maintainers: caphrim007
   $modules/network/fortios/: bjolivot
   $modules/network/illumos/: xen0l
   $modules/network/interface/: $team_networking
-  $modules/network/ios/: privateip rcarrillocruz
-  $modules/network/iosxr/: privateip rcarrillocruz
+  $modules/network/ios/: privateip rcarrillocruz kedarX
+  $modules/network/iosxr/: privateip rcarrillocruz kedarX
+  $modules/network/ironware/: paulquack
   $modules/network/junos/: Qalthos ganeshrn
   $modules/network/layer2/: $team_networking
   $modules/network/layer3/: $team_networking
@@ -539,7 +534,7 @@ files:
   $modules/packaging/os/openbsd_pkg.py: eest
   $modules/packaging/os/opkg.py: skinp
   $modules/packaging/os/package.py: $team_ansible
-  $modules/packaging/os/pacman.py: elasticdog indrajitr
+  $modules/packaging/os/pacman.py: indrajitr
   $modules/packaging/os/pkg5.py: mavit
   $modules/packaging/os/pkg5_publisher.py: mavit
   $modules/packaging/os/pkgin.py: L2G jasperla szinck troy2914
@@ -574,6 +569,7 @@ files:
   $modules/remote_management/ipmi/: cloudnull
   $modules/remote_management/manageiq/: $team_manageiq
   $modules/remote_management/stacki/stacki_host.py: bbyhuy bsanders
+  $modules/remote_management/ucs/: $team_ucs
   $modules/remote_management/wakeonlan.py: dagwieers
   $modules/source_control/bzr.py: andreparames
   $modules/source_control/git.py: $team_ansible
@@ -902,13 +898,18 @@ files:
     maintainers: ericchou1 mischapeters
     labels: networking
   $module_utils/aci.py:
-    maintainers: dagwieers schunduri jmcgill298
+    maintainers: $team_aci
     labels:
     - aci
     - networking
   $module_utils/aireos.py:
     maintainers: jmighion
     labels: networking
+  $module_utils/azure_rm_common.py:
+    maintainers: $team_azure
+    labels:
+      - azure
+      - cloud
   $module_utils/eos.py:
     maintainers: $team_networking
     labels: networking
@@ -963,6 +964,9 @@ files:
   $module_utils/iosxr.py:
     maintainers: $team_networking
     labels: networking
+  $module_utils/ironware.py:
+    maintainers: paulquack
+    labels: networking
   $module_utils/junos.py:
     maintainers: $team_networking
     labels: networking
@@ -999,6 +1003,12 @@ files:
     labels: networking
   $module_utils/ovirt.py:
     maintainers: joshainglis karmab machacekondra
+    labels:
+    - cloud
+    - ovirt
+  $module_utils/remote_management/ucs:
+    maintainers: $team_ucs
+    labels: ucs
   $module_utils/sros.py:
     maintainers: $team_networking
     labels: networking
@@ -1046,6 +1056,9 @@ files:
   lib/ansible/plugins/action/ios:
     maintainers: $team_networking
     labels: networking
+  lib/ansible/plugins/action/ironware:
+    maintainers: paulquack
+    labels: networking
   lib/ansible/plugins/action/junos:
     maintainers: $team_networking
     labels: networking
@@ -1064,6 +1077,9 @@ files:
   lib/ansible/plugins/cliconf/:
     maintainers: $team_networking
     labels: networking
+  lib/ansible/plugins/cliconf/ironware.py:
+    maintainers: paulquack
+    labels: networking
   lib/ansible/plugins/connection/netconf.py:
     maintainers: $team_networking
     labels: networking
@@ -1081,6 +1097,11 @@ files:
     labels:
     - cloud
     - openstack
+  lib/ansible/plugins/inventory/ovirt4.py:
+    maintainers: machacekondra
+    labels:
+      - ovirt
+      - cloud
   lib/ansible/plugins/filter/network.py:
     maintainers: $team_networking
     labels: networking
@@ -1111,6 +1132,9 @@ files:
   lib/ansible/plugins/terminal/iosxr.py:
     maintainers: $team_networking
     labels: networking
+  lib/ansible/plugins/terminal/ironware.py:
+    maintainers: paulquack
+    labels: networking
   lib/ansible/plugins/terminal/junos.py:
     maintainers: $team_networking
     labels: networking
@@ -1134,25 +1158,28 @@ files:
     labels: docs_pull_request
     notify: dharmabumstead
   packaging/:
-    # 'packaging' automatically added to labels
+  test/:
+    # 'test' is a component path, then 'test' label will be automatically added
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
+  team_aci: dagwieers jmcgill298 schunduri 
   team_ansible: []
   team_avi: ericsysmin grastogi23 khaltore
   team_azure: haroldwongms nitzmahone tstringer
   team_cumulus: isharacomix jrrivers privateip
   team_manageiq: gtanzillo abellotti zgalor yaacov cben
-  team_netapp: hulquest lmprice broncofan
+  team_netapp: hulquest lmprice broncofan gouthampacha
   team_netscaler: chiradeep giorgos-nikolopoulos
   team_netvisor: Qalthos amitsi gundalow privateip
-  team_networking: Qalthos ganeshrn gundalow privateip rcarrillocruz trishnaguha
-  team_nxos: GGabriele jedelman8 mikewiebe privateip rahushen rcarrillocruz trishnaguha
+  team_networking: Qalthos ganeshrn gundalow privateip rcarrillocruz trishnaguha kedarX
+  team_nxos: GGabriele jedelman8 mikewiebe privateip rahushen rcarrillocruz trishnaguha kedarX
   team_openstack: emonty j2sol juliakreger rcarrillocruz shrews thingee dagnello
   team_openswitch: Qalthos gundalow privateip
   team_rabbitmq: chrishoffman manuel-sousa hyperized
   team_rhn: alikins barnabycourt flossware vritant
   team_tower: ghjm jlaska matburt wwitzel3
+  team_ucs: dsoper2 johnamcdonough vallard vvb
   team_vmware: dagwieers dav1x jctanner nerzhul akasurde
   team_windows: dagwieers jborean93 jhawkesworth
   team_ipa: Nosmoht akasurde

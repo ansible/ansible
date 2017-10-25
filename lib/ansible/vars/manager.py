@@ -72,15 +72,19 @@ def preprocess_vars(a):
     return data
 
 
-def strip_internal_keys(dirty):
+def strip_internal_keys(dirty, exceptions=None):
     '''
     All keys stating with _ansible_ are internal, so create a copy of the 'dirty' dict
     and remove them from the clean one before returning it
     '''
+
+    if exceptions is None:
+        exceptions = ()
     clean = dirty.copy()
     for k in dirty.keys():
         if isinstance(k, string_types) and k.startswith('_ansible_'):
-            del clean[k]
+            if k not in exceptions:
+                del clean[k]
         elif isinstance(dirty[k], dict):
             clean[k] = strip_internal_keys(dirty[k])
     return clean
@@ -330,15 +334,14 @@ class VariableManager:
                     data[group] = combine_vars(data[group], _plugins_play(group))
                 return data
 
-            # Merge groups as per precedence config, if not implicit localhost
+            # Merge groups as per precedence config
             # only allow to call the functions we want exposed
-            if not host.implicit:
-                for entry in C.VARIABLE_PRECEDENCE:
-                    if entry in self._ALLOWED:
-                        display.debug('Calling %s to load vars for %s' % (entry, host.name))
-                        all_vars = combine_vars(all_vars, locals()[entry]())
-                    else:
-                        display.warning('Ignoring unknown variable precedence entry: %s' % (entry))
+            for entry in C.VARIABLE_PRECEDENCE:
+                if entry in self._ALLOWED:
+                    display.debug('Calling %s to load vars for %s' % (entry, host.name))
+                    all_vars = combine_vars(all_vars, locals()[entry]())
+                else:
+                    display.warning('Ignoring unknown variable precedence entry: %s' % (entry))
 
             # host vars, from inventory, inventory adjacent and play adjacent via plugins
             all_vars = combine_vars(all_vars, host.get_vars())

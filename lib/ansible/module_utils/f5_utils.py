@@ -327,6 +327,11 @@ class AnsibleF5Client(object):
 class AnsibleF5Parameters(object):
     def __init__(self, params=None):
         self._values = defaultdict(lambda: None)
+        self._values['__warnings'] = []
+        if params:
+            self.update(params=params)
+
+    def update(self, params=None):
         if params:
             for k, v in iteritems(params):
                 if self.api_map is not None and k in self.api_map:

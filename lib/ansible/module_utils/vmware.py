@@ -34,7 +34,6 @@ except ImportError:
 from ansible.module_utils._text import to_text
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils.six import integer_types, iteritems, string_types
-from ansible.module_utils._text import to_text
 
 
 class TaskError(Exception):
@@ -157,7 +156,13 @@ def find_datastore_by_name(content, datastore_name):
 
 def find_dvs_by_name(content, switch_name):
 
-    vmware_distributed_switches = get_all_objs(content, [vim.dvs.VmwareDistributedVirtualSwitch])
+    # https://github.com/vmware/govmomi/issues/879
+    # https://github.com/ansible/ansible/pull/31798#issuecomment-336936222
+    try:
+        vmware_distributed_switches = get_all_objs(content, [vim.dvs.VmwareDistributedVirtualSwitch])
+    except IndexError:
+        vmware_distributed_switches = get_all_objs(content, [vim.DistributedVirtualSwitch])
+
     for dvs in vmware_distributed_switches:
         if dvs.name == switch_name:
             return dvs
