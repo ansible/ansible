@@ -58,6 +58,17 @@ options:
         default: 'mutable'
         version_added: '2.10'
         type: str
+    lifecycle_policy:
+        description:
+            - JSON or dict that represents the new lifecycle policy
+        required: false
+        version_added: '2.5'
+    delete_lifecycle_policy:
+        description:
+            - if yes, remove the lifecycle policy from the repository
+        required: false
+        default: false
+        version_added: '2.5'
     state:
         description:
             - Create or destroy the repository.
@@ -108,12 +119,6 @@ EXAMPLES = '''
   ecs_ecr:
     name: needs-no-policy
     delete_policy: yes
-
-- name: create immutable ecr-repo
-  ecs_ecr:
-    name: super/cool
-    image_tag_mutability: immutable
-
 '''
 
 RETURN = '''
@@ -269,23 +274,6 @@ class EcsEcr:
                 return policy
             return None
 
-    def put_image_tag_mutability(self, registry_id, name, new_mutability_configuration):
-        repo = self.get_repository(registry_id, name)
-        current_mutability_configuration = repo.get('imageTagMutability')
-
-        if current_mutability_configuration != new_mutability_configuration:
-            if not self.check_mode:
-                self.ecr.put_image_tag_mutability(
-                    repositoryName=name,
-                    imageTagMutability=new_mutability_configuration,
-                    **build_kwargs(registry_id))
-            else:
-                self.skipped = True
-            self.changed = True
-
-        repo['imageTagMutability'] = new_mutability_configuration
-        return repo
-
 
 def sort_lists_of_strings(policy):
     for statement_index in range(0, len(policy.get('Statement', []))):
@@ -306,10 +294,11 @@ def run(ecr, params, verbosity):
         delete_policy = params['delete_policy']
         registry_id = params['registry_id']
         force_set_policy = params['force_set_policy']
-        image_tag_mutability = params['image_tag_mutability'].upper()
 
         # If a policy was given, parse it
         policy = policy_text and json.loads(policy_text)
+        lifecycle_policy = \
+            lifecycle_policy_text and json.loads(lifecycle_policy_text)
 
         result['state'] = state
         result['created'] = False
@@ -326,6 +315,46 @@ def run(ecr, params, verbosity):
             else:
                 repo = ecr.put_image_tag_mutability(registry_id, name, image_tag_mutability)
             result['repository'] = repo
+
+            if delete_lifecycle_policy:
+                original_lifecycle_policy = \
+                    ecr.get_lifecycle_policy(registry_id, name)
+
+                if verbosity >= 2:
+                    result['lifecycle_policy'] = None
+
+                if verbosity >= 3:
+                    result['original_lifecycle_policy'] = original_lifecycle_policy
+
+                if original_lifecycle_policy:
+                    ecr.delete_lifecycle_policy(registry_id, name)
+                    result['changed'] = True
+
+            elif lifecycle_policy_text is not None:
+                try:
+                    lifecycle_policy = sort_json_policy_dict(lifecycle_policy)
+                    if verbosity >= 2:
+                        result['lifecycle_policy'] = lifecycle_policy
+                    original_lifecycle_policy = ecr.get_lifecycle_policy(
+                        registry_id, name)
+
+                    if original_lifecycle_policy:
+                        original_lifecycle_policy = sort_json_policy_dict(
+                            original_lifecycle_policy)
+
+                    if verbosity >= 3:
+                        result['original_lifecycle_policy'] = \
+                            original_lifecycle_policy
+
+                    if original_lifecycle_policy != lifecycle_policy:
+                        ecr.put_lifecycle_policy(registry_id, name,
+                                                 lifecycle_policy_text)
+                        result['changed'] = True
+                except:
+                    # Some failure w/ the policy. It's helpful to know what the
+                    # policy is.
+                    result['lifecycle_policy'] = lifecycle_policy_text
+                    raise
 
             if delete_policy:
                 original_policy = ecr.get_repository_policy(registry_id, name)
@@ -398,14 +427,13 @@ def main():
                    default='present'),
         force_set_policy=dict(required=False, type='bool', default=False),
         policy=dict(required=False, type='json'),
-        delete_policy=dict(required=False, type='bool'),
-        image_tag_mutability=dict(required=False, choices=['mutable', 'immutable'],
-                                  default='mutable')))
+        delete_policy=dict(required=False, type='bool')))
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True,
                            mutually_exclusive=[
-                               ['policy', 'delete_policy']])
+                               ['policy', 'delete_policy'],
+                               ['lifecycle_policy', 'delete_lifecycle_policy']])
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')
