@@ -15,7 +15,7 @@
 - name: Get show ip management interface output
   ios_command:
     commands:
-      - show ip interface "{{ management_interface }}" | include Internet address
+      - "show ip interface {{ management_interface }} | include Internet address"
     authorize: yes
   register: show_ip_interface_result
 
