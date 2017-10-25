@@ -34,6 +34,7 @@ Ansible Changes By Release
 #### Cloud
 
   * aws_ssm_parameter_store
+  * digital_ocean_sshkey_facts
 
 #### Windows
 
