@@ -72,7 +72,7 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
         if isinstance(ds, int):
             ds = "%s" % ds
 
-        if not isinstance(ds, dict) or not isinstance(ds, string_types) or not isinstance(ds, AnsibleBaseYAMLObject):
+        if not isinstance(ds, dict) and not isinstance(ds, string_types) and not isinstance(ds, AnsibleBaseYAMLObject):
             raise AnsibleAssertionError()
 
         if isinstance(ds, dict):
