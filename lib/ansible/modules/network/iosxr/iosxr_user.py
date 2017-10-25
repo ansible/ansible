@@ -16,7 +16,7 @@ DOCUMENTATION = """
 ---
 module: iosxr_user
 version_added: "2.4"
-author: "Trishna Guha (@trishnaguha)"
+author: "Trishna Guha (@trishnaguha)", "Sebastiaan van Doesselaar (@sebasdoes)"
 short_description: Manage the aggregate of local users on Cisco IOS XR device
 description:
   - This module provides declarative management of the local usernames
@@ -77,6 +77,13 @@ options:
         in the device active configuration
     default: present
     choices: ['present', 'absent']
+  publickeyfile:
+    description:
+      - Configures the path to the public keyfile to upload to the IOS-XR node.
+        This enables users to login using the accompanying private key. IOS-XR
+        only accepts base64 decoded files, so this will be decoded and uploaded
+        to the node. Do note that this requires an OpenSSL public key file, 
+        PuTTy generated files will not work!
 """
 
 EXAMPLES = """
@@ -101,6 +108,11 @@ EXAMPLES = """
     configured_password: "{{ new_password }}"
     update_password: always
     state: present
+- name: Add private key authentication for user netop
+  iosxr_user:
+    name: netop
+    state: present
+    publickeyfile: '/home/netop/.ssh/id_rsa.pub'
 """
 
 RETURN = """
@@ -121,6 +133,17 @@ from ansible.module_utils.network_common import remove_default_spec
 from ansible.module_utils.iosxr import get_config, load_config
 from ansible.module_utils.iosxr import iosxr_argument_spec, check_args
 
+try:
+    from base64 import b64decode
+    HAS_B64 = True
+except ImportError:
+    HAS_B64 = False
+
+try:
+    import paramiko
+    HAS_PARAMIKO = True
+except ImportError:
+    HAS_PARAMIKO = False
 
 def search_obj_in_list(name, lst):
     for o in lst:
@@ -243,6 +266,57 @@ def map_params_to_obj(module):
 
     return objects
 
+def convert_key_to_base64(module):
+    """ IOS-XR only accepts base64 decoded files, this converts the public key to a temp file.
+    """
+    key = module.params['publickeyfile']
+    file = open(key,'r')
+    readfile = file.read()
+    splitfile = readfile.split()[1]
+
+    base64key = b64decode(splitfile)
+    base64file = open('/tmp/publickey_%s.b64'%(module.params['name']),'w')
+    base64file.write(base64key)
+
+    file.close()
+    base64file.close()
+
+    return '/tmp/publickey_%s.b64'%(module.params['name'])
+
+def copy_key_to_node(module,base64keyfile):
+    """ Copy key to IOS-XR node. 
+    """
+    src = base64keyfile
+    dst = '/harddisk:/publickey_%s.b64'%(module.params['name'])
+
+    user = module.params['username']
+    server = module.params['host']
+
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    ssh.connect(server, username=user, allow_agent=True)
+    sftp = ssh.open_sftp()
+    sftp.put(src, dst)
+    sftp.close()
+    ssh.close()
+
+def addremovekey(module,command):
+    """ Add or remove key based on command
+    """
+    user = module.params['username']
+    server = module.params['host']
+
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    ssh.connect(server, username=user, allow_agent=True)
+    ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command('%s \r'%(command))
+    readmsg = ssh_stdout.read(100) #We need to read a bit to actually apply for some reason
+    if ('already' in readmsg) or ('removed' in readmsg) or ('really' in readmsg):
+        ssh_stdin.write('yes\r')
+    ssh_stdout.read(1) #We need to read a bit to actually apply for some reason
+    ssh.close()
+
+    return command
 
 def main():
     """ main entry point for module execution
@@ -252,6 +326,8 @@ def main():
 
         configured_password=dict(no_log=True),
         update_password=dict(default='always', choices=['on_create', 'always']),
+
+        publickeyfile=dict(),
 
         group=dict(aliases=['role']),
         state=dict(default='present', choices=['present', 'absent'])
@@ -274,6 +350,18 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
+
+    if module.params['publickeyfile']:
+        if not HAS_B64:
+            module.fail_json(
+                msg='library base64 is required but does not appear to be '
+                    'installed. It can be installed using `pip install base64`'
+            )
+        if not HAS_PARAMIKO:
+            module.fail_json(
+                msg='library paramiko is required but does not appear to be '
+                    'installed. It can be installed using `pip install paramiko`'
+            )
 
     warnings = list()
     if module.params['password'] and not module.params['configured_password']:
@@ -308,6 +396,24 @@ def main():
         if not module.check_mode:
             load_config(module, commands, result['warnings'], commit=True)
         result['changed'] = True
+
+    if module.params['state'] == 'present' and module.params['publickeyfile']:
+        if not module.check_mode:
+            key = convert_key_to_base64(module)
+            copy_key_to_node(module,key)
+            command = "admin crypto key import authentication rsa username %s harddisk:/publickey_%s.b64"%(module.params['name'],module.params['name'])
+            addremove = addremovekey(module,command)
+            #warnings.append( str(addremove) )
+    elif module.params['state'] == 'absent':
+        if not module.check_mode:
+            command = "admin crypto key zeroize authentication rsa username %s"%(module.params['name'])
+            addremove = addremovekey(module,command)
+            #warnings.append( str(addremove) )
+    elif module.params['purge'] == True:
+        if not module.check_mode:
+            command = "admin crypto key zeroize authentication rsa all"
+            addremove = addremovekey(module,command)
+            #warnings.append( str(addremove) )
 
     module.exit_json(**result)
 
