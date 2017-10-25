@@ -289,7 +289,6 @@ reselect_tries:
 '''
 
 import re
-import os
 
 from ansible.module_utils.f5_utils import AnsibleF5Client
 from ansible.module_utils.f5_utils import AnsibleF5Parameters
@@ -392,9 +391,7 @@ class Parameters(AnsibleF5Parameters):
                 )
             )
             lb_method = lb_map.get(lb_method, lb_method.replace('_', '-'))
-        try:
-            assert lb_method in spec.lb_choice
-        except AssertionError:
+        if lb_method not in spec.lb_choice:
             raise F5ModuleError('Provided lb_method is unknown')
         return lb_method
 
@@ -893,6 +890,16 @@ class ArgumentSpec(object):
         self.f5_product_name = 'bigip'
 
 
+def cleanup_tokens(client):
+    try:
+        resource = client.api.shared.authz.tokens_s.token.load(
+            name=client.api.icrs.token
+        )
+        resource.delete()
+    except Exception:
+        pass
+
+
 def main():
     if not HAS_F5SDK:
         raise F5ModuleError("The python f5-sdk module is required")
@@ -908,8 +915,10 @@ def main():
     try:
         mm = ModuleManager(client)
         results = mm.exec_module()
+        cleanup_tokens(client)
         client.module.exit_json(**results)
     except F5ModuleError as e:
+        cleanup_tokens(client)
         client.module.fail_json(msg=str(e))
 
 
