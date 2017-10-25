@@ -78,7 +78,7 @@ options:
     default: present
     choices: ['present', 'absent']
   publickeyfile:
-    version_added: 2.5
+    version_added: "2.5"
     description:
       - Configures the path to the public keyfile to upload to the IOS-XR node.
         This enables users to login using the accompanying private key. IOS-XR
