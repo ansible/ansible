@@ -209,7 +209,7 @@ class Base(with_metaclass(BaseMeta, object)):
     def load_data(self, ds, variable_manager=None, loader=None):
         ''' walk the input datastructure and assign any values '''
 
-        if ds is not None:
+        if ds is None:
             raise AnsibleAssertionError('ds (%s) should not be None but it is.' % ds)
 
         # cache the datastructure internally
