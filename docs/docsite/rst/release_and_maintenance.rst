@@ -37,11 +37,11 @@ Release status
 +=================+============================+========================================+
 | devel           | `2.5`_ (unreleased, trunk) | In development                         |
 +-----------------+----------------------------+----------------------------------------+
-| 2.4             | `2.4.x`_ (2017-09-19)      | Supported (bug **and** security fixes) |
+| 2.4             | `2.4.1`_ (2017-10-25)      | Supported (bug **and** security fixes) |
 +-----------------+----------------------------+----------------------------------------+
 | 2.3             | `2.3.2`_ (2017-08-08)      | Supported (bug **and** security fixes) |
 +-----------------+----------------------------+----------------------------------------+
-| 2.2             | `2.2.3`_ (2017-05-09)      | Supported (**only** security fixes)    |
+| 2.2             | `2.2.3`_ (2017-05-09)      | Supported (**only** security fixes)    |
 +-----------------+----------------------------+----------------------------------------+
 | 2.1             | `2.1.6`_ (2017-06-01)      | Unsupported (end of life)              |
 +-----------------+----------------------------+----------------------------------------+
@@ -49,11 +49,11 @@ Release status
 +-----------------+----------------------------+----------------------------------------+
 | 1.9             | `1.9.6`_ (2016-04-15)      | Unsupported (end of life)              |
 +-----------------+----------------------------+----------------------------------------+
-| <1.9            | n/a                        | Unsupported (end of life)              |
+| <1.9            | n/a                        | Unsupported (end of life)              |
 +-----------------+----------------------------+----------------------------------------+
 
 .. _2.5: https://github.com/ansible/ansible/blob/devel/CHANGELOG.md
-.. _2.4.x: https://github.com/ansible/ansible/blob/stable-2.4/CHANGELOG.md
+.. _2.4.1: https://github.com/ansible/ansible/blob/stable-2.4/CHANGELOG.md
 .. _2.3.2: https://github.com/ansible/ansible/blob/stable-2.3/CHANGELOG.md
 .. _2.2.3: https://github.com/ansible/ansible/blob/stable-2.2/CHANGELOG.md
 .. _2.1.6: https://github.com/ansible/ansible/blob/stable-2.1/CHANGELOG.md
