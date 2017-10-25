@@ -3,6 +3,7 @@
 
 - ios_command:
     commands: show version
+    authorize: yes
   register: show_version_result
 
 - set_fact: management_interface=GigabitEthernet0/0
