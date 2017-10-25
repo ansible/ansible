@@ -252,7 +252,8 @@ To make a final major release
   :file:`docs/docsite/rst/release_and_maintenance.rst`
 
   * devel status is ``In development``.  Update the Latest Version.
-  * Current and N-1 status is ``Supported (bug **and** security fixes)``
+  * Current and N-1 status is ``Supported (bug **and** security fixes)``  Update current's version
+    number.
   * N-2 is ``Supported (**only** security fixes)``
   * Everything older is ``Unsupported (end of life)``
 
