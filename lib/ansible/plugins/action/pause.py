@@ -144,16 +144,14 @@ class ActionModule(ActionBase):
                     # ICANON -> Allows characters to be deleted and hides things like ^M.
                     # ICRNL -> Makes the return key work when ICANON is enabled, otherwise
                     #          you get stuck at the prompt with no way to get out of it.
+                    # ECHO -> Echos input back to stdout
+                    #
                     # See man termios for details on these flags
                     if not seconds:
                         new_settings = termios.tcgetattr(fd)
                         new_settings[0] = new_settings[0] | termios.ICRNL
-                        new_settings[3] = new_settings[3] | termios.ICANON
+                        new_settings[3] = new_settings[3] | (termios.ICANON | termios.ECHO)
                         termios.tcsetattr(fd, termios.TCSANOW, new_settings)
-
-                        # Enable ECHO since tty.setraw() disables it
-                        new_settings = termios.tcgetattr(fd)
-                        new_settings[3] = new_settings[3] | termios.ECHO
                         termios.tcsetattr(fd, termios.TCSANOW, new_settings)
 
                     # flush the buffer to make sure no previous key presses
