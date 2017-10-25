@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # (c) 2013, Greg Buehler
-# Updates 2016 by tony@nieuwenborg.nl
+# Updates 2017 by tony@nieuwenborg.nl
 # This file is part of Ansible,
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -30,6 +30,7 @@ name, use asterisk. For example --limit="Linux*servers".
 Metadata:
 - ansible_host: IP found in host info, or macro {$ANSIBLE_HOST} if set.
 - ansible_port: macro {$ANSIBLE_PORT} if set, otherwise 22
+- user defined vars: macro {$ANSIBLE_VARS} takes json like { "foo":"bar", "num":2 }
 - templates: list of templates used by host
 
 Notes:
@@ -113,15 +114,26 @@ class ZabbixInventory(object):
             ip = host['interfaces'][0]['ip']
             port = 22
 
+            data[self.defaultgroup]['hosts'].append(hostname)
+            zabbixvars = ''
             for m in host['macros']:
                 if m['macro'] == '{$ANSIBLE_PORT}':
                     port = m['value']
-                else:
-                    if m['macro'] == '{$ANSIBLE_HOST}':
-                        ip = m['value']
+                elif m['macro'] == '{$ANSIBLE_HOST}':
+                    ip = m['value']
+                elif m['macro'] == '{$ANSIBLE_VARS}':
+                    zv = m['value']
+                    try:
+                        zabbixvars = json.loads(zv)
+                    except:
+                        print("Invalid JSON in " + hostname + ":" + "{$ANSIBLE_VARS}: " + zv)
+                        sys.exit(1)
 
-            data[self.defaultgroup]['hosts'].append(hostname)
+            # TODO maybe only add when actually (re)defined?
             data['_meta']['hostvars'][hostname] = {'ansible_host': ip, 'ansible_port': port}
+            if zabbixvars:
+                data['_meta']['hostvars'][hostname].update(zabbixvars)
+
             data['_meta']['hostvars'][hostname]['templates'] = []
             for t in host['parentTemplates']:
                 data['_meta']['hostvars'][hostname]['templates'].append(t['name'])
