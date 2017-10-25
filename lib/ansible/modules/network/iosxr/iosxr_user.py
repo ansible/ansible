@@ -287,6 +287,11 @@ def map_params_to_obj(module):
 def convert_key_to_base64(module):
     """ IOS-XR only accepts base64 decoded files, this converts the public key to a temp file.
     """
+    if module.params['aggregate']:
+        name = 'aggregate'
+    else:
+        name = module.params['name']
+
     if module.params['public_key_contents']:
         key = module.params['public_key_contents']
     elif module.params['public_key']:
@@ -295,18 +300,23 @@ def convert_key_to_base64(module):
     splitfile = key.split()[1]
 
     base64key = b64decode(splitfile)
-    base64file = open('/tmp/publickey_%s.b64' % (module.params['name']), 'w')
+    base64file = open('/tmp/publickey_%s.b64' % (name), 'w')
     base64file.write(base64key)
     base64file.close()
 
-    return '/tmp/publickey_%s.b64' % (module.params['name'])
+    return '/tmp/publickey_%s.b64' % (name)
 
 
 def copy_key_to_node(module, base64keyfile):
     """ Copy key to IOS-XR node. We use SFTP because older IOS-XR versions don't handle SCP very well.
     """
+    if module.params['aggregate']:
+        name = 'aggregate'
+    else:
+        name = module.params['name']
+
     src = base64keyfile
-    dst = '/harddisk:/publickey_%s.b64' % (module.params['name'])
+    dst = '/harddisk:/publickey_%s.b64' % (name)
 
     user = module.params['username']  # Why do I need to do this? I want to leave these out and use the ones similar to {{ ansible_host }} 
     node = module.params['host']  # Why do I need to do this? I want to leave these out and use the ones similar to {{ ansible_host }}
@@ -419,22 +429,30 @@ def main():
             load_config(module, commands, result['warnings'], commit=True)
         result['changed'] = True
 
-    if module.params['state'] == 'present' and (module.params['public_key_contents'] or module.params['public_key']) and not module.params['aggregate']:
+    if module.params['state'] == 'present' and (module.params['public_key_contents'] or module.params['public_key']):
         if not module.check_mode:
             key = convert_key_to_base64(module)
             copy_key_to_node(module, key)
-            commandtodo = "admin crypto key import authentication rsa username %s harddisk:/publickey_%s.b64" % (module.params['name'], module.params['name'])
-            addremove = addremovekey(module, commandtodo)
-    elif module.params['state'] == 'absent' and not module.params['aggregate']:
+            if module.params['aggregate']:
+                for user in module.params['aggregate']:
+                    commandtodo = "admin crypto key import authentication rsa username %s harddisk:/publickey_aggregate.b64" % (user)
+                    addremove = addremovekey(module, commandtodo)
+            else:
+                commandtodo = "admin crypto key import authentication rsa username %s harddisk:/publickey_%s.b64" % (module.params['name'], module.params['name'])
+                addremove = addremovekey(module, commandtodo)
+    elif module.params['state'] == 'absent':
         if not module.check_mode:
-            commandtodo = "admin crypto key zeroize authentication rsa username %s" % (module.params['name'])
-            addremove = addremovekey(module, commandtodo)
-    elif module.params['purge'] is True and not module.params['aggregate']:
+            if module.params['aggregate']:
+                for user in module.params['aggregate']:
+                    commandtodo = "admin crypto key zeroize authentication rsa username %s" % (user)
+                    addremove = addremovekey(module, commandtodo)
+            else:
+                commandtodo = "admin crypto key zeroize authentication rsa username %s" % (module.params['name'])
+                addremove = addremovekey(module, commandtodo)
+    elif module.params['purge'] is True:
         if not module.check_mode:
             commandtodo = "admin crypto key zeroize authentication rsa all"
             addremove = addremovekey(module, commandtodo)
-    elif (module.params['purge'] is True and module.params['aggregate']) or (module.params['state'] == 'absent' and module.params['aggregate']) or (module.params['state'] == 'present' and (module.params['public_key_contents'] or module.params['public_key']) and module.params['aggregate']):
-        warnings.append('Adding or removing keys with aggregate users is impossible at the moment.')
 
     module.exit_json(**result)
 
