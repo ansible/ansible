@@ -25,10 +25,15 @@ description:
 options:
     state:
       description:
-        - Indicate desired state of the resource
-      choices: ['created', 'deleted', 'managed', 'unamanged']
+        - Indicate the desired state of the resource
+      choices: ['present', 'absent', 'restarted']
       required: true
       default: created
+    managed:
+      description:
+        - Specify wether the resource will be managed or unmanaged.
+      required: false
+      default: true
     resource:
       description:
         - Specify the name of the resource to be created.
@@ -78,11 +83,6 @@ options:
         - Specifiy the full path of a command to launch within the container to
           check the health of the container.
       required: false
-    timeout:
-      description:
-        - Timeout when the module should considered that the action has failed
-      required: false
-      default: 300
     force_kill:
       description:
         - Specify wether to kill a container immediately rather than waiting
@@ -95,12 +95,9 @@ options:
           docker registry when the image does not exist locally.
       required: false
       default: true
-requirements:
-    - "python >= 2.6"
 '''
 EXAMPLES = '''
 ---
-# Create a  docker resource
 - name: Create Docker resource
   pacemaker_docker:
     resource: "docker-resource-2"
@@ -124,8 +121,6 @@ rc:
     returned: always
 '''
 
-import time
-
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -146,7 +141,7 @@ class DockerResource:
         self.module = module
         self.changed = False
         self.state = module.params.get('state')
-        self.force = module.params.get('force')
+        self.managed = module.params.get('managed')
         self.resource = module.params.get('resource')
         self.docker_name = module.params.get('docker_name')
         self.group = module.params.get('group')
@@ -157,7 +152,6 @@ class DockerResource:
         self.opts = module.params.get('opts')
         self.mount_points = module.params.get('mount_points')
         self.monitor_cmd = module.params.get('monitor_cmd')
-        self.timeout = module.params.get('timeout')
         self.force_kill = module.params.get('force_kill')
         self.allow_pull = module.params.get('allow_pull')
 
@@ -178,6 +172,12 @@ class DockerResource:
         return status
 
     def create_res(self):
+        res_status = self.get_res_status()
+        if "absent" in res_status:
+            pass
+        else:
+            self.manage_res()
+
         opts_list = ""
 
         if self.opts is not None:
@@ -204,9 +204,10 @@ class DockerResource:
         rc, out, err = self.module.run_command(cmd)
 
         if rc == 0:
-            self.module.exit_json(changed=True, rc=rc, stdout=out, stderr=err)
-        elif "already exists" in err:
-            self.module.exit_json(changed=False, msg="The resource '%s' already exists" % self.resource)
+            if not self.managed:
+                self.manage_res()
+            else:
+                self.module.exit_json(changed=True, rc=rc, stdout=out, stderr=err)
         else:
             self.module.fail_json(rc=rc, stdout=out, stderr=err)
 
@@ -225,10 +226,7 @@ class DockerResource:
 
     def manage_res(self):
         res_status = self.get_res_status()
-        if "absent" in res_status:
-            self.module.fail_json(msg="Resource '%s' is not present" % self.resource)
-
-        if self.state == "managed":
+        if self.managed:
             if "unmanaged" not in res_status:
                 self.module.exit_json(changed=False, stdout="Resource '%s' is already managed" % self.resource, stderr=None)
             action = "manage"
@@ -262,7 +260,8 @@ class DockerResource:
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(required=False, choices=['created', 'deleted', 'restarted', 'managed', 'unmanaged'], default="created"),
+            state=dict(required=False, choices=['present', 'absent', 'restarted'], default="present"),
+            managed=dict(required=False, default=True, type='bool'),
             resource=dict(required=True, default=None),
             docker_name=dict(required=False, default=None),
             group=dict(required=False, default=None),
@@ -273,7 +272,6 @@ def main():
             run_opts=dict(required=False, default=None),
             mount_points=dict(required=False, default=None),
             monitor_cmd=dict(required=False, default=None),
-            timeout=dict(default=30, type='int'),
             force_kill=dict(required=False, default=True, type='bool'),
             allow_pull=dict(required=False, default=True, type='bool'),
         ),
@@ -287,14 +285,12 @@ def main():
 
     docker_resource = DockerResource(module)
     state = module.params.get('state')
-    if state == "created":
+    if state == "present":
         docker_resource.create_res()
-    elif state == "deleted":
+    elif state == "absent":
         docker_resource.delete_res()
-    elif state == "restarted":
-        docker_resource.restart_res()
     else:
-        docker_resource.manage_res()
+        docker_resource.restart_res()
 
 if __name__ == '__main__':
     main()
