@@ -177,6 +177,7 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
             sku=dict(
                 type='str',
                 required=False,
+                default='Basic',
                 choices=['Classic', 'Basic', 'Standard', 'Premium']
             )
         )
