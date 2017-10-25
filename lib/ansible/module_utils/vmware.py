@@ -370,7 +370,7 @@ def get_current_snap_obj(snapshots, snapob):
 
 def list_snapshots(vm):
     result = {}
-    snapshot = _get_vm_prop(vm, ('vm', 'snapshot'))
+    snapshot = _get_vm_prop(vm, ('snapshot',))
     if not snapshot:
         return result
     if vm.snapshot is None:
