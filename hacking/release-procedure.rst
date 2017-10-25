@@ -188,8 +188,6 @@ Once rc1 is released
 
 .. note:: ``@shanemcd`` is our contact for jenkins issues
 
-* Ping ``@jlaska`` or ``@gmainwaring`` to create an ansible2.(X-1) PPA so old releases can get
-  pushed there
 * Post a message in ``#ship_it`` in slack that the stable-2.X branch needs to be added to the tower
   test matrix
 * Add version 2.X to docsite:
@@ -246,6 +244,8 @@ Leading up to the final major release
 To make a final major release
 -----------------------------
 
+* Ping ``@nitzmahone`` or ``@jlaska`` or ``@gmainwaring`` to create an ansible2.X 
+  PPA for major-version-pinned releases
 * In the ``devel`` branch edit :file:`packaging/release/vars/versions.yml` -- Update the release
   date
 * In both ``devel`` and ``stable-2.4`` branch edit release status in
@@ -265,7 +265,14 @@ To make a final major release
    * CONFIRM=<check it>
    * DEB_PPA=<leave as-is>
    * NOTE: the jenkins job does not generate sha256sum files
+* Run the Jenkins DEB job to upload to the version-pinned PPA too (TODO: get this integrated into the main release job,
+  but only when it's the current major release)
 
+   * http://jenkins.testing.ansible.com/job/Build_Ansible_DEB/
+   * GIT_BRANCH=v2.4.0.0-1
+   * OFFICIAL=yes
+   * DEB_DIST=<leave as is>
+   * DEB_PPA=ppa:ansible/ansible-2.4
 * Steps 12-13 of the :ref:`beta1 <first release>` section
 * Other things to check:
 
@@ -287,14 +294,6 @@ To make a final major release
 
 * Send a message to #ship_it on slack to alert tower team that the final release is out
 * Email ansible-tower@redhat.com to alert tower team of final release
-* Run the Jenkins DEB job to upload the latest 2.3 version to this PPA too
-
-   * http://jenkins.testing.ansible.com/job/Build_Ansible_DEB/
-   * GIT_BRANCH=v2.3.2.0-1
-   * OFFICIAL=yes
-   * DEB_DIST=<leave as is>
-   * DEB_PPA=ppa:ansible/ansible-2.3
-
 * Merge the ``temp-staging-post-2.4.0`` branch back into the ``stable-2.4`` branch and then remove
   the branch from the repo
 
@@ -305,6 +304,21 @@ To make a dot release
 ---------------------
 
 * Step 4-16 of the :ref:`beta1 <first_release>` process
+* Build and upload the tarballs/rpm/deb packages via jenkins:
+
+   * http://jenkins.testing.ansible.com/view/Ansible/job/Release_Ansible/
+   * GIT_BRANCH=origin/tags/v2.4.x.0-1
+   * CONFIRM=<check it>
+   * DEB_PPA=<leave as-is>
+   * NOTE: the jenkins job does not generate sha256sum files
+* Run the Jenkins DEB job to upload to the version-pinned PPA too (TODO: get this integrated into the main release job,
+  but only when it's the current major release)
+
+   * http://jenkins.testing.ansible.com/job/Build_Ansible_DEB/
+   * GIT_BRANCH=v2.4.x.0-1
+   * OFFICIAL=yes
+   * DEB_DIST=<leave as is>
+   * DEB_PPA=ppa:ansible/ansible-2.4
 
 
 Building docs
