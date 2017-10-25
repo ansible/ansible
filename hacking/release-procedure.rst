@@ -87,7 +87,7 @@ To make beta1 for the major release
 
         i. Determine a codename for 2.(X+1) (Led Zeppelin song name)
 
-4. Run ``ansible-playbook packaging/release/release.yml``
+4. From the devel checkout run ``ansible-playbook packaging/release/release.yml``
 
     a. Enter the release branch: stable-2.X
     b. Enter the release version: 2.X.0.0
