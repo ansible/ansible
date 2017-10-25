@@ -10,7 +10,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = '''
 ---
 module: ecs_ecr
@@ -44,6 +43,17 @@ options:
             - if yes, remove the policy from the repository
         required: false
         default: false
+    lifecycle_policy:
+        description:
+            - JSON or dict that represents the new lifecycle policy
+        required: false
+        version_added: '2.5'
+    delete_lifecycle_policy:
+        description:
+            - if yes, remove the lifecycle policy from the repository
+        required: false
+        default: false
+        version_added: '2.5'
     state:
         description:
             - create or destroy the repository
@@ -93,6 +103,26 @@ EXAMPLES = '''
   ecs_ecr:
     name: needs-no-policy
     delete_policy: yes
+
+- name: set-lifecycle-policy
+  ecs_ecr:
+    name: needs-lifecycle-policy
+    lifecycle_policy:
+      rules:
+        - rulePriority: 1
+          description: new policy
+          selection:
+            tagStatus: untagged
+            countType: sinceImagePushed
+            countUnit: days
+            countNumber: 365
+          action:
+            type: expire
+
+- name: delete-lifecycle-policy
+  ecs_ecr:
+    name: needs-no-lifecycle-policy
+    delete_lifecycle_policy: yes
 '''
 
 RETURN = '''
@@ -245,6 +275,49 @@ class EcsEcr:
                 return policy
             return None
 
+    def get_lifecycle_policy(self, registry_id, name):
+        try:
+            res = self.ecr.get_lifecycle_policy(
+                repositoryName=name, **build_kwargs(registry_id))
+            text = res.get('lifecyclePolicyText')
+            return text and json.loads(text)
+        except ClientError as err:
+            code = err.response['Error'].get('Code', 'Unknown')
+            if code == 'LifecyclePolicyNotFoundException':
+                return None
+            raise
+
+    def put_lifecycle_policy(self, registry_id, name, policy_text):
+        if not self.check_mode:
+            policy = self.ecr.put_lifecycle_policy(
+                repositoryName=name,
+                lifecyclePolicyText=policy_text,
+                **build_kwargs(registry_id))
+            self.changed = True
+            return policy
+        else:
+            self.skipped = True
+            if self.get_repository(registry_id, name) is None:
+                printable = name
+                if registry_id:
+                    printable = '{}:{}'.format(registry_id, name)
+                raise Exception(
+                    'could not find repository {}'.format(printable))
+            return
+
+    def delete_lifecycle_policy(self, registry_id, name):
+        if not self.check_mode:
+            policy = self.ecr.delete_lifecycle_policy(
+                repositoryName=name, **build_kwargs(registry_id))
+            self.changed = True
+            return policy
+        else:
+            policy = self.get_lifecycle_policy(registry_id, name)
+            if policy:
+                self.skipped = True
+                return policy
+            return None
+
 
 def run(ecr, params, verbosity):
     # type: (EcsEcr, dict, int) -> Tuple[bool, dict]
@@ -256,9 +329,13 @@ def run(ecr, params, verbosity):
         delete_policy = params['delete_policy']
         registry_id = params['registry_id']
         force_set_policy = params['force_set_policy']
+        lifecycle_policy_text = params['lifecycle_policy']
+        delete_lifecycle_policy = params['delete_lifecycle_policy']
 
         # If a policy was given, parse it
         policy = policy_text and json.loads(policy_text)
+        lifecycle_policy = \
+            lifecycle_policy_text and json.loads(lifecycle_policy_text)
 
         result['state'] = state
         result['created'] = False
@@ -272,6 +349,46 @@ def run(ecr, params, verbosity):
                 result['changed'] = True
                 result['created'] = True
             result['repository'] = repo
+
+            if delete_lifecycle_policy:
+                original_lifecycle_policy = \
+                    ecr.get_lifecycle_policy(registry_id, name)
+
+                if verbosity >= 2:
+                    result['lifecycle_policy'] = None
+
+                if verbosity >= 3:
+                    result['original_lifecycle_policy'] = original_lifecycle_policy
+
+                if original_lifecycle_policy:
+                    ecr.delete_lifecycle_policy(registry_id, name)
+                    result['changed'] = True
+
+            elif lifecycle_policy_text is not None:
+                try:
+                    lifecycle_policy = sort_json_policy_dict(lifecycle_policy)
+                    if verbosity >= 2:
+                        result['lifecycle_policy'] = lifecycle_policy
+                    original_lifecycle_policy = ecr.get_lifecycle_policy(
+                        registry_id, name)
+
+                    if original_lifecycle_policy:
+                        original_lifecycle_policy = sort_json_policy_dict(
+                            original_lifecycle_policy)
+
+                    if verbosity >= 3:
+                        result['original_lifecycle_policy'] = \
+                            original_lifecycle_policy
+
+                    if original_lifecycle_policy != lifecycle_policy:
+                        ecr.put_lifecycle_policy(registry_id, name,
+                                                 lifecycle_policy_text)
+                        result['changed'] = True
+                except:
+                    # Some failure w/ the policy. It's helpful to know what the
+                    # policy is.
+                    result['lifecycle_policy'] = lifecycle_policy_text
+                    raise
 
             if delete_policy:
                 original_policy = ecr.get_repository_policy(registry_id, name)
@@ -342,12 +459,15 @@ def main():
                    default='present'),
         force_set_policy=dict(required=False, type='bool', default=False),
         policy=dict(required=False, type='json'),
-        delete_policy=dict(required=False, type='bool')))
+        delete_policy=dict(required=False, type='bool'),
+        lifecycle_policy=dict(required=False, type='json'),
+        delete_lifecycle_policy=dict(required=False, type='bool')))
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True,
                            mutually_exclusive=[
-                               ['policy', 'delete_policy']])
+                               ['policy', 'delete_policy'],
+                               ['lifecycle_policy', 'delete_lifecycle_policy']])
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')
