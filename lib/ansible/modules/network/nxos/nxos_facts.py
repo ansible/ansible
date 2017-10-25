@@ -128,7 +128,7 @@ ansible_net_interfaces:
   returned: when interfaces is configured
   type: dict
 ansible_net_neighbors:
-  description: The list of LLDP neighbors from the remote device
+  description: The list of LLDP/CDP neighbors from the remote device
   returned: when interfaces is configured
   type: dict
 
@@ -299,7 +299,7 @@ class Interfaces(FactsBase):
 
         data = self.run('show cdp neighbors detail', 'json')
         if data:
-            self.facts['neighbors_cdp'] = self.populate_neighbors_cdp(data)
+            self.facts['neighbors'] = self.populate_neighbors_cdp(data)
 
     def populate_interfaces(self, data):
         interfaces = dict()
@@ -363,7 +363,7 @@ class Interfaces(FactsBase):
             objects[local_intf] = list()
             nbor = dict()
             nbor['port'] = item['port_id']
-            nbor['host'] = item['device_id']
+            nbor['sysname'] = item['device_id']
             objects[local_intf].append(nbor)
 
         return objects
