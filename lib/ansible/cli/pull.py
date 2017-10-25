@@ -125,9 +125,6 @@ class PullCLI(CLI):
         self.parser.add_option("--check", default=False, dest='check', action='store_true',
                                help="don't make any changes; instead, try to predict some of the changes that may occur")
 
-        # for pull we don't want a default
-        self.parser.set_defaults(inventory=None)
-
         super(PullCLI, self).parse()
 
         if not self.options.dest:
