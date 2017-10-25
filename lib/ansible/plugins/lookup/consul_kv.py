@@ -5,7 +5,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    lookup: cartesian
+    lookup: consul_kv
     version_added: "1.9"
     short_description: grab metadata from a consul key value store.
     description:
@@ -46,11 +46,11 @@ EXAMPLES = """
   - name: Parameters can be provided after the key be more specific about what to retrieve
     debug: msg='key contains {{item}}'
     with_consul_kv:
-      - 'key/to recurse=true token=E6C060A9-26FB-407A-B83E-12DDAFCB4D98')}}'
+      - 'key/to recurse=true token=E6C060A9-26FB-407A-B83E-12DDAFCB4D98'
 
   - name: retrieving a KV from a remote cluster on non default port
     debug:
-      msg: "{{ lookup('consul_kv', 'my/key', host='10.10.10.10', port='2000')
+      msg: "{{ lookup('consul_kv', 'my/key', host='10.10.10.10', port='2000') }}"
 """
 
 RETURN = """
