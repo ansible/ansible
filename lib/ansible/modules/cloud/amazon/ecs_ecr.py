@@ -295,10 +295,21 @@ def run(ecr, params, verbosity):
         registry_id = params['registry_id']
         force_set_policy = params['force_set_policy']
 
-        # If a policy was given, parse it
-        policy = policy_text and json.loads(policy_text)
-        lifecycle_policy = \
-            lifecycle_policy_text and json.loads(lifecycle_policy_text)
+        # Parse policies, if they are given
+        try:
+            policy = policy_text and json.loads(policy_text)
+        except ValueError:
+            result['policy'] = policy_text
+            result['msg'] = 'Could not parse policy'
+            return False, result
+
+        try:
+            lifecycle_policy = \
+                lifecycle_policy_text and json.loads(lifecycle_policy_text)
+        except ValueError:
+            result['lifecycle_policy'] = lifecycle_policy_text
+            result['msg'] = 'Could not parse lifecycle_policy'
+            return False, result
 
         result['state'] = state
         result['created'] = False
