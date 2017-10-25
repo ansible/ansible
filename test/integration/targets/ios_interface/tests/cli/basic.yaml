@@ -27,14 +27,14 @@
   ios_interface:
     name: "{{ test_interface }}"
     description: test-interface-1
-    speed: 10
+    speed: 1000
     duplex: full
     mtu: 256
     state: present
     authorize: yes
   register: result
 
-- name: Confgure interface
+- name: Configure interface
   ios_interface:
     name: "{{ test_interface }}"
     description: test-interface-initial
@@ -45,7 +45,7 @@
 - assert:
     that:
       - 'result.changed == true'
-      - '"interface GigabitEthernet0/2" in result.commands'
+      - '"interface {{ test_interface }}" in result.commands'
       - '"description test-interface-initial" in result.commands'
 
 - name: Confgure interface (idempotent)
@@ -64,7 +64,6 @@
   ios_interface:
     name: "{{ test_interface }}"
     description: test-interface
-    speed: 100
     mtu: 512
     state: present
     authorize: yes
@@ -75,14 +74,12 @@
       - 'result.changed == true'
       - '"interface {{ test_interface }}" in result.commands'
       - '"description test-interface" in result.commands'
-      - '"speed 100" in result.commands'
       - '"mtu 512" in result.commands'
 
 - name: Change interface parameters
   ios_interface:
     name: "{{ test_interface }}"
     description: test-interface-1
-    speed: 10
     duplex: half
     mtu: 256
     state: present
@@ -94,7 +91,6 @@
       - 'result.changed == true'
       - '"interface {{ test_interface }}" in result.commands'
       - '"description test-interface-1" in result.commands'
-      - '"speed 10" in result.commands'
       - '"duplex half" in result.commands'
       - '"mtu 256" in result.commands'
 
@@ -128,7 +124,7 @@
   ios_interface:
     name: "{{ test_interface2 }}"
     description: test-interface-initial
-    speed: 100
+    speed: 1000
     duplex: half
     mtu: 516
     state: present
@@ -141,7 +137,7 @@
     - "{ name: {{ test_interface }}, mtu: 256, description: test-interface-1 }"
     - "{ name: {{ test_interface2 }}, mtu: 516, description: test-interface-2 }"
     duplex: full
-    speed: 100
+    speed: 1000
     state: present
     authorize: yes
   register: result
@@ -150,12 +146,10 @@
     that:
       - 'result.changed == true'
       - '"interface {{ test_interface }}" in result.commands'
-      - '"speed 100" in result.commands'
       - '"description test-interface-1" in result.commands'
       - '"duplex full" in result.commands'
       - '"mtu 256" in result.commands'
       - '"interface {{ test_interface2 }}" in result.commands'
-      - '"speed 100" in result.commands'
       - '"description test-interface-2" in result.commands'
       - '"duplex full" in result.commands'
       - '"mtu 516" in result.commands'
@@ -166,7 +160,7 @@
     - "{ name: {{ test_interface }}, mtu: 256, description: test-interface-1 }"
     - "{ name: {{ test_interface2 }}, mtu: 516, description: test-interface-2 }"
     duplex: full
-    speed: 100
+    speed: 1000
     state: present
     authorize: yes
   register: result
