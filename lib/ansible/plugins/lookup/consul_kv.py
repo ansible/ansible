@@ -48,17 +48,17 @@ EXAMPLES = """
     debug:
       msg: 'key contains {{item}}'
     with_consul_kv:
-      - 'key/to recurse=true token=E6C060A9-26FB-407A-B83E-12DDAFCB4D98')}}'
+      - 'key/to recurse=true token=E6C060A9-26FB-407A-B83E-12DDAFCB4D98'
 
   - name: retrieving a KV from a remote cluster on non default port
     debug:
-      msg: "{{ lookup('consul_kv', 'my/key', host='10.10.10.10', port='2000')
+      msg: "{{ lookup('consul_kv', 'my/key', host='10.10.10.10', port='2000') }}"
 """
 
 RETURN = """
   _raw:
     description:
-      - value(s) stored in consul
+      - Value(s) stored in consul.
 """
 
 import os
