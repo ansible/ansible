@@ -112,6 +112,7 @@ class CLI(with_metaclass(ABCMeta, object)):
     # -F (quit-if-one-screen) -R (allow raw ansi control chars)
     # -S (chop long lines) -X (disable termcap init and de-init)
     LESS_OPTS = 'FRSX'
+    SKIP_INVENTORY_DEFAULTS = False
 
     def __init__(self, args, callback=None):
         """
@@ -605,7 +606,7 @@ class CLI(with_metaclass(ABCMeta, object)):
             self.options.skip_tags = list(skip_tags)
 
         # process inventory options except for CLIs that require their own processing
-        if hasattr(self.options, 'inventory') and self.__class__.__name__ not in ('PullCLI'):
+        if hasattr(self.options, 'inventory') and not self.SKIP_INVENTORY_DEFAULTS:
 
             if self.options.inventory:
 

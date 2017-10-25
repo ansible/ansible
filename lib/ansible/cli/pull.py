@@ -67,6 +67,8 @@ class PullCLI(CLI):
                                  "look for a playbook based on the host's fully-qualified domain name,"
                                  'on the host hostname and finally a playbook named *local.yml*.', }
 
+    SKIP_INVENTORY_DEFAULTS = True
+
     def _get_inv_cli(self):
 
         inv_opts = ''
