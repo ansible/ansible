@@ -213,7 +213,6 @@ def create_aci_dict(aci):
         location=aci.location,
         type=aci.type,
         restart_policy=aci.restart_policy,
-        state=aci.state,
         provisioning_state=aci.provisioning_state,
         image_registry_credentials=aci.image_registry_credentials,
         volumes=aci.volumes,
@@ -320,7 +319,8 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         results = dict()
         to_be_updated = False
 
-        self.mgmt_client = ContainerInstanceManagementClient(self.azure_credentials, self.subscription_id)
+        self.mgmt_client = self.get_mgmt_svc_client(ContainerInstanceManagementClient,
+                                                    base_url=self._cloud_environment.endpoints.resource_manager)
 
         try:
             resource_group = self.get_resource_group(self.resource_group)
