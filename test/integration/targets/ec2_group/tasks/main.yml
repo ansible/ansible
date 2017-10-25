@@ -8,6 +8,10 @@
 
 # - include: ../../setup_ec2/tasks/common.yml module_name: ec2_group
 
+- name: register botocore version
+  command: python -c 'import botocore; print(botocore.__version__)'
+  register: botocore_version
+
 - block:
 
     # ============================================================
@@ -250,6 +254,64 @@
         that:
            - 'result.changed'
            - 'result.group_id.startswith("sg-")'
+
+    # ============================================================
+    - name: test rule description (expected changed=true)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        state: present
+        rules:
+        - proto: "tcp"
+          from_port: 8182
+          to_port: 8182
+          cidr_ip: "1.1.1.1/32"
+          description: a
+        - proto: "tcp"
+          from_port: 8182
+          to_port: 8182
+          cidr_ipv6: "64:ff9b::/96"
+          description: b
+        - proto: "tcp"
+          from_port: 8182
+          to_port: 8182
+          group_name: "{{ec2_group_name}}"
+          description: c
+        rules_egress:
+        - proto: "tcp"
+          from_port: 8182
+          to_port: 8182
+          cidr_ip: "1.1.1.1/32"
+          description: d
+        - proto: "tcp"
+          from_port: 8182
+          to_port: 8182
+          cidr_ipv6: "64:ff9b::/96"
+          description: e
+        - proto: "tcp"
+          from_port: 8182
+          to_port: 8182
+          group_name: "{{ec2_group_name}}"
+          description: f
+      register: result
+      when: botocore_version.stdout|version_compare('1.7.2', '>=')
+
+    - name: assert state=present (expected changed=true)
+      assert:
+        that:
+           - 'result.changed'
+           - 'result.group_id.startswith("sg-")'
+           - 'result.ip_permissions[0].ip_ranges[0]["description"] == "a"'
+           - 'result.ip_permissions[0].ipv6_ranges[0]["description"] == "b"'
+           - 'result.ip_permissions[0].user_id_group_pairs[0]["description"] == "c"'
+           - 'result.ip_permissions_egress[0].ip_ranges[0]["description"] == "d"'
+           - 'result.ip_permissions_egress[0].ipv6_ranges[0]["description"] == "e"'
+           - 'result.ip_permissions_egress[0].user_id_group_pairs[0]["description"] == "f"'
+      when: botocore_version.stdout|version_compare('1.7.2', '>=')
 
     # ============================================================
     - name: test rules_egress state=present for ipv6 (expected changed=true)
