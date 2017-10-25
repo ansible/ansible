@@ -261,7 +261,7 @@
           - result is failed
 
 
-    - name: When in check mode, deleting a policy that exists
+    - name: When in check mode, deleting a repository that exists
       ecs_ecr:
         name: '{{ ecr_name }}'
         region: '{{ ec2_region }}'
@@ -280,7 +280,7 @@
           - not result.created
 
 
-    - name: When deleting a policy that exists
+    - name: When deleting a repository that exists
       ecs_ecr:
         name: '{{ ecr_name }}'
         region: '{{ ec2_region }}'
@@ -296,7 +296,7 @@
           - result is changed
 
 
-    - name: When in check mode, deleting a policy that does not exist
+    - name: When in check mode, deleting a repository that does not exist
       ecs_ecr:
         name: '{{ ecr_name }}'
         region: '{{ ec2_region }}'
@@ -314,7 +314,7 @@
           - result is not changed
 
 
-    - name: When deleting a policy that does not exist
+    - name: When deleting a repository that does not exist
       ecs_ecr:
         name: '{{ ecr_name }}'
         region: '{{ ec2_region }}'
