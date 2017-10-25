@@ -43,14 +43,16 @@ options:
   echo:
     description:
       - Contols whether or not keyboard input is shown when typing.
+      - Has no effect if 'seconds' or 'minutes' is set.
     required: false
     default: 'yes'
     choices: ['yes', 'no']
-    version_added: 2.4
+    version_added: 2.5
 author: "Tim Bielawa (@tbielawa)"
 notes:
       - Starting in 2.2,  if you specify 0 or negative for minutes or seconds, it will wait for 1 second, previously it would wait indefinitely.
       - This module is also supported for Windows targets.
+      - User input is not captured or echoed, regardless of echo setting, when minutes or seconds is specified.
 '''
 
 EXAMPLES = '''
@@ -65,7 +67,7 @@ EXAMPLES = '''
 - pause:
     prompt: "Make sure org.foo.FooOverload exception is not present"
 
-# Do not echo output
+# Pause to get some sensitive input.
 - pause:
     prompt: "Enter a secret"
     echo: no

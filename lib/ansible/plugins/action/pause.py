@@ -115,8 +115,6 @@ class ActionModule(ActionBase):
 
         ########################################################################
         # Begin the hard work!
-        # FIXME: Delete does not work and instead captures the raw ASCII code, \x7f,
-        # which looks like empty spaces in the returned output.
 
         start = time.time()
         result['start'] = to_text(datetime.datetime.now())
@@ -134,7 +132,7 @@ class ActionModule(ActionBase):
                 signal.alarm(seconds)
 
                 # show the timer and control prompts
-                display.display("Pausing for %d seconds" % seconds)
+                display.display("Pausing for %d seconds%s" % (seconds, echo_prompt))
                 display.display("(ctrl+C then 'C' = continue early, ctrl+C then 'A' = abort)\r"),
 
                 # show the prompt specified in the task
@@ -162,11 +160,22 @@ class ActionModule(ActionBase):
                     old_settings = termios.tcgetattr(fd)
                     tty.setraw(fd)
 
-                    if echo:
-                        # Enable ECHO since tty.setraw() disables it
+                    # Enable a few things turned off by tty.setraw()
+                    # ICANON -> Allows characters to be deleted and hides things like ^M.
+                    # ICRNL -> Makes the return key work when ICANON is enabled, otherwise
+                    #          you get stuck at the prompt with no way to get out of it.
+                    # See man termios for details on these flags
+                    if not seconds:
                         new_settings = termios.tcgetattr(fd)
-                        new_settings[3] = new_settings[3] | termios.ECHO
+                        new_settings[0] = new_settings[0] | termios.ICRNL
+                        new_settings[3] = new_settings[3] | termios.ICANON
                         termios.tcsetattr(fd, termios.TCSANOW, new_settings)
+
+                        if echo:
+                            # Enable ECHO since tty.setraw() disables it
+                            new_settings = termios.tcgetattr(fd)
+                            new_settings[3] = new_settings[3] | termios.ECHO
+                            termios.tcsetattr(fd, termios.TCSANOW, new_settings)
 
                     # flush the buffer to make sure no previous key presses
                     # are read in below
@@ -175,16 +184,10 @@ class ActionModule(ActionBase):
                 try:
                     if fd is not None:
                         key_pressed = stdin.read(1)
-                        if key_pressed == b'\x03':
-                            raise KeyboardInterrupt
 
-                    # Captue input even if a time limit is set
-                    if seconds:
-                        # read key presses and act accordingly
-                        if key_pressed in (b'\r', b'\n'):
-                            break
-                        else:
-                            result['user_input'] += key_pressed
+                        if seconds:
+                            if key_pressed == b'\x03':
+                                raise KeyboardInterrupt
 
                     if not seconds:
                         if fd is None or not isatty(fd):
