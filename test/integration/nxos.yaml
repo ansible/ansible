@@ -313,6 +313,60 @@
 
     - block:
       - include_role:
+          name: nxos_file_copy
+        when: "limit_to in ['*', 'nxos_file_copy']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_file_copy' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_igmp_interface
+        when: "limit_to in ['*', 'nxos_igmp_interface']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_igmp_interface' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_igmp
+        when: "limit_to in ['*', 'nxos_igmp']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_igmp' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_igmp_snooping
+        when: "limit_to in ['*', 'nxos_igmp_snooping']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_igmp_snooping' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_ntp_auth
+        when: "limit_to in ['*', 'nxos_ntp_auth']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_ntp_auth' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_ntp_options
+        when: "limit_to in ['*', 'nxos_ntp_options']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_ntp_options' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
           name: nxos_logging
         when: "limit_to in ['*', 'nxos_logging']"
       rescue:
