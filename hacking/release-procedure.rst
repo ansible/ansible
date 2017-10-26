@@ -257,6 +257,8 @@ To make a final major release
   * N-2 is ``Supported (**only** security fixes)``
   * Everything older is ``Unsupported (end of life)``
 
+* Edit the CHANGELOG file to have the release date.
+
 * Steps 4-6 of the :ref:`beta1 <first_release>` section
   When inputting the information for the release.yml, be sure to specify:
 
