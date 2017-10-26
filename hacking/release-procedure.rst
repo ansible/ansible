@@ -49,6 +49,11 @@ Cherry-picking
 * For RC periods, ask mattclay/a github admin to lock down permissions on the branch so that only
   the RM can cherry-pick
 
+.. warn:: If you cherry-pick something after the last expected RC be sure to let @jladd know about
+    the change so he can test Tower with the new code.  Otherwise they expect that the last RC is
+    the same as final.  They need at least a day for testing so it might be better to create a short
+    RC rather than release final directly.
+
 
 Pre beta1
 ---------
