@@ -116,9 +116,11 @@ from ansible.module_utils.vyos import vyos_argument_spec
 
 
 def search_obj_in_list(vlan_id, lst):
+    obj = list()
     for o in lst:
         if o['vlan_id'] == vlan_id:
-            return o
+            obj.append(o)
+    return obj
 
 
 def map_obj_to_commands(updates, module):
@@ -137,8 +139,9 @@ def map_obj_to_commands(updates, module):
 
         if state == 'absent':
             if obj_in_have:
-                for i in obj_in_have['interfaces']:
-                    commands.append('delete interfaces ethernet {0} vif {1}'.format(i, vlan_id))
+                for obj in obj_in_have:
+                    for i in obj['interfaces']:
+                        commands.append('delete interfaces ethernet {0} vif {1}'.format(i, vlan_id))
 
         elif state == 'present':
             if not obj_in_have:
@@ -225,12 +228,21 @@ def check_declarative_intent_params(want, module):
         time.sleep(module.params['delay'])
         have = map_config_to_obj(module)
 
+        want_interface = list()
+        obj_interface = list()
+
         for w in want:
             for i in w['interfaces']:
-                obj_in_have = search_obj_in_list(w['vlan_id'], have)
+                want_interface.append(i)
+            obj_in_have = search_obj_in_list(w['vlan_id'], have)
+            if obj_in_have:
+                for obj in obj_in_have:
+                    obj_interface.extend(obj['interfaces'])
 
-                if obj_in_have and 'interfaces' in obj_in_have and i not in obj_in_have['interfaces']:
-                    module.fail_json(msg='Interface {0} not configured on vlan {1}'.format(i, want['vlan_id']))
+        for w in want:
+            for i in w['interfaces']:
+                if (set(obj_interface) - set(want_interface)) != set([]):
+                    module.fail_json(msg='Interface {0} not configured on vlan {1}'.format(i, w['vlan_id']))
 
 
 def main():
@@ -247,8 +259,6 @@ def main():
     )
 
     aggregate_spec = deepcopy(element_spec)
-    aggregate_spec['vlan_id'] = dict(required=True)
-    aggregate_spec['interfaces'] = dict(required=True)
 
     # remove default in aggregate spec, to handle common arguments
     remove_default_spec(aggregate_spec)

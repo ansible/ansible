@@ -4,6 +4,7 @@
     lines:
       - delete interfaces ethernet eth1 vif 100
       - delete interfaces ethernet eth0 vif 5
+      - delete interfaces ethernet eth0 vif 100
 
 - name: set vlan with name
   vyos_vlan: &name
