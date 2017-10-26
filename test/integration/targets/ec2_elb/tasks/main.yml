@@ -63,7 +63,7 @@
 
 - name: Test registering and deregistering instances with EC2_ELB
 
-  # ============================================================
+    # ============================================================
 
   # set credentials
   environment:
