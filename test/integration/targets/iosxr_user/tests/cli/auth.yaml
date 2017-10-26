@@ -68,7 +68,7 @@
       state: present
       public_key_contents: "{{ lookup('file', \"{{ output_dir }}/public2.pub\") }}"
 
- - name: test login with invalid private key (should fail)
+  - name: test login with invalid private key (should fail)
     expect:
       command: "ssh auth_user@{{ ansible_ssh_host }} -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i {{output_dir}}/private show version"
       responses:
