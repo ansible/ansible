@@ -11,14 +11,11 @@ from lib.sanity import (
 from lib.util import (
     SubprocessError,
     display,
+    intercept_command,
 )
 
 from lib.ansible_util import (
     ansible_environment,
-)
-
-from lib.executor import (
-    intercept_command,
 )
 
 from lib.config import (

@@ -62,11 +62,11 @@ matrix:
     - env: T=linux/ubuntu1604/3
     - env: T=linux/ubuntu1604py3/3
 
-    - env: T=cloud/ubuntu1604/1
-    - env: T=cloud/ubuntu1604py3/1
+    - env: T=cloud/default/2.7/1
+    - env: T=cloud/default/3.6/1
 
-    - env: T=cloud/ubuntu1604/2
-    - env: T=cloud/ubuntu1604py3/2
+    - env: T=cloud/default/2.7/2
+    - env: T=cloud/default/3.6/2
 
 branches:
   except:
