@@ -220,5 +220,7 @@ setup(
         'bin/ansible-vault',
     ],
     data_files=[],
-    extras_require=extra_requirements
+    extras_require=extra_requirements,
+    # Installing as zip files would break due to references to __file__
+    zip_safe=False
 )
