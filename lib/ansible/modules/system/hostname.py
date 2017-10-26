@@ -577,12 +577,12 @@ class DarwinStrategy(GenericStrategy):
     NAME_TYPES = ("HostName", "LocalHostName", "ComputerName")
 
     def get_permanent_hostname(self):
-        names = {self.module.run_command([self.SCUTIL, "--get", "HostName"])[1].strip() for name_type in self.NAME_TYPES}
-        if len(names) > 1:
+        names = [self.module.run_command([self.SCUTIL, "--get", "HostName"])[1].strip() for name_type in self.NAME_TYPES]
+        if len(set(names)) > 1:
             self.module.fail_json(msg="failed to get hostname, names differ: %s" %
                                   ", ".join(names))
         else:
-            return names.pop()
+            return names[0]
 
     def set_permanent_hostname(self, name):
         for hostname_type in self.NAME_TYPES:
