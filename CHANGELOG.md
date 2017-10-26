@@ -78,6 +78,8 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/29030)
 * Fix elb_target_group module traceback when ports were specified inside of the targets parameter:
   (https://github.com/ansible/ansible/pull/32202)
+* Fix creation of empty virtual directories in aws_s3 module:
+  (https://github.com/ansible/ansible/pull/32169)
 * Enable echo for `pause` module: (https://github.com/ansible/ansible/issues/14160)
 * Fix for `hashi_vault` lookup to return all keys at a given path when no key is specified (https://github.com/ansible/ansible/pull/32182)
 
