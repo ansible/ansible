@@ -312,6 +312,9 @@ def convert_key_to_base64(module):
 def copy_key_to_node(module, base64keyfile):
     """ Copy key to IOS-XR node. We use SFTP because older IOS-XR versions don't handle SCP very well.
     """
+    if not (module.params['host'] or module.params['provider']['host']) or not (module.params['username'] or module.params['provider']['username']):
+        return False
+
     if module.params['aggregate']:
         name = 'aggregate'
     else:
@@ -340,6 +343,9 @@ def copy_key_to_node(module, base64keyfile):
 def addremovekey(module, command):
     """ Add or remove key based on command
     """
+    if not (module.params['host'] or module.params['provider']['host']) or not (module.params['username'] or module.params['provider']['username']):
+        return False
+
     user = module.params['username'] or module.params['provider']['username']
     node = module.params['host'] or module.params['provider']['host']
     password = module.params['password'] or module.params['provider']['password']
@@ -444,27 +450,40 @@ def main():
     if module.params['state'] == 'present' and (module.params['public_key_contents'] or module.params['public_key']):
         if not module.check_mode:
             key = convert_key_to_base64(module)
-            copy_key_to_node(module, key)
+            copykeys = copy_key_to_node(module, key)
+            if copykeys is False:
+                warnings.append('Please set up your provider before running this playbook')
+
             if module.params['aggregate']:
                 for user in module.params['aggregate']:
                     cmdtodo = "admin crypto key import authentication rsa username %s harddisk:/publickey_aggregate.b64" % (user)
                     addremove = addremovekey(module, cmdtodo)
+                    if addremove is False:
+                        warnings.append('Please set up your provider before running this playbook')
             else:
                 cmdtodo = "admin crypto key import authentication rsa username %s harddisk:/publickey_%s.b64" % (module.params['name'], module.params['name'])
                 addremove = addremovekey(module, cmdtodo)
+                if addremove is False:
+                    warnings.append('Please set up your provider before running this playbook')
     elif module.params['state'] == 'absent':
         if not module.check_mode:
             if module.params['aggregate']:
                 for user in module.params['aggregate']:
                     cmdtodo = "admin crypto key zeroize authentication rsa username %s" % (user)
                     addremove = addremovekey(module, cmdtodo)
+                    if addremove is False:
+                        warnings.append('Please set up your provider before running this playbook')
             else:
                 cmdtodo = "admin crypto key zeroize authentication rsa username %s" % (module.params['name'])
                 addremove = addremovekey(module, cmdtodo)
+                if addremove is False:
+                    warnings.append('Please set up your provider before running this playbook')
     elif module.params['purge'] is True:
         if not module.check_mode:
             cmdtodo = "admin crypto key zeroize authentication rsa all"
             addremove = addremovekey(module, cmdtodo)
+            if addremove is False:
+                warnings.append('Please set up your provider before running this playbook')
 
     module.exit_json(**result)
 
