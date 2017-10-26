@@ -992,7 +992,9 @@ files:
     labels: networking
   $module_utils/nxos.py:
     maintainers: $team_networking
-    labels: networking
+    labels:
+    - networking
+    - nxos
   $module_utils/openstack.py:
     maintainers: $team_openstack
     labels:
@@ -1067,7 +1069,9 @@ files:
     labels: networking
   lib/ansible/plugins/action/nxos:
     maintainers: $team_networking
-    labels: networking
+    labels:
+    - networking
+    - nxos
   lib/ansible/plugins/action/sros:
     maintainers: $team_networking
     labels: networking
@@ -1080,6 +1084,11 @@ files:
   lib/ansible/plugins/cliconf/ironware.py:
     maintainers: paulquack
     labels: networking
+  lib/ansible/plugins/cliconf/nxos.py:
+    maintainers: $team_nxos
+    labels:
+    - networking
+    - nxos
   lib/ansible/plugins/connection/netconf.py:
     maintainers: $team_networking
     labels: networking
@@ -1140,7 +1149,9 @@ files:
     labels: networking
   lib/ansible/plugins/terminal/nxos.py:
     maintainers: $team_networking
-    labels: networking
+    labels:
+    - networking
+    - nxos
   lib/ansible/plugins/terminal/sros.py:
     maintainers: $team_networking
     labels: networking
@@ -1160,10 +1171,23 @@ files:
   packaging/:
   test/:
     # 'test' is a component path, then 'test' label will be automatically added
+  test/integration/targets/nxos:
+    maintainers: $team_nxos
+    labels:
+    - networking
+    - nxos
+  test/units/modules/network:
+    maintainers: $team_networking
+    labels: networking
+  test/units/modules/network/nxos:
+    maintainers: $team_nxos
+    labels:
+    - networking
+    - nxos
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
-  team_aci: dagwieers jmcgill298 schunduri 
+  team_aci: dagwieers jmcgill298 schunduri
   team_ansible: []
   team_avi: ericsysmin grastogi23 khaltore
   team_azure: haroldwongms nitzmahone tstringer
