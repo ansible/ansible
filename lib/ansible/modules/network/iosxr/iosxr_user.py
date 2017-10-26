@@ -312,7 +312,7 @@ def convert_key_to_base64(module):
 def copy_key_to_node(module, base64keyfile):
     """ Copy key to IOS-XR node. We use SFTP because older IOS-XR versions don't handle SCP very well.
     """
-    if not (module.params['host'] or module.params['provider']['host']) or not (module.params['username'] or module.params['provider']['username']):
+    if not (module.params['host'] and not module.params['provider']['host']) or not (module.params['username'] and not module.params['provider']['username']):
         return False
 
     if module.params['aggregate']:
