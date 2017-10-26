@@ -49,6 +49,8 @@ DOCUMENTATION = """
 EXAMPLES = """
 - debug: msg="{{ lookup('hashi_vault', 'secret=secret/hello:value token=c975b780-d1be-8016-866b-01d0f9b688a5 url=http://myvault:8200')}}"
 
+- debug: msg="{{ lookup('hashi_vault', 'secret=secret/hello-object token=c975b780-d1be-8016-866b-01d0f9b688a5 url=http://myvault:8200')}}"
+
 - name: Vault that requires authentication via ldap
   debug: msg="{{ lookup('hashi_vault', 'secret=secret/hello:value auth_method=ldap mount_point=ldap username=myuser password=mypas url=http://myvault:8200')}}"
 
@@ -100,7 +102,7 @@ class HashiVault:
         if len(s_f) >= 2:
             self.secret_field = s_f[1]
         else:
-            self.secret_field = 'value'
+            self.secret_field = 'ALL_OBJECT_ELEMENTS'
 
         # if a particular backend is asked for (and its method exists) we call it, otherwise drop through to using
         # token auth.   this means if a particular auth backend is requested and a token is also given, then we
@@ -109,9 +111,9 @@ class HashiVault:
         # to enable a new auth backend, simply add a new 'def auth_<type>' method below.
         #
         self.auth_method = kwargs.get('auth_method')
-        if self.auth_method:
+        if self.auth_method and self.auth_method != 'token':
             try:
-                self.client = hvac.Client(url=self.url)
+                self.client = hvac.Client(url=self.url, verify=self.verify)
                 # prefixing with auth_ to limit which methods can be accessed
                 getattr(self, 'auth_' + self.auth_method)(**kwargs)
             except AttributeError:
@@ -143,7 +145,7 @@ class HashiVault:
         if data is None:
             raise AnsibleError("The secret %s doesn't seem to exist for hashi_vault lookup" % self.secret)
 
-        if self.secret_field == '':  # secret was specified with trailing ':'
+        if self.secret_field == 'ALL_OBJECT_ELEMENTS':  # secret was specified without trailing ':'
             return data['data']
 
         if self.secret_field not in data['data']:
