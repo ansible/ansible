@@ -1,0 +1,58 @@
+# Copyright: (c) 2017, Dag Wieers (@dagwieers) <dag@wieers.com>
+
+- name: Single list item part of choices
+  wildcard:
+    argument_spec:
+      list_example:
+        type: list
+        choices: [ alpha, beta, gamma ]
+    list_example: alpha
+  register: list_choices_1
+
+- assert:
+    that:
+    - list_choices_1|success
+
+- name: Two list items part of choices
+  wildcard:
+    argument_spec:
+      list_example:
+        type: list
+        choices: [ alpha, beta, gamma ]
+    list_example: alpha,beta
+  register: list_choices_2
+
+- assert:
+    that:
+    - list_choices_2|success
+
+- name: Three list items part of choices
+  wildcard:
+    argument_spec:
+      list_example:
+        type: list
+        choices: [ alpha, beta, gamma ]
+    list_example:
+    - alpha
+    - beta
+    - gamma
+  register: list_choices_3
+
+- assert:
+    that:
+    - list_choices_3|success
+
+- name: One list item is not part of choices
+  wildcard:
+    argument_spec:
+      list_example:
+        type: list
+        choices: [ alpha, beta, gamma ]
+    list_example: alpha,omega
+  ignore_errors: yes
+  register: list_choices_4
+
+- assert:
+    that:
+    - list_choices_4|failed
+    - 'list_choices_4.msg == "values of list_example must be one of: alpha,beta,gamma, got: omega"'
