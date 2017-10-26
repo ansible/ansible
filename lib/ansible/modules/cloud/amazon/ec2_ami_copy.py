@@ -80,6 +80,7 @@ extends_documentation_fragment:
     - ec2
 requirements:
     - boto3
+    - boto
 '''
 
 EXAMPLES = '''

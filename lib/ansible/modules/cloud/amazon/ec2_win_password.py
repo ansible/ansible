@@ -56,6 +56,7 @@ extends_documentation_fragment:
 
 requirements:
     - cryptography
+    - boto
 
 notes:
     - As of Ansible 2.4, this module requires the python cryptography module rather than the

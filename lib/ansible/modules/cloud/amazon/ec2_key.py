@@ -19,6 +19,8 @@ version_added: "1.5"
 short_description: maintain an ec2 key pair.
 description:
     - maintains ec2 key pairs. This module has a dependency on python-boto >= 2.5
+requirements:
+    - boto
 options:
   name:
     description:

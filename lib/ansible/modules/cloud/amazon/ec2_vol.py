@@ -114,6 +114,8 @@ author: "Lester Wade (@lwade)"
 extends_documentation_fragment:
     - aws
     - ec2
+requirements:
+    - boto
 '''
 
 EXAMPLES = '''

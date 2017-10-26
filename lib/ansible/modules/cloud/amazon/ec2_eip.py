@@ -74,6 +74,8 @@ options:
 extends_documentation_fragment:
     - aws
     - ec2
+requirements:
+    - boto
 author: "Rick Mendes (@rickmendes) <rmendes@illumina.com>"
 notes:
    - This module will return C(public_ip) on success, which will contain the

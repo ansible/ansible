@@ -131,6 +131,8 @@ author:
 extends_documentation_fragment:
     - aws
     - ec2
+requirements:
+    - boto
 '''
 
 # Thank you to iAcquire for sponsoring development of this module.

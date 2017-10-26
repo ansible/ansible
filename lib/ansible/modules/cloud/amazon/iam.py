@@ -100,6 +100,8 @@ author:
     - "Jonathan I. Davila (@defionscode)"
     - "Paul Seiffert (@seiffert)"
 extends_documentation_fragment: aws
+requirements:
+    - boto
 '''
 
 EXAMPLES = '''

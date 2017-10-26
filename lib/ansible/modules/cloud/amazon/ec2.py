@@ -294,6 +294,8 @@ author:
     - "Lester Wade (@lwade)"
     - "Seth Vidal"
 extends_documentation_fragment: aws
+requirements:
+    - boto
 '''
 
 EXAMPLES = '''

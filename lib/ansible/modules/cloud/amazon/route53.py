@@ -155,6 +155,8 @@ author:
   - "Bruce Pennypacker (@bpennypacker)"
   - "Mike Buzzetti <mike.buzzetti@gmail.com>"
 extends_documentation_fragment: aws
+requirements:
+  - boto
 '''
 
 

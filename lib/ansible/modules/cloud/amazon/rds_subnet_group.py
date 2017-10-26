@@ -48,6 +48,8 @@ author: "Scott Anderson (@tastychutney)"
 extends_documentation_fragment:
     - aws
     - ec2
+requirements:
+    - boto
 '''
 
 EXAMPLES = '''
