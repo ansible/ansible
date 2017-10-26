@@ -67,10 +67,6 @@
       - result.changed == True
       - result.msg == "PUT operation complete"
 # ============================================================
-- name: wait a few seconds before continuing
-  pause:
-    seconds: 3
-# ============================================================
 - name: create a second temp file to download the object from the bucket
   tempfile:
   register: tmp2
@@ -95,10 +91,6 @@
   assert:
     that:
       - file1stat.stat.checksum == file2stat.stat.checksum
-# ============================================================
-- name: wait a few seconds before continuing
-  pause:
-      seconds: 3
 # ============================================================
 - name: test geturl of the object
   s3:

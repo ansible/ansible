@@ -354,7 +354,8 @@ def delete_bucket(module, s3, bucket):
         # if there are contents then we need to delete them before we can delete the bucket
         for keys in paginated_list(s3, Bucket=bucket):
             formatted_keys = [{'Key': key} for key in keys]
-            s3.delete_objects(Bucket=bucket, Delete={'Objects': formatted_keys})
+            if formatted_keys:
+                s3.delete_objects(Bucket=bucket, Delete={'Objects': formatted_keys})
         s3.delete_bucket(Bucket=bucket)
         return True
     except botocore.exceptions.ClientError as e:
@@ -375,12 +376,10 @@ def create_dirkey(module, s3, bucket, obj):
     if module.check_mode:
         module.exit_json(msg="PUT operation skipped - running in check mode", changed=True)
     try:
-        bucket = s3.Bucket(bucket)
-        key = bucket.new_key(obj)
-        key.set_contents_from_string('')
+        s3.put_object(Bucket=bucket, Key=obj, Body=b'')
         for acl in module.params.get('permission'):
             s3.put_object_acl(ACL=acl, Bucket=bucket, Key=obj)
-        module.exit_json(msg="Virtual directory %s created in bucket %s" % (obj, bucket.name), changed=True)
+        module.exit_json(msg="Virtual directory %s created in bucket %s" % (obj, bucket), changed=True)
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg="Failed while creating object %s." % obj, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
