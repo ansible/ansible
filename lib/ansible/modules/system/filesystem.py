@@ -69,7 +69,9 @@ EXAMPLES = '''
     opts: -cc
 '''
 
+from distutils.version import LooseVersion
 import os
+import re
 import stat
 
 from ansible.module_utils.basic import AnsibleModule
@@ -193,7 +195,24 @@ class Reiserfs(Filesystem):
 
 class Btrfs(Filesystem):
     MKFS = 'mkfs.btrfs'
-    MKFS_FORCE_FLAGS = '-f'
+
+    def __init__(self, module):
+        super(Btrfs, self).__init__(module)
+        _, stdout, stderr = self.module.run_command('%s --version' % self.MKFS, check_rc=True)
+        match = re.search(r" v([0-9.]+)", stdout)
+        if not match:
+            # v0.20-rc1 use stderr
+            match = re.search(r" v([0-9.]+)", stderr)
+        if match:
+            # v0.20-rc1 doesn't have --force parameter added in following version v3.12
+            if LooseVersion(match.group(1)) >= LooseVersion('3.12'):
+                self.MKFS_FORCE_FLAGS = '-f'
+            else:
+                self.MKFS_FORCE_FLAGS = ''
+        else:
+            # assume version is greater or equal to 3.12
+            self.MKFS_FORCE_FLAGS = '-f'
+            self.module.warn('Unable to identify mkfs.btrfs version (%r, %r)' % (stdout, stderr))
 
 
 class LVM(Filesystem):
