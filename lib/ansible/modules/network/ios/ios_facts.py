@@ -194,7 +194,7 @@ class Default(FactsBase):
             return match.group(1)
 
     def parse_model(self, data):
-        match = re.search(r'^Cisco (.+) \(revision', data, re.M)
+        match = re.search(r'^[cC]isco\s+(?P<product>\S+).+?with .+? bytes of.+?memory', data, re.M)
         if match:
             return match.group(1)
 
