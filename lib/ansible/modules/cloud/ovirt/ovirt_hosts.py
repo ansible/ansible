@@ -317,6 +317,28 @@ class HostsModule(BaseModule):
             timeout=self.param('timeout'),
         )
 
+    def failed_state_after_reinstall(self, host, count=0):
+        if host.status in [
+            hoststate.ERROR,
+            hoststate.INSTALL_FAILED,
+            hoststate.NON_OPERATIONAL,
+        ]:
+            return True
+
+        # If host is in non-responsive state after upgrade/install
+        # let's wait for few seconds and re-check again the state:
+        if host.status == hoststate.NON_RESPONSIVE:
+            if count <= 3:
+                time.sleep(20)
+                return self.failed_state_after_reinstall(
+                    self._service.service(host.id).get(),
+                    count + 1,
+                )
+            else:
+                return True
+
+        return False
+
 
 def failed_state(host):
     return host.status in [
@@ -421,7 +443,7 @@ def main():
                     module.params.get('hosted_engine') == 'deploy'
                 ) if module.params.get('hosted_engine') is not None else None,
                 result_state=hoststate.UP if host is None else None,
-                fail_condition=failed_state if host is None else lambda h: False,
+                fail_condition=hosts_module.failed_state_after_reinstall if host is None else lambda h: False,
             )
             if module.params['activate'] and host is not None:
                 ret = hosts_module.action(
@@ -473,7 +495,7 @@ def main():
                 action_condition=lambda h: h.update_available,
                 wait_condition=lambda h: h.status == result_state,
                 post_action=lambda h: time.sleep(module.params['poll_interval']),
-                fail_condition=failed_state,
+                fail_condition=hosts_module.failed_state_after_reinstall,
             )
         elif state == 'iscsidiscover':
             host_id = get_id_by_name(hosts_service, module.params['name'])
@@ -546,7 +568,7 @@ def main():
                 action_condition=lambda h: h.status == hoststate.MAINTENANCE,
                 post_action=hosts_module.post_reinstall,
                 wait_condition=lambda h: h.status == hoststate.MAINTENANCE,
-                fail_condition=failed_state,
+                fail_condition=hosts_module.failed_state_after_reinstall,
                 host=otypes.Host(
                     override_iptables=module.params['override_iptables'],
                 ) if module.params['override_iptables'] else None,
