@@ -3,7 +3,7 @@
 
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-#Requires -Module Ansible.ModuleUtils.Legacy
+#Requires -Module Ansible.ModuleUtils.Legacy.psm1
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version 2.0
 
@@ -532,7 +532,7 @@ if ($DriveLetter -ne $null) {
                 }
             }
         }
-        Fail-Json -obj $result -message "The drive_letter $DriveLetter is set on another partition on this target already which is not allowed"
+        Fail-Json -obj $result -message "The drive letter $DriveLetter is set on another partition on this target already which is not allowed"
     }
 } else {
     # Use random drive letter
@@ -618,7 +618,7 @@ if ($DriveLetter -ne $null) {
                 }
             }
         }
-        Fail-Json -obj $result -message "No free drive_letter left available on the target"
+        Fail-Json -obj $result -message "No free drive letter left on the target"
     }
 }
 # Check file system
