@@ -49,6 +49,8 @@ Cherry-picking
 * For RC periods, ask mattclay/a github admin to lock down permissions on the branch so that only
   the RM can cherry-pick
 
+  .. seealso:: :doc:`release-branches`
+
 .. warn:: If you cherry-pick something after the last expected RC be sure to let @jladd know about
     the change so he can test Tower with the new code.  Otherwise they expect that the last RC is
     the same as final.  They need at least a day for testing so it might be better to create a short
@@ -164,6 +166,9 @@ Pre rc1
 
 * Have mattclay/github org admin Tighten permissions on the ``stable-2.X`` branch so only the
   release manager can merge there
+
+  .. seealso:: :doc:`release-branches`
+
 * Create the ``temp-staging-post-2.X.0`` branch for changes that are destined for the next minor
   release to be merged to::
 
@@ -315,7 +320,10 @@ To make a final major release
 * Merge the ``temp-staging-post-2.4.0`` branch back into the ``stable-2.4`` branch and then remove
   the branch from the repo
 
-   * Relax permissions on the stable-2.4 branch so that anyone can commit again
+   * Have a github admin (usually mattclay) relax permissions on the stable-2.4 branch so that
+     anyone can commit again
+
+  .. seealso:: :doc:`release-branches`
 
 
 To make a dot release
