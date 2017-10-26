@@ -31,7 +31,7 @@ done
 
 # GREP_FORMAT_WHITELIST has been formatted so that wordsplitting is wanted.  Therefore no double quotes around the var
 # shellcheck disable=SC2086
-egrep -r 'expanduser' lib/ansible/modules | egrep -v $GREP_FORMAT_WHITELIST
+egrep -r 'expanduser' lib/ansible/modules | egrep '\.py:' | egrep -v $GREP_FORMAT_WHITELIST
 
 if [ $? -ne 1 ]; then
     printf 'The module(s) listed above use expanduser.\n'
