@@ -35,10 +35,26 @@ Ansible Changes By Release
 * Have ansible-pull process inventory in its own way.  Fixes issues with
   ansible-pull not using the correct inventory,  especially for localhost
   (https://github.com/ansible/ansible/pull/32135)
+* Fix for implicit localhost receiving too many variables from the all group
+  (https://github.com/ansible/ansible/pull/31959)
 * Fix the service module to correctly detect which type of init system is
   present on the host. (https://github.com/ansible/ansible/pull/32086)
 * Fix inventory patterns to convert to strings before processing:
   (https://github.com/ansible/ansible/issues/31978)
+* Fix traceback in firewalld module instead of a nice error message:
+  (https://github.com/ansible/ansible/pull/31949)
+* Fix for entering privileged mode using eos network modules:
+  (https://github.com/ansible/ansible/issues/30802)
+* Validate that the destination for ansible-pull is a valid.directory:
+  (https://github.com/ansible/ansible/pull/31499)
+* Document how to preserve strings of digits as strings in the ini inventory:
+  (https://github.com/ansible/ansible/pull/32047)
+* Make sure we return ansible_distribution_major_version to macOS:
+  (https://github.com/ansible/ansible/pull/31708)
+* Fix to ansible-doc -l to list custom inventory plugins:
+  (https://github.com/ansible/ansible/pull/31996)
+* Fix win_chocolatey to respect case sensitivity in URLs:
+  (https://github.com/ansible/ansible/pull/31983)
 
 
 <a id="2.4.1"></a>
