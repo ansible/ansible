@@ -40,12 +40,7 @@ else
     )
 fi
 
-retry.py pip install tox --disable-pip-version-check
-
 for version in "${python_versions[@]}"; do
-    # clean up between test runs until we switch from --tox to --docker
-    rm -rf ~/.ansible/{cp,pc,tmp}/
-
     changed_all_target="all"
 
     if [ "${version}" == "2.7" ]; then
@@ -73,6 +68,6 @@ for version in "${python_versions[@]}"; do
     fi
 
     # shellcheck disable=SC2086
-    ansible-test windows-integration --color -v --retry-on-error "${ci}" --tox --python "${version}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} \
+    ansible-test windows-integration --color -v --retry-on-error "${ci}" --docker default --python "${version}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} \
         "${platforms[@]}" --changed-all-target "${changed_all_target}"
 done
