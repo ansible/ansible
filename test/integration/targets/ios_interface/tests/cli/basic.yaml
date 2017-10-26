@@ -28,7 +28,6 @@
     name: "{{ test_interface }}"
     description: test-interface-1
     speed: 1000
-    duplex: full
     mtu: 256
     state: present
     authorize: yes
@@ -80,7 +79,6 @@
   ios_interface:
     name: "{{ test_interface }}"
     description: test-interface-1
-    duplex: half
     mtu: 256
     state: present
     authorize: yes
@@ -91,7 +89,6 @@
       - 'result.changed == true'
       - '"interface {{ test_interface }}" in result.commands'
       - '"description test-interface-1" in result.commands'
-      - '"duplex half" in result.commands'
       - '"mtu 256" in result.commands'
 
 - name: Disable interface
@@ -125,7 +122,6 @@
     name: "{{ test_interface2 }}"
     description: test-interface-initial
     speed: 1000
-    duplex: half
     mtu: 516
     state: present
     authorize: yes
@@ -136,7 +132,6 @@
     aggregate:
     - "{ name: {{ test_interface }}, mtu: 256, description: test-interface-1 }"
     - "{ name: {{ test_interface2 }}, mtu: 516, description: test-interface-2 }"
-    duplex: full
     speed: 1000
     state: present
     authorize: yes
@@ -147,11 +142,9 @@
       - 'result.changed == true'
       - '"interface {{ test_interface }}" in result.commands'
       - '"description test-interface-1" in result.commands'
-      - '"duplex full" in result.commands'
       - '"mtu 256" in result.commands'
       - '"interface {{ test_interface2 }}" in result.commands'
       - '"description test-interface-2" in result.commands'
-      - '"duplex full" in result.commands'
       - '"mtu 516" in result.commands'
 
 - name: Add interface aggregate (idempotent)
@@ -159,7 +152,6 @@
     aggregate:
     - "{ name: {{ test_interface }}, mtu: 256, description: test-interface-1 }"
     - "{ name: {{ test_interface2 }}, mtu: 516, description: test-interface-2 }"
-    duplex: full
     speed: 1000
     state: present
     authorize: yes
