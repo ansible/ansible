@@ -23,6 +23,7 @@ import abc
 import argparse
 import ast
 import json
+import errno
 import os
 import re
 import subprocess
@@ -1214,7 +1215,20 @@ class GitCache(object):
         else:
             self.base_tree = []
 
-        self.head_tree = self._git(['ls-tree', '-r', '--name-only', 'HEAD', 'lib/ansible/modules/'])
+        try:
+            self.head_tree = self._git(['ls-tree', '-r', '--name-only', 'HEAD', 'lib/ansible/modules/'])
+        except GitError as ex:
+            if ex.status == 128:
+                # fallback when there is no .git directory
+                self.head_tree = self._get_module_files()
+            else:
+                raise
+        except OSError as ex:
+            if ex.errno == errno.ENOENT:
+                # fallback when git is not installed
+                self.head_tree = self._get_module_files()
+            else:
+                raise
 
         self.base_module_paths = dict((os.path.basename(p), p) for p in self.base_tree if os.path.splitext(p)[1] in ('.py', '.ps1'))
 
@@ -1230,11 +1244,30 @@ class GitCache(object):
                     self.head_aliased_modules.add(os.path.basename(os.path.realpath(path)))
 
     @staticmethod
+    def _get_module_files():
+        module_files = []
+
+        for (dir_path, dir_names, file_names) in os.walk('lib/ansible/modules/'):
+            for file_name in file_names:
+                module_files.append(os.path.join(dir_path, file_name))
+
+        return module_files
+
+    @staticmethod
     def _git(args):
         cmd = ['git'] + args
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = p.communicate()
+        if p.returncode != 0:
+            raise GitError(stderr, p.returncode)
         return stdout.decode('utf-8').splitlines()
+
+
+class GitError(Exception):
+    def __init__(self, message, status):
+        super(GitError, self).__init__(message)
+
+        self.status = status
 
 
 if __name__ == '__main__':
