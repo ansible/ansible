@@ -76,7 +76,8 @@ Ansible Changes By Release
 * NXOS integration test nxos_file_copy, nxos_igmp, nxos_igmp_interface
   nxos_igmp_snooping, nxos_ntp_auth, nxos_ntp_options:
   (https://github.com/ansible/ansible/pull/29030)
-
+* Fix elb_target_group module traceback when ports were specified inside of the targets parameter:
+  (https://github.com/ansible/ansible/pull/32202)
 
 
 <a id="2.4.1"></a>
