@@ -55,6 +55,10 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/31996)
 * Fix win_chocolatey to respect case sensitivity in URLs:
   (https://github.com/ansible/ansible/pull/31983)
+* Fix config_format json in the junos_facts module:
+  (https://github.com/ansible/ansible/pull/31818)
+* Allow the apt module's autoremove parameter to take effect in upgrades:
+  (https://github.com/ansible/ansible/pull/30747)
 
 
 <a id="2.4.1"></a>
