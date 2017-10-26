@@ -25,7 +25,6 @@ module: ec2
 short_description: create, terminate, start or stop an instance in ec2
 description:
     - Creates or terminates ec2 instances.
-    - C(state=restarted) was added in 2.2
 version_added: "0.9"
 options:
   key_name:
@@ -235,7 +234,8 @@ options:
   state:
     version_added: "1.3"
     description:
-      - create or terminate instances
+      - create, terminate, start, stop or restart instances.
+        The state 'restarted' was added in 2.2
     required: false
     default: 'present'
     aliases: []
