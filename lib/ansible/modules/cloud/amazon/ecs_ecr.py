@@ -40,6 +40,12 @@ options:
         default: false
     delete_policy:
         description:
+            - deprecated. Use I(purge_policy) instead. To be removed in
+              Ansible 2.6
+        required: false
+        default: false
+    purge_policy:
+        description:
             - if yes, remove the policy from the repository
         required: false
         default: false
@@ -48,7 +54,7 @@ options:
             - JSON or dict that represents the new lifecycle policy
         required: false
         version_added: '2.5'
-    delete_lifecycle_policy:
+    purge_lifecycle_policy:
         description:
             - if yes, remove the lifecycle policy from the repository
         required: false
@@ -102,7 +108,7 @@ EXAMPLES = '''
 - name: delete-policy
   ecs_ecr:
     name: needs-no-policy
-    delete_policy: yes
+    purge_policy: yes
 
 - name: set-lifecycle-policy
   ecs_ecr:
@@ -122,7 +128,7 @@ EXAMPLES = '''
 - name: delete-lifecycle-policy
   ecs_ecr:
     name: needs-no-lifecycle-policy
-    delete_lifecycle_policy: yes
+    purge_lifecycle_policy: yes
 '''
 
 RETURN = '''
@@ -326,11 +332,11 @@ def run(ecr, params, verbosity):
         name = params['name']
         state = params['state']
         policy_text = params['policy']
-        delete_policy = params['delete_policy']
+        purge_policy = params['purge_policy'] or params['delete_policy']
         registry_id = params['registry_id']
         force_set_policy = params['force_set_policy']
         lifecycle_policy_text = params['lifecycle_policy']
-        delete_lifecycle_policy = params['delete_lifecycle_policy']
+        purge_lifecycle_policy = params['purge_lifecycle_policy']
 
         # Parse policies, if they are given
         try:
@@ -361,7 +367,7 @@ def run(ecr, params, verbosity):
                 result['created'] = True
             result['repository'] = repo
 
-            if delete_lifecycle_policy:
+            if purge_lifecycle_policy:
                 original_lifecycle_policy = \
                     ecr.get_lifecycle_policy(registry_id, name)
 
@@ -401,7 +407,7 @@ def run(ecr, params, verbosity):
                     result['lifecycle_policy'] = lifecycle_policy_text
                     raise
 
-            if delete_policy:
+            if purge_policy:
                 original_policy = ecr.get_repository_policy(registry_id, name)
 
                 if verbosity >= 2:
@@ -470,15 +476,16 @@ def main():
                    default='present'),
         force_set_policy=dict(required=False, type='bool', default=False),
         policy=dict(required=False, type='json'),
-        delete_policy=dict(required=False, type='bool'),
+        delete_policy=dict(required=False, type='bool', removed_in_version='2.5'),
+        purge_policy=dict(required=False, type='bool'),
         lifecycle_policy=dict(required=False, type='json'),
-        delete_lifecycle_policy=dict(required=False, type='bool')))
+        purge_lifecycle_policy=dict(required=False, type='bool')))
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True,
                            mutually_exclusive=[
-                               ['policy', 'delete_policy'],
-                               ['lifecycle_policy', 'delete_lifecycle_policy']])
+                               ['policy', 'delete_policy', 'purge_policy'],
+                               ['lifecycle_policy', 'purge_lifecycle_policy']])
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')

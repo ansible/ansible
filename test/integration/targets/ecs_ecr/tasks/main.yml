@@ -88,14 +88,14 @@
           - result is not changed
 
 
-    - name: When in check mode, and deleting a policy that does not exists
+    - name: When in check mode, and purging a policy that does not exists
       ecs_ecr:
         region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
         ec2_access_key: '{{ec2_access_key}}'
         ec2_secret_key: '{{ec2_secret_key}}'
         security_token: '{{security_token}}'
-        delete_policy: yes
+        purge_policy: yes
       register: result
       check_mode: yes
 
@@ -153,19 +153,40 @@
       register: result
       check_mode: yes
 
-    - name: it should skip, change but not create
+    - name: it should skip, change but not create, have deprecations
       assert:
         that:
           - result is skipped
           - result is changed
           - not result.created
+          - result.deprecations
 
 
-    - name: When deleting a policy that exists
+    - name: When in check mode, and purging a policy that exists
       ecs_ecr:
         region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
-        delete_policy: yes
+        purge_policy: yes
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+      register: result
+      check_mode: yes
+
+    - name: it should skip, change but not create, no deprecations
+      assert:
+        that:
+          - result|skipped
+          - result|changed
+          - not result.created
+          - result.deprecations is not defined
+
+
+    - name: When purging a policy that exists
+      ecs_ecr:
+        region: '{{ ec2_region }}'
+        name: '{{ ecr_name }}'
+        purge_policy: yes
         ec2_access_key: '{{ec2_access_key}}'
         ec2_secret_key: '{{ec2_secret_key}}'
         security_token: '{{security_token}}'
@@ -224,12 +245,12 @@
         that:
           - result is not changed
 
-    - name: When specifying both policy and delete_policy
+    - name: When specifying both policy and purge_policy
       ecs_ecr:
         region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
         policy: '{{ policy }}'
-        delete_policy: yes
+        purge_policy: yes
         ec2_access_key: '{{ec2_access_key}}'
         ec2_secret_key: '{{ec2_secret_key}}'
         security_token: '{{security_token}}'
@@ -259,14 +280,14 @@
           - result|failed
 
 
-    - name: When in check mode, and deleting a lifecycle policy that does not exists
+    - name: When in check mode, and purging a lifecycle policy that does not exists
       ecs_ecr:
         region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
         ec2_access_key: '{{ec2_access_key}}'
         ec2_secret_key: '{{ec2_secret_key}}'
         security_token: '{{security_token}}'
-        delete_lifecycle_policy: yes
+        purge_lifecycle_policy: yes
       register: result
       check_mode: yes
 
@@ -313,11 +334,11 @@
           - not result.created
 
 
-    - name: When in check mode, and deleting a lifecyle policy that exists
+    - name: When in check mode, and purging a lifecyle policy that exists
       ecs_ecr:
         region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
-        delete_lifecycle_policy: yes
+        purge_lifecycle_policy: yes
         ec2_access_key: '{{ec2_access_key}}'
         ec2_secret_key: '{{ec2_secret_key}}'
         security_token: '{{security_token}}'
@@ -332,11 +353,11 @@
           - not result.created
 
 
-    - name: When deleting a lifecycle policy that exists
+    - name: When purging a lifecycle policy that exists
       ecs_ecr:
         region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
-        delete_lifecycle_policy: yes
+        purge_lifecycle_policy: yes
         ec2_access_key: '{{ec2_access_key}}'
         ec2_secret_key: '{{ec2_secret_key}}'
         security_token: '{{security_token}}'
@@ -397,12 +418,12 @@
           - not result|changed
 
 
-    - name: When specifying both lifecycle_policy and delete_lifecycle_policy
+    - name: When specifying both lifecycle_policy and purge_lifecycle_policy
       ecs_ecr:
         region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
         lifecycle_policy: '{{ lifecycle_policy }}'
-        delete_lifecycle_policy: yes
+        purge_lifecycle_policy: yes
         ec2_access_key: '{{ec2_access_key}}'
         ec2_secret_key: '{{ec2_secret_key}}'
         security_token: '{{security_token}}'
@@ -430,6 +451,25 @@
       assert:
         that:
           - result is failed
+
+
+    - name: When specifying an invalid document for lifecycle policy
+      ecs_ecr:
+        region: '{{ ec2_region }}'
+        name: '{{ ecr_name }}'
+        lifecycle_policy:
+          rules:
+            - invalid: "Ceci n'est pas une rule"
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+      register: result
+      ignore_errors: true
+
+    - name: it should fail
+      assert:
+        that:
+          - result|failed
 
 
     - name: When in check mode, deleting a repository that exists

@@ -61,6 +61,11 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
 * `osx_say` module was renamed into `say`.
 * Task debugger functionality was moved into `StrategyBase`, and extended to allow explicit invocation from use of the `debugger` keyword.
   The `debug` strategy is still functional, and is now just a trigger to enable this functionality
+* Added lifecycle policy support to `ecs_ecr`
+* Deprecated `ecs_ecr` option `delete_policy` in favor of `purge_policy`
+
+#### Deprecated Modules (to be removed in 2.9):
+* ec2_ami_find: replaced by ec2_ami_facts
 
 #### Removed Modules (previously deprecated):
 * accelerate.
@@ -73,7 +78,6 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
 * ec2_ami_search, use ec2_ami_facts instead.
 * nxos_mtu, use nxos_system's `system_mtu` option. To specify an interfaces MTU use nxos_interface.
   https://github.com/ansible/ansible/issues/29387
-* Added lifecycle policy support to `ecs_ecr`
 
 ### New Plugins
 
