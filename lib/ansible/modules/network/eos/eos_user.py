@@ -181,15 +181,15 @@ def map_obj_to_commands(updates, module):
             commands.append('no username %s' % want['name'])
             continue
 
+        if needs_update('configured_password'):
+            if update_password == 'always' or not have:
+                add('secret %s' % want['configured_password'])
+
         if needs_update('role'):
             add('role %s' % want['role'])
 
         if needs_update('privilege'):
             add('privilege %s' % want['privilege'])
-
-        if needs_update('configured_password'):
-            if update_password == 'always' or not have:
-                add('secret %s' % want['configured_password'])
 
         if needs_update('sshkey'):
             add('sshkey %s' % want['sshkey'])
