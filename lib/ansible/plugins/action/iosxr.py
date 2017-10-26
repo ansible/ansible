@@ -60,6 +60,9 @@ class ActionModule(_ActionModule):
         pc.password = provider['password'] or self._play_context.password
         pc.timeout = provider['timeout'] or self._play_context.timeout
 
+        # mask no_log provider arguments
+        provider['password'] = '********' if provider['password'] else None
+
         display.vvv('using connection plugin %s' % pc.connection, pc.remote_addr)
         connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
 

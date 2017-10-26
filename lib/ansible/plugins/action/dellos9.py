@@ -64,6 +64,10 @@ class ActionModule(_ActionModule):
         pc.become = provider['authorize'] or False
         pc.become_pass = provider['auth_pass']
 
+        # mask no_log provider arguments
+        provider['password'] = '********' if provider['password'] else None
+        provider['auth_pass'] = '********' if provider['auth_pass'] else None
+
         display.vvv('using connection plugin %s' % pc.connection, pc.remote_addr)
         connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
 
