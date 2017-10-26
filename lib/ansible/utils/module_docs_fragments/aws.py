@@ -72,7 +72,6 @@ options:
     default: null
 requirements:
   - "python >= 2.6"
-  - boto
 notes:
   - If parameters are not set within the module, the following
     environment variables can be used in decreasing order of precedence
