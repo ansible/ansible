@@ -61,6 +61,21 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/30747)
 * When creating a new use via eos_user, create the user before setting the
   user's privilege level: (https://github.com/ansible/ansible/pull/32162)
+* Fixes nxos_portchannel idempotence failure on N1 images:
+  (https://github.com/ansible/ansible/pull/31057)
+* Remove provider from prepare_ios_tests integration test:
+  (https://github.com/ansible/ansible/pull/31038)
+* Fix nxos_acl change ports to non well known ports and drop time_range for N1:
+  (https://github.com/ansible/ansible/pull/31261)
+* Fix nxos_banner removal idempotence issue in N1 images:
+  (https://github.com/ansible/ansible/pull/31259)
+* Return error message back to the module
+  (https://github.com/ansible/ansible/pull/31035)
+* Fix nxos_igmp_snooping idempotence:
+  (https://github.com/ansible/ansible/pull/31688)
+* NXOS integration test nxos_file_copy, nxos_igmp, nxos_igmp_interface
+  nxos_igmp_snooping, nxos_ntp_auth, nxos_ntp_options:
+  (https://github.com/ansible/ansible/pull/29030)
 
 
 
