@@ -143,7 +143,7 @@ notes:
   - If the script fails with an error and the writeable status was set from "read-only" to "writeable" before the script will try to set the disk to
     writeable status "read-only" again but will not be canceled if set "read-only" again fails.
   - If you use the --diff option you will get detailed information about the changes on the target.
-  - If you use the --check option nothing will be changed on the target but you will get information what would be changed (contains -diff).
+  - If you use the --check option nothing will be changed on the target but you will get the information what would be changed (contains -diff).
 '''
 
 EXAMPLES = r'''
@@ -187,10 +187,10 @@ msg:
     description: Possible error message on failure.
     returned: failed
     type: string
-    sample: "No free drive_letter left on the target"
+    sample: "No free drive letter left on the target"
 change_log:
     description: Dictionary containing all the detailed information about changes on the selected disk.
-    returned: always
+    returned: if --check or/and --diff option was passed to the module
     type: complex
     contains:
         operational_status:
@@ -199,7 +199,7 @@ change_log:
             type: string
             sample: "Disk set online"
         writeable_status:
-            description: Detailed information if disk was set from read-only to writeable and if not why it was not set to it.
+            description: Detailed information whether disk was set from read-only to writeable and if not why it was not set to it.
             returned: success or failed
             type: string
             sample: "Disk set from read-only to writeable"
