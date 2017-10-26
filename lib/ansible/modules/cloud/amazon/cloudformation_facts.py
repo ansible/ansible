@@ -69,6 +69,17 @@ EXAMPLES = '''
 - debug:
     msg: "{{ ansible_facts['cloudformation']['my-cloudformation-stack'] }}"
 
+# Get stack outputs, when you have the stack name available as a fact
+- set_fact:
+    stack_name: my-awesome-stack
+
+- cloudformation_facts:
+    stack_name: "{{ stack_name }}"
+  register: my_stack
+
+- debug:
+    msg: "{{ my_stack.ansible_facts.cloudformation[stack_name].stack_outputs }}"
+
 # Get all stack information about a stack
 - cloudformation_facts:
     stack_name: my-cloudformation-stack
