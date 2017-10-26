@@ -16,7 +16,7 @@ DOCUMENTATION = """
 ---
 module: iosxr_user
 version_added: "2.4"
-author: 
+author:
   - "Trishna Guha (@trishnaguha)"
   - "Sebastiaan van Doesselaar (@sebasdoes)"
 short_description: Manage the aggregate of local users on Cisco IOS XR device
@@ -86,8 +86,8 @@ options:
         This enables users to login using the accompanying private key. IOS-XR
         only accepts base64 decoded files, so this will be decoded and uploaded
         to the node. Do note that this requires an OpenSSL public key file,
-        PuTTy generated files will not work! Mutually exclusive with 
-        public_key_contents. If used with multiple users in aggregates, then the 
+        PuTTy generated files will not work! Mutually exclusive with
+        public_key_contents. If used with multiple users in aggregates, then the
         same key file is used for all users.
   public_key_contents:
     version_added: "2.5"
@@ -96,8 +96,8 @@ options:
         This enables users to login using the accompanying private key. IOS-XR
         only accepts base64 decoded files, so this will be decoded and uploaded
         to the node. Do note that this requires an OpenSSL public key file,
-        PuTTy generated files will not work! Mutually exclusive with 
-        public_key.If used with multiple users in aggregates, then the 
+        PuTTy generated files will not work! Mutually exclusive with
+        public_key.If used with multiple users in aggregates, then the
         same key file is used for all users.
 requirements:
   - base64 when using I(public_key_contents) or I(public_key)
@@ -389,7 +389,7 @@ def main():
 
     argument_spec.update(element_spec)
     argument_spec.update(iosxr_argument_spec)
-    mutually_exclusive = [('name', 'aggregate'),('public_key','public_key_contents')]
+    mutually_exclusive = [('name', 'aggregate'), ('public_key', 'public_key_contents')]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
@@ -447,24 +447,24 @@ def main():
             copy_key_to_node(module, key)
             if module.params['aggregate']:
                 for user in module.params['aggregate']:
-                    commandtodo = "admin crypto key import authentication rsa username %s harddisk:/publickey_aggregate.b64" % (user)
-                    addremove = addremovekey(module, commandtodo)
+                    cmdtodo = "admin crypto key import authentication rsa username %s harddisk:/publickey_aggregate.b64" % (user)
+                    addremove = addremovekey(module, cmdtodo)
             else:
-                commandtodo = "admin crypto key import authentication rsa username %s harddisk:/publickey_%s.b64" % (module.params['name'], module.params['name'])
-                addremove = addremovekey(module, commandtodo)
+                cmdtodo = "admin crypto key import authentication rsa username %s harddisk:/publickey_%s.b64" % (module.params['name'], module.params['name'])
+                addremove = addremovekey(module, cmdtodo)
     elif module.params['state'] == 'absent':
         if not module.check_mode:
             if module.params['aggregate']:
                 for user in module.params['aggregate']:
-                    commandtodo = "admin crypto key zeroize authentication rsa username %s" % (user)
-                    addremove = addremovekey(module, commandtodo)
+                    cmdtodo = "admin crypto key zeroize authentication rsa username %s" % (user)
+                    addremove = addremovekey(module, cmdtodo)
             else:
-                commandtodo = "admin crypto key zeroize authentication rsa username %s" % (module.params['name'])
-                addremove = addremovekey(module, commandtodo)
+                cmdtodo = "admin crypto key zeroize authentication rsa username %s" % (module.params['name'])
+                addremove = addremovekey(module, cmdtodo)
     elif module.params['purge'] is True:
         if not module.check_mode:
-            commandtodo = "admin crypto key zeroize authentication rsa all"
-            addremove = addremovekey(module, commandtodo)
+            cmdtodo = "admin crypto key zeroize authentication rsa all"
+            addremove = addremovekey(module, cmdtodo)
 
     module.exit_json(**result)
 
