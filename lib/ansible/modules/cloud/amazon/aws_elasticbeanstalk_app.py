@@ -111,11 +111,14 @@ def describe_app(ebs, app_name):
     return None if len(apps) != 1 else apps[0]
 
 
-def list_apps(ebs, app_name):
-    if app_name is not None:
-        apps = ebs.describe_applications(ApplicationNames=[app_name])
-    else:
-        apps = ebs.describe_applications()
+def list_apps(ebs, app_name, module):
+    try:
+        if app_name is not None:
+            apps = ebs.describe_applications(ApplicationNames=[app_name])
+        else:
+            apps = ebs.describe_applications()
+    except Exception as e:
+        module.fail_json_aws(e, msg="Could not describe application")
 
     return apps.get("Applications", [])
 
@@ -186,7 +189,7 @@ def main():
     else:
         module.fail_json(msg='region must be specified')
 
-    app = describe_app(ebs, app_name)
+    app = describe_app(ebs, app_name, module)
 
     if module.check_mode:
         check_app(ebs, app, module)
@@ -194,17 +197,24 @@ def main():
 
     if state == 'present':
         if app is None:
-            create_app = ebs.create_application(**filter_empty(ApplicationName=app_name,
-                                                Description=description))
+            try:
+                create_app = ebs.create_application(**filter_empty(ApplicationName=app_name,
+                                                    Description=description))
+            except Exception as e:
+                module.fail_json_aws(e, msg="Could not create application")
+
             app = describe_app(ebs, app_name)
 
             result = dict(changed=True, app=app)
         else:
             if app.get("Description", None) != description:
-                if not description:
-                    ebs.update_application(ApplicationName=app_name)
-                else:
-                    ebs.update_application(ApplicationName=app_name, Description=description)
+                try:
+                    if not description:
+                        ebs.update_application(ApplicationName=app_name)
+                    else:
+                        ebs.update_application(ApplicationName=app_name, Description=description)
+                except Exception as e:
+                    module.fail_json_aws(e, msg="Could not update application")
 
                 app = describe_app(ebs, app_name)
 
@@ -216,14 +226,14 @@ def main():
         if app is None:
             result = dict(changed=False, output='Application not found')
         else:
-            if terminate_by_force:
-                # Running environments will be terminated before deleting the application
-                ebs.delete_application(ApplicationName=app_name, TerminateEnvByForce=terminate_by_force)
-            else:
-                try:
+            try:
+                if terminate_by_force:
+                    # Running environments will be terminated before deleting the application
+                    ebs.delete_application(ApplicationName=app_name, TerminateEnvByForce=terminate_by_force)
+                else:
                     ebs.delete_application(ApplicationName=app_name)
-                except Exception as e:
-                    module.fail_json_aws(e, msg="Cannot terminate app with running environments")
+            except Exception as e:
+                module.fail_json_aws(e, msg="Cannot terminate app")
 
             result = dict(changed=True, app=app)
 
