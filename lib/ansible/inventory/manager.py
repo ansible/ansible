@@ -91,7 +91,7 @@ def split_host_pattern(pattern):
     # If it's got commas in it, we'll treat it as a straightforward
     # comma-separated list of patterns.
     if ',' in pattern:
-        patterns = re.split('\s*,\s*', pattern)
+        patterns = pattern.split(',')
 
     # If it doesn't, it could still be a single pattern. This accounts for
     # non-separator uses of colons: IPv6 addresses and [x:y] host ranges.
