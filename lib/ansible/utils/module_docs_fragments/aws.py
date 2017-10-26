@@ -25,27 +25,27 @@ options:
     description:
       - Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints).
         Ignored for modules where region is required. Must be specified for all other modules if region is not used.
-        If not set then the value of the EC2_URL environment variable, if any, is used.
+        If not set then the value of the C(EC2_URL) environment variable, if any, is used.
     required: false
     default: null
     aliases: []
   aws_secret_key:
     description:
-      - AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
-        If the server has an IAM role then the role's temporary key is used.
+      - AWS secret key. If not set then the value of the C(AWS_SECRET_ACCESS_KEY), C(AWS_SECRET_KEY), or C(EC2_SECRET_KEY) environment variable is used.
+        If the server has an IAM instance profile then the role's temporary key is used.
     required: false
     default: null
     aliases: [ 'ec2_secret_key', 'secret_key' ]
   aws_access_key:
     description:
-      - AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
-        If the server has an IAM role then the role's temporary key is used.
+      - AWS access key. If not set then the value of the C(AWS_ACCESS_KEY_ID), C(AWS_ACCESS_KEY) or C(EC2_ACCESS_KEY) environment variable is used.
+        If the server has an IAM instance profile then the role's temporary key is used.
     required: false
     default: null
     aliases: [ 'ec2_access_key', 'access_key' ]
   security_token:
     description:
-      - AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+      - AWS STS security token. If not set then the value of the C(AWS_SECURITY_TOKEN) or C(EC2_SECURITY_TOKEN) environment variable is used.
     required: false
     default: null
     aliases: [ 'access_token' ]
@@ -81,8 +81,9 @@ notes:
     C(AWS_SECRET_ACCESS_KEY) or C(AWS_SECRET_KEY) or C(EC2_SECRET_KEY),
     C(AWS_SECURITY_TOKEN) or C(EC2_SECURITY_TOKEN),
     C(AWS_REGION) or C(EC2_REGION)
-  - Ansible uses the boto configuration file (typically ~/.boto or ~/.aws) if no
-    credentials are provided. See http://boto.readthedocs.org/en/latest/boto_config_tut.html
+  - Ansible uses the boto configuration file (typically C(~/.aws/config) and C(~/.aws/credentials) or C(~/.boto)) if no
+    credentials are provided. See U(http://boto3.readthedocs.io/en/latest/guide/configuration.html)
+    and U(http://boto.readthedocs.io/en/latest/boto_config_tut.html).
   - C(AWS_REGION) or C(EC2_REGION) can be typically be used to specify the
     AWS region, when required, but this can also be configured in the boto config file
 """
