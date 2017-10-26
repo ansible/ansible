@@ -63,8 +63,8 @@ class ActionModule(_ActionModule):
             pc.private_key_file = provider['ssh_keyfile'] or self._play_context.private_key_file
             pc.timeout = provider['timeout'] or self._play_context.timeout
 
-            # mask no_log provider arguments
-            provider['password'] = '********' if provider['password'] else None
+            # remove auth from provider arguments
+            provider.pop('password', None)
 
             display.vvv('using connection plugin %s' % pc.connection, pc.remote_addr)
             connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
@@ -108,9 +108,11 @@ class ActionModule(_ActionModule):
             if provider.get('username') is None:
                 provider['username'] = self._play_context.connection_user
 
+            # copy auth to top level module arguments to correctly handle `no_log`.
             if self._task.args.get('password') is None:
                 self._task.args['password'] = provider['password'] or self._play_context.password
 
+            # remove auth from provider arguments
             provider.pop('password', None)
 
             if provider.get('use_ssl') is None:
