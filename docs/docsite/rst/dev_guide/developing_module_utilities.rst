@@ -22,7 +22,7 @@ The following is a list of module_utils files and a general description. The mod
 - ec2.py - Definitions and utilities for modules working with Amazon EC2
 - eos.py - Helper functions for modules working with EOS networking devices.
 - f5.py - Helper functions for modules working with F5 networking devices.
-- facts.py - Helper functions for modules that return facts.
+- facts.py - Helper functions for modules that return facts. (See https://github.com/ansible/ansible/pull/23012 for new location)
 - gce.py - Definitions and helper functions for modules that work with Google Compute Engine resources.
 - ios.py - Definitions and helper functions for modules that manage Cisco IOS networking devices
 - iosxr.py - Definitions and helper functions for modules that manage Cisco IOS-XR networking devices
