@@ -10,9 +10,12 @@ from copy import deepcopy
 from time import sleep
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.mlnxos import load_config, get_interfaces_config
-from ansible.module_utils.mlnxos import mlnxos_argument_spec, check_args
-from ansible.module_utils.network_common import conditional, remove_default_spec
+from ansible.module_utils.network_common import conditional, \
+    remove_default_spec
+
+from ansible.module_utils.mlnxos import get_interfaces_config
+from ansible.module_utils.mlnxos import mlnxos_argument_spec
+from ansible.modules.network.mlnxos import BaseMlnxosApp
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -106,27 +109,17 @@ commands:
 """
 
 
-class MlnxosInterface(object):
+class MlnxosInterfaceApp(BaseMlnxosApp):
 
-    def __init__(self):
+    def init_module(self):
         """ main entry point for module execution
         """
-        neighbors_spec = dict(
-            host=dict(),
-            port=dict()
-        )
-
         element_spec = dict(
             name=dict(),
             description=dict(),
             speed=dict(),
             mtu=dict(),
-            duplex=dict(choices=['full', 'half', 'auto']),
             enabled=dict(default=True, type='bool'),
-            tx_rate=dict(),
-            rx_rate=dict(),
-            neighbors=dict(type='list', elements='dict',
-                           options=neighbors_spec),
             delay=dict(default=10, type='int'),
             state=dict(default='present',
                        choices=['present', 'absent', 'up', 'down'])
@@ -154,38 +147,9 @@ class MlnxosInterface(object):
             required_one_of=required_one_of,
             mutually_exclusive=mutually_exclusive,
             supports_check_mode=True)
-        self._commands = list()
-        self._current_interfaces_config = list()
-        self._required_interfaces_config = list()
 
-    def main(self):
-        warnings = list()
-        check_args(self._module, warnings)
-
-        result = {'changed': False}
-        if warnings:
-            result['warnings'] = warnings
-
-        self.get_required_interfaces_config()
-        self.load_interfaces_config()
-
-        self.generate_commands()
-        result['commands'] = self._commands
-
-        if self._commands:
-            if not self._module.check_mode:
-                load_config(self._module, self._commands)
-            result['changed'] = True
-
-        failed_conditions = self.check_declarative_intent_params(result)
-
-        if failed_conditions:
-            msg = 'One or more conditional statements have not been satisfied'
-            self._module.fail_json(msg=msg, failed_conditions=failed_conditions)
-
-        self._module.exit_json(**result)
-
-    def get_required_interfaces_config(self):
+    def get_required_config(self):
+        self._required_config = list()
         module_params = self._module.params
         aggregate = module_params.get('aggregate')
         if aggregate:
@@ -202,7 +166,7 @@ class MlnxosInterface(object):
                 else:
                     d['disable'] = True
 
-                self._required_interfaces_config.append(d)
+                self._required_config.append(d)
 
         else:
             params = {
@@ -210,12 +174,8 @@ class MlnxosInterface(object):
                 'description': module_params['description'],
                 'speed': module_params['speed'],
                 'mtu': module_params['mtu'],
-                'duplex': module_params['duplex'],
                 'state': module_params['state'],
                 'delay': module_params['delay'],
-                'tx_rate': module_params['tx_rate'],
-                'rx_rate': module_params['rx_rate'],
-                'neighbors': module_params['neighbors']
             }
 
             self.validate_param_values(params)
@@ -224,23 +184,7 @@ class MlnxosInterface(object):
             else:
                 params.update({'disable': True})
 
-            self._required_interfaces_config.append(params)
-
-    def validate_mtu(self, value):
-        if value and not 1500 <= int(value) <= 9612:
-            self._module.fail_json(msg='mtu must be between 1500 and 9612')
-
-    def validate_param_values(self, obj, param=None):
-        if param is None:
-            param = self._module.params
-        for key in obj:
-            # validate the param value (if validator func exists)
-            try:
-                validator = getattr(self, 'validate_%s' % key)
-                if callable(validator):
-                    validator(param.get(key))
-            except AttributeError:
-                pass
+            self._required_config.append(params)
 
     @classmethod
     def get_config_attr(cls, item, arg):
@@ -278,7 +222,8 @@ class MlnxosInterface(object):
             self._commands.append(interface)
         self._commands.append(cmd)
 
-    def load_interfaces_config(self):
+    def load_current_config(self):
+        self._current_config = list()
         config = get_interfaces_config(self._module, "ethernet")
 
         for item in config:
@@ -290,17 +235,17 @@ class MlnxosInterface(object):
                 'disable': not self.get_admin_state(item),
                 'state': self.get_oper_state(item)
             }
-            self._current_interfaces_config.append(obj)
+            self._current_config.append(obj)
 
     def generate_commands(self):
         args = ('speed', 'description', 'mtu')
-        for req_if in self._required_interfaces_config:
+        for req_if in self._required_config:
             name = req_if['name']
             disable = req_if['disable']
             state = req_if['state']
 
             curr_if = self.search_obj_in_list(
-                name, self._current_interfaces_config)
+                name, self._current_config)
             interface = 'interface ' + name
 
             if state == 'absent' and curr_if:
@@ -337,7 +282,7 @@ class MlnxosInterface(object):
 
     def check_declarative_intent_params(self, result):
         failed_conditions = []
-        for req_if in self._required_interfaces_config:
+        for req_if in self._required_config:
             want_state = req_if.get('state')
             name = req_if['name']
             if want_state not in ('up', 'down'):
@@ -346,7 +291,7 @@ class MlnxosInterface(object):
             if result['changed']:
                 sleep(req_if['delay'])
             curr_if = self.search_obj_in_list(
-                name, self._current_interfaces_config)
+                name, self._current_config)
             curr_state = curr_if['state']
             if curr_state is None or not \
                     conditional(want_state, curr_state.strip()):
@@ -355,5 +300,4 @@ class MlnxosInterface(object):
 
 
 if __name__ == '__main__':
-    mlnxos_if = MlnxosInterface()
-    mlnxos_if.main()
+    MlnxosInterfaceApp.main()

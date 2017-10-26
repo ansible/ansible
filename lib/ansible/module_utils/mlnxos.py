@@ -91,18 +91,27 @@ def get_config(module, flags=None):
         return cfg
 
 
-def get_interfaces_config(module, interface_type, json_fmt=True):
+def get_interfaces_config(module, interface_type, json_fmt=True,
+                          summary=False):
     cmd = "show interfaces %s" % interface_type
+    if summary:
+        cmd += " summary"
     if json_fmt:
         cmd += " | json-print"
     if cmd in _DEVICE_CONFIGS:
         return _DEVICE_CONFIGS[cmd]
     rc, out, err = exec_command(module, cmd)
+    with open("/tmp/lag_data.txt", "w") as fp:
+        fp.write(out)
     if rc != 0:
         module.fail_json(
             msg='unable to retrieve current config',
             stderr=to_text(err, errors='surrogate_then_replace'))
     if json_fmt:
+        if out.startswith("show interfaces"):
+            out_list = out.split('\n', 1)
+            out = out_list[1]
+
         cfg = json.loads(out)
     else:
         cfg = to_text(out, errors='surrogate_then_replace').strip()
