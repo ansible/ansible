@@ -63,13 +63,11 @@
         state: present
       register: vpc_subnet_recreate
 
-    - name: assert recreation changed nothing (expected changed=true)
+    - name: assert recreation changed nothing (expected changed=false)
       assert:
         that:
            - 'not vpc_subnet_recreate.changed'
-           - 'vpc_subnet_recreate.subnet.id.startswith("subnet-")'
-           - '"Name" in vpc_subnet_recreate.subnet.tags and vpc_subnet_recreate.subnet.tags["Name"] == ec2_vpc_subnet_name'
-           - '"Description" in vpc_subnet_recreate.subnet.tags and vpc_subnet_recreate.subnet.tags["Description"] == ec2_vpc_subnet_description'
+           - 'vpc_subnet_recreate.subnet == vpc_subnet_create.subnet'
 
     - name: add invalid ipv6 block to subnet (expected failed)
       ec2_vpc_subnet:
@@ -284,11 +282,7 @@
       assert:
         that:
            - 'not vpc_subnet_ipv6_recreate.changed'
-           - 'vpc_subnet_ipv6_recreate.subnet.id.startswith("subnet-")'
-           - "vpc_subnet_ipv6_recreate.subnet.ipv6_cidr_block == '{{ vpc_ipv6_cidr | regex_replace('::/56', '::/64') }}'"
-           - '"Name" in vpc_subnet_ipv6_recreate.subnet.tags and vpc_subnet_ipv6_recreate.subnet.tags["Name"] == ec2_vpc_subnet_name'
-           - '"Description" in vpc_subnet_ipv6_recreate.subnet.tags and vpc_subnet_ipv6_recreate.subnet.tags["Description"] == ec2_vpc_subnet_description'
-           - 'vpc_subnet_ipv6_recreate.subnet.assign_ipv6_address_on_creation'
+           - 'vpc_subnet_ipv6_recreate.subnet == vpc_subnet_ipv6_create.subnet'
 
     - name: change subnet ipv6 attribute (expected changed=true)
       ec2_vpc_subnet:
