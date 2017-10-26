@@ -141,7 +141,6 @@
     that:
       - 'result.changed == true'
       - '"interface {{ test_interface }}" in result.commands'
-      - '"description test-interface-1" in result.commands'
       - '"mtu 1500" in result.commands'
       - '"interface {{ test_interface2 }}" in result.commands'
       - '"description test-interface-2" in result.commands'
