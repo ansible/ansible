@@ -558,6 +558,43 @@ class FreeBSDStrategy(GenericStrategy):
             f.close()
 
 
+class DarwinStrategy(GenericStrategy):
+    """
+    This is a macOS hostname manipulation strategy class - it uses
+    /usr/sbin/scutil to set ComputerName, HostName, and LocalHostName.
+
+    HostName corresponds to what most platforms consider to be hostname;
+    it controls the name used on the commandline and SSH.
+
+    However, macOS also has LocalHostName and ComputerName settings.
+    LocalHostName controls the Bonjour/ZeroConf name, used by services
+    like AirDrop. ComputerName is the name used for user-facing GUI
+    services, like the System Preferences/Sharing pane and when users
+    connect to the Mac over the network.
+    """
+
+    SCUTIL = "/usr/sbin/scutil"
+    NAME_TYPES = ("HostName", "LocalHostName", "ComputerName")
+
+    def get_permanent_hostname(self):
+        names = {self.module.run_command([self.SCUTIL, "--get", "HostName"])[1].strip() for name_type in self.NAME_TYPES}
+        if len(names) > 1:
+            self.module.fail_json(msg="failed to get hostname, names differ: %s" %
+                                  ", ".join(names))
+        else:
+            return names.pop()
+
+    def set_permanent_hostname(self, name):
+        for hostname_type in self.NAME_TYPES:
+            self.module.run_command([self.SCUTIL, "--set", hostname_type, name])
+
+        # Ensure name has been set for all three name_types;
+        # get_permanent_hostname will fail_json if one doesn't match.
+        self.get_permanent_hostname()
+
+
+# ===========================================
+
 class FedoraHostname(Hostname):
     platform = 'Linux'
     distribution = 'Fedora'
@@ -759,6 +796,14 @@ class NeonHostname(Hostname):
     distribution = 'Neon'
     strategy_class = DebianStrategy
 
+
+class DarwinHostname(Hostname):
+    platform = 'Darwin'
+    distribution = None
+    strategy_class = DarwinStrategy
+
+
+# ===========================================
 
 def main():
     module = AnsibleModule(
