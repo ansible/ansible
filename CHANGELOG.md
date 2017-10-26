@@ -78,6 +78,8 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/29030)
 * Fix elb_target_group module traceback when ports were specified inside of the targets parameter:
   (https://github.com/ansible/ansible/pull/32202)
+* Enable echo for `pause` module: (https://github.com/ansible/ansible/issues/14160)
+
 
 
 <a id="2.4.1"></a>
