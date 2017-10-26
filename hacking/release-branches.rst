@@ -1,4 +1,4 @@
-Mananging Release Branches
+Managing Release Branches
 ==========================
 
 
@@ -10,10 +10,11 @@ The procedure for protecting branches on GitHub is as follows:
 
 1. Navigate the the main repository page.
 2. Click **Settings**
-3. In the left menue, click **Branches**.
-4. Under Protected Branches, select the branch you want to restrict.
+3. In the left menu, click **Branches**.
+4. Under Protected Branches, click **Edit** for the branch you want to restrict.
 5. Select **Restrict who can push to this branch**.
 6. Search for and select the designated release manager.
-7. Click **Save changes**.
+7. Also select **Include administrators**.
+8. Click **Save changes**.
 
 Once the release has shipped, the restriction can be removed
