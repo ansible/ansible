@@ -1,5 +1,78 @@
 ---
-- block:
+
+- name: Test incomplete credentials with EC2_ELB
+
+  block:
+
+    # ============================================================
+
+    - name: test credential parameters
+      ec2_elb:
+        ec2_elbs: "{{ lb_name }}"
+        instance_id: i-xxxxxxxxxxxx
+        region: "{{ aws_region }}"
+        state: present
+      register: result
+      ignore_errors: true
+
+    - name: assert credential parameters
+      assert:
+        that:
+           - "result | failed"
+           - "'Unable to locate credentials' in result.msg"
+
+    # ============================================================
+
+    - name: test partial credentials
+      ec2_elb:
+        region: "{{ aws_region }}"
+        aws_access_key: "{{ aws_access_key }}"
+        # aws_secret_key: "{{ aws_secret_key }}"
+        # security_token: "{{ security_token }}"
+        state: present
+        ec2_elbs: "{{ lb_name }}"
+        instance_id: i-xxxxxxxxxxxx
+      register: result
+      ignore_errors: true
+
+    - name: assert task failed
+      assert:
+        that:
+          - "result | failed"
+          - "'Partial credentials found in explicit, missing: aws_secret_access_key' in result.msg"
+
+    # ============================================================
+
+    - name: test invalid profile
+      ec2_elb:
+        region: "{{ aws_region }}"
+        profile: notavalidprofile
+        state: present
+        ec2_elbs: "{{ lb_name }}"
+        instance_id: i-xxxxxxxxxxxx
+      register: result
+      ignore_errors: True
+
+    - name: assert task failed
+      assert:
+        that:
+          - "result | failed"
+          - "result.msg == 'Failed to create ELB client: The config profile (notavalidprofile) could not be found'"
+
+    # ============================================================
+
+- name: Test registering and deregistering instances with EC2_ELB
+
+  # ============================================================
+
+  # set credentials
+  environment:
+    AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
+    AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
+    AWS_SECURITY_TOKEN: "{{ security_token }}"
+    AWS_REGION: "{{ aws_region }}"
+
+  block:
 
     # ============================================================
 
@@ -11,10 +84,6 @@
       ec2_vpc_net:
         name: ansible_test
         cidr_block: 10.0.0.0/24
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
-        region: "{{ aws_region }}"
         tags:
           Name: ansible_test
         tenancy: default
@@ -24,18 +93,10 @@
       ec2_key:
         name: "{{ test_id }}_setup"
         state: present
-        region: "{{ aws_region }}"
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
       register: setup_key
 
     - name: create a subnet to use for creating an ec2 instance
       ec2_vpc_subnet:
-        region: "{{ aws_region }}"
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
         az: "{{ aws_region }}a"
         tags: "{{ test_id }}_setup"
         vpc_id: "{{ setup_vpc.vpc.id }}"
@@ -47,20 +108,12 @@
 
     - name: create an internet gateway for the VPC
       ec2_vpc_igw:
-        region: "{{ aws_region }}"
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
         vpc_id: "{{ setup_vpc.vpc.id }}"
         state: present
       register: setup_igw
 
     - name: add the internet gateway to the routing table
       ec2_vpc_route_table:
-        region: "{{ aws_region }}"
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
         vpc_id: "{{ setup_vpc.vpc.id }}"
         tags:
           Name: "{{ test_id }}"
@@ -73,10 +126,6 @@
     - name: create a security group for an instance
       ec2_group:
         name: "{{ test_id }}_setup"
-        region: "{{ aws_region }}"
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
         description: "created by Ansible integration tests"
         state: present
         vpc_id: "{{ setup_vpc.vpc.id }}"
@@ -93,10 +142,6 @@
 
     - name: provision instance to register/deregister with the ELB
       ec2:
-        region: "{{ aws_region }}"
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
         key_name: "{{ setup_key.key.name }}"
         instance_type: t2.micro
         assign_public_ip: yes
@@ -120,10 +165,6 @@
     - name: Create ELB
       ec2_elb_lb:
         name: "{{ lb_name }}"
-        region: "{{ aws_region }}"
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
         state: present
         cross_az_load_balancing: true
         security_group_ids:
@@ -138,14 +179,13 @@
             load_balancer_port: 8080
             instance_port: 8080
         health_check:
-            ping_protocol: tcp
-            #ping_protocol: http
-            ping_port: 80
-            ping_path: "/"
-            response_timeout: 5
-            interval: 30
-            unhealthy_threshold: 4
-            healthy_threshold: 2
+          ping_protocol: tcp
+          ping_port: 80
+          ping_path: "/"
+          response_timeout: 5
+          interval: 30
+          unhealthy_threshold: 4
+          healthy_threshold: 2
 
     # ============================================================
 
@@ -155,10 +195,6 @@
 
     - name: run module without providing required options
       ec2_elb:
-        region: "{{ aws_region }}"
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
       register: result
       ignore_errors: yes
 
@@ -170,31 +206,11 @@
 
     # ============================================================
 
-    - name: test credential parameters
-      ec2_elb:
-        ec2_elbs: "{{ lb_name }}"
-        instance_id: i-xxxxxxxx
-        region: "{{ aws_region }}"
-        state: present
-      register: result
-      ignore_errors: true
-
-    - name: assert credential parameters
-      assert:
-        that:
-           - "result.failed"
-           - "result.msg == 'Unable to locate credentials'"
-
-    # ============================================================
-
     - name: test invalid region parameter
       ec2_elb:
         ec2_elbs: "{{ lb_name }}"
         instance_id: i-xxxxxxxx
         region: "asdf querty 1234"
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
         state: present
       register: result
       ignore_errors: true
@@ -202,36 +218,12 @@
     - name: assert invalid region parameter
       assert:
         that:
-           - "result.failed"
-
-    # ============================================================
-
-    - name: test partial credentials
-      ec2_elb:
-        region: "{{ aws_region }}"
-        aws_access_key: "{{ aws_access_key }}"
-        # aws_secret_key: "{{ aws_secret_key }}"
-        # security_token: "{{ security_token }}"
-        state: present
-        ec2_elbs: "{{ lb_name }}"
-        instance_id: "{{ setup_instance.instance_ids[0] }}"
-      register: result
-      ignore_errors: true
-
-    - name: assert task failed
-      assert:
-        that:
-          - "result.failed"
-          - "'Partial credentials found in explicit, missing: aws_secret_access_key' in result.msg"
+           - "result | failed"
 
     # ============================================================
 
     - name: register instance with load balancer with wait
       ec2_elb:
-        region: "{{ aws_region }}"
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
         ec2_elbs: "{{ lb_name }}"
         instance_id: "{{ setup_instance.instance_ids[0] }}"
         state: present
@@ -249,10 +241,6 @@
 
     - name: assert that running the same task changes nothing
       ec2_elb:
-        region: "{{ aws_region }}"
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
         ec2_elbs: "{{ lb_name }}"
         instance_id: "{{ setup_instance.instance_ids[0] }}"
         state: present
@@ -270,10 +258,6 @@
 
     - name: try to register an invalid instance
       ec2_elb:
-        region: "{{ aws_region }}"
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
         ec2_elbs: "{{ lb_name }}"
         instance_id: i-xxxxxxxxxxxxxxxxx
         state: present
@@ -284,17 +268,13 @@
     - name: assert failure
       assert:
         that:
-          - "result.failed"
+          - "result | failed"
           - "'Invalid id' in result.msg"
 
     # ============================================================
 
     - name: deregister the instance with wait
       ec2_elb:
-        region: "{{ aws_region }}"
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
         ec2_elbs: "{{ lb_name }}"
         instance_id: "{{ setup_instance.instance_ids[0] }}"
         state: absent
@@ -311,10 +291,6 @@
 
     - name: register the instance without specifying load balancers
       ec2_elb:
-        region: "{{ aws_region }}"
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
         instance_id: "{{ setup_instance.instance_ids[0] }}"
         state: present
         wait: yes
@@ -331,10 +307,6 @@
 
     - name: register instance with load balancer for the following task
       ec2_elb:
-        region: "{{ aws_region }}"
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
         ec2_elbs: "{{ lb_name }}"
         instance_id: "{{ setup_instance.instance_ids[0] }}"
         state: present
@@ -343,10 +315,6 @@
 
     - name: deregister instance without specifying load balancers
       ec2_elb:
-        region: "{{ aws_region }}"
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
         instance_id: "{{ setup_instance.instance_ids[0] }}"
         state: absent
         wait: yes
@@ -364,10 +332,6 @@
 
     - name: test that trying to deregister the instance again changes nothing
       ec2_elb:
-        region: "{{ aws_region }}"
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
         ec2_elbs: "{{ lb_name }}"
         instance_id: "{{ setup_instance.instance_ids[0] }}"
         state: absent
@@ -384,10 +348,6 @@
 
     - name: register the instance without waiting
       ec2_elb:
-        region: "{{ aws_region }}"
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
         ec2_elbs: "{{ lb_name }}"
         instance_id: "{{ setup_instance.instance_ids[0] }}"
         state: present
@@ -404,10 +364,6 @@
 
     - name: test deregistering the instance without waiting
       ec2_elb:
-        region: "{{ aws_region }}"
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
         ec2_elbs: "{{ lb_name }}"
         instance_id: "{{ setup_instance.instance_ids[0] }}"
         state: absent
@@ -433,20 +389,12 @@
     - name: remove the test load balancer completely
       ec2_elb_lb:
         name: "{{ lb_name }}"
-        region: "{{ aws_region }}"
         state: absent
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
       ignore_errors: true
 
     - name: Remove the instance
       ec2:
         instance_ids: "{{ setup_instance.instance_ids }}"
-        region: "{{ aws_region }}"
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
         key_name: "{{ setup_key.key.name }}"
         instance_type: t2.micro
         state: absent
@@ -461,19 +409,11 @@
       ec2_key:
         name: "{{ test_id }}_setup"
         state: absent
-        region: "{{ aws_region }}"
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
       ignore_errors: true
 
     - name: remove security group
       ec2_group:
         name: "{{ test_id }}_setup"
-        region: "{{ aws_region }}"
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
         description: "created by Ansible integration tests"
         state: absent
         vpc_id: "{{ setup_vpc.vpc.id }}"
@@ -481,10 +421,6 @@
 
     - name: remove the internet gateway from the routing table
       ec2_vpc_route_table:
-        region: "{{ aws_region }}"
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
         vpc_id: "{{ setup_vpc.vpc.id }}"
         state: absent
         tags:
@@ -498,20 +434,12 @@
 
     - name: remove internet gateway
       ec2_vpc_igw:
-        region: "{{ aws_region }}"
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
         vpc_id: "{{ setup_vpc.vpc.id }}"
         state: absent
       ignore_errors: true
 
     - name: remove subnet
       ec2_vpc_subnet:
-        region: "{{ aws_region }}"
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
         az: "{{ aws_region }}a"
         tags: "{{ test_id }}_setup"
         vpc_id: "{{ setup_vpc.vpc.id }}"
@@ -525,10 +453,6 @@
       ec2_vpc_net:
         name: ansible_test
         cidr_block: 10.0.0.0/24
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
-        region: "{{ aws_region }}"
         state: absent
         tags:
           Name: ansible_test

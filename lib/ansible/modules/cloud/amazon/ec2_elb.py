@@ -345,7 +345,7 @@ class ElbManager:
         try:
             ec2 = boto3_conn(self.module, conn_type='client', resource='ec2', region=self.region, **self.aws_connect_params)
         except botocore.exceptions.ProfileNotFound as e:
-            self.module.fail_json_aws(e)
+            self.module.fail_json_aws(e, msg="Failed to create EC2 client")
 
         instances = self.retry_get_only_instances(ec2, instance_ids=[self.instance_id])
         if instances:
@@ -385,13 +385,13 @@ def main():
     try:
         client = boto3_conn(module, conn_type='client', resource='elb', region=region, **aws_connect_params)
     except (botocore.exceptions.ProfileNotFound, botocore.exceptions.PartialCredentialsError) as e:
-        module.fail_json_aws(e)
+        module.fail_json_aws(e, msg="Failed to create ELB client")
 
     elb_man = ElbManager(module, instance_id, ec2_elbs, region=region, **aws_connect_params)
     try:
         elb_man.lbs = elb_man._get_instance_lbs(client, ec2_elbs)
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-        module.fail_json_aws(e)
+        module.fail_json_aws(e, msg="Failed to get ELBs attached to instance_id: %s" % instance_id)
 
     if ec2_elbs is not None:
         for elb in ec2_elbs:
