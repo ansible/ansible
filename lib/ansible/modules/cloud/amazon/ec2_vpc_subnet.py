@@ -124,6 +124,9 @@ def subnet_exists(conn, subnet_id):
 
 def create_subnet(conn, module, vpc_id, cidr, az, check_mode):
     try:
+        # Specifying the availability zone is optional.
+        if not az:
+            az = ''
         new_subnet = get_subnet_info(conn.create_subnet(VpcId=vpc_id, CidrBlock=cidr, AvailabilityZone=az))
         # Sometimes AWS takes its time to create a subnet and so using
         # new subnets's id to do things like create tags results in
