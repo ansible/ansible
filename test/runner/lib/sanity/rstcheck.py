@@ -15,6 +15,7 @@ from lib.util import (
     SubprocessError,
     run_command,
     parse_to_dict,
+    find_executable,
 )
 
 from lib.config import (
@@ -39,7 +40,8 @@ class RstcheckTest(SanitySingleVersion):
             return SanitySkipped(self.name)
 
         cmd = [
-            'rstcheck',
+            'python%s' % args.python_version,
+            find_executable('rstcheck'),
             '--report', 'warning',
             '--ignore-substitutions', ','.join(ignore_substitutions),
         ] + paths
