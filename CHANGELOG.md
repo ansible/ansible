@@ -59,6 +59,9 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/31818)
 * Allow the apt module's autoremove parameter to take effect in upgrades:
   (https://github.com/ansible/ansible/pull/30747)
+* When creating a new use via eos_user, create the user before setting the
+  user's privilege level: (https://github.com/ansible/ansible/pull/32162)
+
 
 
 <a id="2.4.1"></a>
