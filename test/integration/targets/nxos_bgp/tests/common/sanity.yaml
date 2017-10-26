@@ -2,10 +2,10 @@
 - debug: msg="START TRANSPORT:{{ connection.transport }} nxos_bgp sanity test"
 
 - set_fact: neighbor_down_fib_accelerate="true"
-  when: (titanium is defined) and not ((titanium | search('true')))
+  when: not titanium
 
 - set_fact: reconnect_interval="55"
-  when: (titanium is defined) and not ((titanium | search('true')))
+  when: not titanium
 
 - name: "Enable feature BGP"
   nxos_feature:
