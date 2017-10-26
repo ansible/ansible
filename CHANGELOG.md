@@ -32,6 +32,14 @@ Ansible Changes By Release
 * Add documentation about writing unittests for Ansible
 * Fix bugs in get_url/uri's SNI and TLS version handling when used on systems
   that have Python-2.7.9+ and urllib3 installed.
+* Have ansible-pull process inventory in its own way.  Fixes issues with
+  ansible-pull not using the correct inventory,  especially for localhost
+  (https://github.com/ansible/ansible/pull/32135)
+* Fix the service module to correctly detect which type of init system is
+  present on the host. (https://github.com/ansible/ansible/pull/32086)
+* Fix inventory patterns to convert to strings before processing:
+  (https://github.com/ansible/ansible/issues/31978)
+
 
 <a id="2.4.1"></a>
 
