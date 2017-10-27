@@ -94,6 +94,8 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/32335)
 * Fix ios integration tests:
   (https://github.com/ansible/ansible/pull/32342)
+* Ensure there is always a basdir so we always pickup group/host_vars
+  https://github.com/ansible/ansible/pull/32269
 
 
 <a id="2.4.1"></a>
