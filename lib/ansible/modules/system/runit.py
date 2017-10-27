@@ -265,6 +265,9 @@ def main():
     changed = False
     orig_state = sv.report()
 
+    if not sv.svc_cmd:
+        module.fail_json(msg="Could not find sv binary. Please ensure it is installed.")
+
     if enabled is not None and enabled != sv.enabled:
         changed = True
         if not module.check_mode:
