@@ -705,7 +705,7 @@ class Templar:
             if fail_on_undefined:
                 raise AnsibleUndefinedVariable(e)
             else:
-                # TODO: return warning about undefined var
+                display.debug("Ignoring undefined failure: %s" % to_text(e))
                 return data
 
     # for backwards compatibility in case anyone is using old private method directly
