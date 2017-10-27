@@ -49,6 +49,7 @@ options:
             - if yes, remove the policy from the repository
         required: false
         default: false
+        version_added: '2.5'
     lifecycle_policy:
         description:
             - JSON or dict that represents the new lifecycle policy
