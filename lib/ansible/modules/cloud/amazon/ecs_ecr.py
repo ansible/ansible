@@ -311,7 +311,7 @@ def sort_lists_of_strings(policy):
     return policy
 
 
-def run(ecr, params, verbosity):
+def run(ecr, params):
     # type: (EcsEcr, dict, int) -> Tuple[bool, dict]
     result = {}
     try:
@@ -360,11 +360,7 @@ def run(ecr, params, verbosity):
                 original_lifecycle_policy = \
                     ecr.get_lifecycle_policy(registry_id, name)
 
-                if verbosity >= 2:
-                    result['lifecycle_policy'] = None
-
-                if verbosity >= 3:
-                    result['original_lifecycle_policy'] = original_lifecycle_policy
+                result['lifecycle_policy'] = None
 
                 if original_lifecycle_policy:
                     ecr.delete_lifecycle_policy(registry_id, name)
@@ -373,18 +369,14 @@ def run(ecr, params, verbosity):
             elif lifecycle_policy_text is not None:
                 try:
                     lifecycle_policy = sort_json_policy_dict(lifecycle_policy)
-                    if verbosity >= 2:
-                        result['lifecycle_policy'] = lifecycle_policy
+                    result['lifecycle_policy'] = lifecycle_policy
+
                     original_lifecycle_policy = ecr.get_lifecycle_policy(
                         registry_id, name)
 
                     if original_lifecycle_policy:
                         original_lifecycle_policy = sort_json_policy_dict(
                             original_lifecycle_policy)
-
-                    if verbosity >= 3:
-                        result['original_lifecycle_policy'] = \
-                            original_lifecycle_policy
 
                     if original_lifecycle_policy != lifecycle_policy:
                         ecr.put_lifecycle_policy(registry_id, name,
@@ -399,11 +391,7 @@ def run(ecr, params, verbosity):
             if purge_policy:
                 original_policy = ecr.get_repository_policy(registry_id, name)
 
-                if verbosity >= 2:
-                    result['policy'] = None
-
-                if verbosity >= 3:
-                    result['original_policy'] = original_policy
+                result['policy'] = None
 
                 if original_policy:
                     ecr.delete_repository_policy(registry_id, name)
@@ -414,16 +402,12 @@ def run(ecr, params, verbosity):
                     # Sort any lists containing only string types
                     policy = sort_lists_of_strings(policy)
 
-                    if verbosity >= 2:
-                        result['policy'] = policy
+                    result['policy'] = policy
+
                     original_policy = ecr.get_repository_policy(
                         registry_id, name)
-
                     if original_policy:
                         original_policy = sort_lists_of_strings(original_policy)
-
-                    if verbosity >= 3:
-                        result['original_policy'] = original_policy
 
                     if compare_policies(original_policy, policy):
                         ecr.set_repository_policy(
@@ -467,7 +451,8 @@ def main():
                    default='present'),
         force_set_policy=dict(required=False, type='bool', default=False),
         policy=dict(required=False, type='json'),
-        delete_policy=dict(required=False, type='bool', removed_in_version='2.5'),
+        delete_policy=dict(required=False, type='bool',
+                           removed_in_version='2.5'),
         purge_policy=dict(required=False, type='bool'),
         lifecycle_policy=dict(required=False, type='json'),
         purge_lifecycle_policy=dict(required=False, type='bool')))
@@ -482,7 +467,7 @@ def main():
         module.fail_json(msg='boto3 required for this module')
 
     ecr = EcsEcr(module)
-    passed, result = run(ecr, module.params, module._verbosity)
+    passed, result = run(ecr, module.params)
 
     if passed:
         module.exit_json(**result)
