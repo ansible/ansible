@@ -112,8 +112,6 @@ def parse_cli(output, tmpl):
                 match_end = end_block.match(line)
 
                 if match_start:
-                    if lines:
-                        blocks.append('\n'.join(lines))
                     lines = list()
                     lines.append(line)
                     block_started = True
@@ -121,6 +119,7 @@ def parse_cli(output, tmpl):
                 elif match_end:
                     if lines:
                         lines.append(line)
+                        blocks.append('\n'.join(lines))
                     block_started = False
 
                 elif block_started:
