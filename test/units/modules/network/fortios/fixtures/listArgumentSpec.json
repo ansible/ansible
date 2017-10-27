@@ -1,0 +1,1082 @@
+{
+  "interface_arg_spec": {
+      "netflow-sampler": {
+        "type": "str",
+        "options": [
+          "disable",
+          "tx",
+          "rx",
+          "both"
+        ]
+      },
+      "gwdetect": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "device-netscan": {
+        "type": "str",
+        "options": [
+          "disable",
+          "enable"
+        ]
+      },
+      "fail-alert-method": {
+        "type": "str",
+        "options": [
+          "link-failed-signal",
+          "link-down"
+        ]
+      },
+      "spillover-threshold": {
+        "type": "int"
+      },
+      "scan-botnet-connections": {
+        "type": "str",
+        "options": [
+          "disable",
+          "block",
+          "monitor"
+        ]
+      },
+      "macaddr": {
+        "type": "str"
+      },
+      "stpforward": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "pppoe-unnumbered-negotiate": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "sample-direction": {
+        "type": "str",
+        "options": [
+          "tx",
+          "rx",
+          "both"
+        ]
+      },
+      "pptp-client": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "speed": {
+        "type": "str",
+        "options": [
+          "auto",
+          "10full",
+          "10half",
+          "100full",
+          "100half",
+          "1000full",
+          "1000half",
+          "1000auto"
+        ]
+      },
+      "vlanforward": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "replacemsg-override-group": {
+        "type": "str"
+      },
+      "member": {
+        "type": "list",
+        "options": {
+          "interface-name": {
+            "type": "str"
+          }
+        }
+      },
+      "lldp-transmission": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable",
+          "vdom"
+        ]
+      },
+      "bfd": {
+        "type": "str",
+        "options": [
+          "global",
+          "enable",
+          "disable"
+        ]
+      },
+      "ips-sniffer-mode": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "drop-overlapped-fragment": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "detectserver": {
+        "type": "str"
+      },
+      "dhcp-client-identifier": {
+        "type": "str"
+      },
+      "security-groups": {
+        "type": "list",
+        "options": {
+          "name": {
+            "type": "str"
+          }
+        }
+      },
+      "dhcp-relay-type": {
+        "type": "str",
+        "options": [
+          "regular",
+          "ipsec"
+        ]
+      },
+      "distance": {
+        "type": "int"
+      },
+      "trust-ip-1": {
+        "type": "str"
+      },
+      "trust-ip-3": {
+        "type": "str"
+      },
+      "trust-ip-2": {
+        "type": "str"
+      },
+      "pptp-user": {
+        "type": "str"
+      },
+      "password": {
+        "type": "str"
+      },
+      "device-identification": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "polling-interval": {
+        "type": "int"
+      },
+      "explicit-ftp-proxy": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "name": {
+        "type": "str"
+      },
+      "lcp-echo-interval": {
+        "type": "int"
+      },
+      "ipmac": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "mode": {
+        "type": "str",
+        "options": [
+          "static",
+          "dhcp",
+          "pppoe"
+        ]
+      },
+      "ha-priority": {
+        "type": "int"
+      },
+      "security-external-logout": {
+        "type": "str"
+      },
+      "inbandwidth": {
+        "type": "int"
+      },
+      "defaultgw": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "padt-retry-timeout": {
+        "type": "int"
+      },
+      "weight": {
+        "type": "int"
+      },
+      "sflow-sampler": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "drop-fragment": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "broadcast-forticlient-discovery": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "service-name": {
+        "type": "str"
+      },
+      "forward-domain": {
+        "type": "int"
+      },
+      "mtu": {
+        "type": "int"
+      },
+      "pptp-timeout": {
+        "type": "int"
+      },
+      "auth-type": {
+        "type": "str",
+        "options": [
+          "auto",
+          "pap",
+          "chap",
+          "mschapv1",
+          "mschapv2"
+        ]
+      },
+      "fortilink-stacking": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "device-user-identification": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "idle-timeout": {
+        "type": "int"
+      },
+      "vlanid": {
+        "type": "int"
+      },
+      "lacp-mode": {
+        "type": "str",
+        "options": [
+          "static",
+          "passive",
+          "active"
+        ]
+      },
+      "vrrp": {
+        "type": "list",
+        "options": {
+          "status": {
+            "type": "str",
+            "options": [
+              "enable",
+              "disable"
+            ]
+          },
+          "priority": {
+            "type": "int"
+          },
+          "adv-interval": {
+            "type": "int"
+          },
+          "start-time": {
+            "type": "int"
+          },
+          "vrid": {
+            "type": "int"
+          },
+          "vrgrp": {
+            "type": "int"
+          },
+          "preempt": {
+            "type": "str",
+            "options": [
+              "enable",
+              "disable"
+            ]
+          },
+          "vrdst": {
+            "type": "str"
+          },
+          "vrip": {
+            "type": "str"
+          }
+        }
+      },
+      "ping-serv-status": {
+        "type": "int"
+      },
+      "pptp-password": {
+        "type": "str"
+      },
+      "vindex": {
+        "type": "int"
+      },
+      "fortiheartbeat": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "devindex": {
+        "type": "int"
+      },
+      "l2forward": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "ap-discover": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "interface": {
+        "type": "str"
+      },
+      "vdom": {
+        "type": "str"
+      },
+      "trust-ip6-2": {
+        "type": "str"
+      },
+      "security-mac-auth-bypass": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "fail-action-on-extender": {
+        "type": "str",
+        "options": [
+          "soft-restart",
+          "hard-restart",
+          "reboot"
+        ]
+      },
+      "trust-ip6-1": {
+        "type": "str"
+      },
+      "priority-override": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "ingress-spillover-threshold": {
+        "type": "int"
+      },
+      "wccp": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "wins-ip": {
+        "type": "str"
+      },
+      "dedicated-to": {
+        "type": "str",
+        "options": [
+          "none",
+          "management"
+        ]
+      },
+      "fail-detect-option": {
+        "type": "str",
+        "options": [
+          "detectserver",
+          "link-down"
+        ]
+      },
+      "detected-peer-mtu": {
+        "type": "int"
+      },
+      "managed-device": {
+        "type": "list",
+        "options": {
+          "name": {
+            "type": "str"
+          }
+        }
+      },
+      "switch-controller-radius-server": {
+        "type": "str"
+      },
+      "color": {
+        "type": "int"
+      },
+      "bfd-desired-min-tx": {
+        "type": "int"
+      },
+      "pptp-auth-type": {
+        "type": "str",
+        "options": [
+          "auto",
+          "pap",
+          "chap",
+          "mschapv1",
+          "mschapv2"
+        ]
+      },
+      "bfd-detect-mult": {
+        "type": "int"
+      },
+      "explicit-web-proxy": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "outbandwidth": {
+        "type": "int"
+      },
+      "broadcast-forward": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "ident-accept": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "stpforward-mode": {
+        "type": "str",
+        "options": [
+          "rpl-all-ext-id",
+          "rpl-bridge-ext-id",
+          "rpl-nothing"
+        ]
+      },
+      "ipunnumbered": {
+        "type": "str"
+      },
+      "security-exempt-list": {
+        "type": "str"
+      },
+      "cli-conn-status": {
+        "type": "int"
+      },
+      "priority": {
+        "type": "int"
+      },
+      "subst": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "dns-server-override": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "netbios-forward": {
+        "type": "str",
+        "options": [
+          "disable",
+          "enable"
+        ]
+      },
+      "type": {
+        "type": "str",
+        "options": [
+          "physical",
+          "vlan",
+          "aggregate",
+          "redundant",
+          "tunnel",
+          "vdom-link",
+          "loopback",
+          "switch",
+          "hard-switch",
+          "vap-switch",
+          "wl-mesh",
+          "fext-wan",
+          "hdlc",
+          "switch-vlan"
+        ]
+      },
+      "vrrp-virtual-mac": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "username": {
+        "type": "str"
+      },
+      "trust-ip6-3": {
+        "type": "str"
+      },
+      "disc-retry-timeout": {
+        "type": "int"
+      },
+      "ipv6": {
+        "type": "dict",
+        "options": {
+          "ip6-allowaccess": {
+            "type": "str",
+            "options": [
+              "ping",
+              "https",
+              "ssh",
+              "snmp",
+              "http",
+              "telnet",
+              "fgfm",
+              "capwap"
+            ]
+          },
+          "ip6-retrans-time": {
+            "type": "int"
+          },
+          "dhcp6-client-options": {
+            "type": "str",
+            "options": [
+              "rapid",
+              "iapd",
+              "iana",
+              "dns",
+              "dnsname"
+            ]
+          },
+          "ip6-other-flag": {
+            "type": "str",
+            "options": [
+              "enable",
+              "disable"
+            ]
+          },
+          "dhcp6-prefix-hint": {
+            "type": "str"
+          },
+          "ip6-dns-server-override": {
+            "type": "str",
+            "options": [
+              "enable",
+              "disable"
+            ]
+          },
+          "ip6-address": {
+            "type": "str"
+          },
+          "ip6-min-interval": {
+            "type": "int"
+          },
+          "dhcp6-prefix-delegation": {
+            "type": "str",
+            "options": [
+              "enable",
+              "disable"
+            ]
+          },
+          "ip6-delegated-prefix-list": {
+            "type": "list",
+            "options": {
+              "subnet": {
+                "type": "str"
+              },
+              "upstream-interface": {
+                "type": "str"
+              },
+              "autonomous-flag": {
+                "type": "str",
+                "options": [
+                  "enable",
+                  "disable"
+                ]
+              },
+              "prefix-id": {
+                "type": "int"
+              },
+              "onlink-flag": {
+                "type": "str",
+                "options": [
+                  "enable",
+                  "disable"
+                ]
+              }
+            }
+          },
+          "ip6-prefix-list": {
+            "type": "list",
+            "options": {
+              "valid-life-time": {
+                "type": "int"
+              },
+              "prefix": {
+                "type": "str"
+              },
+              "autonomous-flag": {
+                "type": "str",
+                "options": [
+                  "enable",
+                  "disable"
+                ]
+              },
+              "onlink-flag": {
+                "type": "str",
+                "options": [
+                  "enable",
+                  "disable"
+                ]
+              },
+              "preferred-life-time": {
+                "type": "int"
+              }
+            }
+          },
+          "ip6-link-mtu": {
+            "type": "int"
+          },
+          "ip6-default-life": {
+            "type": "int"
+          },
+          "ip6-manage-flag": {
+            "type": "str",
+            "options": [
+              "enable",
+              "disable"
+            ]
+          },
+          "dhcp6-relay-type": {
+            "type": "str",
+            "options": [
+              "regular"
+            ]
+          },
+          "dhcp6-relay-ip": {
+            "type": "str"
+          },
+          "dhcp6-relay-service": {
+            "type": "str",
+            "options": [
+              "disable",
+              "enable"
+            ]
+          },
+          "ip6-mode": {
+            "type": "str",
+            "options": [
+              "static",
+              "dhcp",
+              "pppoe",
+              "delegated"
+            ]
+          },
+          "ip6-hop-limit": {
+            "type": "int"
+          },
+          "ip6-subnet": {
+            "type": "str"
+          },
+          "ip6-reachable-time": {
+            "type": "int"
+          },
+          "dhcp6-prefix-hint-vlt": {
+            "type": "int"
+          },
+          "ip6-extra-addr": {
+            "type": "list",
+            "options": {
+              "prefix": {
+                "type": "str"
+              }
+            }
+          },
+          "dhcp6-prefix-hint-plt": {
+            "type": "int"
+          },
+          "ip6-max-interval": {
+            "type": "int"
+          },
+          "ip6-send-adv": {
+            "type": "str",
+            "options": [
+              "enable",
+              "disable"
+            ]
+          },
+          "autoconf": {
+            "type": "str",
+            "options": [
+              "enable",
+              "disable"
+            ]
+          },
+          "ip6-upstream-interface": {
+            "type": "str"
+          }
+        }
+      },
+      "fortilink-backup-link": {
+        "type": "int"
+      },
+      "sample-rate": {
+        "type": "int"
+      },
+      "external": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "fortilink": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "dhcp-relay-service": {
+        "type": "str",
+        "options": [
+          "disable",
+          "enable"
+        ]
+      },
+      "detectprotocol": {
+        "type": "str",
+        "options": [
+          "ping",
+          "tcp-echo",
+          "udp-echo"
+        ]
+      },
+      "mtu-override": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "min-links": {
+        "type": "int"
+      },
+      "icmp-redirect": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "ip": {
+        "type": "str"
+      },
+      "tcp-mss": {
+        "type": "int"
+      },
+      "ac-name": {
+        "type": "str"
+      },
+      "fortilink-split-interface": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "switch-controller-auth": {
+        "type": "str",
+        "options": [
+          "usergroup",
+          "radius"
+        ]
+      },
+      "bfd-required-min-rx": {
+        "type": "int"
+      },
+      "dhcp-relay-ip": {
+        "type": "str"
+      },
+      "min-links-down": {
+        "type": "str",
+        "options": [
+          "operational",
+          "administrative"
+        ]
+      },
+      "endpoint-compliance": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "auto-auth-extension-device": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "switch": {
+        "type": "str"
+      },
+      "security-redirect-url": {
+        "type": "str"
+      },
+      "ndiscforward": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "device-access-list": {
+        "type": "str"
+      },
+      "internal": {
+        "type": "int"
+      },
+      "role": {
+        "type": "str",
+        "options": [
+          "lan",
+          "wan",
+          "dmz",
+          "undefined"
+        ]
+      },
+      "allowaccess": {
+        "type": "str",
+        "options": [
+          "ping",
+          "https",
+          "ssh",
+          "snmp",
+          "http",
+          "telnet",
+          "fgfm",
+          "auto-ipsec",
+          "radius-acct",
+          "probe-response",
+          "capwap"
+        ]
+      },
+      "lacp-ha-slave": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "estimated-upstream-bandwidth": {
+        "type": "int"
+      },
+      "snmp-index": {
+        "type": "int"
+      },
+      "lacp-speed": {
+        "type": "str",
+        "options": [
+          "slow",
+          "fast"
+        ]
+      },
+      "estimated-downstream-bandwidth": {
+        "type": "int"
+      },
+      "description": {
+        "type": "str"
+      },
+      "security-external-web": {
+        "type": "str"
+      },
+      "fail-alert-interfaces": {
+        "type": "list",
+        "options": {
+          "name": {
+            "type": "str"
+          }
+        }
+      },
+      "pptp-server-ip": {
+        "type": "str"
+      },
+      "secondary-IP": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "device-identification-active-scan": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "security-mode": {
+        "type": "str",
+        "options": [
+          "none",
+          "captive-portal",
+          "802.1X"
+        ]
+      },
+      "aggregate": {
+        "type": "str"
+      },
+      "remote-ip": {
+        "type": "str"
+      },
+      "algorithm": {
+        "type": "str",
+        "options": [
+          "L2",
+          "L3",
+          "L4"
+        ]
+      },
+      "lcp-max-echo-fails": {
+        "type": "int"
+      },
+      "redundant-interface": {
+        "type": "str"
+      },
+      "alias": {
+        "type": "str"
+      },
+      "substitute-dst-mac": {
+        "type": "str"
+      },
+      "status": {
+        "type": "str",
+        "options": [
+          "up",
+          "down"
+        ]
+      },
+      "arpforward": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "secondaryip": {
+        "type": "list",
+        "options": {
+          "gwdetect": {
+            "type": "str",
+            "options": [
+              "enable",
+              "disable"
+            ]
+          },
+          "detectprotocol": {
+            "type": "str",
+            "options": [
+              "ping",
+              "tcp-echo",
+              "udp-echo"
+            ]
+          },
+          "ip": {
+            "type": "str"
+          },
+          "detectserver": {
+            "type": "str"
+          },
+          "allowaccess": {
+            "type": "str",
+            "options": [
+              "ping",
+              "https",
+              "ssh",
+              "snmp",
+              "http",
+              "telnet",
+              "fgfm",
+              "auto-ipsec",
+              "radius-acct",
+              "probe-response",
+              "capwap"
+            ]
+          },
+          "ping-serv-status": {
+            "type": "int"
+          },
+          "ha-priority": {
+            "type": "int"
+          },
+          "id": {
+            "type": "int"
+          }
+        }
+      },
+      "link-up-delay": {
+        "type": "int"
+      },
+      "fail-detect": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      }
+    }
+}

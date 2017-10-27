@@ -1,0 +1,947 @@
+{
+  "system_global_arg_spec": {
+      "traffic-priority": {
+        "type": "str",
+        "options": [
+          "tos",
+          "dscp"
+        ]
+      },
+      "reboot-upon-config-restore": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "two-factor-fac-expiry": {
+        "type": "int"
+      },
+      "pre-login-banner": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "per-user-bwl": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "admin-ssh-password": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "igmp-state-limit": {
+        "type": "int"
+      },
+      "max-route-cache-size": {
+        "type": "int"
+      },
+      "csr-ca-attribute": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "wad-worker-count": {
+        "type": "int"
+      },
+      "lldp-transmission": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "udp-idle-timer": {
+        "type": "int"
+      },
+      "clt-cert-req": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "admin-ssh-v1": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "sslvpn-cipher-hardware-acceleration": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "management-vdom": {
+        "type": "str"
+      },
+      "dh-params": {
+        "type": "str",
+        "options": [
+          "1024",
+          "1536",
+          "2048",
+          "3072",
+          "4096",
+          "6144",
+          "8192"
+        ]
+      },
+      "ldapconntimeout": {
+        "type": "int"
+      },
+      "ipsec-hmac-offload": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "admin-concurrent": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "sslvpn-kxp-hardware-acceleration": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "special-file-23-support": {
+        "type": "str",
+        "options": [
+          "disable",
+          "enable"
+        ]
+      },
+      "explicit-proxy-auth-timeout": {
+        "type": "int"
+      },
+      "fortiextender-vlan-mode": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "wireless-controller-port": {
+        "type": "int"
+      },
+      "ipsec-asic-offload": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "ssd-trim-freq": {
+        "type": "str",
+        "options": [
+          "never",
+          "hourly",
+          "daily",
+          "weekly",
+          "monthly"
+        ]
+      },
+      "sslvpn-plugin-version-check": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "virtual-server-count": {
+        "type": "int"
+      },
+      "tp-mc-skip-policy": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "refresh": {
+        "type": "int"
+      },
+      "ipv6-accept-dad": {
+        "type": "int"
+      },
+      "registration-notification": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "av-failopen-session": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "device-idle-timeout": {
+        "type": "int"
+      },
+      "daily-restart": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "syncinterval": {
+        "type": "int"
+      },
+      "admin-https-banned-cipher": {
+        "type": "str",
+        "options": [
+          "rc4",
+          "low"
+        ]
+      },
+      "admin-https-pki-required": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "traffic-priority-level": {
+        "type": "str",
+        "options": [
+          "low",
+          "medium",
+          "high"
+        ]
+      },
+      "gui-custom-language": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "vdom-admin": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "auth-cert": {
+        "type": "str"
+      },
+      "strict-dirty-session-check": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "fortiextender-data-port": {
+        "type": "int"
+      },
+      "anti-replay": {
+        "type": "str",
+        "options": [
+          "disable",
+          "loose",
+          "strict"
+        ]
+      },
+      "post-login-banner": {
+        "type": "str",
+        "options": [
+          "disable",
+          "enable"
+        ]
+      },
+      "wifi-ca-certificate": {
+        "type": "str"
+      },
+      "proxy-kxp-hardware-acceleration": {
+        "type": "str",
+        "options": [
+          "disable",
+          "enable"
+        ]
+      },
+      "ntpsync": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "sslvpn-max-worker-count": {
+        "type": "int"
+      },
+      "scanunit-count": {
+        "type": "int"
+      },
+      "miglogd-children": {
+        "type": "int"
+      },
+      "dst": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "revision-backup-on-logout": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "asymroute": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "admin-login-max": {
+        "type": "int"
+      },
+      "fds-statistics-period": {
+        "type": "int"
+      },
+      "admin-port": {
+        "type": "int"
+      },
+      "restart-time": {
+        "type": "str"
+      },
+      "gui-certificates": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "gui-device-longitude": {
+        "type": "str"
+      },
+      "ssd-trim-date": {
+        "type": "int"
+      },
+      "admin-lockout-duration": {
+        "type": "int"
+      },
+      "log-uuid": {
+        "type": "str",
+        "options": [
+          "disable",
+          "policy-only",
+          "extended"
+        ]
+      },
+      "av-failopen": {
+        "type": "str",
+        "options": [
+          "pass",
+          "idledrop",
+          "off",
+          "one-shot"
+        ]
+      },
+      "two-factor-ftm-expiry": {
+        "type": "int"
+      },
+      "tcp-timewait-timer": {
+        "type": "int"
+      },
+      "cfg-revert-timeout": {
+        "type": "int"
+      },
+      "ssl-worker-count": {
+        "type": "int"
+      },
+      "snat-route-change": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "optimize": {
+        "type": "str",
+        "options": [
+          "antivirus",
+          "session-setup",
+          "throughput"
+        ]
+      },
+      "phase1-rekey": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "wireless-controller": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "admin-server-cert": {
+        "type": "str"
+      },
+      "language": {
+        "type": "str",
+        "options": [
+          "english",
+          "french",
+          "spanish",
+          "portuguese",
+          "japanese",
+          "trach",
+          "simch",
+          "korean"
+        ]
+      },
+      "honor-df": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "ssd-trim-weekday": {
+        "type": "str",
+        "options": [
+          "sunday",
+          "monday",
+          "tuesday",
+          "wednesday",
+          "thursday",
+          "friday",
+          "saturday"
+        ]
+      },
+      "two-factor-sms-expiry": {
+        "type": "int"
+      },
+      "reset-sessionless-tcp": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "user-server-cert": {
+        "type": "str"
+      },
+      "tftp": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "login-timestamp": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "endpoint-control-fds-access": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "policy-auth-concurrent": {
+        "type": "int"
+      },
+      "gui-display-hostname": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "batch-cmdb": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "two-factor-ftk-expiry": {
+        "type": "int"
+      },
+      "mc-ttl-notchange": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "remoteauthtimeout": {
+        "type": "int"
+      },
+      "cert-chain-max": {
+        "type": "int"
+      },
+      "strong-crypto": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "virtual-server-hardware-acceleration": {
+        "type": "str",
+        "options": [
+          "disable",
+          "enable"
+        ]
+      },
+      "block-session-timer": {
+        "type": "int"
+      },
+      "switch-controller": {
+        "type": "str",
+        "options": [
+          "disable",
+          "enable"
+        ]
+      },
+      "fortiservice-port": {
+        "type": "int"
+      },
+      "fds-statistics": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "arp-max-entry": {
+        "type": "int"
+      },
+      "admin-telnet-port": {
+        "type": "int"
+      },
+      "ssd-trim-hour": {
+        "type": "int"
+      },
+      "gui-lines-per-page": {
+        "type": "int"
+      },
+      "admintimeout": {
+        "type": "int"
+      },
+      "device-identification-active-scan-delay": {
+        "type": "int"
+      },
+      "ndp-max-entry": {
+        "type": "int"
+      },
+      "proxy-cipher-hardware-acceleration": {
+        "type": "str",
+        "options": [
+          "disable",
+          "enable"
+        ]
+      },
+      "service-expire-notification": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "admin-lockout-threshold": {
+        "type": "int"
+      },
+      "gui-ipv6": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "auth-http-port": {
+        "type": "int"
+      },
+      "fortiextender": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "revision-image-auto-backup": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "proxy-worker-count": {
+        "type": "int"
+      },
+      "auth-https-port": {
+        "type": "int"
+      },
+      "endpoint-control-portal-port": {
+        "type": "int"
+      },
+      "cli-audit-log": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "fgd-alert-subscription": {
+        "type": "str",
+        "options": [
+          "advisory",
+          "latest-threat",
+          "latest-virus",
+          "latest-attack",
+          "new-antivirus-db",
+          "new-attack-db"
+        ]
+      },
+      "wimax-4g-usb": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "ntpserver": {
+        "type": "str"
+      },
+      "private-data-encryption": {
+        "type": "str",
+        "options": [
+          "disable",
+          "enable"
+        ]
+      },
+      "ssd-trim-min": {
+        "type": "int"
+      },
+      "timezone": {
+        "type": "str",
+        "options": [
+          "01",
+          "02",
+          "03",
+          "04",
+          "05",
+          "81",
+          "06",
+          "07",
+          "08",
+          "09",
+          "10",
+          "11",
+          "12",
+          "13",
+          "74",
+          "14",
+          "77",
+          "15",
+          "16",
+          "17",
+          "18",
+          "19",
+          "20",
+          "75",
+          "21",
+          "22",
+          "23",
+          "24",
+          "80",
+          "79",
+          "25",
+          "26",
+          "27",
+          "28",
+          "78",
+          "29",
+          "30",
+          "31",
+          "32",
+          "33",
+          "34",
+          "35",
+          "36",
+          "37",
+          "38",
+          "83",
+          "84",
+          "40",
+          "85",
+          "41",
+          "42",
+          "43",
+          "39",
+          "44",
+          "46",
+          "47",
+          "51",
+          "48",
+          "45",
+          "49",
+          "50",
+          "52",
+          "53",
+          "54",
+          "55",
+          "56",
+          "57",
+          "58",
+          "59",
+          "60",
+          "62",
+          "63",
+          "61",
+          "64",
+          "65",
+          "66",
+          "67",
+          "68",
+          "69",
+          "70",
+          "71",
+          "72",
+          "00",
+          "82",
+          "73",
+          "86",
+          "76"
+        ]
+      },
+      "admin-sport": {
+        "type": "int"
+      },
+      "gui-wireless-opensecurity": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "multicast-forward": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "miglog-affinity": {
+        "type": "str"
+      },
+      "admin-console-timeout": {
+        "type": "int"
+      },
+      "auto-auth-extension-device": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "admin-https-ssl-versions": {
+        "type": "str",
+        "options": [
+          "tlsv1-0",
+          "tlsv1-1",
+          "tlsv1-2",
+          "sslv3"
+        ]
+      },
+      "hostname": {
+        "type": "str"
+      },
+      "ssh-hmac-md5": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "max-dlpstat-memory": {
+        "type": "int"
+      },
+      "av-affinity": {
+        "type": "str"
+      },
+      "admin-ssh-port": {
+        "type": "int"
+      },
+      "compliance-check": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "admin-scp": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "auth-keepalive": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "tcp-halfclose-timer": {
+        "type": "int"
+      },
+      "vip-arp-range": {
+        "type": "str",
+        "options": [
+          "unlimited",
+          "restricted"
+        ]
+      },
+      "compliance-check-time": {
+        "type": "str"
+      },
+      "sys-perf-log-interval": {
+        "type": "int"
+      },
+      "check-protocol-header": {
+        "type": "str",
+        "options": [
+          "loose",
+          "strict"
+        ]
+      },
+      "failtime": {
+        "type": "int"
+      },
+      "ip-src-port-range": {
+        "type": "str"
+      },
+      "two-factor-email-expiry": {
+        "type": "int"
+      },
+      "gui-device-latitude": {
+        "type": "str"
+      },
+      "tcp-option": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "wifi-certificate": {
+        "type": "str"
+      },
+      "admin-maintainer": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "allow-traffic-redirect": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "interval": {
+        "type": "int"
+      },
+      "cfg-save": {
+        "type": "str",
+        "options": [
+          "automatic",
+          "manual",
+          "revert"
+        ]
+      },
+      "send-pmtu-icmp": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "ssh-cbc-cipher": {
+        "type": "str",
+        "options": [
+          "enable",
+          "disable"
+        ]
+      },
+      "alias": {
+        "type": "str"
+      },
+      "br-fdb-max-entry": {
+        "type": "int"
+      },
+      "check-reset-range": {
+        "type": "str",
+        "options": [
+          "strict",
+          "disable"
+        ]
+      },
+      "switch-controller-reserved-network": {
+        "type": "str"
+      },
+      "tcp-halfopen-timer": {
+        "type": "int"
+      },
+      "gui-theme": {
+        "type": "str",
+        "options": [
+          "green",
+          "red",
+          "blue",
+          "melongene",
+          "mariner"
+        ]
+      },
+      "admin-ssh-grace-time": {
+        "type": "int"
+      },
+      "radius-port": {
+        "type": "int"
+      }
+    }
+}

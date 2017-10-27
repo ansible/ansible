@@ -1,0 +1,2468 @@
+{
+  "system_global_schema_response": {
+      "status": "success",
+      "name": "global",
+      "version": "v5.4.5",
+      "results": {
+        "category": "complex",
+        "q_type": 11,
+        "name": "global",
+        "path": "system",
+        "children": {
+          "reboot-upon-config-restore": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable reboot of system upon restoring configuration."
+              },
+              {
+                "name": "disable",
+                "help": "Disable reboot of system upon restoring configuration."
+              }
+            ],
+            "type": "option",
+            "name": "reboot-upon-config-restore",
+            "help": "Enable/disable reboot of system upon restoring configuration."
+          },
+          "two-factor-fac-expiry": {
+            "category": "unitary",
+            "name": "two-factor-fac-expiry",
+            "min-value": 10,
+            "max-value": 3600,
+            "type": "integer",
+            "help": "Expiration time for FortiAuthenticator token authentication (10 - 3600 sec, default = 60 sec)."
+          },
+          "pre-login-banner": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable pre-login banner."
+              },
+              {
+                "name": "disable",
+                "help": "Disable pre-login banner."
+              }
+            ],
+            "type": "option",
+            "name": "pre-login-banner",
+            "help": "Enable/disable pre-login-banner."
+          },
+          "per-user-bwl": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable per-user black/white list filter."
+              },
+              {
+                "name": "disable",
+                "help": "Disable per-user black/white list filter."
+              }
+            ],
+            "type": "option",
+            "name": "per-user-bwl",
+            "help": "Enable/disable per-user black/white list filter."
+          },
+          "admin-ssh-password": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable password authentication for SSH admin access."
+              },
+              {
+                "name": "disable",
+                "help": "Disable password authentication for SSH admin access."
+              }
+            ],
+            "type": "option",
+            "name": "admin-ssh-password",
+            "help": "Enable/disable password authentication for SSH admin access."
+          },
+          "igmp-state-limit": {
+            "category": "unitary",
+            "name": "igmp-state-limit",
+            "min-value": 96,
+            "max-value": 64000,
+            "type": "integer",
+            "help": "Maximum IGMP memberships (96 - 64000, default = 3200)."
+          },
+          "max-route-cache-size": {
+            "category": "unitary",
+            "name": "max-route-cache-size",
+            "min-value": 0,
+            "max-value": 2147483647,
+            "type": "integer",
+            "help": "Maximum number of IP route cache entries (0 - 2147483647)."
+          },
+          "csr-ca-attribute": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable CA attribute in CSR."
+              },
+              {
+                "name": "disable",
+                "help": "Disable CA attribute in CSR."
+              }
+            ],
+            "type": "option",
+            "name": "csr-ca-attribute",
+            "help": "Enable/disable CSR CA attribute."
+          },
+          "wad-worker-count": {
+            "category": "unitary",
+            "name": "wad-worker-count",
+            "min-value": 1,
+            "max-value": 1,
+            "type": "integer",
+            "help": "Number of concurrent WAD workers."
+          },
+          "lldp-transmission": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable transmission of Link Layer Discovery Protocol (LLDP)."
+              },
+              {
+                "name": "disable",
+                "help": "Disable transmission of Link Layer Discovery Protocol (LLDP)."
+              }
+            ],
+            "type": "option",
+            "name": "lldp-transmission",
+            "help": "Enable/disable Link Layer Discovery Protocol (LLDP) transmission."
+          },
+          "udp-idle-timer": {
+            "category": "unitary",
+            "name": "udp-idle-timer",
+            "min-value": 0,
+            "max-value": 4294967295,
+            "type": "integer",
+            "help": "UDP idle timeout (1 - 86400 sec, default = 180)."
+          },
+          "clt-cert-req": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable require client certificate for GUI login."
+              },
+              {
+                "name": "disable",
+                "help": "Disable require client certificate for GUI login."
+              }
+            ],
+            "type": "option",
+            "name": "clt-cert-req",
+            "help": "Enable/disable require client certificate for GUI login."
+          },
+          "block-session-timer": {
+            "category": "unitary",
+            "name": "block-session-timer",
+            "min-value": 1,
+            "max-value": 300,
+            "type": "integer",
+            "help": "Block-session timeout (1-300 sec, default = 30 sec)."
+          },
+          "admin-ssh-v1": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable SSH v1 compatibility."
+              },
+              {
+                "name": "disable",
+                "help": "Disable SSH v1 compatibility."
+              }
+            ],
+            "type": "option",
+            "name": "admin-ssh-v1",
+            "help": "Enable/disable SSH v1 compatibility."
+          },
+          "sslvpn-cipher-hardware-acceleration": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable SSL-VPN cipher hardware acceleration."
+              },
+              {
+                "name": "disable",
+                "help": "Disable SSL-VPN cipher hardware acceleration."
+              }
+            ],
+            "type": "option",
+            "name": "sslvpn-cipher-hardware-acceleration",
+            "help": "Enable/disable SSL-VPN cipher hardware acceleration."
+          },
+          "management-vdom": {
+            "category": "unitary",
+            "name": "management-vdom",
+            "help": "Management virtual domain name.",
+            "datasource": [
+              "system.vdom.name"
+            ],
+            "type": "string",
+            "size": 11
+          },
+          "dh-params": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "1024",
+                "help": "1024 bits."
+              },
+              {
+                "name": "1536",
+                "help": "1536 bits."
+              },
+              {
+                "name": "2048",
+                "help": "2048 bits."
+              },
+              {
+                "name": "3072",
+                "help": "3072 bits."
+              },
+              {
+                "name": "4096",
+                "help": "4096 bits."
+              },
+              {
+                "name": "6144",
+                "help": "6144 bits."
+              },
+              {
+                "name": "8192",
+                "help": "8192 bits."
+              }
+            ],
+            "type": "option",
+            "name": "dh-params",
+            "help": "Minimum size of Diffie-Hellman prime for HTTPS/SSH."
+          },
+          "ldapconntimeout": {
+            "category": "unitary",
+            "name": "ldapconntimeout",
+            "min-value": 0,
+            "max-value": 4294967295,
+            "type": "integer",
+            "help": "LDAP connection time-out (0 - 4294967295 milliseconds)."
+          },
+          "ipsec-hmac-offload": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable offload IPsec HMAC processing to hardware if possible."
+              },
+              {
+                "name": "disable",
+                "help": "Disable offload IPsec HMAC processing to hardware."
+              }
+            ],
+            "type": "option",
+            "name": "ipsec-hmac-offload",
+            "help": "Enable/disable offload HMAC to hardware for IPsec VPN."
+          },
+          "admin-concurrent": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable admin concurrent login."
+              },
+              {
+                "name": "disable",
+                "help": "Disable admin concurrent login."
+              }
+            ],
+            "type": "option",
+            "name": "admin-concurrent",
+            "help": "Enable/disable admin concurrent login."
+          },
+          "sslvpn-kxp-hardware-acceleration": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable KXP SSL-VPN hardware acceleration."
+              },
+              {
+                "name": "disable",
+                "help": "Disable KXP SSL-VPN hardware acceleration."
+              }
+            ],
+            "type": "option",
+            "name": "sslvpn-kxp-hardware-acceleration",
+            "help": "Enable/disable KXP SSL-VPN hardware acceleration."
+          },
+          "special-file-23-support": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "disable",
+                "help": "Disable support for special file 23."
+              },
+              {
+                "name": "enable",
+                "help": "Enable support for special file 23."
+              }
+            ],
+            "type": "option",
+            "name": "special-file-23-support",
+            "help": "Enable/disable support for special file 23."
+          },
+          "explicit-proxy-auth-timeout": {
+            "category": "unitary",
+            "name": "explicit-proxy-auth-timeout",
+            "min-value": 1,
+            "max-value": 600,
+            "type": "integer",
+            "help": "Authentication timeout (sec) for idle sessions in explicit web proxy."
+          },
+          "fortiextender-vlan-mode": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable FortiExtender VLAN mode."
+              },
+              {
+                "name": "disable",
+                "help": "Disable FortiExtender VLAN mode."
+              }
+            ],
+            "type": "option",
+            "name": "fortiextender-vlan-mode",
+            "help": "Enable/disable FortiExtender VLAN mode."
+          },
+          "wireless-controller-port": {
+            "category": "unitary",
+            "name": "wireless-controller-port",
+            "min-value": 1024,
+            "max-value": 49150,
+            "type": "integer",
+            "help": "Local wireless controller port (1024 - 49150)."
+          },
+          "endpoint-control-portal-port": {
+            "category": "unitary",
+            "name": "endpoint-control-portal-port",
+            "min-value": 1,
+            "max-value": 65535,
+            "type": "integer",
+            "help": "Endpoint control portal port (1 - 65535)."
+          },
+          "ssd-trim-freq": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "never",
+                "help": "Never Run SSD Trim."
+              },
+              {
+                "name": "hourly",
+                "help": "Run SSD Trim Hourly."
+              },
+              {
+                "name": "daily",
+                "help": "Run SSD Trim Daily."
+              },
+              {
+                "name": "weekly",
+                "help": "Run SSD Trim Weekly."
+              },
+              {
+                "name": "monthly",
+                "help": "Run SSD Trim Monthly."
+              }
+            ],
+            "type": "option",
+            "name": "ssd-trim-freq",
+            "help": "SSD trim frequency."
+          },
+          "sslvpn-plugin-version-check": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable SSL-VPN automatic checking of browser plug-in version."
+              },
+              {
+                "name": "disable",
+                "help": "Disable SSL-VPN automatic checking of browser plug-in version."
+              }
+            ],
+            "type": "option",
+            "name": "sslvpn-plugin-version-check",
+            "help": "Enable/disable SSL-VPN automatic checking of browser plug-in version."
+          },
+          "virtual-server-count": {
+            "category": "unitary",
+            "name": "virtual-server-count",
+            "min-value": 1,
+            "max-value": 1,
+            "type": "integer",
+            "help": "Number of concurrent virtual server workers."
+          },
+          "tp-mc-skip-policy": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable skip policy check and allow multicast through."
+              },
+              {
+                "name": "disable",
+                "help": "Disable skip policy check and allow multicast through."
+              }
+            ],
+            "type": "option",
+            "name": "tp-mc-skip-policy",
+            "help": "Enable/disable skip policy check and allow multicast through."
+          },
+          "refresh": {
+            "category": "unitary",
+            "name": "refresh",
+            "min-value": 0,
+            "max-value": 4294967295,
+            "type": "integer",
+            "help": "Statistics refresh interval in GUI."
+          },
+          "ipv6-accept-dad": {
+            "category": "unitary",
+            "name": "ipv6-accept-dad",
+            "min-value": 0,
+            "max-value": 2,
+            "type": "integer",
+            "help": "Enable/disable acceptance of IPv6 DAD (Duplicate Address Detection).\n\t0: Disable DAD;\n\t1: Enable DAD (default);\n\t2: Enable DAD, and disable IPv6 operation if MAC-based duplicate link-local address has been found."
+          },
+          "registration-notification": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable allow license registration notification."
+              },
+              {
+                "name": "disable",
+                "help": "Disable allow license registration notification."
+              }
+            ],
+            "type": "option",
+            "name": "registration-notification",
+            "help": "Enable/disable allow license registration notification."
+          },
+          "av-failopen-session": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable AV fail open session option."
+              },
+              {
+                "name": "disable",
+                "help": "Disable AV fail open session option."
+              }
+            ],
+            "type": "option",
+            "name": "av-failopen-session",
+            "help": "Enable/disable AV fail open session option."
+          },
+          "device-idle-timeout": {
+            "category": "unitary",
+            "name": "device-idle-timeout",
+            "min-value": 30,
+            "max-value": 31536000,
+            "type": "integer",
+            "help": "Device idle timeout (30 - 31536000 sec, default = 300 sec)."
+          },
+          "daily-restart": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable daily reboot of the FortiGate."
+              },
+              {
+                "name": "disable",
+                "help": "Disable daily reboot of the FortiGate."
+              }
+            ],
+            "type": "option",
+            "name": "daily-restart",
+            "help": "Enable/disable firewall daily reboot."
+          },
+          "syncinterval": {
+            "category": "unitary",
+            "name": "syncinterval",
+            "min-value": 1,
+            "max-value": 1440,
+            "type": "integer",
+            "help": "NTP synchronization interval."
+          },
+          "admin-https-banned-cipher": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "rc4",
+                "help": "Ban the use of RC4 ciphers for web administration."
+              },
+              {
+                "name": "low",
+                "help": "Ban the use of LOW encryption ciphers for web administration."
+              }
+            ],
+            "type": "option",
+            "name": "admin-https-banned-cipher",
+            "help": "Banned ciphers for web administration."
+          },
+          "admin-https-pki-required": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Admin users must provide a valid certificate when PKI is enabled for HTTPS admin access."
+              },
+              {
+                "name": "disable",
+                "help": "Admin users can login by providing a valid certificate or password."
+              }
+            ],
+            "type": "option",
+            "name": "admin-https-pki-required",
+            "help": "Enable/disable require HTTPS login page when PKI is enabled."
+          },
+          "traffic-priority-level": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "low",
+                "help": "Low priority."
+              },
+              {
+                "name": "medium",
+                "help": "Medium priority."
+              },
+              {
+                "name": "high",
+                "help": "High priority."
+              }
+            ],
+            "type": "option",
+            "name": "traffic-priority-level",
+            "help": "Default TOS/DSCP priority level."
+          },
+          "gui-custom-language": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Display the feature in GUI."
+              },
+              {
+                "name": "disable",
+                "help": "Do not display the feature in GUI."
+              }
+            ],
+            "type": "option",
+            "name": "gui-custom-language",
+            "help": "Enable/disable custom languages in GUI."
+          },
+          "vdom-admin": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable multiple VDOMs mode."
+              },
+              {
+                "name": "disable",
+                "help": "Disable multiple VDOMs mode."
+              }
+            ],
+            "type": "option",
+            "name": "vdom-admin",
+            "help": "Enable/disable multiple VDOMs mode."
+          },
+          "auth-cert": {
+            "category": "unitary",
+            "name": "auth-cert",
+            "help": "HTTPS server certificate for policy authentication.",
+            "datasource": [
+              "certificate.local.name"
+            ],
+            "type": "string",
+            "size": 35
+          },
+          "strict-dirty-session-check": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable strict dirty-session check."
+              },
+              {
+                "name": "disable",
+                "help": "Disable strict dirty-session check."
+              }
+            ],
+            "type": "option",
+            "name": "strict-dirty-session-check",
+            "help": "Enable/disable strict dirty-session check."
+          },
+          "fortiextender-data-port": {
+            "category": "unitary",
+            "name": "fortiextender-data-port",
+            "min-value": 1024,
+            "max-value": 49150,
+            "type": "integer",
+            "help": "Fortiextender controller data port (1024 - 49150)."
+          },
+          "anti-replay": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "disable",
+                "help": "Disable anti-replay check."
+              },
+              {
+                "name": "loose",
+                "help": "Loose anti-replay check."
+              },
+              {
+                "name": "strict",
+                "help": "Strict anti-replay check."
+              }
+            ],
+            "type": "option",
+            "name": "anti-replay",
+            "help": "Anti-replay control."
+          },
+          "traffic-priority": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "tos",
+                "help": "IP TOS."
+              },
+              {
+                "name": "dscp",
+                "help": "DSCP (DiffServ) DS."
+              }
+            ],
+            "type": "option",
+            "name": "traffic-priority",
+            "help": "Traffic priority type."
+          },
+          "proxy-kxp-hardware-acceleration": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "disable",
+                "help": "Disable use of content processor to encrypt or decrypt traffic."
+              },
+              {
+                "name": "enable",
+                "help": "Enable use of content processor to encrypt or decrypt traffic."
+              }
+            ],
+            "type": "option",
+            "name": "proxy-kxp-hardware-acceleration",
+            "help": "Enable/disable use of content processor to encrypt or decrypt traffic."
+          },
+          "ntpsync": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable synchronization with NTP Server."
+              },
+              {
+                "name": "disable",
+                "help": "Disable synchronization with NTP Server."
+              }
+            ],
+            "type": "option",
+            "name": "ntpsync",
+            "help": "Enable/disable synchronization with NTP Server."
+          },
+          "sslvpn-max-worker-count": {
+            "category": "unitary",
+            "name": "sslvpn-max-worker-count",
+            "min-value": 1,
+            "max-value": 1,
+            "type": "integer",
+            "help": "Maximum number of worker processes for SSL-VPN."
+          },
+          "scanunit-count": {
+            "category": "unitary",
+            "name": "scanunit-count",
+            "min-value": 1,
+            "max-value": 1,
+            "type": "integer",
+            "help": "Scanunit count."
+          },
+          "gui-lines-per-page": {
+            "category": "unitary",
+            "name": "gui-lines-per-page",
+            "min-value": 20,
+            "max-value": 1000,
+            "type": "integer",
+            "help": "Number of lines to display per page for web administration."
+          },
+          "dst": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable daylight saving time."
+              },
+              {
+                "name": "disable",
+                "help": "Disable daylight saving time."
+              }
+            ],
+            "type": "option",
+            "name": "dst",
+            "help": "Enable/disable daylight saving time."
+          },
+          "revision-backup-on-logout": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable revision config backup automatically when logout."
+              },
+              {
+                "name": "disable",
+                "help": "Disable revision config backup automatically when logout."
+              }
+            ],
+            "type": "option",
+            "name": "revision-backup-on-logout",
+            "help": "Enable/disable revision config backup automatically when logout."
+          },
+          "asymroute": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable asymmetric route."
+              },
+              {
+                "name": "disable",
+                "help": "Disable asymmetric route."
+              }
+            ],
+            "type": "option",
+            "name": "asymroute",
+            "help": "Enable/disable asymmetric route."
+          },
+          "admin-login-max": {
+            "category": "unitary",
+            "name": "admin-login-max",
+            "min-value": 1,
+            "max-value": 100,
+            "type": "integer",
+            "help": "Maximum number admin users logged in at one time (1 - 100)."
+          },
+          "wifi-ca-certificate": {
+            "category": "unitary",
+            "name": "wifi-ca-certificate",
+            "help": "WiFi CA certificate for WPA.",
+            "datasource": [
+              "certificate.ca.name"
+            ],
+            "type": "string",
+            "size": 35
+          },
+          "restart-time": {
+            "category": "unitary",
+            "type": "user",
+            "name": "restart-time",
+            "help": "Daily restart time (hh:mm)."
+          },
+          "gui-certificates": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Display the feature in GUI."
+              },
+              {
+                "name": "disable",
+                "help": "Do not display the feature in GUI."
+              }
+            ],
+            "type": "option",
+            "name": "gui-certificates",
+            "help": "Enable/disable certificates configuration in GUI."
+          },
+          "gui-device-longitude": {
+            "category": "unitary",
+            "size": 19,
+            "type": "string",
+            "name": "gui-device-longitude",
+            "help": "Physical device longitude coordinate."
+          },
+          "ssd-trim-date": {
+            "category": "unitary",
+            "name": "ssd-trim-date",
+            "min-value": 1,
+            "max-value": 31,
+            "type": "integer",
+            "help": "Date within a month to run ssd trim."
+          },
+          "post-login-banner": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "disable",
+                "help": "Disable post-login banner."
+              },
+              {
+                "name": "enable",
+                "help": "Enable post-login banner."
+              }
+            ],
+            "type": "option",
+            "name": "post-login-banner",
+            "help": "Enable/disable post-login-banner."
+          },
+          "admin-lockout-duration": {
+            "category": "unitary",
+            "name": "admin-lockout-duration",
+            "min-value": 1,
+            "max-value": 4294967295,
+            "type": "integer",
+            "help": "Lockout duration (sec) for firewall administration."
+          },
+          "log-uuid": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "disable",
+                "help": "Disable UUID in traffic log"
+              },
+              {
+                "name": "policy-only",
+                "help": "Enable only policy UUID in traffic log."
+              },
+              {
+                "name": "extended",
+                "help": "Enable all UUIDs in traffic log."
+              }
+            ],
+            "type": "option",
+            "name": "log-uuid",
+            "help": "Universally Unique Identifier (UUID) log option."
+          },
+          "av-failopen": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "pass",
+                "help": "Pass."
+              },
+              {
+                "name": "idledrop",
+                "help": "Drop idle connections."
+              },
+              {
+                "name": "off",
+                "help": "Off."
+              },
+              {
+                "name": "one-shot",
+                "help": "One-shot."
+              }
+            ],
+            "type": "option",
+            "name": "av-failopen",
+            "help": "AV fail open option."
+          },
+          "two-factor-ftm-expiry": {
+            "category": "unitary",
+            "name": "two-factor-ftm-expiry",
+            "min-value": 1,
+            "max-value": 168,
+            "type": "integer",
+            "help": "Expiration time for FortiToken mobile provision (1 - 168 hr, default = 72 hr)."
+          },
+          "tcp-timewait-timer": {
+            "category": "unitary",
+            "name": "tcp-timewait-timer",
+            "min-value": 0,
+            "max-value": 300,
+            "type": "integer",
+            "help": "TCP time wait timeout (0 - 300 sec, default = 1)."
+          },
+          "cfg-revert-timeout": {
+            "category": "unitary",
+            "name": "cfg-revert-timeout",
+            "min-value": 10,
+            "max-value": 4294967295,
+            "type": "integer",
+            "help": "Time-out for reverting to the last saved configuration."
+          },
+          "ssl-worker-count": {
+            "category": "unitary",
+            "name": "ssl-worker-count",
+            "min-value": 0,
+            "max-value": 4294967295,
+            "type": "integer",
+            "help": "SSL worker count (0 - 4294967295)."
+          },
+          "snat-route-change": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable SNAT route change."
+              },
+              {
+                "name": "disable",
+                "help": "Disable SNAT route change."
+              }
+            ],
+            "type": "option",
+            "name": "snat-route-change",
+            "help": "Enable/disable SNAT route change."
+          },
+          "miglogd-children": {
+            "category": "unitary",
+            "name": "miglogd-children",
+            "min-value": 0,
+            "max-value": 15,
+            "type": "integer",
+            "help": "Number of miglog children."
+          },
+          "optimize": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "antivirus",
+                "help": "Optimize firmware for antivirus."
+              },
+              {
+                "name": "session-setup",
+                "help": "Optimize for session setup rate."
+              },
+              {
+                "name": "throughput",
+                "help": "Optimize firmware for throughput."
+              }
+            ],
+            "type": "option",
+            "name": "optimize",
+            "help": "Firmware optimization option."
+          },
+          "phase1-rekey": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable phase1 rekey."
+              },
+              {
+                "name": "disable",
+                "help": "Disable phase1 rekey."
+              }
+            ],
+            "type": "option",
+            "name": "phase1-rekey",
+            "help": "Enable/disable phase1 rekey."
+          },
+          "wireless-controller": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable wireless controller."
+              },
+              {
+                "name": "disable",
+                "help": "Disable wireless controller."
+              }
+            ],
+            "type": "option",
+            "name": "wireless-controller",
+            "help": "Enable/disable wireless controller."
+          },
+          "admin-server-cert": {
+            "category": "unitary",
+            "name": "admin-server-cert",
+            "help": "Admin HTTPS server certificate.",
+            "datasource": [
+              "certificate.local.name"
+            ],
+            "type": "string",
+            "size": 35
+          },
+          "language": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "english",
+                "help": "English."
+              },
+              {
+                "name": "french",
+                "help": "French."
+              },
+              {
+                "name": "spanish",
+                "help": "Spanish."
+              },
+              {
+                "name": "portuguese",
+                "help": "Portuguese."
+              },
+              {
+                "name": "japanese",
+                "help": "Japanese."
+              },
+              {
+                "name": "trach",
+                "help": "Traditional Chinese."
+              },
+              {
+                "name": "simch",
+                "help": "Simplified Chinese."
+              },
+              {
+                "name": "korean",
+                "help": "Korean."
+              }
+            ],
+            "type": "option",
+            "name": "language",
+            "help": "GUI display language."
+          },
+          "honor-df": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable honoring of Don't-Fragment flag."
+              },
+              {
+                "name": "disable",
+                "help": "Disable honoring of Don't-Fragment flag."
+              }
+            ],
+            "type": "option",
+            "name": "honor-df",
+            "help": "Enable/disable honoring Don't-Fragment flag."
+          },
+          "ssd-trim-weekday": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "sunday",
+                "help": "Sunday"
+              },
+              {
+                "name": "monday",
+                "help": "Monday"
+              },
+              {
+                "name": "tuesday",
+                "help": "Tuesday"
+              },
+              {
+                "name": "wednesday",
+                "help": "Wednesday"
+              },
+              {
+                "name": "thursday",
+                "help": "Thursday"
+              },
+              {
+                "name": "friday",
+                "help": "Friday"
+              },
+              {
+                "name": "saturday",
+                "help": "Saturday"
+              }
+            ],
+            "type": "option",
+            "name": "ssd-trim-weekday",
+            "help": "Day of week to run ssd trim."
+          },
+          "endpoint-control-fds-access": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable access to FortiGuard servers for non-compliant endpoints."
+              },
+              {
+                "name": "disable",
+                "help": "Disable access to FortiGuard servers for non-compliant endpoints."
+              }
+            ],
+            "type": "option",
+            "name": "endpoint-control-fds-access",
+            "help": "Enable/disable access to FortiGuard servers for non-compliant endpoints."
+          },
+          "fds-statistics-period": {
+            "category": "unitary",
+            "name": "fds-statistics-period",
+            "min-value": 1,
+            "max-value": 1440,
+            "type": "integer",
+            "help": "FortiGuard statistics update period (1 - 1440 min, default = 60 min)."
+          },
+          "user-server-cert": {
+            "category": "unitary",
+            "name": "user-server-cert",
+            "help": "User HTTPS server certificate.",
+            "datasource": [
+              "certificate.local.name"
+            ],
+            "type": "string",
+            "size": 35
+          },
+          "tftp": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable TFTP."
+              },
+              {
+                "name": "disable",
+                "help": "Disable TFTP."
+              }
+            ],
+            "type": "option",
+            "name": "tftp",
+            "help": "Enable/disable TFTP."
+          },
+          "login-timestamp": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable login time recording."
+              },
+              {
+                "name": "disable",
+                "help": "Disable login time recording."
+              }
+            ],
+            "type": "option",
+            "name": "login-timestamp",
+            "help": "Enable/disable login time recording."
+          },
+          "policy-auth-concurrent": {
+            "category": "unitary",
+            "name": "policy-auth-concurrent",
+            "min-value": 0,
+            "max-value": 100,
+            "type": "integer",
+            "help": "Concurrent user to pass firewall authentication."
+          },
+          "gui-display-hostname": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Display the feature in GUI."
+              },
+              {
+                "name": "disable",
+                "help": "Do not display the feature in GUI."
+              }
+            ],
+            "type": "option",
+            "name": "gui-display-hostname",
+            "help": "Enable/disable display of hostname on GUI login page."
+          },
+          "batch-cmdb": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable batch mode to execute in CMDB server."
+              },
+              {
+                "name": "disable",
+                "help": "Disable batch mode to execute in CMDB server."
+              }
+            ],
+            "type": "option",
+            "name": "batch-cmdb",
+            "help": "Enable/disable batch mode to execute in CMDB server."
+          },
+          "two-factor-ftk-expiry": {
+            "category": "unitary",
+            "name": "two-factor-ftk-expiry",
+            "min-value": 60,
+            "max-value": 600,
+            "type": "integer",
+            "help": "Expiration time for FortiToken authentication (60 - 600 sec, default = 60 sec)."
+          },
+          "mc-ttl-notchange": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable no modification of multicast TTL."
+              },
+              {
+                "name": "disable",
+                "help": "Disable no modification of multicast TTL."
+              }
+            ],
+            "type": "option",
+            "name": "mc-ttl-notchange",
+            "help": "Enable/disable no modification of multicast TTL."
+          },
+          "remoteauthtimeout": {
+            "category": "unitary",
+            "name": "remoteauthtimeout",
+            "min-value": 0,
+            "max-value": 300,
+            "type": "integer",
+            "help": "Remote authentication (RADIUS/LDAP) time-out."
+          },
+          "cert-chain-max": {
+            "category": "unitary",
+            "name": "cert-chain-max",
+            "min-value": 0,
+            "max-value": 4294967295,
+            "type": "integer",
+            "help": "Maximum depth for certificate chain."
+          },
+          "strong-crypto": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable strong crypto for HTTPS/SSH access."
+              },
+              {
+                "name": "disable",
+                "help": "Disable strong crypto for HTTPS/SSH access."
+              }
+            ],
+            "type": "option",
+            "name": "strong-crypto",
+            "help": "Enable/disable strong crypto for HTTPS/SSH access."
+          },
+          "virtual-server-hardware-acceleration": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "disable",
+                "help": "Disable use of content processor to encrypt or decrypt traffic."
+              },
+              {
+                "name": "enable",
+                "help": "Enable use of content processor to encrypt or decrypt traffic."
+              }
+            ],
+            "type": "option",
+            "name": "virtual-server-hardware-acceleration",
+            "help": "Enable/disable use of content processor to encrypt or decrypt traffic."
+          },
+          "ssh-cbc-cipher": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable CBC cipher for SSH access."
+              },
+              {
+                "name": "disable",
+                "help": "Disable CBC cipher for SSH access."
+              }
+            ],
+            "type": "option",
+            "name": "ssh-cbc-cipher",
+            "help": "Enable/disable CBC cipher for SSH access."
+          },
+          "switch-controller": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "disable",
+                "help": "Disable switch controller feature."
+              },
+              {
+                "name": "enable",
+                "help": "Enable switch controller feature."
+              }
+            ],
+            "type": "option",
+            "name": "switch-controller",
+            "help": "Enable/disable switch controller feature."
+          },
+          "fortiservice-port": {
+            "category": "unitary",
+            "name": "fortiservice-port",
+            "min-value": 1,
+            "max-value": 65535,
+            "type": "integer",
+            "help": "FortiService port number (default = 8013)."
+          },
+          "fds-statistics": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable FortiGuard statistics."
+              },
+              {
+                "name": "disable",
+                "help": "Disable FortiGuard statistics."
+              }
+            ],
+            "type": "option",
+            "name": "fds-statistics",
+            "help": "Enable/disable FortiGuard statistics."
+          },
+          "arp-max-entry": {
+            "category": "unitary",
+            "name": "arp-max-entry",
+            "min-value": 131072,
+            "max-value": 2147483647,
+            "type": "integer",
+            "help": "Maximum number of ARP table entries (set to 131,072 or higher)."
+          },
+          "admin-telnet-port": {
+            "category": "unitary",
+            "name": "admin-telnet-port",
+            "min-value": 1,
+            "max-value": 65535,
+            "type": "integer",
+            "help": "Admin access TELNET port (1 - 65535)."
+          },
+          "ssd-trim-hour": {
+            "category": "unitary",
+            "name": "ssd-trim-hour",
+            "min-value": 0,
+            "max-value": 23,
+            "type": "integer",
+            "help": "Time of day to run ssd trim(hour part, 24 hour clock)."
+          },
+          "admintimeout": {
+            "category": "unitary",
+            "name": "admintimeout",
+            "min-value": 1,
+            "max-value": 480,
+            "type": "integer",
+            "help": "Idle time-out for firewall administration."
+          },
+          "device-identification-active-scan-delay": {
+            "category": "unitary",
+            "name": "device-identification-active-scan-delay",
+            "min-value": 20,
+            "max-value": 3600,
+            "type": "integer",
+            "help": "How many seconds (20 - 3600, default 90) to passively scan a device before performing an active scan."
+          },
+          "ndp-max-entry": {
+            "category": "unitary",
+            "name": "ndp-max-entry",
+            "min-value": 0,
+            "max-value": 4294967295,
+            "type": "integer",
+            "help": "Maximum number of NDP table entries (set to 65,536 or higher; if set to 0, kernel holds 65,536 entries)."
+          },
+          "send-pmtu-icmp": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable sending of PMTU ICMP destination unreachable packet."
+              },
+              {
+                "name": "disable",
+                "help": "Disable sending of PMTU ICMP destination unreachable packet."
+              }
+            ],
+            "type": "option",
+            "name": "send-pmtu-icmp",
+            "help": "Enable/disable sending of PMTU ICMP destination unreachable packet."
+          },
+          "service-expire-notification": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable service expiration notification."
+              },
+              {
+                "name": "disable",
+                "help": "Disable service expiration notification."
+              }
+            ],
+            "type": "option",
+            "name": "service-expire-notification",
+            "help": "Enable/disable service expiration notification."
+          },
+          "admin-lockout-threshold": {
+            "category": "unitary",
+            "name": "admin-lockout-threshold",
+            "min-value": 1,
+            "max-value": 10,
+            "type": "integer",
+            "help": "Lockout threshold for firewall administration."
+          },
+          "gui-ipv6": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Display the feature in GUI."
+              },
+              {
+                "name": "disable",
+                "help": "Do not display the feature in GUI."
+              }
+            ],
+            "type": "option",
+            "name": "gui-ipv6",
+            "help": "Enable/disable IPv6 settings in GUI."
+          },
+          "auth-http-port": {
+            "category": "unitary",
+            "name": "auth-http-port",
+            "min-value": 1,
+            "max-value": 65535,
+            "type": "integer",
+            "help": "Authentication HTTP port (1 - 65535)."
+          },
+          "fortiextender": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable FortiExtender controller."
+              },
+              {
+                "name": "disable",
+                "help": "Disable FortiExtender controller."
+              }
+            ],
+            "type": "option",
+            "name": "fortiextender",
+            "help": "Enable/disable FortiExtender controller."
+          },
+          "revision-image-auto-backup": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable revision image backup automatically when upgrading image."
+              },
+              {
+                "name": "disable",
+                "help": "Disable revision image backup automatically when upgrading image."
+              }
+            ],
+            "type": "option",
+            "name": "revision-image-auto-backup",
+            "help": "Enable/disable revision image backup automatically when upgrading image."
+          },
+          "proxy-worker-count": {
+            "category": "unitary",
+            "name": "proxy-worker-count",
+            "min-value": 1,
+            "max-value": 1,
+            "type": "integer",
+            "help": "Proxy worker count."
+          },
+          "auth-https-port": {
+            "category": "unitary",
+            "name": "auth-https-port",
+            "min-value": 1,
+            "max-value": 65535,
+            "type": "integer",
+            "help": "Authentication HTTPS port (1 - 65535)."
+          },
+          "compliance-check-time": {
+            "category": "unitary",
+            "type": "time",
+            "name": "compliance-check-time",
+            "help": "PCI DSS compliance check time."
+          },
+          "reset-sessionless-tcp": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable reset session-less TCP."
+              },
+              {
+                "name": "disable",
+                "help": "Disable reset session-less TCP."
+              }
+            ],
+            "type": "option",
+            "name": "reset-sessionless-tcp",
+            "help": "Enable/disable reset session-less TCP."
+          },
+          "cli-audit-log": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable CLI audit log."
+              },
+              {
+                "name": "disable",
+                "help": "Disable CLI audit log."
+              }
+            ],
+            "type": "option",
+            "name": "cli-audit-log",
+            "help": "Enable/disable CLI audit log."
+          },
+          "fgd-alert-subscription": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "advisory",
+                "help": "Retrieve FortiGuard advisories, report and news alerts."
+              },
+              {
+                "name": "latest-threat",
+                "help": "Retrieve latest FortiGuard threats alerts."
+              },
+              {
+                "name": "latest-virus",
+                "help": "Retrieve latest FortiGuard virus alerts."
+              },
+              {
+                "name": "latest-attack",
+                "help": "Retrieve latest FortiGuard attack alerts."
+              },
+              {
+                "name": "new-antivirus-db",
+                "help": "Retrieve FortiGuard AV database release alerts."
+              },
+              {
+                "name": "new-attack-db",
+                "help": "Retrieve FortiGuard IPS database release alerts."
+              }
+            ],
+            "type": "option",
+            "name": "fgd-alert-subscription",
+            "help": "FortiGuard alert subscription."
+          },
+          "wimax-4g-usb": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable WiMax 4G."
+              },
+              {
+                "name": "disable",
+                "help": "Disable WiMax 4G."
+              }
+            ],
+            "type": "option",
+            "name": "wimax-4g-usb",
+            "help": "Enable/disable WiMAX USB device."
+          },
+          "ntpserver": {
+            "category": "unitary",
+            "size": 63,
+            "type": "string",
+            "name": "ntpserver",
+            "help": "IP address/hostname of NTP Server."
+          },
+          "private-data-encryption": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "disable",
+                "help": "Disable private data encryption using an AES 128-bit key."
+              },
+              {
+                "name": "enable",
+                "help": "Enable private data encryption using an AES 128-bit key."
+              }
+            ],
+            "type": "option",
+            "name": "private-data-encryption",
+            "help": "Enable/disable private data encryption using an AES 128-bit key."
+          },
+          "ssd-trim-min": {
+            "category": "unitary",
+            "name": "ssd-trim-min",
+            "min-value": 0,
+            "max-value": 60,
+            "type": "integer",
+            "help": "Time of day to run ssd trim (min: 0-59, 60 for random)."
+          },
+          "timezone": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "01",
+                "help": "(GMT-11:00)Midway Island, Samoa"
+              },
+              {
+                "name": "02",
+                "help": "(GMT-10:00)Hawaii"
+              },
+              {
+                "name": "03",
+                "help": "(GMT-9:00)Alaska"
+              },
+              {
+                "name": "04",
+                "help": "(GMT-8:00)Pacific Time(US&Canada)"
+              },
+              {
+                "name": "05",
+                "help": "(GMT-7:00)Arizona"
+              },
+              {
+                "name": "81",
+                "help": "(GMT-7:00)Baja California Sur, Chihuahua"
+              },
+              {
+                "name": "06",
+                "help": "(GMT-7:00)Mountain Time(US&Canada)"
+              },
+              {
+                "name": "07",
+                "help": "(GMT-6:00)Central America"
+              },
+              {
+                "name": "08",
+                "help": "(GMT-6:00)Central Time(US&Canada)"
+              },
+              {
+                "name": "09",
+                "help": "(GMT-6:00)Mexico City"
+              },
+              {
+                "name": "10",
+                "help": "(GMT-6:00)Saskatchewan"
+              },
+              {
+                "name": "11",
+                "help": "(GMT-5:00)Bogota,Lima,Quito"
+              },
+              {
+                "name": "12",
+                "help": "(GMT-5:00)Eastern Time(US & Canada)"
+              },
+              {
+                "name": "13",
+                "help": "(GMT-5:00)Indiana(East)"
+              },
+              {
+                "name": "74",
+                "help": "(GMT-4:30)Caracas"
+              },
+              {
+                "name": "14",
+                "help": "(GMT-4:00)Atlantic Time(Canada)"
+              },
+              {
+                "name": "77",
+                "help": "(GMT-4:00)Georgetown"
+              },
+              {
+                "name": "15",
+                "help": "(GMT-4:00)La Paz"
+              },
+              {
+                "name": "16",
+                "help": "(GMT-3:00)Santiago"
+              },
+              {
+                "name": "17",
+                "help": "(GMT-3:30)Newfoundland"
+              },
+              {
+                "name": "18",
+                "help": "(GMT-3:00)Brasilia"
+              },
+              {
+                "name": "19",
+                "help": "(GMT-3:00)Buenos Aires"
+              },
+              {
+                "name": "20",
+                "help": "(GMT-3:00)Nuuk(Greenland)"
+              },
+              {
+                "name": "75",
+                "help": "(GMT-3:00)Uruguay"
+              },
+              {
+                "name": "21",
+                "help": "(GMT-2:00)Mid-Atlantic"
+              },
+              {
+                "name": "22",
+                "help": "(GMT-1:00)Azores"
+              },
+              {
+                "name": "23",
+                "help": "(GMT-1:00)Cape Verde Is."
+              },
+              {
+                "name": "24",
+                "help": "(GMT)Monrovia"
+              },
+              {
+                "name": "80",
+                "help": "(GMT)Greenwich Mean Time"
+              },
+              {
+                "name": "79",
+                "help": "(GMT)Casablanca"
+              },
+              {
+                "name": "25",
+                "help": "(GMT)Dublin,Edinburgh,Lisbon,London"
+              },
+              {
+                "name": "26",
+                "help": "(GMT+1:00)Amsterdam,Berlin,Bern,Rome,Stockholm,Vienna"
+              },
+              {
+                "name": "27",
+                "help": "(GMT+1:00)Belgrade,Bratislava,Budapest,Ljubljana,Prague"
+              },
+              {
+                "name": "28",
+                "help": "(GMT+1:00)Brussels,Copenhagen,Madrid,Paris"
+              },
+              {
+                "name": "78",
+                "help": "(GMT+1:00)Namibia"
+              },
+              {
+                "name": "29",
+                "help": "(GMT+1:00)Sarajevo,Skopje,Warsaw,Zagreb"
+              },
+              {
+                "name": "30",
+                "help": "(GMT+1:00)West Central Africa"
+              },
+              {
+                "name": "31",
+                "help": "(GMT+2:00)Athens,Sofia"
+              },
+              {
+                "name": "32",
+                "help": "(GMT+2:00)Bucharest"
+              },
+              {
+                "name": "33",
+                "help": "(GMT+2:00)Cairo"
+              },
+              {
+                "name": "34",
+                "help": "(GMT+2:00)Harare,Pretoria"
+              },
+              {
+                "name": "35",
+                "help": "(GMT+2:00)Helsinki,Riga,Tallinn"
+              },
+              {
+                "name": "36",
+                "help": "(GMT+2:00)Jerusalem"
+              },
+              {
+                "name": "37",
+                "help": "(GMT+3:00)Baghdad"
+              },
+              {
+                "name": "38",
+                "help": "(GMT+3:00)Kuwait,Riyadh"
+              },
+              {
+                "name": "83",
+                "help": "(GMT+3:00)Moscow"
+              },
+              {
+                "name": "84",
+                "help": "(GMT+3:00)Minsk"
+              },
+              {
+                "name": "40",
+                "help": "(GMT+3:00)Nairobi"
+              },
+              {
+                "name": "85",
+                "help": "(GMT+3:00)Istanbul"
+              },
+              {
+                "name": "41",
+                "help": "(GMT+3:30)Tehran"
+              },
+              {
+                "name": "42",
+                "help": "(GMT+4:00)Abu Dhabi,Muscat"
+              },
+              {
+                "name": "43",
+                "help": "(GMT+4:00)Baku"
+              },
+              {
+                "name": "39",
+                "help": "(GMT+3:00)St.Petersburg,Volgograd"
+              },
+              {
+                "name": "44",
+                "help": "(GMT+4:30)Kabul"
+              },
+              {
+                "name": "46",
+                "help": "(GMT+5:00)Islamabad,Karachi,Tashkent"
+              },
+              {
+                "name": "47",
+                "help": "(GMT+5:30)Kolkata,Chennai,Mumbai,New Delhi"
+              },
+              {
+                "name": "51",
+                "help": "(GMT+5:30)Sri Jayawardenepara"
+              },
+              {
+                "name": "48",
+                "help": "(GMT+5:45)Kathmandu"
+              },
+              {
+                "name": "45",
+                "help": "(GMT+5:00)Ekaterinburg"
+              },
+              {
+                "name": "49",
+                "help": "(GMT+6:00)Almaty,Novosibirsk"
+              },
+              {
+                "name": "50",
+                "help": "(GMT+6:00)Astana,Dhaka"
+              },
+              {
+                "name": "52",
+                "help": "(GMT+6:30)Rangoon"
+              },
+              {
+                "name": "53",
+                "help": "(GMT+7:00)Bangkok,Hanoi,Jakarta"
+              },
+              {
+                "name": "54",
+                "help": "(GMT+7:00)Krasnoyarsk"
+              },
+              {
+                "name": "55",
+                "help": "(GMT+8:00)Beijing,ChongQing,HongKong,Urumgi,Irkutsk"
+              },
+              {
+                "name": "56",
+                "help": "(GMT+8:00)Ulaan Bataar"
+              },
+              {
+                "name": "57",
+                "help": "(GMT+8:00)Kuala Lumpur,Singapore"
+              },
+              {
+                "name": "58",
+                "help": "(GMT+8:00)Perth"
+              },
+              {
+                "name": "59",
+                "help": "(GMT+8:00)Taipei"
+              },
+              {
+                "name": "60",
+                "help": "(GMT+9:00)Osaka,Sapporo,Tokyo,Seoul"
+              },
+              {
+                "name": "62",
+                "help": "(GMT+9:30)Adelaide"
+              },
+              {
+                "name": "63",
+                "help": "(GMT+9:30)Darwin"
+              },
+              {
+                "name": "61",
+                "help": "(GMT+9:00)Yakutsk"
+              },
+              {
+                "name": "64",
+                "help": "(GMT+10:00)Brisbane"
+              },
+              {
+                "name": "65",
+                "help": "(GMT+10:00)Canberra,Melbourne,Sydney"
+              },
+              {
+                "name": "66",
+                "help": "(GMT+10:00)Guam,Port Moresby"
+              },
+              {
+                "name": "67",
+                "help": "(GMT+10:00)Hobart"
+              },
+              {
+                "name": "68",
+                "help": "(GMT+10:00)Vladivostok"
+              },
+              {
+                "name": "69",
+                "help": "(GMT+10:00)Magadan"
+              },
+              {
+                "name": "70",
+                "help": "(GMT+11:00)Solomon Is.,New Caledonia"
+              },
+              {
+                "name": "71",
+                "help": "(GMT+12:00)Auckland,Wellington"
+              },
+              {
+                "name": "72",
+                "help": "(GMT+12:00)Fiji,Kamchatka,Marshall Is."
+              },
+              {
+                "name": "00",
+                "help": "(GMT+12:00)Eniwetok,Kwajalein"
+              },
+              {
+                "name": "82",
+                "help": "(GMT+12:45)Chatham Islands"
+              },
+              {
+                "name": "73",
+                "help": "(GMT+13:00)Nuku'alofa"
+              },
+              {
+                "name": "86",
+                "help": "(GMT+13:00)Samoa"
+              },
+              {
+                "name": "76",
+                "help": "(GMT+14:00)Kiritimati"
+              }
+            ],
+            "type": "option",
+            "name": "timezone",
+            "help": "Time zone."
+          },
+          "admin-sport": {
+            "category": "unitary",
+            "name": "admin-sport",
+            "min-value": 1,
+            "max-value": 65535,
+            "type": "integer",
+            "help": "Admin access HTTPS port (1 - 65535)."
+          },
+          "gui-wireless-opensecurity": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Display the feature in GUI."
+              },
+              {
+                "name": "disable",
+                "help": "Do not display the feature in GUI."
+              }
+            ],
+            "type": "option",
+            "name": "gui-wireless-opensecurity",
+            "help": "Enable/disable wireless open security option in GUI."
+          },
+          "multicast-forward": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable multicast forwarding."
+              },
+              {
+                "name": "disable",
+                "help": "Disable multicast forwarding."
+              }
+            ],
+            "type": "option",
+            "name": "multicast-forward",
+            "help": "Enable/disable multicast forwarding."
+          },
+          "miglog-affinity": {
+            "category": "unitary",
+            "size": 19,
+            "type": "string",
+            "name": "miglog-affinity",
+            "help": "Affinity setting for logging (64-bit hexadecimal value in the format of xxxxxxxxxxxxxxxx)."
+          },
+          "admin-console-timeout": {
+            "category": "unitary",
+            "name": "admin-console-timeout",
+            "min-value": 0,
+            "max-value": 4294967295,
+            "type": "integer",
+            "help": "Idle time-out for console."
+          },
+          "auto-auth-extension-device": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable automatic authorization of dedicated Fortinet extension device globally."
+              },
+              {
+                "name": "disable",
+                "help": "Disable automatic authorization of dedicated Fortinet extension device globally."
+              }
+            ],
+            "type": "option",
+            "name": "auto-auth-extension-device",
+            "help": "Enable/disable automatic authorization of dedicated Fortinet extension device globally."
+          },
+          "admin-https-ssl-versions": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "tlsv1-0",
+                "help": "TLS 1.0."
+              },
+              {
+                "name": "tlsv1-1",
+                "help": "TLS 1.1."
+              },
+              {
+                "name": "tlsv1-2",
+                "help": "TLS 1.2."
+              },
+              {
+                "name": "sslv3",
+                "help": "SSLv3."
+              }
+            ],
+            "type": "option",
+            "name": "admin-https-ssl-versions",
+            "help": "Allowed SSL/TLS versions for web administration."
+          },
+          "hostname": {
+            "category": "unitary",
+            "size": 35,
+            "type": "string",
+            "name": "hostname",
+            "help": "Firewall hostname."
+          },
+          "two-factor-sms-expiry": {
+            "category": "unitary",
+            "name": "two-factor-sms-expiry",
+            "min-value": 30,
+            "max-value": 300,
+            "type": "integer",
+            "help": "Expiration time for SMS token authentication (30 - 300 sec, default = 60 sec)."
+          },
+          "ssh-hmac-md5": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable HMAC-MD5 for SSH access."
+              },
+              {
+                "name": "disable",
+                "help": "Disable HMAC-MD5 for SSH access."
+              }
+            ],
+            "type": "option",
+            "name": "ssh-hmac-md5",
+            "help": "Enable/disable HMAC-MD5 for SSH access."
+          },
+          "max-dlpstat-memory": {
+            "category": "unitary",
+            "name": "max-dlpstat-memory",
+            "min-value": 0,
+            "max-value": 4294967295,
+            "type": "integer",
+            "help": "Maximum DLP stat memory (0 - 4294967295)."
+          },
+          "av-affinity": {
+            "category": "unitary",
+            "size": 19,
+            "type": "string",
+            "name": "av-affinity",
+            "help": "Affinity setting for AV scanning (64-bit hexadecimal value in the format of xxxxxxxxxxxxxxxx)."
+          },
+          "admin-ssh-port": {
+            "category": "unitary",
+            "name": "admin-ssh-port",
+            "min-value": 1,
+            "max-value": 65535,
+            "type": "integer",
+            "help": "Admin access SSH port (1 - 65535)."
+          },
+          "compliance-check": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable global PCI DSS compliance check."
+              },
+              {
+                "name": "disable",
+                "help": "Disable global PCI DSS compliance check."
+              }
+            ],
+            "type": "option",
+            "name": "compliance-check",
+            "help": "Enable/disable global PCI DSS compliance check."
+          },
+          "admin-scp": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable allow system configuration download by SCP."
+              },
+              {
+                "name": "disable",
+                "help": "Disable allow system configuration download by SCP."
+              }
+            ],
+            "type": "option",
+            "name": "admin-scp",
+            "help": "Enable/disable allow system configuration download by SCP."
+          },
+          "auth-keepalive": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable use of keep alive to extend authentication."
+              },
+              {
+                "name": "disable",
+                "help": "Disable use of keep alive to extend authentication."
+              }
+            ],
+            "type": "option",
+            "name": "auth-keepalive",
+            "help": "Enable/disable use of keep alive to extend authentication."
+          },
+          "tcp-halfclose-timer": {
+            "category": "unitary",
+            "name": "tcp-halfclose-timer",
+            "min-value": 0,
+            "max-value": 4294967295,
+            "type": "integer",
+            "help": "TCP half close timeout (1 - 86400 sec, default = 120)."
+          },
+          "vip-arp-range": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "unlimited",
+                "help": "Send ARPs for all addresses in VIP range."
+              },
+              {
+                "name": "restricted",
+                "help": "Send ARPs for the first 8192 addresses in VIP range."
+              }
+            ],
+            "type": "option",
+            "name": "vip-arp-range",
+            "help": "Control ARP behavior for VIP ranges."
+          },
+          "admin-port": {
+            "category": "unitary",
+            "name": "admin-port",
+            "min-value": 1,
+            "max-value": 65535,
+            "type": "integer",
+            "help": "Admin access HTTP port (1 - 65535)."
+          },
+          "sys-perf-log-interval": {
+            "category": "unitary",
+            "name": "sys-perf-log-interval",
+            "min-value": 0,
+            "max-value": 4294967295,
+            "type": "integer",
+            "help": "The interval of performance statistics logging."
+          },
+          "check-protocol-header": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "loose",
+                "help": "Check protocol header loosely."
+              },
+              {
+                "name": "strict",
+                "help": "Check protocol header strictly."
+              }
+            ],
+            "type": "option",
+            "name": "check-protocol-header",
+            "help": "Level of checking protocol header."
+          },
+          "proxy-cipher-hardware-acceleration": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "disable",
+                "help": "Disable use of content processor to encrypt or decrypt traffic."
+              },
+              {
+                "name": "enable",
+                "help": "Enable use of content processor to encrypt or decrypt traffic."
+              }
+            ],
+            "type": "option",
+            "name": "proxy-cipher-hardware-acceleration",
+            "help": "Enable/disable use of content processor to encrypt or decrypt traffic."
+          },
+          "failtime": {
+            "category": "unitary",
+            "name": "failtime",
+            "min-value": 0,
+            "max-value": 4294967295,
+            "type": "integer",
+            "help": "Fail-time for server lost."
+          },
+          "ip-src-port-range": {
+            "category": "unitary",
+            "type": "user",
+            "name": "ip-src-port-range",
+            "help": "IP source port range for firewall originated traffic."
+          },
+          "two-factor-email-expiry": {
+            "category": "unitary",
+            "name": "two-factor-email-expiry",
+            "min-value": 30,
+            "max-value": 300,
+            "type": "integer",
+            "help": "Expiration time for email token authentication (30 - 300 sec, default = 60 sec)."
+          },
+          "gui-device-latitude": {
+            "category": "unitary",
+            "size": 19,
+            "type": "string",
+            "name": "gui-device-latitude",
+            "help": "Physical device latitude coordinate."
+          },
+          "tcp-option": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable TCP option."
+              },
+              {
+                "name": "disable",
+                "help": "Disable TCP option."
+              }
+            ],
+            "type": "option",
+            "name": "tcp-option",
+            "help": "Enable/disable TCP option."
+          },
+          "wifi-certificate": {
+            "category": "unitary",
+            "name": "wifi-certificate",
+            "help": "WiFi certificate for WPA.",
+            "datasource": [
+              "certificate.local.name"
+            ],
+            "type": "string",
+            "size": 35
+          },
+          "admin-maintainer": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable login for special user (maintainer)."
+              },
+              {
+                "name": "disable",
+                "help": "Disable login for special user (maintainer)."
+              }
+            ],
+            "type": "option",
+            "name": "admin-maintainer",
+            "help": "Enable/disable login of maintainer user."
+          },
+          "allow-traffic-redirect": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable allow traffic redirect."
+              },
+              {
+                "name": "disable",
+                "help": "Disable allow traffic redirect."
+              }
+            ],
+            "type": "option",
+            "name": "allow-traffic-redirect",
+            "help": "Enable/disable allow traffic redirect."
+          },
+          "interval": {
+            "category": "unitary",
+            "name": "interval",
+            "min-value": 0,
+            "max-value": 4294967295,
+            "type": "integer",
+            "help": "Dead gateway detection interval."
+          },
+          "cfg-save": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "automatic",
+                "help": "Automatically save config."
+              },
+              {
+                "name": "manual",
+                "help": "Manually save config."
+              },
+              {
+                "name": "revert",
+                "help": "Manually save config and revert the config when timeout."
+              }
+            ],
+            "type": "option",
+            "name": "cfg-save",
+            "help": "Configuration file save mode for changes made using the CLI."
+          },
+          "alias": {
+            "category": "unitary",
+            "size": 35,
+            "type": "string",
+            "name": "alias",
+            "help": "Device alias."
+          },
+          "br-fdb-max-entry": {
+            "category": "unitary",
+            "name": "br-fdb-max-entry",
+            "min-value": 8192,
+            "max-value": 2147483647,
+            "type": "integer",
+            "help": "Maximum number of bridge forwarding database entries (set to 8192 or higher)."
+          },
+          "check-reset-range": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "strict",
+                "help": "Check RST range strictly."
+              },
+              {
+                "name": "disable",
+                "help": "Disable RST range check."
+              }
+            ],
+            "type": "option",
+            "name": "check-reset-range",
+            "help": "Drop RST packets if out-of-window."
+          },
+          "switch-controller-reserved-network": {
+            "category": "unitary",
+            "type": "ipv4-classnet",
+            "name": "switch-controller-reserved-network",
+            "help": "Reserved network for switch-controller."
+          },
+          "tcp-halfopen-timer": {
+            "category": "unitary",
+            "name": "tcp-halfopen-timer",
+            "min-value": 0,
+            "max-value": 4294967295,
+            "type": "integer",
+            "help": "TCP half open timeout (1 - 86400 sec, default = 10)."
+          },
+          "gui-theme": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "green",
+                "help": "Green theme."
+              },
+              {
+                "name": "red",
+                "help": "Red theme."
+              },
+              {
+                "name": "blue",
+                "help": "Light blue theme."
+              },
+              {
+                "name": "melongene",
+                "help": "Melongene theme (eggplant color)."
+              },
+              {
+                "name": "mariner",
+                "help": "Mariner theme (dark blue color)."
+              }
+            ],
+            "type": "option",
+            "name": "gui-theme",
+            "help": "Color scheme to use for the administration GUI."
+          },
+          "admin-ssh-grace-time": {
+            "category": "unitary",
+            "name": "admin-ssh-grace-time",
+            "min-value": 10,
+            "max-value": 3600,
+            "type": "integer",
+            "help": "Admin access login grace time (10 - 3600 sec)."
+          },
+          "radius-port": {
+            "category": "unitary",
+            "name": "radius-port",
+            "min-value": 0,
+            "max-value": 4294967295,
+            "type": "integer",
+            "help": "RADIUS service port number."
+          },
+          "ipsec-asic-offload": {
+            "category": "unitary",
+            "options": [
+              {
+                "name": "enable",
+                "help": "Enable ASIC offload for IPsec VPN."
+              },
+              {
+                "name": "disable",
+                "help": "Disable ASIC offload for IPsec VPN."
+              }
+            ],
+            "type": "option",
+            "name": "ipsec-asic-offload",
+            "help": "Enable/disable ASIC offload for IPsec VPN."
+          }
+        },
+        "help": "Configure global attributes."
+      },
+      "http_method": "GET",
+      "build": 1138,
+      "http_status": 200,
+      "action": "schema",
+      "path": "system",
+      "serial": "FGVMEV0000000000",
+      "vdom": "root"
+    }
+}
