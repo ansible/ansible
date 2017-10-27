@@ -4,25 +4,25 @@
 - name: setup
   ios_config:
     lines:
-      - no ip domain lookup source-interface
+      - no ip domain lookup source-interface Loopback888
       - vrf definition ansible
     match: none
     authorize: yes
 
 - name: configure lookup_source
   ios_system:
-    lookup_source: Loopback10
+    lookup_source: Loopback888
     authorize: yes
   register: result
 
 - assert:
     that:
       - result.changed == true
-      - "'ip domain lookup source-interface Loopback10' in result.commands"
+      - "'ip domain lookup source-interface Loopback888' in result.commands"
 
 - name: verify lookup_source
   ios_system:
-    lookup_source: Loopback10
+    lookup_source: Loopback888
     authorize: yes
   register: result
 
@@ -84,7 +84,7 @@
 - name: teardown
   ios_config:
     lines:
-      - no ip domain lookup source-interface
+      - no ip domain lookup source-interface Loopback888
       - no vrf definition ansible
     match: none
     authorize: yes
