@@ -114,6 +114,8 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/32234)
 * Fix wrong prompt issue for network modules (https://github.com/ansible/ansible/pull/32426)
 * Fix eos_eapi to enable non-default vrfs if the default vrf is already configured (https://github.com/ansible/ansible/pull/32112)
+* Fix network parse_cli filter in case of single match is not caught when using start_block and end_block
+  (https://github.com/ansible/ansible/pull/31092)
 
 <a id="2.4.1"></a>
 
