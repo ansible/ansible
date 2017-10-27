@@ -22,6 +22,7 @@
         lines:
           - no negotiation auto
         parents: int GigabitEthernet2
+        authorize: yes
 
     - name: Set test interface 2 to GigabitEthernet3 as we are on Cisco IOS-XE
       set_fact: test_interface2=GigabitEthernet3
@@ -30,6 +31,7 @@
         lines:
           - no negotiation auto
         parents: int GigabitEthernet3
+        authorize: yes
   when: "'Cisco IOS-XE' in show_version_result.stdout[0]"
 
 - name: Configure interface (setup)
