@@ -35,6 +35,7 @@ Ansible Changes By Release
 ## Lookups
 * Added `aws_ssm` lookup plugin
 * config, allows querying Ansible settings
+* Added `yaml` output plugin
 
 ### New Modules
 
