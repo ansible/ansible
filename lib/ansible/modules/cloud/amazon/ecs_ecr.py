@@ -56,6 +56,7 @@ options:
         required: false
         default: false
         type: bool
+        version_added: '2.5'
     image_tag_mutability:
         description:
             - Configure whether repository should be mutable (ie. an already existing tag can be overwritten) or not.
