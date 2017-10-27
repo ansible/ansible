@@ -141,7 +141,7 @@ class Sv(object):
         self.pid            = None
         self.duration       = None
 
-        self.svc_cmd        = module.get_bin_path('sv', opt_dirs=self.extra_paths)
+        self.svc_cmd        = module.get_bin_path('sv', opt_dirs=self.extra_paths, required=True)
         self.svstat_cmd     = module.get_bin_path('sv', opt_dirs=self.extra_paths)
         self.svc_full = '/'.join([ self.service_dir, self.name ])
         self.src_full = '/'.join([ self.service_src, self.name ])
@@ -264,9 +264,6 @@ def main():
     sv = Sv(module)
     changed = False
     orig_state = sv.report()
-
-    if not sv.svc_cmd:
-        module.fail_json(msg="Could not find sv binary. Please ensure it is installed.")
 
     if enabled is not None and enabled != sv.enabled:
         changed = True
