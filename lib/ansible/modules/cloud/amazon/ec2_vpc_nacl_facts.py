@@ -25,6 +25,7 @@ options:
       - A list of Network ACL IDs to retrieve facts about.
     required: false
     default: []
+    aliases: [nacl_id]
   filters:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value. See \
@@ -173,7 +174,7 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            nacl_ids=dict(default=[], type='list'),
+            nacl_ids=dict(default=[], type='list', aliases=['nacl_id']),
             filters=dict(default={}, type='dict')
         )
     )
