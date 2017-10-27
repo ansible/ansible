@@ -82,7 +82,8 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/32169)
 * Enable echo for `pause` module: (https://github.com/ansible/ansible/issues/14160)
 * Fix for `hashi_vault` lookup to return all keys at a given path when no key is specified (https://github.com/ansible/ansible/pull/32182)
-
+* Fix for `win_package` to allow TLS 1.1 and 1.2 on web requests:
+  (https://github.com/ansible/ansible/pull/32184)
 
 
 <a id="2.4.1"></a>
