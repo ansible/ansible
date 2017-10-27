@@ -347,10 +347,10 @@ class AzureRMContainerInstance(AzureRMModuleBase):
                 self.log("ACI instance deleted")
             elif self.state == 'present':
                 self.log("Need to check if container group has to be deleted or may be updated")
-                to_be_updated = self.check_need_update(response)
+                to_be_updated = True
                 if to_be_updated:
                     self.log('Deleting ACI instance before update')
-                    if not self.check:
+                    if not self.check_mode:
                         self.delete_aci()
 
         if self.state == 'present':
@@ -462,35 +462,6 @@ class AzureRMContainerInstance(AzureRMModuleBase):
             return create_aci_dict(response)
 
         return False
-
-    def check_need_update(self, cg):
-
-        if self.location.lower() != cg["location"].lower():
-            self.log('Location has changed -- need to delete')
-            return True
-        if self.os_type.lower() != cg["os_type"].lower():
-            self.log('OS Type has changed -- need to delete')
-            return True
-
-        # check if container list has changed
-        if len(cg["containers"]) != len(self.containers):
-            self.log('Number of containers has changed -- need to delete')
-            return True
-
-        for i in range(len(self.containers)):
-            if cg["containers"][i]["image"] != self.containers[i]["image"]:
-                self.log('Container image has changed -- need to delete')
-                return True
-            if cg["containers"][i]["memory"] != self.containers[i]["memory"]:
-                self.log('Container memory has changed -- need to delete')
-                return True
-            if cg["containers"][i]["name"] != self.containers[i]["name"]:
-                self.log('Container name has changed -- need to delete')
-                return True
-
-        self.log('No need to update')
-        return False
-
 
 def main():
     """Main execution"""
