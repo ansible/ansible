@@ -415,7 +415,7 @@ class CLI(with_metaclass(ABCMeta, object)):
     @staticmethod
     def base_parser(usage="", output_opts=False, runas_opts=False, meta_opts=False, runtask_opts=False, vault_opts=False, module_opts=False,
                     async_opts=False, connect_opts=False, subset_opts=False, check_opts=False, inventory_opts=False, epilog=None, fork_opts=False,
-                    runas_prompt_opts=False, desc=None):
+                    runas_prompt_opts=False, desc=None, basedir_opts=False):
         ''' create an options parser for most ansible scripts '''
 
         # base opts
@@ -546,6 +546,10 @@ class CLI(with_metaclass(ABCMeta, object)):
             parser.add_option('--flush-cache', dest='flush_cache', action='store_true',
                               help="clear the fact cache")
 
+        if basedir_opts:
+            parser.add_option('--playbook-dir', default=None, dest='basedir', action='store',
+                              help="Since this tool does not use playbooks, use this as a subsitute playbook directory."
+                                   "This sets the relative path for many features including roles/ group_vars/ etc.")
         return parser
 
     @abstractmethod
@@ -774,6 +778,10 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         # all needs loader
         loader = DataLoader()
+
+        basedir = getattr(options, 'basedir')
+        if basedir:
+            loader.set_basedir(basedir)
 
         vault_ids = options.vault_ids
         default_vault_ids = C.DEFAULT_VAULT_IDENTITY_LIST
