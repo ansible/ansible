@@ -84,7 +84,7 @@
 - name: teardown
   ios_config:
     lines:
-      - no ip domain lookup source-interface
+      - no ip name-server
     match: none
     authorize: yes
 
