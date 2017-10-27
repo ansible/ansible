@@ -220,7 +220,7 @@
       environment:
           AWS_ACCESS_KEY_ID: '{{aws_access_key}}'
           AWS_SECRET_ACCESS_KEY: '{{aws_secret_key}}'
-          #AWS_SESSION_TOKEN: '{{security_token}}'
+          AWS_SESSION_TOKEN: '{{security_token}}'
           AWS_DEFAULT_REGION: '{{ec2_region}}'
       register: result
 
@@ -229,7 +229,7 @@
       environment:
           AWS_ACCESS_KEY_ID: '{{aws_access_key}}'
           AWS_SECRET_ACCESS_KEY: '{{aws_secret_key}}'
-          #AWS_SESSION_TOKEN: '{{security_token}}'
+          AWS_SESSION_TOKEN: '{{security_token}}'
           AWS_DEFAULT_REGION: '{{ec2_region}}'
       register: vpc_ipv6
 
