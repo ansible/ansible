@@ -69,6 +69,10 @@ EXAMPLES = '''
 
 '''
 
+# TODO: Disabled the RETURN as it was breaking docs building. Someone needs to
+# fix this
+RETURN = '''# '''
+
 try:
     import boto3
     HAS_BOTO3 = True
