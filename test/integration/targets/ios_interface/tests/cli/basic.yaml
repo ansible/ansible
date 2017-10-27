@@ -7,20 +7,29 @@
     authorize: yes
   register: show_version_result
 
-- name: Set test interface to GigabitEthernet0/1 if we are on Cisco IOS
-  set_fact: test_interface=GigabitEthernet0/1
+- block:
+    - name: Set test interface to GigabitEthernet0/1 as we are on Cisco IOS
+      set_fact: test_interface=GigabitEthernet0/1
+    - name: Set test interface 2 to GigabitEthernet0/2 as we are on Cisco IOS
+      set_fact: test_interface2=GigabitEthernet0/2
   when: "'Cisco IOS' in show_version_result.stdout[0]"
 
-- name: Set test interface 2 to GigabitEthernet0/2 if we are on Cisco IOS
-  set_fact: test_interface2=GigabitEthernet0/2
-  when: "'Cisco IOS' in show_version_result.stdout[0]"
+- block:
+    - name: Set test interface to GigabitEthernet2 as we are on Cisco IOS-XE
+      set_fact: test_interface=GigabitEthernet2
+    - name: Disable autonegotiation on GigabitEthernet2
+      ios_config:
+        lines:
+          - no negotiation auto
+        parents: int GigabitEthernet2
 
-- name: Set test interface to GigabitEthernet2 if we are on Cisco IOS-XE
-  set_fact: test_interface=GigabitEthernet2
-  when: "'Cisco IOS-XE' in show_version_result.stdout[0]"
-
-- name: Set test interface 2 to GigabitEthernet3 if we are on Cisco IOS-XE
-  set_fact: test_interface2=GigabitEthernet3
+    - name: Set test interface 2 to GigabitEthernet3 as we are on Cisco IOS-XE
+      set_fact: test_interface2=GigabitEthernet3
+    - name: Disable autonegotiation on GigabitEthernet3
+      ios_config:
+        lines:
+          - no negotiation auto
+        parents: int GigabitEthernet3
   when: "'Cisco IOS-XE' in show_version_result.stdout[0]"
 
 - name: Configure interface (setup)
