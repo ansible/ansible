@@ -64,9 +64,6 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
 * Added lifecycle policy support to `ecs_ecr`
 * Deprecated `ecs_ecr` option `delete_policy` in favor of `purge_policy`
 
-#### Deprecated Modules (to be removed in 2.9):
-* ec2_ami_find: replaced by ec2_ami_facts
-
 #### Removed Modules (previously deprecated):
 * accelerate.
 * boundary_meter: There was no deprecation period for this but the hosted
@@ -77,7 +74,6 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
 * ec2_vpc.
 * ec2_ami_search, use ec2_ami_facts instead.
 * nxos_mtu, use nxos_system's `system_mtu` option. To specify an interfaces MTU use nxos_interface.
-  https://github.com/ansible/ansible/issues/29387
 
 ### New Plugins
 
