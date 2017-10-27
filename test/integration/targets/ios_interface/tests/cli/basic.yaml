@@ -39,7 +39,7 @@
     name: "{{ test_interface }}"
     description: test-interface-1
     speed: 1000
-    mtu: 1500
+    mtu: 1800
     state: present
     authorize: yes
   register: result
@@ -74,7 +74,7 @@
   ios_interface:
     name: "{{ test_interface }}"
     description: test-interface
-    mtu: 1600
+    mtu: 2000
     state: present
     authorize: yes
   register: result
@@ -84,13 +84,13 @@
       - 'result.changed == true'
       - '"interface {{ test_interface }}" in result.commands'
       - '"description test-interface" in result.commands'
-      - '"mtu 1600" in result.commands'
+      - '"mtu 2000" in result.commands'
 
 - name: Change interface parameters
   ios_interface:
     name: "{{ test_interface }}"
     description: test-interface-1
-    mtu: 1500
+    mtu: 1800
     state: present
     authorize: yes
   register: result
@@ -100,7 +100,7 @@
       - 'result.changed == true'
       - '"interface {{ test_interface }}" in result.commands'
       - '"description test-interface-1" in result.commands'
-      - '"mtu 1500" in result.commands'
+      - '"mtu 1800" in result.commands'
 
 - name: Disable interface
   ios_interface:
@@ -133,7 +133,7 @@
     name: "{{ test_interface2 }}"
     description: test-interface-initial
     speed: 1000
-    mtu: 1500
+    mtu: 1800
     state: present
     authorize: yes
   register: result
@@ -141,8 +141,8 @@
 - name: Add interface aggregate
   ios_interface:
     aggregate:
-    - { name: "{{ test_interface }}", mtu: 1500, description: test-interface-1 }
-    - { name: "{{ test_interface2 }}", mtu: 1600, description: test-interface-2 }
+    - { name: "{{ test_interface }}", mtu: 1800, description: test-interface-1 }
+    - { name: "{{ test_interface2 }}", mtu: 2000, description: test-interface-2 }
     speed: 1000
     state: present
     authorize: yes
@@ -152,16 +152,16 @@
     that:
       - 'result.changed == true'
       - '"interface {{ test_interface }}" in result.commands'
-      - '"mtu 1500" in result.commands'
+      - '"mtu 1800" in result.commands'
       - '"interface {{ test_interface2 }}" in result.commands'
       - '"description test-interface-2" in result.commands'
-      - '"mtu 1600" in result.commands'
+      - '"mtu 2000" in result.commands'
 
 - name: Add interface aggregate (idempotent)
   ios_interface:
     aggregate:
-    - { name: "{{ test_interface }}", mtu: 1500, description: test-interface-1 }
-    - { name: "{{ test_interface2 }}", mtu: 1600, description: test-interface-2 }
+    - { name: "{{ test_interface }}", mtu: 1800, description: test-interface-1 }
+    - { name: "{{ test_interface2 }}", mtu: 2000, description: test-interface-2 }
     speed: 1000
     state: present
     authorize: yes
