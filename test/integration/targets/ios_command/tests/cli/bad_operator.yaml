@@ -6,6 +6,7 @@
     commands:
       - show version
       - show interfaces GigabitEthernet 0/0
+    authorize: yes
     wait_for:
       - "result[0] contains 'Description: Foo'"
   register: result
