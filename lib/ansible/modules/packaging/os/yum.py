@@ -248,7 +248,6 @@ from ansible.module_utils.urls import fetch_url
 BUFSIZE = 65536
 
 def_qf = "%{epoch}:%{name}-%{version}-%{release}.%{arch}"
-rpmbin = None
 
 
 def yum_base(conf_file=None, installroot='/'):
@@ -343,7 +342,7 @@ def is_group_env_installed(name):
     return False
 
 
-def is_installed(module, repoq, pkgspec, conf_file, qf=None, en_repos=None, dis_repos=None, is_pkg=False, installroot='/'):
+def is_installed(module, pkgspec, conf_file, rpm=False, qf=None, en_repos=None, dis_repos=None, is_pkg=False, installroot='/'):
     if en_repos is None:
         en_repos = []
     if dis_repos is None:
@@ -351,7 +350,7 @@ def is_installed(module, repoq, pkgspec, conf_file, qf=None, en_repos=None, dis_
     if qf is None:
         qf = "%{epoch}:%{name}-%{version}-%{release}.%{arch}\n"
 
-    if not repoq:
+    if not rpm:
         pkgs = []
         try:
             my = yum_base(conf_file, installroot)
@@ -370,9 +369,7 @@ def is_installed(module, repoq, pkgspec, conf_file, qf=None, en_repos=None, dis_
         return [po_to_envra(p) for p in pkgs]
 
     else:
-        global rpmbin
-        if not rpmbin:
-            rpmbin = module.get_bin_path('rpm', required=True)
+        rpmbin = module.get_bin_path('rpm', required=True)
 
         cmd = [rpmbin, '-q', '--qf', qf, pkgspec]
         if installroot != '/':
@@ -546,7 +543,7 @@ def what_provides(module, repoq, req_spec, conf_file, qf=def_qf, en_repos=None, 
             out += out2
             pkgs = set([p for p in out.split('\n') if p.strip()])
             if not pkgs:
-                pkgs = is_installed(module, repoq, req_spec, conf_file, qf=qf, installroot=installroot)
+                pkgs = is_installed(module, req_spec, conf_file, installroot=installroot)
             return pkgs
         else:
             module.fail_json(msg='Error from repoquery: %s: %s' % (cmd, err + err2))
@@ -661,7 +658,7 @@ def list_stuff(module, repoquerybin, conf_file, stuff, installroot='/', disabler
         repoq += ['-c', conf_file]
 
     if stuff == 'installed':
-        return [pkg_to_dict(p) for p in sorted(is_installed(module, repoq, '-a', conf_file, qf=is_installed_qf, installroot=installroot)) if p.strip()]
+        return [pkg_to_dict(p) for p in sorted(is_installed(module, '-a', conf_file, rpm=True, qf=is_installed_qf, installroot=installroot)) if p.strip()]
 
     if stuff == 'updates':
         return [pkg_to_dict(p) for p in sorted(is_update(module, repoq, '-a', conf_file, qf=qf, installroot=installroot)) if p.strip()]
@@ -672,7 +669,7 @@ def list_stuff(module, repoquerybin, conf_file, stuff, installroot='/', disabler
     if stuff == 'repos':
         return [dict(repoid=name, state='enabled') for name in sorted(repolist(module, repoq)) if name.strip()]
 
-    return [pkg_to_dict(p) for p in sorted(is_installed(module, repoq, stuff, conf_file, qf=is_installed_qf, installroot=installroot) +
+    return [pkg_to_dict(p) for p in sorted(is_installed(module, stuff, conf_file, rpm=True, qf=is_installed_qf, installroot=installroot) +
                                            is_available(module, repoq, stuff, conf_file, qf=qf, installroot=installroot)) if p.strip()]
 
 
@@ -740,13 +737,13 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, i
 
             # most common case is the pkg is already installed
             envra = local_envra(package)
-            installed_pkgs = is_installed(module, repoq, envra, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot)
+            installed_pkgs = is_installed(module, envra, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot)
             if installed_pkgs:
                 res['results'].append('%s providing %s is already installed' % (installed_pkgs[0], package))
                 continue
 
             (name, ver, rel, epoch, arch) = splitFilename(envra)
-            installed_pkgs = is_installed(module, repoq, name, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot)
+            installed_pkgs = is_installed(module, name, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot)
 
             # case for two same envr but differrent archs like x86_64 and i686
             if len(installed_pkgs) == 2:
@@ -792,7 +789,7 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, i
             # short circuit all the bs - and search for it as a pkg in is_installed
             # if you find it then we're done
             if not set(['*', '?']).intersection(set(spec)):
-                installed_pkgs = is_installed(module, repoq, spec, conf_file, en_repos=en_repos, dis_repos=dis_repos, is_pkg=True, installroot=installroot)
+                installed_pkgs = is_installed(module, spec, conf_file, en_repos=en_repos, dis_repos=dis_repos, is_pkg=True, installroot=installroot)
                 if installed_pkgs:
                     res['results'].append('%s providing %s is already installed' % (installed_pkgs[0], spec))
                     continue
@@ -818,7 +815,7 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, i
 
             found = False
             for this in pkglist:
-                if is_installed(module, repoq, this, conf_file, en_repos=en_repos, dis_repos=dis_repos, is_pkg=True, installroot=installroot):
+                if is_installed(module, this, conf_file, en_repos=en_repos, dis_repos=dis_repos, is_pkg=True, installroot=installroot):
                     found = True
                     res['results'].append('%s providing %s is already installed' % (this, spec))
                     break
@@ -829,7 +826,7 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, i
             # but virt provides should be all caught in what_provides on its own.
             # highly irritating
             if not found:
-                if is_installed(module, repoq, spec, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot):
+                if is_installed(module, spec, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot):
                     found = True
                     res['results'].append('package providing %s is already installed' % (spec))
 
@@ -847,7 +844,7 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, i
                     (name, ver, rel, epoch, arch) = splitFilename(package)
 
                     # Check if any version of the requested package is installed
-                    inst_pkgs = is_installed(module, repoq, name, conf_file, en_repos=en_repos, dis_repos=dis_repos, is_pkg=True)
+                    inst_pkgs = is_installed(module, name, conf_file, en_repos=en_repos, dis_repos=dis_repos, is_pkg=True)
                     if inst_pkgs:
                         (cur_name, cur_ver, cur_rel, cur_epoch, cur_arch) = splitFilename(inst_pkgs[0])
                         compare = compareEVR((cur_epoch, cur_ver, cur_rel), (epoch, ver, rel))
@@ -889,7 +886,7 @@ def remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, in
         if pkg.startswith('@'):
             installed = is_group_env_installed(pkg)
         else:
-            installed = is_installed(module, repoq, pkg, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot)
+            installed = is_installed(module, pkg, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot)
 
         if installed:
             pkgs.append(pkg)
@@ -922,7 +919,7 @@ def remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, in
             if pkg.startswith('@'):
                 installed = is_group_env_installed(pkg)
             else:
-                installed = is_installed(module, repoq, pkg, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot)
+                installed = is_installed(module, pkg, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot)
 
             if installed:
                 module.fail_json(**res)
@@ -1035,7 +1032,7 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, up
                 envra = local_envra(spec)
 
                 # local rpm files can't be updated
-                if not is_installed(module, repoq, envra, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot):
+                if not is_installed(module, envra, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot):
                     pkgs['install'].append(spec)
                 continue
 
@@ -1046,13 +1043,13 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, up
                 envra = local_envra(package)
 
                 # local rpm files can't be updated
-                if not is_installed(module, repoq, envra, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot):
+                if not is_installed(module, envra, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot):
                     pkgs['install'].append(package)
                 continue
 
             # dep/pkgname  - find it
             else:
-                if is_installed(module, repoq, spec, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot) or update_only:
+                if is_installed(module, spec, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot) or update_only:
                     pkgs['update'].append(spec)
                 else:
                     pkgs['install'].append(spec)
@@ -1084,7 +1081,7 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, up
                         will_update_from_other_package[spec] = pkgname
                     break
 
-            if not is_installed(module, repoq, spec, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot) and update_only:
+            if not is_installed(module, spec, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot) and update_only:
                 res['results'].append("Packages providing %s not installed due to update_only specified" % spec)
                 continue
             if nothing_to_do:
