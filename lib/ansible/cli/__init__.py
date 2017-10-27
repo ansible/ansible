@@ -342,7 +342,7 @@ class CLI(with_metaclass(ABCMeta, object)):
 
     def normalize_become_options(self):
         ''' this keeps backwards compatibility with sudo/su self.options '''
-        self.options.become_ask_pass = self.options.become_ask_pass or self.options.ask_sudo_pass or self.options.ask_su_pass or C.DEFAULT_BECOME_ASK_PASS
+        self.options.become_ask_pass = self.options.become_ask_pass or self.options.ask_sudo_pass or self.options.ask_su_pass
         self.options.become_user = self.options.become_user or self.options.sudo_user or self.options.su_user or C.DEFAULT_BECOME_USER
 
         def _dep(which):
@@ -444,6 +444,8 @@ class CLI(with_metaclass(ABCMeta, object)):
         if vault_opts:
             parser.add_option('--ask-vault-pass', default=C.DEFAULT_ASK_VAULT_PASS, dest='ask_vault_pass', action='store_true',
                               help='ask for vault password')
+            parser.add_option('--no-ask-vault-pass', dest='ask_vault_pass', action='store_false',
+                              help='do not ask for vault password')
             parser.add_option('--vault-password-file', default=[], dest='vault_password_files',
                               help="vault password file", action="callback", callback=CLI.unfrack_paths, type='string')
             parser.add_option('--new-vault-password-file', default=[], dest='new_vault_password_files',
@@ -505,6 +507,8 @@ class CLI(with_metaclass(ABCMeta, object)):
             # consolidated privilege escalation (become)
             runas_group.add_option("-b", "--become", default=C.DEFAULT_BECOME, action="store_true", dest='become',
                                    help="run operations with become (does not imply password prompting)")
+            runas_group.add_option("--no-become", action="store_false", dest='become',
+                                   help="run operations without become")
             runas_group.add_option('--become-method', dest='become_method', default=C.DEFAULT_BECOME_METHOD, type='choice', choices=C.BECOME_METHODS,
                                    help="privilege escalation method to use (default=%s), valid choices: [ %s ]" %
                                    (C.DEFAULT_BECOME_METHOD, ' | '.join(C.BECOME_METHODS)))
@@ -518,8 +522,10 @@ class CLI(with_metaclass(ABCMeta, object)):
                                    help='ask for sudo password (deprecated, use become)')
             runas_group.add_option('--ask-su-pass', default=C.DEFAULT_ASK_SU_PASS, dest='ask_su_pass', action='store_true',
                                    help='ask for su password (deprecated, use become)')
-            runas_group.add_option('-K', '--ask-become-pass', default=False, dest='become_ask_pass', action='store_true',
+            runas_group.add_option('-K', '--ask-become-pass', default=C.DEFAULT_BECOME_ASK_PASS, dest='become_ask_pass', action='store_true',
                                    help='ask for privilege escalation password')
+            runas_group.add_option('--no-ask-become-pass', dest='become_ask_pass', action='store_false',
+                                   help='do not ask for privilege escalation password')
 
         if runas_group:
             parser.add_option_group(runas_group)

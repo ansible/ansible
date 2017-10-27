@@ -36,6 +36,7 @@ Ansible Changes By Release
 * boundary_meter: There was no deprecation period for this but the hosted
   service it relied on has gone away so the module has been removed.
   https://github.com/ansible/ansible/issues/29387
+* Added `--no-ask-vault-pass`, `--no-become`, `--no-ask-become-pass` command line options
 
 ### New Plugins
 
