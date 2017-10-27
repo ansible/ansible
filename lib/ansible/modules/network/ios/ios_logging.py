@@ -148,7 +148,7 @@ def map_obj_to_commands(updates, module):
 
         if state == 'absent' and w in have:
             if dest == 'host':
-                commands.append('no logging host {}'.format(name))
+                commands.append('no logging host {} transport udp port 514'.format(name))
             elif dest:
                 commands.append('no logging {}'.format(dest))
             else:
