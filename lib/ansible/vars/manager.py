@@ -232,22 +232,23 @@ class VariableManager:
             include_delegate_to=include_delegate_to,
         )
 
+        # default for all cases
+        basedirs = [self._loader.get_basedir()]
+
         if play:
             # first we compile any vars specified in defaults/main.yml
             # for all roles within the specified play
             for role in play.get_roles():
                 all_vars = combine_vars(all_vars, role.get_default_vars())
 
-        basedirs = []
         if task:
             # set basedirs
             if C.PLAYBOOK_VARS_ROOT == 'all':  # should be default
                 basedirs = task.get_search_path()
-            elif C.PLAYBOOK_VARS_ROOT == 'top':  # only option pre 2.3
-                basedirs = [self._loader.get_basedir()]
             elif C.PLAYBOOK_VARS_ROOT in ('bottom', 'playbook_dir'):  # only option in 2.4.0
                 basedirs = [task.get_search_path()[0]]
-            else:
+            elif C.PLAYBOOK_VARS_ROOT != 'top':
+                # preserves default basedirs, only option pre 2.3
                 raise AnsibleError('Unkown playbook vars logic: %s' % C.PLAYBOOK_VARS_ROOT)
 
             # if we have a task in this context, and that task has a role, make
