@@ -71,7 +71,7 @@ class InventoryCLI(CLI):
             epilog='Show Ansible inventory information, by default it uses the inventory script JSON format',
             inventory_opts=True,
             vault_opts=True,
-            basdir_opts=True,
+            basedir_opts=True,
         )
 
         # Actions
