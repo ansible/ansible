@@ -26,6 +26,7 @@
   ios_logging:
     dest: host
     name: 172.16.0.1
+    facility: local7
     state: present
     authorize: yes
   register: result
