@@ -1,8 +1,23 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
+#
 # (c) 2017, Ansible by Red Hat, inc
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+#
+# This file is part of Ansible by Red Hat
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
 
 from __future__ import absolute_import, division, print_function
 
@@ -111,10 +126,9 @@ commands:
 
 class MlnxosInterfaceApp(BaseMlnxosApp):
 
-    def init_module(self):
-        """ main entry point for module execution
-        """
-        element_spec = dict(
+    @classmethod
+    def _get_element_spec(cls):
+        return dict(
             name=dict(),
             description=dict(),
             speed=dict(),
@@ -125,23 +139,31 @@ class MlnxosInterfaceApp(BaseMlnxosApp):
                        choices=['present', 'absent', 'up', 'down'])
         )
 
+    @classmethod
+    def _get_aggregate_spec(cls, element_spec):
         aggregate_spec = deepcopy(element_spec)
         aggregate_spec['name'] = dict(required=True)
 
         # remove default in aggregate spec, to handle common arguments
         remove_default_spec(aggregate_spec)
+        return aggregate_spec
 
-        argument_spec = dict(
-            aggregate=dict(type='list', elements='dict',
-                           options=aggregate_spec),
-        )
-
+    def init_module(self):
+        """ main entry point for module execution
+        """
+        element_spec = self._get_element_spec()
+        aggregate_spec = self._get_aggregate_spec(element_spec)
+        if aggregate_spec:
+            argument_spec = dict(
+                aggregate=dict(type='list', elements='dict',
+                               options=aggregate_spec),
+            )
+        else:
+            argument_spec = dict()
         argument_spec.update(element_spec)
         argument_spec.update(mlnxos_argument_spec)
-
         required_one_of = [['name', 'aggregate']]
         mutually_exclusive = [['name', 'aggregate']]
-
         self._module = AnsibleModule(
             argument_spec=argument_spec,
             required_one_of=required_one_of,
@@ -187,16 +209,6 @@ class MlnxosInterfaceApp(BaseMlnxosApp):
             self._required_config.append(params)
 
     @classmethod
-    def get_config_attr(cls, item, arg):
-        return item.get(arg)
-
-    @classmethod
-    def get_mtu(cls, item):
-        mtu = cls.get_config_attr(item, "MTU")
-        ll = mtu.split()
-        return ll[0]
-
-    @classmethod
     def get_if_name(cls, item):
         header = cls.get_config_attr(item, "header")
         return header.replace("Eth", "ethernet ")
@@ -222,63 +234,61 @@ class MlnxosInterfaceApp(BaseMlnxosApp):
             self._commands.append(interface)
         self._commands.append(cmd)
 
+    def _create_if_data(self, item):
+        return {
+            'name': self.get_if_name(item),
+            'description': self.get_config_attr(item, 'Description'),
+            'speed': self.get_config_attr(item, 'Actual speed'),
+            'mtu': self.get_mtu(item),
+            'disable': not self.get_admin_state(item),
+            'state': self.get_oper_state(item)
+        }
+
     def load_current_config(self):
         self._current_config = list()
         config = get_interfaces_config(self._module, "ethernet")
 
         for item in config:
-            obj = {
-                'name': self.get_if_name(item),
-                'description': self.get_config_attr(item, 'Description'),
-                'speed': self.get_config_attr(item, 'Actual speed'),
-                'mtu': self.get_mtu(item),
-                'disable': not self.get_admin_state(item),
-                'state': self.get_oper_state(item)
-            }
-            self._current_config.append(obj)
+            self._current_config.append(self._create_if_data(item))
 
     def generate_commands(self):
-        args = ('speed', 'description', 'mtu')
         for req_if in self._required_config:
             name = req_if['name']
-            disable = req_if['disable']
-            state = req_if['state']
-
             curr_if = self.search_obj_in_list(
                 name, self._current_config)
-            interface = 'interface ' + name
+            if not curr_if:
+                self._module.fail_json(
+                    msg='could not find interface %s' % name)
+                continue
+            self._generate_if_commands(name, req_if, curr_if)
 
-            if state == 'absent' and curr_if:
+    def _generate_if_commands(self, name, req_if, curr_if):
+        args = ('speed', 'description', 'mtu')
+        disable = req_if['disable']
+        state = req_if['state']
+
+        interface = 'interface ' + name
+
+        if state == 'absent':
+            curr_state = curr_if['state']
+            if curr_state == "up":
                 self._commands.append('no ' + interface)
 
-            elif state in ('present', 'up', 'down'):
-                if curr_if:
-                    for item in args:
-                        candidate = req_if.get(item)
-                        running = curr_if.get(item)
-                        if candidate != running:
-                            if candidate:
-                                cmd = item + ' ' + str(candidate)
-                                if item == "mtu":
-                                    cmd = cmd + ' ' + 'force'
-                                self.add_command_to_interface(interface, cmd)
-
-                    if disable and not curr_if.get('disable', False):
-                        self.add_command_to_interface(interface, 'shutdown')
-                    elif not disable and curr_if.get('disable', False):
-                        self.add_command_to_interface(interface, 'no shutdown')
-                else:
-                    self._commands.append(interface)
-                    for item in args:
-                        value = req_if.get(item)
-                        cmd = item + ' ' + str(value)
+        else:
+            for item in args:
+                candidate = req_if.get(item)
+                running = curr_if.get(item)
+                if candidate != running:
+                    if candidate:
+                        cmd = item + ' ' + str(candidate)
                         if item == "mtu":
                             cmd = cmd + ' ' + 'force'
-                        if value:
-                            self._commands.append(cmd)
+                        self.add_command_to_interface(interface, cmd)
 
-                    if disable:
-                        self._commands.append('no shutdown')
+            if disable and not curr_if.get('disable', False):
+                self.add_command_to_interface(interface, 'shutdown')
+            elif not disable and curr_if.get('disable', False):
+                self.add_command_to_interface(interface, 'no shutdown')
 
     def check_declarative_intent_params(self, result):
         failed_conditions = []

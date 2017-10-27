@@ -48,9 +48,22 @@ class BaseMlnxosApp(object):
             except AttributeError:
                 pass
 
+    @classmethod
+    def get_config_attr(cls, item, arg):
+        return item.get(arg)
+
+    @classmethod
+    def get_mtu(cls, item):
+        mtu = cls.get_config_attr(item, "MTU")
+        ll = mtu.split()
+        return ll[0]
+
     def validate_mtu(self, value):
         if value and not 1500 <= int(value) <= 9612:
             self._module.fail_json(msg='mtu must be between 1500 and 9612')
+
+    def generate_commands(self):
+        pass
 
     def run(self):
         self.init_module()
@@ -76,7 +89,8 @@ class BaseMlnxosApp(object):
 
         if failed_conditions:
             msg = 'One or more conditional statements have not been satisfied'
-            self._module.fail_json(msg=msg, failed_conditions=failed_conditions)
+            self._module.fail_json(msg=msg,
+                                   failed_conditions=failed_conditions)
 
         self._module.exit_json(**result)
 

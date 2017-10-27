@@ -1,30 +1,23 @@
-# This code is part of Ansible, but is an independent component.
-# This particular file snippet, and this file snippet only, is BSD licensed.
-# Modules you write using this snippet, which is embedded dynamically by Ansible
-# still belong to the author of the module, and may assign their own license
-# to the complete work.
+# -*- coding: utf-8 -*-
 #
-# (c) 2016 Red Hat Inc.
+# (c) 2017, Ansible by Red Hat, inc
 #
-# Redistribution and use in source and binary forms, with or without modification,
-# are permitted provided that the following conditions are met:
+# This file is part of Ansible by Red Hat
 #
-#    * Redistributions of source code must retain the above copyright
-#      notice, this list of conditions and the following disclaimer.
-#    * Redistributions in binary form must reproduce the above copyright notice,
-#      this list of conditions and the following disclaimer in the documentation
-#      and/or other materials provided with the distribution.
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
-# USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+
 import json
 
 from ansible.module_utils._text import to_text
@@ -38,11 +31,16 @@ _DEVICE_CONFIGS = {}
 mlnxos_provider_spec = {
     'host': dict(),
     'port': dict(type='int'),
-    'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
-    'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
-    'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
-    'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
-    'auth_pass': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS']), no_log=True),
+    'username': dict(fallback=(env_fallback,
+                               ['ANSIBLE_NET_USERNAME'])),
+    'password': dict(fallback=(env_fallback,
+                               ['ANSIBLE_NET_PASSWORD']), no_log=True),
+    'ssh_keyfile': dict(fallback=(env_fallback,
+                                  ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
+    'authorize': dict(fallback=(env_fallback,
+                                ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
+    'auth_pass': dict(fallback=(env_fallback,
+                                ['ANSIBLE_NET_AUTH_PASS']), no_log=True),
     'timeout': dict(type='int')
 }
 mlnxos_argument_spec = {
@@ -101,18 +99,23 @@ def get_interfaces_config(module, interface_type, json_fmt=True,
     if cmd in _DEVICE_CONFIGS:
         return _DEVICE_CONFIGS[cmd]
     rc, out, err = exec_command(module, cmd)
-    with open("/tmp/lag_data.txt", "w") as fp:
+    with open("/tmp/interfaces.out", "w") as fp:
         fp.write(out)
     if rc != 0:
         module.fail_json(
             msg='unable to retrieve current config',
             stderr=to_text(err, errors='surrogate_then_replace'))
     if json_fmt:
-        if out.startswith("show interfaces"):
-            out_list = out.split('\n', 1)
+        out_list = out.split('\n', 1)
+        line = out_list[0].strip()
+        if line and line[0] not in ("[", "{"):
             out = out_list[1]
-
-        cfg = json.loads(out)
+        try:
+            cfg = json.loads(out)
+        except ValueError:
+            module.fail_json(
+                msg="got invalid json",
+                stderr=to_text(out, errors='surrogate_then_replace'))
     else:
         cfg = to_text(out, errors='surrogate_then_replace').strip()
     _DEVICE_CONFIGS[cmd] = cfg

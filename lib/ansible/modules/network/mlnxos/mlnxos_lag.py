@@ -1,8 +1,23 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
+#
 # (c) 2017, Ansible by Red Hat, inc
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+#
+# This file is part of Ansible by Red Hat
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
 
 from __future__ import absolute_import, division, print_function
 
@@ -25,84 +40,53 @@ DOCUMENTATION = """
 module: mlnxos_lag
 version_added: "2.5"
 author: "Samer Deeb (@samerd)"
-short_description: Manage Interface on MLNX-OS network devices
+short_description: Manage Lags on MLNX-OS network devices
 description:
-  - This module provides declarative management of Interfaces
+  - This module provides declarative management of Lags
     on MLNX-OS network devices.
 notes:
   -
 options:
-  name:
+  lag_id:
     description:
-      - Name of the Interface.
+      - port channel ID of the LAG (1-4096).
     required: true
-  description:
+  lag_mode:
     description:
-      - Description of Interface.
-  enabled:
-    description:
-      - Interface link status.
-  speed:
-    description:
-      - Interface link speed.
+      - LAG mode:
+    choices: [on, passive, active].
   mtu:
     description:
       - Maximum size of transmit packet.
   aggregate:
-    description: List of Interfaces definitions.
-  delay:
+    description: List of lags definitions.
+  members:
     description:
-      - Time in seconds to wait before checking for the operational state on remote
-        device. This wait is applicable for operational state argument which are
-        I(state) with values C(up)/C(down), I(tx_rate) and I(rx_rate).
-    default: 10
-  state:
-    description:
-      - State of the Interface configuration, C(up) means present and
-        operationally up and C(down) means present and operationally C(down)
-    default: present
-    choices: ['present', 'absent', 'up', 'down']
+      - ethernet interfaces LAG members.
 """
 
 EXAMPLES = """
-- name: configure interface
+- name: configure LAG
   mlnxos_lag:
-      name: ethernet 1/2
-      description: test-interface
-      speed: 100 GB
-      mtu: 512
-
-- name: make interface up
-  mlnxos_lag:
-    name: ethernet 1/2
-    enabled: True
-
-- name: make interface down
-  mlnxos_lag:
-    name: ethernet 1/2
-    enabled: False
-
-- name: Check intent arguments
-  mlnxos_lag:
-    name: ethernet 1/2
-    state: up
-
-- name: Config + intent
-  mlnxos_lag:
-    name: ethernet 1/2
-    enabled: False
-    state: down
+    lag_id: 5
+    mtu: 1512
+    members:
+      - 1/6
+      - 1/7
+    lag_mode: on
 """
 
 RETURN = """
 commands:
   description: The list of configuration mode commands to send to the device.
-  returned: always, except for the platforms that use Netconf transport to manage the device.
+  returned: always, except for the platforms that use Netconf transport to
   type: list
   sample:
-  - interface ethernet 1/2
-  - description test-interface
-  - mtu 512
+    - interface port-channel 5
+    - exit
+    - interface port-channel 5 mtu 1500 force
+    - interface ethernet 1/16 channel-group 5 mode on
+    - interface ethernet 1/17 channel-group 5 mode on
 """
 
 
@@ -142,16 +126,6 @@ class MlnxosLagApp(BaseMlnxosApp):
     def validate_lag_id(self, value):
         if value and not 1 <= int(value) <= 4096:
             self._module.fail_json(msg='lag id must be between 1 and 4096')
-
-    @classmethod
-    def get_config_attr(cls, item, arg):
-        return item.get(arg)
-
-    @classmethod
-    def get_mtu(cls, item):
-        mtu = cls.get_config_attr(item, "MTU")
-        ll = mtu.split()
-        return ll[0]
 
     @classmethod
     def get_lag_id(cls, item):
@@ -221,10 +195,9 @@ class MlnxosLagApp(BaseMlnxosApp):
                     "interface ethernet %s channel-group %s mode %s" %
                     (member, lag_id, lag_mode))
 
-
-
     def check_declarative_intent_params(self, result):
         pass
+
 
 if __name__ == '__main__':
     MlnxosLagApp.main()
