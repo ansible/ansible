@@ -225,6 +225,7 @@ def get_account_id(module, region=None, endpoint=None, **aws_connect_kwargs):
     several different ways.  Giving either IAM or STS privilages to
     the account should be enough to permit this.
     """
+    account_id = None
     try:
         sts_client = boto3_conn(module, conn_type='client', resource='sts',
                                 region=region, endpoint=endpoint, **aws_connect_kwargs)
