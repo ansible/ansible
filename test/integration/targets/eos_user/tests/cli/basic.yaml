@@ -60,11 +60,11 @@
     that:
       - 'result.changed == true'
       - '"username" in result.commands[0]'
-      - '"role network-operator" in result.commands[0]'
-      - '"secret" in result.commands[1]'
+      - '"role network-operator" in result.commands[1]'
+      - '"secret" in result.commands[0]'
       - '"username" in result.commands[2]'
-      - '"role network-operator" in result.commands[2]'
-      - '"secret" in result.commands[3]'
+      - '"role network-operator" in result.commands[3]'
+      - '"secret" in result.commands[2]'
 
 - name: Add user without password or nopassword arg(Should fail)
   eos_user:
