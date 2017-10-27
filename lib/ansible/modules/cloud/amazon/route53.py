@@ -157,6 +157,83 @@ author:
 extends_documentation_fragment: aws
 '''
 
+RETURN = '''
+nameservers:
+  description: nameservers associated with the zone
+  returned: when state is 'get'
+  type: list
+  sample:
+  - ns-1036.awsdns-00.org.
+  - ns-516.awsdns-00.net.
+  - ns-1504.awsdns-00.co.uk.
+  - ns-1.awsdns-00.com.
+set:
+  description: info specific to the resource record
+  returned: when state is 'get'
+  type: complex
+  contains:
+    alias:
+      description: whether this is an alias
+      returned: always
+      type: bool
+      sample: false
+    failover:
+      description:
+      returned: always
+      type: NoneType
+      sample: null
+    health_check:
+      description: health_check associated with this record
+      returned: always
+      type: NoneType
+      sample: null
+    identifier:
+      description:
+      returned: always
+      type: NoneType
+      sample: null
+    record:
+      description: domain name for the record set
+      returned: always
+      type: string
+      sample: new.foo.com.
+    region:
+      description:
+      returned: always
+      type:
+      sample:
+    ttl:
+      description: resource record cache TTL
+      returned: always
+      type: string
+      sample: '3600'
+    type:
+      description: record set type
+      returned: always
+      type: string
+      sample: A
+    value:
+      description: value
+      returned: always
+      type: string
+      sample: 52.43.18.27
+    values:
+      description: values
+      returned: always
+      type: list
+      sample:
+      - 52.43.18.27
+    weight:
+      description: weight of the record
+      returned: always
+      type: string
+      sample: '3'
+    zone:
+      description: zone this record set belongs to
+      returned: always
+      type: string
+      sample: foo.bar.com.
+'''
 
 EXAMPLES = '''
 # Add new.foo.com as an A record with 3 IPs and wait until the changes have been replicated
