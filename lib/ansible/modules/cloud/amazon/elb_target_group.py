@@ -32,6 +32,7 @@ options:
   health_check_port:
     description:
       - The port the load balancer uses when performing health checks on targets.
+        Can be set to 'traffic-port' to match target port.
     required: false
     default: "The port on which each target receives traffic from the load balancer."
   health_check_path:
@@ -360,7 +361,7 @@ def create_or_update_target_group(connection, module):
             params['HealthCheckProtocol'] = module.params.get("health_check_protocol").upper()
 
         if module.params.get("health_check_port") is not None:
-            params['HealthCheckPort'] = str(module.params.get("health_check_port"))
+            params['HealthCheckPort'] = module.params.get("health_check_port")
 
         if module.params.get("health_check_interval") is not None:
             params['HealthCheckIntervalSeconds'] = module.params.get("health_check_interval")
@@ -622,7 +623,7 @@ def main():
         dict(
             deregistration_delay_timeout=dict(type='int'),
             health_check_protocol=dict(choices=['http', 'https', 'tcp', 'HTTP', 'HTTPS', 'TCP'], type='str'),
-            health_check_port=dict(type='int'),
+            health_check_port=dict(),
             health_check_path=dict(default=None, type='str'),
             health_check_interval=dict(type='int'),
             health_check_timeout=dict(type='int'),
