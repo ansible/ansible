@@ -642,6 +642,15 @@ def ensure_route_table_present(connection, module):
                 error_traceback=traceback.format_exc()
             )
 
+    # make sure the route table represents the current state
+    try:
+        route_table = get_route_table_by_id(connection, vpc_id, route_table.id)
+    except EC2ResponseError as e:
+        raise AnsibleRouteTableException(
+            message="Failed to get the latest state for route table {0}: {1}"
+            .format(route_table.id, str(e)),
+            error_traceback=traceback.format_exc())
+
     module.exit_json(changed=changed, route_table=get_route_table_info(route_table))
 
 
