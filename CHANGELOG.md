@@ -98,6 +98,8 @@ Ansible Changes By Release
   https://github.com/ansible/ansible/pull/32269
 * Fix vars placement in ansible-inventory
   https://github.com/ansible/ansible/pull/32276
+* Correct options for luseradd in user module
+  https://github.com/ansible/ansible/pull/32262
 
 
 <a id="2.4.1"></a>

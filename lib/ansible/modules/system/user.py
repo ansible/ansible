@@ -421,6 +421,10 @@ class User(object):
 
         if self.createhome:
             cmd.append('-m')
+            if self.local:
+                cmd.append('-M')
+            else:
+                cmd.append('-m')
 
             if self.skeleton is not None:
                 cmd.append('-k')
