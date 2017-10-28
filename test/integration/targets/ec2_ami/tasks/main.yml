@@ -158,7 +158,7 @@
       assert:
         that:
           - "result.failed"
-          - "result.msg == 'state is absent but the following are missing: image_id'"
+          - "result.msg == 'state is absent but all of the following are missing: image_id'"
 
     # ============================================================
 
