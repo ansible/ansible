@@ -345,8 +345,6 @@ def get_block_device_mapping(image):
                 'delete_on_termination': ebs.get("delete_on_termination")
             }
             bdm_dict[device_name] = bdm_dict_item
-    else:
-       bdm_dict = { "no match": 0 }
     return bdm_dict
 
 
