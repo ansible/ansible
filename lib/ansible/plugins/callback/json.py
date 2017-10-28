@@ -77,12 +77,9 @@ class CallbackModule(CallbackBase):
             self._errors.append(msg)
 
     def deprecated(self, msg, version=None, removed=False):
-        if version:
-            final = msg + ' removed in %s' % version
-        else:
-            final = msg
-        if final not in self._deprecate:
-            self._deprecate.append(final)
+        dep = {'msg': msg, 'version': version, 'removed': removed}
+        if dep not in self._deprecate:
+            self._deprecate.append(dep)
 
     def v2_playbook_on_play_start(self, play):
         self.results.append(self._new_play(play))
