@@ -666,7 +666,7 @@ def set_vm_power_state(content, vm, state, force):
     requested states. force is forceful
     """
     facts = gather_vm_facts(content, vm)
-    expected_state = state.replace('_', '').lower()
+    expected_state = state.replace('_', '').replace('-', '').lower()
     current_state = facts['hw_power_status'].lower()
     result = dict(
         changed=False,
