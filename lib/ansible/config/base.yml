@@ -1179,6 +1179,15 @@ DISPLAY_SKIPPED_HOSTS:
   ini:
   - {key: display_skipped_hosts, section: defaults}
   type: boolean
+DISPLAY_DUPLICATE_GROUP_HOST_WARNINGS:
+  name: Display inventory warnings
+  default: True
+  description: Display warning when inventory host name is the same as group name
+  env: [{name: DISPLAY_DUPLICATE_GROUP_HOST_WARNINGS}]
+  ini:
+  - {key: display_duplicate_group_host_warnings, section: defaults}
+  type: boolean
+  version_added: "2.5"
 ERROR_ON_MISSING_HANDLER:
   name: Missing handler error
   default: True

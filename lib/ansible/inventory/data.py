@@ -145,8 +145,9 @@ class InventoryData(object):
                 host.vars = combine_vars(self.groups['all'].get_vars(), host.vars)
 
         # warn if overloading identifier as both group and host
-        for conflict in group_names.intersection(host_names):
-            display.warning("Found both group and host with same name: %s" % conflict)
+        if C.DISPLAY_DUPLICATE_GROUP_HOST_WARNINGS:
+            for conflict in group_names.intersection(host_names):
+                display.warning("Found both group and host with same name: %s" % conflict)
 
         self._groups_dict_cache = {}
 
