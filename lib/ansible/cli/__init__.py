@@ -779,7 +779,7 @@ class CLI(with_metaclass(ABCMeta, object)):
         # all needs loader
         loader = DataLoader()
 
-        basedir = getattr(options, 'basedir')
+        basedir = getattr(options, 'basedir', False)
         if basedir:
             loader.set_basedir(basedir)
 
