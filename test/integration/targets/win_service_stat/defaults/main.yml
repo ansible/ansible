@@ -1,4 +1,4 @@
 ---
 test_existing_service_name: winrm
 test_absent_service_name: matt_davis_super_service
-test_stopped_service_name: bits
+test_stopped_service_name: wuauserv
