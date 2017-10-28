@@ -79,6 +79,8 @@ class PlaybookCLI(CLI):
 
     def run(self):
 
+        self._load_callback()
+
         super(PlaybookCLI, self).run()
 
         # Note: slightly wrong, this is written so that implicit localhost
@@ -125,7 +127,7 @@ class PlaybookCLI(CLI):
 
         # create the playbook executor, which manages running the plays via a task queue manager
         pbex = PlaybookExecutor(playbooks=self.args, inventory=inventory, variable_manager=variable_manager, loader=loader, options=self.options,
-                                passwords=passwords)
+                                passwords=passwords, callback=self.callback)
 
         results = pbex.run()
 

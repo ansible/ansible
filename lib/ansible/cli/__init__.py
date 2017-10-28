@@ -798,3 +798,21 @@ class CLI(with_metaclass(ABCMeta, object)):
         variable_manager.options_vars = load_options_vars(options, CLI.version_info(gitinfo=False))
 
         return loader, inventory, variable_manager
+
+    def _load_callback(self):
+
+        from ansible.plugins.loader import callback_loader
+        if self.callback is None:
+            self.callback = C.DEFAULT_STDOUT_CALLBACK
+        if self.callback not in callback_loader:
+            raise AnsibleError("Invalid callback for stdout specified: %s" % self.callback)
+        else:
+            self.callback = callback_loader.get(self.callback)
+            try:
+                self.callback.set_options(C.config.get_plugin_options('callback', self.callback._load_name))
+                display.set_callback(self.callback)
+            except AttributeError:
+                display.deprecated("%s stdout callback, does not support setting 'options', it will work for now, "
+                                   " but this will be required in the future and should be updated,"
+                                   " see the 2.4 porting guide for details." % self.callback._load_name, version="2.9")
+

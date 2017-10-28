@@ -73,6 +73,7 @@ class Display:
 
         self.columns = None
         self.verbosity = verbosity
+        self._callback = None
 
         # list of all deprecation messages to prevent duplicate display
         self._deprecations = {}
@@ -96,6 +97,12 @@ class Display:
                 self.b_cowsay = False
 
         self._set_column_width()
+
+    def set_callback(self, callback):
+        for override in ('v', 'vv', 'vvv', 'vvvv', 'vvvvv', 'debug', 'display', 'deprecated', 'warning', 'error'):
+            new_func = getattr(callback, override, None)
+            if new_func:
+                setattr(self, override, new_func)
 
     def set_cowsay_info(self):
         if not C.ANSIBLE_NOCOWS:

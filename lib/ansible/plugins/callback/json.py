@@ -30,6 +30,10 @@ class CallbackModule(CallbackBase):
     def __init__(self, display=None):
         super(CallbackModule, self).__init__(display)
         self.results = []
+        self._v = {'_global': []}
+        self._warns = []
+        self._errors = []
+        self._deprecate = []
 
     def _new_play(self, play):
         return {
@@ -49,6 +53,33 @@ class CallbackModule(CallbackBase):
             'hosts': {}
         }
 
+    def v(self, msg, host=None):
+        if host:
+            if not host in self._v:
+                self._v[host] = [msg]
+            else:
+                self._v[host].append(msg)
+        else:
+            self._v['_global'].append(msg)
+
+    def warning(self, msg, formatted=False):
+        if msg not in self._warns:
+            self._warns.append(msg)
+
+    def error(self, msg, wrap_text=False):
+        if msg not in self._errors:
+            self._errors.append(msg)
+
+    def deprecated(self, msg, version=None, removed=False):
+        if version:
+            final = msg + ' removed in %s' % version
+        else:
+            final = msg
+        if final not in self._deprecate:
+            self._deprecate.append(final)
+
+    vvvvvv = vvvvv = vvv = vv = v
+
     def v2_playbook_on_play_start(self, play):
         self.results.append(self._new_play(play))
 
@@ -67,11 +98,17 @@ class CallbackModule(CallbackBase):
         summary = {}
         for h in hosts:
             s = stats.summarize(h)
+            if h in self._v:
+                s['info'] = self._v[h]
             summary[h] = s
 
         output = {
             'plays': self.results,
-            'stats': summary
+            'stats': summary,
+            'verbose': self._v['_global'],
+            'warnings': self._warns,
+            'errors': self._errors,
+            'deprecations': self._deprecate,
         }
 
         self._display.display(json.dumps(output, indent=4, sort_keys=True))
