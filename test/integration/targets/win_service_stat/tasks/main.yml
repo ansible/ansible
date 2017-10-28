@@ -1,0 +1,88 @@
+# test code for the win_service_stat module
+# (c) 2017, Trond Hindenes <trond@hindenes.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: stat existing running service
+  win_service_stat:
+    name: "{{ test_existing_service_name }}"
+  register: win_service_stat_existing_result
+
+- name: check result of stat existing service
+  assert:
+    that:
+      - "not win_service_stat_existing_result|changed"
+      - "win_service_stat_existing_result|success"
+      - "win_service_stat_existing_result.win_service_stat.exists"
+      - "win_service_stat_existing_result.win_service_stat.state == 'running'"
+      - "win_service_stat_existing_result.win_service_stat.start_mode == 'auto'"
+
+- name: get the service name from the output so we can check that its equal to input after lower-casing
+  set_fact:
+    output_service_name: "{{ win_service_stat_existing_result.win_service_stat.name | lower }}"
+
+- name: assert that input and result name are the same
+  assert:
+    that:
+      - "output_service_name == test_existing_service_name"
+
+- name: stat existing stopped service
+  win_service_stat:
+    name: "{{ test_stopped_service_name }}"
+  register: stopped_win_service_stat_existing_result
+
+- name: check result of stat existing service
+  assert:
+    that:
+      - "not stopped_win_service_stat_existing_result|changed"
+      - "stopped_win_service_stat_existing_result|success"
+      - "stopped_win_service_stat_existing_result.win_service_stat.exists"
+      - "stopped_win_service_stat_existing_result.win_service_stat.state == 'stopped'"
+      - "stopped_win_service_stat_existing_result.win_service_stat.start_mode == 'manual'"
+
+- name: stat nonexisting
+  win_service_stat:
+    name: "{{ test_absent_service_name }}"
+  register: absent_win_service_stat_existing_result
+
+- name: check result of stat nonexisting service
+  assert:
+    that:
+      - "not stopped_win_service_stat_existing_result|changed"
+      - "absent_win_service_stat_existing_result|success"
+      - "absent_win_service_stat_existing_result.win_service_stat.exists == false"
+
+- name: ensure wildcard testing doesnt return a service
+  win_service_stat:
+    name: "{{ test_stopped_service_name }}*"
+  register: wildcard_win_service_stat_existing_result
+
+- name: check result of stat wildcard service
+  assert:
+    that:
+      - "not stopped_win_service_stat_existing_result|changed"
+      - "wildcard_win_service_stat_existing_result|success"
+      - "wildcard_win_service_stat_existing_result.win_service_stat.exists == false"
+
+- name: ensure module fails if name parameter is omitted
+  win_service_stat:
+  register: test_name_omitted_result
+  ignore_errors: true
+
+- name: check result of 'ensure module fails if name parameter is omitted'
+  assert:
+    that: 
+      - "not test_name_omitted_result|success"
