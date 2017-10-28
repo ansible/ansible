@@ -88,6 +88,8 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/31037)
 * Fix eos_user tests
   (https://github.com/ansible/ansible/pull/32261)
+* Fix ansible-galaxy --force with installed roles:
+  (https://github.com/ansible/ansible/pull/32282)
 
 
 <a id="2.4.1"></a>
