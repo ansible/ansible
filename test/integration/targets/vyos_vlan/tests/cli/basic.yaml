@@ -29,14 +29,14 @@
 - name: set vlan with address
   vyos_vlan: &address
     vlan_id: 5
-    address: 172.24.5.0/24
+    address: 192.168.5.12/24
     interfaces: eth0
   register: result
 
 - assert:
     that:
       - "result.changed == true"
-      - "'set interfaces ethernet eth0 vif 5 address 172.24.5.0/24' in result.commands"
+      - "'set interfaces ethernet eth0 vif 5 address 192.168.5.12/24' in result.commands"
 
 - name: set vlan with address(idempotence)
   vyos_vlan: *address
