@@ -18,8 +18,6 @@ DOCUMENTATION = '''
 '''
 
 import json
-import os
-import time
 
 from ansible.plugins.callback import CallbackBase
 
@@ -66,7 +64,7 @@ class CallbackModule(CallbackBase):
             self._v['_global'].append(msg)
 
     def debug(self, msg):
-        self._debug.append("%6d %0.5f: %s" % (os.getpid(), time.time(), msg))
+        self._debug.append(msg)
 
     def warning(self, msg, formatted=False):
         if msg not in self._warns:
