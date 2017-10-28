@@ -27,6 +27,9 @@ options:
   attributes:
     description:
       - Specifies attributes to device separated by comma.
+      - If attribute has comma, explicit list using
+        [ "parameter=value,with,comma", "parameter=foobar" ]. See alias
+        example.
   device:
     description:
       - Device name.
@@ -98,6 +101,14 @@ EXAMPLES = '''
     device: en1
     attributes: netaddr=192.168.0.100,netmask=255.255.255.0,state=up
     state: present
+
+- name: Adding IP alias to en0
+  aix_devices:
+    device: en0
+    attributes: [
+        "alias4=10.0.0.100,255.255.255.0"
+        ]
+    state: present
 '''
 
 RETURN = '''
@@ -119,10 +130,12 @@ from ansible.module_utils.basic import AnsibleModule
 def _check_device(module, device):
     """
     Check if device already exists and the state.
+    Args:
+        module: Ansible module.
+        device: device to be checked.
 
-    :param module: Ansible module.
-    :param filesystem: filesystem name.
-    :return: Bool (True or False), device_state (Avaiable, Defined, None)
+    Returns: bool, device state
+
     """
     lsdev_cmd = module.get_bin_path('lsdev', True)
     rc, lsdev_out, err = module.run_command("%s -C -l %s" % (lsdev_cmd, device))
@@ -140,6 +153,16 @@ def _check_device(module, device):
 
 
 def _check_device_attr(module, device, attr):
+    """
+
+    Args:
+        module: Ansible module.
+        device: device to check attributes.
+        attr: attribute to be checked.
+
+    Returns:
+
+    """
     lsattr_cmd = module.get_bin_path("lsattr", True)
     rc, lsattr_out, err = module.run_command("%s -El %s -a %s" % (lsattr_cmd, device, attr))
 
@@ -234,6 +257,7 @@ def change_device_attr(module, attributes, device, force):
 
 
 def remove_device(module, device, force, recursive, state):
+    """ Puts device in defined state or removes device. """
 
     state_opt = {
         'absent': '-d',
@@ -297,7 +321,7 @@ def main():
         if attributes:
             # validate attributes
             for attr in attributes:
-                if len(attr.split('=')) < 3:
+                if len(attr.split('=')) < 2:
                     module.fail_json(msg="attributes format is attribute_name=value.", err="Attribute in wrong format %s" % attr)
 
             # change attributes on device
@@ -311,7 +335,7 @@ def main():
 
         else:
             # discovery devices (cfgmgr)
-            if device:
+            if device and device != 'all':
                 device_status, device_state = _check_device(module, device)
                 if device_status:
                     # run cfgmgr on specific device
