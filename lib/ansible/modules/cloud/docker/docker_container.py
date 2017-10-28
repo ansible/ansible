@@ -100,6 +100,12 @@ options:
       - List of custom DNS search domains.
     default: null
     required: false
+  domainname:
+    description:
+      - Container domainname.
+    default: null
+    required: false
+    version_added: "2.5"
   env:
     description:
       - Dictionary of key,value pairs.
@@ -725,6 +731,7 @@ class TaskParameters(DockerBaseClass):
         self.dns_servers = None
         self.dns_opts = None
         self.dns_search_domains = None
+        self.domainname = None
         self.env = None
         self.env_file = None
         self.entrypoint = None
@@ -870,6 +877,7 @@ class TaskParameters(DockerBaseClass):
         '''
         create_params = dict(
             command='command',
+            domainname='domainname',
             hostname='hostname',
             user='user',
             detach='detach',
@@ -1290,6 +1298,7 @@ class Container(DockerBaseClass):
         config_mapping = dict(
             auto_remove=host_config.get('AutoRemove'),
             expected_cmd=config.get('Cmd'),
+            domainname=config.get('Domainname'),
             hostname=config.get('Hostname'),
             user=config.get('User'),
             detach=detach,
@@ -2052,6 +2061,7 @@ def main():
         dns_servers=dict(type='list'),
         dns_opts=dict(type='list'),
         dns_search_domains=dict(type='list'),
+        domainname=dict(type='str'),
         env=dict(type='dict'),
         env_file=dict(type='path'),
         entrypoint=dict(type='list'),
