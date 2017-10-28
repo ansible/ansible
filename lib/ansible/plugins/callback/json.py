@@ -54,7 +54,7 @@ class CallbackModule(CallbackBase):
             'hosts': {}
         }
 
-    def v(self, msg, host=None):
+    def verbose(self, msg, host=None, caplevel=0):
         if host:
             if not host in self._v:
                 self._v[host] = [msg]
@@ -64,7 +64,8 @@ class CallbackModule(CallbackBase):
             self._v['_global'].append(msg)
 
     def debug(self, msg):
-        self._debug.append(msg)
+        if C.DEFAULT_DEBUG:
+            self._debug.append(msg)
 
     def warning(self, msg, formatted=False):
         if msg not in self._warns:
@@ -81,8 +82,6 @@ class CallbackModule(CallbackBase):
             final = msg
         if final not in self._deprecate:
             self._deprecate.append(final)
-
-    vvvvvv = vvvvv = vvv = vv = v
 
     def v2_playbook_on_play_start(self, play):
         self.results.append(self._new_play(play))

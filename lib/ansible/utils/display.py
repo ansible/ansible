@@ -99,7 +99,7 @@ class Display:
         self._set_column_width()
 
     def set_callback(self, callback):
-        for override in ('v', 'vv', 'vvv', 'vvvv', 'vvvvv', 'debug', 'display', 'deprecated', 'warning', 'error'):
+        for override in ('verbose', 'v', 'vv', 'vvv', 'vvvv', 'vvvvv', 'debug', 'display', 'deprecated', 'warning', 'error'):
             new_func = getattr(callback, override, None)
             if new_func:
                 setattr(self, override, new_func)
