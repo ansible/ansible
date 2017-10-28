@@ -413,7 +413,7 @@ def main():
         alias=dict(required=False, type='bool'),
         alias_hosted_zone_id=dict(required=False),
         alias_evaluate_target_health=dict(required=False, type='bool', default=False),
-        value=dict(required=False, type='list', default=[]),
+        value=dict(required=False, type='list'),
         overwrite=dict(required=False, type='bool'),
         retry_interval=dict(required=False, default=500),
         private_zone=dict(required=False, type='bool', default=False),
