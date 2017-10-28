@@ -68,7 +68,7 @@ Use of a passwordless setup makes things easier to automate, but it's not requir
 It is also possible to become a user other than root using
 ``--become-user``::
 
-    $ ansible atlanta -a "/usr/bin/foo" -u username --become-user otheruser [--ask-become-pass]
+    $ ansible atlanta -a "/usr/bin/foo" -u username --become --become-user otheruser [--ask-become-pass]
 
 .. note::
 
