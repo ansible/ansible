@@ -582,11 +582,13 @@ def update_image(module, connection, image_id, resource):
                         }]
                     })
             else:
-                module.exit_json(msg="AMI not updated.", launch_permissions=set_permissions, changed=False, **get_ami_info(get_image_by_id(module, connection, image_id)))
+                module.exit_json(msg="AMI not updated.", launch_permissions=set_permissions, changed=False,
+                                 **get_ami_info(get_image_by_id(module, connection, image_id)))
             module.exit_json(msg="AMI launch permissions updated.", launch_permissions=launch_permissions, set_perms=set_permissions, changed=True,
                              **get_ami_info(get_image_by_id(module, connection, image_id)))
         else:
-            module.exit_json(msg="AMI not updated.", launch_permissions=set_permissions, changed=False, **get_ami_info(get_image_by_id(module, connection, image_id)))
+            module.exit_json(msg="AMI not updated.", launch_permissions=set_permissions, changed=False,
+                             **get_ami_info(get_image_by_id(module, connection, image_id)))
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg="Error updating image - " + str(e), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
