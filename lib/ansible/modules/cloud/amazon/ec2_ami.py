@@ -332,45 +332,51 @@ except ImportError:
 
 def get_block_device_mapping(image):
     bdm_dict = dict()
-    if image is not None and hasattr(image, 'block_device_mapping'):
-        bdm = getattr(image, 'block_device_mapping')
-        for device_name in bdm.keys():
-            bdm_dict[device_name] = {
-                'size': bdm[device_name].size,
-                'snapshot_id': bdm[device_name].snapshot_id,
-                'volume_type': bdm[device_name].volume_type,
-                'encrypted': bdm[device_name].encrypted,
-                'delete_on_termination': bdm[device_name].delete_on_termination
+    if image is not None and image.get('block_device_mappings') is not None:
+        bdm = image.get('block_device_mappings')
+        for device in bdm:
+            device_name = device.get('device_name')
+            ebs = device.get("ebs")
+            bdm_dict_item = {
+                'size': ebs.get("volume_size"),
+                'snapshot_id': ebs.get("snapshot_id"),
+                'volume_type': ebs.get("volume_type"),
+                'encrypted': ebs.get("encrypted"),
+                'delete_on_termination': ebs.get("delete_on_termination")
             }
+            bdm_dict[device_name] = bdm_dict_item
+    else:
+       bdm_dict = { "no match": 0 }
     return bdm_dict
 
 
-def get_ami_info(image):
+def get_ami_info(camel_image):
+    image = camel_dict_to_snake_dict(camel_image)
     return dict(
-        image_id=image.id,
-        state=image.state,
-        architecture=image.architecture,
+        image_id=image.get("image_id"),
+        state=image.get("state"),
+        architecture=image.get("architecture"),
         block_device_mapping=get_block_device_mapping(image),
-        creationDate=image.creation_date,
-        description=image.description,
-        hypervisor=image.hypervisor,
-        is_public=image.public,
-        location=image.image_location,
-        ownerId=image.owner_id,
-        root_device_name=image.root_device_name,
-        root_device_type=image.root_device_type,
-        tags=image.tags,
-        virtualization_type=image.virtualization_type,
-        name=image.name,
-        platform=image.platform,
-        enhanced_networking=image.ena_support,
-        image_owner_alias=image.image_owner_alias,
-        image_type=image.image_type,
-        kernel_id=image.kernel_id,
-        product_codes=image.product_codes,
-        ramdisk_id=image.ramdisk_id,
-        sriov_net_support=image.sriov_net_support,
-        state_reason=image.state_reason
+        creationDate=image.get("creation_date"),
+        description=image.get("description"),
+        hypervisor=image.get("hypervisor"),
+        is_public=image.get("public"),
+        location=image.get("image_location"),
+        ownerId=image.get("owner_id"),
+        root_device_name=image.get("root_device_name"),
+        root_device_type=image.get("root_device_type"),
+        tags=image.get("tags"),
+        virtualization_type=image.get("virtualization_type"),
+        name=image.get("name"),
+        platform=image.get("platform"),
+        enhanced_networking=image.get("ena_support"),
+        image_owner_alias=image.get("image_owner_alias"),
+        image_type=image.get("image_type"),
+        kernel_id=image.get("kernel_id"),
+        product_codes=image.get("product_codes"),
+        ramdisk_id=image.get("ramdisk_id"),
+        sriov_net_support=image.get("sriov_net_support"),
+        state_reason=image.get("state_reason")
     )
 
 
@@ -432,11 +438,11 @@ def create_image(module, connection, resource):
                 device = rename_item_if_exists(device, 'iops', 'Iops', 'Ebs')
                 device = rename_item_if_exists(device, 'encrypted', 'Encrypted', 'Ebs')
                 block_device_mapping.append(device)
+        if block_device_mapping:
+            params['BlockDeviceMappings'] = block_device_mapping
         if instance_id:
             params['InstanceId'] = instance_id
             params['NoReboot'] = no_reboot
-            if block_device_mapping:
-                params['BlockDeviceMappings'] = block_device_mapping
             image_id = connection.create_image(**params).get('ImageId')
         else:
             if architecture:
@@ -457,8 +463,6 @@ def create_image(module, connection, resource):
                 params['KernelId'] = kernel_id
             if root_device_name:
                 params['RootDeviceName'] = root_device_name
-            if block_device_mapping:
-                params['BlockDeviceMappings'] = block_device_mapping
             image_id = connection.register_image(**params).get('ImageId')
     except botocore.exceptions.ClientError as e:
             module.fail_json(msg="Error registering image - " + str(e), exception=traceback.format_exc(),
@@ -492,7 +496,7 @@ def create_image(module, connection, resource):
             module.fail_json(msg="Error setting launch permissions for image: " + image_id + " - " + str(e), exception=traceback.format_exc(),
                              **camel_dict_to_snake_dict(e.response))
 
-    module.exit_json(msg="AMI creation operation complete.", changed=True, **camel_dict_to_snake_dict(image))
+    module.exit_json(msg="AMI creation operation complete.", changed=True, **get_ami_info(image))
 
 
 def deregister_image(module, connection):
@@ -553,7 +557,7 @@ def update_image(module, connection, image_id, resource):
     if 'user_ids' in launch_permissions:
         launch_permissions['user_ids'] = [str(user_id) for user_id in launch_permissions['user_ids']]
 
-    image = get_image_by_id(module, connection, image_id, resource, True)
+    image = resource.Image(image_id)
 
     if image is None:
         module.fail_json(msg="Image %s does not exist" % image_id, changed=False)
@@ -580,30 +584,25 @@ def update_image(module, connection, image_id, resource):
                         }]
                     })
             else:
-                module.exit_json(msg="AMI not updated.", launch_permissions=set_permissions, changed=False, **get_ami_info(image))
+                module.exit_json(msg="AMI not updated.", launch_permissions=set_permissions, changed=False, **get_ami_info(get_image_by_id(module, connection, image_id)))
             module.exit_json(msg="AMI launch permissions updated.", launch_permissions=launch_permissions, set_perms=set_permissions, changed=True,
-                             **get_ami_info(image))
+                             **get_ami_info(get_image_by_id(module, connection, image_id)))
         else:
-            module.exit_json(msg="AMI not updated.", launch_permissions=set_permissions, changed=False, **get_ami_info(image))
+            module.exit_json(msg="AMI not updated.", launch_permissions=set_permissions, changed=False, **get_ami_info(get_image_by_id(module, connection, image_id)))
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg="Error updating image - " + str(e), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
 
-def get_image_by_id(module, connection, image_id, resource=None, image_object=False):
+def get_image_by_id(module, connection, image_id):
     try:
-        if image_object:
-            if resource is None:
-                module.fail_json(msg="boto3_conn resource required for image object.")
-            return resource.Image(image_id)
-        else:
-            images_response = connection.describe_images(ImageIds=[image_id])
-            images = images_response.get('Images')
-            no_images = len(images)
-            if no_images == 0:
-                return None
-            if no_images == 1:
-                return images[0]
-            module.fail_json(msg="Invalid number of instances (%s) found for image_id: %s." % (str(len(images)), image_id))
+        images_response = connection.describe_images(ImageIds=[image_id])
+        images = images_response.get('Images')
+        no_images = len(images)
+        if no_images == 0:
+            return None
+        if no_images == 1:
+            return images[0]
+        module.fail_json(msg="Invalid number of instances (%s) found for image_id: %s." % (str(len(images)), image_id))
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg="Error retreiving image by image_id - " + str(e), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
