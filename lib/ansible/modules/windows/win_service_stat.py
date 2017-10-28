@@ -21,6 +21,10 @@
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
 
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 DOCUMENTATION = r'''
 ---
 module: win_service_stat
@@ -53,16 +57,15 @@ win_service_stat:
       exists:
           description: Boolean indicating wether the service exists or not
       state:
-          description: 'current state of the service. Will be null of service doesn't exist'
+          description: current state of the service - Will be null of service doesnt exist
       caption:
-          description: 'Service display name (returned if service exists)'
+          description: Service display name - returned if service exists
       name:
-          description: 'Name of the service (returned if service exists)'
+          description: Name of the service - returned if service exists
       path_name:
-          description: 'path and parameters to start the service (returned if service exists)'
+          description: path and parameters to start the service - returned if service exists
       start_mode:
-          description: 'start mode of the service. Can be auto, manual, disabled (returned if service exists)'
+          description: start mode of the service Can be auto, manual, disabled - returned if service exists
       start_name:
-          description: 'user account running the service (returned if service exists)'
-
+          description: user account running the service - returned if service exists
 '''
