@@ -20,7 +20,7 @@ author:
 module: aix_devices
 short_description: Manages AIX devices.
 description:
-  - This module discovery, defines, removes and modifies attributes of AIX
+  - This module discovers, defines, removes and modifies attributes of AIX
     devices.
 version_added: "2.5"
 options:
