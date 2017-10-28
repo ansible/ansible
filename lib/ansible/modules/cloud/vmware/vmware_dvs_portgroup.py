@@ -26,6 +26,7 @@ author:
     - Philippe Dellaert (@pdellaert) <philippe@dellaert.org>
 notes:
     - Tested on vSphere 5.5
+    - Tested on vSphere 6.5
 requirements:
     - "python >= 2.6"
     - PyVmomi
@@ -41,7 +42,7 @@ options:
     vlan_id:
         description:
             - The VLAN ID that should be configured with the portgroup, use 0 for no VLAN.
-            - If I(vlan_trunk) is configured to be I(true), this can be a range, example: 1-4094.
+            - 'If C(vlan_trunk) is configured to be I(true), this can be a range, example: 1-4094.'
         required: True
     num_ports:
         description:
@@ -62,6 +63,7 @@ options:
         choices:
             - 'present'
             - 'absent'
+        version_added: '2.5'
     vlan_trunk:
         description:
             - Indicates whether this is a VLAN trunk or not.
@@ -98,18 +100,74 @@ extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
-   - name: Create Management portgroup
-     local_action:
-        module: vmware_dvs_portgroup
+   - name: Create vlan portgroup
+     connection: local
+     vmware_dvs_portgroup:
         hostname: vcenter_ip_or_hostname
         username: vcenter_username
         password: vcenter_password
-        portgroup_name: Management
+        portgroup_name: vlan-123-portrgoup
         switch_name: dvSwitch
         vlan_id: 123
         num_ports: 120
         portgroup_type: earlyBinding
         state: present
+
+   - name: Create vlan trunk portgroup
+     connection: local
+     vmware_dvs_portgroup:
+        hostname: vcenter_ip_or_hostname
+        username: vcenter_username
+        password: vcenter_password
+        portgroup_name: vlan-trunk-portrgoup
+        switch_name: dvSwitch
+        vlan_id: 1-1000
+        vlan_trunk: True
+        num_ports: 120
+        portgroup_type: earlyBinding
+        state: present
+
+   - name: Create no-vlan portgroup
+     connection: local
+     vmware_dvs_portgroup:
+        hostname: vcenter_ip_or_hostname
+        username: vcenter_username
+        password: vcenter_password
+        portgroup_name: no-vlan-portrgoup
+        switch_name: dvSwitch
+        vlan_id: 0
+        num_ports: 120
+        portgroup_type: earlyBinding
+        state: present
+
+   - name: Create vlan portgroup with all security and port policies
+     connection: local
+     vmware_dvs_portgroup:
+        hostname: vcenter_ip_or_hostname
+        username: vcenter_username
+        password: vcenter_password
+        portgroup_name: vlan-123-portrgoup
+        switch_name: dvSwitch
+        vlan_id: 123
+        num_ports: 120
+        portgroup_type: earlyBinding
+        state: present
+        security:
+          promiscuous: yes
+          forged_transmits: yes
+          mac_changes: yes
+        port_policy:
+          block_override: yes
+          ipfix_override: yes
+          live_port_move: yes
+          network_rp_override: yes
+          port_config_reset_at_disconnect: yes
+          security_override: yes
+          shaping_override: yes
+          traffic_filter_override: yes
+          uplink_teaming_override: yes
+          vendor_config_override: yes
+          vlan_override: yes
 '''
 
 try:
