@@ -18,6 +18,8 @@ DOCUMENTATION = '''
 '''
 
 import json
+import os
+import time
 
 from ansible.plugins.callback import CallbackBase
 
@@ -34,6 +36,7 @@ class CallbackModule(CallbackBase):
         self._warns = []
         self._errors = []
         self._deprecate = []
+        self._debug = []
 
     def _new_play(self, play):
         return {
@@ -61,6 +64,9 @@ class CallbackModule(CallbackBase):
                 self._v[host].append(msg)
         else:
             self._v['_global'].append(msg)
+
+    def debug(self, msg):
+        self._debug.append("%6d %0.5f: %s" % (os.getpid(), time.time(), msg))
 
     def warning(self, msg, formatted=False):
         if msg not in self._warns:
@@ -109,6 +115,7 @@ class CallbackModule(CallbackBase):
             'warnings': self._warns,
             'errors': self._errors,
             'deprecations': self._deprecate,
+            'debug': self._debug,
         }
 
         self._display.display(json.dumps(output, indent=4, sort_keys=True))
