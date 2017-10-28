@@ -67,13 +67,12 @@
         - "not stopped_win_service_stat_existing_result|changed"
         - "absent_win_service_stat_existing_result|success"
         - "absent_win_service_stat_existing_result.win_service_stat.exists == false"
-
-  - name: ensure wildcard testing doesnt return a service
-    win_service_stat:
-      name: "{{ test_stopped_service_name }}*"
-    register: wildcard_win_service_stat_existing_result
   when: ('2016' in ansible_distribution) or ('2012' in ansible_distribution)
 
+- name: ensure wildcard testing doesnt return a service
+  win_service_stat:
+    name: "{{ test_stopped_service_name }}*"
+  register: wildcard_win_service_stat_existing_result
 
 - name: check result of stat wildcard service
   assert:
