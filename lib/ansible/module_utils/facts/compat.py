@@ -72,8 +72,7 @@ def ansible_facts(module, gather_subset=None):
     all_collector_classes = default_collectors.collectors
 
     # don't add a prefix
-    namespace = PrefixFactNamespace(namespace_name='ansible',
-                                    prefix='')
+    namespace = PrefixFactNamespace(namespace_name='ansible', prefix='')
 
     fact_collector = \
         ansible_collector.get_ansible_collector(all_collector_classes=all_collector_classes,

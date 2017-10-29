@@ -43,7 +43,7 @@ from ansible.playbook.role_include import IncludeRole
 from ansible.plugins.loader import action_loader, connection_loader, filter_loader, lookup_loader, module_loader, test_loader
 from ansible.template import Templar
 from ansible.utils.vars import combine_vars
-from ansible.vars.manager import strip_internal_keys
+from ansible.vars.clean import strip_internal_keys
 
 
 try:
