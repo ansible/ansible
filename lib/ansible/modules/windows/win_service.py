@@ -30,9 +30,9 @@ DOCUMENTATION = r'''
 ---
 module: win_service
 version_added: "1.7"
-short_description: Manages Windows services
+short_description: Manages and gets info about Windows services
 description:
-    - Manages Windows services.
+    - Manages and gets info about Windows services.
     - For non-Windows targets, use the M(service) module instead.
 options:
   dependencies:
@@ -81,6 +81,8 @@ options:
   name:
     description:
       - Name of the service
+      - If only the name pararameter is specified, the module will report
+        on wether the service exists or not without making any changes.
     required: true
   path:
     description:
