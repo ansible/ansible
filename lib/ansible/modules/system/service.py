@@ -32,14 +32,15 @@ options:
         - Name of the service.
     state:
         required: false
-        choices: [ started, stopped, restarted, reloaded ]
+        choices: [ started, stopped, restarted, status, reloaded ]
         description:
           - C(started)/C(stopped) are idempotent actions that will not run
             commands unless necessary.  C(restarted) will always bounce the
             service.  C(reloaded) will always reload. B(At least one of state
             and enabled are required.) Note that reloaded will start the
             service if it is not already started, even if your chosen init
-            system wouldn't normally.
+            system wouldn't normally. Status will return a boolean in regard
+            of the state of the services, true for running, false for stopped.
     sleep:
         required: false
         version_added: "1.3"
@@ -119,6 +120,11 @@ EXAMPLES = '''
     name: network
     state: restarted
     args: eth0
+
+# Example action to get the status of the httpd service
+- service:
+    name: httpd
+    state: status
 
 '''
 
@@ -1515,7 +1521,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             name = dict(required=True),
-            state = dict(choices=['running', 'started', 'stopped', 'restarted', 'reloaded']),
+            state = dict(choices=['running', 'started', 'stopped', 'restarted', 'status', 'reloaded']),
             sleep = dict(required=False, type='int', default=None),
             pattern = dict(required=False, default=None),
             enabled = dict(type='bool'),
@@ -1560,6 +1566,9 @@ def main():
         service.check_ps()
     else:
         service.get_service_status()
+
+    if module.params['state'] == 'status':
+        module.exit_json(changed=False, state=service.running)
 
     # Calculate if request will change service state
     service.check_service_changed()
