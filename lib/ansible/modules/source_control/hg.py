@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#-*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 # (c) 2013, Yeukhon Wong <yeukhon@acm.org>
 # (c) 2014, Nate Coraor <nate@bx.psu.edu>
@@ -7,13 +7,12 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-__metaclass__ = type
 
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -110,7 +109,6 @@ from ansible.module_utils._text import to_native
 
 
 class Hg(object):
-
     def __init__(self, module, dest, repo, revision, hg_path):
         self.module = module
         self.dest = dest
@@ -167,7 +165,7 @@ class Hg(object):
             self.module.fail_json(msg=err)
 
         after = self.has_local_mods()
-        if before != after and not after:   # no more local modification
+        if before != after and not after:  # no more local modification
             return True
 
     def purge(self):
@@ -229,19 +227,20 @@ class Hg(object):
             return True
         return False
 
+
 # ===========================================
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            repo = dict(required=True, aliases=['name']),
-            dest = dict(type='path'),
-            revision = dict(default=None, aliases=['version']),
-            force = dict(default='no', type='bool'),
-            purge = dict(default='no', type='bool'),
-            update = dict(default='yes', type='bool'),
-            clone = dict(default='yes', type='bool'),
-            executable = dict(default=None),
+        argument_spec=dict(
+            repo=dict(required=True, aliases=['name']),
+            dest=dict(type='path'),
+            revision=dict(default=None, aliases=['version']),
+            force=dict(default='no', type='bool'),
+            purge=dict(default='no', type='bool'),
+            update=dict(default='yes', type='bool'),
+            clone=dict(default='yes', type='bool'),
+            executable=dict(default=None),
         ),
     )
     repo = module.params['repo']
@@ -305,6 +304,7 @@ def main():
     if before != after or cleaned:
         changed = True
     module.exit_json(before=before, after=after, changed=changed, cleaned=cleaned)
+
 
 if __name__ == '__main__':
     main()

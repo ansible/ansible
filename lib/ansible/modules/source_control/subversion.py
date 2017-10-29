@@ -5,13 +5,12 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-__metaclass__ = type
 
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
-
 
 DOCUMENTATION = '''
 ---
@@ -199,7 +198,7 @@ class Subversion(object):
 
     def has_local_mods(self):
         '''True if revisioned files have been added or modified. Unrevisioned files are ignored.'''
-        lines = self._exec(["status", "--quiet", "--ignore-externals",  self.dest])
+        lines = self._exec(["status", "--quiet", "--ignore-externals", self.dest])
         # The --quiet option will return only modified files.
         # Match only revisioned files, i.e. ignore status '?'.
         regex = re.compile(r'^[^?X]')
@@ -292,7 +291,7 @@ def main():
                 module.fail_json(msg="ERROR: modified files exist in the repository.")
         svn.update()
     else:
-        module.fail_json(msg="ERROR: %s folder already exists, but its not a subversion repository." % (dest, ))
+        module.fail_json(msg="ERROR: %s folder already exists, but its not a subversion repository." % (dest,))
 
     if export:
         module.exit_json(changed=True)

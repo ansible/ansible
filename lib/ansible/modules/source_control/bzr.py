@@ -6,13 +6,12 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-__metaclass__ = type
 
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = u'''
 ---
@@ -139,11 +138,12 @@ class Bzr(object):
             args_list = ["revert"]
         return self._command(args_list, check_rc=True, cwd=self.dest)
 
+
 # ===========================================
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
+        argument_spec=dict(
             dest=dict(required=True, type='path'),
             name=dict(required=True, aliases=['parent']),
             version=dict(default='head'),
@@ -152,10 +152,10 @@ def main():
         )
     )
 
-    dest    = module.params['dest']
-    parent  = module.params['name']
+    dest = module.params['dest']
+    parent = module.params['name']
     version = module.params['version']
-    force   = module.params['force']
+    force = module.params['force']
     bzr_path = module.params['executable'] or module.get_bin_path('bzr', True)
 
     bzrconfig = os.path.join(dest, '.bzr', 'branch', 'branch.conf')
