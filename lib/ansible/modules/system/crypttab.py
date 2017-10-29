@@ -5,13 +5,12 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-__metaclass__ = type
 
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -91,29 +90,28 @@ import traceback
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_bytes, to_native
 
-def main():
 
+def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            name           = dict(required=True),
-            state          = dict(required=True, choices=['present', 'absent', 'opts_present', 'opts_absent']),
-            backing_device = dict(default=None),
-            password       = dict(default=None, type='path'),
-            opts           = dict(default=None),
-            path           = dict(default='/etc/crypttab', type='path')
+        argument_spec=dict(
+            name=dict(required=True),
+            state=dict(required=True, choices=['present', 'absent', 'opts_present', 'opts_absent']),
+            backing_device=dict(default=None),
+            password=dict(default=None, type='path'),
+            opts=dict(default=None),
+            path=dict(default='/etc/crypttab', type='path')
         ),
-        supports_check_mode = True
+        supports_check_mode=True
     )
 
     backing_device = module.params['backing_device']
-    password       = module.params['password']
-    opts           = module.params['opts']
-    state          = module.params['state']
-    path           = module.params['path']
-    name           = module.params['name']
+    password = module.params['password']
+    opts = module.params['opts']
+    state = module.params['state']
+    path = module.params['path']
+    name = module.params['name']
     if name.startswith('/dev/mapper/'):
         name = name[len('/dev/mapper/'):]
-
 
     if state != 'absent' and backing_device is None and password is None and opts is None:
         module.fail_json(msg="expected one or more of 'backing_device', 'password' or 'opts'",
@@ -127,8 +125,7 @@ def main():
                           ('backing_device', backing_device),
                           ('password', password),
                           ('opts', opts)):
-        if (arg is not None
-                and (' ' in arg or '\t' in arg or arg == '')):
+        if (arg is not None and (' ' in arg or '\t' in arg or arg == '')):
             module.fail_json(msg="invalid '%s': contains white space or is empty" % arg_name,
                              **module.params)
 
@@ -165,7 +162,6 @@ def main():
         if existing_line is not None:
             changed, reason = existing_line.opts.remove(opts)
 
-
     if changed and not module.check_mode:
         try:
             f = open(path, 'wb')
@@ -177,7 +173,6 @@ def main():
 
 
 class Crypttab(object):
-
     _lines = []
 
     def __init__(self, path):
@@ -185,7 +180,7 @@ class Crypttab(object):
         if not os.path.exists(path):
             if not os.path.exists(os.path.dirname(path)):
                 os.makedirs(os.path.dirname(path))
-            open(path,'a').close()
+            open(path, 'a').close()
 
         try:
             f = open(path, 'r')
@@ -222,7 +217,6 @@ class Crypttab(object):
 
 
 class Line(object):
-
     def __init__(self, line=None, name=None, backing_device=None, password=None, opts=None):
         self.line = line
         self.name = name
@@ -355,8 +349,7 @@ class Options(dict):
         super(Options, self).__delitem__(key)
 
     def __ne__(self, obj):
-        return not (isinstance(obj, Options)
-                    and sorted(self.items()) == sorted(obj.items()))
+        return not (isinstance(obj, Options) and sorted(self.items()) == sorted(obj.items()))
 
     def __str__(self):
         ret = []
