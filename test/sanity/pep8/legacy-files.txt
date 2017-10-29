@@ -149,7 +149,6 @@ lib/ansible/modules/database/vertica/vertica_facts.py
 lib/ansible/modules/database/vertica/vertica_role.py
 lib/ansible/modules/database/vertica/vertica_schema.py
 lib/ansible/modules/database/vertica/vertica_user.py
-lib/ansible/modules/files/blockinfile.py
 lib/ansible/modules/files/synchronize.py
 lib/ansible/modules/files/tempfile.py
 lib/ansible/modules/monitoring/bigpanda.py
