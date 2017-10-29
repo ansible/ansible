@@ -23,6 +23,11 @@
     - ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux', 'Fedora']
     - ansible_python.version.major == 2
 
+- include: 'repo.yml'
+  when:
+    - ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux', 'Fedora']
+    - ansible_python.version.major == 2
+
 # We can't run yum --installroot tests on dnf systems.  Dnf systems revert to
 # yum-deprecated, and yum-deprecated refuses to run if yum.conf exists
 # so we cannot configure yum-deprecated correctly in an empty /tmp/fake.root/

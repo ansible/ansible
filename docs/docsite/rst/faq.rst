@@ -378,7 +378,7 @@ A steadfast rule is 'always use {{ }} except when `when:`'.
 Conditionals are always run through Jinja2 as to resolve the expression,
 so `when:`, `failed_when:` and `changed_when:` are always templated and you should avoid adding `{{}}`.
 
-In most other cases you should always use the brackets, even if previously you could use variables without specifying (like `with_` clauses),
+In most other cases you should always use the brackets, even if previously you could use variables without specifying (like `loop` or `with_` clauses),
 as this made it hard to distinguish between an undefined variable and a string.
 
 Another rule is 'moustaches don't stack'. We often see this:

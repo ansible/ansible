@@ -179,12 +179,12 @@ def map_obj_to_commands(updates, module):
     return commands
 
 
-def parse_facility(line):
-    match = re.search(r'logging facility (\S+)', line, re.M)
-    if match:
-        facility = match.group(1)
-    else:
-        facility = 'local7'
+def parse_facility(line, dest):
+    facility = None
+    if dest == 'facility':
+        match = re.search(r'logging facility (\S+)', line, re.M)
+        if match:
+            facility = match.group(1)
 
     return facility
 
@@ -242,7 +242,7 @@ def parse_level(line, dest):
 
 def map_config_to_obj(module):
     obj = []
-    dest_group = ('console', 'host', 'monitor', 'buffered', 'on')
+    dest_group = ('console', 'host', 'monitor', 'buffered', 'on', 'facility')
 
     data = get_config(module, flags=['| section logging'])
 
@@ -256,10 +256,9 @@ def map_config_to_obj(module):
                     'dest': dest,
                     'name': parse_name(line, dest),
                     'size': parse_size(line, dest),
-                    'facility': parse_facility(line),
+                    'facility': parse_facility(line, dest),
                     'level': parse_level(line, dest)
                 })
-
     return obj
 
 
@@ -332,7 +331,7 @@ def main():
         dest=dict(type='str', choices=['on', 'host', 'console', 'monitor', 'buffered']),
         name=dict(type='str'),
         size=dict(type='int'),
-        facility=dict(type='str', default='local7'),
+        facility=dict(type='str'),
         level=dict(type='str', default='debugging'),
         state=dict(default='present', choices=['present', 'absent']),
     )

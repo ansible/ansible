@@ -1,33 +1,21 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright 2017 F5 Networks Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 F5 Networks Inc.
+# GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {
-    'status': ['preview'],
-    'supported_by': 'community',
-    'metadata_version': '1.1'
-}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-DOCUMENTATION = '''
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
+DOCUMENTATION = r'''
 ---
 module: bigip_partition
-short_description: Manage BIG-IP partitions.
+short_description: Manage BIG-IP partitions
 description:
   - Manage BIG-IP partitions.
 version_added: "2.5"
@@ -58,70 +46,70 @@ author:
   - Tim Rupp (@caphrim007)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Create partition "foo" using the default route domain
   bigip_partition:
-      name: "foo"
-      password: "secret"
-      server: "lb.mydomain.com"
-      user: "admin"
+    name: foo
+    password: secret
+    server: lb.mydomain.com
+    user: admin
   delegate_to: localhost
 
 - name: Create partition "bar" using a custom route domain
   bigip_partition:
-      name: "bar"
-      route_domain: 3
-      password: "secret"
-      server: "lb.mydomain.com"
-      user: "admin"
+    name: bar
+    route_domain: 3
+    password: secret
+    server: lb.mydomain.com
+    user: admin
   delegate_to: localhost
 
 - name: Change route domain of partition "foo"
   bigip_partition:
-      name: "foo"
-      route_domain: 8
-      password: "secret"
-      server: "lb.mydomain.com"
-      user: "admin"
+    name: foo
+    route_domain: 8
+    password: secret
+    server: lb.mydomain.com
+    user: admin
   delegate_to: localhost
 
 - name: Set a description for partition "foo"
   bigip_partition:
-      name: "foo"
-      description: "Tenant CompanyA"
-      password: "secret"
-      server: "lb.mydomain.com"
-      user: "admin"
+    name: foo
+    description: Tenant CompanyA
+    password: secret
+    server: lb.mydomain.com
+    user: admin
   delegate_to: localhost
 
 - name: Delete the "foo" partition
   bigip_partition:
-      name: "foo"
-      password: "secret"
-      server: "lb.mydomain.com"
-      user: "admin"
-      state: "absent"
+    name: foo
+    password: secret
+    server: lb.mydomain.com
+    user: admin
+    state: absent
   delegate_to: localhost
 '''
 
-RETURN = '''
+RETURN = r'''
 route_domain:
-    description: Name of the route domain associated with the partition.
-    returned: changed and success
-    type: int
-    sample: 0
+  description: Name of the route domain associated with the partition.
+  returned: changed and success
+  type: int
+  sample: 0
 description:
-    description: The description of the partition.
-    returned: changed and success
-    type: string
-    sample: "Example partition"
+  description: The description of the partition.
+  returned: changed and success
+  type: string
+  sample: Example partition
 '''
 
 from ansible.module_utils.f5_utils import AnsibleF5Client
 from ansible.module_utils.f5_utils import AnsibleF5Parameters
 from ansible.module_utils.f5_utils import F5ModuleError
-from ansible.module_utils.f5_utils import iteritems
-from ansible.module_utils.f5_utils import defaultdict
+from ansible.module_utils.six import iteritems
+from collections import defaultdict
 
 try:
     from ansible.module_utils.f5_utils import HAS_F5SDK

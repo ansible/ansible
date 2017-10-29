@@ -22,6 +22,7 @@ options:
     description:
       - List of commands to be executed in the telnet session.
     required: True
+    aliases: ['commands']
   host:
     description:
         - The host/target on which to execute the command

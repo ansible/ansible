@@ -592,6 +592,12 @@ class RedHat5Hostname(Hostname):
     strategy_class = RedHatStrategy
 
 
+class RHELHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Red hat enterprise linux'
+    strategy_class = RedHatStrategy
+
+
 class RedHatServerHostname(Hostname):
     platform = 'Linux'
     distribution = 'Red hat enterprise linux server'

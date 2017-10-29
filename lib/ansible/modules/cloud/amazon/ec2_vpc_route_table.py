@@ -51,7 +51,7 @@ options:
   purge_subnets:
     version_added: "2.3"
     description:
-      - "Purge existing subnets that are not found in subnets."
+      - "Purge existing subnets that are not found in subnets. Ignored unless the subnets option is supplied."
     required: false
     default: 'true'
     aliases: []
@@ -142,8 +142,6 @@ try:
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
-    if __name__ != '__main__':
-        raise
 
 
 class AnsibleRouteTableException(Exception):

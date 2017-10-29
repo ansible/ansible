@@ -85,11 +85,12 @@ def split_host_pattern(pattern):
 
     if isinstance(pattern, list):
         return list(itertools.chain(*map(split_host_pattern, pattern)))
+    elif not isinstance(pattern, string_types):
+        pattern = to_native(pattern)
 
     # If it's got commas in it, we'll treat it as a straightforward
     # comma-separated list of patterns.
-
-    elif ',' in pattern:
+    if ',' in pattern:
         patterns = re.split('\s*,\s*', pattern)
 
     # If it doesn't, it could still be a single pattern. This accounts for
@@ -177,7 +178,7 @@ class InventoryManager(object):
     def _setup_inventory_plugins(self):
         ''' sets up loaded inventory plugins for usage '''
 
-        inventory_loader = PluginLoader('InventoryModule', 'ansible.plugins.inventory', 'inventory_plugins', 'inventory_plugins')
+        inventory_loader = PluginLoader('InventoryModule', 'ansible.plugins.inventory', C.DEFAULT_INVENTORY_PLUGIN_PATH, 'inventory_plugins')
         display.vvvv('setting up inventory plugins')
 
         for name in C.INVENTORY_ENABLED:
@@ -190,7 +191,7 @@ class InventoryManager(object):
         if not self._inventory_plugins:
             raise AnsibleError("No inventory plugins available to generate inventory, make sure you have at least one whitelisted.")
 
-    def parse_sources(self, cache=True):
+    def parse_sources(self, cache=False):
         ''' iterate over inventory sources and parse each one to populate it'''
 
         self._setup_inventory_plugins()
@@ -214,7 +215,7 @@ class InventoryManager(object):
 
         self._inventory_plugins = []
 
-    def parse_source(self, source, cache=True):
+    def parse_source(self, source, cache=False):
         ''' Generate or update inventory for the source provided '''
 
         parsed = False
@@ -256,6 +257,7 @@ class InventoryManager(object):
                 # initialize
                 if plugin.verify_file(source):
                     try:
+                        # in case plugin fails 1/2 way we dont want partial inventory
                         plugin.parse(self._inventory, self._loader, source, cache=cache)
                         parsed = True
                         display.vvv('Parsed %s inventory source with %s plugin' % (to_native(source), plugin_name))

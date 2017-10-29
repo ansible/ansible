@@ -12,7 +12,7 @@
 pkgname=ansible-git
 pkgver=1.6.0.1835.ga1809a3
 pkgrel=1
-pkgdesc='Radically simple IT automation platform'
+pkgdesc='Ansible IT Automation'
 arch=('any')
 url='https://www.ansible.com'
 license=('GPL3')
@@ -24,7 +24,7 @@ optdepends=('python2-pyasn1: needed for accelerated mode'
 conflicts=('ansible')
 provides=('ansible')
 backup=('etc/ansible/ansible.cfg')
-source=($pkgname::git://github.com/ansible/ansible.git)
+source=($pkgname::git+https://github.com/ansible/ansible.git)
 md5sums=('SKIP')
 
 pkgver() {

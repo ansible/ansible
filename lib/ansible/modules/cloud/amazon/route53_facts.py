@@ -66,7 +66,7 @@ options:
     description:
       - The type of DNS record
     required: false
-    choices: [ 'A', 'CNAME', 'MX', 'AAAA', 'TXT', 'PTR', 'SRV', 'SPF', 'NS' ]
+    choices: [ 'A', 'CNAME', 'MX', 'AAAA', 'TXT', 'PTR', 'SRV', 'SPF', 'CAA', 'NS' ]
   dns_name:
     description:
       - The first name in the lexicographic ordering of domain names that you want
@@ -388,7 +388,7 @@ def main():
         delegation_set_id=dict(),
         start_record_name=dict(),
         type=dict(choices=[
-            'A', 'CNAME', 'MX', 'AAAA', 'TXT', 'PTR', 'SRV', 'SPF', 'NS'
+            'A', 'CNAME', 'MX', 'AAAA', 'TXT', 'PTR', 'SRV', 'SPF', 'CAA', 'NS'
         ]),
         dns_name=dict(),
         resource_id=dict(type='list', aliases=['resource_ids']),

@@ -7,29 +7,48 @@ Ansible Changes By Release
 
 ### Major Changes
 * Removed the previously deprecated 'accelerate' mode and all associated keywords and code.
+* Removed the previouslly deprecated 'accelerate' mode and all associated keywords and code.
+* New simpler and more intuitive 'loop' keyword for task loops
 
 ### Deprecations
+* previouslly deprecated 'hostfile' config settings have been 're-deprecated' as previouslly code did not warn about deprecated configuration settings.
+* The ``with_<lookup>`` loops are deprecated in favor of the new ``loop`` keyword
 
 #### Deprecated Modules (to be removed in 2.9):
 
 #### Removed Modules (previously deprecated):
 * accelerate
+* boundary_meter: There was no deprecation period for this but the hosted
+  service it relied on has gone away so the module has been removed.
+  https://github.com/ansible/ansible/issues/29387
 
 ### Minor Changes
 * added a few new magic vars corresponding to configuration/command line options:
   `ansible_diff_mode`, `ansible_inventory_sources`, `ansible_limit`, `ansible_run_tags` , `ansible_forks` and `ansible_skip_tags`
 * Updated the bundled copy of the six library to 1.11.0
+* Added support to `become` `NT AUTHORITY\System`, `NT AUTHORITY\LocalService`, and `NT AUTHORITY\NetworkService` on Windows hosts
+
+### New Plugins
+
+## Lookups
+* Added `aws_ssm` lookup plugin
 
 ### New Modules
+
+#### Cloud
+
+  * aws_ssm_parameter_store
+  * digital_ocean_sshkey_facts
 
 #### Windows
 
   * win_scheduled_task_stat
+  * win_audit_rule
 
 
 <a id="2.4"></a>
 
-## 2.4 "Dancing Days" - RELEASE CANDIDATE
+## 2.4 "Dancing Days" - 2017/09/18
 
 ### Major Changes
 
@@ -48,7 +67,7 @@ Ansible Changes By Release
   - New inventory plugins for creating inventory
   - Old inventory formats are still supported via plugins
   - Inline host_list is also an inventory plugin, an example alternative `advanced_host_list` is also provided (it supports ranges)
-  - New configuration option to list enabled plugins and precedence order: `whitelist_inventory` in ansible.cfg
+  - New configuration option to list enabled plugins and precedence order `[inventory]enable_plugins` in ansible.cfg
   - vars_plugins have been reworked, they are now run from Vars manager and API has changed (need docs)
   - Loading group_vars/host_vars is now a vars plugin and can be overridden
   - It is now possible to specify mulitple inventory sources in the command line (-i /etc/hosts1 -i /opt/hosts2)

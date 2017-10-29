@@ -31,7 +31,7 @@
   assert:
     that:
     - vpc|failed
-    - 'vpc.msg == "state is present but the following are missing: cidr"'
+    - 'vpc.msg == "state is present but all of the following are missing: cidr"'
 
 - name: test create vpc in check mode
   cs_vpc:
