@@ -28,6 +28,7 @@ from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.module_utils._text import to_text
 from ansible.parsing.splitter import parse_kv
+from ansible.playbook import Playbook
 from ansible.playbook.play import Play
 from ansible.plugins.loader import get_all_plugin_loaders
 
@@ -145,6 +146,11 @@ class AdHocCLI(CLI):
         play_ds = self._play_ds(pattern, self.options.seconds, self.options.poll_interval)
         play = Play().load(play_ds, variable_manager=variable_manager, loader=loader)
 
+        # used in start callback
+        playbook = Playbook(loader)
+        playbook._entries.append(play)
+        playbook._file_name = '__adhoc_playbook__'
+
         if self.callback:
             cb = self.callback
         elif self.options.one_line:
@@ -175,7 +181,11 @@ class AdHocCLI(CLI):
                 run_tree=run_tree,
             )
 
+            self._tqm.send_callback('v2_playbook_on_start', playbook)
+
             result = self._tqm.run(play)
+
+            self._tqm.send_callback('v2_playbook_on_stats', self._tqm._stats)
         finally:
             if self._tqm:
                 self._tqm.cleanup()
