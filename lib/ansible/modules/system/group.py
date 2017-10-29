@@ -81,11 +81,11 @@ class Group(object):
         return load_platform_subclass(Group, args, kwargs)
 
     def __init__(self, module):
-        self.module     = module
-        self.state      = module.params['state']
-        self.name       = module.params['name']
-        self.gid        = module.params['gid']
-        self.system     = module.params['system']
+        self.module = module
+        self.state = module.params['state']
+        self.name = module.params['name']
+        self.gid = module.params['gid']
+        self.system = module.params['system']
 
     def execute_command(self, cmd):
         return self.module.run_command(cmd)
@@ -137,6 +137,7 @@ class Group(object):
         return info
 
 # ===========================================
+
 
 class SunOS(Group):
     """
@@ -207,6 +208,7 @@ class AIX(Group):
 
 # ===========================================
 
+
 class FreeBsdGroup(Group):
     """
     This is a FreeBSD Group manipulation class.
@@ -249,7 +251,6 @@ class FreeBsdGroup(Group):
 # ===========================================
 
 
-
 class DarwinGroup(Group):
     """
     This is a Mac OS X Darwin Group manipulation class.
@@ -267,22 +268,22 @@ class DarwinGroup(Group):
 
     def group_add(self, **kwargs):
         cmd = [self.module.get_bin_path('dseditgroup', True)]
-        cmd += [ '-o', 'create' ]
+        cmd += ['-o', 'create']
         if self.gid is not None:
-            cmd += [ '-i', self.gid ]
+            cmd += ['-i', self.gid]
         elif 'system' in kwargs and kwargs['system'] is True:
             gid = self.get_lowest_available_system_gid()
             if gid is not False:
                 self.gid = str(gid)
-                cmd += [ '-i', self.gid ]
-        cmd += [ '-L', self.name ]
+                cmd += ['-i', self.gid]
+        cmd += ['-L', self.name]
         (rc, out, err) = self.execute_command(cmd)
         return (rc, out, err)
 
     def group_del(self):
         cmd = [self.module.get_bin_path('dseditgroup', True)]
-        cmd += [ '-o', 'delete' ]
-        cmd += [ '-L', self.name ]
+        cmd += ['-o', 'delete']
+        cmd += ['-L', self.name]
         (rc, out, err) = self.execute_command(cmd)
         return (rc, out, err)
 
@@ -290,10 +291,10 @@ class DarwinGroup(Group):
         info = self.group_info()
         if self.gid is not None and int(self.gid) != info[2]:
             cmd = [self.module.get_bin_path('dseditgroup', True)]
-            cmd += [ '-o', 'edit' ]
+            cmd += ['-o', 'edit']
             if gid is not None:
-                cmd += [ '-i', gid ]
-            cmd += [ '-L', self.name ]
+                cmd += ['-i', gid]
+            cmd += ['-L', self.name]
             (rc, out, err) = self.execute_command(cmd)
             return (rc, out, err)
         return (None, '', '')
@@ -302,7 +303,7 @@ class DarwinGroup(Group):
         # check for lowest available system gid (< 500)
         try:
             cmd = [self.module.get_bin_path('dscl', True)]
-            cmd += [ '/Local/Default', '-list', '/Groups', 'PrimaryGroupID']
+            cmd += ['/Local/Default', '-list', '/Groups', 'PrimaryGroupID']
             (rc, out, err) = self.execute_command(cmd)
             lines = out.splitlines()
             highest = 0
@@ -317,6 +318,7 @@ class DarwinGroup(Group):
             return (highest + 1)
         except:
             return False
+
 
 class OpenBsdGroup(Group):
     """
@@ -359,6 +361,7 @@ class OpenBsdGroup(Group):
 
 # ===========================================
 
+
 class NetBsdGroup(Group):
     """
     This is a NetBSD Group manipulation class.
@@ -400,9 +403,10 @@ class NetBsdGroup(Group):
 
 # ===========================================
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
+        argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             name=dict(required=True, type='str'),
             gid=dict(default=None, type='str'),
