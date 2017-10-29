@@ -85,8 +85,6 @@ class CallbackBase(AnsiblePlugin):
         self._plugin_options = options
 
     def _dump_results(self, result, indent=None, sort_keys=True, keep_invocation=False):
-        if result.get('_ansible_no_log', False):
-            return json.dumps(dict(censored="the output has been hidden due to the fact that 'no_log: true' was specified for this result"))
 
         if not indent and (result.get('_ansible_verbose_always') or self._display.verbosity > 2):
             indent = 4
@@ -219,8 +217,9 @@ class CallbackBase(AnsiblePlugin):
         del result._result['results']
 
     def _clean_results(self, result, task_name):
+        ''' removes data from results for display '''
         if task_name in ['debug']:
-            for remove_key in ('changed', 'invocation', 'failed', 'skipped'):
+            for remove_key in ('invocation'):
                 if remove_key in result:
                     del result[remove_key]
 

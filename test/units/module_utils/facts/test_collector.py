@@ -20,12 +20,99 @@
 from __future__ import (absolute_import, division)
 __metaclass__ = type
 
+from collections import defaultdict
+
 # for testing
 from ansible.compat.tests import unittest
 
 from ansible.module_utils.facts import collector
 
 from ansible.module_utils.facts import default_collectors
+
+
+class TestFindCollectorsForPlatform(unittest.TestCase):
+    def test(self):
+        compat_platforms = [{'system': 'Generic'}]
+        res = collector.find_collectors_for_platform(default_collectors.collectors,
+                                                     compat_platforms)
+        for coll_class in res:
+            self.assertIn(coll_class._platform, ('Generic'))
+
+    def test_linux(self):
+        compat_platforms = [{'system': 'Linux'}]
+        res = collector.find_collectors_for_platform(default_collectors.collectors,
+                                                     compat_platforms)
+        for coll_class in res:
+            self.assertIn(coll_class._platform, ('Linux'))
+
+    def test_linux_or_generic(self):
+        compat_platforms = [{'system': 'Generic'}, {'system': 'Linux'}]
+        res = collector.find_collectors_for_platform(default_collectors.collectors,
+                                                     compat_platforms)
+        for coll_class in res:
+            self.assertIn(coll_class._platform, ('Generic', 'Linux'))
+
+
+class TestSelectCollectorNames(unittest.TestCase):
+    def test(self):
+        collector_names = set(['distribution', 'all_ipv4_addresses',
+                               'local', 'pkg_mgr'])
+        all_fact_subsets = self._all_fact_subsets()
+        all_collector_classes = self._all_collector_classes()
+        res = collector.select_collector_classes(collector_names,
+                                                 all_fact_subsets,
+                                                 all_collector_classes)
+
+        expected = [default_collectors.DistributionFactCollector,
+                    default_collectors.PkgMgrFactCollector]
+
+        self.assertEqual(res, expected)
+
+    def test_reverse(self):
+        collector_names = set(['distribution', 'all_ipv4_addresses',
+                               'local', 'pkg_mgr'])
+        all_fact_subsets = self._all_fact_subsets()
+        all_collector_classes = self._all_collector_classes()
+        all_collector_classes.reverse()
+        res = collector.select_collector_classes(collector_names,
+                                                 all_fact_subsets,
+                                                 all_collector_classes)
+
+        expected = [default_collectors.PkgMgrFactCollector,
+                    default_collectors.DistributionFactCollector]
+
+        self.assertEqual(res, expected)
+
+    def test_default_collectors(self):
+        platform_info = {'system': 'Generic'}
+        compat_platforms = [platform_info]
+        collectors_for_platform = collector.find_collectors_for_platform(default_collectors.collectors,
+                                                                         compat_platforms)
+
+        all_fact_subsets, aliases_map = collector.build_fact_id_to_collector_map(collectors_for_platform)
+
+        all_valid_subsets = frozenset(all_fact_subsets.keys())
+        collector_names = collector.get_collector_names(valid_subsets=all_valid_subsets,
+                                                        aliases_map=aliases_map,
+                                                        platform_info=platform_info)
+        collector.select_collector_classes(collector_names,
+                                           all_fact_subsets,
+                                           default_collectors.collectors)
+
+    def _all_collector_classes(self):
+        return [default_collectors.DistributionFactCollector,
+                default_collectors.PkgMgrFactCollector,
+                default_collectors.LinuxNetworkCollector]
+
+    def _all_fact_subsets(self, data=None):
+        all_fact_subsets = defaultdict(list)
+        _data = {'pkg_mgr': [default_collectors.PkgMgrFactCollector],
+                 'distribution': [default_collectors.DistributionFactCollector],
+                 'network': [default_collectors.LinuxNetworkCollector]}
+        data = data or _data
+        for key, value in data.items():
+            all_fact_subsets[key] = value
+        return all_fact_subsets
 
 
 class TestGetCollectorNames(unittest.TestCase):

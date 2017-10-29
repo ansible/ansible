@@ -12,6 +12,8 @@ from lib.util import (
     ApplicationError,
     display,
     raw_command,
+    find_pip,
+    get_docker_completion,
 )
 
 from lib.delegation import (
@@ -112,7 +114,7 @@ def parse_args():
     except ImportError:
         if '--requirements' not in sys.argv:
             raise
-        raw_command(generate_pip_install('ansible-test'))
+        raw_command(generate_pip_install(find_pip(), 'ansible-test'))
         import argparse
 
     try:
@@ -255,6 +257,8 @@ def parse_args():
                                      targets=walk_network_integration_targets,
                                      config=NetworkIntegrationConfig)
 
+    add_extra_docker_options(network_integration, integration=False)
+
     network_integration.add_argument('--platform',
                                      metavar='PLATFORM',
                                      action='append',
@@ -271,6 +275,8 @@ def parse_args():
     windows_integration.set_defaults(func=command_windows_integration,
                                      targets=walk_windows_integration_targets,
                                      config=WindowsIntegrationConfig)
+
+    add_extra_docker_options(windows_integration, integration=False)
 
     windows_integration.add_argument('--windows',
                                      metavar='VERSION',
@@ -578,6 +584,10 @@ def add_extra_docker_options(parser, integration=True):
                         dest='docker_pull',
                         help='do not explicitly pull the latest docker images')
 
+    docker.add_argument('--docker-keep-git',
+                        action='store_true',
+                        help='transfer git related files into the docker container')
+
     if not integration:
         return
 
@@ -622,8 +632,7 @@ def complete_docker(prefix, parsed_args, **_):
     """
     del parsed_args
 
-    with open('test/runner/completion/docker.txt', 'r') as completion_fd:
-        images = completion_fd.read().splitlines()
+    images = sorted(get_docker_completion().keys())
 
     return [i for i in images if i.startswith(prefix)]
 

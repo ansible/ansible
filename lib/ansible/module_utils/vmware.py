@@ -156,7 +156,13 @@ def find_datastore_by_name(content, datastore_name):
 
 def find_dvs_by_name(content, switch_name):
 
-    vmware_distributed_switches = get_all_objs(content, [vim.dvs.VmwareDistributedVirtualSwitch])
+    # https://github.com/vmware/govmomi/issues/879
+    # https://github.com/ansible/ansible/pull/31798#issuecomment-336936222
+    try:
+        vmware_distributed_switches = get_all_objs(content, [vim.dvs.VmwareDistributedVirtualSwitch])
+    except IndexError:
+        vmware_distributed_switches = get_all_objs(content, [vim.DistributedVirtualSwitch])
+
     for dvs in vmware_distributed_switches:
         if dvs.name == switch_name:
             return dvs
@@ -235,7 +241,11 @@ def compile_folder_path_for_object(vobj):
     thisobj = vobj
     while hasattr(thisobj, 'parent'):
         thisobj = thisobj.parent
-        if thisobj.name == 'Datacenters':
+        try:
+            moid = thisobj._moId
+        except AttributeError:
+            moid = None
+        if moid in ['group-d1', 'ha-folder-root']:
             break
         if isinstance(thisobj, vim.Folder):
             paths.append(thisobj.name)
@@ -601,7 +611,7 @@ def serialize_spec(clonespec):
         elif isinstance(xo, vim.vm.device.VirtualDisk):
             data[x] = serialize_spec(xo)
         elif isinstance(xo, vim.vm.device.VirtualDeviceSpec.FileOperation):
-            data[x] = serialize_spec(xo)
+            data[x] = to_text(xo)
         elif isinstance(xo, vim.Description):
             data[x] = {
                 'dynamicProperty': serialize_spec(xo.dynamicProperty),
@@ -618,7 +628,10 @@ def serialize_spec(clonespec):
             for xe in xo:
                 data[x].append(serialize_spec(xe))
         elif issubclass(xt, string_types + integer_types + (float, bool)):
-            data[x] = to_text(xt)
+            if issubclass(xt, integer_types):
+                data[x] = int(xo)
+            else:
+                data[x] = to_text(xo)
         elif issubclass(xt, bool):
             data[x] = xo
         elif issubclass(xt, dict):
@@ -645,3 +658,109 @@ def find_host_by_cluster_datacenter(module, content, datacenter_name, cluster_na
             return host, cluster
 
     return None, cluster
+
+
+def set_vm_power_state(content, vm, state, force):
+    """
+    Set the power status for a VM determined by the current and
+    requested states. force is forceful
+    """
+    facts = gather_vm_facts(content, vm)
+    expected_state = state.replace('_', '').lower()
+    current_state = facts['hw_power_status'].lower()
+    result = dict(
+        changed=False,
+        failed=False,
+    )
+
+    # Need Force
+    if not force and current_state not in ['poweredon', 'poweredoff']:
+        result['failed'] = True
+        result['msg'] = "Virtual Machine is in %s power state. Force is required!" % current_state
+        return result
+
+    # State is not already true
+    if current_state != expected_state:
+        task = None
+        try:
+            if expected_state == 'poweredoff':
+                task = vm.PowerOff()
+
+            elif expected_state == 'poweredon':
+                task = vm.PowerOn()
+
+            elif expected_state == 'restarted':
+                if current_state in ('poweredon', 'poweringon', 'resetting', 'poweredoff'):
+                    task = vm.Reset()
+                else:
+                    result['failed'] = True
+                    result['msg'] = "Cannot restart virtual machine in the current state %s" % current_state
+
+            elif expected_state == 'suspended':
+                if current_state in ('poweredon', 'poweringon'):
+                    task = vm.Suspend()
+                else:
+                    result['failed'] = True
+                    result['msg'] = 'Cannot suspend virtual machine in the current state %s' % current_state
+
+            elif expected_state in ['shutdownguest', 'rebootguest']:
+                if current_state == 'poweredon':
+                    if vm.guest.toolsRunningStatus == 'guestToolsRunning':
+                        if expected_state == 'shutdownguest':
+                            task = vm.ShutdownGuest()
+                        else:
+                            task = vm.RebootGuest()
+                        # Set result['changed'] immediately because
+                        # shutdown and reboot return None.
+                        result['changed'] = True
+                    else:
+                        result['failed'] = True
+                        result['msg'] = "VMware tools should be installed for guest shutdown/reboot"
+                else:
+                    result['failed'] = True
+                    result['msg'] = "Virtual machine %s must be in poweredon state for guest shutdown/reboot" % vm.name
+
+        except Exception as e:
+            result['failed'] = True
+            result['msg'] = to_text(e)
+
+        if task:
+            wait_for_task(task)
+            if task.info.state == 'error':
+                result['failed'] = True
+                result['msg'] = task.info.error.msg
+            else:
+                result['changed'] = True
+
+    # need to get new metadata if changed
+    if result['changed']:
+        result['instance'] = gather_vm_facts(content, vm)
+
+    return result
+
+
+class PyVmomi(object):
+    def __init__(self, module):
+        if not HAS_PYVMOMI:
+            module.fail_json(msg='PyVmomi Python module required. Install using "pip install PyVmomi"')
+
+        self.module = module
+        self.params = module.params
+        self.si = None
+        self.current_vm_obj = None
+        self.content = connect_to_api(self.module)
+
+    def get_vm(self):
+        vm = None
+        match_first = (self.params['name_match'] == 'first')
+
+        if self.params['uuid']:
+            vm = find_vm_by_id(self.content, vm_id=self.params['uuid'], vm_id_type="uuid")
+        elif self.params['folder'] and self.params['name']:
+            vm = find_vm_by_id(self.content, vm_id=self.params['name'], vm_id_type="inventory_path",
+                               folder=self.params['folder'], match_first=match_first)
+
+        if vm:
+            self.current_vm_obj = vm
+
+        return vm

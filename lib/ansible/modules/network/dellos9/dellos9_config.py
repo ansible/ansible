@@ -47,7 +47,7 @@ options:
       - Specifies the source path to the file that contains the configuration
         or configuration template to load.  The path to the source file can
         either be the full path on the Ansible control host or a relative
-        path from the playbook or role root dir.  This argument is mutually
+        path from the playbook or role root directory.  This argument is mutually
         exclusive with I(lines).
     required: false
     default: null
@@ -74,7 +74,7 @@ options:
         match to I(line), commands match line by line.  If you set
         match to I(strict), command lines match by position.  If you set match to I(exact), command lines
         must be an equal match.  Finally, if you set match to I(none), the
-        module does  not attempt to compare the source configuration with
+        module does not attempt to compare the source configuration with
         the running configuration on the remote device.
     required: false
     default: line
@@ -112,9 +112,9 @@ options:
     choices: ['yes', 'no']
   config:
     description:
-      - The playbook designer can use the  C(config) argument to supply
+      - The playbook designer can use the C(config) argument to supply
         the base configuration to be used to validate necessary configuration
-        changes.  If you provide this argument, the module
+        changes.  If you specify this argument, the module
         does not download the running-config from the remote node.
     required: false
     default: null
@@ -184,10 +184,14 @@ saved:
   description: Returns whether the configuration is saved to the startup
                configuration or not.
   returned: When not check_mode.
-
   type: bool
   sample: True
 
+backup_path:
+  description: The full path to the backup file
+  returned: when backup is yes
+  type: string
+  sample: /playbooks/ansible/backup/dellos9_config.2016-07-16@22:28:34
 """
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.dellos9 import get_config, get_sublevel_config

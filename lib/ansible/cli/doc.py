@@ -12,9 +12,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
-# ansible-vault is a script that encrypts/decrypts YAML files. See
-# http://docs.ansible.com/playbooks_vault.html for more details.
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -98,14 +95,15 @@ class DocCLI(CLI):
         elif plugin_type == 'vars':
             loader = vars_loader
         elif plugin_type == 'inventory':
-            loader = PluginLoader('InventoryModule', 'ansible.plugins.inventory', 'inventory_plugins', 'inventory_plugins')
+            loader = PluginLoader('InventoryModule', 'ansible.plugins.inventory', C.DEFAULT_INVENTORY_PLUGIN_PATH, 'inventory_plugins')
         else:
             loader = module_loader
 
         # add to plugin path from command line
-        if self.options.module_path is not None:
-            for i in self.options.module_path.split(os.pathsep):
-                loader.add_directory(i)
+        if self.options.module_path:
+            for path in self.options.module_path:
+                if path:
+                    loader.add_directory(path)
 
         # save only top level paths for errors
         search_paths = DocCLI.print_paths(loader)

@@ -236,11 +236,7 @@ import ssl
 from httplib import HTTPSConnection
 from httplib import IncompleteRead
 
-try:
-    from urllib.parse import urlparse
-except ImportError:
-    from urlparse import urlparse
-
+from ansible.module_utils.six.moves.urllib.parse import urlparse
 
 try:
     import ovirtsdk4.types as otypes

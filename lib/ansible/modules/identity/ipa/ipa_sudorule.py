@@ -277,9 +277,22 @@ def ensure(module, client):
                                             client.sudorule_add_host_hostgroup,
                                             client.sudorule_remove_host_hostgroup) or changed
         if sudoopt is not None:
-            changed = client.modify_if_diff(name, ipa_sudorule.get('ipasudoopt', []), sudoopt,
-                                            client.sudorule_add_option_ipasudoopt,
-                                            client.sudorule_remove_option_ipasudoopt) or changed
+            # client.modify_if_diff does not work as each option must be removed/added by its own
+            ipa_list = ipa_sudorule.get('ipasudoopt', [])
+            module_list = sudoopt
+            diff = list(set(ipa_list) - set(module_list))
+            if len(diff) > 0:
+                changed = True
+                if not module.check_mode:
+                    for item in diff:
+                        client.sudorule_remove_option_ipasudoopt(name, item)
+            diff = list(set(module_list) - set(ipa_list))
+            if len(diff) > 0:
+                changed = True
+                if not module.check_mode:
+                    for item in diff:
+                        client.sudorule_add_option_ipasudoopt(name, item)
+
         if user is not None:
             changed = category_changed(module, client, 'usercategory', ipa_sudorule) or changed
             changed = client.modify_if_diff(name, ipa_sudorule.get('memberuser_user', []), user,

@@ -28,7 +28,7 @@ from ansible.errors import AnsibleConnectionFailure
 class TerminalModule(TerminalBase):
 
     terminal_stdout_re = [
-        re.compile(br'[\r\n]?[a-zA-Z]{1}[a-zA-Z0-9-_.]*[>|#|%](?:\s*)$'),
+        re.compile(br'[\r\n](?!\s*<)?[a-zA-Z_]{1}[a-zA-Z0-9-_.]*[>|#|%](?:\s*)$'),
         re.compile(br'[\r\n]?[a-zA-Z]{1}[a-zA-Z0-9-_.]*\(.+\)#(?:\s*)$')
     ]
 

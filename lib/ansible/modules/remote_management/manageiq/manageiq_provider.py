@@ -443,7 +443,7 @@ class ManageIQProvider(object):
                 # get role and authtype
                 role = endpoint.get('role') or provider_defaults.get(endpoint_key + '_role', 'default')
                 if role == 'default':
-                    authtype = provider_defaults.get('authtype', role)
+                    authtype = provider_defaults.get('authtype') or role
                 else:
                     authtype = role
 
@@ -461,7 +461,7 @@ class ManageIQProvider(object):
                         'authtype': authtype,
                         'userid': endpoint.get('userid'),
                         'password': endpoint.get('password'),
-                        'auth_key': endpoint.get('auth_key', default_auth_key),
+                        'auth_key': endpoint.get('auth_key') or default_auth_key,
                     }
                 })
 
@@ -548,14 +548,14 @@ def main():
     zone_id = None
     endpoints = []
     argument_spec = dict(
-        manageiq_connection=dict(required=True, type='dict',
-                                 options=manageiq_argument_spec()),
         state=dict(choices=['absent', 'present'], default='present'),
         name=dict(required=True),
         zone=dict(default='default'),
         provider_region=dict(),
         type=dict(choices=supported_providers().keys()),
     )
+    # add the manageiq connection arguments to the arguments
+    argument_spec.update(manageiq_argument_spec())
     # add the endpoint arguments to the arguments
     argument_spec.update(endpoint_list_spec())
 

@@ -139,9 +139,9 @@ requirements:
    - aptitude (before 2.4)
 author: "Matthew Williams (@mgwilliams)"
 notes:
-   - Three of the upgrade modes (C(full), C(safe) and its alias C(yes))
-     required C(aptitude) up to 2.3, since 2.4 C(apt-get) is used as a
-     fall-back.
+   - Three of the upgrade modes (C(full), C(safe) and its alias C(yes)) required C(aptitude) up to 2.3, since 2.4 C(apt-get) is used as a fall-back.
+   - apt starts newly installed services by default, this is what the underlying tooling does,
+     to avoid this you can set the ``RUNLEVEL`` environment variable to 1.
 '''
 
 EXAMPLES = '''
@@ -150,10 +150,13 @@ EXAMPLES = '''
     name: foo
     update_cache: yes
 
+- name: Install apache service but avoid starting it immediately
+  apt: name=apache2 state=present
+  environment:
+    RUNLEVLEL: 1
+
 - name: Remove "foo" package
-  apt:
-    name: foo
-    state: absent
+  apt: name=foo state=absent
 
 - name: Install the package "foo"
   apt:
@@ -222,6 +225,7 @@ EXAMPLES = '''
 - name: Remove dependencies that are no longer required
   apt:
     autoremove: yes
+
 '''
 
 RETURN = '''
@@ -722,7 +726,13 @@ def cleanup(m, purge=False, force=False, operation=None,
 
 def upgrade(m, mode="yes", force=False, default_release=None,
             use_apt_get=False,
-            dpkg_options=expand_dpkg_options(DPKG_OPTIONS)):
+            dpkg_options=expand_dpkg_options(DPKG_OPTIONS), autoremove=None):
+
+    if autoremove:
+        autoremove = '--auto-remove'
+    else:
+        autoremove = ''
+
     if m.check_mode:
         check_arg = '--simulate'
     else:
@@ -741,7 +751,7 @@ def upgrade(m, mode="yes", force=False, default_release=None,
     else:
         if use_apt_get:
             apt_cmd = APT_GET_CMD
-            upgrade_command = "upgrade --with-new-pkgs --autoremove"
+            upgrade_command = "upgrade --with-new-pkgs %s" % (autoremove)
         else:
             # aptitude safe-upgrade # mode=yes # default
             apt_cmd = APTITUDE_CMD
@@ -913,7 +923,7 @@ def main():
     use_apt_get = p['force_apt_get']
 
     if not use_apt_get and not APTITUDE_CMD and p.get('upgrade', None) in ['full', 'safe', 'yes']:
-        module.warn("Could not find aptitude. Using apt-get instead")
+        module.warn("Could not find aptitude. Using apt-get instead.")
         use_apt_get = True
 
     updated_cache = False
@@ -926,8 +936,10 @@ def main():
 
     # Deal with deprecated aliases
     if p['state'] == 'installed':
+        module.deprecate("State 'installed' is deprecated. Using state 'present' instead.", version="2.9")
         p['state'] = 'present'
     if p['state'] == 'removed':
+        module.deprecate("State 'removed' is deprecated. Using state 'absent' instead.", version="2.9")
         p['state'] = 'absent'
 
     # Get the cache object
@@ -975,7 +987,7 @@ def main():
         force_yes = p['force']
 
         if p['upgrade']:
-            upgrade(module, p['upgrade'], force_yes, p['default_release'], use_apt_get, dpkg_options)
+            upgrade(module, p['upgrade'], force_yes, p['default_release'], use_apt_get, dpkg_options, autoremove)
 
         if p['deb']:
             if p['state'] != 'present':
@@ -995,7 +1007,7 @@ def main():
         if latest and all_installed:
             if packages:
                 module.fail_json(msg='unable to install additional packages when ugrading all installed packages')
-            upgrade(module, 'yes', force_yes, p['default_release'], use_apt_get, dpkg_options)
+            upgrade(module, 'yes', force_yes, p['default_release'], use_apt_get, dpkg_options, autoremove)
 
         if packages:
             for package in packages:

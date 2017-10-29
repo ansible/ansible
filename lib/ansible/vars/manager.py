@@ -72,15 +72,19 @@ def preprocess_vars(a):
     return data
 
 
-def strip_internal_keys(dirty):
+def strip_internal_keys(dirty, exceptions=None):
     '''
     All keys stating with _ansible_ are internal, so create a copy of the 'dirty' dict
     and remove them from the clean one before returning it
     '''
+
+    if exceptions is None:
+        exceptions = ()
     clean = dirty.copy()
     for k in dirty.keys():
         if isinstance(k, string_types) and k.startswith('_ansible_'):
-            del clean[k]
+            if k not in exceptions:
+                del clean[k]
         elif isinstance(dirty[k], dict):
             clean[k] = strip_internal_keys(dirty[k])
     return clean
@@ -234,16 +238,26 @@ class VariableManager:
             for role in play.get_roles():
                 all_vars = combine_vars(all_vars, role.get_default_vars())
 
-        # if we have a task in this context, and that task has a role, make
-        # sure it sees its defaults above any other roles, as we previously
-        # (v1) made sure each task had a copy of its roles default vars
-        if task and task._role is not None and (play or task.action == 'include_role'):
-            all_vars = combine_vars(all_vars, task._role.get_default_vars(dep_chain=task.get_dep_chain()))
+        basedirs = []
+        if task:
+            # set basedirs
+            if C.PLAYBOOK_VARS_ROOT == 'all':  # should be default
+                basedirs = task.get_search_path()
+            elif C.PLAYBOOK_VARS_ROOT == 'top':  # only option pre 2.3
+                basedirs = [self._loader.get_basedir()]
+            elif C.PLAYBOOK_VARS_ROOT in ('bottom', 'playbook_dir'):  # only option in 2.4.0
+                basedirs = [task.get_search_path()[0]]
+            else:
+                raise AnsibleError('Unkown playbook vars logic: %s' % C.PLAYBOOK_VARS_ROOT)
+
+            # if we have a task in this context, and that task has a role, make
+            # sure it sees its defaults above any other roles, as we previously
+            # (v1) made sure each task had a copy of its roles default vars
+            if task._role is not None and (play or task.action == 'include_role'):
+                all_vars = combine_vars(all_vars, task._role.get_default_vars(dep_chain=task.get_dep_chain()))
 
         if host:
-            # INIT WORK (use unsafe as we are going to copy/merge vars, no need to x2 copy)
-            # basedir, THE 'all' group and the rest of groups for a host, used below
-            basedir = self._loader.get_basedir()
+            # THE 'all' group and the rest of groups for a host, used below
             all_group = self._inventory.groups.get('all')
             host_groups = sort_groups([g for g in host.get_groups() if g.name not in ['all']])
 
@@ -283,7 +297,8 @@ class VariableManager:
                 ''' merges all entities adjacent to play '''
                 data = {}
                 for plugin in vars_loader.all():
-                    data = combine_vars(data, _get_plugin_vars(plugin, basedir, entities))
+                    for path in basedirs:
+                        data = combine_vars(data, _get_plugin_vars(plugin, path, entities))
                 return data
 
             # configurable functions that are sortable via config, rememer to add to _ALLOWED if expanding this list
@@ -319,7 +334,7 @@ class VariableManager:
                     data[group] = combine_vars(data[group], _plugins_play(group))
                 return data
 
-            # Merge as per precedence config
+            # Merge groups as per precedence config
             # only allow to call the functions we want exposed
             for entry in C.VARIABLE_PRECEDENCE:
                 if entry in self._ALLOWED:
@@ -345,53 +360,58 @@ class VariableManager:
         if play:
             all_vars = combine_vars(all_vars, play.get_vars())
 
-            for vars_file_item in play.get_vars_files():
-                # create a set of temporary vars here, which incorporate the extra
-                # and magic vars so we can properly template the vars_files entries
-                temp_vars = combine_vars(all_vars, self._extra_vars)
-                temp_vars = combine_vars(temp_vars, magic_variables)
-                templar = Templar(loader=self._loader, variables=temp_vars)
+            vars_files = play.get_vars_files()
+            try:
+                for vars_file_item in vars_files:
+                    # create a set of temporary vars here, which incorporate the extra
+                    # and magic vars so we can properly template the vars_files entries
+                    temp_vars = combine_vars(all_vars, self._extra_vars)
+                    temp_vars = combine_vars(temp_vars, magic_variables)
+                    templar = Templar(loader=self._loader, variables=temp_vars)
 
-                # we assume each item in the list is itself a list, as we
-                # support "conditional includes" for vars_files, which mimics
-                # the with_first_found mechanism.
-                vars_file_list = vars_file_item
-                if not isinstance(vars_file_list, list):
-                    vars_file_list = [vars_file_list]
+                    # we assume each item in the list is itself a list, as we
+                    # support "conditional includes" for vars_files, which mimics
+                    # the with_first_found mechanism.
+                    vars_file_list = vars_file_item
+                    if not isinstance(vars_file_list, list):
+                        vars_file_list = [vars_file_list]
 
-                # now we iterate through the (potential) files, and break out
-                # as soon as we read one from the list. If none are found, we
-                # raise an error, which is silently ignored at this point.
-                try:
-                    for vars_file in vars_file_list:
-                        vars_file = templar.template(vars_file)
-                        try:
-                            data = preprocess_vars(self._loader.load_from_file(vars_file, unsafe=True))
-                            if data is not None:
-                                for item in data:
-                                    all_vars = combine_vars(all_vars, item)
-                            break
-                        except AnsibleFileNotFound:
-                            # we continue on loader failures
+                    # now we iterate through the (potential) files, and break out
+                    # as soon as we read one from the list. If none are found, we
+                    # raise an error, which is silently ignored at this point.
+                    try:
+                        for vars_file in vars_file_list:
+                            vars_file = templar.template(vars_file)
+                            try:
+                                data = preprocess_vars(self._loader.load_from_file(vars_file, unsafe=True))
+                                if data is not None:
+                                    for item in data:
+                                        all_vars = combine_vars(all_vars, item)
+                                break
+                            except AnsibleFileNotFound:
+                                # we continue on loader failures
+                                continue
+                            except AnsibleParserError:
+                                raise
+                        else:
+                            # if include_delegate_to is set to False, we ignore the missing
+                            # vars file here because we're working on a delegated host
+                            if include_delegate_to:
+                                raise AnsibleFileNotFound("vars file %s was not found" % vars_file_item)
+                    except (UndefinedError, AnsibleUndefinedVariable):
+                        if host is not None and self._fact_cache.get(host.name, dict()).get('module_setup') and task is not None:
+                            raise AnsibleUndefinedVariable("an undefined variable was found when attempting to template the vars_files item '%s'"
+                                                           % vars_file_item, obj=vars_file_item)
+                        else:
+                            # we do not have a full context here, and the missing variable could be because of that
+                            # so just show a warning and continue
+                            display.vvv("skipping vars_file '%s' due to an undefined variable" % vars_file_item)
                             continue
-                        except AnsibleParserError:
-                            raise
-                    else:
-                        # if include_delegate_to is set to False, we ignore the missing
-                        # vars file here because we're working on a delegated host
-                        if include_delegate_to:
-                            raise AnsibleFileNotFound("vars file %s was not found" % vars_file_item)
-                except (UndefinedError, AnsibleUndefinedVariable):
-                    if host is not None and self._fact_cache.get(host.name, dict()).get('module_setup') and task is not None:
-                        raise AnsibleUndefinedVariable("an undefined variable was found when attempting to template the vars_files item '%s'" % vars_file_item,
-                                                       obj=vars_file_item)
-                    else:
-                        # we do not have a full context here, and the missing variable could be because of that
-                        # so just show a warning and continue
-                        display.vvv("skipping vars_file '%s' due to an undefined variable" % vars_file_item)
-                        continue
 
-                display.vvv("Read vars_file '%s'" % vars_file_item)
+                    display.vvv("Read vars_file '%s'" % vars_file_item)
+            except TypeError:
+                raise AnsibleParserError("Error while reading vars files - please supply a list of file names. "
+                                         "Got '%s' of type %s" % (vars_files, type(vars_files)))
 
             # By default, we now merge in all vars from all roles in the play,
             # unless the user has disabled this via a config option
@@ -502,18 +522,20 @@ class VariableManager:
         templar = Templar(loader=self._loader, variables=vars_copy)
 
         items = []
-        if task.loop is not None:
-            if task.loop in lookup_loader:
+        if task.loop_with is not None:
+            if task.loop_with in lookup_loader:
                 try:
-                    loop_terms = listify_lookup_plugin_terms(terms=task.loop_args, templar=templar,
+                    loop_terms = listify_lookup_plugin_terms(terms=task.loop, templar=templar,
                                                              loader=self._loader, fail_on_undefined=True, convert_bare=False)
-                    items = lookup_loader.get(task.loop, loader=self._loader, templar=templar).run(terms=loop_terms, variables=vars_copy)
+                    items = lookup_loader.get(task.loop_with, loader=self._loader, templar=templar).run(terms=loop_terms, variables=vars_copy)
                 except AnsibleUndefinedVariable:
                     # This task will be skipped later due to this, so we just setup
                     # a dummy array for the later code so it doesn't fail
                     items = [None]
             else:
-                raise AnsibleError("Unexpected failure in finding the lookup named '%s' in the available lookup plugins" % task.loop)
+                raise AnsibleError("Failed to find the lookup named '%s' in the available lookup plugins" % task.loop_with)
+        elif task.loop is not None:
+            items = templar.template(task.loop)
         else:
             items = [None]
 

@@ -43,6 +43,7 @@ class EnvironmentConfig(CommonConfig):
         self.docker_privileged = args.docker_privileged if 'docker_privileged' in args else False  # type: bool
         self.docker_util = docker_qualify_image(args.docker_util if 'docker_util' in args else '')  # type: str
         self.docker_pull = args.docker_pull if 'docker_pull' in args else False  # type: bool
+        self.docker_keep_git = args.docker_keep_git if 'docker_keep_git' in args else False  # type: bool
 
         self.tox_sitepackages = args.tox_sitepackages  # type: bool
 
@@ -53,7 +54,7 @@ class EnvironmentConfig(CommonConfig):
         self.requirements = args.requirements  # type: bool
 
         if self.python == 'default':
-            self.python = '.'.join(str(i) for i in sys.version_info[:2])
+            self.python = None
 
         self.python_version = self.python or '.'.join(str(i) for i in sys.version_info[:2])
 

@@ -79,11 +79,11 @@ def main():
         # Use only major and minor even if there are more these should be enough
         return int(version[0]), int(version[1])
 
-    def is_version_higher_than_18():
-        return MONIT_MAJOR_VERSION > 3 or MONIT_MAJOR_VERSION == 3 and MONIT_MINOR_VERSION > 18
+    def is_version_higher_than_5_18():
+        return (MONIT_MAJOR_VERSION, MONIT_MINOR_VERSION) > (5, 18)
 
     def parse(parts):
-        if is_version_higher_than_18():
+        if is_version_higher_than_5_18():
             return parse_current(parts)
         else:
             return parse_older_versions(parts)
@@ -138,7 +138,7 @@ def main():
 
     MONIT_MAJOR_VERSION, MONIT_MINOR_VERSION = monit_version()
 
-    SUMMARY_COMMAND = ('summary', 'summary -B')[is_version_higher_than_18()]
+    SUMMARY_COMMAND = ('summary', 'summary -B')[is_version_higher_than_5_18()]
 
     if state == 'reloaded':
         if module.check_mode:

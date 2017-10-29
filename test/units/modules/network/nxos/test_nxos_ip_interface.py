@@ -58,7 +58,6 @@ class TestNxosIPInterfaceModule(TestNxosModule):
         self.assertEqual(result['commands'],
                          ['interface eth2/1',
                           'no ip address 1.1.1.1/8',
-                          'interface eth2/1',
                           'ip address 1.1.1.2/8'])
 
     def test_nxos_ip_interface_ip_idempotent(self):

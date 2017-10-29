@@ -120,6 +120,7 @@ options:
             on personally controlled sites using self-signed certificates.  If the transport
             argument is not eapi, this value is ignored.
         choices: ['yes', 'no']
-
+notes:
+  - For more information on using Ansible to manage Arista EOS devices see U(https://www.ansible.com/ansible-arista-networks).
 
 """

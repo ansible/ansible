@@ -298,12 +298,14 @@ def get_pim_interface(module, interface):
         pim_interface['hello_interval'] = str(hello_interval_msec)
 
     border = get_data.get('is-border')
+    border = border.lower() if border else border
     if border == 'true':
         pim_interface['border'] = True
     elif border == 'false':
         pim_interface['border'] = False
 
     isauth = get_data.get('isauth-config')
+    isauth = isauth.lower() if isauth else isauth
     if isauth == 'true':
         pim_interface['isauth'] = True
     elif isauth == 'false':
