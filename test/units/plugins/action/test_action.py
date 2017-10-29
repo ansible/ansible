@@ -33,6 +33,7 @@ from ansible.module_utils._text import to_bytes
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.action import ActionBase
 from ansible.template import Templar
+from ansible.vars.clean import clean_facts
 
 from units.mock.loader import DictDataLoader
 
@@ -550,7 +551,7 @@ class TestActionBaseCleanReturnedData(unittest.TestCase):
                 'ansible_ssh_some_var': 'whatever',
                 'ansible_ssh_host_key_somehost': 'some key here',
                 'some_other_var': 'foo bar'}
-        action_base._clean_returned_data(data)
+        data = clean_facts(data)
         self.assertNotIn('ansible_playbook_python', data)
         self.assertNotIn('ansible_python_interpreter', data)
         self.assertIn('ansible_ssh_host_key_somehost', data)

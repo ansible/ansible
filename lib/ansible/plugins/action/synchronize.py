@@ -24,7 +24,6 @@ from ansible import constants as C
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text
 from ansible.module_utils.parsing.convert_bool import boolean
-from ansible.playbook.play_context import MAGIC_VARIABLE_MAPPING
 from ansible.plugins.action import ActionBase
 from ansible.plugins.loader import connection_loader
 
@@ -223,7 +222,7 @@ class ActionModule(ActionBase):
         localhost_ports = set()
         for host in C.LOCALHOST:
             localhost_vars = task_vars['hostvars'].get(host, {})
-            for port_var in MAGIC_VARIABLE_MAPPING['port']:
+            for port_var in C.MAGIC_VARIABLE_MAPPING['port']:
                 port = localhost_vars.get(port_var, None)
                 if port:
                     break
@@ -271,7 +270,7 @@ class ActionModule(ActionBase):
             localhost_shell = None
             for host in C.LOCALHOST:
                 localhost_vars = task_vars['hostvars'].get(host, {})
-                for shell_var in MAGIC_VARIABLE_MAPPING['shell']:
+                for shell_var in C.MAGIC_VARIABLE_MAPPING['shell']:
                     localhost_shell = localhost_vars.get(shell_var, None)
                     if localhost_shell:
                         break
@@ -285,7 +284,7 @@ class ActionModule(ActionBase):
             localhost_executable = None
             for host in C.LOCALHOST:
                 localhost_vars = task_vars['hostvars'].get(host, {})
-                for executable_var in MAGIC_VARIABLE_MAPPING['executable']:
+                for executable_var in C.MAGIC_VARIABLE_MAPPING['executable']:
                     localhost_executable = localhost_vars.get(executable_var, None)
                     if localhost_executable:
                         break
