@@ -149,32 +149,32 @@ def map_obj_to_commands(updates, module):
 
         if state == 'absent' and w in have:
             if dest == 'host':
-                commands.append('no logging host {}'.format(name))
+                commands.append('no logging host {0}'.format(name))
             elif dest:
-                commands.append('no logging {}'.format(dest))
+                commands.append('no logging {0}'.format(dest))
             else:
                 module.fail_json(msg='dest must be among console, monitor, buffered, host, on')
 
             if facility:
-                commands.append('no logging facility {}'.format(facility))
+                commands.append('no logging facility {0}'.format(facility))
 
         if state == 'present' and w not in have:
             if facility:
-                commands.append('logging facility {}'.format(facility))
+                commands.append('logging facility {0}'.format(facility))
 
             if dest == 'host':
-                commands.append('logging host {}'.format(name))
+                commands.append('logging host {0}'.format(name))
 
             elif dest == 'on':
                 commands.append('logging on')
 
             elif dest == 'buffered' and size:
-                commands.append('logging buffered {}'.format(size))
+                commands.append('logging buffered {0}'.format(size))
 
             else:
-                dest_cmd = 'logging {}'.format(dest)
+                dest_cmd = 'logging {0}'.format(dest)
                 if level:
-                    dest_cmd += ' {}'.format(level)
+                    dest_cmd += ' {0}'.format(level)
 
                 commands.append(dest_cmd)
     return commands
@@ -229,7 +229,7 @@ def parse_level(line, dest):
         level = 'debugging'
 
     else:
-        match = re.search(r'logging {} (\S+)'.format(dest), line, re.M)
+        match = re.search(r'logging {0} (\S+)'.format(dest), line, re.M)
         if match:
             if match.group(1) in level_group:
                 level = match.group(1)
