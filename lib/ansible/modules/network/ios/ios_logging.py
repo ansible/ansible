@@ -38,7 +38,7 @@ options:
   dest:
     description:
       - Destination of the logs.
-    choices: ['on', 'host', console', 'monitor', 'buffered']
+    choices: ['on', 'host', 'console', 'monitor', 'buffered']
   name:
     description:
       - If value of C(dest) is I(file) it indicates file-name,
