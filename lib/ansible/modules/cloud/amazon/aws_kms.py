@@ -181,7 +181,7 @@ def do_grant(kms, keyarn, role_arn, granttypes, mode='grant', dry_run=True, clea
                         statement['Principal']['AWS'] = valid_entries
                         had_invalid_entries = True
 
-                    if not role_arn not in statement['Principal']['AWS']:       # needs to be added.
+                    if role_arn not in statement['Principal']['AWS']:       # needs to be added.
                         changes_needed[granttype] = 'add'
                         statement['Principal']['AWS'].append(role_arn)
                 elif role_arn in statement['Principal']['AWS']:   # not one the places the role should be
