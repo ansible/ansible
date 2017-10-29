@@ -54,59 +54,6 @@ __all__ = ['PlayContext']
 # object. The dictionary values are tuples, to account for aliases
 # in variable names.
 
-MAGIC_VARIABLE_MAPPING = dict(
-
-    # base
-    connection=('ansible_connection', ),
-    module_compression=('ansible_module_compression', ),
-    shell=('ansible_shell_type', ),
-    executable=('ansible_shell_executable', ),
-    remote_tmp_dir=('ansible_remote_tmp', ),
-
-    # connection common
-    remote_addr=('ansible_ssh_host', 'ansible_host'),
-    remote_user=('ansible_ssh_user', 'ansible_user'),
-    password=('ansible_ssh_pass', 'ansible_password'),
-    port=('ansible_ssh_port', 'ansible_port'),
-    pipelining=('ansible_ssh_pipelining', 'ansible_pipelining'),
-    timeout=('ansible_ssh_timeout', 'ansible_timeout'),
-    private_key_file=('ansible_ssh_private_key_file', 'ansible_private_key_file'),
-
-    # networking modules
-    network_os=('ansible_network_os', ),
-    connection_user=('ansible_connection_user',),
-
-    # ssh TODO: remove
-    ssh_executable=('ansible_ssh_executable', ),
-    ssh_common_args=('ansible_ssh_common_args', ),
-    sftp_extra_args=('ansible_sftp_extra_args', ),
-    scp_extra_args=('ansible_scp_extra_args', ),
-    ssh_extra_args=('ansible_ssh_extra_args', ),
-    ssh_transfer_method=('ansible_ssh_transfer_method', ),
-
-    # docker TODO: remove
-    docker_extra_args=('ansible_docker_extra_args', ),
-
-    # become
-    become=('ansible_become', ),
-    become_method=('ansible_become_method', ),
-    become_user=('ansible_become_user', ),
-    become_pass=('ansible_become_password', 'ansible_become_pass'),
-    become_exe=('ansible_become_exe', ),
-    become_flags=('ansible_become_flags', ),
-
-    # deprecated
-    sudo=('ansible_sudo', ),
-    sudo_user=('ansible_sudo_user', ),
-    sudo_pass=('ansible_sudo_password', 'ansible_sudo_pass'),
-    sudo_exe=('ansible_sudo_exe', ),
-    sudo_flags=('ansible_sudo_flags', ),
-    su=('ansible_su', ),
-    su_user=('ansible_su_user', ),
-    su_pass=('ansible_su_password', 'ansible_su_pass'),
-    su_exe=('ansible_su_exe', ),
-    su_flags=('ansible_su_flags', ),
-)
 
 # TODO: needs to be configurable
 b_SU_PROMPT_LOCALIZATIONS = [
@@ -382,7 +329,7 @@ class PlayContext(Base):
             delegated_vars = variables.get('ansible_delegated_vars', dict()).get(delegated_host_name, dict())
 
             delegated_transport = C.DEFAULT_TRANSPORT
-            for transport_var in MAGIC_VARIABLE_MAPPING.get('connection'):
+            for transport_var in C.MAGIC_VARIABLE_MAPPING.get('connection'):
                 if transport_var in delegated_vars:
                     delegated_transport = delegated_vars[transport_var]
                     break
@@ -391,7 +338,7 @@ class PlayContext(Base):
             # address, otherwise we default to connecting to it by name. This
             # may happen when users put an IP entry into their inventory, or if
             # they rely on DNS for a non-inventory hostname
-            for address_var in ('ansible_%s_host' % transport_var,) + MAGIC_VARIABLE_MAPPING.get('remote_addr'):
+            for address_var in ('ansible_%s_host' % transport_var,) + C.MAGIC_VARIABLE_MAPPING.get('remote_addr'):
                 if address_var in delegated_vars:
                     break
             else:
@@ -400,7 +347,7 @@ class PlayContext(Base):
 
             # reset the port back to the default if none was specified, to prevent
             # the delegated host from inheriting the original host's setting
-            for port_var in ('ansible_%s_port' % transport_var,) + MAGIC_VARIABLE_MAPPING.get('port'):
+            for port_var in ('ansible_%s_port' % transport_var,) + C.MAGIC_VARIABLE_MAPPING.get('port'):
                 if port_var in delegated_vars:
                     break
             else:
@@ -410,7 +357,7 @@ class PlayContext(Base):
                     delegated_vars['ansible_port'] = C.DEFAULT_REMOTE_PORT
 
             # and likewise for the remote user
-            for user_var in ('ansible_%s_user' % transport_var,) + MAGIC_VARIABLE_MAPPING.get('remote_user'):
+            for user_var in ('ansible_%s_user' % transport_var,) + C.MAGIC_VARIABLE_MAPPING.get('remote_user'):
                 if user_var in delegated_vars and delegated_vars[user_var]:
                     break
             else:
@@ -419,12 +366,12 @@ class PlayContext(Base):
             delegated_vars = dict()
 
             # setup shell
-            for exe_var in MAGIC_VARIABLE_MAPPING.get('executable'):
+            for exe_var in C.MAGIC_VARIABLE_MAPPING.get('executable'):
                 if exe_var in variables:
                     setattr(new_info, 'executable', variables.get(exe_var))
 
         attrs_considered = []
-        for (attr, variable_names) in iteritems(MAGIC_VARIABLE_MAPPING):
+        for (attr, variable_names) in iteritems(C.MAGIC_VARIABLE_MAPPING):
             for variable_name in variable_names:
                 if attr in attrs_considered:
                     continue
@@ -447,17 +394,17 @@ class PlayContext(Base):
 
         # become legacy updates -- from inventory file (inventory overrides
         # commandline)
-        for become_pass_name in MAGIC_VARIABLE_MAPPING.get('become_pass'):
+        for become_pass_name in C.MAGIC_VARIABLE_MAPPING.get('become_pass'):
             if become_pass_name in variables:
                 break
         else:  # This is a for-else
             if new_info.become_method == 'sudo':
-                for sudo_pass_name in MAGIC_VARIABLE_MAPPING.get('sudo_pass'):
+                for sudo_pass_name in C.MAGIC_VARIABLE_MAPPING.get('sudo_pass'):
                     if sudo_pass_name in variables:
                         setattr(new_info, 'become_pass', variables[sudo_pass_name])
                         break
             elif new_info.become_method == 'su':
-                for su_pass_name in MAGIC_VARIABLE_MAPPING.get('su_pass'):
+                for su_pass_name in C.MAGIC_VARIABLE_MAPPING.get('su_pass'):
                     if su_pass_name in variables:
                         setattr(new_info, 'become_pass', variables[su_pass_name])
                         break
@@ -471,7 +418,7 @@ class PlayContext(Base):
             # in the event that we were using local before make sure to reset the
             # connection type to the default transport for the delegated-to host,
             # if not otherwise specified
-            for connection_type in MAGIC_VARIABLE_MAPPING.get('connection'):
+            for connection_type in C.MAGIC_VARIABLE_MAPPING.get('connection'):
                 if connection_type in delegated_vars:
                     break
             else:
@@ -636,7 +583,7 @@ class PlayContext(Base):
         In case users need to access from the play, this is a legacy from runner.
         '''
 
-        for prop, var_list in MAGIC_VARIABLE_MAPPING.items():
+        for prop, var_list in C.MAGIC_VARIABLE_MAPPING.items():
             try:
                 if 'become' in prop:
                     continue
