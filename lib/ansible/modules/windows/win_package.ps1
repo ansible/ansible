@@ -370,7 +370,7 @@ if ($state -eq "absent") {
                     if ($log_content -ne $null) {
                         $result.log = $log_content
                     }
-                    Fail-Json -obj $result -message "unexpected rc from uninstall $uninstall_exe $($uninstall_arguments): see exit_code, stdout and stderr for more details"
+                    Fail-Json -obj $result -message "unexpected rc from uninstall $uninstall_exe $($uninstall_arguments): see rc, stdout and stderr for more details"
                 } else {
                     $result.failed = $false
                 }
@@ -453,7 +453,7 @@ if ($state -eq "absent") {
                     if ($log_content -ne $null) {
                         $result.log = $log_content
                     }
-                    Fail-Json -obj $result -message "unexpected rc from install $install_exe $($install_arguments): see exit_code, stdout and stderr for more details"
+                    Fail-Json -obj $result -message "unexpected rc from install $install_exe $($install_arguments): see rc, stdout and stderr for more details"
                 } else {
                     $result.failed = $false
                 }
