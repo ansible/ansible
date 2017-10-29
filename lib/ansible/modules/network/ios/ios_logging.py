@@ -48,6 +48,7 @@ options:
     description:
       - Size of buffer. The acceptable value is in range from 4096 to
         4294967295 bytes.
+    default: 4096
   facility:
     description:
       - Set logging facility.
