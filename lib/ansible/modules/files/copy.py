@@ -55,7 +55,7 @@ options:
         if the destination does not exist.
     type: bool
     default: 'yes'
-    aliases: [ "thirsty" ]
+    aliases: [ thirsty ]
     version_added: "1.1"
   directory_mode:
     description:
@@ -88,8 +88,8 @@ extends_documentation_fragment:
     - validate
     - decrypt
 author:
-    - "Ansible Core Team"
-    - "Michael DeHaan"
+    - Ansible Core Team
+    - Michael DeHaan
 notes:
    - The M(copy) module recursively copy facility does not scale to lots (>hundreds) of files.
      For alternative, see M(synchronize) module, which is a wrapper around C(rsync).
@@ -252,7 +252,7 @@ def adjust_recursive_directory_permissions(pre_existing_dir, new_directory_list,
     Walk the new directories list and make sure that permissions are as we would expect
     '''
 
-    if len(new_directory_list) > 0:
+    if new_directory_list:
         working_dir = os.path.join(pre_existing_dir, new_directory_list.pop(0))
         directory_args['path'] = working_dir
         changed = module.set_fs_attributes_if_different(directory_args, changed)
