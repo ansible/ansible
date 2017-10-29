@@ -18,7 +18,22 @@ This document is part of a collection on porting. The complete list of porting g
 Python version
 ==============
 
-Ansible will not support Python 2.4 nor 2.5 on the target hosts anymore. Going forward, Python 2.6+ will be required on targets, as already is the case on the controller.
+Ansible will not support Python 2.4 or 2.5 on the target hosts anymore. Going forward, Python 2.6+ will be required on targets, as already is the case on the controller.
+
+
+Inventory
+=========
+
+Inventory has been refactored to be implemented via plugins and now allows for multiple sources. This change is mostly transparent to users.
+
+One exception is the ``inventory_dir``, which is now a host variable; previously it could only have one value so it was set globally.
+This means you can no longer use it early in plays to determine ``hosts:`` or similar keywords.
+This also changes the behaviour of ``add_hosts`` and the implicit localhost; 
+because they no longer automatically inherit the global value, they default to ``None``. See the module documentation for more information.
+
+The ``inventory_file`` remains unchanged, as it was always host specific.
+
+A bug was fixed with the inventory path/directory, which was defaulting to the current working directory. This caused ``group_vars`` and ``host_vars`` to be picked up from the current working directory instead of just adjacent to the playbook or inventory directory when a host list (comma separated host names) was provided as inventory.
 
 Deprecated
 ==========
@@ -28,7 +43,7 @@ Specifying Inventory sources
 
 Use of ``--inventory-file`` on the command line is now deprecated. Use ``--inventory`` or ``-i``.
 The associated ini configuration key, ``hostfile``, and environment variable, :envvar:`ANSIBLE_HOSTS`,
-are also deprecated.  Replace them with the configuration key ``inventory`` and environment variable :envvar:        `ANSIBLE_INVENTORY`.
+are also deprecated.  Replace them with the configuration key ``inventory`` and environment variable :envvar:`ANSIBLE_INVENTORY`.
 
 Use of multiple tags
 --------------------
@@ -87,7 +102,10 @@ There have been many changes to the implementation of vars plugins, but both use
 
 The most notable difference to users is that vars plugins now get invoked on demand instead of at inventory build time.  This should make them more efficient for large inventories, especially when using a subset of the hosts.
 
-.. note:: This also creates a difference with group/host_vars when using them adjacent to playbooks. Before, the 'first' playbook loaded determined the variables; now the 'current' playbook does. We are looking to fix this soon, since 'all playbooks' in the path should be considered for variable loading.
+
+.. note::
+  - This also creates a difference with group/host_vars when using them adjacent to playbooks. Before, the 'first' playbook loaded determined the variables; now the 'current' playbook does. We are looking to fix this soon, since 'all playbooks' in the path should be considered for variable loading.
+  - In 2.4.1 we added a toggle to allow you to control this behaviour, 'top' will be the pre 2.4, 'bottom' will use the current playbook hosting the task and 'all' will use them all from top to bottom.
 
 
 Inventory plugins

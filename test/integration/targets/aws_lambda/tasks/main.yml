@@ -42,7 +42,7 @@
       assert:
         that:
            - 'result.failed'
-           - 'result.msg.startswith("state is present but the following are missing: handler")'
+           - 'result.msg.startswith("state is present but all of the following are missing: handler")'
 
     # ============================================================
     - name: test with all module required variables but no region

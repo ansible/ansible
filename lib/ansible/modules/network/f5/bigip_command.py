@@ -1,22 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright 2016 F5 Networks Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 F5 Networks Inc.
+# GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -78,6 +64,17 @@ options:
         conditional, the interval indicates how to long to wait before
         trying the command again.
     default: 1
+  transport:
+    description:
+      - Configures the transport connection to use when connecting to the
+        remote device. The transport argument supports connectivity to the
+        device over cli (ssh) or rest.
+    required: true
+    choices:
+        - rest
+        - cli
+    default: rest
+    version_added: "2.5"
 notes:
   - Requires the f5-sdk Python package on the host. This is as easy as pip
     install f5-sdk.
@@ -172,6 +169,7 @@ from ansible.module_utils.f5_utils import AnsibleF5Parameters
 from ansible.module_utils.f5_utils import HAS_F5SDK
 from ansible.module_utils.f5_utils import F5ModuleError
 from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+from ansible.module_utils.f5_utils import run_commands
 from ansible.module_utils.netcli import FailedConditionsError
 from ansible.module_utils.six import string_types
 from ansible.module_utils.netcli import Conditional
@@ -193,10 +191,11 @@ class Parameters(AnsibleF5Parameters):
     @property
     def commands(self):
         commands = deque(self._values['commands'])
-        commands.appendleft(
-            'tmsh modify cli preference pager disabled'
-        )
-        commands = map(self._ensure_tmsh_prefix, list(commands))
+        if self._values['transport'] != 'cli':
+            commands.appendleft(
+                'tmsh modify cli preference pager disabled'
+            )
+            commands = map(self._ensure_tmsh_prefix, list(commands))
         return list(commands)
 
     def _ensure_tmsh_prefix(self, cmd):
@@ -222,9 +221,11 @@ class ModuleManager(object):
 
     def _is_valid_mode(self, cmd):
         valid_configs = [
-            'tmsh list', 'tmsh show',
-            'tmsh modify cli preference pager disabled'
+            'list', 'show',
+            'modify cli preference pager disabled'
         ]
+        if self.client.module.params['transport'] != 'cli':
+            valid_configs = list(map(self.want._ensure_tmsh_prefix, valid_configs))
         if any(cmd.startswith(x) for x in valid_configs):
             return True
         return False
@@ -255,12 +256,16 @@ class ModuleManager(object):
             return
 
         while retries > 0:
-            responses = self.execute_on_device(commands)
+            if self.client.module.params['transport'] == 'cli':
+                responses = run_commands(self.client.module, self.want.commands)
+            else:
+                responses = self.execute_on_device(commands)
 
             for item in list(conditionals):
                 if item(responses):
                     if self.want.match == 'any':
-                        return item
+                        conditionals = list()
+                        break
                     conditionals.remove(item)
 
             if not conditionals:
@@ -294,7 +299,7 @@ class ModuleManager(object):
         commands = transform(commands)
 
         for index, item in enumerate(commands):
-            if not self._is_valid_mode(item['command']):
+            if not self._is_valid_mode(item['command']) and self.client.module.params['transport'] != 'cli':
                 warnings.append(
                     'Using "write" commands is not idempotent. You should use '
                     'a module that is specifically made for that. If such a '
@@ -343,15 +348,17 @@ class ArgumentSpec(object):
             interval=dict(
                 default=1,
                 type='int'
+            ),
+            transport=dict(
+                type='str',
+                default='rest',
+                choices=['cli', 'rest']
             )
         )
         self.f5_product_name = 'bigip'
 
 
 def main():
-    if not HAS_F5SDK:
-        raise F5ModuleError("The python f5-sdk module is required")
-
     spec = ArgumentSpec()
 
     client = AnsibleF5Client(
@@ -359,6 +366,9 @@ def main():
         supports_check_mode=spec.supports_check_mode,
         f5_product_name=spec.f5_product_name
     )
+
+    if client.module.params['transport'] != 'cli' and not HAS_F5SDK:
+        raise F5ModuleError("The python f5-sdk module is required to use the rest api")
 
     try:
         mm = ModuleManager(client)

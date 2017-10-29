@@ -19,12 +19,13 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from collections import MutableMapping
 import hashlib
 import os
 import re
 import string
 
-from ansible.errors import AnsibleError, AnsibleOptionsError
+from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import string_types
@@ -44,11 +45,11 @@ class BaseInventoryPlugin(object):
 
     TYPE = 'generator'
 
-    def __init__(self, cache=None):
+    def __init__(self):
 
         self.inventory = None
         self.display = display
-        self.cache = cache
+        self._cache = {}
 
     def parse(self, inventory, loader, path, cache=True):
         ''' Populates self.groups from the given data. Raises an error on any parse failure.  '''
@@ -80,6 +81,9 @@ class BaseInventoryPlugin(object):
         pass
 
     def populate_host_vars(self, hosts, variables, group=None, port=None):
+        if not isinstance(variables, MutableMapping):
+            raise AnsibleParserError("Invalid data from file, expected dictionary and got:\n\n%s" % to_native(variables))
+
         for host in hosts:
             self.inventory.add_host(host, group=group, port=port)
             for k in variables:
@@ -138,10 +142,13 @@ class BaseInventoryPlugin(object):
                             continue
                         if isinstance(groups, string_types):
                             groups = [groups]
-                        for group_name in groups:
-                            if group_name not in self.inventory.groups:
-                                self.inventory.add_group(group_name)
+                        if isinstance(groups, list):
+                            for group_name in groups:
+                                if group_name not in self.inventory.groups:
+                                    self.inventory.add_group(group_name)
                                 self.inventory.add_child(group_name, host)
+                        else:
+                            raise AnsibleOptionsError("Invalid group name format, expected string or list of strings, got: %s" % type(groups))
                     else:
                         raise AnsibleOptionsError("No key supplied, invalid entry")
                 else:
@@ -153,10 +160,9 @@ class BaseFileInventoryPlugin(BaseInventoryPlugin):
 
     TYPE = 'storage'
 
-    def __init__(self, cache=None):
+    def __init__(self):
 
-        # file based inventories are always local so no need for cache
-        super(BaseFileInventoryPlugin, self).__init__(cache=None)
+        super(BaseFileInventoryPlugin, self).__init__()
 
 
 # Helper methods

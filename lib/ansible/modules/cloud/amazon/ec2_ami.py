@@ -42,7 +42,7 @@ options:
     description:
       - The target architecture of the image to register
     required: false
-    default: null
+    default: x86_64
   kernel_id:
     version_added: "2.3"
     description:
@@ -54,7 +54,7 @@ options:
     description:
       - The virtualization type of the image to register
     required: false
-    default: null
+    default: hvm
   root_device_name:
     version_added: "2.3"
     description:
@@ -70,7 +70,7 @@ options:
   wait_timeout:
     description:
       - How long before wait gives up, in seconds.
-    default: 300
+    default: 900
   state:
     description:
       - Create or deregister/delete AMI.
@@ -136,33 +136,25 @@ extends_documentation_fragment:
 # Thank you to iAcquire for sponsoring development of this module.
 
 EXAMPLES = '''
+# Note: These examples do not set authentication details, see the AWS Guide for details.
+
 # Basic AMI Creation
 - ec2_ami:
-    aws_access_key: xxxxxxxxxxxxxxxxxxxxxxx
-    aws_secret_key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
     instance_id: i-xxxxxx
     wait: yes
     name: newtest
     tags:
       Name: newtest
       Service: TestService
-  register: image
 
 # Basic AMI Creation, without waiting
 - ec2_ami:
-    aws_access_key: xxxxxxxxxxxxxxxxxxxxxxx
-    aws_secret_key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-    region: xxxxxx
     instance_id: i-xxxxxx
     wait: no
     name: newtest
-  register: image
 
 # AMI Registration from EBS Snapshot
 - ec2_ami:
-    aws_access_key: xxxxxxxxxxxxxxxxxxxxxxx
-    aws_secret_key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-    region: xxxxxx
     name: newtest
     state: present
     architecture: x86_64
@@ -174,12 +166,9 @@ EXAMPLES = '''
         snapshot_id: snap-xxxxxxxx
         delete_on_termination: true
         volume_type: gp2
-  register: image
 
 # AMI Creation, with a custom root-device size and another EBS attached
 - ec2_ami:
-    aws_access_key: xxxxxxxxxxxxxxxxxxxxxxx
-    aws_secret_key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
     instance_id: i-xxxxxx
     name: newtest
     device_mapping:
@@ -191,12 +180,9 @@ EXAMPLES = '''
           size: YYY
           delete_on_termination: false
           volume_type: gp2
-  register: image
 
 # AMI Creation, excluding a volume attached at /dev/sdb
 - ec2_ami:
-    aws_access_key: xxxxxxxxxxxxxxxxxxxxxxx
-    aws_secret_key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
     instance_id: i-xxxxxx
     name: newtest
     device_mapping:
@@ -206,31 +192,21 @@ EXAMPLES = '''
           volume_type: gp2
         - device_name: /dev/sdb
           no_device: yes
-  register: image
 
 # Deregister/Delete AMI (keep associated snapshots)
 - ec2_ami:
-    aws_access_key: xxxxxxxxxxxxxxxxxxxxxxx
-    aws_secret_key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-    region: xxxxxx
     image_id: "{{ instance.image_id }}"
     delete_snapshot: False
     state: absent
 
 # Deregister AMI (delete associated snapshots too)
 - ec2_ami:
-    aws_access_key: xxxxxxxxxxxxxxxxxxxxxxx
-    aws_secret_key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-    region: xxxxxx
     image_id: "{{ instance.image_id }}"
     delete_snapshot: True
     state: absent
 
 # Update AMI Launch Permissions, making it public
 - ec2_ami:
-    aws_access_key: xxxxxxxxxxxxxxxxxxxxxxx
-    aws_secret_key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-    region: xxxxxx
     image_id: "{{ instance.image_id }}"
     state: present
     launch_permissions:
@@ -238,9 +214,6 @@ EXAMPLES = '''
 
 # Allow AMI to be launched by another account
 - ec2_ami:
-    aws_access_key: xxxxxxxxxxxxxxxxxxxxxxx
-    aws_secret_key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-    region: xxxxxx
     image_id: "{{ instance.image_id }}"
     state: present
     launch_permissions:
@@ -616,7 +589,11 @@ def main():
             launch_permissions=dict(type='dict')
         )
     )
-    module = AnsibleModule(argument_spec=argument_spec)
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        required_if=[('state', 'present', ('name',)),
+                     ('state', 'absent', ('image_id',))]
+    )
 
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
@@ -627,9 +604,6 @@ def main():
         module.fail_json(msg="Error while connecting to aws: %s" % str(e))
 
     if module.params.get('state') == 'absent':
-        if not module.params.get('image_id'):
-            module.fail_json(msg='image_id needs to be an ami image to registered/delete')
-
         deregister_image(module, ec2)
 
     elif module.params.get('state') == 'present':
@@ -640,8 +614,6 @@ def main():
         # Changed is always set to true when provisioning new AMI
         if not module.params.get('instance_id') and not module.params.get('device_mapping'):
             module.fail_json(msg='instance_id or device_mapping (register from ebs snapshot) parameter is required for new image')
-        if not module.params.get('name'):
-            module.fail_json(msg='name parameter is required for new image')
         create_image(module, ec2)
 
 

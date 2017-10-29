@@ -117,24 +117,24 @@ As the examples show, you don't need to use `{{ }}` to use variables inside cond
 
 Loops and Conditionals
 ``````````````````````
-Combining `when` with `with_items` (see :doc:`playbooks_loops`), be aware that the `when` statement is processed separately for each item. This is by design::
+Combining `when` with loops (see :doc:`playbooks_loops`), be aware that the `when` statement is processed separately for each item. This is by design::
 
     tasks:
         - command: echo {{ item }}
-          with_items: [ 0, 2, 4, 6, 8, 10 ]
+          loop: [ 0, 2, 4, 6, 8, 10 ]
           when: item > 5
 
 If you need to skip the whole task depending on the loop variable being defined, used the `|default` filter to provide an empty iterator::
 
         - command: echo {{ item }}
-          with_items: "{{ mylist|default([]) }}"
+          loop: "{{ mylist|default([]) }}"
           when: item > 5
 
 
-If using `with_dict` which does not take a list::
+If using a dict in a loop::
 
         - command: echo {{ item.key }}
-          with_dict: "{{ mydict|default({}) }}"
+          loop: "{{ lookup('dict', mydict|default({})) }}"
           when: item.value > 5
 
 .. _loading_in_custom_facts:
@@ -259,13 +259,12 @@ The following example shows how to template out a configuration file that was ve
 
     - name: template a file
       template: src={{ item }} dest=/etc/myapp/foo.conf
-      with_first_found:
-        - files:
-           - {{ ansible_distribution }}.conf
-           - default.conf
-          paths:
-           - search_location_one/somedir/
-           - /opt/other_location/somedir/
+      loop: "{{lookup('first_found', { 'files': myfiles, 'paths': mypaths})}}"
+      vars:
+        myfiles:
+          - "{{ansible_distribution}}.conf"
+          -  default.conf
+        mypaths: ['search_location_one/somedir/', '/opt/other_location/somedir/']
 
 Register Variables
 ``````````````````
@@ -288,14 +287,13 @@ The 'register' keyword decides what variable to save a result in.  The resulting
             when: motd_contents.stdout.find('hi') != -1
 
 As shown previously, the registered variable's string contents are accessible with the 'stdout' value.
-The registered result can be used in the "with_items" of a task if it is converted into
+The registered result can be used in the loop of a task if it is converted into
 a list (or already is a list) as shown below.  "stdout_lines" is already available on the object as
 well though you could also call "home_dirs.stdout.split()" if you wanted, and could split by other
 fields::
 
-    - name: registered variable usage as a with_items list
+    - name: registered variable usage as a loop list
       hosts: all
-
       tasks:
 
           - name: retrieve the list of home directories
@@ -304,8 +302,8 @@ fields::
 
           - name: add home dirs to the backup spooler
             file: path=/mnt/bkspool/{{ item }} src=/home/{{ item }} state=link
-            with_items: "{{ home_dirs.stdout_lines }}"
-            # same as with_items: "{{ home_dirs.stdout.split() }}"
+            loop: "{{ home_dirs.stdout_lines }}"
+            # same as loop: "{{ home_dirs.stdout.split() }}"
 
 As shown previously, the registered variable's string contents are accessible with the 'stdout' value.
 You may check the registered variable's string contents for emptiness::

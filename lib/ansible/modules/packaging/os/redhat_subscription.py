@@ -81,11 +81,15 @@ options:
         required: False
         default: Current value from C(/etc/rhsm/rhsm.conf) is the default
         version_added: "2.4"
-    autosubscribe:
+    auto_attach:
         description:
             - Upon successful registration, auto-consume available subscriptions
+            - Added in favor of depracated autosubscribe in 2.5.
         required: False
         default: False
+        type: bool
+        version_added: "2.5"
+        aliases: [autosubscribe]
     activationkey:
         description:
             - supply an activation key for use with registration
@@ -156,7 +160,7 @@ EXAMPLES = '''
     state: present
     username: joe_user
     password: somepass
-    autosubscribe: true
+    auto_attach: true
 
 - name: Same as above but subscribe to a specific pool by ID.
   redhat_subscription:
@@ -210,7 +214,7 @@ EXAMPLES = '''
     username: joe_user
     password: somepass
     environment: Library
-    autosubscribe: yes
+    auto_attach: true
 '''
 
 RETURN = '''
@@ -357,7 +361,7 @@ class Rhsm(RegistrationBase):
         else:
             return False
 
-    def register(self, username, password, autosubscribe, activationkey, org_id,
+    def register(self, username, password, auto_attach, activationkey, org_id,
                  consumer_type, consumer_name, consumer_id, force_register, environment,
                  rhsm_baseurl, server_insecure, server_hostname, server_proxy_hostname,
                  server_proxy_port, server_proxy_user, server_proxy_password):
@@ -381,12 +385,14 @@ class Rhsm(RegistrationBase):
         if server_hostname:
             args.extend(['--serverurl', server_hostname])
 
+        if org_id:
+            args.extend(['--org', org_id])
+
         if activationkey:
             args.extend(['--activationkey', activationkey])
-            args.extend(['--org', org_id])
         else:
-            if autosubscribe:
-                args.append('--autosubscribe')
+            if auto_attach:
+                args.append('--auto-attach')
             if username:
                 args.extend(['--username', username])
             if password:
@@ -669,8 +675,7 @@ def main():
                                  required=False),
             rhsm_baseurl=dict(default=rhsm.config.get_option('rhsm.baseurl'),
                               required=False),
-            autosubscribe=dict(default=False,
-                               type='bool'),
+            auto_attach=dict(aliases=['autosubscribe'], default=False, type='bool'),
             activationkey=dict(default=None,
                                required=False),
             org_id=dict(default=None,
@@ -701,9 +706,17 @@ def main():
                                        required=False,
                                        no_log=True),
         ),
-        required_together=[['username', 'password'], ['activationkey', 'org_id'],
-                           ['server_proxy_hostname', 'server_proxy_port'], ['server_proxy_user', 'server_proxy_password']],
-        mutually_exclusive=[['username', 'activationkey'], ['pool', 'pool_ids']],
+        required_together=[['username', 'password'],
+                           ['server_proxy_hostname', 'server_proxy_port'],
+                           ['server_proxy_user', 'server_proxy_password']],
+
+        mutually_exclusive=[['activationkey', 'username'],
+                            ['activationkey', 'consumer_id'],
+                            ['activationkey', 'environment'],
+                            ['activationkey', 'autosubscribe'],
+                            ['force', 'consumer_id'],
+                            ['pool', 'pool_ids']],
+
         required_if=[['state', 'present', ['username', 'activationkey'], True]],
     )
 
@@ -714,9 +727,11 @@ def main():
     server_hostname = module.params['server_hostname']
     server_insecure = module.params['server_insecure']
     rhsm_baseurl = module.params['rhsm_baseurl']
-    autosubscribe = module.params['autosubscribe']
+    auto_attach = module.params['auto_attach']
     activationkey = module.params['activationkey']
     org_id = module.params['org_id']
+    if activationkey and not org_id:
+        module.fail_json(msg='org_id is required when using activationkey')
     environment = module.params['environment']
     pool = module.params['pool']
     pool_ids = {}
@@ -762,7 +777,7 @@ def main():
             try:
                 rhsm.enable()
                 rhsm.configure(**module.params)
-                rhsm.register(username, password, autosubscribe, activationkey, org_id,
+                rhsm.register(username, password, auto_attach, activationkey, org_id,
                               consumer_type, consumer_name, consumer_id, force_register,
                               environment, rhsm_baseurl, server_insecure, server_hostname,
                               server_proxy_hostname, server_proxy_port, server_proxy_user, server_proxy_password)

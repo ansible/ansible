@@ -100,28 +100,28 @@ EXAMPLES = r'''
     recurse: yes
 
 - name: Recursively find /tmp files older than 4 weeks and equal or greater than 1 megabyte
-- find:
+  find:
     paths: /tmp
     age: 4w
     size: 1m
     recurse: yes
 
 - name: Recursively find /var/tmp files with last access time greater than 3600 seconds
-- find:
+  find:
     paths: /var/tmp
     age: 3600
     age_stamp: atime
     recurse: yes
 
 - name: Find /var/log files equal or greater than 10 megabytes ending with .old or .log.gz
-- find:
+  find:
     paths: /var/log
     patterns: '*.old,*.log.gz'
     size: 10m
 
 # Note that YAML double quotes require escaping backslashes but yaml single quotes do not.
 - name: Find /var/log files equal or greater than 10 megabytes ending with .old or .log.gz via regex
-- find:
+  find:
     paths: /var/log
     patterns: "^.*?\\.(?:old|log\\.gz)$"
     size: 10m

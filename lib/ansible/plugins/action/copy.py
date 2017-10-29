@@ -186,6 +186,10 @@ def _walk_dirs(topdir, base_path=None, local_follow=False, trailing_slash_detect
 
 class ActionModule(ActionBase):
 
+    def _create_remote_file_args(self, module_args):
+        # remove action plugin only keys
+        return dict((k, v) for k, v in module_args.items() if k not in ('content', 'decrypt'))
+
     def _copy_file(self, source_full, source_rel, content, content_tempfile,
                    dest, task_vars, tmp, delete_remote_tmp):
         decrypt = boolean(self._task.args.get('decrypt', True), strict=False)
@@ -286,7 +290,7 @@ class ActionModule(ActionBase):
 
             # src and dest here come after original and override them
             # we pass dest only to make sure it includes trailing slash in case of recursive copy
-            new_module_args = self._task.args.copy()
+            new_module_args = self._create_remote_file_args(self._task.args)
             new_module_args.update(
                 dict(
                     src=tmp_src,
@@ -296,11 +300,6 @@ class ActionModule(ActionBase):
             )
             if lmode:
                 new_module_args['mode'] = lmode
-
-            # remove action plugin only keys
-            for key in ('content', 'decrypt'):
-                if key in new_module_args:
-                    del new_module_args[key]
 
             module_return = self._execute_module(module_name='copy',
                                                  module_args=new_module_args, task_vars=task_vars,
@@ -326,7 +325,7 @@ class ActionModule(ActionBase):
                     dest = dest_status_nofollow['lnk_source']
 
             # Build temporary module_args.
-            new_module_args = self._task.args.copy()
+            new_module_args = self._create_remote_file_args(self._task.args)
             new_module_args.update(
                 dict(
                     src=source_rel,
@@ -335,6 +334,7 @@ class ActionModule(ActionBase):
                     state='file',
                 )
             )
+
             if lmode:
                 new_module_args['mode'] = lmode
 
@@ -513,8 +513,7 @@ class ActionModule(ActionBase):
         for source_full, source_rel in source_files['files']:
             # copy files over.  This happens first as directories that have
             # a file do not need to be created later
-            module_return = self._copy_file(source_full, source_rel, content, content_tempfile,
-                                            dest, task_vars, tmp, delete_remote_tmp)
+            module_return = self._copy_file(source_full, source_rel, content, content_tempfile, dest, task_vars, tmp, delete_remote_tmp)
             if module_return is None:
                 continue
 

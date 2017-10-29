@@ -365,14 +365,13 @@ def main():
         lc_collate=dict(default=""),
         lc_ctype=dict(default=""),
         state=dict(default="present", choices=["absent", "present", "dump", "restore"]),
-        target=dict(default=""),
+        target=dict(default="", type="path"),
         target_opts=dict(default=""),
     ))
 
-
     module = AnsibleModule(
         argument_spec=argument_spec,
-        supports_check_mode = True
+        supports_check_mode=True
     )
 
     if not HAS_PSYCOPG2:
@@ -411,8 +410,6 @@ def main():
 
     if target == "":
         target = "{0}/{1}.sql".format(os.getcwd(), db)
-        target = os.path.expanduser(target)
-    else:
         target = os.path.expanduser(target)
 
     try:

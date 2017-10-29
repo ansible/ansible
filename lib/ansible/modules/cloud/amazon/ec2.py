@@ -25,7 +25,6 @@ module: ec2
 short_description: create, terminate, start or stop an instance in ec2
 description:
     - Creates or terminates ec2 instances.
-    - C(state=restarted) was added in 2.2
 version_added: "0.9"
 options:
   key_name:
@@ -235,7 +234,8 @@ options:
   state:
     version_added: "1.3"
     description:
-      - create or terminate instances
+      - create, terminate, start, stop or restart instances.
+        The state 'restarted' was added in 2.2
     required: false
     default: 'present'
     aliases: []
@@ -639,13 +639,18 @@ except ImportError:
 
 def find_running_instances_by_count_tag(module, ec2, vpc, count_tag, zone=None):
 
-    # get reservations for instances that match tag(s) and are running
-    reservations = get_reservations(module, ec2, vpc, tags=count_tag, state="running", zone=zone)
+    # get reservations for instances that match tag(s) and are in the desired state
+    state = module.params.get('state')
+    if state not in ['running', 'stopped']:
+        state = None
+    reservations = get_reservations(module, ec2, vpc, tags=count_tag, state=state, zone=zone)
 
     instances = []
     for res in reservations:
         if hasattr(res, 'instances'):
             for inst in res.instances:
+                if inst.state == 'terminated':
+                    continue
                 instances.append(inst)
 
     return reservations, instances
@@ -984,6 +989,8 @@ def enforce_count(module, ec2, vpc):
     # ensure all instances are dictionaries
     all_instances = []
     for inst in instances:
+        warn_if_public_ip_assignment_changed(module, inst)
+
         if not isinstance(inst, dict):
             inst = get_instance_info(inst)
         all_instances.append(inst)
@@ -1445,6 +1452,8 @@ def startstop_instances(module, ec2, instance_ids, state, instance_tags):
     for res in ec2.get_all_instances(instance_ids, filters=filters):
         for inst in res.instances:
 
+            warn_if_public_ip_assignment_changed(module, inst)
+
             # Check "source_dest_check" attribute
             try:
                 if inst.vpc_id is not None and inst.get_attribute('sourceDestCheck')['sourceDestCheck'] != source_dest_check:
@@ -1572,6 +1581,8 @@ def restart_instances(module, ec2, instance_ids, state, instance_tags):
     for res in ec2.get_all_instances(instance_ids, filters=filters):
         for inst in res.instances:
 
+            warn_if_public_ip_assignment_changed(module, inst)
+
             # Check "source_dest_check" attribute
             try:
                 if inst.vpc_id is not None and inst.get_attribute('sourceDestCheck')['sourceDestCheck'] != source_dest_check:
@@ -1605,6 +1616,17 @@ def restart_instances(module, ec2, instance_ids, state, instance_tags):
                 changed = True
 
     return (changed, instance_dict_array, instance_ids)
+
+
+def warn_if_public_ip_assignment_changed(module, instance):
+    # This is a non-modifiable attribute.
+    assign_public_ip = module.params.get('assign_public_ip')
+
+    # Check that public ip assignment is the same and warn if not
+    public_dns_name = getattr(instance, 'public_dns_name', None)
+    if (assign_public_ip or public_dns_name) and (not public_dns_name or not assign_public_ip):
+        module.warn("Unable to modify public ip assignment to {0} for instance {1}. "
+                    "Whether or not to assign a public IP is determined during instance creation.".format(assign_public_ip, instance.id))
 
 
 def main():

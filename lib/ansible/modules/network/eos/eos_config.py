@@ -184,8 +184,8 @@ options:
     version_added: "2.4"
   diff_against:
     description:
-      - When using the C(ansible-playbook --diff) command line argument the i
-        module can generate diffs against different sources.
+      - When using the C(ansible-playbook --diff) command line argument
+        the module can generate diffs against different sources.
       - When this option is configure as I(startup), the module will return
         the diff of the running-config against the startup-config.
       - When this option is configured as I(intended), the module will

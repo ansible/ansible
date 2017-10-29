@@ -1,32 +1,6 @@
-# This code is part of Ansible, but is an independent component.
-# This particular file snippet, and this file snippet only, is BSD licensed.
-# Modules you write using this snippet, which is embedded dynamically by Ansible
-# still belong to the author of the module, and may assign their own license
-# to the complete work.
-#
 # Copyright (c), Michael DeHaan <michael.dehaan@gmail.com>, 2012-2013
 # Copyright (c), Toshio Kuratomi <tkuratomi@ansible.com> 2016
-# All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without modification,
-# are permitted provided that the following conditions are met:
-#
-#    * Redistributions of source code must retain the above copyright
-#      notice, this list of conditions and the following disclaimer.
-#    * Redistributions in binary form must reproduce the above copyright notice,
-#      this list of conditions and the following disclaimer in the documentation
-#      and/or other materials provided with the distribution.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
-# USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
+# Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
 SIZE_RANGES = {
     'Y': 1 << 80,
@@ -800,6 +774,7 @@ class AnsibleModule(object):
         self._debug = False
         self._diff = False
         self._socket_path = None
+        self._shell = None
         self._verbosity = 0
         # May be used to set modifications to the environment for any
         # run_command invocation
@@ -810,7 +785,7 @@ class AnsibleModule(object):
         self.aliases = {}
         self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug', '_ansible_diff', '_ansible_verbosity',
                               '_ansible_selinux_special_fs', '_ansible_module_name', '_ansible_version', '_ansible_syslog_facility',
-                              '_ansible_socket']
+                              '_ansible_socket', '_ansible_shell_executable']
         self._options_context = list()
 
         if add_file_common_args:
@@ -1132,9 +1107,9 @@ class AnsibleModule(object):
                 return True
             try:
                 os.lchown(b_path, uid, -1)
-            except OSError:
+            except (IOError, OSError) as e:
                 path = to_text(b_path)
-                self.fail_json(path=path, msg='chown failed')
+                self.fail_json(path=path, msg='chown failed: %s' % (to_text(e)))
             changed = True
         return changed
 
@@ -1612,6 +1587,9 @@ class AnsibleModule(object):
             elif k == '_ansible_socket':
                 self._socket_path = v
 
+            elif k == '_ansible_shell_executable' and v:
+                self._shell = v
+
             elif check_invalid_arguments and k not in legal_inputs:
                 unsupported_parameters.add(k)
 
@@ -1620,10 +1598,10 @@ class AnsibleModule(object):
                 del self.params[k]
 
         if unsupported_parameters:
-            msg = "Unsupported parameters for (%s) module: %s" % (self._name, ','.join(sorted(list(unsupported_parameters))))
+            msg = "Unsupported parameters for (%s) module: %s" % (self._name, ', '.join(sorted(list(unsupported_parameters))))
             if self._options_context:
                 msg += " found in %s." % " -> ".join(self._options_context)
-            msg += " Supported parameters include: %s" % (','.join(sorted(spec.keys())))
+            msg += " Supported parameters include: %s" % (', '.join(sorted(spec.keys())))
             self.fail_json(msg=msg)
         if self.check_mode and not self.supports_check_mode:
             self.exit_json(skipped=True, msg="remote module (%s) does not support check mode" % self._name)
@@ -1643,7 +1621,7 @@ class AnsibleModule(object):
         for check in spec:
             count = self._count_terms(check, param)
             if count > 1:
-                msg = "parameters are mutually exclusive: %s" % (check,)
+                msg = "parameters are mutually exclusive: %s" % ', '.join(check)
                 if self._options_context:
                     msg += " found in %s" % " -> ".join(self._options_context)
                 self.fail_json(msg=msg)
@@ -1654,7 +1632,7 @@ class AnsibleModule(object):
         for check in spec:
             count = self._count_terms(check, param)
             if count == 0:
-                msg = "one of the following is required: %s" % ','.join(check)
+                msg = "one of the following is required: %s" % ', '.join(check)
                 if self._options_context:
                     msg += " found in %s" % " -> ".join(self._options_context)
                 self.fail_json(msg=msg)
@@ -1667,7 +1645,7 @@ class AnsibleModule(object):
             non_zero = [c for c in counts if c > 0]
             if len(non_zero) > 0:
                 if 0 in counts:
-                    msg = "parameters are required together: %s" % (check,)
+                    msg = "parameters are required together: %s" % ', '.join(check)
                     if self._options_context:
                         msg += " found in %s" % " -> ".join(self._options_context)
                     self.fail_json(msg=msg)
@@ -1684,7 +1662,7 @@ class AnsibleModule(object):
             if required and k not in param:
                 missing.append(k)
         if len(missing) > 0:
-            msg = "missing required arguments: %s" % ",".join(missing)
+            msg = "missing required arguments: %s" % ", ".join(missing)
             if self._options_context:
                 msg += " found in %s" % " -> ".join(self._options_context)
             self.fail_json(msg=msg)
@@ -1708,6 +1686,9 @@ class AnsibleModule(object):
             # present, else all requirements should be present.
             if is_one_of:
                 max_missing_count = len(requirements)
+                term = 'any'
+            else:
+                term = 'all'
 
             if key in param and param[key] == val:
                 for check in requirements:
@@ -1715,7 +1696,7 @@ class AnsibleModule(object):
                     if count == 0:
                         missing.append(check)
             if len(missing) and len(missing) >= max_missing_count:
-                msg = "%s is %s but the following are missing: %s" % (key, val, ','.join(missing))
+                msg = "%s is %s but %s of the following are missing: %s" % (key, val, term, ', '.join(missing))
                 if self._options_context:
                     msg += " found in %s" % " -> ".join(self._options_context)
                 self.fail_json(msg=msg)
@@ -1751,7 +1732,7 @@ class AnsibleModule(object):
                                 (param[k],) = overlap
 
                         if param[k] not in choices:
-                            choices_str = ",".join([to_native(c) for c in choices])
+                            choices_str = ", ".join([to_native(c) for c in choices])
                             msg = "value of %s must be one of: %s, got: %s" % (k, choices_str, param[k])
                             if self._options_context:
                                 msg += " found in %s" % " -> ".join(self._options_context)
@@ -2289,7 +2270,7 @@ class AnsibleModule(object):
             if not self.params.get(required_param):
                 missing_params.append(required_param)
         if missing_params:
-            self.fail_json(msg="missing required arguments: %s" % ','.join(missing_params))
+            self.fail_json(msg="missing required arguments: %s" % ', '.join(missing_params))
 
     def digest_from_file(self, filename, algorithm):
         ''' Return hex digest of local file for a digest_method specified by name, or None if file is not present. '''
@@ -2534,6 +2515,7 @@ class AnsibleModule(object):
         # sadly there are some situations where we cannot ensure atomicity, but only if
         # the user insists and we get the appropriate error we update the file unsafely
         try:
+            out_dest = in_src = None
             try:
                 out_dest = open(dest, 'wb')
                 in_src = open(src, 'rb')
@@ -2602,14 +2584,27 @@ class AnsibleModule(object):
             strings on python3, use encoding=None to turn decoding to text off.
         '''
 
-        if isinstance(args, list):
-            if use_unsafe_shell:
+        if not isinstance(args, (list, binary_type, text_type)):
+            msg = "Argument 'args' to run_command must be list or string"
+            self.fail_json(rc=257, cmd=args, msg=msg)
+
+        shell = False
+        if use_unsafe_shell:
+
+            # stringify args for unsafe/direct shell usage
+            if isinstance(args, list):
                 args = " ".join([shlex_quote(x) for x in args])
+
+            # not set explicitly, check if set by controller
+            if executable:
+                args = [executable, '-c', args]
+            elif self._shell not in (None, '/bin/sh'):
+                args = [self._shell, '-c', args]
+            else:
                 shell = True
-        elif isinstance(args, (binary_type, text_type)) and use_unsafe_shell:
-            shell = True
-        elif isinstance(args, (binary_type, text_type)):
-            if not use_unsafe_shell:
+        else:
+            # ensure args are a list
+            if isinstance(args, (binary_type, text_type)):
                 # On python2.6 and below, shlex has problems with text type
                 # On python3, shlex needs a text type.
                 if PY2:
@@ -2617,18 +2612,9 @@ class AnsibleModule(object):
                 elif PY3:
                     args = to_text(args, errors='surrogateescape')
                 args = shlex.split(args)
-        else:
-            msg = "Argument 'args' to run_command must be list or string"
-            self.fail_json(rc=257, cmd=args, msg=msg)
 
-        shell = False
-        if use_unsafe_shell:
-            if executable is None:
-                executable = os.environ.get('SHELL')
-            if executable:
-                args = [executable, '-c', args]
-            else:
-                shell = True
+            # expand shellisms
+            args = [os.path.expanduser(os.path.expandvars(x)) for x in args if x is not None]
 
         prompt_re = None
         if prompt_regex:
@@ -2641,10 +2627,6 @@ class AnsibleModule(object):
                 prompt_re = re.compile(prompt_regex, re.MULTILINE)
             except re.error:
                 self.fail_json(msg="invalid prompt regular expression given to run_command")
-
-        # expand things like $HOME and ~
-        if not shell:
-            args = [os.path.expanduser(os.path.expandvars(x)) for x in args if x is not None]
 
         rc = 0
         msg = None
