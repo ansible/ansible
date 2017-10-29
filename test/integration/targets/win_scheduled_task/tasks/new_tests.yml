@@ -11,7 +11,7 @@
   check_mode: yes
 
 - name: get result of create task (check mode)
-  test_task_stat:
+  win_scheduled_task_stat:
     path: \
     name: '{{test_scheduled_task_name}}'
   register: create_task_result_check
@@ -33,7 +33,7 @@
   register: create_task
 
 - name: get result of create task
-  test_task_stat:
+  win_scheduled_task_stat:
     path: \
     name: '{{test_scheduled_task_name}}'
   register: create_task_result
@@ -43,12 +43,12 @@
     that:
     - create_task|changed
     - create_task_result.task_exists == True
-    - create_task_result.task.actions|count == 1
-    - create_task_result.task.actions[0].Path == "cmd.exe"
-    - create_task_result.task.actions[0].Arguments == "/c echo hi"
-    - create_task_result.task.actions[0].WorkingDirectory == None
-    - create_task_result.task.registration_info.Description == "Original Description"
-    - create_task_result.task.triggers|count == 0
+    - create_task_result.actions|count == 1
+    - create_task_result.actions[0].path == "cmd.exe"
+    - create_task_result.actions[0].arguments == "/c echo hi"
+    - create_task_result.actions[0].working_directory == None
+    - create_task_result.registration_info.description == "Original Description"
+    - create_task_result.triggers|count == 0
 
 - name: create task (idempotent)
   win_scheduled_task:
@@ -78,7 +78,7 @@
   check_mode: yes
 
 - name: get result of change task (check mode)
-  test_task_stat:
+  win_scheduled_task_stat:
     path: \
     name: '{{test_scheduled_task_name}}'
   register: change_task_result_check
@@ -87,12 +87,12 @@
   assert:
     that:
     - change_task_check|changed
-    - change_task_result_check.task.actions|count == 1
-    - change_task_result_check.task.registration_info.Author == None
-    - change_task_result_check.task.registration_info.Description == "Original Description"
-    - change_task_result_check.task.settings.AllowDemandStart == true
-    - change_task_result_check.task.settings.RestartCount == 0
-    - change_task_result_check.task.settings.RestartInterval == None
+    - change_task_result_check.actions|count == 1
+    - change_task_result_check.registration_info.author == None
+    - change_task_result_check.registration_info.description == "Original Description"
+    - change_task_result_check.settings.allow_demand_start == true
+    - change_task_result_check.settings.restart_count == 0
+    - change_task_result_check.settings.restart_interval == None
 
 - name: change task
   win_scheduled_task:
@@ -106,7 +106,7 @@
   register: change_task
 
 - name: get result of change task
-  test_task_stat:
+  win_scheduled_task_stat:
     path: \
     name: '{{test_scheduled_task_name}}'
   register: change_task_result
@@ -115,12 +115,12 @@
   assert:
     that:
     - change_task|changed
-    - change_task_result.task.actions|count == 1
-    - change_task_result.task.registration_info.Author == "Cow Inc."
-    - change_task_result.task.registration_info.Description == "Test for Ansible"
-    - change_task_result.task.settings.AllowDemandStart == false
-    - change_task_result.task.settings.RestartCount == 5
-    - change_task_result.task.settings.RestartInterval == "PT1M"
+    - change_task_result.actions|count == 1
+    - change_task_result.registration_info.author == "Cow Inc."
+    - change_task_result.registration_info.description == "Test for Ansible"
+    - change_task_result.settings.allow_demand_start == false
+    - change_task_result.settings.restart_count == 5
+    - change_task_result.settings.restart_interval == "PT1M"
 
 - name: change task (idempotent)
   win_scheduled_task:
@@ -152,7 +152,7 @@
   check_mode: yes
 
 - name: get result of add task action (check mode)
-  test_task_stat:
+  win_scheduled_task_stat:
     path: \
     name: '{{test_scheduled_task_name}}'
   register: add_task_action_result_check
@@ -161,10 +161,10 @@
   assert:
     that:
     - add_task_action_check|changed
-    - add_task_action_result_check.task.actions|count == 1
-    - add_task_action_result_check.task.actions[0].Path == "cmd.exe"
-    - add_task_action_result_check.task.actions[0].Arguments == "/c echo hi"
-    - add_task_action_result_check.task.actions[0].WorkingDirectory == None
+    - add_task_action_result_check.actions|count == 1
+    - add_task_action_result_check.actions[0].path == "cmd.exe"
+    - add_task_action_result_check.actions[0].arguments == "/c echo hi"
+    - add_task_action_result_check.actions[0].working_directory == None
 
 - name: add task action
   win_scheduled_task:
@@ -179,7 +179,7 @@
   register: add_task_action
 
 - name: get result of add task action
-  test_task_stat:
+  win_scheduled_task_stat:
     path: \
     name: '{{test_scheduled_task_name}}'
   register: add_task_action_result
@@ -188,13 +188,13 @@
   assert:
     that:
     - add_task_action|changed
-    - add_task_action_result.task.actions|count == 2
-    - add_task_action_result.task.actions[0].Path == "cmd.exe"
-    - add_task_action_result.task.actions[0].Arguments == "/c echo hi"
-    - add_task_action_result.task.actions[0].WorkingDirectory == None
-    - add_task_action_result.task.actions[1].Path == "powershell.exe"
-    - add_task_action_result.task.actions[1].Arguments == "-File C:\\ansible\\script.ps1"
-    - add_task_action_result.task.actions[1].WorkingDirectory == "C:\\ansible"
+    - add_task_action_result.actions|count == 2
+    - add_task_action_result.actions[0].path == "cmd.exe"
+    - add_task_action_result.actions[0].arguments == "/c echo hi"
+    - add_task_action_result.actions[0].working_directory == None
+    - add_task_action_result.actions[1].path == "powershell.exe"
+    - add_task_action_result.actions[1].arguments == "-File C:\\ansible\\script.ps1"
+    - add_task_action_result.actions[1].working_directory == "C:\\ansible"
 
 - name: add task action (idempotent)
   win_scheduled_task:
@@ -225,7 +225,7 @@
   check_mode: yes
 
 - name: get result of remove task action (check mode)
-  test_task_stat:
+  win_scheduled_task_stat:
     path: \
     name: '{{test_scheduled_task_name}}'
   register: remove_task_action_result_check
@@ -234,13 +234,13 @@
   assert:
     that:
     - remove_task_action_check|changed
-    - remove_task_action_result_check.task.actions|count == 2
-    - remove_task_action_result_check.task.actions[0].Path == "cmd.exe"
-    - remove_task_action_result_check.task.actions[0].Arguments == "/c echo hi"
-    - remove_task_action_result_check.task.actions[0].WorkingDirectory == None
-    - remove_task_action_result_check.task.actions[1].Path == "powershell.exe"
-    - remove_task_action_result_check.task.actions[1].Arguments == "-File C:\\ansible\\script.ps1"
-    - remove_task_action_result_check.task.actions[1].WorkingDirectory == "C:\\ansible"
+    - remove_task_action_result_check.actions|count == 2
+    - remove_task_action_result_check.actions[0].path == "cmd.exe"
+    - remove_task_action_result_check.actions[0].arguments == "/c echo hi"
+    - remove_task_action_result_check.actions[0].working_directory == None
+    - remove_task_action_result_check.actions[1].path == "powershell.exe"
+    - remove_task_action_result_check.actions[1].arguments == "-File C:\\ansible\\script.ps1"
+    - remove_task_action_result_check.actions[1].working_directory == "C:\\ansible"
 
 - name: remove task action
   win_scheduled_task:
@@ -253,7 +253,7 @@
   register: remove_task_action
 
 - name: get result of remove task action
-  test_task_stat:
+  win_scheduled_task_stat:
     path: \
     name: '{{test_scheduled_task_name}}'
   register: remove_task_action_result
@@ -262,10 +262,10 @@
   assert:
     that:
     - remove_task_action|changed
-    - remove_task_action_result.task.actions|count == 1
-    - remove_task_action_result.task.actions[0].Path == "powershell.exe"
-    - remove_task_action_result.task.actions[0].Arguments == "-File C:\\ansible\\script.ps1"
-    - remove_task_action_result.task.actions[0].WorkingDirectory == "C:\\ansible"
+    - remove_task_action_result.actions|count == 1
+    - remove_task_action_result.actions[0].path == "powershell.exe"
+    - remove_task_action_result.actions[0].arguments == "-File C:\\ansible\\script.ps1"
+    - remove_task_action_result.actions[0].working_directory == "C:\\ansible"
 
 - name: remove task action (idempontent)
   win_scheduled_task:
@@ -290,7 +290,7 @@
   check_mode: yes
 
 - name: get result of remove task (check mode)
-  test_task_stat:
+  win_scheduled_task_stat:
     path: \
     name: '{{test_scheduled_task_name}}'
   register: remove_task_result_check
@@ -308,7 +308,7 @@
   register: remove_task
 
 - name: get result of remove task
-  test_task_stat:
+  win_scheduled_task_stat:
     path: \
     name: '{{test_scheduled_task_name}}'
   register: remove_task_result
@@ -340,7 +340,7 @@
   check_mode: yes
 
 - name: get result of create sole task in folder (check mode)
-  test_task_stat:
+  win_scheduled_task_stat:
     path: '{{test_scheduled_task_path}}'
     name: '{{test_scheduled_task_name}}'
   register: create_sole_task_result_check
@@ -361,7 +361,7 @@
   register: create_sole_task
 
 - name: get result of create sole task in folder
-  test_task_stat:
+  win_scheduled_task_stat:
     path: '{{test_scheduled_task_path}}'
     name: '{{test_scheduled_task_name}}'
   register: create_sole_task_result
@@ -395,7 +395,7 @@
   check_mode: yes
 
 - name: get result of remove sole task in folder (check mode)
-  test_task_stat:
+  win_scheduled_task_stat:
     path: '{{test_scheduled_task_path}}'
     name: '{{test_scheduled_task_name}}'
   register: remove_sole_task_result_check
@@ -415,7 +415,7 @@
   register: remove_sole_task
 
 - name: get result of remove sole task in folder
-  test_task_stat:
+  win_scheduled_task_stat:
     path: '{{test_scheduled_task_path}}'
     name: '{{test_scheduled_task_name}}'
   register: remove_sole_task_result

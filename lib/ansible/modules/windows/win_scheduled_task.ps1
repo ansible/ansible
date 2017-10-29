@@ -547,7 +547,7 @@ Function Compare-Triggers($task_definition) {
     $map = @{
         [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_BOOT = @{
             mandatory = @()
-            optional = @('enabled', 'end_boundary', 'execution_time_limit', 'start_boundary')
+            optional = @('delay', 'enabled', 'end_boundary', 'execution_time_limit', 'start_boundary')
         }
         [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_DAILY = @{
             mandatory = @('start_boundary')

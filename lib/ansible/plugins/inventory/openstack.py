@@ -11,6 +11,9 @@ __metaclass__ = type
 DOCUMENTATION = '''
     name: openstack
     plugin_type: inventory
+    authors:
+      - Marco Vito Moscaritolo <marco@agavee.com>
+      - Jesse Keating <jesse.keating@rackspace.com>
     short_description: OpenStack inventory source
     description:
         - Get inventory hosts from OpenStack clouds
@@ -129,21 +132,18 @@ class InventoryModule(BaseInventoryPlugin):
         except Exception as e:
             raise AnsibleParserError(e)
 
+        msg = ''
         if not self._config_data:
-            # empty. this is not my config file
-            return False
-        if 'plugin' in self._config_data and self._config_data['plugin'] != self.NAME:
-            # plugin config file, but not for us
-            return False
+            msg = 'File empty. this is not my config file'
+        elif 'plugin' in self._config_data and self._config_data['plugin'] != self.NAME:
+            msg = 'plugin config file, but not for us: %s' % self._config_data['plugin']
         elif 'plugin' not in self._config_data and 'clouds' not in self._config_data:
-            # it's not a clouds.yaml file either
-            return False
+            msg = "it's not a plugin configuration nor a clouds.yaml file"
+        elif not HAS_SHADE:
+            msg = "shade is required for the OpenStack inventory plugin. OpenStack inventory sources will be skipped."
 
-        if not HAS_SHADE:
-            self.display.warning(
-                'shade is required for the OpenStack inventory plugin.'
-                ' OpenStack inventory sources will be skipped.')
-            return False
+        if msg:
+            raise AnsibleParserError(msg)
 
         # The user has pointed us at a clouds.yaml file. Use defaults for
         # everything.
@@ -151,9 +151,9 @@ class InventoryModule(BaseInventoryPlugin):
             self._config_data = {}
 
         source_data = None
-        if cache and cache_key in inventory.cache:
+        if cache and cache_key in self._cache:
             try:
-                source_data = inventory.cache[cache_key]
+                source_data = self._cache[cache_key]
             except KeyError:
                 pass
 
@@ -189,7 +189,7 @@ class InventoryModule(BaseInventoryPlugin):
             source_data = cloud_inventory.list_hosts(
                 expand=expand_hostvars, fail_on_cloud_config=fail_on_errors)
 
-            inventory.cache[cache_key] = source_data
+            self._cache[cache_key] = source_data
 
         self._populate_from_source(source_data)
 

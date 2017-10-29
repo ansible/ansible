@@ -250,7 +250,7 @@ Correct. Do not use "trouble shoot" or "trouble-shoot." To isolate the source of
 
 UK
 ++++++++++++++
-Correst as is, no periods.
+Correct as is, no periods.
 
 UNIX®
 ++++++++++++++
@@ -262,7 +262,7 @@ Don't use. Use Clear.
 
 US
 ++++++++++++++
-Correst as is, no periods.
+Correct as is, no periods.
 
 User
 ++++++++++++++

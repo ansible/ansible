@@ -44,7 +44,8 @@ class TerminalModule(TerminalBase):
         re.compile(br"connection timed out", re.I),
         re.compile(br"[^\r\n]+ not found", re.I),
         re.compile(br"'[^']' +returned error code: ?\d+"),
-        re.compile(br"[^\r\n]\/bin\/(?:ba)?sh")
+        re.compile(br"[^\r\n]\/bin\/(?:ba)?sh"),
+        re.compile(br"% More than \d+ OSPF instance", re.I)
     ]
 
     def on_open_shell(self):

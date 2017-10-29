@@ -27,6 +27,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.executor.play_iterator import PlayIterator
 from ansible.executor.stats import AggregateStats
+from ansible.executor.task_result import TaskResult
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text
 from ansible.playbook.block import Block
@@ -371,9 +372,20 @@ class TaskQueueManager:
                 if gotit is not None:
                     methods.append(gotit)
 
+            # send clean copies
+            new_args = []
+            for arg in args:
+                # FIXME: add play/task cleaners
+                if isinstance(arg, TaskResult):
+                    new_args.append(arg.clean_copy())
+                # elif isinstance(arg, Play):
+                # elif isinstance(arg, Task):
+                else:
+                    new_args.append(arg)
+
             for method in methods:
                 try:
-                    method(*args, **kwargs)
+                    method(*new_args, **kwargs)
                 except Exception as e:
                     # TODO: add config toggle to make this fatal or not?
                     display.warning(u"Failure using method (%s) in callback plugin (%s): %s" % (to_text(method_name), to_text(callback_plugin), to_text(e)))

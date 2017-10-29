@@ -169,7 +169,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import exec_command
 from ansible.module_utils.network_common import conditional, remove_default_spec
 from ansible.module_utils.vyos import load_config, get_config
-from ansible.module_utils.vyos import vyos_argument_spec, check_args
+from ansible.module_utils.vyos import vyos_argument_spec
 
 
 def search_obj_in_list(name, lst):
@@ -402,7 +402,6 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
 
     result = {'changed': False}
 

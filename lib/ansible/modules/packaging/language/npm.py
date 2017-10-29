@@ -264,16 +264,16 @@ def main():
     changed = False
     if state == 'present':
         installed, missing = npm.list()
-        if len(missing):
+        if missing:
             changed = True
             npm.install()
     elif state == 'latest':
         installed, missing = npm.list()
         outdated = npm.list_outdated()
-        if len(missing):
+        if missing:
             changed = True
             npm.install()
-        if len(outdated):
+        if outdated:
             changed = True
             npm.update()
     else:  # absent

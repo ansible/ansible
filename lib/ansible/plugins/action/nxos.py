@@ -107,8 +107,5 @@ class ActionModule(_ActionModule):
 
             self._task.args['provider'] = provider
 
-        # make sure a transport value is set in args
-        self._task.args['transport'] = transport
-
         result = super(ActionModule, self).run(tmp, task_vars)
         return result

@@ -48,7 +48,7 @@ options:
       - Specifies the source path to the file that contains the configuration
         or configuration template to load.  The path to the source file can
         either be the full path on the Ansible control host or a relative
-        path from the playbook or role root dir.  This argument is mutually
+        path from the playbook or role root directory.  This argument is mutually
         exclusive with I(lines).
     required: false
     default: null
@@ -182,7 +182,11 @@ saved:
   returned: When not check_mode.
   type: bool
   sample: True
-
+backup_path:
+  description: The full path to the backup file
+  returned: when backup is yes
+  type: string
+  sample: /playbooks/ansible/backup/dellos10_config.2016-07-16@22:28:34
 """
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.dellos10 import get_config, get_sublevel_config

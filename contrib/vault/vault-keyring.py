@@ -65,20 +65,20 @@ import sys
 import getpass
 import keyring
 
-import ansible.constants as C
+from ansible.config.manager import ConfigManager, get_ini_config_value
 
 
 def main():
-    (parser, config_path) = C.load_config_file()
-    if parser.has_option('vault', 'username'):
-        username = parser.get('vault', 'username')
-    else:
-        username = getpass.getuser()
+    config = ConfigManager()
+    username = get_ini_config_value(
+        config._parser,
+        dict(section='vault', key='username')
+    ) or getpass.getuser()
 
-    if parser.has_option('vault', 'keyname'):
-        keyname = parser.get('vault', 'keyname')
-    else:
-        keyname = 'ansible'
+    keyname = get_ini_config_value(
+        config._parser,
+        dict(section='vault', key='keyname')
+    ) or 'ansible'
 
     if len(sys.argv) == 2 and sys.argv[1] == 'set':
         intro = 'Storing password in "{}" user keyring using key name: {}\n'

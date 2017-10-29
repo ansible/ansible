@@ -456,9 +456,9 @@ def nsnameToClark(name, namespaces):
         (nsname, rawname) = name.split(":")
         # return "{{%s}}%s" % (namespaces[nsname], rawname)
         return "{{{0}}}{1}".format(namespaces[nsname], rawname)
-    else:
-        # no namespace name here
-        return name
+
+    # no namespace name here
+    return name
 
 
 def check_or_make_target(module, tree, xpath, namespaces):
@@ -548,7 +548,7 @@ def set_target_inner(module, tree, xpath, namespaces, attribute, value):
         missing_namespace = ""
         # NOTE: This checks only the namespaces defined in root element!
         # TODO: Implement a more robust check to check for child namespaces' existance
-        if len(tree.getroot().nsmap) > 0 and ":" not in xpath:
+        if tree.getroot().nsmap and ":" not in xpath:
             missing_namespace = "XML document has namespace(s) defined, but no namespace prefix(es) used in xpath!\n"
         module.fail_json(msg="%sXpath %s causes a failure: %s\n  -- tree is %s" %
                              (missing_namespace, xpath, e, etree.tostring(tree, pretty_print=True)), exception=traceback.format_exc())

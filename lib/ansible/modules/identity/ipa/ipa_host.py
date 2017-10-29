@@ -65,6 +65,12 @@ options:
     description: State to ensure
     default: present
     choices: ["present", "absent", "disabled"]
+  update_dns:
+    description:
+    - If set C("True") with state as C("absent"), then removes DNS records of the host managed by FreeIPA DNS.
+    - This option has no effect for states other than "absent".
+    default: false
+    version_added: "2.5"
 extends_documentation_fragment: ipa.documentation
 version_added: "2.3"
 '''
@@ -109,6 +115,15 @@ EXAMPLES = '''
     ipa_host: ipa.example.com
     ipa_user: admin
     ipa_pass: topsecret
+
+# Ensure host and its DNS record is absent
+- ipa_host:
+    name: host01.example.com
+    state: absent
+    ipa_host: ipa.example.com
+    ipa_user: admin
+    ipa_pass: topsecret
+    update_dns: True
 '''
 
 RETURN = '''
@@ -142,8 +157,8 @@ class HostIPAClient(IPAClient):
     def host_mod(self, name, host):
         return self._post_json(method='host_mod', name=name, item=host)
 
-    def host_del(self, name):
-        return self._post_json(method='host_del', name=name)
+    def host_del(self, name, update_dns):
+        return self._post_json(method='host_del', name=name, item={'updatedns': update_dns})
 
     def host_disable(self, name):
         return self._post_json(method='host_disable', name=name)
@@ -211,8 +226,9 @@ def ensure(module, client):
     else:
         if ipa_host:
             changed = True
+            update_dns = module.params.get('update_dns', False)
             if not module.check_mode:
-                client.host_del(name=name)
+                client.host_del(name=name, update_dns=update_dns)
 
     return changed, client.host_find(name=name)
 
@@ -228,6 +244,7 @@ def main():
                          ns_os_version=dict(type='str', aliases=['nsosversion']),
                          user_certificate=dict(type='list', aliases=['usercertificate']),
                          mac_address=dict(type='list', aliases=['macaddress']),
+                         update_dns=dict(type='bool'),
                          state=dict(type='str', default='present', choices=['present', 'absent', 'enabled', 'disabled']))
 
     module = AnsibleModule(argument_spec=argument_spec,

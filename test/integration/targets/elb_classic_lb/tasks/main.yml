@@ -6,7 +6,7 @@
 
 # __Test Outline__
 #
-# __ec2_elb_lb__
+# __elb_classic_lb__
 # create test elb with listeners and certificate
 # change AZ's
 # change listeners
@@ -30,7 +30,7 @@
     # create test elb with listeners, certificate, and health check
 
     - name: Create ELB
-      ec2_elb_lb:
+      elb_classic_lb:
         name: "{{ tag_prefix }}"
         region: "{{ ec2_region }}"
         ec2_access_key: "{{ ec2_access_key }}"
@@ -95,7 +95,7 @@
     # Change AZ's
 
     - name: Change AZ's
-      ec2_elb_lb:
+      elb_classic_lb:
         name: "{{ tag_prefix }}"
         region: "{{ ec2_region }}"
         ec2_access_key: "{{ ec2_access_key }}"
@@ -132,7 +132,7 @@
     # Update AZ's
 
     - name: Update AZ's
-      ec2_elb_lb:
+      elb_classic_lb:
         name: "{{ tag_prefix }}"
         region: "{{ ec2_region }}"
         ec2_access_key: "{{ ec2_access_key }}"
@@ -164,7 +164,7 @@
     # Purge Listeners
 
     - name: Purge Listeners
-      ec2_elb_lb:
+      elb_classic_lb:
         name: "{{ tag_prefix }}"
         region: "{{ ec2_region }}"
         ec2_access_key: "{{ ec2_access_key }}"
@@ -196,7 +196,7 @@
     # add Listeners
 
     - name: Add Listeners
-      ec2_elb_lb:
+      elb_classic_lb:
         name: "{{ tag_prefix }}"
         region: "{{ ec2_region }}"
         ec2_access_key: "{{ ec2_access_key }}"
@@ -226,7 +226,7 @@
     # ============================================================
 
     - name: test with no parameters
-      ec2_elb_lb:
+      elb_classic_lb:
       register: result
       ignore_errors: true
 
@@ -240,7 +240,7 @@
 
     # ============================================================
     - name: test with only name
-      ec2_elb_lb:
+      elb_classic_lb:
         name="{{ tag_prefix }}"
       register: result
       ignore_errors: true
@@ -254,7 +254,7 @@
 
     # ============================================================
     - name: test invalid region parameter
-      ec2_elb_lb:
+      elb_classic_lb:
         name: "{{ tag_prefix }}"
         region: 'asdf querty 1234'
         state: present
@@ -277,7 +277,7 @@
 
     # ============================================================
     - name: test valid region parameter
-      ec2_elb_lb:
+      elb_classic_lb:
         name: "{{ tag_prefix }}"
         region: "{{ ec2_region }}"
         state: present
@@ -302,7 +302,7 @@
     # ============================================================
 
     - name: test invalid ec2_url parameter
-      ec2_elb_lb:
+      elb_classic_lb:
         name: "{{ tag_prefix }}"
         region: "{{ ec2_region }}"
         state: present
@@ -327,7 +327,7 @@
 
     # ============================================================
     - name: test valid ec2_url parameter
-      ec2_elb_lb:
+      elb_classic_lb:
         name: "{{ tag_prefix }}"
         region: "{{ ec2_region }}"
         state: present
@@ -352,7 +352,7 @@
 
     # ============================================================
     - name: test credentials from environment
-      ec2_elb_lb:
+      elb_classic_lb:
         name: "{{ tag_prefix }}"
         region: "{{ ec2_region }}"
         state: present
@@ -378,7 +378,7 @@
 
     # ============================================================
     - name: test credential parameters
-      ec2_elb_lb:
+      elb_classic_lb:
         name: "{{ tag_prefix }}"
         region: "{{ ec2_region }}"
         state: present
@@ -402,7 +402,7 @@
 
     # ============================================================
     - name: remove the test load balancer completely
-      ec2_elb_lb:
+      elb_classic_lb:
         name: "{{ tag_prefix }}"
         region: "{{ ec2_region }}"
         state: absent

@@ -181,7 +181,7 @@ def get_vpc(module):
         pkl_vrf = None
         peer_gw = False
 
-        run = get_config(module, flags=['section vpc'])
+        run = get_config(module, flags=['vpc'])
         if run:
             vpc_list = run.split('\n')
             for each in vpc_list:

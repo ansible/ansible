@@ -322,7 +322,7 @@ def main():
             module.fail_json(msg="name is also required when specifying %s" % requires)
 
     # Run daemon-reload first, if requested
-    if module.params['daemon_reload']:
+    if module.params['daemon_reload'] and not module.check_mode:
         (rc, out, err) = module.run_command("%s daemon-reload" % (systemctl))
         if rc != 0:
             module.fail_json(msg='failure %d during daemon-reload: %s' % (rc, err))

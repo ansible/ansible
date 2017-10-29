@@ -131,10 +131,9 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 
 def check_args(module, warnings):
-    transport = module.params['transport']
-    provider_transport = (module.params['provider'] or {}).get('transport')
-    if 'nxapi' in (transport, provider_transport):
-        module.fail_json(msg='transport=nxapi is not supporting when configuring nxapi')
+    provider = module.params['provider']
+    if provider['transport'] == 'nxapi':
+        module.fail_json(msg='module not supported over nxapi transport')
 
     nxos_check_args(module, warnings)
 
@@ -148,9 +147,6 @@ def check_args(module, warnings):
         module.params['state'] = 'absent'
         warnings.append('state=stopped is deprecated and will be removed in a '
                         'a future release.  Please use state=absent instead')
-
-    if module.params['transport'] == 'nxapi':
-        module.fail_json(msg='module not supported over nxapi transport')
 
     for key in ['config']:
         if module.params[key]:

@@ -71,7 +71,7 @@ methods:
 
         # The build method builds the entity we want to create.
         # Always be sure to build only the parameters the user specified
-        # in his yaml file, so we don't change the values which we shouldn't
+        # in their yaml file, so we don't change the values which we shouldn't
         # change. If you set the parameter to None, nothing will be changed.
         def build_entity(self):
             return otypes.Cluster(

@@ -12,7 +12,7 @@ Example::
     tasks:
 
         - yum: name={{ item }} state=installed
-          with_items:
+          loop:
              - httpd
              - memcached
           tags:

@@ -378,6 +378,7 @@ import time
 import logging as log
 import traceback
 
+from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, HAS_BOTO3, camel_dict_to_snake_dict, get_aws_connection_info, AWSRetry
 
@@ -630,7 +631,7 @@ def elb_healthy(asg_connection, elb_connection, module, group_name):
                              exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
         except botocore.exceptions.BotoCoreError as e:
             module.fail_json(msg="Failed to get load balancer.",
-                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                             exception=traceback.format_exc())
 
         for i in lb_instances.get('InstanceStates'):
             if i['State'] == "InService":
@@ -664,7 +665,7 @@ def tg_healthy(asg_connection, elbv2_connection, module, group_name):
                              exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
         except botocore.exceptions.BotoCoreError as e:
             module.fail_json(msg="Failed to get target group.",
-                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                             exception=traceback.format_exc())
 
         for i in tg_instances.get('TargetHealthDescriptions'):
             if i['TargetHealth']['State'] == "healthy":
@@ -794,7 +795,7 @@ def create_autoscaling_group(connection, module):
         for k, v in tag.items():
             if k != 'propagate_at_launch':
                 asg_tags.append(dict(Key=k,
-                                     Value=v,
+                                     Value=to_native(v),
                                      PropagateAtLaunch=bool(tag.get('propagate_at_launch', True)),
                                      ResourceType='auto-scaling-group',
                                      ResourceId=group_name))
@@ -806,6 +807,8 @@ def create_autoscaling_group(connection, module):
         launch_configs = describe_launch_configurations(connection, launch_config_name)
         if len(launch_configs['LaunchConfigurations']) == 0:
             module.fail_json(msg="No launch config found with name %s" % launch_config_name)
+        if desired_capacity is None:
+            desired_capacity = min_size
         ag = dict(
             AutoScalingGroupName=group_name,
             LaunchConfigurationName=launch_configs['LaunchConfigurations'][0]['LaunchConfigurationName'],
@@ -849,9 +852,12 @@ def create_autoscaling_group(connection, module):
             asg_properties = get_properties(as_group, module)
             changed = True
             return changed, asg_properties
-        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+        except botocore.exceptions.ClientError as e:
             module.fail_json(msg="Failed to create Autoscaling Group.",
                              exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        except botocore.exceptions.BotoCoreError as e:
+            module.fail_json(msg="Failed to create Autoscaling Group.",
+                             exception=traceback.format_exc())
     else:
         as_group = as_groups['AutoScalingGroups'][0]
         initial_asg_properties = get_properties(as_group, module)
@@ -887,9 +893,12 @@ def create_autoscaling_group(connection, module):
             changed = True
             try:
                 attach_load_balancers(connection, group_name, load_balancers)
-            except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+            except botocore.exceptions.ClientError as e:
                 module.fail_json(msg="Failed to update Autoscaling Group.",
                                  exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+            except botocore.exceptions.BotoCoreError as e:
+                module.fail_json(msg="Failed to update Autoscaling Group.",
+                                 exception=traceback.format_exc())
 
         # Update load balancers if they are specified and one or more already exists
         elif as_group['LoadBalancerNames']:
@@ -920,9 +929,12 @@ def create_autoscaling_group(connection, module):
             changed = True
             try:
                 attach_lb_target_groups(connection, group_name, target_group_arns)
-            except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+            except botocore.exceptions.ClientError as e:
                 module.fail_json(msg="Failed to update Autoscaling Group.",
                                  exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+            except botocore.exceptions.BotoCoreError as e:
+                module.fail_json(msg="Failed to update Autoscaling Group.",
+                                 exception=traceback.format_exc())
         # Update target groups if they are specified and one or more already exists
         elif target_group_arns is not None and as_group['TargetGroupARNs']:
             # Get differences
@@ -934,18 +946,22 @@ def create_autoscaling_group(connection, module):
                 tgs_to_detach = has_tgs.difference(wanted_tgs)
                 if tgs_to_detach:
                     changed = True
-                    detach_lb_target_groups(connection, group_name, tgs_to_detach)
+                    detach_lb_target_groups(connection, group_name, list(tgs_to_detach))
             if wanted_tgs.issuperset(has_tgs):
                 # if has contains less than wanted, then we need to add some
                 tgs_to_attach = wanted_tgs.difference(has_tgs)
                 if tgs_to_attach:
                     changed = True
-                    attach_lb_target_groups(connection, group_name, tgs_to_attach)
+                    attach_lb_target_groups(connection, group_name, list(tgs_to_attach))
 
         # check for attributes that aren't required for updating an existing ASG
-        desired_capacity = desired_capacity if desired_capacity is not None else as_group['DesiredCapacity']
-        min_size = min_size if min_size is not None else as_group['MinSize']
-        max_size = max_size if max_size is not None else as_group['MaxSize']
+        # check if min_size/max_size/desired capacity have been specified and if not use ASG values
+        if min_size is None:
+            min_size = as_group['MinSize']
+        if max_size is None:
+            max_size = as_group['MaxSize']
+        if desired_capacity is None:
+            desired_capacity = as_group['DesiredCapacity']
         launch_config_name = launch_config_name or as_group['LaunchConfigurationName']
 
         launch_configs = describe_launch_configurations(connection, launch_config_name)
@@ -970,9 +986,12 @@ def create_autoscaling_group(connection, module):
         if notification_topic:
             try:
                 put_notification_config(connection, group_name, notification_topic, notification_types)
-            except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+            except botocore.exceptions.ClientError as e:
                 module.fail_json(msg="Failed to update Autoscaling Group notifications.",
                                  exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+            except botocore.exceptions.BotoCoreError as e:
+                module.fail_json(msg="Failed to update Autoscaling Group notifications.",
+                                 exception=traceback.format_exc())
         if wait_for_instances:
             wait_for_new_inst(module, connection, group_name, wait_timeout, desired_capacity, 'viable_instances')
             # Wait for ELB health if ELB(s)defined
@@ -990,9 +1009,12 @@ def create_autoscaling_group(connection, module):
             asg_properties = get_properties(as_group, module)
             if asg_properties != initial_asg_properties:
                 changed = True
-        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+        except botocore.exceptions.ClientError as e:
             module.fail_json(msg="Failed to read existing Autoscaling Groups.",
                              exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        except botocore.exceptions.BotoCoreError as e:
+            module.fail_json(msg="Failed to read existing Autoscaling Groups.",
+                             exception=traceback.format_exc())
         return changed, asg_properties
 
 

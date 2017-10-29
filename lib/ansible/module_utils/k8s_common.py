@@ -122,10 +122,6 @@ class KubernetesAnsibleModule(AnsibleModule):
         :return: None
         """
 
-        if self.params.get('debug'):
-            self.helper.enable_debug(reset_logfile=False)
-            self.helper.log_argspec()
-
         resource_definition = self.params.get('resource_definition')
         if self.params.get('src'):
             resource_definition = self.load_resource_definition(self.params['src'])
@@ -225,10 +221,10 @@ class KubernetesAnsibleModule(AnsibleModule):
                 return_attributes[self.kind] = existing.to_dict()
                 self.exit_json(**return_attributes)
             else:
-                self.helper.log('Existing:')
-                self.helper.log(json.dumps(existing.to_dict(), indent=4))
-                self.helper.log('\nDifferences:')
-                self.helper.log(json.dumps(diff, indent=4))
+                self.log('Existing:')
+                self.log(json.dumps(existing.to_str(), indent=4))
+                self.log('\nDifferences:')
+                self.log(json.dumps(diff, indent=4))
             # Differences exist between the existing obj and requested params
             if not self.check_mode:
                 try:
@@ -267,7 +263,7 @@ class KubernetesAnsibleModule(AnsibleModule):
         """ Load the requested src path """
         result = None
         path = os.path.normpath(src)
-        self.helper.log("Reading definition from {}".format(path))
+        self.log("Reading definition from {}".format(path))
         if not os.path.exists(path):
             self.fail_json(msg="Error accessing {}. Does the file exist?".format(path))
         try:
@@ -290,7 +286,7 @@ class KubernetesAnsibleModule(AnsibleModule):
                     parameters[key] = value
             elif isinstance(value, dict):
                 self._add_parameter(value, [key], parameters)
-        self.helper.log("Request to parameters: {}".format(json.dumps(parameters)))
+        self.log("Request to parameters: {}".format(json.dumps(parameters)))
         return parameters
 
     def _add_parameter(self, request, path, parameters):
