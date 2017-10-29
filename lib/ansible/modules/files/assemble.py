@@ -13,7 +13,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
-
 DOCUMENTATION = '''
 ---
 module: assemble
@@ -32,34 +31,27 @@ options:
     description:
       - An already existing directory full of source files.
     required: true
-    default: null
-    aliases: []
   dest:
     description:
       - A file to create using the concatenation of all of the source files.
     required: true
-    default: null
   backup:
     description:
       - Create a backup file (if C(yes)), including the timestamp information so
         you can get the original file back if you somehow clobbered it
         incorrectly.
-    required: false
-    choices: [ "yes", "no" ]
-    default: "no"
+    type: bool
+    default: 'no'
   delimiter:
     description:
       - A delimiter to separate the file contents.
     version_added: "1.4"
-    required: false
-    default: null
   remote_src:
     description:
       - If False, it will search for src at originating/master machine, if True it will
         go to the remote/target machine for the src. Default is True.
-    choices: [ "True", "False" ]
-    required: false
-    default: "True"
+    type: bool
+    default: 'yes'
     version_added: "1.4"
   regexp:
     description:
@@ -67,23 +59,20 @@ options:
         all files are assembled. All "\\" (backslash) must be escaped as
         "\\\\" to comply yaml syntax. Uses Python regular expressions; see
         U(http://docs.python.org/2/library/re.html).
-    required: false
-    default: null
   ignore_hidden:
     description:
       - A boolean that controls if files that start with a '.' will be included or not.
-    required: false
-    default: false
+    type: bool
+    default: 'no'
     version_added: "2.0"
   validate:
     description:
       - The validation command to run before copying into place.  The path to the file to
         validate is passed in via '%s' which must be present as in the sshd example below.
         The command is passed securely so shell features like expansion and pipes won't work.
-    required: false
-    default: null
     version_added: "2.0"
-author: "Stephen Fromm (@sfromm)"
+author:
+- Stephen Fromm (@sfromm)
 extends_documentation_fragment:
     - files
     - decrypt
@@ -110,7 +99,6 @@ EXAMPLES = '''
 
 import codecs
 import os
-import os.path
 import re
 import tempfile
 
@@ -118,9 +106,6 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import b
 from ansible.module_utils._text import to_native
 
-
-# ===========================================
-# Support method
 
 def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None, ignore_hidden=False):
     ''' assemble a file from a directory of fragments '''
@@ -178,27 +163,27 @@ def main():
 
     module = AnsibleModule(
         # not checking because of daisy chain to file module
-        argument_spec = dict(
-            src = dict(required=True, type='path'),
-            delimiter = dict(required=False),
-            dest = dict(required=True, type='path'),
+        argument_spec=dict(
+            src=dict(required=True, type='path'),
+            delimiter=dict(required=False),
+            dest=dict(required=True, type='path'),
             backup=dict(default=False, type='bool'),
             remote_src=dict(default=False, type='bool'),
-            regexp = dict(required=False),
-            ignore_hidden = dict(default=False, type='bool'),
-            validate = dict(required=False, type='str'),
+            regexp=dict(required=False),
+            ignore_hidden=dict(default=False, type='bool'),
+            validate=dict(required=False, type='str'),
         ),
-        add_file_common_args=True
+        add_file_common_args=True,
     )
 
-    changed   = False
-    path_hash   = None
-    dest_hash   = None
-    src       = module.params['src']
-    dest      = module.params['dest']
-    backup    = module.params['backup']
+    changed = False
+    path_hash = None
+    dest_hash = None
+    src = module.params['src']
+    dest = module.params['dest']
+    backup = module.params['backup']
     delimiter = module.params['delimiter']
-    regexp    = module.params['regexp']
+    regexp = module.params['regexp']
     compiled_regexp = None
     ignore_hidden = module.params['ignore_hidden']
     validate = module.params.get('validate', None)
