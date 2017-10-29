@@ -82,7 +82,7 @@ options:
     description:
       - Name of the service
       - If only the name pararameter is specified, the module will report
-        on wether the service exists or not without making any changes.
+        on whether the service exists or not without making any changes.
     required: true
   path:
     description:
