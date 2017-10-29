@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#coding: utf-8 -*-
+# coding: utf-8 -*-
 
 # Copyright (c) 2014 Hewlett-Packard Development Company, L.P.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -87,6 +87,7 @@ def _system_state_change(state, device):
             return True
         return False
     return False
+
 
 def main():
     argument_spec = openstack_full_argument_spec(
