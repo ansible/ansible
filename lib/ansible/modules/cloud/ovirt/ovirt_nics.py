@@ -249,7 +249,7 @@ def main():
             networks_service = dcs_service.service(dc.id).networks_service()
             network = next(
                 (n for n in networks_service.list()
-                if n.name == module.params['network']),
+                 if n.name == module.params['network']),
                 None
             )
             if network is None:

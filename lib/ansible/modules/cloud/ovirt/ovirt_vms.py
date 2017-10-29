@@ -720,26 +720,25 @@ class VmsModule(BaseModule):
 
     def update_check(self, entity):
         return (
-            equal(self.param('cluster'), get_link_name(self._connection, entity.cluster))
-            and equal(convert_to_bytes(self.param('memory')), entity.memory)
-            and equal(convert_to_bytes(self.param('memory_guaranteed')), entity.memory_policy.guaranteed)
-            and equal(self.param('cpu_cores'), entity.cpu.topology.cores)
-            and equal(self.param('cpu_sockets'), entity.cpu.topology.sockets)
-            and equal(self.param('type'), str(entity.type))
-            and equal(self.param('operating_system'), str(entity.os.type))
-            and equal(self.param('high_availability'), entity.high_availability.enabled)
-            and equal(self.param('lease'), get_link_name(self._connection, getattr(entity.lease, 'storage_domain', None)))
-            and equal(self.param('stateless'), entity.stateless)
-            and equal(self.param('cpu_shares'), entity.cpu_shares)
-            and equal(self.param('delete_protected'), entity.delete_protected)
-            and equal(self.param('use_latest_template_version'), entity.use_latest_template_version)
-            and equal(self.param('boot_devices'), [str(dev) for dev in getattr(entity.os, 'devices', [])])
-            and equal(self.param('instance_type'), get_link_name(self._connection, entity.instance_type), ignore_case=True)
-            and equal(self.param('description'), entity.description)
-            and equal(self.param('comment'), entity.comment)
-            and equal(self.param('timezone'), getattr(entity.time_zone, 'name', None))
-            and equal(self.param('serial_policy'), str(getattr(entity.serial_number, 'policy', None)))
-            and equal(self.param('serial_policy_value'), getattr(entity.serial_number, 'value', None))
+            equal(self.param('cluster'), get_link_name(self._connection, entity.cluster)) and equal(convert_to_bytes(self.param('memory')), entity.memory) and
+            equal(convert_to_bytes(self.param('memory_guaranteed')), entity.memory_policy.guaranteed) and
+            equal(self.param('cpu_cores'), entity.cpu.topology.cores) and
+            equal(self.param('cpu_sockets'), entity.cpu.topology.sockets) and
+            equal(self.param('type'), str(entity.type)) and
+            equal(self.param('operating_system'), str(entity.os.type)) and
+            equal(self.param('high_availability'), entity.high_availability.enabled) and
+            equal(self.param('lease'), get_link_name(self._connection, getattr(entity.lease, 'storage_domain', None))) and
+            equal(self.param('stateless'), entity.stateless) and
+            equal(self.param('cpu_shares'), entity.cpu_shares) and
+            equal(self.param('delete_protected'), entity.delete_protected) and
+            equal(self.param('use_latest_template_version'), entity.use_latest_template_version) and
+            equal(self.param('boot_devices'), [str(dev) for dev in getattr(entity.os, 'devices', [])]) and
+            equal(self.param('instance_type'), get_link_name(self._connection, entity.instance_type), ignore_case=True) and
+            equal(self.param('description'), entity.description) and
+            equal(self.param('comment'), entity.comment) and
+            equal(self.param('timezone'), getattr(entity.time_zone, 'name', None)) and
+            equal(self.param('serial_policy'), str(getattr(entity.serial_number, 'policy', None))) and
+            equal(self.param('serial_policy_value'), getattr(entity.serial_number, 'value', None))
         )
 
     def pre_create(self, entity):
@@ -1122,6 +1121,7 @@ def control_state(vm, vms_service, module):
                 condition=lambda vm: vm.status in [otypes.VmStatus.DOWN, otypes.VmStatus.UP],
             )
 
+
 def main():
     argument_spec = ovirt_full_argument_spec(
         state=dict(
@@ -1136,7 +1136,7 @@ def main():
         template_version=dict(default=None, type='int'),
         use_latest_template_version=dict(default=None, type='bool'),
         storage_domain=dict(default=None),
-        disk_format=dict(choices=['cow','raw'], default='cow'),
+        disk_format=dict(choices=['cow', 'raw'], default='cow'),
         disks=dict(default=[], type='list'),
         memory=dict(default=None),
         memory_guaranteed=dict(default=None),
@@ -1256,16 +1256,16 @@ def main():
                             initrd=module.params.get('initrd_path'),
                             kernel=module.params.get('kernel_path'),
                         ) if (
-                            module.params.get('kernel_params')
-                            or module.params.get('initrd_path')
-                            or module.params.get('kernel_path')
+                            module.params.get('kernel_params') or
+                            module.params.get('initrd_path') or
+                            module.params.get('kernel_path')
                         ) else None,
                     ) if (
-                        module.params.get('kernel_params')
-                        or module.params.get('initrd_path')
-                        or module.params.get('kernel_path')
-                        or module.params.get('host')
-                        or initialization
+                        module.params.get('kernel_params') or
+                        module.params.get('initrd_path') or
+                        module.params.get('kernel_path') or
+                        module.params.get('host') or
+                        initialization
                     ) else None,
                 )
 

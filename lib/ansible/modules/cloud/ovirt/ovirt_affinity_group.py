@@ -245,13 +245,10 @@ class AffinityGroupsModule(BaseModule):
     def update_check(self, entity):
         assigned_vms = self.assigned_vms(entity)
         do_update = (
-            equal(self.param('description'), entity.description)
-            and equal(self.param('vm_enforcing'), entity.enforcing)
-            and equal(
+            equal(self.param('description'), entity.description) and equal(self.param('vm_enforcing'), entity.enforcing) and equal(
                 self.param('vm_rule') == 'positive' if self.param('vm_rule') else None,
                 entity.positive
-            )
-            and equal(self._vm_ids, assigned_vms)
+            ) and equal(self._vm_ids, assigned_vms)
         )
         # Following attributes is supported since 4.1,
         # so return if it doesn't exist:
@@ -262,14 +259,9 @@ class AffinityGroupsModule(BaseModule):
         return do_update and (
             equal(
                 self.param('host_rule') == 'positive' if self.param('host_rule') else None,
-                entity.hosts_rule.positive
-            )
-            and equal(self.param('host_enforcing'), entity.hosts_rule.enforcing)
-            and equal(
+                entity.hosts_rule.positive) and equal(self.param('host_enforcing'), entity.hosts_rule.enforcing) and equal(
                 self.param('vm_rule') in ['negative', 'positive'] if self.param('vm_rule') else None,
-                entity.vms_rule.enabled
-            )
-            and equal(self._host_ids, sorted([host.id for host in entity.hosts]))
+                entity.vms_rule.enabled) and equal(self._host_ids, sorted([host.id for host in entity.hosts]))
         )
 
 

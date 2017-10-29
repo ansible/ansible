@@ -277,10 +277,7 @@ def main():
     )
     check_sdk(module)
 
-    if (
-        (module.params['object_name'] is None and module.params['object_id'] is None)
-        and module.params['object_type'] != 'system'
-    ):
+    if (module.params['object_name'] is None and module.params['object_id'] is None) and module.params['object_type'] != 'system':
         module.fail_json(msg='"object_name" or "object_id" is required')
 
     if module.params['user_name'] is None and module.params['group_name'] is None:
