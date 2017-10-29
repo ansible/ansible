@@ -5,12 +5,12 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
-
 
 DOCUMENTATION = '''
 ---
@@ -302,7 +302,6 @@ EXAMPLES = '''
       - "--exclude=.git"
 '''
 
-
 import os
 
 # Python3 compat. six.moves.shlex_quote will be available once we're free to
@@ -313,7 +312,6 @@ except ImportError:
     from pipes import quote as shlex_quote
 
 from ansible.module_utils.basic import AnsibleModule
-
 
 client_addr = None
 
@@ -348,36 +346,36 @@ def is_rsh_needed(source, dest):
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            src = dict(required=True),
-            dest = dict(required=True),
-            dest_port = dict(default=None, type='int'),
-            delete = dict(default='no', type='bool'),
-            private_key = dict(type='path', default=None),
-            rsync_path = dict(default=None),
-            _local_rsync_path = dict(default='rsync', type='path'),
-            _substitute_controller = dict(default='no', type='bool'),
-            archive = dict(default='yes', type='bool'),
-            checksum = dict(default='no', type='bool'),
-            compress = dict(default='yes', type='bool'),
-            existing_only = dict(default='no', type='bool'),
-            dirs  = dict(default='no', type='bool'),
-            recursive = dict(type='bool'),
-            links = dict(type='bool'),
-            copy_links = dict(default='no', type='bool'),
-            perms = dict(type='bool'),
-            times = dict(type='bool'),
-            owner = dict(type='bool'),
-            group = dict(type='bool'),
-            set_remote_user = dict(default='yes', type='bool'),
-            rsync_timeout = dict(type='int', default=0),
-            rsync_opts = dict(type='list'),
-            ssh_args = dict(type='str'),
-            partial = dict(default='no', type='bool'),
-            verify_host = dict(default='no', type='bool'),
-            mode = dict(default='push', choices=['push', 'pull']),
+        argument_spec=dict(
+            src=dict(required=True),
+            dest=dict(required=True),
+            dest_port=dict(default=None, type='int'),
+            delete=dict(default='no', type='bool'),
+            private_key=dict(type='path', default=None),
+            rsync_path=dict(default=None),
+            _local_rsync_path=dict(default='rsync', type='path'),
+            _substitute_controller=dict(default='no', type='bool'),
+            archive=dict(default='yes', type='bool'),
+            checksum=dict(default='no', type='bool'),
+            compress=dict(default='yes', type='bool'),
+            existing_only=dict(default='no', type='bool'),
+            dirs=dict(default='no', type='bool'),
+            recursive=dict(type='bool'),
+            links=dict(type='bool'),
+            copy_links=dict(default='no', type='bool'),
+            perms=dict(type='bool'),
+            times=dict(type='bool'),
+            owner=dict(type='bool'),
+            group=dict(type='bool'),
+            set_remote_user=dict(default='yes', type='bool'),
+            rsync_timeout=dict(type='int', default=0),
+            rsync_opts=dict(type='list'),
+            ssh_args=dict(type='str'),
+            partial=dict(default='no', type='bool'),
+            verify_host=dict(default='no', type='bool'),
+            mode=dict(default='push', choices=['push', 'pull']),
         ),
-        supports_check_mode = True
+        supports_check_mode=True
     )
 
     if module.params['_substitute_controller']:

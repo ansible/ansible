@@ -7,12 +7,12 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
-
 
 DOCUMENTATION = '''
 ---
@@ -175,30 +175,29 @@ def cleanup(path, result=None):
 
 
 def main():
-
     module = AnsibleModule(
         # not checking because of daisy chain to file module
-        argument_spec = dict(
-            src = dict(required=True, type='path'),
-            delimiter = dict(required=False),
-            dest = dict(required=True, type='path'),
+        argument_spec=dict(
+            src=dict(required=True, type='path'),
+            delimiter=dict(required=False),
+            dest=dict(required=True, type='path'),
             backup=dict(default=False, type='bool'),
             remote_src=dict(default=False, type='bool'),
-            regexp = dict(required=False),
-            ignore_hidden = dict(default=False, type='bool'),
-            validate = dict(required=False, type='str'),
+            regexp=dict(required=False),
+            ignore_hidden=dict(default=False, type='bool'),
+            validate=dict(required=False, type='str'),
         ),
         add_file_common_args=True
     )
 
-    changed   = False
-    path_hash   = None
-    dest_hash   = None
-    src       = module.params['src']
-    dest      = module.params['dest']
-    backup    = module.params['backup']
+    changed = False
+    path_hash = None
+    dest_hash = None
+    src = module.params['src']
+    dest = module.params['dest']
+    backup = module.params['backup']
     delimiter = module.params['delimiter']
-    regexp    = module.params['regexp']
+    regexp = module.params['regexp']
     compiled_regexp = None
     ignore_hidden = module.params['ignore_hidden']
     validate = module.params.get('validate', None)
@@ -255,6 +254,7 @@ def main():
     # Mission complete
     result['msg'] = "OK"
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

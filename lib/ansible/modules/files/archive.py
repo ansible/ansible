@@ -7,12 +7,12 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -146,12 +146,12 @@ from ansible.module_utils._text import to_native
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            path = dict(type='list', required=True),
-            format = dict(choices=['gz', 'bz2', 'zip', 'tar'], default='gz', required=False),
-            dest = dict(required=False, type='path'),
-            exclude_path = dict(type='list', required=False),
-            remove = dict(required=False, default=False, type='bool'),
+        argument_spec=dict(
+            path=dict(type='list', required=True),
+            format=dict(choices=['gz', 'bz2', 'zip', 'tar'], default='gz', required=False),
+            dest=dict(required=False, type='path'),
+            exclude_path=dict(type='list', required=False),
+            remove=dict(required=False, default=False, type='bool'),
         ),
         add_file_common_args=True,
         supports_check_mode=True,
@@ -235,7 +235,7 @@ def main():
                     break
 
             if i < len(arcroot):
-                arcroot = os.path.dirname(arcroot[0:i+1])
+                arcroot = os.path.dirname(arcroot[0:i + 1])
 
             arcroot += os.sep
 
@@ -393,7 +393,7 @@ def main():
                         arcfile = zipfile.ZipFile(dest, 'w', zipfile.ZIP_DEFLATED, True)
                         arcfile.write(path, path[len(arcroot):])
                         arcfile.close()
-                        state = 'archive' # because all zip files are archives
+                        state = 'archive'  # because all zip files are archives
 
                     else:
                         f_in = open(path, 'rb')
@@ -446,6 +446,7 @@ def main():
                      missing=missing,
                      expanded_paths=expanded_paths,
                      expanded_exclude_paths=expanded_exclude_paths)
+
 
 if __name__ == '__main__':
     main()
