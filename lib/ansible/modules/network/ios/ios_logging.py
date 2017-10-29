@@ -128,7 +128,7 @@ from ansible.module_utils.ios import ios_argument_spec, check_args
 
 def validate_size(value, module):
     if value:
-        if not int(4096) <= value <= int(4294967295):
+        if not int(4096) <= int(value) <= int(4294967295):
             module.fail_json(msg='size must be between 4096 and 4294967295')
         else:
             return value
