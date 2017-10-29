@@ -27,17 +27,15 @@ description:
 notes:
     - For Windows targets, use the M(win_file) module instead.
     - See also M(copy), M(template), M(assemble)
-requirements: [ ]
 author:
-    - "Ansible Core Team"
-    - "Michael DeHaan"
+    - Ansible Core Team
+    - Michael DeHaan
 options:
   path:
     description:
       - 'path to the file being managed.  Aliases: I(dest), I(name)'
     required: true
-    default: []
-    aliases: ['dest', 'name']
+    aliases: [ dest, name ]
   state:
     description:
       - If C(directory), all immediate subdirectories will be created if they
@@ -51,37 +49,31 @@ options:
         If C(touch) (new in 1.4), an empty file will be created if the C(path) does not
         exist, while an existing file or directory will receive updated file access and
         modification times (similar to the way `touch` works from the command line).
-    required: false
     default: file
-    choices: [ file, link, directory, hard, touch, absent ]
+    choices: [ absent, directory, file, hard, link, touch ]
   src:
-    required: false
-    default: null
     description:
       - path of the file to link to (applies only to C(state=link)). Will accept absolute,
         relative and nonexisting paths. Relative paths are not expanded.
   recurse:
-    required: false
-    default: "no"
-    choices: [ "yes", "no" ]
-    version_added: "1.1"
     description:
       - recursively set the specified file attributes (applies only to state=directory)
+    type: bool
+    default: 'no'
+    version_added: "1.1"
   force:
-    required: false
-    default: "no"
-    choices: [ "yes", "no" ]
     description:
       - 'force the creation of the symlinks in two cases: the source file does
         not exist (but will appear later); the destination exists and is a file (so, we need to unlink the
         "path" file and create symlink to the "src" file in place of it).'
+    type: bool
+    default: 'no'
   follow:
-    required: false
-    default: "no"
-    choices: [ "yes", "no" ]
-    version_added: "1.8"
     description:
       - 'This flag indicates that filesystem links, if they exist, should be followed.'
+    type: bool
+    default: "no"
+    version_added: "1.8"
 '''
 
 EXAMPLES = '''
@@ -145,9 +137,9 @@ def get_state(b_path):
             return 'directory'
         elif os.stat(b_path).st_nlink > 1:
             return 'hard'
-        else:
-            # could be many other things, but defaulting to file
-            return 'file'
+
+        # could be many other things, but defaulting to file
+        return 'file'
 
     return 'absent'
 
@@ -371,7 +363,7 @@ def main():
         elif prev_state == 'directory':
             if not force:
                 module.fail_json(path=path, msg='refusing to convert between %s and %s for %s' % (prev_state, state, path))
-            elif len(os.listdir(b_path)) > 0:
+            elif os.listdir(b_path):
                 # refuse to replace a directory that has files in it
                 module.fail_json(path=path, msg='the directory %s is not empty, refusing to convert it' % path)
         elif prev_state in ('file', 'hard') and not force:
