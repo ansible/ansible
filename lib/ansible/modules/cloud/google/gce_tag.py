@@ -128,13 +128,16 @@ def _union_items(baselist, comparelist):
     """Combine two lists, removing duplicates."""
     return list(set(baselist) | set(comparelist))
 
+
 def _intersect_items(baselist, comparelist):
     """Return matching items in both lists."""
     return list(set(baselist) & set(comparelist))
 
+
 def _get_changed_items(baselist, comparelist):
     """Return changed items as they relate to baselist."""
     return list(set(baselist) & set(set(baselist) ^ set(comparelist)))
+
 
 def modify_tags(gce, module, node, tags, state='present'):
     """Modify tags on an instance."""
@@ -164,6 +167,7 @@ def modify_tags(gce, module, node, tags, state='present'):
     except (GoogleBaseError, InvalidRequestError) as e:
         module.fail_json(msg=str(e), changed=False)
 
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -177,10 +181,10 @@ def main():
             project_id=dict(),
         ),
         mutually_exclusive=[
-            [ 'instance_name', 'instance_pattern' ]
+            ['instance_name', 'instance_pattern']
         ],
         required_one_of=[
-            [ 'instance_name', 'instance_pattern' ]
+            ['instance_name', 'instance_pattern']
         ]
     )
 

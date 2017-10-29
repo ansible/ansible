@@ -208,24 +208,24 @@ def publish_messages(message_list, topic):
             batch.publish(bytes(msg), **attrs)
     return True
 
+
 def pull_messages(pull_params, sub):
     """
     :rtype: tuple (output, changed)
     """
     changed = False
-    max_messages=pull_params.get('max_messages', None)
+    max_messages = pull_params.get('max_messages', None)
     message_ack = pull_params.get('message_ack', 'no')
     return_immediately = pull_params.get('return_immediately', False)
 
-    output= []
-    pulled = sub.pull(return_immediately=return_immediately,
-                    max_messages=max_messages)
+    output = []
+    pulled = sub.pull(return_immediately=return_immediately, max_messages=max_messages)
 
     for ack_id, msg in pulled:
         msg_dict = {'message_id': msg.message_id,
                     'attributes': msg.attributes,
                     'data': msg.data,
-                    'ack_id': ack_id }
+                    'ack_id': ack_id}
         output.append(msg_dict)
 
     if message_ack:
@@ -280,7 +280,7 @@ def main():
                            ack_deadline=mod_params['subscription'].get('ack_deadline', None),
                            push_endpoint=mod_params['subscription'].get('push_endpoint', None))
 
-    if mod_params['state'] ==  'absent':
+    if mod_params['state'] == 'absent':
         # Remove the most granular resource.  If subcription is specified
         # we remove it.  If only topic is specified, that is what is removed.
         # Note that a topic can be removed without first removing the subscription.
@@ -294,7 +294,7 @@ def main():
             if t.exists():
                 t.delete()
                 changed = True
-    elif mod_params['state'] ==  'present':
+    elif mod_params['state'] == 'present':
         if not t.exists():
             t.create()
             changed = True
@@ -307,7 +307,7 @@ def main():
                 # Subscription operations
                 # TODO(supertom): if more 'update' operations arise, turn this into a function.
                 s.reload()
-                push_endpoint=mod_params['subscription'].get('push_endpoint', None)
+                push_endpoint = mod_params['subscription'].get('push_endpoint', None)
                 if push_endpoint is not None:
                     if push_endpoint != s.push_endpoint:
                         if push_endpoint == 'None':
@@ -326,11 +326,9 @@ def main():
         if mod_params['publish'] and len(mod_params['publish']) > 0:
             changed = publish_messages(mod_params['publish'], t)
 
-
     json_output['changed'] = changed
     json_output.update(mod_params)
     module.exit_json(**json_output)
-
 
 if __name__ == '__main__':
     main()

@@ -136,6 +136,7 @@ CLOUD_CLIENT = 'google-cloud-spanner'
 CLOUD_CLIENT_MINIMUM_VERSION = '0.23.0'
 CLOUD_CLIENT_USER_AGENT = 'ansible-spanner-0.1'
 
+
 def get_spanner_configuration_name(config_name, project_name):
     config_name = 'projects/%s/instanceConfigs/regional-%s' % (project_name,
                                                                config_name)
