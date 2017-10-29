@@ -150,22 +150,22 @@ class BaseMeta(type):
 class Base(with_metaclass(BaseMeta, object)):
 
     # connection/transport
-    _connection  = FieldAttribute(isa='string')
-    _port        = FieldAttribute(isa='int')
+    _connection = FieldAttribute(isa='string')
+    _port = FieldAttribute(isa='int')
     _remote_user = FieldAttribute(isa='string')
 
     # variables
     _vars = FieldAttribute(isa='dict', priority=100, inherit=False)
 
     # flags and misc. settings
-    _environment         = FieldAttribute(isa='list')
-    _no_log              = FieldAttribute(isa='bool')
-    _always_run          = FieldAttribute(isa='bool')
-    _run_once            = FieldAttribute(isa='bool')
-    _ignore_errors       = FieldAttribute(isa='bool')
-    _check_mode          = FieldAttribute(isa='bool')
-    _diff                = FieldAttribute(isa='bool')
-    _any_errors_fatal    = FieldAttribute(isa='bool')
+    _environment = FieldAttribute(isa='list')
+    _no_log = FieldAttribute(isa='bool')
+    _always_run = FieldAttribute(isa='bool')
+    _run_once = FieldAttribute(isa='bool')
+    _ignore_errors = FieldAttribute(isa='bool')
+    _check_mode = FieldAttribute(isa='bool')
+    _diff = FieldAttribute(isa='bool')
+    _any_errors_fatal = FieldAttribute(isa='bool')
 
     # param names which have been deprecated/removed
     DEPRECATED_ATTRIBUTES = [
@@ -448,9 +448,9 @@ class Base(with_metaclass(BaseMeta, object)):
             except (AnsibleUndefinedVariable, UndefinedError) as e:
                 if templar._fail_on_undefined_errors and name != 'name':
                     if name == 'args':
-                        msg= "The task includes an option with an undefined variable. The error was: %s" % (to_native(e))
+                        msg = "The task includes an option with an undefined variable. The error was: %s" % (to_native(e))
                     else:
-                        msg= "The field '%s' has an invalid value, which includes an undefined variable. The error was: %s" % (name, to_native(e))
+                        msg = "The field '%s' has an invalid value, which includes an undefined variable. The error was: %s" % (name, to_native(e))
                     raise AnsibleParserError(msg, obj=self.get_ds(), orig_exc=e)
 
         self._finalized = True

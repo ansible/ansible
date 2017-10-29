@@ -2143,6 +2143,7 @@ class HPUX(User):
 
 # ===========================================
 
+
 def main():
     ssh_defaults = {
         'bits': 0,
@@ -2150,8 +2151,8 @@ def main():
         'passphrase': None,
         'comment': 'ansible-generated on %s' % socket.gethostname()
     }
-    module = AnsibleModule(
-        argument_spec = dict(
+    module=AnsibleModule(
+        argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             name=dict(required=True, aliases=['user'], type='str'),
             uid=dict(default=None, type='str'),
@@ -2182,7 +2183,7 @@ def main():
             ssh_key_file=dict(default=None, type='path'),
             ssh_key_comment=dict(default=ssh_defaults['comment'], type='str'),
             ssh_key_passphrase=dict(default=None, type='str', no_log=True),
-            update_password=dict(default='always',choices=['always','on_create'],type='str'),
+            update_password=dict(default='always', choice=['always', 'on_create'], type='str'),
             expires=dict(default=None, type='float'),
             local=dict(type='bool'),
         ),
