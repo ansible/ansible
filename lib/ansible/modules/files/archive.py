@@ -13,12 +13,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = '''
 ---
 module: archive
-version_added: 2.3
-short_description: Creates a compressed archive of one or more files or trees.
+version_added: '2.3'
+short_description: Creates a compressed archive of one or more files or trees
 extends_documentation_fragment: files
 description:
     - Packs an archive. It is the opposite of M(unarchive). By default, it assumes the compression source exists on the target. It will not copy the
@@ -31,70 +30,70 @@ options:
   format:
     description:
       - The type of compression to use.
-    choices: [ 'gz', 'bz2', 'zip' ]
-    default: 'gz'
+    choices: [ bz2, gz, tar, zip ]
+    default: gz
   dest:
     description:
       - The file name of the destination archive. This is required when C(path) refers to multiple files by either specifying a glob, a directory or
         multiple paths in a list.
-    required: false
-    default: null
   exclude_path:
-    version_added: 2.4
+    version_added: '2.4'
     description:
       - Remote absolute path, glob, or list of paths or globs for the file or files to exclude from the archive
-    required: false
   remove:
     description:
       - Remove any added source files and trees after adding to archive.
-    required: false
-    default: false
+    type: bool
+    default: 'no'
 
-author: "Ben Doherty (@bendoh)"
+author:
+- Ben Doherty (@bendoh)
 notes:
     - requires tarfile, zipfile, gzip, and bzip2 packages on target host
     - can produce I(gzip), I(bzip2) and I(zip) compressed files or archives
 '''
 
 EXAMPLES = '''
-# Compress directory /path/to/foo/ into /path/to/foo.tgz
-- archive:
+- name: Compress directory /path/to/foo/ into /path/to/foo.tgz
+  archive:
     path: /path/to/foo
     dest: /path/to/foo.tgz
 
-# Compress regular file /path/to/foo into /path/to/foo.gz and remove it
-- archive:
+- name: Compress regular file /path/to/foo into /path/to/foo.gz and remove it
+  archive:
     path: /path/to/foo
-    remove: True
+    remove: yes
 
-# Create a zip archive of /path/to/foo
-- archive:
+- name: Create a zip archive of /path/to/foo
+  archive:
     path: /path/to/foo
     format: zip
 
-# Create a bz2 archive of multiple files, rooted at /path
-- archive:
+- name: Create a bz2 archive of multiple files, rooted at /path
+  archive:
     path:
-        - /path/to/foo
-        - /path/wong/foo
+    - /path/to/foo
+    - /path/wong/foo
     dest: /path/file.tar.bz2
     format: bz2
 
-# Create a bz2 archive of a globbed path, while excluding specific dirnames - archive:
+- name: Create a bz2 archive of a globbed path, while excluding specific dirnames
+  archive:
     path:
-        - /path/to/foo/*
+    - /path/to/foo/*
     dest: /path/file.tar.bz2
     exclude_path:
-        - /path/to/foo/bar
-        - /path/to/foo/baz
+    - /path/to/foo/bar
+    - /path/to/foo/baz
     format: bz2
 
-# Create a bz2 archive of a globbed path, while excluding a glob of dirnames
+- name: Create a bz2 archive of a globbed path, while excluding a glob of dirnames
+  archive:
     path:
-        - /path/to/foo/*
+    - /path/to/foo/*
     dest: /path/file.tar.bz2
     exclude_path:
-        - /path/to/foo/ba*
+    - /path/to/foo/ba*
     format: bz2
 '''
 
@@ -130,28 +129,29 @@ expanded_exclude_paths:
     returned: always
 '''
 
-import os
-import re
-import glob
-import shutil
-import gzip
 import bz2
 import filecmp
-import zipfile
+import glob
+import gzip
+import os
+import re
+import shutil
 import tarfile
+import zipfile
 from traceback import format_exc
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            path = dict(type='list', required=True),
-            format = dict(choices=['gz', 'bz2', 'zip', 'tar'], default='gz', required=False),
-            dest = dict(required=False, type='path'),
-            exclude_path = dict(type='list', required=False),
-            remove = dict(required=False, default=False, type='bool'),
+        argument_spec=dict(
+            path=dict(type='list', required=True),
+            format=dict(type='str', default='gz', choices=['bz2', 'gz', 'tar', 'zip']),
+            dest=dict(type='path'),
+            exclude_path=dict(type='list'),
+            remove=dict(type='bool', default=False),
         ),
         add_file_common_args=True,
         supports_check_mode=True,
@@ -204,7 +204,7 @@ def main():
             else:
                 expanded_exclude_paths.append(exclude_path)
 
-    if len(expanded_paths) == 0:
+    if not expanded_paths:
         return module.fail_json(path=', '.join(paths), expanded_paths=', '.join(expanded_paths), msg='Error, no source paths were found')
 
     # If we actually matched multiple files or TRIED to, then
@@ -235,7 +235,7 @@ def main():
                     break
 
             if i < len(arcroot):
-                arcroot = os.path.dirname(arcroot[0:i+1])
+                arcroot = os.path.dirname(arcroot[0:i + 1])
 
             arcroot += os.sep
 
@@ -258,11 +258,11 @@ def main():
 
     # Multiple files, or globbiness
     elif archive:
-        if len(archive_paths) == 0:
+        if not archive_paths:
             # No source files were found, but the archive is there.
             if os.path.lexists(dest):
                 state = 'archive'
-        elif len(missing) > 0:
+        elif missing:
             # SOME source files were found, but not all of them
             state = 'incomplete'
 
@@ -342,7 +342,7 @@ def main():
                     arcfile.close()
                     state = 'archive'
 
-                if len(errors) > 0:
+                if errors:
                     module.fail_json(msg='Errors when writing archive at %s: %s' % (dest, '; '.join(errors)))
 
         if state in ['archive', 'incomplete'] and remove:
@@ -355,14 +355,14 @@ def main():
                 except OSError as e:
                     errors.append(path)
 
-            if len(errors) > 0:
+            if errors:
                 module.fail_json(dest=dest, msg='Error deleting some source files: ' + str(e), files=errors)
 
         # Rudimentary check: If size changed then file changed. Not perfect, but easy.
         if not check_mode and os.path.getsize(dest) != size:
             changed = True
 
-        if len(successes) and state != 'incomplete':
+        if successes and state != 'incomplete':
             state = 'archive'
 
     # Simple, single-file compression
@@ -393,7 +393,7 @@ def main():
                         arcfile = zipfile.ZipFile(dest, 'w', zipfile.ZIP_DEFLATED, True)
                         arcfile.write(path, path[len(arcroot):])
                         arcfile.close()
-                        state = 'archive' # because all zip files are archives
+                        state = 'archive'  # because all zip files are archives
 
                     else:
                         f_in = open(path, 'rb')
