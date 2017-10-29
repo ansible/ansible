@@ -216,9 +216,7 @@ def main():
     if not p['manifest'] and not p['execute']:
         cmd = ("%(base_cmd)s agent --onetime"
                " --ignorecache --no-daemonize --no-usecacheonfailure --no-splay"
-               " --detailed-exitcodes --verbose --color 0") % dict(
-                   base_cmd=base_cmd,
-                   )
+               " --detailed-exitcodes --verbose --color 0") % dict(base_cmd=base_cmd,)
         if p['puppetmaster']:
             cmd += " --server %s" % pipes.quote(p['puppetmaster'])
         if p['show_diff']:
