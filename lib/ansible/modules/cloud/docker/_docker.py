@@ -4,7 +4,8 @@
 # (c) 2014, Joshua Conner <joshua.conner@gmail.com>
 # (c) 2014, Pavel Antonov <antonov@adwz.ru>
 #
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# GNU General Public License v3.0+ (see COPYING or
+# https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
@@ -586,7 +587,7 @@ def get_split_image_tag(image):
         registry, resource = None, image
 
     # now we can determine if image has a tag or a digest
-    for s in ['@',':']:
+    for s in ['@', ':']:
         if s in resource:
             resource, tag = resource.split(s, 1)
             if registry:
@@ -597,6 +598,7 @@ def get_split_image_tag(image):
         resource = image
 
     return resource, tag
+
 
 def normalize_image(image):
     """
@@ -649,11 +651,13 @@ def check_dependencies(module):
     helpful error message if it isn't.
     """
     if not HAS_DOCKER_PY:
-        module.fail_json(msg="`docker-py` doesn't seem to be installed, but is required for the Ansible Docker module.")
+        module.fail_json(
+            msg="`docker-py` doesn't seem to be installed, but is required for the Ansible Docker module.")
     else:
         versioninfo = get_docker_py_versioninfo()
         if versioninfo < (0, 3, 0):
-            module.fail_json(msg="The Ansible Docker module requires `docker-py` >= 0.3.0.")
+            module.fail_json(
+                msg="The Ansible Docker module requires `docker-py` >= 0.3.0.")
 
 
 class DockerManager(object):
@@ -687,7 +691,7 @@ class DockerManager(object):
         # Clientside only
         'insecure_registry': ((0, 5, 0), '0.0'),
         'env_file': ((1, 4, 0), '0.0')
-        }
+    }
 
     def __init__(self, module):
         self.module = module
@@ -703,19 +707,22 @@ class DockerManager(object):
                 # regular volume
                 if len(parts) == 1:
                     self.volumes.append(parts[0])
-                # host mount (e.g. /mnt:/tmp, bind mounts host's /tmp to /mnt in the container)
+                # host mount (e.g. /mnt:/tmp, bind mounts host's /tmp to /mnt
+                # in the container)
                 elif 2 <= len(parts) <= 3:
                     # default to read-write
                     mode = 'rw'
                     # with supplied bind mode
                     if len(parts) == 3:
                         if parts[2] not in ["rw", "rw,Z", "rw,z", "z,rw", "Z,rw", "Z", "z", "ro", "ro,Z", "ro,z", "z,ro", "Z,ro"]:
-                            self.module.fail_json(msg='invalid bind mode ' + parts[2])
+                            self.module.fail_json(
+                                msg='invalid bind mode ' + parts[2])
                         else:
                             mode = parts[2]
                     self.binds.append("%s:%s:%s" % (parts[0], parts[1], mode))
                 else:
-                    self.module.fail_json(msg='volumes support 1 to 3 arguments')
+                    self.module.fail_json(
+                        msg='volumes support 1 to 3 arguments')
 
         self.lxc_conf = None
         if self.module.params.get('lxc_conf'):
@@ -727,11 +734,13 @@ class DockerManager(object):
 
         self.exposed_ports = None
         if self.module.params.get('expose'):
-            self.exposed_ports = self.get_exposed_ports(self.module.params.get('expose'))
+            self.exposed_ports = self.get_exposed_ports(
+                self.module.params.get('expose'))
 
         self.port_bindings = None
         if self.module.params.get('ports'):
-            self.port_bindings = self.get_port_bindings(self.module.params.get('ports'))
+            self.port_bindings = self.get_port_bindings(
+                self.module.params.get('ports'))
 
         self.links = None
         if self.module.params.get('links'):
@@ -744,13 +753,21 @@ class DockerManager(object):
             for ulimit in ulimits:
                 parts = ulimit.split(":")
                 if len(parts) == 2:
-                    self.ulimits.append({'name': parts[0], 'soft': int(parts[1]), 'hard': int(parts[1])})
+                    self.ulimits.append(
+                        {'name': parts[0],
+                         'soft': int(parts[1]),
+                         'hard': int(parts[1])})
                 elif len(parts) == 3:
-                    self.ulimits.append({'name': parts[0], 'soft': int(parts[1]), 'hard': int(parts[2])})
+                    self.ulimits.append(
+                        {'name': parts[0],
+                         'soft': int(parts[1]),
+                         'hard': int(parts[2])})
                 else:
-                    self.module.fail_json(msg='ulimits support 2 to 3 arguments')
+                    self.module.fail_json(
+                        msg='ulimits support 2 to 3 arguments')
 
-        # Connect to the docker server using any configured host and TLS settings.
+        # Connect to the docker server using any configured host and TLS
+        # settings.
 
         env_host = os.getenv('DOCKER_HOST')
         env_docker_verify = os.getenv('DOCKER_TLS_VERIFY')
@@ -786,7 +803,8 @@ class DockerManager(object):
             else:
                 parsed_url = urlparse(docker_url)
                 if ':' in parsed_url.netloc:
-                    tls_hostname = parsed_url.netloc[:parsed_url.netloc.rindex(':')]
+                    tls_hostname = parsed_url.netloc[
+                        :parsed_url.netloc.rindex(':')]
                 else:
                     tls_hostname = parsed_url
         if not tls_hostname:
@@ -794,7 +812,8 @@ class DockerManager(object):
 
         # use_tls can be one of four values:
         # no: Do not use tls
-        # encrypt: Use tls.  We may do client auth.  We will not verify the server
+        # encrypt: Use tls.  We may do client auth.
+        # We will not verify the server
         # verify: Use tls.  We may do client auth.  We will verify the server
         # None: Only use tls if the parameters for client auth were specified
         #   or tls_ca_cert (which requests verifying the server with
@@ -824,7 +843,8 @@ class DockerManager(object):
                 params['verify'] = False
 
             if params:
-                # See https://github.com/docker/docker-py/blob/d39da11/docker/utils/utils.py#L279-L296
+                # See
+                # https://github.com/docker/docker-py/blob/d39da11/docker/utils/utils.py#L279-L296
                 docker_url = docker_url.replace('tcp://', 'https://')
                 tls_config = docker.tls.TLSConfig(**params)
 
@@ -846,7 +866,8 @@ class DockerManager(object):
         api_version = self.client.version()['ApiVersion']
         for cap, req_vers in self._cap_ver_req.items():
             if (self.docker_py_versioninfo >= req_vers[0] and
-                    docker.utils.compare_version(req_vers[1], api_version) >= 0):
+                    docker.utils.compare_version(
+                        req_vers[1], api_version) >= 0):
                 self._capabilities.add(cap)
 
     def ensure_capability(self, capability, fail=True):
@@ -870,17 +891,20 @@ class DockerManager(object):
 
         api_version = self.client.version()['ApiVersion']
         self.module.fail_json(msg='Specifying the `%s` parameter requires'
-                ' docker-py: %s, docker server apiversion %s; found'
-                ' docker-py: %s, server: %s' % (
-                    capability,
-                    '.'.join(map(str, self._cap_ver_req[capability][0])),
-                    self._cap_ver_req[capability][1],
-                    '.'.join(map(str, self.docker_py_versioninfo)),
-                    api_version))
+                              ' docker-py: %s, docker server apiversion %s; found'
+                              ' docker-py: %s, server: %s' % (
+                                  capability,
+                                  '.'.join(
+                                      map(str, self._cap_ver_req[capability][0])),
+                                  self._cap_ver_req[capability][1],
+                                  '.'.join(
+                                      map(str, self.docker_py_versioninfo)),
+                                  api_version))
 
     def get_environment(self, env, env_file):
         """
-        If environment files are combined with explicit environment variables, the explicit environment variables will override the key from the env file.
+        If environment files are combined with explicit environment variables,
+        the explicit environment variables will override the key from the env file.
         """
         final_env = {}
 
@@ -899,7 +923,9 @@ class DockerManager(object):
 
     def get_links(self, links):
         """
-        Parse the links passed, if a link is specified without an alias then just create the alias of the same name as the link
+        Parse the links passed,
+        if a link is specified without an alias,
+        then just create the alias of the same name as the link
         """
         processed_links = {}
 
@@ -914,7 +940,8 @@ class DockerManager(object):
 
     def get_exposed_ports(self, expose_list):
         """
-        Parse the ports and protocols (TCP/UDP) to expose in the docker-py `create_container` call from the docker CLI-style syntax.
+        Parse the ports and protocols (TCP/UDP) to expose in the docker-py
+        `create_container` call from the docker CLI-style syntax.
         """
         if expose_list:
             exposed = []
@@ -946,8 +973,8 @@ class DockerManager(object):
 
         optionals = {}
         for optional_param in ('devices', 'dns', 'volumes_from',
-                'restart_policy', 'restart_policy_retry', 'pid', 'extra_hosts',
-                'log_driver', 'cap_add', 'cap_drop', 'read_only', 'log_opt'):
+                               'restart_policy', 'restart_policy_retry', 'pid', 'extra_hosts',
+                               'log_driver', 'cap_add', 'cap_drop', 'read_only', 'log_opt'):
             optionals[optional_param] = self.module.params.get(optional_param)
 
         if optionals['devices'] is not None:
@@ -964,9 +991,10 @@ class DockerManager(object):
 
         if optionals['restart_policy'] is not None:
             self.ensure_capability('restart_policy')
-            params['restart_policy'] = { 'Name': optionals['restart_policy'] }
+            params['restart_policy'] = {'Name': optionals['restart_policy']}
             if params['restart_policy']['Name'] == 'on-failure':
-                params['restart_policy']['MaximumRetryCount'] = optionals['restart_policy_retry']
+                params['restart_policy']['MaximumRetryCount'] = optionals[
+                    'restart_policy_retry']
 
         # docker_py only accepts 'host' or None
         if 'pid' in optionals and not optionals['pid']:
@@ -982,7 +1010,8 @@ class DockerManager(object):
 
         if optionals['log_driver'] is not None:
             self.ensure_capability('log_driver')
-            log_config = docker.utils.LogConfig(type=docker.utils.LogConfig.types.JSON)
+            log_config = docker.utils.LogConfig(
+                type=docker.utils.LogConfig.types.JSON)
             if optionals['log_opt'] is not None:
                 for k, v in optionals['log_opt'].items():
                     log_config.set_config_value(k, v)
@@ -1147,7 +1176,7 @@ class DockerManager(object):
         current = self.get_inspect_containers(running)
         defaults = self.client.info()
 
-        #Get API version
+        # Get API version
         api_version = self.client.version()['ApiVersion']
 
         image = self.get_inspect_image()
@@ -1168,7 +1197,8 @@ class DockerManager(object):
             # will be restarted when new versions of an existing image are
             # pulled.
             if container['Image'] != image['Id']:
-                self.reload_reasons.append('image ({0} => {1})'.format(container['Image'], image['Id']))
+                self.reload_reasons.append(
+                    'image ({0} => {1})'.format(container['Image'], image['Id']))
                 differing.append(container)
                 continue
 
@@ -1195,42 +1225,52 @@ class DockerManager(object):
                 actual_command = container["Config"]["Cmd"]
 
                 if actual_command != expected_command:
-                    self.reload_reasons.append('command ({0} => {1})'.format(actual_command, expected_command))
+                    self.reload_reasons.append('command ({0} => {1})'.format(
+                        actual_command, expected_command))
                     differing.append(container)
                     continue
 
             # EXPOSED PORTS
-            expected_exposed_ports = set((image['ContainerConfig'].get('ExposedPorts') or {}).keys())
+            expected_exposed_ports = set(
+                (image['ContainerConfig'].get('ExposedPorts') or {}).keys())
             for p in (self.exposed_ports or []):
                 expected_exposed_ports.add("/".join(p))
 
-            actually_exposed_ports = set((container["Config"].get("ExposedPorts") or {}).keys())
+            actually_exposed_ports = set(
+                (container["Config"].get("ExposedPorts") or {}).keys())
 
             if actually_exposed_ports != expected_exposed_ports:
-                self.reload_reasons.append('exposed_ports ({0} => {1})'.format(actually_exposed_ports, expected_exposed_ports))
+                self.reload_reasons.append('exposed_ports ({0} => {1})'.format(
+                    actually_exposed_ports, expected_exposed_ports))
                 differing.append(container)
                 continue
 
             # VOLUMES
 
-            expected_volume_keys = set((image['ContainerConfig']['Volumes'] or {}).keys())
+            expected_volume_keys = set(
+                (image['ContainerConfig']['Volumes'] or {}).keys())
             if self.volumes:
                 expected_volume_keys.update(self.volumes)
 
-            actual_volume_keys = set((container['Config']['Volumes'] or {}).keys())
+            actual_volume_keys = set(
+                (container['Config']['Volumes'] or {}).keys())
 
             if actual_volume_keys != expected_volume_keys:
-                self.reload_reasons.append('volumes ({0} => {1})'.format(actual_volume_keys, expected_volume_keys))
+                self.reload_reasons.append('volumes ({0} => {1})'.format(
+                    actual_volume_keys, expected_volume_keys))
                 differing.append(container)
                 continue
 
             # ULIMITS
 
-            expected_ulimit_keys = set(map(lambda x: '%s:%s:%s' % (x['name'],x['soft'],x['hard']), self.ulimits or []))
-            actual_ulimit_keys = set(map(lambda x: '%s:%s:%s' % (x['Name'],x['Soft'],x['Hard']), (container['HostConfig']['Ulimits'] or [])))
+            expected_ulimit_keys = set(map(lambda x: '%s:%s:%s' % (
+                x['name'], x['soft'], x['hard']), self.ulimits or []))
+            actual_ulimit_keys = set(map(lambda x: '%s:%s:%s' % (x['Name'], x['Soft'], x[
+                                     'Hard']), (container['HostConfig']['Ulimits'] or [])))
 
             if actual_ulimit_keys != expected_ulimit_keys:
-                self.reload_reasons.append('ulimits ({0} => {1})'.format(actual_ulimit_keys, expected_ulimit_keys))
+                self.reload_reasons.append('ulimits ({0} => {1})'.format(
+                    actual_ulimit_keys, expected_ulimit_keys))
                 differing.append(container)
                 continue
 
@@ -1240,25 +1280,28 @@ class DockerManager(object):
             actual_cpu_shares = container['HostConfig']['CpuShares']
 
             if expected_cpu_shares and actual_cpu_shares != expected_cpu_shares:
-                self.reload_reasons.append('cpu_shares ({0} => {1})'.format(actual_cpu_shares, expected_cpu_shares))
+                self.reload_reasons.append('cpu_shares ({0} => {1})'.format(
+                    actual_cpu_shares, expected_cpu_shares))
                 differing.append(container)
                 continue
 
             # MEM_LIMIT
 
             try:
-                expected_mem = _human_to_bytes(self.module.params.get('memory_limit'))
+                expected_mem = _human_to_bytes(
+                    self.module.params.get('memory_limit'))
             except ValueError as e:
                 self.module.fail_json(msg=str(e))
 
-            #For v1.19 API and above use HostConfig, otherwise use Config
+            # For v1.19 API and above use HostConfig, otherwise use Config
             if docker.utils.compare_version('1.19', api_version) >= 0:
                 actual_mem = container['HostConfig']['Memory']
             else:
                 actual_mem = container['Config']['Memory']
 
             if expected_mem and actual_mem != expected_mem:
-                self.reload_reasons.append('memory ({0} => {1})'.format(actual_mem, expected_mem))
+                self.reload_reasons.append(
+                    'memory ({0} => {1})'.format(actual_mem, expected_mem))
                 differing.append(container)
                 continue
 
@@ -1283,7 +1326,8 @@ class DockerManager(object):
 
             if actual_env != expected_env:
                 # Don't include the environment difference in the output.
-                self.reload_reasons.append('environment {0} => {1}'.format(actual_env, expected_env))
+                self.reload_reasons.append(
+                    'environment {0} => {1}'.format(actual_env, expected_env))
                 differing.append(container)
                 continue
 
@@ -1301,7 +1345,8 @@ class DockerManager(object):
                     actual_labels[name] = value
 
             if actual_labels != expected_labels:
-                self.reload_reasons.append('labels {0} => {1}'.format(actual_labels, expected_labels))
+                self.reload_reasons.append(
+                    'labels {0} => {1}'.format(actual_labels, expected_labels))
                 differing.append(container)
                 continue
 
@@ -1310,7 +1355,8 @@ class DockerManager(object):
             expected_hostname = self.module.params.get('hostname')
             actual_hostname = container['Config']['Hostname']
             if expected_hostname and actual_hostname != expected_hostname:
-                self.reload_reasons.append('hostname ({0} => {1})'.format(actual_hostname, expected_hostname))
+                self.reload_reasons.append('hostname ({0} => {1})'.format(
+                    actual_hostname, expected_hostname))
                 differing.append(container)
                 continue
 
@@ -1319,7 +1365,8 @@ class DockerManager(object):
             expected_domainname = self.module.params.get('domainname')
             actual_domainname = container['Config']['Domainname']
             if expected_domainname and actual_domainname != expected_domainname:
-                self.reload_reasons.append('domainname ({0} => {1})'.format(actual_domainname, expected_domainname))
+                self.reload_reasons.append('domainname ({0} => {1})'.format(
+                    actual_domainname, expected_domainname))
                 differing.append(container)
                 continue
 
@@ -1339,7 +1386,8 @@ class DockerManager(object):
             expected_stdin_open = self.module.params.get('stdin_open')
             actual_stdin_open = container['Config']['OpenStdin']
             if actual_stdin_open != expected_stdin_open:
-                self.reload_reasons.append('stdin_open ({0} => {1})'.format(actual_stdin_open, expected_stdin_open))
+                self.reload_reasons.append('stdin_open ({0} => {1})'.format(
+                    actual_stdin_open, expected_stdin_open))
                 differing.append(container)
                 continue
 
@@ -1348,7 +1396,8 @@ class DockerManager(object):
             expected_tty = self.module.params.get('tty')
             actual_tty = container['Config']['Tty']
             if actual_tty != expected_tty:
-                self.reload_reasons.append('tty ({0} => {1})'.format(actual_tty, expected_tty))
+                self.reload_reasons.append(
+                    'tty ({0} => {1})'.format(actual_tty, expected_tty))
                 differing.append(container)
                 continue
 
@@ -1360,7 +1409,8 @@ class DockerManager(object):
                 expected_lxc = set(self.lxc_conf)
                 actual_lxc = set(container['HostConfig']['LxcConf'] or [])
                 if actual_lxc != expected_lxc:
-                    self.reload_reasons.append('lxc_conf ({0} => {1})'.format(actual_lxc, expected_lxc))
+                    self.reload_reasons.append(
+                        'lxc_conf ({0} => {1})'.format(actual_lxc, expected_lxc))
                     differing.append(container)
                     continue
 
@@ -1379,7 +1429,8 @@ class DockerManager(object):
                     actual_binds.add(bind)
 
             if actual_binds != expected_binds:
-                self.reload_reasons.append('binds ({0} => {1})'.format(actual_binds, expected_binds))
+                self.reload_reasons.append(
+                    'binds ({0} => {1})'.format(actual_binds, expected_binds))
                 differing.append(container)
                 continue
 
@@ -1391,18 +1442,22 @@ class DockerManager(object):
                     if isinstance(container_port, int):
                         container_port = "{0}/tcp".format(container_port)
                     if len(config) == 1:
-                        expected_bound_ports[container_port] = [{'HostIp': "0.0.0.0", 'HostPort': ""}]
+                        expected_bound_ports[container_port] = [
+                            {'HostIp': "0.0.0.0", 'HostPort': ""}]
                     elif isinstance(config[0], tuple):
                         expected_bound_ports[container_port] = []
                         for hostip, hostport in config:
-                            expected_bound_ports[container_port].append({ 'HostIp': hostip, 'HostPort': str(hostport)})
+                            expected_bound_ports[container_port].append(
+                                {'HostIp': hostip, 'HostPort': str(hostport)})
                     else:
-                        expected_bound_ports[container_port] = [{'HostIp': config[0], 'HostPort': str(config[1])}]
+                        expected_bound_ports[container_port] = [
+                            {'HostIp': config[0], 'HostPort': str(config[1])}]
 
             actual_bound_ports = container['HostConfig']['PortBindings'] or {}
 
             if actual_bound_ports != expected_bound_ports:
-                self.reload_reasons.append('port bindings ({0} => {1})'.format(actual_bound_ports, expected_bound_ports))
+                self.reload_reasons.append('port bindings ({0} => {1})'.format(
+                    actual_bound_ports, expected_bound_ports))
                 differing.append(container)
                 continue
 
@@ -1416,7 +1471,8 @@ class DockerManager(object):
             expected_privileged = self.module.params.get('privileged')
             actual_privileged = container['HostConfig']['Privileged']
             if actual_privileged != expected_privileged:
-                self.reload_reasons.append('privileged ({0} => {1})'.format(actual_privileged, expected_privileged))
+                self.reload_reasons.append('privileged ({0} => {1})'.format(
+                    actual_privileged, expected_privileged))
                 differing.append(container)
                 continue
 
@@ -1424,14 +1480,16 @@ class DockerManager(object):
 
             expected_links = set()
             for link, alias in (self.links or {}).items():
-                expected_links.add("/{0}:{1}/{2}".format(link, container["Name"], alias))
+                expected_links.add(
+                    "/{0}:{1}/{2}".format(link, container["Name"], alias))
 
             actual_links = set()
             for link in (container['HostConfig']['Links'] or []):
                 actual_links.add(link)
 
             if actual_links != expected_links:
-                self.reload_reasons.append('links ({0} => {1})'.format(actual_links, expected_links))
+                self.reload_reasons.append(
+                    'links ({0} => {1})'.format(actual_links, expected_links))
                 differing.append(container)
                 continue
 
@@ -1440,7 +1498,8 @@ class DockerManager(object):
             expected_netmode = self.module.params.get('net') or 'bridge'
             actual_netmode = container['HostConfig']['NetworkMode'] or 'bridge'
             if actual_netmode != expected_netmode:
-                self.reload_reasons.append('net ({0} => {1})'.format(actual_netmode, expected_netmode))
+                self.reload_reasons.append('net ({0} => {1})'.format(
+                    actual_netmode, expected_netmode))
                 differing.append(container)
                 continue
 
@@ -1455,10 +1514,12 @@ class DockerManager(object):
 
             actual_devices = set()
             for device in (container['HostConfig']['Devices'] or []):
-                actual_devices.add("{PathOnHost}:{PathInContainer}:{CgroupPermissions}".format(**device))
+                actual_devices.add(
+                    "{PathOnHost}:{PathInContainer}:{CgroupPermissions}".format(**device))
 
             if actual_devices != expected_devices:
-                self.reload_reasons.append('devices ({0} => {1})'.format(actual_devices, expected_devices))
+                self.reload_reasons.append('devices ({0} => {1})'.format(
+                    actual_devices, expected_devices))
                 differing.append(container)
                 continue
 
@@ -1467,37 +1528,46 @@ class DockerManager(object):
             expected_dns = set(self.module.params.get('dns') or [])
             actual_dns = set(container['HostConfig']['Dns'] or [])
             if actual_dns != expected_dns:
-                self.reload_reasons.append('dns ({0} => {1})'.format(actual_dns, expected_dns))
+                self.reload_reasons.append(
+                    'dns ({0} => {1})'.format(actual_dns, expected_dns))
                 differing.append(container)
                 continue
 
             # VOLUMES_FROM
 
-            expected_volumes_from = set(self.module.params.get('volumes_from') or [])
-            actual_volumes_from = set(container['HostConfig']['VolumesFrom'] or [])
+            expected_volumes_from = set(
+                self.module.params.get('volumes_from') or [])
+            actual_volumes_from = set(
+                container['HostConfig']['VolumesFrom'] or [])
             if actual_volumes_from != expected_volumes_from:
-                self.reload_reasons.append('volumes_from ({0} => {1})'.format(actual_volumes_from, expected_volumes_from))
+                self.reload_reasons.append('volumes_from ({0} => {1})'.format(
+                    actual_volumes_from, expected_volumes_from))
                 differing.append(container)
 
             # LOG_DRIVER
 
             if self.ensure_capability('log_driver', False):
-                expected_log_driver = self.module.params.get('log_driver') or defaults['LoggingDriver']
-                actual_log_driver = container['HostConfig']['LogConfig']['Type']
+                expected_log_driver = self.module.params.get(
+                    'log_driver') or defaults['LoggingDriver']
+                actual_log_driver = container[
+                    'HostConfig']['LogConfig']['Type']
                 if actual_log_driver != expected_log_driver:
-                    self.reload_reasons.append('log_driver ({0} => {1})'.format(actual_log_driver, expected_log_driver))
+                    self.reload_reasons.append('log_driver ({0} => {1})'.format(
+                        actual_log_driver, expected_log_driver))
                     differing.append(container)
                     continue
 
             if self.ensure_capability('log_opt', False):
                 expected_logging_opts = self.module.params.get('log_opt') or {}
-                actual_log_opts = container['HostConfig']['LogConfig']['Config']
+                actual_log_opts = container[
+                    'HostConfig']['LogConfig']['Config']
                 if len(set(expected_logging_opts.items()) - set(actual_log_opts.items())) != 0:
                     log_opt_reasons = {
                         'added': dict(set(expected_logging_opts.items()) - set(actual_log_opts.items())),
                         'removed': dict(set(actual_log_opts.items()) - set(expected_logging_opts.items()))
                     }
-                    self.reload_reasons.append('log_opt ({0})'.format(log_opt_reasons))
+                    self.reload_reasons.append(
+                        'log_opt ({0})'.format(log_opt_reasons))
                     differing.append(container)
 
         return differing
@@ -1573,7 +1643,8 @@ class DockerManager(object):
         extra_params = {}
         if self.module.params.get('insecure_registry'):
             if self.ensure_capability('insecure_registry', fail=False):
-                extra_params['insecure_registry'] = self.module.params.get('insecure_registry')
+                extra_params['insecure_registry'] = self.module.params.get(
+                    'insecure_registry')
 
         resource = self.module.params.get('image')
         image, tag = get_split_image_tag(resource)
@@ -1586,9 +1657,11 @@ class DockerManager(object):
                     registry=self.module.params.get('registry')
                 )
             except Exception as e:
-                self.module.fail_json(msg="failed to login to the remote registry, check your username/password.", error=repr(e))
+                self.module.fail_json(
+                    msg="failed to login to the remote registry, check your username/password.", error=repr(e))
         try:
-            changes = list(self.client.pull(image, tag=tag, stream=True, **extra_params))
+            changes = list(self.client.pull(
+                image, tag=tag, stream=True, **extra_params))
             pull_success = False
             for change in changes:
                 status = json.loads(change).get('status', '')
@@ -1604,9 +1677,11 @@ class DockerManager(object):
                     break
             if not pull_success:
                 # Unrecognized status string.
-                self.module.fail_json(msg="Unrecognized status from pull.", status=status, changes=changes)
+                self.module.fail_json(
+                    msg="Unrecognized status from pull.", status=status, changes=changes)
         except Exception as e:
-            self.module.fail_json(msg="Failed to pull the specified image: %s" % resource, error=repr(e))
+            self.module.fail_json(
+                msg="Failed to pull the specified image: %s" % resource, error=repr(e))
 
     def create_containers(self, count=1):
         try:
@@ -1635,7 +1710,7 @@ class DockerManager(object):
         if self.ensure_capability('host_config', fail=False):
             params['host_config'] = self.create_host_config()
 
-        #For v1.19 API and above use HostConfig, otherwise use Config
+        # For v1.19 API and above use HostConfig, otherwise use Config
         if docker.utils.compare_version('1.19', api_version) < 0:
             params['mem_limit'] = mem_limit
         else:
@@ -1718,7 +1793,6 @@ class ContainerSet:
         Update our view of the matching containers from the Docker daemon.
         '''
 
-
         self.deployed = self.manager.get_deployed_containers()
         self.running = [c for c in self.deployed if is_running(c)]
 
@@ -1757,6 +1831,7 @@ def present(manager, containers, count, name):
         containers.notice_changed(manager.get_inspect_containers(to_remove))
         manager.remove_containers(to_remove)
 
+
 def started(manager, containers, count, name):
     '''Ensure that exactly `count` matching containers exist and are running.'''
 
@@ -1779,6 +1854,7 @@ def started(manager, containers, count, name):
         manager.stop_containers(excess)
         manager.remove_containers(excess)
 
+
 def reloaded(manager, containers, count, name):
     '''
     Ensure that exactly `count` matching containers exist and are
@@ -1793,6 +1869,7 @@ def reloaded(manager, containers, count, name):
         manager.remove_containers([container])
 
     started(manager, containers, count, name)
+
 
 def restarted(manager, containers, count, name):
     '''
@@ -1811,13 +1888,16 @@ def restarted(manager, containers, count, name):
     manager.restart_containers(containers.running)
     started(manager, containers, count, name)
 
+
 def stopped(manager, containers, count, name):
     '''Stop any matching containers that are running.'''
 
     containers.refresh()
 
     manager.stop_containers(containers.running)
-    containers.notice_changed(manager.get_inspect_containers(containers.running))
+    containers.notice_changed(
+        manager.get_inspect_containers(containers.running))
+
 
 def killed(manager, containers, count, name):
     '''Kill any matching containers that are running.'''
@@ -1825,7 +1905,9 @@ def killed(manager, containers, count, name):
     containers.refresh()
 
     manager.kill_containers(containers.running)
-    containers.notice_changed(manager.get_inspect_containers(containers.running))
+    containers.notice_changed(
+        manager.get_inspect_containers(containers.running))
+
 
 def absent(manager, containers, count, name):
     '''Stop and remove any matching containers.'''
@@ -1833,71 +1915,79 @@ def absent(manager, containers, count, name):
     containers.refresh()
 
     manager.stop_containers(containers.running)
-    containers.notice_changed(manager.get_inspect_containers(containers.deployed))
+    containers.notice_changed(
+        manager.get_inspect_containers(containers.deployed))
     manager.remove_containers(containers.deployed)
+
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            count           = dict(default=1, type='int'),
-            image           = dict(required=True),
-            pull            = dict(required=False, default='missing', choices=['missing', 'always']),
-            entrypoint      = dict(required=False, default=None, type='str'),
-            command         = dict(required=False, default=None),
-            expose          = dict(required=False, default=None, type='list'),
-            ports           = dict(required=False, default=None, type='list'),
-            publish_all_ports = dict(default=False, type='bool'),
-            volumes         = dict(default=None, type='list'),
-            volumes_from    = dict(default=None, type='list'),
-            links           = dict(default=None, type='list'),
-            devices         = dict(default=None, type='list'),
-            memory_limit    = dict(default=0),
-            memory_swap     = dict(default=0, type='int'),
-            cpu_shares      = dict(default=0, type='int'),
-            docker_url      = dict(),
-            use_tls         = dict(default=None, choices=['no', 'encrypt', 'verify']),
-            tls_client_cert = dict(required=False, default=None, type='path'),
-            tls_client_key  = dict(required=False, default=None, type='path'),
-            tls_ca_cert     = dict(required=False, default=None, type='path'),
-            tls_hostname    = dict(required=False, type='str', default=None),
-            docker_api_version = dict(required=False, default=DEFAULT_DOCKER_API_VERSION, type='str'),
-            docker_user     = dict(default=None),
-            username        = dict(default=None),
-            password        = dict(no_log=True),
-            email           = dict(),
-            registry        = dict(),
-            hostname        = dict(default=None),
-            domainname      = dict(default=None),
-            env             = dict(type='dict'),
-            env_file        = dict(default=None),
-            dns             = dict(default=None, type='list'),
-            detach          = dict(default=True, type='bool'),
-            state           = dict(default='started', choices=['present', 'started', 'reloaded', 'restarted', 'stopped', 'killed', 'absent', 'running']),
-            signal          = dict(default=None),
-            restart_policy  = dict(default=None, choices=['always', 'on-failure', 'no', 'unless-stopped']),
-            restart_policy_retry = dict(default=0, type='int'),
-            extra_hosts     = dict(type='dict'),
-            debug           = dict(default=False, type='bool'),
-            privileged      = dict(default=False, type='bool'),
-            stdin_open      = dict(default=False, type='bool'),
-            tty             = dict(default=False, type='bool'),
-            lxc_conf        = dict(default=None, type='list'),
-            name            = dict(default=None),
-            net             = dict(default=None),
-            pid             = dict(default=None),
-            insecure_registry = dict(default=False, type='bool'),
-            log_driver      = dict(default=None, choices=['json-file', 'none', 'syslog', 'journald', 'gelf', 'fluentd', 'awslogs']),
-            log_opt         = dict(default=None, type='dict'),
-            cpu_set         = dict(default=None),
-            cap_add         = dict(default=None, type='list'),
-            cap_drop        = dict(default=None, type='list'),
-            read_only       = dict(default=None, type='bool'),
-            labels          = dict(default={}, type='dict'),
-            stop_timeout    = dict(default=10, type='int'),
-            timeout         = dict(required=False, default=DEFAULT_TIMEOUT_SECONDS, type='int'),
-            ulimits         = dict(default=None, type='list'),
+        argument_spec=dict(
+            count=dict(default=1, type='int'),
+            image=dict(required=True),
+            pull=dict(required=False, default='missing',
+                      choices=['missing', 'always']),
+            entrypoint=dict(required=False, default=None, type='str'),
+            command=dict(required=False, default=None),
+            expose=dict(required=False, default=None, type='list'),
+            ports=dict(required=False, default=None, type='list'),
+            publish_all_ports=dict(default=False, type='bool'),
+            volumes=dict(default=None, type='list'),
+            volumes_from=dict(default=None, type='list'),
+            links=dict(default=None, type='list'),
+            devices=dict(default=None, type='list'),
+            memory_limit=dict(default=0),
+            memory_swap=dict(default=0, type='int'),
+            cpu_shares=dict(default=0, type='int'),
+            docker_url=dict(),
+            use_tls=dict(default=None, choices=['no', 'encrypt', 'verify']),
+            tls_client_cert=dict(required=False, default=None, type='path'),
+            tls_client_key=dict(required=False, default=None, type='path'),
+            tls_ca_cert=dict(required=False, default=None, type='path'),
+            tls_hostname=dict(required=False, type='str', default=None),
+            docker_api_version=dict(
+                required=False, default=DEFAULT_DOCKER_API_VERSION, type='str'),
+            docker_user=dict(default=None),
+            username=dict(default=None),
+            password=dict(no_log=True),
+            email=dict(),
+            registry=dict(),
+            hostname=dict(default=None),
+            domainname=dict(default=None),
+            env=dict(type='dict'),
+            env_file=dict(default=None),
+            dns=dict(default=None, type='list'),
+            detach=dict(default=True, type='bool'),
+            state=dict(default='started', choices=[
+                       'present', 'started', 'reloaded', 'restarted', 'stopped', 'killed', 'absent', 'running']),
+            signal=dict(default=None),
+            restart_policy=dict(default=None, choices=[
+                                'always', 'on-failure', 'no', 'unless-stopped']),
+            restart_policy_retry=dict(default=0, type='int'),
+            extra_hosts=dict(type='dict'),
+            debug=dict(default=False, type='bool'),
+            privileged=dict(default=False, type='bool'),
+            stdin_open=dict(default=False, type='bool'),
+            tty=dict(default=False, type='bool'),
+            lxc_conf=dict(default=None, type='list'),
+            name=dict(default=None),
+            net=dict(default=None),
+            pid=dict(default=None),
+            insecure_registry=dict(default=False, type='bool'),
+            log_driver=dict(default=None, choices=[
+                            'json-file', 'none', 'syslog', 'journald', 'gelf', 'fluentd', 'awslogs']),
+            log_opt=dict(default=None, type='dict'),
+            cpu_set=dict(default=None),
+            cap_add=dict(default=None, type='list'),
+            cap_drop=dict(default=None, type='list'),
+            read_only=dict(default=None, type='bool'),
+            labels=dict(default={}, type='dict'),
+            stop_timeout=dict(default=10, type='int'),
+            timeout=dict(required=False,
+                         default=DEFAULT_TIMEOUT_SECONDS, type='int'),
+            ulimits=dict(default=None, type='list'),
         ),
-        required_together = (
+        required_together=(
             ['tls_client_cert', 'tls_client_key'],
         ),
     )
@@ -1959,7 +2049,8 @@ def main():
                          ansible_facts=_ansible_facts(containers.changed))
 
     except DockerAPIError as e:
-        module.fail_json(changed=manager.has_changed(), msg="Docker API Error: %s" % e.explanation)
+        module.fail_json(changed=manager.has_changed(),
+                         msg="Docker API Error: %s" % e.explanation)
 
     except RequestException as e:
         module.fail_json(changed=manager.has_changed(), msg=repr(e))
