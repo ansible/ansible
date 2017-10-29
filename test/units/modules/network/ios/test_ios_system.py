@@ -42,7 +42,7 @@ class TestIosSystemModule(TestIosModule):
         self.mock_get_config.stop()
         self.mock_load_config.stop()
 
-    def load_fixtures(self, commnads=None):
+    def load_fixtures(self, commands=None):
         self.get_config.return_value = load_fixture('ios_system_config.cfg')
         self.load_config.return_value = None
 
