@@ -36,13 +36,17 @@ options:
       - Port number for ssh on the destination host. Prior to ansible 2.0, the ansible_ssh_port inventory var took precedence over this value.
     default: Value of ansible_ssh_port for this host, remote_port config setting, or the value from ssh client configuration if none of those are set
     version_added: "1.5"
-  mode:
+  direction:
     description:
       - Specify the direction of the synchronization. In push mode the localhost or delegate is the source; In pull mode the remote host in context
         is the source.
+      - This option was previously called I(mode), but was renamed to improve consistency with other file modules.
+      - The alias I(mode) is still available, but may go away in a future release.
     required: false
     choices: [ 'push', 'pull' ]
     default: 'push'
+    aliases:
+      - mode
   archive:
     description:
       - Mirrors the rsync archive flag, enables recursive, links, perms, times, owner, group flags and -D.
@@ -89,42 +93,65 @@ options:
     choices: [ 'yes', 'no' ]
     default: the value of the archive option
     required: false
-  links:
+  preserve_links:
     description:
       - Copy symlinks as symlinks.
+      - If both this and I(copy_links) are C(no), symlinks are ignored.
+      - This option was previously called I(links), but was renamed to improve consistency.
+      - The alias I(links) is still available, but may go away in a future release.
     choices: [ 'yes', 'no' ]
     default: the value of the archive option
     required: false
+    aliases:
+      - links
   copy_links:
     description:
       - Copy symlinks as the item that they point to (the referent) is copied, rather than the symlink.
+      - This option is not the exact opposite of I(preserve_links)=C(no). If both I(copy_links) and I(preserve_links) or I(archive) are C(no),
+        then nothing is created at the destination if a symlink is encountered.
     choices: [ 'yes', 'no' ]
     default: 'no'
     required: false
-  perms:
+  preserve_mode:
     description:
       - Preserve permissions.
+      - This option was previously called I(perms), but was renamed to improve consistency.
+      - The alias I(perms) is still available, but may go away in a future release.
     choices: [ 'yes', 'no' ]
     default: the value of the archive option
     required: false
-  times:
+    aliases:
+      - perms
+  preserve_times:
     description:
-      - Preserve modification times
+      - Preserve modification times.
+      - This option was previously called I(times), but was renamed to improve consistency.
+      - The alias I(times) is still available, but may go away in a future release.
     choices: [ 'yes', 'no' ]
     default: the value of the archive option
     required: false
-  owner:
+    aliases:
+      - times
+  preserve_owner:
     description:
-      - Preserve owner (super user only)
+      - Preserve owner. (super user only)
+      - This option was previously called I(owner), but was renamed to improve consistency with other file modules.
+      - The alias I(owner) is still available, but may go away in a future release.
     choices: [ 'yes', 'no' ]
     default: the value of the archive option
     required: false
-  group:
+    aliases:
+      - owner
+  preserve_group:
     description:
-      - Preserve group
+      - Preserve group.
+      - This option was previously called I(group), but was renamed to improve consistency with other file modules.
+      - The alias I(group) is still available, but may go away in a future release.
     choices: [ 'yes', 'no' ]
     default: the value of the archive option
     required: false
+    aliases:
+      - group
   rsync_path:
     description:
       - Specify the rsync command to run on the remote host. See C(--rsync-path) on the rsync man page.
@@ -207,7 +234,7 @@ EXAMPLES = '''
 
 # Synchronization using rsync protocol (pull)
 - synchronize:
-    mode: pull
+    direction: pull
     src: rsync://somehost.com/path/
     dest: /some/absolute/path/
 
@@ -219,7 +246,7 @@ EXAMPLES = '''
 
 # Synchronization using rsync protocol on delegate host (pull)
 - synchronize:
-    mode: pull
+    direction: pull
     src: rsync://somehost.com/path/
     dest: /some/absolute/path/
   delegate_to: delegate.host
@@ -241,14 +268,14 @@ EXAMPLES = '''
     src: some/relative/path
     dest: /some/absolute/path
     checksum: yes
-    times: no
+    preserve_times: no
 
 # Synchronization without --archive options enabled except use --links
 - synchronize:
     src: some/relative/path
     dest: /some/absolute/path
     archive: no
-    links: yes
+    preserve_links: yes
 
 # Synchronization of two paths both on the control machine
 - synchronize:
@@ -258,7 +285,7 @@ EXAMPLES = '''
 
 # Synchronization of src on the inventory host to the dest on the localhost in pull mode
 - synchronize:
-    mode: pull
+    direction: pull
     src: some/relative/path
     dest: /some/absolute/path
 
@@ -363,19 +390,19 @@ def main():
             existing_only = dict(default='no', type='bool'),
             dirs  = dict(default='no', type='bool'),
             recursive = dict(type='bool'),
-            links = dict(type='bool'),
+            preserve_links = dict(type='bool', aliases=['links']),
             copy_links = dict(default='no', type='bool'),
-            perms = dict(type='bool'),
-            times = dict(type='bool'),
-            owner = dict(type='bool'),
-            group = dict(type='bool'),
+            preserve_mode = dict(type='bool', aliases=['perms']),
+            preserve_times = dict(type='bool', aliases=['times']),
+            preserve_owner = dict(type='bool', aliases=['owner']),
+            preserve_group = dict(type='bool', aliases=['group']),
             set_remote_user = dict(default='yes', type='bool'),
             rsync_timeout = dict(type='int', default=0),
             rsync_opts = dict(type='list'),
             ssh_args = dict(type='str'),
             partial = dict(default='no', type='bool'),
             verify_host = dict(default='no', type='bool'),
-            mode = dict(default='push', choices=['push', 'pull']),
+            direction = dict(default='push', choices=['push', 'pull'], aliases=['mode']),
         ),
         supports_check_mode = True
     )
@@ -403,15 +430,22 @@ def main():
     partial = module.params['partial']
     # the default of these params depends on the value of archive
     recursive = module.params['recursive']
-    links = module.params['links']
+    preserve_links = module.params['preserve_links']
     copy_links = module.params['copy_links']
-    perms = module.params['perms']
-    times = module.params['times']
-    owner = module.params['owner']
-    group = module.params['group']
+    preserve_mode = module.params['preserve_mode']
+    preserve_times = module.params['preserve_times']
+    preserve_owner = module.params['preserve_owner']
+    preserve_group = module.params['preserve_group']
     rsync_opts = module.params['rsync_opts']
     ssh_args = module.params['ssh_args']
     verify_host = module.params['verify_host']
+
+    # Notify the user of deprecated parameters
+    for param in (('links', 'preserve_links'), ('perms', 'preserve_mode'),
+                  ('times', 'preserve_times'), ('owner', 'preserve_owner'),
+                  ('group', 'preserve_group'), ('mode', 'direction')):
+        if param[0] in module.params:
+            module.deprecate(msg="Please use parameter " + param[1] + " instead of " + param[0])
 
     if '/' not in rsync:
         rsync = module.get_bin_path(rsync, required=True)
@@ -435,28 +469,28 @@ def main():
         cmd.append('--archive')
         if recursive is False:
             cmd.append('--no-recursive')
-        if links is False:
+        if preserve_links is False:
             cmd.append('--no-links')
-        if perms is False:
+        if preserve_mode is False:
             cmd.append('--no-perms')
-        if times is False:
+        if preserve_times is False:
             cmd.append('--no-times')
-        if owner is False:
+        if preserve_owner is False:
             cmd.append('--no-owner')
-        if group is False:
+        if preserve_group is False:
             cmd.append('--no-group')
     else:
         if recursive is True:
             cmd.append('--recursive')
-        if links is True:
+        if preserve_links is True:
             cmd.append('--links')
-        if perms is True:
+        if preserve_mode is True:
             cmd.append('--perms')
-        if times is True:
+        if preserve_times is True:
             cmd.append('--times')
-        if owner is True:
+        if preserve_owner is True:
             cmd.append('--owner')
-        if group is True:
+        if preserve_group is True:
             cmd.append('--group')
     if dirs:
         cmd.append('--dirs')
