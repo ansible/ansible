@@ -17,6 +17,8 @@ rpm-build
 .idea
 #IntelliJ IDEA stuff..
 *.iml
+#VSCode stuff..
+.vscode/
 # Mac OS X stuff...
 .DS_Store
 # manpage build stuff...
@@ -67,6 +69,7 @@ results.xml
 coverage.xml
 /test/units/cover-html
 /test/integration/targets/*/backup/
+/test/cache/*
 # Development
 /test/develop
 venv

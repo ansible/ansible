@@ -1,20 +1,17 @@
 #!/usr/bin/python -tt
 # -*- coding: utf-8 -*-
 
-# (c) 2012, Afterburn <http://github.com/afterburn>
-# (c) 2013, Aaron Bull Schaefer <aaron@elasticdog.com>
-# (c) 2015, Indrajit Raychaudhuri <irc+code@indrajit.com>
-#
+# Copyright: (c) 2012, Afterburn <http://github.com/afterburn>
+# Copyright: (c) 2013, Aaron Bull Schaefer <aaron@elasticdog.com>
+# Copyright: (c) 2015, Indrajit Raychaudhuri <irc+code@indrajit.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -25,34 +22,28 @@ description:
       Arch Linux and its variants.
 version_added: "1.0"
 author:
-    - "Indrajit Raychaudhuri (@indrajitr)"
-    - "'Aaron Bull Schaefer (@elasticdog)' <aaron@elasticdog.com>"
-    - "Afterburn"
-notes: []
-requirements: []
+    - Indrajit Raychaudhuri (@indrajitr)
+    - Aaron Bull Schaefer (@elasticdog) <aaron@elasticdog.com>
+    - Afterburn
 options:
     name:
         description:
             - Name of the package to install, upgrade, or remove.
-        required: false
-        default: null
-        aliases: [ 'pkg', 'package' ]
+        aliases: [ package, pkg ]
 
     state:
         description:
             - Desired state of the package.
-        required: false
-        default: "present"
-        choices: ["present", "absent", "latest"]
+        default: present
+        choices: [ absent, latest, present ]
 
     recurse:
         description:
             - When removing a package, also remove its dependencies, provided
               that they are not required by other packages and were not
               explicitly installed by a user.
-        required: false
+        type: bool
         default: no
-        choices: ["yes", "no"]
         version_added: "1.3"
 
     force:
@@ -60,26 +51,23 @@ options:
             - When removing package - force remove package, without any
               checks. When update_cache - force redownload repo
               databases.
-        required: false
+        type: bool
         default: no
-        choices: ["yes", "no"]
         version_added: "2.0"
 
     update_cache:
         description:
             - Whether or not to refresh the master package lists. This can be
               run as part of a package installation or as a separate step.
-        required: false
+        type: bool
         default: no
-        choices: ["yes", "no"]
-        aliases: [ 'update-cache' ]
+        aliases: [ update-cache ]
 
     upgrade:
         description:
-            - Whether or not to upgrade whole system
-        required: false
+            - Whether or not to upgrade whole system.
+        type: bool
         default: no
-        choices: ["yes", "no"]
         version_added: "2.0"
 '''
 
@@ -88,53 +76,56 @@ packages:
     description: a list of packages that have been changed
     returned: when upgrade is set to yes
     type: list
-    sample: ['package', 'other-package']
+    sample: [ package, other-package ]
 '''
 
 EXAMPLES = '''
-# Install package foo
-- pacman:
+- name: Install package foo
+  pacman:
     name: foo
     state: present
 
-# Upgrade package foo
-- pacman:
+- name: Upgrade package foo
+  pacman:
     name: foo
     state: latest
     update_cache: yes
 
-# Remove packages foo and bar
-- pacman:
+- name: Remove packages foo and bar
+  pacman:
     name: foo,bar
     state: absent
 
-# Recursively remove package baz
-- pacman:
+- name: Recursively remove package baz
+  pacman:
     name: baz
     state: absent
     recurse: yes
 
-# Run the equivalent of "pacman -Sy" as a separate step
-- pacman:
+- name: Run the equivalent of "pacman -Sy" as a separate step
+  pacman:
     update_cache: yes
 
-# Run the equivalent of "pacman -Su" as a separate step
-- pacman:
+- name: Run the equivalent of "pacman -Su" as a separate step
+  pacman:
     upgrade: yes
 
-# Run the equivalent of "pacman -Syu" as a separate step
-- pacman:
+- name: Run the equivalent of "pacman -Syu" as a separate step
+  pacman:
     update_cache: yes
     upgrade: yes
 
-# Run the equivalent of "pacman -Rdd", force remove package baz
-- pacman:
+- name: Run the equivalent of "pacman -Rdd", force remove package baz
+  pacman:
     name: baz
     state: absent
     force: yes
 '''
 
 import re
+
+from ansible.module_utils.basic import AnsibleModule
+
 
 def get_version(pacman_output):
     """Take pacman -Qi or pacman -Si output and get the Version"""
@@ -143,6 +134,7 @@ def get_version(pacman_output):
         if 'Version' in line:
             return line.split(':')[1].strip()
     return None
+
 
 def query_package(module, pacman_path, name, state="present"):
     """Query the package status in both the local system and the repository. Returns a boolean to indicate if the package is installed, a second
@@ -186,6 +178,7 @@ def update_package_db(module, pacman_path):
     else:
         module.fail_json(msg="could not update package db")
 
+
 def upgrade(module, pacman_path):
     cmdupgrade = "%s -Suq --noconfirm" % (pacman_path)
     cmdneedrefresh = "%s -Qu" % (pacman_path)
@@ -215,6 +208,7 @@ def upgrade(module, pacman_path):
             module.fail_json(msg="Could not upgrade")
     else:
         module.exit_json(changed=False, msg='Nothing to upgrade', packages=packages)
+
 
 def remove_packages(module, pacman_path, packages):
     data = []
@@ -296,7 +290,7 @@ def install_packages(module, pacman_path, state, packages, package_files):
             module.fail_json(msg="failed to install %s: %s" % (" ".join(to_install_repos), stderr))
 
         data = stdout.split('\n')[3].split(' ')[2:]
-        data = [ i for i in data if i != '' ]
+        data = [i for i in data if i != '']
         for i, pkg in enumerate(data):
             data[i] = re.sub('-[0-9].*$', '', data[i].split('/')[-1])
             if module._diff:
@@ -312,7 +306,7 @@ def install_packages(module, pacman_path, state, packages, package_files):
             module.fail_json(msg="failed to install %s: %s" % (" ".join(to_install_files), stderr))
 
         data = stdout.split('\n')[3].split(' ')[2:]
-        data = [ i for i in data if i != '' ]
+        data = [i for i in data if i != '']
         for i, pkg in enumerate(data):
             data[i] = re.sub('-[0-9].*$', '', data[i].split('/')[-1])
             if module._diff:
@@ -327,6 +321,7 @@ def install_packages(module, pacman_path, state, packages, package_files):
         module.exit_json(changed=True, msg="installed %s package(s). %s" % (install_c, message), diff=diff)
 
     module.exit_json(changed=False, msg="package(s) already installed. %s" % (message), diff=diff)
+
 
 def check_packages(module, pacman_path, packages, state):
     would_be_changed = []
@@ -364,7 +359,7 @@ def expand_package_groups(module, pacman_path, pkgs):
     expanded = []
 
     for pkg in pkgs:
-        if pkg: # avoid empty strings
+        if pkg:  # avoid empty strings
             cmd = "%s -Sgq %s" % (pacman_path, pkg)
             rc, stdout, stderr = module.run_command(cmd, check_rc=False)
 
@@ -382,16 +377,16 @@ def expand_package_groups(module, pacman_path, pkgs):
 
 def main():
     module = AnsibleModule(
-        argument_spec    = dict(
-            name         = dict(aliases=['pkg', 'package'], type='list'),
-            state        = dict(default='present', choices=['present', 'installed', "latest", 'absent', 'removed']),
-            recurse      = dict(default=False, type='bool'),
-            force        = dict(default=False, type='bool'),
-            upgrade      = dict(default=False, type='bool'),
-            update_cache = dict(default=False, aliases=['update-cache'], type='bool')
+        argument_spec=dict(
+            name=dict(type='list', aliases=['package', 'pkg']),
+            state=dict(type='str', default='present', choices=['absent', 'installed', 'latest', 'present', 'removed']),
+            recurse=dict(type='bool', default=False),
+            force=dict(type='bool', default=False),
+            upgrade=dict(type='bool', default=False),
+            update_cache=dict(type='bool', default=False, aliases=['update-cache']),
         ),
-        required_one_of = [['name', 'update_cache', 'upgrade']],
-        supports_check_mode = True)
+        required_one_of=[['name', 'update_cache', 'upgrade']],
+        supports_check_mode=True),
 
     pacman_path = module.get_bin_path('pacman', True)
 
@@ -419,7 +414,7 @@ def main():
 
         pkg_files = []
         for i, pkg in enumerate(pkgs):
-            if not pkg: # avoid empty strings
+            if not pkg:  # avoid empty strings
                 continue
             elif re.match(".*\.pkg\.tar(\.(gz|bz2|xz|lrz|lzo|Z))?$", pkg):
                 # The package given is a filename, extract the raw pkg name from
@@ -437,8 +432,6 @@ def main():
         elif p['state'] == 'absent':
             remove_packages(module, pacman_path, pkgs)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == "__main__":
     main()

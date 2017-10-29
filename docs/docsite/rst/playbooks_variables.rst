@@ -762,41 +762,63 @@ The contents of each variables file is a simple YAML dictionary, like this::
 Passing Variables On The Command Line
 `````````````````````````````````````
 
-In addition to ``vars_prompt`` and ``vars_files``, it is possible to send variables over
-the Ansible command line.  This is particularly useful when writing a generic release playbook
-where you may want to pass in the version of the application to deploy::
+In addition to ``vars_prompt`` and ``vars_files``, it is possible to set variables at the
+command line using the ``--extra-vars`` (or ``-e``) argument.  Variables can be defined using
+a single quoted string (containing one or more variables) using one of the formats below 
+
+key=value format::
 
     ansible-playbook release.yml --extra-vars "version=1.23.45 other_variable=foo"
-
-This is useful, for, among other things, setting the hosts group or the user for the playbook.
-
-Example::
-
-    ---
-
-    - hosts: '{{ hosts }}'
-      remote_user: '{{ user }}'
-
-      tasks:
-         - ...
-
-    ansible-playbook release.yml --extra-vars "hosts=vipers user=starbuck"
-
-As of Ansible 1.2, you can also pass in extra vars as quoted JSON, like so::
-
-    --extra-vars '{"pacman":"mrs","ghosts":["inky","pinky","clyde","sue"]}'
-
-The ``key=value`` form is obviously simpler, but it's there if you need it!
 
 .. note:: Values passed in using the ``key=value`` syntax are interpreted as strings.
           Use the JSON format if you need to pass in anything that shouldn't be a string (Booleans, integers, floats, lists etc).
 
-As of Ansible 1.3, extra vars can be loaded from a JSON file with the ``@`` syntax::
+.. versionadded:: 1.2
 
-    --extra-vars "@some_file.json"
+JSON string format::
 
-Also as of Ansible 1.3, extra vars can be formatted as YAML, either on the command line
-or in a file as above.
+    ansible-playbook release.yml --extra-vars '{"version":"1.23.45","other_variable":"foo"}'
+    ansible-playbook arcade.yml --extra-vars '{"pacman":"mrs","ghosts":["inky","pinky","clyde","sue"]}'
+
+.. versionadded:: 1.3
+
+YAML string format::
+
+    ansible-playbook release.yml --extra-vars '
+    version: "1.23.45"
+    other_variable: foo'
+
+    ansible-playbook arcade.yml --extra-vars '
+    pacman: mrs
+    ghosts:
+    - inky
+    - pinky
+    - clyde
+    - sue'
+
+.. versionadded:: 1.3
+
+vars from a JSON or YAML file::
+
+    ansible-playbook release.yml --extra-vars "@some_file.json"
+
+This is useful for, among other things, setting the hosts group or the user for the playbook.
+
+Escaping quotes and other special characters:
+
+.. versionadded:: 1.2
+
+Ensure you're escaping quotes appropriately for both your markup (e.g. JSON), and for 
+the shell you're operating in.::
+
+    ansible-playbook arcade.yml --extra-vars "{\"name\":\"Conan O\'Brien\"}"
+    ansible-playbook arcade.yml --extra-vars '{"name":"Conan O'\\\''Brien"}'
+    ansible-playbook script.yml --extra-vars "{\"dialog\":\"He said \\\"I just can\'t get enough of those single and double-quotes"\!"\\\"\"}"
+
+.. versionadded:: 1.3
+
+In these cases, it's probably best to use a JSON or YAML file containing the variable 
+definitions.
 
 .. _ansible_variable_precedence:
 

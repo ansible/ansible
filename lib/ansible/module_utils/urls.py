@@ -700,10 +700,13 @@ class SSLValidationHandler(urllib_request.BaseHandler):
         return True
 
     def _make_context(self, to_add_ca_cert_path):
-        if HAS_URLLIB3_PYOPENSSLCONTEXT:
+        if HAS_SSLCONTEXT:
+            context = create_default_context()
+        elif HAS_URLLIB3_PYOPENSSLCONTEXT:
             context = PyOpenSSLContext(PROTOCOL)
         else:
-            context = create_default_context()
+            raise NotImplementedError('Host libraries are too old to support creating an sslcontext')
+
         if to_add_ca_cert_path:
             context.load_verify_locations(to_add_ca_cert_path)
         return context
@@ -712,8 +715,11 @@ class SSLValidationHandler(urllib_request.BaseHandler):
         tmp_ca_cert_path, to_add_ca_cert_path, paths_checked = self.get_ca_certs()
         https_proxy = os.environ.get('https_proxy')
         context = None
-        if HAS_SSLCONTEXT or HAS_URLLIB3_PYOPENSSLCONTEXT:
+        try:
             context = self._make_context(to_add_ca_cert_path)
+        except Exception:
+            # We'll make do with no context below
+            pass
 
         # Detect if 'no_proxy' environment variable is set and if our URL is included
         use_proxy = self.detect_no_proxy(req.get_full_url())
@@ -728,7 +734,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
                 port = proxy_parts.get('port') or 443
                 s = socket.create_connection((proxy_parts.get('hostname'), port))
                 if proxy_parts.get('scheme') == 'http':
-                    s.sendall(self.CONNECT_COMMAND % (self.hostname, self.port))
+                    s.sendall(to_bytes(self.CONNECT_COMMAND % (self.hostname, self.port), errors='surrogate_or_strict'))
                     if proxy_parts.get('username'):
                         credentials = "%s:%s" % (proxy_parts.get('username', ''), proxy_parts.get('password', ''))
                         s.sendall(b'Proxy-Authorization: Basic %s\r\n' % base64.b64encode(to_bytes(credentials, errors='surrogate_or_strict')).strip())

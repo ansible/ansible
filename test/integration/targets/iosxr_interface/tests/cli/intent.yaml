@@ -3,15 +3,15 @@
 
 - name: Setup (interface is up)
   iosxr_interface:
-    name: GigabitEthernet0/0/0/5
-    description: test_interface_5
+    name: GigabitEthernet0/0/0/1
+    description: test_interface_1
     enabled: True
     state: present
   register: result
 
 - name: Check intent arguments
   iosxr_interface:
-    name: GigabitEthernet0/0/0/5
+    name: GigabitEthernet0/0/0/1
     state: up
     delay: 20
   register: result
@@ -22,7 +22,7 @@
 
 - name: Check intent arguments (failed condition)
   iosxr_interface:
-    name: GigabitEthernet0/0/0/5
+    name: GigabitEthernet0/0/0/1
     state: down
   ignore_errors: yes
   register: result
@@ -34,7 +34,7 @@
 
 - name: Config + intent
   iosxr_interface:
-    name: GigabitEthernet0/0/0/5
+    name: GigabitEthernet0/0/0/1
     enabled: False
     state: down
     delay: 20
@@ -46,7 +46,7 @@
 
 - name: Config + intent (fail)
   iosxr_interface:
-    name: GigabitEthernet0/0/0/5
+    name: GigabitEthernet0/0/0/1
     enabled: False
     state: up
   ignore_errors: yes
@@ -60,7 +60,7 @@
 - name: Aggregate config + intent (pass)
   iosxr_interface:
     aggregate:
-    - name: GigabitEthernet0/0/0/5
+    - name: GigabitEthernet0/0/0/1
       enabled: True
       state: up
       delay: 20

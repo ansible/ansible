@@ -95,6 +95,8 @@ class CallbackModule(CallbackBase):
         else:
 
             if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
+                if result._task.action == 'debug' and 'changed' in result._result:
+                    del result._result['changed']
                 msg += " => %s" % (self._dump_results(result._result),)
             self._display.display(msg, color=color)
 

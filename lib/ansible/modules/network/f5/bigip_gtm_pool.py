@@ -1,43 +1,32 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright 2017 F5 Networks Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 F5 Networks Inc.
+# GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: bigip_gtm_pool
-short_description: Manages F5 BIG-IP GTM pools.
+short_description: Manages F5 BIG-IP GTM pools
 description:
     - Manages F5 BIG-IP GTM pools.
 version_added: "2.4"
 options:
   state:
     description:
-        - Pool member state. When C(present), ensures that the pool is
-          created and enabled. When C(absent), ensures that the pool is
-          removed from the system. When C(enabled) or C(disabled), ensures
-          that the pool is enabled or disabled (respectively) on the remote
-          device.
-    required: True
+      - Pool member state. When C(present), ensures that the pool is
+        created and enabled. When C(absent), ensures that the pool is
+        removed from the system. When C(enabled) or C(disabled), ensures
+        that the pool is enabled or disabled (respectively) on the remote
+        device.
     choices:
       - present
       - absent
@@ -128,6 +117,11 @@ options:
     description:
       - Name of the GTM pool.
     required: True
+  partition:
+    description:
+      - Device partition to manage resources on.
+    default: Common
+    version_added: 2.5
 notes:
   - Requires the f5-sdk Python package on the host. This is as easy as
     pip install f5-sdk.
@@ -141,57 +135,62 @@ author:
   - Tim Rupp (@caphrim007)
 '''
 
-RETURN = '''
+RETURN = r'''
 preferred_lb_method:
-    description: New preferred load balancing method for the pool.
-    returned: changed
-    type: string
-    sample: "topology"
+  description: New preferred load balancing method for the pool.
+  returned: changed
+  type: string
+  sample: topology
 alternate_lb_method:
-    description: New alternate load balancing method for the pool.
-    returned: changed
-    type: string
-    sample: "drop-packet"
+  description: New alternate load balancing method for the pool.
+  returned: changed
+  type: string
+  sample: drop-packet
 fallback_lb_method:
-    description: New fallback load balancing method for the pool.
-    returned: changed
-    type: string
-    sample: "fewest-hops"
+  description: New fallback load balancing method for the pool.
+  returned: changed
+  type: string
+  sample: fewest-hops
 fallback_ip:
-    description: New fallback IP used when load balacing using the C(fallback_ip) method.
-    returned: changed
-    type: string
-    sample: "10.10.10.10"
+  description: New fallback IP used when load balacing using the C(fallback_ip) method.
+  returned: changed
+  type: string
+  sample: 10.10.10.10
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Create a GTM pool
   bigip_gtm_pool:
-      server: "lb.mydomain.com"
-      user: "admin"
-      password: "secret"
-      name: "my_pool"
+    server: lb.mydomain.com
+    user: admin
+    password: secret
+    name: my_pool
   delegate_to: localhost
 
 - name: Disable pool
   bigip_gtm_pool:
-      server: "lb.mydomain.com"
-      user: "admin"
-      password: "secret"
-      state: "disabled"
-      name: "my_pool"
+    server: lb.mydomain.com
+    user: admin
+    password: secret
+    state: disabled
+    name: my_pool
   delegate_to: localhost
 '''
 
 
 from distutils.version import LooseVersion
-from ansible.module_utils.f5_utils import (
-    AnsibleF5Client,
-    AnsibleF5Parameters,
-    HAS_F5SDK,
-    F5ModuleError,
-    iControlUnexpectedHTTPError
-)
+from ansible.module_utils.f5_utils import AnsibleF5Client
+from ansible.module_utils.f5_utils import AnsibleF5Parameters
+from ansible.module_utils.f5_utils import HAS_F5SDK
+from ansible.module_utils.f5_utils import F5ModuleError
+from ansible.module_utils.six import iteritems
+from collections import defaultdict
+
+
+try:
+    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+except ImportError:
+    HAS_F5SDK = False
 
 try:
     from netaddr import IPAddress, AddrFormatError
@@ -214,7 +213,7 @@ class Parameters(AnsibleF5Parameters):
     }
     updatables = [
         'preferred_lb_method', 'alternate_lb_method', 'fallback_lb_method',
-        'fallback_ip'
+        'fallback_ip', 'state'
     ]
     returnables = [
         'preferred_lb_method', 'alternate_lb_method', 'fallback_lb_method',
@@ -222,8 +221,38 @@ class Parameters(AnsibleF5Parameters):
     ]
     api_attributes = [
         'loadBalancingMode', 'alternateMode', 'fallbackMode', 'verifyMemberAvailability',
-        'fallbackIpv4', 'fallbackIpv6', 'fallbackIp'
+        'fallbackIpv4', 'fallbackIpv6', 'fallbackIp', 'enabled', 'disabled'
     ]
+
+    def __init__(self, params=None):
+        self._values = defaultdict(lambda: None)
+        self._values['__warnings'] = []
+        if params:
+            self.update(params=params)
+
+    def update(self, params=None):
+        if params:
+            for k, v in iteritems(params):
+                if self.api_map is not None and k in self.api_map:
+                    map_key = self.api_map[k]
+                else:
+                    map_key = k
+
+                # Handle weird API parameters like `dns.proxy.__iter__` by
+                # using a map provided by the module developer
+                class_attr = getattr(type(self), map_key, None)
+                if isinstance(class_attr, property):
+                    # There is a mapped value for the api_map key
+                    if class_attr.fset is None:
+                        # If the mapped value does not have
+                        # an associated setter
+                        self._values[map_key] = v
+                    else:
+                        # The mapped value has a setter
+                        setattr(self, map_key, v)
+                else:
+                    # If the mapped value is not a @property
+                    self._values[map_key] = v
 
     def to_return(self):
         result = {}
@@ -278,6 +307,8 @@ class Parameters(AnsibleF5Parameters):
             return None
         if self._values['fallback_ip'] == 'any':
             return 'any'
+        if self._values['fallback_ip'] == 'any6':
+            return 'any6'
         try:
             address = IPAddress(self._values['fallback_ip'])
             if address.version == 4:
@@ -298,25 +329,52 @@ class Parameters(AnsibleF5Parameters):
 
     @property
     def enabled(self):
-        if self._values['state'] == 'disabled':
-            return False
-        elif self._values['state'] in ['present', 'enabled']:
-            return True
-        elif self._values['enabled'] is True:
-            return True
-        else:
+        if self._values['enabled'] is None:
             return None
+        return True
 
     @property
     def disabled(self):
-        if self._values['state'] == 'disabled':
-            return True
-        elif self._values['state'] in ['present', 'enabled']:
-            return False
-        elif self._values['disabled'] is True:
-            return True
-        else:
+        if self._values['disabled'] is None:
             return None
+        return True
+
+
+class Changes(Parameters):
+    pass
+
+
+class Difference(object):
+    def __init__(self, want, have=None):
+        self.want = want
+        self.have = have
+
+    def compare(self, param):
+        try:
+            result = getattr(self, param)
+            return result
+        except AttributeError:
+            return self.__default(param)
+
+    def __default(self, param):
+        attr1 = getattr(self.want, param)
+        try:
+            attr2 = getattr(self.have, param)
+            if attr1 != attr2:
+                return attr1
+        except AttributeError:
+            return attr1
+
+    @property
+    def state(self):
+        if self.want.state == 'disabled' and self.have.enabled:
+            return dict(
+                disabled=True
+            )
+        elif self.want.state in ['present', 'enabled'] and self.have.disabled:
+            return dict(
+                enabled=True
+            )
 
 
 class ModuleManager(object):
@@ -361,7 +419,7 @@ class BaseManager(object):
         self.client = client
         self.have = None
         self.want = Parameters(self.client.module.params)
-        self.changes = Parameters()
+        self.changes = Changes()
 
     def _set_changed_options(self):
         changed = {}
@@ -369,24 +427,23 @@ class BaseManager(object):
             if getattr(self.want, key) is not None:
                 changed[key] = getattr(self.want, key)
         if changed:
-            self.changes = Parameters(changed)
+            self.changes = Changes(changed)
 
     def _update_changed_options(self):
-        changed = {}
-        for key in Parameters.updatables:
-            if getattr(self.want, key) is not None:
-                attr1 = getattr(self.want, key)
-                attr2 = getattr(self.have, key)
-                if attr1 != attr2:
-                    changed[key] = attr1
-
-        if self.want.state == 'disabled' and self.have.enabled:
-            changed['state'] = self.want.state
-        elif self.want.state in ['present', 'enabled'] and self.have.disabled:
-            changed['state'] = self.want.state
-
+        diff = Difference(self.want, self.have)
+        updatables = Parameters.updatables
+        changed = dict()
+        for k in updatables:
+            change = diff.compare(k)
+            if change is None:
+                continue
+            else:
+                if isinstance(change, dict):
+                    changed.update(change)
+                else:
+                    changed[k] = change
         if changed:
-            self.changes = Parameters(changed)
+            self.changes = Changes(changed)
             return True
         return False
 
@@ -435,6 +492,10 @@ class BaseManager(object):
         return True
 
     def create(self):
+        if self.want.state == 'disabled':
+            self.want.update({'disabled': True})
+        elif self.want.state in ['present', 'enabled']:
+            self.want.update({'enabled': True})
         self._set_changed_options()
         if self.client.check_mode:
             return True
@@ -488,7 +549,7 @@ class TypedManager(BaseManager):
         return result
 
     def update_on_device(self):
-        params = self.want.api_params()
+        params = self.changes.api_params()
         pools = self.client.api.tm.gtm.pools
         collection = getattr(pools, self.want.collection)
         resource = getattr(collection, self.want.type)
@@ -541,7 +602,7 @@ class UntypedManager(BaseManager):
         return result
 
     def update_on_device(self):
-        params = self.want.api_params()
+        params = self.changes.api_params()
         resource = self.client.api.tm.gtm.pools.pool.load(
             name=self.want.name,
             partition=self.want.partition

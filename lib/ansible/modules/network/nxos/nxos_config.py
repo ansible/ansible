@@ -227,7 +227,7 @@ EXAMPLES = """
 - name: diff the running-config against a provided config
   nxos_config:
     diff_against: intended
-    intended: "{{ lookup('file', 'master.cfg') }}"
+    intended_config: "{{ lookup('file', 'master.cfg') }}"
 
 - nxos_config:
     lines:

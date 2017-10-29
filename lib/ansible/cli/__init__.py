@@ -112,6 +112,7 @@ class CLI(with_metaclass(ABCMeta, object)):
     # -F (quit-if-one-screen) -R (allow raw ansi control chars)
     # -S (chop long lines) -X (disable termcap init and de-init)
     LESS_OPTS = 'FRSX'
+    SKIP_INVENTORY_DEFAULTS = False
 
     def __init__(self, args, callback=None):
         """
@@ -293,7 +294,7 @@ class CLI(with_metaclass(ABCMeta, object)):
             display.vvvvv('Reading vault password file: %s' % vault_id_value)
             # read vault_pass from a file
             file_vault_secret = get_file_vault_secret(filename=vault_id_value,
-                                                      vault_id_name=vault_id_name,
+                                                      vault_id=vault_id_name,
                                                       loader=loader)
 
             # an invalid password file will error globally
@@ -406,7 +407,10 @@ class CLI(with_metaclass(ABCMeta, object)):
 
     @staticmethod
     def unfrack_path(option, opt, value, parser):
-        setattr(parser.values, option.dest, unfrackpath(value))
+        if value != '-':
+            setattr(parser.values, option.dest, unfrackpath(value))
+        else:
+            setattr(parser.values, option.dest, value)
 
     @staticmethod
     def base_parser(usage="", output_opts=False, runas_opts=False, meta_opts=False, runtask_opts=False, vault_opts=False, module_opts=False,
@@ -421,8 +425,7 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         if inventory_opts:
             parser.add_option('-i', '--inventory', '--inventory-file', dest='inventory', action="append",
-                              help="specify inventory host path (default=[%s]) or comma separated host list. "
-                                   "--inventory-file is deprecated" % C.DEFAULT_HOST_LIST)
+                              help="specify inventory host path or comma separated host list. --inventory-file is deprecated")
             parser.add_option('--list-hosts', dest='listhosts', action='store_true',
                               help='outputs a list of matching hosts; does not execute anything else')
             parser.add_option('-l', '--limit', default=C.DEFAULT_SUBSET, dest='subset',
@@ -602,8 +605,8 @@ class CLI(with_metaclass(ABCMeta, object)):
                     skip_tags.add(tag.strip())
             self.options.skip_tags = list(skip_tags)
 
-        # process inventory options
-        if hasattr(self.options, 'inventory'):
+        # process inventory options except for CLIs that require their own processing
+        if hasattr(self.options, 'inventory') and not self.SKIP_INVENTORY_DEFAULTS:
 
             if self.options.inventory:
 
@@ -612,8 +615,7 @@ class CLI(with_metaclass(ABCMeta, object)):
                     self.options.inventory = [self.options.inventory]
 
                 # Ensure full paths when needed
-                self.options.inventory = [unfrackpath(opt) if ',' not in opt else opt for opt in self.options.inventory]
-
+                self.options.inventory = [unfrackpath(opt, follow=False) if ',' not in opt else opt for opt in self.options.inventory]
             else:
                 self.options.inventory = C.DEFAULT_HOST_LIST
 

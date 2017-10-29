@@ -4,24 +4,17 @@ set -o pipefail
 
 shippable.py
 
-retry.py apt-get update -qq
-retry.py apt-get install -qq \
-    shellcheck \
-    libssl-dev \
-    libffi-dev \
-
-pip install cryptography
-
-retry.py pip install tox --disable-pip-version-check
-
 echo '{"verified": false, "results": []}' > test/results/bot/ansible-test-failure.json
 
+if [ "${BASE_BRANCH:-}" ]; then
+    base_branch="origin/${BASE_BRANCH}"
+else
+    base_branch=""
+fi
 # shellcheck disable=SC2086
-ansible-test compile --failure-ok --color -v --junit --requirements --coverage ${CHANGED:+"$CHANGED"}
+ansible-test compile --failure-ok --color -v --junit --coverage ${CHANGED:+"$CHANGED"} --docker default
 # shellcheck disable=SC2086
-ansible-test sanity  --failure-ok --color -v --junit --tox --skip-test ansible-doc --skip-test import --python 3.5 --coverage ${CHANGED:+"$CHANGED"}
-# shellcheck disable=SC2086
-ansible-test sanity  --failure-ok --color -v --junit --tox --test      ansible-doc --test      import              --coverage ${CHANGED:+"$CHANGED"}
+ansible-test sanity  --failure-ok --color -v --junit --coverage ${CHANGED:+"$CHANGED"} --docker default --docker-keep-git --base-branch "${base_branch}"
 
 rm test/results/bot/ansible-test-failure.json
 

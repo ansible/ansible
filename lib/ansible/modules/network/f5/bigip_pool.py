@@ -1,44 +1,24 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright 2017 F5 Networks Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 F5 Networks Inc.
+# GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: bigip_pool
-short_description: Manages F5 BIG-IP LTM pools.
+short_description: Manages F5 BIG-IP LTM pools
 description:
   - Manages F5 BIG-IP LTM pools via iControl REST API.
 version_added: 1.2
-author:
-  - Tim Rupp (@caphrim007)
-  - Wojciech Wypior (@wojtek0806)
-notes:
-  - Requires BIG-IP software version >= 11.
-  - F5 developed module 'F5-SDK' required (https://github.com/F5Networks/f5-common-python).
-  - Best run as a local_action in your playbook.
-requirements:
-  - f5-sdk
 options:
   description:
     description:
@@ -77,9 +57,15 @@ options:
       - weighted-least-connections-nod
   monitor_type:
     description:
-      - Monitor rule type when C(monitors) > 1.
+      - Monitor rule type when C(monitors) is specified. When creating a new
+        pool, if this value is not specified, the default of 'and_list' will
+        be used.
+      - Both C(single) and C(and_list) are functionally identical since BIG-IP
+        considers all monitors as "a list". BIG=IP either has a list of many,
+        or it has a list of one. Where they differ is in the extra guards that
+        C(single) provides; namely that it only allows a single monitor.
     version_added: "1.3"
-    choices: ['and_list', 'm_of_n']
+    choices: ['and_list', 'm_of_n', 'single']
   quorum:
     description:
       - Monitor quorum value when C(monitor_type) is C(m_of_n).
@@ -111,136 +97,211 @@ options:
   host:
     description:
       - Pool member IP.
+      - Deprecated in 2.4. Use the C(bigip_pool_member) module instead.
     aliases:
       - address
   port:
     description:
       - Pool member port.
+      - Deprecated in 2.4. Use the C(bigip_pool_member) module instead.
+  partition:
+    description:
+      - Device partition to manage resources on.
+    default: Common
+    version_added: 2.5
+notes:
+  - Requires BIG-IP software version >= 12.
+  - F5 developed module 'F5-SDK' required (https://github.com/F5Networks/f5-common-python).
+  - Best run as a local_action in your playbook.
+requirements:
+  - f5-sdk
+  - Python >= 2.7
 extends_documentation_fragment: f5
+author:
+  - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Create pool
   bigip_pool:
-      server: "lb.mydomain.com"
-      user: "admin"
-      password: "secret"
-      state: "present"
-      name: "my-pool"
-      partition: "Common"
-      lb_method: "least_connection_member"
-      slow_ramp_time: 120
+    server: lb.mydomain.com
+    user: admin
+    password: secret
+    state: present
+    name: my-pool
+    partition: Common
+    lb_method: least_connection_member
+    slow_ramp_time: 120
   delegate_to: localhost
 
 - name: Modify load balancer method
   bigip_pool:
-      server: "lb.mydomain.com"
-      user: "admin"
-      password: "secret"
-      state: "present"
-      name: "my-pool"
-      partition: "Common"
-      lb_method: "round_robin"
+    server: lb.mydomain.com
+    user: admin
+    password: secret
+    state: present
+    name: my-pool
+    partition: Common
+    lb_method: round_robin
   delegate_to: localhost
 
 - name: Add pool member
   bigip_pool:
-      server: "lb.mydomain.com"
-      user: "admin"
-      password: "secret"
-      state: "present"
-      name: "my-pool"
-      partition: "Common"
-      host: "{{ ansible_default_ipv4['address'] }}"
-      port: 80
+    server: lb.mydomain.com
+    user: admin
+    password: secret
+    state: present
+    name: my-pool
+    partition: Common
+    host: "{{ ansible_default_ipv4['address'] }}"
+    port: 80
+  delegate_to: localhost
+
+- name: Set a single monitor (with enforcement)
+  bigip_pool:
+    server: lb.mydomain.com
+    user: admin
+    password: secret
+    state: present
+    name: my-pool
+    partition: Common
+    monitor_type: single
+    monitors:
+      - http
+  delegate_to: localhost
+
+- name: Set a single monitor (without enforcement)
+  bigip_pool:
+    server: lb.mydomain.com
+    user: admin
+    password: secret
+    state: present
+    name: my-pool
+    partition: Common
+    monitors:
+      - http
+  delegate_to: localhost
+
+- name: Set multiple monitors (all must succeed)
+  bigip_pool:
+    server: lb.mydomain.com
+    user: admin
+    password: secret
+    state: present
+    name: my-pool
+    partition: Common
+    monitor_type: and_list
+    monitors:
+      - http
+      - tcp
+  delegate_to: localhost
+
+- name: Set multiple monitors (at least 1 must succeed)
+  bigip_pool:
+    server: lb.mydomain.com
+    user: admin
+    password: secret
+    state: present
+    name: my-pool
+    partition: Common
+    monitor_type: m_of_n
+    quorum: 1
+    monitors:
+      - http
+      - tcp
   delegate_to: localhost
 
 - name: Remove pool member from pool
   bigip_pool:
-      server: "lb.mydomain.com"
-      user: "admin"
-      password: "secret"
-      state: "absent"
-      name: "my-pool"
-      partition: "Common"
-      host: "{{ ansible_default_ipv4['address'] }}"
-      port: 80
+    server: lb.mydomain.com
+    user: admin
+    password: secret
+    state: absent
+    name: my-pool
+    partition: Common
+    host: "{{ ansible_default_ipv4['address'] }}"
+    port: 80
   delegate_to: localhost
 
 - name: Delete pool
   bigip_pool:
-      server: "lb.mydomain.com"
-      user: "admin"
-      password: "secret"
-      state: "absent"
-      name: "my-pool"
-      partition: "Common"
+    server: lb.mydomain.com
+    user: admin
+    password: secret
+    state: absent
+    name: my-pool
+    partition: Common
   delegate_to: localhost
 '''
 
-RETURN = '''
+RETURN = r'''
 monitor_type:
-    description: The contact that was set on the datacenter.
-    returned: changed
-    type: string
-    sample: "admin@root.local"
+  description: The contact that was set on the datacenter.
+  returned: changed
+  type: string
+  sample: admin@root.local
 quorum:
-    description: The quorum that was set on the pool
-    returned: changed
-    type: int
-    sample: 2
+  description: The quorum that was set on the pool.
+  returned: changed
+  type: int
+  sample: 2
 monitors:
-    description: Monitors set on the pool.
-    returned: changed
-    type: list
-    sample: ['/Common/http', '/Common/gateway_icmp']
+  description: Monitors set on the pool.
+  returned: changed
+  type: list
+  sample: ['/Common/http', '/Common/gateway_icmp']
 service_down_action:
-    description: Service down action that is set on the pool.
-    returned: changed
-    type: string
-    sample: "reset"
+  description: Service down action that is set on the pool.
+  returned: changed
+  type: string
+  sample: reset
 description:
-    description: Description set on the pool.
-    returned: changed
-    type: string
-    sample: "Pool of web servers"
+  description: Description set on the pool.
+  returned: changed
+  type: string
+  sample: Pool of web servers
 lb_method:
-    description: The LB method set for the pool.
-    returned: changed
-    type: string
-    sample: "round-robin"
+  description: The LB method set for the pool.
+  returned: changed
+  type: string
+  sample: round-robin
 host:
-    description: IP of pool member included in pool.
-    returned: changed
-    type: string
-    sample: "10.10.10.10"
+  description: IP of pool member included in pool.
+  returned: changed
+  type: string
+  sample: 10.10.10.10
 port:
-    description: Port of pool member included in pool.
-    returned: changed
-    type: int
-    sample: 80
+  description: Port of pool member included in pool.
+  returned: changed
+  type: int
+  sample: 80
 slow_ramp_time:
-    description: The new value that is set for the slow ramp-up time.
-    returned: changed
-    type: int
-    sample: 500
+  description: The new value that is set for the slow ramp-up time.
+  returned: changed
+  type: int
+  sample: 500
 reselect_tries:
-    description: The new value that is set for the number of tries to contact member
-    returned: changed
-    type: int
-    sample: 10
+  description: The new value that is set for the number of tries to contact member.
+  returned: changed
+  type: int
+  sample: 10
 '''
 
 import re
-import os
+
+from ansible.module_utils.f5_utils import AnsibleF5Client
+from ansible.module_utils.f5_utils import AnsibleF5Parameters
+from ansible.module_utils.f5_utils import HAS_F5SDK
+from ansible.module_utils.f5_utils import F5ModuleError
+from ansible.module_utils.six import iteritems
+from collections import defaultdict
 from netaddr import IPAddress, AddrFormatError
-from ansible.module_utils.f5_utils import (
-    AnsibleF5Client,
-    AnsibleF5Parameters,
-    HAS_F5SDK,
-    F5ModuleError,
-    iControlUnexpectedHTTPError
-)
+
+try:
+    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+except ImportError:
+    HAS_F5SDK = False
 
 
 class Parameters(AnsibleF5Parameters):
@@ -248,13 +309,13 @@ class Parameters(AnsibleF5Parameters):
         'loadBalancingMode': 'lb_method',
         'slowRampTime': 'slow_ramp_time',
         'reselectTries': 'reselect_tries',
-        'serviceDownAction': 'service_down_action'
+        'serviceDownAction': 'service_down_action',
+        'monitor': 'monitors'
     }
 
-    updatables = [
-        'monitor_type', 'quorum', 'monitors', 'service_down_action',
-        'description', 'lb_method', 'slow_ramp_time', 'reselect_tries',
-        'host', 'port'
+    api_attributes = [
+        'description', 'name', 'loadBalancingMode', 'monitor', 'slowRampTime',
+        'reselectTries', 'serviceDownAction'
     ]
 
     returnables = [
@@ -263,14 +324,40 @@ class Parameters(AnsibleF5Parameters):
         'reselect_tries', 'monitor', 'member_name', 'name', 'partition'
     ]
 
-    api_attributes = [
-        'description', 'name', 'loadBalancingMode', 'monitor', 'slowRampTime',
-        'reselectTries', 'serviceDownAction'
+    updatables = [
+        'monitor_type', 'quorum', 'monitors', 'service_down_action',
+        'description', 'lb_method', 'slow_ramp_time', 'reselect_tries',
+        'host', 'port'
     ]
 
     def __init__(self, params=None):
-        super(Parameters, self).__init__(params)
+        self._values = defaultdict(lambda: None)
+        if params:
+            self.update(params=params)
         self._values['__warnings'] = []
+
+    def update(self, params=None):
+        if params:
+            for k, v in iteritems(params):
+                if self.api_map is not None and k in self.api_map:
+                    map_key = self.api_map[k]
+                else:
+                    map_key = k
+
+                # Handle weird API parameters like `dns.proxy.__iter__` by
+                # using a map provided by the module developer
+                class_attr = getattr(type(self), map_key, None)
+                if isinstance(class_attr, property):
+                    # There is a mapped value for the api_map key
+                    if class_attr.fset is None:
+                        # If the mapped value does not have an associated setter
+                        self._values[map_key] = v
+                    else:
+                        # The mapped value has a setter
+                        setattr(self, map_key, v)
+                else:
+                    # If the mapped value is not a @property
+                    self._values[map_key] = v
 
     @property
     def lb_method(self):
@@ -304,77 +391,75 @@ class Parameters(AnsibleF5Parameters):
                 )
             )
             lb_method = lb_map.get(lb_method, lb_method.replace('_', '-'))
-        try:
-            assert lb_method in spec.lb_choice
-        except AssertionError:
+        if lb_method not in spec.lb_choice:
             raise F5ModuleError('Provided lb_method is unknown')
         return lb_method
 
-    @property
-    def monitors(self):
-        monitors = list()
-        monitor_list = self._values['monitors']
-        monitor_type = self._values['monitor_type']
-        error1 = "The 'monitor_type' parameter cannot be empty when " \
-                 "'monitors' parameter is specified."
-        error2 = "The 'monitor' parameter cannot be empty when " \
-                 "'monitor_type' parameter is specified"
-        if monitor_list is not None and monitor_type is None:
-            raise F5ModuleError(error1)
-        elif monitor_list is None and monitor_type is not None:
-            raise F5ModuleError(error2)
-        elif monitor_list is None:
-            return None
-
-        for m in monitor_list:
-            if re.match(r'\/\w+\/\w+', m):
-                m = '/{0}/{1}'.format(self.partition, os.path.basename(m))
-            elif re.match(r'\w+', m):
-                m = '/{0}/{1}'.format(self.partition, m)
-            else:
-                raise F5ModuleError(
-                    "Unknown monitor format '{0}'".format(m)
-                )
-            monitors.append(m)
-
-        return monitors
-
-    @property
-    def quorum(self):
-        value = self._values['quorum']
-        error = "Quorum value must be specified with monitor_type 'm_of_n'."
-        if self._values['monitor_type'] == 'm_of_n' and value is None:
-            raise F5ModuleError(error)
+    def _fqdn_name(self, value):
+        if value is not None and not value.startswith('/'):
+            return '/{0}/{1}'.format(self.partition, value)
         return value
 
     @property
-    def monitor(self):
-        monitors = self.monitors
-        monitor_type = self._values['monitor_type']
-        quorum = self.quorum
+    def monitors_list(self):
+        if self._values['monitors'] is None:
+            return []
+        try:
+            result = re.findall(r'/\w+/[^\s}]+', self._values['monitors'])
+            return result
+        except Exception:
+            return self._values['monitors']
 
-        if monitors is None:
+    @property
+    def monitors(self):
+        if self._values['monitors'] is None:
             return None
-
-        if monitor_type == 'and_list':
-            and_list = list()
-            for m in monitors:
-                if monitors.index(m) == 0:
-                    and_list.append(m)
-                else:
-                    and_list.append('and')
-                    and_list.append(m)
-            result = ' '.join(and_list)
+        monitors = [self._fqdn_name(x) for x in self.monitors_list]
+        if self.monitor_type == 'm_of_n':
+            monitors = ' '.join(monitors)
+            result = 'min %s of { %s }' % (self.quorum, monitors)
         else:
-            min_list = list()
-            prefix = 'min {0} of {{'.format(str(quorum))
-            min_list.append(prefix)
-            for m in monitors:
-                min_list.append(m)
-            min_list.append('}')
-            result = ' '.join(min_list)
+            result = ' and '.join(monitors).strip()
 
         return result
+
+    @property
+    def quorum(self):
+        if self.kind == 'tm:ltm:pool:poolstate':
+            if self._values['monitors'] is None:
+                return None
+            pattern = r'min\s+(?P<quorum>\d+)\s+of'
+            matches = re.search(pattern, self._values['monitors'])
+            if matches:
+                quorum = matches.group('quorum')
+            else:
+                quorum = None
+        else:
+            quorum = self._values['quorum']
+        try:
+            if quorum is None:
+                return None
+            return int(quorum)
+        except ValueError:
+            raise F5ModuleError(
+                "The specified 'quorum' must be an integer."
+            )
+
+    @property
+    def monitor_type(self):
+        if self.kind == 'tm:ltm:pool:poolstate':
+            if self._values['monitors'] is None:
+                return None
+            pattern = r'min\s+\d+\s+of'
+            matches = re.search(pattern, self._values['monitors'])
+            if matches:
+                return 'm_of_n'
+            else:
+                return 'and_list'
+        else:
+            if self._values['monitor_type'] is None:
+                return None
+            return self._values['monitor_type']
 
     @property
     def host(self):
@@ -433,12 +518,83 @@ class Parameters(AnsibleF5Parameters):
         return result
 
 
+class Changes(Parameters):
+    pass
+
+
+class Difference(object):
+    def __init__(self, want, have=None):
+        self.want = want
+        self.have = have
+
+    def compare(self, param):
+        try:
+            result = getattr(self, param)
+            return result
+        except AttributeError:
+            return self.__default(param)
+
+    def __default(self, param):
+        attr1 = getattr(self.want, param)
+        try:
+            attr2 = getattr(self.have, param)
+            if attr1 != attr2:
+                return attr1
+        except AttributeError:
+            return attr1
+
+    @property
+    def monitor_type(self):
+        if self.want.monitor_type is None:
+            self.want.update(dict(monitor_type=self.have.monitor_type))
+        if self.want.quorum is None:
+            self.want.update(dict(quorum=self.have.quorum))
+        if self.want.monitor_type == 'm_of_n' and self.want.quorum is None:
+            raise F5ModuleError(
+                "Quorum value must be specified with monitor_type 'm_of_n'."
+            )
+        elif self.want.monitor_type == 'single':
+            if len(self.want.monitors_list) > 1:
+                raise F5ModuleError(
+                    "When using a 'monitor_type' of 'single', only one monitor may be provided."
+                )
+            elif len(self.have.monitors_list) > 1 and len(self.want.monitors_list) == 0:
+                # Handle instances where there already exists many monitors, and the
+                # user runs the module again specifying that the monitor_type should be
+                # changed to 'single'
+                raise F5ModuleError(
+                    "A single monitor must be specified if more than one monitor currently exists on your pool."
+                )
+            # Update to 'and_list' here because the above checks are all that need
+            # to be done before we change the value back to what is expected by
+            # BIG-IP.
+            #
+            # Remember that 'single' is nothing more than a fancy way of saying
+            # "and_list plus some extra checks"
+            self.want.update(dict(monitor_type='and_list'))
+        if self.want.monitor_type != self.have.monitor_type:
+            return self.want.monitor_type
+
+    @property
+    def monitors(self):
+        if self.want.monitor_type is None:
+            self.want.update(dict(monitor_type=self.have.monitor_type))
+        if not self.want.monitors_list:
+            self.want.monitors = self.have.monitors_list
+        if not self.want.monitors and self.want.monitor_type is not None:
+            raise F5ModuleError(
+                "The 'monitors' parameter cannot be empty when 'monitor_type' parameter is specified"
+            )
+        if self.want.monitors != self.have.monitors:
+            return self.want.monitors
+
+
 class ModuleManager(object):
     def __init__(self, client):
         self.client = client
         self.have = None
         self.want = Parameters(self.client.module.params)
-        self.changes = Parameters()
+        self.changes = Changes()
 
     def exec_module(self):
         changed = False
@@ -480,13 +636,15 @@ class ModuleManager(object):
             self.changes = Parameters(changed)
 
     def _update_changed_options(self):
-        changed = {}
-        for key in Parameters.updatables:
-            if getattr(self.want, key) is not None:
-                attr1 = getattr(self.want, key)
-                attr2 = getattr(self.have, key)
-                if attr1 != attr2:
-                    changed[key] = attr1
+        diff = Difference(self.want, self.have)
+        updatables = Parameters.updatables
+        changed = dict()
+        for k in updatables:
+            change = diff.compare(k)
+            if change is None:
+                continue
+            else:
+                changed[k] = change
         if changed:
             self.changes = Parameters(changed)
             return True
@@ -543,6 +701,24 @@ class ModuleManager(object):
         return True
 
     def create(self):
+        if self.want.monitor_type is not None:
+            if not self.want.monitors_list:
+                raise F5ModuleError(
+                    "The 'monitors' parameter cannot be empty when 'monitor_type' parameter is specified"
+                )
+        else:
+            if self.want.monitor_type is None:
+                self.want.update(dict(monitor_type='and_list'))
+
+        if self.want.monitor_type == 'm_of_n' and self.want.quorum is None:
+            raise F5ModuleError(
+                "Quorum value must be specified with monitor_type 'm_of_n'."
+            )
+        elif self.want.monitor_type == 'single' and len(self.want.monitors_list) > 1:
+            raise F5ModuleError(
+                "When using a 'monitor_type' of 'single', only one monitor may be provided"
+            )
+
         self._set_changed_options()
         if self.client.check_mode:
             return True
@@ -680,7 +856,7 @@ class ArgumentSpec(object):
             ),
             monitor_type=dict(
                 choices=[
-                    'and_list', 'm_of_n'
+                    'and_list', 'm_of_n', 'single'
                 ]
             ),
             quorum=dict(
@@ -714,6 +890,16 @@ class ArgumentSpec(object):
         self.f5_product_name = 'bigip'
 
 
+def cleanup_tokens(client):
+    try:
+        resource = client.api.shared.authz.tokens_s.token.load(
+            name=client.api.icrs.token
+        )
+        resource.delete()
+    except Exception:
+        pass
+
+
 def main():
     if not HAS_F5SDK:
         raise F5ModuleError("The python f5-sdk module is required")
@@ -729,8 +915,10 @@ def main():
     try:
         mm = ModuleManager(client)
         results = mm.exec_module()
+        cleanup_tokens(client)
         client.module.exit_json(**results)
     except F5ModuleError as e:
+        cleanup_tokens(client)
         client.module.fail_json(msg=str(e))
 
 

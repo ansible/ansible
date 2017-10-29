@@ -41,6 +41,16 @@ def m_index():
     return 'vcsim controller'
 
 
+@app.route('/log')
+def get_log():
+    """Read and return the vcsim log"""
+    fdata = ''
+    if os.path.isfile('vcsim.log'):
+        with open('vcsim.log', 'rb') as f:
+            fdata = f.read()
+    return fdata
+
+
 @app.route('/kill/<int:number>')
 def kill_one(number):
     """Kill any arbitrary process id"""
@@ -132,14 +142,30 @@ def spawn_vcsim():
         '-httptest.serve',
         '%s:%s' % (hostname, port),
     ]
-    for x in cli_opts:
-        name = x[0]
-        default = x[1]
-        if request.args.get(name):
-            default = request.args.get(name)
-        cmd.append('-%s=%s' % (name, default))
+
+    # trace soap requests+responses
+    if trace:
+        cmd.append('-trace')
+
+    # esx only allows certain arguments
+    if request.args.get('esx'):
+        cmd.append('-esx')
+        for x in [('vm', 1), ('ds', 1)]:
+            name = x[0]
+            default = x[1]
+            if request.args.get(name):
+                default = request.args.get(name)
+            cmd.append('-%s=%s' % (name, default))
+    else:
+        # use all other options as requested for vcenter
+        for x in cli_opts:
+            name = x[0]
+            default = x[1]
+            if request.args.get(name):
+                default = request.args.get(name)
+            cmd.append('-%s=%s' % (name, default))
     cmd = ' '.join(cmd)
-    cmd += ' 2>&1 > vcsim.log'
+    cmd += ' > vcsim.log 2>&1'
 
     # run it with environment settings
     p = subprocess.Popen(

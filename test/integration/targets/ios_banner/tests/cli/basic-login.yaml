@@ -5,7 +5,6 @@
     banner: login
     state: absent
     authorize: yes
-    provider: "{{ cli }}"
 
 - name: Set login
   ios_banner:
@@ -16,7 +15,6 @@
       string
     state: present
     authorize: yes
-    provider: "{{ cli }}"
   register: result
 
 - debug:
@@ -36,7 +34,6 @@
       string
     state: present
     authorize: yes
-    provider: "{{ cli }}"
   register: result
 
 - assert:
