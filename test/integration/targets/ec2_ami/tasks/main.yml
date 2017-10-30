@@ -66,7 +66,7 @@
         key_name: '{{ setup_key.key.name }}'
         instance_type: t2.micro
         state: present
-        image: '{{ ec2_ami_image[ec2_region] }}'
+        image: '{{ ec2_region_images[ec2_region] }}'
         wait: yes
         instance_tags:
           '{{ec2_ami_name}}_instance_setup': 'integration_tests'
