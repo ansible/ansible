@@ -20,12 +20,14 @@ Engine improvements
   - Investigate implementing subcommands
 - Clean up output formatting
 - Reimplement task result `invocation` injection control-side, but only when module didn't return it.
+
   - always use heuristic sensitive-value filtering on injected values
   - if heuristic filter triggers, add a warning that perhaps use of task-level no_log should be considered
   - consider skipping injection for Python module type (even if it's missing, eg catastrophic module failure) to prevent potentially injecting a value that was arg-level no_log'd on the target side.
   - consider addition of NO_INVOCATION config
 - Automatic shared SSH tunneling support for networked connection plugins (dynamic jumphost for SSH/WinRM/whatever)
 - Assemble module improvements
+
   - assemble just skips when in check mode, it should be able to test 
     if there is a difference and changed=true/false.
   - The same with diff, it should work as template modules does
@@ -51,12 +53,12 @@ Ansible-Config
 - New yaml format for config
 - Extend config to rest of plugin types and update plugins to support the new config
 - Create an playbook directory option
-- 
 
 Inventory
 ---------
 - ansible-inventory option to output group variable assignment and data
-- Convert the following dynamic inventory scripts into plugins
+- Convert the following dynamic inventory scripts into plugins:
+
   - ec2
   - Azure
   - GCE
@@ -92,6 +94,7 @@ PluginLoader
 Static Loop Keyword 
 -------------------
 **(done)**
+
 - Deprecate (not on standard deprecation cycle) ``with_`` in favor of ``loop:``
 - This ``loop:`` will take only a list
 - Remove complexity from loops, lookups are still available to users
@@ -103,6 +106,7 @@ Vault
   being able to change vault failure to decrypt to a warning or something else allows for this.
 - Allow vault password files to be vault encrypted
 - Vault secrets client inc new 'keyring' client **(done)**
+
 Role Versioning
 ---------------
 - ansible-galaxy will install roles using name + version 
@@ -111,6 +115,7 @@ Role Versioning
 - When referencing a role in a play, ansible-playbook should now also check if version is specified and use that if found
 - Option for galaxy to remove 'old roles' on install (upgrade?), this is not clear cut as version can be a commit SHA and order there is not related to sorting, clear 'versions 1.1, 1.2' can use loose versioning comparisons.
 - ansible-galaxy cli should also be able to change the 'base role name' to point to specific versions, this solves the issue when the 'latest' is not actually the one existing plays should be using, again this mimics the 'alternatives' functionality.
+
 Globalize Callbacks
 -------------------
 - Make send_callback available to other code that cannot use it.
@@ -130,9 +135,10 @@ Windows
 - Fix Windows binary module support to work properly with become/env/async in all cases.
 - Fix Windows async + become to allow them to work together
 - Solve Windows become/env support for raw/script
-- Implement Windows become flags for controlling various modes 
-  - logontype,
-  - elevation behavior)
+- Implement Windows become flags for controlling various modes
+
+  - logontype
+  - elevation behavior
   - Add dict support to become_flags.
 - Fix Windows auto-kinit with threaded workers (or disallow it)
 - Finish C#/Powershell module_utils rewrite, convert core modules to use it.
@@ -142,6 +148,7 @@ Windows
 - Module updates
 
   - win_updates
+  
     - Fix win_updates to detect (or request) become
     - Add whitelist/blacklist features to win_updates
   - win_dsc further improvements
@@ -149,11 +156,13 @@ Windows
 General Cloud
 -------------
 - Make multi-cloud provisioning easier
+
   - Document multi-instance provisioning with loop directive
   - Extend async_status to accept a list or build new action to simplify the
     with_items/register/until:finish patterns.
 - Diff mode will output provisioning task results of ansible-playbook runs
 - Terraform module
+
 AWS
 ---
 - Focus on pull requests for various modules
@@ -163,7 +172,8 @@ AWS
   - ec2_instance 
   - ec2_vpc: Allow the addition of secondary IPv4 CIDRS to existing VPCs.
   - AWS Network Load Balancer support (NLB module, ASG support, etc)
-  - rds_instance 
+  - rds_instance
+
 Azure
 -----
 - Azure CLI auth
@@ -198,6 +208,7 @@ Documentation
 - _command show version
 - refactor intro_networking.rst 
 - Network use case documentation
+
 Contributor Quality of Life
 ---------------------------
 - Pester unit test support in ansible-test
