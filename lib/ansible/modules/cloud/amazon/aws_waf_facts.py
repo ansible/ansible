@@ -12,6 +12,7 @@ short_description: Retrieve facts for WAF ACLs, Rule , Conditions and Filters.
 description:
   - Retrieve facts for WAF ACLs, Rule , Conditions and Filters.
 version_added: "2.4"
+requirements: [ boto3 ]
 options:
   name:
     description:

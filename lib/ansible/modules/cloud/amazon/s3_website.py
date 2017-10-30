@@ -18,6 +18,7 @@ short_description: Configure an s3 bucket as a website
 description:
     - Configure an s3 bucket as a website
 version_added: "2.2"
+requirements: [ boto3 ]
 author: Rob White (@wimnat)
 options:
   name:

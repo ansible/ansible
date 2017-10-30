@@ -17,6 +17,7 @@ short_description: Gather facts about ELB target groups in AWS
 description:
     - Gather facts about ELB target groups in AWS
 version_added: "2.4"
+requirements: [ boto3 ]
 author: Rob White (@wimnat)
 options:
   load_balancer_arn:

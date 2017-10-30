@@ -18,6 +18,7 @@ short_description: Gather facts about ec2 volume snapshots in AWS
 description:
     - Gather facts about ec2 volume snapshots in AWS
 version_added: "2.1"
+requirements: [ boto3 ]
 author: "Rob White (@wimnat)"
 options:
   snapshot_ids:
