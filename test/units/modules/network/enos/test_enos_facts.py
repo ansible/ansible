@@ -77,4 +77,3 @@ class TestEnosFacts(TestEnosModule):
         self.assertIn('config', ansible_facts['ansible_net_gather_subset'])
         self.assertEquals('test1', ansible_facts['ansible_net_hostname'])
         self.assertIn('ansible_net_config', ansible_facts)
-
