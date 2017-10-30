@@ -141,7 +141,7 @@ class Sv(object):
         self.pid            = None
         self.duration       = None
 
-        self.svc_cmd        = module.get_bin_path('sv', opt_dirs=self.extra_paths)
+        self.svc_cmd        = module.get_bin_path('sv', opt_dirs=self.extra_paths, required=True)
         self.svstat_cmd     = module.get_bin_path('sv', opt_dirs=self.extra_paths)
         self.svc_full = '/'.join([ self.service_dir, self.name ])
         self.src_full = '/'.join([ self.service_src, self.name ])
