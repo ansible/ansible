@@ -62,6 +62,14 @@ options:
         device running configuration. The argument accepts a string value
         defining the group name. This argument does not check if the group
         has been configured on the device, alias C(role).
+  groups:
+    version_added: "2.5"
+    description:
+      - Configures the groups for the username in the device running
+        configuration. The argument accepts a list of group names.
+        This argument does not check if the group has been configured
+        on the device. It is similar to the aggregrate command for
+        usernames, but lets you configure multiple groups for the user(s).
   purge:
     description:
       - Instructs the module to consider the
@@ -119,6 +127,15 @@ EXAMPLES = """
       - name: netop
       - name: netend
     group: sysadmin
+    state: present
+- name: set multiple users to multiple groups
+  iosxr_user:
+    aggregate:
+      - name: netop
+      - name: netend
+    groups: 
+      - sysadmin
+      - root-system
     state: present
 - name: Change Password for User netop
   iosxr_user:
@@ -192,6 +209,9 @@ def map_obj_to_commands(updates, module):
                 commands.append(user_cmd + ' secret ' + w['configured_password'])
             if w['group']:
                 commands.append(user_cmd + ' group ' + w['group'])
+            elif w['groups']:
+                for group in w['groups']:
+                    commands.append(user_cmd + ' group ' + group)
 
         elif state == 'present' and obj_in_have:
             user_cmd = 'username ' + name
@@ -200,6 +220,9 @@ def map_obj_to_commands(updates, module):
                 commands.append(user_cmd + ' secret ' + w['configured_password'])
             if w['group'] and w['group'] != obj_in_have['group']:
                 commands.append(user_cmd + ' group ' + w['group'])
+            elif w['groups']:
+                for group in w['groups']:
+                    commands.append(user_cmd + ' group ' + group)
 
     return commands
 
@@ -257,6 +280,7 @@ def get_param_value(key, item, module):
 
 def map_params_to_obj(module):
     users = module.params['aggregate']
+
     if not users:
         if not module.params['name'] and module.params['purge']:
             return list()
@@ -280,6 +304,7 @@ def map_params_to_obj(module):
         get_value = partial(get_param_value, item=item, module=module)
         item['configured_password'] = get_value('configured_password')
         item['group'] = get_value('group')
+        item['groups'] = get_value('groups')
         item['state'] = get_value('state')
         objects.append(item)
 
@@ -386,6 +411,8 @@ def main():
         public_key_contents=dict(),
 
         group=dict(aliases=['role']),
+        groups=dict(type='list', elements='dict'),
+
         state=dict(default='present', choices=['present', 'absent'])
     )
     aggregate_spec = deepcopy(element_spec)
@@ -401,7 +428,7 @@ def main():
 
     argument_spec.update(element_spec)
     argument_spec.update(iosxr_argument_spec)
-    mutually_exclusive = [('name', 'aggregate'), ('public_key', 'public_key_contents')]
+    mutually_exclusive = [('name', 'aggregate'), ('public_key', 'public_key_contents'), ('group', 'groups')]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
