@@ -80,7 +80,7 @@ options:
         - Unlock password for ssh_key. Use ASK for prompting.
     authorize:
       description:
-        - Should use authroize for net type.
+        - Should use authorize for net type.
       required: False
       default: False
     authorize_password:
@@ -131,7 +131,7 @@ options:
       default: null
     vault_password:
       description:
-        - Valut password. Use ASK for prompting.
+        - Vault password. Use ASK for prompting.
     state:
       description:
         - Desired state of the resource.
@@ -231,6 +231,7 @@ def main():
                     params['ssh_key_data'] = f.read()
 
             if state == 'present':
+                params.pop('state')
                 result = credential.modify(**params)
                 json_output['id'] = result['id']
             elif state == 'absent':
