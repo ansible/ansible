@@ -359,4 +359,5 @@ lib/ansible/modules/system/solaris_zone.py
 lib/ansible/modules/system/svc.py
 lib/ansible/modules/system/timezone.py
 lib/ansible/modules/system/ufw.py
-lib/ansible/playbook/base.py
+lib/ansible/modules/system/user.py
+

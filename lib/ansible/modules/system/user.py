@@ -2103,7 +2103,29 @@ class HPUX(User):
         return self.execute_command(cmd)
 
 
+
 def main():
+
+    ssh_defaults = {
+        'bits': 0,
+        'type': 'rsa',
+        'passphrase': None,
+        'comment': 'ansible-generated on %s' % socket.gethostname()
+    }
+    module=AnsibleModule(
+        argument_spec=dict(
+            state=dict(default='present', choices=['present', 'absent'], type='str'),
+            name=dict(required=True, aliases=['user'], type='str'),
+            uid=dict(default=None, type='str'),
+            non_unique=dict(default='no', type='bool'),
+            group=dict(default=None, type='str'),
+            groups=dict(default=None, type='list'),
+            comment=dict(default=None, type='str'),
+            home=dict(default=None, type='path'),
+            shell=dict(default=None, type='str'),
+            password=dict(default=None, type='str', no_log=True),
+            login_class=dict(default=None, type='str'),
+
     ssh_defaults = dict(
         bits=0,
         type='rsa',
@@ -2123,6 +2145,7 @@ def main():
             shell=dict(type='str'),
             password=dict(type='str', no_log=True),
             login_class=dict(type='str'),
+
             # following options are specific to selinux
             seuser=dict(type='str'),
             # following options are specific to userdel
@@ -2137,6 +2160,13 @@ def main():
             append=dict(type='bool', default=False),
             # following are specific to ssh key generation
             generate_ssh_key=dict(type='bool'),
+            ssh_key_bits=dict(default=ssh_defaults['bits'], type='int'),
+            ssh_key_type=dict(default=ssh_defaults['type'], type='str'),
+            ssh_key_file=dict(default=None, type='path'),
+            ssh_key_comment=dict(default=ssh_defaults['comment'], type='str'),
+            ssh_key_passphrase=dict(default=None, type='str', no_log=True),
+            update_password=dict(default='always', choice=['always', 'on_create'], type='str'),
+            expires=dict(default=None, type='float'),
             ssh_key_bits=dict(type='int', default=ssh_defaults['bits']),
             ssh_key_type=dict(type='str', default=ssh_defaults['type']),
             ssh_key_file=dict(type='path'),
