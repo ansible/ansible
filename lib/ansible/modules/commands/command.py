@@ -62,11 +62,6 @@ notes:
        For instance, if you only want to run a command if a certain file does not exist, use this."
     -  The C(executable) parameter is removed since version 2.4. If you have a need for this parameter, use the M(shell) module instead.
     -  For Windows targets, use the M(win_command) module instead.
-    -  If you are experiencing odd locale issues, try changing the C(module_lang) configuration parameter in C(ansible.cfg). For example:
-
-        C(module_lang = en_US.UTF-8)
-        C(module_lang = zh_CN.UTF-8)
-        C(module_lang = ru_RU.UTF-8)
 author:
     - Ansible Core Team
     - Michael DeHaan
