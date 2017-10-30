@@ -1,18 +1,9 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
@@ -91,10 +82,15 @@ options:
     description:
       - A dictionary of tags to add to the new image; '{"key":"value"}' and '{"key":"value","key":"value"}'
     version_added: "2.0"
+  purge_tags:
+    description: Whether to remove existing tags that aren't passed in the C(tags) parameter
+    version_added: "2.5"
+    default: "no"
   launch_permissions:
     description:
       - Users and groups that should be able to launch the AMI. Expects dictionary with a key of user_ids and/or group_names. user_ids should
         be a list of account ids. group_name should be a list of groups, "all" is the only acceptable value currently.
+      - You must pass all desired launch permissions if you wish to modify existing launch permissions (passing just groups will remove all users)
     version_added: "2.0"
   image_location:
     description:
@@ -257,6 +253,12 @@ is_public:
     returned: when AMI is created or already exists
     type: bool
     sample: false
+launch_permission:
+    description: permissions allowing other accounts to access the AMI
+    returned: when AMI is created or already exists
+    type: list
+    sample:
+      - group: "all"
 location:
     description: location of image
     returned: when AMI is created or already exists
@@ -315,14 +317,10 @@ snapshots_deleted:
     ]
 '''
 
-# import module snippets
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_connect, ec2_argument_spec, ansible_dict_to_boto3_tag_list
-
 import time
-import traceback
-from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec, ec2_connect, boto3_conn, camel_dict_to_snake_dict, HAS_BOTO3
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec, boto3_conn, camel_dict_to_snake_dict
+from ansible.module_utils.ec2 import ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict, compare_aws_tags
+from ansible.module_utils.aws.core import AnsibleAWSModule
 
 try:
     import botocore
@@ -336,14 +334,17 @@ def get_block_device_mapping(image):
         bdm = image.get('block_device_mappings')
         for device in bdm:
             device_name = device.get('device_name')
-            ebs = device.get("ebs")
-            bdm_dict_item = {
-                'size': ebs.get("volume_size"),
-                'snapshot_id': ebs.get("snapshot_id"),
-                'volume_type': ebs.get("volume_type"),
-                'encrypted': ebs.get("encrypted"),
-                'delete_on_termination': ebs.get("delete_on_termination")
-            }
+            if 'ebs' in device:
+                ebs = device.get("ebs")
+                bdm_dict_item = {
+                    'size': ebs.get("volume_size"),
+                    'snapshot_id': ebs.get("snapshot_id"),
+                    'volume_type': ebs.get("volume_type"),
+                    'encrypted': ebs.get("encrypted"),
+                    'delete_on_termination': ebs.get("delete_on_termination")
+                }
+            elif 'virtual_name' in device:
+                bdm_dict_item = dict(virtual_name=device['virtual_name'])
             bdm_dict[device_name] = bdm_dict_item
     return bdm_dict
 
@@ -363,9 +364,9 @@ def get_ami_info(camel_image):
         ownerId=image.get("owner_id"),
         root_device_name=image.get("root_device_name"),
         root_device_type=image.get("root_device_type"),
-        tags=image.get("tags"),
         virtualization_type=image.get("virtualization_type"),
         name=image.get("name"),
+        tags=boto3_tag_list_to_ansible_dict(image.get('tags')),
         platform=image.get("platform"),
         enhanced_networking=image.get("ena_support"),
         image_owner_alias=image.get("image_owner_alias"),
@@ -374,11 +375,12 @@ def get_ami_info(camel_image):
         product_codes=image.get("product_codes"),
         ramdisk_id=image.get("ramdisk_id"),
         sriov_net_support=image.get("sriov_net_support"),
-        state_reason=image.get("state_reason")
+        state_reason=image.get("state_reason"),
+        launch_permissions=image.get('launch_permissions')
     )
 
 
-def create_image(module, connection, resource):
+def create_image(module, connection):
     instance_id = module.params.get('instance_id')
     name = module.params.get('name')
     wait = module.params.get('wait')
@@ -412,10 +414,6 @@ def create_image(module, connection, resource):
                 }
             ]
         ).get('Images')
-
-        # ensure that launch_permissions are up to date
-        if images and images[0]:
-            update_image(module, connection, images[0].get('ImageId'), resource)
 
         block_device_mapping = None
 
@@ -462,39 +460,35 @@ def create_image(module, connection, resource):
             if root_device_name:
                 params['RootDeviceName'] = root_device_name
             image_id = connection.register_image(**params).get('ImageId')
-    except botocore.exceptions.ClientError as e:
-            module.fail_json(msg="Error registering image - " + str(e), exception=traceback.format_exc(),
-                             **camel_dict_to_snake_dict(e.response))
+    except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+        module.fail_json_aws(e, msg="Error registering image")
 
-    for i in range(wait_timeout):
-        try:
-            image = get_image_by_id(module, connection, image_id)
-            if image.get('State') == 'available':
-                break
-            elif image.get('State') == 'failed':
-                module.fail_json(msg="AMI creation failed, please see the AWS console for more details.")
-        except botocore.exceptions.ClientError as e:
-            if ('InvalidAMIID.NotFound' not in e.error_code and 'InvalidAMIID.Unavailable' not in e.error_code) and wait and i == wait_timeout - 1:
-                module.fail_json(msg="Error while trying to find the new image. Using wait=yes and/or a longer wait_timeout may help. %s: %s"
-                                 % (e.error_code, e.error_message))
-        finally:
-            time.sleep(1)
+    if wait:
+        waiter = connection.get_waiter('image_available')
+        delay = wait_timeout // 30
+        max_attempts = 30
+        waiter.wait(ImageIds=[image_id], WaiterConfig=dict(Delay=delay, MaxAttempts=max_attempts))
 
     if tags:
         try:
             connection.create_tags(Resources=[image_id], Tags=ansible_dict_to_boto3_tag_list(tags))
-        except botocore.exceptions.ClientError as e:
-            module.fail_json(msg="Error tagging image - " + str(e), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+            module.fail_json_aws(e, msg="Error tagging image")
 
     if launch_permissions:
         try:
-            image = get_image_by_id(module, connection, image_id)
-            image.set_launch_permissions(**launch_permissions)
-        except botocore.exceptions.ClientError as e:
-            module.fail_json(msg="Error setting launch permissions for image: " + image_id + " - " + str(e), exception=traceback.format_exc(),
-                             **camel_dict_to_snake_dict(e.response))
+            params = dict(Attribute='LaunchPermission', ImageId=image_id, LaunchPermission=dict(Add=list()))
+            for group_name in launch_permissions.get('group_names', []):
+                params['LaunchPermission']['Add'].append(dict(Group=group_name))
+            for user_id in launch_permissions.get('user_ids', []):
+                params['LaunchPermission']['Add'].append(dict(UserId=str(user_id)))
+            if params['LaunchPermission']['Add']:
+                connection.modify_image_attribute(**params)
+        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+            module.fail_json_aws(e, msg="Error setting launch permissions for image %s" % image_id)
 
-    module.exit_json(msg="AMI creation operation complete.", changed=True, **get_ami_info(image))
+    module.exit_json(msg="AMI creation operation complete.", changed=True,
+                     **get_ami_info(get_image_by_id(module, connection, image_id)))
 
 
 def deregister_image(module, connection):
@@ -505,7 +499,7 @@ def deregister_image(module, connection):
     image = get_image_by_id(module, connection, image_id)
 
     if image is None:
-        module.fail_json(msg="Image %s does not exist." % image_id, changed=False)
+        module.exit_json(changed=False)
 
     # Get all associated snapshot ids before deregistering image otherwise this information becomes unavailable.
     snapshots = []
@@ -518,9 +512,9 @@ def deregister_image(module, connection):
     # When trying to re-deregister an already deregistered image it doesn't raise an exception, it just returns an object without image attributes.
     if 'ImageId' in image:
         try:
-            res = connection.deregister_image(ImageId=image_id)
-        except botocore.exceptions.ClientError as e:
-            module.fail_json(msg="Error deregistering image - " + str(e), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+            connection.deregister_image(ImageId=image_id)
+        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+            module.fail_json_aws(e, msg="Error deregistering image")
     else:
         module.exit_json(msg="Image %s has already been deregistered." % image_id, changed=False)
 
@@ -542,69 +536,103 @@ def deregister_image(module, connection):
                 connection.delete_snapshot(SnapshotId=snapshot_id)
         except botocore.exceptions.ClientError as e:
             # Don't error out if root volume snapshot was already deregistered as part of deregister_image
-            if e.error_code == 'InvalidSnapshot.NotFound':
+            if e.response['Error']['Code'] == 'InvalidSnapshot.NotFound':
                 pass
         exit_params['snapshots_deleted'] = snapshots
 
     module.exit_json(**exit_params)
 
 
-def update_image(module, connection, image_id, resource):
-    launch_permissions = module.params.get('launch_permissions') or []
-
-    if 'user_ids' in launch_permissions:
-        launch_permissions['user_ids'] = [str(user_id) for user_id in launch_permissions['user_ids']]
-
-    image = resource.Image(image_id)
-
+def update_image(module, connection, image_id):
+    launch_permissions = module.params.get('launch_permissions')
+    image = get_image_by_id(module, connection, image_id)
     if image is None:
         module.fail_json(msg="Image %s does not exist" % image_id, changed=False)
+    changed = False
 
-    try:
-        set_permissions = connection.describe_image_attribute(Attribute='launchPermission', ImageId=image_id).get('LaunchPermissions')
-        if set_permissions != launch_permissions:
-            if ('user_ids' in launch_permissions or 'group_names' in launch_permissions):
-                group_names = launch_permissions.get('group_names')[0] if launch_permissions.get('group_names') else None
-                user_ids = launch_permissions.get('user_ids')[0] if launch_permissions.get('user_ids') else None
-                launch_perms_add = {'Add': [{}]}
-                if group_names:
-                    launch_perms_add['Add'][0]['Group'] = group_names
-                if user_ids:
-                    launch_perms_add['Add'][0]['UserId'] = user_ids
-                image.modify_attribute(Attribute='launchPermission', LaunchPermission=launch_perms_add)
-            elif set_permissions and set_permissions[0].get('UserId') is not None and set_permissions[0].get('Group') is not None:
-                image.modify_attribute(
-                    Attribute='launchPermission',
-                    LaunchPermission={
-                        'Remove': [{
-                            'Group': (set_permissions.get('Group') or ''),
-                            'UserId': (set_permissions.get('UserId') or '')
-                        }]
-                    })
-            else:
-                module.exit_json(msg="AMI not updated.", launch_permissions=set_permissions, changed=False,
-                                 **get_ami_info(get_image_by_id(module, connection, image_id)))
-            module.exit_json(msg="AMI launch permissions updated.", launch_permissions=launch_permissions, set_perms=set_permissions, changed=True,
-                             **get_ami_info(get_image_by_id(module, connection, image_id)))
-        else:
-            module.exit_json(msg="AMI not updated.", launch_permissions=set_permissions, changed=False,
-                             **get_ami_info(get_image_by_id(module, connection, image_id)))
-    except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Error updating image - " + str(e), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+    if launch_permissions is not None:
+        current_permissions = image['LaunchPermissions']
+
+        current_users = set(permission['UserId'] for permission in current_permissions if 'UserId' in permission)
+        desired_users = set(str(user_id) for user_id in launch_permissions.get('user_ids', []))
+        current_groups = set(permission['Group'] for permission in current_permissions if 'Group' in permission)
+        desired_groups = set(launch_permissions.get('group_names', []))
+
+        to_add_users = desired_users - current_users
+        to_remove_users = current_users - desired_users
+        to_add_groups = desired_groups - current_groups
+        to_remove_groups = current_groups - desired_groups
+
+        to_add = [dict(Group=group) for group in to_add_groups] + [dict(UserId=user_id) for user_id in to_add_users]
+        to_remove = [dict(Group=group) for group in to_remove_groups] + [dict(UserId=user_id) for user_id in to_remove_users]
+
+        if to_add or to_remove:
+            try:
+                connection.modify_image_attribute(ImageId=image_id, Attribute='launchPermission',
+                                                  LaunchPermission=dict(Add=to_add, Remove=to_remove))
+                changed = True
+            except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+                module.fail_json_aws(e, msg="Error updating launch permissions")
+
+    desired_tags = module.params.get('tags')
+    if desired_tags is not None:
+        current_tags = boto3_tag_list_to_ansible_dict(image.get('Tags'))
+        tags_to_add, tags_to_remove = compare_aws_tags(current_tags, desired_tags, purge_tags=module.params.get('purge_tags'))
+
+        if tags_to_remove:
+            try:
+                connection.delete_tags(Resources=[image_id], Tags=[dict(Key=tagkey) for tagkey in tags_to_remove])
+                changed = True
+            except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+                module.fail_json_aws(e, msg="Error updating tags")
+
+        if tags_to_add:
+            try:
+                connection.create_tags(Resources=[image_id], Tags=ansible_dict_to_boto3_tag_list(tags_to_add))
+                changed = True
+            except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+                module.fail_json_aws(e, msg="Error updating tags")
+
+    description = module.params.get('description')
+    if description and description != image['Description']:
+        try:
+            connection.modify_image_attribute(Attribute='Description ', ImageId=image_id, Description=dict(Value=description))
+            changed = True
+        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+            module.fail_json_aws(e, msg="Error setting description for image %s" % image_id)
+
+    if changed:
+        module.exit_json(msg="AMI updated.", changed=True,
+                         **get_ami_info(get_image_by_id(module, connection, image_id)))
+    else:
+        module.exit_json(msg="AMI not updated.", changed=False,
+                         **get_ami_info(get_image_by_id(module, connection, image_id)))
 
 
 def get_image_by_id(module, connection, image_id):
     try:
-        images_response = connection.describe_images(ImageIds=[image_id])
+        try:
+            images_response = connection.describe_images(ImageIds=[image_id])
+        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+            module.fail_json_aws(e, msg="Error retrieving image %s" % image_id)
         images = images_response.get('Images')
         no_images = len(images)
         if no_images == 0:
             return None
         if no_images == 1:
-            return images[0]
+            result = images[0]
+            try:
+                result['LaunchPermissions'] = connection.describe_image_attribute(Attribute='launchPermission', ImageId=image_id)['LaunchPermissions']
+                result['ProductCodes'] = connection.describe_image_attribute(Attribute='productCodes', ImageId=image_id)['ProductCodes']
+            except botocore.exceptions.ClientError as e:
+                if e.response['Error']['Code'] != 'InvalidAMIID.Unavailable':
+                    module.fail_json_aws(e, msg="Error retrieving image attributes" % image_id)
+            except botocore.exceptions.BotoCoreError as e:
+                module.fail_json_aws(e, msg="Error retrieving image attributes" % image_id)
+            return result
         module.fail_json(msg="Invalid number of instances (%s) found for image_id: %s." % (str(len(images)), image_id))
-    except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Error retreiving image by image_id - " + str(e), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+    except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+        module.fail_json_aws(e, msg="Error retrieving image by image_id")
 
 
 def rename_item_if_exists(dict_object, attribute, new_attribute, child_node=None):
@@ -641,40 +669,32 @@ def main():
         enhanced_networking=dict(type='bool'),
         billing_products=dict(type='list'),
         ramdisk_id=dict(),
-        sriov_net_support=dict()
+        sriov_net_support=dict(),
+        purge_tags=dict(type='bool', default=False)
     ))
 
-    module = AnsibleModule(
+    module = AnsibleAWSModule(
         argument_spec=argument_spec,
         required_if=[
             ['state', 'absent', ['image_id']],
             ['state', 'present', ['name']],
         ]
     )
-    module = AnsibleModule(
-        argument_spec=argument_spec,
-        required_if=[('state', 'present', ('name',)),
-                     ('state', 'absent', ('image_id',))]
-    )
-
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
 
     try:
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
         connection = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-        resource = boto3_conn(module, conn_type='resource', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_kwargs)
     except botocore.exceptions.NoRegionError:
         module.fail_json(msg=("Region must be specified as a parameter in AWS_DEFAULT_REGION environment variable or in boto configuration file."))
 
     if module.params.get('state') == 'absent':
         deregister_image(module, connection)
     elif module.params.get('state') == 'present':
-        if module.params.get('image_id') and module.params.get('launch_permissions'):
-            update_image(module, connection, module.params.get('image_id'), resource)
+        if module.params.get('image_id'):
+            update_image(module, connection, module.params.get('image_id'))
         if not module.params.get('instance_id') and not module.params.get('device_mapping'):
             module.fail_json(msg="The parameters instance_id or device_mapping (register from EBS snapshot) are required for a new image.")
-        create_image(module, connection, resource)
+        create_image(module, connection)
 
 
 if __name__ == '__main__':
