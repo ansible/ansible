@@ -815,4 +815,3 @@ class CLI(with_metaclass(ABCMeta, object)):
                 display.deprecated("%s stdout callback, does not support setting 'options', it will work for now, "
                                    " but this will be required in the future and should be updated,"
                                    " see the 2.4 porting guide for details." % self.callback._load_name, version="2.9")
-

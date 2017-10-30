@@ -57,7 +57,7 @@ class CallbackModule(CallbackBase):
 
     def verbose(self, msg, host=None, caplevel=0):
         if host:
-            if not host in self._v:
+            if host not in self._v:
                 self._v[host] = [msg]
             else:
                 self._v[host].append(msg)
