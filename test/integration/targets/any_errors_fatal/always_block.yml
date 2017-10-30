@@ -7,7 +7,7 @@
         - name: initial block debug
           debug: msg='any_errors_fatal_block,  i execute normally'
 
-        - name: any_errors_fatal, initial block, bin/false to simulate failure
+        - name: EXPECTED FAILURE any_errors_fatal, initial block, bin/false to simulate failure
           command: /bin/false
 
         - name: after a task that fails I should never execute
@@ -17,7 +17,7 @@
         - name: any_errors_fatal_rescue_block debug
           debug: msg='any_errors_fatal_rescue_block_start ... I caught an error'
 
-        - name: any_errors_fatal in rescue block, using bin/false to simulate error
+        - name: EXPECTED FAILURE any_errors_fatal in rescue block, using bin/false to simulate error
           command: /bin/false
 
         - name: any_errors_fatal post debug
