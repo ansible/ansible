@@ -74,7 +74,7 @@ Login with Azure CLI
 
 .. code-block:: bash
 
-    $ az account set -s <your-subscription-id>
+    $ az account set -s "<your-subscription-id>"
 
 Providing Credentials to Azure Modules
 ......................................
