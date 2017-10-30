@@ -16,7 +16,7 @@ short_description: Gather facts about ec2 AMIs
 description: Gather facts about ec2 AMIs
 author:
   - Prasad Katti, @prasadkatti
-requirements: [ "boto3", "botocore" ]
+requirements: [ boto3 ]
 options:
   image_ids:
     description: One or more image IDs.
@@ -171,17 +171,12 @@ images:
       sample: hvm
 '''
 
-import traceback
-
 try:
-    import boto3
-    from botocore.exceptions import ClientError
-    HAS_BOTO3 = True
+    from botocore.exceptions import ClientError, BotoCoreError
 except ImportError:
-    HAS_BOTO3 = False
+    pass
 
-
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import (boto3_conn, ec2_argument_spec, get_aws_connection_info, ansible_dict_to_boto3_filter_list,
                                       camel_dict_to_snake_dict, boto3_tag_list_to_ansible_dict)
 
@@ -195,8 +190,8 @@ def list_ec2_images(ec2_client, module):
 
     try:
         images = ec2_client.describe_images(ImageIds=image_ids, Filters=filters, Owners=owners, ExecutableUsers=executable_users)
-    except ClientError as err:
-        module.fail_json(msg=err.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(err.response))
+    except (ClientError, BotoCoreError) as err:
+        module.fail_json_aws(err, msg="error describing images")
 
     images = [camel_dict_to_snake_dict(image) for image in images["Images"]]
 
@@ -218,10 +213,7 @@ def main():
         )
     )
 
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
-
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
+    module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
 
