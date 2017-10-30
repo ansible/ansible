@@ -283,7 +283,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(type='str', aliases=['service', 'unit']),
-            state=dict(type='str', choices=['reloaded,' 'restarted', 'started', 'stopped']),
+            state=dict(type='str', choices=['reloaded', 'restarted', 'started', 'stopped']),
             enabled=dict(type='bool'),
             masked=dict(type='bool'),
             daemon_reload=dict(type='bool', default=False, aliases=['daemon-reload']),
