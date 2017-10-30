@@ -30,6 +30,10 @@ options:
         optional. If a tag is not provided, 'latest' will be used.
     default: null
     required: true
+  image_ids:
+    description:
+      - A list of image ids.
+    version_added: "2.5"
 
 extends_documentation_fragment:
     - docker
@@ -153,6 +157,7 @@ images:
 
 try:
     from docker import utils
+    from docker.errors import ImageNotFound
 except ImportError:
     # missing docker-py handled in docker_common
     pass
@@ -179,6 +184,14 @@ class ImageManager(DockerBaseClass):
     def fail(self, msg):
         self.client.fail(msg)
 
+    def try_except_wrapper(self, f):
+        def run_function(*args, **kwargs):
+            try:
+                return f(*args, **kwargs)
+            except ImageNotFound:
+                return
+        return run_function
+
     def get_facts(self):
         '''
         Lookup and inspect each image name found in the names parameter.
@@ -204,19 +217,24 @@ class ImageManager(DockerBaseClass):
 
     def get_all_images(self):
         results = []
-        images = self.client.images()
+        if self.client.module.params.get('image_ids'):
+            images = self.client.module.params.get('image_ids')
+        else:
+            images = [image['Id'] for image in self.client.images() if image]
         for image in images:
             try:
-                inspection = self.client.inspect_image(image['Id'])
+                inspection = self.try_except_wrapper(self.client.inspect_image)(image)
             except Exception as exc:
                 self.fail("Error inspecting image %s - %s" % (image['Id'], str(exc)))
-            results.append(inspection)
+            if inspection is not None:
+                results.append(inspection)
         return results
 
 
 def main():
     argument_spec = dict(
         name=dict(type='list'),
+        image_ids=dict(type='list'),
     )
 
     client = AnsibleDockerClient(
