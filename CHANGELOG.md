@@ -234,6 +234,7 @@ Ansible Changes By Release
   https://github.com/ansible/ansible/issues/31786
 * Fix ansible-doc and ansible-console module-path option (https://github.com/ansible/ansible/pull/31744)
 * Fix for hostname module on RHEL 7.5 (https://github.com/ansible/ansible/issues/31811)
+* Fix provider password leak in logs for asa modules (https://github.com/ansible/ansible/issues/32343)
 
 ### Known Bugs
 * Implicit localhost is getting ansible_connection from all:vars instead of
