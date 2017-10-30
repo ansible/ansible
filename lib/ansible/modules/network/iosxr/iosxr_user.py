@@ -133,7 +133,7 @@ EXAMPLES = """
     aggregate:
       - name: netop
       - name: netend
-    groups: 
+    groups:
       - sysadmin
       - root-system
     state: present
