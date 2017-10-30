@@ -65,7 +65,6 @@ class TestEnosFacts(TestEnosModule):
         self.assertIn('default', ansible_facts['ansible_net_gather_subset'])
         self.assertIn('interfaces', ansible_facts['ansible_net_gather_subset'])
         self.assertEquals('test1', ansible_facts['ansible_net_hostname'])
-        #self.assertEquals(['disk0:', 'flash0:'], ansible_facts['ansible_net_filesystems'])
         self.assertIn('MGT', ansible_facts['ansible_net_interfaces'].keys())
         self.assertEquals(3992.75390625, ansible_facts['ansible_net_memtotal_mb'])
         self.assertEquals(3383.109375, ansible_facts['ansible_net_memfree_mb'])
