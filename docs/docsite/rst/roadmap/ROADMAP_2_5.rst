@@ -28,8 +28,7 @@ Engine improvements
 - Automatic shared SSH tunneling support for networked connection plugins (dynamic jumphost for SSH/WinRM/whatever)
 - Assemble module improvements
 
-  - assemble just skips when in check mode, it should be able to test 
-    if there is a difference and changed=true/false.
+  - assemble just skips when in check mode, it should be able to test if there is a difference and changed=true/false.
   - The same with diff, it should work as template modules does
 - Include AWX facts as default fact modules in Ansible
 - Handle Password reset prompts cleaner
@@ -71,7 +70,7 @@ Facts
 - Make fact collectors and gather_subset specs finer grained
 - Eliminate unneeded deps between fact collectors
 - Allow fact collectors to indicate if they need information from another fact collector to be gathered first.
-- 
+
 PluginLoader
 ------------
 - Over the past couple releases we've had some thoughts about how PluginLoader might be better structured
@@ -158,8 +157,7 @@ General Cloud
 - Make multi-cloud provisioning easier
 
   - Document multi-instance provisioning with loop directive
-  - Extend async_status to accept a list or build new action to simplify the
-    with_items/register/until:finish patterns.
+  - Extend async_status to accept a list or build new action to simplify the with_items/register/until:finish patterns.
 - Diff mode will output provisioning task results of ansible-playbook runs
 - Terraform module
 
@@ -201,13 +199,14 @@ Documentation
 -------------
 - Extend documentation to all existing plugins
 - Document vault-password-client scripts.
-- Document different authentication options
-- eos_config
-- Create network module index and TOC
-- set hostname network documentation
-- _command show version
-- refactor intro_networking.rst 
-- Network use case documentation
+- Network Documentation
+
+  - refactor intro_networking.rst 
+  - Document different authentication options
+  - Create network module index and TOC
+  - Use Case: Getting Started
+  - Use Case: set hostname network documentation
+  - Use Case: _command show version
 
 Contributor Quality of Life
 ---------------------------
