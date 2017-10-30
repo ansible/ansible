@@ -60,9 +60,9 @@ class ActionModule(ActionBase):
                         # If var name is same as result, try to template it
                         results = self._templar.template("{{" + results + "}}", convert_bare=True, fail_on_undefined=True)
                 except AnsibleUndefinedVariable as e:
-                    results = "VARIABLE IS NOT DEFINED!"
+                    results = u"VARIABLE IS NOT DEFINED!"
                     if self._display.verbosity > 0:
-                        results += ": %s" % to_text(e)
+                        results += u": %s" % to_text(e)
 
                 if isinstance(self._task.args['var'], (list, dict)):
                     # If var is a list or dict, use the type as key to display
