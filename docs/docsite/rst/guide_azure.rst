@@ -28,6 +28,7 @@ Using the Azure Resource Manager modules requires authenticating with the Azure 
 
 * Active Directory Username/Password
 * Service Principal Credentials
+* Login with Azure CLI
 
 Follow the directions for the strategy you wish to use, then proceed to `Providing Credentials to Azure Modules`_ for
 instructions on how to actually use the modules and authenticate with the Azure API.
@@ -59,6 +60,21 @@ To create an Active Directory username/password:
 * Check the checkbox of the subscription you want to test with this user.
 * Login to Azure Portal with this new user to change the temporary password to a new one. You will not be able to use the
   temporary password for OAuth login.
+  
+Login with Azure CLI
+........................................
+
+* Login Azure CLI:
+
+.. code-block:: bash
+
+    $ az login
+
+* Set your subscription:
+
+.. code-block:: bash
+
+    $ az account set -s <your-subscription-id>
 
 Providing Credentials to Azure Modules
 ......................................
@@ -83,6 +99,10 @@ To pass Active Directory username/password via the environment, define the follo
 * AZURE_AD_USER
 * AZURE_PASSWORD
 * AZURE_SUBSCRIPTION_ID
+
+To use Azure CLI, set the following varibale to true:
+
+* AZURE_CLI_DEFAULT_PROFILE
 
 Storing in a File
 `````````````````
@@ -118,6 +138,9 @@ Or, pass the following parameters for Active Directory username/password:
 * password
 * subscription_id
 
+Or, set the following parameter to true for login with Azure CLI:
+
+* cli_default_profile
 
 Other Cloud Environments
 ------------------------
