@@ -664,48 +664,8 @@ if ($FileSystem -eq "ntfs") {
         Fail-Json -obj $result -message "Option size with value $($Size)gb is not a valid size for ntfs hence the disk can not be formatted with this file system"
     }
 } elseif ($FileSystem -eq "refs") {
-    if ($Size -le 1208925819614650000000000) {
-        if ($AllocUnitSize -ne 64) {
-            $AllocUnitSize = 64                   
-        }
-    } else {
-        if ($SetOnline) {
-            try {
-                Set-OperationalStatus -Disk $disk -Deactivate
-            } catch {
-                $OPStatusFailed = $true
-            } finally {
-                if (-not $OPStatusFailed) {
-                    if ($diff_mode) {
-                        $result.change_log.operational_status = "Disk set online and now offline again"
-                    }
-                    $result.changed = $true
-                } else {
-                    if ($diff_mode) {
-                        $result.change_log.operational_status = "Disk failed to set offline again"
-                    }
-                }
-            }
-        }
-        if ($SetWriteable) {
-            try {
-                Set-DiskWriteable -Disk $disk -Deactivate
-            } catch {
-                $ROStatusFailed = $true
-            } finally {
-                if (-not $ROStatusFailed) {
-                    if ($diff_mode) {
-                        $result.change_log.writeable_status = "Disk set writeable and now read-only again"
-                    }
-                    $result.changed = $true
-                } else {
-                    if ($diff_mode) {
-                        $result.change_log.writeable_status = "Disk failed to set read-only again"
-                    }
-                }
-            }
-        }
-        Fail-Json -obj $result -message "Option size with value $($Size)gb is not a valid size for refs hence the disk can not be formatted with this file system"
+    if ($AllocUnitSize -ne 64) {
+        $AllocUnitSize = 64                   
     }
 }
 
