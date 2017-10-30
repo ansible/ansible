@@ -27,8 +27,8 @@ options:
     name:
         description:
             - Name of the Container Registry.
-        required: true
         default: null
+        required: true
     state:
         description:
             - Assert the state of the ACR. Use 'present' to create or update an ACR and 'absent' to delete it.
@@ -49,10 +49,9 @@ options:
         required: false
     sku:
         description:
-            - Specifies the SKU to use. Currently can be either Classic, Basic, Standard or Premium.
+            - Specifies the SKU to use. Currently can be either Basic, Standard or Premium.
         default: Standard
         choices:
-            - Classic
             - Basic
             - Standard
             - Premium
@@ -89,7 +88,7 @@ EXAMPLES = '''
 '''
 RETURN = '''
 state:
-    description: Current state of the azure container registry
+    description: Current state of the azure container registry and it's credentials
     returned: always
     type: dict
 '''
@@ -125,8 +124,9 @@ except ImportError as exc:
 def create_acr_dict(registry, credentials):
     '''
     Helper method to deserialize a ContainerRegistry to a dict
-    :param: acr: return object from Azure rest API call
-    :return: dict with the state on Azure
+    :param: registry: return ACR object from Azure rest API call
+    :param: credentials: return credential objects from Azure rest API call
+    :return: dict of return ACR and it's credentials
     '''
     results = dict(
         id=registry.id if registry != None else "",
@@ -178,7 +178,7 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
                 type='str',
                 required=False,
                 default='Basic',
-                choices=['Classic', 'Basic', 'Standard', 'Premium']
+                choices=['Basic', 'Standard', 'Premium']
             )
         )
 
