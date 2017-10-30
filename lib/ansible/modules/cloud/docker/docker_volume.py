@@ -149,6 +149,9 @@ class DockerVolumeManager(object):
         except APIError as e:
             self.client.fail(text_type(e))
 
+        if volumes[u'Volumes'] is None:
+            return None
+
         for volume in volumes[u'Volumes']:
             if volume['Name'] == self.parameters.volume_name:
                 return volume
