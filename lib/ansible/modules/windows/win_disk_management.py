@@ -26,7 +26,7 @@ options:
         - Select disk option.
         - Size of the disk in gigabyte which will be selected.
         - If a size is defined the module will try to select the disk with this passed size.
-        - Size value must be equal or greater than 1gb.
+        - Size value must be equal or greater than 1gb and maximum 18446744073709551615gb.
   partition_style_select:
       description:
         - Select disk option.
@@ -77,7 +77,7 @@ options:
       description:
         - Manage disk option.
         - File system which will be set on selected disk.
-        - Maximum volume size for ntfs is 256gb, for refs 1208925819614650gb (1 yobibyte).
+        - Maximum volume size for ntfs is 256000gb, for refs it's the maximum Size option value 18446744073709551615gb.
         - If the disk size of the selected disk does not match with the passed value for option
           file_system (e.g. "ntfs" over 256000gb) the module will be canceled.
       default: ntfs
