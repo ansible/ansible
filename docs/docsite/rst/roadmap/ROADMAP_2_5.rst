@@ -178,15 +178,15 @@ Network Roadmap
 - Add various missing declarative modules for supported platforms and functions
 - Implement a feature that handles platform differences and feature unavailability.
 - netconf-config.py should provide control for deployment strategy
-- create netconf connection plugin
-- create netconf fact module
-- turn network_cli into a usable connection type
-- implements jsonrpc message passing for ansible-connection
-- improve logging for ansible-connection
+- Create netconf connection plugin
+- Create netconf fact module
+- Turn network_cli into a usable connection type
+- Implements jsonrpc message passing for ansible-connection
+- Improve logging for ansible-connection
 - Improve stdout output for failures whilst using persistent connection
 - Create IOS-XR NetConf Plugin
-- refactor junos modules to use netconf plugin
-- 
+- Refactor junos modules to use netconf plugin
+
 Documentation
 -------------
 - Extend documentation to all existing plugins
