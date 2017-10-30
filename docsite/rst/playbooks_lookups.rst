@@ -234,13 +234,13 @@ You can specify regions or tables to fetch secrets from::
 
     ---
     - name: "Test credstash lookup plugin -- get my other password from us-west-1"
-      debug: msg="Credstash lookup! {{ lookup('credstash', 'my-other-password', region='us-west-1') }}"
+      debug: msg="Credstash lookup! {{ lookup('credstash', 'my-other-password', region='us-west-1', default='secret') }}"
 
 
     - name: "Test credstash lookup plugin -- get the company's github password"
       debug: msg="Credstash lookup! {{ lookup('credstash', 'company-github-password', table='company-passwords') }}"
-      
-      
+
+
 If you use the context feature when putting your secret, you can get it by passing a dictionary to the context option like this::
 
     ---
@@ -261,6 +261,16 @@ If you use the context feature when putting your secret, you can get it by passi
 If you're not using 2.0 yet, you can do something similar with the credstash tool and the pipe lookup (see below)::
 
     debug: msg="Poor man's credstash lookup! {{ lookup('pipe', 'credstash -r us-west-1 get my-other-password') }}"
+
+==========   ============      =========================================================================================
+Field        Default           Description
+----------   ------------      -----------------------------------------------------------------------------------------
+type         credstash         To select the credstash plugin
+version      ''                Version of the secret to retrieve
+region       None              AWS region in which the credstash table resides
+table        credential-store  The name of the credstash table to search
+default      None              return value if the key is not in the credstash table
+==========   ============      =========================================================================================
 
 .. _dns_lookup:
 
