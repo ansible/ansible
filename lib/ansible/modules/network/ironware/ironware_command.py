@@ -71,29 +71,14 @@ options:
 """
 
 EXAMPLES = """
-# Note: examples below use the following provider dict to handle
-#       transport and authentication to the node.
----
-vars:
-  cli:
-    host: "{{ inventory_hostname }}"
-    username: username
-    password: secret
-    authorize: yes
-    auth_pass: supersecret
-    transport: cli
-
----
 - ironware_command:
     commands:
       - show version
-    provider: "{{ cli }}"
 
 - ironware_command:
     commands:
       - show interfaces brief wide
       - show mpls vll
-    provider: "{{ cli }}"
 """
 
 RETURN = """
