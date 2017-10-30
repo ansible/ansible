@@ -26,7 +26,7 @@
 
 - name: download sl rpm
   get_url:
-    url: https://download.fedoraproject.org/pub/epel/7/x86_64/s/sl-5.02-1.el7.x86_64.rpm
+    url: https://download.fedoraproject.org/pub/epel/7/x86_64/Packages/s/sl-5.02-1.el7.x86_64.rpm
     dest: /tmp/sl.rpm
 
 - name: download Mono key
