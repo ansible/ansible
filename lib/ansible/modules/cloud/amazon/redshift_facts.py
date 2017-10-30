@@ -19,6 +19,7 @@ short_description: Gather facts about Redshift cluster(s)
 description:
   - Gather facts about Redshift cluster(s)
 version_added: "2.4"
+requirements: [ boto3 ]
 options:
   cluster_identifier:
     description:

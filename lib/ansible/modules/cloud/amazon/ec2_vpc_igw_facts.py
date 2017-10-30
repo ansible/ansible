@@ -18,6 +18,7 @@ short_description: Gather facts about internet gateways in AWS
 description:
     - Gather facts about internet gateways in AWS.
 version_added: "2.3"
+requirements: [ boto3 ]
 author: "Nick Aslanidis (@naslanidis)"
 options:
   filters:

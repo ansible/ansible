@@ -18,6 +18,7 @@ description:
     - Manage an AWS Application Elastic Load Balancer target group. See
       U(http://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-target-groups.html) for details.
 version_added: "2.4"
+requirements: [ boto3 ]
 author: "Rob White (@wimnat)"
 options:
   deregistration_delay_timeout:
