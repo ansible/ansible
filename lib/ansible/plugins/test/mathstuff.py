@@ -20,6 +20,8 @@ __metaclass__ = type
 
 import math
 
+from ansible.plugins.test import renamed_deprecation
+
 
 def issubset(a, b):
     return set(a) <= set(b)
@@ -42,7 +44,10 @@ class TestModule:
     def tests(self):
         return {
             # set theory
-            'issubset': issubset,
-            'issuperset': issuperset,
-            'isnan': isnotanumber,
+            'issubset': renamed_deprecation(issubset, 'subset', '2.9'),
+            'subset': issubset,
+            'issuperset': renamed_deprecation(issuperset, 'superset', '2.9'),
+            'superset': issuperset,
+            'isnan': renamed_deprecation(isnotanumber, 'nan', '2.9'),
+            'nan': isnotanumber,
         }

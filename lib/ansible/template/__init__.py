@@ -27,6 +27,7 @@ import pwd
 import re
 import time
 
+from functools import wraps
 from io import StringIO
 from numbers import Number
 
@@ -158,6 +159,7 @@ def _count_newlines_from_end(in_str):
 
 
 def tests_as_filters_warning(func):
+    @wraps(func)
     def wrapper(*args, **kwargs):
         display.deprecated(
             'Using tests as filters is deprecated. Instead of using `result|%(name)s` instead use '
