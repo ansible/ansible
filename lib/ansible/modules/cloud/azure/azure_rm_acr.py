@@ -94,7 +94,6 @@ state:
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
-from enum import Enum
 
 try:
     from msrestazure.azure_exceptions import CloudError
@@ -117,7 +116,6 @@ try:
 except ImportError as exc:
     # This is handled in azure_rm_common
     print("import error {0}".format(str(exc)) + u'\n')
-
     pass
 
 
@@ -129,25 +127,28 @@ def create_acr_dict(registry, credentials):
     :return: dict of return ACR and it's credentials
     '''
     results = dict(
-        id=registry.id if registry != None else "",
-        name=registry.name if registry != None else "",
-        location=registry.location if registry != None else "",
-        admin_user_enabled=registry.admin_user_enabled if registry != None else "",
-        sku=registry.sku.name if registry != None else "",
-        provisioning_state=registry.provisioning_state if registry != None else "",
-        password_name=credentials.passwords[0].name.value if credentials != None else "",
-        password_value=credentials.passwords[0].value if credentials != None else "",
-        password2_name=credentials.passwords[1].name.value if credentials != None else "",
-        password2_value=credentials.passwords[1].value if credentials != None else "",
-        tags=registry.tags if registry != None else ""
+        id=registry.id if registry is not None else "",
+        name=registry.name if registry is not None else "",
+        location=registry.location if registry is not None else "",
+        admin_user_enabled=registry.admin_user_enabled if registry is not None else "",
+        sku=registry.sku.name if registry is not None else "",
+        provisioning_state=registry.provisioning_state if registry is not None else "",
+        password_name=credentials.passwords[0].name.value if credentials is not None else "",
+        password_value=credentials.passwords[0].value if credentials is not None else "",
+        password2_name=credentials.passwords[1].name.value if credentials is not None else "",
+        password2_value=credentials.passwords[1].value if credentials is not None else "",
+        tags=registry.tags if registry is not None else ""
     )
     return results
+
 
 class Actions:
     NoAction, Create, Update = range(3)
 
+
 class AzureRMContainerRegistry(AzureRMModuleBase):
     """Configuration class for an Azure RM container registry resource"""
+
 
     def __init__(self):
         self.module_arg_spec = dict(
@@ -199,10 +200,9 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
     def exec_module(self, **kwargs):
         """Main module execution method"""
 
-
         for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
-            
+
         resource_group = None
         response = None
         to_do = Actions.NoAction
@@ -273,7 +273,7 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
                         raise Exception("Invalid registry name. reason: " + name_status.reason + " message: " + name_status.message)
                 else:
                     registry = self.containerregistry_mgmt_client.registries.get(self.resource_group, self.name)
-                    if registry != None:
+                    if registry is not None:
                         poller = self.containerregistry_mgmt_client.registries.update(
                             resource_group_name=self.resource_group,
                             registry_name=self.name,
@@ -336,7 +336,7 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
             return create_acr_dict(response, credentials)
         else:
             return False
-    
+
     @property
     def containerregistry_mgmt_client(self):
         self.log('Getting container registry mgmt client')
@@ -344,10 +344,11 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
             self._containerregistry_mgmt_client = self.get_mgmt_svc_client(
                 ContainerRegistryManagementClient,
                 base_url = self._cloud_environment.endpoints.resource_manager,
-                api_version='2017-10-01'
+                api_version = '2017-10-01'
             )
 
         return self._containerregistry_mgmt_client
+
 
 def main():
     """Main execution"""
