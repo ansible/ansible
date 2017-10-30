@@ -180,7 +180,6 @@ lib/ansible/modules/network/aos/aos_external_router.py
 lib/ansible/modules/network/aos/aos_ip_pool.py
 lib/ansible/modules/network/aos/aos_logical_device.py
 lib/ansible/modules/network/aos/aos_logical_device_map.py
-lib/ansible/modules/network/aos/aos_login.py
 lib/ansible/modules/network/aos/aos_rack_type.py
 lib/ansible/modules/network/aos/aos_template.py
 lib/ansible/modules/network/asa/asa_acl.py

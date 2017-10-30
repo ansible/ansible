@@ -91,6 +91,7 @@ try:
 except ImportError:
     HAS_AOS_PYEZ = False
 
+
 def aos_login(module):
 
     mod_args = module.params
@@ -110,6 +111,7 @@ def aos_login(module):
     module.exit_json(changed=False,
                      ansible_facts=dict(aos_session=aos.session),
                      aos_session=dict(aos_session=aos.session))
+
 
 def main():
     module = AnsibleModule(
