@@ -240,10 +240,12 @@ def get_consul_api(module, token=None):
                          verify=module.params.get('validate_certs'),
                          token=module.params.get('token'))
 
+
 def test_dependencies(module):
     if not python_consul_installed:
-        module.fail_json(msg="python-consul required for this module. "\
-              "see http://python-consul.readthedocs.org/en/latest/#installation")
+        module.fail_json(msg="python-consul required for this module. "
+                             "see http://python-consul.readthedocs.org/en/latest/#installation")
+
 
 def main():
 
