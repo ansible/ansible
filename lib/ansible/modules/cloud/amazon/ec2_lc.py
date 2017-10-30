@@ -216,7 +216,7 @@ def create_block_device_meta(module, volume):
         return_object['Ebs']['SnapshotId'] = volume.get('snapshot')
 
     if 'volume_size' in volume:
-        return_object['Ebs']['VolumeSize'] = volume.get('volume_size')
+        return_object['Ebs']['VolumeSize'] = int(volume.get('volume_size', 0))
 
     if 'volume_type' in volume:
         return_object['Ebs']['VolumeType'] = volume.get('volume_type')
