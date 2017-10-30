@@ -125,6 +125,11 @@ images:
       returned: always
       type: string
       sample: machine
+    launch_permissions:
+      description: launch permissions of the ami
+      returned: always
+      type: complex
+      sample: [{"group": "all"}, {"user_id": "408466080000"}]
     name:
       description: The name of the AMI that was provided during image creation
       returned: always
@@ -190,10 +195,12 @@ def list_ec2_images(ec2_client, module):
 
     try:
         images = ec2_client.describe_images(ImageIds=image_ids, Filters=filters, Owners=owners, ExecutableUsers=executable_users)
+        images = [camel_dict_to_snake_dict(image) for image in images["Images"]]
+        for image in images:
+            launch_permissions = ec2_client.describe_image_attribute(Attribute='launchPermission', ImageId=image['image_id'])['LaunchPermissions']
+            image['launch_permissions'] = [camel_dict_to_snake_dict(perm) for perm in launch_permissions]
     except (ClientError, BotoCoreError) as err:
         module.fail_json_aws(err, msg="error describing images")
-
-    images = [camel_dict_to_snake_dict(image) for image in images["Images"]]
 
     for image in images:
         image['tags'] = boto3_tag_list_to_ansible_dict(image.get('tags', []), 'key', 'value')
