@@ -70,7 +70,7 @@ Login with Azure CLI
 
     $ az login
 
-* Set your subscription:
+* Set your subscription for Azure CLI:
 
 .. code-block:: bash
 
