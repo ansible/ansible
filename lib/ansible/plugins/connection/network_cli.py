@@ -113,19 +113,19 @@ class Connection(ConnectionBase):
         # network_cli as a toplevel connection.  Once connection=local is gone,
         # this block can be removed as well and all calls passed directly to
         # the local connection
-        try:
-            cmd = json.loads(to_text(cmd, errors='surrogate_or_strict'))
-            if cmd == b'prompt()':
-                return self._matched_prompt
+        if self._ssh_shell:
+            try:
+                cmd = json.loads(to_text(cmd, errors='surrogate_or_strict'))
+                kwargs = {'command': to_bytes(cmd['command'], errors='surrogate_or_strict')}
+                for key in ('prompts', 'answer', 'send_only'):
+                    if key in cmd:
+                        kwargs[key] = to_bytes(cmd[key], errors='surrogate_or_strict')
+                return self.send(**kwargs)
+            except ValueError:
+                cmd = to_bytes(cmd, errors='surrogate_or_strict')
+                return self.send(command=cmd)
 
-            kwargs = {'command': to_bytes(cmd['command'], errors='surrogate_or_strict')}
-            for key in ('prompts', 'answer', 'send_only'):
-                if key in cmd:
-                    kwargs[key] = to_bytes(cmd[key], errors='surrogate_or_strict')
-
-            return self.send(**kwargs)
-
-        except ValueError:
+        else:
             return self._local.exec_command(cmd, in_data, sudoable)
 
     def put_file(self, in_path, out_path):
