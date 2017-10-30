@@ -213,7 +213,7 @@ class InventoryCLI(CLI):
         self._remove_internal(dump)
         if self.options.show_vars:
             for (name, val) in sorted(dump.items()):
-                result.append(self._graph_name('{%s = %s}' % (name, val), depth + 1))
+                result.append(self._graph_name('{%s = %s}' % (name, val), depth))
         return result
 
     def _graph_name(self, name, depth=0):
@@ -231,7 +231,7 @@ class InventoryCLI(CLI):
         if group.name != 'all':
             for host in sorted(group.hosts, key=attrgetter('name')):
                 result.append(self._graph_name(host.name, depth))
-                result.extend(self._show_vars(host.get_vars(), depth))
+                result.extend(self._show_vars(host.get_vars(), depth + 1))
 
         result.extend(self._show_vars(group.get_vars(), depth))
 
@@ -252,7 +252,6 @@ class InventoryCLI(CLI):
             results[group.name] = {}
             if group.name != 'all':
                 results[group.name]['hosts'] = [h.name for h in sorted(group.hosts, key=attrgetter('name'))]
-            results[group.name]['vars'] = group.get_vars()
             results[group.name]['children'] = []
             for subgroup in sorted(group.child_groups, key=attrgetter('name')):
                 results[group.name]['children'].append(subgroup.name)
@@ -281,7 +280,6 @@ class InventoryCLI(CLI):
 
             # initialize group + vars
             results[group.name] = {}
-            results[group.name]['vars'] = group.get_vars()
 
             # subgroups
             results[group.name]['children'] = {}
