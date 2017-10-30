@@ -68,24 +68,25 @@ Tasks: The following are examples of using the module enos_facts.
       port: 22
       username: admin
       password: admin
+      transport: cli
       timeout: 30
       authorize: True
       auth_pass:
 
 ---
-- name: Collect all facts from the device
-  enos_facts:
+# Collect all facts from the device
+- enos_facts:
     gather_subset: all
     provider: "{{ cli }}"
 
-- name: Collect only the config and default facts
-  enos_facts:
+# Collect only the config and default facts
+- enos_facts:
     gather_subset:
       - config
     provider: "{{ cli }}"
 
-- name: Do not collect hardware facts
-  enos_facts:
+# Do not collect hardware facts
+- enos_facts:
     gather_subset:
       - "!hardware"
     provider: "{{ cli }}"
@@ -120,10 +121,6 @@ RETURN = '''
 # hardware
   ansible_net_memfree_mb:
     description: The available free memory on the remote device in MB
-    returned: when hardware is configured
-    type: int
-  ansible_net_memtotal_mb:
-    description: The total memory on the remote device in MB
     returned: when hardware is configured
     type: int
 # config
@@ -169,6 +166,7 @@ class FactsBase(object):
         self.module = module
         self.facts = dict()
         self.responses = None
+        self.PERSISTENT_COMMAND_TIMEOUT = 60
 
     def populate(self):
         self.responses = run_commands(self.module, self.COMMANDS,
@@ -207,10 +205,10 @@ class Default(FactsBase):
                 hosts = line.split()
                 hostname = hosts[1].strip('\"')
                 return hostname
-            else:
-                return "NA"
+        return "NA"
 
     def parse_model(self, data):
+        # match = re.search(r'^Cisco (.+) \(revision', data, re.M)
         match = re.search(r'^Lenovo RackSwitch (\S+)', data, re.M | re.I)
         if match:
             return match.group(1)
@@ -223,6 +221,7 @@ class Default(FactsBase):
             return "Image2"
 
     def parse_serialnum(self, data):
+        # match = re.search(r'board ID (\S+)', data)
         match = re.search(r'^Switch Serial No:  (\S+)', data, re.M | re.I)
         if match:
             return match.group(1)
@@ -273,10 +272,8 @@ class Interfaces(FactsBase):
         self.facts['all_ipv4_addresses'] = list()
         self.facts['all_ipv6_addresses'] = list()
 
-        data1 = self.run(['show interface status \r\n'])
-        data1 = to_text(data1, errors='surrogate_or_strict').strip()
-        data1 = data1.replace(r"\n", "\n")
-        data2 = self.run(['show lldp port \r\n'])
+        data1 = self.responses[0]
+        data2 = self.run(['show lldp port'])
         data2 = to_text(data2, errors='surrogate_or_strict').strip()
         data2 = data2.replace(r"\n", "\n")
         lines1 = None
@@ -286,9 +283,11 @@ class Interfaces(FactsBase):
         if data2:
             lines2 = self.parse_interfaces(data2)
         if lines1 is not None and lines2 is not None:
-            self.facts['interfaces'] = self.populate_interfaces(lines1, lines2)
+            if len(lines1) == len(lines2):
+                self.facts['interfaces'] = self.populate_interfaces(lines1,
+                                                                    lines2)
 
-        data3 = self.run(['show lldp remote-device port \r\n'])
+        data3 = self.run(['show lldp remote-device port'])
         data3 = to_text(data3, errors='surrogate_or_strict').strip()
         data3 = data3.replace(r"\n", "\n")
 
@@ -298,7 +297,7 @@ class Interfaces(FactsBase):
         if lines3 is not None:
             self.facts['neighbors'] = self.populate_neighbors(lines3)
 
-        data4 = self.run(['show interface ip \r\n'])
+        data4 = self.run(['show interface ip'])
         data4 = data4[0].split('\n')
         lines4 = None
         if data4:
@@ -416,6 +415,8 @@ FACT_SUBSETS = dict(
 
 VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())
 
+PERSISTENT_COMMAND_TIMEOUT = 60
+
 
 def main():
     """main entry point for module execution
@@ -486,3 +487,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
