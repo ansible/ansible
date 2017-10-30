@@ -62,11 +62,21 @@ class InventoryData(object):
         self.add_child('all', 'ungrouped')
 
     def serialize(self):
-        data = dict()
+        self._groups_dict_cache = None
+        data = {
+            'groups': self.groups,
+            'hosts': self.hosts,
+            'local': self.locahost,
+            'source': self.current_source,
+        }
         return data
 
     def deserialize(self, data):
-        pass
+        self._groups_dict_cache = {}
+        self.hosts = data.get('hosts')
+        self.groups = data.get('groups')
+        self.localhost = data.get('local')
+        self.current_source = data.get('source')
 
     def _create_implicit_localhost(self, pattern):
 
