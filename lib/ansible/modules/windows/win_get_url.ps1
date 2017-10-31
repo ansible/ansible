@@ -106,7 +106,7 @@ Function Download-File($result, $url, $dest, $headers, $credentials, $timeout, $
     }
 
     if ($credentials) {
-        $extWebClient.Credentials = $credentials
+        $extWebClient.Headers.Add("Authorization","Basic $credentials")
     }
 
     if (-not $whatif) {
@@ -170,7 +170,7 @@ if ($proxy_url) {
 
 $credentials = $null
 if ($url_username -and $url_password) {
-    $credentials = New-Object System.Net.NetworkCredential($url_username, $url_password)
+    $credentials = [convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($url_username+":"+$url_password))
 }
 
 # If skip_certificate_validation was specified, use validate_certs
