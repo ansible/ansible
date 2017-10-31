@@ -1,7 +1,7 @@
 ---
 
 - name: setup - remove motd
-  eos_banner:
+  net_banner:
     banner: motd
     state: absent
     authorize: yes
@@ -49,6 +49,43 @@
       # Ensure sessions contains epoc. Will fail after 18th May 2033
       - "result.session_name is not defined"
 
+- name: Remove motd
+  net_banner:
+    banner: motd
+    text: |
+      this is my motd banner
+      that has a multiline
+      string
+    state: absent
+    authorize: yes
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'no banner motd' in result.commands"
+      # Ensure sessions contains epoc. Will fail after 18th May 2033
+      - "'ansible_1' in result.session_name"
+
+- name: Remove motd again (idempotent)
+  net_banner:
+    banner: motd
+    text: |
+      this is my motd banner
+      that has a multiline
+      string
+    state: absent
+    authorize: yes
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.commands | length == 0"
+      # Ensure sessions contains epoc. Will fail after 18th May 2033
+      - "result.session_name is not defined"
 
 # FIXME add in tests for everything defined in docs
 # FIXME Test state:absent + test:
