@@ -208,6 +208,7 @@
       - '"delete interfaces ethernet eth2" in result.commands'
 
 - name: Delete interface aggregate (idempotent)
+  net_interface:
     aggregate:
       - name: eth1
       - name: eth2
