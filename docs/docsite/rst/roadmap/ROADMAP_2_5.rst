@@ -16,6 +16,7 @@ Ansible Project, 2.5
 Engine improvements
 -------------------
 - Polish and consolidate CLI
+
   - Add a debug flag that prints log entries to stdout
   - Investigate implementing subcommands
 - Clean up output formatting
@@ -33,7 +34,7 @@ Engine improvements
 - Include AWX facts as default fact modules in Ansible
 - Handle Password reset prompts cleaner
 - Tasks stats for rescues and ignores
-- Make ‘persistent’ a generic feature so multiple actions can occur seamlessly in same connection.
+- Make 'persistent' a generic feature so multiple actions can occur seamlessly in same connection.
 - New property for module documentation to manage expectations of the behaviour of the module.
 - Normalize temp dir usage across all subsystems
 - Currently ignored keywords do not notify user they were ignored, throw a warning on these.
