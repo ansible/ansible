@@ -137,6 +137,7 @@ Try {
 Catch [System.ComponentModel.Win32Exception] {
     # fail nicely for "normal" error conditions
     # FUTURE: this probably won't work on Nano Server
+    #
     $excep = $_
     Exit-Json @{failed=$true;changed=$false;cmd=$raw_command_line;rc=$excep.Exception.NativeErrorCode;msg=$excep.Exception.Message}
 }
