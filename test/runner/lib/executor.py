@@ -157,8 +157,10 @@ def install_command_requirements(args):
     try:
         run_command(args, cmd)
     except SubprocessError as ex:
-        if ex.status != 2:
-            raise
+        display.info("GUNDALOW: Failed with %s" % ex.status)
+        #if ex.status != 2:
+        #    display.info("GUNDALOW raise")
+        #    raise
 
         # If pip is too old it won't understand the arguments we passed in, so we'll need to upgrade it.
 
