@@ -14,11 +14,11 @@ This cycle can be extended in order to allow for larger changes to be properly
 implemented and tested before a new release is made available.
 
 Ansible has a graduated support structure that extends to three major releases.
-For more information, read about the `development and stable version maintenance workflow`_. or see
+For more information, read about the `development and stable version maintenance workflow`_ or see
 the chart in :ref:`schedule` for the degrees to which current releases are supported.
 
-.. note:: Support for three major releases began with Ansible-2.4.  Ansible-2.3 and previous are only
-    supported for two releases.
+.. note:: Support for three major releases began with Ansible-2.4. Ansible-2.3 and older versions
+    are only supported for two releases.
 
 If you are using a release of Ansible that is no longer supported, we strongly
 encourage you to upgrade as soon as possible in order to benefit from the
@@ -79,9 +79,9 @@ major release will only receive fixes for security issues and critical bugs. Ans
 security fixes to releases which are two releases old. This work is tracked on the
 ``stable-<version>`` git branches.
 
-.. note:: Support for three major releases began with Ansible-2.4.  Ansible-2.3 and previous are only
-    supported for two releases with the first stage including both security and general bug fixes
-    while the second stage includes security and critical bug fixes
+.. note:: Support for three major releases began with Ansible-2.4. Ansible-2.3 and older versions
+    are only supported for two releases with the first stage including both security and general bug
+    fixes while the second stage includes security and critical bug fixes
 
 The fixes that land in supported stable branches will eventually be released
 as a new version when necessary.
