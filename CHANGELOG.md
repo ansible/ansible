@@ -102,6 +102,8 @@ Ansible Changes By Release
   https://github.com/ansible/ansible/pull/32262
 * Clarified package docs on 'latest' state
   https://github.com/ansible/ansible/pull/32397
+* Fix issue with user module when local is true
+  (https://github.com/ansible/ansible/pull/32262 and https://github.com/ansible/ansible/pull/32411)
 
 
 <a id="2.4.1"></a>
