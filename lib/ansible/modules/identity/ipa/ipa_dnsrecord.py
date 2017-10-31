@@ -31,15 +31,16 @@ options:
   record_type:
     description:
     - The type of DNS record name
-    - Currently, 'A', 'AAAA', and 'PTR' are supported
+    - Currently, 'A', 'AAAA', 'PTR' and 'TXT' are supported
     required: false
     default: 'A'
-    choices: ['A', 'AAAA', 'PTR']
+    choices: ['A', 'AAAA', 'PTR', 'TXT']
   record_value:
     description:
     - Manage DNS record name with this value.
     - In the case of 'A' or 'AAAA' record types, this will be the IP address.
     - In the case of 'PTR' record type, this will be the hostname.
+    - In the case of 'TXT' record type, this will be a text
     required: true
   state:
     description: State to ensure
@@ -70,6 +71,16 @@ EXAMPLES = '''
     record_name: 5
     record_type: 'PTR'
     record_value: 'internal.ipa.example.com'
+
+# Ensure a TXT record is present
+- ipa_dnsrecord:
+    ipa_host: spider.example.com
+    ipa_pass: Passw0rd!
+    state: present
+    zone_name: example.com
+    record_name: _kerberos
+    record_type: 'TXT'
+    record_value: 'EXAMPLE.COM'
 
 # Ensure that dns record is removed
 - ipa_dnsrecord:
@@ -112,6 +123,8 @@ class DNSRecordIPAClient(IPAClient):
             item.update(aaaa_part_ip_address=details['record_value'])
         elif details['record_type'] == 'PTR':
             item.update(ptr_part_hostname=details['record_value'])
+        elif details['record_type'] == 'TXT':
+            item.update(txtrecord=details['record_value'])
 
         return self._post_json(method='dnsrecord_add', name=zone_name, item=item)
 
@@ -134,6 +147,8 @@ def get_dnsrecord_dict(details=None):
         module_dnsrecord.update(aaaarecord=details['record_value'])
     elif details['record_type'] == 'PTR' and details['record_value']:
         module_dnsrecord.update(ptrrecord=details['record_value'])
+    elif details['record_type'] == 'TXT' and details['record_value']:
+        module_dnsrecord.update(txtrecord=details['record_value'])
     return module_dnsrecord
 
 
@@ -179,7 +194,7 @@ def ensure(module, client):
 
 
 def main():
-    record_types = ['A', 'AAAA', 'PTR']
+    record_types = ['A', 'AAAA', 'PTR', 'TXT']
     argument_spec = ipa_argument_spec()
     argument_spec.update(zone_name=dict(type='str', required=True),
                          record_name=dict(type='str', aliases=['name'], required=True),
