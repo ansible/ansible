@@ -10,6 +10,7 @@ DOCUMENTATION = """
     short_description: Lookup current Ansilbe configuration values
     description:
       - Retrieves the value of an Ansible configuration setting.
+      - You can use ``ansible-config list`` to see all available settings.
     options:
       _terms:
         description: they key(s) too look up
