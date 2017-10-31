@@ -99,7 +99,8 @@ options:
     custom_image:
         description:
             - The name of a custom image used to build the VM.
-            - Can be used instead of I(image).        
+            - Can be used instead of I(image).
+        version_added: "2.5"       
     storage_account_name:
         description:
             - Name of an existing storage account that supports creation of VHD blobs. If not specified for a new VM,
