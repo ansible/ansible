@@ -4,7 +4,7 @@ Release and maintenance
 .. contents:: Topics
    :local:
 
-.. _schedule:
+.. _release_cycle:
 
 Release cycle
 `````````````
@@ -15,7 +15,7 @@ implemented and tested before a new release is made available.
 
 Ansible has a graduated support structure that extends to three major releases.
 For more information, read about the `development and stable version maintenance workflow`_. or see
-the chart in `Release staus`_ for the degrees to which current releases are supported.
+the chart in :ref:`schedule` for the degrees to which current releases are supported.
 
 .. note:: Support for three major releases began with Ansible-2.4.  Ansible-2.3 and previous are only
     supported for two releases.
@@ -31,6 +31,8 @@ You can refer to the `porting guides`_ for tips on updating your Ansible
 playbooks to run on newer versions.
 
 .. _porting guides: https://docs.ansible.com/ansible/porting_guides.html
+
+.. _release_schedule:
 
 Release status
 ``````````````
@@ -117,7 +119,7 @@ More release candidates can be tagged as required, so long as there are
 bugs that the Ansible core maintainers consider should be fixed before the
 final release.
 
-.. _freezing:
+.. _release_freezing:
 
 Feature freeze
 ~~~~~~~~~~~~~~
