@@ -396,9 +396,7 @@ class User(object):
             cmd.append(self.password)
 
         if self.create_home:
-            if self.local:
-                cmd.append('-M')
-            else:
+            if not self.local:
                 cmd.append('-m')
 
             if self.skeleton is not None:
