@@ -48,7 +48,7 @@ options:
   vlan_state:
     description:
       - Manage the vlan operational state of the VLAN
-        This is being deprecated in favor of state:
+        This is being deprecated in favor of state.
     required: false
     default: active
     choices: ['active','suspend']
@@ -69,6 +69,7 @@ options:
   state:
     description:
       - Manage the state of the resource.
+        Active and Suspend will assume the vlan is present.
     required: false
     default: present
     choices: ['present','absent', 'active', 'suspend']
