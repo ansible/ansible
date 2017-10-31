@@ -15,6 +15,15 @@ DOCUMENTATION = """
       _terms:
         description: The key(s) to look up
         required: True
+      on_missing:
+        description:
+            - action to take if term is missing from config
+            - Error will raise a fatal error
+            - Skip will just ignore the term
+            - Warn will skip over it but issue a warning
+        default: error
+        type: string
+        choices: ['error', 'skip', 'warn']
 """
 
 EXAMPLES = """
@@ -38,6 +47,8 @@ _raw:
 """
 
 from ansible import constants as C
+from ansible.errors import AnsibleError
+from ansible.module_utils._text import string_types
 from ansible.plugins.lookup import LookupBase
 
 
@@ -45,7 +56,22 @@ class LookupModule(LookupBase):
 
     def run(self, terms, variables=None, **kwargs):
 
+        missing = kwargs.get('on_missing', 'error').lower()
+        if not isinstance(missing, string_types) or missing not in ['error', 'warn', 'skip']:
+            raise AnsibleError('"on_missing" must be a string and one of "error", "warn" or "skip", not %s' % missing)
+
         ret = []
         for term in terms:
-            ret.append(getattr(C, term, None))
+            if not isinstance(term, string_types):
+                raise AnsibleError('Invalid setting identifier, "%s" is not a string, its a %s' % (term, type(term)))
+            try:
+                result = getattr(C, term)
+                if callable(result):
+                    raise AnsibleError('Invalid setting "%s" attempted' % term)
+                ret.append(result)
+            except AttributeError:
+                if missing == 'error':
+                    raise AnsibleError('Unable to find setting %s' % term)
+                elif missing == 'warn':
+                    self._display.warning('Skipping, did not find setting %s' % term)
         return ret
