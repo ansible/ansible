@@ -44,7 +44,7 @@ except ImportError:
 class ConfigCLI(CLI):
     """ Config command line class """
 
-    VALID_ACTIONS = ("view", "dump", "list") # TODO: edit, update, search
+    VALID_ACTIONS = ("view", "dump", "list")   # TODO: edit, update, search
 
     def __init__(self, args, callback=None):
 
@@ -55,8 +55,8 @@ class ConfigCLI(CLI):
     def parse(self):
 
         self.parser = CLI.base_parser(
-            usage = "usage: %%prog [%s] [--help] [options] [ansible.cfg]" % "|".join(self.VALID_ACTIONS),
-            epilog = "\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0]),
+            usage="usage: %%prog [%s] [--help] [options] [ansible.cfg]" % "|".join(self.VALID_ACTIONS),
+            epilog="\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0]),
             desc="View, edit, and manage ansible configuration.",
         )
         self.parser.add_option('-c', '--config', dest='config_file', help="path to configuration file, defaults to first file found in precedence.")
@@ -121,10 +121,10 @@ class ConfigCLI(CLI):
             option = entry
         subprocess.call([
             'ansible',
-            '-m','ini_file',
+            '-m', 'ini_file',
             'localhost',
-            '-c','local',
-            '-a','"dest=%s section=%s option=%s value=%s backup=yes"' % (self.config_file, section, option, value)
+            '-c', 'local',
+            '-a', '"dest=%s section=%s option=%s value=%s backup=yes"' % (self.config_file, section, option, value)
         ])
 
     def execute_view(self):
@@ -145,7 +145,7 @@ class ConfigCLI(CLI):
 
         # pylint: disable=unreachable
         try:
-            editor = shlex.split(os.environ.get('EDITOR','vi'))
+            editor = shlex.split(os.environ.get('EDITOR', 'vi'))
             editor.append(self.config_file)
             subprocess.call(editor)
         except Exception as e:
