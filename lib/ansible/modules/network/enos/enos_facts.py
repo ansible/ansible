@@ -272,7 +272,9 @@ class Interfaces(FactsBase):
         self.facts['all_ipv4_addresses'] = list()
         self.facts['all_ipv6_addresses'] = list()
 
-        data1 = self.responses[0]
+        data1 = self.run(['show interface status'])
+        data1 = to_text(data1, errors='surrogate_or_strict').strip()
+        data1 = data1.replace(r"\n", "\n")
         data2 = self.run(['show lldp port'])
         data2 = to_text(data2, errors='surrogate_or_strict').strip()
         data2 = data2.replace(r"\n", "\n")
@@ -283,8 +285,7 @@ class Interfaces(FactsBase):
         if data2:
             lines2 = self.parse_interfaces(data2)
         if lines1 is not None and lines2 is not None:
-            if len(lines1) == len(lines2):
-                self.facts['interfaces'] = self.populate_interfaces(lines1,
+            self.facts['interfaces'] = self.populate_interfaces(lines1,
                                                                     lines2)
 
         data3 = self.run(['show lldp remote-device port'])
