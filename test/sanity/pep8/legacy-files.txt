@@ -69,12 +69,6 @@ lib/ansible/modules/cloud/docker/docker_network.py
 lib/ansible/modules/cloud/google/gc_storage.py
 lib/ansible/modules/cloud/google/gcdns_record.py
 lib/ansible/modules/cloud/google/gcdns_zone.py
-lib/ansible/modules/cloud/google/gce.py
-lib/ansible/modules/cloud/google/gce_eip.py
-lib/ansible/modules/cloud/google/gce_lb.py
-lib/ansible/modules/cloud/google/gce_mig.py
-lib/ansible/modules/cloud/google/gce_net.py
-lib/ansible/modules/cloud/google/gce_pd.py
 lib/ansible/modules/cloud/google/gce_tag.py
 lib/ansible/modules/cloud/google/gcpubsub.py
 lib/ansible/modules/cloud/google/gcspanner.py
