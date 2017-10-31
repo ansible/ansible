@@ -31,13 +31,21 @@ EXAMPLES = """
       debug: msg="{{ lookup('config', 'DEFAULT_BECOME_USER')}}"
 
     - name: print out role paths
-      debug: msg="This is a role path {{item}}"
-      loop: "{{ lookup('config', 'DEFAULT_ROLES_PATH')}}"
+      debug: msg="These are the configured role paths: {{lookup('config', 'DEFAULT_ROLES_PATH')}}"
 
-    - name: find retry files
+    - name: find retry files, skip if missing that key
       find:
         paths: "{{lookup('config', 'RETRY_FILES_SAVE_PATH')|default(playbook_dir, True)}}"
         patterns: "*.retry"
+
+    - name: see the colors
+      debug: msg="{{item}}"
+      loop: "{{lookup('config', 'COLOR_OK', 'COLOR_CHANGED', 'COLOR_SKIP', wantlist=True)}}"
+
+    - name: skip if bad value in var
+      debug: msg="{{ lookup('config', config_in_var, on_missing='skip')}}"
+      var:
+        config_in_var: UNKNOWN
 """
 
 RETURN = """
@@ -48,7 +56,7 @@ _raw:
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import string_types
+from ansible.module_utils.six import string_types
 from ansible.plugins.lookup import LookupBase
 
 
