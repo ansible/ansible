@@ -100,6 +100,8 @@ Ansible Changes By Release
   https://github.com/ansible/ansible/pull/32276
 * Correct options for luseradd in user module
   https://github.com/ansible/ansible/pull/32262
+* Clarified package docs on 'latest' state
+  https://github.com/ansible/ansible/pull/32397
 
 
 <a id="2.4.1"></a>
