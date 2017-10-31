@@ -1,6 +1,6 @@
 ---
 - name: Setup
-  eos_banner:
+  net_banner:
     banner: login
     text: |
       Junk login banner

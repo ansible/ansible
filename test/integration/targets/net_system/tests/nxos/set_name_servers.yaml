@@ -11,7 +11,7 @@
     provider: "{{ cli }}"
 
 - name: configure name_servers
-  nxos_system:
+  net_system:
     name_servers:
       - 1.1.1.1
       - 2.2.2.2
@@ -28,7 +28,7 @@
       - "'ip name-server 3.3.3.3' in result.commands"
 
 - name: verify name_servers
-  nxos_system:
+  net_system:
     name_servers:
       - 1.1.1.1
       - 2.2.2.2
@@ -41,7 +41,7 @@
       - result.changed == false
 
 - name: remove one
-  nxos_system:
+  net_system:
     name_servers:
       - 1.1.1.1
       - 2.2.2.2

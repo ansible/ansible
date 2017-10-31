@@ -5,7 +5,6 @@
     name: 172.16.0.1
     state: present
     authorize: yes
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -20,7 +19,6 @@
     name: 172.16.0.1
     state: present
     authorize: yes
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -33,7 +31,6 @@
     name: 172.16.0.1
     state: absent
     authorize: yes
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -47,7 +44,6 @@
     name: 172.16.0.1
     state: absent
     authorize: yes
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -60,7 +56,6 @@
     level: warnings
     state: present
     authorize: yes
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -73,7 +68,6 @@
     dest: monitor
     level: debugging
     authorize: yes
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -87,7 +81,6 @@
       - { dest: console, level: warnings, state: absent }
       - { dest: monitor, level: debuggning, state: absent }
     authorize: yes
-    provider: "{{ cli }}"
   register: result
 
 - assert:

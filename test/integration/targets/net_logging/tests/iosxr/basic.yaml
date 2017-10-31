@@ -4,7 +4,6 @@
     dest: hostnameprefix
     name: 172.16.0.1
     state: present
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -18,7 +17,6 @@
     dest: hostnameprefix
     name: 172.16.0.1
     state: present
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -30,7 +28,6 @@
     dest: hostnameprefix
     name: 172.16.0.1
     state: absent
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -43,7 +40,6 @@
     dest: hostnameprefix
     name: 172.16.0.1
     state: absent
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -55,7 +51,6 @@
     dest: console
     level: warnings
     state: present
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -67,7 +62,6 @@
   net_logging:
     dest: monitor
     level: debugging
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -80,7 +74,6 @@
     aggregate:
       - { dest: console, level: warnings, state: absent }
       - { dest: monitor, level: debuggning, state: absent }
-    provider: "{{ cli }}"
   register: result
 
 - assert:
