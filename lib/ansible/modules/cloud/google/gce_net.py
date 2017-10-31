@@ -264,8 +264,7 @@ target_tags:
 try:
     from libcloud.compute.types import Provider
     from libcloud.compute.providers import get_driver
-    from libcloud.common.google import GoogleBaseError, QuotaExceededError, \
-            ResourceExistsError, ResourceNotFoundError
+    from libcloud.common.google import GoogleBaseError, QuotaExceededError, ResourceExistsError, ResourceNotFoundError
     _ = Provider.GCE
     HAS_LIBCLOUD = True
 except ImportError:
@@ -293,6 +292,7 @@ def format_allowed_section(allowed):
         return_val["ports"] = ports
     return return_val
 
+
 def format_allowed(allowed):
     """Format the 'allowed' value so that it is GCE compatible."""
     return_value = []
@@ -304,33 +304,34 @@ def format_allowed(allowed):
             return_value.append(format_allowed_section(section))
     return return_value
 
+
 def sorted_allowed_list(allowed_list):
     """Sort allowed_list (output of format_allowed) by protocol and port."""
     # sort by protocol
-    allowed_by_protocol = sorted(allowed_list,key=lambda x: x['IPProtocol'])
+    allowed_by_protocol = sorted(allowed_list, key=lambda x: x['IPProtocol'])
     # sort the ports list
     return sorted(allowed_by_protocol, key=lambda y: y.get('ports', []).sort())
 
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            allowed = dict(),
-            ipv4_range = dict(),
-            fwname = dict(),
-            name = dict(),
-            src_range = dict(default=[], type='list'),
-            src_tags = dict(default=[], type='list'),
-            target_tags = dict(default=[], type='list'),
-            state = dict(default='present'),
-            service_account_email = dict(),
-            pem_file = dict(type='path'),
-            credentials_file = dict(type='path'),
-            project_id = dict(),
-            mode = dict(default='legacy', choices=['legacy', 'auto', 'custom']),
-            subnet_name = dict(),
-            subnet_region = dict(),
-            subnet_desc = dict(),
+        argument_spec=dict(
+            allowed=dict(),
+            ipv4_range=dict(),
+            fwname=dict(),
+            name=dict(),
+            src_range=dict(default=[], type='list'),
+            src_tags=dict(default=[], type='list'),
+            target_tags=dict(default=[], type='list'),
+            state=dict(default='present'),
+            service_account_email=dict(),
+            pem_file=dict(type='path'),
+            credentials_file=dict(type='path'),
+            project_id=dict(),
+            mode=dict(default='legacy', choices=['legacy', 'auto', 'custom']),
+            subnet_name=dict(),
+            subnet_region=dict(),
+            subnet_desc=dict(),
         )
     )
 
@@ -379,8 +380,8 @@ def main():
         if name and not network:
             if not ipv4_range and mode != 'auto':
                 module.fail_json(msg="Network '" + name + "' is not found. To create network in legacy or custom mode, 'ipv4_range' parameter is required",
-                    changed=False)
-            args = [ipv4_range if mode =='legacy' else None]
+                                 changed=False)
+            args = [ipv4_range if mode == 'legacy' else None]
             kwargs = {}
             if mode != 'legacy':
                 kwargs['mode'] = mode
@@ -414,8 +415,7 @@ def main():
             if not allowed and not src_range and not src_tags:
                 if changed and network:
                     module.fail_json(
-                        msg="Network created, but missing required " + \
-                        "firewall rule parameter(s)", changed=True)
+                        msg="Network created, but missing required " + "firewall rule parameter(s)", changed=True)
                 module.fail_json(
                     msg="Missing required firewall rule parameter(s)",
                     changed=False)
@@ -484,7 +484,7 @@ def main():
             except ResourceNotFoundError:
                 try:
                     gce.ex_create_firewall(fwname, allowed_list, network=name,
-                        source_ranges=src_range, source_tags=src_tags, target_tags=target_tags)
+                                           source_ranges=src_range, source_tags=src_tags, target_tags=target_tags)
                     changed = True
 
                 except Exception as e:
