@@ -41,7 +41,7 @@ Release status
 Ansible Release   Latest Version               Status
 ===============   ==========================   =================================================
 devel             `2.5`_ (unreleased, trunk)   In development
-2.4               `2.4.1`_ (2017-10-25)        Supported (security **and** bug fixes)
+2.4               `2.4.1`_ (2017-10-25)        Supported (security **and** general bug fixes)
 2.3               `2.3.2`_ (2017-08-08)        Supported (security **and** critical bug fixes)
 2.2               `2.2.3`_ (2017-05-09)        Unsupported (end of life)
 2.1               `2.1.6`_ (2017-06-01)        Unsupported (end of life)
@@ -51,8 +51,8 @@ devel             `2.5`_ (unreleased, trunk)   In development
 ===============   ==========================   =================================================
 
 .. note:: Starting with Ansible-2.4, support lasts for 3 releases.  Thus Ansible-2.4 will receive
-    security and bug fixes when it is first released, security and critical bug fixes when 2.5 is
-    released, and **only** security fixes once 2.6 is released.
+    security and general bug fixes when it is first released, security and critical bug fixes when
+    2.5 is released, and **only** security fixes once 2.6 is released.
 
 .. _2.5: https://github.com/ansible/ansible/blob/devel/CHANGELOG.md
 .. _2.4.1: https://github.com/ansible/ansible/blob/stable-2.4/CHANGELOG.md
@@ -80,8 +80,8 @@ security fixes to releases which are two releases old. This work is tracked on t
 ``stable-<version>`` git branches.
 
 .. note:: Support for three major releases began with Ansible-2.4.  Ansible-2.3 and previous are only
-    supported for two releases with the first stage including both security and bug fixes while the
-    second stage includes security and critical bug fixes
+    supported for two releases with the first stage including both security and general bug fixes
+    while the second stage includes security and critical bug fixes
 
 The fixes that land in supported stable branches will eventually be released
 as a new version when necessary.
