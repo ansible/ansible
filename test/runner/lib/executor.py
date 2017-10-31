@@ -157,15 +157,10 @@ def install_command_requirements(args):
     try:
         run_command(args, cmd)
     except SubprocessError as ex:
-        if ex.status != 2:
-            raise
+        # TODO Gundalow/Mattclay: Revisit logic here https://github.com/ansible/ansible/issues/32398
+        # If the install fails for any reason, upgrade pip and retry.
+        # We don't wish to unconditionally upgrade pip, as that would reduce test coverage
 
-        # If pip is too old it won't understand the arguments we passed in, so we'll need to upgrade it.
-
-        # Installing "coverage" on ubuntu 16.04 fails with the error:
-        # AttributeError: 'Requirement' object has no attribute 'project_name'
-        # See: https://bugs.launchpad.net/ubuntu/xenial/+source/python-pip/+bug/1626258
-        # Upgrading pip works around the issue.
         run_command(args, ['pip', 'install', '--upgrade', 'pip'])
         run_command(args, cmd)
 
