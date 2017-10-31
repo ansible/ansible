@@ -214,7 +214,7 @@ def create_aci_dict(aci):
         type=aci.type,
         restart_policy=aci.restart_policy,
         provisioning_state=aci.provisioning_state,
-        image_registry_credentials=aci.image_registry_credentials,
+        #image_registry_credentials=aci.image_registry_credentials,
         volumes=aci.volumes,
         os_type=aci.os_type
     )
@@ -351,7 +351,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
                 if to_be_updated:
                     self.log('Deleting ACI instance before update')
                     if not self.check_mode:
-                        self.delete_aci()
+                    self.delete_aci()
 
         if self.state == 'present':
 
@@ -380,10 +380,10 @@ class AzureRMContainerInstance(AzureRMModuleBase):
 
         registry_credentials = None
 
-        if self.registry_login_server is not None:
-            registry_credentials = ImageRegistryCredential(self.registry_login_server,
-                                                           self.registry_username,
-                                                           self.registry_password)
+        if self.registry_login_server is not None:            
+            registry_credentials = ImageRegistryCredential(server=self.registry_login_server,
+                                                           username=self.registry_username,
+                                                           password=self.registry_password)
 
         ip_address = None
 
@@ -414,7 +414,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         parameters = ContainerGroup(location=self.location,
                                     tags=self.tags,
                                     containers=containers,
-                                    image_registry_credentials=registry_credentials,
+                                    image_registry_credentials=[ registry_credentials ],
                                     restart_policy=None,
                                     ip_address=ip_address,
                                     os_type=self.os_type,
@@ -462,6 +462,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
             return create_aci_dict(response)
 
         return False
+
 
 def main():
     """Main execution"""
