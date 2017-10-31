@@ -122,6 +122,7 @@ def get_address(gce, name, region):
     except ResourceNotFoundError:
         return None
 
+
 def create_address(gce, params):
     """
     Create a new Address.
@@ -147,6 +148,7 @@ def create_address(gce, params):
 
     return (changed, return_data)
 
+
 def delete_address(address):
     """
     Delete an Address.
@@ -166,6 +168,7 @@ def delete_address(address):
         changed = True
         return_data = address.address
     return (changed, return_data)
+
 
 def main():
     module = AnsibleModule(argument_spec=dict(
