@@ -42,7 +42,7 @@ Ansible Release   Latest Version               Status
 ===============   ==========================   =================================================
 devel             `2.5`_ (unreleased, trunk)   In development
 2.4               `2.4.1`_ (2017-10-25)        Supported (security **and** bug fixes)
-2.3               `2.3.2`_ (2017-08-08)        Supported (**only** security fixes)
+2.3               `2.3.2`_ (2017-08-08)        Supported (security **and** critical bug fixes)
 2.2               `2.2.3`_ (2017-05-09)        Unsupported (end of life)
 2.1               `2.1.6`_ (2017-06-01)        Unsupported (end of life)
 2.0               `2.0.2`_ (2016-04-19)        Unsupported (end of life)
@@ -52,7 +52,7 @@ devel             `2.5`_ (unreleased, trunk)   In development
 
 .. note:: Starting with Ansible-2.4, support lasts for 3 releases.  Thus Ansible-2.4 will receive
     security and bug fixes when it is first released, security and critical bug fixes when 2.5 is
-    released, and only security fixes once 2.6 is released.
+    released, and **only** security fixes once 2.6 is released.
 
 .. _2.5: https://github.com/ansible/ansible/blob/devel/CHANGELOG.md
 .. _2.4.1: https://github.com/ansible/ansible/blob/stable-2.4/CHANGELOG.md
@@ -75,13 +75,13 @@ New modules, plugins, features and bugfixes will always be integrated in what wi
 major version of Ansible.  This work is tracked on the ``devel`` git branch.
 
 Ansible provides bugfixes and security improvements for the most recent major release. The previous
-major release will only receive fixes for security issues and critical bugs. Ansible applies
+major release will only receive fixes for security issues and critical bugs. Ansible only applies
 security fixes to releases which are two releases old. This work is tracked on the
 ``stable-<version>`` git branches.
 
 .. note:: Support for three major releases began with Ansible-2.4.  Ansible-2.3 and previous are only
     supported for two releases with the first stage including both security and bug fixes while the
-    second stage only includes security fixes
+    second stage includes security and critical bug fixes
 
 The fixes that land in supported stable branches will eventually be released
 as a new version when necessary.
