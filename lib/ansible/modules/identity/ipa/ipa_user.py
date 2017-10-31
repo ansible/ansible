@@ -28,6 +28,7 @@ options:
     - Date at which the user password will expire
     - In the format YYYYMMddHHmmss
     - e.g. 20180121182022 will expire on 21 January 2018 at 18:20:22
+    version_added: 2.5
   loginshell:
     description: Login shell
   mail:
