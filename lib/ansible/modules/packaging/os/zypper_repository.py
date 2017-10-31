@@ -375,7 +375,7 @@ def main():
 
     exists, mod, old_repos = repo_exists(module, repodata, overwrite_multiple)
 
-    if repo:
+    if repo.endswith('.repo'):
         shortname = repo
     else:
         shortname = alias
