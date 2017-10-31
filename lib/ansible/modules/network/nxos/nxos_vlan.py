@@ -289,10 +289,7 @@ def main():
         state=dict(choices=['present', 'absent', 'active', 'suspend'], default='present', required=False),
         admin_state=dict(choices=['up', 'down'], required=False),
         mode=dict(choices=['ce', 'fabricpath'], required=False),
-<<<<<<< HEAD
 
-=======
->>>>>>> upstream/devel
     )
 
     argument_spec.update(nxos_argument_spec)
