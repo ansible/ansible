@@ -13,7 +13,7 @@ DOCUMENTATION = """
       - You can use ``ansible-config list`` to see all available settings.
     options:
       _terms:
-        description: they key(s) too look up
+        description: The key(s) to look up
         required: True
 """
 
