@@ -285,7 +285,7 @@ class Interfaces(FactsBase):
         if data2:
             lines2 = self.parse_interfaces(data2)
         if lines1 is not None and lines2 is not None:
-            self.facts['interfaces'] = self.populate_interfaces(lines1 , lines2)
+            self.facts['interfaces'] = self.populate_interfaces(lines1, lines2)
         data3 = self.run(['show lldp remote-device port'])
         data3 = to_text(data3, errors='surrogate_or_strict').strip()
         data3 = data3.replace(r"\n", "\n")
