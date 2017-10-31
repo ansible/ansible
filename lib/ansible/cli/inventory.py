@@ -70,7 +70,8 @@ class InventoryCLI(CLI):
             usage='usage: %prog [options] [host|group]',
             epilog='Show Ansible inventory information, by default it uses the inventory script JSON format',
             inventory_opts=True,
-            vault_opts=True
+            vault_opts=True,
+            basedir_opts=True,
         )
 
         # Actions

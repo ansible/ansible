@@ -88,6 +88,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
             vault_opts=True,
             fork_opts=True,
             module_opts=True,
+            basedir_opts=True,
             desc="REPL console for executing Ansible tasks.",
             epilog="This is not a live session/connection, each task executes in the background and returns it's results."
         )
