@@ -156,8 +156,8 @@ def install_command_requirements(args):
 
     try:
         run_command(args, cmd)
-    except SubprocessError as ex:
-        # TODO Gundalow/Mattclay: Revisit logic here https://github.com/ansible/ansible/issues/32398
+    except SubprocessError:
+        # Gundalow/Mattclay: Revisit logic here https://github.com/ansible/ansible/issues/32398
         # If the install fails for any reason, upgrade pip and retry.
         # We don't wish to unconditionally upgrade pip, as that would reduce test coverage
 
