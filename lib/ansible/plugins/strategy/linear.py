@@ -131,7 +131,7 @@ class StrategyModule(StrategyBase):
                 if t is None:
                     continue
                 if s.run_state == cur_state and s.cur_block == cur_block:
-                    new_t = iterator.get_next_task_for_host(host)
+                    iterator.get_next_task_for_host(host)
                     rvals.append((host, t))
                 else:
                     rvals.append((host, noop_task))
@@ -305,7 +305,6 @@ class StrategyModule(StrategyBase):
                     # this is a fatal error, so we abort here regardless of block state
                     return self._tqm.RUN_ERROR
 
-                include_failure = False
                 if len(included_files) > 0:
                     display.debug("we have included files to process")
 
@@ -363,7 +362,6 @@ class StrategyModule(StrategyBase):
                                 self._tqm._failed_hosts[host.name] = True
                                 iterator.mark_host_failed(host)
                             display.error(to_text(e), wrap_text=False)
-                            include_failure = True
                             continue
 
                     # finally go through all of the hosts and append the
