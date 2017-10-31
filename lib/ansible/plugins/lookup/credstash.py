@@ -41,6 +41,9 @@ DOCUMENTATION = """
         description: AWS session token
         env:
           - name: AWS_SESSION_TOKEN
+      default:
+        description: return value if the key is not in the credstash table
+        version_added: "2.5"
 """
 
 EXAMPLES = """
@@ -51,7 +54,7 @@ EXAMPLES = """
   debug: msg="Credstash lookup! {{ lookup('credstash', 'my-github-password') }}"
 
 - name: "Test credstash lookup plugin -- get my other password from us-west-1"
-  debug: msg="Credstash lookup! {{ lookup('credstash', 'my-other-password', region='us-west-1') }}"
+  debug: msg="Credstash lookup! {{ lookup('credstash', 'my-other-password', region='us-west-1', default='secret') }}"
 
 - name: "Test credstash lookup plugin -- get the company's github password"
   debug: msg="Credstash lookup! {{ lookup('credstash', 'company-github-password', table='company-passwords') }}"
@@ -109,9 +112,13 @@ class LookupModule(LookupBase):
                 aws_session_token = kwargs.pop('aws_session_token', os.getenv('AWS_SESSION_TOKEN', None))
                 kwargs_pass = {'profile_name': profile_name, 'aws_access_key_id': aws_access_key_id,
                                'aws_secret_access_key': aws_secret_access_key, 'aws_session_token': aws_session_token}
+                default = kwargs.pop('default', None)
                 val = credstash.getSecret(term, version, region, table, context=kwargs, **kwargs_pass)
             except credstash.ItemNotFound:
-                raise AnsibleError('Key {0} not found'.format(term))
+                if default is not None:
+                    val = default
+                else:
+                    raise AnsibleError('Key {0} not found'.format(term))
             except Exception as e:
                 raise AnsibleError('Encountered exception while fetching {0}: {1}'.format(term, e.message))
             ret.append(val)
