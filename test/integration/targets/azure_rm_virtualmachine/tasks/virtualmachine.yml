@@ -155,3 +155,17 @@
 
 - assert:
       that: azure_publicipaddresses | length == 0
+
+- name: Check error message when supplying both image and custom_image
+  azure_rm_virtualmachine:
+      resource_group: "{{ resource_group }}"
+      name: testvm002
+      state: present
+      custom_image: customimage
+      image:
+        offer: UbuntuServer
+        publisher: Canonical
+        sku: 16.04-LTS
+        version: latest
+  register: fail_image_and_custom
+  failed_when: 'fail_image_and_custom.msg != "parameter error: expecting image or custom_image and not both"'
