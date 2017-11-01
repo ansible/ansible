@@ -40,7 +40,7 @@
     that:
     - install_network_msi|changed
     - install_network_msi.reboot_required == False
-    - install_network_msi.exit_code == 0
+    - install_network_msi.rc == 0
     - install_network_msi_actual.exists == True
 
 - name: install network msi (idempotent)
@@ -98,7 +98,7 @@
     that:
     - uninstall_path_network_msi|changed
     - uninstall_path_network_msi.reboot_required == False
-    - uninstall_path_network_msi.exit_code == 0
+    - uninstall_path_network_msi.rc == 0
     - uninstall_path_network_msi_actual.exists == False
 
 - name: uninstall network msi with path (idempotent)
@@ -156,7 +156,7 @@
     that:
     - install_network_reboot_msi|changed
     - install_network_reboot_msi.reboot_required == True
-    - install_network_reboot_msi.exit_code == 3010
+    - install_network_reboot_msi.rc == 3010
     - install_network_reboot_msi_actual.exists == True
 
 - name: install network reboot msi (idempotent)
@@ -210,7 +210,7 @@
     that:
     - uninstall_id_network_msi|changed
     - uninstall_id_network_msi.reboot_required == True
-    - uninstall_id_network_msi.exit_code == 3010
+    - uninstall_id_network_msi.rc == 3010
     - uninstall_id_network_msi_actual.exists == False
 
 - name: uninstall network msi with product_id (idempotent)
@@ -283,7 +283,7 @@
     that:
     - install_network_msi_argument|changed
     - install_network_msi_argument.reboot_required == False
-    - install_network_msi_argument.exit_code == 0
+    - install_network_msi_argument.rc == 0
     - install_network_msi_argument_moo.stat.exists == False
     - install_network_msi_argument_cow.stat.exists == True
 
@@ -350,7 +350,7 @@
     that:
     - install_network_exe|changed
     - install_network_exe.reboot_required == False
-    - install_network_exe.exit_code == 0
+    - install_network_exe.rc == 0
     - install_network_exe_actual.exists == True
 
 - name: install network exe (idempotent)
@@ -409,7 +409,7 @@
     that:
     - uninstall_network_exe|changed
     - uninstall_network_exe.reboot_required == False
-    - uninstall_network_exe.exit_code == 0
+    - uninstall_network_exe.rc == 0
     - uninstall_network_exe_actual.exists == False
 
 - name: uninstall network exe (idempotent)
