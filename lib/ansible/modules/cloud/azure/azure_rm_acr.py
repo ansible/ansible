@@ -112,10 +112,8 @@ try:
         WebhookStatus
     )
     from azure.mgmt.containerregistry import ContainerRegistryManagementClient
-    import azure.mgmt.storage
 except ImportError as exc:
     # This is handled in azure_rm_common
-    print("import error {0}".format(str(exc)) + u'\n')
     pass
 
 
@@ -148,7 +146,6 @@ class Actions:
 
 class AzureRMContainerRegistry(AzureRMModuleBase):
     """Configuration class for an Azure RM container registry resource"""
-
 
     def __init__(self):
         self.module_arg_spec = dict(
@@ -193,9 +190,10 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
 
         self.results = dict(changed=False, state=dict())
 
-        super(AzureRMContainerRegistry, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                                      supports_check_mode=True,
-                                                      supports_tags=True)
+        super(AzureRMContainerRegistry, self).__init__(
+            derived_arg_spec=self.module_arg_spec,
+            supports_check_mode=True,
+            supports_tags=True)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
@@ -343,8 +341,8 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
         if not self._containerregistry_mgmt_client:
             self._containerregistry_mgmt_client = self.get_mgmt_svc_client(
                 ContainerRegistryManagementClient,
-                base_url = self._cloud_environment.endpoints.resource_manager,
-                api_version = '2017-10-01'
+                base_url=self._cloud_environment.endpoints.resource_manager,
+                api_version='2017-10-01'
             )
 
         return self._containerregistry_mgmt_client
