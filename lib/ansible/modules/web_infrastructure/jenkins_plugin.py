@@ -89,6 +89,11 @@ options:
     default: http://localhost:8080
     description:
       - URL of the Jenkins server.
+  url_password:
+    required: false
+    default: null
+    description:
+      - Password for the Jenkins server. Does not get logged.
   version:
     required: false
     default: null
