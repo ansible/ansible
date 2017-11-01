@@ -4,14 +4,18 @@
 # Copyright (c) 2017 F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: bigip_virtual_address
-short_description: Manage LTM virtual addresses on a BIG-IP.
+short_description: Manage LTM virtual addresses on a BIG-IP
 description:
   - Manage LTM virtual addresses on a BIG-IP.
 version_added: "2.4"
@@ -99,79 +103,88 @@ options:
     choices:
       - yes
       - no
+  partition:
+    description:
+      - Device partition to manage resources on.
+    required: False
+    default: 'Common'
+    version_added: 2.5
 notes:
   - Requires the f5-sdk Python package on the host. This is as easy as pip
     install f5-sdk.
   - Requires the netaddr Python package on the host. This is as easy as pip
     install netaddr.
 extends_documentation_fragment: f5
+requirements:
+  - f5-sdk
+  - netaddr
 author:
   - Tim Rupp (@caphrim007)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Add virtual address
   bigip_virtual_address:
-      server: "lb.mydomain.net"
-      user: "admin"
-      password: "secret"
-      state: "present"
-      partition: "Common"
-      address: "10.10.10.10"
+    server: lb.mydomain.net
+    user: admin
+    password: secret
+    state: present
+    partition: Common
+    address: 10.10.10.10
   delegate_to: localhost
 
 - name: Enable route advertisement on the virtual address
   bigip_virtual_address:
-      server: "lb.mydomain.net"
-      user: "admin"
-      password: "secret"
-      state: "present"
-      address: "10.10.10.10"
-      use_route_advertisement: yes
+    server: lb.mydomain.net
+    user: admin
+    password: secret
+    state: present
+    address: 10.10.10.10
+    use_route_advertisement: yes
   delegate_to: localhost
 '''
 
-RETURN = '''
+RETURN = r'''
 use_route_advertisement:
-    description: The new setting for whether to use route advertising or not.
-    returned: changed
-    type: bool
-    sample: true
+  description: The new setting for whether to use route advertising or not.
+  returned: changed
+  type: bool
+  sample: true
 auto_delete:
-    description: New setting for auto deleting virtual address.
-    returned: changed
-    type: string
-    sample: enabled
+  description: New setting for auto deleting virtual address.
+  returned: changed
+  type: string
+  sample: enabled
 icmp_echo:
-    description: New ICMP echo setting applied to virtual address.
-    returned: changed
-    type: string
-    sample: disabled
+  description: New ICMP echo setting applied to virtual address.
+  returned: changed
+  type: string
+  sample: disabled
 connection_limit:
-    description: The new connection limit of the virtual address.
-    returned: changed
-    type: int
-    sample: 1000
+  description: The new connection limit of the virtual address.
+  returned: changed
+  type: int
+  sample: 1000
 netmask:
-    description: The netmask of the virtual address.
-    returned: created
-    type: int
-    sample: 2345
+  description: The netmask of the virtual address.
+  returned: created
+  type: int
+  sample: 2345
 arp_state:
-    description: The new way the virtual address handles ARP requests.
-    returned: changed
-    type: string
-    sample: disabled
+  description: The new way the virtual address handles ARP requests.
+  returned: changed
+  type: string
+  sample: disabled
 address:
-    description: The address of the virtual address.
-    returned: created
-    type: int
-    sample: 2345
+  description: The address of the virtual address.
+  returned: created
+  type: int
+  sample: 2345
 state:
-    description: The new state of the virtual address.
-    returned: changed
-    type: string
-    sample: disabled
+  description: The new state of the virtual address.
+  returned: changed
+  type: string
+  sample: disabled
 '''
 
 try:
@@ -180,14 +193,17 @@ try:
 except ImportError:
     HAS_NETADDR = False
 
-from ansible.module_utils.f5_utils import (
-    AnsibleF5Client,
-    AnsibleF5Parameters,
-    HAS_F5SDK,
-    F5ModuleError,
-    iControlUnexpectedHTTPError
-)
-from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE, BOOLEANS_TRUE
+from ansible.module_utils.f5_utils import AnsibleF5Client
+from ansible.module_utils.f5_utils import AnsibleF5Parameters
+from ansible.module_utils.f5_utils import HAS_F5SDK
+from ansible.module_utils.f5_utils import F5ModuleError
+from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
+from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE
+
+try:
+    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+except ImportError:
+    HAS_F5SDK = False
 
 
 class Parameters(AnsibleF5Parameters):
