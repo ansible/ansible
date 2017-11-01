@@ -178,7 +178,7 @@ set:
       type: bool
       sample: false
     failover:
-      description:
+      description: ""
       returned: always
       type: NoneType
       sample: null
@@ -188,7 +188,7 @@ set:
       type: NoneType
       sample: null
     identifier:
-      description:
+      description: ""
       returned: always
       type: NoneType
       sample: null
@@ -198,7 +198,7 @@ set:
       type: string
       sample: new.foo.com.
     region:
-      description:
+      description: ""
       returned: always
       type:
       sample:
