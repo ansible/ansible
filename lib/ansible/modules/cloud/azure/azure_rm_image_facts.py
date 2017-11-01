@@ -15,25 +15,27 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import absolute_import, division, print_function
-
 __metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
-author: "Emma Laurijssens van Engelenhoven"
+author: Emma Laurijssens van Engelenhoven
 description:
-  - "Capture an Azure Virtual Machine image for the deployment of other VMs in Azure 
-     The VM should be generalized usimg sysprep. After this command runs, the Virtual Machine will be unusable.
-     Depends on pip azure module 2.0.0 or above and azure-mgmt-compute 2.1.0 and above."
+  - Show information about VM images in a given subscription in Azure.
+    Depends on pip azure module 2.0.0 or above and azure-mgmt-compute 2.1.0 and above.
 module: azure_rm_image_facts
 options:
   name:
     description:
-      - "The name of the image being queried."
+      - The name of the image being queried.
     required: false
 
 short_description: "Capture Azure Virtual Machine Images"
-version_added: "2.9"
+version_added: "2.5"
 
 '''
 
@@ -46,7 +48,6 @@ EXAMPLES = '''
     - name: List all images in subscription
       azure_rm_image_facts:
         subscription_id: "{{ subscription_id }}"
-        resource_group_name: "{{ resource_group_name }}"
         client_id: "{{ secrets.client_id }}"
         tenant_id: "{{ tenant_id }}"
         client_secret: "{{ secrets.client_secret }}"
@@ -61,6 +62,18 @@ EXAMPLES = '''
         name: win2016-1
 
 '''
+
+RETURN = '''
+azure_images:
+    description: A list of matching image dicts
+    returned: always
+    type: list
+found:
+    description: Whether or not the requested image was found
+    returned: always
+    type: bool
+'''
+
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
@@ -133,12 +146,11 @@ class AzureRMImageFacts(AzureRMModuleBase):
         image_names = self._list_images()
 
         return dict(azure_images=image_names,
-                    status="Found",
+                    found=True,
                     changed=False)
 
     def get_item(self):
 
-        status = "Not found"
         image_names = self._list_images()
         image_item = []
 
@@ -147,11 +159,10 @@ class AzureRMImageFacts(AzureRMModuleBase):
         if found:
             for image in image_names:
                 if image['name'] == self.name:
-                    status = "Found"
                     image_item.append(image)
 
         return dict(azure_images=image_item,
-                    status=status,
+                    found=found,
                     changed=False)
 
 
