@@ -14,7 +14,6 @@ lib/ansible/modules/cloud/webfaction/webfaction_mailbox.py
 lib/ansible/modules/cloud/webfaction/webfaction_site.py
 lib/ansible/modules/clustering/consul_acl.py
 lib/ansible/modules/network/cloudengine/ce_file_copy.py
-lib/ansible/modules/network/f5/bigip_gtm_pool.py
 lib/ansible/modules/network/f5/bigip_gtm_wide_ip.py
 lib/ansible/modules/network/f5/bigip_hostname.py
 lib/ansible/modules/network/f5/bigip_iapp_service.py

@@ -178,13 +178,13 @@ EXAMPLES = r'''
 '''
 
 
-from distutils.version import LooseVersion
 from ansible.module_utils.f5_utils import AnsibleF5Client
 from ansible.module_utils.f5_utils import AnsibleF5Parameters
 from ansible.module_utils.f5_utils import HAS_F5SDK
 from ansible.module_utils.f5_utils import F5ModuleError
 from ansible.module_utils.six import iteritems
 from collections import defaultdict
+from distutils.version import LooseVersion
 
 
 try:
