@@ -46,7 +46,6 @@ Engine improvements
 Ansible Content Management
 --------------------------
 - Have ansible-galaxy handle installation of modules, plugins, etc not included with the install package
-- Combine efforts on Ansible Playbook Bundle spec created by Openshift Ansible Broker team.
 
 Ansible-Config
 --------------
