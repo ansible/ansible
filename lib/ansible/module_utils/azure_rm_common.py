@@ -127,6 +127,7 @@ try:
     from azure.mgmt.dns import DnsManagementClient
     from azure.mgmt.web import WebSiteManagementClient
     from azure.mgmt.containerservice import ContainerServiceClient
+    from azure.mgmt.keyvault import KeyVaultManagementClient
     from azure.storage.cloudstorageaccount import CloudStorageAccount
 except ImportError as exc:
     HAS_AZURE_EXC = exc
@@ -237,6 +238,7 @@ class AzureRMModuleBase(object):
         self._dns_client = None
         self._web_client = None
         self._containerservice_client = None
+        self._keyvault_client = None
 
         self.check_mode = self.module.check_mode
         self.facts_module = facts_module
@@ -789,3 +791,10 @@ class AzureRMModuleBase(object):
         if not self._containerservice_client:
             self._containerservice_client = self.get_mgmt_svc_client(ContainerServiceClient)
         return self._containerservice_client
+
+    @property
+    def keyvault_client(self):
+        self.log('Getting keyvault client')
+        if not self._keyvault_client:
+            self._keyvault_client = self.get_mgmt_svc_client(KeyVaultManagementClient)
+        return self._keyvault_client
