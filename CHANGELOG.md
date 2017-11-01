@@ -113,7 +113,7 @@ Ansible Changes By Release
 * Fix ios_logging module issue where facility is being deleted along with host:
   (https://github.com/ansible/ansible/pull/32234)
 * Fix wrong prompt issue for network modules (https://github.com/ansible/ansible/pull/32426)
-
+* Fix eos_eapi to enable non-default vrfs if the default vrf is already configured (https://github.com/ansible/ansible/pull/32112)
 
 <a id="2.4.1"></a>
 
