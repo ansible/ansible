@@ -73,9 +73,10 @@ class ActionModule(_ActionModule):
         # make sure we are in the right cli context which should be
         # enable mode and not config module
         rc, out, err = connection.exec_command('prompt()')
-        if str(out).strip().endswith(')#'):
+        while str(out).strip().endswith(')#'):
             display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
             connection.exec_command('exit')
+            rc, out, err = connection.exec_command('prompt()')
 
         task_vars['ansible_socket'] = socket_path
 
