@@ -41,6 +41,7 @@ Engine improvements
 - Deprecation version enforcement
 - Force jinja to use native types
 - sysvinit service module
+- Add option to set playbook dir for adhoc, inventory and console to allow for 'relative path loading'
 
 
 Ansible Content Management
