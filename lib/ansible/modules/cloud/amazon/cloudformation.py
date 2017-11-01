@@ -256,7 +256,7 @@ def get_stack_events(cfn, stack_name, token_filter=None):
                 "StackEvents[?ClientRequestToken == '{0}']".format(token_filter)
             ))
         else:
-            events = list(pg)
+            events = list(pg.search("StackEvents[*]"))
     except (botocore.exceptions.ValidationError, botocore.exceptions.ClientError) as err:
         error_msg = boto_exception(err)
         if 'does not exist' in error_msg:
