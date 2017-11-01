@@ -60,14 +60,82 @@ is the order to favour when writing modules:
 - COM objects through ``New-Object -ComObject`` cmdlet
 - Calls to native executables like ``Secedit.exe``
 
+PowerShell modules support a small subset of the ``#Requires`` options built
+into PowerShell as well as some Ansible-specific requirements specified by
+``#AnsibleRequires``. These statements can be placed at any point in the script,
+but are most commonly near the top. They are used to make it easier to state the
+requirements of the module without writing any of the checks. Each ``requires``
+statement must be on its own line, but there can be multiple requires statements
+in one script. 
+
+These are the checks that can be used within Ansible modules:
+
+- ``#Requires -Module Ansible.ModuleUtils.<module_util>``: Added in Ansible 2.4, specifies a module_util to load in for the module execution.
+- ``#Requires -Version x.y``: Added in Ansible 2.5, specifies the version of PowerShell that is required by the module. The module will fail if this requirement is not met.
+- ``#AnsibleRequires -OSVersion x.y``: Added in Ansible 2.5, specifies the OS build version that is required by the module and will fail if this requirement is not met. The actual OS version is derived from ``[Environment]::OSVersion.Version``.
+- ``#AnsibleRequires -Become``: Added in Ansible 2.5, forces the exec runner to run the module with ``become``, which is primarily used to bypass WinRM restrictions. If ``ansible_become_user`` is not specified then the ``SYSTEM`` account is used instead.
+
+
+Windows module utilities
+========================
+
+Like Python modules, PowerShell modules also provide a number of module
+utilities that provide helper functions within PowerShell. These module_utils
+can be imported by adding the following line to a PowerShell module:
+
+.. code-block:: powershell
+
+    #Requires -Module Ansible.ModuleUtils.Legacy
+
+This will import the module_util at ``./lib/ansible/module_utils/powershell/Ansible.ModuleUtils.Legacy.psm1``
+and enable calling all of its functions. 
+
+The following is a list of module_utils that are packaged with Ansible and a general description of what
+they do:
+
+- ArgvParser: Utiliy used to convert a list of arguments to an escaped string compliant with the Windows argument parsing rules.
+- CamelConversion: Utility used to convert camelCase strings/lists/dicts to snake_case.
+- CommandUtil: Utility used to execute a Windows process and return the stdout/stderr and rc as separate objects.
+- Legacy: General definitions and helper utilities for Ansible module.
+- SID: Utilities used to convert a user or group to a Windows SID and vice versa.
+
+For more details on any specific module utility and their requirements, please see the `Ansible 
+module utilities source code <https://github.com/ansible/ansible/tree/devel/lib/ansible/module_utils/powershell>`_.
+
+PowerShell module utilities can be stored outside of the standard Ansible
+distribution for use with custom modules. Custom module_utils are placed in a
+folder called ``module_utils`` located in the root folder of the playbook or role
+directory.
+
+The below example is a role structure that contains two custom module_utils
+called ``Ansible.ModuleUtils.ModuleUtil1`` and
+``Ansible.ModuleUtils.ModuleUtil2``::
+
+    meta/
+      main.yml
+    defaults/
+      main.yml
+    module_utils/
+      Ansible.ModuleUtils.ModuleUtil1.psm1
+      Ansible.ModuleUtils.ModuleUtil2.psm1
+    tasks/
+      main.yml
+
+Each module_util must contain at least one function, and a list of functions, aliases and cmdlets to export for use
+in a module. This can be a blanket export by using ``*``. For example:
+
+.. code-block:: powershell
+
+    Export-ModuleMember -Alias * -Function * -Cmdlet *
+
 
 Windows playbook module testing
 ===============================
 
-To test a module you can do so with an Ansible playbook.
+You can test a module with an Ansible playbook. For example:
 
-- Create a playbook in any directory ``touch testmodule.yml``
-- Create an inventory file in the same directory ``touch hosts``
+- Create a playbook in any directory ``touch testmodule.yml``.
+- Create an inventory file in the same directory ``touch hosts``.
 - Populate the inventory file with the variables required to connect to a Windows host(s).
 - Add the following to the new playbook file::
 
@@ -81,17 +149,17 @@ To test a module you can do so with an Ansible playbook.
 
 - Run the playbook ``ansible-playbook -i hosts testmodule.yml``
 
-This can be pretty high level and is useful for seeing how Ansible runs with
-the new module end to end: but there are better ways to test out the module as
+This can be useful for seeing how Ansible runs with
+the new module end to end. Other possible ways to test the module are
 shown below.
 
 
 Windows debugging
 =================
 
-Debugging a module currently can only be done on a Windows host. This is
-extremely useful when developing a new module or looking at bug fixes. These
-are some steps that need to be followed to set this up.
+Debugging a module currently can only be done on a Windows host. This can be
+useful when developing a new module or implementing bug fixes. These
+are some steps that need to be followed to set this up:
 
 - Copy the module script to the Windows server
 - Copy ``./lib/ansible/module_utils/powershell/Ansible.ModuleUtils.Legacy.psm1`` to the same directory as the script above
@@ -132,42 +200,41 @@ the most popular are
 To be able to view the arguments as passed by Ansible to the module follow
 these steps.
 
-- Prefix the Ansible command with :envvar:`ANSIBLE_KEEP_REMOTE_FILES=1` to get Ansible to keep the exec files on the server
-- Log onto the Windows server using the same user Ansible executed the module as
-- Navigate to ``%TEMP%\..``, there should be a folder starting with ``ansible-tmp-``
-- Inside this folder open up the powershell script for the module
-- In this script there is a raw JSON script under ``$json_raw`` which contains the module arguments under ``module_args``
-- These args can be assigned manually to the ``$complex_args`` variable that is defined on your debug script
+- Prefix the Ansible command with :envvar:`ANSIBLE_KEEP_REMOTE_FILES=1` to specify that Ansible should keep the exec files on the server.
+- Log onto the Windows server using the same user account that Ansible used to execute the module.
+- Navigate to ``%TEMP%\..``. It should contain a folder starting with ``ansible-tmp-``.
+- Inside this folder, open the PowerShell script for the module.
+- In this script is a raw JSON script under ``$json_raw`` which contains the module arguments under ``module_args``. These args can be assigned manually to the ``$complex_args`` variable that is defined on your debug script.
 
 
 Windows unit testing
 ====================
 
 Currently there is no mechanism to run unit tests for Powershell modules under Ansible CI.
-There is work in the pipeline to introduce this in the future, stay tuned.
 
 
 Windows integration testing
 ===========================
 
-Integration tests for Ansible modules are typically written as Ansible roles. The test
+Integration tests for Ansible modules are typically written as Ansible roles. These test
 roles are located in ``./test/integration/targets``. You must first set up your testing
-environment, and configure a test inventory for Ansible to connect to. In this example we
-will set up a test inventory to connect to two hosts and run the integration
-tests for win_stat.
+environment, and configure a test inventory for Ansible to connect to. 
 
-- Create a copy of ``./test/integration/inventory.winrm.template`` and just call it ``inventory.winrm``
-- Fill in entries under ``[windows]`` and set the required vars that are needed to connect to the host
-- To execute the integration tests, run ``ansible-test windows-integration win_stat``- you can replace ``win_stat`` with the role you wish to test
+In this example we will set up a test inventory to connect to two hosts and run the integration
+tests for win_stat:
+
+- Create a copy of ``./test/integration/inventory.winrm.template`` and name it ``inventory.winrm``.
+- Fill in entries under ``[windows]`` and set the required variables that are needed to connect to the host.
+- To execute the integration tests, run ``ansible-test windows-integration win_stat``; you can replace ``win_stat`` with the role you wish to test.
 
 This will execute all the tests currently defined for that role. You can set
 the verbosity level using the ``-v`` argument just as you would with
 ansible-playbook.
 
-When developing tests for a new module, it is recommended to test a scenario in
-check mode and 2 times not in check mode. This ensures that check mode
-does not make any changes but reports a change, as well as that the 2nd run is
-idempotent and does not report changes. Following is an example of one way that this can be done:
+When developing tests for a new module, it is recommended to test a scenario once in
+check mode and twice not in check mode. This ensures that check mode
+does not make any changes but reports a change, as well as that the second run is
+idempotent and does not report changes. For example:
 
 .. code-block:: yaml
 
@@ -220,7 +287,7 @@ Windows communication and development support
 =============================================
 
 Join the IRC channel ``#ansible-devel`` or ``#ansible-windows`` on freenode for
-discussions surrounding Ansible development for Windows.
+discussions about Ansible development for Windows.
 
 For questions and discussions pertaining to using the Ansible product,
 use the ``#ansible`` channel.
