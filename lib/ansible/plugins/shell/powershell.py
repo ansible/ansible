@@ -1,5 +1,4 @@
 # Copyright: (c) 2014, Chris Church <chris@ninemoreminutes.com>
-#
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
@@ -89,12 +88,12 @@ end {
     # load the current action entrypoint as a module custom object with a Run method
     $entrypoint = New-Module -ScriptBlock ([scriptblock]::Create($entrypoint)) -AsCustomObject
 
-    [void] (Set-Variable -Scope global -Name complex_args -Value $payload["module_args"])
+    Set-Variable -Scope global -Name complex_args -Value $payload["module_args"] > $null
 
     # dynamically create/load modules
     ForEach ($mod in $payload.powershell_modules.GetEnumerator()) {
         $decoded_module = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($mod.Value))
-        [void] (New-Module -ScriptBlock ([scriptblock]::Create($decoded_module)) -Name $mod.Key | Import-Module -WarningAction SilentlyContinue)
+        New-Module -ScriptBlock ([scriptblock]::Create($decoded_module)) -Name $mod.Key | Import-Module -WarningAction SilentlyContinue > $null
     }
 
     $output = $entrypoint.Run($payload)
@@ -112,29 +111,29 @@ Function Run($payload) {
 
     $ps = [powershell]::Create()
 
-    [void] ($ps.AddStatement().AddCommand("Set-Variable").AddParameters(@{Scope="global";Name="complex_args";Value=$payload.module_args}))
-    [void] ($ps.AddCommand("Out-Null"))
+    $ps.AddStatement().AddCommand("Set-Variable").AddParameters(@{Scope="global";Name="complex_args";Value=$payload.module_args}) > $null
+    $ps.AddCommand("Out-Null") > $null
 
     # redefine Write-Host to dump to output instead of failing- lots of scripts use it
-    [void] ($ps.AddStatement().AddScript("Function Write-Host(`$msg){ Write-Output `$msg }"))
+    $ps.AddStatement().AddScript("Function Write-Host(`$msg){ Write-Output `$msg }") > $null
 
     ForEach ($env_kv in $payload.environment.GetEnumerator()) {
         $escaped_env_set = "`$env:{0} = '{1}'" -f $env_kv.Key,$env_kv.Value.Replace("'","''")
-        [void] ($ps.AddStatement().AddScript($escaped_env_set))
+        $ps.AddStatement().AddScript($escaped_env_set) > $null
     }
 
     # dynamically create/load modules
     ForEach ($mod in $payload.powershell_modules.GetEnumerator()) {
         $decoded_module = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($mod.Value))
-        [void] ($ps.AddStatement().AddCommand("New-Module").AddParameters(@{ScriptBlock=([scriptblock]::Create($decoded_module));Name=$mod.Key}))
-        [void] ($ps.AddCommand("Import-Module").AddParameters(@{WarningAction="SilentlyContinue"}))
-        [void] ($ps.AddCommand("Out-Null"))
+        $ps.AddStatement().AddCommand("New-Module").AddParameters(@{ScriptBlock=([scriptblock]::Create($decoded_module));Name=$mod.Key}) > $null
+        $ps.AddCommand("Import-Module").AddParameters(@{WarningAction="SilentlyContinue"}) > $null
+        $ps.AddCommand("Out-Null") > $null
     }
 
     # force input encoding to preamble-free UTF8 so PS sub-processes (eg, Start-Job) don't blow up
-    [void] ($ps.AddStatement().AddScript("[Console]::InputEncoding = New-Object Text.UTF8Encoding `$false"))
+    $ps.AddStatement().AddScript("[Console]::InputEncoding = New-Object Text.UTF8Encoding `$false") > $null
 
-    [void] ($ps.AddStatement().AddScript($entrypoint))
+    $ps.AddStatement().AddScript($entrypoint) > $null
 
     $output = $ps.Invoke()
 
@@ -927,12 +926,12 @@ $exec_wrapper = {
     # load the current action entrypoint as a module custom object with a Run method
     $entrypoint = New-Module -ScriptBlock ([scriptblock]::Create($entrypoint)) -AsCustomObject
 
-    [void] (Set-Variable -Scope global -Name complex_args -Value $payload["module_args"])
+    Set-Variable -Scope global -Name complex_args -Value $payload["module_args"] > $null
 
     # dynamically create/load modules
     ForEach ($mod in $payload.powershell_modules.GetEnumerator()) {
         $decoded_module = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($mod.Value))
-        [void] (New-Module -ScriptBlock ([scriptblock]::Create($decoded_module)) -Name $mod.Key | Import-Module -WarningAction SilentlyContinue)
+        New-Module -ScriptBlock ([scriptblock]::Create($decoded_module)) -Name $mod.Key | Import-Module -WarningAction SilentlyContinue > $null
     }
 
     $output = $entrypoint.Run($payload)
@@ -975,7 +974,7 @@ Function Run($payload) {
             throw "become_user '$username' is not recognized on this host"
         }
 
-        [void] (Set-Acl $temp $acl)
+        Set-Acl $temp $acl > $null
 
         $payload_string = $payload | ConvertTo-Json -Depth 99 -Compress
 
@@ -1049,12 +1048,12 @@ $entrypoint = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase6
 # load the current action entrypoint as a module custom object with a Run method
 $entrypoint = New-Module -ScriptBlock ([scriptblock]::Create($entrypoint)) -AsCustomObject
 
-[void] (Set-Variable -Scope global -Name complex_args -Value $payload["module_args"])
+Set-Variable -Scope global -Name complex_args -Value $payload["module_args"] > $null
 
 # dynamically create/load modules
 ForEach ($mod in $payload.powershell_modules.GetEnumerator()) {
     $decoded_module = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($mod.Value))
-    [void] (New-Module -ScriptBlock ([scriptblock]::Create($decoded_module)) -Name $mod.Key | Import-Module -WarningAction SilentlyContinue)
+    New-Module -ScriptBlock ([scriptblock]::Create($decoded_module)) -Name $mod.Key | Import-Module -WarningAction SilentlyContinue > $null
 }
 
 $output = $entrypoint.Run($payload)
@@ -1284,7 +1283,7 @@ Function Run($payload) {
 
     $payload.async_results_path = $results_path
 
-    [void] ([System.IO.Directory]::CreateDirectory([System.IO.Path]::GetDirectoryName($results_path)))
+    [System.IO.Directory]::CreateDirectory([System.IO.Path]::GetDirectoryName($results_path)) > $null
 
     Add-Type -TypeDefinition $native_process_util -Debug:$false
 
@@ -1467,8 +1466,8 @@ Function Run($payload) {
     $job = [powershell]::Create()
     $job.Runspace = $rs
 
-    [void] ($job.AddScript($entrypoint))
-    [void] ($job.AddStatement().AddCommand("Run").AddArgument($payload))
+    $job.AddScript($entrypoint) > $null
+    $job.AddStatement().AddCommand("Run").AddArgument($payload) > $null
 
     Log "job BeginInvoke()"
 
@@ -1512,7 +1511,7 @@ Function Run($payload) {
         Log "wrote output to $resultfile_path"
     }
     Else {
-        [void] ($job.BeginStop($null, $null))  # best effort stop
+        $job.BeginStop($null, $null) > $null  # best effort stop
         # write timeout to result object
         $result.failed = $true
         $result.msg = "timed out waiting for module completion"
@@ -1522,7 +1521,7 @@ Function Run($payload) {
     }
 
     # in the case of a hung pipeline, this will cause the process to stay alive until it's un-hung...
-    #[void] ($rs.Close())
+    #$rs.Close() > $null
 }
 
 '''  # end async_watchdog
