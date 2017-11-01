@@ -176,7 +176,7 @@ class Cli:
         rc = 0
         for command in to_list(commands):
             if command == 'end':
-                pass
+                continue
 
             if command.startswith('banner') or multiline:
                 multiline = True
