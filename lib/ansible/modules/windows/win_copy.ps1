@@ -71,19 +71,19 @@ Function Copy-File($source, $dest) {
             Fail-Json -obj $result -message "cannot copy file from $source to $($dest): object at dest parent dir is not a folder"
         } elseif (-not (Test-Path -Path $file_dir)) {
             # directory doesn't exist, need to create
-            [void] New-Item -Path $file_dir -ItemType Directory -WhatIf:$check_mode 
+            [void] (New-Item -Path $file_dir -ItemType Directory -WhatIf:$check_mode)
             $diff += "+$file_dir\`n"
         }
 
         if (Test-Path -Path $dest -PathType Leaf) {
-            [void] Remove-Item -Path $dest -Force -Recurse -WhatIf:$check_mode
+            [void] (Remove-Item -Path $dest -Force -Recurse -WhatIf:$check_mode)
             $diff += "-$dest`n"
         }
 
         if (-not $check_mode) {
             # cannot run with -WhatIf:$check_mode as if the parent dir didn't
             # exist and was created above would still not exist in check mode
-            [void] Copy-Item -Path $source -Destination $dest -Force
+            [void] (Copy-Item -Path $source -Destination $dest -Force)
         }
         $diff += "+$dest`n"
 
