@@ -734,15 +734,14 @@ class AzureRMModuleBase(object):
 
     def register_namespace(self, namespace):
         self.log('Register the namespace for the subscription if not registered yet')
-        provider = self.rm_client.providers.get(namespace)
-        if provider is None:
-            try:
+
+        try:
+            provider = self.rm_client.providers.get(namespace)
+            if provider is None or provider.namespace != namespace:
                 provider = self.rm_client.providers.register(namespace)
-            except CloudError as e:
-                self.log('Failed to registery the namespace: {0}'.format(str(e)))
-                return False
             return True
-        else:
+        except CloudError as e:
+            self.log('Failed to registery the namespace: {0}'.format(str(e)))
             return False
 
     @property
