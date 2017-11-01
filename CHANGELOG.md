@@ -126,6 +126,8 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/32190)
 * Fix failure during upgrade due to NON_RESPONSIVE state for ovirt_hosts module
   (https://github.com/ansible/ansible/pull/32192)
+* ini inventory format now correclty handles group creation w/o need for specific orders
+  https://github.com/ansible/ansible/pull/32471
 
 <a id="2.4.1"></a>
 
