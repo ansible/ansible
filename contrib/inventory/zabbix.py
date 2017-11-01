@@ -165,6 +165,7 @@ class ZabbixInventory(object):
                 api.login(user=self.zabbix_username, password=self.zabbix_password)
             except BaseException as e:
                 print("Error: Could not login to Zabbix server. Check your zabbix.ini.", file=sys.stderr)
+                print("Error message was: " + str(e))
                 sys.exit(1)
 
             if self.options.host:
