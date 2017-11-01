@@ -116,6 +116,8 @@ Ansible Changes By Release
 * Fix eos_eapi to enable non-default vrfs if the default vrf is already configured (https://github.com/ansible/ansible/pull/32112)
 * Fix network parse_cli filter in case of single match is not caught when using start_block and end_block
   (https://github.com/ansible/ansible/pull/31092)
+* Fix win_find failing on files it can't access, change behaviour to be more
+  like the find module (https://github.com/ansible/ansible/issues/31898)
 
 <a id="2.4.1"></a>
 
