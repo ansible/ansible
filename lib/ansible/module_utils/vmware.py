@@ -198,9 +198,21 @@ def find_vm_by_id(content, vm_id, vm_id_type="vm_name", datacenter=None, cluster
             folder = datacenter.hostFolder
         vm = find_vm_by_name(content, vm_id, folder)
     elif vm_id_type == 'inventory_path':
-        searchpath = folder
+
+        dcpath = compile_folder_path_for_object(datacenter)
+
+        # Check for full path first in case it was already supplied
+        if (folder.startswith(dcpath + datacenter + '/vm')):
+           fullpath = folder
+        elif (folder.startswith('/vm/') or folder == '/vm'):
+           fullpath = "%s%s%s" % (dcpath, datacenter, folder)
+        elif (folder.startswith('/')):
+           fullpath = "%s%s/vm%s" % (dcpath, datacenter, folder)
+        else:
+           fullpath = "%s%s/vm/%s" % (dcpath, datacenter, folder)
+
         # get all objects for this path
-        f_obj = si.FindByInventoryPath(searchpath)
+        f_obj = si.FindByInventoryPath(fullpath)
         if f_obj:
             if isinstance(f_obj, vim.Datacenter):
                 f_obj = f_obj.vmFolder

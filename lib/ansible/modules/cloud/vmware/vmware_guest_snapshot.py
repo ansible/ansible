@@ -238,7 +238,7 @@ class PyVmomiHelper(object):
         elif folder and name:
             if self.params['name_match'] == 'first':
                 match_first = True
-            vm = find_vm_by_id(self.content, vm_id=name, vm_id_type="inventory_path", folder=folder, match_first=match_first)
+            vm = find_vm_by_id(self.content, vm_id=name, vm_id_type="inventory_path", datacenter=self.params['datacenter'], folder=folder, match_first=match_first)
         return vm
 
     @staticmethod

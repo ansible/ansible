@@ -181,7 +181,7 @@ def main():
             module.fail_json(changed=False, msg="Unable to find %(cluster)s cluster" % module.params)
 
     if module.params['vm_id_type'] == 'inventory_path':
-        vm = find_vm_by_id(content, vm_id=module.params['vm_id'], vm_id_type="inventory_path", folder=folder)
+        vm = find_vm_by_id(content, vm_id=module.params['vm_id'], vm_id_type="inventory_path", datacenter=datacenter, folder=folder)
     else:
         vm = find_vm_by_id(content, vm_id=module.params['vm_id'], vm_id_type=module.params['vm_id_type'], datacenter=datacenter, cluster=cluster)
 
