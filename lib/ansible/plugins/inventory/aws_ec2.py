@@ -386,9 +386,12 @@ class InventoryModule(BaseInventoryPlugin):
         for region in regions:
             try:
                 connection = boto3.session.Session(profile_name=self.boto_profile).client('ec2', region, **credentials)
-            except botocore.exceptions.PartialCredentialsError as e:
+            except (botocore.exceptions.ProfileNotFound, botocore.exceptions.PartialCredentialsError) as e:
                 if self.boto_profile:
-                    connection = boto3.session.Session(profile_name=self.boto_profile).client('ec2', region)
+                    try:
+                        connection = boto3.session.Session(profile_name=self.boto_profile).client('ec2', region)
+                    except (botocore.exceptions.ProfileNotFound, botocore.exceptions.PartialCredentialsError) as e:
+                        raise AnsibleError("Insufficient credentials found.")
                 else:
                     raise AnsibleError("Insufficient credentials found.")
             yield connection, region
@@ -451,7 +454,10 @@ class InventoryModule(BaseInventoryPlugin):
         for preference in hostnames:
             hostname = self._get_boto_attr_chain(preference, instance)
             if hostname:
-                return to_safe_group_name(to_text(hostname))
+                if ':' in to_text(hostname):
+                    return to_safe_group_name(to_text(hostname))
+                else:
+                    return to_text(hostname)
 
     def _populate(self, regions, filters, group_by, hostnames, strict_permissions):
         '''
@@ -524,6 +530,9 @@ class InventoryModule(BaseInventoryPlugin):
             self.aws_security_token = self._find_cred(possible_env_vars=('AWS_SECURITY_TOKEN',
                                                                          'AWS_SESSION_TOKEN',
                                                                          'EC2_SECURITY_TOKEN'))
+        if not self.boto_profile and not (self.aws_access_key_id and self.aws_secret_access_key):
+            raise AnsibleError("Insufficient boto credentials found. Please provide them in your "
+                               "inventory configuration file or set them as environment variables.")
 
     def _validate_config(self, loader, path):
         '''
