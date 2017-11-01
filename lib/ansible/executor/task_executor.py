@@ -480,6 +480,8 @@ class TaskExecutor:
                 not getattr(self._connection, 'connected', False) or
                 self._play_context.remote_addr != self._connection._play_context.remote_addr):
             self._connection = self._get_connection(variables=variables, templar=templar)
+            if getattr(self._connection, '_socket_path'):
+                variables['ansible_socket'] = self._connection._socket_path
             # only template the vars if the connection actually implements set_host_overrides
             # NB: this is expensive, and should be removed once connection-specific vars are being handled by play_context
             sho_impl = getattr(type(self._connection), 'set_host_overrides', None)
