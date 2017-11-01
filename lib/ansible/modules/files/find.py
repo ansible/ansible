@@ -153,7 +153,11 @@ examined:
     returned: success
     type: string
     sample: 34
-    
+total_size_dir:
+    description: total size of filesystem directory looked at
+    returned: success
+    type: int
+    sample: 50098
 '''
 
 import fnmatch
@@ -165,9 +169,9 @@ import time
 
 from ansible.module_utils.basic import AnsibleModule
 
+
 def pfilter(f, patterns=None, use_regex=False):
     '''filter using glob patterns'''
-
     if patterns is None:
         return True
 
@@ -241,7 +245,7 @@ def size_dir(directory):
     return 4096 + sum(os.path.getsize(f) for f in file_walker) + sum(size for size in dir_walker)
 
 
-def statinfo(st, fsname=None):
+def statinfo(st, f=None):
     stat_info = {
         'mode': "%04o" % stat.S_IMODE(st.st_mode),
         'isdir': stat.S_ISDIR(st.st_mode),
@@ -272,13 +276,11 @@ def statinfo(st, fsname=None):
         'isuid': bool(st.st_mode & stat.S_ISUID),
         'isgid': bool(st.st_mode & stat.S_ISGID),
     }
-    
-    if fsname:
-        stat_info.update({'size' : int(size_dir(fsname))})
+    if f:
+        stat_info.update({'size': int(size_dir(f))})
         return stat_info
     else:
         return stat_info
-    
 
 
 def main():
@@ -329,6 +331,7 @@ def main():
     now = time.time()
     msg = ''
     looked = 0
+    list_dir = []
     for npath in params['paths']:
         npath = os.path.expanduser(os.path.expandvars(npath))
         if os.path.isdir(npath):
@@ -348,7 +351,6 @@ def main():
                         continue
 
                     r = {'path': fsname}
-				
                     if params['file_type'] == 'any':
                         if pfilter(fsobj, params['patterns'], params['use_regex']) and agefilter(st, now, age, params['age_stamp']):
                             r.update(statinfo(st))
@@ -356,6 +358,7 @@ def main():
                     elif stat.S_ISDIR(st.st_mode) and params['file_type'] == 'directory':
                         if pfilter(fsobj, params['patterns'], params['use_regex']) and agefilter(st, now, age, params['age_stamp']):
                             r.update(statinfo(st, fsname))
+                            list_dir.append(size_dir(fsname))
                             filelist.append(r)
 
                     elif stat.S_ISREG(st.st_mode) and params['file_type'] == 'file':
@@ -380,7 +383,7 @@ def main():
             msg += "%s was skipped as it does not seem to be a valid directory or it cannot be accessed\n" % npath
 
     matched = len(filelist)
-    module.exit_json(files=filelist, changed=False, msg=msg, matched=matched, examined=looked)
+    module.exit_json(files=filelist, changed=False, msg=msg, matched=matched, examined=looked, total_size_dir=sum(list_dir))
 
 
 if __name__ == '__main__':
