@@ -65,10 +65,10 @@ EXAMPLES = """
   tasks:
 
   - name: "Test credstash lookup plugin -- get the password with a context passed as a variable"
-    debug: msg="{{ lookup('credstash', 'some-password', context=context) }}"
+    debug: msg="{{ lookup('credstash', 'some-password', context=**context) }}"
 
-  - name: "Test credstash lookup plugin -- get the password with a context defined here"
-    debug: msg="{{ lookup('credstash', 'some-password', context=dict(app='my_app', environment='production')) }}"
+  - name: "Test credstash lookup plugin -- get the password with a context defined using keyword arguments"
+    debug: msg="{{ lookup('credstash', 'some-password', app='my_app', environment='production') }}"
 """
 
 RETURN = """
