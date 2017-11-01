@@ -193,8 +193,9 @@ Network Roadmap
 - Implements jsonrpc message passing for ansible-connection
 - Improve logging for ansible-connection
 - Improve stdout output for failures whilst using persistent connection
-- Create IOS-XR NetConf Plugin
+- Create IOS-XR NetConf Plugin and refactor iosxr modules to leverage netconf plugin
 - Refactor junos modules to use netconf plugin
+- Filters: Add a filter to convert XML response from a network device to JSON object.
 
 Documentation
 -------------
