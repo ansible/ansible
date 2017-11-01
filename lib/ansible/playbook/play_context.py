@@ -490,7 +490,7 @@ class PlayContext(Base):
                 new_info.connection_user = new_info.remote_user
             new_info.remote_user = pwd.getpwuid(os.getuid()).pw_name
 
-        # set no_log to default if it was not previouslly set
+        # set no_log to default if it was not previously set
         if new_info.no_log is None:
             new_info.no_log = C.DEFAULT_NO_LOG
 
