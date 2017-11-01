@@ -1,5 +1,5 @@
-# (c) 2014, Chris Church <chris@ninemoreminutes.com>
-# Copyright (c) 2017 Ansible Project
+# Copyright: (c) 2014, Chris Church <chris@ninemoreminutes.com>
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
@@ -30,13 +30,13 @@ DOCUMENTATION = """
 
 import base64
 import inspect
+import json
 import os
 import re
 import shlex
-import traceback
-import json
-import tempfile
 import subprocess
+import tempfile
+import traceback
 
 HAVE_KERBEROS = False
 try:
@@ -461,11 +461,11 @@ class Connection(ConnectionBase):
             }}
             process {{
                $bytes = [System.Convert]::FromBase64String($input)
-               [void] ($sha1.TransformBlock($bytes, 0, $bytes.Length, $bytes, 0))
+               $sha1.TransformBlock($bytes, 0, $bytes.Length, $bytes, 0) > $null
                $fd.Write($bytes, 0, $bytes.Length)
             }}
             end {{
-                [void] ($sha1.TransformFinalBlock($bytes, 0, 0))
+                $sha1.TransformFinalBlock($bytes, 0, 0) > $null
 
                 $hash = [System.BitConverter]::ToString($sha1.Hash).Replace("-", "").ToLowerInvariant()
 
@@ -510,12 +510,12 @@ class Connection(ConnectionBase):
                         If (Test-Path -PathType Leaf "%(path)s")
                         {
                             $stream = New-Object IO.FileStream("%(path)s", [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [IO.FileShare]::ReadWrite);
-                            [void] ($stream.Seek(%(offset)d, [System.IO.SeekOrigin]::Begin));
+                            $stream.Seek(%(offset)d, [System.IO.SeekOrigin]::Begin) > $null;
                             $buffer = New-Object Byte[] %(buffer_size)d;
                             $bytesRead = $stream.Read($buffer, 0, %(buffer_size)d);
                             $bytes = $buffer[0..($bytesRead-1)];
                             [System.Convert]::ToBase64String($bytes);
-                            [void] ($stream.Close())
+                            $stream.Close() > $null;
                         }
                         ElseIf (Test-Path -PathType Container "%(path)s")
                         {
