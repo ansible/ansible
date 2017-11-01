@@ -108,7 +108,10 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/issues/32255)
 * Fix check mode when deleting ACS instance in azure_rm_acs module:
   (https://github.com/ansible/ansible/pull/32063)
-
+* Fix ios_logging smaller issues and make default size for buffered work:
+  (https://github.com/ansible/ansible/pull/32321)
+* Fix ios_logging module issue where facility is being deleted along with host:
+  (https://github.com/ansible/ansible/pull/32234)
 
 <a id="2.4.1"></a>
 
