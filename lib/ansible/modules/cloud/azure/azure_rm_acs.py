@@ -619,6 +619,8 @@ class AzureRMContainerService(AzureRMModuleBase):
 
                 self.log("Creation / Update done")
         elif self.state == 'absent':
+            if self.check_mode:
+                return self.results
             self.delete_acs()
             self.log("ACS instance deleted")
 
