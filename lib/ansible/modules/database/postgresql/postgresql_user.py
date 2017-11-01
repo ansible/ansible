@@ -45,80 +45,68 @@ options:
         C('str[\\"md5\\"] + md5[ password + username ]'), resulting in a total of 35 characters.  An easy way to do this is:
         C(echo \\"md5`echo -n \\"verysecretpasswordJOE\\" | md5`\\"). Note that if the provided password string is already in
         MD5-hashed format, then it is used as-is, regardless of encrypted parameter.
-    required: false
     default: null
   db:
     description:
       - name of database where permissions will be granted
-    required: false
     default: null
   fail_on_user:
     description:
       - if C(yes), fail when user can't be removed. Otherwise just log and continue
-    required: false
     default: 'yes'
     choices: [ "yes", "no" ]
   port:
     description:
       - Database port to connect to.
-    required: false
     default: 5432
   login_user:
     description:
       - User (role) used to authenticate with PostgreSQL
-    required: false
     default: postgres
   login_password:
     description:
       - Password used to authenticate with PostgreSQL
-    required: false
     default: null
   login_host:
     description:
       - Host running PostgreSQL.
-    required: false
     default: localhost
   login_unix_socket:
     description:
       - Path to a Unix domain socket for local connections
-    required: false
     default: null
   priv:
     description:
       - "PostgreSQL privileges string in the format: C(table:priv1,priv2)"
-    required: false
     default: null
   role_attr_flags:
     description:
       - "PostgreSQL role attributes string in the format: CREATEDB,CREATEROLE,SUPERUSER"
-    required: false
     default: ""
     choices: [ "[NO]SUPERUSER","[NO]CREATEROLE", "[NO]CREATEUSER", "[NO]CREATEDB",
                     "[NO]INHERIT", "[NO]LOGIN", "[NO]REPLICATION", "[NO]BYPASSRLS" ]
   state:
     description:
       - The user (role) state
-    required: false
     default: present
     choices: [ "present", "absent" ]
   encrypted:
     description:
       - whether the password is stored hashed in the database. boolean. Passwords can be passed already hashed or unhashed, and postgresql ensures the
         stored password is hashed when encrypted is set.
-    required: false
     default: false
     version_added: '1.4'
   expires:
     description:
-      - sets the user's password expiration.
-    required: false
+      - The date at which the user's password is to expire.
+      - If set to C('infinity'), user's password never expire.
+      - Note that this value should be a valid SQL date and time type.
     default: null
     version_added: '1.4'
   no_password_changes:
     description:
       - if C(yes), don't inspect database for password changes. Effective when C(pg_authid) is not accessible (such as AWS RDS). Otherwise, make
         password changes as necessary.
-    required: false
     default: 'no'
     choices: [ "yes", "no" ]
     version_added: '2.0'
@@ -127,7 +115,6 @@ options:
       - Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
       - See https://www.postgresql.org/docs/current/static/libpq-ssl.html for more information on the modes.
       - Default of C(prefer) matches libpq default.
-    required: false
     default: prefer
     choices: [disable, allow, prefer, require, verify-ca, verify-full]
     version_added: '2.3'
@@ -135,13 +122,11 @@ options:
     description:
       - Specifies the name of a file containing SSL certificate authority (CA) certificate(s). If the file exists, the server's certificate will be
         verified to be signed by one of these authorities.
-    required: false
     default: null
     version_added: '2.3'
   conn_limit:
     description:
       - Specifies the user connection limit.
-    required: false
     default: null
     version_added: '2.4'
 notes:
@@ -193,6 +178,14 @@ EXAMPLES = '''
     name: test
     priv: ALL
     state: absent
+
+# Set user's password with no expire date
+- postgresql_user:
+    db: acme
+    name: django
+    password: mysupersecretword
+    priv: "CONNECT/products:ALL"
+    expire: infinity
 
 # Example privileges string format
 # INSERT,UPDATE/table:SELECT/anothertable:ALL
