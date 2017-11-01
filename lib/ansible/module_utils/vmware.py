@@ -203,13 +203,13 @@ def find_vm_by_id(content, vm_id, vm_id_type="vm_name", datacenter=None, cluster
 
         # Check for full path first in case it was already supplied
         if (folder.startswith(dcpath + datacenter + '/vm')):
-           fullpath = folder
+            fullpath = folder
         elif (folder.startswith('/vm/') or folder == '/vm'):
-           fullpath = "%s%s%s" % (dcpath, datacenter, folder)
+            fullpath = "%s%s%s" % (dcpath, datacenter, folder)
         elif (folder.startswith('/')):
-           fullpath = "%s%s/vm%s" % (dcpath, datacenter, folder)
+            fullpath = "%s%s/vm%s" % (dcpath, datacenter, folder)
         else:
-           fullpath = "%s%s/vm/%s" % (dcpath, datacenter, folder)
+            fullpath = "%s%s/vm/%s" % (dcpath, datacenter, folder)
 
         # get all objects for this path
         f_obj = si.FindByInventoryPath(fullpath)
