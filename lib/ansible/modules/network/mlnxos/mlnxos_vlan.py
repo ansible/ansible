@@ -60,11 +60,11 @@ options:
       - number of switchport
     required: false
     default: null
-  action:
+  state:
     description:
       - create or remove vlan
-    default: create
-    choices: ['create', 'delete', 'update']
+    default: present
+    choices: ['present', 'absent']
   mode:
     description:
       - set switchport mode
@@ -76,7 +76,7 @@ EXAMPLES = """
 - name: run add vlan
   mlnxos_vlan:
     vlan_id: 13
-    action: create
+    state: present
     switchport: Eth1/13,Eth1/14
     mode: hybrid
     authorize: yes
@@ -85,18 +85,9 @@ EXAMPLES = """
 - name: run remove vlan
   mlnxos_vlan:
     vlan_id: 13
-    action: delete
+    state: absent
     switchport: Eth1/13,Eth1/14
     mode: hybrid
-    authorize: yes
-    provider:
-      host: "{{ inventory_hostname }}"
-- name: run update switchport mode
-  mlnxos_vlan:
-    vlan_id: 13
-    action: update
-    switchport: Eth1/13,Eth1/14
-    mode: access
     authorize: yes
     provider:
       host: "{{ inventory_hostname }}"
@@ -149,8 +140,8 @@ class MlnxosVlanApp(BaseMlnxosApp):
         return dict(
             vlan_id=dict(),
             switchport=dict(),
-            action=dict(default='create',
-                       choices=['create', 'delete', 'update']),
+            state=dict(default='present',
+                       choices=['present', 'absent']),
             mode=dict(default='trunk',
                        choices=['access', 'hybrid', 'trunk', 'dot1q-tunnel', 'access-dcb']),
         )
@@ -171,7 +162,7 @@ class MlnxosVlanApp(BaseMlnxosApp):
             params = {
                 'vlan_id': module_params['vlan_id'],
                 'switchport': module_params['switchport'],
-                'action': module_params['action'],
+                'state': module_params['state'],
                 'mode': module_params['mode']
             }
             self.validate_param_values(params)
@@ -226,7 +217,7 @@ class MlnxosVlanApp(BaseMlnxosApp):
         return {
             'vlan_id': self.get_config_attr(item, 'vlan_id'),
             'switchport': self.get_switchport_name(item),
-            'action': self.get_config_attr(item, 'action'),
+            'state': self.get_config_attr(item, 'state'),
             'mode': self.get_config_attr(item, 'mode')
         }
 
@@ -260,26 +251,25 @@ class MlnxosVlanApp(BaseMlnxosApp):
             self._generate_vlan_commands(req_conf) # AT get vlan_id
 
     def _generate_vlan_commands(self, req_conf):
-        action = req_conf['action']
+        state = req_conf['state']
         vlan_id = req_conf['vlan_id']
         mode = req_conf['mode']
         if_names = req_conf['switchport'].split(",")
         for if_name in if_names:
             interface = self.get_switchport_command_name(if_name)
-            if action == 'delete':
+            if state == 'absent':
                 self._commands.append("interface " + interface +\
                                       " switchport " + mode + " allowed-vlan remove " +\
                                        vlan_id)
             else:
                 cmd = "interface " +  interface + " switchport mode " + mode
-                if action == 'create':
-                    self._commands.append(cmd)
-                    cmd = "vlan " + vlan_id
-                    self._commands.append(cmd)
-                    cmd = "exit"
-                    self._commands.append(cmd)
-                    cmd = "interface " + interface +\
-                          " switchport " + mode + " allowed-vlan add " + vlan_id
+                self._commands.append(cmd)
+                cmd = "vlan " + vlan_id
+                self._commands.append(cmd)
+                cmd = "exit"
+                self._commands.append(cmd)
+                cmd = "interface " + interface +\
+                      " switchport " + mode + " allowed-vlan add " + vlan_id
                 self._commands.append(cmd)
 
 
