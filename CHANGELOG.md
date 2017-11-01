@@ -106,6 +106,9 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/32262 and https://github.com/ansible/ansible/pull/32411)
 * Fix for max_fail_percentage being inaccurate:
   (https://github.com/ansible/ansible/issues/32255)
+* Fix check mode when deleting ACS instance in azure_rm_acs module:
+  (https://github.com/ansible/ansible/pull/32063)
+
 
 <a id="2.4.1"></a>
 
