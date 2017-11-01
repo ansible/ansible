@@ -168,17 +168,18 @@ EXAMPLES = '''
     state: absent
 
 #
-# Example of how to authenticate
+# Example of how to authenticate (Note that url can also be specfied a top level module parameter)
 #
 # my_jenkins_params:
 #   url_username: admin
+#   url: https://localhost:8433
+#   validate_certs: no
 #
 - name: Install plugin
   jenkins_plugin:
     name: build-pipeline-plugin
     params: "{{ my_jenkins_params }}"
     url_password: p4ssw0rd
-    url: http://localhost:8888
 # Note that url_password **can not** be placed in params as params could end up in a log file
 
 #
