@@ -112,6 +112,8 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/32321)
 * Fix ios_logging module issue where facility is being deleted along with host:
   (https://github.com/ansible/ansible/pull/32234)
+* Fix wrong prompt issue for network modules (https://github.com/ansible/ansible/pull/32426)
+
 
 <a id="2.4.1"></a>
 
