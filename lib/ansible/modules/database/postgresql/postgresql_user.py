@@ -809,6 +809,10 @@ def main():
             try:
                 changed = user_add(cursor, user, password,
                                    role_attr_flags, encrypted, expires, conn_limit)
+            except psycopg2.ProgrammingError as e:
+                module.fail_json(msg="Unable to add user with given requirement "
+                                     "due to : %s" % to_native(e),
+                                 exception=traceback.format_exc())
             except SQLParseError as e:
                 module.fail_json(msg=to_native(e), exception=traceback.format_exc())
         try:
