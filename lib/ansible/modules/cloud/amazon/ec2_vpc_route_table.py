@@ -128,6 +128,13 @@ EXAMPLES = '''
         instance_id: "{{ nat.instance_id }}"
   register: nat_route_table
 
+- name: delete route table
+  ec2_vpc_route_table:
+    vpc_id: vpc-1245678
+    region: us-west-1
+    route_table_id: "{{ route_table.id }}"
+    lookup: id
+    state: absent
 '''
 
 import re

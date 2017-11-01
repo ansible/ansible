@@ -198,7 +198,7 @@ _fail_json_aws() is a new method and may be subject to change.  You can use it i
 being contributed back to Ansible, however if you are publishing your module separately please
 don't use it before the start of 2018 / Ansible 2.4_
 
-In the AnsibleAWSModule there is a special method, `module.fail_json.aws()` for nice reporting of
+In the AnsibleAWSModule there is a special method, `module.fail_json_aws()` for nice reporting of
 exceptions.  Call this on your exception and it will report the error together with a traceback for
 use in Ansible verbose mode.
 
