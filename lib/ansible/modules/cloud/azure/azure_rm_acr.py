@@ -45,7 +45,7 @@ options:
     admin_user_enabled:
         description:
             - If enabled, you can use the registry name as username and admin user access key as password to docker login to your container registry.
-        default: False
+        default: false
         required: false
     sku:
         description:
@@ -73,7 +73,7 @@ EXAMPLES = '''
         location: eastus
         resource_group: testrg
         state: present
-        admin_user_enabled: True
+        admin_user_enabled: true
         sku: Premium
         tags:
             Release: beta1
@@ -328,12 +328,19 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
             self.log("Response : {0}".format(response))
             self.log("ACR instance : {0} found".format(response.name))
         except CloudError as e:
-            self.log('Did not find the ACR instance.')
-        if found is True:
-            credentials = self.containerregistry_mgmt_client.registries.list_credentials(self.resource_group, self.name)
-            return create_acr_dict(response, credentials)
+            self.log('Did not find the ACR instance: {0}'.format(str(e)))
+            response = None
+        if found is True and self.admin_user_enabled is True:
+            try:
+                credentials = self.containerregistry_mgmt_client.registries.list_credentials(self.resource_group, self.name)
+            except CloudError as e:
+                self.log('List registry credentials failed: {0}'.format(str(e)))
+                credentials = None
+        elif found is True and self.admin_user_enabled is False:
+            credentials = None
         else:
             return False
+        return create_acr_dict(response, credentials)
 
     @property
     def containerregistry_mgmt_client(self):

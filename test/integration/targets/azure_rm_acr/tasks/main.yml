@@ -4,7 +4,7 @@
      resource_group: "{{ resource_group }}"
      location: eastus2
      state: present
-     admin_user_enabled: True
+     admin_user_enabled: true
      sku: Premium
      tags:
          Release: beta1
@@ -27,7 +27,7 @@
      name: "acr{{ resource_group | hash('md5') | truncate(7, True, '') }}"
      resource_group: "{{ resource_group }}"
      location: eastus2
-     admin_user_enabled: False
+     admin_user_enabled: false
      sku: Standard
      tags:
          NewTag: newtag
