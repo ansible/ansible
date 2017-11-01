@@ -194,7 +194,7 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
             derived_arg_spec=self.module_arg_spec,
             supports_check_mode=True,
             supports_tags=True)
-        self.get_register_namespace('Microsoft.ContainerRegistry')
+        self.register_namespace('Microsoft.ContainerRegistry')
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
