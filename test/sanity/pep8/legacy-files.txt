@@ -135,7 +135,6 @@ lib/ansible/modules/database/mssql/mssql_db.py
 lib/ansible/modules/database/postgresql/postgresql_db.py
 lib/ansible/modules/database/postgresql/postgresql_ext.py
 lib/ansible/modules/database/postgresql/postgresql_lang.py
-lib/ansible/modules/database/postgresql/postgresql_privs.py
 lib/ansible/modules/database/postgresql/postgresql_schema.py
 lib/ansible/modules/database/vertica/vertica_configuration.py
 lib/ansible/modules/database/vertica/vertica_facts.py
