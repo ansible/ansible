@@ -193,9 +193,7 @@ class InventoryModule(BaseFileInventoryPlugin):
 
                 if groupname in pending_declarations and state != 'vars':
                     if pending_declarations[groupname]['state'] == 'children':
-                        for parent in pending_declarations[groupname]['parents']:
-                            self.inventory.add_child(parent, groupname)
-                    del pending_declarations[groupname]
+                        self._add_pending_children(groupname, pending_declarations)
 
                 continue
             elif line.startswith('[') and line.endswith(']'):
@@ -247,6 +245,13 @@ class InventoryModule(BaseFileInventoryPlugin):
                     raise AnsibleError("%s:%d: Section [%s:vars] not valid for undefined group: %s" % (path, decl['line'], decl['name'], decl['name']))
                 elif decl['state'] == 'children':
                     raise AnsibleError("%s:%d: Section [%s:children] includes undefined group: %s" % (path, decl['line'], decl['parents'].pop(), decl['name']))
+
+    def _add_pending_children(self, group, pending):
+        for parent in pending[group]['parents']:
+            self.inventory.add_child(parent, group)
+            if parent in pending and pending[parent]['state'] == 'children':
+                self._add_pending_children(parent, pending)
+        del pending[group]
 
     def _parse_group_name(self, line):
         '''
