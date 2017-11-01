@@ -23,7 +23,6 @@ lib/ansible/modules/network/f5/bigip_provision.py
 lib/ansible/modules/network/f5/bigip_qkview.py
 lib/ansible/modules/network/f5/bigip_snmp.py
 lib/ansible/modules/network/f5/bigip_snmp_trap.py
-lib/ansible/modules/network/f5/bigip_ucs.py
 lib/ansible/modules/network/ios/ios_static_route.py
 lib/ansible/modules/network/lenovo/cnos_backup.py
 lib/ansible/modules/network/lenovo/cnos_bgp.py
