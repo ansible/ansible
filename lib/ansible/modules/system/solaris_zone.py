@@ -4,13 +4,12 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-__metaclass__ = type
 
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -156,21 +155,21 @@ from ansible.module_utils.basic import AnsibleModule
 class Zone(object):
     def __init__(self, module):
         self.changed = False
-        self.msg     = []
+        self.msg = []
 
-        self.module          = module
-        self.path            = self.module.params['path']
-        self.name            = self.module.params['name']
-        self.sparse          = self.module.params['sparse']
-        self.root_password   = self.module.params['root_password']
-        self.timeout         = self.module.params['timeout']
-        self.config          = self.module.params['config']
-        self.create_options  = self.module.params['create_options']
+        self.module = module
+        self.path = self.module.params['path']
+        self.name = self.module.params['name']
+        self.sparse = self.module.params['sparse']
+        self.root_password = self.module.params['root_password']
+        self.timeout = self.module.params['timeout']
+        self.config = self.module.params['config']
+        self.create_options = self.module.params['create_options']
         self.install_options = self.module.params['install_options']
-        self.attach_options  = self.module.params['attach_options']
+        self.attach_options = self.module.params['attach_options']
 
-        self.zoneadm_cmd    = self.module.get_bin_path('zoneadm', True)
-        self.zonecfg_cmd    = self.module.get_bin_path('zonecfg', True)
+        self.zoneadm_cmd = self.module.get_bin_path('zoneadm', True)
+        self.zonecfg_cmd = self.module.get_bin_path('zonecfg', True)
         self.ssh_keygen_cmd = self.module.get_bin_path('ssh-keygen', True)
 
         if self.module.check_mode:
@@ -188,7 +187,7 @@ class Zone(object):
             self.module.fail_json(msg='Missing required argument: path')
 
         if not self.module.check_mode:
-            t = tempfile.NamedTemporaryFile(delete = False)
+            t = tempfile.NamedTemporaryFile(delete=False)
 
             if self.sparse:
                 t.write('create %s\n' % self.create_options)
@@ -433,6 +432,7 @@ class Zone(object):
             self.attach()
         else:
             self.msg.append('zone already attached')
+
 
 def main():
     module = AnsibleModule(

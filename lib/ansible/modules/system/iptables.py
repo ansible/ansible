@@ -5,6 +5,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -323,7 +324,6 @@ import re
 
 from ansible.module_utils.basic import AnsibleModule
 
-
 BINS = dict(
     ipv4='iptables',
     ipv6='ip6tables',
@@ -346,10 +346,12 @@ def append_param(rule, param, flag, is_list):
             else:
                 rule.extend([flag, param])
 
+
 def append_tcp_flags(rule, param, flag):
     if param:
         if 'flags' in param and 'flags_set' in param:
             rule.extend([flag, ','.join(param['flags']), ','.join(param['flags_set'])])
+
 
 def append_match_flag(rule, param, flag, negatable):
     if param == 'match':
@@ -534,7 +536,7 @@ def main():
 
     # Check if chain option is required
     if args['flush'] is False and args['chain'] is None:
-        module.fail_json( msg="Either chain or flush parameter must be specified.")
+        module.fail_json(msg="Either chain or flush parameter must be specified.")
 
     # Flush the table
     if args['flush'] is True:
@@ -589,6 +591,7 @@ def main():
                         remove_rule(iptables_path, module, module.params)
 
     module.exit_json(**args)
+
 
 if __name__ == '__main__':
     main()

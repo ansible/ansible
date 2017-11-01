@@ -6,13 +6,12 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-__metaclass__ = type
 
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = """
 module: gconftool2
@@ -176,7 +175,7 @@ def main():
                        type='str'),
             direct=dict(required=False, default=False, type='bool'),
             config_source=dict(required=False, default=None, type='str')
-            ),
+        ),
         supports_check_mode=True
     )
 
@@ -203,17 +202,17 @@ def main():
     if state != "get":
         if value is None or value == "":
             module.fail_json(msg='State %s requires "value" to be set'
-                             % str(state))
+                                 % str(state))
         elif value_type is None or value_type == "":
             module.fail_json(msg='State %s requires "value_type" to be set'
-                             % str(state))
+                                 % str(state))
 
         if direct and config_source is None:
             module.fail_json(msg='If "direct" is "yes" then the ' +
-                             '"config_source" must be specified')
+                                 '"config_source" must be specified')
         elif not direct and config_source is not None:
             module.fail_json(msg='If the "config_source" is specified ' +
-                             'then "direct" must be "yes"')
+                                 'then "direct" must be "yes"')
 
     # Create a gconf2 preference
     gconf_pref = GConf2Preference(module, key, value_type,
@@ -246,6 +245,7 @@ def main():
                              'playbook_value': module.params['value']})
 
     module.exit_json(changed=change, ansible_facts=facts)
+
 
 if __name__ == '__main__':
     main()

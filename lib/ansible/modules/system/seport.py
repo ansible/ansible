@@ -4,13 +4,12 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-__metaclass__ = type
 
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -81,15 +80,17 @@ import traceback
 
 try:
     import selinux
-    HAVE_SELINUX=True
+
+    HAVE_SELINUX = True
 except ImportError:
-    HAVE_SELINUX=False
+    HAVE_SELINUX = False
 
 try:
     import seobject
-    HAVE_SEOBJECT=True
+
+    HAVE_SEOBJECT = True
 except ImportError:
-    HAVE_SEOBJECT=False
+    HAVE_SEOBJECT = False
 
 from ansible.module_utils.basic import AnsibleModule, HAVE_SELINUX
 from ansible.module_utils._text import to_native
@@ -235,23 +236,23 @@ def main():
         argument_spec={
             'ports': {
                 'required': True,
-                },
+            },
             'proto': {
                 'required': True,
                 'choices': ['tcp', 'udp'],
-                },
+            },
             'setype': {
                 'required': True,
-                },
+            },
             'state': {
                 'required': True,
                 'choices': ['present', 'absent'],
-                },
+            },
             'reload': {
                 'required': False,
                 'type': 'bool',
                 'default': 'yes',
-                },
+            },
         },
         supports_check_mode=True
     )

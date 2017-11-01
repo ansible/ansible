@@ -4,13 +4,12 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-__metaclass__ = type
 
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
-
 
 DOCUMENTATION = '''
 ---
@@ -55,15 +54,17 @@ import os
 
 try:
     import selinux
-    HAVE_SELINUX=True
+
+    HAVE_SELINUX = True
 except ImportError:
-    HAVE_SELINUX=False
+    HAVE_SELINUX = False
 
 try:
     import semanage
-    HAVE_SEMANAGE=True
+
+    HAVE_SEMANAGE = True
 except ImportError:
-    HAVE_SEMANAGE=False
+    HAVE_SEMANAGE = False
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import binary_type
@@ -86,6 +87,7 @@ def has_boolean_value(module, name):
     else:
         return False
 
+
 def get_boolean_value(module, name):
     state = 0
     try:
@@ -96,6 +98,7 @@ def get_boolean_value(module, name):
         return True
     else:
         return False
+
 
 # The following method implements what setsebool.c does to change
 # a boolean and make it persist after reboot..
@@ -152,6 +155,7 @@ def semanage_boolean_value(module, name, state):
         module.fail_json(msg="Failed to manage policy for boolean %s: %s" % (name, str(e)))
     return True
 
+
 def set_boolean_value(module, name, state):
     rc = 0
     value = 0
@@ -166,9 +170,10 @@ def set_boolean_value(module, name, state):
     else:
         return False
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
+        argument_spec=dict(
             name=dict(required=True),
             persistent=dict(default='no', type='bool'),
             state=dict(required=True, type='bool')
