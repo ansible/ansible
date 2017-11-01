@@ -86,6 +86,14 @@
         - set_fact:
             failed_modules: "{{ failed_modules }} + [ 'iosxr_interface' ]"
             test_failed: true
+    - block:
+      - include_role:
+          name: iosxr_vlan
+        when: "limit_to in ['*', 'iosxr_vlan']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'iosxr_vlan' ]"
+            test_failed: true
 
 ###########
     - debug: var=failed_modules

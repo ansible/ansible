@@ -85,7 +85,6 @@ import time
 from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.connection import exec_command
 from ansible.module_utils.network_common import remove_default_spec
 from ansible.module_utils.iosxr import get_config, load_config
 from ansible.module_utils.iosxr import iosxr_argument_spec, check_args
@@ -171,7 +170,6 @@ def parse_vlan_id(config):
 def map_config_to_obj(module):
     output = get_config(module, flags=['interface'])
     data = output.strip().rstrip('!').split('!')
-    
     if not data:
         return list()
 
@@ -261,7 +259,6 @@ def main():
     if commands:
         if not module.check_mode:
             load_config(module, commands, result['warnings'], commit=True)
-            exec_command(module, 'exit')
         result['changed'] = True
 
     if result['changed']:
