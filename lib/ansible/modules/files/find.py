@@ -100,28 +100,28 @@ EXAMPLES = r'''
     recurse: yes
 
 - name: Recursively find /tmp files older than 4 weeks and equal or greater than 1 megabyte
-  find:
+- find:
     paths: /tmp
     age: 4w
     size: 1m
     recurse: yes
 
 - name: Recursively find /var/tmp files with last access time greater than 3600 seconds
-  find:
+- find:
     paths: /var/tmp
     age: 3600
     age_stamp: atime
     recurse: yes
 
 - name: Find /var/log files equal or greater than 10 megabytes ending with .old or .log.gz
-  find:
+- find:
     paths: /var/log
     patterns: '*.old,*.log.gz'
     size: 10m
 
 # Note that YAML double quotes require escaping backslashes but yaml single quotes do not.
 - name: Find /var/log files equal or greater than 10 megabytes ending with .old or .log.gz via regex
-  find:
+- find:
     paths: /var/log
     patterns: "^.*?\\.(?:old|log\\.gz)$"
     size: 10m
@@ -153,6 +153,7 @@ examined:
     returned: success
     type: string
     sample: 34
+    
 '''
 
 import fnmatch
@@ -163,7 +164,6 @@ import sys
 import time
 
 from ansible.module_utils.basic import AnsibleModule
-
 
 def pfilter(f, patterns=None, use_regex=False):
     '''filter using glob patterns'''
@@ -227,8 +227,22 @@ def contentfilter(fsname, pattern):
     return False
 
 
-def statinfo(st):
-    return {
+def size_dir(directory):
+    file_walker = (
+        os.path.join(root, f)
+        for root, _, files in os.walk(directory)
+        for f in files
+    )
+    dir_walker = (
+        4096
+        for root, dirs, _ in os.walk(directory)
+        for d in dirs
+    )
+    return 4096 + sum(os.path.getsize(f) for f in file_walker) + sum(size for size in dir_walker)
+
+
+def statinfo(st, fsname=None):
+    stat_info = {
         'mode': "%04o" % stat.S_IMODE(st.st_mode),
         'isdir': stat.S_ISDIR(st.st_mode),
         'ischr': stat.S_ISCHR(st.st_mode),
@@ -258,6 +272,13 @@ def statinfo(st):
         'isuid': bool(st.st_mode & stat.S_ISUID),
         'isgid': bool(st.st_mode & stat.S_ISGID),
     }
+    
+    if fsname:
+        stat_info.update({'size' : int(size_dir(fsname))})
+        return stat_info
+    else:
+        return stat_info
+    
 
 
 def main():
@@ -308,6 +329,7 @@ def main():
     now = time.time()
     msg = ''
     looked = 0
+    list_dir = []
     for npath in params['paths']:
         npath = os.path.expanduser(os.path.expandvars(npath))
         if os.path.isdir(npath):
@@ -327,14 +349,15 @@ def main():
                         continue
 
                     r = {'path': fsname}
+				
                     if params['file_type'] == 'any':
                         if pfilter(fsobj, params['patterns'], params['use_regex']) and agefilter(st, now, age, params['age_stamp']):
                             r.update(statinfo(st))
                             filelist.append(r)
                     elif stat.S_ISDIR(st.st_mode) and params['file_type'] == 'directory':
                         if pfilter(fsobj, params['patterns'], params['use_regex']) and agefilter(st, now, age, params['age_stamp']):
-
-                            r.update(statinfo(st))
+                            r.update(statinfo(st, fsname))
+                            list_dir.append(size_dir(fsname))
                             filelist.append(r)
 
                     elif stat.S_ISREG(st.st_mode) and params['file_type'] == 'file':
@@ -359,7 +382,7 @@ def main():
             msg += "%s was skipped as it does not seem to be a valid directory or it cannot be accessed\n" % npath
 
     matched = len(filelist)
-    module.exit_json(files=filelist, changed=False, msg=msg, matched=matched, examined=looked)
+    module.exit_json(files=filelist, changed=False, msg=msg, matched=matched, examined=looked, total_size_dir=sum(list_dir))
 
 
 if __name__ == '__main__':
