@@ -329,7 +329,6 @@ def main():
     now = time.time()
     msg = ''
     looked = 0
-    list_dir = []
     for npath in params['paths']:
         npath = os.path.expanduser(os.path.expandvars(npath))
         if os.path.isdir(npath):
@@ -382,7 +381,7 @@ def main():
             msg += "%s was skipped as it does not seem to be a valid directory or it cannot be accessed\n" % npath
 
     matched = len(filelist)
-    module.exit_json(files=filelist, changed=False, msg=msg, matched=matched, examined=looked, total_size_dir=sum(list_dir))
+    module.exit_json(files=filelist, changed=False, msg=msg, matched=matched, examined=looked)
 
 
 if __name__ == '__main__':
