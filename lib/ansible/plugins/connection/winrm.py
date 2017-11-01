@@ -461,11 +461,11 @@ class Connection(ConnectionBase):
             }}
             process {{
                $bytes = [System.Convert]::FromBase64String($input)
-               $sha1.TransformBlock($bytes, 0, $bytes.Length, $bytes, 0) | Out-Null
+               [void] ($sha1.TransformBlock($bytes, 0, $bytes.Length, $bytes, 0))
                $fd.Write($bytes, 0, $bytes.Length)
             }}
             end {{
-                $sha1.TransformFinalBlock($bytes, 0, 0) | Out-Null
+                [void] ($sha1.TransformFinalBlock($bytes, 0, 0))
 
                 $hash = [System.BitConverter]::ToString($sha1.Hash).Replace("-", "").ToLowerInvariant()
 
@@ -510,12 +510,12 @@ class Connection(ConnectionBase):
                         If (Test-Path -PathType Leaf "%(path)s")
                         {
                             $stream = New-Object IO.FileStream("%(path)s", [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [IO.FileShare]::ReadWrite);
-                            $stream.Seek(%(offset)d, [System.IO.SeekOrigin]::Begin) | Out-Null;
+                            [void] ($stream.Seek(%(offset)d, [System.IO.SeekOrigin]::Begin));
                             $buffer = New-Object Byte[] %(buffer_size)d;
                             $bytesRead = $stream.Read($buffer, 0, %(buffer_size)d);
                             $bytes = $buffer[0..($bytesRead-1)];
                             [System.Convert]::ToBase64String($bytes);
-                            $stream.Close() | Out-Null;
+                            [void] ($stream.Close())
                         }
                         ElseIf (Test-Path -PathType Container "%(path)s")
                         {
