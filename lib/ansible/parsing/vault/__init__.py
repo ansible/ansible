@@ -29,6 +29,7 @@ import tempfile
 import warnings
 from binascii import hexlify
 from binascii import unhexlify
+from binascii import Error as BinasciiError
 from hashlib import md5
 from hashlib import sha256
 from io import BytesIO
@@ -102,6 +103,10 @@ class AnsibleVaultError(AnsibleError):
 
 
 class AnsibleVaultPasswordError(AnsibleVaultError):
+    pass
+
+
+class AnsibleVaultFormatError(AnsibleError):
     pass
 
 
@@ -220,6 +225,13 @@ def format_vaulttext_envelope(b_ciphertext, cipher_name, version=None, vault_id=
     b_vaulttext = b'\n'.join(b_vaulttext)
 
     return b_vaulttext
+
+
+def _unhexlify(b_data):
+    try:
+        return unhexlify(b_data)
+    except (BinasciiError, TypeError) as exc:
+        raise AnsibleVaultFormatError('Vault data format error: %s' % exc)
 
 
 def verify_secret_is_not_empty(secret, msg=None):
@@ -665,6 +677,9 @@ class VaultLib:
                     vault_id_used = vault_secret_id
                     display.vvvvv('decrypt succesful with secret=%s and vault_id=%s' % (vault_secret, vault_secret_id))
                     break
+            except AnsibleVaultFormatError as exc:
+                print('formate error: %s' % exc)
+                raise
             except AnsibleError as e:
                 display.vvvv('Tried to use the vault secret (%s) to decrypt (%s) but it failed. Error: %s' %
                              (vault_secret_id, filename, e))
@@ -1352,10 +1367,10 @@ class VaultAES256:
     @classmethod
     def decrypt(cls, b_vaulttext, secret):
         # SPLIT SALT, DIGEST, AND DATA
-        b_vaulttext = unhexlify(b_vaulttext)
+        b_vaulttext = _unhexlify(b_vaulttext)
         b_salt, b_crypted_hmac, b_ciphertext = b_vaulttext.split(b"\n", 2)
-        b_salt = unhexlify(b_salt)
-        b_ciphertext = unhexlify(b_ciphertext)
+        b_salt = _unhexlify(b_salt)
+        b_ciphertext = _unhexlify(b_ciphertext)
 
         # TODO: would be nice if a VaultSecret could be passed directly to _decrypt_*
         #       (move _gen_key_initctr() to a AES256 VaultSecret or VaultContext impl?)
