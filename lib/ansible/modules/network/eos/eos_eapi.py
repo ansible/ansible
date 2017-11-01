@@ -260,11 +260,17 @@ def map_obj_to_commands(updates, module, warnings):
         else:
             add('protocol unix-socket')
 
+    if needs_update('state') and not needs_update('vrf'):
+        if want['state'] == 'stopped':
+            add('shutdown')
+        elif want['state'] == 'started':
+            add('no shutdown')
+
 
     if needs_update('vrf'):
         add('vrf %s' % want['vrf'])
-
-    if needs_update('state'):
+        # switching operational vrfs here
+        # need to add the desired state as well
         if want['state'] == 'stopped':
             add('shutdown')
         elif want['state'] == 'started':
