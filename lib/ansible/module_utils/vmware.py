@@ -182,6 +182,7 @@ def find_vm_by_id(content, vm_id, vm_id_type="vm_name", datacenter=None, cluster
     """ UUID is unique to a VM, every other id returns the first match. """
     si = content.searchIndex
     vm = None
+    f_obj = None
 
     if vm_id_type == 'dns_name':
         vm = si.FindByDnsName(datacenter=datacenter, dnsName=vm_id, vmSearch=True)
@@ -214,6 +215,7 @@ def find_vm_by_id(content, vm_id, vm_id_type="vm_name", datacenter=None, cluster
 
             # get all objects for this path
             f_obj = si.FindByInventoryPath(fullpath)
+
         if f_obj:
             if isinstance(f_obj, vim.Datacenter):
                 f_obj = f_obj.vmFolder
