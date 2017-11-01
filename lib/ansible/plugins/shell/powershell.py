@@ -1,19 +1,7 @@
-# (c) 2014, Chris Church <chris@ninemoreminutes.com>
+# Copyright: (c) 2014, Chris Church <chris@ninemoreminutes.com>
 #
-# This file is part of Ansible.
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -24,7 +12,6 @@ import shlex
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_text
-
 
 _common_args = ['PowerShell', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Unrestricted']
 
@@ -102,12 +89,12 @@ end {
     # load the current action entrypoint as a module custom object with a Run method
     $entrypoint = New-Module -ScriptBlock ([scriptblock]::Create($entrypoint)) -AsCustomObject
 
-    Set-Variable -Scope global -Name complex_args -Value $payload["module_args"] | Out-Null
+    [void] (Set-Variable -Scope global -Name complex_args -Value $payload["module_args"])
 
     # dynamically create/load modules
     ForEach ($mod in $payload.powershell_modules.GetEnumerator()) {
         $decoded_module = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($mod.Value))
-        New-Module -ScriptBlock ([scriptblock]::Create($decoded_module)) -Name $mod.Key | Import-Module -WarningAction SilentlyContinue | Out-Null
+        [void] (New-Module -ScriptBlock ([scriptblock]::Create($decoded_module)) -Name $mod.Key | Import-Module -WarningAction SilentlyContinue)
     }
 
     $output = $entrypoint.Run($payload)
@@ -125,29 +112,29 @@ Function Run($payload) {
 
     $ps = [powershell]::Create()
 
-    $ps.AddStatement().AddCommand("Set-Variable").AddParameters(@{Scope="global";Name="complex_args";Value=$payload.module_args}) | Out-Null
-    $ps.AddCommand("Out-Null") | Out-Null
+    [void] ($ps.AddStatement().AddCommand("Set-Variable").AddParameters(@{Scope="global";Name="complex_args";Value=$payload.module_args}))
+    [void] ($ps.AddCommand("Out-Null"))
 
     # redefine Write-Host to dump to output instead of failing- lots of scripts use it
-    $ps.AddStatement().AddScript("Function Write-Host(`$msg){ Write-Output `$msg }") | Out-Null
+    [void] ($ps.AddStatement().AddScript("Function Write-Host(`$msg){ Write-Output `$msg }"))
 
     ForEach ($env_kv in $payload.environment.GetEnumerator()) {
         $escaped_env_set = "`$env:{0} = '{1}'" -f $env_kv.Key,$env_kv.Value.Replace("'","''")
-        $ps.AddStatement().AddScript($escaped_env_set) | Out-Null
+        [void] ($ps.AddStatement().AddScript($escaped_env_set))
     }
 
     # dynamically create/load modules
     ForEach ($mod in $payload.powershell_modules.GetEnumerator()) {
         $decoded_module = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($mod.Value))
-        $ps.AddStatement().AddCommand("New-Module").AddParameters(@{ScriptBlock=([scriptblock]::Create($decoded_module));Name=$mod.Key}) | Out-Null
-        $ps.AddCommand("Import-Module").AddParameters(@{WarningAction="SilentlyContinue"}) | Out-Null
-        $ps.AddCommand("Out-Null") | Out-Null
+        [void] ($ps.AddStatement().AddCommand("New-Module").AddParameters(@{ScriptBlock=([scriptblock]::Create($decoded_module));Name=$mod.Key}))
+        [void] ($ps.AddCommand("Import-Module").AddParameters(@{WarningAction="SilentlyContinue"}))
+        [void] ($ps.AddCommand("Out-Null"))
     }
 
     # force input encoding to preamble-free UTF8 so PS sub-processes (eg, Start-Job) don't blow up
-    $ps.AddStatement().AddScript("[Console]::InputEncoding = New-Object Text.UTF8Encoding `$false") | Out-Null
+    [void] ($ps.AddStatement().AddScript("[Console]::InputEncoding = New-Object Text.UTF8Encoding `$false"))
 
-    $ps.AddStatement().AddScript($entrypoint) | Out-Null
+    [void] ($ps.AddStatement().AddScript($entrypoint))
 
     $output = $ps.Invoke()
 
@@ -940,12 +927,12 @@ $exec_wrapper = {
     # load the current action entrypoint as a module custom object with a Run method
     $entrypoint = New-Module -ScriptBlock ([scriptblock]::Create($entrypoint)) -AsCustomObject
 
-    Set-Variable -Scope global -Name complex_args -Value $payload["module_args"] | Out-Null
+    [void] (Set-Variable -Scope global -Name complex_args -Value $payload["module_args"])
 
     # dynamically create/load modules
     ForEach ($mod in $payload.powershell_modules.GetEnumerator()) {
         $decoded_module = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($mod.Value))
-        New-Module -ScriptBlock ([scriptblock]::Create($decoded_module)) -Name $mod.Key | Import-Module -WarningAction SilentlyContinue | Out-Null
+        [void] (New-Module -ScriptBlock ([scriptblock]::Create($decoded_module)) -Name $mod.Key | Import-Module -WarningAction SilentlyContinue)
     }
 
     $output = $entrypoint.Run($payload)
@@ -988,7 +975,7 @@ Function Run($payload) {
             throw "become_user '$username' is not recognized on this host"
         }
 
-        Set-Acl $temp $acl | Out-Null
+        [void] (Set-Acl $temp $acl)
 
         $payload_string = $payload | ConvertTo-Json -Depth 99 -Compress
 
@@ -1062,12 +1049,12 @@ $entrypoint = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase6
 # load the current action entrypoint as a module custom object with a Run method
 $entrypoint = New-Module -ScriptBlock ([scriptblock]::Create($entrypoint)) -AsCustomObject
 
-Set-Variable -Scope global -Name complex_args -Value $payload["module_args"] | Out-Null
+[void] (Set-Variable -Scope global -Name complex_args -Value $payload["module_args"])
 
 # dynamically create/load modules
 ForEach ($mod in $payload.powershell_modules.GetEnumerator()) {
     $decoded_module = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($mod.Value))
-    New-Module -ScriptBlock ([scriptblock]::Create($decoded_module)) -Name $mod.Key | Import-Module -WarningAction SilentlyContinue | Out-Null
+    [void] (New-Module -ScriptBlock ([scriptblock]::Create($decoded_module)) -Name $mod.Key | Import-Module -WarningAction SilentlyContinue)
 }
 
 $output = $entrypoint.Run($payload)
@@ -1297,7 +1284,7 @@ Function Run($payload) {
 
     $payload.async_results_path = $results_path
 
-    [System.IO.Directory]::CreateDirectory([System.IO.Path]::GetDirectoryName($results_path)) | Out-Null
+    [void] ([System.IO.Directory]::CreateDirectory([System.IO.Path]::GetDirectoryName($results_path)))
 
     Add-Type -TypeDefinition $native_process_util -Debug:$false
 
@@ -1480,8 +1467,8 @@ Function Run($payload) {
     $job = [powershell]::Create()
     $job.Runspace = $rs
 
-    $job.AddScript($entrypoint) | Out-Null
-    $job.AddStatement().AddCommand("Run").AddArgument($payload) | Out-Null
+    [void] ($job.AddScript($entrypoint))
+    [void] ($job.AddStatement().AddCommand("Run").AddArgument($payload))
 
     Log "job BeginInvoke()"
 
@@ -1525,7 +1512,7 @@ Function Run($payload) {
         Log "wrote output to $resultfile_path"
     }
     Else {
-        $job.BeginStop($null, $null) | Out-Null # best effort stop
+        [void] ($job.BeginStop($null, $null))  # best effort stop
         # write timeout to result object
         $result.failed = $true
         $result.msg = "timed out waiting for module completion"
@@ -1535,7 +1522,7 @@ Function Run($payload) {
     }
 
     # in the case of a hung pipeline, this will cause the process to stay alive until it's un-hung...
-    #$rs.Close() | Out-Null
+    #[void] ($rs.Close())
 }
 
 '''  # end async_watchdog
