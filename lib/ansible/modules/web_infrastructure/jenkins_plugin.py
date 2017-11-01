@@ -168,7 +168,7 @@ EXAMPLES = '''
     state: absent
 
 #
-# Example of how to authenticate (Note that url can also be specfied a top level module parameter)
+# Example of how to authenticate
 #
 # my_jenkins_params:
 #   url_username: admin
