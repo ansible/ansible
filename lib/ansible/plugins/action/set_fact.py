@@ -54,5 +54,5 @@ class ActionModule(ActionBase):
 
         result['changed'] = False
         result['ansible_facts'] = facts
-        result['ansible_facts_cacheable'] = cacheable
+        result['_ansible_facts_cacheable'] = cacheable
         return result
