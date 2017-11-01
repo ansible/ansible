@@ -478,7 +478,8 @@ def create_image(module, connection):
                 params['LaunchPermission']['Add'].append(dict(Group=group_name))
             for user_id in launch_permissions.get('user_ids', []):
                 params['LaunchPermission']['Add'].append(dict(UserId=str(user_id)))
-            connection.modify_image_attribute(**params)
+            if params['LaunchPermission']['Add']:
+                connection.modify_image_attribute(**params)
         except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
             module.fail_json_aws(e, msg="Error setting launch permissions for image %s" % image_id)
 

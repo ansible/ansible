@@ -169,6 +169,8 @@
         name: '{{ ec2_ami_name }}_ami'
         description: '{{ ec2_ami_description }}'
         state: present
+        launch_permissions:
+          user_ids: []
         tags:
           Name: '{{ ec2_ami_name }}_ami'
         root_device_name: /dev/xvda
