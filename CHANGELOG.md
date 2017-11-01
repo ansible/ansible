@@ -26,6 +26,8 @@ Ansible Changes By Release
 * The jenkins_plugin and yum_repository plugins had their `params` option
   removed due to circumventing Ansible's option processing.
 * combine filter now accepts a list of dicts as well as dicts directly
+* New CLI options for ansible-inventory, ansible-console and ansible to allow
+  specifying a playbook_dir to be used for relative search paths.
 
 #### Deprecated Modules (to be removed in 2.9):
 * ec2_ami_find
