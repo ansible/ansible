@@ -99,8 +99,8 @@ they do:
 - Legacy: General definitions and helper utilities for Ansible module.
 - SID: Utilities used to convert a user or group to a Windows SID and vice versa.
 
-For more details on any specific module utility and their requirements, please see the `Appendix: Ansible Module Utilities <http://docs.ansible.com/ansible/latest/dev_guide/developing_module_utilities.html>_` and the `Ansible 
-module utilities source code <https://github.com/ansible/ansible/tree/devel/lib/ansible/module_utils/powershell>_`.
+For more details on any specific module utility and their requirements, please see the `Ansible 
+module utilities source code <https://github.com/ansible/ansible/tree/devel/lib/ansible/module_utils/powershell>`_.
 
 PowerShell module utilities can be stored outside of the standard Ansible
 distribution for use with custom modules. Custom module_utils are placed in a
