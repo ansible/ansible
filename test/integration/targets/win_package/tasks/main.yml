@@ -1,8 +1,11 @@
 ---
-- name: ensure testing folder exists
+- name: ensure testing folders exists
   win_file:
-    path: '{{test_win_package_path}}'
+    path: '{{item}}'
     state: directory
+  with_items:
+  - '{{test_win_package_path}}'
+  - '{{test_win_package_path_safe}}'
 
 - name: download msi files from S3 bucket
   win_get_url:
@@ -50,3 +53,11 @@
     - { id: '{{test_win_package_good_id}}' }
     - { id: '{{test_win_package_reboot_id}}' }
     # - { id: '{{test_win_package_exe_id}}', args: '/S' }
+  
+  - name: cleanup test artifacts
+    win_file:
+      path: '{{item}}'
+      state: absent
+    with_items:
+    - '{{test_win_package_path}}'
+    - '{{test_win_package_path_safe}}'
