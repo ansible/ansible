@@ -116,7 +116,7 @@ Function Copy-Folder($source, $dest) {
             Fail-Json -obj $result -message "cannot copy folder from $source to $($dest): dest is already a file"
         }
 
-        [void] New-Item -Path $dest -ItemType Container -WhatIf:$check_mode
+        [void] (New-Item -Path $dest -ItemType Container -WhatIf:$check_mode)
         $diff += "+$dest\`n"
         $result.changed = $true
 
@@ -189,7 +189,7 @@ Function Extract-Zip($src, $dest) {
         $entry_dir = [System.IO.Path]::GetDirectoryName($entry_target_path)
 
         if (-not (Test-Path -Path $entry_dir)) {
-            [void] New-Item -Path $entry_dir -ItemType Directory -WhatIf:$check_mode
+            [void] (New-Item -Path $entry_dir -ItemType Directory -WhatIf:$check_mode)
         }
 
         if ($is_dir -eq $false) {
@@ -202,7 +202,7 @@ Function Extract-Zip($src, $dest) {
 
 Function Extract-ZipLegacy($src, $dest) {
     if (-not (Test-Path -Path $dest)) {
-        [void] New-Item -Path $dest -ItemType Directory -WhatIf:$check_mode
+        [void] (New-Item -Path $dest -ItemType Directory -WhatIf:$check_mode)
     }
     $shell = New-Object -ComObject Shell.Application
     $zip = $shell.NameSpace($src)
@@ -221,7 +221,7 @@ Function Extract-ZipLegacy($src, $dest) {
         $entry_dir = [System.IO.Path]::GetDirectoryName($entry_target_path)
 
         if (-not (Test-Path -Path $entry_dir)) {
-            [void] New-Item -Path $entry_dir -ItemType Directory -WhatIf:$check_mode
+            [void] (New-Item -Path $entry_dir -ItemType Directory -WhatIf:$check_mode)
         }
 
         if ($is_dir -eq $false -and (-not $check_mode)) {
@@ -234,7 +234,7 @@ Function Extract-ZipLegacy($src, $dest) {
 
             # once file is extraced, we need to rename it with non base64 name
             $combined_encoded_path = [System.IO.Path]::Combine($dest, $encoded_archive_entry)
-            [void] Move-Item -Path $combined_encoded_path -Destination $entry_target_path -Force
+            [void] (Move-Item -Path $combined_encoded_path -Destination $entry_target_path -Force)
         }
     }
 }
@@ -297,8 +297,8 @@ if ($mode -eq "query") {
     # Detect if the PS zip assemblies are available or whether to use Shell
     $use_legacy = $false
     try {
-        [void] Add-Type -AssemblyName System.IO.Compression.FileSystem
-        [void] Add-Type -AssemblyName System.IO.Compression
+        [void] (Add-Type -AssemblyName System.IO.Compression.FileSystem)
+        [void] (Add-Type -AssemblyName System.IO.Compression)
     } catch {
         $use_legacy = $true
     }
@@ -391,7 +391,7 @@ if ($mode -eq "query") {
         if (Test-Path -Path $parent_dir -PathType Leaf) {
             Fail-Json -obj $result -message "object at destination parent dir $parent_dir is currently a file"
         } elseif (-not (Test-Path -Path $parent_dir -PathType Container)) {
-            [void] New-Item -Path $parent_dir -ItemType Directory 
+            [void] (New-Item -Path $parent_dir -ItemType Directory)
         }
     } else {
         $remote_dest = $dest
@@ -405,7 +405,7 @@ if ($mode -eq "query") {
         }
     }
 
-    [void] Copy-Item -Path $src -Destination $remote_dest -Force
+    [void] (Copy-Item -Path $src -Destination $remote_dest -Force)
     $result.changed = $true
 }
 
