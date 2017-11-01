@@ -76,7 +76,7 @@ def test_invalid_template_json(placeboify):
 def test_client_request_token_s3_stack(maybe_sleep, placeboify):
     connection = placeboify.client('cloudformation')
     params = {
-        'StackName': 'ansible-test-basic-yaml',
+        'StackName': 'ansible-test-client-request-token-yaml',
         'TemplateBody': basic_yaml_tpl,
         'ClientRequestToken': '3faf3fb5-b289-41fc-b940-44151828f6cf',
     }
@@ -87,7 +87,7 @@ def test_client_request_token_s3_stack(maybe_sleep, placeboify):
     # require that the final recorded stack state was CREATE_COMPLETE
     # events are retrieved newest-first, so 0 is the latest
     assert 'CREATE_COMPLETE' in result['events'][0]
-    connection.delete_stack(StackName='ansible-test-basic-yaml')
+    connection.delete_stack(StackName='ansible-test-client-request-token-yaml')
 
 
 def test_basic_s3_stack(maybe_sleep, placeboify):

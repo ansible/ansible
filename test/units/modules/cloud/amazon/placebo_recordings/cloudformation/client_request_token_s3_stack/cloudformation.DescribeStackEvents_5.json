@@ -3,7 +3,7 @@
     "data": {
         "StackEvents": [
             {
-                "StackId": "arn:aws:cloudformation:us-west-2:123456789012:stack/ansible-test-basic-yaml/04023cd0-b5d0-11e7-86b8-503ac93168c5",
+                "StackId": "arn:aws:cloudformation:us-west-2:123456789012:stack/ansible-test-client-request-token-yaml/04023cd0-b5d0-11e7-86b8-503ac93168c5",
                 "EventId": "MyBucket-CREATE_IN_PROGRESS-2017-10-20T19:51:12.754Z",
                 "ResourceStatus": "CREATE_IN_PROGRESS",
                 "ResourceType": "AWS::S3::Bucket",
@@ -18,14 +18,14 @@
                     "minute": 51
                 },
                 "ResourceStatusReason": "Resource creation Initiated",
-                "StackName": "ansible-test-basic-yaml",
+                "StackName": "ansible-test-client-request-token-yaml",
                 "ResourceProperties": "{}\n",
-                "PhysicalResourceId": "ansible-test-basic-yaml-mybucket-13m2y4v8bptj4",
+                "PhysicalResourceId": "ansible-test-client-request-token-yaml-mybucket-13m2y4v8bptj4",
                 "ClientRequestToken": "3faf3fb5-b289-41fc-b940-44151828f6cf",
                 "LogicalResourceId": "MyBucket"
             },
             {
-                "StackId": "arn:aws:cloudformation:us-west-2:123456789012:stack/ansible-test-basic-yaml/04023cd0-b5d0-11e7-86b8-503ac93168c5",
+                "StackId": "arn:aws:cloudformation:us-west-2:123456789012:stack/ansible-test-client-request-token-yaml/04023cd0-b5d0-11e7-86b8-503ac93168c5",
                 "EventId": "MyBucket-CREATE_IN_PROGRESS-2017-10-20T19:51:11.159Z",
                 "ResourceStatus": "CREATE_IN_PROGRESS",
                 "ResourceType": "AWS::S3::Bucket",
@@ -39,14 +39,14 @@
                     "day": 20,
                     "minute": 51
                 },
-                "StackName": "ansible-test-basic-yaml",
+                "StackName": "ansible-test-client-request-token-yaml",
                 "ResourceProperties": "{}\n",
                 "PhysicalResourceId": "",
                 "ClientRequestToken": "3faf3fb5-b289-41fc-b940-44151828f6cf",
                 "LogicalResourceId": "MyBucket"
             },
             {
-                "StackId": "arn:aws:cloudformation:us-west-2:123456789012:stack/ansible-test-basic-yaml/04023cd0-b5d0-11e7-86b8-503ac93168c5",
+                "StackId": "arn:aws:cloudformation:us-west-2:123456789012:stack/ansible-test-client-request-token-yaml/04023cd0-b5d0-11e7-86b8-503ac93168c5",
                 "EventId": "04032730-b5d0-11e7-86b8-503ac93168c5",
                 "ResourceStatus": "CREATE_IN_PROGRESS",
                 "ResourceType": "AWS::CloudFormation::Stack",
@@ -61,10 +61,10 @@
                     "minute": 51
                 },
                 "ResourceStatusReason": "User Initiated",
-                "StackName": "ansible-test-basic-yaml",
-                "PhysicalResourceId": "arn:aws:cloudformation:us-west-2:123456789012:stack/ansible-test-basic-yaml/04023cd0-b5d0-11e7-86b8-503ac93168c5",
+                "StackName": "ansible-test-client-request-token-yaml",
+                "PhysicalResourceId": "arn:aws:cloudformation:us-west-2:123456789012:stack/ansible-test-client-request-token-yaml/04023cd0-b5d0-11e7-86b8-503ac93168c5",
                 "ClientRequestToken": "3faf3fb5-b289-41fc-b940-44151828f6cf",
-                "LogicalResourceId": "ansible-test-basic-yaml"
+                "LogicalResourceId": "ansible-test-client-request-token-yaml"
             }
         ],
         "ResponseMetadata": {

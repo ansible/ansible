@@ -1,7 +1,7 @@
 {
     "status_code": 200,
     "data": {
-        "StackId": "arn:aws:cloudformation:us-west-2:123456789012:stack/ansible-test-basic-yaml/04023cd0-b5d0-11e7-86b8-503ac93168c5",
+        "StackId": "arn:aws:cloudformation:us-west-2:123456789012:stack/ansible-test-client-request-token-yaml/04023cd0-b5d0-11e7-86b8-503ac93168c5",
         "ResponseMetadata": {
             "RetryAttempts": 0,
             "HTTPStatusCode": 200,

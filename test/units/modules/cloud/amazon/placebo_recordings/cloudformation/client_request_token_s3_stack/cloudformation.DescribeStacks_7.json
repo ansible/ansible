@@ -3,13 +3,13 @@
     "data": {
         "Stacks": [
             {
-                "StackId": "arn:aws:cloudformation:us-west-2:123456789012:stack/ansible-test-basic-yaml/04023cd0-b5d0-11e7-86b8-503ac93168c5",
+                "StackId": "arn:aws:cloudformation:us-west-2:123456789012:stack/ansible-test-client-request-token-yaml/04023cd0-b5d0-11e7-86b8-503ac93168c5",
                 "Description": "Basic template that creates an S3 bucket",
                 "Tags": [],
                 "Outputs": [
                     {
                         "OutputKey": "TheName",
-                        "OutputValue": "ansible-test-basic-yaml-mybucket-13m2y4v8bptj4"
+                        "OutputValue": "ansible-test-client-request-token-yaml-mybucket-13m2y4v8bptj4"
                     }
                 ],
                 "EnableTerminationProtection": false,
@@ -23,7 +23,7 @@
                     "day": 20,
                     "minute": 51
                 },
-                "StackName": "ansible-test-basic-yaml",
+                "StackName": "ansible-test-client-request-token-yaml",
                 "NotificationARNs": [],
                 "StackStatus": "CREATE_COMPLETE",
                 "DisableRollback": false,
