@@ -70,7 +70,7 @@ options:
     description:
       - Option used to allow the user to overwrite any of the other options. To
         remove an option, set the value of the option to C(null).
-    version_added: 2.4
+    version_added: 2.5
 '''
 
 EXAMPLES = '''
