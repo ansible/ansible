@@ -292,7 +292,7 @@ def create_stack(module, stack_params, cfn):
 
     try:
         cfn.create_stack(**stack_params)
-        result = stack_operation(cfn, stack_params['StackName'], 'CREATE', stack_params['ClientRequestToken'])
+        result = stack_operation(cfn, stack_params['StackName'], 'CREATE', stack_params.get('ClientRequestToken', None))
     except Exception as err:
         error_msg = boto_exception(err)
         module.fail_json(msg="Failed to create stack {0}: {1}.".format(stack_params.get('StackName'), error_msg), exception=traceback.format_exc())
@@ -351,7 +351,7 @@ def update_stack(module, stack_params, cfn):
     # don't need to be updated.
     try:
         cfn.update_stack(**stack_params)
-        result = stack_operation(cfn, stack_params['StackName'], 'UPDATE', stack_params['ClientRequestToken'])
+        result = stack_operation(cfn, stack_params['StackName'], 'UPDATE', stack_params.get('ClientRequestToken', None))
     except Exception as err:
         error_msg = boto_exception(err)
         if 'No updates are to be performed.' in error_msg:
@@ -630,7 +630,7 @@ def main():
                 result = {'changed': False, 'output': 'Stack not found.'}
             else:
                 cfn.delete_stack(StackName=stack_params['StackName'])
-                result = stack_operation(cfn, stack_params['StackName'], 'DELETE', stack_params['ClientRequestToken'])
+                result = stack_operation(cfn, stack_params['StackName'], 'DELETE', stack_params.get('ClientRequestToken', None))
         except Exception as err:
             module.fail_json(msg=boto_exception(err), exception=traceback.format_exc())
 
