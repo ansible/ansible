@@ -356,7 +356,6 @@ def main():
                     elif stat.S_ISDIR(st.st_mode) and params['file_type'] == 'directory':
                         if pfilter(fsobj, params['patterns'], params['use_regex']) and agefilter(st, now, age, params['age_stamp']):
                             r.update(statinfo(st, fsname))
-                            list_dir.append(size_dir(fsname))
                             filelist.append(r)
 
                     elif stat.S_ISREG(st.st_mode) and params['file_type'] == 'file':
