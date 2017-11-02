@@ -604,71 +604,65 @@ namespace Ansible
 
             GrantAccessToWindowStationAndDesktop(account);
             string account_sid = account.ToString();
+            bool impersonated = false;
+            IntPtr hSystemTokenDup = IntPtr.Zero;
 
+            // Try to get SYSTEM token handle so we can impersonate to get full admin token
+            IntPtr hSystemToken = GetSystemUserHandle();
+            if (hSystemToken == IntPtr.Zero && service_sids.Contains(account_sid))
+            {
+                // We need the SYSTEM token if we want to become one of those accounts, fail here
+                throw new Win32Exception("Failed to get token for NT AUTHORITY\\SYSTEM");
+            }
+            else if (hSystemToken != IntPtr.Zero)
+            {
+                // We have the token, need to duplicate and impersonate
+                bool dupResult = DuplicateTokenEx(
+                    hSystemToken,
+                    TokenAccessLevels.MaximumAllowed,
+                    IntPtr.Zero,
+                    SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation,
+                    TOKEN_TYPE.TokenPrimary,
+                    out hSystemTokenDup);
+                int lastError = Marshal.GetLastWin32Error();
+                CloseHandle(hSystemToken);
+
+                if (!dupResult && service_sids.Contains(account_sid))
+                    throw new Win32Exception(lastError, "Failed to duplicate token for NT AUTHORITY\\SYSTEM");
+                else if (dupResult)
+                {
+                    if (ImpersonateLoggedOnUser(hSystemTokenDup))
+                        impersonated = true;
+                    else if (service_sids.Contains(account_sid))
+                        throw new Win32Exception("Failed to impersonate as SYSTEM account");
+                }
+            }
+
+            LogonType logonType;
+            string domain = null;
             if (service_sids.Contains(account_sid))
             {
-                // We are trying to become to a service account
-                IntPtr hToken = GetUserHandle();
-                if (hToken == IntPtr.Zero)
-                    throw new Exception("Failed to get token for NT AUTHORITY\\SYSTEM");
-
-                IntPtr hTokenDup = IntPtr.Zero;
-                try
-                {
-                    if (!DuplicateTokenEx(
-                        hToken,
-                        TokenAccessLevels.MaximumAllowed,
-                        IntPtr.Zero,
-                        SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation,
-                        TOKEN_TYPE.TokenPrimary,
-                        out hTokenDup))
-                    {
-                        throw new Win32Exception("Failed to duplicate the SYSTEM account token");
-                    }
-                }
-                finally
-                {
-                    CloseHandle(hToken);
-                }
-
-                string lpszDomain = "NT AUTHORITY";
-                string lpszUsername = null;
+                logonType = LogonType.LOGON32_LOGON_SERVICE;
+                domain = "NT AUTHORITY";
+                password = null;
                 switch (account_sid)
                 {
                     case "S-1-5-18":
-                        tokens.Add(hTokenDup);
+                        tokens.Add(hSystemTokenDup);
                         return tokens;
                     case "S-1-5-19":
-                        lpszUsername = "LocalService";
+                        username = "LocalService";
                         break;
                     case "S-1-5-20":
-                        lpszUsername = "NetworkService";
+                        username = "NetworkService";
                         break;
                 }
-
-                if (!ImpersonateLoggedOnUser(hTokenDup))
-                    throw new Win32Exception("Failed to impersonate as SYSTEM account");
-
-                IntPtr newToken = IntPtr.Zero;
-                if (!LogonUser(
-                    lpszUsername,
-                    lpszDomain,
-                    null,
-                    LogonType.LOGON32_LOGON_SERVICE,
-                    LogonProvider.LOGON32_PROVIDER_DEFAULT,
-                    out newToken))
-                {
-                    throw new Win32Exception("LogonUser failed");
-                }
-
-                RevertToSelf();
-                tokens.Add(newToken);
-                return tokens;
+                
             }
             else
             {
                 // We are trying to become a local or domain account
-                string domain = null;
+                logonType = LogonType.LOGON32_LOGON_INTERACTIVE;
                 if (username.Contains(@"\"))
                 {
                     var user_split = username.Split(Convert.ToChar(@"\"));
@@ -679,31 +673,35 @@ namespace Ansible
                     domain = null;
                 else
                     domain = ".";
-
-                // Logon and get the token
-                IntPtr hToken = IntPtr.Zero;
-                if (!LogonUser(
-                    username,
-                    domain,
-                    password,
-                    LogonType.LOGON32_LOGON_INTERACTIVE,
-                    LogonProvider.LOGON32_PROVIDER_DEFAULT,
-                    out hToken))
-                {
-                    throw new Win32Exception("LogonUser failed");
-                }
-
-                // Get the elevate token
-                IntPtr hTokenElevated = GetElevatedToken(hToken);
-
-                tokens.Add(hTokenElevated);
-                tokens.Add(hToken);
-
-                return tokens;
             }
+
+            IntPtr hToken = IntPtr.Zero;
+            if (!LogonUser(
+                username,
+                domain,
+                password,
+                logonType,
+                LogonProvider.LOGON32_PROVIDER_DEFAULT,
+                out hToken))
+            {
+                throw new Win32Exception("LogonUser failed");
+            }
+
+            if (!service_sids.Contains(account_sid))
+            {
+                // Try and get the elevated token for local/domain account
+                IntPtr hTokenElevated = GetElevatedToken(hToken);
+                tokens.Add(hTokenElevated);
+            }
+            tokens.Add(hToken);
+
+            if (impersonated)
+                RevertToSelf();
+            
+            return tokens;
         }
 
-        private static IntPtr GetUserHandle()
+        private static IntPtr GetSystemUserHandle()
         {
             uint array_byte_size = 1024 * sizeof(uint);
             IntPtr[] pids = new IntPtr[1024];
