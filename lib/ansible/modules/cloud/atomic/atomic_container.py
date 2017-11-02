@@ -21,7 +21,7 @@ description:
     - Manage the containers on the atomic host platform
     - Allows to manage the lifecycle of a container on the atomic host platform
 version_added: "2.4"
-author: "Giuseppe Scrivano @gscrivano"
+author: "Giuseppe Scrivano (@giuseppe)"
 notes:
     - Host should support C(atomic) command
 requirements:

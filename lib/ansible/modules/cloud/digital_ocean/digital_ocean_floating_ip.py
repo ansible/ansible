@@ -19,7 +19,7 @@ short_description: Manage DigitalOcean Floating IPs
 description:
      - Create/delete/assign a floating IP.
 version_added: "2.4"
-author: "Patrick Marques (@patrickfmarques)"
+author: "Patrick Marques (@pmarques)"
 options:
   state:
     description:
