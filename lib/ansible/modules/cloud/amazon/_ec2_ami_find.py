@@ -7,7 +7,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 
@@ -16,6 +16,7 @@ DOCUMENTATION = '''
 module: ec2_ami_find
 version_added: '2.0'
 short_description: Searches for AMIs to obtain the AMI ID and other information
+deprecated: Deprecated in 2.5. Use M(ec2_ami_facts) instead.
 description:
   - Returns list of matching AMIs with AMI ID, along with other useful information
   - Can search AMIs with different owners
@@ -347,6 +348,8 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
     )
+
+    module.deprecate("The 'ec2_ami_find' module has been deprecated. Use 'ec2_ami_facts' instead.", version=2.9)
 
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module, install via pip or your package manager')
