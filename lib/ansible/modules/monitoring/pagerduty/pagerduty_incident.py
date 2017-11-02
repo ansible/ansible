@@ -14,11 +14,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 
-module: pagerduty_alert
+module: pagerduty_incident
 short_description: Trigger, acknowledge or resolve PagerDuty incidents
 description:
     - This module will let you trigger, acknowledge or resolve a PagerDuty incident by sending events
-version_added: "1.9"
+version_added: "2.5"
 author:
     - "Amanpreet Singh (@aps-sids)"
 requirements:
@@ -74,7 +74,7 @@ options:
 
 EXAMPLES = '''
 # Trigger an incident with just the basic options
-- pagerduty_alert:
+- pagerduty_incident:
     name: companyabc
     service_key: xxx
     api_key: yourapikey
@@ -82,7 +82,7 @@ EXAMPLES = '''
     desc: problem that led to this trigger
 
 # Trigger an incident with more options
-- pagerduty_alert:
+- pagerduty_incident:
     service_key: xxx
     api_key: yourapikey
     state: triggered
@@ -92,7 +92,7 @@ EXAMPLES = '''
     client_url: http://service.example.com
 
 # Acknowledge an incident based on incident_key
-- pagerduty_alert:
+- pagerduty_incident:
     service_key: xxx
     api_key: yourapikey
     state: acknowledged
@@ -100,13 +100,18 @@ EXAMPLES = '''
     desc: "some text for incident's log"
 
 # Resolve an incident based on incident_key
-- pagerduty_alert:
+- pagerduty_incident:
     service_key: xxx
     api_key: yourapikey
     state: resolved
     incident_key: somekey
     desc: "some text for incident's log"
 '''
+
+RETURN = '''
+
+'''
+
 import json
 
 from ansible.module_utils.basic import AnsibleModule
