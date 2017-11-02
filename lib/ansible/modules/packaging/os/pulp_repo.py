@@ -82,6 +82,16 @@ options:
       - Proxy port setting for the pulp repository importer.
     required: false
     default: null
+  proxy_username:
+    description:
+      - Proxy username for the pulp repository importer.
+    required: false
+    default: null
+  proxy_password:
+    description:
+      - Proxy password for the pulp repository importer.
+    required: false
+    default: null
   publish_distributor:
     description:
       - Distributor to use when state is C(publish). The default is to
@@ -242,6 +252,8 @@ class pulp_server(object):
         serve_https=True,
         proxy_host=None,
         proxy_port=None,
+        proxy_user=None,
+        proxy_pass=None,
         ssl_ca_cert=None,
         ssl_client_cert=None,
         ssl_client_key=None,
@@ -285,7 +297,13 @@ class pulp_server(object):
 
             if proxy_port:
                 data['importer_config']['proxy_port'] = proxy_port
-
+            
+            if proxy_username:
+                data['importer_config']['proxy_username'] = proxy_username
+            
+            if proxy_password:
+                data['importer_config']['proxy_password'] = proxy_password
+                
             if ssl_ca_cert:
                 data['importer_config']['ssl_ca_cert'] = ssl_ca_cert
 
@@ -504,6 +522,8 @@ def main():
         name=dict(required=True, aliases=['repo']),
         proxy_host=dict(),
         proxy_port=dict(),
+        proxy_username=dict(),
+        proxy_password=dict()
         publish_distributor=dict(),
         pulp_host=dict(default="https://127.0.0.1"),
         relative_url=dict(),
@@ -607,6 +627,8 @@ def main():
                     serve_https=serve_https,
                     proxy_host=proxy_host,
                     proxy_port=proxy_port,
+                    proxy_username=proxy_username,
+                    proxy_password=proxy_password,
                     ssl_ca_cert=importer_ssl_ca_cert,
                     ssl_client_cert=importer_ssl_client_cert,
                     ssl_client_key=importer_ssl_client_key,
@@ -623,6 +645,8 @@ def main():
                 feed=feed,
                 proxy_host=proxy_host,
                 proxy_port=proxy_port,
+                proxy_username=proxy_username,
+                proxy_password=proxy_password,
                 ssl_ca_cert=importer_ssl_ca_cert,
                 ssl_client_cert=importer_ssl_client_cert,
                 ssl_client_key=importer_ssl_client_key
@@ -633,6 +657,8 @@ def main():
                         feed=feed,
                         proxy_host=proxy_host,
                         proxy_port=proxy_port,
+                        proxy_username=proxy_username,
+                        proxy_password=proxy_password,
                         ssl_ca_cert=importer_ssl_ca_cert,
                         ssl_client_cert=importer_ssl_client_cert,
                         ssl_client_key=importer_ssl_client_key)
