@@ -27,7 +27,7 @@ options:
     state:
       description:
         - Whether the rule is present, absent or get
-      choices: ["present", "absent", "get"]
+      choices: ["present", "absent"]
       default: present
       required: false
     log_group_name:
@@ -44,8 +44,8 @@ options:
       required: false
     retention:
       description:
-        - The number of days to retain the log events in the specified log group.
-        - Valid values are: [1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653]
+        - "The number of days to retain the log events in the specified log group.
+           Valid values are: [1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653]"
       required: false
     overwrite:
      description:
@@ -116,15 +116,10 @@ log_groups:
             type: string
 '''
 
-try:
-    import boto3
-    HAS_BOTO3 = True
-except ImportError:
-    HAS_BOTO3 = False
-
 import traceback
+from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import _camel_to_snake, camel_dict_to_snake_dict, boto3_conn, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils.ec2 import HAS_BOTO3, camel_dict_to_snake_dict, boto3_conn, ec2_argument_spec, get_aws_connection_info
 
 try:
     import botocore
@@ -133,36 +128,35 @@ except ImportError:
 
 
 def create_log_group(client, log_group_name, kms_key_id, tags, retention, module):
+    request = {'logGroupName': log_group_name}
+    if kms_key_id:
+        request['kmsKeyId'] = kms_key_id
+    if tags:
+        request['tags'] = tags
+
     try:
-        request = {
-            'logGroupName': log_group_name
-        }
-        if kms_key_id:
-            request['kmsKeyId'] = kms_key_id
-        if tags:
-            request['tags'] = tags
-
         client.create_log_group(**request)
-
-        if retention:
-            input_retention_policy(client=client,
-                                   log_group_name=log_group_name,
-                                   retention=retention, module=module)
-
-        desc_log_group = describe_log_group(client=client,
-                                            log_group_name=log_group_name,
-                                            module=module)
-
-        if 'logGroups' in desc_log_group:
-            for i in desc_log_group['logGroups']:
-                if log_group_name == i['logGroupName']:
-                    return i
-                else:
-                    module.fail_json(msg="The aws CloudWatchLogs log group was not created. \n please try again!")
-
     except botocore.exceptions.ClientError as e:
-        module.fail_json(msg=e.response, exception=traceback.format_exc(),
-                         **camel_dict_to_snake_dict(e.response))
+        module.fail_json(msg="Unable to create log group: {0}".format(to_native(e)),
+                         exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+    except botocore.exceptions.BotoCoreError as e:
+        module.fail_json(msg="Unable to create log group: {0}".format(to_native(e)),
+                         exception=traceback.format_exc())
+
+    if retention:
+        input_retention_policy(client=client,
+                               log_group_name=log_group_name,
+                               retention=retention, module=module)
+
+    desc_log_group = describe_log_group(client=client,
+                                        log_group_name=log_group_name,
+                                        module=module)
+
+    if 'logGroups' in desc_log_group:
+        for i in desc_log_group['logGroups']:
+            if log_group_name == i['logGroupName']:
+                return i
+    module.fail_json(msg="The aws CloudWatchLogs log group was not created. \n please try again!")
 
 
 def input_retention_policy(client, log_group_name, retention, module):
@@ -176,24 +170,30 @@ def input_retention_policy(client, log_group_name, retention, module):
             delete_log_group(client=client, log_group_name=log_group_name, module=module)
             module.fail_json(msg="Invalid retention value. Valid values are: [1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653]")
     except botocore.exceptions.ClientError as e:
-        module.fail_json(msg=e.response, exception=traceback.format_exc(),
-                         **camel_dict_to_snake_dict(e.response))
+        module.fail_json(msg="Unable to put retention policy for log group {0}: {1}".format(log_group_name, to_native(e)),
+                         exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+    except botocore.exceptions.BotoCoreError as e:
+        module.fail_json(msg="Unable to put retention policy for log group {0}: {1}".format(log_group_name, to_native(e)),
+                         exception=traceback.format_exc())
 
 
 def delete_log_group(client, log_group_name, module):
-    try:
-        desc_log_group = describe_log_group(client=client,
-                                            log_group_name=log_group_name,
-                                            module=module)
+    desc_log_group = describe_log_group(client=client,
+                                        log_group_name=log_group_name,
+                                        module=module)
 
+    try:
         if 'logGroups' in desc_log_group:
             for i in desc_log_group['logGroups']:
                 if log_group_name == i['logGroupName']:
                     client.delete_log_group(logGroupName=log_group_name)
 
     except botocore.exceptions.ClientError as e:
-        module.fail_json(msg=e.response, exception=traceback.format_exc(),
-                         **camel_dict_to_snake_dict(e.response))
+        module.fail_json(msg="Unable to delete log group {0}: {1}".format(log_group_name, to_native(e)),
+                         exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+    except botocore.exceptions.BotoCoreError as e:
+        module.fail_json(msg="Unable to delete log group {0}: {1}".format(log_group_name, to_native(e)),
+                         exception=traceback.format_exc())
 
 
 def describe_log_group(client, log_group_name, module):
@@ -201,15 +201,18 @@ def describe_log_group(client, log_group_name, module):
         desc_log_group = client.describe_log_groups(logGroupNamePrefix=log_group_name)
         return desc_log_group
     except botocore.exceptions.ClientError as e:
-        module.fail_json(msg=e.response, exception=traceback.format_exc(),
-                         **camel_dict_to_snake_dict(e.response))
+        module.fail_json(msg="Unable to describe log group {0}: {1}".format(log_group_name, to_native(e)),
+                         exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+    except botocore.exceptions.BotoCoreError as e:
+        module.fail_json(msg="Unable to describe log group {0}: {1}".format(log_group_name, to_native(e)),
+                         exception=traceback.format_exc())
 
 
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
         log_group_name=dict(required=True, type='str'),
-        state=dict(choices=['present', 'absent', 'get'],
+        state=dict(choices=['present', 'absent'],
                    default='present'),
         kms_key_id=dict(required=False, type='str'),
         tags=dict(required=False, type='dict'),
@@ -217,81 +220,54 @@ def main():
         overwrite=dict(required=False, type='bool', default=False)
     ))
 
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+    module = AnsibleModule(argument_spec=argument_spec)
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 is required.')
 
-    try:
-        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-        if not region:
-            module.fail_json(msg="Region must be specified as a parameter, in EC2_REGION or AWS_REGION environment variables or in boto configuration file")
-        logs = boto3_conn(module, conn_type='client', resource='logs', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-    except botocore.exceptions.ProfileNotFound as e:
-        module.fail_json(msg=str(e))
+    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
+    logs = boto3_conn(module, conn_type='client', resource='logs', region=region, endpoint=ec2_url, **aws_connect_kwargs)
 
     state = module.params.get('state')
+    changed = False
+
+    # Determine if the log group exists
+    desc_log_group = describe_log_group(client=logs, log_group_name=module.params['log_group_name'], module=module)
+    found_log_group = {}
+    for i in desc_log_group.get('logGroups', []):
+        if module.params['log_group_name'] == i['logGroupName']:
+            found_log_group = i
+            break
 
     if state == 'present':
+        if found_log_group and module.params['overwrite'] is True:
+                changed = True
+                delete_log_group(client=logs, log_group_name=module.params['log_group_name'], module=module)
+                found_log_group = create_log_group(client=logs,
+                                                   log_group_name=module.params['log_group_name'],
+                                                   kms_key_id=module.params['kms_key_id'],
+                                                   tags=module.params['tags'],
+                                                   retention=module.params['retention'],
+                                                   module=module)
+        elif not found_log_group:
+            changed = True
+            found_log_group = create_log_group(client=logs,
+                                               log_group_name=module.params['log_group_name'],
+                                               kms_key_id=module.params['kms_key_id'],
+                                               tags=module.params['tags'],
+                                               retention=module.params['retention'],
+                                               module=module)
 
-        desc_log_group = describe_log_group(client=logs, log_group_name=module.params['log_group_name'], module=module)
-
-        return_create_log_group = {}
-        if 'logGroups' in desc_log_group:
-            for i in desc_log_group['logGroups']:
-                if module.params['log_group_name'] == i['logGroupName'] and module.params['overwrite'] is True:
-                    delete_log_group(client=logs, log_group_name=module.params['log_group_name'], module=module)
-                    return_create_log_group = create_log_group(client=logs,
-                                                               log_group_name=module.params['log_group_name'],
-                                                               kms_key_id=module.params['kms_key_id'],
-                                                               tags=module.params['tags'],
-                                                               retention=module.params['retention'],
-                                                               module=module)
-                elif module.params['log_group_name'] == i['logGroupName']:
-                    return_create_log_group = i
-
-        if not return_create_log_group:
-                    return_create_log_group = create_log_group(client=logs,
-                                                               log_group_name=module.params['log_group_name'],
-                                                               kms_key_id=module.params['kms_key_id'],
-                                                               tags=module.params['tags'],
-                                                               retention=module.params['retention'],
-                                                               module=module)
-
-        desc_log_group_snake = {}
-        for k, v in return_create_log_group.items():
-            desc_log_group_snake[_camel_to_snake(k)] = v
-
-        desc_log_group_result = dict(changed=False, stdout=desc_log_group_snake)
-        module.exit_json(**desc_log_group_result)
+        module.exit_json(changed=changed, **camel_dict_to_snake_dict(found_log_group))
 
     elif state == 'absent':
-        delete_log_group(client=logs,
-                         log_group_name=module.params['log_group_name'],
-                         module=module)
-    elif state == 'get':
-        desc_log_group = describe_log_group(client=logs,
-                                            log_group_name=module.params['log_group_name'],
-                                            module=module)
+        if found_log_group:
+            changed = True
+            delete_log_group(client=logs,
+                             log_group_name=module.params['log_group_name'],
+                             module=module)
 
-        if 'logGroups' not in desc_log_group:
-            module.fail_json(msg="LogGroupNamePrefix does not exists.")
-
-        desc_log_group_snake = {}
-        final_log_group_snake = []
-
-        for lst in desc_log_group['logGroups']:
-            for k, v in lst.items():
-                desc_log_group_snake[_camel_to_snake(k)] = v
-            final_log_group_snake.append(desc_log_group_snake.copy())
-
-        desc_log_group_result = dict(changed=False, stdout=final_log_group_snake)
-        module.exit_json(**desc_log_group_result)
-
-    else:
-        module.fail_json(msg="Invalid state '{0}' provided".format(state))
-
-    module.exit_json()
+    module.exit_json(changed=changed)
 
 
 if __name__ == '__main__':
