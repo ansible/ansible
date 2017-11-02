@@ -66,3 +66,31 @@ element_data_dict:
           dict:
             k22: v22
             k33: v33
+
+element_data_dict_missing:
+  x:
+    id: x
+    the_dict:
+      k0: v0
+      k1: v1
+    the:
+      sub:
+        key:
+          dict:
+            k00: v00
+            k11: v11
+  y:
+    id: y
+    the_dict:
+      k2: v2
+      k3: v3
+  z:
+    id: z
+    the_dict:
+      k4: v5
+      k5: v5
+    the:
+      sub:
+        key:
+          k44: v44
+          k55: v55

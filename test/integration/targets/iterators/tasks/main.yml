@@ -209,6 +209,24 @@
         - "_yv22 == 'v22'"
         - "_yv33 == 'v33'"
 
+- name: test with_subelements dict with missing key or subkey
+  set_fact: "{{ '_'+ item.0.id + item.1 }}={{ item.1 }}"
+  with_subelements:
+    - "{{element_data_dict_missing}}"
+    - the.sub.key.dict
+    - skip_missing: yes
+  register: _subelements_dict_missing_subkeys
+
+- debug: var=_subelements_dict_missing_subkeys
+- debug: var=_subelements_dict_missing_subkeys.results|length
+- name: verify with_subelements dict in subkeys results
+  assert:
+    that:
+        - _subelements_dict_missing_subkeys.skipped is not defined
+        - _subelements_dict_missing_subkeys.results|length == 2
+        - "_xv0 == 'v0'"
+        - "_xv1 == 'v1'"
+
 # WITH_TOGETHER
 
 - name: test with_together

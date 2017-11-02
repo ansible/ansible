@@ -115,9 +115,7 @@ class LookupModule(LookupBase):
             if terms[0].get('skipped', False) is not False:
                 # the registered result was completely skipped
                 return []
-            elementlist = []
-            for key in terms[0]:
-                elementlist.append(terms[0][key])
+            elementlist = list(terms[0].values())
         else:
             elementlist = terms[0]
 
