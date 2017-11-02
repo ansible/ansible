@@ -48,7 +48,10 @@ def data_object_shim(obj, exclude=None):
     creates scaled down object copy containing properties of original but no methods
     """
     d = object_to_dict(obj, exclude)
-    new = lambda: None
+
+    def _noop():
+        pass
+    new = _noop
     for k in d:
         setattr(new, k, d[k])
     return new
