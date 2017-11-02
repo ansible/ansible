@@ -32,7 +32,7 @@ $display_name = Get-AnsibleParam -obj $params -name 'display_name' -type 'str'
 $force_dependent_services = Get-AnsibleParam -obj $params -name 'force_dependent_services' -type 'bool' -default $false
 $name = Get-AnsibleParam -obj $params -name 'name' -type 'str' -failifempty $true
 $password = Get-AnsibleParam -obj $params -name 'password' -type 'str'
-$path = Get-AnsibleParam -obj $params -name 'path' -type 'path'
+$path = Get-AnsibleParam -obj $params -name 'path'
 $start_mode = Get-AnsibleParam -obj $params -name 'start_mode' -type 'str' -validateset 'auto','manual','disabled','delayed'
 $state = Get-AnsibleParam -obj $params -name 'state' -type 'str' -validateset 'started','stopped','restarted','absent','paused'
 $username = Get-AnsibleParam -obj $params -name 'username' -type 'str'
@@ -50,6 +50,9 @@ if ($password -ne $null -and $username -eq $null) {
 }
 if ($desktop_interact -eq $true -and (-not ($username -eq "LocalSystem" -or $username -eq $null))) {
     Fail-Json $result "Can only set 'desktop_interact' to true when 'username' equals 'LocalSystem'"
+}
+if ($path -ne $null) {
+    $path = [System.Environment]::ExpandEnvironmentVariables($path)
 }
 
 Function Get-ServiceInfo($name) {

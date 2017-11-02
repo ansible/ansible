@@ -610,6 +610,37 @@
     - not win_service_path_again|changed
     - win_service_path_again.path == 'C:\\temp\\test.exe'
 
+- name: create test environment variable
+  win_environment:
+    name: TEST_SERVICE_PATH
+    value: C:\temp
+    level: machine
+    state: present
+
+- name: set service path with quotes and env var
+  win_service:
+    name: "{{test_win_service_name}}"
+    path: '"%TEST_SERVICE_PATH%\test.exe"'
+  register: win_service_env_quote_path
+
+- name: check that the quoted service path has been changed
+  assert:
+    that:
+    - win_service_env_quote_path|changed
+    - win_service_env_quote_path.path == '"C:\\temp\\test.exe"'
+
+- name: set service path with quotes and env var again
+  win_service:
+    name: "{{test_win_service_name}}"
+    path: '"%TEST_SERVICE_PATH%\test.exe"'
+  register: win_service_env_quote_path_again
+
+- name: check that the quoted service path has been changed again
+  assert:
+    that:
+    - not win_service_env_quote_path_again|changed
+    - win_service_env_quote_path_again.path == '"C:\\temp\\test.exe"'
+
 - name: revert original service path back to normal
   win_service:
     name: "{{test_win_service_name}}"
