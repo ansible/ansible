@@ -4,11 +4,11 @@
 #- name: enter `enable` configuration mode
 #  command: enable
 
-- name: run add switchports to vlan 
+- name: run add interfaces to vlan 
   mlnxos_vlan:
     vlan_id: 6 
     state: present 
-    switchport: Eth1/6,Eth1/7
+    interface: Eth1/6,Eth1/7
     mode: hybrid 
     authorize: yes
     provider:
@@ -18,11 +18,11 @@
       port: 22
       timeout: 10
 
-- name: run add switchport to vlan
+- name: run add interface to vlan
   mlnxos_vlan:
     vlan_id: 5
     state: present
-    switchport: Eth1/5
+    interface: Eth1/5
     mode: hybrid
     authorize: yes
     provider:
@@ -32,11 +32,11 @@
       port: 22
       timeout: 10
 
-- name: run remove switchports from vlan
+- name: run remove interfaces from vlan
   mlnxos_vlan:
     vlan_id: 6
     state: absent
-    switchport: Eth1/6,Eth1/7
+    interface: Eth1/6,Eth1/7
     mode: hybrid
     authorize: yes
     provider:
@@ -46,11 +46,11 @@
       port: 22
       timeout: 10
 
-- name: run remove switchport from vlan
+- name: run remove interface from vlan
   mlnxos_vlan:
     vlan_id: 5
     state: absent
-    switchport: Eth1/5
+    interface: Eth1/5
     mode: hybrid
     authorize: yes
     provider:
