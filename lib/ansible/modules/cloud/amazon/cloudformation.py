@@ -629,7 +629,10 @@ def main():
             if not stack:
                 result = {'changed': False, 'output': 'Stack not found.'}
             else:
-                cfn.delete_stack(StackName=stack_params['StackName'])
+                if stack_params.get('RoleARN') is None:
+                    cfn.delete_stack(StackName=stack_params['StackName'])
+                else:
+                    cfn.delete_stack(StackName=stack_params['StackName'], RoleARN=stack_params['RoleARN'])
                 result = stack_operation(cfn, stack_params['StackName'], 'DELETE', stack_params['ClientRequestToken'])
         except Exception as err:
             module.fail_json(msg=boto_exception(err), exception=traceback.format_exc())
