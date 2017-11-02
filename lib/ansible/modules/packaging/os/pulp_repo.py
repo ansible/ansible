@@ -87,11 +87,13 @@ options:
       - Proxy username for the pulp repository importer.
     required: false
     default: null
+    version_added: "2.5"
   proxy_password:
     description:
       - Proxy password for the pulp repository importer.
     required: false
     default: null
+    version_added: "2.5"
   publish_distributor:
     description:
       - Distributor to use when state is C(publish). The default is to
@@ -110,6 +112,12 @@ options:
     description:
       - Repo plugin type to use (i.e. C(rpm), C(docker)).
     default: rpm
+    version_added: "2.5"
+  repoview:
+    description:
+      - Enables repoview of published repository to improve browsing experience
+    required: false
+    default: false
   serve_http:
     description:
       - Make the repo available over HTTP.
@@ -224,6 +232,9 @@ class pulp_server(object):
 
         for distributor in repo_config['distributors']:
             for key, value in kwargs.items():
+                if key not in distributor['config'].keys():
+                    return False
+
                 if not distributor['config'][key] == value:
                     return False
 
@@ -254,6 +265,7 @@ class pulp_server(object):
         proxy_port=None,
         proxy_username=None,
         proxy_password=None,
+        repoview=False,
         ssl_ca_cert=None,
         ssl_client_cert=None,
         ssl_client_key=None,
@@ -273,6 +285,7 @@ class pulp_server(object):
             yum_distributor['distributor_config']['http'] = serve_http
             yum_distributor['distributor_config']['https'] = serve_https
             yum_distributor['distributor_config']['relative_url'] = relative_url
+            yum_distributor['distributor_config']['repoview'] = repoview
             data['distributors'].append(yum_distributor)
 
             if add_export_distributor:
@@ -284,6 +297,7 @@ class pulp_server(object):
                 export_distributor['distributor_config']['http'] = serve_http
                 export_distributor['distributor_config']['https'] = serve_https
                 export_distributor['distributor_config']['relative_url'] = relative_url
+                export_distributor['distributor_config']['repoview'] = repoview
                 data['distributors'].append(export_distributor)
 
             data['importer_type_id'] = "yum_importer"
@@ -297,13 +311,13 @@ class pulp_server(object):
 
             if proxy_port:
                 data['importer_config']['proxy_port'] = proxy_port
-            
+
             if proxy_username:
                 data['importer_config']['proxy_username'] = proxy_username
-            
+
             if proxy_password:
                 data['importer_config']['proxy_password'] = proxy_password
-                
+
             if ssl_ca_cert:
                 data['importer_config']['ssl_ca_cert'] = ssl_ca_cert
 
@@ -528,6 +542,7 @@ def main():
         pulp_host=dict(default="https://127.0.0.1"),
         relative_url=dict(),
         repo_type=dict(default="rpm"),
+        repoview=dict(default=False, type='bool'),
         serve_http=dict(default=False, type='bool'),
         serve_https=dict(default=True, type='bool'),
         state=dict(
@@ -552,6 +567,7 @@ def main():
     relative_url = module.params['relative_url']
     repo = module.params['name']
     repo_type = module.params['repo_type']
+    repoview = module.params['repoview']
     serve_http = module.params['serve_http']
     serve_https = module.params['serve_https']
     state = module.params['state']
@@ -631,6 +647,7 @@ def main():
                     proxy_port=proxy_port,
                     proxy_username=proxy_username,
                     proxy_password=proxy_password,
+                    repoview=repoview,
                     ssl_ca_cert=importer_ssl_ca_cert,
                     ssl_client_cert=importer_ssl_client_cert,
                     ssl_client_key=importer_ssl_client_key,
@@ -678,6 +695,12 @@ def main():
                             relative_url=relative_url)
 
                     changed = True
+
+            if not server.compare_repo_distributor_config(repo, repoview=repoview):
+                if not module.check_mode:
+                    server.update_repo_distributor_config(repo, repoview=repoview)
+
+                changed = True
 
             if not server.compare_repo_distributor_config(repo, http=serve_http):
                 if not module.check_mode:
