@@ -234,6 +234,16 @@ def _unhexlify(b_data):
         raise AnsibleVaultFormatError('Vault data format error: %s' % exc)
 
 
+def parse_vaulttext(b_vaulttext):
+    # SPLIT SALT, DIGEST, AND DATA
+    b_vaulttext = _unhexlify(b_vaulttext)
+    b_salt, b_crypted_hmac, b_ciphertext = b_vaulttext.split(b"\n", 2)
+    b_salt = _unhexlify(b_salt)
+    b_ciphertext = _unhexlify(b_ciphertext)
+
+    return b_ciphertext, b_salt, b_crypted_hmac
+
+
 def verify_secret_is_not_empty(secret, msg=None):
     '''Check the secret against minimal requirements.
 
@@ -621,7 +631,14 @@ class VaultLib:
                 msg += "%s is not a vault encrypted file" % filename
             raise AnsibleError(msg)
 
-        b_vaulttext, dummy, cipher_name, vault_id = parse_vaulttext_envelope(b_vaulttext)
+        try:
+            b_vaulttext, dummy, cipher_name, vault_id = parse_vaulttext_envelope(b_vaulttext)
+        except Exception as exc:
+            msg = "There was a vault envelope format error"
+            if filename:
+                msg += ' in %s' % (filename)
+            msg += ': %s' % exc
+            raise AnsibleVaultFormatError(msg)
 
         # create the cipher object, note that the cipher used for decrypt can
         # be different than the cipher used for encrypt
@@ -1370,11 +1387,13 @@ class VaultAES256:
 
     @classmethod
     def decrypt(cls, b_vaulttext, secret):
-        # SPLIT SALT, DIGEST, AND DATA
-        b_vaulttext = _unhexlify(b_vaulttext)
-        b_salt, b_crypted_hmac, b_ciphertext = b_vaulttext.split(b"\n", 2)
-        b_salt = _unhexlify(b_salt)
-        b_ciphertext = _unhexlify(b_ciphertext)
+
+        try:
+            b_ciphertext, b_salt, b_crypted_hmac = parse_vaulttext(b_vaulttext)
+        except Exception as exc:
+            msg = "There was a vault vaulttext format error"
+            msg += ': %s' % exc
+            raise AnsibleVaultFormatError(msg)
 
         # TODO: would be nice if a VaultSecret could be passed directly to _decrypt_*
         #       (move _gen_key_initctr() to a AES256 VaultSecret or VaultContext impl?)
