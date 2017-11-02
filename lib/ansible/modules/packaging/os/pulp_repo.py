@@ -252,8 +252,8 @@ class pulp_server(object):
         serve_https=True,
         proxy_host=None,
         proxy_port=None,
-        proxy_user=None,
-        proxy_pass=None,
+        proxy_username=None,
+        proxy_password=None,
         ssl_ca_cert=None,
         ssl_client_cert=None,
         ssl_client_key=None,
@@ -523,7 +523,7 @@ def main():
         proxy_host=dict(),
         proxy_port=dict(),
         proxy_username=dict(),
-        proxy_password=dict(),
+        proxy_password=dict(no_log=True),
         publish_distributor=dict(),
         pulp_host=dict(default="https://127.0.0.1"),
         relative_url=dict(),
@@ -545,6 +545,8 @@ def main():
     importer_ssl_client_key = module.params['importer_ssl_client_key']
     proxy_host = module.params['proxy_host']
     proxy_port = module.params['proxy_port']
+    proxy_username = module.params['proxy_username']
+    proxy_password = module.params['proxy_password']
     publish_distributor = module.params['publish_distributor']
     pulp_host = module.params['pulp_host']
     relative_url = module.params['relative_url']
