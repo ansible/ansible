@@ -43,8 +43,13 @@ options:
     required: true
   password:
     description:
+      - Password to authenticate with the Jenkins server. This is deprecated, use C(url_password) instead.
+    required: false
+  url_password:
+    description:
       - Password to authenticate with the Jenkins server.
     required: false
+    version_added: 2.5
   state:
     description:
       - Attribute that specifies if the job has to be created or deleted.
@@ -62,13 +67,18 @@ options:
     default: http://localhost:8080
   user:
     description:
+       - User to authenticate with the Jenkins server. This is deprecated, use C(url_username) instead.
+    required: false
+  url_username:
+    description:
        - User to authenticate with the Jenkins server.
     required: false
+    version_added: 2.5
   params:
     required: false
     default: null
     description:
-      - Option used to allow the user to overwrite any of the other options. To
+      - Option used to allow the user to overwrite any of the other options (except C(url_password)). To
         remove an option, set the value of the option to C(null).
     version_added: 2.5
 '''
@@ -78,9 +88,9 @@ EXAMPLES = '''
 - jenkins_job:
     config: "{{ lookup('file', 'templates/test.xml') }}"
     name: test
-    password: admin
+    url_password: admin
     url: http://localhost:8080
-    user: admin
+    url_user: admin
 
 # Create a jenkins job using the token
 - jenkins_job:
@@ -88,15 +98,15 @@ EXAMPLES = '''
     name: test
     token: asdfasfasfasdfasdfadfasfasdfasdfc
     url: http://localhost:8080
-    user: admin
+    url_user: admin
 
 # Delete a jenkins job using basic authentication
 - jenkins_job:
     name: test
-    password: admin
+    url_password: admin
     state: absent
     url: http://localhost:8080
-    user: admin
+    url_user: admin
 
 # Delete a jenkins job using the token
 - jenkins_job:
@@ -104,15 +114,15 @@ EXAMPLES = '''
     token: asdfasfasfasdfasdfadfasfasdfasdfc
     state: absent
     url: http://localhost:8080
-    user: admin
+    url_user: admin
 
 # Disable a jenkins job using basic authentication
 - jenkins_job:
     name: test
-    password: admin
+    url_password: admin
     enabled: False
     url: http://localhost:8080
-    user: admin
+    url_user: admin
 
 # Disable a jenkins job using the token
 - jenkins_job:
@@ -120,7 +130,7 @@ EXAMPLES = '''
     token: asdfasfasfasdfasdfadfasfasdfasdfc
     enabled: False
     url: http://localhost:8080
-    user: admin
+    url_user: admin
 #
 # Example of how to use the params
 #
@@ -129,13 +139,11 @@ EXAMPLES = '''
 #
 # my_jenkins_params:
 #   url_username: admin
-#   url_password: p4ssw0rd
-#   url: https://localhost:8433
-#   validate_certs: no
 #
 - jenkins_job:
     name: test
     enabled: False
+    url_password: admin
     params: "{{ my_jenkins_params }}"
 '''
 
@@ -376,7 +384,8 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         mutually_exclusive=[
-            ['password', 'token'],
+            ['user', 'url_username'],
+            ['password', 'token', 'url_password'],
             ['config', 'enabled'],
         ],
         supports_check_mode=True,
@@ -384,12 +393,21 @@ def main():
 
     # Update module parameters by user's parameters if defined
     if 'params' in module.params and isinstance(module.params['params'], dict):
+        if 'url_password' in module.params['params']:
+            # The params argument should be removed eventually.  Until then, raise an error if
+            # url_password is specified there as it can lead to the password being logged
+            module.fail_json(msg='Do not specify url_password in params as it may get logged')
+
         module.params.update(module.params['params'])
         # Remove the params
         module.params.pop('params', None)
 
+    module.params["url_username"] = module.params.get("url_username") or module.params.get("user")
+    module.params["url_password"] = module.params.get("url_password") or module.params.get("password") or module.params.get("token")
+
     # Force basic authentication
-    module.params['force_basic_auth'] = True
+    if module.params["url_username"]:
+        module.params['force_basic_auth'] = True
 
     test_dependencies(module)
     jenkins_job = JenkinsJob(module)
