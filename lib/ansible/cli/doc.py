@@ -58,7 +58,7 @@ class DocCLI(CLI):
             epilog="See man pages for Ansible CLI options or website for tutorials https://docs.ansible.com"
         )
 
-        self.parser.add_option("-f", "--list_files", action="store_true", default=False, dest="list_files",
+        self.parser.add_option("-F", "--list_files", action="store_true", default=False, dest="list_files",
                                help='Show plugin names and their source files without summaries (implies --list)')
         self.parser.add_option("-l", "--list", action="store_true", default=False, dest='list_dir',
                                help='List available plugins')
