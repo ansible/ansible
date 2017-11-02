@@ -1,21 +1,7 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2017 F5 Networks Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public Liccense for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 F5 Networks Inc.
+# GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -41,6 +27,7 @@ try:
     from library.bigip_irule import ArgumentSpec
     from library.bigip_irule import GtmManager
     from library.bigip_irule import LtmManager
+    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
 except ImportError:
     try:
         from ansible.modules.network.f5.bigip_irule import Parameters
@@ -48,6 +35,7 @@ except ImportError:
         from ansible.modules.network.f5.bigip_irule import ArgumentSpec
         from ansible.modules.network.f5.bigip_irule import GtmManager
         from ansible.modules.network.f5.bigip_irule import LtmManager
+        from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
     except ImportError:
         raise SkipTest("F5 Ansible modules require the f5-sdk Python library")
 
@@ -213,7 +201,7 @@ class TestManager(unittest.TestCase):
         set_module_args(dict(
             name='foo',
             module='gtm',
-            src='/path/to/irules/foo.tcl',
+            src='{0}/create_ltm_irule.tcl'.format(fixture_path),
             partition='Common',
             server='localhost',
             password='password',
@@ -247,7 +235,7 @@ class TestManager(unittest.TestCase):
         assert results['changed'] is True
         assert results['content'] == 'this is my content'
         assert results['module'] == 'gtm'
-        assert results['src'] == '/path/to/irules/foo.tcl'
+        assert results['src'] == '{0}/create_ltm_irule.tcl'.format(fixture_path)
         assert len(results.keys()) == 4
 
     def test_module_mutual_exclusion(self, *args):
