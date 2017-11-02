@@ -13,31 +13,31 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 
-module: manageiq_alert_policies
+module: manageiq_alerts
 
-short_description: Configuration of alert policies for ManageIQ
+short_description: Configuration of alerts in ManageIQ
 extends_documentation_fragment: manageiq
 version_added: '2.5'
 author: Elad Alfassa (ealfassa@redhat.com)
 description:
-  - The manageiq_alert_policies module supports listing, adding, updating and deleting alert policies in ManageIQ.
+  - The manageiq_alerts module supports listing, adding, updating and deleting alerts in ManageIQ.
 
 options:
   state:
     description:
-      - absent - alert policy should not exist,
-      - present - alert policy should exist,
-      - list - return a list of alert policies.
+      - absent - alert should not exist,
+      - present - alert should exist,
+      - list - return a list of existing alerts.
     required: False
     choices: ['absent', 'present', 'list']
     default: 'present'
   description:
     description:
-      - The unique alert policy description in ManageIQ.
+      - The unique alert description in ManageIQ.
       - Required when state is "absent" or "present".
   resource_type:
     description:
-      - The entity type for the alert policy in ManageIQ. Required when state is "present".
+      - The entity type for the alert in ManageIQ. Required when state is "present".
     choices: ['Vm', 'ContainerNode', 'MiqServer', 'Host', 'Storage', 'EmsCluster',
               'ExtManagementSystem', 'MiddlewareServer']
   expression_type:
@@ -47,12 +47,12 @@ options:
     choices: ["hash", "miq"]
   expression:
     description:
-      - The alert policy expression for ManageIQ.
+      - The alert expression for ManageIQ.
       - Can either be in the "Miq Expression" format or the "Hash Expression format".
       - Required if state is "present".
   enabled:
     description:
-      - Enable or disable the alert policy. Required if state is "present".
+      - Enable or disable the alert. Required if state is "present".
     type: bool
   options:
     description:
@@ -62,8 +62,8 @@ options:
 '''
 
 EXAMPLES = '''
-- name: List alert policies in ManageIQ
-  manageiq_alert_policies:
+- name: List alerts in ManageIQ
+  manageiq_alerts:
     state: list
     manageiq_connection:
       url: 'http://127.0.0.1:3000'
@@ -71,8 +71,8 @@ EXAMPLES = '''
       password: 'smartvm'
       verify_ssl: False
 
-- name: Add alert policy with a "hash expression" to ManageIQ
-  manageiq_alert_policies:
+- name: Add an alert with a "hash expression" to ManageIQ
+  manageiq_alerts:
     state: present
     description: Test Alert 01
     options:
@@ -92,8 +92,8 @@ EXAMPLES = '''
       password: 'smartvm'
       verify_ssl: False
 
-- name: Add alert policy with a "miq expression" to ManageIQ
-  manageiq_alert_policies:
+- name: Add an alert with a "miq expression" to ManageIQ
+  manageiq_alerts:
     state: present
     description: Test Alert 02
     options:
@@ -119,8 +119,8 @@ EXAMPLES = '''
       password: 'smartvm'
       verify_ssl: False
 
-- name: Delete an alert policy from ManageIQ
-  manageiq_alert_policies:
+- name: Delete an alert from ManageIQ
+  manageiq_alerts:
     state: absent
     description: Test Alert 01
     manageiq_connection:
@@ -154,21 +154,21 @@ def find_collection_resource_or_fail(module, manageiq, collection_name, **params
     module.fail_json(msg=msg)
 
 
-class ManageIQAlertPolicy(object):
-    """ Represent a ManageIQ alert policy
+class ManageIQAlert(object):
+    """ Represent a ManageIQ alert
     """
-    def __init__(self, policy):
-        self.description = policy['description']
-        self.db = policy['db']
-        self.enabled = policy['enabled']
-        self.options = policy['options']
+    def __init__(self, alert):
+        self.description = alert['description']
+        self.db = alert['db']
+        self.enabled = alert['enabled']
+        self.options = alert['options']
         self.hash_expression = None
         self.miq_expressipn = None
 
-        if 'hash_expression' in policy:
-            self.hash_expression = policy['hash_expression']
-        if 'miq_expression' in policy:
-            self.miq_expression = policy['miq_expression']
+        if 'hash_expression' in alert:
+            self.hash_expression = alert['hash_expression']
+        if 'miq_expression' in alert:
+            self.miq_expression = alert['miq_expression']
             if 'exp' in self.miq_expression:
                 # miq_expression is a field that needs a special case, because
                 # it's returned surrounded by a dict named exp even though we don't
@@ -176,7 +176,7 @@ class ManageIQAlertPolicy(object):
                 self.miq_expression = self.miq_expression['exp']
 
     def __eq__(self, other):
-        """ Compare two ManageIQAlertPolicy objects
+        """ Compare two ManageIQAlert objects
         """
         return self.__dict__ == other.__dict__
 
@@ -211,8 +211,8 @@ class ManageIQAlerts(object):
                 msg = "Hash expression is missing required field {key}".format(key=key)
                 self.module.fail_json(msg)
 
-    def create_policy_dict(self, params):
-        """ Create a dict representing a policy
+    def create_alert_dict(self, params):
+        """ Create a dict representing an alert
         """
         if params['expression_type'] == 'hash':
             # hash expression supports depends on https://github.com/ManageIQ/manageiq-api/pull/76
@@ -221,76 +221,76 @@ class ManageIQAlerts(object):
         else:
             expression_type = 'miq_expression'
 
-        # build the policy
-        policy = dict(description=params['description'],
-                      db=params['resource_type'],
-                      options=params['options'],
-                      enabled=params['enabled'])
+        # build the alret
+        alert = dict(description=params['description'],
+                     db=params['resource_type'],
+                     options=params['options'],
+                     enabled=params['enabled'])
 
         # add the actual expression.
-        policy.update({expression_type: params['expression']})
+        alert.update({expression_type: params['expression']})
 
-        return policy
+        return alert
 
-    def add_alert_policy(self, policy):
-        """ Add a new alert policy to ManageIQ
+    def add_alert(self, alert):
+        """ Add a new alert to ManageIQ
         """
         try:
-            result = self.client.post(self.url, action='create', resource=policy)
+            result = self.client.post(self.url, action='create', resource=alert)
 
-            msg = "Alert policy {description} created successfully: {details}"
-            msg = msg.format(description=policy['description'], details=result)
+            msg = "Alert {description} created successfully: {details}"
+            msg = msg.format(description=alert['description'], details=result)
             return dict(changed=True, msg=msg)
         except Exception as e:
-            msg = "Creating alert policy {description} failed: {error}"
-            msg = msg.format(description=policy['description'], error=e)
+            msg = "Creating alert {description} failed: {error}"
+            msg = msg.format(description=alert['description'], error=e)
             self.module.fail_json(msg=msg)
 
-    def delete_alert_policy(self, alert_policy):
-        """ Delete an alert policy
+    def delete_alert(self, alert):
+        """ Delete an alert
         """
         try:
             result = self.client.post('{url}/{id}'.format(url=self.url,
-                                                          id=alert_policy['id']),
+                                                          id=alert['id']),
                                       action="delete")
-            msg = "Alert policy {description} deleted: {details}"
-            msg = msg.format(description=alert_policy['description'], details=result)
+            msg = "Alert {description} deleted: {details}"
+            msg = msg.format(description=alert['description'], details=result)
             return dict(changed=True, msg=msg)
         except Exception as e:
-            msg = "Deleting alert policy {description} failed: {error}"
-            msg = msg.format(description=alert_policy['description'], error=e)
+            msg = "Deleting alert {description} failed: {error}"
+            msg = msg.format(description=alert['description'], error=e)
             self.module.fail_json(msg=msg)
 
-    def update_alert_policy(self, existing_policy, new_policy):
-        """ Update an existing alert policy with the values from `new_policy`
+    def update_alert(self, existing_alert, new_alert):
+        """ Update an existing alert with the values from `new_alert`
         """
-        new_policy_obj = ManageIQAlertPolicy(new_policy)
-        if new_policy_obj == ManageIQAlertPolicy(existing_policy):
-            # no change needed - alert policies are identical
+        new_alert_obj = ManageIQAlert(new_alert)
+        if new_alert_obj == ManageIQAlert(existing_alert):
+            # no change needed - alerts are identical
             return dict(changed=False, msg="No update needed")
         else:
             try:
-                url = '{url}/{id}'.format(url=self.url, id=existing_policy['id'])
-                result = self.client.post(url, action="edit", resource=new_policy)
+                url = '{url}/{id}'.format(url=self.url, id=existing_alert['id'])
+                result = self.client.post(url, action="edit", resource=new_alert)
 
                 # make sure that the update was indeed successful by comparing
                 # the result to the expected result.
-                if new_policy_obj == ManageIQAlertPolicy(result):
+                if new_alert_obj == ManageIQAlert(result):
                     # success!
-                    msg = "Alert policy {description} upated successfully: {details}"
-                    msg = msg.format(description=existing_policy['description'], details=result)
+                    msg = "Alert {description} upated successfully: {details}"
+                    msg = msg.format(description=existing_alert['description'], details=result)
 
                     return dict(changed=True, msg=msg)
                 else:
                     # unexpected result
-                    msg = "Updating alert policy {description} failed, unexpected result {details}"
-                    msg = msg.format(description=existing_policy['description'], details=result)
+                    msg = "Updating alert {description} failed, unexpected result {details}"
+                    msg = msg.format(description=existing_alert['description'], details=result)
 
                     self.module.fail_json(msg=msg)
 
             except Exception as e:
-                msg = "Updating alert policy {description} failed: {error}"
-                msg = msg.format(description=existing_policy['description'], error=e)
+                msg = "Updating alert {description} failed: {error}"
+                msg = msg.format(description=existing_alert['description'], error=e)
                 self.module.fail_json(msg=msg)
 
 
@@ -332,30 +332,30 @@ def main():
     if state == "list":
         res_args = dict(changed=False, alerts=manageiq_alerts.get_alerts())
     else:
-        existing_policy = manageiq.find_collection_resource_by("alert_definitions",
-                                                               description=description)
+        existing_alert = manageiq.find_collection_resource_by("alert_definitions",
+                                                              description=description)
 
-        # we need to add or update the alert policy
+        # we need to add or update the alert
         if state == "present":
-            policy = manageiq_alerts.create_policy_dict(module.params)
+            alert = manageiq_alerts.create_alert_dict(module.params)
 
-            if not existing_policy:
-                # a policy with this description doesn't exist yet, let's create it
-                res_args = manageiq_alerts.add_alert_policy(policy)
+            if not existing_alert:
+                # an alert with this description doesn't exist yet, let's create it
+                res_args = manageiq_alerts.add_alert(alert)
             else:
-                # a policy with this description exists, we might need to update it
-                res_args = manageiq_alerts.update_alert_policy(existing_policy, policy)
+                # an alert with this description exists, we might need to update it
+                res_args = manageiq_alerts.update_alert(existing_alert, alert)
 
-        # this alert policy should not exist
+        # this alert should not exist
         if state == "absent":
-            # if we have an alert policy with this description, delete it
-            if existing_policy:
-                res_args = manageiq_alerts.delete_alert_policy(existing_policy)
+            # if we have an alert with this description, delete it
+            if existing_alert:
+                res_args = manageiq_alerts.delete_alert(existing_alert)
             else:
-                # we don't have this alert policy - that's an error.
-                msg = "Alert policy '{description}' does not exist in ManageIQ"
+                # it doesn't exist, and that's okay
+                msg = "Alert '{description}' does not exist in ManageIQ"
                 msg = msg.format(description=description)
-                module.fail_json(msg=msg)
+                res_args = dict(changed=False, msg=msg)
 
     module.exit_json(**res_args)
 
