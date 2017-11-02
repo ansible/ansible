@@ -257,7 +257,7 @@ def _create_server(module, oneandone_conn, hostname, description,
                    fixed_instance_size_id, vcore, cores_per_processor, ram,
                    hdds, datacenter_id, appliance_id, ssh_key,
                    private_network_id, firewall_policy_id, load_balancer_id,
-                   monitoring_policy_id, wait, wait_timeout):
+                   monitoring_policy_id, server_type, wait, wait_timeout):
 
     try:
         existing_server = get_server(oneandone_conn, hostname)
@@ -284,7 +284,8 @@ def _create_server(module, oneandone_conn, hostname, description,
                 private_network_id=private_network_id,
                 firewall_policy_id=firewall_policy_id,
                 load_balancer_id=load_balancer_id,
-                monitoring_policy_id=monitoring_policy_id,), hdds)
+                monitoring_policy_id=monitoring_policy_id,
+                server_type=server_type,), hdds)
 
         if wait:
             wait_for_resource_creation_completion(
@@ -335,6 +336,7 @@ def create_server(module, oneandone_conn):
     monitoring_policy = module.params.get('monitoring_policy')
     firewall_policy = module.params.get('firewall_policy')
     load_balancer = module.params.get('load_balancer')
+    server_type = module.params.get('server_type')
     wait = module.params.get('wait')
     wait_timeout = module.params.get('wait_timeout')
 
@@ -434,6 +436,7 @@ def create_server(module, oneandone_conn):
             monitoring_policy_id=monitoring_policy_id,
             firewall_policy_id=firewall_policy_id,
             load_balancer_id=load_balancer_id,
+            server_type=server_type,
             wait=wait,
             wait_timeout=wait_timeout)
         if server:
@@ -622,6 +625,7 @@ def main():
             firewall_policy=dict(type='str'),
             load_balancer=dict(type='str'),
             monitoring_policy=dict(type='str'),
+            server_type=dict(type='str', default='K8S', choices=['cloud', 'baremetal', 'K8S']),
             wait=dict(type='bool', default=True),
             wait_timeout=dict(type='int', default=600),
             state=dict(type='str', default='present', choices=['present', 'absent', 'running', 'stopped']),
