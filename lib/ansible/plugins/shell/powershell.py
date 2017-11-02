@@ -657,7 +657,7 @@ namespace Ansible
                         username = "NetworkService";
                         break;
                 }
-                
+
             }
             else
             {
@@ -697,7 +697,7 @@ namespace Ansible
 
             if (impersonated)
                 RevertToSelf();
-            
+
             return tokens;
         }
 
