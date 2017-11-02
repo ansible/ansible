@@ -52,12 +52,14 @@ class DocCLI(CLI):
     def parse(self):
 
         self.parser = CLI.base_parser(
-            usage='usage: %prog [-l|-s] [options] [-t <plugin type] [plugin]',
+            usage='usage: %prog [-l|-f|-s] [options] [-t <plugin type] [plugin]',
             module_opts=True,
             desc="plugin documentation tool",
             epilog="See man pages for Ansible CLI options or website for tutorials https://docs.ansible.com"
         )
 
+        self.parser.add_option("-f", "--list_files", action="store_true", default=False, dest="list_files",
+                               help='Show plugin names and their source files without summaries (implies --list)')
         self.parser.add_option("-l", "--list", action="store_true", default=False, dest='list_dir',
                                help='List available plugins')
         self.parser.add_option("-s", "--snippet", action="store_true", default=False, dest='show_snippet',
@@ -70,8 +72,8 @@ class DocCLI(CLI):
 
         super(DocCLI, self).parse()
 
-        if [self.options.all_plugins, self.options.list_dir, self.options.show_snippet].count(True) > 1:
-            raise AnsibleOptionsError("Only one of -l, -s or -a can be used at the same time.")
+        if [self.options.all_plugins, self.options.list_dir, self.options.list_files, self.options.show_snippet].count(True) > 1:
+            raise AnsibleOptionsError("Only one of -l, -f, -s or -a can be used at the same time.")
 
         display.verbosity = self.options.verbosity
 
@@ -108,6 +110,17 @@ class DocCLI(CLI):
         # save only top level paths for errors
         search_paths = DocCLI.print_paths(loader)
         loader._paths = None  # reset so we can use subdirs below
+
+
+        # list plugins names and filepath for type
+        if self.options.list_files:
+            paths = loader._get_paths()
+            for path in paths:
+                self.find_plugins(path, plugin_type)
+
+            list_text = self.get_plugin_list_filenames(loader)
+            self.pager(list_text)
+            return 0
 
         # list plugins for type
         if self.options.list_dir:
@@ -226,6 +239,7 @@ class DocCLI(CLI):
         deprecated = []
         for plugin in sorted(self.plugin_list):
 
+            import q; q(plugin)
             try:
                 # if the module lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
                 filename = loader.find_plugin(plugin, mod_type='.py', ignore_deprecated=True, check_aliases=True)
@@ -262,6 +276,32 @@ class DocCLI(CLI):
         if len(deprecated) > 0:
             text.append("\nDEPRECATED:")
             text.extend(deprecated)
+        return "\n".join(text)
+
+    def get_plugin_list_filenames(self, loader):
+        columns = display.columns
+        displace = max(len(x) for x in self.plugin_list)
+        linelimit = columns - displace - 5
+        text = []
+
+        for plugin in sorted(self.plugin_list):
+
+            try:
+                # if the module lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
+                filename = loader.find_plugin(plugin, mod_type='.py', ignore_deprecated=True, check_aliases=True)
+
+                if filename is None:
+                    continue
+                if filename.endswith(".ps1"):
+                    continue
+                if os.path.isdir(filename):
+                    continue
+
+                text.append("%-*s %-*.*s" % (displace, plugin, linelimit, len(filename), filename))
+
+            except Exception as e:
+                raise AnsibleError("Failed reading docs at %s: %s" % (plugin, to_native(e)))
+
         return "\n".join(text)
 
     @staticmethod
