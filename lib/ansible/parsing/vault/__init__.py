@@ -678,7 +678,11 @@ class VaultLib:
                     display.vvvvv('decrypt succesful with secret=%s and vault_id=%s' % (vault_secret, vault_secret_id))
                     break
             except AnsibleVaultFormatError as exc:
-                print('formate error: %s' % exc)
+                msg = "There was a vault format error"
+                if filename:
+                    msg += ' in %s' % (filename)
+                msg += ': %s' % exc
+                display.warning(msg)
                 raise
             except AnsibleError as e:
                 display.vvvv('Tried to use the vault secret (%s) to decrypt (%s) but it failed. Error: %s' %
@@ -1151,7 +1155,7 @@ class VaultAES:
                            'switch to the newer VaultAES256 format', version='2.3')
         # http://stackoverflow.com/a/14989032
 
-        b_vaultdata = unhexlify(b_vaulttext)
+        b_vaultdata = _unhexlify(b_vaulttext)
         b_salt = b_vaultdata[len(b'Salted__'):16]
         b_ciphertext = b_vaultdata[16:]
 
@@ -1304,7 +1308,7 @@ class VaultAES256:
         hmac = HMAC(b_key2, hashes.SHA256(), CRYPTOGRAPHY_BACKEND)
         hmac.update(b_ciphertext)
         try:
-            hmac.verify(unhexlify(b_crypted_hmac))
+            hmac.verify(_unhexlify(b_crypted_hmac))
         except InvalidSignature as e:
             raise AnsibleVaultError('HMAC verification failed: %s' % e)
 
