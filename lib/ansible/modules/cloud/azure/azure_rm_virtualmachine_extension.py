@@ -81,7 +81,7 @@ extends_documentation_fragment:
 
 author:
     - "Sertac Ozercan (@sozercan)"
-    - "Julien Stroheker (@ju_stroh)"
+    - "Julien Stroheker (@julienstroheker)"
 '''
 
 EXAMPLES = '''
