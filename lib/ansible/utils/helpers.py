@@ -40,4 +40,15 @@ def object_to_dict(obj, exclude=None):
     """
     if exclude is None or not isinstance(exclude, list):
         exclude = []
-    return dict((key, getattr(obj, key)) for key in dir(obj) if not (key.startswith('_') or key in exclude))
+    return dict((key, getattr(obj, key)) for key in dir(obj) if not (callable(key) or key.startswith('_') or key in exclude))
+
+
+def data_object_shim(obj, exclude=None):
+    """
+    creates scaled down object copy containing properties of original but no methods
+    """
+    d = object_to_dict(obj, exclude)
+    new = lambda: None
+    for k in d:
+        setattr(new, k, d[k])
+    return new

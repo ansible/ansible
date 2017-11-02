@@ -538,7 +538,8 @@ class TestStrategyBase(unittest.TestCase):
             strategy_base._inventory = mock_inventory
             strategy_base._notified_handlers = {mock_handler_task._uuid: [mock_host]}
 
-            task_result = TaskResult(Host('host01'), Handler(), dict(changed=False))
+            h = Handler()
+            task_result = TaskResult(Host('host01'), h, dict(changed=False))
             tqm._final_q.put(task_result)
 
             result = strategy_base.run_handlers(iterator=mock_iterator, play_context=mock_play_context)
