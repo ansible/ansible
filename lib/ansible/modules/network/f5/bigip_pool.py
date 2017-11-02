@@ -296,7 +296,12 @@ from ansible.module_utils.f5_utils import HAS_F5SDK
 from ansible.module_utils.f5_utils import F5ModuleError
 from ansible.module_utils.six import iteritems
 from collections import defaultdict
-from netaddr import IPAddress, AddrFormatError
+
+try:
+    from netaddr import IPAddress, AddrFormatError
+    HAS_NETADDR = True
+except ImportError:
+    HAS_NETADDR = False
 
 try:
     from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
@@ -903,6 +908,9 @@ def cleanup_tokens(client):
 def main():
     if not HAS_F5SDK:
         raise F5ModuleError("The python f5-sdk module is required")
+
+    if not HAS_NETADDR:
+        raise F5ModuleError("The python netaddr module is required")
 
     spec = ArgumentSpec()
 
