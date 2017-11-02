@@ -1,0 +1,35 @@
+
+# This task for running configuration on a switch
+
+#- name: enter `enable` configuration mode
+#  command: enable
+
+- name: run show version on remote devices
+  mlnxos_command:
+    commands: show version  
+    #transport: cli
+    provider:
+       host: "{{ inventory_hostname }}"
+       username: admin
+       password: admin
+       port: 22
+       timeout: 10
+    username: admin
+    password: admin
+    authorize: no
+    wait_for: result[0] contains MLNX-OS
+
+- name: run show running config  on remote devices
+  mlnxos_command:
+    commands: show running-config
+    provider:
+      host: "{{ inventory_hostname }}"
+      username: admin
+      password: admin
+      port: 22
+      timeout: 10
+    username: admin
+    password: admin
+    authorize: yes
+    wait_for: result[0] contains Hostname
+
