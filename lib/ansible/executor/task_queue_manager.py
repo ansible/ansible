@@ -31,11 +31,13 @@ from ansible.executor.task_result import TaskResult
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text
 from ansible.playbook.block import Block
+from ansible.playbook.play import Play
+from ansible.playbook.task import Task
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import callback_loader, strategy_loader, module_loader
 from ansible.plugins.callback import CallbackBase
 from ansible.template import Templar
-from ansible.utils.helpers import pct_to_int
+from ansible.utils.helpers import data_object_shim
 from ansible.vars.hostvars import HostVars
 from ansible.vars.reserved import warn_if_reserved
 
@@ -362,11 +364,10 @@ class TaskQueueManager:
             # send clean copies
             new_args = []
             for arg in args:
-                # FIXME: add play/task cleaners
                 if isinstance(arg, TaskResult):
                     new_args.append(arg.clean_copy())
-                # elif isinstance(arg, Play):
-                # elif isinstance(arg, Task):
+                elif isinstance(arg, (Play, Task)):
+                    new_args.append(data_object_shim(arg, shim_methods=('get_name', 'get_path')))
                 else:
                     new_args.append(arg)
 

@@ -83,13 +83,15 @@ class TaskResult:
         ignore = _IGNORE
 
         # FIXME: clean task_fields
-        result = TaskResult(data_object_shim(self._host), data_object_shim(self._task, exclude=['DEPRECATED_ATTRIBUTES']), {}, self._task_fields)
+        result = TaskResult(data_object_shim(self._host, shim_methods=('get_name')),
+                            data_object_shim(self._task, exclude=['DEPRECATED_ATTRIBUTES'], shim_methods=('get_name', 'get_path')), {},
+                            self._task_fields)
 
         # statuses are already reflected on the event type
         if self._task:
             # add shim object as refs
             if hasattr(self._task, '_parent'):
-                setattr(result._task, '_parent', data_object_shim(self._task._parent))
+                setattr(result._task, '_parent', data_object_shim(self._task._parent, shim_methods=('get_name', 'get_path')))
 
             if self._task.action in ['debug']:
                 # debug is verbose by default to display vars, no need to add invocation
