@@ -19,6 +19,8 @@
 # SSL Certificate must be forced on the WinRM Listener when re-running this
 # script. This is necessary when a new SID and CN name is created.
 #
+# Use option -EnableCredSSP to enable CredSSP as an authentication option.
+#
 # Use option -SkipNetworkProfileCheck to skip the network profile check.
 # Without specifying this the script will only run if the device's interfaces
 # are in DOMAIN or PRIVATE zones.  Provide this switch if you want to enable
