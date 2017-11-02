@@ -122,7 +122,7 @@ EXAMPLES = '''
     location: westus
     sku: premium
 
-- name: Create a key secret and certifcate management key vault
+- name: Create a key secret and certificate management key vault
   azure_rm_keyvault:
     name: "ozikeyvault"
     resource_group: "presentation_rg"
