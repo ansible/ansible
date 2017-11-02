@@ -26,7 +26,6 @@ Engine improvements
   - if heuristic filter triggers, add a warning that perhaps use of task-level no_log should be considered
   - consider skipping injection for Python module type (even if it's missing, eg catastrophic module failure) to prevent potentially injecting a value that was arg-level no_log'd on the target side.
   - consider addition of NO_INVOCATION config
-- Automatic shared SSH tunneling support for networked connection plugins (dynamic jumphost for SSH/WinRM/whatever)
 - Assemble module improvements
 
   - assemble just skips when in check mode, it should be able to test if there is a difference and changed=true/false.
