@@ -141,7 +141,8 @@ requirements:
 author: "Matthew Williams (@mgwilliams)"
 notes:
    - Three of the upgrade modes (C(full), C(safe) and its alias C(yes)) required C(aptitude) up to 2.3, since 2.4 C(apt-get) is used as a fall-back.
-   - apt starts newly installed services by default, this is what the underlying tooling does, to avoid this you can set the ``RUNLEVEL`` environment variable to 1.
+   - apt starts newly installed services by default, this is what the underlying tooling does,
+     to avoid this you can set the ``RUNLEVEL`` environment variable to 1.
    - The apt-get commandline supports implicit regex matches here but we do not because it can let typos through easier
      (If you typo C(foo) as C(fo) apt-get would install packages that have "fo" in their name with a warning and a prompt for the user.
      Since we don't have warnings and prompts before installing we disallow this.Use an explicit fnmatch pattern if you want wildcarding)
