@@ -27,7 +27,7 @@
 #
 from contextlib import contextmanager
 
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.connection import exec_command
 
 try:
@@ -60,7 +60,7 @@ def send_request(module, obj, check_rc=True, ignore_warning=True):
             else:
                 module.fail_json(msg=str(err))
         return warnings
-    return fromstring(out)
+    return fromstring(to_bytes(out, errors='surrogate_or_strict'))
 
 
 def children(root, iterable):
