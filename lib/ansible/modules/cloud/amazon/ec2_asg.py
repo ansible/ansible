@@ -1334,7 +1334,8 @@ def main():
         ),
     )
 
-    global module; module = AnsibleModule(
+    global module
+    module = AnsibleModule(
         argument_spec=argument_spec,
         mutually_exclusive=[['replace_all_instances', 'replace_instances']]
     )
