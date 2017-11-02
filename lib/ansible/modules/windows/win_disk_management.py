@@ -25,7 +25,7 @@ options:
       description:
         - Select disk option.
         - Size of the disk in gigabyte which will be selected.
-        - If a size is defined the module will try to select the disk with this passed size.
+        - If a size is passed the module will try to select the disk with this size.
         - Size value must be equal or greater than 1gb and maximum 18446744073709551615gb.
   partition_style_select:
       description:
@@ -69,9 +69,9 @@ options:
       description:
         - Manage disk option.
         - Drive letter which will be set for the partition on selected disk.
-        - If a drive letter is defined the module will try to set the partition on the selected disk with this passed drive letter.
+        - If a drive letter is passed the module will try to set the partition on the selected disk with this drive letter.
         - If this drive letter is already in use on the target the module will be canceled.
-        - If no drive_letter option value was defined the module will use a free drive letter on the target randomly.
+        - If no drive_letter option value was passed the module will use a free drive letter on the target randomly.
         - If no free drive lettter is left on the target the module will be canceled.
   file_system:
       description:
