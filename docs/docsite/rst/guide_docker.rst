@@ -205,7 +205,7 @@ options. These are the same environment variables used by the Docker modules.
         by docker-py.
 
     DOCKER_TIMEOUT:
-        The maximum amount of time in seconds to wait on a response fromm the API. Defaults to 60 seconds.
+        The maximum amount of time in seconds to wait on a response from the API. Defaults to 60 seconds.
 
     DOCKER_TLS:
         Secure the connection to the API by using TLS without verifying the authenticity of the Docker host server.
