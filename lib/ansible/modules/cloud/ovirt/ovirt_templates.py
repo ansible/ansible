@@ -351,7 +351,10 @@ def main():
                     ) if module.params['cluster'] else None,
                     **kwargs
                 )
-                template = templates_module.wait_for_import()
+                # Wait for template to appear in system:
+                template = templates_module.wait_for_import(
+                    condition=lambda t: t.status == otypes.TemplateStatus.OK
+                )
                 ret = {
                     'changed': True,
                     'id': template.id,
