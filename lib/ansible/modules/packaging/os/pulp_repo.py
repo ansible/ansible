@@ -523,7 +523,7 @@ def main():
         proxy_host=dict(),
         proxy_port=dict(),
         proxy_username=dict(),
-        proxy_password=dict()
+        proxy_password=dict(),
         publish_distributor=dict(),
         pulp_host=dict(default="https://127.0.0.1"),
         relative_url=dict(),
