@@ -239,7 +239,6 @@ class DocCLI(CLI):
         deprecated = []
         for plugin in sorted(self.plugin_list):
 
-            import q; q(plugin)
             try:
                 # if the module lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
                 filename = loader.find_plugin(plugin, mod_type='.py', ignore_deprecated=True, check_aliases=True)
