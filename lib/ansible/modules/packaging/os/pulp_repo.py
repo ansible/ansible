@@ -114,7 +114,7 @@ options:
     default: rpm
   repoview:
     description:
-      - Enables repoview of published repository to improve browsing experience
+      - Whether to generate repoview files for a published repository
     required: false
     default: false
     version_added: "2.5"
