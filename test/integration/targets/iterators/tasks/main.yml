@@ -181,6 +181,33 @@
         - "_xk == 'k'"
         - "_xl == 'l'"
 
+- name: test with_subelements dictionary
+  set_fact: "{{ '_'+ item.0.id + item.1 }}={{ item.1 }}"
+  with_subelements:
+    - "{{element_data_dict}}"
+    - the_dict
+
+- name: verify with_subelements dictionary results
+  assert:
+    that:
+        - "_xv0 == 'v0'"
+        - "_xv1 == 'v1'"
+        - "_yv2 == 'v2'"
+        - "_yv3 == 'v3'"
+
+- name: test with_subelements dictionary in subkeys
+  set_fact: "{{ '_'+ item.0.id + item.1 }}={{ item.1 }}"
+  with_subelements:
+    - "{{element_data_dict}}"
+    - the.sub.key.dict
+
+- name: verify with_subelements ditionary in subkeys results
+  assert:
+    that:
+        - "_xv00 == 'v00'"
+        - "_xv11 == 'v11'"
+        - "_yv22 == 'v22'"
+        - "_yv33 == 'v33'"
 
 # WITH_TOGETHER
 
