@@ -634,7 +634,7 @@ class VaultLib:
         try:
             b_vaulttext, dummy, cipher_name, vault_id = parse_vaulttext_envelope(b_vaulttext)
         except Exception as exc:
-            msg = "There was a vault envelope format error"
+            msg = "Vault envelope format error"
             if filename:
                 msg += ' in %s' % (filename)
             msg += ': %s' % exc
@@ -1391,8 +1391,7 @@ class VaultAES256:
         try:
             b_ciphertext, b_salt, b_crypted_hmac = parse_vaulttext(b_vaulttext)
         except Exception as exc:
-            msg = "There was a vault vaulttext format error"
-            msg += ': %s' % exc
+            msg = "Vault vaulttext format error: %s" % exc
             raise AnsibleVaultFormatError(msg)
 
         # TODO: would be nice if a VaultSecret could be passed directly to _decrypt_*
