@@ -555,7 +555,7 @@ def main():
 
     elif state == 'mounted':
         if ismount(filesystem):
-            result['changed'] = True
+            result['changed'] = False
             result['msg'] = "File system %s already mounted." % filesystem
         else:
             result['changed'], result['msg'] = mount_fs(module, filesystem)
