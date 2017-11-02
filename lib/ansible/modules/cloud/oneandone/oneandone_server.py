@@ -625,7 +625,7 @@ def main():
             firewall_policy=dict(type='str'),
             load_balancer=dict(type='str'),
             monitoring_policy=dict(type='str'),
-            server_type=dict(type='str', default='K8S', choices=['cloud', 'baremetal', 'K8S']),
+            server_type=dict(type='str', default='cloud', choices=['cloud', 'baremetal', 'K8S']),
             wait=dict(type='bool', default=True),
             wait_timeout=dict(type='int', default=600),
             state=dict(type='str', default='present', choices=['present', 'absent', 'running', 'stopped']),
