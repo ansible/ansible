@@ -52,7 +52,7 @@ class DocCLI(CLI):
     def parse(self):
 
         self.parser = CLI.base_parser(
-            usage='usage: %prog [-l|-f|-s] [options] [-t <plugin type] [plugin]',
+            usage='usage: %prog [-l|-F|-s] [options] [-t <plugin type] [plugin]',
             module_opts=True,
             desc="plugin documentation tool",
             epilog="See man pages for Ansible CLI options or website for tutorials https://docs.ansible.com"
@@ -73,7 +73,7 @@ class DocCLI(CLI):
         super(DocCLI, self).parse()
 
         if [self.options.all_plugins, self.options.list_dir, self.options.list_files, self.options.show_snippet].count(True) > 1:
-            raise AnsibleOptionsError("Only one of -l, -f, -s or -a can be used at the same time.")
+            raise AnsibleOptionsError("Only one of -l, -F, -s or -a can be used at the same time.")
 
         display.verbosity = self.options.verbosity
 
