@@ -137,17 +137,15 @@ class LookupModule(LookupBase):
 
             skip_missing = boolean(flags.get('skip_missing', False), strict=False)
             subvalue = item0
-            lastsubkey = False
+            last_index = len(subelements) - 1
             sublist = []
-            for subkey in subelements:
-                if subkey == subelements[-1]:
-                    lastsubkey = True
+            for index, subkey in enumerate(subelements):
                 if subkey not in subvalue:
                     if skip_missing:
                         continue
                     else:
                         raise AnsibleError("could not find '%s' key in iterated item '%s'" % (subkey, subvalue))
-                if not lastsubkey:
+                if not index == last_index:
                     if not isinstance(subvalue[subkey], dict):
                         if skip_missing:
                             continue

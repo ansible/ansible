@@ -92,5 +92,11 @@ element_data_dict_missing:
     the:
       sub:
         key:
-          k44: v44
-          k55: v55
+
+element_data_with_same_subkeys:
+  - id: x
+    same:
+      key:
+        same:
+          - "q"
+          - "r"

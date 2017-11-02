@@ -227,6 +227,20 @@
         - "_xv0 == 'v0'"
         - "_xv1 == 'v1'"
 
+- name: test with_subelements with similar subkeys
+  set_fact: "{{ '_'+ item.0.id + item.1 }}={{ item.1 }}"
+  with_subelements:
+    - "{{element_data_with_same_subkeys}}"
+    - same.key.same
+  register: _subelements_with_same_subkeys
+
+- debug: var=_subelements_with_same_subkeys
+- name: verify with_subelements with similar subkeys results
+  assert:
+    that:
+      - "_xq == 'q'"
+      - "_xr == 'r'"
+
 # WITH_TOGETHER
 
 - name: test with_together
