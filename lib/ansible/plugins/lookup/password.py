@@ -90,15 +90,13 @@ _raw:
 """
 
 import os
-import string
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.parsing.splitter import parse_kv
 from ansible.plugins.lookup import LookupBase
-from ansible.utils.encrypt import do_encrypt, random_password
+from ansible.utils.encrypt import do_encrypt, random_password, gen_candidate_chars
 from ansible.utils.path import makedirs_safe
-
 
 DEFAULT_LENGTH = 20
 VALID_PARAMS = frozenset(('length', 'encrypt', 'chars'))
@@ -170,45 +168,12 @@ def _read_password_file(b_path):
     return content
 
 
-def _gen_candidate_chars(characters):
-    '''Generate a string containing all valid chars as defined by ``characters``
-
-    :arg characters: A list of character specs. The character specs are
-        shorthand names for sets of characters like 'digits', 'ascii_letters',
-        or 'punctuation' or a string to be included verbatim.
-
-    The values of each char spec can be:
-
-    * a name of an attribute in the 'strings' module ('digits' for example).
-      The value of the attribute will be added to the candidate chars.
-    * a string of characters. If the string isn't an attribute in 'string'
-      module, the string will be directly added to the candidate chars.
-
-    For example::
-
-        characters=['digits', '?|']``
-
-    will match ``string.digits`` and add all ascii digits.  ``'?|'`` will add
-    the question mark and pipe characters directly. Return will be the string::
-
-        u'0123456789?|'
-    '''
-    chars = []
-    for chars_spec in characters:
-        # getattr from string expands things like "ascii_letters" and "digits"
-        # into a set of characters.
-        chars.append(to_text(getattr(string, to_native(chars_spec), chars_spec),
-                     errors='strict'))
-    chars = u''.join(chars).replace(u'"', u'').replace(u"'", u'')
-    return chars
-
-
 def _random_salt():
     """Return a text string suitable for use as a salt for the hash functions we use to encrypt passwords.
     """
     # Note passlib salt values must be pure ascii so we can't let the user
     # configure this
-    salt_chars = _gen_candidate_chars(['ascii_letters', 'digits', './'])
+    salt_chars = gen_candidate_chars(['ascii_letters', 'digits', './'])
     return random_password(length=8, chars=salt_chars)
 
 
@@ -273,7 +238,7 @@ class LookupModule(LookupBase):
             relpath, params = _parse_parameters(term)
             path = self._loader.path_dwim(relpath)
             b_path = to_bytes(path, errors='surrogate_or_strict')
-            chars = _gen_candidate_chars(params['chars'])
+            chars = gen_candidate_chars(params['chars'])
 
             changed = False
             content = _read_password_file(b_path)

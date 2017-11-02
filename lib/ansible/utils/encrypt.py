@@ -6,11 +6,12 @@ __metaclass__ = type
 
 import multiprocessing
 import random
+import string
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils.six import text_type
-from ansible.module_utils._text import to_text, to_bytes
+from ansible.module_utils._text import to_text, to_bytes, to_native
 
 
 PASSLIB_AVAILABLE = False
@@ -58,6 +59,39 @@ def do_encrypt(result, encrypt, salt_size=None, salt=None):
     # we need to traceback and then blacklist such algorithms because it may
     # impact calling code.
     return to_text(result, errors='strict')
+
+
+def gen_candidate_chars(characters):
+    '''Generate a string containing all valid chars as defined by ``characters``
+
+    :arg characters: A list of character specs. The character specs are
+        shorthand names for sets of characters like 'digits', 'ascii_letters',
+        or 'punctuation' or a string to be included verbatim.
+
+    The values of each char spec can be:
+
+    * a name of an attribute in the 'strings' module ('digits' for example).
+      The value of the attribute will be added to the candidate chars.
+    * a string of characters. If the string isn't an attribute in 'string'
+      module, the string will be directly added to the candidate chars.
+
+    For example::
+
+        characters=['digits', '?|']``
+
+    will match ``string.digits`` and add all ascii digits.  ``'?|'`` will add
+    the question mark and pipe characters directly. Return will be the string::
+
+        u'0123456789?|'
+    '''
+    chars = []
+    for chars_spec in characters:
+        # getattr from string expands things like "ascii_letters" and "digits"
+        # into a set of characters.
+        chars.append(to_text(getattr(string, to_native(chars_spec), chars_spec),
+                     errors='strict'))
+    chars = u''.join(chars).replace(u'"', u'').replace(u"'", u'')
+    return chars
 
 
 def random_password(length=DEFAULT_PASSWORD_LENGTH, chars=C.DEFAULT_PASSWORD_CHARS):

@@ -77,6 +77,7 @@ import os
 
 from ansible.errors import AnsibleError
 from ansible.module_utils.parsing.convert_bool import boolean
+from ansible.utils.encrypt import random_password, gen_candidate_chars
 from ansible.plugins.lookup import LookupBase
 
 HAS_HVAC = False
@@ -98,6 +99,20 @@ class HashiVault:
 
         self.url = kwargs.get('url', ANSIBLE_HASHI_VAULT_ADDR)
 
+        self.generate = kwargs.get('generate', 'no')
+
+        self.chars = kwargs.get('chars', None)
+        if self.chars:
+            tmp_chars = []
+            if u',,' in self.chars:
+                tmp_chars.append(u',')
+            tmp_chars.extend(c for c in self.chars.replace(u',,', u',').split(u',') if c)
+            self.chars = tmp_chars
+        else:
+            # Default chars for password
+            self.chars = [u'ascii_letters', u'digits', u".,:-_"]
+
+        self.length = int(kwargs.get('length', 15))
         # split secret arg, which has format 'secret/hello:value' into secret='secret/hello' and secret_field='value'
         s = kwargs.get('secret')
         if s is None:
@@ -149,7 +164,13 @@ class HashiVault:
         data = self.client.read(self.secret)
 
         if data is None:
-            raise AnsibleError("The secret %s doesn't seem to exist for hashi_vault lookup" % self.secret)
+            if self.generate == 'yes':
+                candidate_chars = gen_candidate_chars(self.chars)
+                data = random_password(length=self.length, chars=candidate_chars)
+                self.client.write(self.secret, value=data)
+                return data
+            else:
+                raise AnsibleError("The secret %s doesn't seem to exist for hashi_vault lookup" % self.secret)
 
         if self.secret_field == '':
             return data['data']
