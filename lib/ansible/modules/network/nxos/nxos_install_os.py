@@ -28,21 +28,20 @@ extends_documentation_fragment: nxos
 short_description: Set boot options like boot, kickstart image and issu.
 description:
     - Install an operating system by setting the boot options like boot
-      image and kickstart image and optionally select to install using ISSU.
+      image and kickstart image and optionally select to install using
+      ISSU (In Server Software Upgrade).
 notes:
     - Tested against the following platforms and images:
         - N9k: 7.0(3)I5(3), 7.0(3)I6(1), 7.0(3)I7(1)
         - N3k: 6.0(2)A8(6), 6.0(2)A8(8)
         - N7k: 7.3(0)D1(1), 8.0(1), 8.2(1)
-    - This module executes longer then the default ansible timeout values and
-      will generate errors unless the following ansible timers are configured.
-        - export ANSIBLE_PERSISTENT_COMMAND_TIMEOUT=600
-        - export ANSIBLE_PERSISTENT_CONNECT_TIMEOUT=600
+    - This module executes longer then the default ansible timeout value and
+      will generate errors unless the module timeout parameter is set to a
+      value of 500 seconds or higher.
       NOTE: The example time is sufficent for most upgrades but this can be
-            tuned up or down based on specific upgrade time requirements.
-            If these timers are not utilized, then an ansible block/rescue
-            must be used but the module will generate a failure even on
-            successfull upgrades.
+            tuned higher based on specific upgrade time requirements.
+            The module will exit with a failure message if the timer is
+            not set to 500 seconds or higher.
     - Do not include full file paths, just the name of the file(s) stored on
       the top level flash directory.
     - This module attempts to install the software immediately,
@@ -57,6 +56,12 @@ options:
     system_image_file:
         description:
             - Name of the system (or combined) image file on flash.
+        required: true
+    timeout:
+        description:
+            - The upgrade commands are long running so the timeout value must
+              be set to a value of 500 or greater or the module will exit
+              with a failure message.
         required: true
     kickstart_image_file:
         description:
@@ -78,19 +83,15 @@ options:
 '''
 
 EXAMPLES = '''
-1) Example using the environment variables to set addequate timeout values:
-export ANSIBLE_PERSISTENT_COMMAND_TIMEOUT=600
-export ANSIBLE_PERSISTENT_CONNECT_TIMEOUT=600
-
 - name: Install OS on N9k
   check_mode: no
   nxos_install_os:
-    system_image_file: n7000-s2-dk9.8.2.1.bin
-    kickstart_image_file: n7000-s2-kickstart.8.2.1.bin
+    system_image_file: nxos.7.0.3.I6.1.bin
     issu: desired
+    timeout: 500
     provider: "{{ connection }}"
 
- - name: Wait for device to come back up
+ - name: Wait for device to come back up with new image
    wait_for:
     port: 22
     state: started
@@ -98,46 +99,14 @@ export ANSIBLE_PERSISTENT_CONNECT_TIMEOUT=600
     delay: 60
     host: "{{ inventory_hostname }}"
 
-- name: Check installed OS
-  nxos_command:
-    commands:
-      - show version
-  register: output
-- assert:
-    that:
-      - output['stdout'][0]['kickstart_ver_str'] == '8.2(1)'
-
-2) Example using block/rescue (NOT RECOMMENDED).  Module will still reported
-     a failure even when upgrade succeedes.
-- block:
-    - name: Install OS on N7k
-      check_mode: no
-      nxos_install_os:
-        system_image_file: n7000-s2-dk9.8.2.1.bin
-        kickstart_image_file: n7000-s2-kickstart.8.2.1.bin
-        issu: desired
-        provider: "{{ connection }}"
-  rescue:
-    - name: Wait for device to perform checks
-      wait_for:
-        port: 22
-        state: stopped
-        timeout: 300
-        delay: 60
-    - name: Wait for device to come back up
-      wait_for:
-        port: 22
-        state: started
-        timeout: 300
-        delay: 60
-    - name: Check installed OS
-      nxos_command:
-        commands:
-          - show version
-      register: output
-    - assert:
-        that:
-          - output['stdout'][0]['kickstart_ver_str'] == '8.2(1)'
+  - name: "Check installed OS for newly installed version"
+    nxos_command:
+      commands: ['show version | json']
+      provider: "{{ connection }}"
+    register: output
+  - assert:
+      that:
+      - output['stdout'][0]['kickstart_ver_str'] == '7.0(3)I6(1)'
 '''
 
 RETURN = '''
@@ -177,24 +146,22 @@ def logit(data):
     pprint('\n^^^^^^^\n')
 
 
-def check_ansible_timers(module):
+def check_ansible_timer(module):
     '''Check Ansible Timer Values'''
-    timers_set = True
-    import os
-    env_com = 'ANSIBLE_PERSISTENT_COMMAND_TIMEOUT'
-    env_con = 'ANSIBLE_PERSISTENT_CONNECT_TIMEOUT'
-    msg = ''
-    for tn in [env_com, env_con]:
-        tv = os.environ.get(tn)
-        if tv is None or (tv is not None and int(tv) < 600):
-            msg = msg + 'The ENV setting: %s\n' % tn
-            msg = msg + 'must be set to 600 seconds or higher for\n'
-            msg = msg + 'this module to function properly\n'
-            msg = msg + 'Example:\n'
-            msg = msg + 'export %s=600\n\n' % tn
-            timers_set = False
-
-    if not timers_set:
+    msg = "The 'timeout' provider param value for this module to execute\n"
+    msg = msg + 'properly is too low.\n'
+    msg = msg + 'Upgrades can take a long time so the value needs to be set\n'
+    msg = msg + 'to the recommended value of 500 seconds or higher in the\n'
+    msg = msg + 'ansible playbook for the nxos_install_os module.\n'
+    msg = msg + '\n'
+    msg = msg + 'provider: "{{ connection | combine({\'timeout\': 500}) }}"'
+    data = module.params.get('provider')
+    timer_low = False
+    if data.get('timeout') is None:
+        timer_low = True
+    if data.get('timeout') is not None and data.get('timeout') < 500:
+        timer_low = True
+    if timer_low:
         module.fail_json(msg=msg.split('\n'))
 
 
@@ -283,13 +250,19 @@ def parse_show_install(data):
         21       lcn9k                7.0(3)F3(2)    7.0(3)F2(2)           yes
         21        bios                     v01.70         v01.70            no
     """
-    data = data.split('\n')
+    if len(data) > 0:
+        data = massage_install_data(data)
     ud = {'raw': data}
+    ud['list_data'] = data.split('\n')
     ud['processed'] = []
     ud['disruptive'] = False
-    ud['upgrade'] = False
+    ud['upgrade_needed'] = False
     ud['error'] = False
-    for x in data:
+    ud['install_in_progress'] = False
+    ud['backend_processing_error'] = False
+    ud['upgrade_succeeded'] = False
+    ud['use_impact_data'] = False
+    for x in ud['list_data']:
         # Check for errors and exit if found.
         if re.search(r'Pre-upgrade check failed', x):
             ud['error'] = True
@@ -297,8 +270,36 @@ def parse_show_install(data):
         if re.search(r'[I|i]nvalid command', x):
             ud['error'] = True
             break
-        if re.search(r'Another install procedure may be in progress', x):
+        if re.search(r'No install all data found', x):
             ud['error'] = True
+            break
+
+        # Check for potentially transient conditions
+        if re.search(r'Another install procedure may be in progress', x):
+            ud['install_in_progress'] = True
+            break
+        if re.search(r'Backend processing error', x):
+            ud['backend_processing_error'] = True
+            break
+
+        # Check for messages indicating a successful upgrade.
+        if re.search(r'Finishing the upgrade', x):
+            ud['upgrade_succeeded'] = True
+            break
+        if re.search(r'Install has been successful', x):
+            ud['upgrade_succeeded'] = True
+            break
+
+        # We get these messages when the upgrade is non-disruptive and
+        # we loose connection with the switchover but far enough along that
+        # we can be confident the upgrade succeeded.
+        if re.search(r'timeout trying to send command: install', x):
+            ud['upgrade_succeeded'] = True
+            ud['use_impact_data'] = True
+            break
+        if re.search(r'[C|c]onnection failure: timed out', x):
+            ud['upgrade_succeeded'] = True
+            ud['use_impact_data'] = True
             break
 
         # Begin normal parsing.
@@ -341,7 +342,7 @@ def parse_show_install(data):
         if mo:
             ud['processed'].append(x)
             key = 'm%s_%s' % (mo.group(1), mo.group(2))
-            field = 'upgrade'
+            field = 'upgrade_needed'
             if mo.group(5) == 'yes':
                 ud[field] = True
                 ud[key] = {field: True}
@@ -395,55 +396,6 @@ def build_install_cmd_set(issu, image, kick, type):
     return commands
 
 
-def do_install_all(module, issu, image, kick=None):
-    """Perform the switch upgrade using the 'install all' command"""
-    result_dict = {'pass': False}
-    datachkmode = check_mode(module, issu, image, kick)
-    if datachkmode['error']:
-        # Check mode discovered an error so return with this info.
-        result_dict['ud'] = datachkmode
-    elif not datachkmode['upgrade']:
-        # The switch is already upgraded.  Nothing more to do.
-        result_dict['pass'] = True
-        result_dict['ud'] = datachkmode
-    else:
-        # If we get here, check_mode returned no errors and the switch
-        # needs to be upgraded.
-        if datachkmode['disruptive']:
-            issu = 'no'
-        commands = build_install_cmd_set(issu, image, kick, 'install')
-        opts = {'ignore_timeout': True}
-        # The system may be busy from the call to check_mode so loop until
-        # it's done.
-        in_progress = r'Another install procedure may be in progress'
-        for attempt in range(20):
-            data = load_config(module, commands, True, opts)
-            data = massage_install_data(data)
-            if re.search(in_progress, data, re.M):
-                logit('Install in progress')
-                sleep(1)
-                continue
-            break
-
-        msg1 = 'Finishing the upgrade'
-        msg2 = 'Install has been successful'
-        # When the switch is ISSU capable, the call to load_config will time
-        # out but the upgrade still succeeds.
-        msg3 = 'Connection failure: timed out'
-        msg4 = 'timeout trying to send command: install'
-        msg5 = 'Backend processing error'
-        success_re = r'%s|%s|%s|%s|%s' % (msg1, msg2, msg3, msg4, msg5)
-        if re.search(success_re, data):
-            result_dict['pass'] = True
-
-        if result_dict['pass']:
-            msg = r'%s|%s|%s' % (msg3, msg4, msg5)
-            if re.search(msg, data):
-                result_dict['ud'] = datachkmode
-        result_dict['ud'] = parse_show_install(data)
-    return result_dict
-
-
 def parse_show_version(data):
     version_data = {'raw': data[0].split('\n')}
     version_data['version'] = ''
@@ -461,6 +413,7 @@ def parse_show_version(data):
 
 
 def check_mode_legacy(module, issu, image, kick=None):
+    logit('check_mode_legacy')
     """Some platforms/images/transports don't support the 'install all impact'
         command so we need to use a different method."""
     current = execute_show_command(module, 'show version', 'json')[0]
@@ -470,26 +423,25 @@ def check_mode_legacy(module, issu, image, kick=None):
     upgrade_msg = 'No upgrade required'
 
     # Process System Image
+    data['error'] = False
     tsver = 'show version image bootflash:%s' % image
     target_image = parse_show_version(execute_show_command(module, tsver))
     if target_image['error']:
         data['error'] = True
         data['raw'] = target_image['raw']
-        return data
-    if current['kickstart_ver_str'] != target_image:
+    if current['kickstart_ver_str'] != target_image and not data['error']:
         data['upgrade'] = True
         data['disruptive'] = True
         upgrade_msg = 'Switch upgraded: system: %s' % tsver
 
     # Process Kickstart Image
-    if kick is not None:
+    if kick is not None and not data['error']:
         tkver = 'show version image bootflash:%s' % kick
         target_kick = parse_show_version(execute_show_command(module, tkver))
         if target_kick['error']:
             data['error'] = True
             data['raw'] = target_kick['raw']
-            return data
-        if current['kickstart_ver_str'] != target_kick:
+        if current['kickstart_ver_str'] != target_kick and not data['error']:
             data['upgrade'] = True
             data['disruptive'] = True
             upgrade_msg = upgrade_msg + ' kickstart: %s' % tkver
@@ -500,29 +452,96 @@ def check_mode_legacy(module, issu, image, kick=None):
 
 def check_mode_nextgen(module, issu, image, kick=None):
     """Use the 'install all impact' command for check_mode"""
+    logit('check_mode_nextgen')
+    opts = {'ignore_timeout': True}
     commands = build_install_cmd_set(issu, image, kick, 'impact')
-    data = massage_install_data(load_config(module, commands, True))
-    data = parse_show_install(data)
+    data = parse_show_install(load_config(module, commands, True, opts))
     # If an error is encountered when issu is 'desired' then try again
     # but set issu to 'no'
     if data['error'] and issu == 'desired':
         issu = 'no'
         commands = build_install_cmd_set(issu, image, kick, 'impact')
-        data = massage_install_data(load_config(module, commands, True))
-        data = parse_show_install(data)
-    if re.search(r'No install all data found', data['raw'][0]):
+        # The system may be busy from the previous call to check_mode so loop
+        # until it's done.
+        data = check_install_in_progress(module, commands, opts)
+    if re.search(r'No install all data found', data['raw']):
         data['error'] = True
+    return data
+
+
+def check_install_in_progress(module, commands, opts):
+    for attempt in range(20):
+        data = parse_show_install(load_config(module, commands, True, opts))
+        if data['install_in_progress']:
+            logit('Install in progress')
+            sleep(1)
+            continue
+        break
     return data
 
 
 def check_mode(module, issu, image, kick=None):
     """Check switch upgrade impact using 'show install all impact' command"""
-    global platform
-    if re.search(r'N5K|N6K|N7K', platform):
+    logit('start show install impact')
+    data = check_mode_nextgen(module, issu, image, kick)
+    if data['backend_processing_error']:
+        # We encountered an unrecoverable error in the attempt to get upgrade
+        # impact data from the 'show install all impact' command.
+        # Fallback to legacy method.
         data = check_mode_legacy(module, issu, image, kick)
-    else:
-        data = check_mode_nextgen(module, issu, image, kick)
     return data
+
+
+def do_install_all(module, issu, image, kick=None):
+    """Perform the switch upgrade using the 'install all' command"""
+    logit('start install all')
+    impact_data = check_mode(module, issu, image, kick)
+    if module.check_mode:
+        logit('Check mode set in playbook')
+        # Check mode set in the playbook so just return the impact data.
+        msg = '*** SWITCH WAS NOT UPGRADED: IMPACT DATA ONLY ***'
+        impact_data['processed'].append(msg)
+        return impact_data
+    if impact_data['error']:
+        # Check mode discovered an error so return with this info.
+        logit('error detected.. ending upgrade')
+        return impact_data
+    elif not impact_data['upgrade_needed']:
+        # The switch is already upgraded.  Nothing more to do.
+        logit('switch is already upgraded.. nothing more to do')
+        return impact_data
+    else:
+        # If we get here, check_mode returned no errors and the switch
+        # needs to be upgraded.
+        logit('Check mode completed, starting actual upgrade')
+        if impact_data['disruptive']:
+            # Check mode indicated that ISSU is not possible so issue the
+            # upgrade command without the non-disruptive flag.
+            issu = 'no'
+        commands = build_install_cmd_set(issu, image, kick, 'install')
+        opts = {'ignore_timeout': True}
+        # The system may be busy from the call to check_mode so loop until
+        # it's done.
+        upgrade = check_install_in_progress(module, commands, opts)
+
+        # Special case:  If we encounter a backend processing error at this
+        # stage, then we consider the switch upgraded.
+        if upgrade['backend_processing_error']:
+            logit('backend processing error during upgrade stage')
+            upgrade['upgrade_succeeded'] = True
+            upgrade['use_impact_data'] = True
+
+        if upgrade['use_impact_data']:
+            if upgrade['upgrade_succeeded']:
+                upgrade = impact_data
+                upgrade['upgrade_succeeded'] = True
+            else:
+                upgrade = impact_data
+                upgrade['upgrade_succeeded'] = False
+
+        if not upgrade['upgrade_succeeded']:
+            upgrade['error'] = True
+    return upgrade
 
 
 def main():
@@ -542,11 +561,10 @@ def main():
     warnings = list()
     check_args(module, warnings)
 
-    # This module will error out if the following Ansible timers are not
-    # set properly.
-    # 1) export ANSIBLE_PERSISTENT_COMMAND_TIMEOUT=600
-    # 2) export ANSIBLE_PERSISTENT_CONNECT_TIMEOUT=600
-    check_ansible_timers(module)
+    # This module will error out if the Ansible task timeout value is not
+    # tuned high enough.
+    check_ansible_timer(module)
+    logit('Provider data:\n%s' % module.params.get('provider'))
 
     global platform
     platform = get_platform(module)
@@ -557,46 +575,28 @@ def main():
     kif = module.params['kickstart_image_file']
     issu = module.params['issu']
 
-    if kif == 'null':
+    if kif == 'null' or kif == '':
         kif = None
 
     if kickstart_image_required(module) and kif is None:
-        msg = '%s platform requires a kickstart_image_file' % platform
+        msg = 'This platform requires a kickstart_image_file'
         module.fail_json(msg=msg)
 
-    if re.search(r'N3K|N5K|N6K|N7K', platform):
-        if re.search(r'required|yes', issu):
-            msg1 = 'Module does not support ISSU for %s platforms' % platform
-            msg2 = "\nParameter 'issu' must be set to either 'no' or 'desired'"
-            module.fail_json(msg=msg1 + msg2)
-
-    if module.check_mode:
-        ud = check_mode(module, issu, sif, kick=kif)
-        changed = ud['upgrade']
-        if ud['error']:
-            chk_mode = ud['raw']
-            msg = 'Check mode error encountered'
-            module.fail_json(msg=msg, changed=changed, install_state=chk_mode)
-        else:
-            chk_mode = ud['processed']
-        module.exit_json(changed=changed, install_state=chk_mode)
-
     install_result = do_install_all(module, issu, sif, kick=kif)
-    logit('Install Passed: %s' % install_result['pass'])
-    logit('Device Needs Upgrade: %s' % install_result['ud']['upgrade'])
-    logit('Upgrade Errored?: %s' % install_result['ud']['error'])
-    logit('Processed:\n%s' % install_result['ud']['processed'])
-    logit('Raw Data:\n%s' % install_result['ud']['raw'])
-    if install_result['pass']:
-        state = install_result['ud']['processed']
-        changed = install_result['ud']['upgrade']
-    else:
+    logit('Install Succeeded?: %s' % install_result['upgrade_succeeded'])
+    logit('Device Needed Upgrade: %s' % install_result['upgrade_needed'])
+    logit('Upgrade Errored?: %s' % install_result['error'])
+
+    if install_result['error']:
         msg = "Failed to upgrade device using image "
         if kif:
             msg = msg + "files: kickstart: %s, system: %s" % (kif, sif)
         else:
             msg = msg + "file: system: %s" % sif
-        module.fail_json(msg=msg, raw_data=install_result['ud']['raw'])
+        module.fail_json(msg=msg, raw_data=install_result['list_data'])
+    else:
+        state = install_result['processed']
+        changed = install_result['upgrade_needed']
 
     module.exit_json(changed=changed, install_state=state, warnings=warnings)
 
