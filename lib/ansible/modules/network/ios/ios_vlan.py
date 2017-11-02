@@ -114,10 +114,6 @@ def map_obj_to_commands(updates, module):
         if state == 'absent':
             if obj_in_have:
                 commands.append('no vlan {}'.format(vlan_id))
-                if obj_in_have['interfaces']:
-                    for i in obj_in_have['interfaces']:
-                        commands.append('interface {}'.format(i))
-                        commands.append('no switchport access vlan {}'.format(vlan_id))
 
         elif state == 'present':
             if not obj_in_have:
@@ -138,19 +134,32 @@ def map_obj_to_commands(updates, module):
                         commands.append('name {}'.format(name))
 
                 if interfaces:
-                    for i in interfaces:
-                        if i not in obj_in_have['interfaces']:
-                            if vlan_id != obj_in_have['vlan_id']:
-                                commands.append('vlan {}'.format(vlan_id))
+                    if not obj_in_have['interfaces']:
+                        for i in interfaces:
+                            commands.append('vlan {}'.format(vlan_id))
                             commands.append('interface {}'.format(i))
                             commands.append('switchport mode access')
                             commands.append('switchport access vlan {}'.format(vlan_id))
+
+                    elif set(interfaces) != set(obj_in_have['interfaces']):
+                        missing_interfaces = list(set(interfaces) - set(obj_in_have['interfaces']))
+                        for i in missing_interfaces:
+                            commands.append('vlan {}'.format(vlan_id))
+                            commands.append('interface {}'.format(i))
+                            commands.append('switchport mode access')
+                            commands.append('switchport access vlan {}'.format(vlan_id))
+
+                        superfluous_interfaces = list(set(obj_in_have['interfaces']) - set(interfaces))
+                        for i in superfluous_interfaces:
+                            commands.append('vlan {}'.format(vlan_id))
+                            commands.append('interface {}'.format(i))
+                            commands.append('switchport mode access')
+                            commands.append('no switchport access vlan {}'.format(vlan_id))
         else:
-            if not obj_in_have:
-                commands.append('vlan {}'.format(vlan_id))
-                if name:
-                    commands.append('name {}'.format(name))
-                commands.append('state {}'.format(state))
+            commands.append('vlan {}'.format(vlan_id))
+            if name:
+                commands.append('name {}'.format(name))
+            commands.append('state {}'.format(state))
 
     if purge:
         for h in have:
@@ -233,7 +242,7 @@ def main():
     """ main entry point for module execution
     """
     element_spec = dict(
-        vlan_id=dict(type='int', required=True),
+        vlan_id=dict(type='int'),
         name=dict(),
         interfaces=dict(type='list'),
         delay=dict(default=10, type='int'),
@@ -242,6 +251,7 @@ def main():
     )
 
     aggregate_spec = deepcopy(element_spec)
+    aggregate_spec['vlan_id'] = dict(required=True)
 
     # remove default in aggregate spec, to handle common arguments
     remove_default_spec(aggregate_spec)
