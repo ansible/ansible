@@ -27,7 +27,7 @@ DOCUMENTATION = """
 ---
 module: nxos_banner
 version_added: "2.4"
-author: "Trishna Guha (@trishnag)"
+author: "Trishna Guha (@trishnaguha)"
 short_description: Manage multiline banners on Cisco NXOS devices
 description:
   - This will configure both exec and motd banners on remote devices
