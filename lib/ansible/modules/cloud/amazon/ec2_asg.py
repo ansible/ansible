@@ -375,7 +375,6 @@ viable_instances:
 '''
 
 import time
-import logging as log
 import traceback
 
 from ansible.module_utils._text import to_native
@@ -386,8 +385,6 @@ try:
     import botocore
 except ImportError:
     pass  # will be detected by imported HAS_BOTO3
-
-# log.basicConfig(filename='/tmp/ansible_ec2_asg.log', level=log.DEBUG, format='%(asctime)s: %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 
 ASG_ATTRIBUTES = ('AvailabilityZones', 'DefaultCooldown', 'DesiredCapacity',
                   'HealthCheckGracePeriod', 'HealthCheckType', 'LaunchConfigurationName',
@@ -588,7 +585,7 @@ def elb_dreg(asg_connection, module, group_name, instance_id):
 
     for lb in as_group['LoadBalancerNames']:
         deregister_lb_instances(elb_connection, lb, instance_id)
-        log.debug("De-registering %s from ELB %s", instance_id, lb)
+        module.debug("De-registering %s from ELB %s", instance_id, lb)
 
     wait_timeout = time.time() + wait_timeout
     while wait_timeout > time.time() and count > 0:
@@ -598,7 +595,7 @@ def elb_dreg(asg_connection, module, group_name, instance_id):
             for i in lb_instances['InstanceStates']:
                 if i['InstanceId'] == instance_id and i['State'] == "InService":
                     count += 1
-                    log.debug("%s: %s, %s", i['InstanceId'], i['State'], i['Description'])
+                    module.debug("%s: %s, %s", i['InstanceId'], i['State'], i['Description'])
         time.sleep(10)
 
     if wait_timeout <= time.time():
@@ -615,8 +612,8 @@ def elb_healthy(asg_connection, elb_connection, module, group_name):
     for instance, settings in props['instance_facts'].items():
         if settings['lifecycle_state'] == 'InService' and settings['health_status'] == 'Healthy':
             instances.append(dict(InstanceId=instance))
-    log.debug("ASG considers the following instances InService and Healthy: %s", instances)
-    log.debug("ELB instance status:")
+    module.debug("ASG considers the following instances InService and Healthy: %s", instances)
+    module.debug("ELB instance status:")
     lb_instances = list()
     for lb in as_group.get('LoadBalancerNames'):
         # we catch a race condition that sometimes happens if the instance exists in the ASG
@@ -636,7 +633,7 @@ def elb_healthy(asg_connection, elb_connection, module, group_name):
         for i in lb_instances.get('InstanceStates'):
             if i['State'] == "InService":
                 healthy_instances.add(i['InstanceId'])
-            log.debug("ELB Health State %s: %s", i['InstanceId'], i['State'])
+            module.debug("ELB Health State %s: %s", i['InstanceId'], i['State'])
     return len(healthy_instances)
 
 
@@ -649,8 +646,8 @@ def tg_healthy(asg_connection, elbv2_connection, module, group_name):
     for instance, settings in props['instance_facts'].items():
         if settings['lifecycle_state'] == 'InService' and settings['health_status'] == 'Healthy':
             instances.append(dict(Id=instance))
-    log.debug("ASG considers the following instances InService and Healthy: %s", instances)
-    log.debug("Target Group instance status:")
+    module.debug("ASG considers the following instances InService and Healthy: %s", instances)
+    module.debug("Target Group instance status:")
     tg_instances = list()
     for tg in as_group.get('TargetGroupARNs'):
         # we catch a race condition that sometimes happens if the instance exists in the ASG
@@ -670,7 +667,7 @@ def tg_healthy(asg_connection, elbv2_connection, module, group_name):
         for i in tg_instances.get('TargetHealthDescriptions'):
             if i['TargetHealth']['State'] == "healthy":
                 healthy_instances.add(i['Target']['Id'])
-            log.debug("Target Group Health State %s: %s", i['Target']['Id'], i['TargetHealth']['State'])
+            module.debug("Target Group Health State %s: %s", i['Target']['Id'], i['TargetHealth']['State'])
     return len(healthy_instances)
 
 
@@ -683,7 +680,7 @@ def wait_for_elb(asg_connection, module, group_name):
     as_group = describe_autoscaling_groups(asg_connection, group_name)[0]
 
     if as_group.get('LoadBalancerNames') and as_group.get('HealthCheckType') == 'ELB':
-        log.debug("Waiting for ELB to consider instances healthy.")
+        module.debug("Waiting for ELB to consider instances healthy.")
         elb_connection = boto3_conn(module,
                                     conn_type='client',
                                     resource='elb',
@@ -696,12 +693,12 @@ def wait_for_elb(asg_connection, module, group_name):
 
         while healthy_instances < as_group.get('MinSize') and wait_timeout > time.time():
             healthy_instances = elb_healthy(asg_connection, elb_connection, module, group_name)
-            log.debug("ELB thinks %s instances are healthy.", healthy_instances)
+            module.debug("ELB thinks %s instances are healthy.", healthy_instances)
             time.sleep(10)
         if wait_timeout <= time.time():
             # waiting took too long
             module.fail_json(msg="Waited too long for ELB instances to be healthy. %s" % time.asctime())
-        log.debug("Waiting complete.  ELB thinks %s instances are healthy.", healthy_instances)
+        module.debug("Waiting complete.  ELB thinks %s instances are healthy.", healthy_instances)
 
 
 def wait_for_target_group(asg_connection, module, group_name):
@@ -713,7 +710,7 @@ def wait_for_target_group(asg_connection, module, group_name):
     as_group = describe_autoscaling_groups(asg_connection, group_name)[0]
 
     if as_group.get('TargetGroupARNs') and as_group.get('HealthCheckType') == 'ELB':
-        log.debug("Waiting for Target Group to consider instances healthy.")
+        module.debug("Waiting for Target Group to consider instances healthy.")
         elbv2_connection = boto3_conn(module,
                                       conn_type='client',
                                       resource='elbv2',
@@ -726,12 +723,12 @@ def wait_for_target_group(asg_connection, module, group_name):
 
         while healthy_instances < as_group.get('MinSize') and wait_timeout > time.time():
             healthy_instances = tg_healthy(asg_connection, elbv2_connection, module, group_name)
-            log.debug("Target Group thinks %s instances are healthy.", healthy_instances)
+            module.debug("Target Group thinks %s instances are healthy.", healthy_instances)
             time.sleep(10)
         if wait_timeout <= time.time():
             # waiting took too long
             module.fail_json(msg="Waited too long for ELB instances to be healthy. %s" % time.asctime())
-        log.debug("Waiting complete. Target Group thinks %s instances are healthy.", healthy_instances)
+        module.debug("Waiting complete. Target Group thinks %s instances are healthy.", healthy_instances)
 
 
 def suspend_processes(ec2_connection, as_group, module):
@@ -996,12 +993,12 @@ def create_autoscaling_group(connection, module):
             wait_for_new_inst(module, connection, group_name, wait_timeout, desired_capacity, 'viable_instances')
             # Wait for ELB health if ELB(s)defined
             if load_balancers:
-                log.debug('\tWAITING FOR ELB HEALTH')
+                module.debug('\tWAITING FOR ELB HEALTH')
                 wait_for_elb(connection, module, group_name)
             # Wait for target group health if target group(s)defined
 
             if target_group_arns:
-                log.debug('\tWAITING FOR TG HEALTH')
+                module.debug('\tWAITING FOR TG HEALTH')
                 wait_for_target_group(connection, module, group_name)
 
         try:
@@ -1063,8 +1060,8 @@ def get_chunks(l, n):
 
 def update_size(connection, group, max_size, min_size, dc):
 
-    log.debug("setting ASG sizes")
-    log.debug("minimum size: %s, desired_capacity: %s, max size: %s", min_size, dc, max_size)
+    #module.debug("setting ASG sizes")
+    #module.debug("minimum size: %s, desired_capacity: %s, max size: %s", min_size, dc, max_size)
     updated_group = dict()
     updated_group['AutoScalingGroupName'] = group['AutoScalingGroupName']
     updated_group['MinSize'] = min_size
@@ -1096,7 +1093,7 @@ def replace(connection, module):
 
     if lc_check:
         if num_new_inst_needed == 0 and old_instances:
-            log.debug("No new instances needed, but old instances are present. Removing old instances")
+            module.debug("No new instances needed, but old instances are present. Removing old instances")
             terminate_batch(connection, module, old_instances, instances, True)
             as_group = describe_autoscaling_groups(connection, group_name)[0]
             props = get_properties(as_group, module)
@@ -1105,7 +1102,7 @@ def replace(connection, module):
 
         #  we don't want to spin up extra instances if not necessary
         if num_new_inst_needed < batch_size:
-            log.debug("Overriding batch size to %s", num_new_inst_needed)
+            module.debug("Overriding batch size to %s", num_new_inst_needed)
             batch_size = num_new_inst_needed
 
     if not old_instances:
@@ -1132,7 +1129,7 @@ def replace(connection, module):
     instances = props['instances']
     if replace_instances:
         instances = replace_instances
-    log.debug("beginning main loop")
+    module.debug("beginning main loop")
     for i in get_chunks(instances, batch_size):
         # break out of this loop if we have enough new instances
         break_early, desired_size, term_instances = terminate_batch(connection, module, i, instances, False)
@@ -1142,12 +1139,12 @@ def replace(connection, module):
         wait_for_target_group(connection, module, group_name)
         as_group = describe_autoscaling_groups(connection, group_name)[0]
         if break_early:
-            log.debug("breaking loop")
+            module.debug("breaking loop")
             break
     update_size(connection, as_group, max_size, min_size, desired_capacity)
     as_group = describe_autoscaling_groups(connection, group_name)[0]
     asg_properties = get_properties(as_group, module)
-    log.debug("Rolling update complete.")
+    module.debug("Rolling update complete.")
     changed = True
     return(changed, asg_properties)
 
@@ -1165,14 +1162,14 @@ def get_instances_by_lc(props, lc_check, initial_instances):
                 old_instances.append(i)
 
     else:
-        log.debug("Comparing initial instances with current: %s", initial_instances)
+        # module.debug("Comparing initial instances with current: %s", initial_instances)
         for i in props['instances']:
             if i not in initial_instances:
                 new_instances.append(i)
             else:
                 old_instances.append(i)
-    log.debug("New instances: %s, %s", len(new_instances), new_instances)
-    log.debug("Old instances: %s, %s", len(old_instances), old_instances)
+    # module.debug("New instances: %s, %s", len(new_instances), new_instances)
+    # module.debug("Old instances: %s, %s", len(old_instances), old_instances)
 
     return new_instances, old_instances
 
@@ -1214,17 +1211,17 @@ def terminate_batch(connection, module, replace_instances, initial_instances, le
     # and they have a non-current launch config
     instances_to_terminate = list_purgeable_instances(props, lc_check, replace_instances, initial_instances)
 
-    log.debug("new instances needed: %s", num_new_inst_needed)
-    log.debug("new instances: %s", new_instances)
-    log.debug("old instances: %s", old_instances)
-    log.debug("batch instances: %s", ",".join(instances_to_terminate))
+    module.debug("new instances needed: %s", num_new_inst_needed)
+    module.debug("new instances: %s", new_instances)
+    module.debug("old instances: %s", old_instances)
+    module.debug("batch instances: %s", ",".join(instances_to_terminate))
 
     if num_new_inst_needed == 0:
         decrement_capacity = True
         if as_group['MinSize'] != min_size:
             updated_params = dict(AutoScalingGroupName=as_group['AutoScalingGroupName'], MinSize=min_size)
             update_asg(connection, **updated_params)
-            log.debug("Updating minimum size back to original of %s", min_size)
+            module.debug("Updating minimum size back to original of %s", min_size)
         # if are some leftover old instances, but we are already at capacity with new ones
         # we don't want to decrement capacity
         if leftovers:
@@ -1232,19 +1229,19 @@ def terminate_batch(connection, module, replace_instances, initial_instances, le
         break_loop = True
         instances_to_terminate = old_instances
         desired_size = min_size
-        log.debug("No new instances needed")
+        module.debug("No new instances needed")
 
     if num_new_inst_needed < batch_size and num_new_inst_needed != 0:
         instances_to_terminate = instances_to_terminate[:num_new_inst_needed]
         decrement_capacity = False
         break_loop = False
-        log.debug("%s new instances needed", num_new_inst_needed)
+        module.debug("%s new instances needed", num_new_inst_needed)
 
-    log.debug("decrementing capacity: %s", decrement_capacity)
+    module.debug("decrementing capacity: %s", decrement_capacity)
 
     for instance_id in instances_to_terminate:
         elb_dreg(connection, module, group_name, instance_id)
-        log.debug("terminating instance: %s", instance_id)
+        module.debug("terminating instance: %s", instance_id)
         terminate_asg_instance(connection, instance_id, decrement_capacity)
 
     # we wait to make sure the machines we marked as Unhealthy are
@@ -1261,7 +1258,7 @@ def wait_for_term_inst(connection, module, term_instances):
     count = 1
     wait_timeout = time.time() + wait_timeout
     while wait_timeout > time.time() and count > 0:
-        log.debug("waiting for instances to terminate")
+        module.debug("waiting for instances to terminate")
         count = 0
         as_group = describe_autoscaling_groups(connection, group_name)[0]
         props = get_properties(as_group, module)
@@ -1270,7 +1267,7 @@ def wait_for_term_inst(connection, module, term_instances):
         for i in instances:
             lifecycle = instance_facts[i]['lifecycle_state']
             health = instance_facts[i]['health_status']
-            log.debug("Instance %s has state of %s,%s", i, lifecycle, health)
+            module.debug("Instance %s has state of %s,%s", i, lifecycle, health)
             if lifecycle == 'Terminating' or health == 'Unhealthy':
                 count += 1
         time.sleep(10)
@@ -1285,18 +1282,18 @@ def wait_for_new_inst(module, connection, group_name, wait_timeout, desired_size
     # make sure we have the latest stats after that last loop.
     as_group = describe_autoscaling_groups(connection, group_name)[0]
     props = get_properties(as_group, module)
-    log.debug("Waiting for %s = %s, currently %s", prop, desired_size, props[prop])
+    module.debug("Waiting for %s = %s, currently %s", prop, desired_size, props[prop])
     # now we make sure that we have enough instances in a viable state
     wait_timeout = time.time() + wait_timeout
     while wait_timeout > time.time() and desired_size > props[prop]:
-        log.debug("Waiting for %s = %s, currently %s", prop, desired_size, props[prop])
+        module.debug("Waiting for %s = %s, currently %s", prop, desired_size, props[prop])
         time.sleep(10)
         as_group = describe_autoscaling_groups(connection, group_name)[0]
         props = get_properties(as_group, module)
     if wait_timeout <= time.time():
         # waiting took too long
         module.fail_json(msg="Waited too long for new instances to become viable. %s" % time.asctime())
-    log.debug("Reached %s: %s", prop, desired_size)
+    module.debug("Reached %s: %s", prop, desired_size)
     return props
 
 
