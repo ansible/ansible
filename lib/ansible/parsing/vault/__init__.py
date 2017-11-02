@@ -153,20 +153,7 @@ def is_encrypted_file(file_obj, start_pos=0, count=-1):
         file_obj.seek(current_position)
 
 
-def parse_vaulttext_envelope(b_vaulttext_envelope, default_vault_id=None):
-    """Retrieve information about the Vault and clean the data
-
-    When data is saved, it has a header prepended and is formatted into 80
-    character lines.  This method extracts the information from the header
-    and then removes the header and the inserted newlines.  The string returned
-    is suitable for processing by the Cipher classes.
-
-    :arg b_vaulttext: byte str containing the data from a save file
-    :returns: a byte str suitable for passing to a Cipher class's
-        decrypt() function.
-    """
-    # used by decrypt
-    default_vault_id = default_vault_id or C.DEFAULT_VAULT_IDENTITY
+def _parse_vaulttext_envelope(b_vaulttext_envelope, default_vault_id=None):
 
     b_tmpdata = b_vaulttext_envelope.splitlines()
     b_tmpheader = b_tmpdata[0].strip().split(b';')
@@ -174,7 +161,6 @@ def parse_vaulttext_envelope(b_vaulttext_envelope, default_vault_id=None):
     b_version = b_tmpheader[1].strip()
     cipher_name = to_text(b_tmpheader[2].strip())
     vault_id = default_vault_id
-    # vault_id = None
 
     # Only attempt to find vault_id if the vault file is version 1.2 or newer
     # if self.b_version == b'1.2':
@@ -184,6 +170,37 @@ def parse_vaulttext_envelope(b_vaulttext_envelope, default_vault_id=None):
     b_ciphertext = b''.join(b_tmpdata[1:])
 
     return b_ciphertext, b_version, cipher_name, vault_id
+
+
+def parse_vaulttext_envelope(b_vaulttext_envelope, default_vault_id=None, filename=None):
+    """Parse the vaulttext envelope
+
+    When data is saved, it has a header prepended and is formatted into 80
+    character lines.  This method extracts the information from the header
+    and then removes the header and the inserted newlines.  The string returned
+    is suitable for processing by the Cipher classes.
+
+    :arg b_vaulttext: byte str containing the data from a save file
+    :kwarg default_vault_id: The vault_id name to use if the vaulttext does not provide one.
+    :kwarg filename: The filename that the data came from.  This is only
+        used to make better error messages in case the data cannot be
+        decrypted. This is optional.
+    :returns: A tuple of byte str of the vaulttext suitable to pass to parse_vaultext,
+        a byte str of the vault format version,
+        the name of the cipher used, and the vault_id.
+    :raises: AnsibleVaultFormatError: if the vaulttext_envelope format is invalid
+    """
+    # used by decrypt
+    default_vault_id = default_vault_id or C.DEFAULT_VAULT_IDENTITY
+
+    try:
+        return _parse_vaulttext_envelope(b_vaulttext_envelope, default_vault_id)
+    except Exception as exc:
+        msg = "Vault envelope format error"
+        if filename:
+            msg += ' in %s' % (filename)
+        msg += ': %s' % exc
+        raise AnsibleVaultFormatError(msg)
 
 
 def format_vaulttext_envelope(b_ciphertext, cipher_name, version=None, vault_id=None):
@@ -231,17 +248,35 @@ def _unhexlify(b_data):
     try:
         return unhexlify(b_data)
     except (BinasciiError, TypeError) as exc:
-        raise AnsibleVaultFormatError('Vault data format error: %s' % exc)
+        raise AnsibleVaultFormatError('Vault format unhexlify error: %s' % exc)
 
 
-def parse_vaulttext(b_vaulttext):
-    # SPLIT SALT, DIGEST, AND DATA
+def _parse_vaulttext(b_vaulttext):
     b_vaulttext = _unhexlify(b_vaulttext)
     b_salt, b_crypted_hmac, b_ciphertext = b_vaulttext.split(b"\n", 2)
     b_salt = _unhexlify(b_salt)
     b_ciphertext = _unhexlify(b_ciphertext)
 
     return b_ciphertext, b_salt, b_crypted_hmac
+
+
+def parse_vaulttext(b_vaulttext):
+    """Parse the vaulttext
+
+    :arg b_vaulttext: byte str containing the vaulttext (ciphertext, salt, crypted_hmac)
+    :returns: A tuple of byte str of the ciphertext suitable for passing to a
+        Cipher class's decrypt() function, a byte str of the salt,
+        and a byte str of the crypted_hmac
+    :raises: AnsibleVaultFormatError: if the vaulttext format is invalid
+    """
+    # SPLIT SALT, DIGEST, AND DATA
+    try:
+        return _parse_vaulttext(b_vaulttext)
+    except AnsibleVaultFormatError:
+        raise
+    except Exception as exc:
+        msg = "Vault vaulttext format error: %s" % exc
+        raise AnsibleVaultFormatError(msg)
 
 
 def verify_secret_is_not_empty(secret, msg=None):
@@ -631,14 +666,8 @@ class VaultLib:
                 msg += "%s is not a vault encrypted file" % filename
             raise AnsibleError(msg)
 
-        try:
-            b_vaulttext, dummy, cipher_name, vault_id = parse_vaulttext_envelope(b_vaulttext)
-        except Exception as exc:
-            msg = "Vault envelope format error"
-            if filename:
-                msg += ' in %s' % (filename)
-            msg += ': %s' % exc
-            raise AnsibleVaultFormatError(msg)
+        b_vaulttext, dummy, cipher_name, vault_id = parse_vaulttext_envelope(b_vaulttext,
+                                                                             filename=filename)
 
         # create the cipher object, note that the cipher used for decrypt can
         # be different than the cipher used for encrypt
@@ -898,7 +927,8 @@ class VaultEditor:
 
         # Figure out the vault id from the file, to select the right secret to re-encrypt it
         # (duplicates parts of decrypt, but alas...)
-        dummy, dummy, cipher_name, vault_id = parse_vaulttext_envelope(b_vaulttext)
+        dummy, dummy, cipher_name, vault_id = parse_vaulttext_envelope(b_vaulttext,
+                                                                       filename=filename)
 
         # vault id here may not be the vault id actually used for decrypting
         # as when the edited file has no vault-id but is decrypted by non-default id in secrets
@@ -1388,11 +1418,7 @@ class VaultAES256:
     @classmethod
     def decrypt(cls, b_vaulttext, secret):
 
-        try:
-            b_ciphertext, b_salt, b_crypted_hmac = parse_vaulttext(b_vaulttext)
-        except Exception as exc:
-            msg = "Vault vaulttext format error: %s" % exc
-            raise AnsibleVaultFormatError(msg)
+        b_ciphertext, b_salt, b_crypted_hmac = parse_vaulttext(b_vaulttext)
 
         # TODO: would be nice if a VaultSecret could be passed directly to _decrypt_*
         #       (move _gen_key_initctr() to a AES256 VaultSecret or VaultContext impl?)
