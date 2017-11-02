@@ -9,7 +9,7 @@
 
 - assert:
     that:
-      - 'result.chaned == true'
+      - 'result.changed == true'
       - '"logging host 172.16.0.1" in result.commands'
       - '"logging facility local7" in result.commands'
 
