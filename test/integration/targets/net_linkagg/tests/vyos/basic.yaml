@@ -4,12 +4,16 @@
     name: bond0
     state: absent
 
+- name: Remove linkagg
+  net_linkagg:
+    name: bond1
+    state: absent
+
 - name: Create linkagg
   net_linkagg:
     name: bond0
     members:
       - eth1
-      - eth2
     state: present
   register: result
 
@@ -18,14 +22,12 @@
       - 'result.changed == true'
       - '"set interfaces bonding bond0 mode 802.3ad" in result.commands'
       - '"set interfaces ethernet eth1 bond-group bond0" in result.commands'
-      - '"set interfaces ethernet eth2 bond-group bond0" in result.commands'
 
 - name: Create linkagg again (idempotent)
   net_linkagg:
     name: bond0
     members:
       - eth1
-      - eth2
     state: present
   register: result
 
@@ -37,20 +39,20 @@
   net_linkagg:
     name: bond0
     members:
-      - eth3
+      - eth2
     state: present
   register: result
 
 - assert:
     that:
       - 'result.changed == true'
-      - '"set interfaces ethernet eth3 bond-group bond0" in result.commands'
+      - '"set interfaces ethernet eth2 bond-group bond0" in result.commands'
 
 - name: Add linkagg member again (idempotent)
   net_linkagg:
     name: bond0
     members:
-      - eth3
+      - eth2
     state: present
   register: result
 
@@ -111,7 +113,6 @@
       - 'result.changed == true'
       - '"delete interfaces ethernet eth1 bond-group" in result.commands'
       - '"delete interfaces ethernet eth2 bond-group" in result.commands'
-      - '"delete interfaces ethernet eth3 bond-group" in result.commands'
       - '"delete interfaces bonding bond0" in result.commands'
 
 - name: Remove linkagg again (idempotent)
@@ -127,8 +128,8 @@
 - name: Create collection of linkagg definitions
   net_linkagg:
     aggregate:
-        - { name: bond0, members: [eth1, eth2] }
-        - { name: bond1, members: [eth3, eth4] }
+        - { name: bond0, members: [eth1] }
+        - { name: bond1, members: [eth2] }
     state: present
   register: result
 
@@ -137,16 +138,14 @@
       - 'result.changed == true'
       - '"set interfaces bonding bond0 mode 802.3ad" in result.commands'
       - '"set interfaces ethernet eth1 bond-group bond0" in result.commands'
-      - '"set interfaces ethernet eth2 bond-group bond0" in result.commands'
       - '"set interfaces bonding bond1 mode 802.3ad" in result.commands'
-      - '"set interfaces ethernet eth3 bond-group bond1" in result.commands'
-      - '"set interfaces ethernet eth4 bond-group bond1" in result.commands'
+      - '"set interfaces ethernet eth2 bond-group bond1" in result.commands'
 
 - name: Create collection of linkagg definitions again (idempotent)
   net_linkagg:
     aggregate:
-        - { name: bond0, members: [eth1, eth2] }
-        - { name: bond1, members: [eth3, eth4] }
+        - { name: bond0, members: [eth1] }
+        - { name: bond1, members: [eth2] }
     state: present
   register: result
 
@@ -157,8 +156,8 @@
 - name: Remove collection of linkagg definitions
   net_linkagg:
     aggregate:
-      - { name: bond0 }
-      - { name: bond1 }
+      - name: bond0
+      - name: bond1
     state: absent
   register: result
 
@@ -166,17 +165,15 @@
     that:
       - 'result.changed == true'
       - '"delete interfaces ethernet eth1 bond-group" in result.commands'
-      - '"delete interfaces ethernet eth2 bond-group" in result.commands'
       - '"delete interfaces bonding bond0" in result.commands'
-      - '"delete interfaces ethernet eth1 bond-group" in result.commands'
       - '"delete interfaces ethernet eth2 bond-group" in result.commands'
       - '"delete interfaces bonding bond1" in result.commands'
 
 - name: Remove collection of linkagg definitions again (idempotent)
   net_linkagg:
     aggregate:
-      - { name: bond0 }
-      - { name: bond1 }
+      - name: bond0
+      - name: bond1
     state: absent
   register: result
 
