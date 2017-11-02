@@ -74,6 +74,8 @@ options:
     description:
       - Proxy url setting for the pulp repository importer. This is in the
         format scheme://host.
+    required: false
+    default: null
   proxy_port:
     description:
       - Proxy port setting for the pulp repository importer.
