@@ -4,14 +4,18 @@
 # Copyright (c) 2017 F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: bigip_hostname
-short_description: Manage the hostname of a BIG-IP.
+short_description: Manage the hostname of a BIG-IP
 description:
   - Manage the hostname of a BIG-IP.
 version_added: "2.3"
@@ -31,31 +35,33 @@ author:
   - Matthew Lam (@mryanlam)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Set the hostname of the BIG-IP
   bigip_hostname:
-      hostname: "bigip.localhost.localdomain"
-      password: "admin"
-      server: "bigip.localhost.localdomain"
-      user: "admin"
+    hostname: bigip.localhost.localdomain
+    password: secret
+    server: lb.mydomain.com
+    user: admin
   delegate_to: localhost
 '''
 
-RETURN = '''
+RETURN = r'''
 hostname:
-    description: The new hostname of the device
-    returned: changed
-    type: string
-    sample: "big-ip01.internal"
+  description: The new hostname of the device
+  returned: changed
+  type: string
+  sample: big-ip01.internal
 '''
 
-from ansible.module_utils.f5_utils import (
-    AnsibleF5Client,
-    AnsibleF5Parameters,
-    HAS_F5SDK,
-    F5ModuleError,
-    iControlUnexpectedHTTPError
-)
+from ansible.module_utils.f5_utils import AnsibleF5Client
+from ansible.module_utils.f5_utils import AnsibleF5Parameters
+from ansible.module_utils.f5_utils import HAS_F5SDK
+from ansible.module_utils.f5_utils import F5ModuleError
+
+try:
+    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+except ImportError:
+    HAS_F5SDK = False
 
 
 class Parameters(AnsibleF5Parameters):
