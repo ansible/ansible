@@ -1,0 +1,13 @@
+#
+# This is an example to configure an ethernet interface on Mellanox switch
+#
+- name: configure interface
+  mlnxos_interface:
+    name: ethernet 1/5
+    description: interface connected to host5
+    mtu: 1500
+    provider:
+      host: "{{ inventory_hostname }}"
+      username: admin
+      password: admin
+    authorize: yes
