@@ -19,6 +19,7 @@
 #
 
 import json
+import ast
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback
@@ -120,6 +121,34 @@ def get_interfaces_config(module, interface_type, json_fmt=True,
         cfg = to_text(out, errors='surrogate_then_replace').strip()
     _DEVICE_CONFIGS[cmd] = cfg
     return cfg
+
+
+def show_command(module, fact_commands):
+    responses = list()
+    commands = list()
+    for fact in fact_commands:
+        commands.append("show %s | json-print " % fact)
+
+    for cmd in commands:
+        rc, out, err = exec_command(module, cmd)
+        if rc != 0:
+            module.fail_json(
+                msg='unable to retrieve current fact',
+                stderr=to_text(err, errors='surrogate_then_replace'))
+        out_list = out.split('\n', 1)
+        line = out_list[0].strip()
+        if line and line[0] not in ("[", "{"):
+            out = out_list[1]
+        try:
+            cfg = json.loads(out)
+        except ValueError:
+            module.fail_json(
+                msg="got invalid json",
+                stderr=to_text(out, errors='surrogate_then_replace'))
+        else:
+            cfg = to_text(out, errors='surrogate_then_replace').strip()
+        responses.append(ast.literal_eval(cfg))
+    return responses
 
 
 def to_commands(module, commands):

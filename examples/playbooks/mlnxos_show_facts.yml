@@ -1,0 +1,32 @@
+#
+# This is an example to show facts on Mellanox switch
+#
+- name: configure provider
+  set_fact:
+    provider:
+      username: admin
+      password: admin
+      host: "{{inventory_hostname}}"
+
+- name: show default fact (version)
+  mlnxos_facts:
+    provider: "{{ provider }}"
+
+- name: show all facts
+  mlnxos_facts:
+    provider: "{{ provider }}"
+    gather_subset:
+      - all
+
+- name: show all facts exept module
+  mlnxos_facts:
+    provider: "{{ provider }}"
+    gather_subset:
+      - "!module"
+
+- name: show interfaces and module facts
+  mlnxos_facts:
+    provider: "{{ provider }}"
+    gather_subset:
+      - interfaces
+      - module
