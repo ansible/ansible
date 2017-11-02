@@ -879,7 +879,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     plan = None
                     if self.plan:
                         plan = Plan(name=self.plan.get('name'), product=self.plan.get('product'), publisher=self.plan.get('publisher'),
-                                    promotion_code=self.product.get('promotion_code'))
+                                    promotion_code=self.plan.get('promotion_code'))
 
                     vm_resource = VirtualMachine(
                         self.location,
