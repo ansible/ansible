@@ -45,6 +45,7 @@ options:
     retention:
       description:
         - The number of days to retain the log events in the specified log group.
+        - Valid values are: [1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653]
       required: false
     overwrite:
      description:
@@ -166,8 +167,14 @@ def create_log_group(client, log_group_name, kms_key_id, tags, retention, module
 
 def input_retention_policy(client, log_group_name, retention, module):
     try:
-        response = client.put_retention_policy(logGroupName=log_group_name,
-                                               retentionInDays=retention)
+        permited_values = [1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653]
+
+        if retention in permited_values:
+            response = client.put_retention_policy(logGroupName=log_group_name,
+                                                   retentionInDays=retention)
+        else:
+            delete_log_group(client=client, log_group_name=log_group_name, module=module)
+            module.fail_json(msg="Invalid retention value. Valid values are: [1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653]")
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg=e.response, exception=traceback.format_exc(),
                          **camel_dict_to_snake_dict(e.response))
