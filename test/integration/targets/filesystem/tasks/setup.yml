@@ -1,10 +1,12 @@
-- name: install e2fs and xfs
+- name: install filesystem tools
   package:
     name: '{{ item }}'
     state: present
+  when: ansible_system == 'Linux' or item != 'dosfstools'
   with_items:
     - e2fsprogs
     - xfsprogs
+    - dosfstools
 
 - block:
   - name: install btrfs progs
@@ -27,7 +29,7 @@
     with_items:
       - python-xml
       - btrfsprogs
-  when: ansible_system != "FreeBSD"
+  when: ansible_system == 'Linux'
 
 - command: mke2fs -V
   register: mke2fs

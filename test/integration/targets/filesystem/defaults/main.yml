@@ -5,7 +5,7 @@ tested_filesystems:
   # Other minimal sizes:
   # - XFS: 20Mo
   # - Btrfs: 100Mo (50Mo when "--metadata single" is used)
-  ext4: {fssize: 5, grow: True}
+  ext4: {fssize: 10, grow: True}
   ext4dev: {fssize: 10, grow: True}
   ext3: {fssize: 10, grow: True}
   ext2: {fssize: 10, grow: True}

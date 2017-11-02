@@ -79,6 +79,9 @@
         that:
           - 'not (fs5_result|changed)'
           - 'fs5_result|success'
+
+  - import_tasks: overwrite_another_fs.yml
+
   always:
     - file:
         name: '{{ dev }}'
