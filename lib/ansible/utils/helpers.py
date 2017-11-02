@@ -20,7 +20,17 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_native
 
+
+class Chameleon(object):
+    ''' Create an object that disguises itself as the class of the object passed in '''
+    def __init__(self, obj):
+        self._type = type(obj)
+        self.__class__.__name__ = to_native(self._type)
+
+    def __type__(self):
+        return self._type
 
 def pct_to_int(value, num_items, min_value=1):
     '''
@@ -49,9 +59,9 @@ def data_object_shim(obj, exclude=None):
     """
     d = object_to_dict(obj, exclude)
 
-    def _noop():
-        pass
-    new = _noop
+    # FIXME: create generic method that returns 'unauthorized' error/msg for 'callable' attributes
+    new = Chameleon(obj)
     for k in d:
         setattr(new, k, d[k])
+
     return new
