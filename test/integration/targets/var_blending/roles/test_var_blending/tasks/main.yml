@@ -44,7 +44,7 @@
 
 - assert:
     that:
-      - var_undefined.undefined_variable == 'VARIABLE IS NOT DEFINED!'
+      - "'VARIABLE IS NOT DEFINED!' in var_undefined.undefined_variable"
       - same_value_as_var_name.same_value_as_var_name_var == 'same_value_as_var_name_var'
 
 - name: cleanup temporary template output
