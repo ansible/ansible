@@ -33,12 +33,6 @@ $IntegrityStreams = Get-AnsibleParam -obj $params -name "integrity_streams" -typ
 $result = @{
     changed = $false
 }
-if ($check_mode -or $diff_mode) {
-    $result += @{ 
-        change_log = @{
-        }
-    }
-}
 
 # Validate option values
 if ($Size -ne $null) {
@@ -191,6 +185,7 @@ function Create-Volume {
 # Rescan disks
 $null = Invoke-Expression '"rescan" | diskpart'
 
+# Search disk
 $ParamsDisk = @{
     DiskSize = $Size
     PartitionStyle = $FindPartitionStyle
@@ -198,8 +193,6 @@ $ParamsDisk = @{
     ReadOnly = $ReadOnly
     Number = $Number
 }
-
-# Search disk
 try {
     $disk = Search-Disk @ParamsDisk
 } catch {
@@ -217,6 +210,13 @@ if ($disk) {
         Fail-Json -obj $result -message "No disk could be found and selected with the passed option values"
 }
 
+if ($check_mode -or $diff_mode) {
+    $result += @{ 
+        change_log = @{
+        }
+    }
+}
+
 # Check and set operational status and read-only state
 $SetOnline = $false
 $SetWriteable = $false
@@ -229,6 +229,7 @@ if ($DPartStyle -ne "RAW") {
             try {
                 Set-OperationalStatus -Disk $disk
             } catch {
+                $result.Remove("change_log")
                 Fail-Json -obj $result -message "Failed to set the disk online: $($_.Exception.Message)"
             }
             if ($diff_mode) {
