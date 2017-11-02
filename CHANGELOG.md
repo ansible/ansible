@@ -128,6 +128,8 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/32192)
 * ini inventory format now correclty handles group creation w/o need for specific orders
   https://github.com/ansible/ansible/pull/32471
+* Fix for quoted paths in win_service
+  (https://github.com/ansible/ansible/issues/32368)
 
 <a id="2.4.1"></a>
 
