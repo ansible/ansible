@@ -54,7 +54,7 @@ options:
       description:
         - Select disk option.
         - Number of the disk which will be selected.
-        - If a number is defined the module will try to select the disk with this passed number.
+        - If a number is passed the module will try to select the disk with this number.
         - Passed value will be checked in the beginning of the module whether it is an int32 value.
         - If it is of type in64 the module will be canceled.
   partition_style_set:
