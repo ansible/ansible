@@ -15,15 +15,5 @@
     # On Ubuntu trusty, blkid is unable to identify filesystem smaller than 256Mo, see:
     # https://www.kernel.org/pub/linux/utils/util-linux/v2.21/v2.21-ChangeLog
     # https://anonscm.debian.org/cgit/collab-maint/pkg-util-linux.git/commit/?id=04f7020eadf31efc731558df92daa0a1c336c46c
-    - 'not (item.key == "btrfs" and (ansible_distribution == "Ubuntu" and ansible_distribution_release  == "trusty"))'
-  with_dict:
-    # key: fstype
-    #   fssize: size (Mo)
-    #   grow: True if resizefs is supported
-    ext4: {fssize: 5, grow: True}
-    ext4dev: {fssize: 10, grow: True}
-    ext3: {fssize: 10, grow: True}
-    ext2: {fssize: 10, grow: True}
-    xfs: {fssize: 20, grow: False}  # grow requires a mounted filesystem
-    btrfs: {fssize: 100, grow: False}  # grow not implemented
-    # untested: lvm, requires a block device
+    - 'not (item.key == "btrfs" and (ansible_distribution == "Ubuntu" and ansible_distribution_release == "trusty"))'
+  loop: "{{ lookup('dict', tested_filesystems) }}"
