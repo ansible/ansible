@@ -629,7 +629,7 @@ namespace Ansible
 
                 if (!dupResult && service_sids.Contains(account_sid))
                     throw new Win32Exception(lastError, "Failed to duplicate token for NT AUTHORITY\\SYSTEM");
-                else if (dupResult)
+                else if (dupResult && account_sid != "S-1-5-18")
                 {
                     if (ImpersonateLoggedOnUser(hSystemTokenDup))
                         impersonated = true;
