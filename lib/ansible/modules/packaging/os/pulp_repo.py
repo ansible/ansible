@@ -112,12 +112,12 @@ options:
     description:
       - Repo plugin type to use (i.e. C(rpm), C(docker)).
     default: rpm
-    version_added: "2.5"
   repoview:
     description:
       - Enables repoview of published repository to improve browsing experience
     required: false
     default: false
+    version_added: "2.5"
   serve_http:
     description:
       - Make the repo available over HTTP.
