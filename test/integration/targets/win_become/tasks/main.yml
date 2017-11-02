@@ -158,6 +158,30 @@
       that:
       - whoami_out.stdout_lines[0] == "nt authority\\local service"
 
+  # Test out Async on Windows Server 2012+
+  - name: get OS version
+    win_shell: if ([System.Environment]::OSVersion.Version -ge [Version]"6.2") { $true } else { $false }
+    register: os_version
+  
+  - name: test become + async on older hosts
+    vars: *become_vars
+    win_command: whoami
+    async: 10
+    register: whoami_out
+    ignore_errors: yes
+  
+  - name: verify older hosts failed with become + async
+    assert:
+      that:
+      - whoami_out|failed
+    when: os_version.stdout_lines[0] == "False"
+
+  - name: verify newer hosts worked with become + async
+    assert:
+      that:
+      - whoami_out|success
+    when: os_version.stdout_lines[0] == "True"
+
 # FUTURE: test raw + script become behavior once they're running under the exec wrapper again
 # FUTURE: add standalone playbook tests to include password prompting and play become keywords
 
