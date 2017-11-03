@@ -73,11 +73,22 @@ class IncludeRole(TaskInclude):
             myplay = self._parent._play
         else:
             myplay = play
+        variable_manager = self.get_variable_manager()
+        loader = variable_manager._loader
 
         ri = RoleInclude.load(self._role_name, play=myplay, variable_manager=variable_manager, loader=loader)
         ri.vars.update(self.vars)
 
         # build role
+        if self.vars:
+            v = self.vars.copy()
+            # bypass vars from include_role itself
+            for k in [
+                'name', 'private', 'allow_duplicates',
+                'defaults_from', 'tasks_from', 'vars_from'
+            ]:
+                v.pop(k, None)
+            ri.vars.update(v)
         actual_role = Role.load(ri, myplay, parent_role=self._parent_role, from_files=self._from_files)
         # proxy allow_duplicates attribute to role if explicitly set
         if self.allow_duplicates is not None:
@@ -93,6 +104,7 @@ class IncludeRole(TaskInclude):
         self._role = actual_role
         if myplay is not None:
             self._play = myplay
+            self._play.register_dynamic_role(self)
 
         # compile role with parent roles as dependencies to ensure they inherit
         # variables
@@ -157,6 +169,21 @@ class IncludeRole(TaskInclude):
     @property
     def is_loaded(self):
         return self._role is not None
+
+    def get_default_vars(self, dep_chain=None):
+        if not self.is_loaded:
+            return dict()
+        if dep_chain is None:
+            dep_chain = self.get_dep_chain()
+        return self._role.get_default_vars(dep_chain=dep_chain)
+
+    def get_vars(self, include_params=True):
+        ret = TaskInclude.get_vars(self, include_params=include_params)
+        if self.is_loaded:  # not yet loaded skip
+            ret.update(
+                self._role.get_vars(include_params=include_params)
+            )
+        return ret
 
     def get_include_params(self):
         v = super(IncludeRole, self).get_include_params()
