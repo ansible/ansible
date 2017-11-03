@@ -256,4 +256,4 @@
   assert:
     that:
       - test_script_removes_file_check_mode | changed
-      - create_file_stat.stat.exists
+      - remove_file_stat.stat.exists
