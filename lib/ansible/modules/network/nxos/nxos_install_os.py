@@ -136,15 +136,6 @@ from ansible.module_utils.nxos import load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
-from pprint import pprint
-
-
-def logit(data):
-    logFile = open('ilog', 'w')
-    pprint('\n^^^^^^^\n')
-    pprint(data, logFile)
-    pprint('\n^^^^^^^\n')
-
 
 def check_ansible_timer(module):
     '''Check Ansible Timer Values'''
@@ -401,7 +392,7 @@ def parse_show_version(data):
     version_data['version'] = ''
     version_data['error'] = False
     for x in version_data['raw']:
-        mo = re.search(r'(kickstart|system):\s+version\s+(\S+)', x)
+        mo = re.search(r'(kickstart|system|NXOS):\s+version\s+(\S+)', x)
         if mo:
             version_data['version'] = mo.group(2)
             continue
@@ -413,7 +404,6 @@ def parse_show_version(data):
 
 
 def check_mode_legacy(module, issu, image, kick=None):
-    logit('check_mode_legacy')
     """Some platforms/images/transports don't support the 'install all impact'
         command so we need to use a different method."""
     current = execute_show_command(module, 'show version', 'json')[0]
@@ -429,8 +419,8 @@ def check_mode_legacy(module, issu, image, kick=None):
     if target_image['error']:
         data['error'] = True
         data['raw'] = target_image['raw']
-    if current['kickstart_ver_str'] != target_image and not data['error']:
-        data['upgrade'] = True
+    if current['kickstart_ver_str'] != target_image['version'] and not data['error']:
+        data['upgrade_needed'] = True
         data['disruptive'] = True
         upgrade_msg = 'Switch upgraded: system: %s' % tsver
 
@@ -441,8 +431,8 @@ def check_mode_legacy(module, issu, image, kick=None):
         if target_kick['error']:
             data['error'] = True
             data['raw'] = target_kick['raw']
-        if current['kickstart_ver_str'] != target_kick and not data['error']:
-            data['upgrade'] = True
+        if current['kickstart_ver_str'] != target_kick['version'] and not data['error']:
+            data['upgrade_needed'] = True
             data['disruptive'] = True
             upgrade_msg = upgrade_msg + ' kickstart: %s' % tkver
 
@@ -452,7 +442,6 @@ def check_mode_legacy(module, issu, image, kick=None):
 
 def check_mode_nextgen(module, issu, image, kick=None):
     """Use the 'install all impact' command for check_mode"""
-    logit('check_mode_nextgen')
     opts = {'ignore_timeout': True}
     commands = build_install_cmd_set(issu, image, kick, 'impact')
     data = parse_show_install(load_config(module, commands, True, opts))
@@ -473,7 +462,6 @@ def check_install_in_progress(module, commands, opts):
     for attempt in range(20):
         data = parse_show_install(load_config(module, commands, True, opts))
         if data['install_in_progress']:
-            logit('Install in progress')
             sleep(1)
             continue
         break
@@ -482,7 +470,6 @@ def check_install_in_progress(module, commands, opts):
 
 def check_mode(module, issu, image, kick=None):
     """Check switch upgrade impact using 'show install all impact' command"""
-    logit('start show install impact')
     data = check_mode_nextgen(module, issu, image, kick)
     if data['backend_processing_error']:
         # We encountered an unrecoverable error in the attempt to get upgrade
@@ -494,26 +481,21 @@ def check_mode(module, issu, image, kick=None):
 
 def do_install_all(module, issu, image, kick=None):
     """Perform the switch upgrade using the 'install all' command"""
-    logit('start install all')
     impact_data = check_mode(module, issu, image, kick)
     if module.check_mode:
-        logit('Check mode set in playbook')
         # Check mode set in the playbook so just return the impact data.
         msg = '*** SWITCH WAS NOT UPGRADED: IMPACT DATA ONLY ***'
         impact_data['processed'].append(msg)
         return impact_data
     if impact_data['error']:
         # Check mode discovered an error so return with this info.
-        logit('error detected.. ending upgrade')
         return impact_data
     elif not impact_data['upgrade_needed']:
         # The switch is already upgraded.  Nothing more to do.
-        logit('switch is already upgraded.. nothing more to do')
         return impact_data
     else:
         # If we get here, check_mode returned no errors and the switch
         # needs to be upgraded.
-        logit('Check mode completed, starting actual upgrade')
         if impact_data['disruptive']:
             # Check mode indicated that ISSU is not possible so issue the
             # upgrade command without the non-disruptive flag.
@@ -527,7 +509,6 @@ def do_install_all(module, issu, image, kick=None):
         # Special case:  If we encounter a backend processing error at this
         # stage, then we consider the switch upgraded.
         if upgrade['backend_processing_error']:
-            logit('backend processing error during upgrade stage')
             upgrade['upgrade_succeeded'] = True
             upgrade['use_impact_data'] = True
 
@@ -564,7 +545,6 @@ def main():
     # This module will error out if the Ansible task timeout value is not
     # tuned high enough.
     check_ansible_timer(module)
-    logit('Provider data:\n%s' % module.params.get('provider'))
 
     global platform
     platform = get_platform(module)
@@ -583,10 +563,6 @@ def main():
         module.fail_json(msg=msg)
 
     install_result = do_install_all(module, issu, sif, kick=kif)
-    logit('Install Succeeded?: %s' % install_result['upgrade_succeeded'])
-    logit('Device Needed Upgrade: %s' % install_result['upgrade_needed'])
-    logit('Upgrade Errored?: %s' % install_result['error'])
-
     if install_result['error']:
         msg = "Failed to upgrade device using image "
         if kif:
