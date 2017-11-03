@@ -24,6 +24,8 @@ import copy
 import inspect
 import traceback
 
+import pdb
+
 from os.path import expanduser
 
 from ansible.module_utils.basic import AnsibleModule
@@ -726,16 +728,6 @@ class AzureRMModuleBase(object):
         client.config.add_user_agent(ANSIBLE_USER_AGENT)
 
         return client
-
-    def register_namespace(self, namespace):
-        self.log('Register the namespace for the subscription if not registered yet')
-
-        try:
-            provider = self.rm_client.providers.register(namespace)
-            return True
-        except CloudError as e:
-            self.log('Failed to register the namespace: {0}'.format(str(e)))
-            return False
 
     @property
     def storage_client(self):
