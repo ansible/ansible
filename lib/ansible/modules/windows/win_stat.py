@@ -17,7 +17,7 @@
 # this is a windows documentation stub, actual code lives in the .ps1
 # file of the same name
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
@@ -28,7 +28,8 @@ module: win_stat
 version_added: "1.7"
 short_description: returns information about a Windows file
 description:
-     - Returns information about a Windows file
+     - Returns information about a Windows file.
+     - For non-Windows targets, use the M(stat) module instead.
 options:
     path:
         description:
@@ -59,6 +60,8 @@ options:
         default: sha1
         choices: ['md5', 'sha1', 'sha256', 'sha384', 'sha512']
         version_added: "2.3"
+notes:
+     - For non-Windows targets, use the M(stat) module instead.
 author: "Chris Church (@cchurch)"
 '''
 
@@ -167,6 +170,11 @@ stat:
             sample: True
         isreadonly:
             description: if the path is read only or not
+            returned: success, path exists
+            type: boolean
+            sample: True
+        isreg:
+            description: if the path is a regular file
             returned: success, path exists
             type: boolean
             sample: True

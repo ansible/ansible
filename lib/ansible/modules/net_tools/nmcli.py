@@ -2,24 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2015, Chris Long <alcamie@gmail.com> <chlong@redhat.com>
-#
-# This file is a module for Ansible that interacts with Network Manager
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.    See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.    If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -491,9 +480,7 @@ EXAMPLES='''
 #     - 9 nmcli and NetworkManager versions mismatch
 #     - 10 Connection, device, or access point does not exist.
 '''
-# import ansible.module_utils.basic
-import os
-import sys
+
 HAVE_DBUS=False
 try:
     import dbus
@@ -569,7 +556,7 @@ class Nmcli(object):
         self.type=module.params['type']
         self.ip4=module.params['ip4']
         self.gw4=module.params['gw4']
-        self.dns4=module.params['dns4']
+        self.dns4=' '.join(module.params['dns4'])
         self.ip6=module.params['ip6']
         self.gw6=module.params['gw6']
         self.dns6=module.params['dns6']
@@ -607,7 +594,7 @@ class Nmcli(object):
             for setting in secrets:
                 for key in secrets[setting]:
                     config[setting_name][key]=secrets[setting][key]
-        except Exception as e:
+        except:
             pass
 
     def dict_to_string(self, d):
@@ -639,7 +626,7 @@ class Nmcli(object):
         for setting_name in config:
             setting_list.append(self.dict_to_string(config[setting_name]))
         return setting_list
-        # print ""
+        # print("")
 
     def bool_to_string(self, boolean):
         if boolean:
@@ -823,6 +810,9 @@ class Nmcli(object):
             cmd.append(self.ifname)
         elif self.conn_name is not None:
             cmd.append(self.conn_name)
+        if self.mode is not None:
+            cmd.append('mode')
+            cmd.append(self.mode)
         if self.ip4 is not None:
             cmd.append('ip4')
             cmd.append(self.ip4)
@@ -838,9 +828,6 @@ class Nmcli(object):
         if self.autoconnect is not None:
             cmd.append('autoconnect')
             cmd.append(self.bool_to_string(self.autoconnect))
-        if self.mode is not None:
-            cmd.append('mode')
-            cmd.append(self.mode)
         if self.miimon is not None:
             cmd.append('miimon')
             cmd.append(self.miimon)
@@ -1105,7 +1092,7 @@ def main():
             type=dict(required=False, default=None, choices=['ethernet', 'team', 'team-slave', 'bond', 'bond-slave', 'bridge', 'vlan'], type='str'),
             ip4=dict(required=False, default=None, type='str'),
             gw4=dict(required=False, default=None, type='str'),
-            dns4=dict(required=False, default=None, type='str'),
+            dns4=dict(required=False, default=None, type='list'),
             ip6=dict(required=False, default=None, type='str'),
             gw6=dict(required=False, default=None, type='str'),
             dns6=dict(required=False, default=None, type='str'),
@@ -1168,8 +1155,8 @@ def main():
                 module.exit_json(changed=True)
             (rc, out, err)=nmcli.down_connection()
             (rc, out, err)=nmcli.remove_connection()
-        if rc!=0:
-            module.fail_json(name =('No Connection named %s exists' % nmcli.conn_name), msg=err, rc=rc)
+            if rc!=0:
+                module.fail_json(name =('No Connection named %s exists' % nmcli.conn_name), msg=err, rc=rc)
 
     elif nmcli.state=='present':
         if nmcli.connection_exists():
@@ -1197,6 +1184,7 @@ def main():
         result['stderr']=err
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

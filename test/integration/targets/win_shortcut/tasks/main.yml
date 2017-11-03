@@ -1,157 +1,34 @@
-- name: Clean up Ansible website link
-  win_file:
-    path: '%UserProfile%\Desktop\Ansible website.url'
-    state: absent
+# Test code for the file module.
+# (c) 2017, Dag Wieers <dag@wieers.com>
 
-- name: Add Ansible website link on the desktop
-  win_shortcut:
-    src: 'https://ansible.com/'
-    dest: '%UserProfile%\Desktop\Ansible website.url'
-    state: present
-  register: ansible_website_link_add
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-- name: Check there was a change
-  assert:
-    that:
-    - ansible_website_link_add.changed == true
+- name: Clean slate
+  include: clean.yml
 
-- name: Add Ansible website link on the desktop again
-  win_shortcut:
-    src: 'https://ansible.com/'
-    dest: '%UserProfile%\Desktop\Ansible website.url'
-    state: present
-  register: ansible_website_link_add_again
+- name: Test in normal mode
+  include: tests.yml
+  vars:
+    in_check_mode: no
 
-- name: Check there was no change
-  assert:
-    that:
-    - ansible_website_link_add_again.changed == false
+- name: Clean slate
+  include: clean.yml
 
-- name: Remove link
-  win_shortcut:
-    dest: '%UserProfile%\Desktop\Ansible website.url'
-    state: absent
-  register: ansible_website_link_remove
-
-- name: Check there was a change
-  assert:
-    that:
-    - ansible_website_link_remove.changed == true
-
-- name: Remove link again
-  win_shortcut:
-    dest: '%UserProfile%\Desktop\Ansible website.url'
-    state: absent
-  register: ansible_website_link_remove_again
-
-- name: Check there was no change
-  assert:
-    that:
-    - ansible_website_link_remove_again.changed == false
-
-- name: Clean up Registry Editor shortcut
-  win_file:
-    path: '%Public%\Desktop\Registry Editor.lnk'
-    state: absent
-
-- name: Add a regedit shortcut on the desktop
-  win_shortcut:
-    description: "Registry Editor"
-    src: regedit.exe
-    dest: '%Public%\Desktop\Registry Editor.lnk'
-    state: present
-  register: regedit_shortcut_add
-
-- name: Check there was a change
-  assert:
-    that:
-    - regedit_shortcut_add.changed == true
-
-- name: Add a regedit shortcut on the desktop again
-  win_shortcut:
-    description: "Registry Editor"
-    src: regedit.exe
-    dest: '%Public%\Desktop\Registry Editor.lnk'
-    state: present
-  register: regedit_shortcut_add_again
-
-- name: Check there was no change
-  assert:
-    that:
-    - regedit_shortcut_add_again.changed == false
-
-- name: Update a regedit shortcut on the desktop
-  win_shortcut:
-    description: "Registry Editor"
-    src: C:\BogusPath\regedit.exe
-    dest: '%Public%\Desktop\Registry Editor.lnk'
-    state: present
-  register: regedit_shortcut_update
-
-- name: Check there was a change
-  assert:
-    that:
-    - regedit_shortcut_update.changed == true
-
-- name: Update a regedit shortcut on the desktop again
-  win_shortcut:
-    description: "Registry Editor"
-    src: C:\BogusPath\regedit.exe
-    dest: '%Public%\Desktop\Registry Editor.lnk'
-    state: present
-  register: regedit_shortcut_update_again
-
-- name: Check there was no change
-  assert:
-    that:
-    - regedit_shortcut_update_again.changed == false
-
-- name: Add an (explicit) icon
-  win_shortcut:
-    description: "Registry Editor"
-    src: C:\Windows\regedit.exe
-    dest: '%Public%\Desktop\Registry Editor.lnk'
-    icon: 'C:\Windows\regedit.exe,0'
-    state: present
-  register: regedit_shortcut_add_icon
-
-- name: Check there was a change
-  assert:
-    that:
-    - regedit_shortcut_add_icon.changed == true
-
-- name: Add an (explicit) icon again
-  win_shortcut:
-    description: "Registry Editor"
-    src: C:\Windows\regedit.exe
-    dest: '%Public%\Desktop\Registry Editor.lnk'
-    icon: 'C:\Windows\regedit.exe,0'
-    state: present
-  register: regedit_shortcut_add_icon_again
-
-- name: Check there was no change
-  assert:
-    that:
-    - regedit_shortcut_add_icon_again.changed == false
-
-- name: Remove shortcut
-  win_shortcut:
-    dest: '%Public%\Desktop\Registry Editor.lnk'
-    state: absent
-  register: regedit_shortcut_remove
-
-- name: Check there was a change
-  assert:
-    that:
-    - regedit_shortcut_remove.changed == true
-
-- name: Remove shortcut again
-  win_shortcut:
-    dest: '%Public%\Desktop\Registry Editor.lnk'
-    state: absent
-  register: regedit_shortcut_remove_again
-
-- name: Check there was no change
-  assert:
-    that:
-    - regedit_shortcut_remove_again.changed == false
+- name: Test in check-mode
+  include: tests.yml
+  vars:
+    in_check_mode: yes
+  check_mode: yes

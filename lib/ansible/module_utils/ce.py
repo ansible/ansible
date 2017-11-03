@@ -29,12 +29,15 @@
 #
 
 import re
+import socket
+import sys
+import traceback
 
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.network_common import to_list, ComplexList
 from ansible.module_utils.connection import exec_command
-from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.six import iteritems
+from ansible.module_utils._text import to_native
 
 
 try:
@@ -50,7 +53,7 @@ except ImportError:
 _DEVICE_CLI_CONNECTION = None
 _DEVICE_NC_CONNECTION = None
 
-ce_argument_spec = {
+ce_provider_spec = {
     'host': dict(),
     'port': dict(type='int'),
     'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
@@ -58,17 +61,26 @@ ce_argument_spec = {
     'use_ssl': dict(type='bool'),
     'validate_certs': dict(type='bool'),
     'timeout': dict(type='int'),
-    'provider': dict(type='dict', no_log=True),
-    'transport': dict(choices=['cli'])
+    'transport': dict(default='cli', choices=['cli']),
 }
+ce_argument_spec = {
+    'provider': dict(type='dict', options=ce_provider_spec),
+}
+ce_top_spec = {
+    'host': dict(removed_in_version=2.9),
+    'port': dict(removed_in_version=2.9, type='int'),
+    'username': dict(removed_in_version=2.9),
+    'password': dict(removed_in_version=2.9, no_log=True),
+    'use_ssl': dict(removed_in_version=2.9, type='bool'),
+    'validate_certs': dict(removed_in_version=2.9, type='bool'),
+    'timeout': dict(removed_in_version=2.9, type='int'),
+    'transport': dict(removed_in_version=2.9, choices=['cli']),
+}
+ce_argument_spec.update(ce_top_spec)
 
 
 def check_args(module, warnings):
-    provider = module.params['provider'] or {}
-    for key in ce_argument_spec:
-        if key not in ['provider', 'transport'] and module.params[key]:
-            warnings.append('argument %s has been deprecated and will be '
-                            'removed in a future version' % key)
+    pass
 
 
 def load_params(module):
@@ -115,9 +127,11 @@ class Cli:
 
         return exec_command(self._module, command)
 
-    def get_config(self, flags=[]):
+    def get_config(self, flags=None):
         """Retrieves the current config from the device or cache
         """
+        flags = [] if flags is None else flags
+
         cmd = 'display current-configuration '
         cmd += ' '.join(flags)
         cmd = cmd.strip()
@@ -222,7 +236,9 @@ def to_command(module, commands):
     return commands
 
 
-def get_config(module, flags=[]):
+def get_config(module, flags=None):
+    flags = [] if flags is None else flags
+
     conn = get_connection(module)
     return conn.get_config(flags)
 
@@ -321,9 +337,9 @@ class Netconf(object):
                                       timeout=30)
         except AuthenticationError:
             self._module.fail_json(msg='Error: Authentication failed while connecting to device.')
-        except Exception:
-            err = get_exception()
-            self._module.fail_json(msg='Error: %s' % str(err).replace("\r\n", ""))
+        except Exception as err:
+            self._module.fail_json(msg='Error: %s' % to_native(err).replace("\r\n", ""),
+                                   exception=traceback.format_exc())
             raise
 
     def __del__(self):
@@ -337,9 +353,8 @@ class Netconf(object):
 
         try:
             con_obj = self.mc.edit_config(target='running', config=xml_str)
-        except RPCError:
-            err = get_exception()
-            self._module.fail_json(msg='Error: %s' % str(err).replace("\r\n", ""))
+        except RPCError as err:
+            self._module.fail_json(msg='Error: %s' % to_native(err).replace("\r\n", ""))
 
         return con_obj.xml
 
@@ -349,9 +364,8 @@ class Netconf(object):
         con_obj = None
         try:
             con_obj = self.mc.get(filter=xml_str)
-        except RPCError:
-            err = get_exception()
-            self._module.fail_json(msg='Error: %s' % str(err).replace("\r\n", ""))
+        except RPCError as err:
+            self._module.fail_json(msg='Error: %s' % to_native(err).replace("\r\n", ""))
 
         set_id = get_nc_set_id(con_obj.xml)
         if not set_id:
@@ -366,9 +380,8 @@ class Netconf(object):
             # get next data
             try:
                 con_obj_next = self.mc.dispatch(xsd_fetch)
-            except RPCError:
-                err = get_exception()
-                self._module.fail_json(msg='Error: %s' % str(err).replace("\r\n", ""))
+            except RPCError as err:
+                self._module.fail_json(msg='Error: %s' % to_native(err).replace("\r\n", ""))
 
             if "<data/>" in con_obj_next.xml:
                 break
@@ -386,9 +399,8 @@ class Netconf(object):
 
         try:
             con_obj = self.mc.action(action=xml_str)
-        except RPCError:
-            err = get_exception()
-            self._module.fail_json(msg='Error: %s' % str(err).replace("\r\n", ""))
+        except RPCError as err:
+            self._module.fail_json(msg='Error: %s' % to_native(err).replace("\r\n", ""))
         except TimeoutExpiredError:
             raise
 
@@ -401,9 +413,8 @@ class Netconf(object):
 
         try:
             con_obj = self.mc.cli(command=xml_str)
-        except RPCError:
-            err = get_exception()
-            self._module.fail_json(msg='Error: %s' % str(err).replace("\r\n", ""))
+        except RPCError as err:
+            self._module.fail_json(msg='Error: %s' % to_native(err).replace("\r\n", ""))
 
         return con_obj.xml
 
@@ -443,3 +454,21 @@ def execute_nc_cli(module, xml_str):
 
     conn = get_nc_connection(module)
     return conn.execute_cli(xml_str)
+
+
+def check_ip_addr(ipaddr):
+    """ check ip address, Supports IPv4 and IPv6 """
+
+    if not ipaddr or '\x00' in ipaddr:
+        return False
+
+    try:
+        res = socket.getaddrinfo(ipaddr, 0, socket.AF_UNSPEC,
+                                 socket.SOCK_STREAM,
+                                 0, socket.AI_NUMERICHOST)
+        return bool(res)
+    except socket.gaierror:
+        err = sys.exc_info()[1]
+        if err.args[0] == socket.EAI_NONAME:
+            return False
+        raise

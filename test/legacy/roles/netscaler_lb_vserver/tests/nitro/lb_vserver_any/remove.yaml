@@ -1,0 +1,12 @@
+---
+
+- name: remove http lb vserver
+  register: result
+  check_mode: "{{ check_mode }}"
+  delegate_to: localhost
+  netscaler_lb_vserver:
+    nitro_user: "{{nitro_user}}"
+    nitro_pass: "{{nitro_pass}}"
+    nsip: "{{nsip}}"
+    state: absent
+    name: lb-vserver-4

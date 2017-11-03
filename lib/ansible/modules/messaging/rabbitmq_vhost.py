@@ -2,24 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2013, Chatham Financial <oss@chathamfinancial.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -64,6 +53,9 @@ EXAMPLES = '''
     name: /test
     state: present
 '''
+
+from ansible.module_utils.basic import AnsibleModule
+
 
 class RabbitMqVhost(object):
     def __init__(self, module, name, tracing, node):
@@ -131,26 +123,22 @@ def main():
     tracing = module.params['tracing']
     state = module.params['state']
     node = module.params['node']
-
+    result = dict(changed=False, name=name, state=state)
     rabbitmq_vhost = RabbitMqVhost(module, name, tracing, node)
 
-    changed = False
     if rabbitmq_vhost.get():
         if state == 'absent':
             rabbitmq_vhost.delete()
-            changed = True
+            result['changed'] = True
         else:
             if rabbitmq_vhost.set_tracing():
-                changed = True
+                result['changed'] = True
     elif state == 'present':
         rabbitmq_vhost.add()
         rabbitmq_vhost.set_tracing()
-        changed = True
+        result['changed'] = True
 
-    module.exit_json(changed=changed, name=name, state=state)
-
-# import module snippets
-from ansible.module_utils.basic import *
+    module.exit_json(**result)
 
 if __name__ == '__main__':
     main()

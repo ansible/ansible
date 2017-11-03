@@ -2,23 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2017, Steven Bambling <smbambling@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -111,7 +101,6 @@ try:
 except ImportError:
     import simplejson as json
 
-# import module snippets
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
 
@@ -275,7 +264,7 @@ def main():
             check=dict(required=False),
             creator=dict(required=False),
             expire=dict(required=False),
-            expire_on_resolve=dict(type=bool, required=False),
+            expire_on_resolve=dict(type='bool', required=False),
             reason=dict(required=False),
             state=dict(default='present', choices=['present', 'absent']),
             subscription=dict(required=True),

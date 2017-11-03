@@ -3,8 +3,6 @@ Introduction To Ad-Hoc Commands
 
 .. contents:: Topics
 
-.. highlight:: bash
-
 The following examples show how to use `/usr/bin/ansible` for running
 ad hoc tasks. 
 
@@ -70,7 +68,7 @@ Use of a passwordless setup makes things easier to automate, but it's not requir
 It is also possible to become a user other than root using
 ``--become-user``::
 
-    $ ansible atlanta -a "/usr/bin/foo" -u username --become-user otheruser [--ask-become-pass]
+    $ ansible atlanta -a "/usr/bin/foo" -u username --become --become-user otheruser [--ask-become-pass]
 
 .. note::
 
@@ -195,7 +193,7 @@ Deploying From Source Control
 
 Deploy your webapp straight from git::
 
-    $ ansible webservers -m git -a "repo=git://foo.example.org/repo.git dest=/srv/myapp version=HEAD"
+    $ ansible webservers -m git -a "repo=https://foo.example.org/repo.git dest=/srv/myapp version=HEAD"
 
 Since Ansible modules can notify change handlers it is possible to
 tell Ansible to run specific tasks when the code is updated, such as

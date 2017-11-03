@@ -1,0 +1,18 @@
+---
+
+- name: Setup basic server
+  delegate_to: localhost
+  register: result
+  check_mode: "{{ check_mode }}"
+  netscaler_server:
+    nitro_user: "{{nitro_user}}"
+    nitro_pass: "{{nitro_pass}}"
+    nsip: "{{nsip}}"
+
+    state: present
+
+    name: test-server-domain
+    domain: example.com
+    translationip: 192.168.1.1
+    translationmask: 255.255.255.0
+    domainresolveretry: 10

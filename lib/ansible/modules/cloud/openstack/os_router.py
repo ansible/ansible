@@ -1,19 +1,13 @@
 #!/usr/bin/python
 #
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -76,7 +70,7 @@ options:
      default: None
    availability_zone:
      description:
-       - Ignored. Present for backwards compatability
+       - Ignored. Present for backwards compatibility
      required: false
 requirements: ["shade"]
 '''
@@ -172,13 +166,29 @@ router:
             type: list
 '''
 
+from distutils.version import StrictVersion
+
 try:
     import shade
     HAS_SHADE = True
 except ImportError:
     HAS_SHADE = False
 
-from distutils.version import StrictVersion
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+
+
+ROUTER_INTERFACE_OWNERS = set([
+    'network:router_interface',
+    'network:router_interface_distributed',
+    'network:ha_router_replicated_interface'
+])
+
+
+def _router_internal_interfaces(cloud, router):
+    for port in cloud.list_router_interfaces(router, 'internal'):
+        if port['device_owner'] in ROUTER_INTERFACE_OWNERS:
+            yield port
 
 
 def _needs_update(cloud, module, router, network, internal_subnet_ids):
@@ -221,7 +231,7 @@ def _needs_update(cloud, module, router, network, internal_subnet_ids):
     # check internal interfaces
     if module.params['interfaces']:
         existing_subnet_ids = []
-        for port in cloud.list_router_interfaces(router, 'internal'):
+        for port in _router_internal_interfaces(cloud, router):
             if 'fixed_ips' in port:
                 for fixed_ip in port['fixed_ips']:
                     existing_subnet_ids.append(fixed_ip['subnet_id'])
@@ -377,7 +387,7 @@ def main():
                     # just detach all existing internal interfaces and attach the new.
                     elif internal_ids:
                         router = updated_router
-                        ports = cloud.list_router_interfaces(router, 'internal')
+                        ports = _router_internal_interfaces(cloud, router)
                         for port in ports:
                             cloud.remove_router_interface(router, port_id=port['id'])
                         for internal_subnet_id in internal_ids:
@@ -394,7 +404,7 @@ def main():
             else:
                 # We need to detach all internal interfaces on a router before
                 # we will be allowed to delete it.
-                ports = cloud.list_router_interfaces(router, 'internal')
+                ports = _router_internal_interfaces(cloud, router)
                 router_id = router['id']
                 for port in ports:
                     cloud.remove_router_interface(router, port_id=port['id'])
@@ -405,8 +415,5 @@ def main():
         module.fail_json(msg=str(e))
 
 
-# this is magic, see lib/ansible/module_common.py
-from ansible.module_utils.basic import *
-from ansible.module_utils.openstack import *
 if __name__ == '__main__':
     main()

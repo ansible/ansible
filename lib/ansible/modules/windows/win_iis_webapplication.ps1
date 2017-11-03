@@ -20,100 +20,82 @@
 # WANT_JSON
 # POWERSHELL_COMMON
 
-$params = Parse-Args $args;
+$params = Parse-Args $args -supports_check_mode $true
+$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
-# Name parameter
-$name = Get-Attr $params "name" $FALSE;
-If ($name -eq $FALSE) {
-    Fail-Json (New-Object psobject) "missing required argument: name";
+$name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
+$site = Get-AnsibleParam -obj $params -name "site" -type "str" -failifempty $true
+$state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "absent","present"
+$physical_path = Get-AnsibleParam -obj $params -name "physical_path" -type "str" -aliases "path"
+$application_pool = Get-AnsibleParam -obj $params -name "application_pool" -type "str"
+
+$result = @{
+  application_pool = $application_pool
+  changed = $false
+  physical_path = $physical_path
 }
-
-# Site
-$site = Get-Attr $params "site" $FALSE;
-If ($site -eq $FALSE) {
-    Fail-Json (New-Object psobject) "missing required argument: site";
-}
-
-# State parameter
-$state = Get-Attr $params "state" "present";
-$state.ToString().ToLower();
-If (($state -ne 'present') -and ($state -ne 'absent')) {
-  Fail-Json $result "state is '$state'; must be 'present' or 'absent'"
-}
-
-# Path parameter
-$physical_path = Get-Attr $params "physical_path" $FALSE;
-
-# Application Pool Parameter
-$application_pool = Get-Attr $params "application_pool" $FALSE;
-
 
 # Ensure WebAdministration module is loaded
 if ((Get-Module "WebAdministration" -ErrorAction SilentlyContinue) -eq $null) {
   Import-Module WebAdministration
 }
 
-# Result
-$result = New-Object psobject @{
-  application = New-Object psobject
-  changed = $false
-};
-
 # Application info
 $application = Get-WebApplication -Site $site -Name $name
 
 try {
   # Add application
-  If(($state -eq 'present') -and (-not $application)) {
-    If ($physical_path -eq $FALSE) {
-      Fail-Json (New-Object psobject) "missing required arguments: physical_path"
+  if (($state -eq 'present') -and (-not $application)) {
+    if (-not $physical_path) {
+      Fail-Json $result "missing required arguments: path"
     }
-    If (-not (Test-Path $physical_path)) {
-      Fail-Json (New-Object psobject) "specified folder must already exist: physical_path"
+    if (-not (Test-Path -Path $physical_path)) {
+      Fail-Json $result "specified folder must already exist: path"
     }
 
-    $application_parameters = New-Object psobject @{
-      Site = $site
+    $application_parameters = @{
       Name = $name
       PhysicalPath = $physical_path
-    };
+      Site = $site
+    }
 
-    If ($application_pool) {
+    if ($application_pool) {
       $application_parameters.ApplicationPool = $application_pool
     }
 
-    $application = New-WebApplication @application_parameters -Force
+    if (-not $check_mode) {
+        $application = New-WebApplication @application_parameters -Force
+    }
     $result.changed = $true
-
   }
 
   # Remove application
   if ($state -eq 'absent' -and $application) {
-    $application = Remove-WebApplication -Site $site -Name $name
+    $application = Remove-WebApplication -Site $site -Name $name -WhatIf:$check_mode
     $result.changed = $true
   }
 
   $application = Get-WebApplication -Site $site -Name $name
-  If($application) {
+  if ($application) {
 
     # Change Physical Path if needed
-    if($physical_path) {
-      If (-not (Test-Path $physical_path)) {
-        Fail-Json (New-Object psobject) "specified folder must already exist: physical_path"
+    if ($physical_path) {
+      if (-not (Test-Path -Path $physical_path)) {
+        Fail-Json $result "specified folder must already exist: path"
       }
 
       $app_folder = Get-Item $application.PhysicalPath
       $folder = Get-Item $physical_path
-      If($folder.FullName -ne $app_folder.FullName) {
-        Set-ItemProperty "IIS:\Sites\$($site)\$($name)" -name physicalPath -value $physical_path
+      if ($folder.FullName -ne $app_folder.FullName) {
+        Set-ItemProperty "IIS:\Sites\$($site)\$($name)" -name physicalPath -value $physical_path -WhatIf:$check_mode
         $result.changed = $true
       }
     }
 
     # Change Application Pool if needed
-    if($application_pool) {
-      If($application_pool -ne $application.applicationPool) {
-        Set-ItemProperty "IIS:\Sites\$($site)\$($name)" -name applicationPool -value $application_pool
+    if ($application_pool) {
+      if ($application_pool -ne $application.applicationPool) {
+        Set-ItemProperty "IIS:\Sites\$($site)\$($name)" -name applicationPool -value $application_pool -WhatIf:$check_mode
         $result.changed = $true
       }
     }
@@ -122,11 +104,11 @@ try {
   Fail-Json $result $_.Exception.Message
 }
 
-# Result
+# When in check-mode or on removal, this may fail
 $application = Get-WebApplication -Site $site -Name $name
-$result.application = New-Object psobject @{
-  PhysicalPath = $application.PhysicalPath
-  ApplicationPool = $application.applicationPool
+if ($application) {
+  $result.physical_path = $application.PhysicalPath
+  $result.application_pool = $application.ApplicationPool
 }
 
 Exit-Json $result

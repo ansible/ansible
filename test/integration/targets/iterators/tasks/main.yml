@@ -216,10 +216,10 @@
     - "{{ output_dir + '/bar1' }}"
 
 - name: set expected
-  set_fact: first_expected="{{ output_dir | expanduser | realpath + '/foo1' }}"
+  set_fact: first_expected="{{ output_dir | expanduser + '/foo1' }}"
 
 - name: set unexpected
-  set_fact: first_unexpected="{{ output_dir | expanduser | realpath + '/bar1' }}"
+  set_fact: first_unexpected="{{ output_dir | expanduser + '/bar1' }}"
 
 - name: verify with_first_found results
   assert:

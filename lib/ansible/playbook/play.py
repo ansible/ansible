@@ -55,18 +55,13 @@ class Play(Base, Taggable, Become):
 
     # =================================================================================
     _name = FieldAttribute(isa='string', default='', always_post_validate=True)
+    _hosts = FieldAttribute(isa='list', required=True, listof=string_types, always_post_validate=True)
 
-    # TODO: generalize connection
-    _accelerate = FieldAttribute(isa='bool', default=False, always_post_validate=True)
-    _accelerate_ipv6 = FieldAttribute(isa='bool', default=False, always_post_validate=True)
-    _accelerate_port = FieldAttribute(isa='int', default=5099, always_post_validate=True)
-
-    # Connection
+    # Facts
     _fact_path = FieldAttribute(isa='string', default=None)
     _gather_facts = FieldAttribute(isa='bool', default=None, always_post_validate=True)
     _gather_subset = FieldAttribute(isa='barelist', default=None, always_post_validate=True)
     _gather_timeout = FieldAttribute(isa='int', default=None, always_post_validate=True)
-    _hosts = FieldAttribute(isa='list', required=True, listof=string_types, always_post_validate=True)
 
     # Variable Attributes
     _vars_files = FieldAttribute(isa='list', default=[], priority=99)
@@ -121,7 +116,7 @@ class Play(Base, Taggable, Become):
         Adjusts play datastructure to cleanup old/legacy items
         '''
 
-        assert isinstance(ds, dict)
+        assert isinstance(ds, dict), 'while preprocessing data (%s), ds should be a dict but was a %s' % (ds, type(ds))
 
         # The use of 'user' in the Play datastructure was deprecated to
         # line up with the same change for Tasks, due to the fact that
@@ -145,8 +140,8 @@ class Play(Base, Taggable, Become):
         '''
         try:
             return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
-        except AssertionError:
-            raise AnsibleParserError("A malformed block was encountered.", obj=self._ds)
+        except AssertionError as e:
+            raise AnsibleParserError("A malformed block was encountered while loading tasks", obj=self._ds, orig_exc=e)
 
     def _load_pre_tasks(self, attr, ds):
         '''
@@ -155,8 +150,8 @@ class Play(Base, Taggable, Become):
         '''
         try:
             return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
-        except AssertionError:
-            raise AnsibleParserError("A malformed block was encountered.", obj=self._ds)
+        except AssertionError as e:
+            raise AnsibleParserError("A malformed block was encountered while loading pre_tasks", obj=self._ds, orig_exc=e)
 
     def _load_post_tasks(self, attr, ds):
         '''
@@ -165,8 +160,8 @@ class Play(Base, Taggable, Become):
         '''
         try:
             return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
-        except AssertionError:
-            raise AnsibleParserError("A malformed block was encountered.", obj=self._ds)
+        except AssertionError as e:
+            raise AnsibleParserError("A malformed block was encountered while loading post_tasks", obj=self._ds, orig_exc=e)
 
     def _load_handlers(self, attr, ds):
         '''
@@ -175,8 +170,8 @@ class Play(Base, Taggable, Become):
         '''
         try:
             return load_list_of_blocks(ds=ds, play=self, use_handlers=True, variable_manager=self._variable_manager, loader=self._loader)
-        except AssertionError:
-            raise AnsibleParserError("A malformed block was encountered.", obj=self._ds)
+        except AssertionError as e:
+            raise AnsibleParserError("A malformed block was encountered while loading handlers", obj=self._ds, orig_exc=e)
 
     def _load_roles(self, attr, ds):
         '''
@@ -189,8 +184,8 @@ class Play(Base, Taggable, Become):
 
         try:
             role_includes = load_list_of_roles(ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
-        except AssertionError:
-            raise AnsibleParserError("A malformed role declaration was encountered.", obj=self._ds)
+        except AssertionError as e:
+            raise AnsibleParserError("A malformed role declaration was encountered.", obj=self._ds, orig_exc=e)
 
         roles = []
         for ri in role_includes:
@@ -282,6 +277,8 @@ class Play(Base, Taggable, Become):
         return self.vars.copy()
 
     def get_vars_files(self):
+        if self.vars_files is None:
+            return []
         return self.vars_files
 
     def get_handlers(self):

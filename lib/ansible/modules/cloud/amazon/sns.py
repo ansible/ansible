@@ -2,23 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2014, Michael J. Schultz <mjschultz@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -129,14 +119,8 @@ EXAMPLES = """
   delegate_to: localhost
 """
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, connect_to_aws, get_aws_connection_info
-from ansible.module_utils.pycompat24 import get_exception
+import json
+import traceback
 
 try:
     import boto
@@ -145,6 +129,10 @@ try:
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import ec2_argument_spec, connect_to_aws, get_aws_connection_info
+from ansible.module_utils._text import to_native
 
 
 def arn_topic_lookup(connection, short_topic):
@@ -196,9 +184,8 @@ def main():
         module.fail_json(msg="region must be specified")
     try:
         connection = connect_to_aws(boto.sns, region, **aws_connect_params)
-    except boto.exception.NoAuthHandlerFound:
-        e = get_exception()
-        module.fail_json(msg=str(e))
+    except boto.exception.NoAuthHandlerFound as e:
+        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
     if not message_structure == 'string' and message_attributes:
         module.fail_json(msg="when specifying message_attributes, the message_structure must be set to 'string'; otherwise the attributes will not be sent.")
@@ -207,7 +194,7 @@ def main():
                              "the 'json' message_structure.")
 
     # .publish() takes full ARN topic id, but I'm lazy and type shortnames
-    # so do a lookup (topics cannot contain ':', so thats the decider)
+    # so do a lookup (topics cannot contain ':', so that's the decider)
     if ':' in topic:
         arn_topic = topic
     else:
@@ -237,11 +224,11 @@ def main():
         connection.publish(topic=arn_topic, subject=subject,
                            message_structure=message_structure, message=json_msg,
                            message_attributes=message_attributes)
-    except boto.exception.BotoServerError:
-        e = get_exception()
-        module.fail_json(msg=str(e))
+    except boto.exception.BotoServerError as e:
+        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
     module.exit_json(msg="OK")
+
 
 if __name__ == '__main__':
     main()

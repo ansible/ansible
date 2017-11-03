@@ -23,19 +23,19 @@ import fnmatch
 
 from ansible import constants as C
 from ansible.module_utils.six import iteritems
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.playbook.block import Block
 from ansible.playbook.task import Task
 
-
-boolean = C.mk_boolean
-
-__all__ = ['PlayIterator']
 
 try:
     from __main__ import display
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
+
+
+__all__ = ['PlayIterator']
 
 
 class HostState:
@@ -203,7 +203,9 @@ class PlayIterator:
 
         self._host_states = {}
         start_at_matched = False
-        for host in inventory.get_hosts(self._play.hosts):
+        batch = inventory.get_hosts(self._play.hosts)
+        self.batch_size = len(batch)
+        for host in batch:
             self._host_states[host.name] = HostState(blocks=self._blocks)
             # if we're looking to start at a specific task, iterate through
             # the tasks for this host until we find the specified task
@@ -300,10 +302,10 @@ class PlayIterator:
                     # NOT explicitly set gather_facts to False.
 
                     gathering = C.DEFAULT_GATHERING
-                    implied = self._play.gather_facts is None or boolean(self._play.gather_facts)
+                    implied = self._play.gather_facts is None or boolean(self._play.gather_facts, strict=False)
 
                     if (gathering == 'implicit' and implied) or \
-                       (gathering == 'explicit' and boolean(self._play.gather_facts)) or \
+                       (gathering == 'explicit' and boolean(self._play.gather_facts, strict=False)) or \
                        (gathering == 'smart' and implied and not (self._variable_manager._fact_cache.get(host.name, {}).get('module_setup', False))):
                         # The setup block is always self._blocks[0], as we inject it
                         # during the play compilation in __init__ above.
@@ -331,7 +333,7 @@ class PlayIterator:
 
                 # First, we check for a child task state that is not failed, and if we
                 # have one recurse into it for the next task. If we're done with the child
-                # state, we clear it and drop back to geting the next task from the list.
+                # state, we clear it and drop back to getting the next task from the list.
                 if state.tasks_child_state:
                     (state.tasks_child_state, task) = self._get_next_task_from_state(state.tasks_child_state, host=host, peek=peek, in_child=True)
                     if self._check_failed_state(state.tasks_child_state):
@@ -370,6 +372,9 @@ class PlayIterator:
             elif state.run_state == self.ITERATING_RESCUE:
                 # The process here is identical to ITERATING_TASKS, except instead
                 # we move into the always portion of the block.
+                if host.name in self._play._removed_hosts:
+                    self._play._removed_hosts.remove(host.name)
+
                 if state.rescue_child_state:
                     (state.rescue_child_state, task) = self._get_next_task_from_state(state.rescue_child_state, host=host, peek=peek, in_child=True)
                     if self._check_failed_state(state.rescue_child_state):

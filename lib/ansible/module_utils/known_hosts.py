@@ -30,10 +30,7 @@ import os
 import hmac
 import re
 
-try:
-    import urlparse
-except ImportError:
-    import urllib.parse as urlparse
+from ansible.module_utils.six.moves.urllib.parse import urlparse
 
 try:
     from hashlib import sha1
@@ -41,26 +38,6 @@ except ImportError:
     import sha as sha1
 
 HASHED_KEY_MAGIC = "|1|"
-
-
-def add_git_host_key(module, url, accept_hostkey=True, create_dir=True):
-
-    """ idempotently add a git url hostkey """
-
-    if is_ssh_url(url):
-
-        fqdn, port = get_fqdn_and_port(url)
-
-        if fqdn:
-            known_host = check_hostkey(module, fqdn)
-            if not known_host:
-                if accept_hostkey:
-                    rc, out, err = add_host_key(module, fqdn, port=port, create_dir=create_dir)
-                    if rc != 0:
-                        module.fail_json(msg="failed to add %s hostkey: %s" % (fqdn, out + err))
-                else:
-                    module.fail_json(msg="%s has an unknown hostkey. Set accept_hostkey to True "
-                                     "or manually add the hostkey prior to running the git module" % fqdn)
 
 
 def is_ssh_url(url):
@@ -95,7 +72,7 @@ def get_fqdn_and_port(repo_url):
             fqdn = repo_url.split("/")[0]
     elif "://" in repo_url:
         # this should be something we can parse with urlparse
-        parts = urlparse.urlparse(repo_url)
+        parts = urlparse(repo_url)
         # parts[1] will be empty on python2.4 on ssh:// or git:// urls, so
         # ensure we actually have a parts[1] before continuing.
         if parts[1] != '':

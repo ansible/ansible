@@ -2,21 +2,13 @@
 
 # Copyright (c) 2015 Hewlett-Packard Development Company, L.P.
 # Copyright (c) 2013, Benno Joy <benno@ansible.com>
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -78,7 +70,7 @@ options:
      default: present
    availability_zone:
      description:
-       - Ignored. Present for backwards compatability
+       - Ignored. Present for backwards compatibility
      required: false
 requirements: ["shade"]
 '''
@@ -181,6 +173,9 @@ try:
 except ImportError:
     HAS_SHADE = False
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+
 
 def _ports_match(protocol, module_min, module_max, rule_min, rule_max):
     """
@@ -208,12 +203,17 @@ def _ports_match(protocol, module_min, module_max, rule_min, rule_max):
         if module_max and int(module_max) == -1:
             module_max = None
 
-    # Check if user is supplying None values for full TCP/UDP port range.
-    if protocol in ['tcp', 'udp'] and module_min is None and module_max is None:
-        if (rule_min and int(rule_min) == 1
-                and rule_max and int(rule_max) == 65535):
-            # (None, None) == (1, 65535)
-            return True
+    # Check if the user is supplying -1 or None values for full TPC/UDP port range.
+    if protocol in ['tcp', 'udp'] or protocol is None:
+        if module_min and module_max and int(module_min) == int(module_max) == -1:
+            module_min = None
+            module_max = None
+
+        if ((module_min is None and module_max is None) and
+                (rule_min and int(rule_min) == 1 and
+                    rule_max and int(rule_max) == 65535)):
+                    # (None, None) == (1, 65535)
+                    return True
 
     # Sanity check to make sure we don't have type comparison issues.
     if module_min:
@@ -348,9 +348,6 @@ def main():
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
-# this is magic, see lib/ansible/module_common.py
-from ansible.module_utils.basic import *
-from ansible.module_utils.openstack import *
 
 if __name__ == '__main__':
     main()

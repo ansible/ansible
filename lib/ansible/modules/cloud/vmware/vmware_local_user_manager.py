@@ -3,23 +3,14 @@
 
 # Copyright IBM Corp. 2016
 # Author(s): Andreas Nafpliotis <nafpliot@de.ibm.com>
+#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -78,8 +69,12 @@ try:
 except ImportError:
     HAS_PYVMOMI = False
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.vmware import HAS_PYVMOMI, connect_to_api, vmware_argument_spec
+
 
 class VMwareLocalUserManager(object):
+
     def __init__(self, module):
         self.module = module
         self.content = connect_to_api(self.module)
@@ -109,14 +104,12 @@ class VMwareLocalUserManager(object):
         except Exception as e:
             self.module.fail_json(msg=str(e))
 
-
     def check_local_user_manager_state(self):
         user_account = self.find_user_account()
         if not user_account:
             return 'absent'
         else:
             return 'present'
-
 
     def find_user_account(self):
         searchStr = self.local_user_name
@@ -126,7 +119,6 @@ class VMwareLocalUserManager(object):
         user_account = self.content.userDirectory.RetrieveUserGroups(None, searchStr, None, None, exactMatch, findUsers, findGroups)
         return user_account
 
-
     def create_account_spec(self):
         account_spec = vim.host.LocalAccountManager.AccountSpecification()
         account_spec.id = self.local_user_name
@@ -134,12 +126,11 @@ class VMwareLocalUserManager(object):
         account_spec.description = self.local_user_description
         return account_spec
 
-
     def state_create_user(self):
         account_spec = self.create_account_spec()
 
         try:
-            task = self.content.accountManager.CreateUser(account_spec)
+            self.content.accountManager.CreateUser(account_spec)
             self.module.exit_json(changed=True)
         except vmodl.RuntimeFault as runtime_fault:
             self.module.fail_json(msg=runtime_fault.msg)
@@ -150,27 +141,24 @@ class VMwareLocalUserManager(object):
         account_spec = self.create_account_spec()
 
         try:
-            task = self.content.accountManager.UpdateUser(account_spec)
+            self.content.accountManager.UpdateUser(account_spec)
             self.module.exit_json(changed=True)
         except vmodl.RuntimeFault as runtime_fault:
             self.module.fail_json(msg=runtime_fault.msg)
         except vmodl.MethodFault as method_fault:
             self.module.fail_json(msg=method_fault.msg)
-
 
     def state_remove_user(self):
         try:
-            task = self.content.accountManager.RemoveUser(self.local_user_name)
+            self.content.accountManager.RemoveUser(self.local_user_name)
             self.module.exit_json(changed=True)
         except vmodl.RuntimeFault as runtime_fault:
             self.module.fail_json(msg=runtime_fault.msg)
         except vmodl.MethodFault as method_fault:
             self.module.fail_json(msg=method_fault.msg)
 
-
     def state_exit_unchanged(self):
         self.module.exit_json(changed=False)
-
 
 
 def main():
@@ -189,8 +177,6 @@ def main():
     vmware_local_user_manager = VMwareLocalUserManager(module)
     vmware_local_user_manager.process_state()
 
-from ansible.module_utils.vmware import *
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

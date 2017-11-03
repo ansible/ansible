@@ -16,11 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {
-    'metadata_version': '1.0',
-    'status': ['preview'],
-    'supported_by': 'community'
-}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = '''
@@ -33,6 +31,7 @@ description:
     - Manages physical attributes of interfaces of NX-OS switches.
 author: Jason Edelman (@jedelman8)
 notes:
+  - Tested against NXOSv 7.3.(0)D1(1) on VIRL
   - This module is also used to create logical interfaces such as
     svis and loopbacks.
   - Be cautious of platform specific idiosyncrasies. For example,
@@ -123,16 +122,14 @@ EXAMPLES = '''
     - svi
     - nve
 
-- name: Admin up all ethernet interfaces
+- name: Admin up all loopback interfaces
   nxos_interface:
-    interface: ethernet
-    host: 68.170.147.165
+    interface: loopback 0-1023
     admin_state: up
 
-- name: Admin down ALL interfaces (physical and logical)
+- name: Admin down all loopback interfaces
   nxos_interface:
-    interface: all
-    host: 68.170.147.165
+    interface: looback 0-1023
     admin_state: down
 '''
 
@@ -144,11 +141,9 @@ commands:
     sample: ["interface port-channel101", "shutdown"]
 '''
 
-from ansible.module_utils.nxos import get_config, load_config, run_commands
+from ansible.module_utils.nxos import load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-
-
 
 
 def is_default_interface(interface, module):
@@ -165,7 +160,7 @@ def is_default_interface(interface, module):
 
     try:
         body = execute_show_command(command, module)[0]
-    except IndexError:
+    except (IndexError, TypeError) as e:
         body = ''
 
     if body:
@@ -219,22 +214,21 @@ def get_manual_interface_attributes(interface, module):
     """
 
     if get_interface_type(interface) == 'svi':
-        command = 'show interface {0}'.format(interface)
+        command = 'show run interface {0} all'.format(interface)
         try:
-            body = run_commands(module, [command])[0]
+            # body = run_commands(module, [command])[0]
+            body = execute_show_command(command, module)[0]
         except IndexError:
             return None
-
         if body:
             command_list = body.split('\n')
             desc = None
-            admin_state = 'up'
+            admin_state = 'down'
             for each in command_list:
-                if 'Description:' in each:
-                    line = each.split('Description:')
-                    desc = line[1].strip().split('MTU')[0].strip()
-                elif 'Administratively down' in each:
-                    admin_state = 'down'
+                if 'description' in each:
+                    desc = each.lstrip().split("description")[1].lstrip()
+                elif 'no shutdown' in each:
+                    admin_state = 'up'
 
             return dict(description=desc, admin_state=admin_state)
     else:
@@ -282,9 +276,10 @@ def get_interface(intf, module):
         body = execute_show_command(command, module)[0]
     except IndexError:
         body = []
-
     if body:
         interface_table = body['TABLE_interface']['ROW_interface']
+        if interface_table.get('eth_mode') == 'fex-fabric':
+            module.fail_json(msg='nxos_interface does not support interfaces with mode "fex-fabric"')
         intf_type = get_interface_type(intf)
         if intf_type in ['portchannel', 'ethernet']:
             if not interface_table.get('eth_mode'):
@@ -347,8 +342,6 @@ def get_interface(intf, module):
                 temp_dict['description'] = "None"
             interface.update(temp_dict)
 
-    interface['type'] = intf_type
-
     return interface
 
 
@@ -386,14 +379,15 @@ def get_interfaces_dict(module):
         'portchannel': [],
         'nve': [],
         'unknown': []
-        }
+    }
 
-    interface_list = body.get('TABLE_interface')['ROW_interface']
-    for index in interface_list:
-        intf = index['interface']
-        intf_type = get_interface_type(intf)
+    if body:
+        interface_list = body['TABLE_interface']['ROW_interface']
+        for index in interface_list:
+            intf = index['interface']
+            intf_type = get_interface_type(intf)
 
-        interfaces[intf_type].append(intf)
+            interfaces[intf_type].append(intf)
 
     return interfaces
 
@@ -529,7 +523,6 @@ def get_proposed(existing, normalized_interface, args):
 
 
 def smart_existing(module, intf_type, normalized_interface):
-
     # 7K BUG MAY CAUSE THIS TO FAIL
 
     all_interfaces = get_interfaces_dict(module)
@@ -537,21 +530,31 @@ def smart_existing(module, intf_type, normalized_interface):
         existing = get_interface(normalized_interface, module)
         is_default = is_default_interface(normalized_interface, module)
     else:
-        if intf_type == 'ethernet':
-            module.fail_json(msg='Invalid Ethernet interface provided.',
-                             interface=normalized_interface)
-        elif intf_type in ['loopback', 'portchannel', 'svi', 'nve']:
+        if (intf_type in ['loopback', 'portchannel', 'svi', 'nve'] or
+                intf_type == 'ethernet' and "." in normalized_interface):
             existing = {}
             is_default = 'DNE'
+        elif intf_type == 'ethernet':
+            module.fail_json(msg='Invalid Ethernet interface provided.',
+                             interface=normalized_interface)
     return existing, is_default
 
 
 def execute_show_command(command, module):
-    if module.params['transport'] == 'cli':
-        command += ' | json'
-    cmds = [command]
+    if 'show run' not in command:
+        output = 'json'
+    else:
+        output = 'text'
+    cmds = [{
+        'command': command,
+        'output': output,
+    }]
+
     body = run_commands(module, cmds)
-    return body
+    if body and "Invalid" in body[0]:
+        return []
+    else:
+        return body
 
 
 def flatten_list(command_lists):
@@ -584,10 +587,7 @@ def main():
         interface_type=dict(required=False, choices=['loopback', 'portchannel', 'svi', 'nve']),
         ip_forward=dict(required=False, choices=['enable', 'disable']),
         fabric_forwarding_anycast_gateway=dict(required=False, type='bool'),
-        state=dict(choices=['absent', 'present', 'default'], default='present', required=False),
-        include_defaults=dict(default=True),
-        config=dict(),
-        save=dict(type='bool', default=False)
+        state=dict(choices=['absent', 'present', 'default'], default='present', required=False)
     )
 
     argument_spec.update(nxos_argument_spec)
@@ -627,9 +627,13 @@ def main():
             module.fail_json(msg='The ip_forward and '
                                  'fabric_forwarding_anycast_gateway features '
                                  ' are only available for SVIs.')
+
         args = dict(interface=interface, admin_state=admin_state,
                     description=description, mode=mode, ip_forward=ip_forward,
                     fabric_forwarding_anycast_gateway=fabric_forwarding_anycast_gateway)
+        if (normalized_interface.startswith('Eth') or normalized_interface.startswith('po'))\
+           and "." in normalized_interface:
+            args["mode"] = None
 
         if intf_type == 'unknown':
             module.fail_json(msg='unknown interface type found-1',
@@ -650,10 +654,12 @@ def main():
                 if is_default != 'DNE':
                     cmds = ['no interface {0}'.format(normalized_interface)]
                     commands.append(cmds)
-            elif intf_type in ['ethernet']:
-                if is_default is False:
+            elif intf_type in ['ethernet'] and is_default is False:
+                if "." in normalized_interface:
+                    cmds = ['no interface {0}'.format(normalized_interface)]
+                else:
                     cmds = ['default interface {0}'.format(normalized_interface)]
-                    commands.append(cmds)
+                commands.append(cmds)
         elif state == 'present':
             if not existing:
                 cmds = get_interface_config_commands(proposed, normalized_interface, existing)
@@ -687,7 +693,7 @@ def main():
             load_config(module, cmds)
             results['changed'] = True
             if module.params['interface']:
-                if delta.get('mode'): # or delta.get('admin_state'):
+                if delta.get('mode'):
                     # if the mode changes from L2 to L3, the admin state
                     # seems to change after the API call, so adding a second API
                     # call to ensure it's in the desired state.
@@ -699,8 +705,6 @@ def main():
                     cmds.extend(cmds2)
                 end_state, is_default = smart_existing(module, intf_type,
                                                        normalized_interface)
-            else:
-                end_state = get_interfaces_dict(module)[interface_type]
             cmds = [cmd for cmd in cmds if cmd != 'configure']
 
     results['commands'] = cmds

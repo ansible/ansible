@@ -9,6 +9,9 @@ fi
 if [ ! -f /usr/bin/pip ] && [ -f /usr/bin/pip3 ]; then
     ln -s /usr/bin/pip3 /usr/bin/pip
 fi
+if [ ! -f /usr/bin/virtualenv ] && [ -f /usr/bin/virtualenv-3 ]; then
+    ln -s /usr/bin/virtualenv-3 /usr/bin/virtualenv
+fi
 
 # Improve prompts on remote host for interactive use.
 cat << EOF > ~/.bashrc

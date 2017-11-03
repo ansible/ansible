@@ -26,14 +26,18 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 from contextlib import contextmanager
-from xml.etree.ElementTree import Element, SubElement, fromstring, tostring
 
 from ansible.module_utils.connection import exec_command
+
+try:
+    from lxml.etree import Element, SubElement, fromstring, tostring
+except ImportError:
+    from xml.etree.ElementTree import Element, SubElement, fromstring, tostring
 
 NS_MAP = {'nc': "urn:ietf:params:xml:ns:netconf:base:1.0"}
 
 
-def send_request(module, obj, check_rc=True):
+def send_request(module, obj, check_rc=True, ignore_warning=True):
     request = tostring(obj)
     rc, out, err = exec_command(module, request)
     if rc != 0 and check_rc:
@@ -50,7 +54,7 @@ def send_request(module, obj, check_rc=True):
             message = rpc_error.find('./nc:error-message', NS_MAP).text
             severity = rpc_error.find('./nc:error-severity', NS_MAP).text
 
-            if severity == 'warning':
+            if severity == 'warning' and ignore_warning:
                 warnings.append(message)
             else:
                 module.fail_json(msg=str(err))

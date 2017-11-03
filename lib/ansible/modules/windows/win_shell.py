@@ -19,7 +19,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
 
@@ -33,6 +33,7 @@ description:
      - The C(win_shell) module takes the command name followed by a list of space-delimited arguments.
        It is similar to the M(win_command) module, but runs
        the command via a shell (defaults to PowerShell) on the target host.
+     - For non-Windows targets, use the M(shell) module instead.
 options:
   free_form:
     description:
@@ -52,6 +53,10 @@ options:
     description:
       - change the shell used to execute the command (eg, C(cmd)). The target shell must accept a C(/c) parameter followed by the raw command line to be
         executed.
+  stdin:
+    description:
+    - Set the stdin of the command directly to the specified value.
+    version_added: '2.5'
 notes:
    -  If you want to run an executable securely and predictably, it may be
       better to use the M(win_command) module instead. Best practices when writing
@@ -60,8 +65,10 @@ notes:
    -  WinRM will not return from a command execution until all child processes created have exited.
       Thus, it is not possible to use C(win_shell) to spawn long-running child or background processes.
       Consider creating a Windows service for managing background processes.
+   - For non-Windows targets, use the M(shell) module instead.
+   - See also M(win_command), M(raw)
 author:
-    - Matt Davis
+    - Matt Davis (@nitzmahone)
 '''
 
 EXAMPLES = r'''
@@ -85,6 +92,19 @@ EXAMPLES = r'''
   args:
     executable: cmd
   register: homedir_out
+
+- name: run multi-lined shell commands
+  win_shell: |
+    $value = Test-Path -Path C:\temp
+    if ($value) {
+        Remove-Item -Path C:\temp -Force
+    }
+    New-Item -Path C:\temp -ItemType Directory
+
+- name: retrieve the input based on stdin
+  win_shell: '$string = [Console]::In.ReadToEnd(); Write-Output $string.Trim()'
+  args:
+    stdin: Input message
 '''
 
 RETURN = r'''

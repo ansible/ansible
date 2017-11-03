@@ -26,11 +26,19 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 import re
+import hashlib
 
 from ansible.module_utils.six.moves import zip
+from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.network_common import to_list
 
 DEFAULT_COMMENT_TOKENS = ['#', '!', '/*', '*/', 'echo']
+
+DEFAULT_IGNORE_LINES_RE = set([
+    re.compile("Using \d+ out of \d+ bytes"),
+    re.compile("Building configuration"),
+    re.compile("Current configuration : \d+ bytes")
+])
 
 
 class ConfigLine(object):
@@ -81,7 +89,7 @@ class ConfigLine(object):
         return '\n'.join(config)
 
     @property
-    def has_chilren(self):
+    def has_children(self):
         return len(self._children) > 0
 
     @property
@@ -96,6 +104,9 @@ class ConfigLine(object):
 def ignore_line(text, tokens=None):
     for item in (tokens or DEFAULT_COMMENT_TOKENS):
         if text.startswith(item):
+            return True
+    for regex in DEFAULT_IGNORE_LINES_RE:
+        if regex.match(text):
             return True
 
 
@@ -141,9 +152,16 @@ def dumps(objects, output='block', comments=False):
 
 class NetworkConfig(object):
 
-    def __init__(self, indent=1, contents=None):
+    def __init__(self, indent=1, contents=None, ignore_lines=None):
         self._indent = indent
         self._items = list()
+        self._config_text = None
+
+        if ignore_lines:
+            for item in ignore_lines:
+                if not isinstance(item, re._pattern_type):
+                    item = re.compile(item)
+                DEFAULT_IGNORE_LINES_RE.add(item)
 
         if contents:
             self.load(contents)
@@ -151,6 +169,16 @@ class NetworkConfig(object):
     @property
     def items(self):
         return self._items
+
+    @property
+    def config_text(self):
+        return self._config_text
+
+    @property
+    def sha1(self):
+        sha1 = hashlib.sha1()
+        sha1.update(to_bytes(str(self), errors='surrogate_or_strict'))
+        return sha1.digest()
 
     def __getitem__(self, key):
         for line in self:
@@ -168,6 +196,7 @@ class NetworkConfig(object):
         return len(self._items)
 
     def load(self, s):
+        self._config_text = s
         self._items = self.parse(s)
 
     def loadfp(self, fp):
@@ -176,6 +205,7 @@ class NetworkConfig(object):
     def parse(self, lines, comment_tokens=None):
         toplevel = re.compile(r'\S')
         childline = re.compile(r'^\s*(.+)$')
+        entry_reg = re.compile(r'([{};])')
 
         ancestors = list()
         config = list()
@@ -183,8 +213,8 @@ class NetworkConfig(object):
         curlevel = 0
         prevlevel = 0
 
-        for linenum, line in enumerate(str(lines).split('\n')):
-            text = str(re.sub(r'([{};])', '', line)).strip()
+        for linenum, line in enumerate(to_native(lines, errors='surrogate_or_strict').split('\n')):
+            text = entry_reg.sub('', line).strip()
 
             cfg = ConfigLine(line)
 

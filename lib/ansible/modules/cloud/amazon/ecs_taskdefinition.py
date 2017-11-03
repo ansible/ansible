@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -129,6 +129,7 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import boto3_conn, camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils._text import to_text
 
 class EcsTaskManager:
     """Handles ECS Tasks"""
@@ -240,6 +241,10 @@ def main():
     task_to_describe = None
     task_mgr = EcsTaskManager(module)
     results = dict(changed=False)
+
+    for container in module.params.get('containers', []):
+        for environment in container.get('environment', []):
+            environment['value'] = to_text(environment['value'])
 
     if module.params['state'] == 'present':
         if 'containers' not in module.params or not module.params['containers']:
@@ -353,10 +358,6 @@ def main():
             if not module.check_mode:
                 # Doesn't exist. create it.
                 volumes = module.params.get('volumes', []) or []
-                for container in module.params['containers']:
-                    if 'environment' in container:
-                        for environment in container['environment']:
-                            environment['value'] = str(environment['value'])
                 results['taskdefinition'] = task_mgr.register_task(module.params['family'],
                                                                    module.params['task_role_arn'],
                                                                    module.params['network_mode'],

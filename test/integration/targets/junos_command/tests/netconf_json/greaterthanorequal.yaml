@@ -5,10 +5,10 @@
   junos_command:
     commands:
       - show version
-      - show interfaces fxp0
+      - show interfaces lo0
     format: json
     wait_for:
-      - "result[1]['interface-information'][0]['physical-interface'][0]['mtu'][0]['data'] ge 1514"
+      - "result[1]['interface-information'][0]['physical-interface'][0]['local-index'][0]['data'] ge 6"
     provider: "{{ netconf }}"
   register: result
 
@@ -22,10 +22,10 @@
   junos_command:
     commands:
       - show version
-      - show interfaces fxp0
+      - show interfaces lo0
     format: json
     wait_for:
-      - "result[1]['interface-information'][0]['physical-interface'][0]['mtu'][0]['data'] >= 1514"
+      - "result[1]['interface-information'][0]['physical-interface'][0]['local-index'][0]['data'] >= 6"
     provider: "{{ netconf }}"
   register: result
 

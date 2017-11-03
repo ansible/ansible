@@ -2,24 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2014, Kevin Carter <kevin.carter@rackspace.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -431,7 +420,13 @@ lxc_container:
             sample: True
 """
 
+import os
+import os.path
 import re
+import shutil
+import subprocess
+import tempfile
+import time
 
 try:
     import lxc
@@ -439,6 +434,11 @@ except ImportError:
     HAS_LXC = False
 else:
     HAS_LXC = True
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE, BOOLEANS_TRUE
+from ansible.module_utils.six.moves import xrange
+from ansible.module_utils._text import to_text, to_bytes
 
 
 # LXC_COMPRESSION_MAP is a map of available compression types when creating
@@ -478,7 +478,15 @@ LXC_COMMAND_MAP = {
         }
     },
     'clone': {
-        'variables': {
+        'variables-lxc-copy': {
+            'backing_store': '--backingstorage',
+            'lxc_path': '--lxcpath',
+            'fs_size': '--fssize',
+            'name': '--name',
+            'clone_name': '--newname'
+        },
+        # lxc-clone is deprecated in favor of lxc-copy
+        'variables-lxc-clone': {
             'backing_store': '--backingstore',
             'lxc_path': '--lxcpath',
             'fs_size': '--fssize',
@@ -562,15 +570,10 @@ def create_script(command):
     :type command: ``str``
     """
 
-    import os
-    import os.path as path
-    import subprocess
-    import tempfile
-
     (fd, script_file) = tempfile.mkstemp(prefix='lxc-attach-script')
     f = os.fdopen(fd, 'wb')
     try:
-        f.write(ATTACH_TEMPLATE % {'container_command': command})
+        f.write(to_bytes(ATTACH_TEMPLATE % {'container_command': command}, errors='surrogate_or_strict'))
         f.flush()
     finally:
         f.close()
@@ -666,8 +669,7 @@ class LxcContainerManagement(object):
             build_command.append(
                 '%s %s' % (key, value)
             )
-        else:
-            return build_command
+        return build_command
 
     def _get_vars(self, variables):
         """Return a dict of all variables as found within the module.
@@ -682,13 +684,12 @@ class LxcContainerManagement(object):
             variables.pop(v, None)
 
         return_dict = dict()
-        false_values = [None, ''] + BOOLEANS_FALSE
+        false_values = BOOLEANS_FALSE.union([None, ''])
         for k, v in variables.items():
             _var = self.module.params.get(k)
             if _var not in false_values:
                 return_dict[v] = _var
-        else:
-            return return_dict
+        return return_dict
 
     def _run_command(self, build_command, unsafe_shell=False):
         """Return information from running an Ansible Command.
@@ -722,7 +723,7 @@ class LxcContainerManagement(object):
 
         container_config_file = self.container.config_file_name
         with open(container_config_file, 'rb') as f:
-            container_config = f.readlines()
+            container_config = to_text(f.read(), errors='surrogate_or_strict').splitlines()
 
         # Note used ast literal_eval because AnsibleModule does not provide for
         # adequate dictionary parsing.
@@ -763,7 +764,7 @@ class LxcContainerManagement(object):
                 self.container.stop()
 
             with open(container_config_file, 'wb') as f:
-                f.writelines(container_config)
+                f.writelines([to_bytes(line, errors='surrogate_or_strict') for line in container_config])
 
             self.state_change = True
             if container_state == 'running':
@@ -794,13 +795,20 @@ class LxcContainerManagement(object):
             self.state_change = True
             self.container.stop()
 
+        # lxc-clone is deprecated in favor of lxc-copy
+        clone_vars = 'variables-lxc-copy'
+        clone_cmd = self.module.get_bin_path('lxc-copy')
+        if not clone_cmd:
+            clone_vars = 'variables-lxc-clone'
+            clone_cmd = self.module.get_bin_path('lxc-clone', True)
+
         build_command = [
-            self.module.get_bin_path('lxc-clone', True),
+            clone_cmd,
         ]
 
         build_command = self._add_variables(
             variables_dict=self._get_vars(
-                variables=LXC_COMMAND_MAP['clone']['variables']
+                variables=LXC_COMMAND_MAP['clone'][clone_vars]
             ),
             build_command=build_command
         )
@@ -816,7 +824,7 @@ class LxcContainerManagement(object):
 
         rc, return_data, err = self._run_command(build_command)
         if rc != 0:
-            message = "Failed executing lxc-clone."
+            message = "Failed executing %s." % os.path.basename(clone_cmd)
             self.failure(
                 err=err, rc=rc, msg=message, command=' '.join(
                     build_command
@@ -966,16 +974,15 @@ class LxcContainerManagement(object):
                 time.sleep(1)
             else:
                 return True
-        else:
-            self.failure(
-                lxc_container=self._container_data(),
-                error='Failed to start container'
-                      ' [ %s ]' % self.container_name,
-                rc=1,
-                msg='The container [ %s ] failed to start. Check to lxc is'
-                    ' available and that the container is in a functional'
-                    ' state.' % self.container_name
-            )
+        self.failure(
+            lxc_container=self._container_data(),
+            error='Failed to start container'
+                  ' [ %s ]' % self.container_name,
+            rc=1,
+            msg='The container [ %s ] failed to start. Check to lxc is'
+                ' available and that the container is in a functional'
+                ' state.' % self.container_name
+        )
 
     def _check_archive(self):
         """Create a compressed archive of a container.
@@ -1761,7 +1768,5 @@ def main():
     lxc_manage.run()
 
 
-# import module bits
-from ansible.module_utils.basic import *
 if __name__ == '__main__':
     main()

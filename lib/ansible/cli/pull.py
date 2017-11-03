@@ -31,7 +31,7 @@ import time
 from ansible.cli import CLI
 from ansible.errors import AnsibleOptionsError
 from ansible.module_utils._text import to_native
-from ansible.plugins import module_loader
+from ansible.plugins.loader import module_loader
 from ansible.utils.cmd_functions import run_cmd
 
 try:
@@ -66,6 +66,20 @@ class PullCLI(CLI):
                                  'This can be a relative path within the checkout. By default, Ansible will'
                                  "look for a playbook based on the host's fully-qualified domain name,"
                                  'on the host hostname and finally a playbook named *local.yml*.', }
+
+    SKIP_INVENTORY_DEFAULTS = True
+
+    def _get_inv_cli(self):
+
+        inv_opts = ''
+        if getattr(self.options, 'inventory'):
+            for inv in self.options.inventory:
+                if isinstance(inv, list):
+                    inv_opts += " -i '%s' " % ','.join(inv)
+                elif ',' in inv or os.path.exists(inv):
+                    inv_opts += ' -i %s ' % inv
+
+        return inv_opts
 
     def parse(self):
         ''' create an options parser for bin/ansible '''
@@ -107,9 +121,8 @@ class PullCLI(CLI):
                                help='modified files in the working repository will be discarded')
         self.parser.add_option('--track-subs', dest='tracksubs', default=False, action='store_true',
                                help='submodules will track the latest changes. This is equivalent to specifying the --remote flag to git submodule update')
-
-        # for pull we don't want a default
-        self.parser.set_defaults(inventory=None)
+        self.parser.add_option("--check", default=False, dest='check', action='store_true',
+                               help="don't make any changes; instead, try to predict some of the changes that may occur")
 
         super(PullCLI, self).parse()
 
@@ -118,6 +131,9 @@ class PullCLI(CLI):
             # use a hostname dependent directory, in case of $HOME on nfs
             self.options.dest = os.path.join('~/.ansible/pull', hostname)
         self.options.dest = os.path.expandvars(os.path.expanduser(self.options.dest))
+
+        if os.path.exists(self.options.dest) and not os.path.isdir(self.options.dest):
+            raise AnsibleOptionsError("%s is not a valid or accessible directory." % self.options.dest)
 
         if self.options.sleep:
             try:
@@ -156,15 +172,9 @@ class PullCLI(CLI):
 
         # Attempt to use the inventory passed in as an argument
         # It might not yet have been downloaded so use localhost as default
-        inv_opts = ''
-        if getattr(self.options, 'inventory'):
-            for inv in self.options.inventory:
-                if isinstance(inv, list):
-                    inv_opts += " -i '%s' " % ','.join(inv)
-                elif ',' in inv or os.path.exists(inv):
-                    inv_opts += ' -i %s ' % inv
-        else:
-            inv_opts = "-i 'localhost,'"
+        inv_opts = self._get_inv_cli()
+        if not inv_opts:
+            inv_opts = " -i localhost, "
 
         # FIXME: enable more repo modules hg/svn?
         if self.options.module_name == 'git':
@@ -226,10 +236,10 @@ class PullCLI(CLI):
 
         # Build playbook command
         cmd = '%s/ansible-playbook %s %s' % (bin_path, base_opts, playbook)
-        if self.options.vault_password_file:
-            cmd += " --vault-password-file=%s" % self.options.vault_password_file
-        if inv_opts:
-            cmd += ' %s' % inv_opts
+        if self.options.vault_password_files:
+            for vault_password_file in self.options.vault_password_files:
+                cmd += " --vault-password-file=%s" % vault_password_file
+
         for ev in self.options.extra_vars:
             cmd += ' -e "%s"' % ev
         if self.options.ask_sudo_pass or self.options.ask_su_pass or self.options.become_ask_pass:
@@ -242,8 +252,15 @@ class PullCLI(CLI):
             cmd += ' -l "%s"' % self.options.subset
         else:
             cmd += ' -l "%s"' % limit_opts
+        if self.options.check:
+            cmd += ' -C'
 
         os.chdir(self.options.dest)
+
+        # redo inventory options as new files might exist now
+        inv_opts = self._get_inv_cli()
+        if inv_opts:
+            cmd += inv_opts
 
         # RUN THE PLAYBOOK COMMAND
         display.debug("running ansible-playbook to do actual work")

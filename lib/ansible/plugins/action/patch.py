@@ -20,9 +20,9 @@ __metaclass__ = type
 
 import os
 
-from ansible.constants import mk_boolean as boolean
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 
 
@@ -35,7 +35,7 @@ class ActionModule(ActionBase):
         result = super(ActionModule, self).run(tmp, task_vars)
 
         src = self._task.args.get('src', None)
-        remote_src = boolean(self._task.args.get('remote_src', 'no'))
+        remote_src = boolean(self._task.args.get('remote_src', 'no'), strict=False)
 
         if src is None:
             result['failed'] = True

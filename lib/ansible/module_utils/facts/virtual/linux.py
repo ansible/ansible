@@ -55,7 +55,7 @@ class LinuxVirtual(Virtual):
                     virtual_facts['virtualization_role'] = 'guest'
                     return virtual_facts
 
-        if os.path.exists('/proc/vz'):
+        if os.path.exists('/proc/vz') and not os.path.exists('/proc/lve'):
             virtual_facts['virtualization_type'] = 'openvz'
             if os.path.exists('/proc/bc'):
                 virtual_facts['virtualization_role'] = 'host'
@@ -92,7 +92,7 @@ class LinuxVirtual(Virtual):
             virtual_facts['virtualization_role'] = 'guest'
             return virtual_facts
 
-        if product_name == 'VMware Virtual Platform':
+        if product_name in ['VMware Virtual Platform', 'VMware7,1']:
             virtual_facts['virtualization_type'] = 'VMware'
             virtual_facts['virtualization_role'] = 'guest'
             return virtual_facts
@@ -213,6 +213,11 @@ class LinuxVirtual(Virtual):
             if 'vboxdrv' in modules:
                 virtual_facts['virtualization_type'] = 'virtualbox'
                 virtual_facts['virtualization_role'] = 'host'
+                return virtual_facts
+
+            if 'virtio' in modules:
+                virtual_facts['virtualization_type'] = 'kvm'
+                virtual_facts['virtualization_role'] = 'guest'
                 return virtual_facts
 
         # If none of the above matches, return 'NA' for virtualization_type

@@ -2,23 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2014, Sebastien Rohaut <sebastien.rohaut@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -104,6 +94,8 @@ options:
       - Comment associated with the limit.
     required: false
     default: ''
+notes:
+  - If dest file doesn't exists, it is created.
 '''
 
 EXAMPLES = '''
@@ -178,12 +170,17 @@ def main():
 
     if os.path.isfile(limits_conf):
         if not os.access(limits_conf, os.W_OK):
-            module.fail_json(msg="%s is not writable. Use sudo" % (limits_conf) )
+            module.fail_json(msg="%s is not writable. Use sudo" % limits_conf)
     else:
-        module.fail_json(msg="%s is not visible (check presence, access rights, use sudo)" % (limits_conf) )
+        limits_conf_dir = os.path.dirname(limits_conf)
+        if os.path.isdir(limits_conf_dir) and os.access(limits_conf_dir, os.W_OK):
+            open(limits_conf, 'a').close()
+            changed = True
+        else:
+            module.fail_json(msg="directory %s is not writable (check presence, access rights, use sudo)" % limits_conf_dir)
 
     if use_max and use_min:
-        module.fail_json(msg="Cannot use use_min and use_max at the same time." )
+        module.fail_json(msg="Cannot use use_min and use_max at the same time.")
 
     if not (value in ['unlimited', 'infinity', '-1'] or value.isdigit()):
         module.fail_json(msg="Argument 'value' can be one of 'unlimited', 'infinity', '-1' or positive number. Refer to manual pages for more details.")
@@ -224,9 +221,6 @@ def main():
 
         if not new_comment:
             new_comment = old_comment
-
-        if new_comment:
-            new_comment = "\t#"+new_comment
 
         line_fields = newline.split(' ')
 
@@ -272,6 +266,8 @@ def main():
             # Change line only if value has changed
             if new_value != actual_value:
                 changed = True
+                if new_comment:
+                    new_comment = "\t#" + new_comment
                 new_limit = domain + "\t" + limit_type + "\t" + limit_item + "\t" + new_value + new_comment + "\n"
                 message = new_limit
                 nf.write(new_limit)
@@ -283,6 +279,8 @@ def main():
 
     if not found:
         changed = True
+        if new_comment:
+            new_comment = "\t#"+new_comment
         new_limit = domain + "\t" + limit_type + "\t" + limit_item + "\t" + new_value + new_comment + "\n"
         message = new_limit
         nf.write(new_limit)

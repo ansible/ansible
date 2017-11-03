@@ -4,21 +4,13 @@
 # Copyright (c) 2014 Hewlett-Packard Development Company, L.P.
 # Copyright (c) 2013, Benno Joy <benno@ansible.com>
 # Copyright (c) 2013, John Dewey <john@dewey.ws>
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -422,6 +414,10 @@ try:
 except ImportError:
     HAS_SHADE = False
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.openstack import (openstack_find_nova_addresses,
+                                            openstack_full_argument_spec, openstack_module_kwargs)
+
 
 def _exit_hostvars(module, cloud, server, changed=True):
     hostvars = meta.get_hostvars_from_server(cloud, server)
@@ -577,14 +573,14 @@ def _delete_floating_ip_list(cloud, server, extra_ips):
             server=server.id, address=ip)
 
 
-def _check_floating_ips(module, cloud, server):
+def _check_ips(module, cloud, server):
     changed = False
 
     auto_ip = module.params['auto_ip']
     floating_ips = module.params['floating_ips']
     floating_ip_pools = module.params['floating_ip_pools']
 
-    if floating_ip_pools or floating_ips or auto_ip:
+    if floating_ip_pools or floating_ips:
         ips = openstack_find_nova_addresses(server.addresses, 'floating')
         if not ips:
             # If we're configured to have a floating but we don't have one,
@@ -617,6 +613,21 @@ def _check_floating_ips(module, cloud, server):
             if extra_ips:
                 _delete_floating_ip_list(cloud, server, extra_ips)
                 changed = True
+    elif auto_ip:
+        if server['interface_ip']:
+            changed = False
+        else:
+            # We're configured for auto_ip but we're not showing an
+            # interface_ip. Maybe someone deleted an IP out from under us.
+            server = cloud.add_ips_to_server(
+                server,
+                auto_ip=auto_ip,
+                ips=floating_ips,
+                ip_pool=floating_ip_pools,
+                wait=module.params['wait'],
+                timeout=module.params['timeout'],
+            )
+            changed = True
     return (changed, server)
 
 
@@ -659,7 +670,7 @@ def _get_server_state(module, cloud):
             module.fail_json(
                 msg="The instance is available but not Active state: "
                     + server.status)
-        (ip_changed, server) = _check_floating_ips(module, cloud, server)
+        (ip_changed, server) = _check_ips(module, cloud, server)
         (sg_changed, server) = _check_security_groups(module, cloud, server)
         (server_changed, server) = _update_server(module, cloud, server)
         _exit_hostvars(module, cloud, server,
@@ -751,8 +762,6 @@ def main():
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=str(e), extra_data=e.extra_data)
 
-# this is magic, see lib/ansible/module_common.py
-from ansible.module_utils.basic import *
-from ansible.module_utils.openstack import *
+
 if __name__ == '__main__':
     main()

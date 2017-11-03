@@ -1,4 +1,7 @@
-# (c) 2012, Jan-Piet Mens <jpmens(at)gmail.com>
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+#
+# (m) 2012, Jan-Piet Mens <jpmens(at)gmail.com>
 # (m) 2017, Juan Manuel Parrilla <jparrill@redhat.com>
 #
 # This file is part of Ansible
@@ -64,15 +67,47 @@ RETURN:
             - a value associated with input key
         type: strings
 '''
+
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+    lookup: redis_kv
+    author: Jan-Piet Mens <jpmens(at)gmail.com>
+    version_added: "0.9"
+    short_description: fetch data from Redis
+    description:
+      - this looup returns a list of items given to it, if any of the top level items is also a list it will flatten it, but it will not recurse
+    requirements:
+      - redis (python library https://github.com/andymccurdy/redis-py/)
+    options:
+      _terms:
+        description: Two element comma separated strings composed of url of the Redis server and key to query
+        options:
+          _url:
+            description: location of redis host in url format
+            default: 'redis://localhost:6379'
+          _key:
+            description: key to query
+            required: True
+"""
+
+EXAMPLES = """
+- name: query redis for somekey
+  debug: msg="{{ lookup('redis_kv', 'redis://localhost:6379,somekey') }} is value in Redis for somekey"
+"""
+
+RETURN = """
+_raw:
+  description: values stored in Redis
+"""
 import os
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 
 try:
     import redis
+    HAVE_REDIS = True
 except ImportError:
     raise AnsibleError("Can't LOOKUP(redis_kv): module redis is not installed")
 

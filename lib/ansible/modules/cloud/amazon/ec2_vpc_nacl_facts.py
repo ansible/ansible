@@ -1,22 +1,13 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
@@ -34,6 +25,7 @@ options:
       - A list of Network ACL IDs to retrieve facts about.
     required: false
     default: []
+    aliases: [nacl_id]
   filters:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value. See \
@@ -103,15 +95,16 @@ nacl:
             type: list of list
 '''
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, boto3_conn, get_aws_connection_info
-from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, HAS_BOTO3
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict, boto3_tag_list_to_ansible_dict
-
 try:
     from botocore.exceptions import ClientError, NoCredentialsError
 except ImportError:
     pass  # caught by imported HAS_BOTO3
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import (ec2_argument_spec, boto3_conn, get_aws_connection_info,
+                                      ansible_dict_to_boto3_filter_list, HAS_BOTO3,
+                                      camel_dict_to_snake_dict, boto3_tag_list_to_ansible_dict)
+
 
 # VPC-supported IANA protocol numbers
 # http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml
@@ -140,7 +133,7 @@ def list_ec2_vpc_nacls(connection, module):
         if 'entries' in nacl:
             nacl['egress'] = [nacl_entry_to_list(entry) for entry in nacl['entries']
                               if entry['rule_number'] != 32767 and entry['egress']]
-            nacl['ingress'] = [nacl_entry_to_list(e) for entry in nacl['entries']
+            nacl['ingress'] = [nacl_entry_to_list(entry) for entry in nacl['entries']
                                if entry['rule_number'] != 32767 and not entry['egress']]
             del nacl['entries']
         if 'associations' in nacl:
@@ -181,7 +174,7 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            nacl_ids=dict(default=[], type='list'),
+            nacl_ids=dict(default=[], type='list', aliases=['nacl_id']),
             filters=dict(default={}, type='dict')
         )
     )
@@ -201,6 +194,7 @@ def main():
         module.fail_json(msg="region must be specified")
 
     list_ec2_vpc_nacls(connection, module)
+
 
 if __name__ == '__main__':
     main()

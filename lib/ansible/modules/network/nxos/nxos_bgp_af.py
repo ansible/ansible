@@ -16,11 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {
-    'metadata_version': '1.0',
-    'status': ['preview'],
-    'supported_by': 'community',
-}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = '''
@@ -33,6 +31,7 @@ description:
   - Manages BGP Address-family configurations on NX-OS switches.
 author: Gabriele Gerbino (@GGabriele)
 notes:
+  - Tested against NXOSv 7.3.(0)D1(1) on VIRL
   - C(state=absent) removes the whole BGP ASN configuration
   - Default, where supported, restores params default value.
 options:
@@ -198,7 +197,7 @@ options:
         prefixes to advertise. The list must be in the form of an array.
         Each entry in the array must include a prefix address and an
         optional route-map. For example [['10.0.0.0/16', 'routemap_LA'],
-        ['192.168.1.1', 'Chicago'], ['192.168.2.0/24],
+        ['192.168.1.1', 'Chicago'], ['192.168.2.0/24'],
         ['192.168.3.0/24', 'routemap_NYC']].
     required: false
     default: null
@@ -279,7 +278,6 @@ BOOL_PARAMS = [
     'additional_paths_receive',
     'additional_paths_send',
     'advertise_l2vpn_evpn',
-    'client_to_client',
     'dampening_state',
     'default_information_originate',
     'suppress_inactive',
@@ -360,7 +358,12 @@ def get_value(arg, config, module):
             if inject_re.search(config):
                 value.append('copy_attributes')
 
-    elif arg in ['networks', 'redistribute']:
+    elif arg == 'networks':
+        value = []
+        for network in command_val_re.findall(config):
+            value.append(network.split())
+
+    elif arg == 'redistribute':
         value = []
         if has_command_val:
             value = has_command_val.group('value').split()
@@ -368,9 +371,8 @@ def get_value(arg, config, module):
             if value:
                 if len(value) == 3:
                     value.pop(1)
-                elif arg == 'redistribute' and len(value) == 4:
-                    value = ['{0} {1}'.format(
-                        value[0], value[1]), value[3]]
+                elif len(value) == 4:
+                    value = ['{0} {1}'.format(value[0], value[1]), value[3]]
 
     elif command == 'distance':
         distance_re = r'.*distance\s(?P<d_ebgp>\w+)\s(?P<d_ibgp>\w+)\s(?P<d_local>\w+)'
@@ -420,8 +422,15 @@ def get_value(arg, config, module):
         if has_tablemap:
             value = has_tablemap.group('value')
 
+    elif arg == 'client_to_client':
+        no_command_re = re.compile(r'^\s+no\s{0}\s*$'.format(command), re.M)
+        value = True
+
+        if no_command_re.search(config):
+            value = False
+
     elif arg in BOOL_PARAMS:
-        command_re = re.compile(r'\s+{0}\s*'.format(command), re.M)
+        command_re = re.compile(r'^\s+{0}\s*$'.format(command), re.M)
         value = False
 
         if command_re.search(config):
@@ -674,14 +683,12 @@ def state_present(module, existing, proposed, candidate):
         if module.params['vrf'] != 'default':
             parents.append('vrf {0}'.format(module.params['vrf']))
 
-        if len(commands) == 1:
-            candidate.add(commands, parents=parents)
-        elif len(commands) > 1:
-            parents.append('address-family {0} {1}'.format(module.params['afi'],
-                                                           module.params['safi']))
-            if addr_family_command in commands:
-                commands.remove(addr_family_command)
-            candidate.add(commands, parents=parents)
+        addr_family_command = "address-family {0} {1}".format(module.params['afi'],
+                                                              module.params['safi'])
+        parents.append(addr_family_command)
+        if addr_family_command in commands:
+            commands.remove(addr_family_command)
+        candidate.add(commands, parents=parents)
 
 
 def state_absent(module, candidate):

@@ -10,9 +10,9 @@
 
 - name: enable eapi
   eos_eapi:
-    enable_http: yes
-    enable_https: yes
-    enable_local_http: yes
+    http: yes
+    https: yes
+    local_http: no
     enable_socket: yes
     provider: "{{ cli }}"
 
@@ -24,8 +24,5 @@
 
 - name: disable eapi
   eos_eapi:
-    enable_http: no
-    enable_https: no
-    enable_local_http: no
-    enable_socket: no
+    state: stopped
     provider: "{{ cli }}"

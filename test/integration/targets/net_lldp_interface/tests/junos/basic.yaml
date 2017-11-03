@@ -1,0 +1,106 @@
+---
+- debug: msg="START net_lldp_interface junos/basic.yaml"
+
+- name: setup - Remove lldp interface configuration
+  net_lldp_interface:
+    name: ge-0/0/5
+    state: absent
+    provider: "{{ netconf }}"
+
+- name: lldp interface configuration
+  net_lldp_interface:
+    name: ge-0/0/5
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - result.diff.prepared | search("\+ *interface ge-0/0/5")
+
+- name: lldp interface configuration (idempotent)
+  net_lldp_interface:
+    name: ge-0/0/5
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Deactivate lldp interface configuration
+  net_lldp_interface:
+    name: ge-0/0/5
+    state: present
+    active: False
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - result.diff.prepared | search("! *inactive[:] interface ge-0/0/5")
+
+- name: Activate lldp interface configuration
+  net_lldp_interface:
+    name: ge-0/0/5
+    state: present
+    active: True
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - result.diff.prepared | search("! *active[:] interface ge-0/0/5")
+
+- name: Disable lldp on particular interface
+  net_lldp_interface:
+    name: ge-0/0/5
+    state: disabled
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - result.diff.prepared | search("\+ *disable")
+
+- name: Enable lldp on particular interface
+  net_lldp_interface:
+    name: ge-0/0/5
+    state: enabled
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - result.diff.prepared | search("\- *disable")
+
+- name: Delete lldp on particular interface
+  net_lldp_interface:
+    name: ge-0/0/5
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - result.diff.prepared | search("\- *interface ge-0/0/5")
+
+- name: Delete lldp on particular interface (idempotent)
+  net_lldp_interface:
+    name: ge-0/0/5
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- debug: msg="END net_lldp_interface junos/basic.yaml"

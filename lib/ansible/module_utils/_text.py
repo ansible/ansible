@@ -44,7 +44,7 @@ except LookupError:
     HAS_SURROGATEESCAPE = False
 
 
-_COMPOSED_ERROR_HANDLERS = frozenset((None, 'surrogate_or_escape',
+_COMPOSED_ERROR_HANDLERS = frozenset((None, 'surrogate_or_replace',
                                       'surrogate_or_strict',
                                       'surrogate_then_replace'))
 
@@ -133,6 +133,9 @@ def to_bytes(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
             return obj.encode(encoding, errors)
         except UnicodeEncodeError:
             if original_errors in (None, 'surrogate_then_replace'):
+                # We should only reach this if encoding was non-utf8 original_errors was
+                # surrogate_then_escape and errors was surrogateescape
+
                 # Slow but works
                 return_string = obj.encode('utf-8', 'surrogateescape')
                 return_string = return_string.decode('utf-8', 'replace')

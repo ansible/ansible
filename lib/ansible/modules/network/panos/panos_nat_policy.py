@@ -30,6 +30,7 @@ author: "Luigi Mori (@jtschichold), Ivan Bojer (@ivanbojer)"
 version_added: "2.3"
 requirements:
     - pan-python
+deprecated: In 2.4 use M(panos_nat_rule) instead.
 options:
     ip_address:
         description:
@@ -141,7 +142,7 @@ RETURN = '''
 # Default return values
 '''
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -283,6 +284,10 @@ def main():
         commit=dict(type='bool', default=True)
     )
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
+
+    if module._name == 'panos_nat_policy':
+        module.deprecate("The 'panos_nat_policy' module is being renamed 'panos_nat_rule'", version=2.8)
+
     if not HAS_LIB:
         module.fail_json(msg='pan-python is required for this module')
 

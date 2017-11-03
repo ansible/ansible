@@ -1,27 +1,43 @@
 # (C) 2016, Ievgen Khmelenko <ujenmr@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (C) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+DOCUMENTATION = '''
+    callback: logstash
+    type: notification
+    short_description: Sends events to Logstash
+    description:
+      - This callback will report facts and task events to Foreman https://theforeman.org/
+    version_added: "2.3"
+    requirements:
+      - whitelisting in configuration
+      - logstash (python library)
+    options:
+      server:
+        description: Address of the Logstash server
+        env:
+          - name: LOGSTASH_SERVER
+        default: localhost
+      port:
+        description: Port on which logstash is listening
+        env:
+            - name: LOGSTASH_PORT
+        default: 5000
+      type:
+        description: Message type
+        env:
+          - name: LOGSTASH_TYPE
+        default: ansible
+'''
 
 import os
 import json
 import socket
 import uuid
+from datetime import datetime
 
 import logging
 
@@ -86,6 +102,7 @@ class CallbackModule(CallbackBase):
             self.hostname = socket.gethostname()
             self.session = str(uuid.uuid1())
             self.errors = 0
+        self.start_time = datetime.utcnow()
 
     def v2_playbook_on_start(self, playbook):
         self.playbook = playbook._file_name
@@ -99,6 +116,8 @@ class CallbackModule(CallbackBase):
         self.logger.info("ansible start", extra=data)
 
     def v2_playbook_on_stats(self, stats):
+        end_time = datetime.utcnow()
+        runtime = end_time - self.start_time
         summarize_stat = {}
         for host in stats.processed.keys():
             summarize_stat[host] = stats.summarize(host)
@@ -114,6 +133,7 @@ class CallbackModule(CallbackBase):
             'session': self.session,
             'ansible_type': "finish",
             'ansible_playbook': self.playbook,
+            'ansible_playbook_duration': runtime.total_seconds(),
             'ansible_result': json.dumps(summarize_stat),
         }
         self.logger.info("ansible stats", extra=data)
@@ -192,7 +212,7 @@ class CallbackModule(CallbackBase):
             'ansible_task': result._task,
             'ansible_result': self._dump_results(result._result)
         }
-        self.logger.error("ansbile unreachable", extra=data)
+        self.logger.error("ansible unreachable", extra=data)
 
     def v2_runner_on_async_failed(self, result, **kwargs):
         data = {

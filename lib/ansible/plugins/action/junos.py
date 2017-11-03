@@ -19,16 +19,14 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
 import sys
 import copy
 
-from ansible.module_utils.basic import AnsibleFallbackNotFound
-from ansible.module_utils.junos import junos_argument_spec
-from ansible.module_utils.six import iteritems
-from ansible.plugins import connection_loader, module_loader
+from ansible import constants as C
+from ansible.module_utils.junos import junos_provider_spec
+from ansible.plugins.loader import connection_loader, module_loader
 from ansible.plugins.action.normal import ActionModule as _ActionModule
-from ansible.utils.path import unfrackpath
+from ansible.module_utils.network_common import load_provider
 
 try:
     from __main__ import display
@@ -53,47 +51,37 @@ class ActionModule(_ActionModule):
         if not getattr(module, 'USE_PERSISTENT_CONNECTION', False):
             return super(ActionModule, self).run(tmp, task_vars)
 
-        provider = self.load_provider()
+        provider = load_provider(junos_provider_spec, self._task.args)
 
         pc = copy.deepcopy(self._play_context)
         pc.network_os = 'junos'
 
         pc.remote_addr = provider['host'] or self._play_context.remote_addr
 
-        if self._task.action == 'junos_netconf':
+        if self._task.action == 'junos_netconf' or (provider['transport'] == 'cli' and self._task.action == 'junos_command'):
             pc.connection = 'network_cli'
-            pc.port = provider['port'] or self._play_context.port or 22
+            pc.port = int(provider['port'] or self._play_context.port or 22)
+
         else:
             pc.connection = 'netconf'
-            pc.port = provider['port'] or self._play_context.port or 830
+            pc.port = int(provider['port'] or self._play_context.port or 830)
 
         pc.remote_user = provider['username'] or self._play_context.connection_user
         pc.password = provider['password'] or self._play_context.password
         pc.private_key_file = provider['ssh_keyfile'] or self._play_context.private_key_file
-        pc.timeout = provider['timeout'] or self._play_context.timeout
+        pc.timeout = int(provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT)
 
         display.vvv('using connection plugin %s' % pc.connection, pc.remote_addr)
         connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
 
-        socket_path = self._get_socket_path(pc)
+        socket_path = connection.run()
         display.vvvv('socket_path: %s' % socket_path, pc.remote_addr)
+        if not socket_path:
+            return {'failed': True,
+                    'msg': 'unable to open shell. Please see: ' +
+                           'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell'}
 
-        if not os.path.exists(socket_path):
-            # start the connection if it isn't started
-            if pc.connection == 'netconf':
-                rc, out, err = connection.exec_command('open_session()')
-                display.vvvv('open_session() returned %s %s %s' % (rc, out, err))
-            else:
-                rc, out, err = connection.exec_command('open_shell()')
-                display.vvvv('open_shell() returned %s %s %s' % (rc, out, err))
-
-            if rc != 0:
-                return {'failed': True,
-                        'msg': 'unable to open shell. Please see: ' +
-                               'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell',
-                        'rc': rc}
-
-        elif pc.connection == 'network_cli':
+        if pc.connection == 'network_cli':
             # make sure we are in the right cli context which should be
             # enable mode and not config module
             rc, out, err = connection.exec_command('prompt()')
@@ -106,39 +94,3 @@ class ActionModule(_ActionModule):
 
         result = super(ActionModule, self).run(tmp, task_vars)
         return result
-
-    def _get_socket_path(self, play_context):
-        ssh = connection_loader.get('ssh', class_only=True)
-        path = unfrackpath("$HOME/.ansible/pc")
-        # use play_context.connection instea of play_context.port to avoid
-        # collision if netconf is listening on port 22
-        # cp = ssh._create_control_path(play_context.remote_addr, play_context.connection, play_context.remote_user)
-        cp = ssh._create_control_path(play_context.remote_addr, play_context.port, play_context.remote_user)
-        return cp % dict(directory=path)
-
-    def load_provider(self):
-        provider = self._task.args.get('provider', {})
-        for key, value in iteritems(junos_argument_spec):
-            if key != 'provider' and key not in provider:
-                if key in self._task.args:
-                    provider[key] = self._task.args[key]
-                elif 'fallback' in value:
-                    provider[key] = self._fallback(value['fallback'])
-                elif key not in provider:
-                    provider[key] = None
-        return provider
-
-    def _fallback(self, fallback):
-        strategy = fallback[0]
-        args = []
-        kwargs = {}
-
-        for item in fallback[1:]:
-            if isinstance(item, dict):
-                kwargs = item
-            else:
-                args = item
-        try:
-            return strategy(*args, **kwargs)
-        except AnsibleFallbackNotFound:
-            pass

@@ -37,7 +37,7 @@ from ansible.template import Templar
 from units.mock.loader import DictDataLoader
 
 
-python_module_replacers = b"""
+python_module_replacers = br"""
 #!/usr/bin/python
 
 #ANSIBLE_VERSION = "<<ANSIBLE_VERSION>>"
@@ -91,6 +91,7 @@ class TestActionBase(unittest.TestCase):
         # create our fake task
         mock_task = MagicMock()
         mock_task.action = "copy"
+        mock_task.async = 0
 
         # create a mock connection, so we don't actually try and connect to things
         mock_connection = MagicMock()

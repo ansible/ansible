@@ -1,0 +1,149 @@
+---
+- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_bgp_af sanity test"
+
+- set_fact: advertise_l2vpn_evpn="true"
+  when: platform | search('N9K')
+
+- name: "Enable feature BGP"
+  nxos_feature:
+    feature: bgp
+    state: enabled
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- name: "Enable feature nv overlay"
+  nxos_feature:
+    feature: nv overlay
+    state: enabled
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- name: "Setup"
+  nxos_bgp: &remove
+    asn: 65535
+    state: absent
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- block:
+  - name: "Enable nv overlay evpn"
+    nxos_config:
+      lines:
+        - nv overlay evpn
+      provider: "{{ connection }}"
+    when: platform | search('N9K')
+
+  - name: "Configure BGP_AF defaults"
+    nxos_bgp_af: &configure_default
+      asn: 65535
+      vrf: TESTING
+      afi: ipv4
+      safi: unicast
+      advertise_l2vpn_evpn: "{{advertise_l2vpn_evpn|default(omit)}}"
+      state: present
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: "Check Idempotence"
+    nxos_bgp_af: *configure_default
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: "Remove BGP"
+    nxos_bgp: *remove
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_bgp: *remove
+    register: result
+
+  - assert: *false
+
+  - name: "Configure BGP_AF non defaults"
+    nxos_bgp_af: &configure_non_default
+      asn: 65535
+      vrf: TESTING
+      afi: ipv4
+      safi: unicast
+      additional_paths_install: true
+      additional_paths_receive: true
+      additional_paths_selection: RouteMap
+      additional_paths_send: true
+      advertise_l2vpn_evpn: "{{advertise_l2vpn_evpn|default(omit)}}"
+      client_to_client: false
+      dampen_igp_metric: 200
+      dampening_half_time: 1
+      dampening_max_suppress_time: 4
+      dampening_reuse_time: 2
+      dampening_suppress_time: 3
+      default_information_originate: true
+      default_metric: 50
+      distance_ebgp: 30
+      distance_ibgp: 60
+      distance_local: 90
+      maximum_paths: 9
+      maximum_paths_ibgp: 9
+      next_hop_route_map: RouteMap
+      suppress_inactive: true
+      table_map: RouteMap
+      table_map_filter: true
+      state: present
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_bgp_af: *configure_non_default
+    register: result
+
+  - assert: *false
+
+  - name: "Remove BGP"
+    nxos_bgp: *remove
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_bgp: *remove
+    register: result
+
+  - assert: *false
+
+  rescue:
+  - name: "Cleanup BGP"
+    nxos_bgp: *remove
+    ignore_errors: yes
+
+  always:
+  - name: "Disable feature bgp"
+    nxos_feature: &disable_bgp
+      feature: bgp
+      state: disabled
+      provider: "{{ connection }}"
+
+  - name: "Disable feature nv overlay"
+    nxos_feature: &disable_nvoverlay
+      feature: nv overlay
+      state: disabled
+      provider: "{{ connection }}"
+    ignore_errors: yes
+
+  - name: "Remove nv overlay evpn"
+    nxos_config:
+      lines:
+        - no nv overlay evpn
+      provider: "{{ connection }}"
+    when: platform | search('N9K')
+
+  - debug: msg="END TRANSPORT:{{ connection.transport }} nxos_bgp_af sanity test"

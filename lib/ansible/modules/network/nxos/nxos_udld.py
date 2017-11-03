@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = '''
@@ -33,6 +33,7 @@ description:
 author:
     - Jason Edelman (@jedelman8)
 notes:
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
     - When C(state=absent), it unconfigures existing settings C(msg_time) and set it
       to its default value of 15.  It is cleaner to always use C(state=present).
     - Module will fail if the udld feature has not been previously enabled.
@@ -120,12 +121,13 @@ import re
 
 
 def execute_show_command(command, module, command_type='cli_show'):
-    if module.params['transport'] == 'cli':
+    provider = module.params['provider']
+    if provider['transport'] == 'cli':
         if 'show run' not in command:
             command += ' | json'
         cmds = [command]
         body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
+    elif provider['transport'] == 'nxapi':
         cmds = [command]
         body = run_commands(module, cmds)
 
@@ -294,4 +296,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

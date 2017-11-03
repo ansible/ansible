@@ -4,26 +4,13 @@
 # (c) 2013, Yeukhon Wong <yeukhon@acm.org>
 # (c) 2014, Nate Coraor <nate@bx.psu.edu>
 #
-# This module was originally inspired by Brad Olson's ansible-module-mercurial
-# <https://github.com/bradobro/ansible-module-mercurial>. This module tends
-# to follow the git module implementation.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -91,6 +78,7 @@ options:
             - Path to hg executable to use. If not supplied,
               the normal mechanism for resolving binary paths will be used.
 notes:
+    - "This module does not support push capability. See U(https://github.com/ansible/ansible/issues/31156)."
     - "If the task seems to be hanging, first verify remote host is in C(known_hosts).
       SSH will prompt user to authorize the first contact with a remote host.  To avoid this prompt,
       one solution is to add the remote host public key in C(/etc/ssh/ssh_known_hosts) before calling
@@ -117,9 +105,9 @@ EXAMPLES = '''
 
 import os
 
-# import module snippets
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
+
 
 class Hg(object):
 
@@ -157,7 +145,7 @@ class Hg(object):
     def get_remote_revision(self):
         (rc, out, err) = self._command(['id', self.repo])
         if rc != 0:
-            self.module_fail_json(msg=err)
+            self.module.fail_json(msg=err)
         else:
             return to_native(out).strip('\n')
 

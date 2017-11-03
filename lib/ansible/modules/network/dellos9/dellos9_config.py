@@ -1,26 +1,14 @@
 #!/usr/bin/python
 #
 # (c) 2015 Peter Sprygada, <psprygada@ansible.com>
-#
 # Copyright (c) 2016 Dell Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -59,7 +47,7 @@ options:
       - Specifies the source path to the file that contains the configuration
         or configuration template to load.  The path to the source file can
         either be the full path on the Ansible control host or a relative
-        path from the playbook or role root dir.  This argument is mutually
+        path from the playbook or role root directory.  This argument is mutually
         exclusive with I(lines).
     required: false
     default: null
@@ -86,7 +74,7 @@ options:
         match to I(line), commands match line by line.  If you set
         match to I(strict), command lines match by position.  If you set match to I(exact), command lines
         must be an equal match.  Finally, if you set match to I(none), the
-        module does  not attempt to compare the source configuration with
+        module does not attempt to compare the source configuration with
         the running configuration on the remote device.
     required: false
     default: line
@@ -124,9 +112,9 @@ options:
     choices: ['yes', 'no']
   config:
     description:
-      - The playbook designer can use the  C(config) argument to supply
+      - The playbook designer can use the C(config) argument to supply
         the base configuration to be used to validate necessary configuration
-        changes.  If you provide this argument, the module
+        changes.  If you specify this argument, the module
         does not download the running-config from the remote node.
     required: false
     default: null
@@ -196,17 +184,21 @@ saved:
   description: Returns whether the configuration is saved to the startup
                configuration or not.
   returned: When not check_mode.
-
   type: bool
   sample: True
 
+backup_path:
+  description: The full path to the backup file
+  returned: when backup is yes
+  type: string
+  sample: /playbooks/ansible/backup/dellos9_config.2016-07-16@22:28:34
 """
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import NetworkConfig, dumps
 from ansible.module_utils.dellos9 import get_config, get_sublevel_config
 from ansible.module_utils.dellos9 import dellos9_argument_spec, check_args
 from ansible.module_utils.dellos9 import load_config, run_commands
 from ansible.module_utils.dellos9 import WARNING_PROMPTS_RE
+from ansible.module_utils.netcfg import NetworkConfig, dumps
 
 
 def get_candidate(module):
@@ -300,6 +292,7 @@ def main():
     result['updates'] = commands
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

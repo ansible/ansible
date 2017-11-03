@@ -1,0 +1,141 @@
+---
+
+- include: "{{ role_path }}/tests/nitro/http/setup.yaml"
+  vars:
+    check_mode: yes
+
+- assert:
+    that: result|changed
+
+- include: "{{ role_path }}/tests/nitro/http/setup.yaml"
+  vars:
+    check_mode: no
+
+- assert:
+    that: result|changed
+
+- include: "{{ role_path }}/tests/nitro/http/setup.yaml"
+  vars:
+    check_mode: yes
+
+- assert:
+    that: not result|changed
+
+- include: "{{ role_path }}/tests/nitro/http/setup.yaml"
+  vars:
+    check_mode: no
+
+- assert:
+    that: not result|changed
+
+- include: "{{ role_path }}/tests/nitro/http/update.yaml"
+  vars:
+    check_mode: yes
+
+- assert:
+    that: result|changed
+
+- include: "{{ role_path }}/tests/nitro/http/update.yaml"
+  vars:
+    check_mode: no
+
+- assert:
+    that: result|changed
+
+- include: "{{ role_path }}/tests/nitro/http/update.yaml"
+  vars:
+    check_mode: yes
+
+- assert:
+    that: not result|changed
+
+- include: "{{ role_path }}/tests/nitro/http/update.yaml"
+  vars:
+    check_mode: no
+
+- assert:
+    that: not result|changed
+
+- include: "{{ role_path }}/tests/nitro/http/update_domainbinding.yaml"
+  vars:
+    check_mode: yes
+
+- assert:
+    that: result|changed
+
+- include: "{{ role_path }}/tests/nitro/http/update_domainbinding.yaml"
+  vars:
+    check_mode: no
+
+- assert:
+    that: result|changed
+
+- include: "{{ role_path }}/tests/nitro/http/update_domainbinding.yaml"
+  vars:
+    check_mode: yes
+
+- assert:
+    that: not result|changed
+
+- include: "{{ role_path }}/tests/nitro/http/update_domainbinding.yaml"
+  vars:
+    check_mode: no
+
+- assert:
+    that: not result|changed
+
+- include: "{{ role_path }}/tests/nitro/http/update_gslbservice_binding.yaml"
+  vars:
+    check_mode: yes
+
+- assert:
+    that: result|changed
+
+- include: "{{ role_path }}/tests/nitro/http/update_gslbservice_binding.yaml"
+  vars:
+    check_mode: no
+
+- assert:
+    that: result|changed
+
+- include: "{{ role_path }}/tests/nitro/http/update_gslbservice_binding.yaml"
+  vars:
+    check_mode: yes
+
+- assert:
+    that: not result|changed
+
+- include: "{{ role_path }}/tests/nitro/http/update_gslbservice_binding.yaml"
+  vars:
+    check_mode: no
+
+- assert:
+    that: not result|changed
+
+- include: "{{ role_path }}/tests/nitro/http/remove.yaml"
+  vars:
+    check_mode: yes
+
+- assert:
+    that: result|changed
+
+- include: "{{ role_path }}/tests/nitro/http/remove.yaml"
+  vars:
+    check_mode: no
+
+- assert:
+    that: result|changed
+
+- include: "{{ role_path }}/tests/nitro/http/remove.yaml"
+  vars:
+    check_mode: yes
+
+- assert:
+    that: not result|changed
+
+- include: "{{ role_path }}/tests/nitro/http/remove.yaml"
+  vars:
+    check_mode: no
+
+- assert:
+    that: not result|changed

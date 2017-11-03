@@ -85,7 +85,17 @@ class KubernetesAnsibleModule(AnsibleModule):
         :return: dict: a valid Ansible argument spec
         """
         if not self.argspec_cache:
-            spec = {}
+            spec = {
+                'dry_run': {
+                    'type': 'bool',
+                    'default': False,
+                    'description': [
+                        "If set to C(True) the module will exit without executing any action."
+                        "Useful to only generate YAML file definitions for the resources in the tasks."
+                    ]
+                }
+            }
+
             for arg_name, arg_properties in self.helper.argspec.items():
                 spec[arg_name] = {}
                 for option, option_value in arg_properties.items():
@@ -112,10 +122,6 @@ class KubernetesAnsibleModule(AnsibleModule):
         :return: None
         """
 
-        if self.params.get('debug'):
-            self.helper.enable_debug(reset_logfile=False)
-            self.helper.log_argspec()
-
         resource_definition = self.params.get('resource_definition')
         if self.params.get('src'):
             resource_definition = self.load_resource_definition(self.params['src'])
@@ -125,12 +131,18 @@ class KubernetesAnsibleModule(AnsibleModule):
 
         state = self.params.get('state', None)
         force = self.params.get('force', False)
+        dry_run = self.params.pop('dry_run', False)
         name = self.params.get('name')
         namespace = self.params.get('namespace', None)
         existing = None
 
-        return_attributes = dict(changed=False, api_version=self.api_version)
+        return_attributes = dict(changed=False,
+                                 api_version=self.api_version,
+                                 request=self.helper.request_body_from_params(self.params))
         return_attributes[self.helper.base_model_name_snake] = {}
+
+        if dry_run:
+            self.exit_json(**return_attributes)
 
         try:
             auth_options = {}
@@ -209,10 +221,10 @@ class KubernetesAnsibleModule(AnsibleModule):
                 return_attributes[self.kind] = existing.to_dict()
                 self.exit_json(**return_attributes)
             else:
-                self.helper.log('Existing:')
-                self.helper.log(json.dumps(existing.to_dict(), indent=4))
-                self.helper.log('\nDifferences:')
-                self.helper.log(json.dumps(diff, indent=4))
+                self.log('Existing:')
+                self.log(json.dumps(existing.to_str(), indent=4))
+                self.log('\nDifferences:')
+                self.log(json.dumps(diff, indent=4))
             # Differences exist between the existing obj and requested params
             if not self.check_mode:
                 try:
@@ -251,7 +263,7 @@ class KubernetesAnsibleModule(AnsibleModule):
         """ Load the requested src path """
         result = None
         path = os.path.normpath(src)
-        self.helper.log("Reading definition from {}".format(path))
+        self.log("Reading definition from {}".format(path))
         if not os.path.exists(path):
             self.fail_json(msg="Error accessing {}. Does the file exist?".format(path))
         try:
@@ -274,7 +286,7 @@ class KubernetesAnsibleModule(AnsibleModule):
                     parameters[key] = value
             elif isinstance(value, dict):
                 self._add_parameter(value, [key], parameters)
-        self.helper.log("Request to parameters: {}".format(json.dumps(parameters)))
+        self.log("Request to parameters: {}".format(json.dumps(parameters)))
         return parameters
 
     def _add_parameter(self, request, path, parameters):

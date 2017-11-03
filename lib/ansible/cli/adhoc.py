@@ -28,8 +28,9 @@ from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.module_utils._text import to_text
 from ansible.parsing.splitter import parse_kv
+from ansible.playbook import Playbook
 from ansible.playbook.play import Play
-from ansible.plugins import get_all_plugin_loaders
+from ansible.plugins.loader import get_all_plugin_loaders
 
 try:
     from __main__ import display
@@ -60,6 +61,7 @@ class AdHocCLI(CLI):
             vault_opts=True,
             fork_opts=True,
             module_opts=True,
+            basedir_opts=True,
             desc="Define and run a single task 'playbook' against a set of hosts",
             epilog="Some modules do not make sense in Ad-Hoc (include, meta, etc)",
         )
@@ -105,6 +107,9 @@ class AdHocCLI(CLI):
         (sshpass, becomepass) = self.ask_passwords()
         passwords = {'conn_pass': sshpass, 'become_pass': becomepass}
 
+        # dynamically load any plugins
+        get_all_plugin_loaders()
+
         loader, inventory, variable_manager = self._play_prereqs(self.options)
 
         no_hosts = False
@@ -135,23 +140,24 @@ class AdHocCLI(CLI):
             raise AnsibleOptionsError(err)
 
         # Avoid modules that don't work with ad-hoc
-        if self.options.module_name in ('include', 'include_role'):
+        if self.options.module_name.startswith(('include', 'import_')):
             raise AnsibleOptionsError("'%s' is not a valid action for ad-hoc commands" % self.options.module_name)
-
-        # dynamically load any plugins from the playbook directory
-        for name, obj in get_all_plugin_loaders():
-            if obj.subdir:
-                plugin_path = os.path.join('.', obj.subdir)
-                if os.path.isdir(plugin_path):
-                    obj.add_directory(plugin_path)
 
         play_ds = self._play_ds(pattern, self.options.seconds, self.options.poll_interval)
         play = Play().load(play_ds, variable_manager=variable_manager, loader=loader)
+
+        # used in start callback
+        playbook = Playbook(loader)
+        playbook._entries.append(play)
+        playbook._file_name = '__adhoc_playbook__'
 
         if self.callback:
             cb = self.callback
         elif self.options.one_line:
             cb = 'oneline'
+        # Respect custom 'stdout_callback' only with enabled 'bin_ansible_callbacks'
+        elif C.DEFAULT_LOAD_CALLBACK_PLUGINS and C.DEFAULT_STDOUT_CALLBACK != 'default':
+            cb = C.DEFAULT_STDOUT_CALLBACK
         else:
             cb = 'minimal'
 
@@ -175,7 +181,11 @@ class AdHocCLI(CLI):
                 run_tree=run_tree,
             )
 
+            self._tqm.send_callback('v2_playbook_on_start', playbook)
+
             result = self._tqm.run(play)
+
+            self._tqm.send_callback('v2_playbook_on_stats', self._tqm._stats)
         finally:
             if self._tqm:
                 self._tqm.cleanup()

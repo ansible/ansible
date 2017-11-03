@@ -1,0 +1,12 @@
+{{ mode }}
+/usr/bin/dummy
+
+{% if with_alternatives %}
+/usr/bin/dummy1
+40
+/usr/bin/dummy2
+30
+
+{% else %}
+
+{% endif %}

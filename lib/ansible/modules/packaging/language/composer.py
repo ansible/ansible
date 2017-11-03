@@ -2,24 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2014, Dimitrios Tydeas Mengidis <tydeas.dr@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -42,82 +31,74 @@ options:
         version_added: "1.8"
         description:
             - Composer command like "install", "update" and so on.
-        required: false
         default: install
     arguments:
         version_added: "2.0"
         description:
             - Composer arguments like required package, version and so on.
-        required: false
-        default: null
+    executable:
+        version_added: "2.4"
+        description:
+            - Path to PHP Executable on the remote host, if PHP is not in PATH.
+        aliases: [ php_path ]
     working_dir:
         description:
             - Directory of your project (see --working-dir). This is required when
               the command is not run globally.
             - Will be ignored if C(global_command=true).
-        required: false
-        default: null
-        aliases: [ "working-dir" ]
+        aliases: [ working-dir ]
     global_command:
         version_added: "2.4"
         description:
             - Runs the specified command globally.
-        required: false
         choices: [ true, false]
         default: false
-        aliases: [ "global-command" ]
+        aliases: [ global-command ]
     prefer_source:
         description:
             - Forces installation from package sources when possible (see --prefer-source).
-        required: false
         default: false
         choices: [ true, false]
-        aliases: [ "prefer-source" ]
+        aliases: [ prefer-source ]
     prefer_dist:
         description:
             - Forces installation from package dist even for dev versions (see --prefer-dist).
-        required: false
         default: false
         choices: [ true, false]
-        aliases: [ "prefer-dist" ]
+        aliases: [ prefer-dist ]
     no_dev:
         description:
             - Disables installation of require-dev packages (see --no-dev).
-        required: false
         default: true
         choices: [ true, false]
-        aliases: [ "no-dev" ]
+        aliases: [ no-dev ]
     no_scripts:
         description:
             - Skips the execution of all scripts defined in composer.json (see --no-scripts).
-        required: false
         default: false
         choices: [ true, false]
-        aliases: [ "no-scripts" ]
+        aliases: [ no-scripts ]
     no_plugins:
         description:
             - Disables all plugins ( see --no-plugins ).
-        required: false
         default: false
         choices: [ true, false]
-        aliases: [ "no-plugins" ]
+        aliases: [ no-plugin ]
     optimize_autoloader:
         description:
             - Optimize autoloader during autoloader dump (see --optimize-autoloader).
             - Convert PSR-0/4 autoloading to classmap to get a faster autoloader.
-            - Recommended especially for production, but can take a bit of time to run so it is currently not done by default.
-        required: false
+            - Recommended especially for production, but can take a bit of time to run.
         default: true
         choices: [ true, false]
-        aliases: [ "optimize-autoloader" ]
+        aliases: [ optimize-autoloader ]
     ignore_platform_reqs:
         version_added: "2.0"
         description:
             - Ignore php, hhvm, lib-* and ext-* requirements and force the installation even if the local machine does not fulfill these.
-        required: false
         default: false
         choices: [ true, false]
-        aliases: [ "ignore-platform-reqs" ]
+        aliases: [ ignore-platform-reqs ]
 requirements:
     - php
     - composer installed in bin path (recommended /usr/local/bin)
@@ -177,7 +158,12 @@ def get_available_options(module, command='install'):
 def composer_command(module, command, arguments="", options=None, global_command=False):
     if options is None:
         options = []
-    php_path = module.get_bin_path("php", True, ["/usr/local/bin"])
+
+    if module.params['executable'] is None:
+        php_path = module.get_bin_path("php", True, ["/usr/local/bin"])
+    else:
+        php_path = module.params['executable']
+
     composer_path = module.get_bin_path("composer", True, ["/usr/local/bin"])
     cmd = "%s %s %s %s %s %s" % (php_path, composer_path, "global" if global_command else "", command, " ".join(options), arguments)
     return module.run_command(cmd)
@@ -186,8 +172,9 @@ def composer_command(module, command, arguments="", options=None, global_command
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            command=dict(default="install", type="str", required=False),
-            arguments=dict(default="", type="str", required=False),
+            command=dict(default="install", type="str"),
+            arguments=dict(default="", type="str"),
+            executable=dict(type="path", aliases=["php_path"]),
             working_dir=dict(type="path", aliases=["working-dir"]),
             global_command=dict(default=False, type="bool", aliases=["global-command"]),
             prefer_source=dict(default=False, type="bool", aliases=["prefer-source"]),
@@ -244,7 +231,10 @@ def main():
             options.append(option)
 
     if module.check_mode:
-        options.append('--dry-run')
+        if 'dry-run' in available_options:
+            options.append('--dry-run')
+        else:
+            module.exit_json(skipped=True, msg="command '%s' does not support check mode, skipping" % command)
 
     rc, out, err = composer_command(module, command, arguments, options, global_command)
 

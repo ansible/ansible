@@ -78,14 +78,14 @@ class TestAbstractClass(unittest.TestCase):
         class CacheModule1(BaseCacheModule):
             pass
         with self.assertRaises(TypeError):
-            CacheModule1()
+            CacheModule1()  # pylint: disable=abstract-class-instantiated
 
         class CacheModule2(BaseCacheModule):
             def get(self, key):
                 super(CacheModule2, self).get(key)
 
         with self.assertRaises(TypeError):
-            CacheModule2()
+            CacheModule2()  # pylint: disable=abstract-class-instantiated
 
     def test_subclass_success(self):
         class CacheModule3(BaseCacheModule):

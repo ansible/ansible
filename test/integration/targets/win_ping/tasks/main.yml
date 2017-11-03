@@ -23,20 +23,21 @@
 - name: check win_ping result
   assert:
     that:
-      - "not win_ping_result|failed"
-      - "not win_ping_result|changed"
-      - "win_ping_result.ping == 'pong'"
+      - not win_ping_result|failed
+      - not win_ping_result|changed
+      - win_ping_result.ping == 'pong'
 
 - name: test win_ping with data
-  win_ping: data=☠
+  win_ping:
+    data: ☠
   register: win_ping_with_data_result
 
 - name: check win_ping result with data
   assert:
     that:
-      - "not win_ping_with_data_result|failed"
-      - "not win_ping_with_data_result|changed"
-      - "win_ping_with_data_result.ping == '☠'"
+      - not win_ping_with_data_result|failed
+      - not win_ping_with_data_result|changed
+      - win_ping_with_data_result.ping == '☠'
 
 - name: test win_ping.ps1 with data as complex args
   win_ping.ps1:
@@ -46,9 +47,9 @@
 - name: check win_ping.ps1 result with data
   assert:
     that:
-      - "not win_ping_ps1_result|failed"
-      - "not win_ping_ps1_result|changed"
-      - "win_ping_ps1_result.ping == 'bleep'"
+      - not win_ping_ps1_result|failed
+      - not win_ping_ps1_result|changed
+      - win_ping_ps1_result.ping == 'bleep'
 
 - name: test win_ping with extra args to verify that v2 module replacer escaping works as expected
   win_ping:
@@ -76,9 +77,22 @@
 - name: check that win_ping with extra args succeeds and ignores everything except data
   assert:
     that:
-      - "not win_ping_extra_args_result|failed"
-      - "not win_ping_extra_args_result|changed"
-      - "win_ping_extra_args_result.ping == 'bloop'"
+      - not win_ping_extra_args_result|failed
+      - not win_ping_extra_args_result|changed
+      - win_ping_extra_args_result.ping == 'bloop'
+
+- name: test win_ping using data=crash so that it throws an exception
+  win_ping:
+    data: crash
+  register: win_ping_crash_result
+  ignore_errors: yes
+
+- name: check win_ping_crash result
+  assert:
+    that:
+      - win_ping_crash_result|failed
+      - not win_ping_crash_result|changed
+      - "'FullyQualifiedErrorId : boom' in win_ping_crash_result.module_stderr"
 
 # TODO: fix code or tests? discrete error returns from PS are strange...
 
@@ -90,11 +104,11 @@
 #- name: check win_ping_throw result
 #  assert:
 #    that:
-#      - "win_ping_throw_result|failed"
-#      - "not win_ping_throw_result|changed"
-#      - "win_ping_throw_result.msg == 'MODULE FAILURE'"
-#      - "win_ping_throw_result.exception"
-#      - "win_ping_throw_result.error_record"
+#      - win_ping_throw_result|failed
+#      - not win_ping_throw_result|changed
+#      - win_ping_throw_result.msg == 'MODULE FAILURE'
+#      - win_ping_throw_result.exception
+#      - win_ping_throw_result.error_record
 #
 #- name: test modified win_ping that throws a string exception
 #  action: win_ping_throw_string
@@ -104,11 +118,11 @@
 #- name: check win_ping_throw_string result
 #  assert:
 #    that:
-#      - "win_ping_throw_string_result|failed"
-#      - "not win_ping_throw_string_result|changed"
-#      - "win_ping_throw_string_result.msg == 'no ping for you'"
-#      - "win_ping_throw_string_result.exception"
-#      - "win_ping_throw_string_result.error_record"
+#      - win_ping_throw_string_result|failed
+#      - not win_ping_throw_string_result|changed
+#      - win_ping_throw_string_result.msg == 'no ping for you'
+#      - win_ping_throw_string_result.exception
+#      - win_ping_throw_string_result.error_record
 #
 #- name: test modified win_ping that has a syntax error
 #  action: win_ping_syntax_error
@@ -118,10 +132,10 @@
 #- name: check win_ping_syntax_error result
 #  assert:
 #    that:
-#      - "win_ping_syntax_error_result|failed"
-#      - "not win_ping_syntax_error_result|changed"
-#      - "win_ping_syntax_error_result.msg"
-#      - "win_ping_syntax_error_result.exception"
+#      - win_ping_syntax_error_result|failed
+#      - not win_ping_syntax_error_result|changed
+#      - win_ping_syntax_error_result.msg
+#      - win_ping_syntax_error_result.exception
 #
 #- name: test modified win_ping that has an error that only surfaces when strict mode is on
 #  action: win_ping_strict_mode_error
@@ -131,10 +145,10 @@
 #- name: check win_ping_strict_mode_error result
 #  assert:
 #    that:
-#      - "win_ping_strict_mode_error_result|failed"
-#      - "not win_ping_strict_mode_error_result|changed"
-#      - "win_ping_strict_mode_error_result.msg"
-#      - "win_ping_strict_mode_error_result.exception"
+#      - win_ping_strict_mode_error_result|failed
+#      - not win_ping_strict_mode_error_result|changed
+#      - win_ping_strict_mode_error_result.msg
+#      - win_ping_strict_mode_error_result.exception
 #
 #- name: test modified win_ping to verify a Set-Attr fix
 #  action: win_ping_set_attr data="fixed"
@@ -143,6 +157,6 @@
 #- name: check win_ping_set_attr_result result
 #  assert:
 #    that:
-#      - "not win_ping_set_attr_result|failed"
-#      - "not win_ping_set_attr_result|changed"
-#      - "win_ping_set_attr_result.ping == 'fixed'"
+#      - not win_ping_set_attr_result|failed
+#      - not win_ping_set_attr_result|changed
+#      - win_ping_set_attr_result.ping == 'fixed'

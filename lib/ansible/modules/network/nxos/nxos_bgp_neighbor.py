@@ -16,11 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {
-    'metadata_version': '1.0',
-    'status': ['preview'],
-    'supported_by': 'community',
-}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = '''
@@ -33,6 +31,7 @@ description:
   - Manages BGP neighbors configurations on NX-OS switches.
 author: Gabriele Gerbino (@GGabriele)
 notes:
+  - Tested against NXOSv 7.3.(0)D1(1) on VIRL
   - C(state=absent) removes the whole BGP neighbor configuration.
   - Default, where supported, restores params default value.
 options:
@@ -198,7 +197,6 @@ EXAMPLES = '''
     remote_as: 30
     description: "just a description"
     update_source: Ethernet1/3
-    shutdown: default
     state: present
 '''
 
@@ -227,7 +225,7 @@ BOOL_PARAMS = [
     'dynamic_capability',
     'low_memory_exempt',
     'suppress_4_byte_as',
-    'transport_passive_only'
+    'transport_passive_only',
 ]
 PARAM_TO_COMMAND_KEYMAP = {
     'asn': 'router bgp',
@@ -263,36 +261,36 @@ PARAM_TO_DEFAULT_KEYMAP = {
 
 def get_value(arg, config):
     command = PARAM_TO_COMMAND_KEYMAP[arg]
-    has_command = re.search(r'\s+{0}\s*$'.format(command), config, re.M)
-    has_command_value = re.search(r'(?:{0}\s)(?P<value>.*)$'.format(command), config, re.M)
+    has_command = re.search(r'^\s+{0}$'.format(command), config, re.M)
+    has_command_val = re.search(r'(?:\s+{0}\s*)(?P<value>.*)$'.format(command), config, re.M)
 
-    if arg in BOOL_PARAMS:
-        value = False
-        try:
-            if has_command:
-                value = True
-        except TypeError:
+    if arg == 'dynamic_capability':
+        has_no_command = re.search(r'\s+no\s{0}\s*$'.format(command), config, re.M)
+        value = True
+        if has_no_command:
             value = False
+    elif arg in BOOL_PARAMS:
+        value = False
+        if has_command:
+            value = True
     elif arg == 'log_neighbor_changes':
         value = ''
         if has_command:
-            if has_command_value:
-                value = 'disable'
-            else:
-                value = 'enable'
+            value = 'enable'
+        elif has_command_val:
+            value = 'disable'
 
     elif arg == 'remove_private_as':
         value = 'disable'
         if has_command:
-            if has_command_value:
-                value = has_command_value.group('value')
-            else:
-                value = 'enable'
+            value = 'enable'
+        elif has_command_val:
+            value = has_command_val.group('value')
     else:
         value = ''
 
-        if has_command_value:
-            value = has_command_value.group('value')
+        if has_command_val:
+            value = has_command_val.group('value')
 
             if command in ['timers', 'password']:
                 split_value = value.split()
@@ -389,10 +387,10 @@ def state_present(module, existing, proposed, candidate):
                 else:
                     command = '{0} {1}'.format(key, value)
                     commands.append(command)
-            elif key.startswith('timers'):
+            elif key == 'timers':
                 command = 'timers {0} {1}'.format(
-                    proposed_commands['timers-keepalive'],
-                    proposed_commands['timers-holdtime'])
+                    proposed['timers_keepalive'],
+                    proposed['timers_holdtime'])
                 if command not in commands:
                     commands.append(command)
             else:
@@ -442,7 +440,7 @@ def main():
         pwd_type=dict(required=False, type='str', choices=['cleartext', '3des', 'cisco_type_7', 'default']),
         remote_as=dict(required=False, type='str'),
         remove_private_as=dict(required=False, type='str', choices=['enable', 'disable', 'all', 'replace-as']),
-        shutdown=dict(required=False, type='str'),
+        shutdown=dict(required=False, type='bool'),
         suppress_4_byte_as=dict(required=False, type='bool'),
         timers_keepalive=dict(required=False, type='str'),
         timers_holdtime=dict(required=False, type='str'),
@@ -495,7 +493,7 @@ def main():
 
     if candidate:
         candidate = candidate.items_text()
-        load_config(module, candidate)
+        warnings.extend(load_config(module, candidate))
         result['changed'] = True
         result['commands'] = candidate
     else:

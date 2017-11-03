@@ -8,7 +8,7 @@
 
 - name: configure top level command
   iosxr_config:
-    commands: ['hostname foo']
+    commands: ['banner motd "hello world"', 'hostname foo']
     match: strict
   register: result
 
@@ -16,10 +16,11 @@
     that:
       - "result.changed == true"
       - "'hostname foo' in result.commands"
+      - "'banner motd \"hello world\"' in result.commands"
 
 - name: configure top level command idempotent check
   iosxr_config:
-    commands: ['hostname foo']
+    commands: ['banner motd "hello world"', 'hostname foo']
     match: strict
   register: result
 

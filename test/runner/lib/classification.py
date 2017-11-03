@@ -12,6 +12,7 @@ from lib.target import (
     walk_compile_targets,
     walk_sanity_targets,
     load_integration_prefixes,
+    analyze_integration_target_dependencies,
 )
 
 from lib.util import (
@@ -22,14 +23,20 @@ from lib.import_analysis import (
     get_python_module_utils_imports,
 )
 
+from lib.config import (
+    TestConfig,
+    IntegrationConfig,
+)
 
-def categorize_changes(paths, verbose_command=None):
+
+def categorize_changes(args, paths, verbose_command=None):
     """
+    :type args: TestConfig
     :type paths: list[str]
     :type verbose_command: str
     :rtype paths: dict[str, list[str]]
     """
-    mapper = PathMapper()
+    mapper = PathMapper(args)
 
     commands = {
         'sanity': set(),
@@ -43,6 +50,9 @@ def categorize_changes(paths, verbose_command=None):
     additional_paths = set()
 
     for path in paths:
+        if not os.path.exists(path):
+            continue
+
         dependent_paths = mapper.get_dependent_paths(path)
 
         if not dependent_paths:
@@ -67,7 +77,7 @@ def categorize_changes(paths, verbose_command=None):
 
         if tests is None:
             display.info('%s -> all' % path, verbosity=1)
-            tests = all_tests()  # not categorized, run all tests
+            tests = all_tests(args)  # not categorized, run all tests
             display.warning('Path not categorized: %s' % path)
         else:
             tests = dict((key, value) for key, value in tests.items() if value)
@@ -88,6 +98,8 @@ def categorize_changes(paths, verbose_command=None):
             commands[command].add(target)
 
     for command in commands:
+        commands[command].discard('none')
+
         if any(t == 'all' for t in commands[command]):
             commands[command] = set(['all'])
 
@@ -98,7 +110,13 @@ def categorize_changes(paths, verbose_command=None):
 
 class PathMapper(object):
     """Map file paths to test commands and targets."""
-    def __init__(self):
+    def __init__(self, args):
+        """
+        :type args: TestConfig
+        """
+        self.args = args
+        self.integration_all_target = get_integration_all_target(self.args)
+
         self.integration_targets = list(walk_integration_targets())
         self.module_targets = list(walk_module_targets())
         self.compile_targets = list(walk_compile_targets())
@@ -122,6 +140,7 @@ class PathMapper(object):
                                                   if 'network/' in t.aliases for m in t.modules)
 
         self.prefixes = load_integration_prefixes()
+        self.integration_dependencies = analyze_integration_target_dependencies(self.integration_targets)
 
         self.python_module_utils_imports = {}  # populated on first use to reduce overhead when not needed
 
@@ -135,6 +154,9 @@ class PathMapper(object):
         if path.startswith('lib/ansible/module_utils/'):
             if ext == '.py':
                 return self.get_python_module_utils_usage(path)
+
+        if path.startswith('test/integration/targets/'):
+            return self.get_integration_target_usage(path)
 
         return []
 
@@ -159,6 +181,16 @@ class PathMapper(object):
             name = name[:-9]
 
         return sorted(self.python_module_utils_imports[name])
+
+    def get_integration_target_usage(self, path):
+        """
+        :type path: str
+        :rtype: list[str]
+        """
+        target_name = path.split('/')[3]
+        dependents = [os.path.join('test/integration/targets/%s/' % target) for target in sorted(self.integration_dependencies.get(target_name, set()))]
+
+        return dependents
 
     def classify(self, path):
         """
@@ -186,6 +218,7 @@ class PathMapper(object):
         :type path: str
         :rtype: dict[str, str] | None
         """
+        dirname = os.path.dirname(path)
         filename = os.path.basename(path)
         name, ext = os.path.splitext(filename)
 
@@ -217,22 +250,22 @@ class PathMapper(object):
             return minimal
 
         if path.startswith('lib/ansible/modules/'):
-            module = self.module_names_by_path.get(path)
+            module_name = self.module_names_by_path.get(path)
 
-            if module:
+            if module_name:
                 return {
-                    'units': module if module in self.units_modules else None,
-                    'integration': self.posix_integration_by_module.get(module) if ext == '.py' else None,
-                    'windows-integration': self.windows_integration_by_module.get(module) if ext == '.ps1' else None,
-                    'network-integration': self.network_integration_by_module.get(module),
+                    'units': module_name if module_name in self.units_modules else None,
+                    'integration': self.posix_integration_by_module.get(module_name) if ext == '.py' else None,
+                    'windows-integration': self.windows_integration_by_module.get(module_name) if ext == '.ps1' else None,
+                    'network-integration': self.network_integration_by_module.get(module_name),
                 }
 
             return minimal
 
         if path.startswith('lib/ansible/module_utils/'):
-            if ext == '.ps1':
+            if ext in ('.ps1', '.psm1'):
                 return {
-                    'windows-integration': 'all',
+                    'windows-integration': self.integration_all_target,
                 }
 
             if ext == '.py':
@@ -241,9 +274,9 @@ class PathMapper(object):
         if path.startswith('lib/ansible/plugins/connection/'):
             if name == '__init__':
                 return {
-                    'integration': 'all',
-                    'windows-integration': 'all',
-                    'network-integration': 'all',
+                    'integration': self.integration_all_target,
+                    'windows-integration': self.integration_all_target,
+                    'network-integration': self.integration_all_target,
                     'units': 'test/units/plugins/connection/',
                 }
 
@@ -261,20 +294,20 @@ class PathMapper(object):
 
             if name == 'winrm':
                 return {
-                    'windows-integration': 'all',
+                    'windows-integration': self.integration_all_target,
                     'units': units_path,
                 }
 
             if name == 'local':
                 return {
-                    'integration': 'all',
-                    'network-integration': 'all',
+                    'integration': self.integration_all_target,
+                    'network-integration': self.integration_all_target,
                     'units': units_path,
                 }
 
             if name == 'network_cli':
                 return {
-                    'network-integration': 'all',
+                    'network-integration': self.integration_all_target,
                     'units': units_path,
                 }
 
@@ -303,7 +336,7 @@ class PathMapper(object):
                     }
 
                 return {
-                    'network-integration': 'all',
+                    'network-integration': self.integration_all_target,
                     'units': 'all',
                 }
 
@@ -313,9 +346,28 @@ class PathMapper(object):
             }
 
         if path.startswith('lib/ansible/'):
-            return all_tests()  # broad impact, run all tests
+            return all_tests(self.args)  # broad impact, run all tests
 
         if path.startswith('packaging/'):
+            if path.startswith('packaging/requirements/'):
+                if name.startswith('requirements-') and ext == '.txt':
+                    component = name.split('-', 1)[1]
+
+                    candidates = (
+                        'cloud/%s/' % component,
+                    )
+
+                    for candidate in candidates:
+                        if candidate in self.integration_targets_by_alias:
+                            return {
+                                'integration': candidate,
+                            }
+
+                return all_tests(self.args)  # broad impact, run all tests
+
+            return minimal
+
+        if path.startswith('test/cache/'):
             return minimal
 
         if path.startswith('test/compile/'):
@@ -324,6 +376,9 @@ class PathMapper(object):
             }
 
         if path.startswith('test/results/'):
+            return minimal
+
+        if path.startswith('test/legacy/'):
             return minimal
 
         if path.startswith('test/integration/roles/'):
@@ -336,10 +391,13 @@ class PathMapper(object):
             target = self.integration_targets_by_name[path.split('/')[3]]
 
             if 'hidden/' in target.aliases:
+                if target.type == 'role':
+                    return minimal  # already expanded using get_dependent_paths
+
                 return {
-                    'integration': 'all',
-                    'windows-integration': 'all',
-                    'network-integration': 'all',
+                    'integration': self.integration_all_target,
+                    'windows-integration': self.integration_all_target,
+                    'network-integration': self.integration_all_target,
                 }
 
             return {
@@ -349,10 +407,38 @@ class PathMapper(object):
             }
 
         if path.startswith('test/integration/'):
+            if dirname == 'test/integration':
+                if self.prefixes.get(name) == 'network' and ext == '.yaml':
+                    return minimal  # network integration test playbooks are not used by ansible-test
+
+                if filename == 'network-all.yaml':
+                    return minimal  # network integration test playbook not used by ansible-test
+
+                if filename == 'platform_agnostic.yaml':
+                    return minimal  # network integration test playbook not used by ansible-test
+
+                for command in (
+                        'integration',
+                        'windows-integration',
+                        'network-integration',
+                ):
+                    if name == command and ext == '.cfg':
+                        return {
+                            command: self.integration_all_target,
+                        }
+
+                if name.startswith('cloud-config-'):
+                    cloud_target = 'cloud/%s/' % name.split('-')[2].split('.')[0]
+
+                    if cloud_target in self.integration_targets_by_alias:
+                        return {
+                            'integration': cloud_target,
+                        }
+
             return {
-                'integration': 'all',
-                'windows-integration': 'all',
-                'network-integration': 'all',
+                'integration': self.integration_all_target,
+                'windows-integration': self.integration_all_target,
+                'network-integration': self.integration_all_target,
             }
 
         if path.startswith('test/sanity/'):
@@ -378,6 +464,9 @@ class PathMapper(object):
 
                 test_path = os.path.dirname(test_path)
 
+        if path.startswith('test/runner/docker/'):
+            return minimal  # not used by tests, only used to build the default container
+
         if path.startswith('test/runner/lib/cloud/'):
             cloud_target = 'cloud/%s/' % name
 
@@ -386,13 +475,44 @@ class PathMapper(object):
                     'integration': cloud_target,
                 }
 
-            return all_tests()  # test infrastructure, run all tests
+            return all_tests(self.args)  # test infrastructure, run all tests
+
+        if path.startswith('test/runner/lib/sanity/'):
+            return {
+                'sanity': 'all',  # test infrastructure, run all sanity checks
+            }
+
+        if path.startswith('test/runner/requirements/'):
+            if name in (
+                    'integration',
+                    'network-integration',
+                    'windows-integration',
+            ):
+                return {
+                    name: self.integration_all_target,
+                }
+
+            if name in (
+                    'sanity',
+                    'units',
+            ):
+                return {
+                    name: 'all',
+                }
+
+            if name.startswith('integration.cloud.'):
+                cloud_target = 'cloud/%s/' % name.split('.')[2]
+
+                if cloud_target in self.integration_targets_by_alias:
+                    return {
+                        'integration': cloud_target,
+                    }
 
         if path.startswith('test/runner/'):
-            return all_tests()  # test infrastructure, run all tests
+            return all_tests(self.args)  # test infrastructure, run all tests
 
         if path.startswith('test/utils/shippable/'):
-            return all_tests()  # test infrastructure, run all tests
+            return all_tests(self.args)  # test infrastructure, run all tests
 
         if path.startswith('test/utils/'):
             return minimal
@@ -413,7 +533,6 @@ class PathMapper(object):
                     'COPYING',
                     'VERSION',
                     'Makefile',
-                    'setup.py',
             ):
                 return minimal
 
@@ -421,7 +540,10 @@ class PathMapper(object):
                     'shippable.yml',
                     '.coveragerc',
             ):
-                return all_tests()  # test infrastructure, run all tests
+                return all_tests(self.args)  # test infrastructure, run all tests
+
+            if path == 'setup.py':
+                return all_tests(self.args)  # broad impact, run all tests
 
             if path == '.yamllint':
                 return {
@@ -434,15 +556,29 @@ class PathMapper(object):
         return None  # unknown, will result in fall-back to run all tests
 
 
-def all_tests():
+def all_tests(args):
     """
+    :type args: TestConfig
     :rtype: dict[str, str]
     """
+    integration_all_target = get_integration_all_target(args)
+
     return {
         'sanity': 'all',
         'compile': 'all',
         'units': 'all',
-        'integration': 'all',
-        'windows-integration': 'all',
-        'network-integration': 'all',
+        'integration': integration_all_target,
+        'windows-integration': integration_all_target,
+        'network-integration': integration_all_target,
     }
+
+
+def get_integration_all_target(args):
+    """
+    :type args: TestConfig
+    :rtype: str
+    """
+    if isinstance(args, IntegrationConfig):
+        return args.changed_all_target
+
+    return 'all'

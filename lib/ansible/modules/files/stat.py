@@ -1,20 +1,11 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
@@ -25,6 +16,7 @@ version_added: "1.3"
 short_description: Retrieve file or file system status
 description:
      - Retrieves facts for a file similar to the linux/unix 'stat' command.
+     - For Windows targets, use the M(win_stat) module instead.
 options:
   path:
     description:
@@ -73,6 +65,8 @@ options:
     default: 'yes'
     version_added: "2.3"
     aliases: [ attr, attributes ]
+notes:
+     - For Windows targets, use the M(win_stat) module instead.
 author: Bruce Pennypacker (@bpennypacker)
 '''
 
@@ -289,10 +283,16 @@ stat:
             type: boolean
             sample: False
         lnk_source:
-            description: Original path
+            description: Target of the symlink normalized for the remote filesystem
             returned: success, path exists and user can read stats and the path is a symbolic link
             type: string
             sample: /home/foobar/21102015-1445431274-908472971
+        lnk_target:
+            description: Target of the symlink.  Note that relative paths remain relative
+            returned: success, path exists and user can read stats and the path is a symbolic link
+            type: string
+            sample: ../foobar/21102015-1445431274-908472971
+            version_added: 2.4
         md5:
             description: md5 hash of the path
             returned: success, path exists and user can read stats and path
@@ -350,7 +350,7 @@ stat:
         attributes:
             description: list of file attributes
             returned: success, path exists and user can execute the path
-            type: boolean
+            type: list
             sample: [ immutable, extent ]
             version_added: 2.3
 '''
@@ -363,7 +363,6 @@ import stat
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils._text import to_bytes
 
 
@@ -404,7 +403,7 @@ def format_output(module, path, st):
         isgid=bool(mode & stat.S_ISGID),
     )
 
-    # Platform dependant flags:
+    # Platform dependent flags:
     for other in [
             # Some Linux
             ('st_blocks', 'blocks'),
@@ -460,8 +459,7 @@ def main():
             st = os.stat(b_path)
         else:
             st = os.lstat(b_path)
-    except OSError:
-        e = get_exception()
+    except OSError as e:
         if e.errno == errno.ENOENT:
             output = {'exists': False}
             module.exit_json(changed=False, stat=output)
@@ -478,6 +476,7 @@ def main():
     # symlink info
     if output.get('islnk'):
         output['lnk_source'] = os.path.realpath(b_path)
+        output['lnk_target'] = os.readlink(b_path)
 
     try:  # user data
         pw = pwd.getpwuid(st.st_uid)

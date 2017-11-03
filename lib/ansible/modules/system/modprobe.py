@@ -1,136 +1,119 @@
 #!/usr/bin/python
-#coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
-# (c) 2013, David Stygstra <david.stygstra@gmail.com>
-#
-# This file is part of Ansible
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2013, David Stygstra <david.stygstra@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
 module: modprobe
-short_description: Add or remove kernel modules
-requirements: []
+short_description: Load or unload kernel modules
 version_added: 1.4
 author:
-    - "David Stygstra (@stygstra)"
-    - "Julien Dauphant"
-    - "Matt Jeffery"
+    - David Stygstra (@stygstra)
+    - Julien Dauphant
+    - Matt Jeffery
 description:
-    - Add or remove kernel modules.
+    - Load or unload kernel modules.
 options:
     name:
         required: true
         description:
             - Name of kernel module to manage.
     state:
-        required: false
-        default: "present"
-        choices: [ present, absent ]
         description:
             - Whether the module should be present or absent.
+        choices: [ absent, present ]
+        default: present
     params:
-        required: false
-        default: ""
-        version_added: "1.6"
         description:
             - Modules parameters.
+        default: ''
+        version_added: "1.6"
 '''
 
 EXAMPLES = '''
-# Add the 802.1q module
-- modprobe:
+- name: Add the 802.1q module
+  modprobe:
     name: 8021q
     state: present
 
-# Add the dummy module
-- modprobe:
+- name: Add the dummy module
+  modprobe:
     name: dummy
     state: present
     params: 'numdummies=2'
 '''
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.pycompat24 import get_exception
 import shlex
+import traceback
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 
 
 def main():
     module = AnsibleModule(
-        argument_spec={
-            'name': {'required': True},
-            'state': {'default': 'present', 'choices': ['present', 'absent']},
-            'params': {'default': ''},
-        },
+        argument_spec=dict(
+            name=dict(type='str', required=True),
+            state=dict(type='str', default='present', choices=['absent', 'present']),
+            params=dict(type='str', default=''),
+        ),
         supports_check_mode=True,
     )
-    args = {
-        'changed': False,
-        'failed': False,
-        'name': module.params['name'],
-        'state': module.params['state'],
-        'params': module.params['params'],
-    }
+
+    name = module.params['name']
+    params = module.params['params']
+    state = module.params['state']
+
+    # FIXME: Adding all parameters as result values is useless
+    result = dict(
+        changed=False,
+        name=name,
+        params=params,
+        state=state,
+    )
 
     # Check if module is present
     try:
         modules = open('/proc/modules')
         present = False
-        module_name = args['name'].replace('-', '_') + ' '
+        module_name = name.replace('-', '_') + ' '
         for line in modules:
             if line.startswith(module_name):
                 present = True
                 break
         modules.close()
-    except IOError:
-        e = get_exception()
-        module.fail_json(msg=str(e), **args)
-
-    # Check only; don't modify
-    if module.check_mode:
-        if args['state'] == 'present' and not present:
-            changed = True
-        elif args['state'] == 'absent' and present:
-            changed = True
-        else:
-            changed = False
-        module.exit_json(changed=changed)
+    except IOError as e:
+        module.fail_json(msg=to_native(e), exception=traceback.format_exc(), **result)
 
     # Add/remove module as needed
-    if args['state'] == 'present':
+    if state == 'present':
         if not present:
-            command = [module.get_bin_path('modprobe', True), args['name']]
-            command.extend(shlex.split(args['params']))
-            rc, _, err = module.run_command(command)
-            if rc != 0:
-                module.fail_json(msg=err, **args)
-            args['changed'] = True
-    elif args['state'] == 'absent':
+            if not module.check_mode:
+                command = [module.get_bin_path('modprobe', True), name]
+                command.extend(shlex.split(params))
+                rc, out, err = module.run_command(command)
+                if rc != 0:
+                    module.fail_json(msg=err, rc=rc, stdout=out, stderr=err, **result)
+            result['changed'] = True
+    elif state == 'absent':
         if present:
-            rc, _, err = module.run_command([module.get_bin_path('modprobe', True), '-r', args['name']])
-            if rc != 0:
-                module.fail_json(msg=err, **args)
-            args['changed'] = True
+            if not module.check_mode:
+                rc, out, err = module.run_command([module.get_bin_path('modprobe', True), '-r', name])
+                if rc != 0:
+                    module.fail_json(msg=err, rc=rc, stdout=out, stderr=err, **result)
+            result['changed'] = True
 
-    module.exit_json(**args)
+    module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

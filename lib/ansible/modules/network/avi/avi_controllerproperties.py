@@ -23,7 +23,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -113,6 +113,11 @@ options:
             - Allowed values are 1-1051200.
             - Special values are 0 - 'disabled'.
             - Default value when not specified in API or module is interpreted by Avi Controller as 60.
+    portal_token:
+        description:
+            - Token used for uploading tech-support to portal.
+            - Field introduced in 16.4.6,17.1.2.
+        version_added: "2.4"
     query_host_fail:
         description:
             - Number of query_host_fail.
@@ -267,6 +272,7 @@ def main():
         max_pcap_per_tenant=dict(type='int',),
         max_seq_vnic_failures=dict(type='int',),
         persistence_key_rotate_period=dict(type='int',),
+        portal_token=dict(type='str', no_log=True,),
         query_host_fail=dict(type='int',),
         se_create_timeout=dict(type='int',),
         se_failover_attempt_interval=dict(type='int',),
@@ -302,7 +308,7 @@ def main():
             'Avi python API SDK (avisdk>=17.1) is not installed. '
             'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'controllerproperties',
-                           set([]))
+                           set(['portal_token']))
 
 if __name__ == '__main__':
     main()

@@ -1,31 +1,20 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 #
-# Copyright 2017 F5 Networks Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 F5 Networks Inc.
+# GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {
-    'status': ['preview'],
-    'supported_by': 'community',
-    'metadata_version': '1.0'
-}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-DOCUMENTATION = '''
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
+DOCUMENTATION = r'''
 module: bigip_snmp_trap
-short_description: Manipulate SNMP trap information on a BIG-IP.
+short_description: Manipulate SNMP trap information on a BIG-IP
 description:
   - Manipulate SNMP trap information on a BIG-IP.
 version_added: 2.4
@@ -82,70 +71,73 @@ author:
   - Tim Rupp (@caphrim007)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Create snmp v1 trap
   bigip_snmp_trap:
-      community: "general"
-      destination: "1.2.3.4"
-      name: "my-trap1"
-      network: "management"
-      port: "9000"
-      snmp_version: "1"
-      server: "lb.mydomain.com"
-      user: "admin"
-      password: "secret"
+    community: general
+    destination: 1.2.3.4
+    name: my-trap1
+    network: management
+    port: 9000
+    snmp_version: 1
+    server: lb.mydomain.com
+    user: admin
+    password: secret
   delegate_to: localhost
 
 - name: Create snmp v2 trap
   bigip_snmp_trap:
-      community: "general"
-      destination: "5.6.7.8"
-      name: "my-trap2"
-      network: "default"
-      port: "7000"
-      snmp_version: "2c"
-      server: "lb.mydomain.com"
-      user: "admin"
-      password: "secret"
+    community: general
+    destination: 5.6.7.8
+    name: my-trap2
+    network: default
+    port: 7000
+    snmp_version: 2c
+    server: lb.mydomain.com
+    user: admin
+    password: secret
   delegate_to: localhost
 '''
 
-RETURN = '''
+RETURN = r'''
 snmp_version:
-    description: The new C(snmp_version) configured on the remote device.
-    returned: changed and success
-    type: string
-    sample: "2c"
+  description: The new C(snmp_version) configured on the remote device.
+  returned: changed and success
+  type: string
+  sample: 2c
 community:
-    description: The new C(community) name for the trap destination.
-    returned: changed and success
-    type: list
-    sample: "secret"
+  description: The new C(community) name for the trap destination.
+  returned: changed and success
+  type: list
+  sample: secret
 destination:
-    description: The new address for the trap destination in either IP or hostname form.
-    returned: changed and success
-    type: string
-    sample: "1.2.3.4"
+  description: The new address for the trap destination in either IP or hostname form.
+  returned: changed and success
+  type: string
+  sample: 1.2.3.4
 port:
-    description: The new C(port) of the trap destination.
-    returned: changed and success
-    type: string
-    sample: "900"
+  description: The new C(port) of the trap destination.
+  returned: changed and success
+  type: string
+  sample: 900
 network:
-    description: The new name of the network the SNMP trap is on.
-    returned: changed and success
-    type: string
-    sample: "management"
+  description: The new name of the network the SNMP trap is on.
+  returned: changed and success
+  type: string
+  sample: management
 '''
 
+
+from ansible.module_utils.f5_utils import AnsibleF5Client
+from ansible.module_utils.f5_utils import AnsibleF5Parameters
+from ansible.module_utils.f5_utils import HAS_F5SDK
+from ansible.module_utils.f5_utils import F5ModuleError
 from distutils.version import LooseVersion
-from ansible.module_utils.f5_utils import (
-    AnsibleF5Client,
-    AnsibleF5Parameters,
-    HAS_F5SDK,
-    F5ModuleError,
-    iControlUnexpectedHTTPError
-)
+
+try:
+    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+except ImportError:
+    HAS_F5SDK = False
 
 
 class Parameters(AnsibleF5Parameters):

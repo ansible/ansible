@@ -17,9 +17,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -33,6 +33,8 @@ description:
     This module can also be introspected to validate key parameters before
     returning successfully.
 extends_documentation_fragment: vyos
+notes:
+  - Tested against VYOS 1.1.7
 options:
   hostname:
     description:
@@ -92,7 +94,7 @@ EXAMPLES = """
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vyos import get_config, load_config
-from ansible.module_utils.vyos import vyos_argument_spec, check_args
+from ansible.module_utils.vyos import vyos_argument_spec
 
 
 def spec_key_to_device_key(key):
@@ -188,7 +190,6 @@ def main():
     )
 
     warnings = list()
-    check_args(module, warnings)
 
     result = {'changed': False, 'warnings': warnings}
 

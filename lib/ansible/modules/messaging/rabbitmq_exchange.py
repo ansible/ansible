@@ -2,24 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2015, Manuel Sousa <manuel.sousa@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -115,58 +104,71 @@ EXAMPLES = '''
     vhost: myVhost
 '''
 
-import requests
-import urllib
 import json
+
+try:
+    import requests
+    HAS_REQUESTS = True
+except ImportError:
+    HAS_REQUESTS = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves.urllib import parse as urllib_parse
+
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            state = dict(default='present', choices=['present', 'absent'], type='str'),
-            name = dict(required=True, type='str'),
-            login_user = dict(default='guest', type='str'),
-            login_password = dict(default='guest', type='str', no_log=True),
-            login_host = dict(default='localhost', type='str'),
-            login_port = dict(default='15672', type='str'),
-            vhost = dict(default='/', type='str'),
-            durable = dict(default=True, type='bool'),
-            auto_delete = dict(default=False, type='bool'),
-            internal = dict(default=False, type='bool'),
-            exchange_type = dict(default='direct', aliases=['type'], type='str'),
-            arguments = dict(default=dict(), type='dict')
+        argument_spec=dict(
+            state=dict(default='present', choices=['present', 'absent'], type='str'),
+            name=dict(required=True, type='str'),
+            login_user=dict(default='guest', type='str'),
+            login_password=dict(default='guest', type='str', no_log=True),
+            login_host=dict(default='localhost', type='str'),
+            login_port=dict(default='15672', type='str'),
+            vhost=dict(default='/', type='str'),
+            durable=dict(default=True, type='bool'),
+            auto_delete=dict(default=False, type='bool'),
+            internal=dict(default=False, type='bool'),
+            exchange_type=dict(default='direct', aliases=['type'], type='str'),
+            arguments=dict(default=dict(), type='dict')
         ),
-        supports_check_mode = True
+        supports_check_mode=True
     )
+
+    result = dict(changed=False, name=module.params['name'])
 
     url = "http://%s:%s/api/exchanges/%s/%s" % (
         module.params['login_host'],
         module.params['login_port'],
-        urllib.quote(module.params['vhost'],''),
-        urllib.quote(module.params['name'],'')
+        urllib_parse.quote(module.params['vhost'], ''),
+        urllib_parse.quote(module.params['name'], '')
     )
 
-    # Check if exchange already exists
-    r = requests.get( url, auth=(module.params['login_user'],module.params['login_password']))
+    if not HAS_REQUESTS:
+        module.fail_json(msg="requests library is required for this module. To install, use `pip install requests`")
 
-    if r.status_code==200:
+    # Check if exchange already exists
+    r = requests.get(url, auth=(module.params['login_user'], module.params['login_password']))
+
+    if r.status_code == 200:
         exchange_exists = True
         response = r.json()
-    elif r.status_code==404:
+    elif r.status_code == 404:
         exchange_exists = False
         response = r.text
     else:
         module.fail_json(
-            msg = "Invalid response from RESTAPI when trying to check if exchange exists",
-            details = r.text
+            msg="Invalid response from RESTAPI when trying to check if exchange exists",
+            details=r.text
         )
 
-    if module.params['state']=='present':
+    if module.params['state'] == 'present':
         change_required = not exchange_exists
     else:
         change_required = exchange_exists
 
     # Check if attributes change on existing exchange
-    if not change_required and r.status_code==200 and module.params['state'] == 'present':
+    if not change_required and r.status_code == 200 and module.params['state'] == 'present':
         if not (
             response['durable'] == module.params['durable'] and
             response['auto_delete'] == module.params['auto_delete'] and
@@ -174,56 +176,48 @@ def main():
             response['type'] == module.params['exchange_type']
         ):
             module.fail_json(
-                msg = "RabbitMQ RESTAPI doesn't support attribute changes for existing exchanges"
+                msg="RabbitMQ RESTAPI doesn't support attribute changes for existing exchanges"
             )
 
     # Exit if check_mode
     if module.check_mode:
-        module.exit_json(
-            changed= change_required,
-            name = module.params['name'],
-            details = response,
-            arguments = module.params['arguments']
-        )
+        result['changed'] = change_required
+        result['details'] = response
+        result['arguments'] = module.params['arguments']
+        module.exit_json(**result)
 
     # Do changes
     if change_required:
         if module.params['state'] == 'present':
             r = requests.put(
                 url,
-                auth = (module.params['login_user'],module.params['login_password']),
-                headers = { "content-type": "application/json"},
-                data = json.dumps({
+                auth=(module.params['login_user'], module.params['login_password']),
+                headers={"content-type": "application/json"},
+                data=json.dumps({
                     "durable": module.params['durable'],
                     "auto_delete": module.params['auto_delete'],
                     "internal": module.params['internal'],
                     "type": module.params['exchange_type'],
                     "arguments": module.params['arguments']
-                    })
+                })
             )
         elif module.params['state'] == 'absent':
-            r = requests.delete( url, auth = (module.params['login_user'],module.params['login_password']))
+            r = requests.delete(url, auth=(module.params['login_user'], module.params['login_password']))
 
-        if r.status_code == 204:
-            module.exit_json(
-                changed = True,
-                name = module.params['name']
-            )
+        # RabbitMQ 3.6.7 changed this response code from 204 to 201
+        if r.status_code == 204 or r.status_code == 201:
+            result['changed'] = True
+            module.exit_json(**result)
         else:
             module.fail_json(
-                msg = "Error creating exchange",
-                status = r.status_code,
-                details = r.text
+                msg="Error creating exchange",
+                status=r.status_code,
+                details=r.text
             )
 
     else:
-        module.exit_json(
-            changed = False,
-            name = module.params['name']
-        )
-
-# import module snippets
-from ansible.module_utils.basic import *
+        result['changed'] = False
+        module.exit_json(**result)
 
 if __name__ == '__main__':
     main()

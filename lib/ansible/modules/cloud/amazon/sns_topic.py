@@ -1,23 +1,15 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-#
-# This is a free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This Ansible library is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this library.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = """
@@ -129,9 +121,9 @@ sns_topic:
       attributes_set: []
 '''
 
-import time
 import json
 import re
+import time
 
 try:
     import boto.sns
@@ -288,7 +280,7 @@ class SnsTopicManager(object):
         for (protocol, endpoint) in desired_subscriptions:
             if (protocol, endpoint) not in subscriptions_existing_list:
                 self.changed = True
-                self.subscriptions_added.append(sub)
+                self.subscriptions_added.append((protocol, endpoint))
                 if not self.check_mode:
                     self.connection.subscribe(self.arn_topic, protocol, endpoint)
 

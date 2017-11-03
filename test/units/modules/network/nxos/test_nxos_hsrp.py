@@ -41,20 +41,21 @@ class TestNxosHsrpModule(TestNxosModule):
         self.mock_run_commands.stop()
         self.mock_load_config.stop()
 
-    def load_fixtures(self, commands=None):
+    def load_fixtures(self, commands=None, device=''):
         self.load_config.return_value = None
 
     def test_nxos_hsrp(self):
         set_module_args(dict(group='10',
-                             vip='192.0.2.2',
+                             vip='192.0.2.2/8',
                              priority='150',
                              interface='Ethernet1/2',
                              preempt='enabled',
                              host='192.0.2.1'))
         result = self.execute_module(changed=True)
-        self.assertEqual(sorted(result['commands']), sorted(['interface ethernet1/2',
+        self.assertEqual(sorted(result['commands']), sorted(['config t',
+                                                             'interface ethernet1/2',
                                                              'hsrp version 2',
                                                              'hsrp 10',
                                                              'priority 150',
-                                                             'ip 192.0.2.2',
+                                                             'ip 192.0.2.2/8',
                                                              'preempt']))

@@ -1,0 +1,25 @@
+---
+- name: get current entries for right
+  test_get_right:
+    name: '{{test_win_user_right_name}}'
+  register: actual_users
+
+- name: get facts
+  setup:
+
+- block:
+  - name: ensure right is empty before test
+    win_user_right:
+      name: '{{test_win_user_right_name}}'
+      users: []
+      action: set
+  
+  - name: run tests
+    include_tasks: tests.yml
+
+  always:
+  - name: reset entries for test right
+    win_user_right:
+      name: '{{test_win_user_right_name}}'
+      users: '{{actual_users.users}}'
+      action: set

@@ -19,7 +19,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -43,15 +43,24 @@ options:
             - "ID of the Virtual Machine to manage."
     state:
         description:
-            - "Should the Virtual Machine be running/stopped/present/absent/suspended/next_run."
-            - "I(present) and I(running) are equal states."
+            - "Should the Virtual Machine be running/stopped/present/absent/suspended/next_run/registered.
+               When C(state) is I(registered) and the unregistered VM's name
+               belongs to an already registered in engine VM in the same DC
+               then we fail to register the unregistered template."
+            - "I(present) state will create/update VM and don't change its state if it already exists."
+            - "I(running) state will create/update VM and start it."
             - "I(next_run) state updates the VM and if the VM has next run configuration it will be rebooted."
             - "Please check I(notes) to more detailed description of states."
-        choices: ['running', 'stopped', 'present', 'absent', 'suspended', 'next_run']
+            - "I(registered) is supported since 2.4"
+        choices: ['running', 'stopped', 'present', 'absent', 'suspended', 'next_run', 'registered']
         default: present
     cluster:
         description:
             - "Name of the cluster, where Virtual Machine should be created. Required if creating VM."
+    allow_partial_import:
+        description:
+            - "Boolean indication whether to allow partial registration of Virtual Machine when C(state) is registered."
+        version_added: "2.4"
     template:
         description:
             - "Name of the template, which should be used to create Virtual Machine. Required if creating VM."
@@ -66,6 +75,24 @@ options:
             - "Specify if latest template version should be used, when running a stateless VM."
             - "If this parameter is set to I(true) stateless VM is created."
         version_added: "2.3"
+    storage_domain:
+        description:
+            - "Name of the storage domain where all template disks should be created."
+            - "This parameter is considered only when C(template) is provided."
+            - "C(**IMPORTANT**)"
+            - "This parameter is not idempotent, if the VM exists and you specfiy different storage domain,
+              disk won't move."
+        version_added: "2.4"
+    disk_format:
+        description:
+            - "Specify format of the disk."
+            - "If (cow) format is used, disk will by created as sparse, so space will be allocated for the volume as needed, also known as I(thin provision)."
+            - "If (raw) format is used, disk storage will be allocated right away, also known as I(preallocated)."
+            - "Note that this option isn't idempotent as it's not currently possible to change format of the disk via API."
+            - "This parameter is considered only when C(template) and C(storage domain) is provided."
+        choices: ['cow', 'raw']
+        default: cow
+        version_added: "2.4"
     memory:
         description:
             - "Amount of memory of the Virtual Machine. Prefix uses IEC 60027-2 standard (for example 1GiB, 1024MiB)."
@@ -112,6 +139,11 @@ options:
             - "If I(True) Virtual Machine will be set as highly available."
             - "If I(False) Virtual Machine won't be set as highly available."
             - "If no value is passed, default value is set by oVirt/RHV engine."
+    lease:
+        description:
+            - "Name of the storage domain this virtual machine lease reside on."
+            - "C(Note): Supported since oVirt 4.1."
+        version_added: "2.4"
     delete_protected:
         description:
             - "If I(True) Virtual Machine will be set as delete protected."
@@ -336,6 +368,28 @@ ovirt_vms:
     name: myvm
     template: rhel7_template
 
+# Register VM
+ovirt_vms:
+    state: registered
+    storage_domain: mystorage
+    cluster: mycluster
+    name: myvm
+
+# Register VM using id
+ovirt_vms:
+    state: registered
+    storage_domain: mystorage
+    cluster: mycluster
+    id: 1111-1111-1111-1111
+
+# Register VM, allowing partial import
+ovirt_vms:
+    state: registered
+    storage_domain: mystorage
+    allow_partial_import: "True"
+    cluster: mycluster
+    id: 1111-1111-1111-1111
+
 # Creates a stateless VM which will always use latest template version:
 ovirt_vms:
     name: myvm
@@ -476,6 +530,15 @@ ovirt_vms:
       username: user
       password: password
 
+# create vm from template and create all disks on specific storage domain
+ovirt_vms:
+  name: vm_test
+  cluster: mycluster
+  template: mytemplate
+  storage_domain: mynfs
+  nics:
+    - name: nic1
+
 # Remove VM, if VM is running it will be stopped:
 ovirt_vms:
     state: absent
@@ -495,7 +558,6 @@ vm:
     returned: On success if VM is found.
     type: dict
 '''
-
 import traceback
 
 try:
@@ -511,6 +573,7 @@ from ansible.module_utils.ovirt import (
     convert_to_bytes,
     create_connection,
     equal,
+    get_dict_of_struct,
     get_entity,
     get_link_name,
     get_id_by_name,
@@ -537,18 +600,59 @@ class VmsModule(BaseModule):
                     t for t in templates
                     if t.version.version_number == self.param('template_version')
                 ]
-            if templates:
-                template = templates[0]
+            if not templates:
+                raise ValueError(
+                    "Template with name '%s' and version '%s' was not found'" % (
+                        self.param('template'),
+                        self.param('template_version')
+                    )
+                )
+            template = sorted(templates, key=lambda t: t.version.version_number, reverse=True)[0]
 
         return template
 
+    def __get_storage_domain_and_all_template_disks(self, template):
+
+        if self.param('template') is None:
+            return None
+
+        if self.param('storage_domain') is None:
+            return None
+
+        disks = list()
+
+        for att in self._connection.follow_link(template.disk_attachments):
+            disks.append(
+                otypes.DiskAttachment(
+                    disk=otypes.Disk(
+                        id=att.disk.id,
+                        format=otypes.DiskFormat(self.param('disk_format')),
+                        storage_domains=[
+                            otypes.StorageDomain(
+                                id=get_id_by_name(
+                                    self._connection.system_service().storage_domains_service(),
+                                    self.param('storage_domain')
+                                )
+                            )
+                        ]
+                    )
+                )
+            )
+
+        return disks
+
     def build_entity(self):
         template = self.__get_template_with_version()
+
+        disk_attachments = self.__get_storage_domain_and_all_template_disks(template)
+
         return otypes.Vm(
+            id=self.param('id'),
             name=self.param('name'),
             cluster=otypes.Cluster(
                 name=self.param('cluster')
             ) if self.param('cluster') else None,
+            disk_attachments=disk_attachments,
             template=otypes.Template(
                 id=template.id,
             ) if template else None,
@@ -558,6 +662,14 @@ class VmsModule(BaseModule):
             high_availability=otypes.HighAvailability(
                 enabled=self.param('high_availability')
             ) if self.param('high_availability') is not None else None,
+            lease=otypes.StorageDomainLease(
+                storage_domain=otypes.StorageDomain(
+                    id=get_id_by_name(
+                        service=self._connection.system_service().storage_domains_service(),
+                        name=self.param('lease')
+                    )
+                )
+            ) if self.param('lease') is not None else None,
             cpu=otypes.Cpu(
                 topology=otypes.CpuTopology(
                     cores=self.param('cpu_cores'),
@@ -616,6 +728,7 @@ class VmsModule(BaseModule):
             and equal(self.param('type'), str(entity.type))
             and equal(self.param('operating_system'), str(entity.os.type))
             and equal(self.param('high_availability'), entity.high_availability.enabled)
+            and equal(self.param('lease'), get_link_name(self._connection, getattr(entity.lease, 'storage_domain', None)))
             and equal(self.param('stateless'), entity.stateless)
             and equal(self.param('cpu_shares'), entity.cpu_shares)
             and equal(self.param('delete_protected'), entity.delete_protected)
@@ -731,6 +844,17 @@ class VmsModule(BaseModule):
             timeout=self.param('timeout'),
         )
 
+    def _wait_for_vm_disks(self, vm_service):
+        disks_service = self._connection.system_service().disks_service()
+        for da in vm_service.disk_attachments_service().list():
+            disk_service = disks_service.disk_service(da.disk.id)
+            wait(
+                service=disk_service,
+                condition=lambda disk: disk.status == otypes.DiskStatus.OK,
+                wait=self.param('wait'),
+                timeout=self.param('timeout'),
+            )
+
     def wait_for_down(self, vm):
         """
         This function will first wait for the status DOWN of the VM.
@@ -772,8 +896,14 @@ class VmsModule(BaseModule):
         return True
 
     def __attach_disks(self, entity):
-        disks_service = self._connection.system_service().disks_service()
+        if not self.param('disks'):
+            return
 
+        vm_service = self._service.service(entity.id)
+        disks_service = self._connection.system_service().disks_service()
+        disk_attachments_service = vm_service.disk_attachments_service()
+
+        self._wait_for_vm_disks(vm_service)
         for disk in self.param('disks'):
             # If disk ID is not specified, find disk by name:
             disk_id = disk.get('id')
@@ -788,8 +918,8 @@ class VmsModule(BaseModule):
                 )
 
             # Attach disk to VM:
-            disk_attachments_service = self._service.service(entity.id).disk_attachments_service()
-            if get_entity(disk_attachments_service.attachment_service(disk_id)) is None:
+            disk_attachment = disk_attachments_service.attachment_service(disk_id)
+            if get_entity(disk_attachment) is None:
                 if not self._module.check_mode:
                     disk_attachments_service.add(
                         otypes.DiskAttachment(
@@ -992,19 +1122,21 @@ def control_state(vm, vms_service, module):
                 condition=lambda vm: vm.status in [otypes.VmStatus.DOWN, otypes.VmStatus.UP],
             )
 
-
 def main():
     argument_spec = ovirt_full_argument_spec(
         state=dict(
-            choices=['running', 'stopped', 'present', 'absent', 'suspended', 'next_run'],
+            choices=['running', 'stopped', 'present', 'absent', 'suspended', 'next_run', 'registered'],
             default='present',
         ),
         name=dict(default=None),
         id=dict(default=None),
         cluster=dict(default=None),
+        allow_partial_import=dict(default=None, type='bool'),
         template=dict(default=None),
         template_version=dict(default=None, type='int'),
         use_latest_template_version=dict(default=None, type='bool'),
+        storage_domain=dict(default=None),
+        disk_format=dict(choices=['cow','raw'], default='cow'),
         disks=dict(default=[], type='list'),
         memory=dict(default=None),
         memory_guaranteed=dict(default=None),
@@ -1030,6 +1162,7 @@ def main():
         cd_iso=dict(default=None),
         boot_devices=dict(default=None, type='list'),
         high_availability=dict(type='bool'),
+        lease=dict(default=None),
         stateless=dict(type='bool'),
         delete_protected=dict(type='bool'),
         force=dict(type='bool', default=False),
@@ -1056,6 +1189,7 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
+        required_one_of=[['id', 'name']],
     )
     check_sdk(module)
     check_params(module)
@@ -1073,7 +1207,7 @@ def main():
         vm = vms_module.search_entity()
 
         control_state(vm, vms_service, module)
-        if state == 'present' or state == 'running' or state == 'next_run':
+        if state in ('present', 'running', 'next_run'):
             if module.params['xen'] or module.params['kvm'] or module.params['vmware']:
                 vms_module.changed = import_vm(module, connection)
 
@@ -1091,46 +1225,49 @@ def main():
                 clone=module.params['clone'],
                 clone_permissions=module.params['clone_permissions'],
             )
-            initialization = _get_initialization(sysprep, cloud_init, cloud_init_nics)
-            ret = vms_module.action(
-                action='start',
-                post_action=vms_module._post_start_action,
-                action_condition=lambda vm: (
-                    vm.status not in [
-                        otypes.VmStatus.MIGRATING,
-                        otypes.VmStatus.POWERING_UP,
-                        otypes.VmStatus.REBOOT_IN_PROGRESS,
-                        otypes.VmStatus.WAIT_FOR_LAUNCH,
-                        otypes.VmStatus.UP,
-                        otypes.VmStatus.RESTORING_STATE,
-                    ]
-                ),
-                wait_condition=lambda vm: vm.status == otypes.VmStatus.UP,
-                # Start action kwargs:
-                use_cloud_init=cloud_init is not None or len(cloud_init_nics) > 0,
-                use_sysprep=sysprep is not None,
-                vm=otypes.Vm(
-                    placement_policy=otypes.VmPlacementPolicy(
-                        hosts=[otypes.Host(name=module.params['host'])]
-                    ) if module.params['host'] else None,
-                    initialization=initialization,
-                    os=otypes.OperatingSystem(
-                        cmdline=module.params.get('kernel_params'),
-                        initrd=module.params.get('initrd_path'),
-                        kernel=module.params.get('kernel_path'),
+
+            # Run the VM if it was just created, else don't run it:
+            if state == 'running':
+                initialization = _get_initialization(sysprep, cloud_init, cloud_init_nics)
+                ret = vms_module.action(
+                    action='start',
+                    post_action=vms_module._post_start_action,
+                    action_condition=lambda vm: (
+                        vm.status not in [
+                            otypes.VmStatus.MIGRATING,
+                            otypes.VmStatus.POWERING_UP,
+                            otypes.VmStatus.REBOOT_IN_PROGRESS,
+                            otypes.VmStatus.WAIT_FOR_LAUNCH,
+                            otypes.VmStatus.UP,
+                            otypes.VmStatus.RESTORING_STATE,
+                        ]
+                    ),
+                    wait_condition=lambda vm: vm.status == otypes.VmStatus.UP,
+                    # Start action kwargs:
+                    use_cloud_init=cloud_init is not None or len(cloud_init_nics) > 0,
+                    use_sysprep=sysprep is not None,
+                    vm=otypes.Vm(
+                        placement_policy=otypes.VmPlacementPolicy(
+                            hosts=[otypes.Host(name=module.params['host'])]
+                        ) if module.params['host'] else None,
+                        initialization=initialization,
+                        os=otypes.OperatingSystem(
+                            cmdline=module.params.get('kernel_params'),
+                            initrd=module.params.get('initrd_path'),
+                            kernel=module.params.get('kernel_path'),
+                        ) if (
+                            module.params.get('kernel_params')
+                            or module.params.get('initrd_path')
+                            or module.params.get('kernel_path')
+                        ) else None,
                     ) if (
                         module.params.get('kernel_params')
                         or module.params.get('initrd_path')
                         or module.params.get('kernel_path')
+                        or module.params.get('host')
+                        or initialization
                     ) else None,
-                ) if (
-                    module.params.get('kernel_params')
-                    or module.params.get('initrd_path')
-                    or module.params.get('kernel_path')
-                    or module.params.get('host')
-                    or initialization
-                ) else None,
-            )
+                )
 
             if state == 'next_run':
                 # Apply next run configuration, if needed:
@@ -1180,12 +1317,54 @@ def main():
             )
         elif state == 'absent':
             ret = vms_module.remove()
+        elif state == 'registered':
+            storage_domains_service = connection.system_service().storage_domains_service()
+
+            # Find the storage domain with unregistered VM:
+            sd_id = get_id_by_name(storage_domains_service, module.params['storage_domain'])
+            storage_domain_service = storage_domains_service.storage_domain_service(sd_id)
+            vms_service = storage_domain_service.vms_service()
+
+            # Find the the unregistered VM we want to register:
+            vms = vms_service.list(unregistered=True)
+            vm = next(
+                (vm for vm in vms if (vm.id == module.params['id'] or vm.name == module.params['name'])),
+                None
+            )
+            changed = False
+            if vm is None:
+                vm = vms_module.search_entity()
+                if vm is None:
+                    raise ValueError(
+                        "VM '%s(%s)' wasn't found." % (module.params['name'], module.params['id'])
+                    )
+            else:
+                # Register the vm into the system:
+                changed = True
+                vm_service = vms_service.vm_service(vm.id)
+                vm_service.register(
+                    allow_partial_import=module.params['allow_partial_import'],
+                    cluster=otypes.Cluster(
+                        name=module.params['cluster']
+                    ) if module.params['cluster'] else None
+                )
+
+                if module.params['wait']:
+                    vm = vms_module.wait_for_import()
+                else:
+                    # Fetch vm to initialize return.
+                    vm = vm_service.get()
+            ret = {
+                'changed': changed,
+                'id': vm.id,
+                'vm': get_dict_of_struct(vm)
+            }
 
         module.exit_json(**ret)
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
     finally:
-        connection.close(logout='token' not in module.params['auth'])
+        connection.close(logout=auth.get('token') is None)
 
 
 if __name__ == "__main__":

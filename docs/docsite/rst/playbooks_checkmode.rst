@@ -33,7 +33,7 @@ There are two options:
 1. Force a task to **run in check mode**, even when the playbook is called **without** ``--check``. This is called ``check_mode: yes``.
 2. Force a task to **run in normal mode** and make changes to the system, even when the playbook is called **with** ``--check``. This is called ``check_mode: no``.
 
-.. note:: Prior to version 2.2 only the the equivalent of ``check_mode: no`` existed. The notation for that was ``always_run: yes``.
+.. note:: Prior to version 2.2 only the equivalent of ``check_mode: no`` existed. The notation for that was ``always_run: yes``.
 
 Instead of ``yes``/``no`` you can use a Jinja2 expression, just like the ``when`` clause.
 
@@ -51,7 +51,7 @@ Example::
 
 
 Running single tasks with ``check_mode: yes`` can be useful to write tests for
-ansible modules, either to test the module itself or to the the conditions under
+ansible modules, either to test the module itself or to the conditions under
 which a module would make changes. 
 With ``register`` (see :doc:`playbooks_conditionals`) you can check the
 potential changes.
@@ -86,9 +86,10 @@ Showing Differences with ``--diff``
 
 .. versionadded:: 1.1
 
-The ``--diff`` option to ansible-playbook works great with ``--check`` (detailed above) but can also be used by itself.  When this flag is supplied, if any templated files on the remote system are changed, and the ansible-playbook CLI will report back
-the textual changes made to the file (or, if used with ``--check``, the changes that would have been made).  Since the diff
-feature produces a large amount of output, it is best used when checking a single host at a time, like so::
+The ``--diff`` option to ansible-playbook works great with ``--check`` (detailed above) but can also be used by itself.
+When this flag is supplied and the module supports this, Ansible will report back the changes made or, if used with ``--check``, the changes that would have been made.
+This is mostly used in modules that manipulate files (i.e. template) but other modules might also show 'before and after' information (i.e. user).
+Since the diff feature produces a large amount of output, it is best used when checking a single host at a time. For example::
 
     ansible-playbook foo.yml --check --diff --limit foo.example.com
 

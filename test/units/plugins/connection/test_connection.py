@@ -56,14 +56,14 @@ class TestConnectionBaseClass(unittest.TestCase):
         class ConnectionModule1(ConnectionBase):
             pass
         with self.assertRaises(TypeError):
-            ConnectionModule1()
+            ConnectionModule1()  # pylint: disable=abstract-class-instantiated
 
         class ConnectionModule2(ConnectionBase):
             def get(self, key):
                 super(ConnectionModule2, self).get(key)
 
         with self.assertRaises(TypeError):
-            ConnectionModule2()
+            ConnectionModule2()  # pylint: disable=abstract-class-instantiated
 
     def test_subclass_success(self):
         class ConnectionModule3(ConnectionBase):

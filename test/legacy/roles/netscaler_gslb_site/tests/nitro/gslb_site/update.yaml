@@ -1,0 +1,20 @@
+---
+
+- name: Setup gslb site
+  delegate_to: localhost
+  register: result
+  check_mode: "{{ check_mode }}"
+  netscaler_gslb_site:
+
+    nitro_user: "{{nitro_user}}"
+    nitro_pass: "{{nitro_pass}}"
+    nsip: "{{nsip}}"
+
+    sitename: gslb-site-1
+    siteipaddress: 192.168.1.1
+    sitetype: LOCAL
+    publicip: 192.168.1.1
+    metricexchange: disabled
+    nwmetricexchange: enabled
+    sessionexchange: enabled
+    triggermonitor: ALWAYS

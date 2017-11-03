@@ -41,9 +41,9 @@ class TestNxosBgpNeighborAfModule(TestNxosModule):
         self.mock_load_config.stop()
         self.mock_get_config.stop()
 
-    def load_fixtures(self, commands=None):
-        self.get_config.return_value = load_fixture('nxos_bgp_config.cfg')
-        self.load_config.return_value = None
+    def load_fixtures(self, commands=None, device=''):
+        self.get_config.return_value = load_fixture('nxos_bgp', 'config.cfg')
+        self.load_config.return_value = []
 
     def test_nxos_bgp_neighbor_af(self):
         set_module_args(dict(asn=65535, neighbor='3.3.3.3', afi='ipv4',
@@ -63,4 +63,37 @@ class TestNxosBgpNeighborAfModule(TestNxosModule):
         self.execute_module(
             changed=True, sort=False,
             commands=['router bgp 65535', 'neighbor 3.3.3.5', 'no address-family ipv4 unicast']
+        )
+
+    def test_nxos_bgp_neighbor_af_advertise_map(self):
+        set_module_args(dict(asn=65535, neighbor='3.3.3.5', afi='ipv4', safi='unicast',
+                             advertise_map_exist=['my_advertise_map', 'my_exist_map']))
+        self.execute_module(
+            changed=True, sort=False,
+            commands=['router bgp 65535', 'neighbor 3.3.3.5', 'address-family ipv4 unicast', 'advertise-map my_advertise_map exist-map my_exist_map']
+        )
+
+    def test_nxos_bgp_neighbor_af_advertise_map_non_exist(self):
+        set_module_args(dict(asn=65535, neighbor='3.3.3.5', afi='ipv4', safi='unicast',
+                             advertise_map_non_exist=['my_advertise_map', 'my_non_exist_map']))
+        self.execute_module(
+            changed=True, sort=False,
+            commands=['router bgp 65535', 'neighbor 3.3.3.5', 'address-family ipv4 unicast', 'advertise-map my_advertise_map non-exist-map my_non_exist_map']
+        )
+
+    def test_nxos_bgp_neighbor_af_max_prefix_limit_default(self):
+        set_module_args(dict(asn=65535, neighbor='3.3.3.5', afi='ipv4',
+                             safi='unicast', max_prefix_limit='default'))
+        self.execute_module(
+            changed=True, sort=False,
+            commands=['router bgp 65535', 'neighbor 3.3.3.5', 'address-family ipv4 unicast', 'no maximum-prefix']
+        )
+
+    def test_nxos_bgp_neighbor_af_max_prefix(self):
+        set_module_args(dict(asn=65535, neighbor='3.3.3.5', afi='ipv4',
+                             safi='unicast', max_prefix_threshold=20,
+                             max_prefix_limit=20))
+        self.execute_module(
+            changed=True, sort=False,
+            commands=['router bgp 65535', 'neighbor 3.3.3.5', 'address-family ipv4 unicast', 'maximum-prefix 20 20']
         )

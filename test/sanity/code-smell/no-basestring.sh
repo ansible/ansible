@@ -6,8 +6,9 @@ BASESTRING_USERS=$(grep -r basestring . \
     | grep isinstance \
     | grep -v \
     -e test/results/ \
-    -e lib/ansible/module_utils/six/_six.py \
-    -e lib/ansible/modules/ \
+    -e docs/docsite/_build/ \
+    -e docs/docsite/rst/dev_guide/testing/sanity/ \
+    -e lib/ansible/module_utils/six/__init__.py \
     -e '^[^:]*:#'
     )
 

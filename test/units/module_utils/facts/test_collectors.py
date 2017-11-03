@@ -32,7 +32,7 @@ from ansible.module_utils.facts.system.distribution import DistributionFactColle
 from ansible.module_utils.facts.system.dns import DnsFactCollector
 from ansible.module_utils.facts.system.env import EnvFactCollector
 from ansible.module_utils.facts.system.fips import FipsFactCollector
-from ansible.module_utils.facts.system.pkg_mgr import PkgMgrFactCollector
+from ansible.module_utils.facts.system.pkg_mgr import PkgMgrFactCollector, OpenBSDPkgMgrFactCollector
 from ansible.module_utils.facts.system.platform import PlatformFactCollector
 from ansible.module_utils.facts.system.python import PythonFactCollector
 from ansible.module_utils.facts.system.selinux import SelinuxFactCollector
@@ -119,6 +119,49 @@ class TestCmdLineFacts(BaseFactsTest):
     fact_namespace = 'ansible_cmdline'
     collector_class = CmdLineFactCollector
 
+    def test_parse_proc_cmdline_uefi(self):
+        uefi_cmdline = r'initrd=\70ef65e1a04a47aea04f7b5145ea3537\4.10.0-19-generic\initrd root=UUID=50973b75-4a66-4bf0-9764-2b7614489e64 ro quiet'
+        expected = {'initrd': r'\70ef65e1a04a47aea04f7b5145ea3537\4.10.0-19-generic\initrd',
+                    'root': 'UUID=50973b75-4a66-4bf0-9764-2b7614489e64',
+                    'quiet': True,
+                    'ro': True}
+        fact_collector = self.collector_class()
+        facts_dict = fact_collector._parse_proc_cmdline(uefi_cmdline)
+
+        self.assertDictEqual(facts_dict, expected)
+
+    def test_parse_proc_cmdline_fedora(self):
+        cmdline_fedora = r'BOOT_IMAGE=/vmlinuz-4.10.16-200.fc25.x86_64 root=/dev/mapper/fedora-root ro rd.lvm.lv=fedora/root rd.luks.uuid=luks-c80b7537-358b-4a07-b88c-c59ef187479b rd.lvm.lv=fedora/swap rhgb quiet LANG=en_US.UTF-8'   # noqa
+
+        expected = {'BOOT_IMAGE': '/vmlinuz-4.10.16-200.fc25.x86_64',
+                    'LANG': 'en_US.UTF-8',
+                    'quiet': True,
+                    'rd.luks.uuid': 'luks-c80b7537-358b-4a07-b88c-c59ef187479b',
+                    'rd.lvm.lv': 'fedora/swap',
+                    'rhgb': True,
+                    'ro': True,
+                    'root': '/dev/mapper/fedora-root'}
+
+        fact_collector = self.collector_class()
+        facts_dict = fact_collector._parse_proc_cmdline(cmdline_fedora)
+
+        self.assertDictEqual(facts_dict, expected)
+
+    def test_parse_proc_cmdline_dup_console(self):
+        example = r'BOOT_IMAGE=/boot/vmlinuz-4.4.0-72-generic root=UUID=e12e46d9-06c9-4a64-a7b3-60e24b062d90 ro console=tty1 console=ttyS0'
+
+        # FIXME: Two 'console' keywords? Using a dict for the fact value here loses info. Currently the 'last' one wins
+        expected = {'BOOT_IMAGE': '/boot/vmlinuz-4.4.0-72-generic',
+                    'root': 'UUID=e12e46d9-06c9-4a64-a7b3-60e24b062d90',
+                    'ro': True,
+                    'console': 'ttyS0'}
+
+        fact_collector = self.collector_class()
+        facts_dict = fact_collector._parse_proc_cmdline(example)
+
+        # TODO: fails because we lose a 'console'
+        self.assertDictEqual(facts_dict, expected)
+
 
 class TestDistributionFacts(BaseFactsTest):
     __test__ = True
@@ -182,6 +225,29 @@ class TestPkgMgrFacts(BaseFactsTest):
     fact_namespace = 'ansible_pkgmgr'
     collector_class = PkgMgrFactCollector
 
+    def test_collect(self):
+        module = self._mock_module()
+        fact_collector = self.collector_class()
+        facts_dict = fact_collector.collect(module=module, collected_facts=self.collected_facts)
+        self.assertIsInstance(facts_dict, dict)
+        self.assertIn('pkg_mgr', facts_dict)
+
+
+class TestOpenBSDPkgMgrFacts(BaseFactsTest):
+    __test__ = True
+    gather_subset = ['!all', 'pkg_mgr']
+    valid_subsets = ['pkg_mgr']
+    fact_namespace = 'ansible_pkgmgr'
+    collector_class = OpenBSDPkgMgrFactCollector
+
+    def test_collect(self):
+        module = self._mock_module()
+        fact_collector = self.collector_class()
+        facts_dict = fact_collector.collect(module=module, collected_facts=self.collected_facts)
+        self.assertIsInstance(facts_dict, dict)
+        self.assertIn('pkg_mgr', facts_dict)
+        self.assertEqual(facts_dict['pkg_mgr'], 'openbsd_pkg')
+
 
 class TestPlatformFactCollector(BaseFactsTest):
     __test__ = True
@@ -212,7 +278,7 @@ class TestSelinuxFacts(BaseFactsTest):
             fact_collector = self.collector_class()
             facts_dict = fact_collector.collect(module=module)
             self.assertIsInstance(facts_dict, dict)
-            self.assertFalse(facts_dict['selinux'])
+            self.assertEqual(facts_dict['selinux']['status'], 'Missing selinux Python library')
             return facts_dict
 
 

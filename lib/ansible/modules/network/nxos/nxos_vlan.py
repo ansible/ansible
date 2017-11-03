@@ -16,11 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {
-    'metadata_version': '1.0',
-    'status': ['preview'],
-    'supported_by': 'community',
-}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
 
 DOCUMENTATION = '''
 ---
@@ -50,7 +48,7 @@ options:
   vlan_state:
     description:
       - Manage the vlan operational state of the VLAN
-        (equivalent to state {active | suspend} command.
+        This is being deprecated in favor of state.
     required: false
     default: active
     choices: ['active','suspend']
@@ -71,9 +69,17 @@ options:
   state:
     description:
       - Manage the state of the resource.
+        Active and Suspend will assume the vlan is present.
     required: false
     default: present
-    choices: ['present','absent']
+    choices: ['present','absent', 'active', 'suspend']
+  mode:
+    description:
+      - Set VLAN mode to classical ethernet or fabricpath.
+    required: false
+    default: null
+    choices: ['ce','fabricpath']
+    version_added: "2.4"
 '''
 
 EXAMPLES = '''
@@ -108,8 +114,7 @@ commands:
 import re
 
 from ansible.module_utils.nxos import get_config, load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec
-from ansible.module_utils.nxos import check_args as nxos_check_args
+from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -228,6 +233,7 @@ def get_vlan(vlanid, module):
     try:
         body = run_commands(module, [command])[0]
         vlan_table = body['TABLE_vlanbriefid']['ROW_vlanbriefid']
+        mtu_table = body['TABLE_mtuinfoid']['ROW_mtuinfoid']
     except (TypeError, IndexError, KeyError):
         return {}
 
@@ -240,11 +246,18 @@ def get_vlan(vlanid, module):
 
     vlan = apply_key_map(key_map, vlan_table)
 
+    vlan['mode'] = mtu_table['vlanshowinfo-vlanmode']
+
     value_map = {
         "admin_state": {
             "shutdown": "down",
             "noshutdown": "up"
+        },
+        "mode": {
+            "fabricpath-vlan": "fabricpath",
+            "ce-vlan": "ce"
         }
+
     }
 
     vlan = apply_value_map(value_map, vlan)
@@ -267,14 +280,6 @@ def apply_value_map(value_map, resource):
     return resource
 
 
-def check_args(module, warnings):
-    nxos_check_args(module, warnings)
-
-    for key in ('include_defaults', 'config', 'save'):
-        if module.params[key] is not None:
-            warnings.append('argument %s is no longer supported, ignoring value' % key)
-
-
 def main():
     argument_spec = dict(
         vlan_id=dict(required=False, type='str'),
@@ -282,13 +287,10 @@ def main():
         name=dict(required=False),
         vlan_state=dict(choices=['active', 'suspend'], required=False),
         mapped_vni=dict(required=False, type='str'),
-        state=dict(choices=['present', 'absent'], default='present', required=False),
+        state=dict(choices=['present', 'absent', 'active', 'suspend'], default='present', required=False),
         admin_state=dict(choices=['up', 'down'], required=False),
+        mode=dict(choices=['ce', 'fabricpath'], required=False),
 
-        # Deprecated in Ansible 2.4
-        include_defaults=dict(default=False),
-        config=dict(),
-        save=dict(type='bool', default=False)
     )
 
     argument_spec.update(nxos_argument_spec)
@@ -300,7 +302,7 @@ def main():
 
     warnings = list()
     check_args(module, warnings)
-    results = dict(changed=False, warnings=warnings)
+    results = dict(changed=False)
 
     vlan_range = module.params['vlan_range']
     vlan_id = module.params['vlan_id']
@@ -310,12 +312,20 @@ def main():
     mapped_vni = module.params['mapped_vni']
     state = module.params['state']
 
+    # this allows vlan_state to remain backwards compatible as we move towards
+    # pushing all 4 options into state to match net_vlan
+    if state == 'active' or state == 'suspend':
+        vlan_state = module.params['state']
+        state = 'present'
+
+    mode = module.params['mode']
+
     if vlan_id:
         if not vlan_id.isdigit():
             module.fail_json(msg='vlan_id must be a valid VLAN ID')
 
     args = dict(name=name, vlan_state=vlan_state,
-                admin_state=admin_state, mapped_vni=mapped_vni)
+                admin_state=admin_state, mapped_vni=mapped_vni, mode=mode)
 
     proposed = dict((k, v) for k, v in args.items() if v is not None)
 
@@ -353,7 +363,10 @@ def main():
         if existing.get('mapped_vni'):
             if (existing.get('mapped_vni') != proposed.get('mapped_vni') and
                     existing.get('mapped_vni') != '0' and proposed.get('mapped_vni') != 'default'):
-                commands.insert(1, 'no vn-segment')
+                if state == 'absent':
+                    commands = ['vlan ' + vlan_id, 'no vn-segment', 'no vlan ' + vlan_id]
+                else:
+                    commands.insert(1, 'no vn-segment')
         if module.check_mode:
             module.exit_json(changed=True, commands=commands)
         else:

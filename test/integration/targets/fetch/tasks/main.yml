@@ -122,3 +122,17 @@
   assert:
     that:
       'diff.stdout == ""'
+
+- name: dest is an existing directory name without trailing slash and flat=yes, should fail
+  fetch:
+    src: "{{ output_dir }}/orig"
+    dest: "{{ output_dir }}"
+    flat: yes
+  register: failed_fetch_dest_dir
+  ignore_errors: true
+
+- name: check that it indeed failed
+  assert:
+    that:
+      - "failed_fetch_dest_dir|failed"
+      - "failed_fetch_dest_dir.msg"

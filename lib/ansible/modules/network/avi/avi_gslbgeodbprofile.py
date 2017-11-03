@@ -23,7 +23,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -52,6 +52,11 @@ options:
             - List of geodb entries.
             - An entry can either be a geodb file or an ip address group with geo properties.
             - Field introduced in 17.1.1.
+    is_federated:
+        description:
+            - This field indicates that this object is replicated across gslb federation.
+            - Field introduced in 17.1.3.
+            - Default value when not specified in API or module is interpreted by Avi Controller as True.
     name:
         description:
             - A user-friendly name for the geodb profile.
@@ -103,6 +108,7 @@ def main():
                    choices=['absent', 'present']),
         description=dict(type='str',),
         entries=dict(type='list',),
+        is_federated=dict(type='bool',),
         name=dict(type='str', required=True),
         tenant_ref=dict(type='str',),
         url=dict(type='str',),

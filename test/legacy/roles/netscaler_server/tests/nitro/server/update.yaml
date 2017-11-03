@@ -1,0 +1,16 @@
+---
+
+- name: Setup basic server
+  delegate_to: localhost
+  register: result
+  check_mode: "{{ check_mode }}"
+  netscaler_server:
+    nitro_user: "{{nitro_user}}"
+    nitro_pass: "{{nitro_pass}}"
+    nsip: "{{nsip}}"
+
+    state: present
+
+    name: test-server-1
+    ipaddress: 11.11.11.11
+    disabled: yes

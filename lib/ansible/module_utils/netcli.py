@@ -29,7 +29,7 @@ import re
 import shlex
 import time
 
-from ansible.module_utils.basic import BOOLEANS_TRUE, BOOLEANS_FALSE, get_exception
+from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE, BOOLEANS_FALSE
 from ansible.module_utils.six import string_types, text_type
 from ansible.module_utils.six.moves import zip
 
@@ -163,8 +163,7 @@ class CommandRunner(object):
     def add_conditional(self, condition):
         try:
             self.conditionals.add(Conditional(condition))
-        except AttributeError:
-            exc = get_exception()
+        except AttributeError as exc:
             raise AddConditionError(msg=str(exc), condition=condition)
 
     def run(self):

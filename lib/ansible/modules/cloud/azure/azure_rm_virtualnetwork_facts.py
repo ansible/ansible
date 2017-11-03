@@ -3,25 +3,15 @@
 # Copyright (c) 2016 Matt Davis, <mdavis@ansible.com>
 #                    Chris Houseknecht, <house@redhat.com>
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
@@ -100,15 +90,13 @@ azure_virtualnetworks:
     }]
 '''
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.azure_rm_common import *
-
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.common import AzureMissingResourceHttpError, AzureHttpError
 except:
     # This is handled in azure_rm_common
     pass
+
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 
 AZURE_OBJECT_CLASS = 'VirtualNetwork'
@@ -168,7 +156,7 @@ class AzureRMNetworkInterfaceFacts(AzureRMModuleBase):
         self.log('List items for resource group')
         try:
             response = self.network_client.virtual_networks.list(self.resource_group)
-        except AzureHttpError as exc:
+        except CloudError as exc:
             self.fail("Failed to list for resource group {0} - {1}".format(self.resource_group, str(exc)))
 
         results = []
@@ -181,7 +169,7 @@ class AzureRMNetworkInterfaceFacts(AzureRMModuleBase):
         self.log('List all for items')
         try:
             response = self.network_client.virtual_networks.list_all()
-        except AzureHttpError as exc:
+        except CloudError as exc:
             self.fail("Failed to list all items - {0}".format(str(exc)))
 
         results = []
@@ -195,4 +183,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

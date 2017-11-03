@@ -509,7 +509,7 @@ def main():
 
         try:
             print("CHECKING: %s (%s)" % (features[0], fdesc.get(features[0], '')))
-            VTM.run()
+            res = VTM.run()
             if options.show_stdout:
                 VTM.show_stdout()
 

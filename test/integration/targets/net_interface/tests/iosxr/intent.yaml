@@ -1,0 +1,72 @@
+---
+- debug: msg="START net_interface iosxr/intent.yaml"
+
+- name: Setup (interface is up)
+  net_interface:
+    name: GigabitEthernet0/0/0/5
+    description: test_interface_5
+    enabled: True
+    state: present
+  register: result
+
+- name: Check intent arguments
+  net_interface:
+    name: GigabitEthernet0/0/0/5
+    state: up
+    delay: 20
+  register: result
+
+- assert:
+    that:
+      - "result.failed == false"
+
+- name: Check intent arguments (failed condition)
+  net_interface:
+    name: GigabitEthernet0/0/0/5
+    state: down
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+      - "result.failed == true"
+      - "'state eq(down)' in result.failed_conditions"
+
+- name: Config + intent
+  net_interface:
+    name: GigabitEthernet0/0/0/5
+    enabled: False
+    state: down
+    delay: 20
+  register: result
+
+- assert:
+    that:
+      - "result.failed == false"
+
+- name: Config + intent (fail)
+  net_interface:
+    name: GigabitEthernet0/0/0/5
+    enabled: False
+    state: up
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+      - "result.failed == true"
+      - "'state eq(up)' in result.failed_conditions"
+
+- name: Aggregate config + intent (pass)
+  net_interface:
+    aggregate:
+    - name: GigabitEthernet0/0/0/5
+      enabled: True
+      state: up
+      delay: 20
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+      - "result.failed == false"

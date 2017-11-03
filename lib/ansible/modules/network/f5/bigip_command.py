@@ -1,33 +1,21 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright 2016 F5 Networks Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 F5 Networks Inc.
+# GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {
-    'status': ['preview'],
-    'supported_by': 'community',
-    'metadata_version': '1.0'
-}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-DOCUMENTATION = '''
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
+DOCUMENTATION = r'''
 ---
 module: bigip_command
-short_description: Run arbitrary command on F5 devices.
+short_description: Run arbitrary command on F5 devices
 description:
   - Sends an arbitrary command to an BIG-IP node and returns the results
     read from the device. This module includes an argument that will cause
@@ -80,6 +68,17 @@ options:
         conditional, the interval indicates how to long to wait before
         trying the command again.
     default: 1
+  transport:
+    description:
+      - Configures the transport connection to use when connecting to the
+        remote device. The transport argument supports connectivity to the
+        device over cli (ssh) or rest.
+    required: true
+    choices:
+        - rest
+        - cli
+    default: rest
+    version_added: "2.5"
 notes:
   - Requires the f5-sdk Python package on the host. This is as easy as pip
     install f5-sdk.
@@ -90,24 +89,24 @@ author:
   - Tim Rupp (@caphrim007)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: run show version on remote devices
   bigip_command:
     commands: show sys version
-    server: "lb.mydomain.com"
-    password: "secret"
-    user: "admin"
-    validate_certs: "no"
+    server: lb.mydomain.com
+    password: secret
+    user: admin
+    validate_certs: no
   delegate_to: localhost
 
 - name: run show version and check to see if output contains BIG-IP
   bigip_command:
     commands: show sys version
     wait_for: result[0] contains BIG-IP
-    server: "lb.mydomain.com"
-    password: "secret"
-    user: "admin"
-    validate_certs: "no"
+    server: lb.mydomain.com
+    password: secret
+    user: admin
+    validate_certs: no
   delegate_to: localhost
 
 - name: run multiple commands on remote nodes
@@ -115,10 +114,10 @@ EXAMPLES = '''
     commands:
       - show sys version
       - list ltm virtual
-    server: "lb.mydomain.com"
-    password: "secret"
-    user: "admin"
-    validate_certs: "no"
+    server: lb.mydomain.com
+    password: secret
+    user: admin
+    validate_certs: no
   delegate_to: localhost
 
 - name: run multiple commands and evaluate the output
@@ -129,10 +128,10 @@ EXAMPLES = '''
     wait_for:
       - result[0] contains BIG-IP
       - result[1] contains my-vs
-    server: "lb.mydomain.com"
-    password: "secret"
-    user: "admin"
-    validate_certs: "no"
+    server: lb.mydomain.com
+    password: secret
+    user: admin
+    validate_certs: no
   delegate_to: localhost
 
 - name: tmsh prefixes will automatically be handled
@@ -140,46 +139,56 @@ EXAMPLES = '''
     commands:
       - show sys version
       - tmsh list ltm virtual
-    server: "lb.mydomain.com"
-    password: "secret"
-    user: "admin"
-    validate_certs: "no"
+    server: lb.mydomain.com
+    password: secret
+    user: admin
+    validate_certs: no
   delegate_to: localhost
 '''
 
-RETURN = '''
+RETURN = r'''
 stdout:
-    description: The set of responses from the commands
-    returned: always
-    type: list
-    sample: ['...', '...']
-
+  description: The set of responses from the commands
+  returned: always
+  type: list
+  sample: ['...', '...']
 stdout_lines:
-    description: The value of stdout split into a list
-    returned: always
-    type: list
-    sample: [['...', '...'], ['...'], ['...']]
-
+  description: The value of stdout split into a list
+  returned: always
+  type: list
+  sample: [['...', '...'], ['...'], ['...']]
 failed_conditions:
-    description: The list of conditionals that have failed
-    returned: failed
-    type: list
-    sample: ['...', '...']
+  description: The list of conditionals that have failed
+  returned: failed
+  type: list
+  sample: ['...', '...']
 '''
 
+import re
 import time
 
 from ansible.module_utils.f5_utils import AnsibleF5Client
 from ansible.module_utils.f5_utils import AnsibleF5Parameters
 from ansible.module_utils.f5_utils import HAS_F5SDK
 from ansible.module_utils.f5_utils import F5ModuleError
-from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+
+try:
+    from ansible.module_utils.f5_utils import run_commands
+    HAS_CLI_TRANSPORT = True
+except ImportError:
+    HAS_CLI_TRANSPORT = False
+
 from ansible.module_utils.netcli import FailedConditionsError
 from ansible.module_utils.six import string_types
 from ansible.module_utils.netcli import Conditional
 from ansible.module_utils.network_common import ComplexList
 from ansible.module_utils.network_common import to_list
 from collections import deque
+
+try:
+    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+except ImportError:
+    HAS_F5SDK = False
 
 
 class Parameters(AnsibleF5Parameters):
@@ -195,11 +204,16 @@ class Parameters(AnsibleF5Parameters):
     @property
     def commands(self):
         commands = deque(self._values['commands'])
-        commands.appendleft(
-            'tmsh modify cli preference pager disabled'
-        )
-        commands = map(self._ensure_tmsh_prefix, list(commands))
+        if self._values['transport'] != 'cli':
+            commands.appendleft(
+                'tmsh modify cli preference pager disabled'
+            )
+            commands = map(self._ensure_tmsh_prefix, list(commands))
         return list(commands)
+
+    @property
+    def user_commands(self):
+        return map(self._ensure_tmsh_prefix, list(self._values['commands']))
 
     def _ensure_tmsh_prefix(self, cmd):
         cmd = cmd.strip()
@@ -224,9 +238,11 @@ class ModuleManager(object):
 
     def _is_valid_mode(self, cmd):
         valid_configs = [
-            'tmsh list', 'tmsh show',
-            'tmsh modify cli preference pager disabled'
+            'list', 'show',
+            'modify cli preference pager disabled'
         ]
+        if self.client.module.params['transport'] != 'cli':
+            valid_configs = list(map(self.want._ensure_tmsh_prefix, valid_configs))
         if any(cmd.startswith(x) for x in valid_configs):
             return True
         return False
@@ -235,16 +251,17 @@ class ModuleManager(object):
         result = dict()
 
         try:
-            self.execute()
+            changed = self.execute()
         except iControlUnexpectedHTTPError as e:
             raise F5ModuleError(str(e))
 
         result.update(**self.changes.to_return())
-        result.update(dict(changed=True))
+        result.update(dict(changed=changed))
         return result
 
     def execute(self):
         warnings = list()
+        changed = ('tmsh modify', 'tmsh create', 'tmsh delete')
 
         commands = self.parse_commands(warnings)
 
@@ -257,12 +274,16 @@ class ModuleManager(object):
             return
 
         while retries > 0:
-            responses = self.execute_on_device(commands)
+            if self.client.module.params['transport'] == 'cli' and HAS_CLI_TRANSPORT:
+                responses = run_commands(self.client.module, self.want.commands)
+            else:
+                responses = self.execute_on_device(commands)
 
             for item in list(conditionals):
                 if item(responses):
                     if self.want.match == 'any':
-                        return item
+                        conditionals = list()
+                        break
                     conditionals.remove(item)
 
             if not conditionals:
@@ -280,6 +301,9 @@ class ModuleManager(object):
             'stdout_lines': self._to_lines(responses),
             'warnings': warnings
         })
+        if any(x for x in self.want.user_commands if x.startswith(changed)):
+            return True
+        return False
 
     def parse_commands(self, warnings):
         results = []
@@ -296,7 +320,7 @@ class ModuleManager(object):
         commands = transform(commands)
 
         for index, item in enumerate(commands):
-            if not self._is_valid_mode(item['command']):
+            if not self._is_valid_mode(item['command']) and self.client.module.params['transport'] != 'cli':
                 warnings.append(
                     'Using "write" commands is not idempotent. You should use '
                     'a module that is specifically made for that. If such a '
@@ -312,10 +336,12 @@ class ModuleManager(object):
 
     def execute_on_device(self, commands):
         responses = []
+        escape_patterns = r'([$' + "'])"
         for item in to_list(commands):
+            command = re.sub(escape_patterns, r'\\\1', item['command'])
             output = self.client.api.tm.util.bash.exec_cmd(
                 'run',
-                utilCmdArgs='-c "{0}"'.format(item['command'])
+                utilCmdArgs='-c "{0}"'.format(command)
             )
             if hasattr(output, 'commandResult'):
                 responses.append(str(output.commandResult))
@@ -345,15 +371,17 @@ class ArgumentSpec(object):
             interval=dict(
                 default=1,
                 type='int'
+            ),
+            transport=dict(
+                type='str',
+                default='rest',
+                choices=['cli', 'rest']
             )
         )
         self.f5_product_name = 'bigip'
 
 
 def main():
-    if not HAS_F5SDK:
-        raise F5ModuleError("The python f5-sdk module is required")
-
     spec = ArgumentSpec()
 
     client = AnsibleF5Client(
@@ -361,6 +389,9 @@ def main():
         supports_check_mode=spec.supports_check_mode,
         f5_product_name=spec.f5_product_name
     )
+
+    if client.module.params['transport'] != 'cli' and not HAS_F5SDK:
+        raise F5ModuleError("The python f5-sdk module is required to use the rest api")
 
     try:
         mm = ModuleManager(client)

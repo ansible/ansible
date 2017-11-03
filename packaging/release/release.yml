@@ -33,7 +33,7 @@
   #  private: no
   - name: has_submodules
     prompt: "Does this branch have git submodules?"
-    default: "yes"
+    default: "no"
     private: no
   - name: is_final
     prompt: "Is this a final release (not a beta/rc)?"

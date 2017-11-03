@@ -16,11 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {
-    'metadata_version': '1.0',
-    'status': ['preview'],
-    'supported_by': 'community'
-}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
 
 DOCUMENTATION = '''
 ---
@@ -35,6 +33,7 @@ author:
   - Jason Edelman (@jedelman8)
   - Gabriele Gerbino (@GGabriele)
 notes:
+  - Tested against NXOSv 7.3.(0)D1(1) on VIRL
   - The feature must be enabled with feature scp-server.
   - If the file is already present (md5 sums match), no transfer will
     take place.
@@ -62,9 +61,8 @@ options:
 EXAMPLES = '''
 - nxos_file_copy:
     local_file: "./test_file.txt"
-    username: "{{ un }}"
-    password: "{{ pwd }}"
-    host: "{{ inventory_hostname }}"
+    remote_file: "test_file.txt"
+    provider: "{{ cli }}"
 '''
 
 RETURN = '''
@@ -102,7 +100,7 @@ except ImportError:
 
 def remote_file_exists(module, dst, file_system='bootflash:'):
     command = 'dir {0}/{1}'.format(file_system, dst)
-    body = run_commands(module, [command])[0]
+    body = run_commands(module, {'command': command, 'output': 'text'})[0]
     if 'No such file' in body:
         return False
     return True
@@ -110,7 +108,7 @@ def remote_file_exists(module, dst, file_system='bootflash:'):
 
 def verify_remote_file_exists(module, dst, file_system='bootflash:'):
     command = 'dir {0}/{1}'.format(file_system, dst)
-    body = run_commands(module, [command])[0]
+    body = run_commands(module, {'command': command, 'output': 'text'})[0]
     if 'No such file' in body:
         return 0
     return body.split()[0].strip()
@@ -122,7 +120,7 @@ def local_file_exists(module):
 
 def get_flash_size(module):
     command = 'dir {}'.format(module.params['file_system'])
-    body = run_commands(module, [command])[0]
+    body = run_commands(module, {'command': command, 'output': 'text'})[0]
 
     match = re.search(r'(\d+) bytes free', body)
     bytes_free = match.group(1)
@@ -145,9 +143,11 @@ def transfer_file(module, dest):
     if not enough_space(module):
         module.fail_json(msg='Could not transfer file. Not enough space on device.')
 
-    hostname = module.params['host']
-    username = module.params['username']
-    password = module.params['password']
+    provider = module.params['provider']
+
+    hostname = module.params.get('host') or provider.get('host')
+    username = module.params.get('username') or provider.get('username')
+    password = module.params.get('password') or provider.get('password')
 
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -181,9 +181,6 @@ def main():
         local_file=dict(required=True),
         remote_file=dict(required=False),
         file_system=dict(required=False, default='bootflash:'),
-        include_defaults=dict(default=True),
-        config=dict(),
-        save=dict(type='bool', default=False)
     )
 
     argument_spec.update(nxos_argument_spec)

@@ -32,11 +32,11 @@ Errors generally fall into one of the following categories:
   * Can occur when trying to pull a large amount of data
   * May actually be masking a authentication issue
 :Playbook issues:
-  * Use of ``delegate_to``, instead of ``ProxyCommand``
+  * Use of ``delegate_to``, instead of ``ProxyCommand``. See :ref:`network proxy guide <network_delegate_to_vs_ProxyCommand>` for more information.
   * Not using ``connection: local``
 
 
-.. warning: ``unable to open shell`
+.. warning:: ``unable to open shell``
 
   The ``unable to open shell`` message is new in Ansible 2.3, it means that the ``ansible-connection`` daemon has not been able to successfully
   talk to the remote network device. This generally means that there is an authentication issue. See the "Authentication and connection issues" section
@@ -51,7 +51,7 @@ Enabling Networking logging and how to read the logfile
 
 Ansible 2.3 features improved logging to help diagnose and troubleshoot issues regarding Ansible Networking modules.
 
-Because logging is very verbose it is disabled by default. It can be enabled via the ``ANSIBLE_LOG_PATH`` and ``ANISBLE_DEBUG`` options::
+Because logging is very verbose it is disabled by default. It can be enabled via the :envvar:`ANSIBLE_LOG_PATH` and :envvar:`ANSIBLE_DEBUG` options::
 
    # Specify the location for the log file
    export ANSIBLE_LOG_PATH=~/ansible.log
@@ -143,7 +143,7 @@ Category "Unable to open shell"
 
 **Platforms:** Any
 
-The ``unable to open shell`` message is new in Ansible 2.3. This message means that the ``ansible-connection`` daemon has not been able to successfully talk to the remote network device. This generally means that there is an authentication issue. It is a "catch all" message, meaning you need to enable ``ANSIBLE_LOG_PATH`` to find the underlying issues.
+The ``unable to open shell`` message is new in Ansible 2.3. This message means that the ``ansible-connection`` daemon has not been able to successfully talk to the remote network device. This generally means that there is an authentication issue. It is a "catch all" message, meaning you need to enable :ref:`log_path` to find the underlying issues.
 
 
 
@@ -166,7 +166,6 @@ or:
        "changed": false,
        "failed": true,
        "msg": "unable to open shell",
-       "rc": 255
    }
 
 Suggestions to resolve:
@@ -223,7 +222,7 @@ For example:
 
 Suggestions to resolve:
 
-If you are specifying credentials via ``password:`` (either directly or via ``provider:``) or the environment variable ``ANSIBLE_NET_PASSWORD`` it is possible that ``paramiko`` (the Python SSH library that Ansible uses) is using ssh keys, and therefore the credentials you are specifying are being ignored. To find out if this is the case, disable "look for keys". This can be done like this:
+If you are specifying credentials via ``password:`` (either directly or via ``provider:``) or the environment variable :envvar:`ANSIBLE_NET_PASSWORD` it is possible that ``paramiko`` (the Python SSH library that Ansible uses) is using ssh keys, and therefore the credentials you are specifying are being ignored. To find out if this is the case, disable "look for keys". This can be done like this:
 
 .. code-block:: yaml
 
@@ -277,7 +276,7 @@ Environment variable method::
 
 ansible.cfg
 
-.. code-block: ini
+.. code-block:: ini
 
   [paramiko_connection]
   host_key_auto_add = True
@@ -301,8 +300,8 @@ For example:
    2017-04-04 12:19:05,670 p=18591 u=fred |  using connection plugin network_cli
    2017-04-04 12:19:06,606 p=18591 u=fred |  connecting to host veos01 returned an error
    2017-04-04 12:19:06,606 p=18591 u=fred |  No authentication methods available
-   2017-04-04 12:19:35,708 p=18591 u=fred |  number of connection attempts exceeded, unable to connect to control socket
-   2017-04-04 12:19:35,709 p=18591 u=fred |  persistent_connect_interval=1, persistent_connect_retries=30
+   2017-04-04 12:19:35,708 p=18591 u=fred |  connect retry timeout expired, unable to connect to control socket
+   2017-04-04 12:19:35,709 p=18591 u=fred |  persistent_connect_retry_timeout is 15 secs
 
 
 Suggestions to resolve:
@@ -328,15 +327,61 @@ Timeout issues
 
 Timeouts
 --------
+Persistent connection idle timeout:
 
-All network modules support a timeout value that can be set on a per task
-basis.  The timeout value controls the amount of time in seconds before the
+For example:
+
+.. code-block:: yaml
+
+   2017-04-04 12:19:05,670 p=18591 u=fred |  persistent connection idle timeout triggered, timeout value is 30 secs
+
+Suggestions to resolve:
+
+Increase value of presistent connection idle timeout.
+.. code-block:: yaml
+
+   export ANSIBLE_PERSISTENT_CONNECT_TIMEOUT=60
+
+To make this a permanent change, add the following to your ``ansible.cfg`` file:
+
+.. code-block:: ini
+
+   [persistent_connection]
+   connect_timeout = 60
+
+Command timeout:
+For example:
+
+.. code-block:: yaml
+
+   2017-04-04 12:19:05,670 p=18591 u=fred |  command timeout triggered, timeout value is 10 secs
+
+Suggestions to resolve:
+
+Options 1:
+Increase value of command timeout in configuration file or by setting environment variable.
+Note: This value should be less than persistent connection idle timeout ie. connect_timeout
+
+.. code-block:: yaml
+
+   export ANSIBLE_PERSISTENT_COMMAND_TIMEOUT=30
+
+To make this a permanent change, add the following to your ``ansible.cfg`` file:
+
+.. code-block:: ini
+
+   [persistent_connection]
+   command_timeout = 30
+
+Option 2:
+Increase command timeout per task basis. All network modules support a
+timeout value that can be set on a per task basis.
+The timeout value controls the amount of time in seconds before the
 task will fail if the command has not returned.
 
 For example:
 
 .. FIXME: Detail error here
-
 
 Suggestions to resolve:
 
@@ -353,6 +398,33 @@ example is saving the current running config on IOS devices to startup config.
 In this case, changing the timeout value form the default 10 seconds to 30
 seconds will prevent the task from failing before the command completes
 successfully.
+Note: This value should be less than persistent connection idle timeout ie. connect_timeout
+
+Persistent socket connect timeout:
+For example:
+
+.. code-block:: yaml
+
+   2017-04-04 12:19:35,708 p=18591 u=fred |  connect retry timeout expired, unable to connect to control socket
+   2017-04-04 12:19:35,709 p=18591 u=fred |  persistent_connect_retry_timeout is 15 secs
+
+Suggestions to resolve:
+
+Increase the value of the persistent connection idle timeout.
+Note: This value should be greater than the SSH timeout value (the timeout value under the defaults
+section in the configuration file) and less than the value of the persistent
+connection idle timeout (connect_timeout).
+
+.. code-block:: yaml
+
+   export ANSIBLE_PERSISTENT_CONNECT_RETRY_TIMEOUT=30
+
+To make this a permanent change, add the following to your ``ansible.cfg`` file:
+
+.. code-block:: ini
+
+   [persistent_connection]
+   connect_retry_timeout = 30
 
 
 
@@ -403,7 +475,6 @@ For example:
       "changed": false,
       "failed": true,
      "msg": "unable to enter configuration mode",
-      "rc": 255
   }
 
 Suggestions to resolve:
@@ -419,10 +490,10 @@ Add ``authorize: yes`` to the task. For example:
         authorize: yes
     register: result
 
-If the user requires a password to go into privileged mode, this can be specified with ``auth_pass``; if ``auth_pass`` isn't set, the environment variable ``ANSIBLE_NET_AUTHORIZE`` will be used instead.
+If the user requires a password to go into privileged mode, this can be specified with ``auth_pass``; if ``auth_pass`` isn't set, the environment variable :envvar:`ANSIBLE_NET_AUTHORIZE` will be used instead.
 
 
-Add `authorize: yes` to the task. For example:
+Add ``authorize: yes`` to the task. For example:
 
 .. code-block:: yaml
 
@@ -435,41 +506,41 @@ Add `authorize: yes` to the task. For example:
   register: result
 
 
-.. delete_to not honoured
-   ----------------------
-   
-   FIXME Do we get an error message
-   
-   FIXME Link to howto
-   
-   
-   
-   
-   fixmes
-   ======
-   
-   Error: "number of connection attempts exceeded, unable to connect to control socket"
-   ------------------------------------------------------------------------------------
-   
-   **Platforms:** Any
-   
-   This occurs when Ansible wasn't able to connect to the remote device and obtain a shell with the timeout.
-   
-   
-   This information is available when ``ANSIBLE_LOG_PATH`` is set see (FIXMELINKTOSECTION):
-   
-   .. code-block:: yaml
-   
-     less $ANSIBLE_LOG_PATH
-     2017-03-10 15:32:06,173 p=19677 u=fred |  number of connection attempts exceeded, unable to connect to control socket
-     2017-03-10 15:32:06,174 p=19677 u=fred |  persistent_connect_interval=1, persistent_connect_retries=10
-     2017-03-10 15:32:06,222 p=19669 u=fred |  fatal: [veos01]: FAILED! => {
-   
-   Suggestions to resolve:
-   
-   Do stuff For example:
-   
-   .. code-block:: yaml
-   
-   	Example stuff
-   
+Proxy Issues
+============
+
+ .. _network_delegate_to_vs_ProxyCommand:
+
+delegate_to vs ProxyCommand
+---------------------------
+
+The new connection framework for Network Modules in Ansible 2.3 that uses ``cli`` transport
+no longer supports the use of the ``delegate_to`` directive.
+In order to use a bastion or intermediate jump host to connect to network devices over ``cli``
+transport, network modules now support the use of ``ProxyCommand``.
+
+To use ``ProxyCommand``, configure the proxy settings in the Ansible inventory
+file to specify the proxy host.
+
+.. code-block:: ini
+
+    [nxos]
+    nxos01
+    nxos02
+
+    [nxos:vars]
+    ansible_ssh_common_args='-o ProxyCommand="ssh -W %h:%p -q bastion01"'
+
+
+With the configuration above, simply build and run the playbook as normal with
+no additional changes necessary.  The network module will now connect to the
+network device by first connecting to the host specified in
+``ansible_ssh_common_args``, which is ``bastion01`` in the above example.
+
+
+.. note:: Using ``ProxyCommand`` with passwords via variables
+
+   By design, SSH doesn't support providing passwords via environment variables.
+   This is done to prevent secrets from leaking out, for example in ``ps`` output.
+
+   We recommend using SSH Keys, and if needed an ssh-agent, rather than passwords, where ever possible.

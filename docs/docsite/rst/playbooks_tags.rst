@@ -12,7 +12,7 @@ Example::
     tasks:
 
         - yum: name={{ item }} state=installed
-          with_items:
+          loop:
              - httpd
              - memcached
           tags:
@@ -35,7 +35,7 @@ On the other hand, if you want to run a playbook *without* certain tasks, you co
 
 Tag Reuse
 ```````````````
-You can apply the same tag name to more than one task, in the same file 
+You can apply the same tag name to more than one task, in the same file
 or included files. This will run all tasks with that tag.
 
 Example::
@@ -62,8 +62,7 @@ Example::
 Tag Inheritance
 ```````````````
 
-You can apply tags to more than tasks, but they ONLY affect the tasks themselves. Applying tags anywhere else is just a
-convenience so you don't have to write it on every task::
+You can apply tags to more than tasks, but they ONLY affect the tasks themselves. Applying tags anywhere else is just a convenience so you don't have to write it on every task::
 
     - hosts: all
       tags:
@@ -81,14 +80,24 @@ You may also apply tags to roles::
     roles:
       - { role: webserver, port: 5000, tags: [ 'web', 'foo' ] }
 
-And include statements::
+And import/include statements::
 
-    - include: foo.yml
+    - import_tasks: foo.yml
+      tags: [web,foo]
+
+or::
+
+    - include_tasks: foo.yml
       tags: [web,foo]
 
 All of these apply the specified tags to EACH task inside the play, included
 file, or role, so that these tasks can be selectively run when the playbook
 is invoked with the corresponding tags.
+
+Tags are inherited *down* the dependency chain. In order for tags to be applied to a role and all its dependencies,
+the tag should be applied to the role, not to all the tasks within a role.
+
+You can see which tags are applied to tasks by running ``ansible-playbook`` with the ``--list-tasks`` option. You can display all tags using the ``--list-tags`` option.
 
 .. _special_tags:
 
@@ -119,7 +128,7 @@ By default ansible runs as if ``--tags all`` had been specified.
 
    :doc:`playbooks`
        An introduction to playbooks
-   :doc:`playbooks_roles`
+   :doc:`playbooks_reuse_roles`
        Playbook organization by roles
    `User Mailing List <http://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!

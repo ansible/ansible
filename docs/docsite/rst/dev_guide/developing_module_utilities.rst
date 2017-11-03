@@ -9,8 +9,10 @@ Ansible provides a number of module utilities that provide helper functions that
 The following is a list of module_utils files and a general description. The module utility source code lives in the `./lib/module_utils` directory under your main Ansible path - for more details on any specific module utility, please see the source code.
 
 - a10.py - Utilities used by the a10_server module to manage A10 Networks devices.
+- aireos.py - Definitions and helper functions for modules that manage Cisco WLC devices.
 - api.py - Adds shared support for generic API modules.
 - aos.py - Module support utilities for managing Apstra AOS Server.
+- aruba.py - Helper functions for modules working with Aruba networking devices.
 - asa.py - Module support utilities for managing Cisco ASA network devices.
 - azure_rm_common.py - Definitions and utilities for Microsoft Azure Resource Manager template deployments.
 - basic.py - General definitions and helper utilities for Ansible modules.
@@ -27,15 +29,18 @@ The following is a list of module_utils files and a general description. The mod
 - ismount.py - Contains single helper function that fixes os.path.ismount
 - junos.py -  Definitions and helper functions for modules that manage Junos networking devices
 - known_hosts.py - utilities for working with known_hosts file
+- manageiq.py - Functions and utilities for modules that work with ManageIQ platform and its resources.
 - mysql.py - Allows modules to connect to a MySQL instance
 - netapp.py - Functions and utilities for modules that work with the NetApp storage platforms.
 - netcfg.py - Configuration utility functions for use by networking modules
 - netcmd.py - Defines commands and comparison operators for use in networking modules
+- netscaler.py - Utilities specifically for the netscaler network modules.
 - network.py - Functions for running commands on networking devices
 - nxos.py - Contains definitions and helper functions specific to Cisco NXOS networking devices
 - openstack.py - Utilities for modules that work with Openstack instances.
 - openswitch.py - Definitions and helper functions for modules that manage OpenSwitch devices
 - powershell.ps1 - Utilities for working with Microsoft Windows clients
+- pure.py - Functions and utilities for modules that work with the Pure Storage storage platforms.
 - pycompat24.py - Exception workaround for Python 2.4.
 - rax.py -  Definitions and helper functions for modules that work with Rackspace resources.
 - redhat.py - Functions for modules that manage Red Hat Network registration and subscriptions

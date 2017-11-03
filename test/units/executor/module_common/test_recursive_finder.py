@@ -113,22 +113,22 @@ class TestRecursiveFinder(object):
         name = 'ping'
         data = b'#!/usr/bin/python\nfrom ansible.module_utils import six'
         recursive_finder(name, data, *finder_containers)
-        assert finder_containers.py_module_names == set((('six', '__init__'), ('six', '_six')))
+        assert finder_containers.py_module_names == set((('six', '__init__'),))
         assert finder_containers.py_module_cache == {}
-        assert frozenset(finder_containers.zf.namelist()) == frozenset(('ansible/module_utils/six/__init__.py', 'ansible/module_utils/six/_six.py'))
+        assert frozenset(finder_containers.zf.namelist()) == frozenset(('ansible/module_utils/six/__init__.py', ))
 
     def test_import_six(self, finder_containers):
         name = 'ping'
         data = b'#!/usr/bin/python\nimport ansible.module_utils.six'
         recursive_finder(name, data, *finder_containers)
-        assert finder_containers.py_module_names == set((('six', '__init__'), ('six', '_six')))
+        assert finder_containers.py_module_names == set((('six', '__init__'),))
         assert finder_containers.py_module_cache == {}
-        assert frozenset(finder_containers.zf.namelist()) == frozenset(('ansible/module_utils/six/__init__.py', 'ansible/module_utils/six/_six.py'))
+        assert frozenset(finder_containers.zf.namelist()) == frozenset(('ansible/module_utils/six/__init__.py', ))
 
     def test_import_six_from_many_submodules(self, finder_containers):
         name = 'ping'
         data = b'#!/usr/bin/python\nfrom ansible.module_utils.six.moves.urllib.parse import urlparse'
         recursive_finder(name, data, *finder_containers)
-        assert finder_containers.py_module_names == set((('six', '__init__'), ('six', '_six')))
+        assert finder_containers.py_module_names == set((('six', '__init__'),))
         assert finder_containers.py_module_cache == {}
-        assert frozenset(finder_containers.zf.namelist()) == frozenset(('ansible/module_utils/six/__init__.py', 'ansible/module_utils/six/_six.py'))
+        assert frozenset(finder_containers.zf.namelist()) == frozenset(('ansible/module_utils/six/__init__.py',))

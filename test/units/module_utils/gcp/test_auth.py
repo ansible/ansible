@@ -48,7 +48,9 @@ class FakeModule(object):
             else:
                 return alt
 
-    def __init__(self, data={}):
+    def __init__(self, data=None):
+        data = {} if data is None else data
+
         self.params = FakeModule.Params()
         self.params.data = data
 
@@ -152,7 +154,7 @@ class GCPAuthTestCase(unittest.TestCase):
         module = mock.MagicMock()
         with mock.patch("ansible.module_utils.gcp.open",
                         mock.mock_open(read_data='foobar'), create=True) as m:
-            # pem condition, warning is surpressed with the return_value
+            # pem condition, warning is suppressed with the return_value
             credentials_file = '/foopath/pem.pem'
             is_valid = _validate_credentials_file(module,
                                                   credentials_file=credentials_file,

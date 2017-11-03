@@ -19,9 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
-from ansible.compat.tests.mock import patch, MagicMock
+from ansible.compat.tests.mock import patch
 from ansible.modules.network.junos import junos_facts
 from .junos_module import TestJunosModule, load_fixture, set_module_args
 
@@ -30,6 +28,7 @@ RPC_CLI_MAP = {
     'get-interface-information': 'show interfaces details',
     'get-system-memory-information': 'show system memory',
     'get-chassis-inventory': 'show chassis hardware',
+    'get-route-engine-information': 'show chassis routing-engine',
     'get-system-storage': 'show system storage'
 }
 
@@ -74,6 +73,9 @@ class TestJunosCommandModule(TestJunosModule):
         self.assertEqual(facts['ansible_net_memtotal_mb'], 983500)
         self.assertEqual(facts['ansible_net_filesystems'][0], '/dev/vtbd0s1a')
         self.assertTrue('ansible_net_config' not in facts)
+        self.assertEqual(facts['ansible_net_routing_engines']["0"]['model'], 'RE-S-EX9200-1800X4')
+        self.assertEqual(facts['ansible_net_modules'][0]['name'], 'Midplane')
+        self.assertTrue(facts['ansible_net_has_2RE'])
 
     def test_junos_get_facts_subset_config_set(self):
         self.get_config.return_value = load_fixture('get_configuration_rpc_reply.txt')
@@ -83,6 +85,17 @@ class TestJunosCommandModule(TestJunosModule):
 
         self.assertTrue('ansible_net_config' in facts)
         self.assertTrue(facts['ansible_net_config'].startswith('set'))
+        self.assertEqual(facts['ansible_net_hostname'], 'vsrx01')
+        self.assertTrue('ansible_net_interfaces' not in facts)
+
+    def test_junos_get_facts_subset_config_json(self):
+        self.get_config.return_value = load_fixture('get_configuration_rpc_reply_json.txt')
+        set_module_args(dict(gather_subset='config', config_format='json'))
+        result = self.execute_module(format='xml')
+        facts = result['ansible_facts']
+
+        self.assertTrue('ansible_net_config' in facts)
+        self.assertTrue('configuration' in facts['ansible_net_config'])
         self.assertEqual(facts['ansible_net_hostname'], 'vsrx01')
         self.assertTrue('ansible_net_interfaces' not in facts)
 

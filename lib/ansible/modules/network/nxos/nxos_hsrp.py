@@ -17,11 +17,9 @@
 #
 
 
-ANSIBLE_METADATA = {
-    'metadata_version': '1.0',
-    'status': ['preview'],
-    'supported_by': 'community'
-}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
 
 DOCUMENTATION = '''
 ---
@@ -35,6 +33,7 @@ author:
   - Jason Edelman (@jedelman8)
   - Gabriele Gerbino (@GGabriele)
 notes:
+  - Tested against NXOSv 7.3.(0)D1(1) on VIRL
   - HSRP feature needs to be enabled first on the system.
   - SVIs must exist before using this module.
   - Interface must be a L3 port before using this module.
@@ -130,11 +129,12 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def execute_show_command(command, module):
-    if module.params['transport'] == 'cli':
+    provider = module.params['provider']
+    if provider['transport'] == 'cli':
         command += ' | json'
         cmds = [command]
         body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
+    elif provider['transport'] == 'nxapi':
         cmds = [command]
         body = run_commands(module, cmds)
 
@@ -374,10 +374,7 @@ def main():
         vip=dict(type='str', required=False),
         auth_type=dict(choices=['text', 'md5'], required=False),
         auth_string=dict(type='str', required=False),
-        state=dict(choices=['absent', 'present'], required=False, default='present'),
-        include_defaults=dict(default=True),
-        config=dict(),
-        save=dict(type='bool', default=False)
+        state=dict(choices=['absent', 'present'], required=False, default='present')
     )
 
     argument_spec.update(nxos_argument_spec)
@@ -398,7 +395,7 @@ def main():
     auth_type = module.params['auth_type']
     auth_string = module.params['auth_string']
 
-    transport = module.params['transport']
+    transport = module.params['provider']['transport']
 
     if state == 'present' and not vip:
         module.fail_json(msg='the "vip" param is required when state=present')
@@ -464,11 +461,15 @@ def main():
             module.exit_json(**results)
         else:
             load_config(module, commands)
-            if transport == 'cli':
+
+            # validate IP
+            if transport == 'cli' and state == 'present':
+                commands.insert(0, 'config t')
                 body = run_commands(module, commands)
                 validate_config(body, vip, module)
+
             results['changed'] = True
-            end_state = get_hsrp_group(group, interface, module)
+
             if 'configure' in commands:
                 commands.pop(0)
 

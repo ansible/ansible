@@ -1,0 +1,90 @@
+---
+- name: Set up console logging
+  net_logging:
+    dest: console
+    dest_level: 0
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"logging console 0" in result.commands'
+
+- name: Set up console logging again (idempotent)
+  net_logging:
+    dest: console
+    dest_level: 0
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Delete/disable console logging
+  net_logging:
+    dest: console
+    dest_level: 0
+    state: absent
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"no logging console" in result.commands'
+
+- name: Delete/disable console logging (idempotent)
+  net_logging:
+    dest: console
+    dest_level: 0
+    state: absent
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Logfile logging with level
+  net_logging:
+    dest: logfile
+    name: test
+    dest_level: 0
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"logging logfile test 0" in result.commands'
+
+- name: Configure facility with level
+  net_logging:
+    facility: daemon
+    facility_level: 0
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"logging level daemon 0" in result.commands'
+
+- name: remove logging as collection tearDown
+  net_logging:
+    aggregate:
+      - { dest: logfile, name: test, dest_level: 0, state: absent }
+      - { facility: daemon, facility_level: 0, state: absent }
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"no logging logfile" in result.commands'
+      - '"no logging level daemon" in result.commands'

@@ -1,20 +1,12 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -59,7 +51,7 @@ options:
     description:
       - Record type.
     required: false
-    choices: [ 'A', 'AAAA', 'CNAME', 'HTTPRED', 'MX', 'NS', 'PTR', 'SRV', 'TXT' ]
+    choices: [ 'A', 'AAAA', 'CNAME', 'ANAME', 'HTTPRED', 'MX', 'NS', 'PTR', 'SRV', 'TXT' ]
     default: null
 
   record_value:
@@ -385,19 +377,18 @@ EXAMPLES = '''
 # DNSMadeEasy module specific support methods.
 #
 
+import json
+import hashlib
+import hmac
+from time import strftime, gmtime
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url
 from ansible.module_utils.six.moves.urllib.parse import urlencode
+from ansible.module_utils.six import string_types
 
-IMPORT_ERROR = None
-try:
-    import json
-    from time import strftime, gmtime
-    import hashlib
-    import hmac
-except ImportError:
-    e = get_exception()
-    IMPORT_ERROR = str(e)
 
-class DME2:
+class DME2(object):
 
     def __init__(self, apikey, secret, domain, module):
         self.module = module
@@ -437,7 +428,7 @@ class DME2:
 
     def query(self, resource, method, data=None):
         url = self.baseurl + resource
-        if data and not isinstance(data, basestring):
+        if data and not isinstance(data, string_types):
             data = urlencode(data)
 
         response, info = fetch_url(self.module, url, data=data, method=method, headers=self._headers())
@@ -480,12 +471,12 @@ class DME2:
         if not self.all_records:
             self.all_records = self.getRecords()
 
-        if record_type in ["A", "AAAA", "CNAME", "HTTPRED", "PTR"]:
+        if record_type in ["CNAME", "ANAME", "HTTPRED", "PTR"]:
             for result in self.all_records:
                 if result['name'] == record_name and result['type'] == record_type:
                     return result
             return False
-        elif record_type in ["MX", "NS", "TXT", "SRV"]:
+        elif record_type in ["A", "AAAA", "MX", "NS", "TXT", "SRV"]:
             for result in self.all_records:
                 if record_type == "MX":
                     value = record_value.split(" ")[1]
@@ -570,7 +561,7 @@ def main():
             state=dict(required=True, choices=['present', 'absent']),
             record_name=dict(required=False),
             record_type=dict(required=False, choices=[
-                             'A', 'AAAA', 'CNAME', 'HTTPRED', 'MX', 'NS', 'PTR', 'SRV', 'TXT']),
+                             'A', 'AAAA', 'CNAME', 'ANAME', 'HTTPRED', 'MX', 'NS', 'PTR', 'SRV', 'TXT']),
             record_value=dict(required=False),
             record_ttl=dict(required=False, default=1800, type='int'),
             monitor=dict(default='no', type='bool'),
@@ -600,9 +591,6 @@ def main():
             ['monitor', True, ['port', 'protocol', 'maxEmails', 'systemDescription', 'ip1']]
         ]
     )
-
-    if IMPORT_ERROR:
-        module.fail_json(msg="Import Error: " + IMPORT_ERROR)
 
     protocols = dict(TCP=1, UDP=2, HTTP=3, DNS=4, SMTP=5, HTTPS=6)
     sensitivities = dict(Low=8, Medium=5, High=3)
@@ -721,15 +709,12 @@ def main():
             module.exit_json(changed=True)
 
         # record does not exist, return w/o change.
-        module.exit_json(changed=False)
+        module.exit_json(changed=changed)
 
     else:
         module.fail_json(
             msg="'%s' is an unknown value for the state argument" % state)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 
 if __name__ == '__main__':
     main()

@@ -24,12 +24,15 @@
 # INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
+
+import traceback
+
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.basic import env_fallback, get_exception
-from ansible.module_utils.netcli import Cli, Command
+from ansible.module_utils.basic import env_fallback
+from ansible.module_utils.netcli import Cli
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import iteritems
+
 
 NET_TRANSPORT_ARGS = dict(
     host=dict(required=True),
@@ -130,9 +133,8 @@ class NetworkModule(AnsibleModule):
             self.connection = cls()
         except KeyError:
             self.fail_json(msg='Unknown transport or no default transport specified')
-        except (TypeError, NetworkError):
-            exc = get_exception()
-            self.fail_json(msg=to_native(exc))
+        except (TypeError, NetworkError) as exc:
+            self.fail_json(msg=to_native(exc), exception=traceback.format_exc())
 
         if connect_on_load:
             self.connect()
@@ -176,18 +178,16 @@ class NetworkModule(AnsibleModule):
                     self.connection.authorize(self.params)
                 self.log('connected to %s:%s using %s' % (self.params['host'],
                          self.params['port'], self.params['transport']))
-        except NetworkError:
-            exc = get_exception()
-            self.fail_json(msg=to_native(exc))
+        except NetworkError as exc:
+            self.fail_json(msg=to_native(exc), exception=traceback.format_exc())
 
     def disconnect(self):
         try:
             if self.connected:
                 self.connection.disconnect()
             self.log('disconnected from %s' % self.params['host'])
-        except NetworkError:
-            exc = get_exception()
-            self.fail_json(msg=to_native(exc))
+        except NetworkError as exc:
+            self.fail_json(msg=to_native(exc), exception=traceback.format_exc())
 
 
 def register_transport(transport, default=False):

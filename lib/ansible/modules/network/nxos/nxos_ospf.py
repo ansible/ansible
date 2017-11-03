@@ -16,11 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {
-    'metadata_version': '1.0',
-    'status': ['preview'],
-    'supported_by': 'community'
-}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
 
 DOCUMENTATION = '''
 ---
@@ -139,7 +137,7 @@ def main():
         existing_list = existing['ospf']
 
     candidate = CustomNetworkConfig(indent=3)
-    if state == 'present':
+    if state == 'present' and ospf not in existing_list:
         state_present(module, proposed, candidate)
     if state == 'absent' and ospf in existing_list:
         state_absent(module, proposed, candidate)

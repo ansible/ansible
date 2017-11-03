@@ -32,7 +32,7 @@ from ansible.module_utils.connection import exec_command
 
 _DEVICE_CONFIGS = {}
 
-ios_argument_spec = {
+ios_provider_spec = {
     'host': dict(),
     'port': dict(type='int'),
     'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
@@ -40,25 +40,31 @@ ios_argument_spec = {
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
     'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
     'auth_pass': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS']), no_log=True),
-    'timeout': dict(type='int'),
-    'provider': dict(type='dict'),
+    'timeout': dict(type='int')
+}
+ios_argument_spec = {
+    'provider': dict(type='dict', options=ios_provider_spec),
 }
 
+ios_top_spec = {
+    'host': dict(removed_in_version=2.9),
+    'port': dict(removed_in_version=2.9, type='int'),
+    'username': dict(removed_in_version=2.9),
+    'password': dict(removed_in_version=2.9, no_log=True),
+    'ssh_keyfile': dict(removed_in_version=2.9, type='path'),
+    'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
+    'auth_pass': dict(removed_in_version=2.9, no_log=True),
+    'timeout': dict(removed_in_version=2.9, type='int')
+}
+ios_argument_spec.update(ios_top_spec)
 
-def get_argspec():
-    return ios_argument_spec
+
+def get_provider_argspec():
+    return ios_provider_spec
 
 
 def check_args(module, warnings):
-    provider = module.params['provider'] or {}
-    for key in ios_argument_spec:
-        if key not in ['provider', 'authorize'] and module.params[key]:
-            warnings.append('argument %s has been deprecated and will be removed in a future version' % key)
-
-    if provider:
-        for param in ('auth_pass', 'password'):
-            if provider.get(param):
-                module.no_log_values.update(return_values(provider[param]))
+    pass
 
 
 def get_defaults_flag(module):
@@ -67,16 +73,18 @@ def get_defaults_flag(module):
 
     commands = set()
     for line in out.splitlines():
-        if line:
+        if line.strip():
             commands.add(line.strip().split()[0])
 
     if 'all' in commands:
-        return 'all'
+        return ['all']
     else:
-        return 'full'
+        return ['full']
 
 
-def get_config(module, flags=[]):
+def get_config(module, flags=None):
+    flags = [] if flags is None else flags
+
     cmd = 'show running-config '
     cmd += ' '.join(flags)
     cmd = cmd.strip()
@@ -125,6 +133,7 @@ def load_config(module, commands):
             continue
         rc, out, err = exec_command(module, command)
         if rc != 0:
+            exec_command(module, 'end')
             module.fail_json(msg=to_text(err, errors='surrogate_then_replace'), command=command, rc=rc)
 
     exec_command(module, 'end')

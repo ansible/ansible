@@ -1,0 +1,4 @@
+- include: "package.yml"
+  when: "ansible_distribution_version not in passwordstore_skip_os.get(ansible_distribution, [])"
+- include: "tests.yml"
+  when: "ansible_distribution_version not in passwordstore_skip_os.get(ansible_distribution, [])"

@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = '''
@@ -33,6 +33,7 @@ author:
     - Jason Edelman (@jedelman8)
     - Gabriele Gerbino (@GGabriele)
 notes:
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
     - C(state=absent) removes the whole BGP ASN configuration when
       C(vrf=default) or the whole VRF instance within the BGP process when
       using a different VRF.
@@ -360,9 +361,9 @@ PARAM_TO_DEFAULT_KEYMAP = {
     'suppress_fib_pending': True,
     'fast_external_fallover': True,
     'enforce_first_as': True,
-    'event_history_periodic': True,
     'event_history_cli': True,
-    'event_history_events': True
+    'event_history_events': True,
+    'event_history_periodic': True,
 }
 PARAM_TO_COMMAND_KEYMAP = {
     'asn': 'router bgp',
@@ -411,17 +412,15 @@ def get_value(arg, config):
     command = PARAM_TO_COMMAND_KEYMAP.get(arg)
 
     if command.split()[0] == 'event-history':
-        command_re = re.compile(r'\s+{0}\s*'.format(command), re.M)
+        has_size = re.search(r'^\s+{0} size\s(?P<value>.*)$'.format(command), config, re.M)
 
-        size_re = re.compile(r'(?:{0} size\s)(?P<value>.*)'.format(command), re.M)
-        value = False
+        if command == 'event-history detail':
+            value = False
+        else:
+            value = 'size_small'
 
-        if command_re.search(config):
-            search = size_re.search(config)
-            if search:
-                value = search.group('value')
-            else:
-                value = True
+        if has_size:
+            value = 'size_%s' % has_size.group('value')
 
     elif arg in ['enforce_first_as', 'fast_external_fallover']:
         no_command_re = re.compile(r'no\s+{0}\s*'.format(command), re.M)
@@ -431,10 +430,10 @@ def get_value(arg, config):
             value = False
 
     elif arg in BOOL_PARAMS:
-        command_re = re.compile(r'\s+{0}\s*'.format(command), re.M)
+        has_command = re.search(r'^\s+{0}\s*$'.format(command), config, re.M)
         value = False
 
-        if command_re.search(config):
+        if has_command:
             value = True
     else:
         command_val_re = re.compile(r'(?:{0}\s)(?P<value>.*)'.format(command), re.M)
@@ -460,7 +459,7 @@ def get_value(arg, config):
 
 def get_existing(module, args, warnings):
     existing = {}
-    netcfg = CustomNetworkConfig(indent=2, contents=get_config(module))
+    netcfg = CustomNetworkConfig(indent=2, contents=get_config(module, flags=['bgp all']))
 
     asn_re = re.compile(r'.*router\sbgp\s(?P<existing_asn>\d+).*', re.S)
     asn_match = asn_re.match(str(netcfg))
@@ -684,7 +683,7 @@ def main():
 
     if candidate:
         candidate = candidate.items_text()
-        load_config(module, candidate)
+        warnings.extend(load_config(module, candidate))
         result['changed'] = True
         result['commands'] = candidate
     else:

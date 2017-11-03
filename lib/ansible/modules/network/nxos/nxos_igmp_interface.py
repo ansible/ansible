@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = '''
@@ -33,6 +33,7 @@ author:
     - Jason Edelman (@jedelman8)
     - Gabriele Gerbino (@GGabriele)
 notes:
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
     - When C(state=default), supported params will be reset to a default state.
       These include C(version), C(startup_query_interval),
       C(startup_query_count), C(robustness), C(querier_timeout), C(query_mrt),
@@ -93,7 +94,7 @@ options:
         description:
             - Sets the frequency at which the software sends IGMP host query
               messages. Values can range from 1 to 18000 seconds.
-              he default is 125 seconds.
+              The default is 125 seconds.
         required: false
         default: null
     last_member_qrt:
@@ -242,15 +243,18 @@ from ansible.module_utils.basic import AnsibleModule
 import re
 
 def execute_show_command(command, module, command_type='cli_show'):
-    if module.params['transport'] == 'cli':
-        command += ' | json'
-        cmds = [command]
-        body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
-        cmds = [command]
-        body = run_commands(module, cmds)
+    if command_type == 'cli_show_ascii':
+        cmds = [{
+            'command': command,
+            'output': 'text',
+        }]
+    else:
+        cmds = [{
+            'command': command,
+            'output': 'json',
+        }]
 
-    return body
+    return run_commands(module, cmds)
 
 
 def get_interface_mode(interface, intf_type, module):
@@ -318,7 +322,7 @@ def get_igmp_interface(module, interface):
         'ConfiguredStartupQueryInterval': 'startup_query_interval',
         'StartupQueryCount': 'startup_query_count',
         'RobustnessVariable': 'robustness',
-        'QuerierTimeout': 'querier_timeout',
+        'ConfiguredQuerierTimeout': 'querier_timeout',
         'ConfiguredMaxResponseTime': 'query_mrt',
         'ConfiguredQueryInterval': 'query_interval',
         'LastMemberMTR': 'last_member_qrt',
@@ -331,16 +335,16 @@ def get_igmp_interface(module, interface):
     if body:
         resource = body['TABLE_vrf']['ROW_vrf']['TABLE_if']['ROW_if']
         igmp = apply_key_map(key_map, resource)
-        report_llg = str(resource['ReportingForLinkLocal'])
+        report_llg = str(resource['ReportingForLinkLocal']).lower()
         if report_llg == 'true':
             igmp['report_llg'] = True
         elif report_llg == 'false':
             igmp['report_llg'] = False
 
-        immediate_leave = str(resource['ImmediateLeave'])  # returns en or dis
-        if immediate_leave == 'en':
+        immediate_leave = str(resource['ImmediateLeave']).lower()  # returns en or dis
+        if immediate_leave == 'en' or immediate_leave == 'true':
             igmp['immediate_leave'] = True
-        elif immediate_leave == 'dis':
+        elif immediate_leave == 'dis' or immediate_leave == 'false':
             igmp['immediate_leave'] = False
 
     # the  next block of code is used to retrieve anything with:
@@ -695,4 +699,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

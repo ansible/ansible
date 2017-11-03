@@ -1,0 +1,134 @@
+---
+- debug: msg="START net_static_route junos/basic.yaml"
+
+- name: setup - remove static route
+  net_static_route:
+    address: 1.1.1.0/24
+    state: absent
+    provider: "{{ netconf }}"
+
+- name: Confgiure static route
+  net_static_route:
+    prefix: 1.1.1.0/24
+    next_hop: 3.3.3.3
+    admin_distance: 10
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<name>1.1.1.0/24</name>' in config.xml"
+      - "'<next-hop>3.3.3.3</next-hop>' in config.xml"
+
+- name: Confgiure static route (idempotent)
+  net_static_route:
+    prefix: 1.1.1.0/24
+    next_hop: 3.3.3.3
+    admin_distance: 10
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Delete static route
+  net_static_route:
+    prefix: 1.1.1.0/24
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<name>1.1.1.0/24</name>' not in config.xml"
+
+- name: Delete static route (idempotent)
+  net_static_route:
+    prefix: 1.1.1.0/24
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Setup static route for aggegrate
+  net_static_route:
+    aggregate:
+    - {address: 4.4.4.0/24, state: absent}
+    - {address: 5.5.5.0/24, state: absent}
+    provider: "{{ netconf }}"
+
+- name: Confgiure static route using aggegrate
+  net_static_route:
+    aggregate:
+      - {address: 4.4.4.0/24, next_hop: 3.3.3.3, preference: 10, qualified_next_hop: 5.5.5.5, qualified_preference: 30}
+      - {address: 5.5.5.0/24, next_hop: 6.6.6.6, preference: 11, qualified_next_hop: 7.7.7.7, qualified_preference: 12}
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - result.diff.prepared | search("\+ *route 4.4.4.0/24")
+      - result.diff.prepared | search("\+ *next-hop 3.3.3.3")
+      - result.diff.prepared | search("\+ *qualified-next-hop 5.5.5.5")
+      - result.diff.prepared | search("\+ *preference 30")
+      - result.diff.prepared | search("\+ *preference 10")
+      - result.diff.prepared | search("\+ *route 5.5.5.0/24")
+      - result.diff.prepared | search("\+ *next-hop 6.6.6.6")
+      - result.diff.prepared | search("\+ *qualified-next-hop 7.7.7.7")
+      - result.diff.prepared | search("\+ *preference 12")
+      - result.diff.prepared | search("\+ *preference 11")
+
+- name: Delete static route configuration using aggegrate
+  net_static_route:
+    aggregate:
+      - {address: 4.4.4.0/24, state: absent}
+      - {address: 5.5.5.0/24, state: absent}
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - result.diff.prepared | search("\- *route 4.4.4.0/24")
+      - result.diff.prepared | search("\- *next-hop 3.3.3.3")
+      - result.diff.prepared | search("\- *qualified-next-hop 5.5.5.5")
+      - result.diff.prepared | search("\- *preference 30")
+      - result.diff.prepared | search("\- *preference 10")
+      - result.diff.prepared | search("\- *route 5.5.5.0/24")
+      - result.diff.prepared | search("\- *next-hop 6.6.6.6")
+      - result.diff.prepared | search("\- *qualified-next-hop 7.7.7.7")
+      - result.diff.prepared | search("\- *preference 12")
+      - result.diff.prepared | search("\- *preference 11")
+
+- name: Delete static route configuration using aggegrate (idempotent)
+  net_static_route:
+    aggregate:
+      - {address: 4.4.4.0/24, state: absent}
+      - {address: 5.5.5.0/24, state: absent}
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"

@@ -16,11 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {
-    'metadata_version': '1.0',
-    'status': ['preview'],
-    'supported_by': 'community'
-}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
 
 DOCUMENTATION = '''
 ---
@@ -34,6 +32,7 @@ author:
   - Jason Edelman (@jedelman8)
   - Gabriele Gerbino (@GGabriele)
 notes:
+  - Tested against NXOSv 7.3.(0)D1(1) on VIRL
   - C(state=absent) removes the portchannel config and interface if it
     already exists. If members to be removed are not explicitly
     passed, all existing members (if any), are removed.
@@ -143,12 +142,13 @@ def get_custom_value(arg, config, module):
 
 
 def execute_show_command(command, module):
-    if module.params['transport'] == 'cli':
+    provider = module.params['provider']
+    if provider['transport'] == 'cli':
         if 'show port-channel summary' in command:
             command += ' | json'
         cmds = [command]
         body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
+    elif provider['transport'] == 'nxapi':
         cmds = [command]
         body = run_commands(module, cmds)
 
@@ -203,6 +203,8 @@ def get_portchannel(module, netcfg=None):
         for pc in pc_table:
             if pc['group'] == module.params['group']:
                 portchannel_table = pc
+            elif module.params['group'].isdigit() and pc['group'] == int(module.params['group']):
+                portchannel_table = pc
     except (KeyError, AttributeError, TypeError, IndexError):
         return {}
 
@@ -255,16 +257,18 @@ def get_existing(module, args):
     return existing, interface_exist
 
 
-def config_portchannel(proposed, mode, group):
+def config_portchannel(proposed, mode, group, force):
     commands = []
+    # NOTE: Leading whitespace for force option is important
+    force = ' force' if force else ''
     config_args = {
-        'mode': 'channel-group {group} mode {mode}',
+        'mode': 'channel-group {group}{force} mode {mode}',
         'min_links': 'lacp min-links {min_links}',
     }
 
     for member in proposed.get('members', []):
         commands.append('interface {0}'.format(member))
-        commands.append(config_args.get('mode').format(group=group, mode=mode))
+        commands.append(config_args.get('mode').format(group=group, force=force, mode=mode))
 
     min_links = proposed.get('min_links', None)
     if min_links:
@@ -276,7 +280,7 @@ def config_portchannel(proposed, mode, group):
     return commands
 
 
-def get_commands_to_add_members(proposed, existing, module):
+def get_commands_to_add_members(proposed, existing, force, module):
     try:
         proposed_members = proposed['members']
     except KeyError:
@@ -290,11 +294,13 @@ def get_commands_to_add_members(proposed, existing, module):
     members_to_add = list(set(proposed_members).difference(existing_members))
 
     commands = []
+    # NOTE: Leading whitespace for force option is important
+    force = ' force' if force else ''
     if members_to_add:
         for member in members_to_add:
             commands.append('interface {0}'.format(member))
-            commands.append('channel-group {0} mode {1}'.format(
-                existing['group'], proposed['mode']))
+            commands.append('channel-group {0}{1} mode {2}'.format(
+                existing['group'], force, proposed['mode']))
 
     return commands
 
@@ -320,7 +326,7 @@ def get_commands_to_remove_members(proposed, existing, module):
     return commands
 
 
-def get_commands_if_mode_change(proposed, existing, group, mode, module):
+def get_commands_if_mode_change(proposed, existing, group, mode, force, module):
     try:
         proposed_members = proposed['members']
     except KeyError:
@@ -346,6 +352,8 @@ def get_commands_if_mode_change(proposed, existing, group, mode, module):
                     members_with_mode_change.append(interface)
 
     commands = []
+    # NOTE: Leading whitespace for force option is important
+    force = ' force' if force else ''
     if members_with_mode_change:
         for member in members_with_mode_change:
             commands.append('interface {0}'.format(member))
@@ -353,7 +361,7 @@ def get_commands_if_mode_change(proposed, existing, group, mode, module):
 
         for member in members_with_mode_change:
             commands.append('interface {0}'.format(member))
-            commands.append('channel-group {0} mode {1}'.format(group, mode))
+            commands.append('channel-group {0}{1} mode {2}'.format(group, force, mode))
 
     return commands
 
@@ -388,7 +396,7 @@ def state_present(module, existing, proposed, interface_exist, force, warnings):
     min_links = module.params['min_links']
 
     if not interface_exist:
-        command = config_portchannel(proposed, mode, group)
+        command = config_portchannel(proposed, mode, group, force)
         commands.append(command)
         commands.insert(0, 'interface port-channel{0}'.format(group))
         warnings.append("The proposed port-channel interface did not "
@@ -400,10 +408,10 @@ def state_present(module, existing, proposed, interface_exist, force, warnings):
             command = get_commands_to_remove_members(proposed, existing, module)
             commands.append(command)
 
-        command = get_commands_to_add_members(proposed, existing, module)
+        command = get_commands_to_add_members(proposed, existing, force, module)
         commands.append(command)
 
-        mode_command = get_commands_if_mode_change(proposed, existing, group, mode, module)
+        mode_command = get_commands_if_mode_change(proposed, existing, group, mode, force, module)
         commands.insert(0, mode_command)
 
         if min_links:

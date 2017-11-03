@@ -2,23 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2016, Fabrizio Colonna <colofabrix@tin.it>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -355,7 +345,7 @@ def format_disk_size(size_bytes, unit):
     elif unit in units_iec:
         multiplier = 1024.0 ** units_iec.index(unit)
 
-    output = size_bytes / multiplier * (1 + 1E-16)
+    output = size_bytes // multiplier * (1 + 1E-16)
 
     # Corrections to round up as per IEEE754 standard
     if output < 10:
@@ -559,6 +549,7 @@ def main():
 
             # mklabel <label-type> command
             'label': {
+                'default': 'msdos',
                 'choices': [
                     'aix', 'amiga', 'bsd', 'dvh', 'gpt', 'loop', 'mac', 'msdos',
                     'pc98', 'sun'
@@ -588,9 +579,13 @@ def main():
                 'type': 'str'
             }
         },
+        required_if=[
+            ['state', 'present', ['number']],
+            ['state', 'absent', ['number']],
+        ],
         supports_check_mode=True,
     )
-    module.run_command_environ_update = {'LANG': 'C', 'LC_ALL': 'C', 'LC_MESSAGES': 'C'}
+    module.run_command_environ_update = {'LANG': 'C', 'LC_ALL': 'C', 'LC_MESSAGES': 'C', 'LC_CTYPE': 'C'}
 
     # Data extraction
     device = module.params['device']
@@ -609,8 +604,8 @@ def main():
     parted_exec = module.get_bin_path('parted', True)
 
     # Conditioning
-    if number and number < 0:
-        module.fail_json(msg="The partition number must be non negative.")
+    if number is not None and number < 1:
+        module.fail_json(msg="The partition number must be greater then 0.")
     if not check_size_format(part_start):
         module.fail_json(
             msg="The argument 'part_start' doesn't respect required format."
@@ -629,9 +624,6 @@ def main():
     current_parts = current_device['partitions']
 
     if state == 'present':
-        # Default value for the label
-        if not label:
-            label = 'msdos'
 
         # Assign label if required
         if current_device['generic'].get('table', None) != label:
@@ -664,7 +656,7 @@ def main():
             if not module.check_mode:
                 partition = [p for p in current_parts if p['num'] == number][0]
 
-            # Assign name to the the partition
+            # Assign name to the partition
             if name is not None and partition.get('name', None) != name:
                 script += "name %s %s " % (number, name)
 

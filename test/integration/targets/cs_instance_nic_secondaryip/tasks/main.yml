@@ -1,0 +1,220 @@
+---
+- name: setup network
+  cs_network:
+    name: "net_nic"
+    zone: "{{ cs_common_zone_adv }}"
+    network_offering: DefaultSharedNetworkOffering
+    network_domain: example.com
+    vlan: 1234
+    start_ip: 10.100.123.11
+    end_ip: 10.100.123.250
+    gateway: 10.100.123.1
+    netmask: 255.255.255.0
+  register: net
+- name: verify setup network
+  assert:
+    that:
+    - net|success
+    - net.name == "net_nic"
+
+- name: setup instance
+  cs_instance:
+    name: "instance-nic-vm"
+    template: "{{ cs_common_template }}"
+    service_offering: "{{ cs_common_service_offering }}"
+    zone: "{{ cs_common_zone_adv }}"
+    network: "net_nic"
+    state: stopped
+  register: instance
+- name: verify setup instance
+  assert:
+    that:
+    - instance|success
+    - instance.name == "instance-nic-vm"
+    - instance.state == "Stopped"
+
+- name: setup network 2
+  cs_network:
+    name: "net_nic2"
+    zone: "{{ cs_common_zone_adv }}"
+    network_offering: DefaultSharedNetworkOffering
+    network_domain: example.com
+    vlan: 1235
+    start_ip: 10.100.124.11
+    end_ip: 10.100.124.250
+    gateway: 10.100.124.1
+    netmask: 255.255.255.0
+  register: net
+- name: verify setup network 2
+  assert:
+    that:
+    - net|success
+    - net.name == "net_nic2"
+
+- name: setup nic
+  cs_instance_nic:
+    vm: "instance-nic-vm"
+    network: "net_nic2"
+    ip_address: 10.100.124.42
+    zone: "{{ cs_common_zone_adv }}"
+  register: nic
+- name: verify test create nic
+  assert:
+    that:
+    - nic|success
+    - nic.ip_address == "10.100.124.42"
+    - nic.netmask == "255.255.255.0"
+    - nic.network == "net_nic2"
+    - nic.vm == "instance-nic-vm"
+    - nic.zone == "{{ cs_common_zone_adv }}"
+    - nic.mac_address is defined
+
+- name: setup remove secondary ip
+  cs_instance_nic_secondaryip:
+    vm: "instance-nic-vm"
+    network: "net_nic2"
+    vm_guest_ip: 10.100.124.43
+    zone: "{{ cs_common_zone_adv }}"
+    state: absent
+  register: sip
+- name: verify setup remove secondary ip
+  assert:
+    that:
+    - sip|success
+
+- name: test add secondary ip in check mode
+  cs_instance_nic_secondaryip:
+    vm: "instance-nic-vm"
+    network: "net_nic2"
+    vm_guest_ip: 10.100.124.43
+    zone: "{{ cs_common_zone_adv }}"
+  check_mode: true
+  register: sip
+- name: verify test add secondary ip in check mode
+  assert:
+    that:
+    - sip|success
+    - sip|changed
+    - sip.network == "net_nic2"
+    - sip.vm == "instance-nic-vm"
+    - sip.zone == "{{ cs_common_zone_adv }}"
+
+- name: test add secondary ip
+  cs_instance_nic_secondaryip:
+    vm: "instance-nic-vm"
+    network: "net_nic2"
+    vm_guest_ip: 10.100.124.43
+    zone: "{{ cs_common_zone_adv }}"
+  register: sip
+- name: verify test add secondary ip
+  assert:
+    that:
+    - sip|success
+    - sip|changed
+    - sip.vm_guest_ip == "10.100.124.43"
+    - sip.network == "net_nic2"
+    - sip.vm == "instance-nic-vm"
+    - sip.zone == "{{ cs_common_zone_adv }}"
+
+- name: test add secondary ip idempotence
+  cs_instance_nic_secondaryip:
+    vm: "instance-nic-vm"
+    network: "net_nic2"
+    vm_guest_ip: 10.100.124.43
+    zone: "{{ cs_common_zone_adv }}"
+  register: sip
+- name: verify test add secondary ip idempotence
+  assert:
+    that:
+    - sip|success
+    - not sip|changed
+    - sip.vm_guest_ip == "10.100.124.43"
+    - sip.network == "net_nic2"
+    - sip.vm == "instance-nic-vm"
+    - sip.zone == "{{ cs_common_zone_adv }}"
+
+- name: test remove secondary ip in check mode
+  cs_instance_nic_secondaryip:
+    vm: "instance-nic-vm"
+    network: "net_nic2"
+    vm_guest_ip: 10.100.124.43
+    zone: "{{ cs_common_zone_adv }}"
+    state: absent
+  check_mode: true
+  register: sip
+- name: verify test remove secondary ip in check mode
+  assert:
+    that:
+    - sip|success
+    - sip|changed
+    - sip.vm_guest_ip == "10.100.124.43"
+    - sip.network == "net_nic2"
+    - sip.vm == "instance-nic-vm"
+    - sip.zone == "{{ cs_common_zone_adv }}"
+
+- name: test remove secondary ip
+  cs_instance_nic_secondaryip:
+    vm: "instance-nic-vm"
+    network: "net_nic2"
+    vm_guest_ip: 10.100.124.43
+    zone: "{{ cs_common_zone_adv }}"
+    state: absent
+  register: sip
+- name: verify test remove secondary ip
+  assert:
+    that:
+    - sip|success
+    - sip|changed
+    - sip.vm_guest_ip == "10.100.124.43"
+    - sip.network == "net_nic2"
+    - sip.vm == "instance-nic-vm"
+    - sip.zone == "{{ cs_common_zone_adv }}"
+
+- name: test remove secondary ip idempotence
+  cs_instance_nic_secondaryip:
+    vm: "instance-nic-vm"
+    network: "net_nic2"
+    vm_guest_ip: 10.100.124.43
+    zone: "{{ cs_common_zone_adv }}"
+    state: absent
+  register: sip
+- name: verify test remove secondary ip idempotence
+  assert:
+    that:
+    - sip|success
+    - not sip|changed
+    - sip.network == "net_nic2"
+    - sip.vm == "instance-nic-vm"
+    - sip.zone == "{{ cs_common_zone_adv }}"
+
+- name: cleanup instance
+  cs_instance:
+    name: "instance-nic-vm"
+    state: expunged
+  register: instance
+- name: verify cleanup instance
+  assert:
+    that:
+    - instance|success
+
+- name: cleanup network
+  cs_network:
+    name: "net_nic"
+    zone: "{{ cs_common_zone_adv }}"
+    state: absent
+  register: net
+- name: verify cleanup network
+  assert:
+    that:
+    - net|success
+
+- name: cleanup network 2
+  cs_network:
+    name: "net_nic2"
+    zone: "{{ cs_common_zone_adv }}"
+    state: absent
+  register: net
+- name: verify cleanup network 2
+  assert:
+    that:
+    - net|success

@@ -90,7 +90,7 @@ Variables defined from included files and roles
 
 It turns out we've already talked about variables in another place too.
 
-As described in :doc:`playbooks_roles`, variables can also be included in the playbook via include files, which may or may
+As described in :doc:`playbooks_reuse_roles`, variables can also be included in the playbook via include files, which may or may
 not be part of an "Ansible Role".  Usage of roles is preferred as it provides a nice organizational system.
 
 .. _about_jinja2:
@@ -762,43 +762,65 @@ The contents of each variables file is a simple YAML dictionary, like this::
 Passing Variables On The Command Line
 `````````````````````````````````````
 
-In addition to ``vars_prompt`` and ``vars_files``, it is possible to send variables over
-the Ansible command line.  This is particularly useful when writing a generic release playbook
-where you may want to pass in the version of the application to deploy::
+In addition to ``vars_prompt`` and ``vars_files``, it is possible to set variables at the
+command line using the ``--extra-vars`` (or ``-e``) argument.  Variables can be defined using
+a single quoted string (containing one or more variables) using one of the formats below 
+
+key=value format::
 
     ansible-playbook release.yml --extra-vars "version=1.23.45 other_variable=foo"
-
-This is useful, for, among other things, setting the hosts group or the user for the playbook.
-
-Example::
-
-    ---
-
-    - hosts: '{{ hosts }}'
-      remote_user: '{{ user }}'
-
-      tasks:
-         - ...
-
-    ansible-playbook release.yml --extra-vars "hosts=vipers user=starbuck"
-
-As of Ansible 1.2, you can also pass in extra vars as quoted JSON, like so::
-
-    --extra-vars '{"pacman":"mrs","ghosts":["inky","pinky","clyde","sue"]}'
-
-The ``key=value`` form is obviously simpler, but it's there if you need it!
 
 .. note:: Values passed in using the ``key=value`` syntax are interpreted as strings.
           Use the JSON format if you need to pass in anything that shouldn't be a string (Booleans, integers, floats, lists etc).
 
-As of Ansible 1.3, extra vars can be loaded from a JSON file with the ``@`` syntax::
+.. versionadded:: 1.2
 
-    --extra-vars "@some_file.json"
+JSON string format::
 
-Also as of Ansible 1.3, extra vars can be formatted as YAML, either on the command line
-or in a file as above.
+    ansible-playbook release.yml --extra-vars '{"version":"1.23.45","other_variable":"foo"}'
+    ansible-playbook arcade.yml --extra-vars '{"pacman":"mrs","ghosts":["inky","pinky","clyde","sue"]}'
 
-.. _variable_precedence:
+.. versionadded:: 1.3
+
+YAML string format::
+
+    ansible-playbook release.yml --extra-vars '
+    version: "1.23.45"
+    other_variable: foo'
+
+    ansible-playbook arcade.yml --extra-vars '
+    pacman: mrs
+    ghosts:
+    - inky
+    - pinky
+    - clyde
+    - sue'
+
+.. versionadded:: 1.3
+
+vars from a JSON or YAML file::
+
+    ansible-playbook release.yml --extra-vars "@some_file.json"
+
+This is useful for, among other things, setting the hosts group or the user for the playbook.
+
+Escaping quotes and other special characters:
+
+.. versionadded:: 1.2
+
+Ensure you're escaping quotes appropriately for both your markup (e.g. JSON), and for 
+the shell you're operating in.::
+
+    ansible-playbook arcade.yml --extra-vars "{\"name\":\"Conan O\'Brien\"}"
+    ansible-playbook arcade.yml --extra-vars '{"name":"Conan O'\\\''Brien"}'
+    ansible-playbook script.yml --extra-vars "{\"dialog\":\"He said \\\"I just can\'t get enough of those single and double-quotes"\!"\\\"\"}"
+
+.. versionadded:: 1.3
+
+In these cases, it's probably best to use a JSON or YAML file containing the variable 
+definitions.
+
+.. _ansible_variable_precedence:
 
 Variable Precedence: Where Should I Put A Variable?
 ````````````````````````````````````````````````````
@@ -836,13 +858,16 @@ In 2.x, we have made the order of precedence more specific (with the last listed
 
   * role defaults [1]_
   * inventory file or script group vars [2]_
-  * inventory group_vars/all
-  * playbook group_vars/all
-  * inventory group_vars/*
-  * playbook group_vars/*
+  * inventory group_vars/all [3]_
+  * playbook group_vars/all [3]_
+  * inventory group_vars/* [3]_
+  * playbook group_vars/* [3]_
   * inventory file or script host vars [2]_
   * inventory host_vars/*
   * playbook host_vars/*
+  * host facts / cached set_facts [4]_
+  * inventory host_vars/* [3]_
+  * playbook host_vars/* [3]_
   * host facts
   * play vars
   * play vars_prompt
@@ -862,11 +887,16 @@ Basically, anything that goes into "role defaults" (the defaults folder inside t
 
 .. [1] Tasks in each role will see their own role's defaults. Tasks defined outside of a role will see the last role's defaults.
 .. [2] Variables defined in inventory file or provided by dynamic inventory.
+.. [3] Includes vars added by 'vars plugins' as well as host_vars and group_vars which are added by the default vars plugin shipped with Ansible.
+.. [4] When created with set_facts's cacheable option, variables will have the high precedence in the play,
+       but will be the same as a host facts precedence when they come from the cache.
 
 .. note:: Within any section, redefining a var will overwrite the previous instance.
           If multiple groups have the same variable, the last one loaded wins.
           If you define a variable twice in a play's vars: section, the 2nd one wins.
 .. note:: the previous describes the default config `hash_behavior=replace`, switch to 'merge' to only partially overwrite.
+.. note:: Group loading follows parent/child relationships. Groups of the same 'patent/child' level are then merged following alphabetical order.
+          This last one can be superceeded by the user via `ansible_group_priority`, which defaults to 0 for all groups.
 
 
 Another important thing to consider (for all versions) is that connection variables override config, command line and play/role/task specific options and directives.  For example::
@@ -946,7 +976,7 @@ roles aren't you?  Hint hint.
 
 Ok, so if you are writing a redistributable role with reasonable defaults, put those in the ``roles/x/defaults/main.yml`` file.  This means
 the role will bring along a default value but ANYTHING in Ansible will override it.  It's just a default.  That's why it says "defaults" :)
-See :doc:`playbooks_roles` for more info about this::
+See :doc:`playbooks_reuse_roles` for more info about this::
 
     ---
     # file: roles/x/defaults/main.yml
@@ -1000,7 +1030,7 @@ can set variables in there and make use of them in other roles and elsewhere in 
         - { role: something, foo: 12 }
         - { role: something_else }
 
-.. note:: There are some protections in place to avoid the need to namespace variables.  
+.. note:: There are some protections in place to avoid the need to namespace variables.
           In the above, variables defined in common_settings are most definitely available to 'something' and 'something_else' tasks, but if
           "something's" guaranteed to have foo set at 12, even if somewhere deep in common settings it set foo to 20.
 
@@ -1029,7 +1059,7 @@ For information about advanced YAML syntax used to declare variables and have mo
        Jinja2 filters and their uses
    :doc:`playbooks_loops`
        Looping in playbooks
-   :doc:`playbooks_roles`
+   :doc:`playbooks_reuse_roles`
        Playbook organization by roles
    :doc:`playbooks_best_practices`
        Best practices in playbooks

@@ -72,12 +72,13 @@ class TestNetconfConnectionClass(unittest.TestCase):
         mock_manager = MagicMock(name='self._manager.connect')
         type(mock_manager).session_id = PropertyMock(return_value='123456789')
         netconf.manager.connect.return_value = mock_manager
+        conn._play_context.network_os = 'default'
 
         rc, out, err = conn._connect()
 
         self.assertEqual(0, rc)
-        self.assertEqual('123456789', out)
-        self.assertEqual('', err)
+        self.assertEqual(b'123456789', out)
+        self.assertEqual(b'', err)
         self.assertTrue(conn._connected)
 
     def test_netconf_exec_command(self):
@@ -101,8 +102,8 @@ class TestNetconfConnectionClass(unittest.TestCase):
         netconf.to_ele.assert_called_with('<test/>')
 
         self.assertEqual(0, rc)
-        self.assertEqual('<test/>', out)
-        self.assertEqual('', err)
+        self.assertEqual(b'<test/>', out)
+        self.assertEqual(b'', err)
 
     def test_netconf_exec_command_invalid_request(self):
         pc = PlayContext()
@@ -116,5 +117,5 @@ class TestNetconfConnectionClass(unittest.TestCase):
         rc, out, err = conn.exec_command('test string')
 
         self.assertEqual(1, rc)
-        self.assertEqual('', out)
-        self.assertEqual('unable to parse request', err)
+        self.assertEqual(b'', out)
+        self.assertEqual(b'unable to parse request', err)

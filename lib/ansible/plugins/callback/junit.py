@@ -1,22 +1,46 @@
 # (c) 2016 Matt Clay <matt@mystile.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+DOCUMENTATION = '''
+    callback: junit
+    type: aggregate
+    short_description: write playbook output to a JUnit file.
+    version_added: historical
+    description:
+      - This callback writes playbook output to a JUnit formatted XML file.
+      - "Tasks show up in the report as follows:
+        'ok': pass
+        'failed' with 'EXPECTED FAILURE' in the task name: pass
+        'failed' due to an exception: error
+        'failed' for other reasons: failure
+        'skipped': skipped"
+    options:
+      output_dir:
+        name: JUnit output dir
+        default: ~/.ansible.log
+        description: Directory to write XML files to.
+        env:
+          - name: JUNIT_OUTPUT_DIR
+      task_class:
+        name: JUnit Task class
+        default: False
+        description: Configure the output to be one class per yaml file
+        env:
+          - name: JUNIT_TASK_CLASS
+      fail_on_change:
+        name: JUnit fail on change
+        default: False
+        description: Consider any tasks reporting "changed" as a junit test failure
+        env:
+          - name: JUNIT_FAIL_ON_CHANGE
+    requirements:
+      - whitelist in configuration
+      - junit_xml (python lib)
+'''
 
 import os
 import time
@@ -58,6 +82,8 @@ class CallbackModule(CallbackBase):
                                      Default: ~/.ansible.log
         JUNIT_TASK_CLASS (optional): Configure the output to be one class per yaml file
                                      Default: False
+        JUNIT_FAIL_ON_CHANGE (optional): Consider any tasks reporting "changed" as a junit test failure
+                                     Default: False
 
     Requires:
         junit_xml
@@ -74,6 +100,7 @@ class CallbackModule(CallbackBase):
 
         self._output_dir = os.getenv('JUNIT_OUTPUT_DIR', os.path.expanduser('~/.ansible.log'))
         self._task_class = os.getenv('JUNIT_TASK_CLASS', 'False').lower()
+        self._fail_on_change = os.getenv('JUNIT_FAIL_ON_CHANGE', 'False').lower()
         self._playbook_path = None
         self._playbook_name = None
         self._play_name = None
@@ -128,6 +155,9 @@ class CallbackModule(CallbackBase):
             host_name = 'include'
 
         task_data = self._task_data[task_uuid]
+
+        if self._fail_on_change == 'true' and status == 'ok' and result._result.get('changed', False):
+            status = 'failed'
 
         if status == 'failed' and 'EXPECTED FAILURE' in task_data.name:
             status = 'ok'

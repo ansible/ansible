@@ -2,23 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2016 Michael Gruener <michael.gruener@chaosmoon.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -30,9 +20,9 @@ author: "Michael Gruener (@mgruener)"
 version_added: "2.2"
 short_description: Create SSL certificates with Let's Encrypt
 description:
-   - "Create and renew SSL certificates with Let's Encrypt. Let’s Encrypt is a
+   - "Create and renew SSL certificates with Let's Encrypt. Let's Encrypt is a
       free, automated, and open certificate authority (CA), run for the
-      public’s benefit. For details see U(https://letsencrypt.org). The current
+      public's benefit. For details see U(https://letsencrypt.org). The current
       implementation supports the http-01, tls-sni-02 and dns-01 challenges."
    - "To use this module, it has to be executed at least twice. Either as two
       different tasks in the same run or during multiple runs."
@@ -53,7 +43,7 @@ requirements:
 options:
   account_key:
     description:
-      - "File containing the the Let's Encrypt account RSA key."
+      - "File containing the Let's Encrypt account RSA key."
       - "Can be created with C(openssl rsa ...)."
     required: true
   account_email:
@@ -164,11 +154,23 @@ authorizations:
         type: dict
 '''
 
+import base64
 import binascii
 import copy
-import locale
+import hashlib
+import json
+import os
+import re
+import shutil
+import tempfile
 import textwrap
+import time
+import traceback
 from datetime import datetime
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+from ansible.module_utils.urls import fetch_url
 
 
 def nopad_b64(data):
@@ -212,12 +214,12 @@ def get_cert_days(module, cert_file):
     _, out, _ = module.run_command(openssl_cert_cmd, check_rc=True)
     try:
         not_after_str = re.search(r"\s+Not After\s*:\s+(.*)", out.decode('utf8')).group(1)
-        not_after = datetime.datetime.fromtimestamp(time.mktime(time.strptime(not_after_str, '%b %d %H:%M:%S %Y %Z')))
+        not_after = datetime.fromtimestamp(time.mktime(time.strptime(not_after_str, '%b %d %H:%M:%S %Y %Z')))
     except AttributeError:
         module.fail_json(msg="No 'Not after' date found in {0}".format(cert_file))
     except ValueError:
         module.fail_json(msg="Failed to parse 'Not after' date of {0}".format(cert_file))
-    now = datetime.datetime.utcnow()
+    now = datetime.utcnow()
     return (not_after - now).days
 
 
@@ -235,7 +237,7 @@ def write_file(module, dest, content):
         f.write(content)
     except Exception as err:
         os.remove(tmpsrc)
-        module.fail_json(msg="failed to create temporary content file: %s" % str(err))
+        module.fail_json(msg="failed to create temporary content file: %s" % to_native(err), exception=traceback.format_exc())
     f.close()
     checksum_src = None
     checksum_dest = None
@@ -267,7 +269,7 @@ def write_file(module, dest, content):
             changed = True
         except Exception as err:
             os.remove(tmpsrc)
-            module.fail_json(msg="failed to copy %s to %s: %s" % (tmpsrc, dest, str(err)))
+            module.fail_json(msg="failed to copy %s to %s: %s" % (tmpsrc, dest, to_native(err)), exception=traceback.format_exc())
     os.remove(tmpsrc)
     return changed
 
@@ -405,13 +407,15 @@ class ACMEAccount(object):
 
         return result, info
 
-    def _new_reg(self, contact=[]):
+    def _new_reg(self, contact=None):
         '''
         Registers a new ACME account. Returns True if the account was
         created and False if it already existed (e.g. it was not newly
         created)
         https://tools.ietf.org/html/draft-ietf-acme-acme-02#section-6.3
         '''
+        contact = [] if contact is None else contact
+
         if self.uri is not None:
             return True
 
@@ -536,7 +540,7 @@ class ACMEClient(object):
         _, out, _ = self.module.run_command(openssl_csr_cmd, check_rc=True)
 
         domains = set([])
-        common_name = re.search(r"Subject:.*? CN=([^\s,;/]+)", out.decode('utf8'))
+        common_name = re.search(r"Subject:.*? CN\s?=\s?([^\s,;/]+)", out.decode('utf8'))
         if common_name is not None:
             domains.add(common_name.group(1))
         subject_alt_names = re.search(r"X509v3 Subject Alternative Name: \n +([^\n]+)\n", out.decode('utf8'), re.MULTILINE | re.DOTALL)
@@ -630,8 +634,8 @@ class ACMEClient(object):
                 len_ka_digest = len(ka_digest)
                 resource = 'subjectAlternativeNames'
                 value = [
-                    "{0}.{1}.token.acme.invalid".format(token_digest[:len_token_digest / 2], token_digest[len_token_digest / 2:]),
-                    "{0}.{1}.ka.acme.invalid".format(ka_digest[:len_ka_digest / 2], ka_digest[len_ka_digest / 2:]),
+                    "{0}.{1}.token.acme.invalid".format(token_digest[:len_token_digest // 2], token_digest[len_token_digest // 2:]),
+                    "{0}.{1}.ka.acme.invalid".format(ka_digest[:len_ka_digest // 2], ka_digest[len_ka_digest // 2:]),
                 ]
             elif type == 'dns-01':
                 # https://tools.ietf.org/html/draft-ietf-acme-acme-02#section-7.4
@@ -786,7 +790,7 @@ def main():
     )
 
     # AnsibleModule() changes the locale, so change it back to C because we rely on time.strptime() when parsing certificate dates.
-    locale.setlocale(locale.LC_ALL, "C")
+    module.run_command_environ_update = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C', LC_CTYPE='C')
 
     cert_days = get_cert_days(module, module.params['dest'])
     if cert_days < module.params['remaining_days']:
@@ -805,9 +809,6 @@ def main():
     else:
         module.exit_json(changed=False, cert_days=cert_days)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 
 if __name__ == '__main__':
     main()

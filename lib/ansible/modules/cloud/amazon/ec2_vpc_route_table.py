@@ -13,9 +13,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
@@ -30,7 +30,7 @@ options:
   lookup:
     description:
       - "Look up route table by either tags or by route table ID. Non-unique tag lookup will fail.
-        If no tags are specifed then no lookup for an existing route table is performed and a new
+        If no tags are specified then no lookup for an existing route table is performed and a new
         route table will be created. To change tags of a route table or delete a route table,
         you must look up by id."
     required: false
@@ -51,7 +51,7 @@ options:
   purge_subnets:
     version_added: "2.3"
     description:
-      - "Purge existing subnets that are not found in subnets."
+      - "Purge existing subnets that are not found in subnets. Ignored unless the subnets option is supplied."
     required: false
     default: 'true'
     aliases: []
@@ -77,7 +77,7 @@ options:
   subnets:
     description:
       - "An array of subnets to add to this route table. Subnets may be specified by either subnet ID, Name tag, or by a CIDR such as '10.0.0.0/24'."
-    required: true
+    required: false
   tags:
     description:
       - "A dictionary of resource tags of the form: { tag1: value1, tag2: value2 }. Tags are
@@ -128,10 +128,17 @@ EXAMPLES = '''
         instance_id: "{{ nat.instance_id }}"
   register: nat_route_table
 
+- name: delete route table
+  ec2_vpc_route_table:
+    vpc_id: vpc-1245678
+    region: us-west-1
+    route_table_id: "{{ route_table.id }}"
+    lookup: id
+    state: absent
 '''
 
 import re
-
+import traceback
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import AnsibleAWSError, connect_to_aws, ec2_argument_spec, get_aws_connection_info
 
@@ -142,12 +149,12 @@ try:
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
-    if __name__ != '__main__':
-        raise
 
 
 class AnsibleRouteTableException(Exception):
-    pass
+    def __init__(self, message, error_traceback=None):
+        self.message = message
+        self.error_traceback = error_traceback
 
 
 class AnsibleIgwSearchException(AnsibleRouteTableException):
@@ -274,7 +281,8 @@ def ensure_tags(vpc_conn, resource_id, tags, add_only, check_mode):
         return {'changed': True, 'tags': latest_tags}
     except EC2ResponseError as e:
         raise AnsibleTagCreationException(
-            'Unable to update tags for {0}, error: {1}'.format(resource_id, e))
+            message='Unable to update tags for {0}, error: {1}'.format(resource_id, e),
+            error_traceback=traceback.format_exc())
 
 
 def get_route_table_by_id(vpc_conn, vpc_id, route_table_id):
@@ -331,6 +339,11 @@ def route_spec_matches_route(route_spec, route):
     return True
 
 
+def route_spec_matches_route_cidr(route_spec, route):
+    cidr_attr = 'destination_cidr_block'
+    return route_spec[cidr_attr] == getattr(route, cidr_attr)
+
+
 def rename_key(d, old_key, new_key):
     d[new_key] = d[old_key]
     del d[old_key]
@@ -340,16 +353,21 @@ def index_of_matching_route(route_spec, routes_to_match):
     for i, route in enumerate(routes_to_match):
         if route_spec_matches_route(route_spec, route):
             return i
+        elif route_spec_matches_route_cidr(route_spec, route):
+            return "replace"
 
 
 def ensure_routes(vpc_conn, route_table, route_specs, propagating_vgw_ids,
                   check_mode, purge_routes):
     routes_to_match = list(route_table.routes)
     route_specs_to_create = []
+    route_specs_to_recreate = []
     for route_spec in route_specs:
         i = index_of_matching_route(route_spec, routes_to_match)
         if i is None:
             route_specs_to_create.append(route_spec)
+        elif i == "replace":
+            route_specs_to_recreate.append(route_spec)
         else:
             del routes_to_match[i]
 
@@ -369,7 +387,7 @@ def ensure_routes(vpc_conn, route_table, route_specs, propagating_vgw_ids,
             else:
                 routes_to_delete.append(r)
 
-    changed = bool(routes_to_delete or route_specs_to_create)
+    changed = bool(routes_to_delete or route_specs_to_create or route_specs_to_recreate)
     if changed:
         for route in routes_to_delete:
             try:
@@ -389,6 +407,11 @@ def ensure_routes(vpc_conn, route_table, route_specs, propagating_vgw_ids,
                 if e.error_code == 'DryRunOperation':
                     pass
 
+        for route_spec in route_specs_to_recreate:
+            if not check_mode:
+                vpc_conn.replace_route(route_table.id,
+                                       **route_spec)
+
     return {'changed': bool(changed)}
 
 
@@ -401,6 +424,8 @@ def ensure_subnet_association(vpc_conn, vpc_id, route_table_id, subnet_id,
         if route_table.id is None:
             continue
         for a in route_table.associations:
+            if a.main:
+                continue
             if a.subnet_id == subnet_id:
                 if route_table.id == route_table_id:
                     return {'changed': False, 'association_id': a.id}
@@ -415,7 +440,7 @@ def ensure_subnet_association(vpc_conn, vpc_id, route_table_id, subnet_id,
 
 def ensure_subnet_associations(vpc_conn, vpc_id, route_table, subnets,
                                check_mode, purge_subnets):
-    current_association_ids = [a.id for a in route_table.associations]
+    current_association_ids = [a.id for a in route_table.associations if not a.main]
     new_association_ids = []
     changed = False
     for subnet in subnets:
@@ -472,16 +497,18 @@ def ensure_route_table_absent(connection, module):
             try:
                 route_table = get_route_table_by_tags(connection, vpc_id, tags)
             except EC2ResponseError as e:
-                module.fail_json(msg=e.message)
+                module.fail_json(msg="Error finding route table with lookup 'tag': {0}".format(e.message),
+                                 exception=traceback.format_exc())
             except RuntimeError as e:
-                module.fail_json(msg=e.args[0])
+                module.fail_json(msg=e.args[0], exception=traceback.format_exc())
         else:
             route_table = None
     elif lookup == 'id':
         try:
             route_table = get_route_table_by_id(connection, vpc_id, route_table_id)
         except EC2ResponseError as e:
-            module.fail_json(msg=e.message)
+            module.fail_json(msg="Error finding route table with lookup 'id': {0}".format(e.message),
+                             exception=traceback.format_exc())
 
     if route_table is None:
         return {'changed': False}
@@ -494,7 +521,8 @@ def ensure_route_table_absent(connection, module):
         if e.error_code == 'DryRunOperation':
             pass
         else:
-            module.fail_json(msg=e.message)
+            module.fail_json(msg="Error deleting route table: {0}".format(e.message),
+                             exception=traceback.format_exc())
 
     return {'changed': True}
 
@@ -540,7 +568,8 @@ def ensure_route_table_present(connection, module):
     try:
         routes = create_route_spec(connection, module, vpc_id)
     except AnsibleIgwSearchException as e:
-        module.fail_json(msg=e[0])
+        module.fail_json(msg="Failed to find the Internet gateway for the given VPC ID {0}: {1}".format(vpc_id, e[0]),
+                         exception=traceback.format_exc())
 
     changed = False
     tags_valid = False
@@ -550,16 +579,18 @@ def ensure_route_table_present(connection, module):
             try:
                 route_table = get_route_table_by_tags(connection, vpc_id, tags)
             except EC2ResponseError as e:
-                module.fail_json(msg=e.message)
+                module.fail_json(msg="Error finding route table with lookup 'tag': {0}".format(e.message),
+                                 exception=traceback.format_exc())
             except RuntimeError as e:
-                module.fail_json(msg=e.args[0])
+                module.fail_json(msg=e.args[0], exception=traceback.format_exc())
         else:
             route_table = None
     elif lookup == 'id':
         try:
             route_table = get_route_table_by_id(connection, vpc_id, route_table_id)
         except EC2ResponseError as e:
-            module.fail_json(msg=e.message)
+            module.fail_json(msg="Error finding route table with lookup 'id': {0}".format(e.message),
+                             exception=traceback.format_exc())
 
     # If no route table returned then create new route table
     if route_table is None:
@@ -569,8 +600,8 @@ def ensure_route_table_present(connection, module):
         except EC2ResponseError as e:
             if e.error_code == 'DryRunOperation':
                 module.exit_json(changed=True)
-
-            module.fail_json(msg=e.message)
+            module.fail_json(msg="Failed to create route table: {0}".format(e.message),
+                             exception=traceback.format_exc())
 
     if routes is not None:
         try:
@@ -579,7 +610,8 @@ def ensure_route_table_present(connection, module):
                                    purge_routes)
             changed = changed or result['changed']
         except EC2ResponseError as e:
-            module.fail_json(msg=e.message)
+            module.fail_json(msg="Error while updating routes: {0}".format(e.message),
+                             exception=traceback.format_exc())
 
     if propagating_vgw_ids is not None:
         result = ensure_propagation(connection, route_table,
@@ -599,8 +631,9 @@ def ensure_route_table_present(connection, module):
             associated_subnets = find_subnets(connection, vpc_id, subnets)
         except EC2ResponseError as e:
             raise AnsibleRouteTableException(
-                'Unable to find subnets for route table {0}, error: {1}'
-                .format(route_table, e)
+                message='Unable to find subnets for route table {0}, error: {1}'
+                .format(route_table, e),
+                error_traceback=traceback.format_exc()
             )
 
         try:
@@ -611,8 +644,9 @@ def ensure_route_table_present(connection, module):
             changed = changed or result['changed']
         except EC2ResponseError as e:
             raise AnsibleRouteTableException(
-                'Unable to associate subnets for route table {0}, error: {1}'
-                .format(route_table, e)
+                message='Unable to associate subnets for route table {0}, error: {1}'
+                .format(route_table, e),
+                error_traceback=traceback.format_exc()
             )
 
     module.exit_json(changed=changed, route_table=get_route_table_info(route_table))
@@ -663,7 +697,9 @@ def main():
         elif state == 'absent':
             result = ensure_route_table_absent(connection, module)
     except AnsibleRouteTableException as e:
-        module.fail_json(msg=str(e))
+        if e.error_traceback:
+            module.fail_json(msg=e.message, exception=e.error_traceback)
+        module.fail_json(msg=e.message)
 
     module.exit_json(**result)
 

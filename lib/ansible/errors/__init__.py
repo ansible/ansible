@@ -19,6 +19,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from collections import Sequence
+import traceback
+import sys
+
 from ansible.errors.yaml_strings import (
     YAML_COMMON_DICT_ERROR,
     YAML_COMMON_LEADING_TAB_ERROR,
@@ -46,7 +50,7 @@ class AnsibleError(Exception):
     which should be returned by the DataLoader() class.
     '''
 
-    def __init__(self, message="", obj=None, show_content=True, suppress_extended_error=False):
+    def __init__(self, message="", obj=None, show_content=True, suppress_extended_error=False, orig_exc=None):
         # we import this here to prevent an import loop problem,
         # since the objects code also imports ansible.errors
         from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject
@@ -61,6 +65,10 @@ class AnsibleError(Exception):
                 self.message = '%s' % to_native(message)
         else:
             self.message = '%s' % to_native(message)
+        if orig_exc:
+            self.orig_exc = orig_exc
+
+        self.tb = ''.join(traceback.format_tb(sys.exc_info()[2]))
 
     def __str__(self):
         return self.message
@@ -216,7 +224,25 @@ class AnsibleUndefinedVariable(AnsibleRuntimeError):
 
 class AnsibleFileNotFound(AnsibleRuntimeError):
     ''' a file missing failure '''
-    pass
+
+    def __init__(self, message="", obj=None, show_content=True, suppress_extended_error=False, orig_exc=None, paths=None, file_name=None):
+
+        self.file_name = file_name
+        self.paths = paths
+
+        if self.file_name:
+            if message:
+                message += "\n"
+            message += "Could not find or access '%s'" % to_text(self.file_name)
+
+        if self.paths and isinstance(self.paths, Sequence):
+            searched = to_text('\n\t'.join(self.paths))
+            if message:
+                message += "\n"
+            message += "Searched in:\n\t%s" % searched
+
+        super(AnsibleFileNotFound, self).__init__(message=message, obj=obj, show_content=show_content,
+                                                  suppress_extended_error=suppress_extended_error, orig_exc=orig_exc)
 
 
 class AnsibleActionSkip(AnsibleRuntimeError):

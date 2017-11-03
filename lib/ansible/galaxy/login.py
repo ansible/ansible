@@ -26,6 +26,7 @@ import getpass
 import json
 
 from ansible.errors import AnsibleError, AnsibleOptionsError
+from ansible.module_utils.six.moves import input
 from ansible.module_utils.six.moves.urllib.parse import quote as urlquote, urlparse
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.module_utils.urls import open_url
@@ -61,7 +62,7 @@ class GalaxyLogin(object):
                         " if you do not want to enter your password." + u'\n\n', screen_only=True)
 
         try:
-            self.github_username = raw_input("Github Username: ")
+            self.github_username = input("Github Username: ")
         except:
             pass
 

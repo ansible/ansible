@@ -1,5 +1,6 @@
 # Test code for the iso_extract module.
 # (c) 2017, James Tanner <tanner.jc@gmail.com>
+# (c) 2017, Dag Wieers <dag@wieers.com>
 
 # This file is part of Ansible
 #
@@ -16,30 +17,27 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-- set_fact: output_dir_test={{output_dir}}/test_command_raw
+- set_fact:
+    output_dir_test: '{{ output_dir }}/test_iso_extract'
 
-- name: make sure our testing sub-directory does not exist
-  file: path="{{ output_dir_test }}" state=absent
+- name: Install 7zip
+  include_tasks: 7zip.yml
 
-- name: create our testing sub-directory
-  file: path="{{ output_dir_test }}" state=directory
+- name: Prepare environment
+  include_tasks: prepare.yml
 
-##
-## iso_extract
-##
+- name: Test in normal mode
+  include_tasks: tests.yml
+  vars:
+    in_check_mode: no
 
-- name: copy the iso to the test dir
-  copy:
-      src: test.iso
-      dest: "{{ output_dir_test }}"
+- name: Prepare environment
+  include_tasks: prepare.yml
 
-- name: extract the iso
-  iso_extract:
-      image: "{{ output_dir_test }}/test.iso"
-      dest: "{{ output_dir_test }}"
-      files:
-          - 1.txt
-          - 2.txt
-  register: iso_extract_test0
+- name: Test in check-mode
+  include_tasks: tests.yml
+  vars:
+    in_check_mode: yes
+  check_mode: yes
 
 # FIXME - fill this in after figuring out how to allow mounts

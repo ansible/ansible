@@ -1,22 +1,14 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'metadata_version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -47,7 +39,7 @@ options:
       - Option when creating an endpoint. If not provided AWS will
         utilise a default policy which provides full access to the service.
     required: false
-  policy_path:
+  policy_file:
     description:
       - The path to the properly json formatted policy file, see
         U(https://github.com/ansible/ansible/issues/7005#issuecomment-42894813)
@@ -55,6 +47,7 @@ options:
       - Option when creating an endpoint. If not provided AWS will
         utilise a default policy which provides full access to the service.
     required: false
+    aliases: [ "policy_path" ]
   state:
     description:
         - present to ensure resource is created.
@@ -181,14 +174,15 @@ import json
 import time
 import traceback
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn, ec2_argument_spec, HAS_BOTO3
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict
-
 try:
     import botocore
 except ImportError:
     pass  # will be picked up by imported HAS_BOTO3
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import (get_aws_connection_info, boto3_conn, ec2_argument_spec, HAS_BOTO3,
+                                      camel_dict_to_snake_dict)
+from ansible.module_utils.six import string_types
 
 
 def date_handler(obj):
@@ -197,7 +191,7 @@ def date_handler(obj):
 
 def wait_for_status(client, module, resource_id, status):
     polling_increment_secs = 15
-    max_retries = (module.params.get('wait_timeout') / polling_increment_secs)
+    max_retries = (module.params.get('wait_timeout') // polling_increment_secs)
     status_achieved = False
 
     for x in range(0, max_retries):
@@ -269,7 +263,7 @@ def create_vpc_endpoint(client, module):
 
     elif module.params.get('policy_file'):
         try:
-            with open(module.params.get('policy'), 'r') as json_data:
+            with open(module.params.get('policy_file'), 'r') as json_data:
                 policy = json.load(json_data)
         except Exception as e:
             module.fail_json(msg=str(e), exception=traceback.format_exc(),
@@ -309,7 +303,7 @@ def setup_removal(client, module):
     params = dict()
     changed = False
     params['DryRun'] = module.check_mode
-    if isinstance(module.params.get('vpc_endpoint_id'), basestring):
+    if isinstance(module.params.get('vpc_endpoint_id'), string_types):
         params['VpcEndpointIds'] = [module.params.get('vpc_endpoint_id')]
     else:
         params['VpcEndpointIds'] = module.params.get('vpc_endpoint_id')
@@ -337,7 +331,7 @@ def main():
             vpc_id=dict(),
             service=dict(),
             policy=dict(type='json'),
-            policy_file=dict(type='path'),
+            policy_file=dict(type='path', aliases=['policy_path']),
             state=dict(default='present', choices=['present', 'absent']),
             wait=dict(type='bool', default=False),
             wait_timeout=dict(type='int', default=320, required=False),

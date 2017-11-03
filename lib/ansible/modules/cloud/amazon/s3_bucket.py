@@ -13,9 +13,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'core'}
 
 
 DOCUMENTATION = '''
@@ -120,15 +120,16 @@ import xml.etree.ElementTree as ET
 
 import ansible.module_utils.six.moves.urllib.parse as urlparse
 from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec
-from ansible.module_utils.ec2 import sort_json_policy_dict
+from ansible.module_utils.ec2 import sort_json_policy_dict, compare_policies
 
 try:
     import boto.ec2
     from boto.s3.connection import OrdinaryCallingFormat, Location, S3Connection
     from boto.s3.tagging import Tags, TagSet
-    from boto.exception import BotoServerError, S3CreateError, S3ResponseError
+    from boto.exception import BotoServerError, S3CreateError, S3ResponseError, BotoClientError
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
@@ -170,7 +171,7 @@ def _create_or_update_bucket(connection, module, location):
         try:
             bucket = connection.create_bucket(name, location=location)
             changed = True
-        except S3CreateError as e:
+        except (S3CreateError, BotoClientError) as e:
             module.fail_json(msg=e.message)
 
     # Versioning
@@ -195,16 +196,16 @@ def _create_or_update_bucket(connection, module, location):
     requester_pays_status = get_request_payment_status(bucket)
     if requester_pays_status != requester_pays:
         if requester_pays:
-            payer='Requester'
+            payer = 'Requester'
         else:
-            payer='BucketOwner'
+            payer = 'BucketOwner'
         bucket.set_request_payment(payer=payer)
         changed = True
         requester_pays_status = get_request_payment_status(bucket)
 
     # Policy
     try:
-        current_policy = json.loads(bucket.get_policy())
+        current_policy = json.loads(to_native(bucket.get_policy()))
     except S3ResponseError as e:
         if e.error_code == "NoSuchBucketPolicy":
             current_policy = {}
@@ -219,11 +220,11 @@ def _create_or_update_bucket(connection, module, location):
             # only show changed if there was already a policy
             changed = bool(current_policy)
 
-        elif sort_json_policy_dict(current_policy) != sort_json_policy_dict(policy):
+        elif compare_policies(current_policy, policy):
+            changed = True
             try:
                 bucket.set_policy(json.dumps(policy))
-                changed = True
-                current_policy = json.loads(bucket.get_policy())
+                current_policy = json.loads(to_native(bucket.get_policy()))
             except S3ResponseError as e:
                 module.fail_json(msg=e.message)
 
@@ -291,7 +292,7 @@ def _destroy_bucket(connection, module):
 
 
 def _create_or_update_bucket_ceph(connection, module, location):
-    #TODO: add update
+    # TODO: add update
 
     name = module.params.get("name")
 
@@ -303,7 +304,7 @@ def _create_or_update_bucket_ceph(connection, module, location):
         try:
             bucket = connection.create_bucket(name, location=location)
             changed = True
-        except S3CreateError as e:
+        except (S3CreateError, BotoClientError) as e:
             module.fail_json(msg=e.message)
 
     if bucket:
@@ -348,6 +349,7 @@ def is_walrus(s3_url):
         return not o.hostname.endswith('amazonaws.com')
     else:
         return False
+
 
 def main():
 
@@ -434,8 +436,8 @@ def main():
     except Exception as e:
         module.fail_json(msg='Failed to connect to S3: %s' % str(e))
 
-    if connection is None: # this should never happen
-        module.fail_json(msg ='Unknown error, failed to create s3 connection, no information from boto.')
+    if connection is None:  # this should never happen
+        module.fail_json(msg='Unknown error, failed to create s3 connection, no information from boto.')
 
     state = module.params.get("state")
 

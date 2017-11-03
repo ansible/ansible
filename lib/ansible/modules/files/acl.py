@@ -1,21 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
@@ -29,74 +20,62 @@ description:
     - Sets and retrieves file ACL information.
 options:
   path:
-    required: true
-    default: null
     description:
       - The full path of the file or object.
-    aliases: ['name']
+    aliases: [ name ]
+    required: true
 
   state:
-    required: false
-    default: query
-    choices: [ 'query', 'present', 'absent' ]
     description:
       - defines whether the ACL should be present or not.  The C(query) state gets the current acl without changing it, for use in 'register' operations.
+    choices: [ absent, present, query ]
+    default: query
 
   follow:
-    required: false
-    default: yes
-    choices: [ 'yes', 'no' ]
     description:
       - whether to follow symlinks on the path if a symlink is encountered.
+    type: bool
+    default: 'yes'
 
   default:
-    version_added: "1.5"
-    required: false
-    default: no
-    choices: [ 'yes', 'no' ]
     description:
       - if the target is a directory, setting this to yes will make it the default acl for entities created inside the directory. It causes an error if
         path is a file.
+    type: bool
+    default: 'no'
+    version_added: "1.5"
 
   entity:
-    version_added: "1.5"
-    required: false
     description:
       - actual user or group that the ACL applies to when matching entity types user or group are selected.
+    version_added: "1.5"
 
   etype:
-    version_added: "1.5"
-    required: false
-    default: null
-    choices: [ 'user', 'group', 'mask', 'other' ]
     description:
       - the entity type of the ACL to apply, see setfacl documentation for more info.
+    choices: [ group, mask, other, user ]
+    version_added: "1.5"
 
   permissions:
-    version_added: "1.5"
-    required: false
-    default: null
     description:
       - Permissions to apply/remove can be any combination of r, w and  x (read, write and execute respectively)
+    version_added: "1.5"
 
   entry:
-    required: false
-    default: null
     description:
       - DEPRECATED. The acl to set or remove.  This must always be quoted in the form of '<etype>:<qualifier>:<perms>'.  The qualifier may be empty for
         some types, but the type and perms are always required. '-' can be used as placeholder when you do not care about permissions. This is now
         superseded by entity, type and permissions fields.
 
   recursive:
-    version_added: "2.0"
-    required: false
-    default: no
-    choices: [ 'yes', 'no' ]
     description:
       - Recursively sets the specified ACL (added in Ansible 2.0). Incompatible with C(state=query).
+    type: bool
+    default: 'no'
+    version_added: "2.0"
 author:
-    - "Brian Coca (@bcoca)"
-    - "Jérémie Astori (@astorije)"
+    - Brian Coca (@bcoca)
+    - Jérémie Astori (@astorije)
 notes:
     - The "acl" module requires that acls are enabled on the target filesystem and that the setfacl and getfacl binaries are installed.
     - As of Ansible 2.0, this module only supports Linux distributions.
@@ -104,23 +83,23 @@ notes:
 '''
 
 EXAMPLES = '''
-# Grant user Joe read access to a file
-- acl:
+- name: Grant user Joe read access to a file
+  acl:
     path: /etc/foo.conf
     entity: joe
     etype: user
     permissions: r
     state: present
 
-# Removes the acl for Joe on a specific file
-- acl:
+- name: Removes the acl for Joe on a specific file
+  acl:
     path: /etc/foo.conf
     entity: joe
     etype: user
     state: absent
 
-# Sets default acl for joe on foo.d
-- acl:
+- name: Sets default acl for joe on foo.d
+  acl:
     path: /etc/foo.d
     entity: joe
     etype: user
@@ -128,14 +107,14 @@ EXAMPLES = '''
     default: yes
     state: present
 
-# Same as previous but using entry shorthand
-- acl:
+- name: Same as previous but using entry shorthand
+  acl:
     path: /etc/foo.d
     entry: "default:user:joe:rw-"
     state: present
 
-# Obtain the acl for a specific file
-- acl:
+- name: Obtain the acl for a specific file
+  acl:
     path: /etc/foo.conf
   register: acl_info
 '''
@@ -150,8 +129,9 @@ acl:
 
 import os
 
-# import module snippets
 from ansible.module_utils.basic import AnsibleModule, get_platform
+from ansible.module_utils.pycompat24 import get_exception
+
 
 def split_entry(entry):
     ''' splits entry and ensures normalized return'''
@@ -187,10 +167,11 @@ def build_entry(etype, entity, permissions=None, use_nfsv4_acls=False):
     '''Builds and returns an entry string. Does not include the permissions bit if they are not provided.'''
     if use_nfsv4_acls:
         return ':'.join([etype, entity, permissions, 'allow'])
+
     if permissions:
         return etype + ':' + entity + ':' + permissions
-    else:
-        return etype + ':' + entity
+
+    return etype + ':' + entity
 
 
 def build_command(module, mode, path, follow, default, recursive, entry=''):
@@ -218,7 +199,7 @@ def build_command(module, mode, path, follow, default, recursive, entry=''):
             cmd.append('-h')
 
     if default:
-        if(mode == 'rm'):
+        if mode == 'rm':
             cmd.insert(1, '-k')
         else:  # mode == 'set' or mode == 'get'
             cmd.insert(1, '-d')
@@ -259,8 +240,8 @@ def run_acl(module, cmd, check_rc=True):
     if lines and not lines[-1].split():
         # trim last line only when it is empty
         return lines[:-1]
-    else:
-        return lines
+
+    return lines
 
 
 def main():

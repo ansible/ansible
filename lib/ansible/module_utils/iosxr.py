@@ -33,34 +33,39 @@ from ansible.module_utils.connection import exec_command
 
 _DEVICE_CONFIGS = {}
 
-iosxr_argument_spec = {
+iosxr_provider_spec = {
     'host': dict(),
     'port': dict(type='int'),
     'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
     'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
     'timeout': dict(type='int'),
-    'provider': dict(type='dict')
 }
+iosxr_argument_spec = {
+    'provider': dict(type='dict', options=iosxr_provider_spec)
+}
+iosxr_top_spec = {
+    'host': dict(removed_in_version=2.9),
+    'port': dict(removed_in_version=2.9, type='int'),
+    'username': dict(removed_in_version=2.9),
+    'password': dict(removed_in_version=2.9, no_log=True),
+    'ssh_keyfile': dict(removed_in_version=2.9, type='path'),
+    'timeout': dict(removed_in_version=2.9, type='int'),
+}
+iosxr_argument_spec.update(iosxr_top_spec)
 
 
-def get_argspec():
-    return iosxr_argument_spec
+def get_provider_argspec():
+    return iosxr_provider_spec
 
 
 def check_args(module, warnings):
-    provider = module.params['provider'] or {}
-    for key in iosxr_argument_spec:
-        if key != 'provider' and module.params[key]:
-            warnings.append('argument %s has been deprecated and will be removed in a future version' % key)
-
-    if provider:
-        for param in ('password',):
-            if provider.get(param):
-                module.no_log_values.update(return_values(provider[param]))
+    pass
 
 
-def get_config(module, flags=[]):
+def get_config(module, flags=None):
+    flags = [] if flags is None else flags
+
     cmd = 'show running-config '
     cmd += ' '.join(flags)
     cmd = cmd.strip()
@@ -98,9 +103,12 @@ def run_commands(module, commands, check_rc=True):
     return responses
 
 
-def load_config(module, commands, warnings, commit=False, replace=False, comment=None):
+def load_config(module, commands, warnings, commit=False, replace=False, comment=None, admin=False):
+    cmd = 'configure terminal'
+    if admin:
+        cmd = 'admin ' + cmd
 
-    rc, out, err = exec_command(module, 'configure terminal')
+    rc, out, err = exec_command(module, cmd)
     if rc != 0:
         module.fail_json(msg='unable to enter configuration mode', err=to_text(err, errors='surrogate_or_strict'))
 
@@ -132,7 +140,10 @@ def load_config(module, commands, warnings, commit=False, replace=False, comment
             cmd += ' comment {0}'.format(comment)
     else:
         cmd = 'abort'
-        diff = None
-    exec_command(module, cmd)
+
+    rc, out, err = exec_command(module, cmd)
+    if rc != 0:
+        exec_command(module, 'abort')
+        module.fail_json(msg=err, commands=commands, rc=rc)
 
     return to_text(diff, errors='surrogate_or_strict')

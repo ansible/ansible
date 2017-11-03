@@ -27,7 +27,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils.six import with_metaclass
 from ansible.module_utils._text import to_bytes
-from ansible.plugins import cache_loader
+from ansible.plugins.loader import cache_loader
 
 try:
     from __main__ import display
@@ -105,29 +105,28 @@ class BaseFileCacheModule(BaseCacheModule):
         and it would be problematic if the key did expire after some long running tasks and
         user gets 'undefined' error in the same play """
 
-        if key in self._cache:
-            return self._cache.get(key)
+        if key not in self._cache:
 
-        if self.has_expired(key) or key == "":
-            raise KeyError
+            if self.has_expired(key) or key == "":
+                raise KeyError
 
-        cachefile = "%s/%s" % (self._cache_dir, key)
-        try:
+            cachefile = "%s/%s" % (self._cache_dir, key)
             try:
                 value = self._load(cachefile)
                 self._cache[key] = value
-                return value
             except ValueError as e:
                 display.warning("error in '%s' cache plugin while trying to read %s : %s. "
                                 "Most likely a corrupt file, so erasing and failing." % (self.plugin_name, cachefile, to_bytes(e)))
                 self.delete(key)
                 raise AnsibleError("The cache file %s was corrupt, or did not otherwise contain valid data. "
                                    "It has been removed, so you can re-run your command now." % cachefile)
-        except (OSError, IOError) as e:
-            display.warning("error in '%s' cache plugin while trying to read %s : %s" % (self.plugin_name, cachefile, to_bytes(e)))
-            raise KeyError
-        except Exception as e:
-            raise AnsibleError("Error while decoding the cache file %s: %s" % (cachefile, to_bytes(e)))
+            except (OSError, IOError) as e:
+                display.warning("error in '%s' cache plugin while trying to read %s : %s" % (self.plugin_name, cachefile, to_bytes(e)))
+                raise KeyError
+            except Exception as e:
+                raise AnsibleError("Error while decoding the cache file %s: %s" % (cachefile, to_bytes(e)))
+
+        return self._cache.get(key)
 
     def set(self, key, value):
 
@@ -184,7 +183,6 @@ class BaseFileCacheModule(BaseCacheModule):
                 return False
             else:
                 display.warning("error in '%s' cache plugin while trying to stat %s : %s" % (self.plugin_name, cachefile, to_bytes(e)))
-                pass
 
     def delete(self, key):
         try:

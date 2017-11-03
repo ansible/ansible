@@ -19,7 +19,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -70,7 +70,10 @@ options:
             - "C(display) - I(true) if the network should marked as display network."
             - "C(migration) - I(true) if the network should marked as migration network."
             - "C(gluster) - I(true) if the network should marked as gluster network."
-
+    label:
+        description:
+            - "Name of the label to assign to the network."
+        version_added: "2.5"
 extends_documentation_fragment: ovirt
 '''
 
@@ -142,7 +145,26 @@ class NetworksModule(BaseModule):
             mtu=self._module.params['mtu'],
         )
 
+    def post_create(self, entity):
+        self._update_label_assignments(entity)
+
+    def _update_label_assignments(self, entity):
+        if self.param('label') is None:
+            return
+
+        labels = [lbl.id for lbl in self._connection.follow_link(entity.network_labels)]
+        labels_service = self._service.service(entity.id).network_labels_service()
+        if not self.param('label') in labels:
+            if not self._module.check_mode:
+                if labels:
+                    labels_service.label_service(labels[0]).remove()
+                labels_service.add(
+                    label=otypes.NetworkLabel(id=self.param('label'))
+                )
+            self.changed = True
+
     def update_check(self, entity):
+        self._update_label_assignments(entity)
         return (
             equal(self._module.params.get('comment'), entity.comment) and
             equal(self._module.params.get('description'), entity.description) and
@@ -210,6 +232,7 @@ def main():
         vm_network=dict(default=None, type='bool'),
         mtu=dict(default=None, type='int'),
         clusters=dict(default=None, type='list'),
+        label=dict(default=None),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -229,14 +252,12 @@ def main():
             service=networks_service,
         )
         state = module.params['state']
-        network = networks_module.search_entity(
-            search_params={
-                'name': module.params['name'],
-                'datacenter': module.params['data_center'],
-            },
-        )
+        search_params = {
+            'name': module.params['name'],
+            'datacenter': module.params['data_center'],
+        }
         if state == 'present':
-            ret = networks_module.create(entity=network)
+            ret = networks_module.create(search_params=search_params)
 
             # Update clusters networks:
             if module.params.get('clusters') is not None:
@@ -258,7 +279,7 @@ def main():
                         ret = cluster_networks_module.remove()
 
         elif state == 'absent':
-            ret = networks_module.remove(entity=network)
+            ret = networks_module.remove(search_params=search_params)
 
         module.exit_json(**ret)
     except Exception as e:

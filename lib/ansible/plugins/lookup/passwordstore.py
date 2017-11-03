@@ -1,27 +1,90 @@
 # (c) 2017, Patrick Deelman <patrick@patrickdeelman.nl>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+
+DOCUMENTATION = """
+    lookup: passwordstore
+    version_added: "2.3"
+    author:
+      - Patrick Deelman <patrick@patrickdeelman.nl>
+    short_description: manage passwords with passwordstore.org's pass utility
+    description:
+      - Enables Ansible to retrieve, create or update passwords from the passwordstore.org pass utility.
+        It also retrieves YAML style keys stored as multilines in the passwordfile.
+    options:
+      _terms:
+        description: query key
+        required: True
+      passwordstore:
+        description: location of the password store
+        default: '~/.password-store'
+      directory:
+        description: directory of the password store
+        default: null
+        env:
+          - name: PASSWORD_STORE_DIR
+      create:
+        description: flag to create the password
+        type: boolean
+        default: False
+      overwrite:
+        description: flag to overwrite the password
+        type: boolean
+        default: False
+      returnall:
+        description: flag to return all the contents of the password store
+        type: boolean
+        default: False
+      subkey:
+        description: subkey to return
+        default: password
+      userpass:
+        description: user password
+      length:
+        description: password length
+        type: integer
+        default: 16
+"""
+EXAMPLES = """
+# Debug is used for examples, BAD IDEA to show passwords on screen
+- name: Basic lookup. Fails if example/test doesn't exist
+  debug: msg="{{ lookup('passwordstore', 'example/test')}}"
+
+- name: Create pass with random 16 character password. If password exists just give the password
+  debug: var=mypassword
+  vars:
+    mypassword: "{{ lookup('passwordstore', 'example/test create=true')}}"
+
+- name: Different size password
+  debug: msg="{{ lookup('passwordstore', 'example/test create=true length=42')}}"
+
+- name: Create password and overwrite the password if it exists. As a bonus, this module includes the old password inside the pass file
+  debug: msg="{{ lookup('passwordstore', 'example/test create=true overwrite=true')}}"
+
+- name: Return the value for user in the KV pair user, username
+  debug: msg="{{ lookup('passwordstore', 'example/test subkey=user')}}"
+
+- name: Return the entire password file content
+  set_fact: passfilecontent="{{ lookup('passwordstore', 'example/test returnall=true')}}"
+"""
+
+RETURN = """
+_raw:
+  description:
+    - a password
+"""
 
 import os
 import subprocess
 import time
+
 from distutils import util
 from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.utils.encrypt import random_password
 from ansible.plugins.lookup import LookupBase
 
 
@@ -35,25 +98,31 @@ def check_output2(*popenargs, **kwargs):
     if 'input' in kwargs:
         if 'stdin' in kwargs:
             raise ValueError('stdin and input arguments may not both be used.')
-        inputdata = kwargs['input']
+        b_inputdata = to_bytes(kwargs['input'], errors='surrogate_or_strict')
         del kwargs['input']
         kwargs['stdin'] = subprocess.PIPE
     else:
-        inputdata = None
+        b_inputdata = None
     process = subprocess.Popen(*popenargs, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **kwargs)
     try:
-        out, err = process.communicate(inputdata)
+        b_out, b_err = process.communicate(b_inputdata)
     except:
         process.kill()
         process.wait()
         raise
     retcode = process.poll()
-    if retcode:
+    if retcode != 0 or \
+            b'encryption failed: Unusable public key' in b_out or \
+            b'encryption failed: Unusable public key' in b_err:
         cmd = kwargs.get("args")
         if cmd is None:
             cmd = popenargs[0]
-        raise subprocess.CalledProcessError(retcode, cmd, out + err)
-    return out
+        raise subprocess.CalledProcessError(
+            retcode,
+            cmd,
+            to_native(b_out + b_err, errors='surrogate_or_strict')
+        )
+    return b_out
 
 
 class LookupModule(LookupBase):
@@ -95,11 +164,14 @@ class LookupModule(LookupBase):
 
     def check_pass(self):
         try:
-            self.passoutput = check_output2(["pass", self.passname]).splitlines()
+            self.passoutput = to_text(
+                check_output2(["pass", self.passname]),
+                errors='surrogate_or_strict'
+            ).splitlines()
             self.password = self.passoutput[0]
             self.passdict = {}
             for line in self.passoutput[1:]:
-                if ":" in line:
+                if ':' in line:
                     name, value = line.split(':', 1)
                     self.passdict[name.strip()] = value.strip()
         except (subprocess.CalledProcessError) as e:
@@ -118,10 +190,7 @@ class LookupModule(LookupBase):
         if self.paramvals['userpass']:
             newpass = self.paramvals['userpass']
         else:
-            try:
-                newpass = check_output2(['pwgen', '-cns', str(self.paramvals['length']), '1']).rstrip()
-            except (subprocess.CalledProcessError) as e:
-                raise AnsibleError(e)
+            newpass = random_password(length=self.paramvals['length'])
         return newpass
 
     def update_password(self):
@@ -131,7 +200,7 @@ class LookupModule(LookupBase):
         msg = newpass + '\n' + '\n'.join(self.passoutput[1:])
         msg += "\nlookup_pass: old password was {} (Updated on {})\n".format(self.password, datetime)
         try:
-            generate = check_output2(['pass', 'insert', '-f', '-m', self.passname], input=msg)
+            check_output2(['pass', 'insert', '-f', '-m', self.passname], input=msg)
         except (subprocess.CalledProcessError) as e:
             raise AnsibleError(e)
         return newpass
@@ -143,7 +212,7 @@ class LookupModule(LookupBase):
         datetime = time.strftime("%d/%m/%Y %H:%M:%S")
         msg = newpass + '\n' + "lookup_pass: First generated by ansible on {}\n".format(datetime)
         try:
-            generate = check_output2(['pass', 'insert', '-f', '-m', self.passname], input=msg)
+            check_output2(['pass', 'insert', '-f', '-m', self.passname], input=msg)
         except (subprocess.CalledProcessError) as e:
             raise AnsibleError(e)
         return newpass

@@ -53,7 +53,9 @@ class ProxmoxVM(dict):
 
 
 class ProxmoxVMList(list):
-    def __init__(self, data=[]):
+    def __init__(self, data=None):
+        data = [] if data is None else data
+
         for item in data:
             self.append(ProxmoxVM(item))
 

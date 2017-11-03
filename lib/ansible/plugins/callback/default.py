@@ -1,32 +1,25 @@
 # (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-'''
-DOCUMENTATION:
-    callback: default
-    short_description: default Ansbile screen output
-    version_added: historical
-    description:
-        - This is the default output callback for ansible-playbook.
-'''
-# Make coding more python3-ish
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = '''
+    callback: default
+    type: stdout
+    short_description: default Ansible screen output
+    version_added: historical
+    description:
+        - This is the default output callback for ansible-playbook.
+    extends_documentation_fragment:
+      - default_callback
+    requirements:
+      - set as stdout in configuration
+'''
+
 from ansible import constants as C
+from ansible.playbook.task_include import TaskInclude
 from ansible.plugins.callback import CallbackBase
 from ansible.utils.color import colorize, hostcolor
 
@@ -50,10 +43,12 @@ class CallbackModule(CallbackBase):
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
 
+        delegated_vars = result._result.get('_ansible_delegated_vars', None)
+        self._clean_results(result._result, result._task.action)
+
         if self._play.strategy == 'free' and self._last_task_banner != result._task._uuid:
             self._print_task_banner(result._task)
 
-        delegated_vars = result._result.get('_ansible_delegated_vars', None)
         self._handle_exception(result._result)
         self._handle_warnings(result._result)
 
@@ -63,8 +58,7 @@ class CallbackModule(CallbackBase):
         else:
             if delegated_vars:
                 self._display.display("fatal: [%s -> %s]: FAILED! => %s" % (result._host.get_name(), delegated_vars['ansible_host'],
-                                                                            self._dump_results(result._result)),
-                                      color=C.COLOR_ERROR)
+                                                                            self._dump_results(result._result)), color=C.COLOR_ERROR)
             else:
                 self._display.display("fatal: [%s]: FAILED! => %s" % (result._host.get_name(), self._dump_results(result._result)), color=C.COLOR_ERROR)
 
@@ -73,14 +67,13 @@ class CallbackModule(CallbackBase):
 
     def v2_runner_on_ok(self, result):
 
+        delegated_vars = result._result.get('_ansible_delegated_vars', None)
+        self._clean_results(result._result, result._task.action)
+
         if self._play.strategy == 'free' and self._last_task_banner != result._task._uuid:
             self._print_task_banner(result._task)
 
-        self._clean_results(result._result, result._task.action)
-
-        delegated_vars = result._result.get('_ansible_delegated_vars', None)
-        self._clean_results(result._result, result._task.action)
-        if result._task.action in ('include', 'include_role'):
+        if isinstance(result._task, TaskInclude):
             return
         elif result._result.get('changed', False):
             if delegated_vars:
@@ -102,11 +95,16 @@ class CallbackModule(CallbackBase):
         else:
 
             if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
+                if result._task.action == 'debug' and 'changed' in result._result:
+                    del result._result['changed']
                 msg += " => %s" % (self._dump_results(result._result),)
             self._display.display(msg, color=color)
 
     def v2_runner_on_skipped(self, result):
-        if C.DISPLAY_SKIPPED_HOSTS:
+        if self._plugin_options.get('show_skipped_hosts', C.DISPLAY_SKIPPED_HOSTS):  # fallback on constants for inherited plugins missing docs
+
+            self._clean_results(result._result, result._task.action)
+
             if self._play.strategy == 'free' and self._last_task_banner != result._task._uuid:
                 self._print_task_banner(result._task)
 
@@ -194,7 +192,8 @@ class CallbackModule(CallbackBase):
 
     def v2_runner_item_on_ok(self, result):
         delegated_vars = result._result.get('_ansible_delegated_vars', None)
-        if result._task.action in ('include', 'include_role'):
+        self._clean_results(result._result, result._task.action)
+        if isinstance(result._task, TaskInclude):
             return
         elif result._result.get('changed', False):
             msg = 'changed'
@@ -217,6 +216,7 @@ class CallbackModule(CallbackBase):
     def v2_runner_item_on_failed(self, result):
 
         delegated_vars = result._result.get('_ansible_delegated_vars', None)
+        self._clean_results(result._result, result._task.action)
         self._handle_exception(result._result)
 
         msg = "failed: "
@@ -229,7 +229,8 @@ class CallbackModule(CallbackBase):
         self._display.display(msg + " (item=%s) => %s" % (self._get_item(result._result), self._dump_results(result._result)), color=C.COLOR_ERROR)
 
     def v2_runner_item_on_skipped(self, result):
-        if C.DISPLAY_SKIPPED_HOSTS:
+        if self._plugin_options.get('show_skipped_hosts', C.DISPLAY_SKIPPED_HOSTS):  # fallback on constants for inherited plugins missing docs
+            self._clean_results(result._result, result._task.action)
             msg = "skipping: [%s] => (item=%s) " % (result._host.get_name(), self._get_item(result._result))
             if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
                 msg += " => %s" % self._dump_results(result._result)
@@ -267,7 +268,7 @@ class CallbackModule(CallbackBase):
         self._display.display("", screen_only=True)
 
         # print custom stats
-        if C.SHOW_CUSTOM_STATS and stats.custom:
+        if self._plugin_options.get('show_custom_stats', C.SHOW_CUSTOM_STATS) and stats.custom:  # fallback on constants for inherited plugins missing docs
             self._display.banner("CUSTOM STATS: ")
             # per host
             # TODO: come up with 'pretty format'
@@ -288,6 +289,7 @@ class CallbackModule(CallbackBase):
             self._display.banner("PLAYBOOK: %s" % basename(playbook._file_name))
 
         if self._display.verbosity > 3:
+            # show CLI options
             if self._options is not None:
                 for option in dir(self._options):
                     if option.startswith('_') or option in ['read_file', 'ensure_value', 'read_module']:

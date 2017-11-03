@@ -184,9 +184,9 @@
       - "result.stdout_lines[-1] == '(0 rows)'"
 
 #
-# Create and destroy user
+# Create and destroy user, test 'password' and 'encrypted' parameters
 #
-- include: test_user.yml
+- include: test_password.yml
   vars:
     encrypted: '{{ item.user_creation_encrypted_value }}'
     db_password1: 'secretù' # use UTF-8
@@ -194,154 +194,31 @@
     - user_creation_encrypted_value: 'yes'
     - user_creation_encrypted_value: 'no'
 
-# BYPASSRLS role attribute was introduced in Postgres 9.5, so 
+# BYPASSRLS role attribute was introduced in PostgreSQL 9.5, so
 # we want to test atrribute management differently depending
-# on the version. See https://github.com/ansible/ansible/pull/24625
-# for more details.
-- name: Get Postgres version 
+# on the version.
+- name: Get PostgreSQL version
   become_user: "{{ pg_user }}"
   become: True
-  shell: echo 'SHOW SERVER_VERSION' | psql -d postgres
+  shell: "echo 'SHOW SERVER_VERSION' | psql --tuples-only --no-align --dbname postgres"
   register: postgres_version_resp
 
-- name: Print Postgres server version
+- name: Print PostgreSQL server version
   debug:
-    msg: "{{ postgres_version_resp.stdout_lines[-2] | trim }}"
+    msg: "{{ postgres_version_resp.stdout }}"
 
-- name: Role attribute testing for Postgres 9.5+
-  include: postgresql_user_9.5_or_greater.yml
-  when: (postgres_version_resp.stdout_lines[-2] | trim) | version_compare('9.5.0', '>=')
+- set_fact:
+    bypassrls_supported: "{{ postgres_version_resp.stdout | version_compare('9.5.0', '>=') }}"
 
-- name: Role attribute testing for Postgres versions below 9.5 
-  include: postgresql_user_less_than_9.5.yml
-  when: (postgres_version_resp.stdout_lines[-2] | trim) | version_compare('9.5.0', '<')
+# test 'no_password_change' and 'role_attr_flags' parameters
+- include: test_no_password_change.yml
+  vars:
+    no_password_changes: '{{ item }}'
+  with_items:
+    - 'yes'
+    - 'no'
 
-- name: Cleanup the user
-  become_user: "{{ pg_user }}"
-  become: True
-  postgresql_user:
-    name: "{{ db_user1 }}"
-    state: 'absent'
-    login_user: "{{ pg_user }}"
-    db: postgres
-
-- name: Check that they were removed
-  become_user: "{{ pg_user }}"
-  become: True
-  shell: echo "select * from pg_user where usename='{{ db_user1 }}';" | psql -d postgres
-  register: result
-
-- assert:
-    that:
-      - "result.stdout_lines[-1] == '(0 rows)'"
-
-# Test cases to replicate issue 19835
-- name: Create a user "{{ db_user3 }}"  to test issue 19835
-  become_user: "{{ pg_user }}"
-  become: True
-  postgresql_user:
-    name: "{{ db_user3 }}"
-    encrypted: 'yes'
-    password: "md55c8ccfd9d6711fc69a7eae647fc54f51"
-    login_user: "{{ pg_user }}"
-    #role_attr_flags: "NOSUPERUSER,NOCREATEROLE,NOCREATEDB,noinherit,NOLOGIN"
-    db: postgres
-  register: result
-
-- name: Check that ansible reports that "{{ db_user3 }}" was created for testing issue 19835
-  assert:
-    that:
-      - "result.changed == True"
-
-- name: debug result
-  debug:
-    var: result
-
-- name: Check that "{{ db_user3 }}" was created for testing issue 19835
-  become_user: "{{ pg_user }}"
-  become: True
-  shell: echo "select * from pg_user where usename='{{ db_user3 }}';" | psql -d postgres
-  register: result
-
-- assert:
-    that:
-      - "result.stdout_lines[-1] == '(1 row)'"
-
-- name: Modify user "{{ db_user3 }}" to have only login role attributes for testing issue 19835
-  become_user: "{{ pg_user }}"
-  become: True
-  postgresql_user:
-    name: "{{ db_user3 }}"
-    state: "present"
-    role_attr_flags: "NOSUPERUSER,NOCREATEROLE,NOCREATEDB,noinherit"
-    login_user: "{{ pg_user }}"
-    db: postgres
-  register: result
-
-- name: Check that ansible reports it modified the roles for testing issue 19835
-  assert:
-    that:
-      - "result.changed == True"
-
-- name: Check that the user "{{ db_user3 }}" has the requested role attributes for testing issue 19835
-  become_user: "{{ pg_user }}"
-  become: True
-  shell: echo "select 'super:'||rolsuper, 'createrole:'||rolcreaterole, 'create:'||rolcreatedb, 'inherit:'||rolinherit, 'login:'||rolcanlogin from pg_roles where rolname='{{ db_user3 }}';" | psql -d postgres
-  register: result
-
-- name: Modify a single role attribute on the user "{{ db_user3 }}"  with no_password_changes set to yes. issue 19835
-  become_user: "{{ pg_user }}"
-  become: True
-  postgresql_user:
-    name: "{{ db_user3 }}"
-    state: "present"
-    role_attr_flags: "CREATEDB"
-    no_password_changes: yes
-    login_user: "{{ pg_user }}"
-    db: postgres
-  register: result
-
-- name: Check that ansible reports it modified the role with no_password_changes set to yes. issue 19835
-  assert:
-    that:
-      - "result.changed == True"
-
-- name: Check that the user "{{ db_user3 }}" has the requested role attributes with no_password_changes set to yes. issue 19835
-  become_user: "{{ pg_user }}"
-  become: True
-  shell: echo "select 'super:'||rolsuper, 'createrole:'||rolcreaterole, 'create:'||rolcreatedb, 'inherit:'||rolinherit, 'login:'||rolcanlogin  from pg_roles where rolname='{{ db_user3 }}';" | psql -d postgres
-  register: result
-
-- name: Assert that the request role attributes check for user "{{ db_user3 }}" was correct with no_password_changes set to yes. issue 19835
-  assert:
-    that:
-      - "result.stdout_lines[-1] == '(1 row)'"
-      - "'super:f' in result.stdout_lines[-2]"
-      - "'createrole:f' in result.stdout_lines[-2]"
-      - "'create:t' in result.stdout_lines[-2]"
-      - "'inherit:f' in result.stdout_lines[-2]"
-      - "'login:t' in result.stdout_lines[-2]"
-
-- name: Cleanup the "{{ db_user3 }}" user
-  become_user: "{{ pg_user }}"
-  become: True
-  postgresql_user:
-    name: "{{ db_user3 }}"
-    state: 'absent'
-    login_user: "{{ pg_user }}"
-    db: postgres
-
-- name: Check that "{{ db_user3 }}"  was removed
-  become_user: "{{ pg_user }}"
-  become: True
-  shell: echo "select * from pg_user where usename='{{ db_user3 }}';" | psql -d postgres
-  register: result
-
-- assert:
-    that:
-      - "result.stdout_lines[-1] == '(0 rows)'"
-
-### TODO: test expires, fail_on_user
+### TODO: fail_on_user
 
 #
 # Test db ownership
@@ -459,16 +336,21 @@
   become: True
   shell: echo "create table test_table2 (field text);" | psql {{ db_name }}
 
-- name: Create a user with some permissions on the db
-  become_user: "{{ pg_user }}"
-  become: True
-  postgresql_user:
-    name: "{{ db_user1 }}"
-    encrypted: 'yes'
-    password: "md55c8ccfd9d6711fc69a7eae647fc54f51"
-    db: "{{ db_name }}"
-    priv: 'test_table1:INSERT,SELECT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER/test_table2:INSERT/CREATE,CONNECT,TEMP'
-    login_user: "{{ pg_user }}"
+- vars:
+    db_password: 'secretù' # use UTF-8
+  block:
+    - name: Create a user with some permissions on the db
+      become_user: "{{ pg_user }}"
+      become: True
+      postgresql_user:
+        name: "{{ db_user1 }}"
+        encrypted: 'yes'
+        password: "md5{{ (db_password ~ db_user1) | hash('md5')}}"
+        db: "{{ db_name }}"
+        priv: 'test_table1:INSERT,SELECT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER/test_table2:INSERT/CREATE,CONNECT,TEMP'
+        login_user: "{{ pg_user }}"
+
+    - include: pg_authid_not_readable.yml
 
 - name: Check that the user has the requested permissions (table1)
   become_user: "{{ pg_user }}"
@@ -871,6 +753,21 @@
 - assert:
     that:
       - "result.stdout_lines[-1] == '(0 rows)'"
+
+# dump/restore tests per format
+# ============================================================
+- include: state_dump_restore.yml test_fixture=user file=dbdata.sql
+- include: state_dump_restore.yml test_fixture=user file=dbdata.sql.gz
+- include: state_dump_restore.yml test_fixture=user file=dbdata.sql.bz2
+- include: state_dump_restore.yml test_fixture=user file=dbdata.sql.xz
+- include: state_dump_restore.yml test_fixture=user file=dbdata.tar
+- include: state_dump_restore.yml test_fixture=user file=dbdata.tar.gz
+- include: state_dump_restore.yml test_fixture=user file=dbdata.tar.bz2
+- include: state_dump_restore.yml test_fixture=user file=dbdata.tar.xz
+
+# dump/restore tests per other logins
+# ============================================================
+- include: state_dump_restore.yml file=dbdata.tar test_fixture=admin
 
 #
 # Cleanup

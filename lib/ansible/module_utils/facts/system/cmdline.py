@@ -27,24 +27,30 @@ class CmdLineFactCollector(BaseFactCollector):
     name = 'cmdline'
     _fact_ids = set()
 
+    def _get_proc_cmdline(self):
+        return get_file_content('/proc/cmdline')
+
+    def _parse_proc_cmdline(self, data):
+        cmdline_dict = {}
+        try:
+            for piece in shlex.split(data, posix=False):
+                item = piece.split('=', 1)
+                if len(item) == 1:
+                    cmdline_dict[item[0]] = True
+                else:
+                    cmdline_dict[item[0]] = item[1]
+        except ValueError:
+            pass
+
+        return cmdline_dict
+
     def collect(self, module=None, collected_facts=None):
         cmdline_facts = {}
 
-        data = get_file_content('/proc/cmdline')
+        data = self._get_proc_cmdline()
 
         if not data:
             return cmdline_facts
 
-        cmdline_facts['cmdline'] = {}
-
-        try:
-            for piece in shlex.split(data):
-                item = piece.split('=', 1)
-                if len(item) == 1:
-                    cmdline_facts['cmdline'][item[0]] = True
-                else:
-                    cmdline_facts['cmdline'][item[0]] = item[1]
-        except ValueError:
-            pass
-
+        cmdline_facts['cmdline'] = self._parse_proc_cmdline(data)
         return cmdline_facts

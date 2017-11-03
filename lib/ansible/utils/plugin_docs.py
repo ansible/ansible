@@ -20,14 +20,12 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import ast
-import yaml
-
 from collections import MutableMapping, MutableSet, MutableSequence
 
 from ansible.module_utils.six import string_types
+from ansible.parsing.plugin_docs import read_docstring
 from ansible.parsing.yaml.loader import AnsibleLoader
-from ansible.plugins import fragment_loader
+from ansible.plugins.loader import fragment_loader
 
 try:
     from __main__ import display
@@ -92,80 +90,13 @@ def add_fragments(doc, filename):
 
 def get_docstring(filename, verbose=False):
     """
-    Search for assignment of the DOCUMENTATION and EXAMPLES variables
-    in the given file.
-    Parse DOCUMENTATION from YAML and return the YAML doc or None
-    together with EXAMPLES, as plain text.
-
-    DOCUMENTATION can be extended using documentation fragments
-    loaded by the PluginLoader from the module_docs_fragments
-    directory.
+    DOCUMENTATION can be extended using documentation fragments loaded by the PluginLoader from the module_docs_fragments directory.
     """
 
-    data = {
-        'doc': None,
-        'plainexamples': None,
-        'returndocs': None,
-        'metadata': None
-    }
+    data = read_docstring(filename, verbose=verbose)
 
-    string_to_vars = {
-        'DOCUMENTATION': 'doc',
-        'EXAMPLES': 'plainexamples',
-        'RETURN': 'returndocs',
-        'ANSIBLE_METADATA': 'metadata'
-    }
-
-    try:
-        M = ast.parse(''.join(open(filename)))
-        try:
-            display.debug('Attempt first docstring is yaml docs')
-            docstring = yaml.load(M.body[0].value.s)
-            for string in string_to_vars.keys():
-                if string in docstring:
-                    data[string_to_vars[string]] = docstring[string]
-                display.debug('assigned :%s' % string_to_vars[string])
-        except Exception as e:
-            display.debug('failed docstring parsing: %s' % str(e))
-
-        if 'docs' not in data or not data['docs']:
-            display.debug('Fallback to vars parsing')
-            for child in M.body:
-                if isinstance(child, ast.Assign):
-                    for t in child.targets:
-                        try:
-                            theid = t.id
-                        except AttributeError:
-                            # skip errors can happen when trying to use the normal code
-                            display.warning("Failed to assign id for %s on %s, skipping" % (t, filename))
-                            continue
-
-                        if theid in string_to_vars:
-                            varkey = string_to_vars[theid]
-                            if isinstance(child.value, ast.Dict):
-                                data[varkey] = ast.literal_eval(child.value)
-                            else:
-                                if theid in ['DOCUMENTATION', 'ANSIBLE_METADATA']:
-                                    # string should be yaml
-                                    data[varkey] = AnsibleLoader(child.value.s, file_name=filename).get_single_data()
-                                else:
-                                    # not yaml, should be a simple string
-                                    data[varkey] = child.value.s
-                            display.debug('assigned :%s' % varkey)
-
-        # add fragments to documentation
-        if data['doc']:
-            add_fragments(data['doc'], filename)
-
-        # remove version
-        if data['metadata']:
-            for x in ('version', 'metadata_version'):
-                if x in data['metadata']:
-                    del data['metadata'][x]
-    except:
-        display.error("unable to parse %s" % filename)
-        if verbose is True:
-            display.display("unable to parse %s" % filename)
-            raise
+    # add fragments to documentation
+    if data.get('doc', False):
+        add_fragments(data['doc'], filename)
 
     return data['doc'], data['plainexamples'], data['returndocs'], data['metadata']

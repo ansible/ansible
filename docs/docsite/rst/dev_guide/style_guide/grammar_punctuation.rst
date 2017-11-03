@@ -55,7 +55,7 @@ Commas are always important, considering the vast difference in meanings of the 
 - Let's eat, Grandma
 - Let's eat Grandma.
 
-Correct punctation could save Grandma's life.
+Correct punctuation could save Grandma's life.
 
 If that does not convince you, maybe this will:
 
@@ -110,7 +110,7 @@ Never use "we" when writing. "We" aren't doing anything on the user side. Ansibl
 
 Hyphen
 ~~~~~~~~~~~~~~
-The hyphen’s primary function is the formation of certain compound terms. Do not use a hyphen unless it serves a purpose. If a compound adjective cannot be misread or, as with many psychological terms, its meaning is established, a hyphen is not necessary.
+The hyphen's primary function is the formation of certain compound terms. Do not use a hyphen unless it serves a purpose. If a compound adjective cannot be misread or, as with many psychological terms, its meaning is established, a hyphen is not necessary.
 
 Use hyphens to avoid ambiguity or confusion:
 

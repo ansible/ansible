@@ -16,11 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {
-    'metadata_version': '1.0',
-    'status': ['preview'],
-    'supported_by': 'community',
-}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = '''
@@ -33,6 +31,7 @@ description:
   - Manages BGP address-family's neighbors configurations on NX-OS switches.
 author: Gabriele Gerbino (@GGabriele)
 notes:
+  - Tested against NXOSv 7.3.(0)D1(1) on VIRL
   - C(state=absent) removes the whole BGP address-family's
     neighbor configuration.
   - Default, when supported, removes properties
@@ -158,7 +157,7 @@ options:
   max_prefix_interval:
     description:
       - Optional restart interval. Valid values are an integer.
-        Requires max_prefix_limit.
+        Requires max_prefix_limit. May not be combined with max_prefix_warning.
     required: false
     default: null
   max_prefix_threshold:
@@ -170,7 +169,8 @@ options:
     default: null
   max_prefix_warning:
     description:
-      - Optional warning-only keyword. Requires max_prefix_limit.
+      - Optional warning-only keyword. Requires max_prefix_limit. May not be
+        combined with max_prefix_interval.
     required: false
     choices: ['true','false']
     default: null
@@ -305,25 +305,25 @@ PARAM_TO_COMMAND_KEYMAP = {
     'neighbor': 'neighbor',
     'additional_paths_receive': 'capability additional-paths receive',
     'additional_paths_send': 'capability additional-paths send',
-    'advertise_map_exist': 'advertise-map',
-    'advertise_map_non_exist': 'advertise-map',
+    'advertise_map_exist': 'advertise-map exist-map',
+    'advertise_map_non_exist': 'advertise-map non-exist-map',
     'allowas_in': 'allowas-in',
     'allowas_in_max': 'allowas-in',
     'as_override': 'as-override',
     'default_originate': 'default-originate',
     'default_originate_route_map': 'default-originate route-map',
-    'filter_list_in': 'filter-list',
-    'filter_list_out': 'filter-list',
+    'filter_list_in': 'filter-list in',
+    'filter_list_out': 'filter-list out',
     'max_prefix_limit': 'maximum-prefix',
-    'max_prefix_interval': 'maximum-prefix options',
-    'max_prefix_threshold': 'maximum-prefix options',
-    'max_prefix_warning': 'maximum-prefix options',
+    'max_prefix_interval': 'maximum-prefix interval',
+    'max_prefix_threshold': 'maximum-prefix threshold',
+    'max_prefix_warning': 'maximum-prefix warning',
     'next_hop_self': 'next-hop-self',
     'next_hop_third_party': 'next-hop-third-party',
-    'prefix_list_in': 'prefix-list',
-    'prefix_list_out': 'prefix-list',
-    'route_map_in': 'route-map',
-    'route_map_out': 'route-map',
+    'prefix_list_in': 'prefix-list in',
+    'prefix_list_out': 'prefix-list out',
+    'route_map_in': 'route-map in',
+    'route_map_out': 'route-map out',
     'route_reflector_client': 'route-reflector-client',
     'safi': 'address-family',
     'send_community': 'send-community',
@@ -338,37 +338,43 @@ PARAM_TO_COMMAND_KEYMAP = {
 
 def get_value(arg, config, module):
     custom = [
-        'allowas_in_max',
         'additional_paths_send',
         'additional_paths_receive',
-        'advertise_map_exist',
-        'advertise_map_non_exist',
         'max_prefix_limit',
         'max_prefix_interval',
         'max_prefix_threshold',
         'max_prefix_warning',
-        'next_hop_third_party',
         'soft_reconfiguration_in'
     ]
     command = PARAM_TO_COMMAND_KEYMAP[arg]
-    has_command = re.search(r'\s+{0}\s*'.format(command), config, re.M)
+    has_command = re.search(r'^\s+{0}\s*'.format(command), config, re.M)
     has_command_val = re.search(r'(?:{0}\s)(?P<value>.*)$'.format(command), config, re.M)
     value = ''
 
     if arg in custom:
         value = get_custom_value(arg, config, module)
 
+    elif arg == 'next_hop_third_party':
+        has_no_command = re.search(r'^\s+no\s+{0}\s*$'.format(command), config, re.M)
+        value = False
+        if not has_no_command:
+            value = True
+
     elif arg in BOOL_PARAMS:
         value = False
         if has_command:
             value = True
 
+    elif command.startswith('advertise-map'):
+        value = []
+        has_adv_map = re.search(r'{0}\s(?P<value1>.*)\s{1}\s(?P<value2>.*)$'.format(*command.split()), config, re.M)
+        if has_adv_map:
+            value = list(has_adv_map.groups())
+
     elif command.split()[0] in ['filter-list', 'prefix-list', 'route-map']:
-        direction = arg.rsplit('_', 1)[1]
-        if has_command_val:
-            params = has_command_val.group('value').split()
-            if params[-1] == direction:
-                value = params[0]
+        has_cmd_direction_val = re.search(r'{0}\s(?P<value>.*)\s{1}$'.format(*command.split()), config, re.M)
+        if has_cmd_direction_val:
+            value = has_cmd_direction_val.group('value')
 
     elif arg == 'send_community':
         if has_command:
@@ -400,27 +406,6 @@ def get_custom_value(arg, config, module):
                     value = 'disable'
                 else:
                     value = 'enable'
-    elif arg == 'advertise_map_exist':
-        value = []
-        for line in splitted_config:
-            if 'advertise-map' in line and 'exist-map' in line:
-                splitted_line = line.split()
-                value = [splitted_line[1], splitted_line[3]]
-    elif command == 'advertise-map':
-        value = []
-        exclude = 'non_exist' in arg
-        for line in splitted_config:
-            if 'advertise-map' in line and (
-                (exclude and 'non-exist-map' in line) or
-                (not exclude and 'exist-map' in line)
-            ):
-                splitted_line = line.split()
-                value = [splitted_line[1], splitted_line[3]]
-    elif arg == 'allowas_in_max':
-        if has_command_val:
-            split_line = has_command_val.group('value').split()
-            if len(split_line) == 2:
-                value = splitted_line[-1]
     elif arg.startswith('max_prefix'):
         for line in splitted_config:
             if 'maximum-prefix' in line:
@@ -445,11 +430,6 @@ def get_custom_value(arg, config, module):
                     value = 'always'
                 else:
                     value = 'enable'
-    elif arg == 'next_hop_third_party':
-        no_command_re = re.compile(r'\s+no\s+{0}\s*'.format(command), re.M)
-        value = False
-        if not no_command_re.search(config) and command_re.search(config):
-            value = True
 
     return value
 
@@ -528,8 +508,7 @@ def get_default_command(key, value, existing_commands):
             elif key == 'route-map out':
                 command = 'no route-map {0} out'.format(existing_value)
             elif key.startswith('maximum-prefix'):
-                command = 'no maximum-prefix {0}'.format(
-                    existing_commands.get('maximum-prefix'))
+                command = 'no maximum-prefix'
             elif key == 'allowas-in max':
                 command = ['no allowas-in {0}'.format(existing_value)]
                 command.append('allowas-in')
@@ -545,16 +524,10 @@ def fix_proposed(module, proposed):
     allowas_in = proposed.get('allowas_in')
     allowas_in_max = proposed.get('allowas_in_max')
 
-    if allowas_in is False and allowas_in_max:
+    if allowas_in_max and not allowas_in:
         proposed.pop('allowas_in_max')
     elif allowas_in and allowas_in_max:
         proposed.pop('allowas_in')
-
-    for key, value in proposed.items():
-        if key in ['filter_list_in', 'prefix_list_in', 'route_map_in']:
-            proposed[key] = [value, 'in']
-        elif key in ['filter_list_out', 'prefix_list_out', 'route_map_out']:
-            proposed[key] = [value, 'out']
 
     return proposed
 
@@ -566,7 +539,18 @@ def state_present(module, existing, proposed, candidate):
     proposed_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, proposed)
     existing_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, existing)
     for key, value in proposed_commands.items():
-        if key.startswith('maximum-prefix'):
+        if value in ['inherit', 'default']:
+            command = get_default_command(key, value, existing_commands)
+
+            if isinstance(command, str):
+                if command and command not in commands:
+                    commands.append(command)
+            elif isinstance(command, list):
+                for cmd in command:
+                    if cmd not in commands:
+                        commands.append(cmd)
+
+        elif key.startswith('maximum-prefix'):
             command = 'maximum-prefix {0}'.format(module.params['max_prefix_limit'])
             if module.params['max_prefix_threshold']:
                 command += ' {0}'.format(module.params['max_prefix_threshold'])
@@ -580,17 +564,6 @@ def state_present(module, existing, proposed, candidate):
             commands.append(key)
         elif value is False:
             commands.append('no {0}'.format(key))
-        elif value == 'default' or value == 'inherit':
-            command = get_default_command(key, value, existing_commands)
-
-            if isinstance(command, str):
-                if command and command not in commands:
-                    commands.append(command)
-            elif isinstance(command, list):
-                for cmd in command:
-                    if cmd not in commands:
-                        commands.append(cmd)
-
         elif key == 'address-family':
             commands.append("address-family {0} {1}".format(module.params['afi'], module.params['safi']))
         elif key.startswith('capability additional-paths'):
@@ -599,10 +572,10 @@ def state_present(module, existing, proposed, candidate):
                 command += ' disable'
             commands.append(command)
         elif key.startswith('advertise-map'):
-            direction = key.split()[0]
+            direction = key.split()[1]
             commands.append('advertise-map {1} {0} {2}'.format(direction, *value))
-        elif key in ['filter-list', 'prefix-list', 'route-map']:
-            commands.append('{0} {1} {2}'.format(key, *value))
+        elif key.split()[0] in ['filter-list', 'prefix-list', 'route-map']:
+            commands.append('{1} {0} {2}'.format(value, *key.split()))
 
         elif key == 'soft-reconfiguration inbound':
             command = ''
@@ -628,16 +601,12 @@ def state_present(module, existing, proposed, candidate):
 
         parents.append('neighbor {0}'.format(module.params['neighbor']))
 
-        if len(commands) == 1:
-            candidate.add(commands, parents=parents)
-        elif len(commands) > 1:
-            af_command = 'address-family {0} {1}'.format(
-                module.params['afi'], module.params['safi'])
-            if af_command in commands:
-                commands.remove(af_command)
-                parents.append('address-family {0} {1}'.format(
-                    module.params['afi'], module.params['safi']))
-                candidate.add(commands, parents=parents)
+        af_command = 'address-family {0} {1}'.format(
+            module.params['afi'], module.params['safi'])
+        parents.append(af_command)
+        if af_command in commands:
+            commands.remove(af_command)
+        candidate.add(commands, parents=parents)
 
 
 def state_absent(module, existing, candidate):
@@ -693,10 +662,8 @@ def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        mutually_exclusive=[['advertise_map_exist', 'advertise_map_non_exist']],
-        required_together=[['max_prefix_limit', 'max_prefix_interval'],
-                           ['max_prefix_limit', 'max_prefix_warning'],
-                           ['max_prefix_limit', 'max_prefix_threshold']],
+        mutually_exclusive=[['advertise_map_exist', 'advertise_map_non_exist'],
+                            ['max_prefix_interval', 'max_prefix_warning']],
         supports_check_mode=True,
     )
 
@@ -705,7 +672,11 @@ def main():
     result = dict(changed=False, warnings=warnings)
 
     state = module.params['state']
-
+    for key in ['max_prefix_interval', 'max_prefix_warning', 'max_prefix_threshold']:
+        if module.params[key] and not module.params['max_prefix_limit']:
+            module.fail_json(
+                msg='max_prefix_limit is required when using %s' % key
+            )
     if module.params['vrf'] == 'default' and module.params['soo']:
         module.fail_json(msg='SOO is only allowed in non-default VRF')
 
@@ -748,7 +719,7 @@ def main():
 
     if candidate:
         candidate = candidate.items_text()
-        load_config(module, candidate)
+        warnings.extend(load_config(module, candidate))
         result['changed'] = True
         result['commands'] = candidate
     else:

@@ -32,3 +32,12 @@ def pct_to_int(value, num_items, min_value=1):
         return int((value_pct / 100.0) * num_items) or min_value
     else:
         return int(value)
+
+
+def object_to_dict(obj, exclude=None):
+    """
+    Converts an object into a dict making the properties into keys, allows excluding certain keys
+    """
+    if exclude is None or not isinstance(exclude, list):
+        exclude = []
+    return dict((key, getattr(obj, key)) for key in dir(obj) if not (key.startswith('_') or key in exclude))

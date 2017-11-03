@@ -25,6 +25,12 @@
       - "result.changed == true"
       - "'hostname foo' in result.updates"
 
+- name: get current running-config
+  eos_command:
+    commands: show running-config
+    provider: "{{ cli }}"
+  register: config
+
 - name: configure hostname again
   eos_config:
     lines: hostname foo

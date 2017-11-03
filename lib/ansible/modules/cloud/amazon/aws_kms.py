@@ -14,9 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
@@ -26,6 +26,7 @@ short_description: Perform various KMS management tasks.
 description:
      - Manage role/user access to a KMS key. Not designed for encrypting/decrypting.
 version_added: "2.3"
+requirements: [ boto3 ]
 options:
   mode:
     description:
@@ -104,6 +105,8 @@ statement_label = {
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import boto_exception
+from ansible.module_utils.six import string_types
 
 # import a class, we'll use a fully qualified path
 import ansible.module_utils.ec2
@@ -116,17 +119,6 @@ try:
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
-
-def boto_exception(err):
-    '''generic error message handler'''
-    if hasattr(err, 'error_message'):
-        error = err.error_message
-    elif hasattr(err, 'message'):
-        error = str(err.message) + ' ' + str(err) + ' - ' + str(type(err))
-    else:
-        error = '%s: %s' % (Exception, err)
-
-    return error
 
 def get_arn_from_kms_alias(kms, aliasname):
     ret = kms.list_aliases()
@@ -165,47 +157,53 @@ def do_grant(kms, keyarn, role_arn, granttypes, mode='grant', dry_run=True, clea
             # do we want this grant type? Are we on its statement?
             # and does the role have this grant type?
 
+            # create Principal and 'AWS' so we can safely use them later.
+            if not isinstance(statement.get('Principal'), dict):
+                statement['Principal'] = dict()
+
+            if 'AWS' in statement['Principal'] and isinstance(statement['Principal']['AWS'], string_types):
+                # convert to list
+                statement['Principal']['AWS'] = [statement['Principal']['AWS']]
+            if not isinstance(statement['Principal'].get('AWS'), list):
+                statement['Principal']['AWS'] = list()
+
             if mode == 'grant' and statement['Sid'] == statement_label[granttype]:
                 # we're granting and we recognize this statement ID.
 
                 if granttype in granttypes:
-                    invalid_entries = list(filter(lambda x: not x.startswith('arn:aws:iam::'), statement['Principal']['AWS']))
-                    if clean_invalid_entries and len(list(invalid_entries)):
+                    invalid_entries = [item for item in statement['Principal']['AWS'] if not item.startswith('arn:aws:iam::')]
+                    if clean_invalid_entries and invalid_entries:
                         # we have bad/invalid entries. These are roles that were deleted.
                         # prune the list.
-                        valid_entries = filter(lambda x: x.startswith('arn:aws:iam::'), statement['Principal']['AWS'])
+                        valid_entries = [item for item in statement['Principal']['AWS'] if item.startswith('arn:aws:iam::')]
                         statement['Principal']['AWS'] = valid_entries
                         had_invalid_entries = True
 
-
                     if not role_arn in statement['Principal']['AWS']: # needs to be added.
                         changes_needed[granttype] = 'add'
-                        if not dry_run:
-                            statement['Principal']['AWS'].append(role_arn)
+                        statement['Principal']['AWS'].append(role_arn)
                 elif role_arn in statement['Principal']['AWS']: # not one the places the role should be
                     changes_needed[granttype] = 'remove'
-                    if not dry_run:
-                        statement['Principal']['AWS'].remove(role_arn)
+                    statement['Principal']['AWS'].remove(role_arn)
 
             elif mode == 'deny' and statement['Sid'] == statement_label[granttype] and role_arn in statement['Principal']['AWS']:
                 # we don't selectively deny. that's a grant with a
                 # smaller list. so deny=remove all of this arn.
                 changes_needed[granttype] = 'remove'
-                if not dry_run:
-                    statement['Principal']['AWS'].remove(role_arn)
+                statement['Principal']['AWS'].remove(role_arn)
 
     try:
         if len(changes_needed) and not dry_run:
             policy_json_string = json.dumps(policy)
             kms.put_key_policy(KeyId=keyarn, PolicyName='default', Policy=policy_json_string)
+            # returns nothing, so we have to just assume it didn't throw
+            ret['changed'] = True
     except:
-        raise Exception("{}: // {}".format("e", policy_json_string))
-
-        # returns nothing, so we have to just assume it didn't throw
-        ret['changed'] = True
+        raise
 
     ret['changes_needed'] = changes_needed
     ret['had_invalid_entries'] = had_invalid_entries
+    ret['new_policy'] = policy
     if dry_run:
         # true if changes > 0
         ret['changed'] = (not len(changes_needed) == 0)
@@ -283,8 +281,10 @@ def main():
                 if not g in statement_label:
                     module.fail_json(msg='{} is an unknown grant type.'.format(g))
 
-        ret = do_grant(kms, module.params['key_arn'], module.params['role_arn'], module.params['grant_types'], mode=mode, dry_run=module.check_mode,
-                       clean_invalid_entries=module.params['clean_invalid_entries'])
+        ret = do_grant(kms, module.params['key_arn'], module.params['role_arn'], module.params['grant_types'],
+                  mode=mode,
+                  dry_run=module.check_mode,
+                  clean_invalid_entries=module.params['clean_invalid_entries'])
         result.update(ret)
 
     except Exception as err:
@@ -296,4 +296,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

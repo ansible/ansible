@@ -2,23 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2013, Chatham Financial <oss@chathamfinancial.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -26,49 +16,64 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: rabbitmq_plugin
-short_description: Adds or removes plugins to RabbitMQ
+short_description: Manage RabbitMQ plugins
 description:
-  - Enables or disables RabbitMQ plugins
+  - Manage RabbitMQ plugins.
 version_added: "1.1"
-author: '"Chris Hoffman (@chrishoffman)"'
+author:
+  - Chris Hoffman (@chrishoffman)
 options:
   names:
     description:
-      - Comma-separated list of plugin names
+      - Comma-separated list of plugin names.
     required: true
-    default: null
     aliases: [name]
   new_only:
     description:
-      - Only enable missing plugins
-      - Does not disable plugins that are not in the names list
-    required: false
+      - Only enable missing plugins.
+      - Does not disable plugins that are not in the names list.
+    type: bool
     default: "no"
-    choices: [ "yes", "no" ]
   state:
     description:
-      - Specify if plugins are to be enabled or disabled
-    required: false
+      - Specify if plugins are to be enabled or disabled.
     default: enabled
     choices: [enabled, disabled]
   prefix:
     description:
-      - Specify a custom install prefix to a Rabbit
-    required: false
+      - Specify a custom install prefix to a Rabbit.
     version_added: "1.3"
-    default: null
 '''
 
 EXAMPLES = '''
-# Enables the rabbitmq_management plugin
-- rabbitmq_plugin:
+- name: Enables the rabbitmq_management plugin
+  rabbitmq_plugin:
     names: rabbitmq_management
     state: enabled
 '''
 
+RETURN = '''
+enabled:
+  description: list of plugins enabled during task run
+  returned: always
+  type: list
+  sample: ["rabbitmq_management"]
+disabled:
+  description: list of plugins disabled during task run
+  returned: always
+  type: list
+  sample: ["rabbitmq_management"]
+'''
+
 import os
+from ansible.module_utils.basic import AnsibleModule
+
+
+from ansible.module_utils.basic import AnsibleModule
+
 
 class RabbitMqPlugins(object):
+
     def __init__(self, module):
         self.module = module
 
@@ -80,7 +85,7 @@ class RabbitMqPlugins(object):
             else:
                 # No such path exists.
                 raise Exception("No binary folder in prefix %s" %
-                        module.params['prefix'])
+                                module.params['prefix'])
 
             self._rabbitmq_plugins = bin_path + "/rabbitmq-plugins"
 
@@ -123,6 +128,7 @@ def main():
         supports_check_mode=True
     )
 
+    result = dict()
     names = module.params['names'].split(',')
     new_only = module.params['new_only']
     state = module.params['state']
@@ -149,11 +155,11 @@ def main():
                 rabbitmq_plugins.disable(plugin)
                 disabled.append(plugin)
 
-    changed = len(enabled) > 0 or len(disabled) > 0
-    module.exit_json(changed=changed, enabled=enabled, disabled=disabled)
+    result['changed'] = len(enabled) > 0 or len(disabled) > 0
+    result['enabled'] = enabled
+    result['disabled'] = disabled
+    module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

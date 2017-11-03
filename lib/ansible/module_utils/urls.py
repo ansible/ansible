@@ -96,14 +96,15 @@ for users making use of a module. If possible, avoid third party libraries by us
 this code instead.
 '''
 
+import base64
 import netrc
 import os
-import re
-import sys
-import socket
 import platform
+import re
+import socket
+import sys
 import tempfile
-import base64
+import traceback
 
 try:
     import httplib
@@ -111,10 +112,10 @@ except ImportError:
     # Python 3
     import http.client as httplib
 
+import ansible.module_utils.six.moves.http_cookiejar as cookiejar
 import ansible.module_utils.six.moves.urllib.request as urllib_request
 import ansible.module_utils.six.moves.urllib.error as urllib_error
-from ansible.module_utils.basic import get_distribution, get_exception
-from ansible.module_utils.six import b
+from ansible.module_utils.basic import get_distribution
 from ansible.module_utils._text import to_bytes, to_native, to_text
 
 try:
@@ -310,7 +311,7 @@ if not HAS_MATCH_HOSTNAME:
 # ca cert, regardless of validity, for Python on Mac OS to use the
 # keychain functionality in OpenSSL for validating SSL certificates.
 # See: http://mercurial.selenic.com/wiki/CACertificates#Mac_OS_X_10.6_and_higher
-b_DUMMY_CA_CERT = b("""-----BEGIN CERTIFICATE-----
+b_DUMMY_CA_CERT = b"""-----BEGIN CERTIFICATE-----
 MIICvDCCAiWgAwIBAgIJAO8E12S7/qEpMA0GCSqGSIb3DQEBBQUAMEkxCzAJBgNV
 BAYTAlVTMRcwFQYDVQQIEw5Ob3J0aCBDYXJvbGluYTEPMA0GA1UEBxMGRHVyaGFt
 MRAwDgYDVQQKEwdBbnNpYmxlMB4XDTE0MDMxODIyMDAyMloXDTI0MDMxNTIyMDAy
@@ -327,7 +328,7 @@ MUB80IR6knq9K/tY+hvPsZer6eFMzO3JGkRFBh2kn6JdMDnhYGX7AXVHGflrwNQH
 qFy+aenWXsC0ZvrikFxbQnX8GVtDADtVznxOi7XzFw7JOxdsVrpXgSN0eh0aMzvV
 zKPZsZ2miVGclicJHzm5q080b1p/sZtuKIEZk6vZqEg=
 -----END CERTIFICATE-----
-""")
+"""
 
 #
 # Exceptions
@@ -468,7 +469,7 @@ def generic_urlparse(parts):
                 # so remove it and convert the port to an integer
                 port = int(port[1:])
             if auth:
-                # the capture group above inclues the @, so remove it
+                # the capture group above includes the @, so remove it
                 # and then split it up based on the first ':' found
                 auth = auth[:-1]
                 username, password = auth.split(':', 1)
@@ -571,6 +572,8 @@ def build_ssl_validation_error(hostname, port, paths, exc=None):
     if not HAS_SSLCONTEXT:
         msg.append('If the website serving the url uses SNI you need'
                    ' python >= 2.7.9 on your managed machine')
+        msg.append(' (the python executable used (%s) is version: %s)' %
+                   (sys.executable, ''.join(sys.version.splitlines())))
         if not HAS_URLLIB3_PYOPENSSLCONTEXT or not HAS_URLLIB3_SSL_WRAP_SOCKET:
             msg.append('or you can install the `urllib3`, `pyOpenSSL`,'
                        ' `ndg-httpsclient`, and `pyasn1` python modules')
@@ -654,11 +657,11 @@ class SSLValidationHandler(urllib_request.BaseHandler):
                             cert = cert_file.read()
                             cert_file.close()
                             os.write(tmp_fd, cert)
-                            os.write(tmp_fd, b('\n'))
+                            os.write(tmp_fd, b'\n')
                             if full_path not in LOADED_VERIFY_LOCATIONS:
                                 to_add = True
                                 os.write(to_add_fd, cert)
-                                os.write(to_add_fd, b('\n'))
+                                os.write(to_add_fd, b'\n')
                                 LOADED_VERIFY_LOCATIONS.add(full_path)
                         except (OSError, IOError):
                             pass
@@ -667,10 +670,12 @@ class SSLValidationHandler(urllib_request.BaseHandler):
             to_add_path = None
         return (tmp_path, to_add_path, paths_checked)
 
-    def validate_proxy_response(self, response, valid_codes=[200]):
+    def validate_proxy_response(self, response, valid_codes=None):
         '''
         make sure we get back a valid code from the proxy
         '''
+        valid_codes = [200] if valid_codes is None else valid_codes
+
         try:
             (http_version, resp_code, msg) = re.match(r'(HTTP/\d\.\d) (\d\d\d) (.*)', response).groups()
             if int(resp_code) not in valid_codes:
@@ -695,10 +700,13 @@ class SSLValidationHandler(urllib_request.BaseHandler):
         return True
 
     def _make_context(self, to_add_ca_cert_path):
-        if HAS_URLLIB3_PYOPENSSLCONTEXT:
+        if HAS_SSLCONTEXT:
+            context = create_default_context()
+        elif HAS_URLLIB3_PYOPENSSLCONTEXT:
             context = PyOpenSSLContext(PROTOCOL)
         else:
-            context = create_default_context()
+            raise NotImplementedError('Host libraries are too old to support creating an sslcontext')
+
         if to_add_ca_cert_path:
             context.load_verify_locations(to_add_ca_cert_path)
         return context
@@ -707,8 +715,11 @@ class SSLValidationHandler(urllib_request.BaseHandler):
         tmp_ca_cert_path, to_add_ca_cert_path, paths_checked = self.get_ca_certs()
         https_proxy = os.environ.get('https_proxy')
         context = None
-        if HAS_SSLCONTEXT or HAS_URLLIB3_PYOPENSSLCONTEXT:
+        try:
             context = self._make_context(to_add_ca_cert_path)
+        except Exception:
+            # We'll make do with no context below
+            pass
 
         # Detect if 'no_proxy' environment variable is set and if our URL is included
         use_proxy = self.detect_no_proxy(req.get_full_url())
@@ -718,19 +729,18 @@ class SSLValidationHandler(urllib_request.BaseHandler):
             return req
 
         try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             if https_proxy:
                 proxy_parts = generic_urlparse(urlparse(https_proxy))
                 port = proxy_parts.get('port') or 443
-                s.connect((proxy_parts.get('hostname'), port))
+                s = socket.create_connection((proxy_parts.get('hostname'), port))
                 if proxy_parts.get('scheme') == 'http':
-                    s.sendall(self.CONNECT_COMMAND % (self.hostname, self.port))
+                    s.sendall(to_bytes(self.CONNECT_COMMAND % (self.hostname, self.port), errors='surrogate_or_strict'))
                     if proxy_parts.get('username'):
                         credentials = "%s:%s" % (proxy_parts.get('username', ''), proxy_parts.get('password', ''))
-                        s.sendall(b('Proxy-Authorization: Basic %s\r\n') % base64.b64encode(to_bytes(credentials, errors='surrogate_or_strict')).strip())
-                    s.sendall(b('\r\n'))
-                    connect_result = b("")
-                    while connect_result.find(b("\r\n\r\n")) <= 0:
+                        s.sendall(b'Proxy-Authorization: Basic %s\r\n' % base64.b64encode(to_bytes(credentials, errors='surrogate_or_strict')).strip())
+                    s.sendall(b'\r\n')
+                    connect_result = b""
+                    while connect_result.find(b"\r\n\r\n") <= 0:
                         connect_result += s.recv(4096)
                         # 128 kilobytes of headers should be enough for everyone.
                         if len(connect_result) > 131072:
@@ -746,7 +756,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
                 else:
                     raise ProxyError('Unsupported proxy scheme: %s. Currently ansible only supports HTTP proxies.' % proxy_parts.get('scheme'))
             else:
-                s.connect((self.hostname, self.port))
+                s = socket.create_connection((self.hostname, self.port))
                 if context:
                     ssl_s = context.wrap_socket(s, server_hostname=self.hostname)
                 elif HAS_URLLIB3_SSL_WRAP_SOCKET:
@@ -757,11 +767,9 @@ class SSLValidationHandler(urllib_request.BaseHandler):
             # close the ssl connection
             # ssl_s.unwrap()
             s.close()
-        except (ssl.SSLError, CertificateError):
-            e = get_exception()
+        except (ssl.SSLError, CertificateError) as e:
             build_ssl_validation_error(self.hostname, self.port, paths_checked, e)
-        except socket.error:
-            e = get_exception()
+        except socket.error as e:
             raise ConnectionError('Failed to connect to %s at port %s: %s' % (self.hostname, self.port, to_native(e)))
 
         try:
@@ -812,7 +820,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
              force=False, last_mod_time=None, timeout=10, validate_certs=True,
              url_username=None, url_password=None, http_agent=None,
              force_basic_auth=False, follow_redirects='urllib2',
-             client_cert=None, client_key=None):
+             client_cert=None, client_key=None, cookies=None):
     '''
     Sends a request via HTTP(S) or FTP using urllib2 (Python2) or urllib (Python3)
 
@@ -906,6 +914,10 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
 
     handlers.append(RedirectHandlerFactory(follow_redirects, validate_certs))
 
+    # add some nicer cookie handling
+    if cookies is not None:
+        handlers.append(urllib_request.HTTPCookieProcessor(cookies))
+
     opener = urllib_request.build_opener(*handlers)
     urllib_request.install_opener(opener)
 
@@ -956,7 +968,7 @@ def basic_auth_header(username, password):
     """Takes a username and password and returns a byte string suitable for
     using as value of an Authorization header to do basic auth.
     """
-    return b("Basic %s") % base64.b64encode(to_bytes("%s:%s" % (username, password), errors='surrogate_or_strict'))
+    return b"Basic %s" % base64.b64encode(to_bytes("%s:%s" % (username, password), errors='surrogate_or_strict'))
 
 
 def url_argument_spec():
@@ -1019,13 +1031,15 @@ def fetch_url(module, url, data=None, headers=None, method=None,
 
     username = module.params.get('url_username', '')
     password = module.params.get('url_password', '')
-    http_agent = module.params.get('http_agent', None)
+    http_agent = module.params.get('http_agent', 'ansible-httpget')
     force_basic_auth = module.params.get('force_basic_auth', '')
 
     follow_redirects = module.params.get('follow_redirects', 'urllib2')
 
     client_cert = module.params.get('client_cert')
     client_key = module.params.get('client_key')
+
+    cookies = cookiejar.LWPCookieJar()
 
     r = None
     info = dict(url=url)
@@ -1035,44 +1049,44 @@ def fetch_url(module, url, data=None, headers=None, method=None,
                      validate_certs=validate_certs, url_username=username,
                      url_password=password, http_agent=http_agent, force_basic_auth=force_basic_auth,
                      follow_redirects=follow_redirects, client_cert=client_cert,
-                     client_key=client_key)
+                     client_key=client_key, cookies=cookies)
         info.update(r.info())
+        # parse the cookies into a nice dictionary
+        cookie_dict = dict()
+        for cookie in cookies:
+            cookie_dict[cookie.name] = cookie.value
+        info['cookies'] = cookie_dict
+        # finally update the result with a message about the fetch
         info.update(dict(msg="OK (%s bytes)" % r.headers.get('Content-Length', 'unknown'), url=r.geturl(), status=r.code))
-    except NoSSLError:
-        e = get_exception()
+    except NoSSLError as e:
         distribution = get_distribution()
         if distribution is not None and distribution.lower() == 'redhat':
-            module.fail_json(msg='%s. You can also install python-ssl from EPEL' % str(e))
+            module.fail_json(msg='%s. You can also install python-ssl from EPEL' % to_native(e))
         else:
-            module.fail_json(msg='%s' % str(e))
-    except (ConnectionError, ValueError):
-        e = get_exception()
-        module.fail_json(msg=str(e))
-    except urllib_error.HTTPError:
-        e = get_exception()
+            module.fail_json(msg='%s' % to_native(e))
+    except (ConnectionError, ValueError) as e:
+        module.fail_json(msg=to_native(e))
+    except urllib_error.HTTPError as e:
         try:
             body = e.read()
         except AttributeError:
             body = ''
 
         # Try to add exception info to the output but don't fail if we can't
-        exc_info = e.info()
         try:
             info.update(dict(**e.info()))
         except:
             pass
 
-        info.update({'msg': str(e), 'body': body, 'status': e.code})
+        info.update({'msg': to_native(e), 'body': body, 'status': e.code})
 
-    except urllib_error.URLError:
-        e = get_exception()
+    except urllib_error.URLError as e:
         code = int(getattr(e, 'code', -1))
-        info.update(dict(msg="Request failed: %s" % str(e), status=code))
-    except socket.error:
-        e = get_exception()
-        info.update(dict(msg="Connection failure: %s" % str(e), status=-1))
-    except Exception:
-        e = get_exception()
-        info.update(dict(msg="An unknown error occurred: %s" % str(e), status=-1))
+        info.update(dict(msg="Request failed: %s" % to_native(e), status=code))
+    except socket.error as e:
+        info.update(dict(msg="Connection failure: %s" % to_native(e), status=-1))
+    except Exception as e:
+        info.update(dict(msg="An unknown error occurred: %s" % to_native(e), status=-1),
+                    exception=traceback.format_exc())
 
     return r, info

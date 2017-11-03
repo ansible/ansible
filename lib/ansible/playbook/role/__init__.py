@@ -31,7 +31,7 @@ from ansible.playbook.conditional import Conditional
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.role.metadata import RoleMetadata
 from ansible.playbook.taggable import Taggable
-from ansible.plugins import get_all_plugin_loaders
+from ansible.plugins.loader import get_all_plugin_loaders
 from ansible.utils.vars import combine_vars
 
 
@@ -209,16 +209,18 @@ class Role(Base, Become, Conditional, Taggable):
         if task_data:
             try:
                 self._task_blocks = load_list_of_blocks(task_data, play=self._play, role=self, loader=self._loader, variable_manager=self._variable_manager)
-            except AssertionError:
-                raise AnsibleParserError("The tasks/main.yml file for role '%s' must contain a list of tasks" % self._role_name, obj=task_data)
+            except AssertionError as e:
+                raise AnsibleParserError("The tasks/main.yml file for role '%s' must contain a list of tasks" % self._role_name,
+                                         obj=task_data, orig_exc=e)
 
         handler_data = self._load_role_yaml('handlers')
         if handler_data:
             try:
                 self._handler_blocks = load_list_of_blocks(handler_data, play=self._play, role=self, use_handlers=True, loader=self._loader,
                                                            variable_manager=self._variable_manager)
-            except AssertionError:
-                raise AnsibleParserError("The handlers/main.yml file for role '%s' must contain a list of tasks" % self._role_name, obj=handler_data)
+            except AssertionError as e:
+                raise AnsibleParserError("The handlers/main.yml file for role '%s' must contain a list of tasks" % self._role_name,
+                                         obj=handler_data, orig_exc=e)
 
         # vars and default vars are regular dictionaries
         self._role_vars = self._load_role_yaml('vars', main=self._from_files.get('vars'))
@@ -299,7 +301,9 @@ class Role(Base, Become, Conditional, Taggable):
     def get_parents(self):
         return self._parents
 
-    def get_default_vars(self, dep_chain=[]):
+    def get_default_vars(self, dep_chain=None):
+        dep_chain = [] if dep_chain is None else dep_chain
+
         default_vars = dict()
         for dep in self.get_all_dependencies():
             default_vars = combine_vars(default_vars, dep.get_default_vars())
@@ -309,7 +313,9 @@ class Role(Base, Become, Conditional, Taggable):
         default_vars = combine_vars(default_vars, self._default_vars)
         return default_vars
 
-    def get_inherited_vars(self, dep_chain=[]):
+    def get_inherited_vars(self, dep_chain=None):
+        dep_chain = [] if dep_chain is None else dep_chain
+
         inherited_vars = dict()
 
         if dep_chain:
@@ -317,7 +323,9 @@ class Role(Base, Become, Conditional, Taggable):
                 inherited_vars = combine_vars(inherited_vars, parent._role_vars)
         return inherited_vars
 
-    def get_role_params(self, dep_chain=[]):
+    def get_role_params(self, dep_chain=None):
+        dep_chain = [] if dep_chain is None else dep_chain
+
         params = {}
         if dep_chain:
             for parent in dep_chain:
@@ -325,7 +333,9 @@ class Role(Base, Become, Conditional, Taggable):
         params = combine_vars(params, self._role_params)
         return params
 
-    def get_vars(self, dep_chain=[], include_params=True):
+    def get_vars(self, dep_chain=None, include_params=True):
+        dep_chain = [] if dep_chain is None else dep_chain
+
         all_vars = self.get_inherited_vars(dep_chain)
 
         for dep in self.get_all_dependencies():

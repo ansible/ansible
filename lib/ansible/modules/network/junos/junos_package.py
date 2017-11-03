@@ -1,24 +1,16 @@
 #!/usr/bin/python
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# -*- coding: utf-8 -*-
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+# (c) 2017, Ansible by Red Hat, inc
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -79,9 +71,11 @@ options:
     choices: ['true', 'false']
 requirements:
   - junos-eznc
+  - ncclient (>=v0.5.2)
 notes:
   - This module requires the netconf system service be enabled on
-    the remote device being managed
+    the remote device being managed.
+  - Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
 """
 
 EXAMPLES = """
@@ -98,8 +92,8 @@ EXAMPLES = """
     reboot: no
 """
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.junos import junos_argument_spec, get_param
+from ansible.module_utils.pycompat24 import get_exception
 
 try:
     from jnpr.junos import Device
@@ -142,7 +136,8 @@ def install_package(module, device):
     package = module.params['src']
     no_copy = module.params['no_copy']
 
-    progress_log = lambda x, y: module.log(y)
+    def progress_log(dev, report):
+        module.log(report)
 
     module.log('installing package')
     result = junos.install(package, progress=progress_log, no_copy=no_copy)

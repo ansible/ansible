@@ -26,6 +26,7 @@ import warnings
 from copy import deepcopy
 
 from ansible import constants as C
+from ansible.plugins import AnsiblePlugin
 from ansible.module_utils._text import to_text
 from ansible.utils.color import stringc
 from ansible.vars.manager import strip_internal_keys
@@ -45,7 +46,7 @@ except ImportError:
 __all__ = ["CallbackBase"]
 
 
-class CallbackBase:
+class CallbackBase(AnsiblePlugin):
 
     '''
     This is a base ansible callback class that does nothing. New callbacks should
@@ -53,7 +54,8 @@ class CallbackBase:
     custom actions.
     '''
 
-    def __init__(self, display=None):
+    def __init__(self, display=None, options=None):
+
         if display:
             self._display = display
         else:
@@ -70,12 +72,19 @@ class CallbackBase:
             version = getattr(self, 'CALLBACK_VERSION', '1.0')
             self._display.vvvv('Loading callback plugin %s of type %s, v%s from %s' % (name, ctype, version, __file__))
 
+        self.disabled = False
+
+        self._plugin_options = {}
+        if options is not None:
+            self.set_options(options)
+
     ''' helper for callbacks, so they don't all have to include deepcopy '''
     _copy_result = deepcopy
 
+    def set_options(self, options):
+        self._plugin_options = options
+
     def _dump_results(self, result, indent=None, sort_keys=True, keep_invocation=False):
-        if result.get('_ansible_no_log', False):
-            return json.dumps(dict(censored="the output has been hidden due to the fact that 'no_log: true' was specified for this result"))
 
         if not indent and (result.get('_ansible_verbose_always') or self._display.verbosity > 2):
             indent = 4
@@ -208,8 +217,9 @@ class CallbackBase:
         del result._result['results']
 
     def _clean_results(self, result, task_name):
+        ''' removes data from results for display '''
         if task_name in ['debug']:
-            for remove_key in ('changed', 'invocation'):
+            for remove_key in ('invocation'):
                 if remove_key in result:
                     del result[remove_key]
 
@@ -321,7 +331,7 @@ class CallbackBase:
         self.runner_on_async_failed(host, result._result, jid)
 
     def v2_runner_on_file_diff(self, result, diff):
-        pass  # no v1 correspondance
+        pass  # no v1 correspondence
 
     def v2_playbook_on_start(self, playbook):
         self.playbook_on_start()
@@ -340,10 +350,10 @@ class CallbackBase:
         self.playbook_on_task_start(task.name, is_conditional)
 
     def v2_playbook_on_cleanup_task_start(self, task):
-        pass  # no v1 correspondance
+        pass  # no v1 correspondence
 
     def v2_playbook_on_handler_task_start(self, task):
-        pass  # no v1 correspondance
+        pass  # no v1 correspondence
 
     def v2_playbook_on_vars_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None):
         self.playbook_on_vars_prompt(varname, private, prompt, encrypt, confirm, salt_size, salt, default)
@@ -371,7 +381,7 @@ class CallbackBase:
             self.on_file_diff(host, result._result['diff'])
 
     def v2_playbook_on_include(self, included_file):
-        pass  # no v1 correspondance
+        pass  # no v1 correspondence
 
     def v2_runner_item_on_ok(self, result):
         pass

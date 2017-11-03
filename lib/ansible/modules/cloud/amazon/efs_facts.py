@@ -1,22 +1,14 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
@@ -47,10 +39,9 @@ options:
         default: None
     targets:
         description:
-            - "List of mounted targets. It should be a list of dictionaries, every dictionary should include next attributes:
-                    - SubnetId - Mandatory. The ID of the subnet to add the mount target in.
-                    - IpAddress - Optional. A valid IPv4 address within the address range of the specified subnet.
-                    - SecurityGroups - Optional. List of security group IDs, of the form 'sg-xxxxxxxx'. These must be for the same VPC as subnet specified."
+          - list of targets on which to filter the returned results
+          - result must match all of the specified targets, each of which can be
+            a security group ID, a subnet ID or an IP address
         required: false
         default: None
 extends_documentation_fragment:
@@ -165,15 +156,17 @@ tags:
 '''
 
 
-from time import sleep
 from collections import defaultdict
 
 try:
-    from botocore.exceptions import ClientError
-    import boto3
-    HAS_BOTO3 = True
-except ImportError as e:
-    HAS_BOTO3 = False
+    import botocore
+except ImportError:
+    pass  # caught by AnsibleAWSModule
+
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_argument_spec, AWSRetry
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, boto3_tag_list_to_ansible_dict
+
 
 class EFSConnection(object):
     STATE_CREATING = 'creating'
@@ -186,21 +179,56 @@ class EFSConnection(object):
             self.connection = boto3_conn(module, conn_type='client',
                                          resource='efs', region=region,
                                          **aws_connect_params)
+            self.module = module
         except Exception as e:
             module.fail_json(msg="Failed to connect to AWS: %s" % str(e))
 
         self.region = region
 
-    def get_file_systems(self, **kwargs):
+    @AWSRetry.exponential_backoff()
+    def list_file_systems(self, **kwargs):
         """
          Returns generator of file systems including all attributes of FS
         """
-        items = iterate_all(
-            'FileSystems',
-            self.connection.describe_file_systems,
-            **kwargs
-        )
-        for item in items:
+        paginator = self.connection.get_paginator('describe_file_systems')
+        return paginator.paginate(**kwargs).build_full_result()['FileSystems']
+
+    @AWSRetry.exponential_backoff()
+    def get_tags(self, file_system_id):
+        """
+         Returns tag list for selected instance of EFS
+        """
+        paginator = self.connection.get_paginator('describe_tags')
+        return boto3_tag_list_to_ansible_dict(paginator.paginate(FileSystemId=file_system_id).build_full_result()['Tags'])
+
+    @AWSRetry.exponential_backoff()
+    def get_mount_targets(self, file_system_id):
+        """
+         Returns mount targets for selected instance of EFS
+        """
+        paginator = self.connection.get_paginator('describe_mount_targets')
+        return paginator.paginate(FileSystemId=file_system_id).build_full_result()['MountTargets']
+
+    @AWSRetry.exponential_backoff()
+    def get_security_groups(self, mount_target_id):
+        """
+         Returns security groups for selected instance of EFS
+        """
+        return self.connection.describe_mount_target_security_groups(MountTargetId=mount_target_id)['SecurityGroups']
+
+    def get_file_systems(self, file_system_id=None, creation_token=None):
+        kwargs = dict()
+        if file_system_id:
+            kwargs['FileSystemId'] = file_system_id
+        if creation_token:
+            kwargs['CreationToken'] = creation_token
+        try:
+            file_systems = self.list_file_systems(**kwargs)
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            self.module.fail_json_aws(e, msg="Couldn't get EFS file systems")
+
+        results = list()
+        for item in file_systems:
             item['CreationTime'] = str(item['CreationTime'])
             """
             Suffix of network path to be used as NFS device for mount. More detail here:
@@ -210,73 +238,30 @@ class EFSConnection(object):
             if 'Timestamp' in item['SizeInBytes']:
                 item['SizeInBytes']['Timestamp'] = str(item['SizeInBytes']['Timestamp'])
             if item['LifeCycleState'] == self.STATE_AVAILABLE:
-                item['Tags'] = self.get_tags(FileSystemId=item['FileSystemId'])
-                item['MountTargets'] = list(self.get_mount_targets(FileSystemId=item['FileSystemId']))
+                try:
+                    item['MountTargets'] = self.get_mount_targets(item['FileSystemId'])
+                except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                    self.module.fail_json_aws(e, msg="Couldn't get EFS targets")
+                for target in item['MountTargets']:
+                    if target['LifeCycleState'] == self.STATE_AVAILABLE:
+                        try:
+                            target['SecurityGroups'] = self.get_security_groups(target['MountTargetId'])
+                        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                            self.module.fail_json_aws(e, msg="Couldn't get EFS security groups")
+                    else:
+                        target['SecurityGroups'] = []
             else:
-                item['Tags'] = {}
-                item['MountTargets'] = []
-            yield item
-
-    def get_tags(self, **kwargs):
-        """
-         Returns tag list for selected instance of EFS
-        """
-        tags = iterate_all(
-            'Tags',
-            self.connection.describe_tags,
-            **kwargs
-        )
-        return dict((tag['Key'], tag['Value']) for tag in tags)
-
-    def get_mount_targets(self, **kwargs):
-        """
-         Returns mount targets for selected instance of EFS
-        """
-        targets = iterate_all(
-            'MountTargets',
-            self.connection.describe_mount_targets,
-            **kwargs
-        )
-        for target in targets:
-            if target['LifeCycleState'] == self.STATE_AVAILABLE:
-                target['SecurityGroups'] = list(self.get_security_groups(
-                    MountTargetId=target['MountTargetId']
-                ))
-            else:
-                target['SecurityGroups'] = []
-            yield target
-
-    def get_security_groups(self, **kwargs):
-        """
-         Returns security groups for selected instance of EFS
-        """
-        return iterate_all(
-            'SecurityGroups',
-            self.connection.describe_mount_target_security_groups,
-            **kwargs
-        )
-
-
-def iterate_all(attr, map_method, **kwargs):
-    """
-     Method creates iterator from boto result set
-    """
-    args = dict((key, value) for (key, value) in kwargs.items() if value is not None)
-    wait = 1
-    while True:
-        try:
-            data = map_method(**args)
-            for elm in data[attr]:
-                yield elm
-            if 'NextMarker' in data:
-                args['Marker'] = data['Nextmarker']
-                continue
-            break
-        except ClientError as e:
-            if e.response['Error']['Code'] == "ThrottlingException" and wait < 600:
-                sleep(wait)
-                wait = wait * 2
-                continue
+                item['tags'] = {}
+                item['mount_targets'] = []
+            result = camel_dict_to_snake_dict(item)
+            # Set tags *after* doing camel to snake
+            if result['life_cycle_state'] == self.STATE_AVAILABLE:
+                try:
+                    result['tags'] = self.get_tags(result['file_system_id'])
+                except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                    self.module.fail_json_aws(e, msg="Couldn't get EFS tags")
+            results.append(result)
+        return results
 
 
 def prefix_to_attr(attr_id):
@@ -284,18 +269,14 @@ def prefix_to_attr(attr_id):
      Helper method to convert ID prefix to mount target attribute
     """
     attr_by_prefix = {
-        'fsmt-': 'MountTargetId',
-        'subnet-': 'SubnetId',
-        'eni-': 'NetworkInterfaceId',
-        'sg-': 'SecurityGroups'
+        'fsmt-': 'mount_target_id',
+        'subnet-': 'subnet_id',
+        'eni-': 'network_interface_id',
+        'sg-': 'security_groups'
     }
-    prefix = first_or_default(filter(
-        lambda pref: str(attr_id).startswith(pref),
-        attr_by_prefix.keys()
-    ))
-    if prefix:
-        return attr_by_prefix[prefix]
-    return 'IpAddress'
+    return first_or_default([attr_name for (prefix, attr_name) in attr_by_prefix.items()
+                             if str(attr_id).startswith(prefix)], 'ip_address')
+
 
 def first_or_default(items, default=None):
     """
@@ -304,6 +285,7 @@ def first_or_default(items, default=None):
     for item in items:
         return item
     return default
+
 
 def has_tags(available, required):
     """
@@ -314,15 +296,17 @@ def has_tags(available, required):
             return False
     return True
 
+
 def has_targets(available, required):
     """
-    Helper method to determine if mount tager requested already exists
+    Helper method to determine if mount target requested already exists
     """
     grouped = group_list_of_dict(available)
     for (value, field) in required:
         if field not in grouped or value not in grouped[field]:
             return False
     return True
+
 
 def group_list_of_dict(array):
     """
@@ -341,16 +325,14 @@ def main():
     """
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        id=dict(required=False, type='str', default=None),
-        name=dict(required=False, type='str', default=None),
-        tags=dict(required=False, type="dict", default={}),
-        targets=dict(required=False, type="list", default=[])
+        id=dict(),
+        name=dict(),
+        tags=dict(type="dict", default={}),
+        targets=dict(type="list", default=[])
     ))
 
-    module = AnsibleModule(argument_spec=argument_spec)
-
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
+    module = AnsibleAWSModule(argument_spec=argument_spec,
+                              supports_check_mode=True)
 
     region, _, aws_connect_params = get_aws_connection_info(module, boto3=True)
     connection = EFSConnection(module, region, **aws_connect_params)
@@ -360,21 +342,17 @@ def main():
     tags = module.params.get('tags')
     targets = module.params.get('targets')
 
-    file_systems_info = connection.get_file_systems(FileSystemId=fs_id, CreationToken=name)
+    file_systems_info = connection.get_file_systems(fs_id, name)
 
     if tags:
-        file_systems_info = filter(lambda item: has_tags(item['Tags'], tags), file_systems_info)
+        file_systems_info = [item for item in file_systems_info if has_tags(item['tags'], tags)]
 
     if targets:
         targets = [(item, prefix_to_attr(item)) for item in targets]
-        file_systems_info = filter(lambda item:
-                                   has_targets(item['MountTargets'], targets), file_systems_info)
+        file_systems_info = [item for item in file_systems_info if has_targets(item['mount_targets'], targets)]
 
-    file_systems_info = [camel_dict_to_snake_dict(x) for x in file_systems_info]
     module.exit_json(changed=False, ansible_facts={'efs': file_systems_info})
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

@@ -40,7 +40,7 @@ from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.included_file import IncludedFile
 from ansible.playbook.task_include import TaskInclude
 from ansible.playbook.role_include import IncludeRole
-from ansible.plugins import action_loader, connection_loader, filter_loader, lookup_loader, module_loader, test_loader
+from ansible.plugins.loader import action_loader, connection_loader, filter_loader, lookup_loader, module_loader, test_loader
 from ansible.template import Templar
 from ansible.utils.vars import combine_vars
 from ansible.vars.manager import strip_internal_keys
@@ -245,7 +245,7 @@ class StrategyBase:
         return host_list
 
     def get_delegated_hosts(self, result, task):
-        host_name = result.get('_ansible_delegated_vars', {}).get('ansible_host', None)
+        host_name = result.get('_ansible_delegated_vars', {}).get('ansible_delegated_host', None)
         if host_name is not None:
             actual_host = self._inventory.get_host(host_name)
             if actual_host is None:
@@ -327,7 +327,7 @@ class StrategyBase:
         while True:
             try:
                 self._results_lock.acquire()
-                task_result = self._results.pop()
+                task_result = self._results.popleft()
             except IndexError:
                 break
             finally:
@@ -450,6 +450,8 @@ class StrategyBase:
                                 target_handler = search_handler_blocks_by_name(handler_name, iterator._play.handlers)
                                 if target_handler is not None:
                                     found = True
+                                    if target_handler._uuid not in self._notified_handlers:
+                                        self._notified_handlers[target_handler._uuid] = []
                                     if original_host not in self._notified_handlers[target_handler._uuid]:
                                         self._notified_handlers[target_handler._uuid].append(original_host)
                                         # FIXME: should this be a callback?
@@ -509,11 +511,12 @@ class StrategyBase:
                                 for target_host in host_list:
                                     self._variable_manager.set_host_variable(target_host, var_name, var_value)
                         else:
+                            cacheable = result_item.pop('_ansible_facts_cacheable', False)
                             for target_host in host_list:
+                                if not original_task.action == 'set_fact' or cacheable:
+                                    self._variable_manager.set_host_facts(target_host, result_item['ansible_facts'].copy())
                                 if original_task.action == 'set_fact':
                                     self._variable_manager.set_nonpersistent_facts(target_host, result_item['ansible_facts'].copy())
-                                else:
-                                    self._variable_manager.set_host_facts(target_host, result_item['ansible_facts'].copy())
 
                     if 'ansible_stats' in result_item and 'data' in result_item['ansible_stats'] and result_item['ansible_stats']['data']:
 
@@ -535,7 +538,7 @@ class StrategyBase:
                     if self._diff:
                         self._tqm.send_callback('v2_on_file_diff', task_result)
 
-                if original_task.action not in ['include', 'include_role']:
+                if not isinstance(original_task, TaskInclude):
                     self._tqm._stats.increment('ok', original_host.name)
                     if 'changed' in task_result._result and task_result._result['changed']:
                         self._tqm._stats.increment('changed', original_host.name)
@@ -611,9 +614,6 @@ class StrategyBase:
                 new_group = self._inventory.groups[group_name]
                 new_group.add_host(self._inventory.hosts[host_name])
 
-            # clear pattern caching completely since it's unpredictable what patterns may have referenced the group
-            self._inventory.clear_pattern_cache()
-
             # reconcile inventory, ensures inventory rules are followed
             self._inventory.reconcile_inventory()
 
@@ -630,12 +630,17 @@ class StrategyBase:
         # host object from the master inventory
         real_host = self._inventory.hosts[host.name]
         group_name = result_item.get('add_group')
+        parent_group_names = result_item.get('parent_groups', [])
 
-        if group_name not in self._inventory.groups:
-            # create the new group and add it to inventory
-            self._inventory.add_group(group_name)
-            changed = True
+        for name in [group_name] + parent_group_names:
+            if name not in self._inventory.groups:
+                # create the new group and add it to inventory
+                self._inventory.add_group(name)
+                changed = True
         group = self._inventory.groups[group_name]
+        for parent_group_name in parent_group_names:
+            parent_group = self._inventory.groups[parent_group_name]
+            parent_group.add_child_group(group)
 
         if real_host.name not in group.get_hosts():
             group.add_host(real_host)
@@ -646,7 +651,6 @@ class StrategyBase:
             changed = True
 
         if changed:
-            self._inventory.clear_pattern_cache()
             self._inventory.reconcile_inventory()
 
         return changed
@@ -761,6 +765,8 @@ class StrategyBase:
         host_results = []
         for host in notified_hosts:
             if not handler.has_triggered(host) and (not iterator.is_failed(host) or play_context.force_handlers):
+                if handler._uuid not in iterator._task_uuid_cache:
+                    iterator._task_uuid_cache[handler._uuid] = handler
                 task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=handler)
                 self.add_tqm_variables(task_vars, play=iterator._play)
                 self._queue_task(host, handler, task_vars, play_context)
@@ -866,7 +872,8 @@ class StrategyBase:
         elif meta_action == 'clear_facts':
             if _evaluate_conditional(target_host):
                 for host in self._inventory.get_hosts(iterator._play.hosts):
-                    self._variable_manager.clear_facts(host)
+                    hostname = host.get_name()
+                    self._variable_manager.clear_facts(hostname)
                 msg = "facts cleared"
             else:
                 skipped = True
@@ -887,6 +894,7 @@ class StrategyBase:
                 msg = "ending play"
         elif meta_action == 'reset_connection':
             connection = connection_loader.get(play_context.connection, play_context, os.devnull)
+            play_context.set_options_from_plugin(connection)
             if connection:
                 connection.reset()
                 msg = 'reset connection'

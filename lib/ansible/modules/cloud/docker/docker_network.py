@@ -1,23 +1,13 @@
 #!/usr/bin/python
 #
 # Copyright 2016 Red Hat | Ansible
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -161,14 +151,12 @@ facts:
     sample: {}
 '''
 
-from ansible.module_utils.docker_common import *
+from ansible.module_utils.docker_common import AnsibleDockerClient, DockerBaseClass, HAS_DOCKER_PY_2
 
 try:
     from docker import utils
     if HAS_DOCKER_PY_2:
-        from docker.types import Ulimit, IPAMPool, IPAMConfig
-    else:
-        from docker.utils.types import Ulimit
+        from docker.types import IPAMPool, IPAMConfig
 except:
     # missing docker-py handled in ansible.module_utils.docker
     pass
@@ -220,12 +208,14 @@ class DockerNetworkManager(object):
             self.absent()
 
     def get_existing_network(self):
-        networks = self.client.networks()
-        network = None
-        for n in networks:
-            if n['Name'] == self.parameters.network_name:
-                network = n
-        return network
+        networks = self.client.networks(names=[self.parameters.network_name])
+        # check if a user is trying to find network by its Id
+        if not networks:
+            networks = self.client.networks(ids=[self.parameters.network_name])
+        if not networks:
+            return None
+        else:
+            return networks[0]
 
     def has_different_config(self, net):
         '''
@@ -320,6 +310,8 @@ class DockerNetworkManager(object):
                 self.results['changed'] = True
 
     def disconnect_missing(self):
+        if not self.existing_network:
+            return
         containers = self.existing_network['Containers']
         if not containers:
             return
@@ -390,8 +382,6 @@ def main():
     cm = DockerNetworkManager(client)
     client.module.exit_json(**cm.results)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

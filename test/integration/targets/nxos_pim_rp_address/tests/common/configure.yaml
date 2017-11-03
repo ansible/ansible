@@ -1,0 +1,130 @@
+---
+- debug: msg="START {{ connection.transport }} nxos_pim_rp_address sanity"
+
+- set_fact: bidir="false" 
+  when: platform | search('N3K')
+
+- set_fact: bidircfg='bidir'
+- set_fact: bidircfg=''
+  when: platform | search('N3K')
+
+- block:
+  - name: "Disable feature PIM"
+    nxos_feature: &disable_feature
+      feature: pim
+      state: disabled
+      provider: "{{ connection }}"
+
+  - name: "Enable feature PIM"
+    nxos_feature: &enable_feature
+      feature: pim
+      state: enabled
+      provider: "{{ connection }}"
+
+  - name: Configure rp_address + group_list 
+    nxos_pim_rp_address: &configgl
+      rp_address: "10.1.1.20"
+      group_list: "224.0.0.0/8"
+      bidir: "{{bidir|default('true')}}"
+      state: present
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: Check idempotence rp_address + group_list
+    nxos_pim_rp_address: *configgl
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: Remove rp_address + group_list using long config
+    #FIXME: Config deletion shall be fixed in 2.5 for platform dependencies.
+    
+    # Note: For 2.4 - Use platform specific config delete command as shown below.
+    # Possible options: Identify and use the command that is supported 
+    # by your platform under test.
+
+    # no ip pim rp-address <ip address> <group-list|prefix-list|route-map> bidir
+    # no ip pim rp-address <ip address>
+    # no ip pim rp-address <ip address> <group-list|prefix-list|route-map>
+
+    nxos_config:
+      lines: "no ip pim rp-address 10.1.1.20 group-list 224.0.0.0/8 {{ bidircfg }}" 
+      provider: "{{ connection }}"
+    ignore_errors: yes
+
+  - name: Remove rp_address + group_list using short config
+    nxos_config:
+      lines: no ip pim rp-address 10.1.1.20
+      provider: "{{ connection }}"
+    ignore_errors: yes
+
+  - name: Configure rp_address + prefix_list 
+    nxos_pim_rp_address: &configpl
+      rp_address: "10.1.1.20"
+      prefix_list: "pim_prefix_list"
+      bidir: "{{bidir|default('true')}}"
+      state: present
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: Check idempotence rp_address + prefix_list
+    nxos_pim_rp_address: *configpl
+    register: result
+
+  - assert: *false
+
+  - name: Remove rp_address + prefix_list using long config
+    nxos_config:
+      lines: "no ip pim rp-address 10.1.1.20 prefix-list pim_prefix_list {{ bidircfg }}"
+      provider: "{{ connection }}"
+    ignore_errors: yes
+
+  - name: Remove rp_address + prefix_list using short config
+    nxos_config:
+      lines: no ip pim rp-address 10.1.1.20
+      provider: "{{ connection }}"
+    ignore_errors: yes
+
+  - name: Configure rp_address + route_map 
+    nxos_pim_rp_address: &configrm
+      rp_address: "10.1.1.20"
+      route_map: "pim_routemap"
+      bidir: "{{bidir|default('true')}}"
+      state: present
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: Check idempotence rp_address + route_map
+    nxos_pim_rp_address: *configrm
+    register: result
+
+  - assert: *false
+
+  - name: Remove rp_address + route_map using long config
+    nxos_config:
+      lines: "no ip pim rp-address 10.1.1.20 route-map pim_routemap {{ bidircfg }}"
+      provider: "{{ connection }}"
+    ignore_errors: yes
+
+  - name: Remove rp_address + route_map using short config
+    nxos_config:
+      lines: no ip pim rp-address 10.1.1.20
+      provider: "{{ connection }}"
+    ignore_errors: yes
+
+
+  always:
+    - name: "Disable feature PIM"
+      nxos_feature: *disable_feature
+
+- debug: msg="END {{ connection.transport }} nxos_pim_rp_address sanity"

@@ -2,24 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2015, Sebastian Kornehl <sebastian.kornehl@asideas.de>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-# import module snippets
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -44,7 +33,7 @@ options:
     state:
         description: ["The designated state of the monitor."]
         required: true
-        choices: ['present', 'absent', 'muted', 'unmuted']
+        choices: ['present', 'absent', 'mute', 'unmute']
     tags:
         description: ["A list of tags to associate with your monitor when creating or updating. This can help you categorize and filter monitors."]
         required: false
@@ -122,6 +111,12 @@ options:
         required: false
         default: null
         version_added: "2.3"
+    new_host_delay:
+        description: ["A positive integer representing the number of seconds to wait before evaluating the monitor for new hosts.
+        This gives the host time to fully initialize."]
+        required: false
+        default: null
+        version_added: "2.4"
     id:
         description: ["The id of the alert. If set, will be used instead of the name to locate the alert."]
         required: false
@@ -162,6 +157,7 @@ datadog_monitor:
   api_key: "9775a026f1ca7d1c6c5af9d94d9595a4"
   app_key: "87ce4a24b5553d2e482ea8a8500e71b8ad4554ff"
 '''
+import traceback
 
 # Import Datadog
 try:
@@ -171,7 +167,7 @@ except:
     HAS_DATADOG = False
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 
 
 def main():
@@ -195,6 +191,7 @@ def main():
             tags=dict(required=False, type='list', default=None),
             locked=dict(required=False, default=False, type='bool'),
             require_full_window=dict(required=False, default=None, type='bool'),
+            new_host_delay=dict(required=False, default=None),
             id=dict(required=False)
         )
     )
@@ -260,9 +257,8 @@ def _post_monitor(module, options):
             module.fail_json(msg=str(msg['errors']))
         else:
             module.exit_json(changed=True, msg=msg)
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg=str(e))
+    except Exception as e:
+        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
 
 def _equal_dicts(a, b, ignore_keys):
@@ -286,9 +282,8 @@ def _update_monitor(module, monitor, options):
             module.exit_json(changed=False, msg=msg)
         else:
             module.exit_json(changed=True, msg=msg)
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg=str(e))
+    except Exception as e:
+        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
 
 def install_monitor(module):
@@ -301,7 +296,8 @@ def install_monitor(module):
         "escalation_message": module.params['escalation_message'],
         "notify_audit": module.boolean(module.params['notify_audit']),
         "locked": module.boolean(module.params['locked']),
-        "require_full_window": module.params['require_full_window']
+        "require_full_window": module.params['require_full_window'],
+        "new_host_delay": module.params['new_host_delay']
     }
 
     if module.params['type'] == "service check":
@@ -323,9 +319,8 @@ def delete_monitor(module):
     try:
         msg = api.Monitor.delete(monitor['id'])
         module.exit_json(changed=True, msg=msg)
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg=str(e))
+    except Exception as e:
+        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
 
 def mute_monitor(module):
@@ -334,7 +329,7 @@ def mute_monitor(module):
         module.fail_json(msg="Monitor %s not found!" % module.params['name'])
     elif monitor['options']['silenced']:
         module.fail_json(msg="Monitor is already muted. Datadog does not allow to modify muted alerts, consider unmuting it first.")
-    elif (module.params['silenced'] is not None and len(set(monitor['options']['silenced']) - set(module.params['silenced'])) == 0):
+    elif (module.params['silenced'] is not None and len(set(monitor['options']['silenced']) ^ set(module.params['silenced'])) == 0):
         module.exit_json(changed=False)
     try:
         if module.params['silenced'] is None or module.params['silenced'] == "":
@@ -342,9 +337,8 @@ def mute_monitor(module):
         else:
             msg = api.Monitor.mute(id=monitor['id'], silenced=module.params['silenced'])
         module.exit_json(changed=True, msg=msg)
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg=str(e))
+    except Exception as e:
+        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
 
 def unmute_monitor(module):
@@ -356,9 +350,8 @@ def unmute_monitor(module):
     try:
         msg = api.Monitor.unmute(monitor['id'])
         module.exit_json(changed=True, msg=msg)
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg=str(e))
+    except Exception as e:
+        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':

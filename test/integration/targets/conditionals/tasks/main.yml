@@ -307,3 +307,55 @@
 - name: test complex templated condition
   debug: msg="it works"
   when: vars_file_var in things1|union([vars_file_var])
+
+- name: test dict with invalid key is undefined
+  vars:
+    mydict:
+     a: foo
+     b: bar
+  debug: var=mydict['c']
+  register: result
+  when: mydict['c'] is undefined
+
+- name: assert the task did not fail
+  assert:
+    that:
+      - "result.failed == false"
+
+- name: test dict with invalid key does not run with conditional is defined
+  vars:
+    mydict:
+      a: foo
+      b: bar
+  debug: var=mydict['c']
+  when: mydict['c'] is defined
+  register: result
+
+- name: assert the task was skipped
+  assert:
+    that:
+    - "result.skipped == true"
+
+- name: test list with invalid element does not run with conditional is defined
+  vars:
+    mylist: []
+  debug: var=mylist[0]
+  when: mylist[0] is defined
+  register: result
+
+- name: assert the task was skipped
+  assert:
+    that:
+    - "result.skipped == true"
+
+- name: test list with invalid element is undefined
+  vars:
+    mylist: []
+  debug: var=mylist[0]
+  when: mylist[0] is undefined
+  register: result
+
+- name: assert the task did not fail
+  assert:
+    that:
+      - "result.failed == false"

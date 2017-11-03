@@ -1,0 +1,342 @@
+# this won't run in Ansible's integration tests until we get a domain set up
+# these are here if someone wants to run the module tests locally on their own
+# domain.
+# Requirements:
+#   LDAP Base path set in defaults/main.yml like DC=ansible,DC=local
+#   Custom OU path set in defaults/main.yml like OU=ou1,DC=ansible,DC=local
+---
+- name: ensure the test group is deleted before the test
+  win_domain_group:
+    name: '{{test_win_domain_group_name}}'
+    state: absent
+    ignore_protection: True
+
+- name: fail pass in an invalid path
+  win_domain_group:
+    name: '{{test_win_domain_group_name}}'
+    state: present
+    organizational_unit: OU=fakeou,{{test_win_domain_group_ldap_base}}
+  register: fail_invalid_path
+  failed_when: fail_invalid_path.msg != 'the group path OU=fakeou,' + test_win_domain_group_ldap_base + ' does not exist, please specify a valid LDAP path'
+
+- name: create group with defaults check
+  win_domain_group:
+    name: '{{test_win_domain_group_name}}'
+    scope: global
+    state: present
+  register: create_default_check
+  check_mode: yes
+
+- name: get actual group with defaults check
+  win_command: powershell.exe "Import-Module ActiveDirectory; Get-ADGroup -Identity '{{test_win_domain_group_name}}'"
+  register: create_default_actual_check
+  ignore_errors: True
+
+- name: assert create group with defaults checl
+  assert:
+    that:
+    - create_default_check|changed
+    - create_default_actual_check.rc == 1
+
+- name: create group with defaults
+  win_domain_group:
+    name: '{{test_win_domain_group_name}}'
+    scope: global
+    state: present
+  register: create_default
+
+- name: get actual group with defaults
+  win_command: powershell.exe "Import-Module ActiveDirectory; Get-ADGroup -Identity '{{test_win_domain_group_name}}'"
+  register: create_default_actual
+
+- name: assert create group with defaults
+  assert:
+    that:
+    - create_default|changed
+    - create_default.category == 'Security'
+    - create_default.description == None
+    - create_default.display_name == None
+    - create_default.distinguished_name == 'CN=' + test_win_domain_group_name + ',CN=Users,' + test_win_domain_group_ldap_base
+    - create_default.group_scope == 'Global'
+    - create_default.guid is defined
+    - create_default.managed_by == None
+    - create_default.name == test_win_domain_group_name
+    - create_default.protected_from_accidental_deletion == False
+    - create_default.sid is defined
+    - create_default_actual.rc == 0
+
+- name: create group with defaults again
+  win_domain_group:
+    name: '{{test_win_domain_group_name}}'
+    scope: global
+    state: present
+  register: create_default_again
+
+- name: assert create group with defaults again
+  assert:
+    that:
+    - not create_default_again|changed
+
+- name: remove group check
+  win_domain_group:
+    name: '{{test_win_domain_group_name}}'
+    state: absent
+  register: remove_group_check
+  check_mode: yes
+
+- name: get actual remove group check
+  win_command: powershell.exe "Import-Module ActiveDirectory; Get-ADGroup -Identity '{{test_win_domain_group_name}}'"
+  register: remove_group_actual_check
+
+- name: assert remove group check
+  assert:
+    that:
+    - remove_group_check|changed
+    - remove_group_actual_check.rc == 0
+
+- name: remove group
+  win_domain_group:
+    name: '{{test_win_domain_group_name}}'
+    state: absent
+  register: remove_group
+
+- name: get actual remove group
+  win_command: powershell.exe "Import-Module ActiveDirectory; Get-ADGroup -Identity '{{test_win_domain_group_name}}'"
+  register: remove_group_actual
+  ignore_errors: True
+
+- name: assert remove group
+  assert:
+    that:
+    - remove_group|changed
+    - remove_group_actual.rc == 1
+
+- name: remove group again
+  win_domain_group:
+    name: '{{test_win_domain_group_name}}'
+    state: absent
+  register: remove_group_again
+
+- name: assert remove group again
+  assert:
+    that:
+    - not remove_group_again|changed
+
+- name: create non default group check
+  win_domain_group:
+    name: '{{test_win_domain_group_name}}'
+    state: present
+    description: Group Description
+    display_name: Group Display Name
+    managed_by: Domain Admins
+    organizational_unit: '{{test_win_domain_group_ou_path}}'
+    category: distribution
+    scope: domainlocal
+    attributes:
+      mail: test@email.com
+      wWWHomePage: www.google.com
+    protect: True
+  register: create_non_default_check
+  check_mode: yes
+
+- name: get actual create non default group check
+  win_command: powershell.exe "Import-Module ActiveDirectory; Get-ADGroup -Identity '{{test_win_domain_group_name}}'"
+  register: create_non_default_actual_check
+  ignore_errors: True
+
+- name: assert create non default group check
+  assert:
+    that:
+    - create_non_default_check|changed
+    - create_non_default_actual_check.rc == 1
+
+- name: create non default group
+  win_domain_group:
+    name: '{{test_win_domain_group_name}}'
+    state: present
+    description: Group Description
+    display_name: Group Display Name
+    managed_by: Domain Admins
+    organizational_unit: '{{test_win_domain_group_ou_path}}'
+    category: distribution
+    scope: domainlocal
+    attributes:
+      mail: test@email.com
+      wWWHomePage: www.google.com
+    protect:  True
+  register: create_non_default
+
+- name: get actual create non default group
+  win_command: powershell.exe "Import-Module ActiveDirectory; Get-ADGroup -Identity '{{test_win_domain_group_name}}'"
+  register: create_non_default_actual
+  ignore_errors: True
+
+- name: assert create non default group
+  assert:
+    that:
+    - create_non_default|changed
+    - create_non_default.category == 'Distribution'
+    - create_non_default.description == 'Group Description'
+    - create_non_default.display_name == 'Group Display Name'
+    - create_non_default.distinguished_name == 'CN=' + test_win_domain_group_name + ',' + test_win_domain_group_ou_path
+    - create_non_default.group_scope == 'DomainLocal'
+    - create_non_default.guid is defined
+    - create_non_default.managed_by == 'CN=Domain Admins,CN=Users,' + test_win_domain_group_ldap_base
+    - create_non_default.name == test_win_domain_group_name
+    - create_non_default.protected_from_accidental_deletion == True
+    - create_non_default.sid is defined
+    - create_non_default.attributes.mail == 'test@email.com'
+    - create_non_default.attributes.wWWHomePage == 'www.google.com'
+    - create_non_default_actual.rc == 0
+
+- name: create non default group again
+  win_domain_group:
+    name: '{{test_win_domain_group_name}}'
+    state: present
+    description: Group Description
+    display_name: Group Display Name
+    managed_by: Domain Admins
+    organizational_unit: '{{test_win_domain_group_ou_path}}'
+    category: distribution
+    scope: domainlocal
+    attributes:
+      mail: test@email.com
+      wWWHomePage: www.google.com
+  register: create_non_default_again
+
+- name: assert create non default group again
+  assert:
+    that:
+    - not create_non_default_again|changed
+
+- name: try and move group with protection mode on
+  win_domain_group:
+    name: '{{test_win_domain_group_name}}'
+    state: present
+    organizational_unit: CN=Users,{{test_win_domain_group_ldap_base}}
+  register: fail_move_with_protection
+  failed_when: fail_move_with_protection.msg != 'cannot move group ' + test_win_domain_group_name + ' when ProtectedFromAccidentalDeletion is turned on, run this module with ignore_protection=true to override this'
+
+- name: modify existing group check
+  win_domain_group:
+    name: '{{test_win_domain_group_name}}'
+    state: present
+    description: New Description
+    display_name: New Display Name
+    managed_by: Administrator
+    organizational_unit: 'CN=Users,{{test_win_domain_group_ldap_base}}'
+    category: security
+    scope: global
+    attributes:
+      mail: anothertest@email.com
+    ignore_protection: True
+  register: modify_existing_check
+  check_mode: yes
+
+- name: get actual of modify existing group check
+  win_command: powershell.exe "Import-Module ActiveDirectory; (Get-ADGroup -Identity '{{test_win_domain_group_name}}').DistinguishedName"
+  register: modify_existing_actual_check
+
+- name: assert modify existing group check
+  assert:
+    that:
+    - modify_existing_check|changed
+    - modify_existing_actual_check.stdout == 'CN=' + test_win_domain_group_name + ',' + test_win_domain_group_ou_path + '\r\n'
+
+- name: modify existing group
+  win_domain_group:
+    name: '{{test_win_domain_group_name}}'
+    state: present
+    description: New Description
+    display_name: New Display Name
+    managed_by: Administrator
+    organizational_unit: CN=Users,{{test_win_domain_group_ldap_base}}
+    category: security
+    scope: global
+    attributes:
+      mail: anothertest@email.com
+    protect:  True
+    ignore_protection: True
+  register: modify_existing
+
+- name: get actual of modify existing group
+  win_command: powershell.exe "Import-Module ActiveDirectory; (Get-ADGroup -Identity '{{test_win_domain_group_name}}').DistinguishedName"
+  register: modify_existing_actual
+
+- name: assert modify existing group
+  assert:
+    that:
+    - modify_existing|changed
+    - modify_existing.category == 'Security'
+    - modify_existing.description == 'New Description'
+    - modify_existing.display_name == 'New Display Name'
+    - modify_existing.distinguished_name == 'CN=' + test_win_domain_group_name + ',CN=Users,' + test_win_domain_group_ldap_base
+    - modify_existing.group_scope == 'Global'
+    - modify_existing.guid is defined
+    - modify_existing.managed_by == 'CN=Administrator,CN=Users,' + test_win_domain_group_ldap_base
+    - modify_existing.name == test_win_domain_group_name
+    - modify_existing.protected_from_accidental_deletion == True
+    - modify_existing.sid is defined
+    - modify_existing.attributes.mail == 'anothertest@email.com'
+    - modify_existing_actual.stdout == 'CN=' + test_win_domain_group_name + ',CN=Users,' + test_win_domain_group_ldap_base  + '\r\n'
+
+- name: modify existing group again
+  win_domain_group:
+    name: '{{test_win_domain_group_name}}'
+    state: present
+    description: New Description
+    display_name: New Display Name
+    managed_by: Administrator
+    organizational_unit: CN=Users,{{test_win_domain_group_ldap_base}}
+    category: Security
+    scope: global
+    attributes:
+      mail: anothertest@email.com
+    protect:  True
+    ignore_protection: True
+  register: modify_existing_again
+
+- name: assert modify existing group again
+  assert:
+    that:
+    - not modify_existing_again|changed
+
+- name: fail change managed_by to invalid user
+  win_domain_group:
+    name: '{{test_win_domain_group_name}}'
+    state: present
+    scope: global
+    managed_by: fake user
+  register: fail_invalid_managed_by_user
+  failed_when: fail_invalid_managed_by_user.msg != 'failed to find managed_by user or group fake user to be used for comparison'
+
+- name: fail delete group with protection mode on
+  win_domain_group:
+    name: '{{test_win_domain_group_name}}'
+    state: absent
+  register: fail_delete_with_protection
+  failed_when: fail_delete_with_protection.msg != 'cannot delete group ' + test_win_domain_group_name + ' when ProtectedFromAccidentalDeletion is turned on, run this module with ignore_protection=true to override this'
+
+- name: delete group with protection mode on
+  win_domain_group:
+    name: '{{test_win_domain_group_name}}'
+    state: absent
+    ignore_protection: True
+  register: delete_with_force
+
+- name: get actual delete group with protection mode on
+  win_command: powershell.exe "Import-Module ActiveDirectory; Get-ADGroup -Identity '{{test_win_domain_group_name}}'"
+  register: delete_with_force_actual
+  ignore_errors: True
+
+- name: assert delete group with protection mode on
+  assert:
+    that:
+    - delete_with_force|changed
+    - delete_with_force_actual.rc == 1
+
+- name: ensure the test group is deleted after the test
+  win_domain_group:
+    name: '{{test_win_domain_group_name}}'
+    state: absent
+    ignore_protection: True

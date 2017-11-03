@@ -2,23 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2014, Ravi Bhure <ravibhure@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -30,10 +20,10 @@ version_added: "1.9"
 short_description: Enable, disable, and set weights for HAProxy backend servers using socket commands.
 author: "Ravi Bhure (@ravibhure)"
 description:
-    - Enable, disable, and set weights for HAProxy backend servers using socket
+    - Enable, disable, drain and set weights for HAProxy backend servers using socket
       commands.
 notes:
-    - Enable and disable commands are restricted and can only be issued on
+    - Enable, disable and drain commands are restricted and can only be issued on
       sockets configured for level 'admin'. For example, you can add the line
       'stats socket /var/run/haproxy.sock level admin' to the general section of
       haproxy.cfg. See U(http://haproxy.1wt.eu/download/1.5/doc/configuration.txt).
@@ -45,6 +35,14 @@ options:
       - Name of the HAProxy backend pool.
     required: false
     default: auto-detected
+  drain:
+    description:
+      - Wait until the server has no active connections or until the timeout
+        determined by wait_interval and wait_retries is reached.  Continue only
+        after the status changes to 'MAINT'.  This overrides the
+        shutdown_sessions option.
+    default: false
+    version_added: "2.4"
   host:
     description:
       - Name of the backend host to change.
@@ -54,7 +52,8 @@ options:
     description:
       - When disabling a server, immediately terminate all the sessions attached
         to the specified server. This can be used to terminate long-running
-        sessions after a server is put into maintenance mode.
+        sessions after a server is put into maintenance mode. Overridden by the
+        drain option.
     required: false
     default: false
   socket:
@@ -65,9 +64,11 @@ options:
   state:
     description:
       - Desired state of the provided backend host.
+      - Note that C(drain) state was added in version 2.4. It is supported only by HAProxy version 1.5 or later,
+        if used on versions < 1.5, it will be ignored.
     required: true
     default: null
-    choices: [ "enabled", "disabled" ]
+    choices: [ "enabled", "disabled", "drain" ]
   fail_on_not_found:
     description:
       - Fail whenever trying to enable/disable a backend host that does not exist
@@ -76,8 +77,8 @@ options:
     version_added: "2.2"
   wait:
     description:
-      - Wait until the server reports a status of 'UP' when `state=enabled`, or
-        status of 'MAINT' when `state=disabled`.
+      - Wait until the server reports a status of 'UP' when `state=enabled`,
+        status of 'MAINT' when `state=disabled` or status of 'DRAIN' when `state=drain`
     required: false
     default: false
     version_added: "2.0"
@@ -130,6 +131,19 @@ EXAMPLES = '''
     backend: www
     wait: yes
 
+# Place server in drain mode, providing a socket file.  Then check the server's
+# status every minute to see if it changes to maintenance mode, continuing if it
+# does in an hour and failing otherwise.
+- haproxy:
+    state: disabled
+    host: '{{ inventory_hostname }}'
+    socket: /var/run/haproxy.sock
+    backend: www
+    wait: yes
+    drain: yes
+    wait_interval: 1
+    wait_retries: 60
+
 # disable backend server in 'www' backend pool and drop open sessions to it
 - haproxy:
     state: disabled
@@ -173,17 +187,26 @@ EXAMPLES = '''
     socket: /var/run/haproxy.sock
     weight: 10
     backend: www
+
+# set the server in 'www' backend pool to drain mode
+- haproxy:
+    state: drain
+    host: '{{ inventory_hostname }}'
+    socket: /var/run/haproxy.sock
+    backend: www
 '''
 
-import socket
 import csv
+import socket
 import time
 from string import Template
+
+from ansible.module_utils.basic import AnsibleModule
 
 
 DEFAULT_SOCKET_LOCATION = "/var/run/haproxy.sock"
 RECV_SIZE = 1024
-ACTION_CHOICES = ['enabled', 'disabled']
+ACTION_CHOICES = ['enabled', 'disabled', 'drain']
 WAIT_RETRIES = 25
 WAIT_INTERVAL = 5
 
@@ -218,6 +241,7 @@ class HAProxy(object):
         self.wait = self.module.params['wait']
         self.wait_retries = self.module.params['wait_retries']
         self.wait_interval = self.module.params['wait_interval']
+        self.drain = self.module.params['drain']
         self.command_results = {}
 
     def execute(self, cmd, timeout=200, capture_output=True):
@@ -259,6 +283,22 @@ class HAProxy(object):
         r = csv.DictReader(data.splitlines())
         return tuple(map(lambda d: d['pxname'], filter(lambda d: d['svname'] == 'BACKEND', r)))
 
+    def discover_version(self):
+        """
+        Attempt to extract the haproxy version.
+        Return a tuple containing major and minor version.
+        """
+        data = self.execute('show info', 200, False)
+        lines = data.splitlines()
+        line = [x for x in lines if 'Version:' in x]
+        try:
+            version_values = line[0].partition(':')[2].strip().split('.', 3)
+            version = (int(version_values[0]), int(version_values[1]))
+        except (ValueError, TypeError, IndexError):
+            version = None
+
+        return version
+
     def execute_for_backends(self, cmd, pxname, svname, wait_for_status=None):
         """
         Run some command on the specified backends. If no backends are provided they will
@@ -274,12 +314,13 @@ class HAProxy(object):
         for backend in backends:
             # Fail when backends were not found
             state = self.get_state_for(backend, svname)
-            if (self.fail_on_not_found or self.wait) and state is None:
+            if (self.fail_on_not_found) and state is None:
                 self.module.fail_json(msg="The specified backend '%s/%s' was not found!" % (backend, svname))
 
-            self.execute(Template(cmd).substitute(pxname=backend, svname=svname))
-            if self.wait:
-                self.wait_until_status(backend, svname, wait_for_status)
+            if state is not None:
+                self.execute(Template(cmd).substitute(pxname=backend, svname=svname))
+                if self.wait:
+                    self.wait_until_status(backend, svname, wait_for_status)
 
     def get_state_for(self, pxname, svname):
         """
@@ -290,7 +331,7 @@ class HAProxy(object):
         r = csv.DictReader(data.splitlines())
         state = tuple(
             map(
-                lambda d: {'status': d['status'], 'weight': d['weight']},
+                lambda d: {'status': d['status'], 'weight': d['weight'], 'scur': d['scur']},
                 filter(lambda d: (pxname is None or d['pxname'] == pxname) and d['svname'] == svname, r)
             )
         )
@@ -308,7 +349,8 @@ class HAProxy(object):
 
             # We can assume there will only be 1 element in state because both svname and pxname are always set when we get here
             if state[0]['status'] == status:
-                return True
+                if not self.drain or (state[0]['scur'] == '0' and state == 'MAINT'):
+                    return True
             else:
                 time.sleep(self.wait_interval)
 
@@ -336,6 +378,19 @@ class HAProxy(object):
             cmd += "; shutdown sessions server $pxname/$svname"
         self.execute_for_backends(cmd, backend, host, 'MAINT')
 
+    def drain(self, host, backend, status='DRAIN'):
+        """
+        Drain action, sets the server to DRAIN mode.
+        In this mode mode, the server will not accept any new connections
+        other than those that are accepted via persistence.
+        """
+        haproxy_version = self.discover_version()
+
+        # check if haproxy version suppots DRAIN state (starting with 1.5)
+        if haproxy_version and (1, 5) <= haproxy_version:
+            cmd = "set server $pxname/$svname state drain"
+            self.execute_for_backends(cmd, backend, host, status)
+
     def act(self):
         """
         Figure out what you want to do from ansible, and then do it.
@@ -347,8 +402,12 @@ class HAProxy(object):
         # toggle enable/disbale server
         if self.state == 'enabled':
             self.enabled(self.host, self.backend, self.weight)
+        elif self.state == 'disabled' and self.drain:
+            self.drain(self.host, self.backend, status='MAINT')
         elif self.state == 'disabled':
             self.disabled(self.host, self.backend, self.shutdown_sessions)
+        elif self.state == 'drain':
+            self.drain(self.host, self.backend)
         else:
             self.module.fail_json(msg="unknown state specified: '%s'" % self.state)
 
@@ -380,6 +439,7 @@ def main():
             wait=dict(required=False, default=False, type='bool'),
             wait_retries=dict(required=False, default=WAIT_RETRIES, type='int'),
             wait_interval=dict(required=False, default=WAIT_INTERVAL, type='int'),
+            drain=dict(default=False, type='bool'),
         ),
     )
 
@@ -389,8 +449,6 @@ def main():
     ansible_haproxy = HAProxy(module)
     ansible_haproxy.act()
 
-# import module snippets
-from ansible.module_utils.basic import AnsibleModule
 
 if __name__ == '__main__':
     main()

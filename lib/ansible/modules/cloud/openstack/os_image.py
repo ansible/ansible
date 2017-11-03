@@ -2,23 +2,15 @@
 
 # Copyright (c) 2015 Hewlett-Packard Development Company, L.P.
 # Copyright (c) 2013, Benno Joy <benno@ansible.com>
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-#TODO(mordred): we need to support "location"(v1) and "locations"(v2)
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+
+# TODO(mordred): we need to support "location"(v1) and "locations"(v2)
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -37,6 +29,18 @@ options:
      description:
         - Name that has to be given to the image
      required: true
+     default: None
+   id:
+     version_added: "2.4"
+     description:
+        - The Id of the image
+     required: false
+     default: None
+   checksum:
+     version_added: "2.5"
+     description:
+        - The checksum of the image
+     required: false
      default: None
    disk_format:
      description:
@@ -95,7 +99,7 @@ options:
      default: present
    availability_zone:
      description:
-       - Ignored. Present for backwards compatability
+       - Ignored. Present for backwards compatibility
      required: false
 requirements: ["shade"]
 '''
@@ -126,11 +130,16 @@ try:
 except ImportError:
     HAS_SHADE = False
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+
 
 def main():
 
     argument_spec = openstack_full_argument_spec(
         name              = dict(required=True),
+        id                = dict(default=None),
+        checksum          = dict(default=None),
         disk_format       = dict(default='qcow2', choices=['ami', 'ari', 'aki', 'vhd', 'vmdk', 'raw', 'qcow2', 'vdi', 'iso', 'vhdx', 'ploop']),
         container_format  = dict(default='bare', choices=['ami', 'aki', 'ari', 'bare', 'ovf', 'ova', 'docker']),
         owner             = dict(default=None),
@@ -153,10 +162,16 @@ def main():
         cloud = shade.openstack_cloud(**module.params)
 
         changed = False
-        image = cloud.get_image(name_or_id=module.params['name'])
+        if module.params['checksum']:
+            image = cloud.get_image(name_or_id=None,filters={'checksum': module.params['checksum']})
+        else:
+            image = cloud.get_image(name_or_id=module.params['name'])
 
         if module.params['state'] == 'present':
             if not image:
+                kwargs={}
+                if module.params['id'] is not None:
+                    kwargs['id'] = module.params['id']
                 image = cloud.create_image(
                     name=module.params['name'],
                     filename=module.params['filename'],
@@ -166,7 +181,8 @@ def main():
                     timeout=module.params['timeout'],
                     is_public=module.params['is_public'],
                     min_disk=module.params['min_disk'],
-                    min_ram=module.params['min_ram']
+                    min_ram=module.params['min_ram'],
+                    **kwargs
                 )
                 changed = True
                 if not module.params['wait']:
@@ -194,9 +210,6 @@ def main():
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=str(e), extra_data=e.extra_data)
 
-# this is magic, see lib/ansible/module_common.py
-from ansible.module_utils.basic import *
-from ansible.module_utils.openstack import *
 
 if __name__ == "__main__":
     main()

@@ -1,22 +1,14 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -29,7 +21,7 @@ description:
     - Manage the containers on the atomic host platform
     - Allows to manage the lifecycle of a container on the atomic host platform
 version_added: "2.4"
-author: "Giuseppe Scrivano @gscrivano"
+author: "Giuseppe Scrivano (@giuseppe)"
 notes:
     - Host should support C(atomic) command
 requirements:
@@ -109,8 +101,8 @@ msg:
 # import module snippets
 import traceback
 
-from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 
 
 def do_install(module, mode, rootfs, container, image, values_list, backend):
@@ -206,7 +198,7 @@ def main():
     )
 
     if module.params['values'] is not None and module.params['mode'] == 'default':
-        module.fail_json(msg="values is supported only with user or system mode", err=err)
+        module.fail_json(msg="values is supported only with user or system mode")
 
     # Verify that the platform supports atomic command
     rc, out, err = module.run_command('atomic -v', check_rc=False)

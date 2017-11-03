@@ -84,6 +84,7 @@ class ActionModule(ActionBase):
             task_vars = dict()
 
         self.show_content = True
+        self.included_files = []
 
         # Validate arguments
         dirs = 0
@@ -108,15 +109,18 @@ class ActionModule(ActionBase):
         if self.source_dir:
             self._set_dir_defaults()
             self._set_root_dir()
-            if path.exists(self.source_dir):
+            if not path.exists(self.source_dir):
+                failed = True
+                err_msg = ('{0} directory does not exist'.format(self.source_dir))
+            elif not path.isdir(self.source_dir):
+                failed = True
+                err_msg = ('{0} is not a directory'.format(self.source_dir))
+            else:
                 for root_dir, filenames in self._traverse_dir_depth():
                     failed, err_msg, updated_results = (self._load_files_in_dir(root_dir, filenames))
                     if failed:
                         break
                     results.update(updated_results)
-            else:
-                failed = True
-                err_msg = ('{0} directory does not exist'.format(self.source_dir))
         else:
             try:
                 self.source_file = self._find_needle('vars', self.source_file)
@@ -141,6 +145,7 @@ class ActionModule(ActionBase):
             result['failed'] = failed
             result['message'] = err_msg
 
+        result['ansible_included_var_files'] = self.included_files
         result['ansible_facts'] = results
         result['_ansible_no_log'] = not self.show_content
 
@@ -208,7 +213,6 @@ class ActionModule(ActionBase):
             Bool
         """
         file_ext = path.splitext(source_file)
-        print(file_ext[-1][2:])
         return bool(len(file_ext) > 1 and file_ext[-1][1:] in self.valid_extensions)
 
     def _load_files(self, filename, validate_extensions=False):
@@ -237,6 +241,7 @@ class ActionModule(ActionBase):
                 failed = True
                 err_msg = ('{0} must be stored as a dictionary/hash' .format(filename))
             else:
+                self.included_files.append(filename)
                 results.update(data)
 
         return failed, err_msg, results

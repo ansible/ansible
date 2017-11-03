@@ -109,10 +109,10 @@
 
 # ============================================================
 - name: create user1 to access database dbuser1
-  mysql_user: name=user1 password=password1 priv=*.*:ALL state=present
+  mysql_user: name=user1 password=Hfd6fds^dfA8Ga priv=*.*:ALL state=present
 
 - name: create database dbuser1 using user1
-  mysql_db: name={{ db_user1 }} state=present login_user=user1 login_password=password1
+  mysql_db: name={{ db_user1 }} state=present login_user=user1 login_password=Hfd6fds^dfA8Ga
   register: result
 
 - name: assert output message that database was created
@@ -127,10 +127,10 @@
 
 # ============================================================
 - name: create user2 to access database with privilege select only
-  mysql_user: name=user2 password=password2 priv=*.*:SELECT state=present
+  mysql_user: name=user2 password=kjsfd&F7safjad priv=*.*:SELECT state=present
 
 - name: create database dbuser2 using user2 with no privilege to create (expect failed=true)
-  mysql_db: name={{ db_user2 }} state=present login_user=user2 login_password=password2
+  mysql_db: name={{ db_user2 }} state=present login_user=user2 login_password=kjsfd&F7safjad
   register: result
   ignore_errors: true
 
@@ -149,7 +149,7 @@
 
 # ============================================================
 - name: delete database using user2 with no privilege to delete (expect failed=true)
-  mysql_db: name={{ db_user1 }} state=absent login_user=user2 login_password=password2
+  mysql_db: name={{ db_user1 }} state=absent login_user=user2 login_password=kjsfd&F7safjad
   register: result
   ignore_errors: true
 
@@ -168,7 +168,7 @@
 
 # ============================================================
 - name: delete database using user1 with all privilege to delete a database (expect changed=true)
-  mysql_db: name={{ db_user1 }} state=absent login_user=user1 login_password=password1
+  mysql_db: name={{ db_user1 }} state=absent login_user=user1 login_password=Hfd6fds^dfA8Ga
   register: result
   ignore_errors: true
 

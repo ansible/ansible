@@ -16,11 +16,15 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import collections
 import errno
+import glob
 import json
 import os
 import re
 import sys
+
+from ansible.module_utils.six import iteritems
 
 from ansible.module_utils.basic import bytes_to_human
 
@@ -189,7 +193,8 @@ class LinuxHardware(Hardware):
 
             # model name is for Intel arch, Processor (mind the uppercase P)
             # works for some ARM devices, like the Sheevaplug.
-            if key in ['model name', 'Processor', 'vendor_id', 'cpu', 'Vendor']:
+            # 'ncpus active' is SPARC attribute
+            if key in ['model name', 'Processor', 'vendor_id', 'cpu', 'Vendor', 'processor']:
                 if 'processor' not in cpu_facts:
                     cpu_facts['processor'] = []
                 cpu_facts['processor'].append(data[1].strip())
@@ -212,6 +217,8 @@ class LinuxHardware(Hardware):
                 cores[coreid] = int(data[1].strip())
             elif key == '# processors':
                 cpu_facts['processor_cores'] = int(data[1].strip())
+            elif key == 'ncpus active':
+                i = int(data[1].strip())
 
         # Skip for platforms without vendor_id/model_name in cpuinfo (e.g ppc64le)
         if vendor_id_occurrence > 0:
@@ -428,7 +435,7 @@ class LinuxHardware(Hardware):
             if fstype == 'none':
                 continue
 
-            size_total, size_available = get_mount_size(mount)
+            mount_statvfs_info = get_mount_size(mount)
 
             if mount in bind_mounts:
                 # only add if not already there, we might have a plain /etc/mtab
@@ -439,16 +446,50 @@ class LinuxHardware(Hardware):
                           'device': device,
                           'fstype': fstype,
                           'options': options,
-                          # statvfs data
-                          'size_total': size_total,
-                          'size_available': size_available,
                           'uuid': uuids.get(device, 'N/A')}
+
+            mount_info.update(mount_statvfs_info)
 
             mounts.append(mount_info)
 
         mount_facts['mounts'] = mounts
 
         return mount_facts
+
+    def get_device_links(self, link_dir):
+        if not os.path.exists(link_dir):
+            return {}
+        try:
+            retval = collections.defaultdict(set)
+            for entry in os.listdir(link_dir):
+                try:
+                    target = os.path.basename(os.readlink(os.path.join(link_dir, entry)))
+                    retval[target].add(entry)
+                except OSError:
+                    continue
+            return dict((k, list(sorted(v))) for (k, v) in iteritems(retval))
+        except OSError:
+            return {}
+
+    def get_all_device_owners(self):
+        try:
+            retval = collections.defaultdict(set)
+            for path in glob.glob('/sys/block/*/slaves/*'):
+                elements = path.split('/')
+                device = elements[3]
+                target = elements[5]
+                retval[target].add(device)
+            return dict((k, list(sorted(v))) for (k, v) in iteritems(retval))
+        except OSError:
+            return {}
+
+    def get_all_device_links(self):
+        return {
+            'ids': self.get_device_links('/dev/disk/by-id'),
+            'uuids': self.get_device_links('/dev/disk/by-uuid'),
+            'labels': self.get_device_links('/dev/disk/by-label'),
+            'masters': self.get_all_device_owners(),
+        }
 
     def get_holders(self, block_dev_dict, sysdir):
         block_dev_dict['holders'] = []
@@ -491,6 +532,9 @@ class LinuxHardware(Hardware):
                         continue
                     devs_wwn[os.path.basename(wwn_link)] = link_name[4:]
 
+        links = self.get_all_device_links()
+        device_facts['device_links'] = links
+
         for block in block_devs:
             virtual = 1
             sysfs_no_links = 0
@@ -503,17 +547,17 @@ class LinuxHardware(Hardware):
                     sysfs_no_links = 1
                 else:
                     continue
-            if "virtual" in path:
-                continue
             sysdir = os.path.join("/sys/block", path)
             if sysfs_no_links == 1:
                 for folder in os.listdir(sysdir):
                     if "device" in folder:
                         virtual = 0
                         break
-                if virtual:
-                    continue
             d = {}
+            d['virtual'] = virtual
+            d['links'] = {}
+            for (link_type, link_values) in iteritems(links):
+                d['links'][link_type] = link_values.get(block, [])
             diskname = os.path.basename(sysdir)
             for key in ['vendor', 'model', 'sas_address', 'sas_device_handle']:
                 d[key] = get_file_content(sysdir + "/device/" + key)
@@ -547,8 +591,13 @@ class LinuxHardware(Hardware):
                     partname = m.group(1)
                     part_sysdir = sysdir + "/" + partname
 
+                    part['links'] = {}
+                    for (link_type, link_values) in iteritems(links):
+                        part['links'][link_type] = link_values.get(partname, [])
+
                     part['start'] = get_file_content(part_sysdir + "/start", 0)
                     part['sectors'] = get_file_content(part_sysdir + "/size", 0)
+
                     part['sectorsize'] = get_file_content(part_sysdir + "/queue/logical_block_size")
                     if not part['sectorsize']:
                         part['sectorsize'] = get_file_content(part_sysdir + "/queue/hw_sector_size", 512)
@@ -617,7 +666,7 @@ class LinuxHardware(Hardware):
         lvm_facts = {}
 
         if os.getuid() == 0 and self.module.get_bin_path('vgs'):
-            lvm_util_options = '--noheadings --nosuffix --units g'
+            lvm_util_options = '--noheadings --nosuffix --units g --separator ,'
 
             vgs_path = self.module.get_bin_path('vgs')
             # vgs fields: VG #PV #LV #SN Attr VSize VFree
@@ -625,7 +674,7 @@ class LinuxHardware(Hardware):
             if vgs_path:
                 rc, vg_lines, err = self.module.run_command('%s %s' % (vgs_path, lvm_util_options))
                 for vg_line in vg_lines.splitlines():
-                    items = vg_line.split()
+                    items = vg_line.strip().split(',')
                     vgs[items[0]] = {'size_g': items[-2],
                                      'free_g': items[-1],
                                      'num_lvs': items[2],
@@ -638,7 +687,7 @@ class LinuxHardware(Hardware):
             if lvs_path:
                 rc, lv_lines, err = self.module.run_command('%s %s' % (lvs_path, lvm_util_options))
                 for lv_line in lv_lines.splitlines():
-                    items = lv_line.split()
+                    items = lv_line.strip().split(',')
                     lvs[items[0]] = {'size_g': items[3], 'vg': items[1]}
 
             pvs_path = self.module.get_bin_path('pvs')
@@ -647,7 +696,7 @@ class LinuxHardware(Hardware):
             if pvs_path:
                 rc, pv_lines, err = self.module.run_command('%s %s' % (pvs_path, lvm_util_options))
                 for pv_line in pv_lines.splitlines():
-                    items = pv_line.split()
+                    items = pv_line.strip().split(',')
                     pvs[self._find_mapper_device_name(items[0])] = {
                         'size_g': items[4],
                         'free_g': items[5],

@@ -14,6 +14,7 @@ from lib.util import (
     SubprocessError,
     ApplicationError,
     run_command,
+    intercept_command,
 )
 
 from lib.core_ci import (
@@ -51,7 +52,7 @@ class ManageWindowsCI(object):
 
         for _ in range(1, 120):
             try:
-                run_command(self.core_ci.args, cmd, env=env)
+                intercept_command(self.core_ci.args, cmd, 'ping', env=env)
                 return
             except SubprocessError:
                 sleep(10)
@@ -78,7 +79,7 @@ class ManageNetworkCI(object):
             'ansible_ssh_private_key_file=%s' % self.core_ci.ssh_key.key,
         ]
 
-        name = '%s-%s' % (self.core_ci.platform, self.core_ci.version.replace('.', '_'))
+        name = '%s-%s' % (self.core_ci.platform, self.core_ci.version.replace('.', '-'))
 
         env = ansible_environment(self.core_ci.args)
         cmd = [
@@ -93,7 +94,7 @@ class ManageNetworkCI(object):
 
         for _ in range(1, 90):
             try:
-                run_command(self.core_ci.args, cmd, env=env)
+                intercept_command(self.core_ci.args, cmd, 'ping', env=env)
                 return
             except SubprocessError:
                 sleep(10)
@@ -110,12 +111,25 @@ class ManagePosixCI(object):
         :type core_ci: AnsibleCoreCI
         """
         self.core_ci = core_ci
-        self.ssh_args = ['-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=no', '-i', self.core_ci.ssh_key.key]
+        self.ssh_args = ['-i', self.core_ci.ssh_key.key]
+
+        ssh_options = dict(
+            BatchMode='yes',
+            StrictHostKeyChecking='no',
+            UserKnownHostsFile='/dev/null',
+            ServerAliveInterval=15,
+            ServerAliveCountMax=4,
+        )
+
+        for ssh_option in sorted(ssh_options):
+            self.ssh_args += ['-o', '%s=%s' % (ssh_option, ssh_options[ssh_option])]
 
         if self.core_ci.platform == 'freebsd':
             self.become = ['su', '-l', 'root', '-c']
         elif self.core_ci.platform == 'osx':
             self.become = ['sudo', '-in', 'PATH=/usr/local/bin:$PATH']
+        elif self.core_ci.platform == 'rhel':
+            self.become = ['sudo', '-in', 'bash', '-c']
 
     def setup(self):
         """Start instance and wait for it to become ready and respond to an ansible ping."""
@@ -148,7 +162,7 @@ class ManagePosixCI(object):
             remote_source_path = os.path.join(remote_source_dir, os.path.basename(local_source_fd.name))
 
             if not self.core_ci.args.explain:
-                lib.pytar.create_tarfile(local_source_fd.name, '.', lib.pytar.ignore)
+                lib.pytar.create_tarfile(local_source_fd.name, '.', lib.pytar.DefaultTarFilter())
 
             self.upload(local_source_fd.name, remote_source_dir)
             self.ssh('rm -rf ~/ansible && mkdir ~/ansible && cd ~/ansible && tar oxzf %s' % remote_source_path)

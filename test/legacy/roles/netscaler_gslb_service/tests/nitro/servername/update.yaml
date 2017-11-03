@@ -1,0 +1,17 @@
+---
+
+- name: Setup gslb service 3
+
+  delegate_to: localhost
+  register: result
+  check_mode: "{{ check_mode }}"
+
+  netscaler_gslb_service:
+    operation: present
+
+    servicename: gslb-service-3
+    servername: 10.10.10.10
+    servicetype: HTTP
+    port: 80
+    comment: added comment
+    sitename: gslb-site-1

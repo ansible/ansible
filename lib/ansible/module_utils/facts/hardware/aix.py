@@ -74,9 +74,9 @@ class AIXHardware(Hardware):
             cpu_facts['processor'] = data[1]
 
             rc, out, err = self.module.run_command("/usr/sbin/lsattr -El " + cpudev + " -a smt_threads")
-
-            data = out.split(' ')
-            cpu_facts['processor_cores'] = int(data[1])
+            if out:
+                data = out.split(' ')
+                cpu_facts['processor_cores'] = int(data[1])
 
         return cpu_facts
 
@@ -146,7 +146,7 @@ class AIXHardware(Hardware):
         vgs_facts = {}
         lsvg_path = self.module.get_bin_path("lsvg")
         xargs_path = self.module.get_bin_path("xargs")
-        cmd = "%s | %s %s -p" % (lsvg_path, xargs_path, lsvg_path)
+        cmd = "%s -o | %s %s -p" % (lsvg_path, xargs_path, lsvg_path)
         if lsvg_path and xargs_path:
             rc, out, err = self.module.run_command(cmd, use_unsafe_shell=True)
             if rc == 0 and out:

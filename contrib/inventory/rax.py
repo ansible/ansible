@@ -168,10 +168,11 @@ except ImportError:
 
 from time import time
 
-from ansible.constants import get_config, mk_boolean
+from ansible.constants import get_config
+from ansible.module_utils.parsing.convert_bool import boolean
+from ansible.module_utils.six import text_type
 
-
-NON_CALLABLES = (basestring, bool, dict, int, list, type(None))
+NON_CALLABLES = (text_type, str, bool, dict, int, list, type(None))
 
 
 def load_config_file():
@@ -232,13 +233,17 @@ def _list_into_cache(regions):
                               'RAX_ACCESS_NETWORK', 'public', value_type='list')
     except TypeError:
         # Ansible 2.2.x and below
+        # pylint: disable=unexpected-keyword-arg
         networks = get_config(p, 'rax', 'access_network',
                               'RAX_ACCESS_NETWORK', 'public', islist=True)
     try:
         try:
+            # Ansible 2.3+
             ip_versions = map(int, get_config(p, 'rax', 'access_ip_version',
                                               'RAX_ACCESS_IP_VERSION', 4, value_type='list'))
         except TypeError:
+            # Ansible 2.2.x and below
+            # pylint: disable=unexpected-keyword-arg
             ip_versions = map(int, get_config(p, 'rax', 'access_ip_version',
                                               'RAX_ACCESS_IP_VERSION', 4, islist=True))
     except:
@@ -288,7 +293,7 @@ def _list_into_cache(regions):
                 if not cbs_attachments[region]:
                     cbs = pyrax.connect_to_cloud_blockstorage(region)
                     for vol in cbs.list():
-                        if mk_boolean(vol.bootable):
+                        if boolean(vol.bootable, strict=False):
                             for attachment in vol.attachments:
                                 metadata = vol.volume_image_metadata
                                 server_id = attachment['server_id']
@@ -437,6 +442,7 @@ def setup():
                                      value_type='list')
         except TypeError:
             # Ansible 2.2.x and below
+            # pylint: disable=unexpected-keyword-arg
             region_list = get_config(p, 'rax', 'regions', 'RAX_REGION', 'all',
                                      islist=True)
 

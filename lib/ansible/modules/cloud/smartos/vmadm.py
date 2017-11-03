@@ -2,24 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2017, Jasper Lievisse Adriaanse <j@jasper.la>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -346,17 +335,15 @@ state:
   sample: 'running'
 '''
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils._text import to_native
+import json
 import os
 import re
 import tempfile
 import traceback
-try:
-    import json
-except ImportError:
-    import simplejson as json
+
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 
 # While vmadm(1M) supports a -E option to return any errors in JSON, the
 # generated JSON does not play well with the JSON parsers of Python.
@@ -377,11 +364,10 @@ def get_vm_prop(module, uuid, prop):
 
     try:
         stdout_json = json.loads(stdout)
-    except:
-        e = get_exception()
+    except Exception as e:
         module.fail_json(
-            msg='Invalid JSON returned by vmadm for uuid lookup of {0}'.format(alias),
-            details=to_native(e))
+            msg='Invalid JSON returned by vmadm for uuid lookup of {0}'.format(prop),
+            details=to_native(e), exception=traceback.format_exc())
 
     if len(stdout_json) > 0 and prop in stdout_json[0]:
         return stdout_json[0][prop]
@@ -408,11 +394,10 @@ def get_vm_uuid(module, alias):
     else:
         try:
             stdout_json = json.loads(stdout)
-        except:
-            e = get_exception()
+        except Exception as e:
             module.fail_json(
                 msg='Invalid JSON returned by vmadm for uuid lookup of {0}'.format(alias),
-                details=to_native(e))
+                details=to_native(e), exception=traceback.format_exc())
 
         if len(stdout_json) > 0 and 'uuid' in stdout_json[0]:
             return stdout_json[0]['uuid']
@@ -430,9 +415,9 @@ def get_all_vm_uuids(module):
     try:
         stdout_json = json.loads(stdout)
         return [v['uuid'] for v in stdout_json]
-    except:
-        e = get_exception()
-        module.fail_json(msg='Could not retrieve VM UUIDs', details=to_native(e))
+    except Exception as e:
+        module.fail_json(msg='Could not retrieve VM UUIDs', details=to_native(e),
+                         exception=traceback.format_exc())
 
 
 def new_vm(module, uuid, vm_state):
@@ -465,9 +450,8 @@ def new_vm(module, uuid, vm_state):
     except Exception as e:
         # Since the payload may contain sensitive information, fail hard
         # if we cannot remove the file so the operator knows about it.
-        module.fail_json(
-            msg='Could not remove temporary JSON payload file {0}'.format(payload_file),
-            exception=traceback.format_exc())
+        module.fail_json(msg='Could not remove temporary JSON payload file {0}: {1}'.format(payload_file, to_native(e)),
+                         exception=traceback.format_exc())
 
     return changed, vm_uuid
 
@@ -540,15 +524,14 @@ def create_payload(module, uuid):
         # drop the mkstemp call and rely on ANSIBLE_KEEP_REMOTE_FILES to retain
         # the payload (thus removing the `save_payload` option).
         fname = tempfile.mkstemp()[1]
-        fh = open(fname, 'w')
         os.chmod(fname, 0o400)
-        fh.write(vmdef_json)
-        fh.close()
+        with open(fname, 'w') as fh:
+            fh.write(vmdef_json)
     except Exception as e:
-        module.fail_json(
-            msg='Could not save JSON payload', exception=traceback.format_exc())
+        module.fail_json(msg='Could not save JSON payload: %s' % to_native(e), exception=traceback.format_exc())
 
     return fname
+
 
 def vm_state_transition(module, uuid, vm_state):
     ret = set_vm_state(module, uuid, vm_state)
@@ -658,7 +641,7 @@ def main():
         cpu_type=dict(
             default='qemu64',
             type='str',
-            choices=['host','qemu64']
+            choices=['host', 'qemu64']
         ),
         # Regular strings, however these require additional options.
         spice_password=dict(type='str', no_log=True),
@@ -683,7 +666,7 @@ def main():
     uuid = p['uuid']
     state = p['state']
 
-    # Translate the state paramter into something we can use later on.
+    # Translate the state parameter into something we can use later on.
     if state in ['present', 'running']:
         vm_state = 'running'
     elif state in ['stopped', 'created']:

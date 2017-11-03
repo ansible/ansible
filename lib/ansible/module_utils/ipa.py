@@ -32,8 +32,7 @@ try:
 except ImportError:
     import simplejson as json
 
-from ansible.module_utils._text import to_bytes, to_text
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.six import PY3
 from ansible.module_utils.six.moves.urllib.parse import quote
 from ansible.module_utils.urls import fetch_url
@@ -69,9 +68,8 @@ class IPAClient(object):
                             'Content-Type': 'application/json',
                             'Accept': 'application/json',
                             'Cookie': resp.info().get('Set-Cookie')}
-        except Exception:
-            e = get_exception()
-            self._fail('login', str(e))
+        except Exception as e:
+            self._fail('login', to_native(e))
 
     def _fail(self, msg, e):
         if 'message' in e:
@@ -90,9 +88,8 @@ class IPAClient(object):
             status_code = info['status']
             if status_code not in [200, 201, 204]:
                 self._fail(method, info['msg'])
-        except Exception:
-            e = get_exception()
-            self._fail('post %s' % method, str(e))
+        except Exception as e:
+            self._fail('post %s' % method, to_native(e))
 
         if PY3:
             charset = resp.headers.get_content_charset('latin-1')
@@ -105,7 +102,7 @@ class IPAClient(object):
         resp = json.loads(to_text(resp.read(), encoding=charset), encoding=charset)
         err = resp.get('error')
         if err is not None:
-            self._fail('repsonse %s' % method, err)
+            self._fail('response %s' % method, err)
 
         if 'result' in resp:
             result = resp.get('result')
@@ -158,3 +155,14 @@ class IPAClient(object):
                     add_method(name=name, item=diff)
 
         return changed
+
+
+def ipa_argument_spec():
+    return dict(
+        ipa_prot=dict(type='str', default='https', choices=['http', 'https']),
+        ipa_host=dict(type='str', default='ipa.example.com'),
+        ipa_port=dict(type='int', default=443),
+        ipa_user=dict(type='str', default='admin'),
+        ipa_pass=dict(type='str', required=True, no_log=True),
+        validate_certs=dict(type='bool', default=True),
+    )

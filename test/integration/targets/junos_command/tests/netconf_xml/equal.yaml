@@ -5,10 +5,9 @@
   junos_command:
     commands:
       - show version
-      - show interfaces fxp0
+      - show interfaces lo0
     wait_for:
-      - "result[0].rpc-reply.software-information.host-name == {{ inventory_hostname_short }}"
-      - "result[1].rpc-reply.interface-information.physical-interface.name == fxp0"
+      - "result[1].rpc-reply.interface-information.physical-interface.name == lo0"
     format: xml
     provider: "{{ netconf }}"
   register: result
@@ -23,10 +22,9 @@
   junos_command:
     commands:
       - show version
-      - show interfaces fxp0
+      - show interfaces lo0
     wait_for:
-      - "result[0].rpc-reply.software-information.host-name eq {{ inventory_hostname_short }}"
-      - "result[1].rpc-reply.interface-information.physical-interface.name eq fxp0"
+      - "result[1].rpc-reply.interface-information.physical-interface.name eq lo0"
     format: xml
     provider: "{{ netconf }}"
   register: result

@@ -2,24 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2012, Franck Cuny <franck@lumberjaph.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -91,7 +80,7 @@ options:
     version_added: "2.1"
 notes:
    - Please note that U(http://search.cpan.org/dist/App-cpanminus/bin/cpanm, cpanm) must be installed on the remote host.
-author: "Franck Cuny (@franckcuny)"
+author: "Franck Cuny (@fcuny)"
 '''
 
 EXAMPLES = '''
@@ -135,6 +124,11 @@ EXAMPLES = '''
     version: '1.0'
 '''
 
+import os
+
+from ansible.module_utils.basic import AnsibleModule
+
+
 def _is_package_installed(module, name, locallib, cpanm, version):
     cmd = ""
     if locallib:
@@ -145,10 +139,7 @@ def _is_package_installed(module, name, locallib, cpanm, version):
     else:
         cmd = "%s;'" % cmd
     res, stdout, stderr = module.run_command(cmd, check_rc=False)
-    if res == 0:
-        return True
-    else:
-        return False
+    return res == 0
 
 def _build_cmd_line(name, from_path, notest, locallib, mirror, mirror_only, installdeps, cpanm, use_sudo):
     # this code should use "%s" like everything else and just return early but not fixing all of it now.
@@ -181,9 +172,10 @@ def _build_cmd_line(name, from_path, notest, locallib, mirror, mirror_only, inst
 
 def _get_cpanm_path(module):
     if module.params['executable']:
-        return module.params['executable']
+        result = module.params['executable']
     else:
-        return module.get_bin_path('cpanm', True)
+        result = module.get_bin_path('cpanm', True)
+    return result
 
 
 def main():
@@ -233,8 +225,6 @@ def main():
 
     module.exit_json(changed=changed, binary=cpanm, name=name)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

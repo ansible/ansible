@@ -12,6 +12,8 @@ from lib.util import (
     ApplicationError,
     display,
     raw_command,
+    find_pip,
+    get_docker_completion,
 )
 
 from lib.delegation import (
@@ -27,6 +29,14 @@ from lib.executor import (
     command_shell,
     SUPPORTED_PYTHON_VERSIONS,
     COMPILE_PYTHON_VERSIONS,
+    ApplicationWarning,
+    Delegate,
+    generate_pip_install,
+    check_startup,
+)
+
+from lib.config import (
+    IntegrationConfig,
     PosixIntegrationConfig,
     WindowsIntegrationConfig,
     NetworkIntegrationConfig,
@@ -34,10 +44,6 @@ from lib.executor import (
     UnitsConfig,
     CompileConfig,
     ShellConfig,
-    ApplicationWarning,
-    Delegate,
-    generate_pip_install,
-    check_startup,
 )
 
 from lib.sanity import (
@@ -78,7 +84,7 @@ def main():
         config = args.config(args)
         display.verbosity = config.verbosity
         display.color = config.color
-        display.info_stderr = isinstance(config, SanityConfig) and config.lint
+        display.info_stderr = (isinstance(config, SanityConfig) and config.lint) or (isinstance(config, IntegrationConfig) and config.list_targets)
         check_startup()
 
         try:
@@ -108,7 +114,7 @@ def parse_args():
     except ImportError:
         if '--requirements' not in sys.argv:
             raise
-        raw_command(generate_pip_install('ansible-test'))
+        raw_command(generate_pip_install(find_pip(), 'ansible-test'))
         import argparse
 
     try:
@@ -182,7 +188,7 @@ def parse_args():
 
     integration.add_argument('--python',
                              metavar='VERSION',
-                             choices=SUPPORTED_PYTHON_VERSIONS,
+                             choices=SUPPORTED_PYTHON_VERSIONS + ('default',),
                              help='python version: %s' % ', '.join(SUPPORTED_PYTHON_VERSIONS))
 
     integration.add_argument('--start-at',
@@ -193,6 +199,18 @@ def parse_args():
                              metavar='TASK',
                              help='start at the specified task')
 
+    integration.add_argument('--tags',
+                             metavar='TAGS',
+                             help='only run plays and tasks tagged with these values')
+
+    integration.add_argument('--skip-tags',
+                             metavar='TAGS',
+                             help='only run plays and tasks whose tags do not match these values')
+
+    integration.add_argument('--diff',
+                             action='store_true',
+                             help='show diff output')
+
     integration.add_argument('--allow-destructive',
                              action='store_true',
                              help='allow destructive tests (--local and --tox only)')
@@ -200,6 +218,23 @@ def parse_args():
     integration.add_argument('--retry-on-error',
                              action='store_true',
                              help='retry failed test with increased verbosity')
+
+    integration.add_argument('--continue-on-error',
+                             action='store_true',
+                             help='continue after failed test')
+
+    integration.add_argument('--debug-strategy',
+                             action='store_true',
+                             help='run test playbooks using the debug strategy')
+
+    integration.add_argument('--changed-all-target',
+                             metavar='TARGET',
+                             default='all',
+                             help='target to run when all tests are needed')
+
+    integration.add_argument('--list-targets',
+                             action='store_true',
+                             help='list matching targets instead of running tests')
 
     subparsers = parser.add_subparsers(metavar='COMMAND')
     subparsers.required = True  # work-around for python 3 bug which makes subparsers optional
@@ -222,10 +257,16 @@ def parse_args():
                                      targets=walk_network_integration_targets,
                                      config=NetworkIntegrationConfig)
 
+    add_extra_docker_options(network_integration, integration=False)
+
     network_integration.add_argument('--platform',
                                      metavar='PLATFORM',
                                      action='append',
                                      help='network platform/version').completer = complete_network_platform
+
+    network_integration.add_argument('--inventory',
+                                     metavar='PATH',
+                                     help='path to inventory used for tests')
 
     windows_integration = subparsers.add_parser('windows-integration',
                                                 parents=[integration],
@@ -234,6 +275,8 @@ def parse_args():
     windows_integration.set_defaults(func=command_windows_integration,
                                      targets=walk_windows_integration_targets,
                                      config=WindowsIntegrationConfig)
+
+    add_extra_docker_options(windows_integration, integration=False)
 
     windows_integration.add_argument('--windows',
                                      metavar='VERSION',
@@ -269,7 +312,7 @@ def parse_args():
 
     compiler.add_argument('--python',
                           metavar='VERSION',
-                          choices=COMPILE_PYTHON_VERSIONS,
+                          choices=COMPILE_PYTHON_VERSIONS + ('default',),
                           help='python version: %s' % ', '.join(COMPILE_PYTHON_VERSIONS))
 
     add_lint(compiler)
@@ -301,7 +344,7 @@ def parse_args():
 
     sanity.add_argument('--python',
                         metavar='VERSION',
-                        choices=SUPPORTED_PYTHON_VERSIONS,
+                        choices=SUPPORTED_PYTHON_VERSIONS + ('default',),
                         help='python version: %s' % ', '.join(SUPPORTED_PYTHON_VERSIONS))
 
     sanity.add_argument('--base-branch',
@@ -351,7 +394,11 @@ def parse_args():
                                                      help='generate console coverage report')
 
     coverage_report.set_defaults(func=lib.cover.command_coverage_report,
-                                 config=lib.cover.CoverageConfig)
+                                 config=lib.cover.CoverageReportConfig)
+
+    coverage_report.add_argument('--show-missing',
+                                 action='store_true',
+                                 help='show line numbers of statements not executed')
 
     add_extra_coverage_options(coverage_report)
 
@@ -537,6 +584,10 @@ def add_extra_docker_options(parser, integration=True):
                         dest='docker_pull',
                         help='do not explicitly pull the latest docker images')
 
+    docker.add_argument('--docker-keep-git',
+                        action='store_true',
+                        help='transfer git related files into the docker container')
+
     if not integration:
         return
 
@@ -581,8 +632,7 @@ def complete_docker(prefix, parsed_args, **_):
     """
     del parsed_args
 
-    with open('test/runner/completion/docker.txt', 'r') as completion_fd:
-        images = completion_fd.read().splitlines()
+    images = sorted(get_docker_completion().keys())
 
     return [i for i in images if i.startswith(prefix)]
 

@@ -11,9 +11,11 @@ Additional features allow for tuning the orders in which things complete, and as
 
 This section covers all of these features.  For examples of these items in use, `please see the ansible-examples repository <https://github.com/ansible/ansible-examples/>`_. There are quite a few examples of zero-downtime update procedures for different kinds of applications.
 
-You should also consult the :doc:`modules` section, various modules like 'ec2_elb', 'nagios', and 'bigip_pool', and 'netscaler' dovetail neatly with the concepts mentioned here.  
+You should also consult the :doc:`modules` section, various modules like 'ec2_elb', 'nagios', and 'bigip_pool', and 'netscaler' dovetail neatly with the concepts mentioned here.
 
-You'll also want to read up on :doc:`playbooks_roles`, as the 'pre_task' and 'post_task' concepts are the places where you would typically call these modules. 
+You'll also want to read up on :doc:`playbooks_reuse_roles`, as the 'pre_task' and 'post_task' concepts are the places where you would typically call these modules.
+
+Be aware that certain tasks are impossible to delegate, i.e. `include`, `add_host`, `debug`, etc as they always execute on the controller.
 
 .. _rolling_update_batch_size:
 
@@ -160,6 +162,20 @@ Here is an example::
 Note that you must have passphrase-less SSH keys or an ssh-agent configured for this to work, otherwise rsync
 will need to ask for a passphrase.
 
+In case you have to specify more arguments you can use the following syntax::
+
+    ---
+    # ...
+      tasks:
+
+      - name: Send summary mail
+        local_action:
+          module: mail
+          subject: "Summary Mail"
+          to: "{{ mail_recipient }}"
+          body: "{{ mail_body }}"
+        run_once: True
+
 The `ansible_host` variable (`ansible_ssh_host` in 1.x or specific to ssh/paramiko plugins) reflects the host a task is delegated to.
 
 .. _delegate_facts:
@@ -179,7 +195,7 @@ In 2.0, the directive `delegate_facts` may be set to `True` to assign the task's
           setup:
           delegate_to: "{{item}}"
           delegate_facts: True
-          with_items: "{{groups['dbservers']}}"
+          loop: "{{groups['dbservers']}}"
 
 The above will gather facts for the machines in the dbservers group and assign the facts to those machines and not to app_servers.
 This way you can lookup `hostvars['dbhost1']['default_ipv4']['address']` even though dbservers were not part of the play, or left out by using `--limit`.

@@ -5,10 +5,10 @@
   junos_command:
     commands:
       - show version
-      - show interfaces fxp0
+      - show interfaces lo0
     format: json
     wait_for:
-      - "result[0]['software-information'][0]['host-name'][0]['data'] neq localhost"
+      - "result[1]['interface-information'][0]['physical-interface'][0]['name'][0]['data'] neq em0"
     provider: "{{ netconf }}"
   register: result
 
@@ -22,10 +22,10 @@
   junos_command:
     commands:
       - show version
-      - show interfaces fxp0
+      - show interfaces lo0
     format: json
     wait_for:
-      - "result[0]['software-information'][0]['host-name'][0]['data'] != localhost"
+      - "result[1]['interface-information'][0]['physical-interface'][0]['name'][0]['data'] neq em0"
     provider: "{{ netconf }}"
   register: result
 

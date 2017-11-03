@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -86,10 +86,6 @@ EXAMPLES = """
 - name: remove configuration
   nxos_system:
     state: absent
-
-- name: configure DNS lookup sources
-  nxos_system:
-    lookup_source: Management1
 
 - name: configure name servers
   nxos_system:
@@ -242,17 +238,20 @@ def parse_domain_search(config, vrf_config):
 
     return objects
 
-def parse_name_servers(config, vrf_config):
+def parse_name_servers(config, vrf_config, vrfs):
     objects = list()
 
     match = re.search('^ip name-server (.+)$', config, re.M)
     if match:
         for addr in match.group(1).split(' '):
+            if addr == 'use-vrf' or addr in vrfs:
+                continue
             objects.append({'server': addr, 'vrf': None})
 
     for vrf, cfg in iteritems(vrf_config):
-        for item in re.findall('ip name-server (\S+)', cfg, re.M):
-            for addr in match.group(1).split(' '):
+        vrf_match = re.search('ip name-server (.+)', cfg, re.M)
+        if vrf_match:
+            for addr in vrf_match.group(1).split(' '):
                 objects.append({'server': addr, 'vrf': vrf})
 
     return objects
@@ -278,7 +277,7 @@ def map_config_to_obj(module):
         'domain_lookup': 'no ip domain-lookup' not in config,
         'domain_name': parse_domain_name(config, vrf_config),
         'domain_search': parse_domain_search(config, vrf_config),
-        'name_servers': parse_name_servers(config, vrf_config),
+        'name_servers': parse_name_servers(config, vrf_config, vrfs),
         'system_mtu': parse_system_mtu(config)
     }
 
@@ -334,7 +333,7 @@ def main():
         name_servers=dict(type='list'),
 
         system_mtu=dict(type='int'),
-
+        lookup_source=dict(),
         state=dict(default='present', choices=['present', 'absent'])
     )
 

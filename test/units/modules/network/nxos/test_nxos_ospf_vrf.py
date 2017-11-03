@@ -41,7 +41,7 @@ class TestNxosOspfVrfModule(TestNxosModule):
         self.mock_load_config.stop()
         self.mock_get_config.stop()
 
-    def load_fixtures(self, commands=None):
+    def load_fixtures(self, commands=None, device=''):
         self.load_config.return_value = None
 
     def test_nxos_ospf_vrf_present(self):
@@ -59,7 +59,6 @@ class TestNxosOspfVrfModule(TestNxosModule):
                          sorted(['router ospf 1',
                                  'vrf test',
                                  'timers throttle lsa 60 1100 3000',
-                                 'ospf 1',
                                  'timers throttle spf 50 1000 2000',
                                  'vrf test']))
 

@@ -1,0 +1,5 @@
+- name: set handler fact
+  set_fact:
+    handler_called: True
+- name: test handler
+  debug: msg="handler called"

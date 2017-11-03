@@ -80,15 +80,13 @@ class OpenBSDHardware(Hardware):
                 fields = re.sub(r'\s+', ' ', line).split()
                 if fields[1] == 'none' or fields[3] == 'xx':
                     continue
-                size_total, size_available = get_mount_size(fields[1])
-                mount_facts['mounts'].append({
-                    'mount': fields[1],
-                    'device': fields[0],
-                    'fstype': fields[2],
-                    'options': fields[3],
-                    'size_total': size_total,
-                    'size_available': size_available
-                })
+                mount_statvfs_info = get_mount_size(fields[1])
+                mount_info = {'mount': fields[1],
+                              'device': fields[0],
+                              'fstype': fields[2],
+                              'options': fields[3]}
+                mount_info.update(mount_statvfs_info)
+                mount_facts['mounts'].append(mount_info)
         return mount_facts
 
     def get_memory_facts(self):
@@ -146,9 +144,9 @@ class OpenBSDHardware(Hardware):
 
     def get_dmi_facts(self):
         dmi_facts = {}
-        # We don't use dmidecode(1) here because:
+        # We don't use dmidecode(8) here because:
         # - it would add dependency on an external package
-        # - dmidecode(1) can only be ran as root
+        # - dmidecode(8) can only be ran as root
         # So instead we rely on sysctl(8) to provide us the information on a
         # best-effort basis. As a bonus we also get facts on non-amd64/i386
         # platforms this way.

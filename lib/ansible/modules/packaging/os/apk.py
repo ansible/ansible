@@ -5,20 +5,13 @@
 # Based on pacman (Afterburn <http://github.com/afterburn>, Aaron Bull Schaefer <aaron@elasticdog.com>)
 # and apt (Matthew Williams <matthew@flowroute.com>) modules.
 #
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
@@ -42,7 +35,7 @@ options:
     version_added: "2.4"
   name:
     description:
-      - A package name, like C(foo), or mutliple packages, like C(foo, bar).
+      - A package name, like C(foo), or multiple packages, like C(foo, bar).
     required: false
     default: null
   repository:
@@ -242,7 +235,7 @@ def install_packages(module, names, state):
         upgrade = True
     if not to_install and not upgrade:
         module.exit_json(changed=False, msg="package(s) already installed")
-    packages = " ".join(to_install) + " ".join(to_upgrade)
+    packages = " ".join(to_install + to_upgrade)
     if upgrade:
         if module.check_mode:
             cmd = "%s add --upgrade --simulate %s" % (APK_PATH, packages)

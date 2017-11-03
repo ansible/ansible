@@ -1,0 +1,117 @@
+---
+- debug: msg="START junos_lldp netconf/basic.yaml"
+
+- name: setup - Disable lldp and remove it's configuration
+  junos_lldp:
+    state: absent
+    provider: "{{ netconf }}"
+
+- name: Enable lldp
+  junos_lldp:
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: Enable lldp (idempotent)
+  junos_lldp:
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: configure lldp parameters and enable lldp
+  junos_lldp:
+    interval: 10
+    hold_multiplier: 5
+    transmit_delay: 2
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - result.diff.prepared | search("\+ *advertisement-interval 10")
+      - result.diff.prepared | search("\+ *transmit-delay 2")
+      - result.diff.prepared | search("\+ *hold-multiplier 5")
+
+- name: configure lldp parameters and enable lldp(idempotent)
+  junos_lldp:
+    interval: 10
+    hold_multiplier: 5
+    transmit_delay: 2
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: configure lldp parameters and disable lldp
+  junos_lldp:
+    interval: 10
+    hold_multiplier: 5
+    transmit_delay: 2
+    state: disabled
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - result.diff.prepared | search("\+ *disable")
+      - "'advertisement-interval 10;' not in result.diff.prepared"
+      - "'transmit-delay 2;' not in result.diff.prepared"
+      - "'hold-multiplier 5;' not in result.diff.prepared"
+
+- name: configure lldp parameters and enable lldp
+  junos_lldp:
+    interval: 10
+    hold_multiplier: 5
+    transmit_delay: 2
+    state: enabled
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - result.diff.prepared | search("\- *disable")
+      - "'advertisement-interval 10;' not in result.diff.prepared"
+      - "'transmit-delay 2;' not in result.diff.prepared"
+      - "'hold-multiplier 5;' not in result.diff.prepared"
+
+- name: Remove lldp configuration and diable lldp
+  junos_lldp:
+    interval: 10
+    hold_multiplier: 5
+    transmit_delay: 2
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - result.diff.prepared | search("\+ *disable")
+      - result.diff.prepared | search("\- *advertisement-interval 10")
+      - result.diff.prepared | search("\- *transmit-delay 2")
+      - result.diff.prepared | search("\- *hold-multiplier 5")
+
+- name: Remove lldp (idempotent)
+  junos_lldp:
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"

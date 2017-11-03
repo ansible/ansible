@@ -175,6 +175,7 @@ class PacketInventory(object):
         # Configure which groups should be created.
         group_by_options = [
             'group_by_device_id',
+            'group_by_hostname',
             'group_by_facility',
             'group_by_project',
             'group_by_operating_system',
@@ -326,6 +327,12 @@ class PacketInventory(object):
             self.inventory[device.id] = [dest]
             if self.nested_groups:
                 self.push_group(self.inventory, 'devices', device.id)
+
+        # Inventory: Group by device name (hopefully a group of 1)
+        if self.group_by_hostname:
+            self.push(self.inventory, device.hostname, dest)
+            if self.nested_groups:
+                self.push_group(self.inventory, 'hostnames', project.name)
 
         # Inventory: Group by project
         if self.group_by_project:
