@@ -21,7 +21,7 @@ description:
     standard levels of Dedicated, Nominal, and Minimum.
 version_added: "2.4"
 options:
-  module:
+  name:
     description:
       - The module to provision in BIG-IP.
     required: true
@@ -40,6 +40,8 @@ options:
       - sam
       - swg
       - vcmp
+    aliases:
+      - module
   level:
     description:
       - Sets the provisioning level for the requested modules. Changing the
@@ -109,9 +111,9 @@ from ansible.module_utils.f5_utils import AnsibleF5Client
 from ansible.module_utils.f5_utils import AnsibleF5Parameters
 from ansible.module_utils.f5_utils import HAS_F5SDK
 from ansible.module_utils.f5_utils import F5ModuleError
-from f5.sdk_exception import LazyAttributesRequired
 
 try:
+    from f5.sdk_exception import LazyAttributesRequired
     from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
 except ImportError:
     HAS_F5SDK = False
@@ -207,11 +209,16 @@ class ModuleManager(object):
             return False
         if self.client.check_mode:
             return True
+
         self.update_on_device()
         self._wait_for_module_provisioning()
+
         if self.want.module == 'vcmp':
             self._wait_for_reboot()
             self._wait_for_module_provisioning()
+
+        if self.want.module == 'asm':
+            self._wait_for_asm_ready()
         return True
 
     def should_update(self):
@@ -294,6 +301,26 @@ class ModuleManager(object):
             pass
         return False
 
+    def _wait_for_asm_ready(self):
+        """Waits specifically for ASM
+
+        On older versions, ASM can take longer to actually start up than
+        all the previous checks take. This check here is specifically waiting for
+        the Policies API to stop raising errors
+        :return:
+        """
+        nops = 0
+        while nops < 3:
+            try:
+                policies = self.client.api.tm.asm.policies_s.get_collection()
+                if len(policies) >= 0:
+                    nops += 1
+                else:
+                    nops = 0
+            except Exception:
+                pass
+            time.sleep(5)
+
     def _get_last_reboot(self):
         output = self.client.api.tm.util.bash.exec_cmd(
             'run',
@@ -339,7 +366,8 @@ class ArgumentSpec(object):
                     'afm', 'am', 'sam', 'asm', 'avr', 'fps',
                     'gtm', 'lc', 'ltm', 'pem', 'swg', 'ilx',
                     'apm', 'vcmp'
-                ]
+                ],
+                aliases=['name']
             ),
             level=dict(
                 default='nominal',
