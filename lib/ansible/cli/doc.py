@@ -111,7 +111,6 @@ class DocCLI(CLI):
         search_paths = DocCLI.print_paths(loader)
         loader._paths = None  # reset so we can use subdirs below
 
-
         # list plugins names and filepath for type
         if self.options.list_files:
             paths = loader._get_paths()
