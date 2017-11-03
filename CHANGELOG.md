@@ -130,6 +130,9 @@ Ansible Changes By Release
   https://github.com/ansible/ansible/pull/32471
 * Fix for quoted paths in win_service
   (https://github.com/ansible/ansible/issues/32368)
+* Fix tracebacks for non-ascii paths when parsing inventory
+  (https://github.com/ansible/ansible/pull/32511)
+
 
 <a id="2.4.1"></a>
 
