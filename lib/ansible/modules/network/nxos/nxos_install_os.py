@@ -115,16 +115,16 @@ install_state:
     type: dictionary
     sample: {
     "install_state": [
-        "Compatibility check is done:", 
-        "Module  bootable          Impact  Install-type  Reason", 
-        "------  --------  --------------  ------------  ------", 
-        "     1       yes  non-disruptive         reset  ", 
-        "Images will be upgraded according to following table:", 
-        "Module       Image                  Running-Version(pri:alt)           New-Version  Upg-Required", 
-        "------  ----------  ----------------------------------------  --------------------  ------------", 
-        "     1        nxos                               7.0(3)I6(1)           7.0(3)I7(1)           yes", 
+        "Compatibility check is done:",
+        "Module  bootable          Impact  Install-type  Reason",
+        "------  --------  --------------  ------------  ------",
+        "     1       yes  non-disruptive         reset  ",
+        "Images will be upgraded according to following table:",
+        "Module       Image                  Running-Version(pri:alt)           New-Version  Upg-Required",
+        "------  ----------  ----------------------------------------  --------------------  ------------",
+        "     1        nxos                               7.0(3)I6(1)           7.0(3)I7(1)           yes",
         "     1        bios                        v4.4.0(07/12/2017)    v4.4.0(07/12/2017)            no"
-    ], 
+    ],
     }
 '''
 
@@ -506,7 +506,9 @@ def do_install_all(module, issu, image, kick=None):
         upgrade = check_install_in_progress(module, commands, opts)
 
         # Special case:  If we encounter a backend processing error at this
-        # stage, then we consider the switch upgraded.
+        # stage it means the command was sent and the upgrade was started but
+        # we will need to use the impact data instead of the current install
+        # data.
         if upgrade['backend_processing_error']:
             upgrade['upgrade_succeeded'] = True
             upgrade['use_impact_data'] = True
@@ -530,8 +532,6 @@ def main():
         kickstart_image_file=dict(required=False),
         issu=dict(choices=['required', 'desired', 'no', 'yes'], default='no'),
     )
-    # ISSU choices, 'required', 'desired', 'no', 'yes'
-    # parse intsall all commands for everything.
 
     argument_spec.update(nxos_argument_spec)
 
@@ -569,10 +569,9 @@ def main():
         else:
             msg = msg + "file: system: %s" % sif
         module.fail_json(msg=msg, raw_data=install_result['list_data'])
-    else:
-        state = install_result['processed']
-        changed = install_result['upgrade_needed']
 
+    state = install_result['processed']
+    changed = install_result['upgrade_needed']
     module.exit_json(changed=changed, install_state=state, warnings=warnings)
 
 
