@@ -1071,8 +1071,12 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         )
 
                     availability_set_resource = None
-                    if vm_dict['properties']['availabilitySet']['id']:
+                    try:
                         availability_set_resource = SubResource(vm_dict['properties']['availabilitySet']['id'])
+                    except Exception:
+                        # pass if the availability set is not set
+                        pass
+
                     vm_resource = VirtualMachine(
                         vm_dict['location'],
                         os_profile=OSProfile(
