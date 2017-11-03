@@ -184,7 +184,7 @@ INDEX_OPTIONS = INDEX_REQUIRED_OPTIONS + ['hash_key_type', 'range_key_name', 'ra
 INDEX_TYPE_OPTIONS = ['all', 'global_all', 'global_include', 'global_keys_only', 'include', 'keys_only']
 
 
-def create_or_update_dynamo_table(connection, module, boto3_dynamodb=None, boto3_sts=None):
+def create_or_update_dynamo_table(connection, module, boto3_dynamodb=None, boto3_sts=None, region=None):
     table_name = module.params.get('name')
     hash_key_name = module.params.get('hash_key_name')
     hash_key_type = module.params.get('hash_key_type')
@@ -193,7 +193,6 @@ def create_or_update_dynamo_table(connection, module, boto3_dynamodb=None, boto3
     read_capacity = module.params.get('read_capacity')
     write_capacity = module.params.get('write_capacity')
     all_indexes = module.params.get('indexes')
-    region = module.params.get('region')
     tags = module.params.get('tags')
     wait_for_active_timeout = module.params.get('wait_for_active_timeout')
 
@@ -481,7 +480,7 @@ def main():
 
     state = module.params.get('state')
     if state == 'present':
-        create_or_update_dynamo_table(connection, module, boto3_dynamodb, boto3_sts)
+        create_or_update_dynamo_table(connection, module, boto3_dynamodb, boto3_sts, region)
     elif state == 'absent':
         delete_dynamo_table(connection, module)
 
