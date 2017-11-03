@@ -187,7 +187,6 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
         self.sku = None
         self.tags = None
         self._containerregistry_mgmt_client = None
-        self._registered = False
 
         self.results = dict(changed=False, state=dict())
 
@@ -198,9 +197,6 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
-        if self._registered is False:
-            self._registered = self.register_namespace('Microsoft.ContainerRegistry')
-
         for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
 
