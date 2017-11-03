@@ -235,10 +235,13 @@ class VariableManager:
         # default for all cases
         basedirs = [self._loader.get_basedir()]
 
+        # First compile vars that are coming from roles (defaults/main.yml)
+        # from within the play (both static and loaded dynamically)
+        # Of course for dynamic, we are only the ones which are
+        # already parsed yet through playbooks/role_include.py
+        # and not marked as private on the include statement.
         if play:
-            # first we compile any vars specified in defaults/main.yml
-            # for all roles within the specified play
-            for role in play.get_roles():
+            for role in play.get_roles() + play.get_dynamic_roles():
                 all_vars = combine_vars(all_vars, role.get_default_vars())
 
         if task:
@@ -412,7 +415,7 @@ class VariableManager:
             # By default, we now merge in all vars from all roles in the play,
             # unless the user has disabled this via a config option
             if not C.DEFAULT_PRIVATE_ROLE_VARS:
-                for role in play.get_roles():
+                for role in play.get_roles() + play.get_dynamic_roles():
                     all_vars = combine_vars(all_vars, role.get_vars(include_params=False))
 
         # next, we merge in the vars from the role, which will specifically
