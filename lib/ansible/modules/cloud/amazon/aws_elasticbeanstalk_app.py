@@ -1,18 +1,6 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -76,7 +64,6 @@ EXAMPLES = '''
 RETURN = '''
 app:
     description: beanstalk application
-    returned: success and when state != list
     type: dict
     sample: {
         "ApplicationName": "app-name",
@@ -106,7 +93,7 @@ from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_conn
 
 
 def describe_app(ebs, app_name):
-    apps = list_apps(ebs, app_name)
+    apps = list_apps(ebs, app_name, module)
 
     return None if len(apps) != 1 else apps[0]
 
@@ -162,7 +149,7 @@ def main():
         dict(
             app_name=dict(aliases=['name'], type='str', required=False),
             description=dict(),
-            state=dict(choices=['present', 'absent', 'list'], default='present'),
+            state=dict(choices=['present', 'absent'], default='present'),
             terminate_by_force=dict(type='bool', default=False, required=False)
         )
     )
@@ -189,7 +176,7 @@ def main():
     else:
         module.fail_json(msg='region must be specified')
 
-    app = describe_app(ebs, app_name, module)
+    app = describe_app(ebs, app_name)
 
     if module.check_mode:
         check_app(ebs, app, module)
