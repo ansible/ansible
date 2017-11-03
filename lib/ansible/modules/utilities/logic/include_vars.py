@@ -37,7 +37,7 @@ options:
   name:
     version_added: "2.2"
     description:
-      - The name of a variable into which assign the included vars, if omitted (null) they will be made top level vars.
+      - The name of a variable into which assign the included vars. If omitted (null) they will be made top level vars.
     default: null
   depth:
     version_added: "2.2"

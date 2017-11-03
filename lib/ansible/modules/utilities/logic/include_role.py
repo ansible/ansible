@@ -57,10 +57,10 @@ options:
     default: None
 notes:
   - Handlers are made available to the whole play.
-  - Before 2.4, as with C(include), this task could be static or dynamic, If static, it implied that it won't need
-    templating nor loops nor conditionals and will show included tasks in the `--list` options. Ansible would try to
+  - Before Ansible 2.4, as with C(include), this task could be static or dynamic, If static, it implied that it won't
+    need templating, loops or conditionals and will show included tasks in the `--list` options. Ansible would try to
     autodetect what is needed, but you can set `static` to `yes` or `no` at task level to control this.
-  - After 2.4, you can use M(import_role) for 'static' behaviour and this action for 'dynamic' one.
+  - After Ansible 2.4, you can use M(import_role) for 'static' behaviour and this action for 'dynamic' one.
 '''
 
 EXAMPLES = """

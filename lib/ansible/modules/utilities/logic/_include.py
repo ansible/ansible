@@ -24,14 +24,14 @@ deprecated:
   will be removed in version 2.8. As alternatives use M(include_tasks), M(import_playbook), M(import_tasks).
 description:
   - Includes a file with a list of plays or tasks to be executed in the current playbook.
-  - Files with a list of plays can only be included at the top level, lists of tasks can only be included where tasks
+  - Files with a list of plays can only be included at the top level. Lists of tasks can only be included where tasks
     normally run (in play).
-  - Before 2.0 all includes were 'static', executed at play compile time.
-  - Static includes are not subject to most directives, for example, loops or conditionals, they are applied instead to
-    each inherited task.
-  - Since 2.0 task includes are dynamic and behave more like real tasks.  This means they can be looped, skipped and
-    use variables from any source. Ansible tries to auto detect this, use the `static` directive (new in 2.1) to bypass
-    autodetection.
+  - Before Ansible version 2.0, all includes were 'static' and were executed when the play was compiled.
+  - Static includes are not subject to most directives. For example, loops or conditionals are applied instead to each
+    inherited task.
+  - Since Ansible 2.0, task includes are dynamic and behave more like real tasks. This means they can be looped,
+    skipped and use variables from any source. Ansible tries to auto detect this, but you can use the `static`
+    directive (which was added in Ansible 2.1) to bypass autodetection.
   - This module is also supported for Windows targets.
 version_added: "0.6"
 options:
@@ -39,8 +39,7 @@ options:
     description:
       - This module allows you to specify the name of the file directly without any other options.
 notes:
-  - This is really not a module, though it appears as such, this is a feature of the Ansible Engine, as such it cannot
-    be overridden the same way a module can.
+  - This is a feature of the Ansible Engine, rather than a module, and cannot be overridden like a module.
   - This module is also supported for Windows targets.
 '''
 

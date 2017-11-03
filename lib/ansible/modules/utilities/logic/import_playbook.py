@@ -21,15 +21,14 @@ module: import_playbook
 short_description: Import a playbook
 description:
   - Includes a file with a list of plays to be executed.
-  - Files with a list of plays can only be included at the top level, you cannot use this action inside a play.
+  - Files with a list of plays can only be included at the top level. You cannot use this action inside a play.
 version_added: "2.4"
 options:
   free-form:
     description:
       - The name of the imported playbook is specified directly without any other option.
 notes:
-  - This is really not a module, this is a feature of the Ansible Engine, as such it cannot be overridden the same way
-    a module can.
+  - This is a feature of the Ansible Engine, rather than a module, and cannot be overridden like a module.
 '''
 
 EXAMPLES = """

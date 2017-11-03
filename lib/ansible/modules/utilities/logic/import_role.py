@@ -20,10 +20,10 @@ author: Ansible Core Team (@ansible)
 module: import_role
 short_description: Import a role into a play
 description:
-  - Mostly like the `roles:` keyword, this task loads a role, but it allows you to control it when the role tasks run
-    in between other tasks of the play.
-  - Most keywords, loops and conditionals will only be applied to the imported tasks, not to this statement itself.
-    If you want the opposite behaviour, use M(include_role) instead.
+  - Much like the `roles:` keyword, this task loads a role, but it allows you to control it when the role tasks run in
+    between other tasks of the play.
+  - Most keywords, loops and conditionals will only be applied to the imported tasks, not to this statement itself. If
+    you want the opposite behaviour, use M(include_role) instead.
 version_added: "2.4"
 options:
   name:
