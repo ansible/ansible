@@ -16,6 +16,11 @@
       name: "{{ storage_account }}"
       account_type: Standard_LRS
 
+- name: Create an availability set
+  azure_rm_availabilityset:
+    name: myavailabilityset
+    resource_group: "{{ resource_group }}"
+
 - name: Create virtual network
   azure_rm_virtualnetwork:
       resource_group: "{{ resource_group }}"
@@ -62,6 +67,7 @@
       short_hostname: testvm
       os_type: Linux
       network_interfaces: testvm001
+      availability_set: myavailabilityset
       image:
         offer: UbuntuServer
         publisher: Canonical
