@@ -31,17 +31,17 @@ description:
       image and kickstart image and optionally select to install using
       ISSU (In Server Software Upgrade).
 notes:
-    - Tested against the following platforms and images:
-        - N9k: 7.0(3)I5(3), 7.0(3)I6(1), 7.0(3)I7(1)
-        - N3k: 6.0(2)A8(6), 6.0(2)A8(8)
-        - N7k: 7.3(0)D1(1), 8.0(1), 8.2(1)
+    - Tested against the following platforms and images
+      - N9k 7.0(3)I4(6), 7.0(3)I5(3), 7.0(3)I6(1), 7.0(3)I7(1)
+      - N3k 6.0(2)A8(6), 6.0(2)A8(8)
+      - N7k 7.3(0)D1(1), 8.0(1), 8.2(1)
     - This module executes longer then the default ansible timeout value and
       will generate errors unless the module timeout parameter is set to a
       value of 500 seconds or higher.
-      NOTE: The example time is sufficent for most upgrades but this can be
-            tuned higher based on specific upgrade time requirements.
-            The module will exit with a failure message if the timer is
-            not set to 500 seconds or higher.
+      The example time is sufficent for most upgrades but this can be
+      tuned higher based on specific upgrade time requirements.
+      The module will exit with a failure message if the timer is
+      not set to 500 seconds or higher.
     - Do not include full file paths, just the name of the file(s) stored on
       the top level flash directory.
     - This module attempts to install the software immediately,
@@ -72,13 +72,13 @@ options:
         description:
             - Upgrade using In Service Software Upgrade (ISSU).
               (Only supported on N9k platforms)
-        required: false
-        choices: ['required','desired', 'yes', 'no']
             - Selecting 'required' or 'yes' means that upgrades will only
               proceed if the switch is capable of ISSU.
             - Selecting 'desired' means that upgrades will use ISSU if possible
               but will fall back to disruptive upgrade if needed.
             - Selecting 'no' means do not use ISSU. Forced disruptive.
+        required: false
+        choices: ['required','desired', 'yes', 'no']
         default: 'no'
 '''
 
@@ -90,22 +90,22 @@ EXAMPLES = '''
     issu: desired
     provider: "{{ connection | combine({'timeout': 500}) }}"
 
- - name: Wait for device to come back up with new image
-   wait_for:
+- name: Wait for device to come back up with new image
+  wait_for:
     port: 22
     state: started
     timeout: 500
     delay: 60
     host: "{{ inventory_hostname }}"
 
-  - name: "Check installed OS for newly installed version"
-    nxos_command:
-      commands: ['show version | json']
-      provider: "{{ connection }}"
-    register: output
-  - assert:
-      that:
-      - output['stdout'][0]['kickstart_ver_str'] == '7.0(3)I6(1)'
+- name: Check installed OS for newly installed version
+  nxos_command:
+    commands: ['show version | json']
+    provider: "{{ connection }}"
+  register: output
+- assert:
+    that:
+    - output['stdout'][0]['kickstart_ver_str'] == '7.0(3)I6(1)'
 '''
 
 RETURN = '''
@@ -356,7 +356,7 @@ def massage_install_data(data):
         result_data = default_error_msg
 
     # Further processing may be needed for result_data
-    if len(data) == 2 and type(data[1]) is dict:
+    if len(data) == 2 and isinstance(data[1], dict):
         if 'clierror' in data[1].keys():
             result_data = data[1]['clierror']
         elif 'code' in data[1].keys() and data[1]['code'] == '500':
