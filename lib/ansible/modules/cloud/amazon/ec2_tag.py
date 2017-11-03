@@ -41,7 +41,7 @@ options:
     aliases: []
   purge_tags:
     description:
-      - Purge tags by providing key only, no value. '{"key":""}' and '{"key":"","key":""}'
+      - Whether or not to delete tags by providing which tags to keep only, no value. '{"keepkey":""}' and '{"keepkey":"","keepotherkey":""}'
     required: false
     default: false
     aliases: []
@@ -125,7 +125,7 @@ EXAMPLES = '''
     state: absent
     purge_tags: yes
     tags:
-      TestKey: ""
+      KeepThisKey: ""
 '''
 
 
@@ -195,8 +195,8 @@ def main():
         for (key, value) in set(tags.items()):
             if (key, value) in set(tagdict.items()):
                 dictremove[key] = value
-            if purge_tags:
-                dictremove[key] = None
+        if purge_tags:
+            dictremove = {x:None for x in tagdict if x not in tags}
         if not module.check_mode:
             ec2.delete_tags(resource, dictremove)
         module.exit_json(msg="Tags %s removed for resource %s." % (dictremove,resource), changed=True)
