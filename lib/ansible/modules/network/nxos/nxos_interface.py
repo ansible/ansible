@@ -275,11 +275,11 @@ def get_interface(intf, module):
     try:
         body = execute_show_command(command, module)[0]
     except IndexError:
-        body = []
+        body = {}
     if body:
         try:
             interface_table = body['TABLE_interface']['ROW_interface']
-        except TypeError:
+        except KeyError:
             interface_table = {}
         if interface_table:
             if interface_table.get('eth_mode') == 'fex-fabric':
