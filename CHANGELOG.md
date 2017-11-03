@@ -140,6 +140,8 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/32596)
 * Fix unreferenced variable in SNS topic module
   (https://github.com/ansible/ansible/pull/29117)
+* Handle ignore_errors in loops
+  https://github.com/ansible/ansible/pull/32546
 
 
 <a id="2.4.1"></a>

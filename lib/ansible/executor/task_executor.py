@@ -102,9 +102,14 @@ class TaskExecutor:
                     for item in item_results:
                         if 'changed' in item and item['changed'] and not res.get('changed'):
                             res['changed'] = True
-                        if 'failed' in item and item['failed'] and not res.get('failed'):
-                            res['failed'] = True
-                            res['msg'] = 'One or more items failed'
+                        if 'failed' in item and item['failed']:
+                            item_ignore = item.pop('_ansible_ignore_errors')
+                            if not res.get('failed'):
+                                res['failed'] = True
+                                res['msg'] = 'One or more items failed'
+                                self._task.ignore_errors = item_ignore
+                            elif self._task.ignore_errors and not item_ignore:
+                                self._task.ignore_errors = item_ignore
 
                         # ensure to accumulate these
                         for array in ['warnings', 'deprecations']:
@@ -289,6 +294,7 @@ class TaskExecutor:
             (self._task, tmp_task) = (tmp_task, self._task)
             (self._play_context, tmp_play_context) = (tmp_play_context, self._play_context)
             res = self._execute(variables=task_vars)
+            task_fields = self._task.dump_attrs()
             (self._task, tmp_task) = (tmp_task, self._task)
             (self._play_context, tmp_play_context) = (tmp_play_context, self._play_context)
 
@@ -296,6 +302,7 @@ class TaskExecutor:
             # to the list of results
             res[loop_var] = item
             res['_ansible_item_result'] = True
+            res['_ansible_ignore_errors'] = task_fields.get('ignore_errors')
 
             if label is not None:
                 templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=self._job_vars)
@@ -306,7 +313,7 @@ class TaskExecutor:
                     self._host.name,
                     self._task._uuid,
                     res,
-                    task_fields=self._task.dump_attrs(),
+                    task_fields=task_fields,
                 ),
                 block=False,
             )
