@@ -88,8 +88,7 @@ EXAMPLES = '''
   nxos_install_os:
     system_image_file: nxos.7.0.3.I6.1.bin
     issu: desired
-    timeout: 500
-    provider: "{{ connection }}"
+    provider: "{{ connection | combine({'timeout': 500}) }}"
 
  - name: Wait for device to come back up with new image
    wait_for:
