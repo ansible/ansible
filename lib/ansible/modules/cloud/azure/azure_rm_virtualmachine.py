@@ -598,7 +598,7 @@ try:
                                           VirtualHardDisk, ManagedDiskParameters, \
                                           ImageReference, NetworkProfile, LinuxConfiguration, \
                                           SshConfiguration, SshPublicKey, VirtualMachineSizeTypes, \
-                                          DiskCreateOptionTypes, Plan
+                                          DiskCreateOptionTypes, Plan, SubResource
     from azure.mgmt.network.models import PublicIPAddress, NetworkSecurityGroup, NetworkInterface, \
                                           NetworkInterfaceIPConfiguration, Subnet
     from azure.mgmt.storage.models import StorageAccountCreateParameters, Sku
