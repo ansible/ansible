@@ -65,6 +65,10 @@ class ActionModule(_ActionModule):
             pc.become = provider['authorize'] or False
             pc.become_pass = provider['auth_pass']
 
+            # remove auth from provider arguments
+            provider.pop('password', None)
+            provider.pop('auth_pass', None)
+
             display.vvv('using connection plugin %s' % pc.connection, pc.remote_addr)
             connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
 
@@ -109,18 +113,22 @@ class ActionModule(_ActionModule):
             if provider.get('username') is None:
                 provider['username'] = self._play_context.connection_user
 
-            if provider.get('password') is None:
-                provider['password'] = self._play_context.password
-
             if provider.get('authorize') is None:
                 provider['authorize'] = False
 
             if provider.get('validate_certs') is None:
                 provider['validate_certs'] = ARGS_DEFAULT_VALUE['validate_certs']
 
-            self._task.args['provider'] = provider
+            # copy auth to top level module arguments to correctly handle `no_log`.
+            if self._task.args.get('password') is None:
+                self._task.args['password'] = provider['password'] or self._play_context.password
 
+            # remove auth from provider arguments
+            provider.pop('password', None)
+
+            self._task.args['provider'] = provider
         result = super(ActionModule, self).run(tmp, task_vars)
+
         return result
 
     def _get_socket_path(self, play_context):
