@@ -26,6 +26,7 @@ from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.task_include import TaskInclude
 from ansible.playbook.role import Role
 from ansible.playbook.role.include import RoleInclude
+from ansible.utils.vars import combine_vars
 
 try:
     from __main__ import display
@@ -63,25 +64,50 @@ class IncludeRole(TaskInclude):
         self._parent_role = role
         self._role_name = None
         self._role_path = None
+        self._play = None
+        self._dynamic_role = None
 
-    def get_block_list(self, play=None, variable_manager=None, loader=None):
+    def serialize(self, no_play=False):
+        data = super(IncludeRole, self).serialize()
+        if not self._squashed and not self._finalized:
+            data['_irole_name'] = self._role_name
+            if self._parent_role:
+                data['_irole_prole'] = self._parent_role.serialize()
+            data['_irole_path'] = self._role_path
+            if self._dynamic_role:
+                data['_irole_drole'] = self._dynamic_role.serialize()
+            if self._play and not no_play:
+                data['_irole_play'] = self._play.serialize(
+                    skip_dynamic_roles=True)
+        return data
 
-        # only need play passed in when dynamic
-        if play is None:
-            myplay = self._parent._play
-        else:
-            myplay = play
+    def deserialize(self, data, play=None, include_deps=True):
+        from ansible.playbook.play import Play
+        from ansible.playbook.role import Role
+        self._role_name = data.get('_irole_name', '')
+        self._role_path = data.get('_irole_path', '')
+        if play is None and '_irole_play' in data:
+            play = Play()
+            play.deserialize(data['_irole_play'])
+        if play is not None:
+            setattr(self, '_play', play)
+        if '_irole_drole' in data:
+            r = Role()
+            r.deserialize(data['_irole_drole'])
+            setattr(self, '_dynamic_role', r)
+        if '_irole_prole' in data:
+            r = Role()
+            r.deserialize(data['_irole_prole'])
+            setattr(self, '_parent_role', r)
+        if play is not None:
+            play.register_dynamic_role(self)
+        super(IncludeRole, self).deserialize(data)
 
-        ri = RoleInclude.load(self._role_name, play=myplay, variable_manager=variable_manager, loader=loader)
-        ri.vars.update(self.vars)
-
-        # build role
-        actual_role = Role.load(ri, myplay, parent_role=self._parent_role, from_files=self._from_files)
-        actual_role._metadata.allow_duplicates = self.allow_duplicates
-
-        # save this for later use
-        self._role_path = actual_role._role_path
-
+    def get_block_list(self, play, variable_manager=None, loader=None):
+        self.set_play(play)
+        play = self.get_play()  # may throw error if play is None
+        # Get role
+        ir = self.load_dynamic_role()
         # compile role with parent roles as dependencies to ensure they inherit
         # variables
         if not self._parent_role:
@@ -90,13 +116,14 @@ class IncludeRole(TaskInclude):
             dep_chain = list(self._parent_role._parents)
             dep_chain.append(self._parent_role)
 
-        blocks = actual_role.compile(play=myplay, dep_chain=dep_chain)
+        blocks = ir.compile(play=self._play, dep_chain=dep_chain)
         for b in blocks:
             b._parent = self
 
         # updated available handlers in play
-        handlers = actual_role.get_handler_blocks(play=myplay)
-        myplay.handlers = myplay.handlers + handlers
+        handlers = ir.get_handler_blocks(play=self._play)
+
+        play.handlers = self._play.handlers + handlers
         return blocks, handlers
 
     @staticmethod
@@ -129,15 +156,80 @@ class IncludeRole(TaskInclude):
         return ir
 
     def copy(self, exclude_parent=False, exclude_tasks=False):
-
         new_me = super(IncludeRole, self).copy(exclude_parent=exclude_parent, exclude_tasks=exclude_tasks)
         new_me.statically_loaded = self.statically_loaded
         new_me._from_files = self._from_files.copy()
         new_me._parent_role = self._parent_role
         new_me._role_name = self._role_name
         new_me._role_path = self._role_path
+        new_me.private = self.private
+        try:
+            ir = self.get_dynamic_role()
+        except ValueError:
+            ir = None
+        if ir is not None:
+            new_play = self.get_play().copy()
+            new_me.set_play(new_play)
+            self.load_dynamic_role()
 
         return new_me
+
+    def load_dynamic_role(self, allow_duplicates=None):
+        if allow_duplicates is None:
+            allow_duplicates = self.allow_duplicates
+        play = self.get_play()
+        variable_manager = self.get_variable_manager()
+        loader = variable_manager._loader
+        # build role
+        ri = RoleInclude.load(self._role_name,
+                              play=play,
+                              variable_manager=variable_manager,
+                              loader=loader)
+        ri.vars.update(self.vars)
+        dynamic_role = Role.load(
+            ri, play, parent_role=self._parent_role,
+            from_files=self._from_files)
+        dynamic_role._metadata.allow_duplicates = self.allow_duplicates
+        self._role_path = dynamic_role._role_path
+        self.set_dynamic_role(dynamic_role)
+        play.register_dynamic_role(self)
+        return dynamic_role
+
+    def set_play(self, play):
+        self._play = play
+
+    def get_play(self):
+        if self._play is None:
+            raise ValueError('Play is not initialised')
+        return self._play
+
+    def set_dynamic_role(self, value):
+        self._dynamic_role = value
+
+    def get_dynamic_role(self):
+        if self._dynamic_role is None:
+            raise ValueError('Role is not initialised, call load !')
+        return self._dynamic_role
+
+    @property
+    def is_loaded(self):
+        return self._dynamic_role is not None
+
+    def get_default_vars(self, dep_chain=None):
+        if not self.is_loaded:
+            return dict()
+        if dep_chain is None:
+            dep_chain = self.get_dep_chain()
+        return self.get_dynamic_role().get_default_vars(dep_chain=dep_chain)
+
+    def get_vars(self, include_params=True):
+        ret = TaskInclude.get_vars(self, include_params=include_params)
+        if self.is_loaded:  # not yet loaded skip
+            ret = combine_vars(
+                ret,
+                self.get_dynamic_role().get_vars(include_params=include_params)
+            )
+        return ret
 
     def get_include_params(self):
         v = super(IncludeRole, self).get_include_params()

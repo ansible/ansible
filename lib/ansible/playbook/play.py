@@ -97,6 +97,7 @@ class Play(Base, Taggable, Become):
         self._included_conditional = None
         self._included_path = None
         self._removed_hosts = []
+        self._dynamic_roles = []
         self.ROLE_CACHE = {}
 
     def __repr__(self):
@@ -290,6 +291,16 @@ class Play(Base, Taggable, Become):
     def get_roles(self):
         return self.roles[:]
 
+    def get_dynamic_roles(self):
+        return self._dynamic_roles[:]
+
+    def register_dynamic_role(self, drole):
+        if not getattr(drole, 'private', None):
+            try:
+                self._dynamic_roles.index(drole)
+            except ValueError:
+                self._dynamic_roles.append(drole)
+
     def get_tasks(self):
         tasklist = []
         for task in self.pre_tasks + self.tasks + self.post_tasks:
@@ -299,13 +310,26 @@ class Play(Base, Taggable, Become):
                 tasklist.append(task)
         return tasklist
 
-    def serialize(self):
+    def serialize(self, skip_dynamic_roles=False):
         data = super(Play, self).serialize()
 
+        if skip_dynamic_roles is None:
+            skip_dynamic_roles = []
+
         roles = []
+        dynamic_roles = []
         for role in self.get_roles():
             roles.append(role.serialize())
+
         data['roles'] = roles
+
+        if not skip_dynamic_roles:
+            for role in self.get_dynamic_roles():
+                rdata = role.serialize(no_play=True)
+                dynamic_roles.append(rdata)
+
+        data['dynamic_roles'] = dynamic_roles
+
         data['included_path'] = self._included_path
 
         return data
@@ -325,9 +349,22 @@ class Play(Base, Taggable, Become):
             setattr(self, 'roles', roles)
             del data['roles']
 
+        if 'dynamic_roles' in data:
+            role_data = data.get('dynamic_roles', [])
+            droles = []
+            for role in role_data:
+                r = Role()
+                role['_irole_play'] = self
+                r.deserialize(role)
+                droles.append(r)
+
+            setattr(self, 'dynamic_roles', droles)
+            del data['dynamic_roles']
+
     def copy(self):
         new_me = super(Play, self).copy()
         new_me.ROLE_CACHE = self.ROLE_CACHE.copy()
         new_me._included_conditional = self._included_conditional
         new_me._included_path = self._included_path
+        new_me._dynamic_roles = self._dynamic_roles[:]
         return new_me
