@@ -85,6 +85,7 @@ options:
     version_added: "2.4"
 notes:
   - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
+  - Option I(follow) has been removed in version 2.5, because this module modifies the contents of the file so I(follow=no) doesn't make sense.
 """
 
 EXAMPLES = r"""
