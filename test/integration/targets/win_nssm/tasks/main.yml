@@ -1,0 +1,73 @@
+# This is an initial attempt to NSSM integration tests
+
+# No check-mode or idempotency tests yet.
+
+- name: Create run.bat
+  win_copy:
+    content: dotnet run
+    dest: C:\Windows\Temp\run.bat
+
+- name: Install NSSM
+  win_chocolatey:
+    name: nssm
+    state: present
+
+- name: Install and start the testservice service
+  win_nssm:
+    name: testservice
+    application: C:\Windows\Temp\run.bat
+
+# This will yield the following command: C:\Windows\Temp\run.bat bar "true"
+- name: Install and start the testservice service with a key-value pair argument
+  win_nssm:
+    name: testservice
+    application: C:\Windows\Temp\run.bat
+    app_parameters:
+      bar: true
+
+
+# This will yield the following command: C:\Windows\Temp\run.bat -bar "true"
+- name: Install and start the testservice service with a key-value pair argument, where the argument needs to start with a dash
+  win_nssm:
+    name: testservice
+    application: C:\Windows\Temp\run.bat
+    app_parameters:
+      '-bar': true
+
+# This will yield the following command: C:\Windows\Temp\run.bat bar
+- name: Install and start the testservice service with a single parameter
+  win_nssm:
+    name: testservice
+    application: C:\Windows\Temp\run.bat
+    app_parameters:
+      _: bar
+
+# This will yield the following command: C:\Windows\Temp\run.bat bar -file output.bat
+- name: Install and start the foo service with a mix of single params, and key value pairs
+  win_nssm:
+    name: testservice
+    application: C:\Windows\Temp\run.bat
+    app_parameters:
+      _: bar
+      '-file': 'output.bat'
+
+- name: Install and start the testservice service, but wait for dependencies tcpip and adf
+  win_nssm:
+    name: testservice
+    application: C:\Windows\Temp\run.bat
+    dependencies: 'adf,tcpip'
+
+- name: Remove the testservice service
+  win_nssm:
+    name: testservice
+    state: absent
+
+- name: Uninstall NSSM
+  win_chocolatey:
+    name: nssm
+    state: absent
+
+- name: Clean up run.bat
+  win_file:
+    path: C:\Windows\Temp\run.bat
+    state: absent
