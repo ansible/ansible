@@ -42,9 +42,9 @@ options:
     version:
       description:
         - Specify the version of the managed box.
+        - Please consider using an explicit version with the state "absent".
       required: false
       default: latest
-      N.B: please consider using an explicit version with the state "absent".
     provider:
       description:
         - Specify the provider for the box.
