@@ -109,6 +109,7 @@ options:
     availability_set:
         description:
             - Name or ID of an existing availability set to add the VM to. None by default.
+        version_added: "2.5"
     storage_account_name:
         description:
             - Name of an existing storage account that supports creation of VHD blobs. If not specified for a new VM,
@@ -1459,7 +1460,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         try:
             return self.compute_client.availability_sets.get(resource_group, name)
         except Exception as exc:
-            self.fail("Error fetching availability set {0} - {1}".format(name, str(exc))) 
+            self.fail("Error fetching availability set {0} - {1}".format(name, str(exc)))
 
     def get_storage_account(self, name):
         try:
