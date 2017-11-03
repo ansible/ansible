@@ -92,7 +92,7 @@ from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
 
 
-def describe_app(ebs, app_name):
+def describe_app(ebs, app_name, module):
     apps = list_apps(ebs, app_name, module)
 
     return None if len(apps) != 1 else apps[0]
@@ -176,7 +176,7 @@ def main():
     else:
         module.fail_json(msg='region must be specified')
 
-    app = describe_app(ebs, app_name)
+    app = describe_app(ebs, app_name, module)
 
     if module.check_mode:
         check_app(ebs, app, module)
@@ -190,7 +190,7 @@ def main():
             except Exception as e:
                 module.fail_json_aws(e, msg="Could not create application")
 
-            app = describe_app(ebs, app_name)
+            app = describe_app(ebs, app_name, module)
 
             result = dict(changed=True, app=app)
         else:
@@ -203,7 +203,7 @@ def main():
                 except Exception as e:
                     module.fail_json_aws(e, msg="Could not update application")
 
-                app = describe_app(ebs, app_name)
+                app = describe_app(ebs, app_name, module)
 
                 result = dict(changed=True, app=app)
             else:
