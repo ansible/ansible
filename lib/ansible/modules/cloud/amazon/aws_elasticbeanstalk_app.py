@@ -173,7 +173,7 @@ def main():
     else:
         module.fail_json(msg='region must be specified')
 
-    app = describe_app(ebs, app_name)
+    app = describe_app(ebs, app_name, module)
 
     if module.check_mode:
         check_app(ebs, app, module)
