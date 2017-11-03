@@ -116,16 +116,16 @@ install_state:
     type: dictionary
     sample: {
     "install_state": [
-        "Compatibility check is done:",
-        "Module  bootable          Impact  Install-type  Reason",
-        "------  --------  --------------  ------------  ------",
-        "     1       yes      disruptive         reset  default upgrade is not hitless",
-        "Images will be upgraded according to following table:",
-        "Module       Image                  Running-Version(pri:alt)           New-Version  Upg-Required",
-        "------  ----------  ----------------------------------------  --------------------  ------------",
-        "     1        nxos                               7.0(3)I7(1)           7.0(3)I6(1)           yes",
-        "     1        bios     v07.59(08/26/2016):v07.06(03/02/2014)    v07.59(08/26/2016)            no"
-    ],
+        "Compatibility check is done:", 
+        "Module  bootable          Impact  Install-type  Reason", 
+        "------  --------  --------------  ------------  ------", 
+        "     1       yes  non-disruptive         reset  ", 
+        "Images will be upgraded according to following table:", 
+        "Module       Image                  Running-Version(pri:alt)           New-Version  Upg-Required", 
+        "------  ----------  ----------------------------------------  --------------------  ------------", 
+        "     1        nxos                               7.0(3)I6(1)           7.0(3)I7(1)           yes", 
+        "     1        bios                        v4.4.0(07/12/2017)    v4.4.0(07/12/2017)            no"
+    ], 
     }
 '''
 
