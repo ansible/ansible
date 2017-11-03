@@ -24,8 +24,6 @@ import copy
 import inspect
 import traceback
 
-import pdb
-
 from os.path import expanduser
 
 from ansible.module_utils.basic import AnsibleModule
