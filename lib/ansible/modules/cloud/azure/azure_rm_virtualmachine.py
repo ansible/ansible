@@ -451,6 +451,9 @@ azure_vm:
     type: complex
     contains: {
         "properties": {
+            "availabilitySet": {
+                    "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Compute/availabilitySets/MYAVAILABILITYSET"
+            },
             "hardwareProfile": {
                 "vmSize": "Standard_D1"
             },
@@ -1066,6 +1069,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                             storage_account_type=vm_dict['properties']['storageProfile']['osDisk']['managedDisk']['storageAccountType']
                         )
 
+                    availability_set_resource = None
+                    if vm_dict['properties']['availabilitySet']['id']:
+                        availability_set_resource = SubResource(vm_dict['properties']['availabilitySet']['id'])
                     vm_resource = VirtualMachine(
                         vm_dict['location'],
                         os_profile=OSProfile(
@@ -1091,6 +1097,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                 version=vm_dict['properties']['storageProfile']['imageReference']['version']
                             ),
                         ),
+                        availability_set=availability_set_resource,
                         network_profile=NetworkProfile(
                             network_interfaces=nics
                         ),

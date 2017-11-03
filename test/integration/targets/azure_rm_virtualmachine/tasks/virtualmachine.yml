@@ -75,6 +75,10 @@
         version: latest
   register: output
 
+- assert:
+      that:
+        - azure_vm.properties.availabilitySet.id
+
 - name: Restart the virtual machine
   azure_rm_virtualmachine:
       resource_group: "{{ resource_group }}"
