@@ -278,7 +278,7 @@ class AzureRMKeyVault(AzureRMModuleBase):
         # create a new vault variable in case the 'try' doesn't find a vault
         vault = None
 
-        for key in self.module_arg_spec.keys() + ['tags']:
+        for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
 
         self.results['check_mode'] = self.check_mode
