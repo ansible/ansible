@@ -69,6 +69,7 @@ options:
         required: false
         default: null
     issu:
+        version_added: "2.5"
         description:
             - Upgrade using In Service Software Upgrade (ISSU).
               (Only supported on N9k platforms)
