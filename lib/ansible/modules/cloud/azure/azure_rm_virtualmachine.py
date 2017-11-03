@@ -969,6 +969,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         network_profile=NetworkProfile(
                             network_interfaces=nics
                         ),
+                        availability_set=availability_set_resource,
                         plan=plan
                     )
 
@@ -1090,7 +1091,6 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                 version=vm_dict['properties']['storageProfile']['imageReference']['version']
                             ),
                         ),
-                        availability_set = availability_set_resource,
                         network_profile=NetworkProfile(
                             network_interfaces=nics
                         ),
