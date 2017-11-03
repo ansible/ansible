@@ -247,6 +247,7 @@ class VagrantBox:
         else:
             self.module.fail_json(msg=err)
 
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
