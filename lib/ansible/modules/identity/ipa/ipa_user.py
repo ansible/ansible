@@ -49,7 +49,6 @@ options:
     - List of telephone numbers assigned to the user.
     - If an empty list is passed all assigned telephone numbers will be deleted.
     - If None is passed telephone numbers will not be checked or changed.
-    version_added: 2.5
   title:
     description: Title
   uid:
