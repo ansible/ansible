@@ -110,6 +110,7 @@ class PyVmomiHelper(object):
         self.content = connect_to_api(self.module)
 
     def getvm(self, name=None, uuid=None, folder=None):
+        dc = self.params['datacenter']
         vm = None
         match_first = False
         if uuid:
@@ -117,7 +118,7 @@ class PyVmomiHelper(object):
         elif folder and name:
             if self.params['name_match'] == 'first':
                 match_first = True
-            vm = find_vm_by_id(self.content, vm_id=name, vm_id_type="inventory_path", folder=folder, match_first=match_first)
+            vm = find_vm_by_id(self.content, vm_id=name, vm_id_type="inventory_path", datacenter=dc, folder=folder, match_first=match_first)
         return vm
 
     def gather_facts(self, vm):
