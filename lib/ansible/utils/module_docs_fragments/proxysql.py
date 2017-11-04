@@ -25,8 +25,8 @@ options:
     default: 6032
   config_file:
     description:
-      - Specify a config file from which login_user and login_password are to
-        be read.
+      - Specify a config file from which I(login_user) and I(login_password)
+        are to be read.
     default: ''
 requirements:
    - MySQLdb
@@ -37,11 +37,12 @@ requirements:
 options:
   save_to_disk:
     description:
-      - Save mysql host config to sqlite db on disk to persist the
-        configuration.
+      - Save config to sqlite db on disk to persist the configuration.
+    type: bool
     default: True
   load_to_runtime:
     description:
-      - Dynamically load mysql host config to runtime memory.
+      - Dynamically load config to runtime memory.
+    type: bool
     default: True
 '''
