@@ -78,12 +78,6 @@ options:
   others:
     description:
       - All arguments accepted by the M(file) module also work here.
-  follow:
-    description:
-      - 'This flag indicates that filesystem links, if they exist, should be followed.'
-    type: bool
-    default: "no"
-    version_added: "1.9"
   encoding:
     description:
       - "The character encoding for reading and writing the file."
@@ -91,6 +85,7 @@ options:
     version_added: "2.4"
 notes:
   - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
+  - Option I(follow) has been removed in version 2.5, because this module modifies the contents of the file so I(follow=no) doesn't make sense.
 """
 
 EXAMPLES = r"""
@@ -269,8 +264,8 @@ def main():
     if changed and not module.check_mode:
         if params['backup'] and os.path.exists(path):
             res_args['backup_file'] = module.backup_local(path)
-        if params['follow'] and os.path.islink(path):
-            path = os.path.realpath(path)
+        # We should always follow symlinks so that we change the real file
+        path = os.path.realpath(path)
         write_changes(module, to_bytes(result[0], encoding=encoding), path)
 
     res_args['msg'], res_args['changed'] = check_file_attrs(module, changed, msg)
