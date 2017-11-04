@@ -297,7 +297,7 @@ class AzureRMKeyVault(AzureRMModuleBase):
             vault = self.keyvault_client.vaults.get(self.resource_group, self.name)
 
             # serialize object into a dictionary
-            results = vault_to_dict(vault)
+            results = vault.as_dict() # vault_to_dict(vault)
             
             # don't change anything if creating an existing vault (unless outdated tags), but change if deleting it
             if self.state == 'present':
@@ -363,7 +363,7 @@ class AzureRMKeyVault(AzureRMModuleBase):
             new_vault = self.keyvault_client.vaults.create_or_update(self.resource_group, self.name, vault)
         except Exception as exc:
             self.fail("Error creating or updating vault {0} - {1}".format(self.name, str(exc)))
-        return vault_to_dict(new_vault)
+        return new_vault.as_dict() # vault_to_dict(new_vault)
 
     def delete_vault(self):
         try:
@@ -418,7 +418,7 @@ def vault_to_dict(vault):
     )
     if vault.properties:
         result['properties']=dict(
-            tenant_id=vault.properties.tenant_id,
+            tenant_id=vault.properties.tenant_id or None,
             sku=dict(
                 name=vault.properties.sku.name.value
             ) if vault.properties.sku else None,
