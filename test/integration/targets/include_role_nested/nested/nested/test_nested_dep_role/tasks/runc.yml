@@ -1,0 +1,4 @@
+---
+- debug:
+    msg: from test_nested_dep_role
+- include_role: {name: nested/nested/test_nested_dep_role2}
