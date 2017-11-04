@@ -66,6 +66,7 @@ URL_MAPPING = dict(
     aep=dict(aci_class='infraAttEntityP', mo='infra/attentp-', key='name'),
     ap=dict(aci_class='fvAp', mo='ap-', key='name'),
     bd=dict(aci_class='fvBD', mo='BD-', key='name'),
+    bd_dhcp_label=dict(aci_class='dhcpLbl', mo='dhcplbl-', key='name'),
     bd_l3out=dict(aci_class='fvRsBDToOut', mo='rsBDToOut-', key='tnL3extOutName'),
     contract=dict(aci_class='vzBrCP', mo='brc-', key='name'),
     entry=dict(aci_class='vzEntry', mo='e-', key='name'),
@@ -765,3 +766,4 @@ class ACIModule(object):
         else:
             self.result['changed'] = True
             self.result['method'] = 'POST'
+
