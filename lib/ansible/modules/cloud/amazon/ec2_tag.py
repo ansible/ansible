@@ -196,10 +196,11 @@ def main():
             if (key, value) in set(tagdict.items()):
                 dictremove[key] = value
         if purge_tags:
-            dictremove = {x:None for x in tagdict if x not in tags}
+            dictremove = dict.fromkeys(set(tagdict) - set(tags), None)
         if not module.check_mode:
             ec2.delete_tags(resource, dictremove)
         module.exit_json(msg="Tags %s removed for resource %s." % (dictremove,resource), changed=True)
+
 
     if state == 'list':
         module.exit_json(changed=False, tags=tagdict)
