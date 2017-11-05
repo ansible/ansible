@@ -182,8 +182,3 @@
       - result5.changed == True
       - result5.msg == 'section removed'
       - content5 == ""
-
-
-
-
-
