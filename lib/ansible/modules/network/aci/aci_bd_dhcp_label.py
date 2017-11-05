@@ -121,8 +121,8 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
         required_if=[
-            ['state', 'absent', ['bd', 'tenant']],
-            ['state', 'present', ['bd', 'tenant']],
+            ['state', 'absent', ['bd', 'tenant', 'dhcp_label']],
+            ['state', 'present', ['bd', 'tenant', 'dhcp_label']],
         ],
     )
 
