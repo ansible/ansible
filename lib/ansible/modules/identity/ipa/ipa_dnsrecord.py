@@ -31,7 +31,7 @@ options:
   record_type:
     description:
     - The type of DNS record name
-    - Currently, 'A', 'AAAA', 'PTR' and 'TXT' are supported
+    - Currently, 'A', 'AAAA', 'PTR' and 'TXT' (added in 2.5) are supported
     required: false
     default: 'A'
     choices: ['A', 'AAAA', 'PTR', 'TXT']
