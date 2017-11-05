@@ -47,6 +47,14 @@ options:
         description:
             - Boolean indication whether to allow partial registration of Virtual Machine when C(state) is registered.
         version_added: "2.4"
+    vnic_profile_mappings:
+        description:
+            - "Mapper which maps an external virtual NIC profile to one that exists in the engine when C(state) is registered.
+               vnic_profile is described by the following dictionary:"
+            - "C(source_network_name): The network name of the source network."
+            - "C(source_profile_name): The prfile name related to the source network."
+            - "C(target_profile_id): The id of the target profile id to be mapped to in the engine."
+        version_added: "2.5"
     template:
         description:
             - Name of the template, which should be used to create Virtual Machine.
@@ -418,6 +426,21 @@ EXAMPLES = '''
     allow_partial_import: "True"
     cluster: mycluster
     id: 1111-1111-1111-1111
+
+- name: Register VM with vnic profile mappings
+  ovirt_vms:
+    state: registered
+    storage_domain: mystorage
+    cluster: mycluster
+    id: 1111-1111-1111-1111
+    vnic_profile_mappings:
+    - source_network_name: mynetwork
+      source_profile_name: mynetwork
+      target_profile_id: 3333-3333-3333-3333
+    - source_network_name: mynetwork2
+      source_profile_name: mynetwork2
+      target_profile_id: 4444-4444-4444-4444
+    reassign_bad_macs: "True"
 
 - name: Creates a stateless VM which will always use latest template version
   ovirt_vms:
@@ -1013,6 +1036,23 @@ class VmsModule(BaseModule):
                 self.changed = True
 
 
+def _get_vnic_profile_mappings(module):
+    vnicProfileMappings = list()
+
+    for vnicProfileMapping in module.params['vnic_profile_mappings']:
+        vnicProfileMappings.append(
+            otypes.VnicProfileMapping(
+                source_network_name=vnicProfileMapping['source_network_name'],
+                source_network_profile_name=vnicProfileMapping['source_profile_name'],
+                target_vnic_profile=otypes.VnicProfile(
+                    id=vnicProfileMapping['target_profile_id'],
+                ) if vnicProfileMapping['target_profile_id'] else None,
+            )
+        )
+
+    return vnicProfileMappings
+
+
 def import_vm(module, connection):
     vms_service = connection.system_service().vms_service()
     if search_by_name(vms_service, module.params['name']) is not None:
@@ -1184,6 +1224,7 @@ def main():
                               ]),
         cd_iso=dict(type='str'),
         boot_devices=dict(type='list'),
+        vnic_profile_mappings=dict(default=[], type='list'),
         high_availability=dict(type='bool'),
         lease=dict(type='str'),
         stateless=dict(type='bool'),
@@ -1369,7 +1410,9 @@ def main():
                     allow_partial_import=module.params['allow_partial_import'],
                     cluster=otypes.Cluster(
                         name=module.params['cluster']
-                    ) if module.params['cluster'] else None
+                    ) if module.params['cluster'] else None,
+                    vnic_profile_mappings=_get_vnic_profile_mappings(module)
+                    if module.params['vnic_profile_mappings'] else None
                 )
 
                 if module.params['wait']:
