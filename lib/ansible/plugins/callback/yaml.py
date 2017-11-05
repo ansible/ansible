@@ -26,6 +26,7 @@ import string
 import sys
 from ansible.plugins.callback import CallbackBase, strip_internal_keys
 from ansible.plugins.callback.default import CallbackModule as Default
+from ansible.parsing.yaml.dumper import AnsibleDumper
 
 
 # from http://stackoverflow.com/a/15423007/115478
@@ -61,9 +62,6 @@ def my_represent_scalar(self, tag, value, style=None):
     return node
 
 
-yaml.representer.BaseRepresenter.represent_scalar = my_represent_scalar
-
-
 class CallbackModule(Default):
 
     """
@@ -77,6 +75,7 @@ class CallbackModule(Default):
 
     def __init__(self):
         super(CallbackModule, self).__init__()
+        yaml.representer.BaseRepresenter.represent_scalar = my_represent_scalar
 
     def _dump_results(self, result, indent=None, sort_keys=True, keep_invocation=False):
         if result.get('_ansible_no_log', False):
@@ -114,7 +113,7 @@ class CallbackModule(Default):
 
         if abridged_result:
             dumped += '\n'
-            dumped += yaml.safe_dump(json.loads(json.dumps(abridged_result, ensure_ascii=False)), width=1000, default_flow_style=False)
+            dumped += yaml.dump(json.loads(json.dumps(abridged_result, ensure_ascii=False)), width=1000, Dumper=AnsibleDumper, default_flow_style=False)
 
         # indent by a couple of spaces
         dumped = '\n  '.join(dumped.split('\n')).rstrip()
