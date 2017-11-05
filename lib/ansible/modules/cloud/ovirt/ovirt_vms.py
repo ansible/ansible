@@ -60,6 +60,10 @@ options:
         description:
             - "Boolean indication whether to allow partial registration of Virtual Machine when C(state) is registered."
         version_added: "2.4"
+    vnic_profile_mappings:
+        description:
+            - "Mapper which maps an external virtual NIC profile to one that exists in the engine when C(state) is registered."
+        version_added: "2.4"
     template:
         description:
             - "Name of the template, which should be used to create Virtual Machine. Required if creating VM."
@@ -388,6 +392,20 @@ ovirt_vms:
     allow_partial_import: "True"
     cluster: mycluster
     id: 1111-1111-1111-1111
+
+# Register VM with vnic profile mappings
+ovirt_vms:
+    state: registered
+    storage_domain: mystorage
+    cluster: mycluster
+    id: 1111-1111-1111-1111
+    vnic_profile_mappings:
+      - source_network_name: mynetwork
+        source_profile_name: mynetwork
+        target_profile_name: target_network
+      - source_network_name: mynetwork2
+        source_profile_name: mynetwork2
+        target_profile_name: target_network2
 
 # Creates a stateless VM which will always use latest template version:
 ovirt_vms:
@@ -961,6 +979,26 @@ class VmsModule(BaseModule):
                 self.changed = True
 
 
+def _get_vnic_profile_mappings(module):
+    if module.params['vnic_profile_mappings'] is None:
+        return None
+
+    vnicProfileMappings = list()
+
+    for vnicProfileMapping in module.params['vnic_profile_mappings']:
+        vnicProfileMappings.append(
+            otypes.VnicProfileMapping(
+                source_network_name=vnicProfileMapping.params['source_network_name'],
+                source_network_profile_name=vnicProfileMapping.params['source_network_profile_name'],
+                target_vnic_profile=types.VnicProfile(
+                    name=vnicProfileMapping.params['target_vnic_profile'],
+                ),
+            )
+        )
+
+    return vnicProfileMappings
+
+
 def import_vm(module, connection):
     vms_service = connection.system_service().vms_service()
     if search_by_name(vms_service, module.params['name']) is not None:
@@ -1118,6 +1156,7 @@ def main():
         cpu_sockets=dict(default=None, type='int'),
         cpu_cores=dict(default=None, type='int'),
         cpu_shares=dict(default=None, type='int'),
+        vnic_profile_mappings=dict(default=[], type='list'),
         type=dict(choices=['server', 'desktop']),
         operating_system=dict(
             default=None,
@@ -1318,7 +1357,8 @@ def main():
                     allow_partial_import=module.params['allow_partial_import'],
                     cluster=otypes.Cluster(
                         name=module.params['cluster']
-                    ) if module.params['cluster'] else None
+                    ) if module.params['cluster'] else None,
+                    vnic_profile_mappings=_get_vnic_profile_mappings(module)
                 )
 
                 if module.params['wait']:
