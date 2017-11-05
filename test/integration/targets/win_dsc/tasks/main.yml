@@ -16,12 +16,13 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+- name: run setup to ensure all checked facts are populated
+  setup: 
 
 - name: check whether servermanager module is available (windows 2008 r2 or later)
   raw: PowerShell -Command Import-Module ServerManager
   register: win_feature_has_servermanager
   ignore_errors: true
-
 
 - name: start with feature absent
   win_feature:
