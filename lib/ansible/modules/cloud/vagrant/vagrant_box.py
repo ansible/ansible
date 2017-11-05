@@ -69,7 +69,7 @@ options:
       description:
         - The name to give to the box if added from a file.
         - When adding a box from a catalog, the name is included in the catalog entry and should not be specified.
-      default: false
+      default: the basename of the file
     checksum:
       description:
         - The checksum for the box that is downloaded.
@@ -158,7 +158,7 @@ class VagrantBox:
 
     def add(self):
         if self.ispresent() and not self.force:
-            self.module.exit_json(changed=False, stdout="The box: '%s' version: '%s' for provider: '%s' already exists" % (self.box, self.version, self.provider))
+            self.module.exit_json(changed=False, stdout="The box: '%s' version: '%s' provider: '%s' already exists" % (self.box, self.version, self.provider))
 
         opts_list = ['--clean']
         opts_dict = dict()
@@ -202,14 +202,13 @@ class VagrantBox:
         if rc == 0:
             self.module.exit_json(changed=True, rc=rc, stdout=out, stderr=err)
         elif "already exists" in err:
-            self.module.exit_json(changed=False, stdout="The box: '%s' version: '%s' for provider: '%s' already exists" % (self.box, self.version, self.provider))
+            self.module.exit_json(changed=False, stdout="The box: '%s' version: '%s' provider: '%s' already exists" % (self.box, self.version, self.provider))
         else:
             self.module.fail_json(msg=err)
 
     def delete(self):
         if not self.ispresent() and self.version is not "latest":
-            self.module.exit_json(changed=False, stdout="The box: '%s' version: '%s' for provider: '%s' already removed" % (self.box, self.version, self.provider))
-
+            self.module.exit_json(changed=False, stdout="The box: '%s' version: '%s' provider: '%s' already removed" % (self.box, self.version, self.provider))
 
         opts_list = []
         if os.path.exists(self.box):
@@ -234,13 +233,13 @@ class VagrantBox:
         elif "interface with the UI" in err:
             self.module.fail_json(msg="The box: '%s' is still in use by at least one Vagrant environment, use 'force' flag to force the deletion" % self.box)
         elif "could not be found" in err:
-            self.module.exit_json(changed=False, stdout="The box: '%s' version: '%s' for provider: '%s' already removed" % (box, self.version, self.provider))
+            self.module.exit_json(changed=False, stdout="The box: '%s' version: '%s' provider: '%s' already removed" % (box, self.version, self.provider))
         else:
             self.module.fail_json(msg=err, rc=rc)
 
     def update(self):
         if not self.ispresent() and self.version is not "latest":
-            self.module.fail_json(msg="The box: '%s' version: '%s' for provider: '%s' does not exist" % (self.box, self.version, self.provider))
+            self.module.fail_json(msg="The box: '%s' version: '%s' provider: '%s' does not exist" % (self.box, self.version, self.provider))
 
         if os.path.exists(self.box):
             box = os.path.basename(self.box)
