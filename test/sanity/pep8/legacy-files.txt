@@ -1,7 +1,3 @@
-lib/ansible/cli/config.py
-lib/ansible/config/data.py
-lib/ansible/config/manager.py
-lib/ansible/constants.py
 lib/ansible/modules/cloud/amazon/_ec2_ami_search.py
 lib/ansible/modules/cloud/amazon/_ec2_remote_facts.py
 lib/ansible/modules/cloud/amazon/_ec2_vpc.py
@@ -351,4 +347,3 @@ lib/ansible/modules/system/solaris_zone.py
 lib/ansible/modules/system/svc.py
 lib/ansible/modules/system/timezone.py
 lib/ansible/modules/system/ufw.py
-lib/ansible/playbook/base.py

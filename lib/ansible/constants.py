@@ -1,8 +1,7 @@
-# Copyright (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
-# Copyright (c) 2017 Ansible Project
+# Copyright: (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -59,7 +58,7 @@ def set_constant(name, value, export=vars()):
     export[name] = value
 
 
-### CONSTANTS ### yes, actual ones
+# CONSTANTS ### yes, actual ones
 BECOME_METHODS = ['sudo', 'su', 'pbrun', 'pfexec', 'doas', 'dzdo', 'ksu', 'runas', 'pmrun']
 BECOME_ERROR_STRINGS = {
     'sudo': 'Sorry, try again.',
@@ -100,7 +99,7 @@ TREE_DIR = None
 VAULT_VERSION_MIN = 1.0
 VAULT_VERSION_MAX = 1.0
 
-### POPULATE SETTINGS FROM CONFIG ###
+# POPULATE SETTINGS FROM CONFIG ###
 config = ConfigManager()
 
 # Generate constants from config
@@ -118,7 +117,7 @@ for setting in config.data.get_settings():
             except ValueError:
                 pass  # not a python data structure
         except:
-            pass # not templatable
+            pass  # not templatable
         value = ensure_type(value, setting.name)
 
     set_constant(setting.name, value)
