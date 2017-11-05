@@ -18,7 +18,7 @@ description:
 - Manage VRF (private networks aka. contexts) on Cisco ACI fabrics.
 - Each context is a private network associated to a tenant, i.e. VRF.
 - More information from the internal APIC class
-  I(fv:Ctx) at U(https://developer.cisco.com/media/mim-ref/MO-fvCtx.html).
+  I(fv:Ctx) at U(https://pubhub-prod.s3.amazonaws.com/media/apic-mim-ref/docs/MO-fvCtx.html).
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)

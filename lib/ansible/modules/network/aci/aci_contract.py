@@ -17,7 +17,7 @@ short_description: Manage contract resources on Cisco ACI fabrics (vz:BrCP)
 description:
 - Manage Contract resources on Cisco ACI fabrics.
 - More information from the internal APIC class
-  I(vz:BrCP) at U(https://developer.cisco.com/media/mim-ref/MO-vzBrCP.html).
+  I(vz:BrCP) at U(https://pubhub-prod.s3.amazonaws.com/media/apic-mim-ref/docs/MO-vzBrCP.html).
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)

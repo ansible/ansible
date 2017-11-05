@@ -17,7 +17,7 @@ short_description: Manage MCP interface policies on Cisco ACI fabrics (mcp:IfPol
 description:
 - Manage MCP interface policies on Cisco ACI fabrics.
 - More information from the internal APIC class
-  I(mcp:IfPol) at U(https://developer.cisco.com/media/mim-ref/MO-mcpIfPol.html).
+  I(mcp:IfPol) at U(https://pubhub-prod.s3.amazonaws.com/media/apic-mim-ref/docs/MO-mcpIfPol.html).
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)

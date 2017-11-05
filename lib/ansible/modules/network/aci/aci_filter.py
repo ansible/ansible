@@ -17,7 +17,7 @@ short_description: Manages top level filter objects on Cisco ACI fabrics (vz:Fil
 description:
 - Manages top level filter objects on Cisco ACI fabrics.
 - More information from the internal APIC class
-  I(vz:Filter) at U(https://developer.cisco.com/media/mim-ref/MO-vzFilter.html).
+  I(vz:Filter) at U(https://pubhub-prod.s3.amazonaws.com/media/apic-mim-ref/docs/MO-vzFilter.html).
 - This modules does not manage filter entries, see M(aci_filter_entry) for this functionality.
 author:
 - Swetha Chunduri (@schunduri)
