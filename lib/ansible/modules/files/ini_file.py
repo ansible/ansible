@@ -40,7 +40,7 @@ options:
         a single value is being set.
       - If left empty or set to `null`, the I(option) will be placed before the first I(section).
         Using `null` is also required if the config format does not support sections.
-    required: true
+    required: false
   option:
     description:
       - If set (required for changing a I(value)), this is the name of the option.
@@ -149,7 +149,13 @@ def do_ini(module, filename, section=None, option=None, value=None,
     if module._diff:
         diff['before'] = ''.join(ini_lines)
 
+    # Needed vars init
     changed = False
+    msg = 'OK'
+    if no_extra_spaces:
+        assignment_format = '%s=%s\n'
+    else:
+        assignment_format = '%s = %s\n'
 
     # ini file could be empty
     if not ini_lines:
@@ -160,77 +166,140 @@ def do_ini(module, filename, section=None, option=None, value=None,
         ini_lines[-1] += '\n'
         changed = True
 
-    # append a fake section line to simplify the logic
-    ini_lines.append('[')
+    if not section or section == 'null':
+        # Managing options within no section
+        # Regex to look for a section
+        r_section_string = '^\s*\['
+        r_section = re.compile(r_section_string)
 
-    within_section = not section
-    section_start = 0
-    msg = 'OK'
-    if no_extra_spaces:
-        assignment_format = '%s=%s\n'
-    else:
-        assignment_format = '%s = %s\n'
+        # Regex to look for the option key
+        r_key_string = '^\s*%s\s*=\s*' % option
+        r_key = re.compile(r_key_string)
 
-    for index, line in enumerate(ini_lines):
-        if line.startswith('[%s]' % section):
-            within_section = True
-            section_start = index
-        elif line.startswith('['):
-            if within_section:
-                if state == 'present':
-                    # insert missing option line at the end of the section
-                    for i in range(index, 0, -1):
-                        # search backwards for previous non-blank or non-comment line
-                        if not re.match(r'^[ \t]*([#;].*)?$', ini_lines[i - 1]):
-                            ini_lines.insert(i, assignment_format % (option, value))
-                            msg = 'option added'
-                            changed = True
-                            break
-                elif state == 'absent' and not option:
-                    # remove the entire section
-                    del ini_lines[section_start:index]
-                    msg = 'section removed'
-                    changed = True
-                break
+        # Look for the first section line
+        section_found = False
+
+        # Looking for every section defined
+        sections_start_line = [index for index, line in enumerate(ini_lines) if r_section.match(line)]
+
+        try:
+            # line of the first section...
+            first_section_line = sections_start_line[0]
+            section_found = True
+        except IndexError:
+            # ...or, if no section found, the scope to look for the option is the whole file
+            first_section_line = len(ini_lines)
+
+        # Looking for the option
+        option_found = False
+        if first_section_line > 0:
+            # Looking for every line containing this option before the first section
+            # I know, it should be declared only once...
+            option_in_lines = [index for index, line in enumerate(ini_lines[:first_section_line]) if r_key.match(line)]
+            try:
+                # Option found
+                workon_line = option_in_lines[0]
+                option_found = True
+            except IndexError:
+                # option does not exist
+                workon_line = 0
         else:
-            if within_section and option:
-                if state == 'present':
-                    # change the existing option line
-                    if match_opt(option, line):
-                        newline = assignment_format % (option, value)
-                        option_changed = ini_lines[index] != newline
-                        changed = changed or option_changed
-                        if option_changed:
-                            msg = 'option changed'
-                        ini_lines[index] = newline
-                        if option_changed:
-                            # remove all possible option occurrences from the rest of the section
-                            index = index + 1
-                            while index < len(ini_lines):
-                                line = ini_lines[index]
-                                if line.startswith('['):
-                                    break
-                                if match_active_opt(option, line):
-                                    del ini_lines[index]
-                                else:
-                                    index = index + 1
-                        break
-                elif state == 'absent':
-                    # delete the existing line
-                    if match_active_opt(option, line):
-                        del ini_lines[index]
+            # No option before first section or EOF
+            workon_line = 0
+
+        if state == "absent" and option_found > 0:
+            # Delete option only if it has been found
+            ini_lines.pop(workon_line)
+            changed = True
+            msg = 'option removed'
+
+        if state == "present":
+            if option_found:
+                # option found, so it could need, or not, be modified
+
+                # get and prepare existing value to be compared to the target value
+                existing_option = [x.strip() for x in ini_lines[workon_line].split("=")]
+
+                # do the same with the target key-value pair desired
+                desired_option = [x.strip() for x in (assignment_format % (option, value)).split("=")]
+
+                if existing_option[1] != desired_option[1]:
+                    ini_lines[workon_line] = assignment_format % (option, value) + '\n'
+                    changed = True
+                    msg = 'option modified'
+            else:
+                # Option does not exist, so it's inserted
+                ini_lines.insert(workon_line, assignment_format % (option, value) + '\n')
+                changed = True
+                msg = 'option added'
+
+    else:
+        # append a fake section line to simplify the logic
+        ini_lines.append('[')
+
+        within_section = not section
+        section_start = 0
+
+        for index, line in enumerate(ini_lines):
+            if line.startswith('[%s]' % section):
+                within_section = True
+                section_start = index
+            elif line.startswith('['):
+                if within_section:
+                    if state == 'present':
+                        # insert missing option line at the end of the section
+                        for i in range(index, 0, -1):
+                            # search backwards for previous non-blank or non-comment line
+                            if not re.match(r'^[ \t]*([#;].*)?$', ini_lines[i - 1]):
+                                ini_lines.insert(i, assignment_format % (option, value))
+                                msg = 'option added'
+                                changed = True
+                                break
+                    elif state == 'absent' and not option:
+                        # remove the entire section
+                        del ini_lines[section_start:index]
+                        msg = 'section removed'
                         changed = True
-                        msg = 'option changed'
-                        break
+                    break
+            else:
+                if within_section and option:
+                    if state == 'present':
+                        # change the existing option line
+                        if match_opt(option, line):
+                            newline = assignment_format % (option, value)
+                            option_changed = ini_lines[index] != newline
+                            changed = changed or option_changed
+                            if option_changed:
+                                msg = 'option changed'
+                            ini_lines[index] = newline
+                            if option_changed:
+                                # remove all possible option occurrences from the rest of the section
+                                index = index + 1
+                                while index < len(ini_lines):
+                                    line = ini_lines[index]
+                                    if line.startswith('['):
+                                        break
+                                    if match_active_opt(option, line):
+                                        del ini_lines[index]
+                                    else:
+                                        index = index + 1
+                            break
+                    elif state == 'absent':
+                        # delete the existing line
+                        if match_active_opt(option, line):
+                            del ini_lines[index]
+                            changed = True
+                            msg = 'option changed'
+                            break
 
-    # remove the fake section line
-    del ini_lines[-1:]
+        # remove the fake section line
+        del ini_lines[-1:]
 
-    if not within_section and option and state == 'present':
-        ini_lines.append('[%s]\n' % section)
-        ini_lines.append(assignment_format % (option, value))
-        changed = True
-        msg = 'section and option added'
+        if not within_section and option and state == 'present':
+            ini_lines.append('[%s]\n' % section)
+            ini_lines.append(assignment_format % (option, value))
+            changed = True
+            msg = 'section and option added'
 
     if module._diff:
         diff['after'] = ''.join(ini_lines)
@@ -253,7 +322,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             path=dict(type='path', required=True, aliases=['dest']),
-            section=dict(type='str', required=True),
+            section=dict(type='str', required=False),
             option=dict(type='str'),
             value=dict(type='str'),
             backup=dict(type='bool', default=False),
