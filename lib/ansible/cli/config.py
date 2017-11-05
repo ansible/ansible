@@ -1,20 +1,5 @@
-# (c) 2017, Ansible by Red Hat, Inc.
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
-# ansible-vault is a script that encrypts/decrypts YAML files. See
-# http://docs.ansible.com/playbooks_vault.html for more details.
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -44,7 +29,7 @@ except ImportError:
 class ConfigCLI(CLI):
     """ Config command line class """
 
-    VALID_ACTIONS = ("view", "dump", "list") # TODO: edit, update, search
+    VALID_ACTIONS = ("view", "dump", "list")  # TODO: edit, update, search
 
     def __init__(self, args, callback=None):
 
@@ -55,8 +40,8 @@ class ConfigCLI(CLI):
     def parse(self):
 
         self.parser = CLI.base_parser(
-            usage = "usage: %%prog [%s] [--help] [options] [ansible.cfg]" % "|".join(self.VALID_ACTIONS),
-            epilog = "\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0]),
+            usage="usage: %%prog [%s] [--help] [options] [ansible.cfg]" % "|".join(self.VALID_ACTIONS),
+            epilog="\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0]),
             desc="View, edit, and manage ansible configuration.",
         )
         self.parser.add_option('-c', '--config', dest='config_file', help="path to configuration file, defaults to first file found in precedence.")
@@ -121,10 +106,10 @@ class ConfigCLI(CLI):
             option = entry
         subprocess.call([
             'ansible',
-            '-m','ini_file',
+            '-m', 'ini_file',
             'localhost',
-            '-c','local',
-            '-a','"dest=%s section=%s option=%s value=%s backup=yes"' % (self.config_file, section, option, value)
+            '-c', 'local',
+            '-a', '"dest=%s section=%s option=%s value=%s backup=yes"' % (self.config_file, section, option, value)
         ])
 
     def execute_view(self):
@@ -145,7 +130,7 @@ class ConfigCLI(CLI):
 
         # pylint: disable=unreachable
         try:
-            editor = shlex.split(os.environ.get('EDITOR','vi'))
+            editor = shlex.split(os.environ.get('EDITOR', 'vi'))
             editor.append(self.config_file)
             subprocess.call(editor)
         except Exception as e:
