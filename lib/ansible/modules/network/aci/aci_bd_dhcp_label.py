@@ -20,7 +20,7 @@ description:
   I(dhcp:Lbl) at U(https://pubhub-prod.s3.amazonaws.com/media/apic-mim-ref/docs/MO-dhcpLbl.html).
 author:
 - sig9 (sig9@sig9.org)
-version_added: '2.4'
+version_added: '2.5'
 requirements:
 - ACI Fabric 1.0(3f)+
 notes:
