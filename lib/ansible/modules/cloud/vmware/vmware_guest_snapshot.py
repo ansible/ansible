@@ -24,7 +24,7 @@ author:
     - James Tanner (@jctanner) <tanner.jc@gmail.com>
     - Loic Blot (@nerzhul) <loic.blot@unix-experience.fr>
 notes:
-    - Tested on vSphere 5.5
+    - Tested on vSphere 5.5, 6.0
 requirements:
     - "python >= 2.6"
     - PyVmomi
@@ -101,6 +101,14 @@ options:
               for removal.
         required: False
         version_added: "2.4"
+   new_snapshot_name:
+        description:
+             - Value to rename the existing snapshot to
+        version_added: 2.5
+   new_description:
+        description:
+             - Value to change the description of an existing snapshot to
+        version_added: 2.5
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -174,6 +182,18 @@ EXAMPLES = '''
       state: remove
       remove_children: True
       snapshot_name: snap1
+    delegate_to: localhost
+
+  - name: Rename a snapshot
+    vmware_guest_snapshot:
+      hostname: 192.168.1.209
+      username: administrator@vsphere.local
+      password: vmware
+      name: dummy_vm
+      state: present
+      snapshot_name: current_snap_name
+      new_snapshot_name: im_renamed
+      new_description: "renamed snapshot today"
     delegate_to: localhost
 '''
 
@@ -261,9 +281,35 @@ class PyVmomiHelper(object):
 
         return task
 
+    def rename_snapshot(self, vm):
+        if vm.snapshot is None:
+            self.module.exit_json(msg="VM - %s doesn't have any snapshots" %
+                                  self.module.params.get('uuid') or self.module.params.get('name'))
+
+        snap_obj = self.get_snapshots_by_name_recursively(vm.snapshot.rootSnapshotList,
+                                                          self.module.params["snapshot_name"])
+        task = None
+        if len(snap_obj) == 1:
+            snap_obj = snap_obj[0].snapshot
+            if self.module.params["new_snapshot_name"] and self.module.params["new_description"]:
+                task = snap_obj.RenameSnapshot(name=self.module.params["new_snapshot_name"],
+                                               description=self.module.params["new_description"])
+            elif self.module.params["new_snapshot_name"]:
+                task = snap_obj.RenameSnapshot(name=self.module.params["new_snapshot_name"])
+            else:
+                task = snap_obj.RenameSnapshot(description=self.module.params["new_description"])
+        else:
+            self.module.exit_json(
+                msg="Couldn't find any snapshots with specified name: %s on VM: %s" %
+                    (self.module.params["snapshot_name"],
+                     self.module.params.get('uuid') or self.module.params.get('name')))
+
+        return task
+
     def remove_or_revert_snapshot(self, vm):
         if vm.snapshot is None:
-            self.module.exit_json(msg="VM - %s doesn't have any snapshots" % self.module.params["name"])
+            self.module.exit_json(msg="VM - %s doesn't have any snapshots" %
+                                  self.module.params.get('uuid') or self.module.params.get('name'))
 
         snap_obj = self.get_snapshots_by_name_recursively(vm.snapshot.rootSnapshotList,
                                                           self.module.params["snapshot_name"])
@@ -279,14 +325,20 @@ class PyVmomiHelper(object):
         else:
             self.module.exit_json(
                 msg="Couldn't find any snapshots with specified name: %s on VM: %s" %
-                    (self.module.params["snapshot_name"], self.module.params["name"]))
+                    (self.module.params["snapshot_name"],
+                     self.module.params.get('uuid') or self.module.params.get('name')))
 
         return task
 
     def apply_snapshot_op(self, vm):
         result = {}
         if self.module.params["state"] == "present":
-            task = self.snapshot_vm(vm)
+            if self.module.params["new_snapshot_name"] or self.module.params["new_description"]:
+                self.rename_snapshot(vm)
+                result = {'changed': True, 'failed': False, 'renamed': True}
+                task = None
+            else:
+                task = self.snapshot_vm(vm)
         elif self.module.params["state"] in ["absent", "revert"]:
             task = self.remove_or_revert_snapshot(vm)
         elif self.module.params["state"] == "remove_all":
@@ -319,6 +371,8 @@ def main():
         quiesce=dict(type='bool', default=False),
         memory_dump=dict(type='bool', default=False),
         remove_children=dict(type='bool', default=False),
+        new_snapshot_name=dict(type='str'),
+        new_description=dict(type='str'),
     )
     module = AnsibleModule(argument_spec=argument_spec, required_one_of=[['name', 'uuid']])
 

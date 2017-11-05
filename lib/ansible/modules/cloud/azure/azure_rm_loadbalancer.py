@@ -143,7 +143,7 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Thomas Stringer (@tr_stringer)"
+    - "Thomas Stringer (@tstringer)"
 '''
 
 EXAMPLES = '''

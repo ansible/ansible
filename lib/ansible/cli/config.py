@@ -16,6 +16,9 @@
 #
 # ansible-vault is a script that encrypts/decrypts YAML files. See
 # http://docs.ansible.com/playbooks_vault.html for more details.
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -46,6 +49,8 @@ class ConfigCLI(CLI):
     """ Config command line class """
 
     VALID_ACTIONS = ("view", "dump", "list")   # TODO: edit, update, search
+    VALID_ACTIONS = ("view", "dump", "list")  # TODO: edit, update, search
+
 
     def __init__(self, args, callback=None):
 

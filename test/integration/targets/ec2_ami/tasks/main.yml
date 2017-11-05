@@ -66,7 +66,7 @@
         key_name: '{{ setup_key.key.name }}'
         instance_type: t2.micro
         state: present
-        image: '{{ ec2_ami_image[ec2_region] }}'
+        image: '{{ ec2_region_images[ec2_region] }}'
         wait: yes
         instance_tags:
           '{{ec2_ami_name}}_instance_setup': 'integration_tests'
@@ -115,6 +115,23 @@
     - name: set image id fact for deletion later
       set_fact:
         ec2_ami_image_id: "{{ result.image_id }}"
+
+    # ============================================================
+
+    - name: gather facts about the image created
+      ec2_ami_facts:
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        image_ids: '{{ ec2_ami_image_id }}'
+      register: ami_facts_result
+      ignore_errors: true
+
+    - name: assert that the right image was found
+      assert:
+        that:
+          - "ami_facts_result.images[0].image_id == ec2_ami_image_id"
 
     # ============================================================
 

@@ -133,6 +133,7 @@ def load_config(module, commands):
             continue
         rc, out, err = exec_command(module, command)
         if rc != 0:
+            exec_command(module, 'end')
             module.fail_json(msg=to_text(err, errors='surrogate_then_replace'), command=command, rc=rc)
 
     exec_command(module, 'end')
