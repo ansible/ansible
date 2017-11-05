@@ -55,6 +55,14 @@ options:
     description: uid of the user
     required: true
     aliases: ["name"]
+  uidnumber:
+    description:
+    - Account Settings UID/Posix User ID number
+    version_added: 2.5
+  gidnumber:
+    description:
+    - Posix Group ID
+    version_added: 2.5
 extends_documentation_fragment: ipa.documentation
 version_added: "2.3"
 requirements:
@@ -76,6 +84,8 @@ EXAMPLES = '''
     sshpubkey:
     - ssh-rsa ....
     - ssh-dsa ....
+    uidnumber: 1001
+    gidnumber: 100
     ipa_host: ipa.example.com
     ipa_user: admin
     ipa_pass: topsecret
@@ -129,7 +139,7 @@ class UserIPAClient(IPAClient):
 
 
 def get_user_dict(displayname=None, givenname=None, loginshell=None, mail=None, nsaccountlock=False, sn=None,
-                  sshpubkey=None, telephonenumber=None, title=None, userpassword=None):
+                  sshpubkey=None, telephonenumber=None, title=None, userpassword=None, gidnumber=None, uidnumber=None):
     user = {}
     if displayname is not None:
         user['displayname'] = displayname
@@ -150,6 +160,10 @@ def get_user_dict(displayname=None, givenname=None, loginshell=None, mail=None, 
         user['title'] = title
     if userpassword is not None:
         user['userpassword'] = userpassword
+    if gidnumber is not None:
+        user['gidnumber'] = gidnumber
+    if uidnumber is not None:
+        user['uidnumber'] = uidnumber
 
     return user
 
@@ -217,7 +231,8 @@ def ensure(module, client):
                                 mail=module.params['mail'], sn=module.params['sn'],
                                 sshpubkey=module.params['sshpubkey'], nsaccountlock=nsaccountlock,
                                 telephonenumber=module.params['telephonenumber'], title=module.params['title'],
-                                userpassword=module.params['password'])
+                                userpassword=module.params['password'],
+                                gidnumber=module.params.get('gidnumber'), uidnumber=module.params.get('uidnumber'))
 
     ipa_user = client.user_find(name=name)
 
@@ -250,6 +265,8 @@ def main():
                          mail=dict(type='list'),
                          sn=dict(type='str'),
                          uid=dict(type='str', required=True, aliases=['name']),
+                         gidnumber=dict(type='str'),
+                         uidnumber=dict(type='str'),
                          password=dict(type='str', no_log=True),
                          sshpubkey=dict(type='list'),
                          state=dict(type='str', default='present',
