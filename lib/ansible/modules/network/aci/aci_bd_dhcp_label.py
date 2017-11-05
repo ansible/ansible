@@ -24,7 +24,9 @@ version_added: '3.0'
 requirements:
 - ACI Fabric 1.0(3f)+
 notes:
-- A DHCP relay label contains a name for the label, the scope, and a DHCP option policy. The scope is the owner of the relay server and the DHCP option policy supplies DHCP clients with configuration parameters such as domain, nameserver, and subnet router addresses. 
+- A DHCP relay label contains a name for the label, the scope, and a DHCP option policy.
+  The scope is the owner of the relay server and the DHCP option policy supplies DHCP clients
+  with configuration parameters such as domain, nameserver, and subnet router addresses.
 options:
   bd:
     description:
@@ -37,10 +39,11 @@ options:
     - The name of the DHCP Relay Label.
   dhcp_option:
     description:
-    - The DHCP option is used to supply DHCP clients with configuration parameters such as a domain, name server, subnet, and network address.
+    - The DHCP option is used to supply DHCP clients with configuration parameters
+    such as a domain, name server, subnet, and network address.
   owner:
     description:
-    - Represents the target relay servers ownership. 
+    - Represents the target relay servers ownership.
   tenant:
     description:
     - The name of the Tenant.
@@ -67,7 +70,7 @@ def main():
         tenant=dict(type='str', aliases=['tenant_name']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
     )
-    
+
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
@@ -76,22 +79,22 @@ def main():
             ['state', 'present', ['bd', 'tenant']],
         ],
     )
-    
+
     description = module.params['description']
     dhcp_label = module.params['dhcp_label']
     dhcp_option = module.params['dhcp_option']
     owner = module.params['owner']
     state = module.params['state']
-    
+
     module.params['bd_dhcp_label'] = dhcp_label
-    
+
     aci = ACIModule(module)
     aci.construct_url(
         root_class='tenant', subclass_1='bd', subclass_2='bd_dhcp_label',
         child_classes=['dhcpRsDhcpOptionPol'],
     )
     aci.get_existing()
-    
+
     if state == 'present':
         # Filter out module params with null values
         aci.payload(
@@ -105,19 +108,18 @@ def main():
                 {'dhcpRsDhcpOptionPol': {'attributes': {'tnDhcpOptionPolName': dhcp_option}}},
             ],
         )
-        
+
         # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='dhcpLbl')
-        
+
         # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
-    
+
     elif state == 'absent':
         aci.delete_config()
-    
+
     module.exit_json(**aci.result)
 
 
 if __name__ == "__main__":
     main()
-

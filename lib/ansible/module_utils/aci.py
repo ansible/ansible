@@ -766,4 +766,3 @@ class ACIModule(object):
         else:
             self.result['changed'] = True
             self.result['method'] = 'POST'
-
