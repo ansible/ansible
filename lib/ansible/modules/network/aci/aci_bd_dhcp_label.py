@@ -40,7 +40,7 @@ options:
   dhcp_option:
     description:
     - The DHCP option is used to supply DHCP clients with configuration parameters
-    such as a domain, name server, subnet, and network address.
+      such as a domain, name server, subnet, and network address.
   owner:
     description:
     - Represents the target relay servers ownership.
