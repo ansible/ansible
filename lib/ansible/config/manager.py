@@ -1,7 +1,6 @@
-# Copyright (c) 2017 Ansible Project
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -215,9 +214,9 @@ class ConfigManager(object):
                 except configparser.Error as e:
                     raise AnsibleOptionsError("Error reading config file (%s): %s" % (cfile, to_native(e)))
             # FIXME: this should eventually handle yaml config files
-            #elif ftype == 'yaml':
-            #    with open(cfile, 'rb') as config_stream:
-            #        self._parser = yaml.safe_load(config_stream)
+            # elif ftype == 'yaml':
+            #     with open(cfile, 'rb') as config_stream:
+            #         self._parser = yaml.safe_load(config_stream)
             else:
                 raise AnsibleOptionsError("Unsupported configuration file type: %s" % to_native(ftype))
 
