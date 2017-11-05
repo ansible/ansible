@@ -18,7 +18,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 - name: record the output directory
-  set_fact: output_file={{output_dir}}/foo.ini
+  set_fact: output_file={{output_dir}}/foo_test_ini.conf
 
 - name: add "fav=lemonade" is in section "[drinks]" in specified file
   ini_file:
@@ -154,7 +154,7 @@
 - name: set expected content and get current ini file content
   set_fact:
     expected7: |-
-      hate = coke
+      hate = water
 
     content7: "{{ lookup('file', output_file) }}"
 
@@ -170,15 +170,15 @@
     path: "{{ output_file }}"
     option: hate
     state: absent
-  register: result5
+  register: result8
 
 - name: get current ini file content
   set_fact:
-    content5: "{{ lookup('file', output_file) }}"
+    content8: "{{ lookup('file', output_file) }}"
 
 - name: assert changed (no section)
   assert:
     that:
-      - result5.changed == True
-      - result5.msg == 'section removed'
-      - content5 == ""
+      - result8.changed == True
+      - result8.msg == 'option removed'
+      - content8 == ""
