@@ -31,28 +31,74 @@ options:
   bd:
     description:
     - The name of the Bridge Domain.
+    required: yes
   description:
     description:
     - Specifies a description of the policy definition.
+    required: no
   dhcp_label:
     description:
     - The name of the DHCP Relay Label.
+    required: yes
   dhcp_option:
     description:
     - The DHCP option is used to supply DHCP clients with configuration parameters
       such as a domain, name server, subnet, and network address.
+    required: no
   owner:
     description:
     - Represents the target relay servers ownership.
+    required: yes
+    choices: [ infra, tenant ]
+    default: infra
   tenant:
     description:
     - The name of the Tenant.
     aliases: [ tenant_name ]
+    required: yes
 '''
 
-EXAMPLES = r''' # '''
+EXAMPLES = r'''
+- name: Create a new DHCP Relay Label to a Bridge Domain
+  aci_bd_dhcp_label:
+    host: "{{ apic }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    validate_certs: false
+    tenant: "{{ tenant }}"
+    bd: "{{ inventory_hostname }}"
+    dhcp_label: "{{ dhcp_label }}"
+    owner: "{{ owner }}"
+    state: "present"
 
-RETURN = r''' # '''
+- name: Remove a DHCP Relay Label for a Bridge Domain
+  aci_bd_dhcp_label:
+    host: "{{ apic }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    validate_certs: false
+    tenant: "{{ tenant }}"
+    bd: "{{ inventory_hostname }}"
+    dhcp_label: "{{ dhcp_label }}"
+    owner: "{{ owner }}"
+    state: "absent"
+
+- name: Query a DHCP Relay Label of a Bridge Domain
+  aci_bd_dhcp_label:
+    host: "{{ apic }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    validate_certs: false
+    tenant: "{{ tenant }}"
+    bd: "{{ inventory_hostname }}"
+    dhcp_label: "{{ dhcp_label }}"
+    owner: "{{ owner }}"
+    state: "query"
+'''
+
+RETURN = r'''
+#
+'''
 
 from ansible.module_utils.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
