@@ -1,7 +1,6 @@
-# Copyright (c) 2017 Ansible Project
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -26,9 +25,9 @@ class ConfigData(object):
 
         settings = []
         if plugin is None:
-            settings = [ self._global_settings[k] for k in self._global_settings ]
+            settings = [self._global_settings[k] for k in self._global_settings]
         elif plugin.type in self._plugins and plugin.name in self._plugins[plugin.type]:
-            settings = [ self._plugins[plugin.type][plugin.name][k] for k in self._plugins[plugin.type][plugin.name] ]
+            settings = [self._plugins[plugin.type][plugin.name][k] for k in self._plugins[plugin.type][plugin.name]]
 
         return settings
 
