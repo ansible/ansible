@@ -1115,7 +1115,8 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, up
         res['changed'] = True
     elif pkgs['install'] or will_update:
         cmd = yum_basecmd + ['install'] + pkgs['install'] + pkgs['update']
-        rc, out, err = module.run_command(cmd)
+        lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
+        rc, out, err = module.run_command(cmd, environ_update=lang_env)
         out_lower = out.strip().lower()
         if not out_lower.endswith("no packages marked for update") and \
                 not out_lower.endswith("nothing to do"):
