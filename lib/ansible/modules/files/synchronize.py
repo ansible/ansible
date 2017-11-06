@@ -6,7 +6,6 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -330,8 +329,8 @@ def is_rsh_needed(source, dest):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            src=dict(required=True),
-            dest=dict(required=True),
+            src=dict(type='str', required=True),
+            dest=dict(type='str', required=True),
             dest_port=dict(type='int'),
             delete=dict(type='bool', default=False),
             private_key=dict(type='path'),
