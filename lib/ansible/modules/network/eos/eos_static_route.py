@@ -48,24 +48,24 @@ options:
 EXAMPLES = """
 - name: configure static route
   eos_static_route:
-    prefix: 10.0.2.0/24
+    address: 10.0.2.0/24
     next_hop: 10.8.38.1
     admin_distance: 2
 - name: delete static route
   eos_static_route:
-    prefix: 10.0.2.0/24
+    address: 10.0.2.0/24
     next_hop: 10.8.38.1
     state: absent
 - name: configure static routes using aggregate
   eos_static_route:
     aggregate:
-      - { prefix: 10.0.1.0/24, next_hop: 10.8.38.1 }
-      - { prefix: 10.0.3.0/24, next_hop: 10.8.38.1 }
+      - { address: 10.0.1.0/24, next_hop: 10.8.38.1 }
+      - { address: 10.0.3.0/24, next_hop: 10.8.38.1 }
 - name: Delete static route using aggregate
   eos_static_route:
     aggregate:
-      - { prefix: 10.0.1.0/24, next_hop: 10.8.38.1 }
-      - { prefix: 10.0.3.0/24, next_hop: 10.8.38.1 }
+      - { address: 10.0.1.0/24, next_hop: 10.8.38.1 }
+      - { address: 10.0.3.0/24, next_hop: 10.8.38.1 }
     state: absent
 """
 
