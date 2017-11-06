@@ -113,7 +113,7 @@ class CallbackModule(Default):
 
         if abridged_result:
             dumped += '\n'
-            dumped += yaml.dump(json.loads(json.dumps(abridged_result, ensure_ascii=False)), width=1000, Dumper=AnsibleDumper, default_flow_style=False)
+            dumped += yaml.dump(abridged_result, width=1000, Dumper=AnsibleDumper, default_flow_style=False)
 
         # indent by a couple of spaces
         dumped = '\n  '.join(dumped.split('\n')).rstrip()
