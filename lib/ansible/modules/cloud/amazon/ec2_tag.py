@@ -122,7 +122,7 @@ EXAMPLES = '''
   ec2_tag:
     region: eu-west-1
     resource: vol-XXXXXX
-    state: absent
+    state: present
     purge_tags: yes
     tags:
       KeepThisKey: ""
