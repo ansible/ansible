@@ -1,11 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# (c) 2015, Brian Coca <bcoca@ansible.com>
+# Copyright: (c) 2015, Brian Coca <bcoca@ansible.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -15,19 +14,18 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: svc
-author: "Brian Coca (@bcoca)"
+author:
+- Brian Coca (@bcoca)
 version_added: "1.9"
-short_description:  Manage daemontools services.
+short_description:  Manage daemontools services
 description:
     - Controls daemontools services on remote hosts using the svc utility.
 options:
     name:
-        required: true
         description:
             - Name of the service to manage.
+        required: true
     state:
-        required: false
-        choices: [ started, stopped, restarted, reloaded, once, killed ]
         description:
             - C(Started)/C(stopped) are idempotent actions that will not run
               commands unless necessary.  C(restarted) will always bounce the
@@ -35,58 +33,55 @@ options:
               C(reloaded) will send a sigusr1 (svc -1).
               C(once) will run a normally downed svc once (svc -o), not really
               an idempotent operation.
+        choices: [ killed, once, reloaded, restarted, started, stopped ]
     downed:
-        required: false
-        choices: [ "yes", "no" ]
-        default: no
         description:
             - Should a 'down' file exist or not, if it exists it disables auto startup.
               defaults to no. Downed does not imply stopped.
+        type: bool
+        default: 'no'
     enabled:
-        required: false
-        choices: [ "yes", "no" ]
         description:
             - Wheater the service is enabled or not, if disabled it also implies stopped.
               Make note that a service can be enabled and downed (no auto restart).
+        type: bool
     service_dir:
-        required: false
-        default: /service
         description:
             - directory svscan watches for services
+        default: /service
     service_src:
-        required: false
         description:
             - directory where services are defined, the source of symlinks to service_dir.
 '''
 
 EXAMPLES = '''
-# Example action to start svc dnscache, if not running
- - svc:
+- name: Start svc dnscache, if not running
+  svc:
     name: dnscache
     state: started
 
-# Example action to stop svc dnscache, if running
- - svc:
+- name: Stop svc dnscache, if running
+  svc:
     name: dnscache
     state: stopped
 
-# Example action to kill svc dnscache, in all cases
- - svc:
+- name: Kill svc dnscache, in all cases
+  svc:
     name: dnscache
     state: killed
 
-# Example action to restart svc dnscache, in all cases
- - svc:
+- name: Restart svc dnscache, in all cases
+  svc:
     name: dnscache
     state: restarted
 
-# Example action to reload svc dnscache, in all cases
- - svc:
+- name: Reload svc dnscache, in all cases
+  svc:
     name: dnscache
     state: reloaded
 
-# Example using alt svc directory location
- - svc:
+- name: Using alternative svc directory location
+  svc:
     name: dnscache
     state: reloaded
     service_dir: /var/service
@@ -248,13 +243,13 @@ class Svc(object):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(required=True),
-            state=dict(choices=['started', 'stopped', 'restarted', 'killed', 'reloaded', 'once']),
-            enabled=dict(required=False, type='bool'),
-            downed=dict(required=False, type='bool'),
-            dist=dict(required=False, default='daemontools'),
-            service_dir=dict(required=False, default='/service'),
-            service_src=dict(required=False, default='/etc/service'),
+            name=dict(type='str', required=True),
+            state=dict(type='str', choices=['killed', 'once', 'reloaded', 'restarted', 'started', 'stopped']),
+            enabled=dict(type='bool'),
+            downed=dict(type='bool'),
+            dist=dict(type='str', default='daemontools'),
+            service_dir=dict(type='str', default='/service'),
+            service_src=dict(type='str', default='/etc/service'),
         ),
         supports_check_mode=True,
     )
