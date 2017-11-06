@@ -219,7 +219,7 @@ def create_block_device_meta(module, volume):
         return_object['Ebs']['VolumeSize'] = int(volume.get('volume_size', 0))
 
     if 'volume_type' in volume:
-        return_object['Ebs']['VolumeType'] = volume.get('volume_type')
+        return_object['Ebs']['VolumeType'] = volume.get('device_type')
 
     if 'delete_on_termination' in volume:
         return_object['Ebs']['DeleteOnTermination'] = volume.get('delete_on_termination', False)
