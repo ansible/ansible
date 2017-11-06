@@ -5,3 +5,4 @@ sphinx < 1.6 ; python_version < '2.7' # sphinx 1.6 and later require python 2.7 
 yamllint < 1.8 ; python_version < '2.7' # yamllint 1.8 and later require python 2.7 or later
 wheel < 0.30.0 ; python_version < '2.7' # wheel 0.30.0 and later require python 2.7 or later
 isort < 4.2.8 # 4.2.8 changes import sort order requirements which breaks previously passing pylint tests
+pep8 <= 1.7.0 # pep8 1.7.0 is the last "real" release, avoid the user warning added in 1.7.1
