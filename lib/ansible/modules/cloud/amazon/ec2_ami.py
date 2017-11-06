@@ -333,14 +333,17 @@ def get_block_device_mapping(image):
         bdm = image.get('block_device_mappings')
         for device in bdm:
             device_name = device.get('device_name')
-            ebs = device.get("ebs")
-            bdm_dict_item = {
-                'size': ebs.get("volume_size"),
-                'snapshot_id': ebs.get("snapshot_id"),
-                'volume_type': ebs.get("volume_type"),
-                'encrypted': ebs.get("encrypted"),
-                'delete_on_termination': ebs.get("delete_on_termination")
-            }
+            if 'ebs' in device:
+                ebs = device.get("ebs")
+                bdm_dict_item = {
+                    'size': ebs.get("volume_size"),
+                    'snapshot_id': ebs.get("snapshot_id"),
+                    'volume_type': ebs.get("volume_type"),
+                    'encrypted': ebs.get("encrypted"),
+                    'delete_on_termination': ebs.get("delete_on_termination")
+                }
+            elif 'virtual_name' in device:
+                bdm_dict_item = dict(virtual_name=device['virtual_name'])
             bdm_dict[device_name] = bdm_dict_item
     return bdm_dict
 
