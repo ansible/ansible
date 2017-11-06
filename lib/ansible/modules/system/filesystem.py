@@ -1,11 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2013, Alexander Bulimov <lazywolf0@gmail.com>
+# Copyright: (c) 2013, Alexander Bulimov <lazywolf0@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -14,7 +13,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-author: "Alexander Bulimov (@abulimov)"
+author:
+- Alexander Bulimov (@abulimov)
 module: filesystem
 short_description: Makes file system on block device
 description:
@@ -22,48 +22,48 @@ description:
 version_added: "1.2"
 options:
   fstype:
-    choices: [ "ext4", "ext4dev", "ext3", "ext2", "xfs", "btrfs", "reiserfs", "lvm"]
+    choices: [ btrfs, ext2, ext3, ext4, ext4dev, lvm, reiserfs, xfs ]
     description:
     - File System type to be created.
     - reiserfs support was added in 2.2.
     - lvm support was added in 2.5.
-    required: true
+    required: yes
   dev:
     description:
     - Target block device.
-    required: true
+    required: yes
   force:
-    choices: [ "yes", "no" ]
-    default: "no"
     description:
-    - If yes, allows to create new filesystem on devices that already has filesystem.
-    required: false
+    - If C(yes), allows to create new filesystem on devices that already has filesystem.
+    type: bool
+    default: 'no'
   resizefs:
-    choices: [ "yes", "no" ]
-    default: "no"
     description:
-    - If yes, if the block device and filessytem size differ, grow the filesystem into the space. Note, XFS Will only grow if mounted.
-    required: false
+    - If C(yes), if the block device and filessytem size differ, grow the filesystem into the space.
+    - Note, XFS Will only grow if mounted.
+    type: bool
+    default: 'no'
     version_added: "2.0"
   opts:
     description:
     - List of options to be passed to mkfs command.
 notes:
-  - uses mkfs command
+  - Uses mkfs command.
 '''
 
 EXAMPLES = '''
-# Create a ext2 filesystem on /dev/sdb1.
-- filesystem:
+- name: Create a ext2 filesystem on /dev/sdb1
+  filesystem:
     fstype: ext2
     dev: /dev/sdb1
 
-# Create a ext4 filesystem on /dev/sdb1 and check disk blocks.
-- filesystem:
+- name: Create a ext4 filesystem on /dev/sdb1 and check disk blocks
+  filesystem:
     fstype: ext4
     dev: /dev/sdb1
     opts: -cc
 '''
+
 import os
 
 from ansible.module_utils.basic import AnsibleModule
@@ -190,12 +190,12 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            fstype=dict(required=True, aliases=['type'],
+            fstype=dict(type='str', required=True, aliases=['type'],
                         choices=fs_cmd_map.keys() + friendly_names.keys()),
-            dev=dict(required=True, aliases=['device']),
-            opts=dict(),
-            force=dict(type='bool', default='no'),
-            resizefs=dict(type='bool', default='no'),
+            dev=dict(type='str', required=True, aliases=['device']),
+            opts=dict(type='str'),
+            force=dict(type='bool', default=False),
+            resizefs=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
     )
