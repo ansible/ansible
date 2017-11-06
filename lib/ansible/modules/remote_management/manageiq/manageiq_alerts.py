@@ -20,16 +20,15 @@ extends_documentation_fragment: manageiq
 version_added: '2.5'
 author: Elad Alfassa (ealfassa@redhat.com)
 description:
-  - The manageiq_alerts module supports listing, adding, updating and deleting alerts in ManageIQ.
+  - The manageiq_alerts module supports adding, updating and deleting alerts in ManageIQ.
 
 options:
   state:
     description:
       - absent - alert should not exist,
       - present - alert should exist,
-      - list - return a list of existing alerts.
     required: False
-    choices: ['absent', 'present', 'list']
+    choices: ['absent', 'present']
     default: 'present'
   description:
     description:
@@ -62,15 +61,6 @@ options:
 '''
 
 EXAMPLES = '''
-- name: List alerts in ManageIQ
-  manageiq_alerts:
-    state: list
-    manageiq_connection:
-      url: 'http://127.0.0.1:3000'
-      username: 'admin'
-      password: 'smartvm'
-      verify_ssl: False
-
 - name: Add an alert with a "hash expression" to ManageIQ
   manageiq_alerts:
     state: present
@@ -137,25 +127,9 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.manageiq import ManageIQ, manageiq_argument_spec
 
 
-# TODO: I copied this from yaacov's ansible/ansible PR 31233. It should be removed
-# from here once that PR is merged.
-def find_collection_resource_or_fail(module, manageiq, collection_name, **params):
-    """ Searches the collection resource by the collection name and the param passed.
-
-    Returns:
-        the resource as an object if it exists in manageiq, Fail otherwise.
-    """
-    resource = manageiq.find_collection_resource_by(collection_name, **params)
-    if resource:
-        return resource
-    else:
-        msg = "{collection_name} where {params} does not exist in manageiq".format(
-            collection_name=collection_name, params=str(params))
-    module.fail_json(msg=msg)
-
-
 class ManageIQAlert(object):
-    """ Represent a ManageIQ alert
+    """ Represent a ManageIQ alert. Can be initialized with both the format
+    we recieve from the server and the format we get from the user.
     """
     def __init__(self, alert):
         self.description = alert['description']
@@ -191,13 +165,13 @@ class ManageIQAlerts(object):
         self.module = self.manageiq.module
         self.api_url = self.manageiq.api_url
         self.client = self.manageiq.client
-        self.url = '{api_url}/alert_definitions'.format(api_url=self.api_url)
+        self.alerts_url = '{api_url}/alert_definitions'.format(api_url=self.api_url)
 
     def get_alerts(self):
         """ Get all alerts from ManageIQ
         """
         try:
-            response = self.client.get(self.url + '?expand=resources')
+            response = self.client.get(self.alerts_url + '?expand=resources')
         except Exception as e:
             self.module.fail_json(msg="Failed to query alerts: {error}".format(error=e))
         return response.get('resources', [])
@@ -219,7 +193,8 @@ class ManageIQAlerts(object):
             self.validate_hash_expression(params['expression'])
             expression_type = 'hash_expression'
         else:
-            expression_type = 'miq_expression'
+            # actually miq_expression, but we call it "expression" for backwards-compatibility
+            expression_type = 'expression'
 
         # build the alret
         alert = dict(description=params['description'],
@@ -236,21 +211,26 @@ class ManageIQAlerts(object):
         """ Add a new alert to ManageIQ
         """
         try:
-            result = self.client.post(self.url, action='create', resource=alert)
+            result = self.client.post(self.alerts_url, action='create', resource=alert)
 
             msg = "Alert {description} created successfully: {details}"
             msg = msg.format(description=alert['description'], details=result)
             return dict(changed=True, msg=msg)
         except Exception as e:
             msg = "Creating alert {description} failed: {error}"
-            msg = msg.format(description=alert['description'], error=e)
+            if "Resource expression needs be specified" in str(e):
+                # Running on an older version of ManageIQ and trying to create a hash expression
+                msg = msg.format(description=alert['description'],
+                                 error="Your version of ManageIQ does not support hash_expression")
+            else:
+                msg = msg.format(description=alert['description'], error=e)
             self.module.fail_json(msg=msg)
 
     def delete_alert(self, alert):
         """ Delete an alert
         """
         try:
-            result = self.client.post('{url}/{id}'.format(url=self.url,
+            result = self.client.post('{url}/{id}'.format(url=self.alerts_url,
                                                           id=alert['id']),
                                       action="delete")
             msg = "Alert {description} deleted: {details}"
@@ -270,7 +250,7 @@ class ManageIQAlerts(object):
             return dict(changed=False, msg="No update needed")
         else:
             try:
-                url = '{url}/{id}'.format(url=self.url, id=existing_alert['id'])
+                url = '{url}/{id}'.format(url=self.alerts_url, id=existing_alert['id'])
                 result = self.client.post(url, action="edit", resource=new_alert)
 
                 # make sure that the update was indeed successful by comparing
@@ -290,7 +270,12 @@ class ManageIQAlerts(object):
 
             except Exception as e:
                 msg = "Updating alert {description} failed: {error}"
-                msg = msg.format(description=existing_alert['description'], error=e)
+                if "Resource expression needs be specified" in str(e):
+                    # Running on an older version of ManageIQ and trying to update a hash expression
+                    msg = msg.format(description=existing_alert['description'],
+                                     error="Your version of ManageIQ does not support hash_expression")
+                else:
+                    msg = msg.format(description=existing_alert['description'], error=e)
                 self.module.fail_json(msg=msg)
 
 
@@ -310,7 +295,7 @@ def main():
         options=dict(type='dict'),
         enabled=dict(type='bool'),
         state=dict(require=False, default='present',
-                   choices=['present', 'absent', 'list']),
+                   choices=['present', 'absent']),
     )
     # add the manageiq connection arguments to the arguments
     argument_spec.update(manageiq_argument_spec())
@@ -329,35 +314,33 @@ def main():
     manageiq = ManageIQ(module)
     manageiq_alerts = ManageIQAlerts(manageiq)
 
-    if state == "list":
-        res_args = dict(changed=False, alerts=manageiq_alerts.get_alerts())
-    else:
-        existing_alert = manageiq.find_collection_resource_by("alert_definitions",
-                                                              description=description)
+    existing_alert = manageiq.find_collection_resource_by("alert_definitions",
+                                                          description=description)
 
-        # we need to add or update the alert
-        if state == "present":
-            alert = manageiq_alerts.create_alert_dict(module.params)
+    # we need to add or update the alert
+    if state == "present":
+        alert = manageiq_alerts.create_alert_dict(module.params)
 
-            if not existing_alert:
-                # an alert with this description doesn't exist yet, let's create it
-                res_args = manageiq_alerts.add_alert(alert)
-            else:
-                # an alert with this description exists, we might need to update it
-                res_args = manageiq_alerts.update_alert(existing_alert, alert)
+        if not existing_alert:
+            # an alert with this description doesn't exist yet, let's create it
+            res_args = manageiq_alerts.add_alert(alert)
+        else:
+            # an alert with this description exists, we might need to update it
+            res_args = manageiq_alerts.update_alert(existing_alert, alert)
 
-        # this alert should not exist
-        if state == "absent":
-            # if we have an alert with this description, delete it
-            if existing_alert:
-                res_args = manageiq_alerts.delete_alert(existing_alert)
-            else:
-                # it doesn't exist, and that's okay
-                msg = "Alert '{description}' does not exist in ManageIQ"
-                msg = msg.format(description=description)
-                res_args = dict(changed=False, msg=msg)
+    # this alert should not exist
+    elif state == "absent":
+        # if we have an alert with this description, delete it
+        if existing_alert:
+            res_args = manageiq_alerts.delete_alert(existing_alert)
+        else:
+            # it doesn't exist, and that's okay
+            msg = "Alert '{description}' does not exist in ManageIQ"
+            msg = msg.format(description=description)
+            res_args = dict(changed=False, msg=msg)
 
     module.exit_json(**res_args)
+
 
 if __name__ == "__main__":
     main()
