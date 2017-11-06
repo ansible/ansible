@@ -217,10 +217,7 @@ delegation or accessing forbidden system calls like the WUA API. You can use
 ``become`` with the same user as ``ansible_user`` to bypass these limitations
 and run commands that are not normally accessible in a WinRM session.
 
-.. note:: While become support was added for Windows starting with Ansible 
-    version 2.3, this functionality is still considered experimental and can 
-    change in the future based on issues and limitations that are found. Prior to 
-    Ansible 2.4, become would only work when ``ansible_winrm_transport`` was 
+.. note:: Prior to Ansible 2.4, become would only work when ``ansible_winrm_transport`` was
     set to either ``basic`` or ``credssp``, but since Ansible 2.4 become now works on 
     all transport types.
 
