@@ -35,11 +35,12 @@ options:
     description:
     - device name of a mounted volume to be snapshotted
     required: false
-  snapshot_tags:
+  tags:
     description:
       - a hash/dictionary of tags to add to the snapshot
     required: false
     version_added: "1.6"
+    aliases: [snapshot_tags]
   wait:
     description:
       - wait for the snapshot to be ready
@@ -80,34 +81,34 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = '''
-# Simple snapshot of volume using volume_id
-- ec2_snapshot:
+# Note: These examples do not set authentication details, see the AWS Guide for details.
+
+- name: create a snapshot of a volume using volume_id
+  ec2_snapshot:
     volume_id: vol-abcdef12
     description: snapshot of /data from DB123 taken 2013/11/28 12:18:32
 
-# Snapshot of volume mounted on device_name attached to instance_id
-- ec2_snapshot:
+- name: create a snapshot of the volume mounted on device_name on a particular instance
+  ec2_snapshot:
     instance_id: i-12345678
     device_name: /dev/sdb1
     description: snapshot of /data from DB123 taken 2013/11/28 12:18:32
 
-# Snapshot of volume with tagging
-- ec2_snapshot:
+- name: create a snapshot and apply provided tags
+  ec2_snapshot:
     instance_id: i-12345678
     device_name: /dev/sdb1
     snapshot_tags:
         frequency: hourly
         source: /data
 
-# Remove a snapshot
-- local_action:
-    module: ec2_snapshot
+- name: delete a snapshot using snapshot_id
+  ec2_snapshot:
     snapshot_id: snap-abcd1234
     state: absent
 
-# Create a snapshot only if the most recent one is older than 1 hour
-- local_action:
-    module: ec2_snapshot
+- name: create a snapshot only if the most recent one is older than 1 hour
+  ec2_snapshot:
     volume_id: vol-abcdef12
     last_snapshot_min_age: 60
 '''
@@ -183,12 +184,6 @@ def create_snapshot(module, ec2, state=None, description=None, wait=None,
     snapshot = None
     changed = False
 
-    required = [volume_id, snapshot_id, instance_id]
-    if required.count(None) != len(required) - 1: # only 1 must be set
-        module.fail_json(msg='One and only one of volume_id or instance_id or snapshot_id must be specified')
-    if instance_id and not device_name or device_name and not instance_id:
-        module.fail_json(msg='Instance ID and device name must both be specified')
-
     if instance_id:
         try:
             volumes = ec2.get_all_volumes(filters={'attachment.instance-id': instance_id, 'attachment.device': device_name})
@@ -199,21 +194,6 @@ def create_snapshot(module, ec2, state=None, description=None, wait=None,
             module.fail_json(msg="Could not find volume with name %s attached to instance %s" % (device_name, instance_id))
 
         volume_id = volumes[0].id
-
-    if state == 'absent':
-        if not snapshot_id:
-            module.fail_json(msg = 'snapshot_id must be set when state is absent')
-        try:
-            ec2.delete_snapshot(snapshot_id)
-        except boto.exception.BotoServerError as e:
-            # exception is raised if snapshot does not exist
-            if e.error_code == 'InvalidSnapshot.NotFound':
-                module.exit_json(changed=False)
-            else:
-                module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
-
-        # successful delete
-        module.exit_json(changed=True)
 
     if last_snapshot_min_age > 0:
         try:
@@ -245,28 +225,43 @@ def create_snapshot(module, ec2, state=None, description=None, wait=None,
                      tags=snapshot.tags.copy())
 
 
-def create_snapshot_ansible_module():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            volume_id = dict(),
-            description = dict(),
-            instance_id = dict(),
-            snapshot_id = dict(),
-            device_name = dict(),
-            wait = dict(type='bool', default=True),
-            wait_timeout = dict(type='int', default=0),
-            last_snapshot_min_age = dict(type='int', default=0),
-            snapshot_tags = dict(type='dict', default=dict()),
-            state = dict(choices=['absent', 'present'], default='present'),
-        )
-    )
-    module = AnsibleModule(argument_spec=argument_spec)
-    return module
+def delete_snapshot(module, ec2, snapshot_id):
+
+    try:
+        ec2.delete_snapshot(snapshot_id)
+    except boto.exception.BotoServerError as e:
+        if e.error_code == 'InvalidSnapshot.NotFound':
+            module.exit_json(changed=False)
+        else:
+            module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
+
+    module.exit_json(changed=True)
 
 
 def main():
-    module = create_snapshot_ansible_module()
+
+    argument_spec = ec2_argument_spec()
+    argument_spec.update(
+        dict(
+            volume_id = dict(type='str'),
+            description = dict(type='str'),
+            instance_id = dict(type='str'),
+            snapshot_id = dict(type='str'),
+            device_name = dict(type='str'),
+            wait = dict(type='bool', default=True),
+            wait_timeout = dict(type='int', default=0),
+            last_snapshot_min_age = dict(type='int', default=0),
+            tags = dict(type='dict', default=dict(), aliases=['snapshot_tags']),
+            state = dict(choices=['absent', 'present'], default='present'),
+        )
+    )
+
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        required_if=[['state', 'absent', ('snapshot_id',)]],
+        required_together=[['instance_id', 'device_name']],
+        mutually_exclusive=[['volume_id', 'snapshot_id', 'instance_id']]
+    )
 
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
@@ -279,26 +274,28 @@ def main():
     wait = module.params.get('wait')
     wait_timeout = module.params.get('wait_timeout')
     last_snapshot_min_age = module.params.get('last_snapshot_min_age')
-    snapshot_tags = module.params.get('snapshot_tags')
+    snapshot_tags = module.params.get('tags')
     state = module.params.get('state')
 
     ec2 = ec2_connect(module)
 
-    create_snapshot(
-        module=module,
-        state=state,
-        description=description,
-        wait=wait,
-        wait_timeout=wait_timeout,
-        ec2=ec2,
-        volume_id=volume_id,
-        instance_id=instance_id,
-        snapshot_id=snapshot_id,
-        device_name=device_name,
-        snapshot_tags=snapshot_tags,
-        last_snapshot_min_age=last_snapshot_min_age
-    )
-
+    if state == 'present':
+        create_snapshot(
+            module=module,
+            state=state,
+            description=description,
+            wait=wait,
+            wait_timeout=wait_timeout,
+            ec2=ec2,
+            volume_id=volume_id,
+            instance_id=instance_id,
+            snapshot_id=snapshot_id,
+            device_name=device_name,
+            snapshot_tags=snapshot_tags,
+            last_snapshot_min_age=last_snapshot_min_age
+        )
+    elif state == 'absent':
+        delete_snapshot(module, ec2, snapshot_id)
 
 if __name__ == '__main__':
     main()
