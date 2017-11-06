@@ -67,13 +67,13 @@ author:
 
 EXAMPLES = '''
 - name: Create an image from a virtual machine
-    azure_rm_image:
+  azure_rm_image:
     resource_group: Testing
     name: foobar
     source: testvm001
 
 - name: Create an image from os disk
-    azure_rm_image:
+  azure_rm_image:
     resource_group: Testing
     name: foobar
     source: /subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Compute/disks/disk001
@@ -83,7 +83,7 @@ EXAMPLES = '''
     os_type: Linux
 
 - name: Delete an image
-    azure_rm_image:
+  azure_rm_image:
     state: absent
     resource_group: Testing
     name: foobar
