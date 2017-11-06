@@ -114,7 +114,7 @@ if ($dest -and -not $check_mode) {
 
 if ($user -and $password) {
     $webrequest_opts.Credential = New-Object System.Management.Automation.PSCredential($user, $($password | ConvertTo-SecureString -AsPlainText -Force))
-} elif ($user -or $password) {
+} elseif ($user -or $password) {
     Add-Warning -obj $result -message "Both 'user' and 'password' parameters are required together, skipping authentication"
 }
 

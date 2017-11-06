@@ -4,14 +4,18 @@
 # Copyright (c) 2017 F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: bigip_configsync_action
-short_description: Perform different actions related to config-sync.
+short_description: Perform different actions related to config-sync
 description:
   - Allows one to run different config-sync actions. These actions allow
     you to manually sync your configuration across multiple BIG-IPs when
@@ -60,39 +64,39 @@ author:
   - Tim Rupp (@caphrim007)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Sync configuration from device to group
   bigip_configsync_actions:
-      device_group: "foo-group"
-      sync_device_to_group: yes
-      server: "lb01.mydomain.com"
-      user: "admin"
-      password: "secret"
-      validate_certs: no
+    device_group: foo-group
+    sync_device_to_group: yes
+    server: lb.mydomain.com
+    user: admin
+    password: secret
+    validate_certs: no
   delegate_to: localhost
 
 - name: Sync configuration from most recent device to the current host
   bigip_configsync_actions:
-      device_group: "foo-group"
-      sync_most_recent_to_device: yes
-      server: "lb01.mydomain.com"
-      user: "admin"
-      password: "secret"
-      validate_certs: no
+    device_group: foo-group
+    sync_most_recent_to_device: yes
+    server: lb.mydomain.com
+    user: admin
+    password: secret
+    validate_certs: no
   delegate_to: localhost
 
 - name: Perform an initial sync of a device to a new device group
   bigip_configsync_actions:
-      device_group: "new-device-group"
-      sync_device_to_group: yes
-      server: "lb01.mydomain.com"
-      user: "admin"
-      password: "secret"
-      validate_certs: no
+    device_group: new-device-group
+    sync_device_to_group: yes
+    server: lb.mydomain.com
+    user: admin
+    password: secret
+    validate_certs: no
   delegate_to: localhost
 '''
 
-RETURN = '''
+RETURN = r'''
 # only common fields returned
 '''
 
@@ -345,10 +349,14 @@ class ArgumentSpec(object):
 
 def main():
     if not HAS_F5SDK:
-        raise F5ModuleError("The python f5-sdk module is required")
+        raise F5ModuleError(
+            "The python 'f5-sdk' module is required. This can be done with 'pip install f5-sdk'"
+        )
 
     if not HAS_OBJPATH:
-        raise F5ModuleError("The python objectpath module is required")
+        raise F5ModuleError(
+            "The python 'objectpath' module is required. This can be done with 'pip install objectpath'"
+        )
 
     spec = ArgumentSpec()
 

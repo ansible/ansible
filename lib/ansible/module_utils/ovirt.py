@@ -746,14 +746,14 @@ class BaseModule(object):
             'diff': self._diff,
         }
 
-    def wait_for_import(self):
+    def wait_for_import(self, condition=lambda e: True):
         if self._module.params['wait']:
             start = time.time()
             timeout = self._module.params['timeout']
             poll_interval = self._module.params['poll_interval']
             while time.time() < start + timeout:
                 entity = self.search_entity()
-                if entity:
+                if entity and condition(entity):
                     return entity
                 time.sleep(poll_interval)
 
