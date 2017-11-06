@@ -50,5 +50,12 @@ if _system_six:
     six = _system_six
 else:
     from . import _six as six
+
 six_py_file = '{0}.py'.format(os.path.splitext(six.__file__)[0])
+if not os.path.exists(six_py_file):
+    # Only the .pyc/.pyo version of six was installed but we need a .py file
+    # Fallback to the bundled copy
+    from . import _six as six
+    six_py_file = '{0}.py'.format(os.path.splitext(six.__file__)[0])
+
 exec(open(six_py_file, 'rb').read())
