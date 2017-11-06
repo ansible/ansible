@@ -120,17 +120,68 @@ For example::
     Ansible to ensure any credentials used are not stored in any log file or
     console output.
 
-Simple Type Arrays
-++++++++++++++++++
-Simple type arrays like ``[string[]]`` or ``[UInt32[]]`` are defined as a comma
-separated string which are then cast to their type. For example, 
-to define a simple type array in Ansible::
+CimInstance Type
+++++++++++++++++
+A ``[CimInstance]`` object is used by DSC to store a dictionary object based on
+a custom class defined by that resource. Defining a value that takes in a
+``[CimInstance]`` in YAML is the same as defining a dictionary in YAML.
+For example, to define a ``[CimInstance]`` value in Ansible::
+
+    # [CimInstance]AuthenticationInfo == MSFT_xWebAuthenticationInformation
+    AuthenticationInfo
+      Anonymous: no
+      Basic: yes
+      Digest: no
+      Windows: yes
+
+In the above example, the CIM instance is a representation of the class
+``MSFT_xWebAuthenticationInformation <https://github.com/PowerShell/xWebAdministration/blob/dev/DSCResources/MSFT_xWebsite/MSFT_xWebsite.schema.mof>``_.
+This class accepts four boolean variables, ``Anonymous``, ``Basic``,
+``Digest``, and ``Windows``. The keys to use in a ``[CimInstance]`` depend on
+the class it represents, please read through the documentation of the resource
+to determine the keys that can be used and the types of each key value. The
+class definition is typically located in the ``<resource name>.schema.mof``.
+
+Arrays
+++++++
+Simple type arrays like ``[string[]]`` or ``[UInt32[]]`` are defined as a list
+or as a comma separated string which are then cast to their type. Using a list
+is recommended as the values are not manually parsed by the ``win_dsc`` module
+before being passed to the DSC engine. For example, to define a simple type
+array in Ansible::
 
     # [string[]]
     ValueData: entry1, entry2, entry3
+    ValueData:
+    - entry1
+    - entry2
+    - entry3
 
     # [UInt32[]]
     ReturnCode: 0,3010
+    ReturnCode:
+    - 0
+    - 3010
+
+Complex type arrays like ``[CimInstance[]]`` (array of dicts), can be defined
+like this example::
+
+    # [CimInstance[]]BindingInfo == MSFT_xWebBindingInformation
+    BindingInfo:
+    - Protocol: https
+      Port: 443
+      CertificateStoreName: My
+      CertificateThumbprint: C676A89018C4D5902353545343634F35E6B3A659
+      HostName: DSCTest
+      IPAddress: '*'
+      SSLFlags: 1
+    - Protocol: http
+      Port: 80
+      IPAddress: '*'
+
+The above example, is an array with two values of the class ``MSFT_xWebBindingInformation <https://github.com/PowerShell/xWebAdministration/blob/dev/DSCResources/MSFT_xWebsite/MSFT_xWebsite.schema.mof>``_.
+When defining a ``[CimInstance[]]``, be sure to read the resource documentation
+to find out what keys to use in the definition.
 
 Run As Another User
 -------------------
@@ -292,12 +343,6 @@ Setup IIS Website
       with_items:
       - Web-Server
       - Web-Asp-Net45
-    
-    - name: remove Default Web Site
-      win_dsc:
-        resource_name: xWebsite
-        Name: Default Web Site
-        Ensure: Absent
 
     - name: setup web content
       win_dsc:
@@ -310,13 +355,29 @@ Setup IIS Website
           <body>This is the body</body>
           </html>
         Ensure: present
-    
+
     - name: create new website
       win_dsc:
         resource_name: xWebsite
         Name: NewIISSite
         State: Started
         PhysicalPath: C:\inetpub\IISSite\index.html
+        BindingInfo:
+        - Protocol: https
+          Port: 8443
+          CertificateStoreName: My
+          CertificateThumbprint: C676A89018C4D5902353545343634F35E6B3A659
+          HostName: DSCTest
+          IPAddress: '*'
+          SSLFlags: 1
+        - Protocol: http
+          Port: 8080
+          IPAddress: '*'
+        AuthenticationInfo:
+          Anonymous: no
+          Basic: yes
+          Digest: no
+          Windows: yes
 
 .. seealso::
 
