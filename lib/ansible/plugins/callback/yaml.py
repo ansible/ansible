@@ -11,7 +11,7 @@ DOCUMENTATION = '''
     short_description: yaml-ized Ansible screen output
     version_added: 2.5
     description:
-        - Ansible output that can be quite a bit easier to read than the 
+        - Ansible output that can be quite a bit easier to read than the
           default JSON formatting.
     extends_documentation_fragment:
       - default_callback
