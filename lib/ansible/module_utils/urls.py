@@ -677,7 +677,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
         valid_codes = [200] if valid_codes is None else valid_codes
 
         try:
-            (http_version, resp_code, msg) = re.match(r'(HTTP/\d\.\d) (\d\d\d) (.*)', response).groups()
+            (http_version, resp_code, msg) = re.match(rb'(HTTP/\d\.\d) (\d\d\d) (.*)', response).groups()
             if int(resp_code) not in valid_codes:
                 raise Exception
         except:
@@ -745,7 +745,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
                         # 128 kilobytes of headers should be enough for everyone.
                         if len(connect_result) > 131072:
                             raise ProxyError('Proxy sent too verbose headers. Only 128KiB allowed.')
-                    self.validate_proxy_response(to_native(connect_result))
+                    self.validate_proxy_response(connect_result)
                     if context:
                         ssl_s = context.wrap_socket(s, server_hostname=self.hostname)
                     elif HAS_URLLIB3_SSL_WRAP_SOCKET:
