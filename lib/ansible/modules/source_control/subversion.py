@@ -272,7 +272,7 @@ def main():
                 module.fail_json(msg="ERROR: modified files exist in the repository.")
         svn.update()
     else:
-        module.fail_json(msg="ERROR: %s folder already exists, but its not a subversion repository." % (dest, ))
+        module.fail_json(msg="ERROR: %s folder already exists, but its not a subversion repository." % (dest,))
 
     if export:
         module.exit_json(changed=True)
