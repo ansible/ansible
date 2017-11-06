@@ -1,11 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2014, Taneli Leppä <taneli@crasman.fi>
+# Copyright: (c) 2014, Taneli Leppä <taneli@crasman.fi>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -21,75 +20,76 @@ version_added: '1.9'
 options:
   name:
     description:
-      - The volume name
+      - The volume name.
     required: true
   state:
     description:
       - Use present/absent ensure if a volume exists or not.
         Use started/stopped to control its availability.
     required: true
-    choices: ['present', 'absent', 'started', 'stopped']
+    choices: ['absent', 'present', 'started', 'stopped']
   cluster:
     description:
-      - List of hosts to use for probing and brick setup
+      - List of hosts to use for probing and brick setup.
   host:
     description:
-      - Override local hostname (for peer probing purposes)
+      - Override local hostname (for peer probing purposes).
   replicas:
     description:
-      - Replica count for volume
+      - Replica count for volume.
   arbiter:
     description:
-      - Arbiter count for volume
+      - Arbiter count for volume.
     version_added: '2.3'
   stripes:
     description:
-      - Stripe count for volume
+      - Stripe count for volume.
   disperses:
     description:
-      - Disperse count for volume
+      - Disperse count for volume.
     version_added: '2.2'
   redundancies:
     description:
-      - Redundancy count for volume
+      - Redundancy count for volume.
     version_added: '2.2'
   transport:
     description:
-      - Transport type for volume
-    default: 'tcp'
-    choices: ['tcp', 'rdma', 'tcp,rdma']
+      - Transport type for volume.
+    default: tcp
+    choices: [ rdma, tcp, tcp,rdma ]
   bricks:
     description:
       - Brick paths on servers. Multiple brick paths can be separated by commas.
-    aliases: ['brick']
+    aliases: [ brick ]
   start_on_create:
     description:
-      - Controls whether the volume is started after creation or not
-    default: 'yes'
+      - Controls whether the volume is started after creation or not.
     type: bool
+    default: 'yes'
   rebalance:
     description:
-      - Controls whether the cluster is rebalanced after changes
-    default: 'no'
+      - Controls whether the cluster is rebalanced after changes.
     type: bool
+    default: 'no'
   directory:
     description:
-      - Directory for limit-usage
+      - Directory for limit-usage.
   options:
     description:
-      - A dictionary/hash with options/settings for the volume
+      - A dictionary/hash with options/settings for the volume.
   quota:
     description:
-      - Quota value for limit-usage (be sure to use 10.0MB instead of 10MB, see quota list)
+      - Quota value for limit-usage (be sure to use 10.0MB instead of 10MB, see quota list).
   force:
     description:
       - If brick is being created in the root partition, module will fail.
         Set force to true to override this behaviour.
     type: bool
 notes:
-  - Requires cli tools for GlusterFS on servers
-  - Will add new bricks, but not remove them
-author: Taneli Leppä (@rosmo)
+  - Requires cli tools for GlusterFS on servers.
+  - Will add new bricks, but not remove them.
+author:
+- Taneli Leppä (@rosmo)
 """
 
 EXAMPLES = """
@@ -361,24 +361,24 @@ def main():
     global module
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(required=True, aliases=['volume']),
-            state=dict(required=True, choices=['present', 'absent', 'started', 'stopped']),
-            cluster=dict(default=None, type='list'),
-            host=dict(default=None),
-            stripes=dict(default=None, type='int'),
-            replicas=dict(default=None, type='int'),
-            arbiters=dict(default=None, type='int'),
-            disperses=dict(default=None, type='int'),
-            redundancies=dict(default=None, type='int'),
-            transport=dict(default='tcp', choices=['tcp', 'rdma', 'tcp,rdma']),
-            bricks=dict(default=None, aliases=['brick']),
-            start_on_create=dict(default=True, type='bool'),
-            rebalance=dict(default=False, type='bool'),
-            options=dict(default={}, type='dict'),
-            quota=dict(),
-            directory=dict(default=None),
-            force=dict(default=False, type='bool'),
-        )
+            name=dict(type='str', required=True, aliases=['volume']),
+            state=dict(type='str', required=True, choices=['absent', 'started', 'stopped', 'present']),
+            cluster=dict(type='list'),
+            host=dict(type='str'),
+            stripes=dict(type='int'),
+            replicas=dict(type='int'),
+            arbiters=dict(type='int'),
+            disperses=dict(type='int'),
+            redundancies=dict(type='int'),
+            transport=dict(type='str', default='tcp', choices=['tcp', 'rdma', 'tcp,rdma']),
+            bricks=dict(type='str', aliases=['brick']),
+            start_on_create=dict(type='bool', default=True),
+            rebalance=dict(type='bool', default=False),
+            options=dict(type='dict', default={}),
+            quota=dict(type='str'),
+            directory=dict(type='str'),
+            force=dict(type='bool', default=False),
+        ),
     )
 
     global glusterbin
