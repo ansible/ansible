@@ -92,7 +92,7 @@ EXAMPLES = """
     group: '{{ my_group}}'
     account_name: '{{ user_name }}'
     password: '{{ password }}'
-    owner: 'DOMAIN\USER'
+    owner: 'DOMAIN\\USER'
 
 """
 
