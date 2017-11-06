@@ -6,17 +6,16 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
-
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '2.5',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = """
 module: pmp
-version_added: "1.0"
+version_added: "2.5"
 short_description: Create and modify accounts and groups in Password Manager Pro (PMP)
 description:
   - Create and modify accounts and groups in Password Manager Pro (PMP).
@@ -67,7 +66,16 @@ options:
     required: true
     description:
      - Change the default owner, must be an exising user.
-
+       
+  use_proxy:
+    required: false
+    description:
+      - Set if open_url must use proxy
+   validate_certs:
+    required: false
+    description:
+      - Set if open_url must validate certificates
+      
 author: "Bernat Mut (@berni69)"
 """
 
@@ -96,147 +104,124 @@ EXAMPLES = """
 
 """
 
-import urllib2
-import requests
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
-requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 import json
 import sys
-import logging
-import contextlib
-requests.packages.urllib3.disable_warnings()
-try:
-    from http.client import HTTPConnection # py3
-except ImportError:
-    from httplib import HTTPConnection # py2
-
+import urllib
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.urls import open_url
 
-def debug_requests_on():
-    '''Switches on logging of the requests module.'''
-    HTTPConnection.debuglevel = 1
-    logging.basicConfig()
-    logging.getLogger().setLevel(logging.DEBUG)
-    requests_log = logging.getLogger("requests.packages.urllib3")
-    requests_log.setLevel(logging.DEBUG)
-    requests_log.propagate = True
 
-def debug_requests_off():
-    '''Switches off logging of the requests module, might be some side-effects'''
-    HTTPConnection.debuglevel = 0
-
-    root_logger = logging.getLogger()
-    root_logger.setLevel(logging.WARNING)
-    root_logger.handlers = []
-    requests_log = logging.getLogger("requests.packages.urllib3")
-    requests_log.setLevel(logging.WARNING)
-    requests_log.propagate = False
-
-@contextlib.contextmanager
-def debug_requests():
-    '''Use with 'with'!'''
-    debug_requests_on()
-    yield
-    debug_requests_off()
-
-class PasswordManagerPro():
-    ##Configuracion del sistema##
+class PasswordManagerPro:
     data = {
-        'HOST'  : '',
-        'PORT'  : '',
-        'TOKEN' : '',
+        'HOST': '',
+        'PORT': '',
+        'TOKEN': '',
     }
-    def format(self,strr):
+
+    use_proxy = False
+    validate_certs = False
+
+    def format(self, strr):
         for key, value in self.data.iteritems():
-            strr = strr.replace('{'+key+'}',value)
+            strr = strr.replace('{' + key + '}', value)
         return strr
 
     def __init__(self, args=None):
-        if args and args['HOST']:
-            self.data['TOKEN'] = args['TOKEN']
-        if args and args['HOST']:
-            self.data['HOST'] = args['HOST']
-        if args and args['PORT']:
-            self.data['PORT'] = args['PORT']
+        if args:
+            if 'TOKEN' in args:
+                self.data['TOKEN'] = args['TOKEN']
+            if 'HOST' in args:
+                self.data['HOST'] = args['HOST']
+            if 'HOST' in args:
+                self.data['PORT'] = args['PORT']
+            if 'use_proxy' in args:
+                self.use_proxy = args['use_proxy']
+            if 'validate_certs' in args:
+                self.validate_certs = args['validate_certs']
 
     def getResources(self):
         url = self.format('https://{HOST}:{PORT}/restapi/json/v1/resources?AUTHTOKEN={TOKEN}')
-        return json.loads(urllib2.urlopen(url).read())
+        return json.loads(open_url(url, validate_certs=self.validate_certs, use_proxy=self.use_proxy).read())
 
     def getAccountsResource(self):
         url = self.format('https://{HOST}:{PORT}/restapi/json/v1/resources/{resourceId}/accounts?AUTHTOKEN={TOKEN}')
-        return json.loads(urllib2.urlopen(url).read())['operation']['Details']['ACCOUNT LIST']
+        return json.loads(open_url(url, validate_certs=self.validate_certs, use_proxy=self.use_proxy).read())['operation']['Details']['ACCOUNT LIST']
 
-    def getAccountResourceByName(self,username):
+    def getAccountResourceByName(self, username):
         url = self.format('https://{HOST}:{PORT}/restapi/json/v1/resources/{resourceId}/accounts?AUTHTOKEN={TOKEN}')
-        accounts = json.loads(urllib2.urlopen(url).read())['operation']['Details']['ACCOUNT LIST']
-        for acc in  accounts:
+        accounts = json.loads(open_url(url, validate_certs=self.validate_certs, use_proxy=self.use_proxy).read())['operation']['Details']['ACCOUNT LIST']
+        for acc in accounts:
             if acc['ACCOUNT NAME'] == username:
                 return acc
         raise RuntimeError('ACCOUNT not found!')
 
     def getAccountPwd(self):
-        url = self.format('https://{HOST}:{PORT}/restapi/json/v1/resources/{resourceId}/accounts/{accountId}/password?AUTHTOKEN={TOKEN}')
-        res = json.loads(urllib2.urlopen(url).read())['operation']
+        url = self.format(
+            'https://{HOST}:{PORT}/restapi/json/v1/resources/{resourceId}/accounts/{accountId}/password?AUTHTOKEN={TOKEN}')
+        res = json.loads(open_url(url, validate_certs=self.validate_certs, use_proxy=self.use_proxy).read())['operation']
         status = res['result']['status']
         if status == 'Failed':
             raise RuntimeError(res['result']['message'])
         return res['Details']['PASSWORD']
 
-    def getResourceByName(self,name):
+    def getResourceByName(self, name):
         url = self.format('https://{HOST}:{PORT}/restapi/json/v1/resources?AUTHTOKEN={TOKEN}')
-        resources = json.loads(urllib2.urlopen(url).read())
-        for res in  resources['operation']['Details']:
+        resources = json.loads(open_url(url, validate_certs=self.validate_certs, use_proxy=self.use_proxy).read())
+        for res in resources['operation']['Details']:
             if res['RESOURCE NAME'] == name:
                 return res
         raise RuntimeError('RESOURCE not found!')
 
-    def getPassword(self,server,username):
+    def getPassword(self, server, username):
         resource = self.getResourceByName(server)
         self.data['resourceId'] = resource['RESOURCE ID']
         account = self.getAccountResourceByName(username)
         self.data['accountId'] = account['ACCOUNT ID']
         return self.getAccountPwd()
 
-    def createResource(self,resourcename,accountname,password,ownername,type='Linux',group=''):
-        data={
-           "operation":{
-              "Details":{
-                 "RESOURCENAME":resourcename,
-                 "ACCOUNTNAME":accountname,
-                 "RESOURCETYPE":type,
-                 "PASSWORD":password,
-                 "OWNERNAME":ownername,
-              }
+    def createResource(self, resourcename, accountname, password, ownername, resource_type='Linux', group=''):
+        data = {
+            "operation": {
+                "Details": {
+                    "RESOURCENAME": resourcename,
+                    "ACCOUNTNAME": accountname,
+                    "RESOURCETYPE": resource_type,
+                    "PASSWORD": password,
+                    "OWNERNAME": ownername,
+                }
             }
-          }
+        }
         if group:
             data["operation"]["Details"]["RESOURCEGROUPNAME"] = group
-
         headers = {
-            'Content-Type': 'application/json',
-            } #admin test
+            'Content-Type': 'text/json',
+        }  # admin test
 
         url = self.format('https://{HOST}:{PORT}/restapi/json/v1/resources?AUTHTOKEN={TOKEN}')
-        with debug_requests():
-            r=requests.post(url, data={'INPUT_DATA' : json.dumps(data, sort_keys=False)},verify=False, headers=headers)
-        res = json.loads(r.text)['operation']['result']
+        data = json.dumps(data, sort_keys=False)
+
+        params = urllib.urlencode({'INPUT_DATA': unicode(data)})
+        
+        r = open_url(url, method="POST", headers=headers, data=params, validate_certs=self.validate_certs, use_proxy=self.use_proxy)
+
+        res = json.loads(r.read())['operation']['result']
         status = res['status']
         if status == 'Failed':
             raise RuntimeError(res['message'])
         return status
 
-def get_password(auth_pmp,params):
+
+def get_password(auth_pmp, params):
     pmp = PasswordManagerPro(auth_pmp)
-    password = pmp.getPassword(params['resource_name'],params['account_name'])
-    return { 'status': 'OK', 'password': password }
+    password = pmp.getPassword(params['resource_name'], params['account_name'])
+    return {'status': 'OK', 'password': password}
 
 
-def create_host(auth_pmp,params):
+def create_host(auth_pmp, params):
     pmp = PasswordManagerPro(auth_pmp)
-    status = pmp.createResource(params['resource_name'],params['account_name'],params['password'],params['owner'],params['group'])
-    return { 'status': status }
+    status = pmp.createResource(params['resource_name'], params['account_name'], params['password'], params['owner'],
+                                group=params['group'])
+    return {'status': status}
 
 
 # Some parameters are required depending on the operation:
@@ -246,28 +231,27 @@ OP_REQUIRED = dict(create_host=['resource_name', 'account_name', 'password', 'ow
 
 
 def main():
-
     global module
     module = AnsibleModule(
         argument_spec=dict(
             uri=dict(required=True),
-            port=dict(required=False,default="7272"),
+            port=dict(required=False, default="7272"),
             operation=dict(choices=['get_password', 'create_host'],
                            aliases=['command'], required=True),
-            token=dict(required=True,no_log=True),
+            token=dict(required=True, no_log=True),
             resource_name=dict(),
             account_name=dict(),
             password=dict(no_log=True),
             owner=dict(),
             group=dict(),
-            debug=dict(default=False),
+            use_proxy=dict(default=False),
+            validate_certs=dict(default=False),
             timeout=dict(type='float', default=10),
         ),
         supports_check_mode=False
     )
 
     op = module.params['operation']
-
     # Check we have the necessary per-operation parameters
     missing = []
     for parm in OP_REQUIRED[op]:
@@ -278,20 +262,19 @@ def main():
 
     # Handle rest of parameters
     pmp_auth = {
-        'HOST'  : module.params['uri'],
-        'PORT'  : module.params['port'],
-        'TOKEN' : module.params['token'],
+        'HOST': module.params['uri'],
+        'PORT': module.params['port'],
+        'TOKEN': module.params['token'],
     }
 
     # Dispatch
     try:
-
         # Lookup the corresponding method for this operation. This is
         # safe as the AnsibleModule should remove any unknown operations.
         thismod = sys.modules[__name__]
         method = getattr(thismod, op)
 
-        ret = method( pmp_auth, module.params)
+        ret = method(pmp_auth, module.params)
 
     except Exception as e:
         return module.fail_json(msg=e.message)
