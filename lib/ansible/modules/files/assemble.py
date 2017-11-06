@@ -160,6 +160,7 @@ def cleanup(path, result=None):
 
 
 def main():
+
     module = AnsibleModule(
         # not checking because of daisy chain to file module
         argument_spec=dict(
