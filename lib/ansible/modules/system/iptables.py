@@ -6,7 +6,6 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -334,6 +333,7 @@ import re
 
 from ansible.module_utils.basic import AnsibleModule
 
+
 BINS = dict(
     ipv4='iptables',
     ipv6='ip6tables',
@@ -588,7 +588,6 @@ def main():
                 remove_rule(iptables_path, module, module.params)
 
     module.exit_json(**args)
-
 
 if __name__ == '__main__':
     main()
