@@ -223,7 +223,6 @@ class DebianStrategy(GenericStrategy):
                                       to_native(e), exception=traceback.format_exc())
 
 
-
 class SLESStrategy(GenericStrategy):
     """
     This is a SLES Hostname strategy class - it edits the
@@ -258,7 +257,6 @@ class SLESStrategy(GenericStrategy):
         except Exception as e:
             self.module.fail_json(msg="failed to update hostname: %s" %
                                       to_native(e), exception=traceback.format_exc())
-
 
 
 class RedHatStrategy(GenericStrategy):
@@ -306,7 +304,6 @@ class RedHatStrategy(GenericStrategy):
         except Exception as e:
             self.module.fail_json(msg="failed to update hostname: %s" %
                                       to_native(e), exception=traceback.format_exc())
-
 
 
 class AlpineStrategy(GenericStrategy):
@@ -478,7 +475,6 @@ class OpenBSDStrategy(GenericStrategy):
         except Exception as e:
             self.module.fail_json(msg="failed to update hostname: %s" %
                                       to_native(e), exception=traceback.format_exc())
-
 
 
 class SolarisStrategy(GenericStrategy):
