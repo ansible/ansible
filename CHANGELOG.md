@@ -134,6 +134,8 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/32511)
 * Fix git archive when update is set to no
   (https://github.com/ansible/ansible/pull/31829)
+* Fix locale when screen scraping in the yum module
+  (https://github.com/ansible/ansible/pull/32203)
 
 
 <a id="2.4.1"></a>
