@@ -51,8 +51,8 @@ options:
 '''
 
 EXAMPLES = '''
-# Example action to start sv dnscache, if not running
- - runit:
+- name: Start sv dnscache, if not running
+  runit:
     name: dnscache
     state: started
 
