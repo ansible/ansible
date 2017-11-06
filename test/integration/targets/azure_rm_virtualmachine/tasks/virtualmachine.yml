@@ -18,7 +18,7 @@
 
 - name: Create an availability set
   azure_rm_availabilityset:
-    name: myavailabilityset
+    name: "avbs{{ resource_group | hash('md5') | truncate(7, True, '') }}"
     resource_group: "{{ resource_group }}"
 
 - name: Create virtual network

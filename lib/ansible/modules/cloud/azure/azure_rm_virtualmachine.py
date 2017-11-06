@@ -108,7 +108,8 @@ options:
         required: true
     availability_set:
         description:
-            - Name or ID of an existing availability set to add the VM to. None by default.
+            - Name or ID of an existing availability set to add the VM to. The availability_set should be in the same resource group as VM.
+        default: null
         version_added: "2.5"
     storage_account_name:
         description:
