@@ -54,14 +54,11 @@ options:
     description:
       - The username for use in HTTP basic authentication.
       - This parameter can be used without C(url_password) for sites that allow empty passwords.
-    version_added: '1.6'
   url_password:
     description:
         - The password for use in HTTP basic authentication.
         - If the C(url_username) parameter is not specified, the C(url_password) parameter will not be used.
-    version_added: '1.6'
   force_basic_auth:
-    version_added: '2.0'
     description:
       - httplib2, the library used by the uri module only sends authentication information when a webservice
         responds to an initial request with a 401 status. Since some basic auth services do not properly
@@ -74,13 +71,11 @@ options:
       - PEM formatted certificate chain file to be used for SSL client
         authentication. This file can also include the key as well, and if
         the key is included, C(client_key) is not required.
-    version_added: '2.4'
   client_key:
     description:
       - PEM formatted file that contains your private key to be used for SSL
         client authentication. If C(client_cert) contains both the certificate
         and key, this option is not required.
-    version_added: '2.4'
   state:
     description:
       - Apply feature state.
@@ -92,12 +87,9 @@ options:
       - name used to create / delete the host
       - this does not need to be the FQDN, but does needs to be uniuqe
     required: true
-    default: null
   zone:
     description:
-      - ??
-    required: false
-    default: None
+      - the zone from where this host should be polled
   template:
     description:
       - the template used to define the host
@@ -137,7 +129,14 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-#
+name:
+    description: The name used to create, modify or delete the host 
+    type: string
+    returned: always
+data: 
+    description: The data structure used for create, modify or delete of the host 
+    type: dict
+    returned: always
 '''
 
 import json
@@ -236,7 +235,7 @@ def main():
     argument_spec.update(
         state=dict(default="present", choices=["absent", "present"]),
         name=dict(required=True, aliases=['host']),
-        zone=dict(default=None),
+        zone=dict(),
         template=dict(default=None),
         check_command=dict(default="hostalive"),
         display_name=dict(default=None),
