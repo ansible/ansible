@@ -82,6 +82,7 @@ Ansible Changes By Release
   - TODO: build upon this to add many features detailed in ansible-config proposal https://github.com/ansible/proposals/issues/35
 * Windows modules now support the use of multiple shared module_utils files in the form of Powershell modules (.psm1), via `#Requires -Module Ansible.ModuleUtils.Whatever.psm1`
 * Python module argument_spec now supports custom validation logic by accepting a callable as the `type` argument.
+* Windows become_method: runas is no longer marked `experimental`
 * Windows become_method: runas now works across all authtypes and will auto-elevate under UAC if WinRM user has "Act as part of the operating system" privilege
 
 ### Deprecations
