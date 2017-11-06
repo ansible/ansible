@@ -145,7 +145,7 @@ EXAMPLES = '''
     name: OpenSSH
     delete: yes
 
-- name: Deny all access to port 53:
+- name: Deny all access to port 53
   ufw:
     rule: deny
     port: 53
@@ -155,13 +155,13 @@ EXAMPLES = '''
     rule: allow
     port: '60000:61000'
 
-- name: Allow all access to tcp port 80:
+- name: Allow all access to tcp port 80
   ufw:
     rule: allow
     port: 80
     proto: tcp
 
-- name: Allow all access from RFC1918 networks to this host: 
+- name: Allow all access from RFC1918 networks to this host
   ufw:
     rule: allow
     src: '{{ item }}'
@@ -170,7 +170,7 @@ EXAMPLES = '''
     - 172.16.0.0/12
     - 192.168.0.0/16
 
-- name: Deny access to udp port 514 from host 1.2.3.4 and include a comment:
+- name: Deny access to udp port 514 from host 1.2.3.4 and include a comment
   ufw:
     rule: deny
     proto: udp
@@ -190,7 +190,7 @@ EXAMPLES = '''
     to_port: 5469
 
 # Note that IPv6 must be enabled in /etc/default/ufw for IPv6 firewalling to work.
-- name: Deny all traffic from the IPv6 2001:db8::/32 to tcp port 25 on this host.
+- name: Deny all traffic from the IPv6 2001:db8::/32 to tcp port 25 on this host
   ufw:
     rule: deny
     proto: tcp
@@ -198,7 +198,7 @@ EXAMPLES = '''
     port: 25
 
 # Can be used to further restrict a global FORWARD policy set to allow
-- name: Deny forwarded/routed traffic from subnet 1.2.3.0/24 to subnet 4.5.6.0/24.
+- name: Deny forwarded/routed traffic from subnet 1.2.3.0/24 to subnet 4.5.6.0/24
   ufw:
     rule: deny
     route: yes
