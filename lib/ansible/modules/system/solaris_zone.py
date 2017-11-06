@@ -429,7 +429,8 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(type='str', required=True),
-            state=dict(type='str', default='present', choices=['absent', 'attached', 'configured', 'detached', 'installed', 'present', 'running', 'started', 'stopped']),
+            state=dict(type='str', default='present',
+                       choices=['absent', 'attached', 'configured', 'detached', 'installed', 'present', 'running', 'started', 'stopped']),
             path=dict(type='str'),
             sparse=dict(type='bool', default=False),
             root_password=dict(type='str', no_log=True),
