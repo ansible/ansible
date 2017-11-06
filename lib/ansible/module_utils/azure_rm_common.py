@@ -151,6 +151,7 @@ def azure_id_to_dict(id):
         index += 1
     return result
 
+
 def format_resource_id(val, subscription_id, namespace, types, resource_group):
     return resource_id(name=val,
                        resource_group=resource_group,

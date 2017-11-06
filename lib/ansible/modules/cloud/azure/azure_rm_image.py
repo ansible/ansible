@@ -66,28 +66,28 @@ author:
 '''
 
 EXAMPLES = '''
-    - name: Create an image from a virtual machine
-      azure_rm_image:
-        resource_group: Testing
-        name: foobar
-        source: testvm001
+- name: Create an image from a virtual machine
+    azure_rm_image:
+    resource_group: Testing
+    name: foobar
+    source: testvm001
 
-    - name: Create an image from os disk
-      azure_rm_image:
-        resource_group: Testing
-        name: foobar
-        source: /subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Compute/disks/disk001
-        data_disk_sources:
-          - datadisk001
-          - datadisk002
-        os_type: Linux
+- name: Create an image from os disk
+    azure_rm_image:
+    resource_group: Testing
+    name: foobar
+    source: /subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Compute/disks/disk001
+    data_disk_sources:
+        - datadisk001
+        - datadisk002
+    os_type: Linux
 
-    - name: Delete an image
-      azure_rm_image:
-        state: absent
-        resource_group: Testing
-        name: foobar
-        source: testvm001
+- name: Delete an image
+    azure_rm_image:
+    state: absent
+    resource_group: Testing
+    name: foobar
+    source: testvm001
 '''
 
 RETURN = '''
@@ -150,7 +150,6 @@ state:
 '''  # NOQA
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, format_resource_id
-
 
 try:
     from msrestazure.tools import parse_resource_id
