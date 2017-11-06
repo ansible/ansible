@@ -1,11 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2012, Stephen Fromm <sfromm@gmail.com>
+# Copyright: (c) 2012, Stephen Fromm <sfromm@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -15,41 +14,42 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: group
-author: "Stephen Fromm (@sfromm)"
+author:
+- Stephen Fromm (@sfromm)
 version_added: "0.0.2"
 short_description: Add or remove groups
-requirements: [ groupadd, groupdel, groupmod ]
+requirements:
+- groupadd
+- groupdel
+- groupmod
 description:
     - Manage presence of groups on a host.
     - For Windows targets, use the M(win_group) module instead.
 options:
     name:
-        required: true
         description:
             - Name of the group to manage.
+        required: true
     gid:
-        required: false
         description:
             - Optional I(GID) to set for the group.
     state:
-        required: false
-        default: "present"
-        choices: [ present, absent ]
         description:
             - Whether the group should be present or not on the remote host.
+        choices: [ absent, present ]
+        default: present
     system:
-        required: false
-        default: "no"
-        choices: [ "yes", "no" ]
         description:
             - If I(yes), indicates that the group created is a system group.
+        type: bool
+        default: 'no'
 notes:
     - For Windows targets, use the M(win_group) module instead.
 '''
 
 EXAMPLES = '''
-# Example group command from Ansible Playbooks
-- group:
+- name: Ensure group "somegroup" exists
+  group:
     name: somegroup
     state: present
 '''
@@ -406,12 +406,12 @@ class NetBsdGroup(Group):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(default='present', choices=['present', 'absent'], type='str'),
-            name=dict(required=True, type='str'),
-            gid=dict(default=None, type='str'),
-            system=dict(default=False, type='bool'),
+            state=dict(type='str', default='present', choices=['absent', 'present']),
+            name=dict(type='str', required=True),
+            gid=dict(type='str'),
+            system=dict(type='bool', default=False),
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
     )
 
     group = Group(module)
