@@ -149,3 +149,17 @@ class ManageIQ(object):
         except Exception as e:
             self.module.fail_json(msg="failed to find resource {error}".format(error=e))
         return vars(entity)
+
+    def find_collection_resource_or_fail(self, collection_name, **params):
+        """ Searches the collection resource by the collection name and the param passed.
+
+        Returns:
+            the resource as an object if it exists in manageiq, Fail otherwise.
+        """
+        resource = self.find_collection_resource_by(collection_name, **params)
+        if resource:
+            return resource
+        else:
+            msg = "{collection_name} where {params} does not exist in manageiq".format(
+                collection_name=collection_name, params=str(params))
+            self.module.fail_json(msg=msg)
