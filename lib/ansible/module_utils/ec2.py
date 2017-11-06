@@ -106,7 +106,7 @@ def boto3_conn(module, conn_type=None, resource=None, region=None, endpoint=None
         return _boto3_conn(conn_type=conn_type, resource=resource, region=region, endpoint=endpoint, **params)
     except ValueError as e:
         module.fail_json(msg="Couldn't connect to AWS: " % to_native(e))
-    except botocore.exceptions.ProfileNotFound as e:
+    except (botocore.exceptions.ProfileNotFound, botocore.exceptions.PartialCredentialsError) as e:
         module.fail_json(msg=to_native(e))
     except botocore.exceptions.NoRegionError as e:
         module.fail_json(msg="The %s module requires a region and none was found in configuration, "
