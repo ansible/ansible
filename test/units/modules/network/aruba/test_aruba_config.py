@@ -68,7 +68,7 @@ class TestArubaConfigModule(TestArubaModule):
         result = self.execute_module()
         self.assertIn('__backup__', result)
 
-    def test_aruba_config_save(self):
+    def test_aruba_config_save_always(self):
         self.run_commands.return_value = "Hostname foo"
         set_module_args(dict(save_when='always'))
         self.execute_module(changed=True)
@@ -77,6 +77,30 @@ class TestArubaConfigModule(TestArubaModule):
         self.assertEqual(self.load_config.call_count, 0)
         args = self.run_commands.call_args[0][1]
         self.assertIn('copy running-config startup-config', args)
+
+    def test_aruba_config_save_changed_true(self):
+        src = load_fixture('aruba_config_src.cfg')
+        set_module_args(dict(src=src, save_when='changed'))
+        commands = ['hostname foo', 'interface GigabitEthernet0/0',
+                    'no ip address']
+        self.execute_module(changed=True, commands=commands)
+        # src = load_fixture('aruba_config_src.cfg')
+
+        # set_module_args(dict(save_when='changed'))
+        # commands = ['hostname changed']
+        # self.execute_module(changed=False, commands=commands)
+        self.assertEqual(self.run_commands.call_count, 1)
+        self.assertEqual(self.get_config.call_count, 1)
+        self.assertEqual(self.load_config.call_count, 1)
+        args = self.run_commands.call_args[0][1]
+        self.assertIn('copy running-config startup-config', args)
+
+    def test_aruba_config_save_changed_false(self):
+        set_module_args(dict(save_when='changed'))
+        self.execute_module(changed=False)
+        self.assertEqual(self.run_commands.call_count, 0)
+        self.assertEqual(self.get_config.call_count, 0)
+        self.assertEqual(self.load_config.call_count, 0)
 
     def test_aruba_config_lines_wo_parents(self):
         set_module_args(dict(lines=['hostname foo']))
@@ -144,3 +168,11 @@ class TestArubaConfigModule(TestArubaModule):
         set_module_args(dict(lines=lines, parents=parents, match='exact'))
         commands = parents + lines
         self.execute_module(changed=True, commands=commands, sort=False)
+
+    def test_aruba_encrypt_false(self):
+        set_module_args(dict(encrypt=False))
+        self.execute_module()
+        self.assertEqual(self.run_commands.call_count, 2)
+        args = self.run_commands.call_args_list
+        self.assertIn('encrypt disable', args[0][0])
+        self.assertIn('encrypt enable', args[1][0])
