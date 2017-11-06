@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2013, André Paramés <git@andreparames.com>
+# Copyright: (c) 2013, André Paramés <git@andreparames.com>
 # Based on the Git module by Michael DeHaan <michael.dehaan@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
