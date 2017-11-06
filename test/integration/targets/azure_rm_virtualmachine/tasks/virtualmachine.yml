@@ -67,7 +67,7 @@
       short_hostname: testvm
       os_type: Linux
       network_interfaces: testvm001
-      availability_set: myavailabilityset
+      availability_set: "avbs{{ resource_group | hash('md5') | truncate(7, True, '') }}"
       image:
         offer: UbuntuServer
         publisher: Canonical
