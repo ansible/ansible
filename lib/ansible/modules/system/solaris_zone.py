@@ -4,7 +4,6 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -19,12 +18,12 @@ description:
    - Create, start, stop and delete Solaris zones. This module doesn't currently allow
      changing of options for a zone that's already been created.
 version_added: "2.0"
-author: Paul Markham
+author:
+- Paul Markham
 requirements:
   - Solaris 10 or 11
 options:
   state:
-    required: true
     description:
       - C(present), configure and install the zone.
       - C(installed), synonym for C(present).
@@ -36,8 +35,9 @@ options:
       - C(configured), configure the ready so that it's to be attached.
       - C(attached), attach a zone, but do not boot it.
       - C(detached), shutdown and detach a zone
-    choices: ['present', 'installed', 'started', 'running', 'stopped', 'absent', 'configured', 'attached', 'detached']
+    choices: [ absent, attached, configured, detached, installed, present, running, started, stopped ]
     default: present
+    required: true
   name:
     description:
       - Zone name.
@@ -46,48 +46,39 @@ options:
     description:
       - The path where the zone will be created. This is required when the zone is created, but not
         used otherwise.
-    required: false
-    default: null
   sparse:
     description:
       - Whether to create a sparse (C(true)) or whole root (C(false)) zone.
-    required: false
-    default: false
+    type: bool
+    default: 'no'
   root_password:
     description:
       - The password hash for the root account. If not specified, the zone's root account
         will not have a password.
-    required: false
-    default: null
   config:
     description:
       - 'The zonecfg configuration commands for this zone. See zonecfg(1M) for the valid options
         and syntax. Typically this is a list of options separated by semi-colons or new lines, e.g.
         "set auto-boot=true;add net;set physical=bge0;set address=10.1.1.1;end"'
-    required: false
     default: empty string
   create_options:
     description:
       - 'Extra options to the zonecfg(1M) create command.'
-    required: false
     default: empty string
   install_options:
     description:
       - 'Extra options to the zoneadm(1M) install command. To automate Solaris 11 zone creation,
          use this to specify the profile XML file, e.g. install_options="-c sc_profile.xml"'
-    required: false
     default: empty string
   attach_options:
     description:
       - 'Extra options to the zoneadm attach command. For example, this can be used to specify
         whether a minimum or full update of packages is required and if any packages need to
         be deleted. For valid values, see zoneadm(1M)'
-    required: false
     default: empty string
   timeout:
     description:
       - Timeout, in seconds, for zone to boot.
-    required: false
     default: 600
 '''
 
@@ -437,18 +428,18 @@ class Zone(object):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(required=True),
-            state=dict(default='present', choices=['running', 'started', 'present', 'installed', 'stopped', 'absent', 'configured', 'detached', 'attached']),
-            path=dict(default=None),
-            sparse=dict(default=False, type='bool'),
-            root_password=dict(default=None, no_log=True),
-            timeout=dict(default=600, type='int'),
-            config=dict(default=''),
-            create_options=dict(default=''),
-            install_options=dict(default=''),
-            attach_options=dict(default=''),
+            name=dict(type='str', required=True),
+            state=dict(type='str', default='present', choices=['absent', 'attached', 'configured', 'detached', 'installed', 'present', 'running', 'started', 'stopped']),
+            path=dict(type='str'),
+            sparse=dict(type='bool', default=False),
+            root_password=dict(type='str', no_log=True),
+            timeout=dict(type='int', default=600),
+            config=dict(type='str', default=''),
+            create_options=dict(type='str', default=''),
+            install_options=dict(type='str', default=''),
+            attach_options=dict(type='str', default=''),
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
     )
 
     zone = Zone(module)
