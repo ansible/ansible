@@ -1,11 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2013, Jeroen Hoekx <jeroen.hoekx@dsquare.be>, Alexander Bulimov <lazywolf0@gmail.com>
+# Copyright: (c) 2013, Jeroen Hoekx <jeroen.hoekx@dsquare.be>, Alexander Bulimov <lazywolf0@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -15,8 +14,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 author:
-    - "Jeroen Hoekx (@jhoekx)"
-    - "Alexander Bulimov (@abulimov)"
+    - Jeroen Hoekx (@jhoekx)
+    - Alexander Bulimov (@abulimov)
 module: lvol
 short_description: Configure LVM logical volumes
 description:
@@ -39,152 +38,147 @@ options:
       Float values must begin with a digit.
       Resizing using percentage values was not supported prior to 2.1.
   state:
-    choices: [ "present", "absent" ]
-    default: present
     description:
     - Control if the logical volume exists. If C(present) and the
       volume does not already exist then the C(size) option is required.
-    required: false
+    choices: [ absent, present ]
+    default: present
   active:
-    version_added: "2.2"
-    choices: [ "yes", "no" ]
-    default: "yes"
     description:
     - Whether the volume is activate and visible to the host.
-    required: false
+    type: bool
+    default: 'yes'
+    version_added: "2.2"
   force:
-    version_added: "1.5"
-    choices: [ "yes", "no" ]
-    default: "no"
     description:
     - Shrink or remove operations of volumes requires this switch. Ensures that
       that filesystems get never corrupted/destroyed by mistake.
-    required: false
+    type: bool
+    default: 'no'
+    version_added: "1.5"
   opts:
-    version_added: "2.0"
     description:
     - Free-form options to be passed to the lvcreate command
+    version_added: "2.0"
   snapshot:
-    version_added: "2.1"
     description:
     - The name of the snapshot volume
-    required: false
+    version_added: "2.1"
   pvs:
-    version_added: "2.2"
     description:
     - Comma separated list of physical volumes e.g. /dev/sda,/dev/sdb
-    required: false
-  shrink:
     version_added: "2.2"
+  shrink:
     description:
     - shrink if current size is higher than size requested
-    required: false
-    default: yes
+    type: bool
+    default: 'yes'
+    version_added: "2.2"
 notes:
   - Filesystems on top of the volume are not resized.
 '''
 
 EXAMPLES = '''
-# Create a logical volume of 512m.
-- lvol:
+- name: Create a logical volume of 512m
+  lvol:
     vg: firefly
     lv: test
     size: 512
 
-# Create a logical volume of 512m with disks /dev/sda and /dev/sdb
-- lvol:
+- name: Create a logical volume of 512m with disks /dev/sda and /dev/sdb
+  lvol:
     vg: firefly
     lv: test
     size: 512
     pvs: /dev/sda,/dev/sdb
 
-# Create cache pool logical volume
-- lvol:
+- name: Create cache pool logical volume
+  lvol:
     vg: firefly
     lv: lvcache
     size: 512m
     opts: --type cache-pool
 
-# Create a logical volume of 512g.
-- lvol:
+- name: Create a logical volume of 512g.
+  lvol:
     vg: firefly
     lv: test
     size: 512g
 
-# Create a logical volume the size of all remaining space in the volume group
-- lvol:
+- name: Create a logical volume the size of all remaining space in the volume group
+  lvol:
     vg: firefly
     lv: test
     size: 100%FREE
 
-# Create a logical volume with special options
-- lvol:
+- name: Create a logical volume with special options
+  lvol:
     vg: firefly
     lv: test
     size: 512g
     opts: -r 16
 
-# Extend the logical volume to 1024m.
-- lvol:
+- name: Extend the logical volume to 1024m.
+  lvol:
     vg: firefly
     lv: test
     size: 1024
 
-# Extend the logical volume to consume all remaining space in the volume group
-- lvol:
+- name: Extend the logical volume to consume all remaining space in the volume group
+  lvol:
     vg: firefly
     lv: test
     size: +100%FREE
 
-# Extend the logical volume to take all remaining space of the PVs
-- lvol:
+- name: Extend the logical volume to take all remaining space of the PVs
+  lvol:
     vg: firefly
     lv: test
     size: 100%PVS
 
-# Resize the logical volume to % of VG
-- lvol:
+- name: Resize the logical volume to % of VG
+  lvol:
     vg: firefly
     lv: test
     size: 80%VG
     force: yes
 
-# Reduce the logical volume to 512m
-- lvol:
+- name: Reduce the logical volume to 512m
+  lvol:
     vg: firefly
     lv: test
     size: 512
     force: yes
 
-# Set the logical volume to 512m and do not try to shrink if size is lower than current one
-- lvol:
+- name: Set the logical volume to 512m and do not try to shrink if size is lower than current one
+  lvol:
     vg: firefly
     lv: test
     size: 512
     shrink: no
 
-# Remove the logical volume.
-- lvol:
+- name: Remove the logical volume.
+  lvol:
     vg: firefly
     lv: test
     state: absent
     force: yes
 
-# Create a snapshot volume of the test logical volume.
-- lvol:
+- name: Create a snapshot volume of the test logical volume.
+  lvol:
     vg: firefly
     lv: test
     snapshot: snap1
     size: 100m
 
-# Deactivate a logical volume
-- lvol:
+- name: Deactivate a logical volume
+  lvol:
     vg: firefly
     lv: test
     active: false
 
-# Create a deactivated logical volume
-- lvol:
+- name: Create a deactivated logical volume
+  lvol:
     vg: firefly
     lv: test
     size: 512g
@@ -241,15 +235,15 @@ def get_lvm_version(module):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            vg=dict(required=True),
-            lv=dict(required=True),
+            vg=dict(type='str', required=True),
+            lv=dict(type='str', required=True),
             size=dict(type='str'),
             opts=dict(type='str'),
-            state=dict(choices=["absent", "present"], default='present'),
-            force=dict(type='bool', default='no'),
-            shrink=dict(type='bool', default='yes'),
-            active=dict(type='bool', default='yes'),
-            snapshot=dict(type='str', default=None),
+            state=dict(type='str', default='present', choices=['absent', 'present']),
+            force=dict(type='bool', default=False),
+            shrink=dict(type='bool', default=True),
+            active=dict(type='bool', default=True),
+            snapshot=dict(type='str'),
             pvs=dict(type='str')
         ),
         supports_check_mode=True,
