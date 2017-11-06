@@ -192,9 +192,9 @@ class ActionModule(ActionBase):
         # remove action plugin only keys
         return dict((k, v) for k, v in module_args.items() if k not in ('content', 'decrypt'))
 
-    def _copy_file(self, source_full, source_rel, content, content_tempfile, dest, task_vars):
+    def _copy_file(self, source_full, source_rel, content, content_tempfile,
+                   dest, task_vars, follow):
         decrypt = boolean(self._task.args.get('decrypt', True), strict=False)
-        follow = boolean(self._task.args.get('follow', False), strict=False)
         force = boolean(self._task.args.get('force', 'yes'), strict=False)
         raw = boolean(self._task.args.get('raw', 'no'), strict=False)
 
@@ -289,6 +289,7 @@ class ActionModule(ActionBase):
                     src=tmp_src,
                     dest=dest,
                     original_basename=source_rel,
+                    follow=follow
                 )
             )
             if not self._task.args.get('checksum'):
@@ -491,7 +492,14 @@ class ActionModule(ActionBase):
         for source_full, source_rel in source_files['files']:
             # copy files over.  This happens first as directories that have
             # a file do not need to be created later
-            module_return = self._copy_file(source_full, source_rel, content, content_tempfile, dest, task_vars)
+
+            # We only follow symlinks for files in the non-recursive case
+            if source_files['directories']:
+                follow = False
+            else:
+                follow = boolean(self._task.args.get('follow', False), strict=False)
+
+            module_return = self._copy_file(source_full, source_rel, content, content_tempfile, dest, task_vars, follow)
             if module_return is None:
                 continue
 
@@ -528,6 +536,9 @@ class ActionModule(ActionBase):
             new_module_args['src'] = target_path
             new_module_args['state'] = 'link'
             new_module_args['force'] = True
+            # Only follow remote symlinks in the non-recursive case
+            if source_files['directories']:
+                new_module_args['follow'] = False
 
             module_return = self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars)
             module_executed = True
