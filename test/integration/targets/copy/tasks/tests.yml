@@ -20,6 +20,10 @@
     mode: 0444
   register: copy_result
 
+- name: Record the sha of the test file for later tests
+  set_fact:
+    remote_file_hash: "{{ copy_result['checksum'] }}"
+
 - name: Check the mode of the output file
   file:
     name: "{{ remote_file }}"
@@ -163,7 +167,7 @@
 - name: Create a hardlink to the file
   file:
     src: '{{ remote_file }}'
-    dest: '{{ output_dir }}/hard.lnk'
+    dest: '{{ remote_dir }}/hard.lnk'
     state: hard
 
 - name: copy the same contents into place
@@ -181,7 +185,7 @@
 
 - name: Check the stat results of the hard link
   stat:
-    path: "{{ output_dir }}/hard.lnk"
+    path: "{{ remote_dir }}/hard.lnk"
   register: hlink_results
 
 - name: Check that the file did not change
@@ -206,7 +210,7 @@
 
 - name: Check the stat results of the hard link
   stat:
-    path: "{{ output_dir }}/hard.lnk"
+    path: "{{ remote_dir }}/hard.lnk"
   register: hlink_results
 
 - name: Check that the file changed permissions but is still the same
@@ -232,7 +236,7 @@
 
 - name: Check the stat results of the hard link
   stat:
-    path: "{{ output_dir }}/hard.lnk"
+    path: "{{ remote_dir }}/hard.lnk"
   register: hlink_results
 
 - name: Check that the file changed and hardlink was broken
@@ -1095,6 +1099,10 @@
 
   remote_user: root
 
+#
+# Follow=True tests
+#
+
 # test overwriting a link using "follow=yes" so that the link
 # is preserved and the link target is updated
 
@@ -1112,7 +1120,7 @@
 - name: Update the test file using follow=True to preserve the link
   copy:
     dest: "{{ remote_dir }}/follow_link"
-    content: "this is the new content\n"
+    src: foo.txt
     follow: yes
   register: replace_follow_result
 
@@ -1121,19 +1129,37 @@
     path: "{{ remote_dir }}/follow_link"
   register: stat_link_result
 
-- name: Assert that the link is still a link
+- name: Assert that the link is still a link and contents were changed
   assert:
     that:
-    - stat_link_result.stat.islnk
+    - stat_link_result['stat']['islnk']
+    - stat_link_result['stat']['lnk_target'] == './follow_test'
+    - replace_follow_result['changed']
+    - "replace_follow_result['checksum'] == remote_file_hash"
 
-- name: Get the checksum of the link target
-  shell: "{{ sha1sum.stdout }} {{remote_dir}}/follow_test | cut -f1 -sd ' '"
-  register: target_file_result
+# Symlink handling when the dest is already there
+# https://github.com/ansible/ansible-modules-core/issues/1568
 
-- name: Assert that the link target was updated
+- name: test idempotency by trying to copy to the symlink with the same contents
+  copy:
+    dest: "{{ remote_dir }}/follow_link"
+    src: foo.txt
+    follow: yes
+  register: replace_follow_result
+
+- name: Stat the link path
+  stat:
+    path: "{{ remote_dir }}/follow_link"
+  register: stat_link_result
+
+- name: Assert that the link is still a link and contents were changed
   assert:
     that:
-    - replace_follow_result.checksum == target_file_result.stdout
+    - stat_link_result['stat']['islnk']
+    - stat_link_result['stat']['lnk_target'] == './follow_test'
+    - not replace_follow_result['changed']
+    - replace_follow_result['checksum'] == remote_file_hash
+
 
 - name: Update the test file using follow=False to overwrite the link
   copy:
@@ -1158,6 +1184,13 @@
        - "'content' not in copy_results"
        - "stat_results.stat.checksum == ('modified'|hash('sha1'))"
        - "not stat_results.stat.islnk"
+
+# test overwriting a link using "follow=yes" so that the link
+# is preserved and the link target is updated when the thing being copied is a link
+
+#
+# File mode tests
+#
 
 - name: setup directory for test
   file: state=directory dest={{remote_dir }}/directory mode=0755
