@@ -962,7 +962,6 @@ class LinuxService(Service):
         return (rc_state, stdout, stderr)
 
 
-
 class FreeBsdService(Service):
     """
     This is the FreeBSD Service manipulation class - it uses the /etc/rc.conf
