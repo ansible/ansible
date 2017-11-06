@@ -14,7 +14,7 @@
       name: ensure temp dir exists
 
     # file cannot do this properly, use command instead
-    - name: Create ciruclar symbolic link
+    - name: Create circular symbolic link
       command: ln -s ../ circles
       args:
         chdir: '{{role_path}}/files/subdir/subdir1'
@@ -57,7 +57,7 @@
 
     - name: Remove circular symbolic link
       file:
-        path: subdir/subdir1/circles
+        path: '{{ role_path }}/files/subdir/subdir1/circles'
         state: absent
       connection: local
 
