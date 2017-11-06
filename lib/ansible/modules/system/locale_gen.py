@@ -1,10 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-#
+
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -14,37 +13,34 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: locale_gen
-short_description: Creates or removes locales.
+short_description: Creates or removes locales
 description:
      - Manages locales by editing /etc/locale.gen and invoking locale-gen.
 version_added: "1.6"
-author: "Augustus Kling (@AugustusKling)"
+author:
+- Augustus Kling (@AugustusKling)
 options:
     name:
         description:
              - Name and encoding of the locale, such as "en_GB.UTF-8".
         required: true
-        default: null
-        aliases: []
     state:
       description:
            - Whether the locale shall be present.
-      required: false
-      choices: ["present", "absent"]
-      default: "present"
+      choices: [ absent, present ]
+      default: present
 '''
 
 EXAMPLES = '''
-# Ensure a locale exists.
-- locale_gen:
+- name: Ensure a locale exists
+  locale_gen:
     name: de_CH.UTF-8
     state: present
 '''
 
 import os
-import os.path
-from subprocess import Popen, PIPE, call
 import re
+from subprocess import Popen, PIPE, call
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
@@ -191,16 +187,13 @@ def apply_change_ubuntu(targetState, name):
         raise EnvironmentError(localeGenExitValue, "locale.gen failed to execute, it returned " + str(localeGenExitValue))
 
 
-# ==============================================================
-# main
-
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(required=True),
-            state=dict(choices=['present', 'absent'], default='present'),
+            name=dict(type='str', required=True),
+            state=dict(type='str', default='present', choices=['absent', 'present']),
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
     )
 
     name = module.params['name']
