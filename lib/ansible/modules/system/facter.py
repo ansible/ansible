@@ -1,11 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+# Copyright: (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -17,16 +16,16 @@ DOCUMENTATION = '''
 module: facter
 short_description: Runs the discovery program I(facter) on the remote system
 description:
-     - Runs the I(facter) discovery program
-       (U(https://github.com/puppetlabs/facter)) on the remote system, returning
-       JSON data that can be useful for inventory purposes.
+- Runs the I(facter) discovery program
+  (U(https://github.com/puppetlabs/facter)) on the remote system, returning
+  JSON data that can be useful for inventory purposes.
 version_added: "0.2"
-options: {}
-notes: []
-requirements: [ "facter", "ruby-json" ]
+requirements:
+- facter
+- ruby-json
 author:
-    - "Ansible Core Team"
-    - "Michael DeHaan"
+- Ansible Core Team
+- Michael DeHaan
 '''
 
 EXAMPLES = '''
