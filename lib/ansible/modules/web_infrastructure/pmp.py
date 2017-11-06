@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function
 
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
+ANSIBLE_METADATA = {'metadata_version': '2.5',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -66,7 +66,7 @@ options:
     required: true
     description:
      - Change the default owner, must be an exising user.
-       
+
   use_proxy:
     required: false
     description:
@@ -75,7 +75,7 @@ options:
     required: false
     description:
       - Set if open_url must validate certificates
-      
+
 author: "Bernat Mut (@berni69)"
 """
 
@@ -104,6 +104,19 @@ EXAMPLES = """
 
 """
 
+RETURN = '''
+status:
+    description: status of action executed
+    returned: success
+    type: string
+    sample: 'OK'
+password:
+    description: password retrieved
+    returned: success
+    type: string
+    sample: "123456"
+'''
+
 import json
 import sys
 import urllib
@@ -122,7 +135,7 @@ class PasswordManagerPro:
     validate_certs = False
 
     def format(self, strr):
-        for key, value in self.data.iteritems():
+        for key, value in self.data.items():
             strr = strr.replace('{' + key + '}', value)
         return strr
 
@@ -199,11 +212,8 @@ class PasswordManagerPro:
 
         url = self.format('https://{HOST}:{PORT}/restapi/json/v1/resources?AUTHTOKEN={TOKEN}')
         data = json.dumps(data, sort_keys=False)
-
-        params = urllib.urlencode({'INPUT_DATA': unicode(data)})
-        
+        params = urllib.urlencode({'INPUT_DATA': data})
         r = open_url(url, method="POST", headers=headers, data=params, validate_certs=self.validate_certs, use_proxy=self.use_proxy)
-
         res = json.loads(r.read())['operation']['result']
         status = res['status']
         if status == 'Failed':
