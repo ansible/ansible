@@ -132,6 +132,8 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/issues/32368)
 * Fix tracebacks for non-ascii paths when parsing inventory
   (https://github.com/ansible/ansible/pull/32511)
+* Fix git archive when update is set to no
+  (https://github.com/ansible/ansible/pull/31829)
 
 
 <a id="2.4.1"></a>
