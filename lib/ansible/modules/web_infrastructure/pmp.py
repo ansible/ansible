@@ -71,7 +71,7 @@ options:
     required: false
     description:
       - Set if open_url must use proxy
-   validate_certs:
+  validate_certs:
     required: false
     description:
       - Set if open_url must validate certificates
