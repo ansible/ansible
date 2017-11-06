@@ -1,11 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2016, Shinichi TAMURA (@tmshn)
+# Copyright: (c) 2016, Shinichi TAMURA (@tmshn)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -32,7 +31,6 @@ options:
       - Name of the timezone for the system clock.
         Default is to keep current setting. B(At least one of name and
         hwclock are required.)
-    required: false
   hwclock:
     description:
       - Whether the hardware clock is in UTC or in local timezone.
@@ -41,14 +39,13 @@ options:
         to configure, especially on virtual environments such as AWS.
         B(At least one of name and hwclock are required.)
         I(Only used on Linux.)
-    required: false
-    aliases: ['rtc']
+    aliases: [ rtc ]
 notes:
   - On SmartOS the C(sm-set-timezone) utility (part of the smtools package) is required to set the zone timezone
 author:
-  - "Shinichi TAMURA (@tmshn)"
-  - "Jasper Lievisse Adriaanse (@jasperla)"
-  - "Indrajit Raychaudhuri (@indrajitr)"
+  - Shinichi TAMURA (@tmshn)
+  - Jasper Lievisse Adriaanse (@jasperla)
+  - Indrajit Raychaudhuri (@indrajitr)
 '''
 
 RETURN = '''
@@ -630,11 +627,13 @@ def main():
     # Construct 'module' and 'tz'
     module = AnsibleModule(
         argument_spec=dict(
-            hwclock=dict(choices=['UTC', 'local'], aliases=['rtc']),
-            name=dict(),
+            hwclock=dict(type='str', choices=['local', 'UTC'], aliases=['rtc']),
+            name=dict(type='str'),
         ),
-        required_one_of=[['hwclock', 'name']],
-        supports_check_mode=True
+        required_one_of=[
+            ['hwclock', 'name']
+        ],
+        supports_check_mode=True,
     )
     tz = Timezone(module)
 
