@@ -1,15 +1,13 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2014, Ahti Kitsik <ak@ahtik.com>
-# (c) 2014, Jarno Keskikangas <jarno.keskikangas@gmail.com>
-# (c) 2013, Aleksey Ovcharenko <aleksey.ovcharenko@gmail.com>
-# (c) 2013, James Martin <jmartin@basho.com>
-#
+# Copyright: (c) 2014, Ahti Kitsik <ak@ahtik.com>
+# Copyright: (c) 2014, Jarno Keskikangas <jarno.keskikangas@gmail.com>
+# Copyright: (c) 2013, Aleksey Ovcharenko <aleksey.ovcharenko@gmail.com>
+# Copyright: (c) 2013, James Martin <jmartin@basho.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -24,9 +22,9 @@ description:
     - Manage firewall with UFW.
 version_added: 1.6
 author:
-    - "Aleksey Ovcharenko (@ovcharenko)"
-    - "Jarno Keskikangas (@pyykkis)"
-    - "Ahti Kitsik (@ahtik)"
+    - Aleksey Ovcharenko (@ovcharenko)
+    - Jarno Keskikangas (@pyykkis)
+    - Ahti Kitsik (@ahtik)
 notes:
     - See C(man ufw) for more examples.
 requirements:
@@ -38,99 +36,82 @@ options:
       - C(disabled) unloads firewall and disables firewall on boot.
       - C(reloaded) reloads firewall.
       - C(reset) disables and resets firewall to installation defaults.
-    required: false
-    choices: ['enabled', 'disabled', 'reloaded', 'reset']
+    choices: [ disabled, enabled, reloaded, reset ]
   policy:
     description:
       - Change the default policy for incoming or outgoing traffic.
-    required: false
-    aliases: ['default']
-    choices: ['allow', 'deny', 'reject']
+    aliases: [ default ]
+    choices: [ allow, deny, reject ]
   direction:
     description:
       - Select direction for a rule or default policy command.
-    required: false
-    choices: ['in', 'out', 'incoming', 'outgoing', 'routed']
+    choices: [ in, incoming, out, outgoing, routed ]
   logging:
     description:
       - Toggles logging. Logged packets use the LOG_KERN syslog facility.
-    choices: ['on', 'off', 'low', 'medium', 'high', 'full']
-    required: false
+    choices: [ on, off, low, medium, high, full ]
   insert:
     description:
       - Insert the corresponding rule as rule number NUM
-    required: false
   rule:
     description:
       - Add firewall rule
-    required: false
-    choices: ['allow', 'deny', 'reject', 'limit']
+    choices: ['allow', 'deny', 'limit', 'reject']
   log:
     description:
       - Log new connections matched to this rule
-    required: false
-    choices: ['yes', 'no']
+    type: bool
   from_ip:
     description:
       - Source IP address.
-    required: false
-    aliases: ['from', 'src']
-    default: 'any'
+    aliases: [ from, src ]
+    default: any
   from_port:
     description:
       - Source port.
-    required: false
   to_ip:
     description:
       - Destination IP address.
-    required: false
-    aliases: ['to', 'dest']
-    default: 'any'
+    aliases: [ dest, to]
+    default: any
   to_port:
     description:
       - Destination port.
-    required: false
-    aliases: ['port']
+    aliases: [ port ]
   proto:
     description:
       - TCP/IP protocol.
-    choices: ['any', 'tcp', 'udp', 'ipv6', 'esp', 'ah']
-    required: false
+    choices: [ any, tcp, udp, ipv6, esp, ah ]
   name:
     description:
-      - Use profile located in C(/etc/ufw/applications.d)
-    required: false
-    aliases: ['app']
+      - Use profile located in C(/etc/ufw/applications.d).
+    aliases: [ app ]
   delete:
     description:
       - Delete rule.
-    required: false
-    choices: ['yes', 'no']
+    type: bool
   interface:
     description:
       - Specify interface for rule.
-    required: false
-    aliases: ['if']
+    aliases: [ if ]
   route:
     description:
       - Apply the rule to routed/forwarded packets.
-    required: false
-    choices: ['yes', 'no']
+    type: bool
   comment:
     description:
       - Add a comment to the rule. Requires UFW version >=0.35.
-    required: false
     version_added: "2.4"
 '''
 
 EXAMPLES = '''
-# Allow everything and enable UFW
-- ufw:
+- name: Allow everything and enable UFW
+  ufw:
     state: enabled
     policy: allow
 
-# Set logging
-- ufw:
+- name: Set logging
+  ufw:
     logging: on
 
 # Sometimes it is desirable to let the sender know when traffic is
@@ -158,30 +139,30 @@ EXAMPLES = '''
     rule: allow
     name: OpenSSH
 
-# Delete OpenSSH rule
-- ufw:
+- name: Delete OpenSSH rule
+  ufw:
     rule: allow
     name: OpenSSH
     delete: yes
 
-# Deny all access to port 53:
-- ufw:
+- name: Deny all access to port 53:
+  ufw:
     rule: deny
     port: 53
 
-# Allow port range 60000-61000
-- ufw:
+- name: Allow port range 60000-61000
+  ufw:
     rule: allow
     port: '60000:61000'
 
-# Allow all access to tcp port 80:
-- ufw:
+- name: Allow all access to tcp port 80:
+  ufw:
     rule: allow
     port: 80
     proto: tcp
 
-# Allow all access from RFC1918 networks to this host:
-- ufw:
+- name: Allow all access from RFC1918 networks to this host: 
+  ufw:
     rule: allow
     src: '{{ item }}'
   with_items:
@@ -189,16 +170,16 @@ EXAMPLES = '''
     - 172.16.0.0/12
     - 192.168.0.0/16
 
-# Deny access to udp port 514 from host 1.2.3.4 and include a comment:
-- ufw:
+- name: Deny access to udp port 514 from host 1.2.3.4 and include a comment:
+  ufw:
     rule: deny
     proto: udp
     src: 1.2.3.4
     port: 514
     comment: "Block syslog"
 
-# Allow incoming access to eth0 from 1.2.3.5 port 5469 to 1.2.3.4 port 5469
-- ufw:
+- name: Allow incoming access to eth0 from 1.2.3.5 port 5469 to 1.2.3.4 port 5469
+  ufw:
     rule: allow
     interface: eth0
     direction: in
@@ -208,17 +189,17 @@ EXAMPLES = '''
     dest: 1.2.3.4
     to_port: 5469
 
-# Deny all traffic from the IPv6 2001:db8::/32 to tcp port 25 on this host.
 # Note that IPv6 must be enabled in /etc/default/ufw for IPv6 firewalling to work.
-- ufw:
+- name: Deny all traffic from the IPv6 2001:db8::/32 to tcp port 25 on this host.
+  ufw:
     rule: deny
     proto: tcp
     src: '2001:db8::/32'
     port: 25
 
-# Deny forwarded/routed traffic from subnet 1.2.3.0/24 to subnet 4.5.6.0/24.
 # Can be used to further restrict a global FORWARD policy set to allow
-- ufw:
+- name: Deny forwarded/routed traffic from subnet 1.2.3.0/24 to subnet 4.5.6.0/24.
+  ufw:
     rule: deny
     route: yes
     src: 1.2.3.0/24
@@ -234,26 +215,28 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(default=None, choices=['enabled', 'disabled', 'reloaded', 'reset']),
-            default=dict(default=None, aliases=['policy'], choices=['allow', 'deny', 'reject']),
-            logging=dict(default=None, choices=['on', 'off', 'low', 'medium', 'high', 'full']),
-            direction=dict(default=None, choices=['in', 'incoming', 'out', 'outgoing', 'routed']),
-            delete=dict(default=False, type='bool'),
-            route=dict(default=False, type='bool'),
-            insert=dict(default=None),
-            rule=dict(default=None, choices=['allow', 'deny', 'reject', 'limit']),
-            interface=dict(default=None, aliases=['if']),
-            log=dict(default=False, type='bool'),
-            from_ip=dict(default='any', aliases=['src', 'from']),
-            from_port=dict(default=None),
-            to_ip=dict(default='any', aliases=['dest', 'to']),
-            to_port=dict(default=None, aliases=['port']),
-            proto=dict(default=None, aliases=['protocol'], choices=['any', 'tcp', 'udp', 'ipv6', 'esp', 'ah']),
-            app=dict(default=None, aliases=['name']),
-            comment=dict(default=None, type='str')
+            state=dict(type='str', choices=['enabled', 'disabled', 'reloaded', 'reset']),
+            default=dict(type='str', aliases=['policy'], choices=['allow', 'deny', 'reject']),
+            logging=dict(type='str', choices=['full', 'high', 'low', 'medium', 'off', 'on']),
+            direction=dict(type='str', choices=['in', 'incoming', 'out', 'outgoing', 'routed']),
+            delete=dict(type='bool', default=False),
+            route=dict(type='bool', default=False),
+            insert=dict(type='str'),
+            rule=dict(type='str', choices=['allow', 'deny', 'limit', 'reject']),
+            interface=dict(type='str', aliases=['if']),
+            log=dict(type='bool', default=False),
+            from_ip=dict(type='str', default='any', aliases=['from', 'src']),
+            from_port=dict(type='str'),
+            to_ip=dict(type='str', default='any', aliases=['dest', 'to']),
+            to_port=dict(type='str', aliases=['port']),
+            proto=dict(type='str', aliases=['protocol'], choices=['ah', 'any', 'esp', 'ipv6', 'tcp', 'udp']),
+            app=dict(type='str', aliases=['name']),
+            comment=dict(type='str'),
         ),
         supports_check_mode=True,
-        mutually_exclusive=[['app', 'proto', 'logging']]
+        mutually_exclusive=[
+            ['app', 'proto', 'logging']
+        ],
     )
 
     cmds = []
