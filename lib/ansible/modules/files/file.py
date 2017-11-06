@@ -177,7 +177,7 @@ def main():
             original_basename=dict(required=False),  # Internal use only, for recursive ops
             recurse=dict(default=False, type='bool'),
             force=dict(required=False, default=False, type='bool'),
-            follow=dict(required=False, default=True, type='bool'),
+            follow=dict(required=False, default=False, type='bool'),
             diff_peek=dict(default=None),  # Internal use only, for internal checks in the action plugins
             validate=dict(required=False, default=None),  # Internal use only, for template and copy
             src=dict(required=False, default=None, type='path'),
