@@ -151,14 +151,15 @@ state:
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, format_resource_id
 
+
 try:
     from msrestazure.tools import parse_resource_id
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.compute.models import SubResource, OperatingSystemStateTypes, ImageStorageProfile, \
-                                          Image, ImageOSDisk, ImageDataDisk
+    from azure.mgmt.compute.models import SubResource, OperatingSystemStateTypes, ImageStorageProfile, Image, ImageOSDisk, ImageDataDisk
 except ImportError:
     # This is handled in azure_rm_common
     pass
+
 
 class AzureRMImage(AzureRMModuleBase):
 
@@ -227,7 +228,7 @@ class AzureRMImage(AzureRMModuleBase):
                 if vm:
                     if self.data_disk_sources:
                         self.fail('data_disk_sources is not allowed when capturing image from vm')
-                    image = Image(self.location, source_virtual_machine=SubResource(vm_resource_id))
+                    image = Image(self.location, source_virtual_machine=SubResource(vm.id))
                 else:
                     if not self.os_type:
                         self.fail('os_type is required to create the image')
@@ -310,7 +311,7 @@ class AzureRMImage(AzureRMModuleBase):
                                  managed_disk=managed_disk)
 
     def create_data_disks(self):
-        return filter(None, [ self.create_data_disk(lun, source) for lun, source in enumerate(self.data_disk_sources) ])
+        return filter(None, [self.create_data_disk(lun, source) for lun, source in enumerate(self.data_disk_sources)])
 
     def get_source_vm(self):
         vm_resource_id = format_resource_id(self.source,
@@ -363,6 +364,7 @@ class AzureRMImage(AzureRMModuleBase):
             self.fail("Error deleting image {0} - {1}".format(self.name, str(exc)))
 
         return result
+
 
 def main():
     AzureRMImage()
