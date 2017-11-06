@@ -204,13 +204,8 @@ namespace Ansible
         public IntPtr lpReserved;
         public IntPtr lpDesktop;
         public IntPtr lpTitle;
-        public Int32 dwX;
-        public Int32 dwY;
-        public Int32 dwXSize;
-        public Int32 dwYSize;
-        public Int32 dwXCountChars;
-        public Int32 dwYCountChars;
-        public Int32 dwFillAttribute;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 28)]
+        public byte[] _data1;
         public Int32 dwFlags;
         public Int16 wShowWindow;
         public Int16 cbReserved2;
@@ -258,17 +253,6 @@ namespace Ansible
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public struct IO_COUNTERS
-    {
-        public UInt64 ReadOperationCount;
-        public UInt64 WriteOperationCount;
-        public UInt64 OtherOperationCount;
-        public UInt64 ReadTransferCount;
-        public UInt64 WriteTransferCount;
-        public UInt64 OtherTransferCount;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
     public struct JOBOBJECT_BASIC_LIMIT_INFORMATION
     {
         public UInt64 PerProcessUserTimeLimit;
@@ -283,14 +267,13 @@ namespace Ansible
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public struct JOBOBJECT_EXTENDED_LIMIT_INFORMATION
+    public class JOBOBJECT_EXTENDED_LIMIT_INFORMATION
     {
-        public JOBOBJECT_BASIC_LIMIT_INFORMATION BasicLimitInformation;
-        public IO_COUNTERS IoInfo;
-        public UIntPtr ProcessMemoryLimit;
-        public UIntPtr JobMemoryLimit;
-        public UIntPtr PeakProcessMemoryUsed;
-        public UIntPtr PeakJobMemoryUsed;
+        public JOBOBJECT_BASIC_LIMIT_INFORMATION BasicLimitInformation = new JOBOBJECT_BASIC_LIMIT_INFORMATION();
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst=48)]
+        public byte[] IO_COUNTERS_BLOB;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst=4)]
+        public UIntPtr[] LIMIT_BLOB;
     }
 
     [Flags]
@@ -305,8 +288,6 @@ namespace Ansible
         CREATE_BREAKAWAY_FROM_JOB = 0x01000000,
         CREATE_DEFAULT_ERROR_MODE = 0x04000000,
         CREATE_NEW_CONSOLE = 0x00000010,
-        CREATE_NEW_PROCESS_GROUP = 0x00000200,
-        CREATE_SEPARATE_WOW_VDM = 0x00000800,
         CREATE_SUSPENDED = 0x00000004,
         CREATE_UNICODE_ENVIRONMENT = 0x00000400,
         EXTENDED_STARTUPINFO_PRESENT = 0x00080000
@@ -339,9 +320,6 @@ namespace Ansible
     public enum LogonProvider
     {
         LOGON32_PROVIDER_DEFAULT = 0,
-        LOGON32_PROVIDER_WINNT35 = 1,
-        LOGON32_PROVIDER_WINNT40 = 2,
-        LOGON32_PROVIDER_WINNT50 = 3
     }
 
     public enum TokenInformationClass
@@ -363,28 +341,12 @@ namespace Ansible
     [Flags]
     public enum ProcessAccessFlags : uint
     {
-        PROCESS_ALL_ACCESS = 0x001F0FFF,
-        PROCESS_TERMINATE = 0x00000001,
-        PROCESS_CREATE_THREAD = 0x00000002,
-        PROCESS_VM_OPERATION = 0x00000008,
-        PROCESS_VM_READ = 0x00000010,
-        PROCESS_VM_WRITE = 0x00000020,
-        PROCESS_DUP_HANDLE = 0x00000040,
-        PROCESS_CREATE_PROCESS = 0x000000080,
-        PROCESS_SET_QUOTA = 0x00000100,
-        PROCESS_SET_INFORMATION = 0x00000200,
         PROCESS_QUERY_INFORMATION = 0x00000400,
-        PROCESS_SUSPEND_RESUME = 0x00000800,
-        PROCESS_QUERY_LIMITED_INFORMATION = 0x00001000,
-        SYNCHRONIZE = 0x00100000
     }
 
     public enum SECURITY_IMPERSONATION_LEVEL
     {
-        SecurityAnoynmous,
-        SecurityIdentification,
         SecurityImpersonation,
-        SecurityDelegation
     }
 
     public enum TOKEN_TYPE
@@ -395,13 +357,7 @@ namespace Ansible
 
     enum JobObjectInfoType
     {
-        AssociateCompletionPortInformation = 7,
-        BasicLimitInformation = 2,
-        BasicUIRestrictions = 4,
-        EndOfJobTimeInformation = 6,
         ExtendedLimitInformation = 9,
-        SecurityLimitInformation = 5,
-        GroupInformation = 11
     }
 
     [Flags]
@@ -455,8 +411,8 @@ namespace Ansible
         private static extern bool SetInformationJobObject(
             IntPtr hJob,
             JobObjectInfoType JobObjectInfoClass,
-            IntPtr lpJobObjectInfo,
-            UInt32 cbJobObjectInfoLength);
+            JOBOBJECT_EXTENDED_LIMIT_INFORMATION lpJobObjectInfo,
+            int cbJobObjectInfoLength);
 
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern bool AssignProcessToJobObject(
@@ -475,17 +431,11 @@ namespace Ansible
             if (handle == IntPtr.Zero)
                 throw new Win32Exception("CreateJobObject() failed");
 
-            JOBOBJECT_BASIC_LIMIT_INFORMATION jobInfo = new JOBOBJECT_BASIC_LIMIT_INFORMATION();
-            jobInfo.LimitFlags = LimitFlags.JOB_OBJECT_LIMIT_BREAKAWAY_OK | LimitFlags.JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
-
             JOBOBJECT_EXTENDED_LIMIT_INFORMATION extendedJobInfo = new JOBOBJECT_EXTENDED_LIMIT_INFORMATION();
-            extendedJobInfo.BasicLimitInformation = jobInfo;
+            // on OSs that support nested jobs, one of the jobs must allow breakaway for async to work properly under WinRM
+            extendedJobInfo.BasicLimitInformation.LimitFlags = LimitFlags.JOB_OBJECT_LIMIT_BREAKAWAY_OK | LimitFlags.JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
 
-            int length = Marshal.SizeOf(typeof(JOBOBJECT_EXTENDED_LIMIT_INFORMATION));
-            IntPtr pExtendedJobInfo = Marshal.AllocHGlobal(length);
-            Marshal.StructureToPtr(extendedJobInfo, pExtendedJobInfo, false);
-
-            if (!SetInformationJobObject(handle, JobObjectInfoType.ExtendedLimitInformation, pExtendedJobInfo, (UInt32)length))
+            if (!SetInformationJobObject(handle, JobObjectInfoType.ExtendedLimitInformation, extendedJobInfo, Marshal.SizeOf(extendedJobInfo)))
                 throw new Win32Exception("SetInformationJobObject() failed");
         }
 
@@ -628,8 +578,6 @@ namespace Ansible
         {
             SecurityIdentifier account = GetBecomeSid(username);
 
-            CreationFlags startup_flags = CreationFlags.CREATE_UNICODE_ENVIRONMENT | CreationFlags.CREATE_BREAKAWAY_FROM_JOB | CreationFlags.CREATE_SUSPENDED;
-
             STARTUPINFOEX si = new STARTUPINFOEX();
             si.startupInfo.dwFlags = (int)StartupInfoFlags.USESTDHANDLES;
 
@@ -664,6 +612,9 @@ namespace Ansible
 
             // Create the environment block if set
             IntPtr lpEnvironment = IntPtr.Zero;
+
+            // To support async + become, we have to do some job magic later, which requires both breakaway and starting suspended
+            CreationFlags startup_flags = CreationFlags.CREATE_UNICODE_ENVIRONMENT | CreationFlags.CREATE_BREAKAWAY_FROM_JOB | CreationFlags.CREATE_SUSPENDED;
 
             PROCESS_INFORMATION pi = new PROCESS_INFORMATION();
 
@@ -761,97 +712,109 @@ namespace Ansible
             GrantAccessToWindowStationAndDesktop(account);
             string account_sid = account.ToString();
             bool impersonated = false;
-            IntPtr hSystemTokenDup = IntPtr.Zero;
 
-            // Try to get SYSTEM token handle so we can impersonate to get full admin token
-            IntPtr hSystemToken = GetSystemUserHandle();
-            if (hSystemToken == IntPtr.Zero && service_sids.Contains(account_sid))
+            try
             {
-                // We need the SYSTEM token if we want to become one of those accounts, fail here
-                throw new Win32Exception("Failed to get token for NT AUTHORITY\\SYSTEM");
-            }
-            else if (hSystemToken != IntPtr.Zero)
-            {
-                // We have the token, need to duplicate and impersonate
-                bool dupResult = DuplicateTokenEx(
-                    hSystemToken,
-                    TokenAccessLevels.MaximumAllowed,
-                    IntPtr.Zero,
-                    SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation,
-                    TOKEN_TYPE.TokenPrimary,
-                    out hSystemTokenDup);
-                int lastError = Marshal.GetLastWin32Error();
-                CloseHandle(hSystemToken);
+                IntPtr hSystemTokenDup = IntPtr.Zero;
 
-                if (!dupResult && service_sids.Contains(account_sid))
-                    throw new Win32Exception(lastError, "Failed to duplicate token for NT AUTHORITY\\SYSTEM");
-                else if (dupResult && account_sid != "S-1-5-18")
+                // Try to get SYSTEM token handle so we can impersonate to get full admin token
+                IntPtr hSystemToken = GetSystemUserHandle();
+                if (hSystemToken == IntPtr.Zero && service_sids.Contains(account_sid))
                 {
-                    if (ImpersonateLoggedOnUser(hSystemTokenDup))
-                        impersonated = true;
-                    else if (service_sids.Contains(account_sid))
-                        throw new Win32Exception("Failed to impersonate as SYSTEM account");
+                    // We need the SYSTEM token if we want to become one of those accounts, fail here
+                    throw new Win32Exception("Failed to get token for NT AUTHORITY\\SYSTEM");
                 }
-            }
+                else if (hSystemToken != IntPtr.Zero)
+                {
+                    // We have the token, need to duplicate and impersonate
+                    bool dupResult = DuplicateTokenEx(
+                        hSystemToken,
+                        TokenAccessLevels.MaximumAllowed,
+                        IntPtr.Zero,
+                        SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation,
+                        TOKEN_TYPE.TokenPrimary,
+                        out hSystemTokenDup);
+                    int lastError = Marshal.GetLastWin32Error();
+                    CloseHandle(hSystemToken);
 
-            LogonType logonType;
-            string domain = null;
-            if (service_sids.Contains(account_sid))
-            {
-                logonType = LogonType.LOGON32_LOGON_SERVICE;
-                domain = "NT AUTHORITY";
-                password = null;
-                switch (account_sid)
-                {
-                    case "S-1-5-18":
-                        tokens.Add(hSystemTokenDup);
-                        return tokens;
-                    case "S-1-5-19":
-                        username = "LocalService";
-                        break;
-                    case "S-1-5-20":
-                        username = "NetworkService";
-                        break;
+                    if (!dupResult && service_sids.Contains(account_sid))
+                        throw new Win32Exception(lastError, "Failed to duplicate token for NT AUTHORITY\\SYSTEM");
+                    else if (dupResult && account_sid != "S-1-5-18")
+                    {
+                        if (ImpersonateLoggedOnUser(hSystemTokenDup))
+                            impersonated = true;
+                        else if (service_sids.Contains(account_sid))
+                            throw new Win32Exception("Failed to impersonate as SYSTEM account");
+                    }
+                    // If SYSTEM impersonation failed but we're trying to become a regular user, just proceed;
+                    // might get a limited token in UAC-enabled cases, but better than nothing...
                 }
-            }
-            else
-            {
-                // We are trying to become a local or domain account
-                logonType = LogonType.LOGON32_LOGON_INTERACTIVE;
-                if (username.Contains(@"\"))
+
+                LogonType logonType;
+                string domain = null;
+
+                if (service_sids.Contains(account_sid))
                 {
-                    var user_split = username.Split(Convert.ToChar(@"\"));
-                    domain = user_split[0];
-                    username = user_split[1];
+                    // We're using a well-known service account, do a service logon instead of interactive
+                    logonType = LogonType.LOGON32_LOGON_SERVICE;
+                    domain = "NT AUTHORITY";
+                    password = null;
+                    switch (account_sid)
+                    {
+                        case "S-1-5-18":
+                            tokens.Add(hSystemTokenDup);
+                            return tokens;
+                        case "S-1-5-19":
+                            username = "LocalService";
+                            break;
+                        case "S-1-5-20":
+                            username = "NetworkService";
+                            break;
+                    }
                 }
-                else if (username.Contains("@"))
-                    domain = null;
                 else
-                    domain = ".";
-            }
+                {
+                    // We are trying to become a local or domain account
+                    logonType = LogonType.LOGON32_LOGON_INTERACTIVE;
+                    if (username.Contains(@"\"))
+                    {
+                        var user_split = username.Split(Convert.ToChar(@"\"));
+                        domain = user_split[0];
+                        username = user_split[1];
+                    }
+                    else if (username.Contains("@"))
+                        domain = null;
+                    else
+                        domain = ".";
+                }
 
-            IntPtr hToken = IntPtr.Zero;
-            if (!LogonUser(
-                username,
-                domain,
-                password,
-                logonType,
-                LogonProvider.LOGON32_PROVIDER_DEFAULT,
-                out hToken))
+                IntPtr hToken = IntPtr.Zero;
+                if (!LogonUser(
+                    username,
+                    domain,
+                    password,
+                    logonType,
+                    LogonProvider.LOGON32_PROVIDER_DEFAULT,
+                    out hToken))
+                {
+                    throw new Win32Exception("LogonUser failed");
+                }
+
+                if (!service_sids.Contains(account_sid))
+                {
+                    // Try and get the elevated token for local/domain account
+                    IntPtr hTokenElevated = GetElevatedToken(hToken);
+                    tokens.Add(hTokenElevated);
+                }
+
+                // add the original token as a fallback
+                tokens.Add(hToken);
+            }
+            finally
             {
-                throw new Win32Exception("LogonUser failed");
+                if (impersonated)
+                    RevertToSelf();
             }
-
-            if (!service_sids.Contains(account_sid))
-            {
-                // Try and get the elevated token for local/domain account
-                IntPtr hTokenElevated = GetElevatedToken(hToken);
-                tokens.Add(hTokenElevated);
-            }
-            tokens.Add(hToken);
-
-            if (impersonated)
-                RevertToSelf();
 
             return tokens;
         }
