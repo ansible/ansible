@@ -1,10 +1,9 @@
 #!/usr/bin/python
 #
-# (c) 2013, RSD Services S.A
+# Copyright: (c) 2013, RSD Services S.A
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -64,10 +63,10 @@ options:
   state:
     description:
       - Defines action which can be either certificate import or removal.
-    choices: [ 'present', 'absent' ]
+    choices: [ absent, present ]
     default: present
-
-author: Adam Hamsik @haad
+author:
+- Adam Hamsik (@haad)
 '''
 
 EXAMPLES = '''
@@ -285,13 +284,12 @@ def main():
         pkcs12_password=dict(type='str', no_log=True),
         pkcs12_alias=dict(type='str'),
         cert_alias=dict(type='str'),
-        cert_port=dict(default='443', type='int'),
+        cert_port=dict(type='int', default='443'),
         keystore_path=dict(type='path'),
-        keystore_pass=dict(required=True, type='str', no_log=True),
-        keystore_create=dict(default=False, type='bool'),
-        executable=dict(default='keytool', type='str'),
-        state=dict(default='present',
-                   choices=['present', 'absent'])
+        keystore_pass=dict(type='str', required=True, no_log=True),
+        keystore_create=dict(type='bool', default=False),
+        executable=dict(type='str', default='keytool'),
+        state=dict(type='str', default='present', choices=['absent', 'present']),
     )
 
     module = AnsibleModule(
