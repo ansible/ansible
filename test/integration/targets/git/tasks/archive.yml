@@ -33,6 +33,16 @@
     - "ansible_os_family == 'RedHat'"
     - ansible_distribution_major_version | version_compare('7', '>=')
 
+- name: ARCHIVE | Clear checkout_dir               
+  file:                  
+    state: absent        
+    path: "{{ checkout_dir }}"                     
+                         
+- name: ARCHIVE | Clone clean repo                 
+  git:                   
+    repo: '{{ repo_format1 }}'                     
+    dest: '{{ checkout_dir }}'
+
 # Check git archive functionality without update
 - name: ARCHIVE | Archive repo using various archival format and without update
   git:
