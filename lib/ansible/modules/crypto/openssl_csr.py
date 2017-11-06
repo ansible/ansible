@@ -183,7 +183,7 @@ EXAMPLES = '''
     privatekey_path: /etc/ssl/private/ansible.com.pem
     common_name: www.ansible.com
     key_usage:
-      - digitlaSignature
+      - digitalSignature
       - keyAgreement
     extended_key_usage:
       - clientAuth
