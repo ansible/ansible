@@ -130,6 +130,21 @@
 - assert:
       that: not output.changed
 
+- name: Create an image from VM
+  azure_rm_image:
+      resource_group: "{{ resource_group }}"
+      source: "https://{{ storage_account }}.blob.core.windows.net/testvm001/testvm001.vhd"
+      name: testimage001
+      os_type: Linux
+
+- name: Delete image
+  azure_rm_image:
+      resource_group: "{{ resource_group }}"
+      name: testimage01
+      source: "https://{{ storage_account }}.blob.core.windows.net/testvm001/testvm001.vhd"
+      os_type: Linux
+      state: absent
+
 - name: Delete VM
   azure_rm_virtualmachine:
       resource_group: "{{ resource_group }}"

@@ -110,6 +110,7 @@ except ImportError as exc:
 try:
     from enum import Enum
     from msrestazure.azure_exceptions import CloudError
+    from msrestazure.tools import resource_id, is_valid_resource_id
     from msrestazure import azure_cloud
     from azure.mgmt.network.models import PublicIPAddress, NetworkSecurityGroup, SecurityRule, NetworkInterface, \
         NetworkInterfaceIPConfiguration, Subnet
@@ -150,6 +151,12 @@ def azure_id_to_dict(id):
         index += 1
     return result
 
+def format_resource_id(val, subscription_id, namespace, types, resource_group):
+    return resource_id(name=val,
+                       resource_group=resource_group,
+                       namespace=namespace,
+                       type=types,
+                       subscription=subscription_id) if not is_valid_resource_id(val) else val
 
 AZURE_PKG_VERSIONS = {
     StorageManagementClient.__name__: {
