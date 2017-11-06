@@ -1,12 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2013, Alexander Bulimov <lazywolf0@gmail.com>
-# based on lvol module by Jeroen Hoekx <jeroen.hoekx@dsquare.be>
+# Copyright: (c) 2013, Alexander Bulimov <lazywolf0@gmail.com>
+# Based on lvol module by Jeroen Hoekx <jeroen.hoekx@dsquare.be>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -15,7 +14,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-author: "Alexander Bulimov (@abulimov)"
+author:
+- Alexander Bulimov (@abulimov)
 module: lvg
 short_description: Configure LVM volume groups
 description:
@@ -30,61 +30,54 @@ options:
     description:
     - List of comma-separated devices to use as physical devices in this volume group. Required when creating or resizing volume group.
     - The module will take care of running pvcreate if needed.
-    required: false
   pesize:
     description:
     - The size of the physical extent in megabytes. Must be a power of 2.
     default: 4
-    required: false
   pv_options:
     description:
     - Additional options to pass to C(pvcreate) when creating the volume group.
-    default: null
-    required: false
     version_added: "2.4"
   vg_options:
     description:
     - Additional options to pass to C(vgcreate) when creating the volume group.
-    default: null
-    required: false
     version_added: "1.6"
   state:
-    choices: [ "present", "absent" ]
-    default: present
     description:
     - Control if the volume group exists.
-    required: false
+    choices: [ absent, present ]
+    default: present
   force:
-    choices: [ "yes", "no" ]
-    default: "no"
     description:
-    - If yes, allows to remove volume group with logical volumes.
-    required: false
+    - If C(yes), allows to remove volume group with logical volumes.
+    type: bool
+    default: 'no'
 notes:
-  - module does not modify PE size for already present volume group
+  - This module does not modify PE size for already present volume group.
 '''
 
 EXAMPLES = '''
-# Create a volume group on top of /dev/sda1 with physical extent size = 32MB.
-- lvg:
+- name: Create a volume group on top of /dev/sda1 with physical extent size = 32MB
+  lvg:
     vg: vg.services
     pvs: /dev/sda1
     pesize: 32
 
-# Create or resize a volume group on top of /dev/sdb1 and /dev/sdc5.
 # If, for example, we already have VG vg.services on top of /dev/sdb1,
 # this VG will be extended by /dev/sdc5.  Or if vg.services was created on
 # top of /dev/sda5, we first extend it with /dev/sdb1 and /dev/sdc5,
 # and then reduce by /dev/sda5.
-- lvg:
+- name: Create or resize a volume group on top of /dev/sdb1 and /dev/sdc5.
+  lvg:
     vg: vg.services
     pvs: /dev/sdb1,/dev/sdc5
 
-# Remove a volume group with name vg.services.
-- lvg:
+- name: Remove a volume group with name vg.services
+  lvg:
     vg: vg.services
     state: absent
 '''
+
 import os
 
 from ansible.module_utils.basic import AnsibleModule
@@ -129,13 +122,13 @@ def parse_pvs(module, data):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            vg=dict(required=True),
+            vg=dict(type='str', required=True),
             pvs=dict(type='list'),
             pesize=dict(type='int', default=4),
-            pv_options=dict(default=''),
-            vg_options=dict(default=''),
-            state=dict(choices=["absent", "present"], default='present'),
-            force=dict(type='bool', default='no'),
+            pv_options=dict(type='str', default=''),
+            vg_options=dict(type='str', default=''),
+            state=dict(type='str', default='present', choices=['absent', 'present']),
+            force=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
     )
