@@ -1,7 +1,7 @@
 ---
 
 - name: setup - remove login
-  eos_banner:
+  net_banner:
     banner: login
     state: absent
     authorize: yes

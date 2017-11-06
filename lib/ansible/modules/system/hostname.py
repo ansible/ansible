@@ -1,11 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2013, Hiroaki Nakamura <hnakamur@gmail.com>
+# Copyright: (c) 2013, Hiroaki Nakamura <hnakamur@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -16,8 +15,8 @@ DOCUMENTATION = '''
 ---
 module: hostname
 author:
-    - "Adrian Likins (@alikins)"
-    - "Hideki Saito (@saito-hideki)"
+    - Adrian Likins (@alikins)
+    - Hideki Saito (@saito-hideki)
 version_added: "1.4"
 short_description: Manage hostname
 requirements: [ hostname ]
@@ -27,9 +26,9 @@ description:
     - Windows, HP-UX and AIX are not currently supported.
 options:
     name:
-        required: true
         description:
             - Name of the host
+        required: true
 '''
 
 EXAMPLES = '''
@@ -42,12 +41,13 @@ import socket
 import traceback
 from distutils.version import LooseVersion
 
-from ansible.module_utils.basic import (AnsibleModule,
-                                        get_distribution,
-                                        get_distribution_version,
-                                        get_platform,
-                                        load_platform_subclass,
-                                        )
+from ansible.module_utils.basic import (
+    AnsibleModule,
+    get_distribution,
+    get_distribution_version,
+    get_platform,
+    load_platform_subclass,
+)
 from ansible.module_utils.facts.system.service_mgr import ServiceMgrFactCollector
 from ansible.module_utils._text import to_native
 
@@ -170,16 +170,14 @@ class GenericStrategy(object):
         cmd = [self.hostname_cmd]
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
-            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
-                                      (rc, out, err))
+            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
         return to_native(out).strip()
 
     def set_current_hostname(self, name):
         cmd = [self.hostname_cmd, name]
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
-            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
-                                      (rc, out, err))
+            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
 
     def get_permanent_hostname(self):
         return None
@@ -187,8 +185,6 @@ class GenericStrategy(object):
     def set_permanent_hostname(self, name):
         pass
 
-
-# ===========================================
 
 class DebianStrategy(GenericStrategy):
     """
@@ -227,7 +223,6 @@ class DebianStrategy(GenericStrategy):
                                       to_native(e), exception=traceback.format_exc())
 
 
-# ===========================================
 
 class SLESStrategy(GenericStrategy):
     """
@@ -265,7 +260,6 @@ class SLESStrategy(GenericStrategy):
                                       to_native(e), exception=traceback.format_exc())
 
 
-# ===========================================
 
 class RedHatStrategy(GenericStrategy):
     """
@@ -314,7 +308,6 @@ class RedHatStrategy(GenericStrategy):
                                       to_native(e), exception=traceback.format_exc())
 
 
-# ===========================================
 
 class AlpineStrategy(GenericStrategy):
     """
@@ -361,11 +354,8 @@ class AlpineStrategy(GenericStrategy):
         cmd = [self.hostname_cmd, '-F', self.HOSTNAME_FILE]
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
-            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
-                                      (rc, out, err))
+            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
 
-
-# ===========================================
 
 class SystemdStrategy(GenericStrategy):
     """
@@ -377,8 +367,7 @@ class SystemdStrategy(GenericStrategy):
         cmd = ['hostname']
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
-            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
-                                      (rc, out, err))
+            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
         return to_native(out).strip()
 
     def set_current_hostname(self, name):
@@ -387,15 +376,13 @@ class SystemdStrategy(GenericStrategy):
         cmd = ['hostnamectl', '--transient', 'set-hostname', name]
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
-            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
-                                      (rc, out, err))
+            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
 
     def get_permanent_hostname(self):
         cmd = ['hostnamectl', '--static', 'status']
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
-            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
-                                      (rc, out, err))
+            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
         return to_native(out).strip()
 
     def set_permanent_hostname(self, name):
@@ -404,16 +391,12 @@ class SystemdStrategy(GenericStrategy):
         cmd = ['hostnamectl', '--pretty', 'set-hostname', name]
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
-            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
-                                      (rc, out, err))
+            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
         cmd = ['hostnamectl', '--static', 'set-hostname', name]
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
-            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
-                                      (rc, out, err))
+            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
 
-
-# ===========================================
 
 class OpenRCStrategy(GenericStrategy):
     """
@@ -460,8 +443,6 @@ class OpenRCStrategy(GenericStrategy):
             f.close()
 
 
-# ===========================================
-
 class OpenBSDStrategy(GenericStrategy):
     """
     This is a OpenBSD family Hostname manipulation strategy class - it edits
@@ -499,7 +480,6 @@ class OpenBSDStrategy(GenericStrategy):
                                       to_native(e), exception=traceback.format_exc())
 
 
-# ===========================================
 
 class SolarisStrategy(GenericStrategy):
     """
@@ -512,8 +492,7 @@ class SolarisStrategy(GenericStrategy):
         cmd = [self.hostname_cmd, cmd_option, name]
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
-            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
-                                      (rc, out, err))
+            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
 
     def get_permanent_hostname(self):
         fmri = 'svc:/system/identity:node'
@@ -521,19 +500,15 @@ class SolarisStrategy(GenericStrategy):
         cmd = '/usr/sbin/svccfg -s %s listprop -o value %s' % (fmri, pattern)
         rc, out, err = self.module.run_command(cmd, use_unsafe_shell=True)
         if rc != 0:
-            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
-                                      (rc, out, err))
+            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
         return to_native(out).strip()
 
     def set_permanent_hostname(self, name):
         cmd = [self.hostname_cmd, name]
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
-            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
-                                      (rc, out, err))
+            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
 
-
-# ===========================================
 
 class FreeBSDStrategy(GenericStrategy):
     """
@@ -586,8 +561,6 @@ class FreeBSDStrategy(GenericStrategy):
         finally:
             f.close()
 
-
-# ===========================================
 
 class FedoraHostname(Hostname):
     platform = 'Linux'
@@ -791,14 +764,12 @@ class NeonHostname(Hostname):
     strategy_class = DebianStrategy
 
 
-# ===========================================
-
 def main():
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(required=True)
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
     )
 
     hostname = Hostname(module)

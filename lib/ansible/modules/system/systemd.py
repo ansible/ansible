@@ -1,10 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# (c) 2016, Brian Coca <bcoca@ansible.com>
+
+# Copyright: (c) 2016, Brian Coca <bcoca@ansible.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -14,63 +14,53 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 module: systemd
 author:
-    - "Ansible Core Team"
+    - Ansible Core Team
 version_added: "2.2"
-short_description:  Manage services.
+short_description:  Manage services
 description:
     - Controls systemd services on remote hosts.
 options:
     name:
-        required: false
         description:
             - Name of the service. When using in a chroot environment you always need to specify the full name i.e. (crond.service).
-        aliases: ['unit', 'service']
+        aliases: [ service, unit ]
     state:
-        required: false
-        default: null
-        choices: [ 'started', 'stopped', 'restarted', 'reloaded' ]
         description:
             - C(started)/C(stopped) are idempotent actions that will not run commands unless necessary.
               C(restarted) will always bounce the service. C(reloaded) will always reload.
+        choices: [ reloaded, restarted, started, stopped ]
     enabled:
-        required: false
-        choices: [ "yes", "no" ]
-        default: null
         description:
             - Whether the service should start on boot. B(At least one of state and enabled are required.)
+        type: bool
     masked:
-        required: false
-        choices: [ "yes", "no" ]
-        default: null
         description:
             - Whether the unit should be masked or not, a masked unit is impossible to start.
+        type: bool
     daemon_reload:
-        required: false
-        default: no
-        choices: [ "yes", "no" ]
         description:
             - run daemon-reload before doing any other operations, to make sure systemd has read any changes.
-        aliases: ['daemon-reload']
+        type: bool
+        default: 'no'
+        aliases: [ daemon-reload ]
     user:
-        required: false
-        default: no
-        choices: [ "yes", "no" ]
         description:
             - run systemctl talking to the service manager of the calling user, rather than the service manager
               of the system.
+        type: bool
+        default: 'no'
     no_block:
-        required: false
-        default: no
-        choices: [ "yes", "no" ]
         description:
             - Do not synchronously wait for the requested operation to finish.
               Enqueued job will continue without Ansible blocking on its completion.
+        type: bool
+        default: 'no'
         version_added: "2.3"
 notes:
     - Since 2.4, one of the following options is required 'state', 'enabled', 'masked', 'daemon_reload', and all except 'daemon_reload' also require 'name'.
     - Before 2.4 you always required 'name'.
 requirements:
-    - A system managed by systemd
+    - A system managed by systemd.
 '''
 
 EXAMPLES = '''
@@ -292,8 +282,8 @@ def main():
     # initialize
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(aliases=['unit', 'service']),
-            state=dict(choices=['started', 'stopped', 'restarted', 'reloaded'], type='str'),
+            name=dict(type='str', aliases=['service', 'unit']),
+            state=dict(type='str', choices=['reloaded', 'restarted', 'started', 'stopped']),
             enabled=dict(type='bool'),
             masked=dict(type='bool'),
             daemon_reload=dict(type='bool', default=False, aliases=['daemon-reload']),
@@ -312,11 +302,11 @@ def main():
     unit = module.params['name']
     rc = 0
     out = err = ''
-    result = {
-        'name': unit,
-        'changed': False,
-        'status': {},
-    }
+    result = dict(
+        name=unit,
+        changed=False,
+        status=dict(),
+    )
 
     for requires in ('state', 'enabled', 'masked'):
         if module.params[requires] is not None and unit is None:

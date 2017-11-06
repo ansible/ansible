@@ -26,6 +26,7 @@ short_description: Perform various KMS management tasks.
 description:
      - Manage role/user access to a KMS key. Not designed for encrypting/decrypting.
 version_added: "2.3"
+requirements: [ boto3 ]
 options:
   mode:
     description:

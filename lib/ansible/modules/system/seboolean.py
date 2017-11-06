@@ -1,10 +1,9 @@
 #!/usr/bin/python
 
-# (c) 2012, Stephen Fromm <sfromm@gmail.com>
+# Copyright: (c) 2012, Stephen Fromm <sfromm@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -14,37 +13,37 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: seboolean
-short_description: Toggles SELinux booleans.
+short_description: Toggles SELinux booleans
 description:
      - Toggles SELinux booleans.
 version_added: "0.7"
 options:
   name:
     description:
-      - Name of the boolean to configure
+      - Name of the boolean to configure.
     required: true
-    default: null
   persistent:
     description:
-      - Set to C(yes) if the boolean setting should survive a reboot
-    required: false
-    default: no
-    choices: [ "yes", "no" ]
+      - Set to C(yes) if the boolean setting should survive a reboot.
+    type: bool
+    default: 'no'
   state:
     description:
       - Desired boolean value
+    type: bool
     required: true
-    default: null
-    choices: [ 'yes', 'no' ]
 notes:
-   - Not tested on any debian based system
-requirements: [ libselinux-python, libsemanage-python ]
-author: "Stephen Fromm (@sfromm)"
+   - Not tested on any Debian based system.
+requirements:
+- libselinux-python
+- libsemanage-python
+author:
+- Stephen Fromm (@sfromm)
 '''
 
 EXAMPLES = '''
-# Set (httpd_can_network_connect) flag on and keep it persistent across reboots
-- seboolean:
+- name: Set httpd_can_network_connect flag on and keep it persistent across reboots
+  seboolean:
     name: httpd_can_network_connect
     state: yes
     persistent: yes
@@ -54,14 +53,12 @@ import os
 
 try:
     import selinux
-
     HAVE_SELINUX = True
 except ImportError:
     HAVE_SELINUX = False
 
 try:
     import semanage
-
     HAVE_SEMANAGE = True
 except ImportError:
     HAVE_SEMANAGE = False
@@ -174,11 +171,11 @@ def set_boolean_value(module, name, state):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(required=True),
-            persistent=dict(default='no', type='bool'),
-            state=dict(required=True, type='bool')
+            name=dict(type='str', required=True),
+            persistent=dict(type='bool', default=False),
+            state=dict(type='bool', required=True),
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
     )
 
     if not HAVE_SELINUX:
@@ -193,8 +190,10 @@ def main():
     name = module.params['name']
     persistent = module.params['persistent']
     state = module.params['state']
-    result = {}
-    result['name'] = name
+
+    result = dict(
+        name=name,
+    )
 
     if hasattr(selinux, 'selinux_boolean_sub'):
         # selinux_boolean_sub allows sites to rename a boolean and alias the old name
@@ -207,12 +206,11 @@ def main():
     cur_value = get_boolean_value(module, name)
 
     if cur_value == state:
-        result['state'] = cur_value
-        result['changed'] = False
-        module.exit_json(**result)
+        module.exit_json(changed=False, state=cur_value, **result)
 
     if module.check_mode:
         module.exit_json(changed=True)
+
     if persistent:
         r = semanage_boolean_value(module, name, state)
     else:
@@ -225,6 +223,7 @@ def main():
         selinux.security_commit_booleans()
     except:
         module.fail_json(msg="Failed to commit pending boolean %s value" % name)
+
     module.exit_json(**result)
 
 

@@ -230,6 +230,26 @@ options:
             - "It can be 'all' or a list with any of the following: ['network_interfaces', 'virtual_storage', 'public_ips']"
             - Any other input will be ignored
         default: ['all']
+    plan:
+        description:
+            - A dictionary describing a third-party billing plan for an instance
+        version_added: 2.5
+        suboptions:
+            name:
+                description:
+                    - billing plan name
+                required: true
+            product:
+                description:
+                    - product name
+                required: true
+            publisher:
+                description:
+                    - publisher offering the plan
+                required: true
+            promotion_code:
+                description:
+                    - optional promotion code
 
 extends_documentation_fragment:
     - azure
@@ -544,7 +564,7 @@ try:
                                           VirtualHardDisk, ManagedDiskParameters, \
                                           ImageReference, NetworkProfile, LinuxConfiguration, \
                                           SshConfiguration, SshPublicKey, VirtualMachineSizeTypes, \
-                                          DiskCreateOptionTypes
+                                          DiskCreateOptionTypes, Plan
     from azure.mgmt.network.models import PublicIPAddress, NetworkSecurityGroup, NetworkInterface, \
                                           NetworkInterfaceIPConfiguration, Subnet
     from azure.mgmt.storage.models import StorageAccountCreateParameters, Sku
@@ -606,6 +626,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             restarted=dict(type='bool', default=False),
             started=dict(type='bool', default=True),
             data_disks=dict(type='list'),
+            plan=dict(type='dict')
         )
 
         self.resource_group = None
@@ -639,6 +660,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.started = None
         self.differences = None
         self.data_disks = None
+        self.plan = None
 
         self.results = dict(
             changed=False,
@@ -698,11 +720,15 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             if self.image:
                 if not self.image.get('publisher') or not self.image.get('offer') or not self.image.get('sku') \
                    or not self.image.get('version'):
-                    self.error("parameter error: expecting image to contain publisher, offer, sku and version keys.")
+                    self.fail("parameter error: expecting image to contain publisher, offer, sku and version keys.")
                 image_version = self.get_image_version()
                 if self.image['version'] == 'latest':
                     self.image['version'] = image_version.name
                     self.log("Using image version {0}".format(self.image['version']))
+
+            if self.plan:
+                if not self.plan.get('name') or not self.plan.get('product') or not self.plan.get('publisher'):
+                    self.fail("parameter error: plan must include name, product, and publisher")
 
             if not self.storage_blob_name and not self.managed_disk_type:
                 self.storage_blob_name = self.name + '.vhd'
@@ -850,6 +876,11 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         vhd = None
                         managed_disk = ManagedDiskParameters(storage_account_type=self.managed_disk_type)
 
+                    plan = None
+                    if self.plan:
+                        plan = Plan(name=self.plan.get('name'), product=self.plan.get('product'), publisher=self.plan.get('publisher'),
+                                    promotion_code=self.plan.get('promotion_code'))
+
                     vm_resource = VirtualMachine(
                         self.location,
                         tags=self.tags,
@@ -878,6 +909,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         network_profile=NetworkProfile(
                             network_interfaces=nics
                         ),
+                        plan=plan
                     )
 
                     if self.admin_password:

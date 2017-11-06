@@ -248,7 +248,7 @@ EXAMPLES = """
 
 - name: check the running-config against master config
   ios_config:
-    diff_config: intended
+    diff_against: intended
     intended_config: "{{ lookup('file', 'master.cfg') }}"
 
 - name: check the startup-config against the running-config

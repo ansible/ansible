@@ -1,12 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+# Copyright: (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-
-__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
@@ -16,22 +14,20 @@ DOCUMENTATION = '''
 ---
 module: service
 author:
-    - "Ansible Core Team"
-    - "Michael DeHaan"
+    - Ansible Core Team
+    - Michael DeHaan
 version_added: "0.1"
-short_description:  Manage services.
+short_description:  Manage services
 description:
     - Controls services on remote hosts. Supported init systems include BSD init,
       OpenRC, SysV, Solaris SMF, systemd, upstart.
     - For Windows targets, use the M(win_service) module instead.
 options:
     name:
-        required: true
         description:
         - Name of the service.
+        required: true
     state:
-        required: false
-        choices: [ started, stopped, restarted, reloaded ]
         description:
           - C(started)/C(stopped) are idempotent actions that will not run
             commands unless necessary.  C(restarted) will always bounce the
@@ -39,86 +35,81 @@ options:
             and enabled are required.) Note that reloaded will start the
             service if it is not already started, even if your chosen init
             system wouldn't normally.
+        choices: [ reloaded, restarted, running, started, stopped ]
     sleep:
-        required: false
-        version_added: "1.3"
         description:
         - If the service is being C(restarted) then sleep this many seconds
           between the stop and start command. This helps to workaround badly
           behaving init scripts that exit immediately after signaling a process
           to stop.
+        version_added: "1.3"
     pattern:
-        required: false
-        version_added: "0.7"
         description:
         - If the service does not respond to the status command, name a
           substring to look for as would be found in the output of the I(ps)
           command as a stand-in for a status result.  If the string is found,
           the service will be assumed to be running.
+        version_added: "0.7"
     enabled:
-        required: false
-        choices: [ "yes", "no" ]
         description:
         - Whether the service should start on boot. B(At least one of state and
           enabled are required.)
-
+        type: bool
     runlevel:
-        required: false
-        default: 'default'
         description:
         - "For OpenRC init scripts (ex: Gentoo) only.  The runlevel that this service belongs to."
+        default: default
     arguments:
         description:
         - Additional arguments provided on the command line
-        aliases: [ 'args' ]
+        aliases: [ args ]
     use:
         description:
             - The service module actually uses system specific modules, normally through auto detection, this setting can force a specific module.
             - Normally it uses the value of the 'ansible_service_mgr' fact and falls back to the old 'service' module when none matching is found.
-        default: 'auto'
+        default: auto
         version_added: 2.2
 notes:
     - For Windows targets, use the M(win_service) module instead.
 '''
 
 EXAMPLES = '''
-# Example action to start service httpd, if not running
-- service:
+- name: Start service httpd, if not running
+  service:
     name: httpd
     state: started
 
-# Example action to stop service httpd, if running
-- service:
+- name: Stop service httpd, if running
+  service:
     name: httpd
     state: stopped
 
-# Example action to restart service httpd, in all cases
-- service:
+- name: Restart service httpd, in all cases
+  service:
     name: httpd
     state: restarted
 
-# Example action to reload service httpd, in all cases
-- service:
+- name: Reload service httpd, in all cases
+  service:
     name: httpd
     state: reloaded
 
-# Example action to enable service httpd, and not touch the running state
-- service:
+- name: Enable service httpd, and not touch the running state
+  service:
     name: httpd
     enabled: yes
 
-# Example action to start service foo, based on running process /usr/bin/foo
-- service:
+- name: Start service foo, based on running process /usr/bin/foo
+  service:
     name: foo
     pattern: /usr/bin/foo
     state: started
 
-# Example action to restart network service for interface eth0
-- service:
+- name: Restart network service for interface eth0
+  service:
     name: network
     state: restarted
     args: eth0
-
 '''
 
 import glob
@@ -322,9 +313,9 @@ class Service(object):
         if self.state and self.running is None:
             self.module.fail_json(msg="failed determining service state, possible typo of service name?")
         # Find out if state has changed
-        if not self.running and self.state in ["started", "running", "reloaded"]:
+        if not self.running and self.state in ["reloaded", "running", "started"]:
             self.svc_change = True
-        elif self.running and self.state in ["stopped", "reloaded"]:
+        elif self.running and self.state in ["reloaded", "stopped"]:
             self.svc_change = True
         elif self.state == "restarted":
             self.svc_change = True
@@ -336,7 +327,7 @@ class Service(object):
         # Only do something if state will change
         if self.svc_change:
             # Control service
-            if self.state in ['started', 'running']:
+            if self.state in ['running', 'started']:
                 self.action = "start"
             elif not self.running and self.state == 'reloaded':
                 self.action = "start"
@@ -416,9 +407,6 @@ class Service(object):
             # Replace previous rc.conf.
             self.module.atomic_move(tmp_rcconf_file, self.rcconf_file)
 
-
-# ===========================================
-# Subclass: Linux
 
 class LinuxService(Service):
     """
@@ -973,8 +961,6 @@ class LinuxService(Service):
         return (rc_state, stdout, stderr)
 
 
-# ===========================================
-# Subclass: FreeBSD
 
 class FreeBsdService(Service):
     """
@@ -1086,9 +1072,6 @@ class FreeBsdService(Service):
 
         return ret
 
-
-# ===========================================
-# Subclass: OpenBSD
 
 class OpenBsdService(Service):
     """
@@ -1239,9 +1222,6 @@ class OpenBsdService(Service):
         self.changed = True
 
 
-# ===========================================
-# Subclass: NetBSD
-
 class NetBsdService(Service):
     """
     This is the NetBSD Service manipulation class - it uses the /etc/rc.conf
@@ -1298,8 +1278,6 @@ class NetBsdService(Service):
         return self.execute_command("%s %s" % (self.svc_cmd, self.action), daemonize=True)
 
 
-# ===========================================
-# Subclass: SunOS
 class SunOSService(Service):
     """
     This is the SunOS Service manipulation class - it uses the svcadm
@@ -1434,9 +1412,6 @@ class SunOSService(Service):
         return self.execute_command("%s %s %s" % (self.svcadm_cmd, subcmd, self.name))
 
 
-# ===========================================
-# Subclass: AIX
-
 class AIX(Service):
     """
     This is the AIX Service (SRC) manipulation class - it uses lssrc, startsrc, stopsrc
@@ -1514,13 +1489,13 @@ class AIX(Service):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(required=True),
-            state=dict(choices=['running', 'started', 'stopped', 'restarted', 'reloaded']),
-            sleep=dict(required=False, type='int', default=None),
-            pattern=dict(required=False, default=None),
+            name=dict(type='str', required=True),
+            state=dict(type='str', choices=['running', 'started', 'stopped', 'reloaded', 'restarted']),
+            sleep=dict(type='int'),
+            pattern=dict(type='str'),
             enabled=dict(type='bool'),
-            runlevel=dict(required=False, default='default'),
-            arguments=dict(aliases=['args'], default=''),
+            runlevel=dict(type='str', default='default'),
+            arguments=dict(type='str', default='', aliases=['args']),
         ),
         supports_check_mode=True,
         required_one_of=[['state', 'enabled']],
@@ -1594,7 +1569,7 @@ def main():
     else:
         # as we may have just bounced the service the service command may not
         # report accurate state at this moment so just show what we ran
-        if service.module.params['state'] in ['started', 'restarted', 'running', 'reloaded']:
+        if service.module.params['state'] in ['reloaded', 'restarted', 'running', 'started']:
             result['state'] = 'started'
         else:
             result['state'] = 'stopped'

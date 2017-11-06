@@ -1,38 +1,20 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2014, Chris Hoffman <choffman@chathamfinancial.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
-# this is a windows documentation stub.  actual code lives in the .ps1
-# file of the same name
+# Copyright: (c) 2014, Chris Hoffman <choffman@chathamfinancial.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
-
 DOCUMENTATION = r'''
 ---
 module: win_service
 version_added: "1.7"
-short_description: Manages Windows services
+short_description: Manage and query Windows services
 description:
-    - Manages Windows services.
+    - Manage and query Windows services.
     - For non-Windows targets, use the M(service) module instead.
 options:
   dependencies:
@@ -60,7 +42,8 @@ options:
     description:
       - Whether to allow the service user to interact with the desktop.
       - This should only be set to true when using the LocalSystem username.
-    default: False
+    type: bool
+    default: 'no'
     version_added: "2.3"
   description:
     description:
@@ -72,15 +55,18 @@ options:
     version_added: "2.3"
   force_dependent_services:
     description:
-    - If True, stopping or restarting a service with dependent services will
+    - If C(yes), stopping or restarting a service with dependent services will
       force the dependent services to stop or restart also.
-    - If False, stopping or restarting a service with dependent services may
+    - If C(no), stopping or restarting a service with dependent services may
       fail.
-    default: False
+    type: bool
+    default: 'no'
     version_added: "2.3"
   name:
     description:
-      - Name of the service
+      - Name of the service.
+      - If only the name parameter is specified, the module will report
+        on whether the service exists or not without making any changes.
     required: true
   path:
     description:
@@ -125,7 +111,8 @@ options:
     version_added: "2.3"
 notes:
     - For non-Windows targets, use the M(service) module instead.
-author: "Chris Hoffman (@chrishoffman)"
+author:
+- Chris Hoffman (@chrishoffman)
 '''
 
 EXAMPLES = r'''
@@ -140,7 +127,7 @@ EXAMPLES = r'''
     start_mode: auto
     state: started
 
-- name: pause a service
+- name: Pause a service
   win_service:
     name: Netlogon
     state: paused
@@ -149,50 +136,50 @@ EXAMPLES = r'''
 # - username: LocalSystem
 # - state: stopped
 # - start_mode: auto
-- name: create a new service
+- name: Create a new service
   win_service:
     name: service name
     path: C:\temp\test.exe
 
-- name: create a new service with extra details
+- name: Create a new service with extra details
   win_service:
     name: service name
     path: C:\temp\test.exe
     display_name: Service Name
     description: A test service description
 
-- name: remove a service
+- name: Remove a service
   win_service:
     name: service name
     state: absent
 
-- name: check if a service is installed
+- name: Check if a service is installed
   win_service:
     name: service name
   register: service_info
 
-- name: set the log on user to a domain account
+- name: Set the log on user to a domain account
   win_service:
     name: service name
     state: restarted
     username: DOMAIN\User
     password: Password
 
-- name: set the log on user to a local account
+- name: Set the log on user to a local account
   win_service:
     name: service name
     state: restarted
     username: .\Administrator
     password: Password
 
-- name: set the log on user to Local System
+- name: Set the log on user to Local System
   win_service:
     name: service name
     state: restarted
     username: LocalSystem
     password: ""
 
-- name: set the log on user to Local System and allow it to interact with the desktop
+- name: Set the log on user to Local System and allow it to interact with the desktop
   win_service:
     name: service name
     state: restarted
@@ -200,32 +187,32 @@ EXAMPLES = r'''
     password: ""
     desktop_interact: True
 
-- name: set the log on user to Network Service
+- name: Set the log on user to Network Service
   win_service:
     name: service name
     state: restarted
     username: NT AUTHORITY\NetworkService
     password: ""
 
-- name: set the log on user to Local Service
+- name: Set the log on user to Local Service
   win_service:
     name: service name
     state: restarted
     username: NT AUTHORITY\LocalService
     password: ""
 
-- name: set dependencies to ones only in the list
+- name: Set dependencies to ones only in the list
   win_service:
     name: service name
     dependencies: ['service1', 'service2']
 
-- name: add dependencies to existing dependencies
+- name: Add dependencies to existing dependencies
   win_service:
     name: service name
     dependencies: ['service1', 'service2']
     dependency_action: add
 
-- name: remove dependencies from existing dependencies
+- name: Remove dependencies from existing dependencies
   win_service:
     name: service name
     dependencies: ['service1', 'service2']

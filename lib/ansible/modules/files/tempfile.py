@@ -1,6 +1,7 @@
 #!/usr/bin/python
-# coding: utf-8 -*-
-# Copyright: (c) 2016 Krzysztof Magosa <krzysztof@magosa.pl>
+# -*- coding: utf-8 -*-
+
+# Copyright: (c) 2016, Krzysztof Magosa <krzysztof@magosa.pl>
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -28,23 +29,18 @@ options:
   state:
     description:
       - Whether to create file or directory.
-    required: false
-    choices: [ "file", "directory" ]
+    choices: [ directory, file ]
     default: file
   path:
     description:
       - Location where temporary file or directory should be created. If path is not specified default system temporary directory will be used.
-    required: false
-    default: null
   prefix:
     description:
       - Prefix of file/directory name created by module.
-    required: false
     default: ansible.
   suffix:
     description:
       - Suffix of file/directory name created by module.
-    required: false
     default: ""
 notes:
   - For Windows targets, use the M(win_tempfile) module instead.
@@ -73,6 +69,7 @@ path:
 from os import close
 from tempfile import mkstemp, mkdtemp
 from traceback import format_exc
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 
@@ -80,11 +77,11 @@ from ansible.module_utils._text import to_native
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(default='file', choices=['file', 'directory']),
-            path=dict(default=None),
-            prefix=dict(default='ansible.'),
-            suffix=dict(default='')
-        )
+            state=dict(type='str', default='file', choices=['file', 'directory']),
+            path=dict(type='path'),
+            prefix=dict(type='str', default='ansible.'),
+            suffix=dict(type='str', default=''),
+        ),
     )
 
     try:
@@ -92,14 +89,14 @@ def main():
             handle, path = mkstemp(
                 prefix=module.params['prefix'],
                 suffix=module.params['suffix'],
-                dir=module.params['path']
+                dir=module.params['path'],
             )
             close(handle)
         elif module.params['state'] == 'directory':
             path = mkdtemp(
                 prefix=module.params['prefix'],
                 suffix=module.params['suffix'],
-                dir=module.params['path']
+                dir=module.params['path'],
             )
 
         module.exit_json(changed=True, path=path)

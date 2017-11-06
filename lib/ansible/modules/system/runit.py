@@ -1,11 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# (c) 2015, Brian Coca <bcoca@ansible.com>
+# Copyright: (c) 2015, Brian Coca <bcoca@ansible.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -17,19 +16,18 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: runit
-author: "James Sumners (@jsumners)"
+author:
+- James Sumners (@jsumners)
 version_added: "2.3"
-short_description:  Manage runit services.
+short_description:  Manage runit services
 description:
     - Controls runit services on remote hosts using the sv utility.
 options:
     name:
-        required: true
         description:
             - Name of the service to manage.
+        required: yes
     state:
-        required: false
-        choices: [ started, stopped, restarted, killed, reloaded, once ]
         description:
             - C(started)/C(stopped) are idempotent actions that will not run
               commands unless necessary.  C(restarted) will always bounce the
@@ -37,21 +35,19 @@ options:
               C(reloaded) will send a HUP (sv reload).
               C(once) will run a normally downed sv once (sv once), not really
               an idempotent operation.
+        choices: [ killed, once, reloaded, restarted, started, stopped ]
     enabled:
-        required: false
-        choices: [ "yes", "no" ]
         description:
             - Wheater the service is enabled or not, if disabled it also implies stopped.
+        type: bool
     service_dir:
-        required: false
-        default: /var/service
         description:
             - directory runsv watches for services
+        default: /var/service
     service_src:
-        required: false
-        default: /etc/sv
         description:
             - directory where services are defined, the source of symlinks to service_dir.
+        default: /etc/sv
 '''
 
 EXAMPLES = '''
@@ -60,28 +56,28 @@ EXAMPLES = '''
     name: dnscache
     state: started
 
-# Example action to stop sv dnscache, if running
- - runit:
+- name: Stop sv dnscache, if running
+  runit:
     name: dnscache
     state: stopped
 
-# Example action to kill sv dnscache, in all cases
- - runit:
+- name: Kill sv dnscache, in all cases
+  runit:
     name: dnscache
     state: killed
 
-# Example action to restart sv dnscache, in all cases
- - runit:
+- name: Restart sv dnscache, in all cases
+  runit:
     name: dnscache
     state: restarted
 
-# Example action to reload sv dnscache, in all cases
- - runit:
+- name: Reload sv dnscache, in all cases
+  runit:
     name: dnscache
     state: reloaded
 
-# Example using alt sv directory location
- - runit:
+- name: Use alternative sv directory location
+  runit:
     name: dnscache
     state: reloaded
     service_dir: /run/service
@@ -138,7 +134,7 @@ class Sv(object):
         self.pid = None
         self.duration = None
 
-        self.svc_cmd = module.get_bin_path('sv', opt_dirs=self.extra_paths)
+        self.svc_cmd = module.get_bin_path('sv', opt_dirs=self.extra_paths, required=True)
         self.svstat_cmd = module.get_bin_path('sv', opt_dirs=self.extra_paths)
         self.svc_full = '/'.join([self.service_dir, self.name])
         self.src_full = '/'.join([self.service_src, self.name])
@@ -237,18 +233,15 @@ class Sv(object):
         return states
 
 
-# ===========================================
-# Main control flow
-
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(required=True),
-            state=dict(choices=['started', 'stopped', 'restarted', 'killed', 'reloaded', 'once']),
-            enabled=dict(required=False, type='bool'),
-            dist=dict(required=False, default='runit'),
-            service_dir=dict(required=False, default='/var/service'),
-            service_src=dict(required=False, default='/etc/sv'),
+            name=dict(type='str', required=True),
+            state=dict(type='str', choices=['killed', 'once', 'reloaded', 'restarted', 'started', 'stopped']),
+            enabled=dict(type='bool'),
+            dist=dict(type='str', default='runit'),
+            service_dir=dict(type='str', default='/var/service'),
+            service_src=dict(type='str', default='/etc/sv'),
         ),
         supports_check_mode=True,
     )
