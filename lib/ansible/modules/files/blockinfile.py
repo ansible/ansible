@@ -145,6 +145,7 @@ from ansible.module_utils._text import to_bytes
 
 
 def write_changes(module, contents, path):
+
     tmpfd, tmpfile = tempfile.mkstemp()
     f = os.fdopen(tmpfd, 'wb')
     f.write(contents)
@@ -165,6 +166,7 @@ def write_changes(module, contents, path):
 
 
 def check_file_attrs(module, changed, message, diff):
+
     file_args = module.load_file_common_arguments(module.params)
     if module.set_file_attributes_if_different(file_args, False, diff=diff):
 
