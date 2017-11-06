@@ -675,7 +675,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
         make sure we get back a valid code from the proxy
         '''
         try:
-            (http_version, resp_code, msg) = re.match(r'(HTTP/\d\.\d) (\d\d\d) (.*)', response).groups()
+            (http_version, resp_code, msg) = re.match(br'(HTTP/\d\.\d) (\d\d\d) (.*)', response).groups()
             if int(resp_code) not in valid_codes:
                 raise Exception
         except:
