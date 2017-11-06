@@ -157,8 +157,8 @@ try:
     from libcloud.compute.providers import get_driver
     from libcloud.loadbalancer.types import Provider as Provider_lb
     from libcloud.loadbalancer.providers import get_driver as get_driver_lb
-    from libcloud.common.google import GoogleBaseError, QuotaExceededError, \
-            ResourceExistsError, ResourceNotFoundError
+    from libcloud.common.google import GoogleBaseError, QuotaExceededError, ResourceExistsError, ResourceNotFoundError
+
     _ = Provider.GCE
     HAS_LIBCLOUD = True
 except ImportError:
@@ -170,26 +170,26 @@ from ansible.module_utils.gce import USER_AGENT_PRODUCT, USER_AGENT_VERSION, gce
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            httphealthcheck_name = dict(),
-            httphealthcheck_port = dict(default=80),
-            httphealthcheck_path = dict(default='/'),
-            httphealthcheck_interval = dict(default=5),
-            httphealthcheck_timeout = dict(default=5),
-            httphealthcheck_unhealthy_count = dict(default=2),
-            httphealthcheck_healthy_count = dict(default=2),
-            httphealthcheck_host = dict(),
-            name = dict(),
-            protocol = dict(default='tcp'),
-            region = dict(),
-            external_ip = dict(),
-            port_range = dict(),
-            members = dict(type='list'),
-            state = dict(default='present'),
-            service_account_email = dict(),
-            pem_file = dict(type='path'),
-            credentials_file = dict(type='path'),
-            project_id = dict(),
+        argument_spec=dict(
+            httphealthcheck_name=dict(),
+            httphealthcheck_port=dict(default=80),
+            httphealthcheck_path=dict(default='/'),
+            httphealthcheck_interval=dict(default=5),
+            httphealthcheck_timeout=dict(default=5),
+            httphealthcheck_unhealthy_count=dict(default=2),
+            httphealthcheck_healthy_count=dict(default=2),
+            httphealthcheck_host=dict(),
+            name=dict(),
+            protocol=dict(default='tcp'),
+            region=dict(),
+            external_ip=dict(),
+            port_range=dict(),
+            members=dict(type='list'),
+            state=dict(default='present'),
+            service_account_email=dict(),
+            pem_file=dict(type='path'),
+            credentials_file=dict(type='path'),
+            project_id=dict(),
         )
     )
 
@@ -203,10 +203,8 @@ def main():
     httphealthcheck_path = module.params.get('httphealthcheck_path')
     httphealthcheck_interval = module.params.get('httphealthcheck_interval')
     httphealthcheck_timeout = module.params.get('httphealthcheck_timeout')
-    httphealthcheck_unhealthy_count = \
-            module.params.get('httphealthcheck_unhealthy_count')
-    httphealthcheck_healthy_count = \
-            module.params.get('httphealthcheck_healthy_count')
+    httphealthcheck_unhealthy_count = module.params.get('httphealthcheck_unhealthy_count')
+    httphealthcheck_healthy_count = module.params.get('httphealthcheck_healthy_count')
     httphealthcheck_host = module.params.get('httphealthcheck_host')
     name = module.params.get('name')
     protocol = module.params.get('protocol')
@@ -227,8 +225,7 @@ def main():
     json_output = {'name': name, 'state': state}
 
     if not name and not httphealthcheck_name:
-        module.fail_json(msg='Nothing to do, please specify a "name" ' + \
-                'or "httphealthcheck_name" parameter', changed=False)
+        module.fail_json(msg='Nothing to do, please specify a "name" ' + 'or "httphealthcheck_name" parameter', changed=False)
 
     if state in ['active', 'present']:
         # first, create the httphealthcheck if requested
@@ -237,12 +234,12 @@ def main():
             json_output['httphealthcheck_name'] = httphealthcheck_name
             try:
                 hc = gcelb.ex_create_healthcheck(httphealthcheck_name,
-                    host=httphealthcheck_host, path=httphealthcheck_path,
-                    port=httphealthcheck_port,
-                    interval=httphealthcheck_interval,
-                    timeout=httphealthcheck_timeout,
-                    unhealthy_threshold=httphealthcheck_unhealthy_count,
-                    healthy_threshold=httphealthcheck_healthy_count)
+                                                 host=httphealthcheck_host, path=httphealthcheck_path,
+                                                 port=httphealthcheck_port,
+                                                 interval=httphealthcheck_interval,
+                                                 timeout=httphealthcheck_timeout,
+                                                 unhealthy_threshold=httphealthcheck_unhealthy_count,
+                                                 healthy_threshold=httphealthcheck_healthy_count)
                 changed = True
             except ResourceExistsError:
                 hc = gce.ex_get_healthcheck(httphealthcheck_name)
@@ -255,17 +252,15 @@ def main():
                 json_output['httphealthcheck_port'] = hc.port
                 json_output['httphealthcheck_interval'] = hc.interval
                 json_output['httphealthcheck_timeout'] = hc.timeout
-                json_output['httphealthcheck_unhealthy_count'] = \
-                        hc.unhealthy_threshold
-                json_output['httphealthcheck_healthy_count'] = \
-                        hc.healthy_threshold
+                json_output['httphealthcheck_unhealthy_count'] = hc.unhealthy_threshold
+                json_output['httphealthcheck_healthy_count'] = hc.healthy_threshold
 
         # create the forwarding rule (and target pool under the hood)
         lb = None
         if name:
             if not region:
                 module.fail_json(msg='Missing required region name',
-                        changed=False)
+                                 changed=False)
             nodes = []
             output_nodes = []
             json_output['name'] = name
@@ -282,11 +277,11 @@ def main():
             try:
                 if hc is not None:
                     lb = gcelb.create_balancer(name, port_range, protocol,
-                        None, nodes, ex_region=region, ex_healthchecks=[hc],
-                        ex_address=external_ip)
+                                               None, nodes, ex_region=region, ex_healthchecks=[hc],
+                                               ex_address=external_ip)
                 else:
                     lb = gcelb.create_balancer(name, port_range, protocol,
-                        None, nodes, ex_region=region, ex_address=external_ip)
+                                               None, nodes, ex_region=region, ex_address=external_ip)
                 changed = True
             except ResourceExistsError:
                 lb = gcelb.get_balancer(name)
@@ -330,7 +325,6 @@ def main():
                 pass
             except Exception as e:
                 module.fail_json(msg=unexpected_error_msg(e), changed=False)
-
 
     json_output['changed'] = changed
     module.exit_json(**json_output)

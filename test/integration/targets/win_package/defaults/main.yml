@@ -1,5 +1,6 @@
 ---
 # spaces are tricky, let's have one by default
+test_win_package_path_safe: C:\ansible\win_package
 test_win_package_path: C:\ansible\win package
 test_win_package_good_url: https://s3.amazonaws.com/ansible-ci-files/test/integration/roles/test_win_package/good.msi
 test_win_package_reboot_url: https://s3.amazonaws.com/ansible-ci-files/test/integration/roles/test_win_package/reboot.msi
