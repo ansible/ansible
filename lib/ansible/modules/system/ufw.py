@@ -153,7 +153,7 @@ EXAMPLES = '''
 - name: Allow port range 60000-61000
   ufw:
     rule: allow
-    port: '60000:61000'
+    port: 60000:61000
 
 - name: Allow all access to tcp port 80
   ufw:
@@ -176,7 +176,7 @@ EXAMPLES = '''
     proto: udp
     src: 1.2.3.4
     port: 514
-    comment: "Block syslog"
+    comment: Block syslog
 
 - name: Allow incoming access to eth0 from 1.2.3.5 port 5469 to 1.2.3.4 port 5469
   ufw:
@@ -194,7 +194,7 @@ EXAMPLES = '''
   ufw:
     rule: deny
     proto: tcp
-    src: '2001:db8::/32'
+    src: 2001:db8::/32
     port: 25
 
 # Can be used to further restrict a global FORWARD policy set to allow
