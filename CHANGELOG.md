@@ -136,6 +136,8 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/31829)
 * Fix locale when screen scraping in the yum module
   (https://github.com/ansible/ansible/pull/32203)
+* Fix for validating proxy results on Python3 for modules making http requests:
+  (https://github.com/ansible/ansible/pull/32596)
 
 
 <a id="2.4.1"></a>
