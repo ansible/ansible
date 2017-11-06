@@ -43,7 +43,7 @@ options:
             - Location of the image.
         required: false
     os_type:
-        description:
+        description: The OS type of image.
         choices:
             - Windows
             - Linux
