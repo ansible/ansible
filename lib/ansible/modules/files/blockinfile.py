@@ -6,7 +6,6 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -179,15 +178,15 @@ def check_file_attrs(module, changed, message, diff):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            path=dict(required=True, aliases=['dest', 'destfile', 'name'], type='path'),
-            state=dict(default='present', choices=['absent', 'present']),
-            marker=dict(default='# {mark} ANSIBLE MANAGED BLOCK', type='str'),
-            block=dict(default='', type='str', aliases=['content']),
-            insertafter=dict(default=None),
-            insertbefore=dict(default=None),
-            create=dict(default=False, type='bool'),
-            backup=dict(default=False, type='bool'),
-            validate=dict(default=None, type='str'),
+            path=dict(type='path', required=True, aliases=['dest', 'destfile', 'name']),
+            state=dict(type='str', default='present', choices=['absent', 'present']),
+            marker=dict(type='str', default='# {mark} ANSIBLE MANAGED BLOCK'),
+            block=dict(type='str', default='', aliases=['content']),
+            insertafter=dict(type='str'),
+            insertbefore=dict(type='str'),
+            create=dict(type='bool', default=False),
+            backup=dict(type='bool', default=False),
+            validate=dict(type='str'),
         ),
         mutually_exclusive=[['insertbefore', 'insertafter']],
         add_file_common_args=True,
