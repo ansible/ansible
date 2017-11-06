@@ -585,8 +585,6 @@ class PlayContext(Base):
 
             elif self.become_method == 'runas':
                 # become is handled inside the WinRM connection plugin
-                display.warning("The Windows 'runas' become method is experimental, and may change significantly in future Ansible releases.")
-
                 if not self.become_user:
                     raise AnsibleError(("The 'runas' become method requires a username "
                                         "(specify with the '--become-user' CLI arg, the 'become_user' keyword, or the 'ansible_become_user' variable)"))
