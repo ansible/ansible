@@ -13,6 +13,8 @@ DOCUMENTATION = '''
     short_description: Sends events to Foreman
     description:
       - This callback will report facts and task events to Foreman https://theforeman.org/
+      - Before 2.4, if you wanted to use an ini configuration, the file must be placed in the same directory as this plugin and named foreman.ini
+      - In 2.4 and above you can just put it in the main Ansible configuration file.
     version_added: "2.2"
     requirements:
       - whitelisting in configuration
@@ -23,14 +25,26 @@ DOCUMENTATION = '''
         env:
           - name: FOREMAN_URL
         required: True
+        default: http://localhost:3000
+        ini:
+          - section: callback_foreman
+            key: url
       ssl_cert:
         description: X509 certificate to authenticate to Foreman if https is used
         env:
             - name: FOREMAN_SSL_CERT
+        default: /etc/foreman/client_cert.pem
+        ini:
+          - section: callback_foreman
+            key: ssl_cert
       ssl_key:
         description: the corresponding private key
         env:
           - name: FOREMAN_SSL_KEY
+        default: /etc/foreman/client_key.pem
+        ini:
+          - section: callback_foreman
+            key: ssl_key
       verify_certs:
         description:
           - Toggle to decidewhether to verify the Foreman certificate.
@@ -38,6 +52,10 @@ DOCUMENTATION = '''
           - Set to '0' to disable certificate checking.
         env:
           - name: FOREMAN_SSL_VERIFY
+        default: 1
+        ini:
+          - section: callback_foreman
+            key: verify_certs
 '''
 
 import os
@@ -56,32 +74,11 @@ from ansible.plugins.callback import CallbackBase
 
 
 class CallbackModule(CallbackBase):
-    """
-    This callback will report facts and reports to Foreman https://theforeman.org/
-
-    It makes use of the following environment variables:
-
-    FOREMAN_URL: URL to the Foreman server
-    FOREMAN_SSL_CERT: X509 certificate to authenticate to Foreman if
-      https is used
-    FOREMAN_SSL_KEY: the corresponding private key
-    FOREMAN_SSL_VERIFY: whether to verify the Foreman certificate
-      It can be set to '1' to verify SSL certificates using the
-      installed CAs or to a path pointing to a CA bundle. Set to '0'
-      to disable certificate checking.
-    """
-
     CALLBACK_VERSION = 2.0
     CALLBACK_TYPE = 'notification'
     CALLBACK_NAME = 'foreman'
     CALLBACK_NEEDS_WHITELIST = True
 
-    FOREMAN_URL = os.getenv('FOREMAN_URL', "http://localhost:3000")
-    FOREMAN_SSL_CERT = (os.getenv('FOREMAN_SSL_CERT',
-                                  "/etc/foreman/client_cert.pem"),
-                        os.getenv('FOREMAN_SSL_KEY',
-                                  "/etc/foreman/client_key.pem"))
-    FOREMAN_SSL_VERIFY = os.getenv('FOREMAN_SSL_VERIFY', "1")
     FOREMAN_HEADERS = {
         "Content-Type": "application/json",
         "Accept": "application/json"
@@ -92,6 +89,14 @@ class CallbackModule(CallbackBase):
         super(CallbackModule, self).__init__()
         self.items = defaultdict(list)
         self.start_time = int(time.time())
+
+    def set_options(self, options):
+
+        super(CallbackModule, self).set_options(options)
+
+        self.FOREMAN_URL = self._plugin_options['url']
+        self.FOREMAN_SSL_CERT = (self._plugin_options['ssl_cert'], self._plugin_options['ssl_key'])
+        self.FOREMAN_SSL_VERIFY = self._plugin_options['verify_certs']
 
         if HAS_REQUESTS:
             requests_major = int(requests.__version__.split('.')[0])
@@ -136,11 +141,15 @@ class CallbackModule(CallbackBase):
         facts = {"name": host,
                  "facts": data,
                  }
-        requests.post(url=self.FOREMAN_URL + '/api/v2/hosts/facts',
-                      data=json.dumps(facts),
-                      headers=self.FOREMAN_HEADERS,
-                      cert=self.FOREMAN_SSL_CERT,
-                      verify=self.ssl_verify)
+        try:
+            r = requests.post(url=self.FOREMAN_URL + '/api/v2/hosts/facts',
+                              data=json.dumps(facts),
+                              headers=self.FOREMAN_HEADERS,
+                              cert=self.FOREMAN_SSL_CERT,
+                              verify=self.ssl_verify)
+            r.raise_for_status()
+        except requests.exceptions.RequestException as err:
+            print(str(err))
 
     def _build_log(self, data):
         logs = []
@@ -192,11 +201,15 @@ class CallbackModule(CallbackBase):
             # To be changed to /api/v2/config_reports in 1.11.  Maybe we
             # could make a GET request to get the Foreman version & do
             # this automatically.
-            requests.post(url=self.FOREMAN_URL + '/api/v2/reports',
-                          data=json.dumps(report),
-                          headers=self.FOREMAN_HEADERS,
-                          cert=self.FOREMAN_SSL_CERT,
-                          verify=self.ssl_verify)
+            try:
+                r = requests.post(url=self.FOREMAN_URL + '/api/v2/reports',
+                                  data=json.dumps(report),
+                                  headers=self.FOREMAN_HEADERS,
+                                  cert=self.FOREMAN_SSL_CERT,
+                                  verify=self.ssl_verify)
+                r.raise_for_status()
+            except requests.exceptions.RequestException as err:
+                print(str(err))
             self.items[host] = []
 
     def append_result(self, result):
