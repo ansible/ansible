@@ -3,7 +3,6 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
-
 __metaclass__ = type
 
 import itertools
@@ -27,7 +26,6 @@ try:
     from __main__ import display
 except ImportError:
     from ansible.utils.display import Display
-
     display = Display()
 
 
@@ -71,6 +69,7 @@ def _generic_d(prop_name, self):
 
 
 class BaseMeta(type):
+
     """
     Metaclass for the Base object, which is used to construct the class
     attributes based on the FieldAttributes available.
@@ -135,6 +134,7 @@ class BaseMeta(type):
 
 
 class Base(with_metaclass(BaseMeta, object)):
+
     # connection/transport
     _connection = FieldAttribute(isa='string')
     _port = FieldAttribute(isa='int')
