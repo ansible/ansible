@@ -6,12 +6,12 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
-
 
 DOCUMENTATION = """
 ---
@@ -145,7 +145,6 @@ from ansible.module_utils._text import to_bytes
 
 
 def write_changes(module, contents, path):
-
     tmpfd, tmpfile = tempfile.mkstemp()
     f = os.fdopen(tmpfd, 'wb')
     f.write(contents)
@@ -166,7 +165,6 @@ def write_changes(module, contents, path):
 
 
 def check_file_attrs(module, changed, message, diff):
-
     file_args = module.load_file_common_arguments(module.params)
     if module.set_file_attributes_if_different(file_args, False, diff=diff):
 
@@ -271,7 +269,7 @@ def main():
             elif insertafter is not None:
                 n0 += 1
         elif insertbefore is not None:
-            n0 = 0           # insertbefore=BOF
+            n0 = 0  # insertbefore=BOF
         else:
             n0 = len(lines)  # insertafter=EOF
     elif n0 < n1:
