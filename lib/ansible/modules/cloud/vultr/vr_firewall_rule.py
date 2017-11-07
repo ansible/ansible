@@ -75,7 +75,7 @@ EXAMPLES = '''
     protocol: udp
     port: 53
     ip_version: "{{ item }}"
-  with_items: [ v4. v6 ]
+  with_items: [ v4, v6 ]
 
 - name: allow ping
   local_action:
