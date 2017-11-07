@@ -2,8 +2,6 @@ lib/ansible/modules/cloud/amazon/_ec2_ami_search.py
 lib/ansible/modules/cloud/amazon/_ec2_remote_facts.py
 lib/ansible/modules/cloud/amazon/_ec2_vpc.py
 lib/ansible/modules/cloud/amazon/_ec2_vpc_dhcp_options.py
-lib/ansible/modules/cloud/openstack/_os_server_actions.py
-lib/ansible/modules/cloud/ovirt/_ovirt_affinity_groups.py
 lib/ansible/modules/cloud/amazon/cloudformation.py
 lib/ansible/modules/cloud/amazon/cloudfront_facts.py
 lib/ansible/modules/cloud/amazon/dynamodb_table.py
@@ -77,6 +75,7 @@ lib/ansible/modules/cloud/misc/serverless.py
 lib/ansible/modules/cloud/misc/virt_net.py
 lib/ansible/modules/cloud/misc/virt_pool.py
 lib/ansible/modules/cloud/misc/xenserver_facts.py
+lib/ansible/modules/cloud/openstack/_os_server_actions.py
 lib/ansible/modules/cloud/openstack/os_image.py
 lib/ansible/modules/cloud/openstack/os_keypair.py
 lib/ansible/modules/cloud/openstack/os_nova_flavor.py
@@ -85,6 +84,7 @@ lib/ansible/modules/cloud/openstack/os_security_group_rule.py
 lib/ansible/modules/cloud/openstack/os_server.py
 lib/ansible/modules/cloud/openstack/os_stack.py
 lib/ansible/modules/cloud/ovh/ovh_ip_loadbalancing_backend.py
+lib/ansible/modules/cloud/ovirt/_ovirt_affinity_groups.py
 lib/ansible/modules/cloud/ovirt/ovirt_affinity_group.py
 lib/ansible/modules/cloud/ovirt/ovirt_nics.py
 lib/ansible/modules/cloud/ovirt/ovirt_permissions.py
