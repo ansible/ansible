@@ -131,6 +131,12 @@ options:
         aliases: [ 'extKeyUsage_critical', 'extendedKeyUsage_critical' ]
         description:
             - Should the extkeyUsage extension be considered as critical
+    basic_constraints:
+        required: false
+        aliases: ['basicConstraints']
+        description:
+            - Indicates basic constraints, such as if the certificate is a CA.
+        version_added: 2.5
 extends_documentation_fragment: files
 
 notes:
@@ -221,6 +227,11 @@ extendedKeyUsage:
     returned: changed or success
     type: list
     sample: [ 'clientAuth' ]
+basicConstraints:
+    description: Indicates if the certificate belongs to a CA
+    returned: changed or success
+    type: list
+    sample: ['CA:TRUE']
 '''
 
 import os
@@ -261,6 +272,7 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
         self.keyUsage_critical = module.params['keyUsage_critical']
         self.extendedKeyUsage = module.params['extendedKeyUsage']
         self.extendedKeyUsage_critical = module.params['extendedKeyUsage_critical']
+        self.basicConstraints = module.params['basicConstraints']
         self.request = None
         self.privatekey = None
 
@@ -300,6 +312,10 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
             if self.extendedKeyUsage:
                 usages = ', '.join(self.extendedKeyUsage)
                 extensions.append(crypto.X509Extension(b"extendedKeyUsage", self.extendedKeyUsage_critical, usages.encode('ascii')))
+
+            if self.basicConstraints:
+                usages = ', '.join(self.basicConstraints)
+                extensions.append(crypto.X509Extension(b"basicConstraints", False, usages.encode('ascii')))
 
             req.add_extensions(extensions)
 
@@ -366,9 +382,13 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
         def _check_extenededKeyUsage(extensions):
             return _check_keyUsage_(extensions, b'extendedKeyUsage', self.extendedKeyUsage, self.extendedKeyUsage_critical)
 
+        def _check_basicConstraints(extensions):
+            return _check_keyUsage_(extensions, b'basicConstraints', self.basicConstraints, False)
+
         def _check_extensions(csr):
             extensions = csr.get_extensions()
-            return _check_subjectAltName(extensions) and _check_keyUsage(extensions) and _check_extenededKeyUsage(extensions)
+            return (_check_subjectAltName(extensions) and _check_keyUsage(extensions) and
+                    _check_extenededKeyUsage(extensions) and _check_basicConstraints(extensions))
 
         def _check_signature(csr):
             try:
@@ -422,6 +442,7 @@ def main():
             keyUsage_critical=dict(aliases=['key_usage_critical'], default=False, type='bool'),
             extendedKeyUsage=dict(aliases=['extKeyUsage', 'extended_key_usage'], type='list'),
             extendedKeyUsage_critical=dict(aliases=['extKeyUsage_critical', 'extended_key_usage_critical'], default=False, type='bool'),
+            basicConstraints=dict(aliases=['basic_constraints'], type='list'),
         ),
         add_file_common_args=True,
         supports_check_mode=True,
