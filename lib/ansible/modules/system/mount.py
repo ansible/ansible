@@ -66,8 +66,6 @@ options:
       - C(absent) specifies that the device mount's entry will be removed from
         I(fstab) and will also unmount the device and remove the mount
         point.
-      - If specifying C(mounted) and the mount point is not present, the mount
-        point will be created.
     required: true
     choices: [ absent, mounted, present, unmounted ]
   fstab:
