@@ -32,6 +32,7 @@ from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import connection_loader
 from ansible.utils.path import unfrackpath, makedirs_safe
 from ansible.errors import AnsibleError
+from ansible.utils.display import Display
 from ansible.utils.jsonrpc import JsonRpcServer
 
 
@@ -78,6 +79,7 @@ class ConnectionProcess(object):
         try:
             while True:
                 signal.signal(signal.SIGALRM, self.handler)
+                signal.signal(signal.SIGTERM, self.handler)
                 signal.alarm(C.PERSISTENT_CONNECT_TIMEOUT)
 
                 self.exception = None
@@ -111,6 +113,10 @@ class ConnectionProcess(object):
             self.shutdown()
 
     def handler(self, signum, frame):
+        if signum == signal.SIGALRM:
+            display.display('persistent connection idle timeout triggered, timeout value is %s secs' % C.PERSISTENT_CONNECT_TIMEOUT, log_only=True)
+        else:
+            display.display('signal handler called with signal %s' % signum, log_only=True)
         self.shutdown()
 
     def shutdown(self):
@@ -227,7 +233,7 @@ def main():
 
     if rc == 0:
         ssh = connection_loader.get('ssh', class_only=True)
-        cp = ssh._create_control_path(play_context.remote_addr, play_context.port, play_context.remote_user)
+        cp = ssh._create_control_path(play_context.remote_addr, play_context.port, play_context.remote_user, play_context.connection)
 
         # create the persistent connection dir if need be and create the paths
         # which we will be using later
@@ -289,4 +295,5 @@ def main():
     sys.exit(rc)
 
 if __name__ == '__main__':
+    display = Display()
     main()
