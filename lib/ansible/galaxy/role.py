@@ -22,6 +22,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import errno
 import datetime
 import os
 import tarfile
@@ -325,11 +326,10 @@ class GalaxyRole(object):
                         installed = True
                     except OSError as e:
                         error = True
-                        if e[0] == 13 and len(self.paths) > 1:
+                        if e.errno == errno.EACCES and len(self.paths) > 1:
                             current = self.paths.index(self.path)
-                            nextidx = current + 1
-                            if len(self.paths) >= current:
-                                self.path = self.paths[nextidx]
+                            if len(self.paths) > current:
+                                self.path = self.paths[current + 1]
                                 error = False
                         if error:
                             raise AnsibleError("Could not update files in %s: %s" % (self.path, str(e)))
