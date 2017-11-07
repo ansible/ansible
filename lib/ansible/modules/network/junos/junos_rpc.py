@@ -112,7 +112,7 @@ def main():
     argument_spec = dict(
         rpc=dict(required=True),
         args=dict(type='dict'),
-        attrs=dict(type='dict'),
+        attrs=dict(type='dict', version_added="2.5"),
         output=dict(default='xml', choices=['xml', 'json', 'text']),
     )
 
