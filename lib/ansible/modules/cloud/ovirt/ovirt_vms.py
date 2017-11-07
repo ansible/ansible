@@ -31,7 +31,7 @@ options:
             - Should the Virtual Machine be running/stopped/present/absent/suspended/next_run/registered.
               When C(state) is I(registered) and the unregistered VM's name
               belongs to an already registered in engine VM in the same DC
-               then we fail to register the unregistered template.
+              then we fail to register the unregistered template.
             - I(present) state will create/update VM and don't change its state if it already exists.
             - I(running) state will create/update VM and start it.
             - I(next_run) state updates the VM and if the VM has next run configuration it will be rebooted.
@@ -67,15 +67,14 @@ options:
         description:
             - Name of the storage domain where all template disks should be created.
             - This parameter is considered only when C(template) is provided.
-            - C(**IMPORTANT**)
-            - This parameter is not idempotent, if the VM exists and you specfiy different storage domain,
+            - IMPORTANT - This parameter is not idempotent, if the VM exists and you specfiy different storage domain,
               disk won't move.
         version_added: "2.4"
     disk_format:
         description:
             - Specify format of the disk.
-            - If (cow) format is used, disk will by created as sparse, so space will be allocated for the volume as needed, also known as I(thin provision).
-            - If (raw) format is used, disk storage will be allocated right away, also known as I(preallocated).
+            - If C(cow) format is used, disk will by created as sparse, so space will be allocated for the volume as needed, also known as I(thin provision).
+            - If C(raw) format is used, disk storage will be allocated right away, also known as I(preallocated).
             - Note that this option isn't idempotent as it's not currently possible to change format of the disk via API.
             - This parameter is considered only when C(template) and C(storage domain) is provided.
         choices: [ cow, raw ]
@@ -112,14 +111,47 @@ options:
         description:
             - Operating system of the Virtual Machine.
             - Default value is set by oVirt/RHV engine.
-        choices: [
-            rhel_6_ppc64, other, freebsd, windows_2003x64, windows_10, rhel_6x64, rhel_4x64, windows_2008x64,
-            windows_2008R2x64, debian_7, windows_2012x64, ubuntu_14_04, ubuntu_12_04, ubuntu_13_10, windows_8x64,
-            other_linux_ppc64, windows_2003, other_linux, windows_10x64, windows_2008, rhel_3, rhel_5, rhel_4,
-            other_ppc64, sles_11, rhel_6, windows_xp, rhel_7x64, freebsdx64, rhel_7_ppc64, windows_7, rhel_5x64,
-            ubuntu_14_04_ppc64, sles_11_ppc64, windows_8, windows_2012R2x64, windows_2008r2x64, ubuntu_13_04,
-            ubuntu_12_10, windows_7x64
-        ]
+        choices:
+        - debian_7
+        - freebsd
+        - freebsdx64
+        - other
+        - other_linux
+        - other_linux_ppc64
+        - other_ppc64
+        - rhel_3
+        - rhel_4
+        - rhel_4x64
+        - rhel_5
+        - rhel_5x64
+        - rhel_6
+        - rhel_6x64
+        - rhel_6_ppc64
+        - rhel_7x64
+        - rhel_7_ppc64
+        - sles_11
+        - sles_11_ppc64
+        - ubuntu_12_04
+        - ubuntu_12_10
+        - ubuntu_13_04
+        - ubuntu_13_10
+        - ubuntu_14_04
+        - ubuntu_14_04_ppc64
+        - windows_10
+        - windows_10x64
+        - windows_2003
+        - windows_2003x64
+        - windows_2008
+        - windows_2008x64
+        - windows_2008r2x64
+        - windows_2008R2x64
+        - windows_2012x64
+        - windows_2012R2x64
+        - windows_7
+        - windows_7x64
+        - windows_8
+        - windows_8x64
+        - windows_xp
     boot_devices:
         description:
             - List of boot devices which should be used to boot. For example C([ cdrom, hd ]).
@@ -308,9 +340,9 @@ options:
               a virtual machine to oVirt.
             - Dictionary can contain following values.
             - C(url) - The URL to be passed to the I(virt-v2v) tool for conversion.
-              For example I(xen+ssh://root@zen.server). This is required paramater.
+              For example I(xen+ssh://root@zen.server). This is required parameter.
             - C(drivers_iso) - The name of the ISO containing drivers that can
-              be used during the I(virt-v2v) conversion process."
+              be used during the I(virt-v2v) conversion process.
             - C(sparse) - Specifies the disk allocation policy of the resulting
               virtual machine. I(true) for sparse, I(false) for preallocated.
               Default value is I(true).
@@ -326,7 +358,7 @@ options:
             - C(username) - The username to authenticate against the KVM.
             - C(password) - The password to authenticate against the KVM.
             - C(url) - The URL to be passed to the I(virt-v2v) tool for conversion.
-              For example I(qemu:///system). This is required paramater.
+              For example I(qemu:///system). This is required parameter.
             - C(drivers_iso) - The name of the ISO containing drivers that can
               be used during the I(virt-v2v) conversion process.
             - C(sparse) - Specifies the disk allocation policy of the resulting
