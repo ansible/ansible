@@ -302,7 +302,7 @@ options:
     timezone:
         description:
             - Sets time zone offset of the guest hardware clock.
-            - For example: Etc/GMT
+            - For example C(Etc/GMT)
         version_added: "2.3"
     serial_policy:
         description:
