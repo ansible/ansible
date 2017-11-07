@@ -115,7 +115,7 @@ class InventoryModule(BaseInventoryPlugin):
 
                 # create composite vars
                 self._set_composite_vars(data.get('compose'), hostvars, host, strict=strict)
-                
+
                 # refetch host vars in case new ones have been created above
                 hostvars = inventory.hosts[host].get_vars()
                 if host in self._cache:  # adds facts if cache is active
