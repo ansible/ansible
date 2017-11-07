@@ -458,7 +458,7 @@ def main():
     ttl_in = module.params.get('ttl')
     record_in = module.params.get('record').lower()
     type_in = module.params.get('type')
-    value_in = module.params.get('value')
+    value_in = module.params.get('value') or []
     alias_in = module.params.get('alias')
     alias_hosted_zone_id_in = module.params.get('alias_hosted_zone_id')
     alias_evaluate_target_health_in = module.params.get('alias_evaluate_target_health')
