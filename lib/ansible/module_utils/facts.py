@@ -2377,6 +2377,7 @@ class Darwin(Hardware):
             system_profile = self.get_system_profile()
             self.facts['processor'] = '%s @ %s' % (system_profile['Processor Name'], system_profile['Processor Speed'])
             self.facts['processor_cores'] = self.sysctl['hw.physicalcpu']
+        self.facts['processor_vcpus'] = self.sysctl.get('hw.logicalcpu') or self.sysctl.get('hw.ncpu') or ''
 
     def get_memory_facts(self):
         self.facts['memtotal_mb'] = int(self.sysctl['hw.memsize']) // 1024 // 1024
