@@ -90,20 +90,17 @@ def get_config(module, flags=None):
         return cfg
 
 
-def get_interfaces_config(module, interface_type, json_fmt=True,
-                          summary=False):
-    cmd = "show interfaces %s" % interface_type
-    if summary:
-        cmd += " summary"
+def show_cmd(module, cmd, json_fmt=True, fail_on_error=True):
     if json_fmt:
         cmd += " | json-print"
-    if cmd in _DEVICE_CONFIGS:
-        return _DEVICE_CONFIGS[cmd]
     rc, out, err = exec_command(module, cmd)
     if rc != 0:
-        module.fail_json(
-            msg='unable to retrieve current config',
-            stderr=to_text(err, errors='surrogate_then_replace'))
+        if fail_on_error:
+            module.fail_json(
+                msg='unable to retrieve config: %s' % cmd,
+                stderr=to_text(err, errors='surrogate_then_replace'))
+        else:
+            return None
     if json_fmt:
         out_list = out.split('\n', 1)
         line = out_list[0].strip()
@@ -117,16 +114,20 @@ def get_interfaces_config(module, interface_type, json_fmt=True,
                 stderr=to_text(out, errors='surrogate_then_replace'))
     else:
         cfg = to_text(out, errors='surrogate_then_replace').strip()
-    _DEVICE_CONFIGS[cmd] = cfg
     return cfg
+
+
+def get_interfaces_config(module, interface_type, json_fmt=True,
+                          summary=False):
+    cmd = "show interfaces %s" % interface_type
+    if summary:
+        cmd += " summary"
+    return show_cmd(module, cmd, json_fmt)
 
 
 def get_bgp_summary(module):
     cmd = "show ip bgp summary"
-    rc, out, _ = exec_command(module, cmd)
-    if rc != 0:
-        return None
-    return out
+    return show_cmd(module, cmd, json_fmt=False, fail_on_error=False)
 
 
 def show_command(module, fact_commands):

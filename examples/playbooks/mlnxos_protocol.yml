@@ -1,0 +1,14 @@
+
+# This task for running configuration on a switch
+
+- name: configure mlnxos protocols
+  mlnxos_protocol:
+    mlag: enabled
+    ip_routing: enabled
+    spanning_tree: disabled
+    provider:
+      host: "{{ inventory_hostname }}"
+      username: admin
+      password: admin
+    authorize: yes
+
