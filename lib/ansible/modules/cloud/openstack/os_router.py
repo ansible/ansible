@@ -65,7 +65,6 @@ options:
      default: None
    interfaces:
      description:
-<<<<<<< fec610f3fef0bbe4b8b935feca51de4ce1b52bed
         - List of subnets to attach to the router internal interface. Default
           gateway  associated with the subnet will be automatically attached
           with the router's  internal interface. 
@@ -109,13 +108,22 @@ EXAMPLES = '''
     network: ext_network1
     external_fixed_ips:
       - subnet: public-subnet
-        portip: 172.24.4.2
+        ip: 172.24.4.2
+    interfaces:
+      - private-subnet
+
+# Create another router with two internal subnet interface. one with  user defined port 
+# ip and and another  with default gateway.  
+- os_router:
+    cloud: mycloud
+    state: present
+    name: router2
+    network: ext_network1
     interfaces:
       - net: private-net
         subnet: private-subnet
-      - net: project-net
-        subnet: project-subnet
-        portip: 10.0.0.10
+        portip: 10.1.1.10
+      - project-subnet
 
 # Create another router with two internal subnet interface. one with  user defined port 
 # ip and and another  with default gateway.  
@@ -260,11 +268,9 @@ def _needs_update(cloud, module, router, network, internal_subnet_ids, internal_
     if module.params['interfaces']:
         existing_subnet_ids = []
         for port in _router_internal_interfaces(cloud, router):
-            existing_internal_port_ids.append(port.id)
             if 'fixed_ips' in port:
                 for fixed_ip in port['fixed_ips']:
                     existing_subnet_ids.append(fixed_ip['subnet_id'])
-                    existing_internal_port_ips.append(fixed_ip['ip_address'])
 
         for iface in module.params['interfaces']:
          if  type(iface)==dict:
@@ -277,11 +283,7 @@ def _needs_update(cloud, module, router, network, internal_subnet_ids, internal_
         if set(internal_subnet_ids) != set(existing_subnet_ids):
             internal_subnet_ids = []
             return True
-        if set(internal_port_ips) != set(existing_internal_port_ips):
-            return True
 
-        if set(internal_subnet_ids) != set(existing_subnet_ids):
-                return True
     return False
 
 
@@ -386,7 +388,6 @@ def main():
     module = AnsibleModule(argument_spec,
                            supports_check_mode=True,
                            **module_kwargs)
-   
 
     if not HAS_SHADE:
         module.fail_json(msg='shade is required for this module')
@@ -455,11 +456,12 @@ def main():
                     # As of now  by making another call to validate_subnet solves the problem 
                     kwargs = _build_kwargs(cloud, module, router, net)
                     updated_router = cloud.update_router(**kwargs)
-                                       
+
                     # Protect against update_router() not actually
                     # updating the router.
                     if not updated_router:
                         changed = False
+
                     # On a router update, if any internal interfaces were supplied,
                     # just detach all existing internal interfaces and attach the new.
                     if internal_portids or subnet_internal_ids:              
@@ -497,7 +499,6 @@ def main():
 
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
-        
 
 
 if __name__ == '__main__':
