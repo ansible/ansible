@@ -203,6 +203,11 @@ change_log:
             returned: success or failed
             type: string
             sample: "Disk set from read-only to writeable"
+        allocation_unit:
+            description: Information whether allocation_unit_size value was automatically adjusted.
+            returned: if file_system option value was refs and allocation_unit_size value was not 64
+            type: string
+            sample: "Size was automatically adjusted to 64kb due to file_system option value refs"
         initializing:
             description: Detailed information about initializing the disk.
             returned: success or failed
