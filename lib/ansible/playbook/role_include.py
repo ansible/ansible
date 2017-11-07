@@ -53,7 +53,7 @@ class IncludeRole(TaskInclude):
     # ATTRIBUTES
 
     # private as this is a 'module options' vs a task property
-    _allow_duplicates = FieldAttribute(isa='bool', default=True, private=True)
+    _allow_duplicates = FieldAttribute(isa='bool', default=False, private=True)
     _private = FieldAttribute(isa='bool', default=None, private=True)
 
     def __init__(self, block=None, role=None, task_include=None):
@@ -65,7 +65,7 @@ class IncludeRole(TaskInclude):
         self._role_name = None
         self._role_path = None
         self._play = None
-        self._dynamic_role = None
+        self._role = None
 
     def serialize(self, no_play=False):
         data = super(IncludeRole, self).serialize()
@@ -74,8 +74,8 @@ class IncludeRole(TaskInclude):
             if self._parent_role:
                 data['_irole_prole'] = self._parent_role.serialize()
             data['_irole_path'] = self._role_path
-            if self._dynamic_role:
-                data['_irole_drole'] = self._dynamic_role.serialize()
+            if self._role:
+                data['_irole_drole'] = self._role.serialize()
             if self._play and not no_play:
                 data['_irole_play'] = self._play.serialize(
                     skip_dynamic_roles=True)
@@ -94,7 +94,7 @@ class IncludeRole(TaskInclude):
         if '_irole_drole' in data:
             r = Role()
             r.deserialize(data['_irole_drole'])
-            setattr(self, '_dynamic_role', r)
+            setattr(self, '_role', r)
         if '_irole_prole' in data:
             r = Role()
             r.deserialize(data['_irole_prole'])
@@ -185,15 +185,23 @@ class IncludeRole(TaskInclude):
                               play=play,
                               variable_manager=variable_manager,
                               loader=loader)
-        ri.vars.update(self.vars)
-        dynamic_role = Role.load(
+        if self.vars:
+            v = self.vars.copy()
+            # bypass vars from include_role itself
+            for k in [
+                'name', 'private', 'allow_duplicates',
+                'defaults_from', 'tasks_from', 'vars_from'
+            ]:
+                v.pop(k, None)
+            ri.vars.update(v)
+        role = Role.load(
             ri, play, parent_role=self._parent_role,
             from_files=self._from_files)
-        dynamic_role._metadata.allow_duplicates = self.allow_duplicates
-        self._role_path = dynamic_role._role_path
-        self.set_dynamic_role(dynamic_role)
+        role._metadata.allow_duplicates = self.allow_duplicates
+        self._role_path = role._role_path
+        self.set_dynamic_role(role)
         play.register_dynamic_role(self)
-        return dynamic_role
+        return role
 
     def set_play(self, play):
         self._play = play
@@ -204,16 +212,16 @@ class IncludeRole(TaskInclude):
         return self._play
 
     def set_dynamic_role(self, value):
-        self._dynamic_role = value
+        self._role = value
 
     def get_dynamic_role(self):
-        if self._dynamic_role is None:
+        if self._role is None:
             raise ValueError('Role is not initialised, call load !')
-        return self._dynamic_role
+        return self._role
 
     @property
     def is_loaded(self):
-        return self._dynamic_role is not None
+        return self._role is not None
 
     def get_default_vars(self, dep_chain=None):
         if not self.is_loaded:
