@@ -64,6 +64,10 @@ options:
         description:
             - "Mapper which maps an external virtual NIC profile to one that exists in the engine when C(state) is registered."
         version_added: "2.4"
+    reassign_bad_macs:
+        description:
+            - "Boolean indication whether to reassign bad macs when C(state) is registered."
+        version_added: "2.4"
     template:
         description:
             - "Name of the template, which should be used to create Virtual Machine. Required if creating VM."
@@ -393,7 +397,7 @@ ovirt_vms:
     cluster: mycluster
     id: 1111-1111-1111-1111
 
-# Register VM with vnic profile mappings
+# Register VM with vnic profile mappings and reassign bad macs
 ovirt_vms:
     state: registered
     storage_domain: mystorage
@@ -406,6 +410,7 @@ ovirt_vms:
       - source_network_name: mynetwork2
         source_profile_name: mynetwork2
         target_profile_name: target_network2
+    reassign_bad_macs: "True"
 
 # Creates a stateless VM which will always use latest template version:
 ovirt_vms:
@@ -1157,6 +1162,7 @@ def main():
         cpu_cores=dict(default=None, type='int'),
         cpu_shares=dict(default=None, type='int'),
         vnic_profile_mappings=dict(default=[], type='list'),
+        reassign_bad_macs=dict(default=None, type='bool'),
         type=dict(choices=['server', 'desktop']),
         operating_system=dict(
             default=None,
@@ -1358,7 +1364,8 @@ def main():
                     cluster=otypes.Cluster(
                         name=module.params['cluster']
                     ) if module.params['cluster'] else None,
-                    vnic_profile_mappings=_get_vnic_profile_mappings(module)
+                    vnic_profile_mappings=_get_vnic_profile_mappings(module),
+                    reassign_bad_macs=module.params['reassign_bad_macs']
                 )
 
                 if module.params['wait']:
