@@ -30,9 +30,9 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves import configparser
 import ansible.module_utils.six.moves.urllib.parse as urlparse
 try:
-    from ansible.release import __version__ as ansible_version
+    from ansible.release import __version__ as ANSIBLE_VERSION
 except ImportError:
-    ansible_version = 'unknown'
+    ANSIBLE_VERSION = 'unknown'
 
 AZURE_COMMON_ARGS = dict(
     cli_default_profile=dict(type='bool'),
@@ -68,7 +68,8 @@ AZURE_COMMON_REQUIRED_IF = [
     ('log_mode', 'file', ['log_path'])
 ]
 
-ANSIBLE_USER_AGENT = 'Ansible/{0}'.format(ansible_version)
+ANSIBLE_USER_AGENT = 'Ansible/{0}'.format(ANSIBLE_VERSION)
+CLOUDSHELL_USER_AGENT_KEY = 'AZURE_HTTP_USER_AGENT'
 
 CIDR_PATTERN = re.compile("(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1"
                           "[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))")
@@ -723,7 +724,11 @@ class AzureRMModuleBase(object):
                                  self.subscription_id,
                                  base_url=base_url)
 
+        # Add user agent for Ansible
         client.config.add_user_agent(ANSIBLE_USER_AGENT)
+        # Add user agent when running from Cloud Shell
+        if CLOUDSHELL_USER_AGENT_KEY in os.environ:
+            client.config.add_user_agent(os.environ[CLOUDSHELL_USER_AGENT_KEY])
 
         return client
 
