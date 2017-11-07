@@ -69,7 +69,7 @@ $arguments = ""
 
 if ($include_volumes) {
     foreach ($volume in $include_volumes) {
-        if ($volume.Length == 1) {
+        if ($volume.Length -eq 1) {
             $arguments += " $($volume):"
         } else {
             $arguments += " $volume"
@@ -82,7 +82,7 @@ if ($include_volumes) {
 if ($exclude_volumes) {
     $arguments += " /E"
     foreach ($volume in $exclude_volumes) {
-        if ($volume.Length == 1) {
+        if ($volume.Length -eq 1) {
             $arguments += " $($volume):"
         } else {
             $arguments += " $volume"
