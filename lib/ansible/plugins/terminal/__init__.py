@@ -61,7 +61,7 @@ class TerminalBase(with_metaclass(ABCMeta, object)):
 
         :arg cmd: Byte string command to be executed
         '''
-        return self._connection.send(cmd)
+        return self._connection.exec_command(cmd)
 
     def _get_prompt(self):
         """
