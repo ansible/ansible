@@ -43,7 +43,7 @@ options:
   force_instance_delete:
     description:
        - To delete an instance, this argument must exist and be true (along with state being equal to absent).
-     type: bool
+    type: bool
     default: 'no'
   instance_display_name:
     description:
