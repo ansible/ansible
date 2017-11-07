@@ -200,7 +200,7 @@ class DebianStrategy(GenericStrategy):
                 open(self.HOSTNAME_FILE, "a").write("")
             except IOError as e:
                 self.module.fail_json(msg="failed to write file: %s" %
-                                      to_native(e), exception=traceback.format_exc())
+                                          to_native(e), exception=traceback.format_exc())
         try:
             f = open(self.HOSTNAME_FILE)
             try:
@@ -209,7 +209,7 @@ class DebianStrategy(GenericStrategy):
                 f.close()
         except Exception as e:
             self.module.fail_json(msg="failed to read hostname: %s" %
-                                  to_native(e), exception=traceback.format_exc())
+                                      to_native(e), exception=traceback.format_exc())
 
     def set_permanent_hostname(self, name):
         try:
@@ -220,7 +220,7 @@ class DebianStrategy(GenericStrategy):
                 f.close()
         except Exception as e:
             self.module.fail_json(msg="failed to update hostname: %s" %
-                                  to_native(e), exception=traceback.format_exc())
+                                      to_native(e), exception=traceback.format_exc())
 
 
 class SLESStrategy(GenericStrategy):
@@ -236,7 +236,7 @@ class SLESStrategy(GenericStrategy):
                 open(self.HOSTNAME_FILE, "a").write("")
             except IOError as e:
                 self.module.fail_json(msg="failed to write file: %s" %
-                                      to_native(e), exception=traceback.format_exc())
+                                          to_native(e), exception=traceback.format_exc())
         try:
             f = open(self.HOSTNAME_FILE)
             try:
@@ -245,7 +245,7 @@ class SLESStrategy(GenericStrategy):
                 f.close()
         except Exception as e:
             self.module.fail_json(msg="failed to read hostname: %s" %
-                                  to_native(e), exception=traceback.format_exc())
+                                      to_native(e), exception=traceback.format_exc())
 
     def set_permanent_hostname(self, name):
         try:
@@ -256,7 +256,7 @@ class SLESStrategy(GenericStrategy):
                 f.close()
         except Exception as e:
             self.module.fail_json(msg="failed to update hostname: %s" %
-                                  to_native(e), exception=traceback.format_exc())
+                                      to_native(e), exception=traceback.format_exc())
 
 
 class RedHatStrategy(GenericStrategy):
@@ -278,7 +278,7 @@ class RedHatStrategy(GenericStrategy):
                 f.close()
         except Exception as e:
             self.module.fail_json(msg="failed to read hostname: %s" %
-                                  to_native(e), exception=traceback.format_exc())
+                                      to_native(e), exception=traceback.format_exc())
 
     def set_permanent_hostname(self, name):
         try:
@@ -303,7 +303,7 @@ class RedHatStrategy(GenericStrategy):
                 f.close()
         except Exception as e:
             self.module.fail_json(msg="failed to update hostname: %s" %
-                                  to_native(e), exception=traceback.format_exc())
+                                      to_native(e), exception=traceback.format_exc())
 
 
 class AlpineStrategy(GenericStrategy):
@@ -325,7 +325,7 @@ class AlpineStrategy(GenericStrategy):
                 open(self.HOSTNAME_FILE, "a").write("")
             except IOError as e:
                 self.module.fail_json(msg="failed to write file: %s" %
-                                      to_native(e), exception=traceback.format_exc())
+                                          to_native(e), exception=traceback.format_exc())
         try:
             f = open(self.HOSTNAME_FILE)
             try:
@@ -334,7 +334,7 @@ class AlpineStrategy(GenericStrategy):
                 f.close()
         except Exception as e:
             self.module.fail_json(msg="failed to read hostname: %s" %
-                                  to_native(e), exception=traceback.format_exc())
+                                      to_native(e), exception=traceback.format_exc())
 
     def set_permanent_hostname(self, name):
         try:
@@ -345,7 +345,7 @@ class AlpineStrategy(GenericStrategy):
                 f.close()
         except Exception as e:
             self.module.fail_json(msg="failed to update hostname: %s" %
-                                  to_native(e), exception=traceback.format_exc())
+                                      to_native(e), exception=traceback.format_exc())
 
     def set_current_hostname(self, name):
         cmd = [self.hostname_cmd, '-F', self.HOSTNAME_FILE]
@@ -413,7 +413,7 @@ class OpenRCStrategy(GenericStrategy):
                         return line[10:].strip('"')
             except Exception as e:
                 self.module.fail_json(msg="failed to read hostname: %s" %
-                                      to_native(e), exception=traceback.format_exc())
+                                          to_native(e), exception=traceback.format_exc())
         finally:
             f.close()
 
@@ -435,7 +435,7 @@ class OpenRCStrategy(GenericStrategy):
                 f.write('\n'.join(lines) + '\n')
             except Exception as e:
                 self.module.fail_json(msg="failed to update hostname: %s" %
-                                      to_native(e), exception=traceback.format_exc())
+                                          to_native(e), exception=traceback.format_exc())
         finally:
             f.close()
 
@@ -454,7 +454,7 @@ class OpenBSDStrategy(GenericStrategy):
                 open(self.HOSTNAME_FILE, "a").write("")
             except IOError as e:
                 self.module.fail_json(msg="failed to write file: %s" %
-                                      to_native(e), exception=traceback.format_exc())
+                                          to_native(e), exception=traceback.format_exc())
         try:
             f = open(self.HOSTNAME_FILE)
             try:
@@ -463,7 +463,7 @@ class OpenBSDStrategy(GenericStrategy):
                 f.close()
         except Exception as e:
             self.module.fail_json(msg="failed to read hostname: %s" %
-                                  to_native(e), exception=traceback.format_exc())
+                                      to_native(e), exception=traceback.format_exc())
 
     def set_permanent_hostname(self, name):
         try:
@@ -474,7 +474,7 @@ class OpenBSDStrategy(GenericStrategy):
                 f.close()
         except Exception as e:
             self.module.fail_json(msg="failed to update hostname: %s" %
-                                  to_native(e), exception=traceback.format_exc())
+                                      to_native(e), exception=traceback.format_exc())
 
 
 class SolarisStrategy(GenericStrategy):
@@ -521,7 +521,7 @@ class FreeBSDStrategy(GenericStrategy):
                 open(self.HOSTNAME_FILE, "a").write("hostname=temporarystub\n")
             except IOError as e:
                 self.module.fail_json(msg="failed to write file: %s" %
-                                      to_native(e), exception=traceback.format_exc())
+                                          to_native(e), exception=traceback.format_exc())
         try:
             try:
                 f = open(self.HOSTNAME_FILE, 'r')
@@ -531,7 +531,7 @@ class FreeBSDStrategy(GenericStrategy):
                         return line[10:].strip('"')
             except Exception as e:
                 self.module.fail_json(msg="failed to read hostname: %s" %
-                                      to_native(e), exception=traceback.format_exc())
+                                          to_native(e), exception=traceback.format_exc())
         finally:
             f.close()
 
@@ -553,7 +553,7 @@ class FreeBSDStrategy(GenericStrategy):
                 f.write('\n'.join(lines) + '\n')
             except Exception as e:
                 self.module.fail_json(msg="failed to update hostname: %s" %
-                                      to_native(e), exception=traceback.format_exc())
+                                          to_native(e), exception=traceback.format_exc())
         finally:
             f.close()
 

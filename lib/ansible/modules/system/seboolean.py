@@ -42,8 +42,8 @@ author:
 '''
 
 EXAMPLES = '''
-# Set (httpd_can_network_connect) flag on and keep it persistent across reboots
-- seboolean:
+- name: Set httpd_can_network_connect flag on and keep it persistent across reboots
+  seboolean:
     name: httpd_can_network_connect
     state: yes
     persistent: yes
@@ -173,7 +173,7 @@ def main():
         argument_spec=dict(
             name=dict(type='str', required=True),
             persistent=dict(type='bool', default=False),
-            state=dict(type='bool', required=True)
+            state=dict(type='bool', required=True),
         ),
         supports_check_mode=True,
     )
@@ -190,6 +190,7 @@ def main():
     name = module.params['name']
     persistent = module.params['persistent']
     state = module.params['state']
+
     result = dict(
         name=name,
     )
@@ -205,12 +206,11 @@ def main():
     cur_value = get_boolean_value(module, name)
 
     if cur_value == state:
-        result['state'] = cur_value
-        result['changed'] = False
-        module.exit_json(**result)
+        module.exit_json(changed=False, state=cur_value, **result)
 
     if module.check_mode:
         module.exit_json(changed=True)
+
     if persistent:
         r = semanage_boolean_value(module, name, state)
     else:
@@ -223,6 +223,7 @@ def main():
         selinux.security_commit_booleans()
     except:
         module.fail_json(msg="Failed to commit pending boolean %s value" % name)
+
     module.exit_json(**result)
 
 

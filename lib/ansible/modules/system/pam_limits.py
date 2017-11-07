@@ -5,13 +5,12 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-__metaclass__ = type
 
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -133,38 +132,37 @@ from ansible.module_utils._text import to_native
 
 
 def main():
-
     pam_items = ['core', 'data', 'fsize', 'memlock', 'nofile', 'rss', 'stack', 'cpu', 'nproc', 'as', 'maxlogins', 'maxsyslogins', 'priority', 'locks',
                  'sigpending', 'msgqueue', 'nice', 'rtprio', 'chroot']
 
-    pam_types = [ 'soft', 'hard', '-' ]
+    pam_types = ['soft', 'hard', '-']
 
     limits_conf = '/etc/security/limits.conf'
 
     module = AnsibleModule(
         # not checking because of daisy chain to file module
-        argument_spec = dict(
-            domain            = dict(required=True, type='str'),
-            limit_type        = dict(required=True, type='str', choices=pam_types),
-            limit_item        = dict(required=True, type='str', choices=pam_items),
-            value             = dict(required=True, type='str'),
-            use_max           = dict(default=False, type='bool'),
-            use_min           = dict(default=False, type='bool'),
-            backup            = dict(default=False, type='bool'),
-            dest              = dict(default=limits_conf, type='str'),
-            comment           = dict(required=False, default='', type='str')
+        argument_spec=dict(
+            domain=dict(required=True, type='str'),
+            limit_type=dict(required=True, type='str', choices=pam_types),
+            limit_item=dict(required=True, type='str', choices=pam_items),
+            value=dict(required=True, type='str'),
+            use_max=dict(default=False, type='bool'),
+            use_min=dict(default=False, type='bool'),
+            backup=dict(default=False, type='bool'),
+            dest=dict(default=limits_conf, type='str'),
+            comment=dict(required=False, default='', type='str')
         )
     )
 
-    domain      =       module.params['domain']
-    limit_type  =       module.params['limit_type']
-    limit_item  =       module.params['limit_item']
-    value       =       module.params['value']
-    use_max     =       module.params['use_max']
-    use_min     =       module.params['use_min']
-    backup      =       module.params['backup']
-    limits_conf =       module.params['dest']
-    new_comment =       module.params['comment']
+    domain = module.params['domain']
+    limit_type = module.params['limit_type']
+    limit_item = module.params['limit_item']
+    value = module.params['value']
+    use_max = module.params['use_max']
+    use_min = module.params['use_min']
+    backup = module.params['backup']
+    limits_conf = module.params['dest']
+    new_comment = module.params['comment']
 
     changed = False
 
@@ -192,7 +190,7 @@ def main():
     space_pattern = re.compile(r'\s+')
 
     message = ''
-    f = open (limits_conf, 'rb')
+    f = open(limits_conf, 'rb')
     # Tempfile
     nf = tempfile.NamedTemporaryFile(mode='w+')
 
@@ -211,9 +209,9 @@ def main():
             continue
 
         # Remove comment in line
-        newline = newline.split('#',1)[0]
+        newline = newline.split('#', 1)[0]
         try:
-            old_comment = line.split('#',1)[1]
+            old_comment = line.split('#', 1)[1]
         except:
             old_comment = ''
 
@@ -228,10 +226,10 @@ def main():
             nf.write(line)
             continue
 
-        line_domain     = line_fields[0]
-        line_type       = line_fields[1]
-        line_item       = line_fields[2]
-        actual_value    = line_fields[3]
+        line_domain = line_fields[0]
+        line_type = line_fields[1]
+        line_item = line_fields[2]
+        actual_value = line_fields[3]
 
         if not (actual_value in ['unlimited', 'infinity', '-1'] or actual_value.isdigit()):
             module.fail_json(msg="Invalid configuration of '%s'. Current value of %s is unsupported." % (limits_conf, line_item))
@@ -280,7 +278,7 @@ def main():
     if not found:
         changed = True
         if new_comment:
-            new_comment = "\t#"+new_comment
+            new_comment = "\t#" + new_comment
         new_limit = domain + "\t" + limit_type + "\t" + limit_item + "\t" + new_value + new_comment + "\n"
         message = new_limit
         nf.write(new_limit)
@@ -297,7 +295,7 @@ def main():
         pass
 
     res_args = dict(
-        changed = changed, msg = message
+        changed=changed, msg=message
     )
 
     if backup:
