@@ -25,7 +25,7 @@ FORMAT_1_2_HEADER="\$ANSIBLE_VAULT;1.2;AES256"
 
 # test invalid format ala https://github.com/ansible/ansible/issues/28038
 EXPECTED_ERROR='Vault format unhexlify error: Non-hexadecimal digit found'
-ansible-playbook "$@" -i invalid_format/inventory --vault-id invalid_format/vault-secret invalid_format/broken-host-vars-tasks.yml | grep "${EXPECTED_ERROR}"
+ansible-playbook "$@" -i invalid_format/inventory --vault-id invalid_format/vault-secret invalid_format/broken-host-vars-tasks.yml 2>&1 | grep "${EXPECTED_ERROR}"
 # | grep 'Vault format unhexlify error: Odd-length string'
 
 # test invalid format ala https://github.com/ansible/ansible/issues/28038
