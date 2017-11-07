@@ -1,7 +1,7 @@
 ---
 
 - name: setup - remove vrf
-  eos_vrf:
+  net_vrf:
     name: test
     state: absent
     authorize: yes

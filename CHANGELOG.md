@@ -7,11 +7,11 @@ Ansible Changes By Release
 
 ### Major Changes
 * Removed the previously deprecated 'accelerate' mode and all associated keywords and code.
-* Removed the previouslly deprecated 'accelerate' mode and all associated keywords and code.
+* Removed the previously deprecated 'accelerate' mode and all associated keywords and code.
 * New simpler and more intuitive 'loop' keyword for task loops
 
 ### Deprecations
-* previouslly deprecated 'hostfile' config settings have been 're-deprecated' as previouslly code did not warn about deprecated configuration settings.
+* Previously deprecated 'hostfile' config settings have been 're-deprecated' as previously code did not warn about deprecated configuration settings.
 * The ``with_<lookup>`` loops are deprecated in favor of the new ``loop`` keyword
 
 #### Deprecated Modules (to be removed in 2.9):
@@ -27,11 +27,14 @@ Ansible Changes By Release
   `ansible_diff_mode`, `ansible_inventory_sources`, `ansible_limit`, `ansible_run_tags` , `ansible_forks` and `ansible_skip_tags`
 * Updated the bundled copy of the six library to 1.11.0
 * Added support to `become` `NT AUTHORITY\System`, `NT AUTHORITY\LocalService`, and `NT AUTHORITY\NetworkService` on Windows hosts
+* Fixed `become` to work with async on Windows hosts
+* Improved `become` elevation process to work on standard Administrator users without disabling UAC on Windows hosts
 
 ### New Plugins
 
 ## Lookups
 * Added `aws_ssm` lookup plugin
+* config, allows querying Ansible settings
 
 ### New Modules
 
@@ -79,6 +82,7 @@ Ansible Changes By Release
   - TODO: build upon this to add many features detailed in ansible-config proposal https://github.com/ansible/proposals/issues/35
 * Windows modules now support the use of multiple shared module_utils files in the form of Powershell modules (.psm1), via `#Requires -Module Ansible.ModuleUtils.Whatever.psm1`
 * Python module argument_spec now supports custom validation logic by accepting a callable as the `type` argument.
+* Windows become_method: runas is no longer marked `experimental`
 * Windows become_method: runas now works across all authtypes and will auto-elevate under UAC if WinRM user has "Act as part of the operating system" privilege
 
 ### Deprecations
@@ -94,7 +98,7 @@ Ansible Changes By Release
   moved to `ansible.utils.unsafe_proxy` to avoid a circular import.
 * The win_get_url module has the dictionary 'win_get_url' in its results deprecated,
   its content is now also available directly in the resulting output, like other modules.
-* previouslly deprecated 'hostfile' config settings have been 're-deprecated' as before the code did not warn about deprecated configuration settings, but it does now.
+* Previously deprecated 'hostfile' config settings have been 're-deprecated' as before the code did not warn about deprecated configuration settings, but it does now.
 
 #### Deprecated Modules (to be removed in 2.8):
 * azure: use M(azure_rm_virtualmachine) instead
@@ -108,7 +112,7 @@ Ansible Changes By Release
 * s3: replaced by aws_s3
 * win_msi: use M(win_package) instead
 
-#### Removed Modules (previouslly deprecated):
+#### Removed Modules (previously deprecated):
 * eos_template: use eos_config instead
 * ios_template: use ios_config instead
 * iosxr_template: use iosxr_config instead
@@ -1807,7 +1811,7 @@ Module fixes:
 * Fix a bug with the dnf module where state=latest could only upgrade, not install.
 * Fix to make implicit fact gathering task correctly inherit settings from play,
   this might cause an error if settings environment on play depending on 'ansible_env'
-  which was previouslly ignored
+  which was previously ignored
 
 <a id="2.0"></a>
 
@@ -2330,7 +2334,7 @@ Major changes:
 * environment: directive now can also be applied to play and is inhertited by tasks, which can still override it.
 * expanded facts and OS/distribution support for existing facts and improved performance with pypy.
 * new 'wantlist' option to lookups allows for selecting a list typed variable vs a comma delimited string as the return.
-* the shared module code for file backups now uses a timestamp resolution of seconds (previouslly minutes).
+* the shared module code for file backups now uses a timestamp resolution of seconds (previously minutes).
 * allow for empty inventories, this is now a warning and not an error (for those using localhost and cloud modules).
 * sped up YAML parsing in ansible by up to 25% by switching to CParser loader.
 

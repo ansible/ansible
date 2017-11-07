@@ -248,6 +248,7 @@ class Connection(Rpc, _Connection):
                     match = regex.search(response)
                     if match:
                         errored_response = response
+                        self._matched_prompt = match.group()
                         break
 
         if not is_error_message:

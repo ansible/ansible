@@ -38,7 +38,7 @@
     that:
     - install_local_exe|changed
     - install_local_exe.reboot_required == False
-    - install_local_exe.exit_code == 0
+    - install_local_exe.rc == 0
     - install_local_exe_actual.exists == True
 
 - name: install local exe (idempotent)
@@ -93,7 +93,7 @@
     that:
     - uninstall_path_local_exe|changed
     - uninstall_path_local_exe.reboot_required == False
-    - uninstall_path_local_exe.exit_code == 0
+    - uninstall_path_local_exe.rc == 0
     - uninstall_path_local_exe_actual.exists == False
 
 - name: uninstall local exe with path (idempotent)
@@ -148,7 +148,7 @@
     that:
     - install_url_exe|changed
     - install_url_exe.reboot_required == False
-    - install_url_exe.exit_code == 0
+    - install_url_exe.rc == 0
     - install_url_exe_actual.exists == True
 
 - name: install url exe (idempotent)
@@ -201,7 +201,7 @@
     that:
     - uninstall_id_local_exe|changed
     - uninstall_id_local_exe.reboot_required == False
-    - uninstall_id_local_exe.exit_code == 0
+    - uninstall_id_local_exe.rc == 0
     - uninstall_id_local_exe_actual.exists == False
 
 - name: uninstall local exe with product_id (idempotent)

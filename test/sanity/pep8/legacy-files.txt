@@ -1,8 +1,3 @@
-lib/ansible/constants.py
-lib/ansible/cli/config.py
-lib/ansible/config/data.py
-lib/ansible/config/manager.py
-lib/ansible/constants.py
 lib/ansible/modules/cloud/amazon/_ec2_ami_search.py
 lib/ansible/modules/cloud/amazon/_ec2_remote_facts.py
 lib/ansible/modules/cloud/amazon/_ec2_vpc.py
@@ -71,12 +66,6 @@ lib/ansible/modules/cloud/docker/docker_network.py
 lib/ansible/modules/cloud/google/gc_storage.py
 lib/ansible/modules/cloud/google/gcdns_record.py
 lib/ansible/modules/cloud/google/gcdns_zone.py
-lib/ansible/modules/cloud/google/gce.py
-lib/ansible/modules/cloud/google/gce_eip.py
-lib/ansible/modules/cloud/google/gce_lb.py
-lib/ansible/modules/cloud/google/gce_mig.py
-lib/ansible/modules/cloud/google/gce_net.py
-lib/ansible/modules/cloud/google/gce_pd.py
 lib/ansible/modules/cloud/google/gce_tag.py
 lib/ansible/modules/cloud/google/gcpubsub.py
 lib/ansible/modules/cloud/google/gcspanner.py
@@ -140,10 +129,8 @@ lib/ansible/modules/database/misc/riak.py
 lib/ansible/modules/database/mongodb/mongodb_parameter.py
 lib/ansible/modules/database/mongodb/mongodb_user.py
 lib/ansible/modules/database/mssql/mssql_db.py
-lib/ansible/modules/database/postgresql/postgresql_db.py
 lib/ansible/modules/database/postgresql/postgresql_ext.py
 lib/ansible/modules/database/postgresql/postgresql_lang.py
-lib/ansible/modules/database/postgresql/postgresql_privs.py
 lib/ansible/modules/database/postgresql/postgresql_schema.py
 lib/ansible/modules/database/vertica/vertica_configuration.py
 lib/ansible/modules/database/vertica/vertica_facts.py
@@ -317,8 +304,6 @@ lib/ansible/modules/packaging/os/yum.py
 lib/ansible/modules/packaging/os/zypper.py
 lib/ansible/modules/packaging/os/zypper_repository.py
 lib/ansible/modules/remote_management/stacki/stacki_host.py
-lib/ansible/modules/source_control/bzr.py
-lib/ansible/modules/source_control/hg.py
 lib/ansible/modules/storage/infinidat/infini_export.py
 lib/ansible/modules/storage/infinidat/infini_export_client.py
 lib/ansible/modules/storage/infinidat/infini_fs.py
@@ -343,7 +328,6 @@ lib/ansible/modules/system/filesystem.py
 lib/ansible/modules/system/gconftool2.py
 lib/ansible/modules/system/gluster_volume.py
 lib/ansible/modules/system/group.py
-lib/ansible/modules/system/iptables.py
 lib/ansible/modules/system/java_cert.py
 lib/ansible/modules/system/kernel_blacklist.py
 lib/ansible/modules/system/locale_gen.py
@@ -361,4 +345,3 @@ lib/ansible/modules/system/solaris_zone.py
 lib/ansible/modules/system/svc.py
 lib/ansible/modules/system/timezone.py
 lib/ansible/modules/system/ufw.py
-lib/ansible/playbook/base.py

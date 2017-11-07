@@ -2,7 +2,7 @@
 - debug: msg="START net_vlan eos/basic.yaml"
 
 - name: setup - remove vlan
-  eos_vlan:
+  net_vlan:
     vlan_id: 4000
     name: test-vlan
     state: absent

@@ -1,0 +1,30 @@
+====================================================================
+NetIron MLX active MP slot 5: 
+Total SDRAM         :  4294967295 bytes
+Available Memory    :  3806097408 bytes
+Available Memory (%):          88 percent
+Free Physical Pages :      925008 pages
+
+Malloc statistics: total  633606628
+OS malloc count:        2437418082
+OS malloc fail:                  0
+OS free count:          2437404486
+OS free fail:                    0
+diff:                        13596
+====================================================================
+NetIron MLX standby MP slot 6:
+Total SDRAM         :  4294967295 bytes
+Available Memory    :  3784171520 bytes
+Available Memory (%):          88 percent
+Free Physical Pages :      917843 pages
+
+====================================================================
+NetIron MLX LP SL 1: 
+Total SDRAM         :  1073741824 bytes
+Available Memory    :   485294080 bytes
+Available Memory (%):          45 percent
+====================================================================
+NetIron MLX LP SL 2: 
+Total SDRAM         :  1073741824 bytes
+Available Memory    :   561364992 bytes
+Available Memory (%):          52 percent
