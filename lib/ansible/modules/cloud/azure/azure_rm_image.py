@@ -248,7 +248,7 @@ class AzureRMImage(AzureRMModuleBase):
         return self.results
 
     def _image_to_dict(self, image):
-        result = self.serialize_obj(image, 'Image')
+        result = self.serialize_obj(image, 'Image', enum_modules=['azure.mgmt.compute.models'])
         result.update({
             'provisioning_state': image.provisioning_state,
             'name': image.name,
