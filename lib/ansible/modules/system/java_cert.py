@@ -186,7 +186,6 @@ def check_cert_present(module, executable, keystore_path, keystore_pass, alias, 
 def import_cert_url(module, executable, url, port, keystore_path, keystore_pass, alias, keystore_type):
     ''' Import certificate from URL into keystore located at keystore_path '''
 
-
     https_proxy = os.getenv("https_proxy")
     no_proxy = os.getenv("no_proxy")
 
