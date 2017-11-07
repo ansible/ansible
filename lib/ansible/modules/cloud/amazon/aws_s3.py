@@ -671,10 +671,7 @@ def main():
     if s3_url:
         for key in ['validate_certs', 'security_token', 'profile_name']:
             aws_connect_kwargs.pop(key, None)
-    try:
-        s3 = get_s3_connection(module, aws_connect_kwargs, location, rgw, s3_url)
-    except botocore.exceptions.ProfileNotFound as e:
-        module.fail_json(msg=to_native(e))
+    s3 = get_s3_connection(module, aws_connect_kwargs, location, rgw, s3_url)
 
     validate = not ignore_nonexistent_bucket
 
