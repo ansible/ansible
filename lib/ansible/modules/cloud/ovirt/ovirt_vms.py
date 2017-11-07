@@ -55,6 +55,10 @@ options:
             - "C(source_profile_name): The prfile name related to the source network."
             - "C(target_profile_id): The id of the target profile id to be mapped to in the engine."
         version_added: "2.5"
+    reassign_bad_macs:
+        description:
+            - "Boolean indication whether to reassign bad macs when C(state) is registered."
+        version_added: "2.5"
     template:
         description:
             - Name of the template, which should be used to create Virtual Machine.
@@ -427,7 +431,7 @@ EXAMPLES = '''
     cluster: mycluster
     id: 1111-1111-1111-1111
 
-- name: Register VM with vnic profile mappings
+- name: Register VM with vnic profile mappings and reassign bad macs
   ovirt_vms:
     state: registered
     storage_domain: mystorage
@@ -1225,6 +1229,7 @@ def main():
         cd_iso=dict(type='str'),
         boot_devices=dict(type='list'),
         vnic_profile_mappings=dict(default=[], type='list'),
+        reassign_bad_macs=dict(default=None, type='bool'),
         high_availability=dict(type='bool'),
         lease=dict(type='str'),
         stateless=dict(type='bool'),
@@ -1412,7 +1417,9 @@ def main():
                         name=module.params['cluster']
                     ) if module.params['cluster'] else None,
                     vnic_profile_mappings=_get_vnic_profile_mappings(module)
-                    if module.params['vnic_profile_mappings'] else None
+                    if module.params['vnic_profile_mappings'] else None,
+                    reassign_bad_macs=module.params['reassign_bad_macs']
+                    if module.params['reassign_bad_macs'] is not None else None
                 )
 
                 if module.params['wait']:
