@@ -1,21 +1,20 @@
 #!/usr/bin/python
 
-# (c) 2013, Vincent Van der Kussen <vincent at vanderkussen.org>
+# Copyright: (c) 2013, Vincent Van der Kussen <vincent at vanderkussen.org>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = '''
 ---
 module: ovirt
-author: "Vincent Van der Kussen (@vincentvdk)"
+author:
+- Vincent Van der Kussen (@vincentvdk)
 short_description: oVirt/RHEV platform management
 description:
     - This module only supports oVirt/RHEV version 3. A newer module M(ovirt_vms) supports oVirt/RHV version 4.
@@ -24,190 +23,141 @@ version_added: "1.4"
 options:
   user:
     description:
-     - the user to authenticate with
-    default: null
+     - The user to authenticate with.
     required: true
-    aliases: []
   url:
     description:
-     - the url of the oVirt instance
-    default: null
+     - The url of the oVirt instance.
     required: true
-    aliases: []
   instance_name:
     description:
-     - the name of the instance to use
-    default: null
+     - The name of the instance to use.
     required: true
     aliases: [ vmname ]
   password:
     description:
-     - password of the user to authenticate with
-    default: null
+     - Password of the user to authenticate with.
     required: true
-    aliases: []
   image:
     description:
-     - template to use for the instance
-    default: null
-    required: false
-    aliases: []
+     - The template to use for the instance.
   resource_type:
     description:
-     - whether you want to deploy an image or create an instance from scratch.
-    default: null
-    required: false
-    aliases: []
-    choices: [ 'new', 'template' ]
+     - Whether you want to deploy an image or create an instance from scratch.
+    choices: [ new, template ]
   zone:
     description:
-     - deploy the image to this oVirt cluster
-    default: null
-    required: false
-    aliases: []
+     - Deploy the image to this oVirt cluster.
   instance_disksize:
     description:
-     - size of the instance's disk in GB
-    default: null
-    required: false
+     - Size of the instance's disk in GB.
     aliases: [ vm_disksize]
   instance_cpus:
     description:
-     - the instance's number of cpu's
+     - The instance's number of CPUs.
     default: 1
-    required: false
     aliases: [ vmcpus ]
   instance_nic:
     description:
-     - name of the network interface in oVirt/RHEV
-    default: null
-    required: false
+     - The name of the network interface in oVirt/RHEV.
     aliases: [ vmnic  ]
   instance_network:
     description:
-     - the logical network the machine should belong to
+     - The logical network the machine should belong to.
     default: rhevm
-    required: false
     aliases: [ vmnetwork ]
   instance_mem:
     description:
-     - the instance's amount of memory in MB
-    default: null
-    required: false
+     - The instance's amount of memory in MB.
     aliases: [ vmmem ]
   instance_type:
     description:
-     - define if the instance is a server or desktop
+     - Define whether the instance is a server or desktop.
+    choices: [ desktop, server ]
     default: server
-    required: false
     aliases: [ vmtype ]
-    choices: [ 'server', 'desktop' ]
   disk_alloc:
     description:
-     - define if disk is thin or preallocated
+     - Define whether disk is thin or preallocated.
+    choices: [ preallocated, thin ]
     default: thin
-    required: false
-    aliases: []
-    choices: [ 'thin', 'preallocated' ]
   disk_int:
     description:
-     - interface type of the disk
+     - Interface type of the disk.
+    choices: [ ide, virtio ]
     default: virtio
-    required: false
-    aliases: []
-    choices: [ 'virtio', 'ide' ]
   instance_os:
     description:
-     - type of Operating System
-    default: null
-    required: false
+     - Type of Operating System.
     aliases: [ vmos ]
   instance_cores:
     description:
-     - define the instance's number of cores
+     - Define the instance's number of cores.
     default: 1
-    required: false
     aliases: [ vmcores ]
   sdomain:
     description:
-     - the Storage Domain where you want to create the instance's disk on.
-    default: null
-    required: false
-    aliases: []
+     - The Storage Domain where you want to create the instance's disk on.
   region:
     description:
-     - the oVirt/RHEV datacenter where you want to deploy to
-    default: null
-    required: false
-    aliases: []
+     - The oVirt/RHEV datacenter where you want to deploy to.
   instance_dns:
     description:
-     - define the instance's Primary DNS server
-    required: false
+     - Define the instance's Primary DNS server.
     aliases: [ dns ]
     version_added: "2.1"
   instance_domain:
     description:
-     - define the instance's Domain
-    required: false
+     - Define the instance's Domain.
     aliases: [ domain ]
     version_added: "2.1"
   instance_hostname:
     description:
-     - define the instance's Hostname
-    required: false
+     - Define the instance's Hostname.
     aliases: [ hostname ]
     version_added: "2.1"
   instance_ip:
     description:
-     - define the instance's IP
-    required: false
+     - Define the instance's IP.
     aliases: [ ip ]
     version_added: "2.1"
   instance_netmask:
     description:
-     - define the instance's Netmask
-    required: false
+     - Define the instance's Netmask.
     aliases: [ netmask ]
     version_added: "2.1"
   instance_rootpw:
     description:
-     - define the instance's Root password
-    required: false
+     - Define the instance's Root password.
     aliases: [ rootpw ]
     version_added: "2.1"
   instance_key:
     description:
-     - define the instance's Authorized key
-    required: false
+     - Define the instance's Authorized key.
     aliases: [ key ]
     version_added: "2.1"
   state:
     description:
-     - create, terminate or remove instances
-    default: 'present'
-    required: false
-    aliases: []
-    choices: ['present', 'absent', 'shutdown', 'started', 'restarted']
-
+     - Create, terminate or remove instances.
+    choices: [ absent, present, restarted, shutdown, started ]
+    default: present
 requirements:
-  - "python >= 2.6"
-  - "ovirt-engine-sdk-python"
+  - ovirt-engine-sdk-python
 '''
-EXAMPLES = '''
-# Basic example provisioning from image.
 
-ovirt:
+EXAMPLES = '''
+- name: Basic example to provision from image
+  ovirt:
     user: admin@internal
     url: https://ovirt.example.com
     instance_name: ansiblevm04
     password: secret
     image: centos_64
     zone: cluster01
-    resource_type: template"
+    resource_type: template
 
-# Full example to create new instance from scratch
-ovirt:
+- name: Full example to create new instance from scratch
+  ovirt:
     instance_name: testansible
     resource_type: new
     instance_type: server
@@ -225,26 +175,26 @@ ovirt:
     sdomain: FIBER01
     instance_cores: 1
     instance_os: rhel_6x64
-    disk_int: virtio"
+    disk_int: virtio
 
-# stopping an instance
-ovirt:
+- name: Stopping an existing instance
+  ovirt:
     instance_name: testansible
     state: stopped
     user: admin@internal
     password: secret
     url: https://ovirt.example.com
 
-# starting an instance
-ovirt:
+- name: Start an existing instance
+  ovirt:
     instance_name: testansible
     state: started
     user: admin@internal
     password: secret
     url: https://ovirt.example.com
 
-# starting an instance with cloud init information
-ovirt:
+- name: Start an instance with cloud init information
+  ovirt:
     instance_name: testansible
     state: started
     user: admin@internal
@@ -256,8 +206,8 @@ ovirt:
     netmask: 255.255.255.0
     gateway: 192.0.2.1
     rootpw: bigsecret
-
 '''
+
 import time
 
 try:
@@ -405,36 +355,35 @@ def get_vm(conn, vmname):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(default='present', choices=['present', 'absent', 'shutdown', 'started', 'restart']),
-            # name      = dict(required=True),
-            user=dict(required=True),
-            url=dict(required=True),
-            instance_name=dict(required=True, aliases=['vmname']),
-            password=dict(required=True, no_log=True),
-            image=dict(),
-            resource_type=dict(choices=['new', 'template']),
-            zone=dict(),
-            instance_disksize=dict(aliases=['vm_disksize']),
-            instance_cpus=dict(default=1, aliases=['vmcpus']),
-            instance_nic=dict(aliases=['vmnic']),
-            instance_network=dict(default='rhevm', aliases=['vmnetwork']),
-            instance_mem=dict(aliases=['vmmem']),
-            instance_type=dict(default='server', aliases=['vmtype'], choices=['server', 'desktop']),
-            disk_alloc=dict(default='thin', choices=['thin', 'preallocated']),
-            disk_int=dict(default='virtio', choices=['virtio', 'ide']),
-            instance_os=dict(aliases=['vmos']),
-            instance_cores=dict(default=1, aliases=['vmcores']),
-            instance_hostname=dict(aliases=['hostname']),
-            instance_ip=dict(aliases=['ip']),
-            instance_netmask=dict(aliases=['netmask']),
-            instance_gateway=dict(aliases=['gateway']),
-            instance_domain=dict(aliases=['domain']),
-            instance_dns=dict(aliases=['dns']),
-            instance_rootpw=dict(aliases=['rootpw']),
-            instance_key=dict(aliases=['key']),
-            sdomain=dict(),
-            region=dict(),
-        )
+            state=dict(type='str', default='present', choices=['absent', 'present', 'restart', 'shutdown', 'started']),
+            user=dict(type='str', required=True),
+            url=dict(type='str', required=True),
+            instance_name=dict(type='str', required=True, aliases=['vmname']),
+            password=dict(type='str', required=True, no_log=True),
+            image=dict(type='str'),
+            resource_type=dict(type='str', choices=['new', 'template']),
+            zone=dict(type='str'),
+            instance_disksize=dict(type='str', aliases=['vm_disksize']),
+            instance_cpus=dict(type='str', default=1, aliases=['vmcpus']),
+            instance_nic=dict(type='str', aliases=['vmnic']),
+            instance_network=dict(type='str', default='rhevm', aliases=['vmnetwork']),
+            instance_mem=dict(type='str', aliases=['vmmem']),
+            instance_type=dict(type='str', default='server', aliases=['vmtype'], choices=['desktop', 'server']),
+            disk_alloc=dict(type='str', default='thin', choices=['preallocated', 'thin']),
+            disk_int=dict(type='str', default='virtio', choices=['ide', 'virtio']),
+            instance_os=dict(type='str', aliases=['vmos']),
+            instance_cores=dict(type='str', default=1, aliases=['vmcores']),
+            instance_hostname=dict(type='str', aliases=['hostname']),
+            instance_ip=dict(type='str', aliases=['ip']),
+            instance_netmask=dict(type='str', aliases=['netmask']),
+            instance_gateway=dict(type='str', aliases=['gateway']),
+            instance_domain=dict(type='str', aliases=['domain']),
+            instance_dns=dict(type='str', aliases=['dns']),
+            instance_rootpw=dict(type='str', aliases=['rootpw']),
+            instance_key=dict(type='str', aliases=['key']),
+            sdomain=dict(type='str'),
+            region=dict(type='str'),
+        ),
     )
 
     if not HAS_OVIRTSDK:
