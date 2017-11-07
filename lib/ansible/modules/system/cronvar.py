@@ -1,23 +1,19 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-#
-# This file is part of Ansible
-#
+
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-#
 # Cronvar Plugin: The goal of this plugin is to provide an idempotent
 # method for set cron variable values.  It should play well with the
 # existing cron module as well as allow for manually added variables.
 # Each variable entered will be preceded with a comment describing the
 # variable so that it can be found later.  This is required to be
 # present in order for this plugin to find/modify the variable
-#
+
 # This module is based on the crontab module.
-#
 
 from __future__ import absolute_import, division, print_function
-
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -36,69 +32,58 @@ options:
   name:
     description:
       - Name of the crontab variable.
-    default: null
-    required: true
+    required: yes
   value:
     description:
-      - The value to set this variable to.  Required if state=present.
-    required: false
-    default: null
+      - The value to set this variable to.
+      - Required if C(state=present).
   insertafter:
-    required: false
-    default: null
     description:
-      - Used with C(state=present). If specified, the variable will be inserted
-        after the variable specified.
+      - If specified, the variable will be inserted after the variable specified.
+      - Used with C(state=present).
   insertbefore:
-    required: false
-    default: null
     description:
       - Used with C(state=present). If specified, the variable will be inserted
         just before the variable specified.
   state:
     description:
       - Whether to ensure that the variable is present or absent.
-    required: false
+    choices: [ absent, present ]
     default: present
-    choices: [ "present", "absent" ]
   user:
     description:
       - The specific user whose crontab should be modified.
-    required: false
     default: root
   cron_file:
     description:
       - If specified, uses this file instead of an individual user's crontab.
         Without a leading /, this is assumed to be in /etc/cron.d.  With a leading
         /, this is taken as absolute.
-    required: false
-    default: null
   backup:
     description:
       - If set, create a backup of the crontab before it is modified.
         The location of the backup is returned in the C(backup) variable by this module.
-    required: false
-    default: false
+    type: bool
+    default: 'no'
 requirements:
   - cron
-author: "Doug Luce (@dougluce)"
+author:
+- Doug Luce (@dougluce)
 """
 
 EXAMPLES = '''
-# Ensure a variable exists.
-# Creates an entry like "EMAIL=doug@ansibmod.con.com"
-- cronvar:
+- name: Ensure entry like "EMAIL=doug@ansibmod.con.com" exists
+  cronvar:
     name: EMAIL
     value: doug@ansibmod.con.com
 
-# Make sure a variable is gone.  This will remove any variable named
-# "LEGACY"
-- cronvar:
+- name: Ensure a variable does not exist. This may remove any variable named "LEGACY"
+  cronvar:
     name: LEGACY
     state: absent
 
-# Adds a variable to a file under /etc/cron.d
-- cronvar:
+- name: Add a variable to a file under /etc/cron.d
+  cronvar:
     name: LOGFILE
     value: /var/log/yum-autoupdate.log
     user: root
@@ -345,14 +330,14 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(required=True),
-            value=dict(required=False),
-            user=dict(required=False),
-            cron_file=dict(required=False),
-            insertafter=dict(default=None),
-            insertbefore=dict(default=None),
-            state=dict(default='present', choices=['present', 'absent']),
-            backup=dict(default=False, type='bool'),
+            name=dict(type='str', required=True),
+            value=dict(type='str'),
+            user=dict(type='str'),
+            cron_file=dict(type='str'),
+            insertafter=dict(type='str'),
+            insertbefore=dict(type='str'),
+            state=dict(type='str', default='present', choices=['absent', 'present']),
+            backup=dict(type='bool', default=False),
         ),
         mutually_exclusive=[['insertbefore', 'insertafter']],
         supports_check_mode=False,
