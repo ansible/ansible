@@ -225,7 +225,7 @@ options:
             - C(bootable) - I(True) if the disk should be bootable, default is non bootable.
             - C(activate) - I(True) if the disk should be activated, default is activated.
             - NOTE - This parameter is used only when C(state) is I(running) or I(present) and is able to only attach disks.
-              To manage disks of the VM in more depth please use M(ovirt_disks) module instead."
+              To manage disks of the VM in more depth please use M(ovirt_disks) module instead.
     sysprep:
         description:
             - Dictionary with values for Windows Virtual Machine initialization using sysprep.
@@ -260,8 +260,8 @@ options:
             - C(nic_on_boot) - If I(True) network interface will be set to start on boot.
     cloud_init_nics:
         description:
-            - List of dictionaries representing network interafaces to be setup by cloud init."
-            - This option is used, when user needs to setup more network interfaces via cloud init."
+            - List of dictionaries representing network interafaces to be setup by cloud init.
+            - This option is used, when user needs to setup more network interfaces via cloud init.
             - If one network interface is enough, user should use C(cloud_init) I(nic_*) parameters. C(cloud_init) I(nic_*) parameters
               are merged with C(cloud_init_nics) parameters.
             - Dictionary can contain following values.
