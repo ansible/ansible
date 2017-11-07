@@ -103,6 +103,15 @@
             failed_modules: "{{ failed_modules }} + [ 'eos_logging' ]"
             test_failed: true
 
+    - block:
+      - include_role:
+          name: eos_static_route
+        when: "limit_to in ['*', 'eos_static_route']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'eos_static_route' ]"
+            test_failed: true
+
 
 
 ###########
