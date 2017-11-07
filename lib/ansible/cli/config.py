@@ -29,7 +29,7 @@ except ImportError:
 class ConfigCLI(CLI):
     """ Config command line class """
 
-    VALID_ACTIONS = ("view", "dump", "list")   # TODO: edit, update, search
+    VALID_ACTIONS = ("view", "dump", "list")  # TODO: edit, update, search
 
     def __init__(self, args, callback=None):
 
