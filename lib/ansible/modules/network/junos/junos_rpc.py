@@ -43,6 +43,7 @@ options:
     description:
       - The C(attrs) arguments defines a list of attributes and their values
         to set for the RPC call. This accepts a dictionary of key-values.
+    version_added: "2.5"
   output:
     description:
       - The C(output) argument specifies the desired output of the
@@ -112,7 +113,7 @@ def main():
     argument_spec = dict(
         rpc=dict(required=True),
         args=dict(type='dict'),
-        attrs=dict(type='dict', version_added="2.5"),
+        attrs=dict(type='dict'),
         output=dict(default='xml', choices=['xml', 'json', 'text']),
     )
 
