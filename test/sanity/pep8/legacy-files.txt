@@ -70,7 +70,6 @@ lib/ansible/modules/cloud/google/gcpubsub.py
 lib/ansible/modules/cloud/google/gcspanner.py
 lib/ansible/modules/cloud/lxc/lxc_container.py
 lib/ansible/modules/cloud/lxd/lxd_container.py
-lib/ansible/modules/cloud/misc/ovirt.py
 lib/ansible/modules/cloud/misc/rhevm.py
 lib/ansible/modules/cloud/misc/serverless.py
 lib/ansible/modules/cloud/misc/virt_net.py
@@ -85,11 +84,6 @@ lib/ansible/modules/cloud/openstack/os_security_group_rule.py
 lib/ansible/modules/cloud/openstack/os_server.py
 lib/ansible/modules/cloud/openstack/os_stack.py
 lib/ansible/modules/cloud/ovh/ovh_ip_loadbalancing_backend.py
-lib/ansible/modules/cloud/ovirt/_ovirt_affinity_groups.py
-lib/ansible/modules/cloud/ovirt/ovirt_affinity_group.py
-lib/ansible/modules/cloud/ovirt/ovirt_nics.py
-lib/ansible/modules/cloud/ovirt/ovirt_permissions.py
-lib/ansible/modules/cloud/ovirt/ovirt_vms.py
 lib/ansible/modules/cloud/packet/packet_sshkey.py
 lib/ansible/modules/cloud/profitbricks/profitbricks.py
 lib/ansible/modules/cloud/profitbricks/profitbricks_datacenter.py
