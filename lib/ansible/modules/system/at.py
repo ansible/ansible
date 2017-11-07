@@ -132,6 +132,7 @@ def create_tempfile(command):
 
 
 def main():
+
     module = AnsibleModule(
         argument_spec=dict(
             command=dict(type='str'),
