@@ -28,6 +28,7 @@
 import re
 import ast
 import operator
+import socket
 
 from itertools import chain
 
@@ -335,6 +336,20 @@ def remove_default_spec(spec):
     for item in spec:
         if 'default' in spec[item]:
             del spec[item]['default']
+
+
+def validate_ip_address(address):
+    try:
+        socket.inet_aton(address)
+    except socket.error:
+        return False
+    return address.count('.') == 3
+
+
+def validate_prefix(prefix):
+    if prefix and not 0 <= int(prefix) <= 32:
+        return False
+    return True
 
 
 def load_provider(spec, args):
