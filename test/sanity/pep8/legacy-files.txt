@@ -65,9 +65,6 @@ lib/ansible/modules/cloud/docker/docker_network.py
 lib/ansible/modules/cloud/google/gc_storage.py
 lib/ansible/modules/cloud/google/gcdns_record.py
 lib/ansible/modules/cloud/google/gcdns_zone.py
-lib/ansible/modules/cloud/google/gce_tag.py
-lib/ansible/modules/cloud/google/gcpubsub.py
-lib/ansible/modules/cloud/google/gcspanner.py
 lib/ansible/modules/cloud/lxc/lxc_container.py
 lib/ansible/modules/cloud/lxd/lxd_container.py
 lib/ansible/modules/cloud/misc/rhevm.py
