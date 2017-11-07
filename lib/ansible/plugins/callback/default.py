@@ -304,3 +304,6 @@ class CallbackModule(CallbackBase):
         if (self._display.verbosity > 2 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
             msg += "Result was: %s" % self._dump_results(result._result)
         self._display.display(msg, color=C.COLOR_DEBUG)
+
+    def v2_playbook_on_notify(self, handler, host):
+        display.vv("NOTIFIED HANDLER %s for %s" % (handler.get_name(), host))

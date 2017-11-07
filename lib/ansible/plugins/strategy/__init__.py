@@ -454,8 +454,7 @@ class StrategyBase:
                                         self._notified_handlers[target_handler._uuid] = []
                                     if original_host not in self._notified_handlers[target_handler._uuid]:
                                         self._notified_handlers[target_handler._uuid].append(original_host)
-                                        # FIXME: should this be a callback?
-                                        display.vv("NOTIFIED HANDLER %s" % (handler_name,))
+                                        self._tqm.send_callback('v2_playbook_on_notify', target_handler, original_host)
                                 else:
                                     # As there may be more than one handler with the notified name as the
                                     # parent, so we just keep track of whether or not we found one at all
@@ -465,7 +464,7 @@ class StrategyBase:
                                             found = True
                                             if original_host not in self._notified_handlers[target_handler._uuid]:
                                                 self._notified_handlers[target_handler._uuid].append(original_host)
-                                                display.vv("NOTIFIED HANDLER %s" % (target_handler.get_name(),))
+                                                self._tqm.send_callback('v2_playbook_on_notify', target_handler, original_host)
 
                                 if handler_name in self._listening_handlers:
                                     for listening_handler_uuid in self._listening_handlers[handler_name]:
@@ -476,7 +475,7 @@ class StrategyBase:
                                             continue
                                         if original_host not in self._notified_handlers[listening_handler._uuid]:
                                             self._notified_handlers[listening_handler._uuid].append(original_host)
-                                            display.vv("NOTIFIED HANDLER %s" % (listening_handler.get_name(),))
+                                            self._tqm.send_callback('v2_playbook_on_notify', listening_handler, original_host)
 
                                 # and if none were found, then we raise an error
                                 if not found:
