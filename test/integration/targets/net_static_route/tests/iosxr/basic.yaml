@@ -2,22 +2,22 @@
 - name: setup - remove config used in test
   net_static_route:
     aggregate:
-      - { address: 192.168.3.0/24, next_hop: 192.168.0.1 }
-      - { address: 192.168.4.0/24, next_hop: 192.168.0.1 }
-      - { address: 192.168.5.0/24, next_hop: 192.168.0.1 }
+      - { address: 192.168.3.0/24, next_hop: 10.0.2.2 }
+      - { address: 192.168.4.0/24, next_hop: 10.0.2.2 }
+      - { address: 192.168.5.0/24, next_hop: 10.0.2.2 }
     state: absent
 
 - name: configure static route
   net_static_route: &single_route
     address: 192.168.3.0/24
-    next_hop: 192.168.0.1
+    next_hop: 10.0.2.2
     admin_distance: 2
   register: result
 
 - assert:
     that:
       - "result.changed == true"
-      - "'192.168.3.0/24 192.168.0.1 2' in result.commands"
+      - "'192.168.3.0/24 10.0.2.2 2' in result.commands"
 
 - name: configure static route(Idempotence)
   net_static_route: *single_route
@@ -30,7 +30,7 @@
 - name: delete static route
   net_static_route: &delete_single
     address: 192.168.3.0/24
-    next_hop: 192.168.0.1
+    next_hop: 10.0.2.2
     admin_distance: 2
     state: absent
   regiser: result
@@ -38,7 +38,7 @@
 - assert:
     that:
       - "result.changed == true"
-      - "'no 192.168.3.0/24 192.168.0.1' in result.commands"
+      - "'no 192.168.3.0/24 10.0.2.2' in result.commands"
 
 - name: delete static route(Idempotence)
   net_static_route: *delete_single
@@ -51,15 +51,15 @@
 - name: configure static routes using aggregate
   net_static_route: &configure_aggregate
     aggregate:
-      - { address: 192.168.4.0/24, next_hop: 192.168.0.1 }
-      - { address: 192.168.5.0/24, next_hop: 192.168.0.1 }
+      - { address: 192.168.4.0/24, next_hop: 10.0.2.2 }
+      - { address: 192.168.5.0/24, next_hop: 10.0.2.2 }
   register: result
 
 - assert:
     that:
       - "result.changed == true"
-      - "'192.168.4.0/24 192.168.0.1' in result.commands"
-      - "'192.168.5.0/24 192.168.0.1' in result.commands"
+      - "'192.168.4.0/24 10.0.2.2' in result.commands"
+      - "'192.168.5.0/24 10.0.2.2' in result.commands"
 
 - name: configure static routes using aggregate(Idemporence)
   net_static_route: *configure_aggregate
@@ -72,16 +72,16 @@
 - name: delete static routes using aggregate
   net_static_route: &delete_aggregate
     aggregate:
-      - { address: 192.168.4.0/24, next_hop: 192.168.0.1 }
-      - { address: 192.168.5.0/24, next_hop: 192.168.0.1 }
+      - { address: 192.168.4.0/24, next_hop: 10.0.2.2 }
+      - { address: 192.168.5.0/24, next_hop: 10.0.2.2 }
     state: absent
   register: result
 
 - assert:
     that:
       - "result.changed == true"
-      - "'no 192.168.4.0/24 192.168.0.1' in result.commands"
-      - "'no 192.168.5.0/24 192.168.0.1' in result.commands"
+      - "'no 192.168.4.0/24 10.0.2.2' in result.commands"
+      - "'no 192.168.5.0/24 10.0.2.2' in result.commands"
 
 - name: delete static routes using aggregate(Idempotence)
   net_static_route: *delete_aggregate
