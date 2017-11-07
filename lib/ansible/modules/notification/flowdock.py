@@ -115,7 +115,7 @@ def main():
         argument_spec=dict(
             token=dict(required=True, no_log=True),
             msg=dict(required=True),
-            type=dict(required=True, choices=["inbox","chat"]),
+            type=dict(required=True, choices=["inbox","chat"]), 
             external_user_name=dict(required=False),
             from_address=dict(required=False),
             source=dict(required=False),

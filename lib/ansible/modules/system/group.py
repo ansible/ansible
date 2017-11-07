@@ -138,6 +138,7 @@ class Group(object):
 
 # ===========================================
 
+
 class SunOS(Group):
     """
     This is a SunOS Group manipulation class. Solaris doesn't have
@@ -208,6 +209,7 @@ class AIX(Group):
 
 # ===========================================
 
+
 class FreeBsdGroup(Group):
     """
     This is a FreeBSD Group manipulation class.
@@ -247,8 +249,6 @@ class FreeBsdGroup(Group):
             return self.execute_command(cmd)
         return (None, '', '')
 
-
-# ===========================================
 
 class DarwinGroup(Group):
     """
@@ -361,6 +361,7 @@ class OpenBsdGroup(Group):
 
 # ===========================================
 
+
 class NetBsdGroup(Group):
     """
     This is a NetBSD Group manipulation class.
@@ -402,6 +403,7 @@ class NetBsdGroup(Group):
 
 
 # ===========================================
+
 
 def main():
     module = AnsibleModule(

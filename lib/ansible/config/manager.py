@@ -215,8 +215,8 @@ class ConfigManager(object):
                     raise AnsibleOptionsError("Error reading config file (%s): %s" % (cfile, to_native(e)))
             # FIXME: this should eventually handle yaml config files
             # elif ftype == 'yaml':
-            #     with open(cfile, 'rb') as config_stream:
-            #         self._parser = yaml.safe_load(config_stream)
+            #    with open(cfile, 'rb') as config_stream:
+            #        self._parser = yaml.safe_load(config_stream)
             else:
                 raise AnsibleOptionsError("Unsupported configuration file type: %s" % to_native(ftype))
 
