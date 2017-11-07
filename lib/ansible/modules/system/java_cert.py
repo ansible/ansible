@@ -189,11 +189,11 @@ def import_cert_url(module, executable, url, port, keystore_path, keystore_pass,
 def is_new_cert(module, executable, path, keystore_path, keystore_pass, alias):
     ''' Compare certificate from path with the existing in keystore for same alias '''
     existing_sha_cmd = ("%s -noprompt -list -keystore '%s' "
-                  "-storepass '%s' -alias '%s'")%(executable,
+                  "-storepass '%s' -alias '%s'") % (executable,
                                                   keystore_path,
                                                   keystore_pass,
                                                   alias)
-    new_sha_cmd = ("%s -printcert -file '%s'")%(executable, path)
+    new_sha_cmd = ("%s -printcert -file '%s'") % (executable, path)
 
     (check_rc, check_out, check_err) = module.run_command(existing_sha_cmd)
     for line in check_out.split('\n'):
@@ -216,6 +216,7 @@ def is_new_cert(module, executable, path, keystore_path, keystore_pass, alias):
 def import_cert_url(module, executable, url, port, keystore_path, keystore_pass, alias):
 >>>>>>> Fix conflict
     ''' Import certificate from URL into keystore located at keystore_path '''
+
 
     https_proxy = os.getenv("https_proxy")
     no_proxy = os.getenv("no_proxy")
