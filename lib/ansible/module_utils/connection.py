@@ -64,7 +64,11 @@ def recv_data(s):
 
 def exec_command(module, command):
     connection = Connection(module._socket_path)
-    out = connection.exec_command(command)
+    try:
+        out = connection.exec_command(command)
+    except ConnectionError as exc:
+        code = getattr(exc, 'code', 1)
+        return code, '', to_text(exc, errors='surrogate_then_replace')
     return 0, out, ''
 
 
@@ -122,7 +126,7 @@ class Connection:
             response = json.loads(out)
 
         except socket.error as e:
-            raise ConnectionError('unable to connect to socket', err=to_native(e), exception=traceback.format_exc())
+            raise ConnectionError('unable to connect to socket', err=to_text(e, errors='surrogate_then_replace'), exception=traceback.format_exc())
 
         if response['id'] != reqid:
             raise ConnectionError('invalid json-rpc id received')
@@ -131,7 +135,7 @@ class Connection:
             err = response.get('error')
             msg = err.get('data') or err['message']
             code = err['code']
-            raise ConnectionError(msg, code=code, errors='surrogate_then_replace')
+            raise ConnectionError(to_text(msg, errors='surrogate_then_replace'), code=code)
 
         return response['result']
 
@@ -145,8 +149,8 @@ class Connection:
 
         except socket.error as e:
             sf.close()
-            raise ConnectionError('unable to connect to socket', err=to_native(e), exception=traceback.format_exc())
+            raise ConnectionError('unable to connect to socket', err=to_text(e, errors='surrogate_then_replace'), exception=traceback.format_exc())
 
         sf.close()
 
-        return to_native(response, errors='surrogate_or_strict')
+        return to_text(response, errors='surrogate_or_strict')
