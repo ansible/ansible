@@ -65,15 +65,19 @@ EXAMPLES = '''
     dev: /dev/sdb1
     opts: -cc
 '''
-import os
 
+import os
 from ansible.module_utils.basic import AnsibleModule
 
 
 def _get_dev_size(dev, module):
     """ Return size in bytes of device. Returns int """
-    blockdev_cmd = module.get_bin_path("blockdev", required=True)
-    rc, devsize_in_bytes, err = module.run_command("%s %s %s" % (blockdev_cmd, "--getsize64", dev))
+    devsize_in_bytes = 0
+    fd = os.open(dev, os.O_RDONLY)
+    try:
+        devsize_in_bytes = os.lseek(fd, 0, os.SEEK_END)
+    finally:
+        os.close(fd)
     return int(devsize_in_bytes)
 
 
