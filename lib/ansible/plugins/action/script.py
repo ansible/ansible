@@ -89,10 +89,15 @@ class ActionModule(ActionBase):
 
         # transfer the file to a remote tmp location
         tmp_src = self._connection._shell.join_path(tmp, os.path.basename(source))
-        self._transfer_file(source, tmp_src)
+        
+        if os.path.exists(tmp_src):
+            self._transfer_file(source, tmp_src)
 
-        # set file permissions, more permissive when the copy is done as a different user
-        self._fixup_perms2((tmp, tmp_src), execute=True)
+            # set file permissions, more permissive when the copy is done as a different user
+            self._fixup_perms2((tmp, tmp_src), execute=True)
+        else:
+            result['failed'] = True
+            result['msg'] = to_native('The file \'%s\' does not exist' % source)
 
         # add preparation steps to one ssh roundtrip executing the script
         env_dict = dict()
