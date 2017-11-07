@@ -54,6 +54,8 @@ class ActionModule(_ActionModule):
                 pc.private_key_file = provider['ssh_keyfile'] or self._play_context.private_key_file
                 pc.timeout = int(provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT)
                 pc.become = provider['authorize'] or False
+                if pc.become:
+                    pc.become_method = 'enable'
                 pc.become_pass = provider['auth_pass']
 
                 display.vvv('using connection plugin %s' % pc.connection, pc.remote_addr)
