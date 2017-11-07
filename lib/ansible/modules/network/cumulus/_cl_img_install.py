@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: cl_img_install
 version_added: "2.1"
-author: "Cumulus Networks (@CumulusLinux)"
+author: "Cumulus Networks (@CumulusNetworks)"
 short_description: Install a different Cumulus Linux version.
 deprecated: Deprecated in 2.3. The image slot system no longer exists in Cumulus Linux.
 description:
