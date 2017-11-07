@@ -259,264 +259,256 @@ ovirt:
 
 '''
 import time
-
 try:
     from ovirtsdk.api import API
     from ovirtsdk.xml import params
     HAS_OVIRTSDK = True
 except ImportError:
     HAS_OVIRTSDK = False
-
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 
 
-# ------------------------------------------------------------------- #
-# create connection with API
-#
-def conn(url, user, password):
-    api = API(url=url, username=user, password=password, insecure=True)
-    try:
-        value = api.test()
-    except:
-        raise Exception("error connecting to the oVirt API")
-    return api
+class OvirtVM(object):
+    def __init__(self, module):
+        self.conn = None
+        self.module = module
+        self.url = module.params['url']
+        self.user = module.params['user']
+        self.password = module.params['password']
+        self.vmname = module.params['instance_name']
+        self.image = module.params['image']  # name of the image to deploy
+        self.resource_type = module.params['resource_type']  # template or from scratch
+        self.zone = module.params['zone']  # oVirt cluster
+        self.vmdisk_size = module.params['instance_disksize']  # disksize
+        self.vmcpus = module.params['instance_cpus']  # number of cpu
+        self.vmnic = module.params['instance_nic']  # network interface
+        self.vmnetwork = module.params['instance_network']  # logical network
+        self.vmmem = module.params['instance_mem']  # mem size
+        self.vmdisk_alloc = module.params['disk_alloc']  # thin, preallocated
+        self.vmdisk_int = module.params['disk_int']  # disk interface virtio or ide
+        self.vmos = module.params['instance_os']  # Operating System
+        self.vmtype = module.params['instance_type']  # server or desktop
+        self.vmcores = module.params['instance_cores']  # number of cores
+        self.sdomain = module.params['sdomain']  # storage domain to store disk on
+        self.region = module.params['region']  # oVirt Datacenter
+        self.hostname = module.params['instance_hostname']
+        self.ip = module.params['instance_ip']
+        self.netmask = module.params['instance_netmask']
+        self.gateway = module.params['instance_gateway']
+        self.domain = module.params['instance_domain']
+        self.dns = module.params['instance_dns']
+        self.rootpw = module.params['instance_rootpw']
+        self.key = module.params['instance_key']
 
-# ------------------------------------------------------------------- #
-# Create VM from scratch
-def create_vm(conn, vmtype, vmname, zone, vmdisk_size, vmcpus, vmnic, vmnetwork, vmmem, vmdisk_alloc, sdomain, vmcores, vmos, vmdisk_int):
-    if vmdisk_alloc == 'thin':
-        # define VM params
-        vmparams = params.VM(name=vmname, cluster=conn.clusters.get(name=zone), os=params.OperatingSystem(type_=vmos),
-                             template=conn.templates.get(name="Blank"), memory=1024 * 1024 * int(vmmem),
-                             cpu=params.CPU(topology=params.CpuTopology(cores=int(vmcores))), type_=vmtype)
-        # define disk params
-        vmdisk= params.Disk(size=1024 * 1024 * 1024 * int(vmdisk_size), wipe_after_delete=True, sparse=True, interface=vmdisk_int, type_="System", format='cow',
-        storage_domains=params.StorageDomains(storage_domain=[conn.storagedomains.get(name=sdomain)]))
+    def connect(self):
+        api = API(url=self.url + '/api', username=self.user, password=self.password, insecure=True)
+        try:
+            api.test()
+        except Exception as exc:
+            self.module.fail_json("error connecting to the oVirt API: %s" % to_native(exc))
+        self.conn = api
+
+    def get_vm(self, vm_name):
+        """ Get VM Object and return it's name if object exists"""
+        vm = self.conn.vms.get(name=vm_name)
+        if vm is None:
+            name = "empty"
+        else:
+            name = vm.get_name()
+        return name
+
+    def create_vm_template(self, vm_name):
+        """ Create an instance from a template"""
+        vm_params = params.VM(name=vm_name,
+                              cluster=self.conn.clusters.get(name=self.zone),
+                              template=self.conn.templates.get(name=self.image),
+                              disks=params.Disks(clone=True))
+        try:
+            self.conn.vms.add(vm_params)
+        except:
+            raise Exception('Error adding template {0}'.format(self.image))
+
+    def create_vm(self, vm_name):
+        """Create a VM from scratch"""
+        if self.vmdisk_alloc == 'thin':
+            disk_type = "cow"
+        elif self.vmdisk_alloc == 'preallocated':
+            disk_type = "raw"
+
+        vmparams = params.VM(name=vm_name,
+                             cluster=self.conn.clusters.get(name=self.zone),
+                             os=params.OperatingSystem(type_=self.vmos),
+                             template=self.conn.templates.get(name="Blank"),
+                             memory=1024 * 1024 * int(self.vmmem),
+                             cpu=params.CPU(topology=params.CpuTopology(cores=int(self.vmcores))),
+                             type_=self.vmtype)
+
+        vmdisk = params.Disk(size=1024 * 1024 * 1024 * int(self.vmdisk_size),
+                             wipe_after_delete=True,
+                             sparse=False,
+                             interface=self.vmdisk_int,
+                             type_="System",
+                             format=disk_type,
+                             storage_domains=params.StorageDomains(storage_domain=[self.conn.storagedomains.get(name=self.sdomain)]))
         # define network parameters
-        network_net = params.Network(name=vmnetwork)
-        nic_net1 = params.NIC(name='nic1', network=network_net, interface='virtio')
-    elif vmdisk_alloc == 'preallocated':
-        # define VM params
-        vmparams = params.VM(name=vmname, cluster=conn.clusters.get(name=zone), os=params.OperatingSystem(type_=vmos),
-                             template=conn.templates.get(name="Blank"), memory=1024 * 1024 * int(vmmem),
-                             cpu=params.CPU(topology=params.CpuTopology(cores=int(vmcores))) ,type_=vmtype)
-        # define disk params
-        vmdisk= params.Disk(size=1024 * 1024 * 1024 * int(vmdisk_size), wipe_after_delete=True, sparse=False, interface=vmdisk_int, type_="System",
-                            format='raw', storage_domains=params.StorageDomains(storage_domain=[conn.storagedomains.get(name=sdomain)]))
-        # define network parameters
-        network_net = params.Network(name=vmnetwork)
-        nic_net1 = params.NIC(name=vmnic, network=network_net, interface='virtio')
+        network_net = params.Network(name=self.vmnetwork)
+        nic_net1 = params.NIC(name=self.vmnic, network=network_net, interface='virtio')
 
-    try:
-        conn.vms.add(vmparams)
-    except:
-        raise Exception("Error creating VM with specified parameters")
-    vm = conn.vms.get(name=vmname)
-    try:
-        vm.disks.add(vmdisk)
-    except:
-        raise Exception("Error attaching disk")
-    try:
-        vm.nics.add(nic_net1)
-    except:
-        raise Exception("Error adding nic")
+        try:
+            self.conn.vms.add(vmparams)
+        except:
+            raise Exception("Error creating VM with specified parameters")
+        vm = self.conn.vms.get(name=vm_name)
+        try:
+            vm.disks.add(vmdisk)
+        except:
+            raise Exception("Error attaching disk")
+        try:
+            vm.nics.add(nic_net1)
+        except:
+            raise Exception("Error adding nic")
 
+    def vm_stop(self, vm_name):
+        """ Stop an instance"""
+        vm = self.conn.vms.get(name=vm_name)
+        vm.stop()
 
-# create an instance from a template
-def create_vm_template(conn, vmname, image, zone):
-    vmparams = params.VM(name=vmname, cluster=conn.clusters.get(name=zone), template=conn.templates.get(name=image),disks=params.Disks(clone=True))
-    try:
-        conn.vms.add(vmparams)
-    except:
-        raise Exception('error adding template %s' % image)
+    def vm_restart(self, vm_name):
+        """Restart an instance"""
+        state = self.vm_status(vm_name)
+        vm = self.conn.vms.get(name=vm_name)
+        vm.stop()
+        while vm.get_status().get_state() != 'down':
+            time.sleep(5)
+        vm.start()
 
+    def vm_remove(self, vm_name):
+        """Remove an instance"""
+        vm = self.conn.vms.get(name=vm_name)
+        vm.delete()
 
-# start instance
-def vm_start(conn, vmname, hostname=None, ip=None, netmask=None, gateway=None,
-             domain=None, dns=None, rootpw=None, key=None):
-    vm = conn.vms.get(name=vmname)
-    use_cloud_init = False
-    nics = None
-    nic = None
-    if hostname or ip or netmask or gateway or domain or dns or rootpw or key:
-        use_cloud_init = True
-    if ip and netmask and gateway:
-        ipinfo = params.IP(address=ip, netmask=netmask, gateway=gateway)
-        nic = params.GuestNicConfiguration(name='eth0', boot_protocol='STATIC', ip=ipinfo, on_boot=True)
-        nics = params.Nics()
-    nics = params.GuestNicsConfiguration(nic_configuration=[nic])
-    initialization=params.Initialization(regenerate_ssh_keys=True, host_name=hostname, domain=domain, user_name='root',
-                                         root_password=rootpw, nic_configurations=nics, dns_servers=dns,
-                                         authorized_ssh_keys=key)
-    action = params.Action(use_cloud_init=use_cloud_init, vm=params.VM(initialization=initialization))
-    vm.start(action=action)
+    def vm_status(self, vm_name):
+        """ Get the VMs status"""
+        status = self.conn.vms.get(name=vm_name).status.state
+        return status
 
-# Stop instance
-def vm_stop(conn, vmname):
-    vm = conn.vms.get(name=vmname)
-    vm.stop()
+    def vm_start(self, vm_name):
+        """ Start given instance"""
+        vm = self.conn.vms.get(name=vm_name)
+        use_cloud_init = False
+        nics = None
+        nic = None
+        if self.hostname or self.ip or self.netmask or self.gateway or self.domain or self.dns or self.rootpw or self.key:
+            use_cloud_init = True
+        if self.ip and self.netmask and self.gateway:
+            ipinfo = params.IP(address=self.ip, netmask=self.netmask, gateway=self.gateway)
+            nic = params.GuestNicConfiguration(name='eth0', boot_protocol='STATIC', ip=ipinfo, on_boot=True)
+            nics = params.Nics()
+        nics = params.GuestNicsConfiguration(nic_configuration=[nic])
+        initialization = params.Initialization(regenerate_ssh_keys=True,
+                                               host_name=self.hostname,
+                                               domain=self.domain, user_name='root',
+                                               root_password=self.rootpw,
+                                               nic_configurations=nics,
+                                               dns_servers=self.dns,
+                                               authorized_ssh_keys=self.key)
+        action = params.Action(use_cloud_init=use_cloud_init, vm=params.VM(initialization=initialization))
+        vm.start(action=action)
 
-# restart instance
-def vm_restart(conn, vmname):
-    state = vm_status(conn, vmname)
-    vm = conn.vms.get(name=vmname)
-    vm.stop()
-    while conn.vms.get(vmname).get_status().get_state() != 'down':
-        time.sleep(5)
-    vm.start()
-
-# remove an instance
-def vm_remove(conn, vmname):
-    vm = conn.vms.get(name=vmname)
-    vm.delete()
-
-# ------------------------------------------------------------------- #
-# VM statuses
-#
-# Get the VMs status
-def vm_status(conn, vmname):
-    status = conn.vms.get(name=vmname).status.state
-    return status
-
-
-# Get VM object and return it's name if object exists
-def get_vm(conn, vmname):
-    vm = conn.vms.get(name=vmname)
-    if vm is None:
-        name = "empty"
-    else:
-        name = vm.get_name()
-    return name
-
-# ------------------------------------------------------------------- #
-# Hypervisor operations
-#
-# not available yet
-# ------------------------------------------------------------------- #
-# Main
 
 def main():
-
     module = AnsibleModule(
-        argument_spec = dict(
-            state = dict(default='present', choices=['present', 'absent', 'shutdown', 'started', 'restart']),
-            #name      = dict(required=True),
-            user = dict(required=True),
-            url = dict(required=True),
-            instance_name = dict(required=True, aliases=['vmname']),
-            password = dict(required=True, no_log=True),
-            image = dict(),
-            resource_type = dict(choices=['new', 'template']),
-            zone = dict(),
-            instance_disksize = dict(aliases=['vm_disksize']),
-            instance_cpus = dict(default=1, aliases=['vmcpus']),
-            instance_nic = dict(aliases=['vmnic']),
-            instance_network = dict(default='rhevm', aliases=['vmnetwork']),
-            instance_mem = dict(aliases=['vmmem']),
-            instance_type = dict(default='server', aliases=['vmtype'], choices=['server', 'desktop']),
-            disk_alloc = dict(default='thin', choices=['thin', 'preallocated']),
-            disk_int = dict(default='virtio', choices=['virtio', 'ide']),
-            instance_os = dict(aliases=['vmos']),
-            instance_cores = dict(default=1, aliases=['vmcores']),
-            instance_hostname = dict(aliases=['hostname']),
-            instance_ip = dict(aliases=['ip']),
-            instance_netmask = dict(aliases=['netmask']),
-            instance_gateway = dict(aliases=['gateway']),
-            instance_domain = dict(aliases=['domain']),
-            instance_dns = dict(aliases=['dns']),
-            instance_rootpw = dict(aliases=['rootpw']),
-            instance_key = dict(aliases=['key']),
-            sdomain = dict(),
-            region = dict(),
+        argument_spec=dict(
+            state=dict(default='present', choices=['present', 'absent', 'shutdown', 'started', 'restart']),
+            # name=dict(required=True),
+            user=dict(required=True),
+            url=dict(required=True),
+            instance_name=dict(required=True, aliases=['vmname']),
+            password=dict(required=True, no_log=True),
+            image=dict(),
+            resource_type=dict(choices=['new', 'template']),
+            zone=dict(),
+            instance_disksize=dict(aliases=['vm_disksize']),
+            instance_cpus=dict(default=1, aliases=['vmcpus']),
+            instance_nic=dict(aliases=['vmnic']),
+            instance_network=dict(default='rhevm', aliases=['vmnetwork']),
+            instance_mem=dict(aliases=['vmmem']),
+            instance_type=dict(default='server', aliases=['vmtype'], choices=['server', 'desktop']),
+            disk_alloc=dict(default='thin', choices=['thin', 'preallocated']),
+            disk_int=dict(default='virtio', choices=['virtio', 'ide']),
+            instance_os=dict(aliases=['vmos']),
+            instance_cores=dict(default=1, aliases=['vmcores']),
+            instance_hostname=dict(aliases=['hostname']),
+            instance_ip=dict(aliases=['ip']),
+            instance_netmask=dict(aliases=['netmask']),
+            instance_gateway=dict(aliases=['gateway']),
+            instance_domain=dict(aliases=['domain']),
+            instance_dns=dict(aliases=['dns']),
+            instance_rootpw=dict(aliases=['rootpw'], no_log=True),
+            instance_key=dict(aliases=['key']),
+            sdomain=dict(),
+            region=dict(),
         )
     )
 
     if not HAS_OVIRTSDK:
         module.fail_json(msg='ovirtsdk required for this module')
 
-    state         = module.params['state']
-    user          = module.params['user']
-    url           = module.params['url']
-    vmname        = module.params['instance_name']
-    password      = module.params['password']
-    image         = module.params['image']              # name of the image to deploy
-    resource_type = module.params['resource_type']      # template or from scratch
-    zone          = module.params['zone']               # oVirt cluster
-    vmdisk_size   = module.params['instance_disksize']  # disksize
-    vmcpus        = module.params['instance_cpus']      # number of cpu
-    vmnic         = module.params['instance_nic']       # network interface
-    vmnetwork     = module.params['instance_network']   # logical network
-    vmmem         = module.params['instance_mem']       # mem size
-    vmdisk_alloc  = module.params['disk_alloc']         # thin, preallocated
-    vmdisk_int    = module.params['disk_int']           # disk interface virtio or ide
-    vmos          = module.params['instance_os']        # Operating System
-    vmtype        = module.params['instance_type']      # server or desktop
-    vmcores       = module.params['instance_cores']     # number of cores
-    sdomain       = module.params['sdomain']            # storage domain to store disk on
-    region        = module.params['region']             # oVirt Datacenter
-    hostname      = module.params['instance_hostname']
-    ip            = module.params['instance_ip']
-    netmask       = module.params['instance_netmask']
-    gateway       = module.params['instance_gateway']
-    domain        = module.params['instance_domain']
-    dns           = module.params['instance_dns']
-    rootpw        = module.params['instance_rootpw']
-    key            = module.params['instance_key']
-    #initialize connection
-    try:
-        c = conn(url+"/api", user, password)
-    except Exception as e:
-        module.fail_json(msg='%s' % e)
+    state = module.params['state']
+    vm_name = module.params['instance_name']
+    resource_type = module.params['resource_type']
+    ovirt = OvirtVM(module)
+
+    # Initialize connection
+    ovirt.connect()
 
     if state == 'present':
-        if get_vm(c, vmname) == "empty":
+        if ovirt.get_vm(vm_name) == "empty":
             if resource_type == 'template':
                 try:
-                    create_vm_template(c, vmname, image, zone)
-                except Exception as e:
-                    module.fail_json(msg='%s' % e)
-                module.exit_json(changed=True, msg="deployed VM %s from template %s"  % (vmname,image))
+                    ovirt.create_vm_template(vm_name)
+                except Exception as exc:
+                    module.fail_json(msg=exc)
+                module.exit_json(changed=True, msg="deployed VM %s from template %s" % (vm_name, ovirt.image))
             elif resource_type == 'new':
-                # FIXME: refactor, use keyword args.
                 try:
-                    create_vm(c, vmtype, vmname, zone, vmdisk_size, vmcpus, vmnic, vmnetwork, vmmem, vmdisk_alloc, sdomain, vmcores, vmos, vmdisk_int)
+                    ovirt.create_vm(vm_name)
                 except Exception as e:
                     module.fail_json(msg='%s' % e)
-                module.exit_json(changed=True, msg="deployed VM %s from scratch"  % vmname)
+                module.exit_json(changed=True, msg="deployed VM %s from scratch" % vm_name)
             else:
                 module.exit_json(changed=False, msg="You did not specify a resource type")
         else:
-            module.exit_json(changed=False, msg="VM %s already exists" % vmname)
+            module.exit_json(changed=False, msg="VM %s already exists" % vm_name)
 
     if state == 'started':
-        if vm_status(c, vmname) == 'up':
-            module.exit_json(changed=False, msg="VM %s is already running" % vmname)
+        if ovirt.vm_status(vm_name) == 'up':
+            module.exit_json(changed=False, msg="VM %s is already running" % vm_name)
         else:
-            #vm_start(c, vmname)
-            vm_start(c, vmname, hostname, ip, netmask, gateway, domain, dns, rootpw, key)
-            module.exit_json(changed=True, msg="VM %s started" % vmname)
+            ovirt.vm_start(vm_name)
+            module.exit_json(changed=True, msg="VM %s started" % vm_name)
 
     if state == 'shutdown':
-        if vm_status(c, vmname) == 'down':
-            module.exit_json(changed=False, msg="VM %s is already shutdown" % vmname)
+        if ovirt.vm_status(vm_name) == 'down':
+            module.exit_json(changed=False, msg="VM %s is already shutdown" % vm_name)
         else:
-            vm_stop(c, vmname)
-            module.exit_json(changed=True, msg="VM %s is shutting down" % vmname)
+            ovirt.vm_stop(vm_name)
+            module.exit_json(changed=True, msg="VM %s is shutting down" % vm_name)
 
     if state == 'restart':
-        if vm_status(c, vmname) == 'up':
-            vm_restart(c, vmname)
-            module.exit_json(changed=True, msg="VM %s is restarted" % vmname)
+        if ovirt.vm_status(vm_name) == 'up':
+            ovirt.vm_restart(vm_name)
+            module.exit_json(changed=True, msg="VM %s is restarted" % vm_name)
         else:
-            module.exit_json(changed=False, msg="VM %s is not running" % vmname)
+            module.exit_json(changed=False, msg="VM %s is not running" % vm_name)
 
     if state == 'absent':
-        if get_vm(c, vmname) == "empty":
-            module.exit_json(changed=False, msg="VM %s does not exist" % vmname)
+        if ovirt.get_vm(vm_name) == "empty":
+            module.exit_json(changed=False, msg="VM %s does not exist" % vm_name)
         else:
-            vm_remove(c, vmname)
-            module.exit_json(changed=True, msg="VM %s removed" % vmname)
-
+            ovirt.vm_remove(vm_name)
+            module.exit_json(changed=True, msg="VM %s removed" % vm_name)
 
 if __name__ == '__main__':
     main()
