@@ -74,7 +74,7 @@ Individuals who've been asked to become a part of this group have generally been
 +=====================+======================+====================+======================+
 | James Cammarata     | jimi-c               | jimi               |                      |
 +---------------------+----------------------+--------------------+----------------------+
-| Brian Coca          | bcoca                | bcoca              | mdyson@cyberdyne.com |
+| Brian Coca          | bcoca                | bcoca              |                      |
 +---------------------+----------------------+--------------------+----------------------+
 | Matt Davis          | nitzmahone           | nitzmahone         |                      |
 +---------------------+----------------------+--------------------+----------------------+
@@ -127,4 +127,6 @@ Individuals who've been asked to become a part of this group have generally been
 | Tim Rupp            | caphrim007           | caphrim007         |                      |
 +---------------------+----------------------+--------------------+----------------------+
 | Sloane Hertel       | s-hertel             | shertel            |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Sam Doran           | sdoran               | sdoran             |                      |
 +---------------------+----------------------+--------------------+----------------------+
