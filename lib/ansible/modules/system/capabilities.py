@@ -1,11 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2014, Nate Coraor <nate@bx.psu.edu>
+# Copyright: (c) 2014, Nate Coraor <nate@bx.psu.edu>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -23,18 +22,16 @@ options:
     path:
         description:
             - Specifies the path to the file to be managed.
-        required: true
-        default: null
+        required: yes
     capability:
         description:
             - Desired capability to set (with operator and flags, if state is C(present)) or remove (if state is C(absent))
-        required: true
-        default: null
-        aliases: [ 'cap' ]
+        required: yes
+        aliases: [ cap ]
     state:
         description:
             - Whether the entry should be present or absent in the file's capabilities.
-        choices: [ "present", "absent" ]
+        choices: [ absent, present ]
         default: present
 notes:
     - The capabilities system will automatically transform operators and flags
@@ -42,19 +39,19 @@ notes:
       cap_foo+ep). This module does not attempt to determine the final operator
       and flags to compare, so you will want to ensure that your capabilities
       argument matches the final capabilities.
-requirements: []
-author: "Nate Coraor (@natefoo)"
+author:
+- Nate Coraor (@natefoo)
 '''
 
 EXAMPLES = '''
-# Set cap_sys_chroot+ep on /foo
-- capabilities:
+- name: Set cap_sys_chroot+ep on /foo
+  capabilities:
     path: /foo
     capability: cap_sys_chroot+ep
     state: present
 
-# Remove cap_net_bind_service from /bar
-- capabilities:
+- name: Remove cap_net_bind_service from /bar
+  capabilities:
     path: /bar
     capability: cap_net_bind_service
     state: absent
@@ -165,11 +162,11 @@ def main():
     # defining module
     module = AnsibleModule(
         argument_spec=dict(
-            path=dict(aliases=['key'], required=True),
-            capability=dict(aliases=['cap'], required=True),
-            state=dict(default='present', choices=['present', 'absent']),
+            path=dict(type='str', required=True, aliases=['key']),
+            capability=dict(type='str', required=True, aliases=['cap']),
+            state=dict(type='str', default='present', choices=['absent', 'present']),
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
     )
 
     CapabilitiesModule(module)
