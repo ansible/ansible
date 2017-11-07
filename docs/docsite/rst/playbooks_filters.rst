@@ -707,11 +707,11 @@ To add quotes for shell usage::
 
 To use one value on true and another on false (new in version 1.9)::
 
-   {{ (name == "John") | ternary('Mr','Ms') }}
+    {{ (name == "John") | ternary('Mr','Ms') }}
 
 To concatenate a list into a string::
 
-   {{ list | join(" ") }}
+    {{ list | join(" ") }}
 
 To get the last name of a file path, like 'foo.txt' out of '/etc/asdf/foo.txt'::
 
@@ -747,7 +747,7 @@ To expand a path containing a tilde (`~`) character (new in version 1.5)::
 
 To get the real path of a link (new in version 1.8)::
 
-   {{ path | realpath }}
+    {{ path | realpath }}
 
 To get the relative path of a link, from a start point (new in version 1.7)::
 

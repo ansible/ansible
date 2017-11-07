@@ -490,7 +490,7 @@ class PlayContext(Base):
                 new_info.connection_user = new_info.remote_user
             new_info.remote_user = pwd.getpwuid(os.getuid()).pw_name
 
-        # set no_log to default if it was not previouslly set
+        # set no_log to default if it was not previously set
         if new_info.no_log is None:
             new_info.no_log = C.DEFAULT_NO_LOG
 
@@ -585,8 +585,6 @@ class PlayContext(Base):
 
             elif self.become_method == 'runas':
                 # become is handled inside the WinRM connection plugin
-                display.warning("The Windows 'runas' become method is experimental, and may change significantly in future Ansible releases.")
-
                 if not self.become_user:
                     raise AnsibleError(("The 'runas' become method requires a username "
                                         "(specify with the '--become-user' CLI arg, the 'become_user' keyword, or the 'ansible_become_user' variable)"))
