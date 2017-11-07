@@ -129,12 +129,13 @@ To connect to AWS, you should use `get_aws_connection_info` and then `boto3_conn
 These functions handle some of the more esoteric connection options, such as security tokens and
 boto profiles.
 
-Some boto services require that the region is specified. You should check for the region parameter
-if required.
 
 #### boto
 
 An example of connecting to ec2:
+
+Some boto services require that the region is specified. You should check for the region parameter
+if required.
 
 ```python
 region, ec2_url, aws_connect_params = get_aws_connection_info(module)
@@ -153,13 +154,12 @@ An example of connecting to ec2 is shown below.  Note that there is no `NoAuthHa
 exception handling like in boto.  Instead, an `AuthFailure` exception will be thrown when you use
 'connection'. To ensure that authorization, parameter validation and permissions errors are all
 caught, you should catch `ClientError` and `BotoCoreError` exceptions with every boto3 connection call.
+See exception handling. module_utils.ec2 checks for missing profiles or a region not set when it needs to be,
+so you don't have to.
 
 ```python
 region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-if region:
-    connection = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_params)
-else:
-    module.fail_json(msg="region must be specified")
+connection = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_params)
 ```
 
 ### Exception Handling for boto

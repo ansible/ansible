@@ -104,9 +104,13 @@ class AWSRetry(CloudRetry):
 def boto3_conn(module, conn_type=None, resource=None, region=None, endpoint=None, **params):
     try:
         return _boto3_conn(conn_type=conn_type, resource=resource, region=region, endpoint=endpoint, **params)
-    except ValueError:
-        module.fail_json(msg='There is an issue in the code of the module. You must specify either both, resource or client to the conn_type '
-                             'parameter in the boto3_conn function call')
+    except ValueError as e:
+        module.fail_json(msg="Couldn't connect to AWS: " % to_native(e))
+    except (botocore.exceptions.ProfileNotFound, botocore.exceptions.PartialCredentialsError) as e:
+        module.fail_json(msg=to_native(e))
+    except botocore.exceptions.NoRegionError as e:
+        module.fail_json(msg="The %s module requires a region and none was found in configuration, "
+                         "environment variables or module parameters" % module._name)
 
 
 def _boto3_conn(conn_type=None, resource=None, region=None, endpoint=None, **params):
@@ -128,6 +132,7 @@ def _boto3_conn(conn_type=None, resource=None, region=None, endpoint=None, **par
         client = boto3.session.Session(profile_name=profile).client(resource, region_name=region, endpoint_url=endpoint, **params)
         resource = boto3.session.Session(profile_name=profile).resource(resource, region_name=region, endpoint_url=endpoint, **params)
         return client, resource
+
 
 boto3_inventory_conn = _boto3_conn
 

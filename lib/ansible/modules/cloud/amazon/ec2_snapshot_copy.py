@@ -113,7 +113,7 @@ from ansible.module_utils._text import to_native
 
 try:
     import boto3
-    from botocore.exceptions import ClientError, NoCredentialsError, ProfileNotFound, NoRegionError, WaiterError
+    from botocore.exceptions import ClientError, WaiterError
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
@@ -174,12 +174,8 @@ def main():
         module.fail_json(msg='botocore and boto3 are required.')
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-    if not region:
-        module.fail_json(msg="Region must be provided.")
-    try:
-        client = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-    except (NoCredentialsError, ProfileNotFound) as e:
-        module.fail_json(msg="Can't authorize connection - %s" % to_native(e))
+    client = boto3_conn(module, conn_type='client', resource='ec2',
+                        region=region, endpoint=ec2_url, **aws_connect_kwargs)
 
     copy_snapshot(module, client)
 
