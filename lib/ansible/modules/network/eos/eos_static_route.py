@@ -36,6 +36,7 @@ options:
   admin_distance:
     description:
       - Admin distance of the static route.
+    default: 1
   aggregate:
     description: List of static route definitions
   state:
@@ -82,7 +83,8 @@ from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network_common import remove_default_spec
-from ansible.module_utils.eos import load_config, get_config, run_commands
+from ansible.module_utils.network_common import validate_ip_address, validate_prefix
+from ansible.module_utils.eos import load_config, run_commands
 from ansible.module_utils.eos import eos_argument_spec, check_args
 
 
@@ -186,8 +188,16 @@ def main():
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
+    address = module.params['address']
+    prefix = address.split('/')[-1]
     warnings = list()
     check_args(module, warnings)
+
+    if '/' not in address or not validate_ip_address(address.split('/')[0]):
+        module.fail_json(msg='{} is not a valid IP address'.format(address))
+
+    if not validate_prefix(prefix):
+        module.fail_json(msg='Length of prefix should be between 0 and 32 bits')
 
     result = {'changed': False}
     if warnings:
