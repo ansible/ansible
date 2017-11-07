@@ -306,4 +306,3 @@ lib/ansible/modules/storage/netapp/netapp_e_storagepool.py
 lib/ansible/modules/storage/netapp/sf_snapshot_schedule_manager.py
 lib/ansible/modules/storage/netapp/sf_volume_access_group_manager.py
 lib/ansible/modules/storage/netapp/sf_volume_manager.py
-lib/ansible/modules/storage/zfs/zfs.py
