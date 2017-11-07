@@ -1,0 +1,33 @@
+--- lib/ansible/plugins/loader.py
++++ lib/ansible/plugins/loader.py
+@@ -404,21 +405,23 @@ class PluginLoader:
+         display.debug(msg)
+ 
+     def get_py_files(self):
+-        all_matches = []
+-        for i in self._get_paths():
+-            all_matches.extend(glob.glob(os.path.join(i, "*.py")))
+-        return all_matches
++        if self._py_files is not None:
++            return self._py_files
++        else:
++            all_matches = []
++            for i in self._get_paths():
++                all_matches.extend(glob.glob(os.path.join(i, "*.py")))
++            self._py_files = all_matches
++            return all_matches
+ 
+     def all(self, *args, **kwargs):
+         ''' instantiates all plugins with the same arguments '''
+ 
+         path_only = kwargs.pop('path_only', False)
+         class_only = kwargs.pop('class_only', False)
+-        all_matches = []
++        all_matches = self.get_py_files()
+         found_in_cache = True
+ 
+-        for i in self._get_paths():
+-            all_matches.extend(glob.glob(os.path.join(i, "*.py")))
+ 
+         for path in sorted(all_matches, key=os.path.basename):
+             name = os.path.basename(os.path.splitext(path)[0])
