@@ -23,6 +23,15 @@ echo "This is a test file for edit2" > "${TEST_FILE_EDIT2}"
 FORMAT_1_1_HEADER="\$ANSIBLE_VAULT;1.1;AES256"
 FORMAT_1_2_HEADER="\$ANSIBLE_VAULT;1.2;AES256"
 
+# test invalid format ala https://github.com/ansible/ansible/issues/28038
+EXPECTED_ERROR='Vault format unhexlify error: Non-hexadecimal digit found'
+ansible-playbook "$@" -i invalid_format/inventory --vault-id invalid_format/vault-secret invalid_format/broken-host-vars-tasks.yml | grep "${EXPECTED_ERROR}"
+# | grep 'Vault format unhexlify error: Odd-length string'
+
+# test invalid format ala https://github.com/ansible/ansible/issues/28038
+EXPECTED_ERROR='Vault format unhexlify error: Odd-length string'
+ansible-playbook "$@" -i invalid_format/inventory --vault-id invalid_format/vault-secret invalid_format/broken-group-vars-tasks.yml 2>&1 | grep "${EXPECTED_ERROR}"
+
 VAULT_PASSWORD_FILE=vault-password
 # new format, view, using password client script
 ansible-vault view "$@" --vault-id vault-password@test-vault-client.py format_1_1_AES256.yml
