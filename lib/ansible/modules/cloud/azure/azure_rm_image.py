@@ -310,7 +310,7 @@ class AzureRMImage(AzureRMModuleBase):
                                  managed_disk=managed_disk)
 
     def create_data_disks(self):
-        return filter(None, [self.create_data_disk(lun, source) for lun, source in enumerate(self.data_disk_sources)])
+        return list(filter(None, [self.create_data_disk(lun, source) for lun, source in enumerate(self.data_disk_sources)]))
 
     def get_source_vm(self):
         vm_resource_id = format_resource_id(self.source,
