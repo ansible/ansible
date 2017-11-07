@@ -70,7 +70,7 @@ author:
 
 EXAMPLES = '''
 - name: Run puppet agent and fail if anything goes wrong
-  puppet
+  puppet:
 
 - name: Run puppet and timeout in 5 minutes
   puppet:
