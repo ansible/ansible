@@ -115,6 +115,11 @@ class InventoryModule(BaseInventoryPlugin):
 
                 # create composite vars
                 self._set_composite_vars(data.get('compose'), hostvars, host, strict=strict)
+                
+                # refetch host vars in case new ones have been created above
+                hostvars = inventory.hosts[host].get_vars()
+                if host in self._cache:  # adds facts if cache is active
+                    hostvars = combine_vars(hostvars, self._cache[host])
 
                 # constructed groups based on conditionals
                 self._add_host_to_composed_groups(data.get('groups'), hostvars, host, strict=strict)
