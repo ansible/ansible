@@ -4,13 +4,12 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-__metaclass__ = type
 
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -130,16 +129,16 @@ def _get_facter_dir():
 def _write_structured_data(basedir, basename, data):
     if not os.path.exists(basedir):
         os.makedirs(basedir)
-    file_path = os.path.join(basedir, "{0}.json".format(basename))
-    # This is more complex than you might normally expect because we want to
-    # open the file with only u+rw set. Also, we use the stat constants
-    # because ansible still supports python 2.4 and the octal syntax changed
-    out_file = os.fdopen(
-        os.open(
-            file_path, os.O_CREAT | os.O_WRONLY,
-            stat.S_IRUSR | stat.S_IWUSR), 'w')
-    out_file.write(json.dumps(data).encode('utf8'))
-    out_file.close()
+        file_path = os.path.join(basedir, "{0}.json".format(basename))
+        # This is more complex than you might normally expect because we want to
+        # open the file with only u+rw set. Also, we use the stat constants
+        # because ansible still supports python 2.4 and the octal syntax changed
+        out_file = os.fdopen(
+            os.open(
+                file_path, os.O_CREAT | os.O_WRONLY,
+                stat.S_IRUSR | stat.S_IWUSR), 'w')
+        out_file.write(json.dumps(data).encode('utf8'))
+        out_file.close()
 
 
 def main():
@@ -217,8 +216,8 @@ def main():
         cmd = ("%(base_cmd)s agent --onetime"
                " --ignorecache --no-daemonize --no-usecacheonfailure --no-splay"
                " --detailed-exitcodes --verbose --color 0") % dict(
-                   base_cmd=base_cmd,
-                   )
+            base_cmd=base_cmd,
+        )
         if p['puppetmaster']:
             cmd += " --server %s" % pipes.quote(p['puppetmaster'])
         if p['show_diff']:
