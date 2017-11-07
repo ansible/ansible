@@ -100,8 +100,6 @@ def get_interfaces_config(module, interface_type, json_fmt=True,
     if cmd in _DEVICE_CONFIGS:
         return _DEVICE_CONFIGS[cmd]
     rc, out, err = exec_command(module, cmd)
-    with open("/tmp/interfaces.out", "w") as fp:
-        fp.write(out)
     if rc != 0:
         module.fail_json(
             msg='unable to retrieve current config',
@@ -121,6 +119,14 @@ def get_interfaces_config(module, interface_type, json_fmt=True,
         cfg = to_text(out, errors='surrogate_then_replace').strip()
     _DEVICE_CONFIGS[cmd] = cfg
     return cfg
+
+
+def get_bgp_summary(module):
+    cmd = "show ip bgp summary"
+    rc, out, _ = exec_command(module, cmd)
+    if rc != 0:
+        return None
+    return out
 
 
 def show_command(module, fact_commands):
