@@ -959,7 +959,7 @@ class LinuxService(Service):
                 stdout = stdout1 + stdout2
                 stderr = stderr1 + stderr2
 
-        return(rc_state, stdout, stderr)
+        return (rc_state, stdout, stderr)
 
 
 class FreeBsdService(Service):

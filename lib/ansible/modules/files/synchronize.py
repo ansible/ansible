@@ -331,8 +331,8 @@ def is_rsh_needed(source, dest):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            src=dict(required=True),
-            dest=dict(required=True),
+            src=dict(type='str', required=True),
+            dest=dict(type='str', required=True),
             dest_port=dict(type='int'),
             delete=dict(type='bool', default=False),
             private_key=dict(type='path'),
