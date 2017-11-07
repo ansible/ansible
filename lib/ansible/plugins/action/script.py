@@ -19,6 +19,7 @@ __metaclass__ = type
 
 import os
 import re
+import shlex
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native
@@ -76,33 +77,31 @@ class ActionModule(ActionBase):
         # out now so we know the file name we need to transfer to the remote,
         # and everything else is an argument to the script which we need later
         # to append to the remote command
-        # FIXME: If the path to the script has a space in it, this silently fails to do anything
-        # This code makes a bad assumption by splitting on spaces.
-        parts = self._task.args.get('_raw_params', '').strip().split()
+        #
+        # If the path contains a space, it needs to be quoted in the arguments.
+        # If the script file name contains a space, that's also problematic and does not work.
+        parts = shlex.split(self._task.args.get('_raw_params', '').strip())
         source = parts[0]
         args = ' '.join(parts[1:])
 
         try:
             source = self._loader.get_real_file(self._find_needle('files', source), decrypt=self._task.args.get('decrypt', True))
         except AnsibleError as e:
-            return dict(failed=True, msg=to_native(e))
+            return dict(failed=True, msg=to_native(e) + ' If the path contains spaces or looks truncated, quote the path.')
 
-        # transfer the file to a remote tmp location
-        tmp_src = self._connection._shell.join_path(tmp, os.path.basename(source))
-        
-        if os.path.exists(tmp_src):
+        if not self._play_context.check_mode:
+            # transfer the file to a remote tmp location
+            tmp_src = self._connection._shell.join_path(tmp, os.path.basename(source))
+
             self._transfer_file(source, tmp_src)
 
             # set file permissions, more permissive when the copy is done as a different user
             self._fixup_perms2((tmp, tmp_src), execute=True)
-        else:
-            result['failed'] = True
-            result['msg'] = to_native('The file \'%s\' does not exist' % source)
 
-        # add preparation steps to one ssh roundtrip executing the script
-        env_dict = dict()
-        env_string = self._compute_environment_string(env_dict)
-        script_cmd = ' '.join([env_string, tmp_src, args])
+            # add preparation steps to one ssh roundtrip executing the script
+            env_dict = dict()
+            env_string = self._compute_environment_string(env_dict)
+            script_cmd = ' '.join([env_string, tmp_src, args])
 
         if self._play_context.check_mode:
             result['changed'] = True
