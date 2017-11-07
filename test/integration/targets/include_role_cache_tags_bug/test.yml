@@ -31,4 +31,3 @@
   roles: [inccounter5, inccounter5]
   tasks:
   - assert: {that: counter=='3', msg: "counterfail1 {{counter}}"}
-
