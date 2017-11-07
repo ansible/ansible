@@ -720,6 +720,10 @@ def set_vm_power_state(content, vm, state, force):
                     result['failed'] = True
                     result['msg'] = "Virtual machine %s must be in poweredon state for guest shutdown/reboot" % vm.name
 
+            else:
+                result['failed'] = True
+                result['msg'] = "Unsupported expected state provided: %s" % expected_state
+
         except Exception as e:
             result['failed'] = True
             result['msg'] = to_text(e)
