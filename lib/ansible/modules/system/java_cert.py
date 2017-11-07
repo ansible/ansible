@@ -182,8 +182,39 @@ def check_cert_present(module, executable, keystore_path, keystore_pass, alias, 
         return True
     return False
 
+<<<<<<< HEAD
 
 def import_cert_url(module, executable, url, port, keystore_path, keystore_pass, alias, keystore_type):
+=======
+def is_new_cert(module, executable, path, keystore_path, keystore_pass, alias):
+    ''' Compare certificate from path with the existing in keystore for same alias '''
+    existing_sha_cmd = ("%s -noprompt -list -keystore '%s' "
+                  "-storepass '%s' -alias '%s'")%(executable,
+                                                  keystore_path,
+                                                  keystore_pass,
+                                                  alias)
+    new_sha_cmd = ("%s -printcert -file '%s'")%(executable, path)
+
+    (check_rc, check_out, check_err) = module.run_command(existing_sha_cmd)
+    for line in check_out.split('\n'):
+        if "SHA1" in line:
+            existing_sha_out = line
+
+    (check_rc, check_out, check_err) = module.run_command(new_sha_cmd)
+    for line in check_out.split('\n'):
+        if "SHA1:" in line:
+            new_sha_out = line
+
+    existing_sha = existing_sha_out.split()[-1]
+    new_sha = new_sha_out.split()[-1]
+
+    if existing_sha == new_sha:
+        return False
+    else:
+        return True  
+  
+def import_cert_url(module, executable, url, port, keystore_path, keystore_pass, alias):
+>>>>>>> Fix conflict
     ''' Import certificate from URL into keystore located at keystore_path '''
 
     https_proxy = os.getenv("https_proxy")
@@ -378,6 +409,14 @@ def main():
         if url:
             import_cert_url(module, executable, url, port, keystore_path,
                             keystore_pass, cert_alias, keystore_type)
+
+    elif state == 'present' and cert_present:
+        if is_new_cert(module, executable, path, keystore_path, keystore_pass, cert_alias):
+            delete_cert(module, executable, keystore_path, keystore_pass, cert_alias)
+            import_cert_path(module, executable, path, keystore_path,
+                             keystore_pass, cert_alias, keystore_type)
+        else:
+            module.exit_json(changed=False)
 
     module.exit_json(changed=False)
 
