@@ -151,6 +151,15 @@
       - "not setuptools_check_mode.changed"
 
 
+# Upgrade pip in virtualenv
+- name: download get-pip.py
+  get_url:
+    url: https://bootstrap.pypa.io/get-pip.py
+    dest: "{{ output_dir }}"
+
+- name: install pip
+  command: "{{ output_dir }}/pipenv/bin/python {{ output_dir }}/get-pip.py"
+
 # Normal case
 - name: check for q package
   pip: name=q virtualenv={{ output_dir }}/pipenv state=present
