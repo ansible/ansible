@@ -192,7 +192,7 @@ def main():
             service_account_email=dict(type='str'),
             credentials_file=dict(type='str'),
             project_id=dict(type='str'),
-        ), 
+        ),
     )
 
     if not HAS_PYTHON26:
