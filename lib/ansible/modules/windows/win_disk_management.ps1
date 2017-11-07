@@ -229,7 +229,9 @@ if ($DPartStyle -ne "RAW") {
             try {
                 Set-OperationalStatus -Disk $disk
             } catch {
-                $result.Remove("change_log")
+                if ($Verbose) {
+                    $result.Remove("change_log")
+                }
                 Fail-Json -obj $result -message "Failed to set the disk online: $($_.Exception.Message)"
             }
             if ($diff_mode) {
@@ -539,7 +541,7 @@ if ($DriveLetter -ne $null) {
     # Use random drive letter
     try {
         $DriveLetter = Get-ChildItem Function:[a-z]: -Name | Where-Object {
-            !(Test-Path -Path $_ -IsValid)
+            -not (Test-Path -Path $_ -IsValid)
         } | Get-Random
     } catch {
         if ($SetOnline) {
@@ -666,7 +668,10 @@ if ($FileSystem -eq "ntfs") {
     }
 } elseif ($FileSystem -eq "refs") {
     if ($AllocUnitSize -ne 64) {
-        $AllocUnitSize = 64                   
+        $AllocUnitSize = 64
+        if ($diff_mode) {
+            $result.change_log.allocation_unit = "Size was automatically adjusted to 64kb due to file_system option value refs"
+        }      
     }
 }
 
@@ -933,7 +938,6 @@ if (-not $check_mode) {
     try {
         $CVolume = Create-Volume @ParamsVol
     } catch {
-        $result.change_log.formatting = "Volume was failed to create on disk with partition $($CPartition.Type)"
         if ($SetOnline) {
             try {
                 Set-OperationalStatus -Disk $disk -Deactivate
