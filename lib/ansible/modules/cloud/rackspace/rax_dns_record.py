@@ -127,8 +127,7 @@ from ansible.module_utils.rax import (rax_argument_spec,
                                       rax_find_server,
                                       rax_required_together,
                                       rax_to_dict,
-                                      setup_rax_module,
-                                     )
+                                      setup_rax_module,)
 
 
 def rax_dns_record_ptr(module, data=None, comment=None, loadbalancer=None,

@@ -90,7 +90,6 @@ lib/ansible/modules/cloud/rackspace/rax_cdb.py
 lib/ansible/modules/cloud/rackspace/rax_clb.py
 lib/ansible/modules/cloud/rackspace/rax_clb_ssl.py
 lib/ansible/modules/cloud/rackspace/rax_dns.py
-lib/ansible/modules/cloud/rackspace/rax_dns_record.py
 lib/ansible/modules/cloud/rackspace/rax_facts.py
 lib/ansible/modules/cloud/rackspace/rax_files.py
 lib/ansible/modules/cloud/rackspace/rax_keypair.py
