@@ -132,6 +132,12 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/issues/32368)
 * Fix tracebacks for non-ascii paths when parsing inventory
   (https://github.com/ansible/ansible/pull/32511)
+* Fix git archive when update is set to no
+  (https://github.com/ansible/ansible/pull/31829)
+* Fix locale when screen scraping in the yum module
+  (https://github.com/ansible/ansible/pull/32203)
+* Fix for validating proxy results on Python3 for modules making http requests:
+  (https://github.com/ansible/ansible/pull/32596)
 
 
 <a id="2.4.1"></a>
@@ -273,6 +279,7 @@ Ansible Changes By Release
 * Fix ansible-doc and ansible-console module-path option (https://github.com/ansible/ansible/pull/31744)
 * Fix for hostname module on RHEL 7.5 (https://github.com/ansible/ansible/issues/31811)
 * Fix provider password leak in logs for asa modules (https://github.com/ansible/ansible/issues/32343)
+* Fix tagging for dynamodb_table if region is not explicitly passed to the module (https://github.com/ansible/ansible/pull/32557)
 
 ### Known Bugs
 * Implicit localhost is getting ansible_connection from all:vars instead of
