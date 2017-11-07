@@ -65,7 +65,7 @@ options:
         description:
         - If set, C(win_updates) will append update progress to the specified file. The directory must already exist.
         required: false
-author: "Matt Davis (@mattdavispdx)"
+author: "Matt Davis (@nitzmahone)"
 notes:
 - C(win_updates) must be run by a user with membership in the local Administrators group
 - C(win_updates) will use the default update service configured for the machine (Windows Update, Microsoft Update, WSUS, etc)

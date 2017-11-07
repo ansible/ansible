@@ -14,24 +14,25 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = """
 module: consul_kv
-short_description: Manipulate entries in the key/value store of a consul cluster.
+short_description: Manipulate entries in the key/value store of a consul cluster
 description:
   - Allows the addition, modification and deletion of key/value entries in a
     consul cluster via the agent. The entire contents of the record, including
     the indices, flags and session are returned as 'value'.
   - If the key represents a prefix then Note that when a value is removed, the existing
     value if any is returned as part of the results.
-  - "See http://www.consul.io/docs/agent/http.html#kv for more details."
+  - See http://www.consul.io/docs/agent/http.html#kv for more details.
 requirements:
-  - "python >= 2.6"
+  - python >= 2.6
   - python-consul
   - requests
 version_added: "2.0"
-author: "Steve Gargan (@sgargan)"
+author:
+- Steve Gargan (@sgargan)
 options:
     state:
         description:
-          - the action to take with the supplied key and value. If the state is
+          - The action to take with the supplied key and value. If the state is
             'present', the key contents will be set to the value supplied,
             'changed' will be set to true only if the value was different to the
             current contents. The state 'absent' will remove the key/value pair,
@@ -41,97 +42,84 @@ options:
             'release' respectively. a valid session must be supplied to make the
             attempt changed will be true if the attempt is successful, false
             otherwise.
-        required: false
-        choices: ['present', 'absent', 'acquire', 'release']
+        choices: [ absent, acquire, present, release ]
         default: present
     key:
         description:
-          - the key at which the value should be stored.
-        required: true
+          - The key at which the value should be stored.
+        required: yes
     value:
         description:
-          - the value should be associated with the given key, required if state
-            is present
-        required: true
+          - The value should be associated with the given key, required if C(state)
+            is C(present).
+        required: yes
     recurse:
         description:
-          - if the key represents a prefix, each entry with the prefix can be
-            retrieved by setting this to true.
-        required: false
-        default: false
+          - If the key represents a prefix, each entry with the prefix can be
+            retrieved by setting this to C(yes).
+        type: bool
+        default: 'no'
     session:
         description:
-          - the session that should be used to acquire or release a lock
-            associated with a key/value pair
-        required: false
-        default: None
+          - The session that should be used to acquire or release a lock
+            associated with a key/value pair.
     token:
         description:
-          - the token key indentifying an ACL rule set that controls access to
+          - The token key indentifying an ACL rule set that controls access to
             the key value pair
-        required: false
-        default: None
     cas:
         description:
-          - used when acquiring a lock with a session. If the cas is 0, then
+          - Used when acquiring a lock with a session. If the C(cas) is C(0), then
             Consul will only put the key if it does not already exist. If the
-            cas value is non-zero, then the key is only set if the index matches
+            C(cas) value is non-zero, then the key is only set if the index matches
             the ModifyIndex of that key.
-        required: false
-        default: None
     flags:
         description:
-          - opaque integer value that can be passed when setting a value.
-        required: false
-        default: None
+          - Opaque integer value that can be passed when setting a value.
     host:
         description:
-          - host of the consul agent defaults to localhost
-        required: false
+          - Host of the consul agent.
         default: localhost
     port:
         description:
-          - the port on which the consul agent is running
-        required: false
+          - The port on which the consul agent is running.
         default: 8500
     scheme:
         description:
-          - the protocol scheme on which the consul agent is running
-        required: false
+          - The protocol scheme on which the consul agent is running.
         default: http
         version_added: "2.1"
     validate_certs:
         description:
-          - whether to verify the tls certificate of the consul agent
-        required: false
-        default: True
+          - Whether to verify the tls certificate of the consul agent.
+        type: bool
+        default: 'yes'
         version_added: "2.1"
 """
 
 
 EXAMPLES = '''
+- name: Add or update the value associated with a key in the key/value store
+  consul_kv:
+    key: somekey
+    value: somevalue
 
-  - name: add or update the value associated with a key in the key/value store
-    consul_kv:
-      key: somekey
-      value: somevalue
+- name: Remove a key from the store
+  consul_kv:
+    key: somekey
+    state: absent
 
-  - name: remove a key from the store
-    consul_kv:
-      key: somekey
-      state: absent
+- name: Add a node to an arbitrary group via consul inventory (see consul.ini)
+  consul_kv:
+    key: ansible/groups/dc1/somenode
+    value: top_secret
 
-  - name: add a node to an arbitrary group via consul inventory (see consul.ini)
-    consul_kv:
-      key: ansible/groups/dc1/somenode
-      value: 'top_secret'
-
-  - name: Register a key/value pair with an associated session
-    consul_kv:
-      key: stg/node/server_birthday
-      value: 20160509
-      session: "{{ sessionid }}"
-      state: acquire
+- name: Register a key/value pair with an associated session
+  consul_kv:
+    key: stg/node/server_birthday
+    value: 20160509
+    session: "{{ sessionid }}"
+    state: acquire
 '''
 
 try:
@@ -240,30 +228,36 @@ def get_consul_api(module, token=None):
                          verify=module.params.get('validate_certs'),
                          token=module.params.get('token'))
 
+
 def test_dependencies(module):
     if not python_consul_installed:
-        module.fail_json(msg="python-consul required for this module. "\
-              "see http://python-consul.readthedocs.org/en/latest/#installation")
+        module.fail_json(msg="python-consul required for this module. "
+                             "see http://python-consul.readthedocs.org/en/latest/#installation")
+
 
 def main():
 
-    argument_spec = dict(
-        cas=dict(required=False),
-        flags=dict(required=False),
-        key=dict(required=True),
-        host=dict(default='localhost'),
-        scheme=dict(required=False, default='http'),
-        validate_certs=dict(required=False, type='bool', default=True),
-        port=dict(default=8500, type='int'),
-        recurse=dict(required=False, type='bool'),
-        retrieve=dict(required=False, type='bool', default=True),
-        state=dict(default='present', choices=['present', 'absent', 'acquire', 'release']),
-        token=dict(required=False, no_log=True),
-        value=dict(required=False),
-        session=dict(required=False)
+    module = AnsibleModule(
+        argument_spec=dict(
+            cas=dict(type='str'),
+            flags=dict(type='str'),
+            key=dict(type='str', required=True),
+            host=dict(type='str', default='localhost'),
+            scheme=dict(type='str', default='http'),
+            validate_certs=dict(type='bool', default=True),
+            port=dict(type='int', default=8500),
+            recurse=dict(type='bool'),
+            retrieve=dict(type='bool', default=True),
+            state=dict(type='str', default='present', choices=['absent', 'acquire', 'present', 'release']),
+            token=dict(type='str', no_log=True),
+            value=dict(type='str'),
+            session=dict(type='str'),
+        ),
+        supports_check_mode=False,
+        required_if=[
+            ['state', 'present', ['value']],
+        ],
     )
-
-    module = AnsibleModule(argument_spec, supports_check_mode=False)
 
     test_dependencies(module)
 
@@ -271,7 +265,7 @@ def main():
         execute(module)
     except ConnectionError as e:
         module.fail_json(msg='Could not connect to consul agent at %s:%s, error was %s' % (
-            module.params.get('host'), module.params.get('port'), str(e)))
+            module.params.get('host'), module.params.get('port'), e))
     except Exception as e:
         module.fail_json(msg=str(e))
 
