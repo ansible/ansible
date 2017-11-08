@@ -26,7 +26,6 @@ from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.task_include import TaskInclude
 from ansible.playbook.role import Role
 from ansible.playbook.role.include import RoleInclude
-from ansible.utils.vars import combine_vars
 
 try:
     from __main__ import display
@@ -163,15 +162,8 @@ class IncludeRole(TaskInclude):
         new_me._role_name = self._role_name
         new_me._role_path = self._role_path
         new_me.private = self.private
-        try:
-            ir = self.get_dynamic_role()
-        except ValueError:
-            ir = None
-        if ir is not None:
-            new_play = self.get_play().copy()
-            new_me.set_play(new_play)
-            self.load_dynamic_role()
-
+        new_me._play = self._play
+        new_me._role = self._role
         return new_me
 
     def load_dynamic_role(self, allow_duplicates=None):
@@ -233,8 +225,7 @@ class IncludeRole(TaskInclude):
     def get_vars(self, include_params=True):
         ret = TaskInclude.get_vars(self, include_params=include_params)
         if self.is_loaded:  # not yet loaded skip
-            ret = combine_vars(
-                ret,
+            ret.update(
                 self.get_dynamic_role().get_vars(include_params=include_params)
             )
         return ret
