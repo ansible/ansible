@@ -1,5 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 #
 # Copyright (C) 2017 Lenovo, Inc.
 #
@@ -18,7 +20,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Module to Reset to factory settings of Lenovo Switches
+# Module to show sys info of Lenovo Switches
 # Lenovo Networking
 #
 
@@ -29,47 +31,47 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: cnos_factory
+module: cnos_facts
 author: "Dave Kasberg (@dkasberg)"
-short_description: Reset the switch's startup configuration to default (factory) on devices running Lenovo CNOS
+short_description: Collect facts on devices running Lenovo CNOS
 description:
-    - This module allows you to reset a switch's startup configuration. The method provides a way to reset the
-     startup configuration to its factory settings. This is helpful when you want to move the switch to another
-     topology as a new network device.
-     This module uses SSH to manage network device configuration.
-     The results of the operation can be viewed in results directory.
+    - This module allows you to view the switch information. It executes the show sysinfo CLI command on a switch
+     and returns a file containing all the system information of the target network device. This module uses SSH to
+     manage network device configuration. The results of the operation can be viewed in results directory.
      For more information about this module from Lenovo and customizing it usage for your
-     use cases, please visit U(http://systemx.lenovofiles.com/help/index.jsp?topic=%2Fcom.lenovo.switchmgt.ansible.doc%2Fcnos_factory.html)
+     use cases, please visit U(http://systemx.lenovofiles.com/help/index.jsp?topic=%2Fcom.lenovo.switchmgt.ansible.doc%2Fcnos_facts.html)
 version_added: "2.3"
 extends_documentation_fragment: cnos
 options: {}
 
 '''
 EXAMPLES = '''
-Tasks : The following are examples of using the module cnos_reload. These are written in the main.yml file of the tasks directory.
+Tasks : The following are examples of using the module cnos_facts. These are written in the main.yml file of the tasks directory.
 ---
-- name: Test Reset to factory
-  cnos_factory:
+- name: Test Sys Info
+  cnos_facts:
       host: "{{ inventory_hostname }}"
       username: "{{ hostvars[inventory_hostname]['username'] }}"
       password: "{{ hostvars[inventory_hostname]['password'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      outputfile: "./results/test_factory_{{ inventory_hostname }}_output.txt"
-
+      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
+      outputfile: "./results/cnos_facts_{{ inventory_hostname }}_output.txt"
 '''
 RETURN = '''
 msg:
   description: Success or failure message
   returned: always
   type: string
-  sample: "Switch Startup Config is Reset to factory settings"
+  sample: "Device Sys Info is saved to file"
 '''
 
-
 import sys
-import paramiko
+try:
+    import paramiko
+    HAS_PARAMIKO = True
+except ImportError:
+    HAS_PARAMIKO = False
 import time
-import argparse
 import socket
 import array
 import json
@@ -91,18 +93,18 @@ def main():
             host=dict(required=True),
             username=dict(required=True),
             password=dict(required=True, no_log=True),
-            enablePassword=dict(required=False, no_log=True),
-            deviceType=dict(required=True),),
+            enablePassword=dict(required=False, no_log=True),),
         supports_check_mode=False)
 
     username = module.params['username']
     password = module.params['password']
     enablePassword = module.params['enablePassword']
-    cliCommand = "save erase \n"
+    cliCommand = "display sys-info"
     outputfile = module.params['outputfile']
     hostIP = module.params['host']
-    deviceType = module.params['deviceType']
     output = ""
+    if not HAS_PARAMIKO:
+        module.fail_json(msg='paramiko is required for this module')
 
     # Create instance of SSHClient object
     remote_conn_pre = paramiko.SSHClient()
@@ -126,11 +128,8 @@ def main():
     # Make terminal length = 0
     output = output + cnos.waitForDeviceResponse("terminal length 0\n", "#", 2, remote_conn)
 
-    # cnos.debugOutput(cliCommand)
     # Send the CLi command
-    output = output + cnos.waitForDeviceResponse(cliCommand, "[n]", 2, remote_conn)
-
-    output = output + cnos.waitForDeviceResponse("y" + "\n", "#", 2, remote_conn)
+    output = output + cnos.waitForDeviceResponse(cliCommand + "\n", "#", 2, remote_conn)
 
     # Save it into the file
     file = open(outputfile, "a")
@@ -139,7 +138,7 @@ def main():
 
     errorMsg = cnos.checkOutputForError(output)
     if(errorMsg is None):
-        module.exit_json(changed=True, msg="Switch Startup Config is Reset to factory settings ")
+        module.exit_json(changed=True, msg="Device Sys Info is saved to file ")
     else:
         module.fail_json(msg=errorMsg)
 
