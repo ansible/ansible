@@ -27,7 +27,6 @@ options:
         - The name of the box to be managed, it could be a path to a file, URL or shorthand name from Vagrant cloud.
       aliases: ['path', 'url']
       required: true
-      default: None
     state:
       description:
         - Indicate the desired state of the box
@@ -101,17 +100,6 @@ EXAMPLES = '''
     box: "centos/7"
     state: "updated"
     provider: "virtualbox"
-'''
-
-RETURN = '''
-changed:
-    description: True if the action is performed successfuly and made the change
-    type: bool
-    returned: always
-rc:
-    description: exit code of the module
-    type: bool
-    returned: always
 '''
 
 import os
@@ -276,6 +264,7 @@ def main():
         ),
         supports_check_mode=False,
     )
+    module.run_command_environ_update = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C', LC_CTYPE='C')
 
     vbox = VagrantBox(module)
     state = module.params.get('state')
