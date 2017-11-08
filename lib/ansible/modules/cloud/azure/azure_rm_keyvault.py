@@ -322,6 +322,11 @@ class AzureRMKeyVault(AzureRMModuleBase):
         self.results['changed'] = changed
         self.results['state'] = results
 
+        if self.tenant_id is None:
+            self.tenant_id = self.credentials['tenant']
+        if self.object_id is None:
+            self.object_id = self.credentials['client_id']
+
         # return the results if your only gathering information
         if self.check_mode:
             return self.results
