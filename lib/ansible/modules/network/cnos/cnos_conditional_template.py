@@ -1,5 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 #
 # Copyright (C) 2017 Lenovo, Inc.
 #
@@ -104,9 +106,12 @@ msg:
 '''
 
 import sys
-import paramiko
+try:
+    import paramiko
+    HAS_PARAMIKO = True
+except ImportError:
+    HAS_PARAMIKO = False
 import time
-import argparse
 import socket
 import array
 import json
@@ -146,6 +151,8 @@ def main():
     hostIP = module.params['host']
 
     output = ""
+    if not HAS_PARAMIKO:
+        module.fail_json(msg='paramiko is required for this module')
 
     # Here comes the logic against which a template is
     # conditionally executed for right Network element.
@@ -177,7 +184,7 @@ def main():
     # Go to config mode
     output = output + cnos.waitForDeviceResponse("configure d\n", "(config)#", 2, remote_conn)
     # Send commands one by one
-    #with open(commandfile, "r") as f:
+    # with open(commandfile, "r") as f:
     f = open(commandfile, "r")
     for line in f:
         # Omit the comment lines in template file
@@ -185,7 +192,7 @@ def main():
             # cnos.debugOutput(line)
             command = line
             if not line.endswith("\n"):
-                command = command+"\n"
+                command = command + "\n"
             response = cnos.waitForDeviceResponse(command, "#", 2, remote_conn)
             errorMsg = cnos.checkOutputForError(response)
             output = output + response

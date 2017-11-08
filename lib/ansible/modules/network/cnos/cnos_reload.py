@@ -1,5 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 #
 # Copyright (C) 2017 Lenovo, Inc.
 #
@@ -18,7 +20,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Module to show sys info of Lenovo Switches
+# Module to reload Lenovo Switches
 # Lenovo Networking
 #
 
@@ -29,44 +31,48 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: cnos_facts
+module: cnos_reload
 author: "Dave Kasberg (@dkasberg)"
-short_description: Collect facts on devices running Lenovo CNOS
+short_description: Perform switch restart on devices running Lenovo CNOS
 description:
-    - This module allows you to view the switch information. It executes the show sysinfo CLI command on a switch
-     and returns a file containing all the system information of the target network device. This module uses SSH to
-     manage network device configuration. The results of the operation can be viewed in results directory.
+    - This module allows you to restart the switch using the current startup configuration.
+     The module is usually invoked after the running configuration has been saved over the startup configuration.
+     This module uses SSH to manage network device configuration.
+     The results of the operation can be viewed in results directory.
      For more information about this module from Lenovo and customizing it usage for your
-     use cases, please visit U(http://systemx.lenovofiles.com/help/index.jsp?topic=%2Fcom.lenovo.switchmgt.ansible.doc%2Fcnos_facts.html)
+     use cases, please visit U(http://systemx.lenovofiles.com/help/index.jsp?topic=%2Fcom.lenovo.switchmgt.ansible.doc%2Fcnos_reload.html)
 version_added: "2.3"
 extends_documentation_fragment: cnos
 options: {}
 
 '''
 EXAMPLES = '''
-Tasks : The following are examples of using the module cnos_facts. These are written in the main.yml file of the tasks directory.
+Tasks : The following are examples of using the module cnos_reload. These are written in the main.yml file of the tasks directory.
 ---
-- name: Test Sys Info
-  cnos_facts:
+- name: Test Reload
+  cnos_reload:
       host: "{{ inventory_hostname }}"
       username: "{{ hostvars[inventory_hostname]['username'] }}"
       password: "{{ hostvars[inventory_hostname]['password'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
       enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
-      outputfile: "./results/cnos_facts_{{ inventory_hostname }}_output.txt"
+      outputfile: "./results/test_reload_{{ inventory_hostname }}_output.txt"
 '''
 RETURN = '''
 msg:
   description: Success or failure message
   returned: always
   type: string
-  sample: "Device Sys Info is saved to file"
+  sample: "Device is Reloading. Please wait..."
 '''
 
 import sys
-import paramiko
+try:
+    import paramiko
+    HAS_PARAMIKO = True
+except ImportError:
+    HAS_PARAMIKO = False
 import time
-import argparse
 import socket
 import array
 import json
@@ -88,16 +94,20 @@ def main():
             host=dict(required=True),
             username=dict(required=True),
             password=dict(required=True, no_log=True),
-            enablePassword=dict(required=False, no_log=True),),
+            enablePassword=dict(required=False, no_log=True),
+            deviceType=dict(required=True),),
         supports_check_mode=False)
 
     username = module.params['username']
     password = module.params['password']
     enablePassword = module.params['enablePassword']
-    cliCommand = "display sys-info"
+    cliCommand = "reload \n"
     outputfile = module.params['outputfile']
     hostIP = module.params['host']
+    deviceType = module.params['deviceType']
     output = ""
+    if not HAS_PARAMIKO:
+        module.fail_json(msg='paramiko is required for this module')
 
     # Create instance of SSHClient object
     remote_conn_pre = paramiko.SSHClient()
@@ -122,7 +132,10 @@ def main():
     output = output + cnos.waitForDeviceResponse("terminal length 0\n", "#", 2, remote_conn)
 
     # Send the CLi command
-    output = output + cnos.waitForDeviceResponse(cliCommand + "\n", "#", 2, remote_conn)
+    output = output + cnos.waitForDeviceResponse(cliCommand, "(y/n):", 2, remote_conn)
+
+    # Send the Confirmation y
+    output = output + cnos.waitForDeviceResponse("y\n", "#", 2, remote_conn)
 
     # Save it into the file
     file = open(outputfile, "a")
@@ -130,8 +143,8 @@ def main():
     file.close()
 
     errorMsg = cnos.checkOutputForError(output)
-    if(errorMsg is None):
-        module.exit_json(changed=True, msg="Device Sys Info is saved to file ")
+    if(errorMsg in "Device Response Timed out"):
+        module.exit_json(changed=True, msg="Device is Reloading. Please wait...")
     else:
         module.fail_json(msg=errorMsg)
 

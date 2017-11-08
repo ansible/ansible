@@ -1,5 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 #
 # Copyright (C) 2017 Lenovo, Inc.
 #
@@ -365,9 +367,12 @@ msg:
 '''
 
 import sys
-import paramiko
+try:
+    import paramiko
+    HAS_PARAMIKO = True
+except ImportError:
+    HAS_PARAMIKO = False
 import time
-import argparse
 import socket
 import array
 import json
@@ -419,6 +424,8 @@ def main():
     deviceType = module.params['deviceType']
     output = ""
 
+    if not HAS_PARAMIKO:
+        module.fail_json(msg='paramiko is required for this module')
     # Create instance of SSHClient object
     remote_conn_pre = paramiko.SSHClient()
 
