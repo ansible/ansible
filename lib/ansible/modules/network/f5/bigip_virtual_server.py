@@ -212,7 +212,7 @@ def vs_exists(api, vs):
     return result
 
 
-def vs_create(api, name, destination, port, pool, profiles):
+def vs_create(api, name, destination, protocol, port, pool, profiles):
     if profiles:
         _profiles = []
         for profile in profiles:
@@ -223,7 +223,14 @@ def vs_create(api, name, destination, port, pool, profiles):
                 )
             )
     else:
-        _profiles = [{'profile_context': 'PROFILE_CONTEXT_TYPE_ALL', 'profile_name': 'tcp'}]
+        _profiles = [{'profile_context': 'PROFILE_CONTEXT_TYPE_ALL', 'profile_name': protocol}]
+
+    if protocol == 'tcp':
+        _protocol = 'PROTOCOL_TCP'
+    elif protocol == 'udp':
+        _protocol = 'PROTOCOL_UDP'
+    else:
+        raise Exception("unknown protocol specified: %s" % protocol)
 
     # a bit of a hack to handle concurrent runs of this module.
     # even though we've checked the vs doesn't exist,
@@ -232,7 +239,7 @@ def vs_create(api, name, destination, port, pool, profiles):
     # about it!
     try:
         api.LocalLB.VirtualServer.create(
-            definitions=[{'name': [name], 'address': [destination], 'port': port, 'protocol': 'PROTOCOL_TCP'}],
+            definitions=[{'name': [name], 'address': [destination], 'port': port, 'protocol': _protocol}],
             wildmasks=['255.255.255.255'],
             resources=[{'type': 'RESOURCE_TYPE_POOL', 'default_pool_name': pool}],
             profiles=[_profiles])
@@ -306,7 +313,7 @@ def set_profiles(api, name, profiles_list):
                 to_add_profiles.append({'profile_context': 'PROFILE_CONTEXT_TYPE_ALL', 'profile_name': x})
         to_del_profiles = []
         for x in current_profiles:
-            if (x not in profiles_list) and (x != "/Common/tcp"):
+            if (x not in profiles_list) and (x not in ("/Common/tcp", "/Common/udp")):
                 to_del_profiles.append({'profile_context': 'PROFILE_CONTEXT_TYPE_ALL', 'profile_name': x})
         if len(to_del_profiles) > 0:
             api.LocalLB.VirtualServer.remove_profile(
@@ -670,6 +677,7 @@ def main():
                    choices=['present', 'absent', 'disabled', 'enabled']),
         name=dict(type='str', required=True, aliases=['vs']),
         destination=dict(type='str', aliases=['address', 'ip']),
+        protocol=dict(type='str', choices=['tcp', 'udp'], default='tcp'),
         port=dict(type='str', default=None),
         all_policies=dict(type='list'),
         all_profiles=dict(type='list', default=None),
@@ -712,6 +720,7 @@ def main():
 
     name = fq_name(partition, module.params['name'])
     destination = module.params['destination']
+    protocol = module.params['protocol']
     port = module.params['port']
     if port == '' or port is None:
         port = None
@@ -770,7 +779,7 @@ def main():
                     # this catches the exception and does something smart
                     # about it!
                     try:
-                        vs_create(api, name, destination, port, pool, all_profiles)
+                        vs_create(api, name, destination, protocol, port, pool, all_profiles)
                         set_policies(api, name, all_policies)
                         set_enabled_vlans(api, name, all_enabled_vlans)
                         set_rules(api, name, all_rules)
