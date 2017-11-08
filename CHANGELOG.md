@@ -29,6 +29,8 @@ Ansible Changes By Release
 * Added support to `become` `NT AUTHORITY\System`, `NT AUTHORITY\LocalService`, and `NT AUTHORITY\NetworkService` on Windows hosts
 * Fixed `become` to work with async on Windows hosts
 * Improved `become` elevation process to work on standard Administrator users without disabling UAC on Windows hosts
+* The jenkins_plugin and yum_repository plugins had their `params` option
+  removed due to circumventing Ansible's option processing.
 
 ### New Plugins
 
