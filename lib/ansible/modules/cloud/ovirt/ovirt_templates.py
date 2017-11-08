@@ -64,6 +64,14 @@ options:
         description:
             - "Boolean indication whether to allow partial registration of a template when C(state) is registered."
         version_added: "2.4"
+    vnic_profile_mappings:
+        description:
+            - "Mapper which maps an external virtual NIC profile to one that exists in the engine when C(state) is registered.
+               vnic_profile is described by the following dictionary:"
+            - "C(source_network_name): The network name of the source network."
+            - "C(source_profile_name): The prfile name related to the source network."
+            - "C(target_profile_id): The id of the target profile id to be mapped to in the engine."
+        version_added: "2.5"
     exclusive:
         description:
             - "When C(state) is I(exported) this parameter indicates if the existing templates with the
@@ -153,6 +161,20 @@ EXAMPLES = '''
   allow_partial_import: "True"
   cluster: mycluster
   id: 1111-1111-1111-1111
+
+# Register template with vnic profile mappings
+- ovirt_templates:
+    state: registered
+    storage_domain: mystorage
+    cluster: mycluster
+    id: 1111-1111-1111-1111
+    vnic_profile_mappings:
+      - source_network_name: mynetwork
+        source_profile_name: mynetwork
+        target_profile_id: 3333-3333-3333-3333
+      - source_network_name: mynetwork2
+        source_profile_name: mynetwork2
+        target_profile_id: 4444-4444-4444-4444
 
 # Import image from Glance s a template
 - ovirt_templates:
@@ -245,6 +267,21 @@ class TemplatesModule(BaseModule):
     def post_import_action(self, entity):
         self._service = self._connection.system_service().templates_service()
 
+def _get_vnic_profile_mappings(module):
+    vnicProfileMappings = list()
+
+    for vnicProfileMapping in module.params['vnic_profile_mappings']:
+        vnicProfileMappings.append(
+            otypes.VnicProfileMapping(
+                source_network_name=vnicProfileMapping['source_network_name'],
+                source_network_profile_name=vnicProfileMapping['source_profile_name'],
+                target_vnic_profile=otypes.VnicProfile(
+                    id=vnicProfileMapping['target_profile_id'],
+                ) if vnicProfileMapping['target_profile_id'] else None,
+            )
+        )
+
+    return vnicProfileMappings
 
 def main():
     argument_spec = ovirt_full_argument_spec(
@@ -268,6 +305,7 @@ def main():
         image_disk=dict(default=None, aliases=['glance_image_disk_name']),
         template_image_disk_name=dict(default=None),
         seal=dict(type='bool'),
+        vnic_profile_mappings=dict(default=[], type='list'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -388,7 +426,9 @@ def main():
                     allow_partial_import=module.params['allow_partial_import'],
                     cluster=otypes.Cluster(
                         name=module.params['cluster']
-                    ) if module.params['cluster'] else None
+                    ) if module.params['cluster'] else None,
+                    vnic_profile_mappings=_get_vnic_profile_mappings(module)
+                    if module.params['vnic_profile_mappings'] else None
                 )
 
                 if module.params['wait']:
