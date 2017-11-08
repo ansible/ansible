@@ -324,12 +324,12 @@ def combine(*terms, **kwargs):
 
     dicts = []
     for t in terms:
-        if isinstance(t, list):
-            dicts.append(combine(*t, **kwargs))
-        elif not isinstance(t, dict):
-            raise errors.AnsibleFilterError("|combine expects dictionaries, got " + repr(t))
-        else:
+        if isinstance(t, MutableMapping):
             dicts.append(t)
+        elif isinstance(t, list):
+            dicts.append(combine(*t, **kwargs))
+        else:
+            raise errors.AnsibleFilterError("|combine expects dictionaries, got " + repr(t))
 
     if recursive:
         return reduce(merge_hash, dicts)
