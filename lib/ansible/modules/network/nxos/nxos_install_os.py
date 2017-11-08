@@ -32,8 +32,8 @@ description:
       ISSU (In Server Software Upgrade).
 notes:
     - Tested against the following platforms and images
-      - N9k 7.0(3)I4(6), 7.0(3)I5(3), 7.0(3)I6(1), 7.0(3)I7(1)
-      - N3k 6.0(2)A8(6), 6.0(2)A8(8)
+      - N9k 7.0(3)I4(6), 7.0(3)I5(3), 7.0(3)I6(1), 7.0(3)I7(1), 7.0(3)F2(2), 7.0(3)F3(2)
+      - N3k 6.0(2)A8(6), 6.0(2)A8(8), 7.0(3)I6(1), 7.0(3)I7(1)
       - N7k 7.3(0)D1(1), 8.0(1), 8.2(1)
     - This module executes longer then the default ansible timeout value and
       will generate errors unless the module timeout parameter is set to a
@@ -47,7 +47,7 @@ notes:
     - This module attempts to install the software immediately,
       which may trigger a reboot.
     - In check mode, the module will indicate if an upgrade is needed and
-      weather or not the upgrade is disruptive or non-disruptive(ISSU).
+      whether or not the upgrade is disruptive or non-disruptive(ISSU).
 author:
     - Jason Edelman (@jedelman8)
     - Gabriele Gerbibo (@GGabriele)
@@ -56,12 +56,6 @@ options:
     system_image_file:
         description:
             - Name of the system (or combined) image file on flash.
-        required: true
-    timeout:
-        description:
-            - The upgrade commands are long running so the timeout value must
-              be set to a value of 500 or greater or the module will exit
-              with a failure message.
         required: true
     kickstart_image_file:
         description:
