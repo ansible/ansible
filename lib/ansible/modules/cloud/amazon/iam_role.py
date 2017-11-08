@@ -214,7 +214,8 @@ def create_or_update_role(connection, module):
     params['Path'] = module.params.get('path')
     params['RoleName'] = module.params.get('name')
     params['AssumeRolePolicyDocument'] = module.params.get('assume_role_policy_document')
-    params['Description'] = module.params.get('description')
+    if module.params.get('description') is not None:
+        params['Description'] = module.params.get('description')
     managed_policies = module.params.get('managed_policy')
     if managed_policies:
         managed_policies = convert_friendly_names_to_arns(connection, module, managed_policies)
@@ -368,7 +369,7 @@ def main():
             assume_role_policy_document=dict(type='json'),
             managed_policy=dict(type='list', aliases=['managed_policies']),
             state=dict(choices=['present', 'absent'], required=True),
-            description=dict(required=False, type='str', default='')
+            description=dict(required=False, type='str')
         )
     )
 
