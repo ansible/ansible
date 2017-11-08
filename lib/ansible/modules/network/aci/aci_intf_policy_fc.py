@@ -16,8 +16,7 @@ module: aci_intf_policy_fc
 short_description: Manage Fibre Channel interface policies on Cisco ACI fabrics (fc:IfPol)
 description:
 - Manage ACI Fiber Channel interface policies on Cisco ACI fabrics.
-- More information from the internal APIC class
-  I(fc:IfPol) at U(https://pubhub-prod.s3.amazonaws.com/media/apic-mim-ref/docs/MO-fcIfPol.html).
+- More information https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)

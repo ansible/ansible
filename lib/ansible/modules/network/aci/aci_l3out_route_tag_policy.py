@@ -17,7 +17,7 @@ short_description: Manage route tag policies on Cisco ACI fabrics (l3ext:RouteTa
 description:
 - Manage route tag policies on Cisco ACI fabrics.
 - More information from the internal APIC class
-  I(l3ext:RouteTagPol) at U(https://pubhub-prod.s3.amazonaws.com/media/apic-mim-ref/docs/MO-l3extRouteTagPol.html).
+  I(l3ext:RouteTagPol) at U(https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)

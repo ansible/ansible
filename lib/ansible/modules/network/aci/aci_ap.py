@@ -17,7 +17,7 @@ short_description: Manage top level Application Profile (AP) objects on Cisco AC
 description:
 - Manage top level Application Profile (AP) objects on Cisco ACI fabrics
 - More information from the internal APIC class
-  I(fv:Ap) at U(https://pubhub-prod.s3.amazonaws.com/media/apic-mim-ref/docs/MO-fvAp.html).
+  I(fv:Ap) at U(https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)

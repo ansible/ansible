@@ -17,7 +17,7 @@ short_description: Manage End Point (EP) retention protocol policies on Cisco AC
 description:
 - Manage End Point (EP) retention protocol policies on Cisco ACI fabrics.
 - More information from the internal APIC class
-  I(fv:EpRetPol) at U(https://pubhub-prod.s3.amazonaws.com/media/apic-mim-ref/docs/MO-fvEpRetPol.html).
+  I(fv:EpRetPol) at U(https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)

@@ -17,7 +17,7 @@ short_description: Manage filter entries on Cisco ACI fabrics (vz:Entry)
 description:
 - Manage filter entries for a filter on Cisco ACI fabrics.
 - More information from the internal APIC class
-  I(vz:Entry) at U(https://pubhub-prod.s3.amazonaws.com/media/apic-mim-ref/docs/MO-vzEntry.html).
+  I(vz:Entry) at U(https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)

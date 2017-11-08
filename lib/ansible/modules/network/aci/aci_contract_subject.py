@@ -17,7 +17,7 @@ short_description: Manage initial Contract Subjects on Cisco ACI fabrics (vz:Sub
 description:
 - Manage initial Contract Subjects on Cisco ACI fabrics.
 - More information from the internal APIC class
-  I(vz:Subj) at U(https://pubhub-prod.s3.amazonaws.com/media/apic-mim-ref/docs/MO-vzSubj.html).
+  I(vz:Subj) at U(https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
