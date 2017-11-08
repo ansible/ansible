@@ -848,6 +848,9 @@
 # ============================================================
 - include: state_dump_restore.yml file=dbdata.tar test_fixture=admin
 
+# postgres_pg_hba module checks
+# ============================================================
+- include: postgresql_pg_hba.yml
 #
 # Cleanup
 #
