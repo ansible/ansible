@@ -102,6 +102,13 @@ EXAMPLES = '''
     provider: "virtualbox"
 '''
 
+RETURN = '''
+ changed:
+     description: True if the action is performed successfuly and made the change
+     type: bool
+     returned: always
+'''
+
 import os
 import re
 
