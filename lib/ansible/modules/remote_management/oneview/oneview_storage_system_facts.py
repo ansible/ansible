@@ -18,12 +18,12 @@ description:
     - Retrieve facts about the Storage Systems from OneView.
 version_added: "2.5"
 requirements:
-    - hpOneView >= 4.0.0
+    - "hpOneView >= 2.0.1"
 author:
-    - Priyanka Sood (@soodpr)
-    - Madhav Bharadwaj (@madhav-bharadwaj)
-    - Ricardo Galeno (@ricardogpsf)
     - Alex Monteiro (@aalexmonteiro)
+    - Madhav Bharadwaj (@madhav-bharadwaj)
+    - Priyanka Sood (@soodpr)
+    - Ricardo Galeno (@ricardogpsf)
 options:
     storage_hostname:
       description:
@@ -33,13 +33,13 @@ options:
         - Storage System name.
     options:
       description:
-        - "List with options to gather additional facts about a Storage System and related resources.
-          Options allowed:
-          C(hostTypes) gets the list of supported host types.
-          C(storagePools) gets a list of storage pools belonging to the specified storage system.
-          C(reachablePorts) gets a list of storage system reachable ports. Accepts C(params).
+        - List with options to gather additional facts about a Storage System and related resources.
+        - "options allowed:
+          - C(hostTypes) gets the list of supported host types.
+          - C(storagePools) gets a list of storage pools belonging to the specified storage system.
+          - C(reachablePorts) gets a list of storage system reachable ports. Accepts C(params).
             An additional C(networks) list param can be used to restrict the search for only these ones.
-          C(templates) gets a list of storage templates belonging to the storage system."
+          - C(templates) gets a list of storage templates belonging to the storage system."
         - "To gather facts about C(storagePools), C(reachablePorts), and C(templates) it is required to inform
             either the argument C(name), or C(storage_hostname). Otherwise, this option will be ignored."
 extends_documentation_fragment:
