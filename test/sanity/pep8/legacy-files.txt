@@ -55,7 +55,6 @@ lib/ansible/modules/cloud/azure/azure_rm_subnet.py
 lib/ansible/modules/cloud/azure/azure_rm_virtualmachine.py
 lib/ansible/modules/cloud/azure/azure_rm_virtualnetwork.py
 lib/ansible/modules/cloud/azure/azure_rm_virtualnetwork_facts.py
-lib/ansible/modules/cloud/centurylink/clc_loadbalancer.py
 lib/ansible/modules/cloud/cloudstack/_cs_nic.py
 lib/ansible/modules/cloud/docker/docker_container.py
 lib/ansible/modules/cloud/docker/docker_image.py
