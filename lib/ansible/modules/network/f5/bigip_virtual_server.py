@@ -1,8 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-#
-# Copyright (c) 2017 F5 Networks Inc.
-# Copyright (c) 2015 Etienne Carriere <etienne.carriere@gmail.com>
+
+# Copyright: (c) 2017, F5 Networks Inc.
+# Copyright: (c) 2015, Etienne Carriere <etienne.carriere@gmail.com>
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -12,43 +12,36 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: bigip_virtual_server
-short_description: "Manages F5 BIG-IP LTM virtual servers"
+short_description: Manages F5 BIG-IP LTM virtual servers
 description:
-  - "Manages F5 BIG-IP LTM virtual servers via iControl SOAP API"
+  - Manages F5 BIG-IP LTM virtual servers via iControl SOAP API.
 version_added: "2.1"
 author:
   - Etienne Carriere (@Etienne-Carriere)
   - Tim Rupp (@caphrim007)
 notes:
-  - "Requires BIG-IP software version >= 11"
-  - "F5 developed module 'bigsuds' required (see http://devcentral.f5.com)"
-  - "Best run as a local_action in your playbook"
+  - Requires BIG-IP software version >= 11.
+  - F5 developed module 'bigsuds' required, see U(http://devcentral.f5.com).
+  - Best run as a local_action in your playbook.
 requirements:
   - bigsuds
 options:
   state:
     description:
-      - Virtual Server state
-      - Absent, delete the VS if present
+      - Virtual Server state.
+      - Absent, delete the VS if present.
       - C(present) (and its synonym enabled), create if needed the VS and set
-        state to enabled
-      - C(disabled), create if needed the VS and set state to disabled
-    required: false
+        state to enabled.
+      - C(disabled), create if needed the VS and set state to disabled.
     default: present
-    choices:
-      - present
-      - absent
-      - enabled
-      - disabled
-    aliases: []
+    choices: [ absent, disabled, enabled, present ]
   partition:
     description:
-      - Partition
-    required: false
-    default: 'Common'
+      - Partition.
+    default: Common
   name:
     description:
-      - Virtual server name
+      - Virtual server name.
     required: true
     aliases:
       - vs
@@ -65,70 +58,49 @@ options:
       - Port of the virtual server. Required when state=present and vs does
         not exist. If you specify a value for this field, it must be a number
         between 0 and 65535.
-    required: false
-    default: None
   all_profiles:
     description:
       - List of all Profiles (HTTP,ClientSSL,ServerSSL,etc) that must be used
-        by the virtual server
-    required: false
-    default: None
+        by the virtual server.
   all_policies:
     description:
       - List of all policies enabled for the virtual server.
-    required: false
-    default: None
     version_added: "2.3"
   all_rules:
-    version_added: "2.2"
     description:
-      - List of rules to be applied in priority order
-    required: false
-    default: None
-  enabled_vlans:
+      - List of rules to be applied in priority order.
     version_added: "2.2"
+  enabled_vlans:
     description:
       - List of vlans to be enabled. When a VLAN named C(ALL) is used, all
         VLANs will be allowed.
-    required: false
-    default: None
+    version_added: "2.2"
   pool:
     description:
-      - Default pool for the virtual server
-    required: false
-    default: None
+      - Default pool for the virtual server.
   snat:
     description:
-      - Source network address policy
-    required: false
+      - Source network address policy.
     choices:
       - None
       - Automap
       - Name of a SNAT pool (eg "/Common/snat_pool_name") to enable SNAT with the specific pool
-    default: None
   default_persistence_profile:
     description:
-      - Default Profile which manages the session persistence
-    required: false
-    default: None
+      - Default Profile which manages the session persistence.
   fallback_persistence_profile:
     description:
       - Specifies the persistence profile you want the system to use if it
         cannot use the specified default persistence profile.
-    required: false
-    default: None
     version_added: "2.3"
   route_advertisement_state:
     description:
-      - Enable route advertisement for destination
-    required: false
-    default: disabled
+      - Enable route advertisement for destination.
+    choices: [ disabled, enabled ]
     version_added: "2.3"
   description:
     description:
-      - Virtual server description
-    required: false
-    default: None
+      - Virtual server description.
 extends_documentation_fragment: f5
 '''
 
@@ -183,6 +155,10 @@ deleted:
     type: string
     sample: "my-virtual-server"
 '''
+
+# import module snippets
+from ansible.module_utils.basic import *
+from ansible.module_utils.f5_utils import *
 
 # map of state values
 STATES = {
@@ -654,7 +630,7 @@ def set_route_advertisement_state(api, destination, partition, route_advertiseme
     try:
         state = "STATE_%s" % route_advertisement_state.strip().upper()
         address = fq_name(partition, destination,)
-        current_route_advertisement_state = get_route_advertisement_status(api,address)
+        current_route_advertisement_state = get_route_advertisement_status(api, address)
         if current_route_advertisement_state != route_advertisement_state:
             api.LocalLB.VirtualAddressV2.set_route_advertisement_state(virtual_addresses=[address], states=[state])
             updated = True
@@ -666,25 +642,20 @@ def set_route_advertisement_state(api, destination, partition, route_advertiseme
 def main():
     argument_spec = f5_argument_spec()
     argument_spec.update(dict(
-        state=dict(type='str', default='present',
-                   choices=['present', 'absent', 'disabled', 'enabled']),
+        state=dict(type='str', default='present', choices=['absent', 'disabled', 'enabled', 'present']),
         name=dict(type='str', required=True, aliases=['vs']),
         destination=dict(type='str', aliases=['address', 'ip']),
-        port=dict(type='str', default=None),
+        port=dict(type='str'),
         all_policies=dict(type='list'),
-        all_profiles=dict(type='list', default=None),
+        all_profiles=dict(type='list'),
         all_rules=dict(type='list'),
         enabled_vlans=dict(type='list'),
         pool=dict(type='str'),
         description=dict(type='str'),
         snat=dict(type='str'),
-        route_advertisement_state=dict(
-            type='str',
-            default=None,
-            choices=['enabled', 'disabled']
-        ),
+        route_advertisement_state=dict(type='str', choices=['disabled', 'enabled']),
         default_persistence_profile=dict(type='str'),
-        fallback_persistence_profile=dict(type='str')
+        fallback_persistence_profile=dict(type='str'),
     ))
 
     module = AnsibleModule(
@@ -818,9 +789,6 @@ def main():
         module.fail_json(msg="received exception: %s" % e)
 
     module.exit_json(**result)
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.f5_utils import *
 
 if __name__ == '__main__':
     main()
