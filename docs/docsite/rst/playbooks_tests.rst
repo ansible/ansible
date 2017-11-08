@@ -17,7 +17,7 @@ In addition to those Jinja2 tests, Ansible supplies a few more and users can eas
 Test syntax
 ```````````
 
-`Test syntax<http://jinja.pocoo.org/docs/dev/templates/#tests>`_ varies from `filter syntax <http://jinja.pocoo.org/docs/dev/templates/#filters>`_ (``variable | filter``). Historically Ansible has registered tests as both jinja tests and jinja filters, allowing for them to be referenced using filter syntax.
+`Test syntax <http://jinja.pocoo.org/docs/dev/templates/#tests>`_ varies from `filter syntax <http://jinja.pocoo.org/docs/dev/templates/#filters>`_ (``variable | filter``). Historically Ansible has registered tests as both jinja tests and jinja filters, allowing for them to be referenced using filter syntax.
 
 As of Ansible 2.5, using a jinja test as a filter will generate a warning.
 
