@@ -22,7 +22,7 @@ import re
 import shlex
 
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_text
 from ansible.plugins.action import ActionBase
 
 
@@ -80,14 +80,15 @@ class ActionModule(ActionBase):
         #
         # If the path contains a space, it needs to be quoted in the arguments.
         # If the script file name contains a space, that's also problematic and does not work.
-        parts = shlex.split(self._task.args.get('_raw_params', '').strip())
+        raw_params = to_native(self._task.args.get('_raw_params', ''), errors='surrogate_or_strict')
+        parts = [to_text(s, errors='surrogate_or_strict') for s in shlex.split(raw_params.strip())]
         source = parts[0]
         args = ' '.join(parts[1:])
 
         try:
             source = self._loader.get_real_file(self._find_needle('files', source), decrypt=self._task.args.get('decrypt', True))
         except AnsibleError as e:
-            return dict(failed=True, msg=to_native(e) + ' If the path contains spaces or looks truncated, quote the path.')
+            return dict(failed=True, msg=to_native(e))
 
         if not self._play_context.check_mode:
             # transfer the file to a remote tmp location
