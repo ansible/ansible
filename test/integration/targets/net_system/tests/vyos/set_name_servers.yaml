@@ -4,12 +4,12 @@
 - name: setup
   vyos_config:
     lines:
-      - no ip name-server 1.1.1.1
-      - no ip name-server 2.2.2.2
-      - no ip name-server 3.3.3.3
+      - delete system name-server 1.1.1.1
+      - delete system name-server 2.2.2.2
+      - delete system name-server 3.3.3.3
     match: none
 
-- name: configure name_servers
+- name: configure name servers
   net_system:
     name_servers:
       - 1.1.1.1
@@ -21,9 +21,9 @@
     that:
       - result.changed == true
       - result.commands|length == 3
-      - "'ip name-server 1.1.1.1' in result.commands"
-      - "'ip name-server 2.2.2.2' in result.commands"
-      - "'ip name-server 3.3.3.3' in result.commands"
+      - result.commands[0] | search("set system name-server '1.1.1.1'")
+      - result.commands[1] | search("set system name-server '2.2.2.2'")
+      - result.commands[2] | search("set system name-server '3.3.3.3'")
 
 - name: verify name_servers
   net_system:
@@ -40,22 +40,22 @@
 - name: remove one
   net_system:
     name_servers:
-      - 1.1.1.1
-      - 2.2.2.2
+      - 3.3.3.3
+    state: absent
   register: result
 
 - assert:
     that:
       - result.changed == true
       - result.commands|length == 1
-      - "'no ip name-server 3.3.3.3' in result.commands"
+      - result.commands[0] | search("delete system name-server '3.3.3.3'")
 
 - name: teardown
   vyos_config:
     lines:
-      - no ip lookup source-interface
+      - delete system name-server name-server 1.1.1.1
+      - delete system name-server name-server 2.2.2.2
+      - delete system name-server name-server 3.3.3.3
     match: none
-  ignore_errors: yes
-  # FIXME Copied from iosxr, not sure what we need here
 
 - debug: msg="END vyos/set_name_servers.yaml"
