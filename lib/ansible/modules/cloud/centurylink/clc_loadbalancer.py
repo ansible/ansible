@@ -1,82 +1,69 @@
 #!/usr/bin/python
-#
-# Copyright (c) 2015 CenturyLink
-#
+# -*- coding: utf-8 -*-
+
+# Copyright: (c) 2015, CenturyLink
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = '''
 module: clc_loadbalancer
-short_description: Create, Delete shared loadbalancers in CenturyLink Cloud.
+short_description: Create, Delete shared loadbalancers in CenturyLink Cloud
 description:
   - An Ansible module to Create, Delete shared loadbalancers in CenturyLink Cloud.
 version_added: "2.0"
 options:
   name:
     description:
-      - The name of the loadbalancer
+      - The name of the loadbalancer.
     required: True
   description:
     description:
-      - A description for the loadbalancer
-    required: False
-    default: None
+      - A description for the loadbalancer.
   alias:
     description:
-      - The alias of your CLC Account
+      - The alias of your CLC Account.
     required: True
   location:
     description:
-      - The location of the datacenter where the load balancer resides in
+      - The location of the datacenter where the load balancer resides in.
     required: True
   method:
     description:
-      -The balancing method for the load balancer pool
-    required: False
-    default: None
-    choices: ['leastConnection', 'roundRobin']
+      -The balancing method for the load balancer pool.
+    choices: [ leastConnection, roundRobin ]
   persistence:
     description:
-      - The persistence method for the load balancer
-    required: False
-    default: None
-    choices: ['standard', 'sticky']
+      - The persistence method for the load balancer.
+    choices: [ standard, sticky ]
   port:
     description:
-      - Port to configure on the public-facing side of the load balancer pool
-    required: False
-    default: None
-    choices: [80, 443]
+      - Port to configure on the public-facing side of the load balancer pool.
+    choices: [ 80, 443 ]
   nodes:
     description:
-      - A list of nodes that needs to be added to the load balancer pool
-    required: False
-    default: []
+      - A list of nodes that needs to be added to the load balancer pool.
   status:
     description:
-      - The status of the loadbalancer
-    required: False
+      - The status of the loadbalancer.
+    choices: [ disabled, enabled ]
     default: enabled
-    choices: ['enabled', 'disabled']
   state:
     description:
-      - Whether to create or delete the load balancer pool
-    required: False
+      - Whether to create or delete the load balancer pool.
+    choices: [ absent, nodes_absent, nodes_present, port_absent, present ]
     default: present
-    choices: ['present', 'absent', 'port_absent', 'nodes_present', 'nodes_absent']
 requirements:
     - python = 2.7
     - requests >= 2.5.0
     - clc-sdk
-author: "CLC Runner (@clc-runner)"
+author:
+- CLC Runner (@clc-runner)
 notes:
     - To use this module, it is required to set the below environment variables which enables access to the
       Centurylink Cloud
@@ -796,7 +783,7 @@ class ClcLoadBalancer:
         for node in nodes_to_add:
             if not node.get('status'):
                 node['status'] = 'enabled'
-            if not node in nodes:
+            if node not in nodes:
                 changed = True
                 nodes.append(node)
         if changed is True and not self.module.check_mode:
@@ -866,23 +853,16 @@ class ClcLoadBalancer:
         :return: argument spec dictionary
         """
         argument_spec = dict(
-            name=dict(required=True),
-            description=dict(default=None),
-            location=dict(required=True),
-            alias=dict(required=True),
-            port=dict(choices=[80, 443]),
-            method=dict(choices=['leastConnection', 'roundRobin']),
-            persistence=dict(choices=['standard', 'sticky']),
+            name=dict(type='str', required=True),
+            description=dict(type='str'),
+            location=dict(type='str', required=True),
+            alias=dict(type='str', required=True),
+            port=dict(type='str', choices=[80, 443]),
+            method=dict(type='str', choices=['leastConnection', 'roundRobin']),
+            persistence=dict(type='str', choices=['standard', 'sticky']),
             nodes=dict(type='list', default=[]),
-            status=dict(default='enabled', choices=['enabled', 'disabled']),
-            state=dict(
-                default='present',
-                choices=[
-                    'present',
-                    'absent',
-                    'port_absent',
-                    'nodes_present',
-                    'nodes_absent'])
+            status=dict(type='str', default='enabled', choices=['enabled', 'disabled']),
+            state=dict(type='str', default='present', choices=['absent', 'nodes_present', 'nodes_absent', 'port_absent', 'present']),
         )
         return argument_spec
 
