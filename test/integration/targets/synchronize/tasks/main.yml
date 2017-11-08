@@ -173,6 +173,14 @@
         - "sync_result.results[0].msg.endswith('+ foo.txt\n')"
         - "sync_result.results[1].msg.endswith('+ bar.txt\n')"
 
+- name: Cleanup
+  file:
+    state: absent
+    path: "{{output_dir}}/{{item}}.result"
+  with_items:
+    - foo.txt
+    - bar.txt
+
 - name: synchronize files using rsync_path (issue#7182)
   synchronize: src={{output_dir}}/foo.txt dest={{output_dir}}/foo.rsync_path rsync_path="sudo rsync"
   register: sync_result
@@ -187,3 +195,10 @@
         - "'msg' in sync_result"
         - "sync_result.msg.startswith('>f+')"
         - "sync_result.msg.endswith('+ foo.txt\n')"
+
+- name: Cleanup
+  file:
+    state: absent
+    path: "{{output_dir}}/{{item}}"
+  with_items:
+    - foo.rsync_path
