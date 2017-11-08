@@ -67,7 +67,7 @@ def get_provider_argspec():
     return enos_provider_spec
 
 
-def check_args(module):
+def check_args(module, warnings):
     pass
 
 
