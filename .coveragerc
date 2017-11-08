@@ -1,6 +1,7 @@
 # This configuration file is used for manual execution of coverage
 # as well as for tests run through ansible-test.
 
+
 [run]
 branch = True
 
