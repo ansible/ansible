@@ -729,7 +729,8 @@ def main():
     for list_param in ['baseurl', 'gpgkey']:
         if (
                 list_param in module.params and
-                module.params[list_param] is not None):
+                module.params[list_param] is not None and
+                isinstance(module.params[list_param], list)):
             module.params[list_param] = "\n".join(module.params[list_param])
 
     # Define repo file name if it doesn't exist

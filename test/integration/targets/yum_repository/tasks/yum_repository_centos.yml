@@ -174,3 +174,25 @@
   yum_repository:
     name: listtest
     state: absent
+
+- set_fact:
+    yum_repos:
+      - name: foo
+        baseurl: http://some.repo/foo
+        description: foo
+        gpgkey: file:///tmp/foo.key
+
+- name: Test user-defined params
+  yum_repository:
+    name: "{{ item.name }}"
+    params: "{{ item }}"
+  with_items: "{{ yum_repos }}"
+
+- set_fact:
+    repofile: "{{ lookup('file', '/etc/yum.repos.d/foo.repo') }}"
+
+- name: Assert that lists were properly inserted
+  assert:
+    that:
+      - "'baseurl = http://some.repo/foo' in repofile"
+      - "'gpgkey = file:///tmp/foo.key' in repofile"
