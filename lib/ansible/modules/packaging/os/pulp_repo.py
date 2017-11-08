@@ -44,6 +44,14 @@ options:
     required: false
     choices: [ "yes", "no" ]
     default: "no"
+  generate_sqlite:
+    description:
+      - Boolean flag to indicate whether sqlite files should be generated during
+        a repository publish.
+    required: false
+    choices: [ "yes", "no" ]
+    default: "no"
+    version_added: "2.5"
   importer_ssl_ca_cert:
     description:
       - CA certificate string used to validate the feed source SSL certificate.
@@ -114,9 +122,11 @@ options:
     default: rpm
   repoview:
     description:
-      - Whether to generate repoview files for a published repository
+      - Whether to generate repoview files for a published repository. Setting
+        this to "yes" automatically activates `generate_sqlite`.
     required: false
-    default: false
+    choices: ["yes", "no"]
+    default: no
     version_added: "2.5"
   serve_http:
     description:
@@ -259,6 +269,7 @@ class pulp_server(object):
         repo_id,
         relative_url,
         feed=None,
+        generate_sqlite=False,
         serve_http=False,
         serve_https=True,
         proxy_host=None,
@@ -286,6 +297,7 @@ class pulp_server(object):
             yum_distributor['distributor_config']['https'] = serve_https
             yum_distributor['distributor_config']['relative_url'] = relative_url
             yum_distributor['distributor_config']['repoview'] = repoview
+            yum_distributor['distributor_config']['generate_sqlite'] = generate_sqlite or repoview
             data['distributors'].append(yum_distributor)
 
             if add_export_distributor:
@@ -298,6 +310,7 @@ class pulp_server(object):
                 export_distributor['distributor_config']['https'] = serve_https
                 export_distributor['distributor_config']['relative_url'] = relative_url
                 export_distributor['distributor_config']['repoview'] = repoview
+                export_distributor['distributor_config']['generate_sqlite'] = generate_sqlite or repoview
                 data['distributors'].append(export_distributor)
 
             data['importer_type_id'] = "yum_importer"
@@ -530,6 +543,7 @@ def main():
     argument_spec.update(
         add_export_distributor=dict(default=False, type='bool'),
         feed=dict(),
+        generate_sqlite=dict(default=False, type='bool'),
         importer_ssl_ca_cert=dict(),
         importer_ssl_client_cert=dict(),
         importer_ssl_client_key=dict(),
@@ -555,6 +569,7 @@ def main():
 
     add_export_distributor = module.params['add_export_distributor']
     feed = module.params['feed']
+    generate_sqlite = module.params['generate_sqlite']
     importer_ssl_ca_cert = module.params['importer_ssl_ca_cert']
     importer_ssl_client_cert = module.params['importer_ssl_client_cert']
     importer_ssl_client_key = module.params['importer_ssl_client_key']
@@ -641,6 +656,7 @@ def main():
                     repo_id=repo,
                     relative_url=relative_url,
                     feed=feed,
+                    generate_sqlite=generate_sqlite,
                     serve_http=serve_http,
                     serve_https=serve_https,
                     proxy_host=proxy_host,
@@ -695,6 +711,12 @@ def main():
                             relative_url=relative_url)
 
                     changed = True
+
+            if not server.compare_repo_distributor_config(repo, generate_sqlite=generate_sqlite):
+                if not module.check_mode:
+                    server.update_repo_distributor_config(repo, generate_sqlite=generate_sqlite)
+
+                changed = True
 
             if not server.compare_repo_distributor_config(repo, repoview=repoview):
                 if not module.check_mode:
