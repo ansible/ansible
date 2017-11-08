@@ -159,18 +159,44 @@
       - gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG2-KEY-EPEL-{{ ansible_distribution_major_version }}
 
 - set_fact:
-    repofile: "{{ lookup('file', '/etc/yum.repos.d/listtest.repo') }}"
+    repolistfile: "{{ lookup('file', '/etc/yum.repos.d/listtest.repo') }}"
 
 - name: Assert that lists were properly inserted
   assert:
     that:
-      - "'download.fedoraproject.org' in repofile"
-      - "'download2.fedoraproject.org' in repofile"
-      - "'RPM-GPG-KEY-EPEL' in repofile"
-      - "'RPM-GPG2-KEY-EPEL' in repofile"
+      - "'download.fedoraproject.org' in repolistfile"
+      - "'download2.fedoraproject.org' in repolistfile"
+      - "'RPM-GPG-KEY-EPEL' in repolistfile"
+      - "'RPM-GPG2-KEY-EPEL' in repolistfile"
     value:
 
 - name: Cleanup list test repo
   yum_repository:
     name: listtest
+    state: absent
+
+- name: Test string for baseurl and gpgkey
+  yum_repository:
+    name: strtest
+    description: Testing string feature
+    params:
+      baseurl:
+        - https://download.fedoraproject.org/pub/epel/{{ ansible_distribution_major_version }}/{{ ansible_architecture }}/
+        - https://download2.fedoraproject.org/pub/epel/{{ ansible_distribution_major_version }}/{{ ansible_architecture }}/
+      gpgkey: file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-{{ ansible_distribution_major_version }}
+
+- set_fact:
+    repostrfile: "{{ lookup('file', '/etc/yum.repos.d/strtest.repo') }}"
+
+- name: Assert that strings were properly inserted
+  assert:
+    that:
+      - "'download.fedoraproject.org' in repostrfile"
+      - "'download2.fedoraproject.org' in repolistfile"
+      - "'RPM-GPG-KEY-EPEL' in repostrfile"
+    value:
+
+- name: Cleanup list test repo
+  yum_repository:
+    name: strtest
     state: absent
