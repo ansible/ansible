@@ -39,7 +39,7 @@
     authorize: yes
     provider: "{{ cli }}"
     state: absent
-  regiser: result
+  register: result
 
 - assert:
     that:
