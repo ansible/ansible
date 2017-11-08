@@ -82,9 +82,10 @@ options:
   values:
     description:
       - The value(s) to add or remove. This can be a string or a list of
-        strings. The complex argument format is required in order to pass
-        a list of strings (see examples).
-    required: true
+        strings. The complex argument format is required in order to pass a
+        list of strings (see examples). Optional if `state` is `'absent'`, in
+        which case all values are deleted.
+    required: false
   validate_certs:
     description:
       - If C(no), SSL certificates will not be validated. This should only be
@@ -206,6 +207,12 @@ class LdapAttr(object):
         # Normalize values
         if isinstance(self.module.params['values'], list):
             self.values = map(str, self.module.params['values'])
+        elif self.module.params['values'] is None:
+            if self.state != 'absent':
+                self.module.fail_json(
+                    "Must provide a value if state is not 'absent'"
+                )
+            self.values = None
         else:
             self.values = [str(self.module.params['values'])]
 
@@ -223,12 +230,18 @@ class LdapAttr(object):
         return modlist
 
     def delete(self):
-        values_to_delete = filter(self._is_value_present, self.values)
-
-        if len(values_to_delete) > 0:
-            modlist = [(ldap.MOD_DELETE, self.name, values_to_delete)]
+        if self.values is None:
+            if self._is_attr_present():
+                modlist = [(ldap.MOD_DELETE, self.name, None)]
+            else:
+                modlist = []
         else:
-            modlist = []
+            values_to_delete = filter(self._is_value_present, self.values)
+
+            if len(values_to_delete) > 0:
+                modlist = [(ldap.MOD_DELETE, self.name, values_to_delete)]
+            else:
+                modlist = []
 
         return modlist
 
@@ -253,6 +266,12 @@ class LdapAttr(object):
                 modlist = [(ldap.MOD_REPLACE, self.name, self.values)]
 
         return modlist
+
+    def _is_attr_present(self):
+        dn, attrs = self.connection.search_s(
+            self.dn, ldap.SCOPE_BASE, attrsonly=True, attrlist=[self.name]
+        )[0]
+        return bool(attrs)
 
     def _is_value_present(self, value):
         """ True if the target attribute has the given value. """
@@ -305,7 +324,7 @@ def main():
             'state': dict(
                 default='present',
                 choices=['present', 'absent', 'exact']),
-            'values': dict(required=True, type='raw'),
+            'values': dict(required=False, type='raw'),
             'validate_certs': dict(default=True, type='bool'),
         },
         supports_check_mode=True,
