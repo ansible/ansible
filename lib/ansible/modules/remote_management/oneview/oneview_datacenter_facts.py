@@ -43,6 +43,7 @@ EXAMPLES = '''
     username: administrator
     password: my_password
     api_version: 500
+  no_log: true
   delegate_to: localhost
 - debug: var=datacenters
 
@@ -57,21 +58,30 @@ EXAMPLES = '''
       count: 3
       sort: 'name:descending'
       filter: 'state=Unmanaged'
+  no_log: true
 - debug: var=datacenters
 
 - name: Gather facts about a Data Center by name
   oneview_datacenter_facts:
-    config: "/etc/oneview/oneview_config.json"
+    hostname: 172.16.101.48
+    username: administrator
+    password: my_password
+    api_version: 500
     name: "My Data Center"
+  no_log: true
   delegate_to: localhost
 - debug: var=datacenters
 
 - name: Gather facts about the Data Center Visual Content
   oneview_datacenter_facts:
-    config: "/etc/oneview/oneview_config.json"
+    hostname: 172.16.101.48
+    username: administrator
+    password: my_password
+    api_version: 500
     name: "My Data Center"
     options:
       - visualContent
+  no_log: true
   delegate_to: localhost
 - debug: var=datacenters
 - debug: var=datacenter_visual_content
