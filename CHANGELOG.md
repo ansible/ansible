@@ -144,7 +144,8 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/32546)
 * Fix running with closed stdin on python 3
   (https://github.com/ansible/ansible/pull/31695)
-
+* Fix undefined variable in script inventory plugin
+  (https://github.com/ansible/ansible/pull/31381)
 
 <a id="2.4.1"></a>
 
