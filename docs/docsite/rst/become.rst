@@ -249,7 +249,7 @@ determines whether the user has Administrative rights. Here are the labels that
 can be returned and what they mean:
 
 * ``Medium``: Ansible failed to get an elevated token and ran under a limited
-  token, only a subset of the privileges assigned to user are available during
+  token. Only a subset of the privileges assigned to user are available during
   the module execution and the user does not have administrative rights.
 
 * ``High``: An elevated token was used and all the privileges assigned to the
@@ -301,8 +301,8 @@ If running on a version of Ansible that is older than 2.5 or the normal
       win_reboot:
       when: uac_result|changed
 
-.. Note:: Granting the ``SeTcbPrivilege`` or turning UAC off subverts the
-    Windows security model and care should be given if these steps are taken.
+.. Note:: Granting the ``SeTcbPrivilege`` or turning UAC off can cause Windows
+    security vulnerabilities and care should be given if these steps are taken.
 
 Local Service Accounts
 ----------------------
@@ -334,9 +334,10 @@ Be aware of the following limitations with ``become`` on Windows:
   ``SeAllowLogOnLocally`` privilege or inherits the ``SeDenyLogOnLocally``
   privilege, the become process will fail.
 
-* Prior to Ansible version 2.3, become only worked when ``ansible_winrm_transport`` was
-  either ``basic`` or ``credssp``. This restriction has been lifted since the
-  2.4 release of Ansible for all hosts except Server 2008 (non R2 version).
+* Prior to Ansible version 2.3, become only worked when
+  ``ansible_winrm_transport`` was either ``basic`` or ``credssp``. This
+  restriction has been lifted since the 2.4 release of Ansible for all hosts
+  except Windows Server 2008 (non R2 version).
 
 .. seealso::
 
