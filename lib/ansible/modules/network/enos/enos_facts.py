@@ -479,7 +479,7 @@ def main():
         ansible_facts[key] = value
 
     warnings = list()
-    check_args(module)
+    check_args(module, warnings)
 
     module.exit_json(ansible_facts=ansible_facts, warnings=warnings)
 
