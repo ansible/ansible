@@ -833,6 +833,9 @@ def create_block_device(module, ec2, volume):
     # we add handling for either/or but not both
     if all(key in volume for key in ['device_type', 'volume_type']):
         module.fail_json(msg='device_type is a deprecated name for volume_type. Do not use both device_type and volume_type')
+    if 'device_type' in volume:
+        module.deprecate('device_type is deprecated for block devices - use volume_type instead',
+                         version=2.9)
 
     # get whichever one is set, or NoneType if neither are set
     volume_type = volume.get('device_type') or volume.get('volume_type')
