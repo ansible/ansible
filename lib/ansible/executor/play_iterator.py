@@ -432,7 +432,14 @@ class PlayIterator:
                             # we're advancing blocks, so if this was an end-of-role block we
                             # mark the current role complete
                             # unless we are the role or it allows_duplicates
-                            if block._eor and host.name in block._role._had_task_run and ((not in_child) or (not (block._role._metadata and block._role._metadata.allow_duplicates))):
+                            if (
+                                block._eor and
+                                host.name in block._role._had_task_run and (
+                                    (not in_child) or
+                                    (not (block._role._metadata and
+                                          block._role._metadata.allow_duplicates))
+                                )
+                            ):
                                 block._role._completed[host.name] = True
                     else:
                         task = block.always[state.cur_always_task]
