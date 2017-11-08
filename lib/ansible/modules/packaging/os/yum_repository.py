@@ -472,6 +472,7 @@ state:
 import os
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.six import string_types
 from ansible.module_utils.six.moves import configparser
 
 
@@ -701,7 +702,16 @@ def main():
 
     # Update module parameters by user's parameters if defined
     if 'params' in module.params and isinstance(module.params['params'], dict):
-        module.params.update(module.params['params'])
+        for pk, pv in module.params['params'].items():
+            if pk != 'params':
+                if (
+                        'type' in module.argument_spec[pk] and
+                        module.argument_spec[pk]['type'] == 'list' and
+                        isinstance(pv, string_types)):
+                    module.params[pk] = [pv]
+                else:
+                    module.params[pk] = pv
+
         # Remove the params
         module.params.pop('params', None)
 
