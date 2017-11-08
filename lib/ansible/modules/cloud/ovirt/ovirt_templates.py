@@ -64,6 +64,10 @@ options:
         description:
             - "Boolean indication whether to allow partial registration of a template when C(state) is registered."
         version_added: "2.4"
+    vnic_profile_mappings:
+        description:
+            - "Mapper which maps an external virtual NIC profile to one that exists in the engine when C(state) is registered."
+        version_added: "2.4"
     exclusive:
         description:
             - "When C(state) is I(exported) this parameter indicates if the existing templates with the
@@ -145,6 +149,20 @@ EXAMPLES = '''
   allow_partial_import: "True"
   cluster: mycluster
   id: 1111-1111-1111-1111
+
++# Register template with vnic profile mappings
+- ovirt_templates:
+  state: registered
+  storage_domain: mystorage
+  cluster: mycluster
+  id: 1111-1111-1111-1111
+  vnic_profile_mappings:
+    - source_network_name: mynetwork
+      source_profile_name: mynetwork
+      target_profile_name: target_network
+    - source_network_name: mynetwork2
+      source_profile_name: mynetwork2
+      target_profile_name: target_network2
 
 # Import image from Glance s a template
 - ovirt_templates:
@@ -237,6 +255,25 @@ class TemplatesModule(BaseModule):
     def post_import_action(self, entity):
         self._service = self._connection.system_service().templates_service()
 
+def _get_vnic_profile_mappings(module):
+
+    if module.params['vnic_profile_mappings'] is None:
+        return None
+
+    vnicProfileMappings = list()
+
+    for vnicProfileMapping in module.params['vnic_profile_mappings']:
+        vnicProfileMappings.append(
+            otypes.VnicProfileMapping(
+                source_network_name=vnicProfileMapping.params['source_network_name'],
+                source_network_profile_name=vnicProfileMapping.params['source_network_profile_name'],
+                target_vnic_profile=types.VnicProfile(
+                    name=vnicProfileMapping.params['target_vnic_profile'],
+                ),
+            )
+        )
+
+    return vnicProfileMappings
 
 def main():
     argument_spec = ovirt_full_argument_spec(
@@ -259,6 +296,7 @@ def main():
         image_provider=dict(default=None),
         image_disk=dict(default=None, aliases=['glance_image_disk_name']),
         template_image_disk_name=dict(default=None),
+        vnic_profile_mappings=dict(default=[], type='list'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -375,7 +413,8 @@ def main():
                     allow_partial_import=module.params['allow_partial_import'],
                     cluster=otypes.Cluster(
                         name=module.params['cluster']
-                    ) if module.params['cluster'] else None
+                    ) if module.params['cluster'] else None,
+                    vnic_profile_mappings=_get_vnic_profile_mappings(module)
                 )
 
                 if module.params['wait']:
