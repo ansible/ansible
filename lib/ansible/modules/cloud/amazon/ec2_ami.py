@@ -90,6 +90,7 @@ options:
     description:
       - Users and groups that should be able to launch the AMI. Expects dictionary with a key of user_ids and/or group_names. user_ids should
         be a list of account ids. group_name should be a list of groups, "all" is the only acceptable value currently.
+      - You must pass all desired launch permissions if you wish to modify existing launch permissions (passing just groups will remove all users)
     version_added: "2.0"
   image_location:
     description:
@@ -574,22 +575,23 @@ def update_image(module, connection, image_id):
                 module.fail_json_aws(e, msg="Error updating launch permissions")
 
     desired_tags = module.params.get('tags')
-    current_tags = boto3_tag_list_to_ansible_dict(image.get('Tags'))
-    tags_to_add, tags_to_remove = compare_aws_tags(current_tags, desired_tags, purge_tags=module.params.get('purge_tags'))
+    if desired_tags is not None:
+        current_tags = boto3_tag_list_to_ansible_dict(image.get('Tags'))
+        tags_to_add, tags_to_remove = compare_aws_tags(current_tags, desired_tags, purge_tags=module.params.get('purge_tags'))
 
-    if tags_to_remove:
-        try:
-            connection.delete_tags(Resources=[image_id], Tags=[dict(Key=tagkey) for tagkey in tags_to_remove])
-            changed = True
-        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
-            module.fail_json_aws(e, msg="Error updating tags")
+        if tags_to_remove:
+            try:
+                connection.delete_tags(Resources=[image_id], Tags=[dict(Key=tagkey) for tagkey in tags_to_remove])
+                changed = True
+            except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+                module.fail_json_aws(e, msg="Error updating tags")
 
-    if tags_to_add:
-        try:
-            connection.create_tags(Resources=[image_id], Tags=ansible_dict_to_boto3_tag_list(tags_to_add))
-            changed = True
-        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
-            module.fail_json_aws(e, msg="Error updating tags")
+        if tags_to_add:
+            try:
+                connection.create_tags(Resources=[image_id], Tags=ansible_dict_to_boto3_tag_list(tags_to_add))
+                changed = True
+            except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+                module.fail_json_aws(e, msg="Error updating tags")
 
     description = module.params.get('description')
     if description and description != image['Description']:
@@ -600,7 +602,7 @@ def update_image(module, connection, image_id):
             module.fail_json_aws(e, msg="Error setting description for image %s" % image_id)
 
     if changed:
-        module.exit_json(msg="AMI launch permissions updated.", changed=True,
+        module.exit_json(msg="AMI updated.", changed=True,
                          **get_ami_info(get_image_by_id(module, connection, image_id)))
     else:
         module.exit_json(msg="AMI not updated.", changed=False,
