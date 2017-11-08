@@ -124,17 +124,17 @@ class ActionModule(ActionBase):
 
             # save the attributes on the existing (duped) stdin so
             # that we can restore them later after we set raw mode
-            if PY3:
-                stdin = self._connection._new_stdin.buffer
-            else:
-                stdin = self._connection._new_stdin
             fd = None
             try:
+                if PY3:
+                    stdin = self._connection._new_stdin.buffer
+                else:
+                    stdin = self._connection._new_stdin
                 fd = stdin.fileno()
             except (ValueError, AttributeError):
                 # ValueError: someone is using a closed file descriptor as stdin
                 # AttributeError: someone is using a null file descriptor as stdin on windoez
-                pass
+                stdin = None
             if fd is not None:
                 if isatty(fd):
                     old_settings = termios.tcgetattr(fd)
