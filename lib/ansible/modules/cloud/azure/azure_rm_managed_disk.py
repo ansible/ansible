@@ -79,8 +79,12 @@ options:
         required: false
     disk_size_gb:
         description:
-            -Size in GB of the managed disk to be created. If 'create_option' is 'copy' then the value must be greater than or equal to the source's size.
-        required: true
+            - Size in GB of the managed disk to be created. If 'create_option' is 'copy' then the value must be greater than or equal to the source's size.
+        required: false
+    managed_by:
+        description:
+            - Name of an existing virtual machine with which the disk is or will be associated, this VM should be in the same resource group.
+        required: false
     tags:
         description:
             - Tags to assign to the managed disk.
@@ -100,6 +104,14 @@ EXAMPLES = '''
         location: eastus
         resource_group: Testing
         disk_size_gb: 4
+
+    - name: Mount the managed disk to VM
+      azure_rm_managed_disk:
+        name: mymanageddisk
+        location: eastus
+        resource_group: Testing
+        disk_size_gb: 4
+        managed_by: testvm001
 
     - name: Delete managed disk
       azure_rm_manage_disk:
@@ -129,9 +141,10 @@ import re
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 try:
+    from msrestazure.tools import parse_resource_id
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.compute.models import DiskCreateOption
-    from azure.mgmt.compute.models import DiskSku
+    from azure.mgmt.compute.models import DiskCreateOption, DiskCreateOptionTypes, ManagedDiskParameters, \
+                                          DiskSku, DataDisk
 except ImportError:
     # This is handled in azure_rm_common
     pass
@@ -148,7 +161,8 @@ def managed_disk_to_dict(managed_disk):
         tags=managed_disk.tags,
         disk_size_gb=managed_disk.disk_size_gb,
         os_type=os_type,
-        storage_account_type='Premium_LRS' if managed_disk.sku.tier == 'Premium' else 'Standard_LRS'
+        storage_account_type=managed_disk.sku.name.value,
+        managed_by=managed_disk.managed_by
     )
 
 
@@ -200,12 +214,16 @@ class AzureRMManagedDisk(AzureRMModuleBase):
             disk_size_gb=dict(
                 type='int',
                 required=False
+            ),
+            managed_by=dict(
+                type='str',
+                required=False
             )
         )
         required_if = [
             ('create_option', 'import', ['source_uri']),
             ('create_option', 'copy', ['source_resource_uri']),
-            ('state', 'present', ['disk_size_gb'])
+            ('create_option', 'empty', ['disk_size_gb'])
         ]
         self.results = dict(
             changed=False,
@@ -221,6 +239,7 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         self.os_type = None
         self.disk_size_gb = None
         self.tags = None
+        self.managed_by = None
         super(AzureRMManagedDisk, self).__init__(
             derived_arg_spec=self.module_arg_spec,
             required_if=required_if,
@@ -231,21 +250,72 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         """Main module execution method"""
         for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
-        results = dict()
-        resource_group = None
-        response = None
 
+        result = None
         resource_group = self.get_resource_group(self.resource_group)
         if not self.location:
             self.location = resource_group.location
+
+        result = self.get_managed_disk()
         if self.state == 'present':
-            self.results['state'] = self.create_or_update_managed_disk()
-        elif self.state == 'absent':
-            self.delete_managed_disk()
+            result, changed = self.create_or_update_managed_disk(result)
+
+        # unmount from the old virtual machine and mount to the new virtual machine
+        if result:
+            vm_name = parse_resource_id(result.get('managed_by', '')).get('name')
+            if self.managed_by != vm_name:
+                changed = True
+                if vm_name:
+                    self.detach(vm_name, result)
+                if self.managed_by:
+                    self.attach(self.managed_by, result)
+                result = self.get_managed_disk()
+
+        if self.state == 'absent':
+            changed = self.delete_managed_disk() or changed
+        
+        self.results['changed'] =  changed
+        self.results['state'] = result
         return self.results
 
-    def create_or_update_managed_disk(self):
+    def attach(self, vm_name, disk):
+        vm = self._get_vm(vm_name)
+        # find the lun
+        luns = ([d.lun for d in vm.storage_profile.data_disks]
+                if vm.storage_profile.data_disks else [])
+        lun = max(luns) + 1 if luns else 0
+
+        # prepare the data disk
+        params = ManagedDiskParameters(id = disk.get('id'), storage_account_type = disk.get('storage_account_type'))
+        data_disk = DataDisk(lun, DiskCreateOptionTypes.attach, managed_disk=params)
+        vm.storage_profile.data_disks.append(data_disk)
+        self._update_vm(vm_name, vm)
+
+    def detach(self, vm_name, disk):
+        vm = self._get_vm(vm_name)
+        leftovers = [d for d in vm.storage_profile.data_disks if d.name.lower() != disk.get('name').lower()]
+        if len(vm.storage_profile.data_disks) == len(leftovers):
+            self.fail("No disk with the name '{0}' was found".format(disk.get('name')))
+        vm.storage_profile.data_disks = leftovers
+        self._update_vm(vm_name, vm)
+
+    def _update_vm(self, name, params):
+        try:
+            poller = self.compute_client.virtual_machines.create_or_update(self.resource_group, name, params)
+            self.get_poller_result(poller)
+        except Exception as exc:
+            self.fail("Error updating virtual machine {0} - {1}".format(name, str(exc)))
+    
+    def _get_vm(self, name):
+        try:
+            return self.compute_client.virtual_machines.get(self.resource_group, name, expand='instanceview')
+        except Exception as exc:
+            self.fail("Error getting virtual machine {0} - {1}".format(name, str(exc)))
+
+    def create_or_update_managed_disk(self, found_prev_disk):
         # Scaffolding empty managed disk
+        changed = False
+        result = None
         disk_params = {}
         creation_data = {}
         disk_params['location'] = self.location
@@ -265,10 +335,9 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         try:
             # CreationData cannot be changed after creation
             disk_params['creation_data'] = creation_data
-            found_prev_disk = self.get_managed_disk()
             if found_prev_disk:
                 if not self.is_different(found_prev_disk, disk_params):
-                    return found_prev_disk
+                    return (found_prev_disk, changed)
             if not self.check_mode:
                 poller = self.compute_client.disks.create_or_update(
                     self.resource_group,
@@ -276,12 +345,10 @@ class AzureRMManagedDisk(AzureRMModuleBase):
                     disk_params)
                 aux = self.get_poller_result(poller)
                 result = managed_disk_to_dict(aux)
-            else:
-                result = True
-            self.results['changed'] = True
+            changed = True
         except CloudError as e:
             self.fail("Error creating the managed disk: {0}".format(str(e)))
-        return result
+        return (result, changed)
 
     # This method accounts for the difference in structure between the
     # Azure retrieved disk and the parameters for the new disk to be created.
@@ -300,6 +367,7 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         return resp
 
     def delete_managed_disk(self):
+        changed = False
         try:
             if not self.check_mode:
                 poller = self.compute_client.disks.delete(
@@ -308,23 +376,19 @@ class AzureRMManagedDisk(AzureRMModuleBase):
                 result = self.get_poller_result(poller)
             else:
                 result = True
-            self.results['changed'] = True
+            changed = True
         except CloudError as e:
             self.fail("Error deleting the managed disk: {0}".format(str(e)))
-        return result
+        return changed
 
     def get_managed_disk(self):
-        resp = False
         try:
             resp = self.compute_client.disks.get(
                 self.resource_group,
                 self.name)
+            return managed_disk_to_dict(resp)
         except CloudError as e:
             self.log('Did not find managed disk')
-        if resp:
-            resp = managed_disk_to_dict(
-                resp)
-        return resp
 
 
 def main():

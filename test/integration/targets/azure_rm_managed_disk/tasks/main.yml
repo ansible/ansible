@@ -23,14 +23,7 @@
        tags:
            testing: testing
            delete: never
-   register: output
    check_mode: yes
-
- - name: Assert status succeeded (Check Mode)
-   assert:
-     that:
-       - output.changed
-       - output.state
 
  - name: Test invalid account name (should give error)
    azure_rm_managed_disk:
@@ -130,7 +123,7 @@
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}" 
        name: "{{ managed_disk1 }}"
-       storage_account_type: "Premium_LRS"
+       storage_account_type: Premium_LRS
        disk_size_gb: 2
    register: output
 
@@ -190,6 +183,70 @@
        that:
            - "azure_managed_disk | length > 0"
 
+ - name: Create virtual network
+   azure_rm_virtualnetwork:
+       resource_group: "{{ resource_group }}"
+       name: testvm001
+       address_prefixes: "10.10.0.0/16"
+
+ - name: Add subnet
+   azure_rm_subnet:
+       resource_group: "{{ resource_group }}"
+       name: testvm001
+       address_prefix: "10.10.0.0/24"
+       virtual_network: testvm001
+
+ - name: Create public ip
+   azure_rm_publicipaddress:
+       resource_group: "{{ resource_group }}"
+       allocation_method: Static
+       name: testvm001
+
+ - name: Create security group
+   azure_rm_securitygroup:
+       resource_group: "{{ resource_group }}"
+       name: testvm001
+
+ - name: Create NIC
+   azure_rm_networkinterface:
+       resource_group: "{{ resource_group }}"
+       name: testvm001
+       virtual_network: testvm001
+       subnet: testvm001
+       public_ip_name: testvm001
+       security_group: testvm001
+
+ - name: Create virtual machine
+   azure_rm_virtualmachine:
+       resource_group: "{{ resource_group }}"
+       name: testvm001
+       admin_username: adminuser
+       admin_password: Password123!
+       os_type: Linux
+       managed_disk_type: Premium_LRS
+       vm_size: Standard_DS1_v2
+       network_interfaces: testvm001
+       image:
+         offer: UbuntuServer
+         publisher: Canonical
+         sku: 16.04-LTS
+         version: latest
+ 
+ - name: Mount the disk to virtual machine
+   azure_rm_managed_disk:
+       resource_group: "{{ resource_group }}"
+       name: "{{ managed_disk1 }}"
+       disk_size_gb: 2
+       managed_by: testvm001
+       tags:
+           testing: testing
+           delete: never
+   register: mounted
+  
+ - assert:
+     that:
+       - "'testvm001' in mounted.state.managed_by"
+
  - name: Delete managed disk (Check Mode)
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}" 
@@ -198,12 +255,6 @@
        disk_size_gb: 2
    check_mode: yes
 
- - name: Assert status succeeded 
-   assert:
-     that:
-       - output.changed
-       - output.state
-
  - name: Delete managed disk 
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}" 
@@ -211,6 +262,10 @@
        disk_size_gb: 1
        state: absent
    check_mode: no
+ - name: Assert status succeeded 
+   assert:
+     that:
+       - output.changed
 
  - name: Delete copied managed disk 
    azure_rm_managed_disk:
@@ -219,3 +274,10 @@
        disk_size_gb: 2
        state: absent
    check_mode: no
+
+ - name: Delete virtual machine
+   azure_rm_virtualmachine:
+       resource_group: "{{ resource_group }}"
+       name: testvm001
+       state: absent
+       vm_size: Standard_DS1_v2
