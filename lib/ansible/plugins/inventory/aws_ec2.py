@@ -4,84 +4,68 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-'''
-DOCUMENTATION:
+DOCUMENTATION = '''
     name: aws_ec2
     plugin_type: inventory
     short_description: ec2 inventory source
     description:
         - Get inventory hosts from Amazon Web Services EC2.
+        - Uses a <name>.aws_ec2.yaml (or <name>.aws_ec2.yml) YAML configuration file.
     options:
         boto_profile:
-          description:
-            - The boto profile to use. If not provided, the environment variables AWS_PROFILE and AWS_DEFAULT_PROFILE
+          description: The boto profile to use. If not provided, the environment variables AWS_PROFILE and AWS_DEFAULT_PROFILE
               will be checked.
         aws_access_key_id:
-          description:
-            - The AWS access key to use. If not provided, the environment variables AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY,
+          description: The AWS access key to use. If not provided, the environment variables AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY,
               and EC2_ACCESS_KEY will be checked. If you have specified a profile, you don't need to provide
               an access key/secret key/session token.
         aws_secret_key_id:
-          description:
-            - The AWS secret key that corresponds to the access key. If not provided, the environment variables
+          description: The AWS secret key that corresponds to the access key. If not provided, the environment variables
               AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, and EC2_SECRET_KEY will be checked. If you have specified a profile,
               you don't need to provide an access key/secret key/session token.
         aws_security_token:
-          description:
-            - The AWS security token if using temporary access and secret keys. If not provided in the config file, the
+          description: The AWS security token if using temporary access and secret keys. If not provided in the config file, the
               environment variables AWS_SECURITY_TOKEN, AWS_SESSION_TOKEN, EC2_SECURITY_TOKEN will be checked.
               If you have specified a profile, you don't need to provide an access key/secret key/session token.
         regions:
-          description:
-            - A list of regions in which to describe EC2 instances. By default this is all regions except us-gov-west-1
+          description: A list of regions in which to describe EC2 instances. By default this is all regions except us-gov-west-1
               and cn-north-1.
         hostnames:
-          description:
-            - A list in order of precedence for hostname variables. You can use any of the options specified in
+          description: A list in order of precedence for hostname variables. You can use any of the options specified in
               U(http://docs.aws.amazon.com/cli/latest/reference/ec2/describe-instances.html#options.)
         filters:
-          description:
-            - A dictionary of filter: value pairs. Available filters are listed here:
+          description: A dictionary of filter value pairs. Available filters are listed here
               U(http://docs.aws.amazon.com/cli/latest/reference/ec2/describe-instances.html#options)
         group_by:
-          description:
-            - A list of filters (and optionally their values) to create inventory groups with. Available filters are
-              listed here: U(http://docs.aws.amazon.com/cli/latest/reference/ec2/describe-instances.html#options)
+          description: A list of filters (and optionally their values) to create inventory groups with. Available filters are
+              listed here U(http://docs.aws.amazon.com/cli/latest/reference/ec2/describe-instances.html#options)
         strict_permissions:
-          description:
-            - By default if a 403 (Forbidden) is encountered this plugin will fail. You can set strict_permissions to
+          description: By default if a 403 (Forbidden) is encountered this plugin will fail. You can set strict_permissions to
               False in the inventory config file which will allow 403 errors to be gracefully skipped.
 '''
 
-'''
-EXAMPLES:
-An example config file:
-
-plugin: aws_ec2
-
-boto_profile: aws_profile
-
-regions: # populate inventory with instances in these regions
-  - us-east-1
-  - us-east-2
-
-group_by:
-  # makes a group for instances that have the tag key 'name' and value 'value'
-  - tag:name=value
-  # makes a group for instances that have the tag key 'prod' regardless of the value
-  - tag-key=prod
-  # makes a group for instances that have the tag values 'test' and 'ansible' regardless of the tag keys
-  - tag-value=test,ansible
-  - instance-type=t2.micro
-  - state
-
-filters:
-  # filter by tags with the value dev
-  tag:Name: dev
-  instance.group-id: sg-xxxxxxxx
-
-# ignores 403 errors rather than failing
-strict_permissions: False
+EXAMPLES = '''
+simple_config_file:
+    plugin: aws_ec2
+    boto_profile: aws_profile
+    regions: # populate inventory with instances in these regions
+      - us-east-1
+      - us-east-2
+    group_by:
+    # makes a group for instances that have the tag key 'name' and value 'value'
+      - tag:name=value
+    # makes a group for instances that have the tag key 'prod' regardless of the value
+      - tag-key=prod
+    # makes a group for instances that have the tag values 'test' and 'ansible' regardless of the tag keys
+      - tag-value=test,ansible
+      - instance-type=t2.micro
+      - state
+    filters:
+    # filter by tags with the value dev
+      tag:Name: dev
+      instance.group-id: sg-xxxxxxxx
+    # ignores 403 errors rather than failing
+    strict_permissions: False
 '''
 
 from ansible.plugins.inventory import BaseInventoryPlugin, to_safe_group_name
