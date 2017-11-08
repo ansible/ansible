@@ -2,6 +2,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from ansible.compat.tests import unittest
+from oneview_module_loader import OneViewModuleBase
 from ansible.modules.remote_management.oneview.oneview_storage_system_facts import StorageSystemFactsModule
 from hpe_test_utils import FactsParamsTestCase
 
