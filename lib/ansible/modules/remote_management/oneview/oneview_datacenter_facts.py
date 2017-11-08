@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: oneview_datacenter_facts
-short_description: Retrieve facts about the OneView Data Centers.
+short_description: Retrieve facts about the OneView Data Centers
 description:
     - Retrieve facts about the OneView Data Centers.
 version_added: "2.5"
@@ -39,13 +39,19 @@ extends_documentation_fragment:
 EXAMPLES = '''
 - name: Gather facts about all Data Centers
   oneview_datacenter_facts:
-    config: "/etc/oneview/oneview_config.json"
+    hostname: 172.16.101.48
+    username: administrator
+    password: my_password
+    api_version: 500
   delegate_to: localhost
 - debug: var=datacenters
 
 - name: Gather paginated, filtered and sorted facts about Data Centers
   oneview_datacenter_facts:
-    config: "/etc/oneview/oneview_config.json"
+    hostname: 172.16.101.48
+    username: administrator
+    password: my_password
+    api_version: 500
     params:
       start: 0
       count: 3
