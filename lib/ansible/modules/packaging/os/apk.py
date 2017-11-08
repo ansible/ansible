@@ -40,7 +40,8 @@ options:
     default: null
   repository:
     description:
-      - A package repository or multiple repositories
+      - A package repository or multiple repositories.
+        Unlike with the underlying apk command, this list will override the system repositories rather than supplement them.
     required: false
     default: null
     version_added: "2.4"
@@ -299,7 +300,7 @@ def main():
     # add repositories to the APK_PATH
     if p['repository']:
         for r in p['repository']:
-            APK_PATH = "%s --repository %s" % (APK_PATH, r)
+            APK_PATH = "%s --repository %s --repositories-file /dev/null" % (APK_PATH, r)
 
     # normalize the state parameter
     if p['state'] in ['present', 'installed']:
