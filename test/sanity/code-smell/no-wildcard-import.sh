@@ -11,7 +11,7 @@
 # unittest.py is importing code for an installed library for compat (pylint disabled added)
 #
 # Everything else needs to be fixed
-wildcard_imports=$(find . -path ./test/runner/.tox -prune \
+wildcard_imports=$(find . \( -type d -name .tox -prune \) \
         -o -path ./lib/ansible/vars/unsafe_proxy.py -prune \
         -o -path ./lib/ansible/executor/module_common.py -prune \
         -o -path ./test/units/plugins/action/test_action.py \

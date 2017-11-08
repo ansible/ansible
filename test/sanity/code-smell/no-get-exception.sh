@@ -4,7 +4,7 @@
 # get_exception is no longer needed as we no longer support python-2.4 on the controller.
 
 # We eventually want pycompat24 and basic.py to be the only things on this list
-get_exception=$(find . -path ./test/runner/.tox -prune \
+get_exception=$(find . \( -type d -name .tox -prune \) \
         -o -path ./lib/ansible/module_utils/pycompat24.py -prune \
         -o -path ./lib/ansible/module_utils/basic.py -prune \
         -o -path ./lib/ansible/modules/storage/netapp -prune \
