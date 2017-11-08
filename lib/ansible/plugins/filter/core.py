@@ -322,14 +322,19 @@ def combine(*terms, **kwargs):
     if len(kwargs) > 1 or (len(kwargs) == 1 and 'recursive' not in kwargs):
         raise errors.AnsibleFilterError("'recursive' is the only valid keyword argument")
 
+    dicts = []
     for t in terms:
-        if not isinstance(t, dict):
+        if isinstance(t, list):
+            dicts.append(combine(*t, **kwargs))
+        elif not isinstance(t, dict):
             raise errors.AnsibleFilterError("|combine expects dictionaries, got " + repr(t))
+        else:
+            dicts.append(t)
 
     if recursive:
-        return reduce(merge_hash, terms)
+        return reduce(merge_hash, dicts)
     else:
-        return dict(itertools.chain(*map(iteritems, terms)))
+        return dict(itertools.chain(*map(iteritems, dicts)))
 
 
 def comment(text, style='plain', **kw):
