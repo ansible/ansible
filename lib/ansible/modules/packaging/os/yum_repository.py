@@ -241,12 +241,6 @@ options:
       - Unique repository ID.
       - This parameter is only required if I(state) is set to C(present) or
         C(absent).
-  params:
-    required: false
-    default: null
-    description:
-      - Option used to allow the user to overwrite any of the other options.
-        To remove an option, set the value of the option to C(null).
   password:
     required: false
     default: null
@@ -391,6 +385,8 @@ notes:
   - The repo file will be automatically deleted if it contains no repository.
   - When removing a repository, beware that the metadata cache may still remain
     on disk until you run C(yum clean all). Use a notification handler for this.
+  - "The C(params) parameter was removed in Ansible 2.5 due to circumventing Ansible's parameter
+    handling"
 '''
 
 EXAMPLES = '''
@@ -699,11 +695,11 @@ def main():
         supports_check_mode=True,
     )
 
-    # Update module parameters by user's parameters if defined
-    if 'params' in module.params and isinstance(module.params['params'], dict):
-        module.params.update(module.params['params'])
-        # Remove the params
-        module.params.pop('params', None)
+    # Params was removed
+    # https://meetbot.fedoraproject.org/ansible-meeting/2017-09-28/ansible_dev_meeting.2017-09-28-15.00.log.html
+    if module.params['params']:
+        module.fail_json(msg="The params option to yum_repository was removed in Ansible 2.5"
+                         "since it circumvents Ansible's option handling")
 
     name = module.params['name']
     state = module.params['state']
