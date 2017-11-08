@@ -1,5 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 #
 # Copyright (C) 2017 Lenovo, Inc.
 #
@@ -18,7 +20,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Module to reload Lenovo Switches
+# Module to Reset to factory settings of Lenovo Switches
 # Lenovo Networking
 #
 
@@ -29,16 +31,17 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: cnos_reload
+module: cnos_factory
 author: "Dave Kasberg (@dkasberg)"
-short_description: Perform switch restart on devices running Lenovo CNOS
+short_description: Reset the switch's startup configuration to default (factory) on devices running Lenovo CNOS
 description:
-    - This module allows you to restart the switch using the current startup configuration.
-     The module is usually invoked after the running configuration has been saved over the startup configuration.
+    - This module allows you to reset a switch's startup configuration. The method provides a way to reset the
+     startup configuration to its factory settings. This is helpful when you want to move the switch to another
+     topology as a new network device.
      This module uses SSH to manage network device configuration.
      The results of the operation can be viewed in results directory.
      For more information about this module from Lenovo and customizing it usage for your
-     use cases, please visit U(http://systemx.lenovofiles.com/help/index.jsp?topic=%2Fcom.lenovo.switchmgt.ansible.doc%2Fcnos_reload.html)
+     use cases, please visit U(http://systemx.lenovofiles.com/help/index.jsp?topic=%2Fcom.lenovo.switchmgt.ansible.doc%2Fcnos_factory.html)
 version_added: "2.3"
 extends_documentation_fragment: cnos
 options: {}
@@ -47,27 +50,30 @@ options: {}
 EXAMPLES = '''
 Tasks : The following are examples of using the module cnos_reload. These are written in the main.yml file of the tasks directory.
 ---
-- name: Test Reload
-  cnos_reload:
+- name: Test Reset to factory
+  cnos_factory:
       host: "{{ inventory_hostname }}"
       username: "{{ hostvars[inventory_hostname]['username'] }}"
       password: "{{ hostvars[inventory_hostname]['password'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
-      outputfile: "./results/test_reload_{{ inventory_hostname }}_output.txt"
+      outputfile: "./results/test_factory_{{ inventory_hostname }}_output.txt"
+
 '''
 RETURN = '''
 msg:
   description: Success or failure message
   returned: always
   type: string
-  sample: "Device is Reloading. Please wait..."
+  sample: "Switch Startup Config is Reset to factory settings"
 '''
 
 import sys
-import paramiko
+try:
+    import paramiko
+    HAS_PARAMIKO = True
+except ImportError:
+    HAS_PARAMIKO = False
 import time
-import argparse
 import socket
 import array
 import json
@@ -96,11 +102,13 @@ def main():
     username = module.params['username']
     password = module.params['password']
     enablePassword = module.params['enablePassword']
-    cliCommand = "reload \n"
+    cliCommand = "save erase \n"
     outputfile = module.params['outputfile']
     hostIP = module.params['host']
     deviceType = module.params['deviceType']
     output = ""
+    if not HAS_PARAMIKO:
+        module.fail_json(msg='paramiko is required for this module')
 
     # Create instance of SSHClient object
     remote_conn_pre = paramiko.SSHClient()
@@ -124,11 +132,11 @@ def main():
     # Make terminal length = 0
     output = output + cnos.waitForDeviceResponse("terminal length 0\n", "#", 2, remote_conn)
 
+    # cnos.debugOutput(cliCommand)
     # Send the CLi command
-    output = output + cnos.waitForDeviceResponse(cliCommand, "(y/n):", 2, remote_conn)
+    output = output + cnos.waitForDeviceResponse(cliCommand, "[n]", 2, remote_conn)
 
-    # Send the Confirmation y
-    output = output + cnos.waitForDeviceResponse("y\n", "#", 2, remote_conn)
+    output = output + cnos.waitForDeviceResponse("y" + "\n", "#", 2, remote_conn)
 
     # Save it into the file
     file = open(outputfile, "a")
@@ -136,8 +144,8 @@ def main():
     file.close()
 
     errorMsg = cnos.checkOutputForError(output)
-    if(errorMsg in "Device Response Timed out"):
-        module.exit_json(changed=True, msg="Device is Reloading. Please wait...")
+    if(errorMsg is None):
+        module.exit_json(changed=True, msg="Switch Startup Config is Reset to factory settings ")
     else:
         module.fail_json(msg=errorMsg)
 

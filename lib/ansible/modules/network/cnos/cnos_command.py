@@ -1,5 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 #
 # Copyright (C) 2017 Lenovo, Inc.
 #
@@ -18,8 +20,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Module to send CLI templates to Lenovo Switches
+# Module to send CLI commands to Lenovo Switches
 # Lenovo Networking
+#
 #
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -29,55 +32,42 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: cnos_template
+module: cnos_command
 author: "Dave Kasberg (@dkasberg)"
-short_description: Manage switch configuration using templates on devices running Lenovo CNOS
+short_description: Execute a single command on devices running Lenovo CNOS
 description:
-    - This module allows you to work with the running configuration of a switch. It provides a way
-     to execute a set of CNOS commands on a switch by evaluating the current running configuration
-     and executing the commands only if the specific settings have not been already configured.
-     The configuration source can be a set of commands or a template written in the Jinja2 templating language.
+    - This module allows you to modify the switch running configuration. It provides a way to
+     execute a single CNOS command on a switch by evaluating the current running configuration
+     and executing the command only if the specific setting has not been already configured.
+     The CNOS command is passed as an argument of the method.
      This module uses SSH to manage network device configuration.
      The results of the operation will be placed in a directory named 'results'
      that must be created by the user in their local directory to where the playbook is run.
      For more information about this module from Lenovo and customizing it usage for your
-     use cases, please visit U(http://systemx.lenovofiles.com/help/index.jsp?topic=%2Fcom.lenovo.switchmgt.ansible.doc%2Fcnos_template.html)
+     use cases, please visit U(http://systemx.lenovofiles.com/help/index.jsp?topic=%2Fcom.lenovo.switchmgt.ansible.doc%2Fcnos_command.html)
 version_added: "2.3"
 extends_documentation_fragment: cnos
 options:
-    commandfile:
+    clicommand:
         description:
-           - This specifies the path to the CNOS command file which needs to be applied. This usually
-             comes from the commands folder. Generally this file is the output of the variables applied
-             on a template file. So this command is preceded by a template module.
-             Note The command file must contain the Ansible keyword {{ inventory_hostname }} in its
-             filename to ensure that the command file is unique for each switch and condition.
-             If this is omitted, the command file will be overwritten during iteration. For example,
-             commandfile=./commands/clos_leaf_bgp_{{ inventory_hostname }}_commands.txt
+            - This specifies the CLI command as an attribute to this method. The command is
+             passed using double quotes. The variables can be placed directly on to the CLI
+             commands or can be invoked from the vars directory.
         required: true
         default: Null
 '''
 EXAMPLES = '''
-Tasks : The following are examples of using the module cnos_template. These are written in the main.yml file of the tasks directory.
+Tasks : The following are examples of using the module cnos_command. These are written in the main.yml file of the tasks directory.
 ---
-- name: Replace Config CLI command template with values
-  template:
-      src: demo_template.j2
-      dest: "./commands/demo_template_{{ inventory_hostname }}_commands.txt"
-      vlanid1: 13
-      slot_chassis_number1: "1/2"
-      portchannel_interface_number1: 100
-      portchannel_mode1: "active"
-
-- name: Applying CLI commands on Switches
-  cnos_template:
+- name: Test Command
+  cnos_command:
       host: "{{ inventory_hostname }}"
       username: "{{ hostvars[inventory_hostname]['username'] }}"
       password: "{{ hostvars[inventory_hostname]['password'] }}"
-      deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
       enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
-      commandfile: "./commands/demo_template_{{ inventory_hostname }}_commands.txt"
-      outputfile: "./results/demo_template_command_{{ inventory_hostname }}_output.txt"
+      deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
+      outputfile: "./results/test_command_{{ inventory_hostname }}_output.txt"
+      clicommand: "display users"
 
 '''
 RETURN = '''
@@ -85,13 +75,16 @@ msg:
   description: Success or failure message
   returned: always
   type: string
-  sample: "Template Applied."
+  sample: "Command Applied"
 '''
 
 import sys
-import paramiko
+try:
+    import paramiko
+    HAS_PARAMIKO = True
+except ImportError:
+    HAS_PARAMIKO = False
 import time
-import argparse
 import socket
 import array
 import json
@@ -109,7 +102,7 @@ from collections import defaultdict
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            commandfile=dict(required=True),
+            clicommand=dict(required=True),
             outputfile=dict(required=True),
             host=dict(required=True),
             deviceType=dict(required=True),
@@ -117,14 +110,17 @@ def main():
             password=dict(required=True, no_log=True),
             enablePassword=dict(required=False, no_log=True),),
         supports_check_mode=False)
+
     username = module.params['username']
     password = module.params['password']
     enablePassword = module.params['enablePassword']
-    commandfile = module.params['commandfile']
-    outputfile = module.params['outputfile']
+    cliCommand = module.params['clicommand']
     deviceType = module.params['deviceType']
+    outputfile = module.params['outputfile']
     hostIP = module.params['host']
     output = ""
+    if not HAS_PARAMIKO:
+        module.fail_json(msg='paramiko is required for this module')
 
     # Create instance of SSHClient object
     remote_conn_pre = paramiko.SSHClient()
@@ -151,23 +147,10 @@ def main():
     # Go to config mode
     output = output + cnos.waitForDeviceResponse("configure d\n", "(config)#", 2, remote_conn)
 
-    # Send commands one by one
-    #with open(commandfile, "r") as f:
-    f = open(commandfile, "r")
-    for line in f:
-        # Omit the comment lines in template file
-        if not line.startswith("#"):
-            command = line
-            if not line.endswith("\n"):
-                command = command+"\n"
-            response = cnos.waitForDeviceResponse(command, "#", 2, remote_conn)
-            errorMsg = cnos.checkOutputForError(response)
-            output = output + response
-            if(errorMsg is not None):
-                break   # To cater to Mufti case
-    # Write to memory
-    output = output + cnos.waitForDeviceResponse("save\n", "#", 3, remote_conn)
-    # Write output to file
+    # Send the CLi command
+    output = output + cnos.waitForDeviceResponse(cliCommand + "\n", "(config)#", 2, remote_conn)
+
+    # Save it into the file
     file = open(outputfile, "a")
     file.write(output)
     file.close()
@@ -175,9 +158,9 @@ def main():
     # Logic to check when changes occur or not
     errorMsg = cnos.checkOutputForError(output)
     if(errorMsg is None):
-        module.exit_json(changed=True, msg="Template Applied")
+        module.exit_json(changed=True, msg="CLI command executed and results saved in file ")
     else:
         module.fail_json(msg=errorMsg)
 
 if __name__ == '__main__':
-    main()
+        main()
