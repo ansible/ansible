@@ -38,6 +38,8 @@ Ansible Changes By Release
 
 ### New Modules
 
+* Added `yaml` output plugin
+
 #### Cloud
 
   * aws_ssm_parameter_store
