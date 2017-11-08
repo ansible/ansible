@@ -414,6 +414,9 @@ def connect_to_api(module, disconnect_atexit=True):
         service_instance = connect.SmartConnect(host=hostname, user=username, pwd=password, sslContext=ssl_context)
     except vim.fault.InvalidLogin as e:
         module.fail_json(msg="Unable to log on to vCenter or ESXi API at %s as %s: %s" % (hostname, username, e.msg))
+    except vim.fault.NoPermission as e:
+        module.fail_json(msg="User %s does not have required permission"
+                             " to log on to vCenter or ESXi API at %s: %s" % (username, hostname, e.msg))
     except (requests.ConnectionError, ssl.SSLError) as e:
         module.fail_json(msg="Unable to connect to vCenter or ESXi API at %s on TCP/443: %s" % (hostname, e))
     except Exception as e:
