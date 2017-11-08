@@ -540,9 +540,6 @@ def main():
     # tuned high enough.
     check_ansible_timer(module)
 
-    global platform
-    platform = get_platform(module)
-
     # Get system_image_file(sif), kickstart_image_file(kif) and
     # issu settings from module params.
     sif = module.params['system_image_file']
