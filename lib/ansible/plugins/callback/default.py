@@ -306,4 +306,4 @@ class CallbackModule(CallbackBase):
         self._display.display(msg, color=C.COLOR_DEBUG)
 
     def v2_playbook_on_notify(self, handler, host):
-        display.vv("NOTIFIED HANDLER %s for %s" % (handler.get_name(), host))
+        self._display.vv("NOTIFIED HANDLER %s for %s" % (handler.get_name(), host))
