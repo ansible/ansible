@@ -138,7 +138,7 @@ In the above example, the CIM instance is a representation of the class
 ``MSFT_xWebAuthenticationInformation <https://github.com/PowerShell/xWebAdministration/blob/dev/DSCResources/MSFT_xWebsite/MSFT_xWebsite.schema.mof>``_.
 This class accepts four boolean variables, ``Anonymous``, ``Basic``,
 ``Digest``, and ``Windows``. The keys to use in a ``[CimInstance]`` depend on
-the class it represents, please read through the documentation of the resource
+the class it represents. Please read through the documentation of the resource
 to determine the keys that can be used and the types of each key value. The
 class definition is typically located in the ``<resource name>.schema.mof``.
 
@@ -146,9 +146,9 @@ Arrays
 ++++++
 Simple type arrays like ``[string[]]`` or ``[UInt32[]]`` are defined as a list
 or as a comma separated string which are then cast to their type. Using a list
-is recommended as the values are not manually parsed by the ``win_dsc`` module
-before being passed to the DSC engine. For example, to define a simple type
-array in Ansible::
+is recommended because the values are not manually parsed by the ``win_dsc``
+module before being passed to the DSC engine. For example, to define a simple
+type array in Ansible::
 
     # [string[]]
     ValueData: entry1, entry2, entry3
