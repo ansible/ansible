@@ -77,8 +77,10 @@ if C.DEFAULT_JINJA2_NATIVE:
         USE_JINJA2_NATIVE = True
     except ImportError:
         from jinja2 import Environment
+        from jinja2.utils import concat as j2_concat
 else:
     from jinja2 import Environment
+    from jinja2.utils import concat as j2_concat
 
 
 def generate_ansible_template_vars(path):
