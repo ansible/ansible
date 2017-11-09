@@ -46,6 +46,7 @@ options:
         not be collected.
     required: false
     default: '!config'
+    choices: ['all', 'hardware', 'config', 'interfaces']
 """
 
 EXAMPLES = """
