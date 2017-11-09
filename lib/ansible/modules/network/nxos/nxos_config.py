@@ -390,13 +390,16 @@ def main():
     running_config = None
     startup_config = None
 
+    sh_run_config = {'command': 'show running-config', 'output': 'text'}
+    sh_startup_config = {'command': 'show startup-config', 'output': 'text'}
+
     diff_ignore_lines = module.params['diff_ignore_lines']
 
     if module.params['save']:
         module.params['save_when'] = 'always'
 
     if module.params['save_when'] != 'never':
-        output = run_commands(module, ['show running-config', 'show startup-config'])
+        output = run_commands(module, [sh_run_config, sh_startup_config])
 
         running_config = NetworkConfig(indent=1, contents=output[0], ignore_lines=diff_ignore_lines)
         startup_config = NetworkConfig(indent=1, contents=output[1], ignore_lines=diff_ignore_lines)
@@ -413,7 +416,7 @@ def main():
 
     if module._diff:
         if not running_config:
-            output = run_commands(module, 'show running-config')
+            output = run_commands(module, [sh_run_config])
             contents = output[0]
         else:
             contents = running_config.config_text
@@ -430,7 +433,7 @@ def main():
 
         elif module.params['diff_against'] == 'startup':
             if not startup_config:
-                output = run_commands(module, 'show startup-config')
+                output = run_commands(module, [sh_startup_config])
                 contents = output[0]
             else:
                 contents = output[0]
