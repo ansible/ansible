@@ -2,9 +2,13 @@
 
 set -o pipefail
 
+# Script invoked by DCI-Agents hooks/post-running.yml
+
+# Platform: $1 = (ios, openvswitch, vyos, ...)
+# Branch: $2 = (devel, stable-2.4, ...)
+
 test="dci-$1"
 branch="$2"
-CODECOV_SLUG="ansible/ansible"
 
 if find test/results/coverage/ -mindepth 1 -name '.*' -prune -o -print -quit | grep -q .; then
     stub=""
@@ -12,7 +16,7 @@ if find test/results/coverage/ -mindepth 1 -name '.*' -prune -o -print -quit | g
     # shellcheck disable=SC2086
     test/runner/ansible-test coverage xml -v --requirements --group-by command --group-by version ${stub:+"$stub"}
 
-    # upload coverage report to codecov.io only when using complete on-demand coverage
+    # upload coverage report to codecov.io
     for file in test/results/reports/coverage=*.xml; do
         flags="${file##*/coverage=}"
         flags="${flags%.xml}"
@@ -32,7 +36,6 @@ if find test/results/coverage/ -mindepth 1 -name '.*' -prune -o -print -quit | g
             -K \
             -B "$branch" \
             -r "ansible/ansible" \
-            -v \
         || echo "Failed to upload code coverage report to codecov.io: ${file}"
     done
 fi
