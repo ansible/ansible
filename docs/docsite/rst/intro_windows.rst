@@ -210,7 +210,7 @@ If you get different hostnames back than the name you originally pinged, speak t
 
 Ensure that the Ansible controller has a properly configured computer account in the domain.
 
-Check your Ansible controller's clock is synchronised with your domain controller.  Kerberos is time sensitive and a little clock drift can cause tickets not be granted.
+Check your Ansible controller's clock is synchronised with your domain controller.  Kerberos is time sensitive and a little clock drift can cause tickets not to be granted.
 
 Check you are using the real fully qualified domain name for the domain.  Sometimes domains are commonly known to users by aliases.  To check this run:
 
