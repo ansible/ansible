@@ -92,15 +92,20 @@ options:
               /home/<admin username>/.ssh/authorized_keys. Set key_data to the actual value of the public key."
     image:
         description:
-            - "A dictionary describing the Marketplace image used to build the VM. Will contain keys: publisher,
-              offer, sku and version. NOTE: set image.version to 'latest' to get the most recent version of a given
-              image."
+            - Specifies the image used to build the VM.
+            - If a string, the image is sourced from a custom image based on the
+              name.
+            - 'If a dict with the keys C(publisher), C(offer), C(sku), and
+              C(version), the image is sourced from a Marketplace image. NOTE:
+              set image.version to C(latest) to get the most recent version of a
+              given image.'
+            - 'If a dict with the keys C(name) and C(resource_group), the image
+              is sourced from a custom image based on the C(name) and
+              C(resource_group) set. NOTE: the key C(resource_group) is optional
+              and if omitted, all images in the subscription will be search for
+              by C(name).'
+            - Custom image support was added in Ansible 2.5
         required: true
-    custom_image:
-        description:
-            - The name of a custom image used to build the VM.
-            - Can be used instead of I(image).
-        version_added: "2.5"
     storage_account_name:
         description:
             - Name of an existing storage account that supports creation of VHD blobs. If not specified for a new VM,
@@ -370,7 +375,18 @@ EXAMPLES = '''
     vm_size: Standard_DS1_v2
     admin_username: adminUser
     admin_password: password01
-    custom_image: customimage001
+    image: customimage001
+
+- name: Create a VM with a custom image from a particular resource group
+  azure_rm_virtualmachine:
+    resource_group: Testing
+    name: testvm001
+    vm_size: Standard_DS1_v2
+    admin_username: adminUser
+    admin_password: password01
+    image:
+      name: customimage001
+      resource_group: Testing
 
 - name: Power Off
   azure_rm_virtualmachine:
@@ -620,8 +636,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             admin_password=dict(type='str', no_log=True),
             ssh_password_enabled=dict(type='bool', default=True),
             ssh_public_keys=dict(type='list'),
-            image=dict(type='dict'),
-            custom_image=dict(type='str'),
+            image=dict(type='raw'),
             storage_account_name=dict(type='str', aliases=['storage_account']),
             storage_container_name=dict(type='str', aliases=['storage_container'], default='vhds'),
             storage_blob_name=dict(type='str', aliases=['storage_blob']),
@@ -655,7 +670,6 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.ssh_password_enabled = None
         self.ssh_public_keys = None
         self.image = None
-        self.custom_image = None
         self.storage_account_name = None
         self.storage_container_name = None
         self.storage_blob_name = None
@@ -706,6 +720,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         disable_ssh_password = None
         vm_dict = None
         image_reference = None
+        custom_image = False
 
         resource_group = self.get_resource_group(self.resource_group)
         if not self.location:
@@ -734,32 +749,31 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     if not key.get('path') or not key.get('key_data'):
                         self.fail(msg)
 
-            if self.image and self.custom_image:
-                self.fail("parameter error: expecting image or custom_image and not both")
+            if self.image and isinstance(self.image, dict):
+                if all(key in self.image for key in ('publisher', 'offer', 'sku', 'version')):
+                    marketplace_image = self.get_marketplace_image_version()
+                    if self.image['version'] == 'latest':
+                        self.image['version'] = marketplace_image.name
+                        self.log("Using image version {0}".format(self.image['version']))
 
-            if self.image:
-                if not self.image.get('publisher') or not self.image.get('offer') or not self.image.get('sku') \
-                        or not self.image.get('version'):
-                    self.fail("parameter error: expecting image to contain publisher, offer, sku and version keys.")
-
-                marketplace_image = self.get_marketplace_image_version()
-                if self.image['version'] == 'latest':
-                    self.image['version'] = marketplace_image.name
-                    self.log("Using image version {0}".format(self.image['version']))
-
-                image_reference = ImageReference(
-                    publisher=self.image['publisher'],
-                    offer=self.image['offer'],
-                    sku=self.image['sku'],
-                    version=self.image['version']
-                )
-
-            if self.custom_image:
-                vm_image = self.get_vm_image()
-                image_reference = ImageReference(
-                    id=vm_image.id
-                )
-                self.log("Using custom image id {0}".format(vm_image.id))
+                    image_reference = ImageReference(
+                        publisher=self.image['publisher'],
+                        offer=self.image['offer'],
+                        sku=self.image['sku'],
+                        version=self.image['version']
+                    )
+                elif self.image.get('name'):
+                    custom_image = True
+                    image_reference = self.get_custom_image_reference(
+                        self.image.get('name'),
+                        self.image.get('resource_group'))
+                else:
+                    self.fail("parameter error: expecting image to contain [publisher, offer, sku, version] or [name, resource_group]")
+            elif self.image and isinstance(self.image, str):
+                custom_image = True
+                image_reference = self.get_custom_image_reference(self.image)
+            elif self.image:
+                self.fail("parameter error: expecting image to be a string or dict not {0}".format(type(self.image).__name__))
 
             if self.plan:
                 if not self.plan.get('name') or not self.plan.get('product') or not self.plan.get('publisher'):
@@ -907,7 +921,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     if self.managed_disk_type:
                         vhd = None
                         managed_disk = ManagedDiskParameters(storage_account_type=self.managed_disk_type)
-                    elif self.custom_image:
+                    elif custom_image:
                         vhd = None
                         managed_disk = None
                     else:
@@ -1405,17 +1419,21 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                                                       self.image['sku'],
                                                                       self.image['version']))
 
-    def get_vm_image(self):
+    def get_custom_image_reference(self, name, resource_group=None):
         try:
-            vm_images = self.compute_client.images.list()
+            if resource_group:
+                vm_images = self.compute_client.images.list_by_resource_group(resource_group)
+            else:
+                vm_images = self.compute_client.images.list()
         except Exception as exc:
             self.fail("Error fetching custom images from subscription - {0}".format(str(exc)))
 
         for vm_image in vm_images:
-            if vm_image.name == self.custom_image:
-                return vm_image
+            if vm_image.name == name:
+                self.log("Using custom image id {0}".format(vm_image.id))
+                return ImageReference(id=vm_image.id)
 
-        self.fail("Error could not find image with name {0}".format(self.custom_image))
+        self.fail("Error could not find image with name {0}".format(name))
 
     def get_storage_account(self, name):
         try:
