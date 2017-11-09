@@ -85,7 +85,7 @@ class ConnectionProcess(object):
     def run(self):
         try:
             while True:
-                signal.signal(signal.SIGALRM, self.handler)
+                signal.signal(signal.SIGALRM, self.connect_timeout)
                 signal.signal(signal.SIGTERM, self.handler)
                 signal.alarm(C.PERSISTENT_CONNECT_TIMEOUT)
 
@@ -93,6 +93,7 @@ class ConnectionProcess(object):
                 (s, addr) = self.sock.accept()
                 signal.alarm(0)
 
+                signal.signal(signal.SIGALRM, self.command_timeout)
                 while True:
                     data = recv_data(s)
                     if not data:
@@ -119,11 +120,16 @@ class ConnectionProcess(object):
             # the socket file so it can be recreated
             self.shutdown()
 
+    def connect_timeout(self, signum, frame):
+        display.display('persistent connection idle timeout triggered, timeout value is %s secs' % C.PERSISTENT_CONNECT_TIMEOUT, log_only=True)
+        self.shutdown()
+
+    def command_timeout(self, signum, frame):
+        display.display('command timeout triggered, timeout value is %s secs' % self.play_context.timeout, log_only=True)
+        self.shutdown()
+
     def handler(self, signum, frame):
-        if signum == signal.SIGALRM:
-            display.display('persistent connection idle timeout triggered, timeout value is %s secs' % C.PERSISTENT_CONNECT_TIMEOUT, log_only=True)
-        else:
-            display.display('signal handler called with signal %s' % signum, log_only=True)
+        display.display('signal handler called with signal %s' % signum, log_only=True)
         self.shutdown()
 
     def shutdown(self):
