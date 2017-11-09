@@ -1,0 +1,106 @@
+- name: create a kevyault
+  azure_rm_keyvault:
+    resource_group: "{{ resource_group }}"
+    name: debugkey
+    enabled_for_deployment: True
+    location: westus
+    sku: premium
+  register: results
+
+- assert:
+    that: results.changed
+
+- name: create a kevyault with tags
+  azure_rm_keyvault:
+    resource_group: "{{ resource_group }}"
+    name: debugkeytag
+    enabled_for_deployment: True
+    location: westus
+    sku: premium
+    tags:
+      tag1: testtag
+  register: results
+
+- assert:
+    that: 
+     - results.changed
+     - results.state.tags.tag1 == 'testtag'
+
+- name: Create a key secret and certificate management key vault
+  azure_rm_keyvault:
+    name: "ozikeyvault2"
+    resource_group: "{{ resource_group }}"
+    state: "present"
+    enabled_for_deployment: True
+    location: "westus"
+    sku: "premium"
+    enabled_for_disk_encryption: True
+  register: results
+
+- assert:
+    that: results.changed
+
+- name: Create a key management key vault
+  azure_rm_keyvault:
+    name: "ozikeymanagement2"
+    resource_group: "{{ resource_group }}"
+    state: "present"
+    enabled_for_deployment: True
+    location: "westus"
+    sku: "premium"
+    enabled_for_disk_encryption: True
+    permissions: "Key Management"
+  register: results
+
+- assert:
+    that: results.changed
+
+- name: Create a certificate management key vault
+  azure_rm_keyvault:
+    name: "ozicertmanagement2"
+    resource_group: "{{ resource_group }}"
+    state: "present"
+    enabled_for_deployment: True
+    location: "westus"
+    sku: "premium"
+    enabled_for_disk_encryption: True
+    permissions: "Certificate Management"
+  register: results
+
+- assert:
+    that: results.changed
+
+- name: delete a kevyault
+  azure_rm_keyvault:
+    resource_group: "{{ resource_group }}"
+    name: debugkey
+    state: absent
+    location: westus
+
+- name: delete a kevyault with tags
+  azure_rm_keyvault:
+    resource_group: "{{ resource_group }}"
+    name: debugkeytag
+    state: absent
+    location: westus
+
+- name: delete a key secret and certificate management key vault
+  azure_rm_keyvault:
+    resource_group: "{{ resource_group }}"
+    name: ozikeyvault2
+    state: absent
+    location: westus
+
+- name: delete a key management key vault
+  azure_rm_keyvault:
+    resource_group: "{{ resource_group }}"
+    name: ozikeymanagement2
+    state: absent
+    location: westus
+
+- name: delete a certificate management key vault
+  azure_rm_keyvault:
+    resource_group: "{{ resource_group }}"
+    name: ozicertmanagement2
+    state: absent
+    location: westus
