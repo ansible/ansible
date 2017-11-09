@@ -326,6 +326,8 @@ Ansible Changes By Release
 * Windows modules now support the use of multiple shared module_utils files in the form of Powershell modules (.psm1), via `#Requires -Module Ansible.ModuleUtils.Whatever.psm1`
 * Python module argument_spec now supports custom validation logic by accepting a callable as the `type` argument.
 * Windows become_method: runas now works across all authtypes and will auto-elevate under UAC if WinRM user has "Act as part of the operating system" privilege
+* Do not escape backslashes in the template lookup plugin to mirror what the template module does
+  https://github.com/ansible/ansible/issues/26397
 
 ### Deprecations
 * The behaviour when specifying `--tags` (or `--skip-tags`) multiple times on the command line
@@ -920,7 +922,6 @@ Ansible Changes By Release
 ### Bugfixes
 * Fix alternatives module handlling of non existing options
 * Fix synchronize traceback with the docker connection plugin
-* Do not escape backslashes in the template lookup plugin to mirror what the template module does
 * Fix the expires option of the postgresq_user module
 * Fix for win_acl when settings permissions on registry objects that use `ALL APPLICATION PACKAGES` and `ALL RESTRICTED APPLICATION PACKAGES`
 * Python3 fixes
