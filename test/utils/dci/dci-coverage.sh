@@ -7,7 +7,7 @@ set -o pipefail
 # Platform: $1 = (ios, openvswitch, vyos, ...)
 # Branch: $2 = (devel, stable-2.4, ...)
 
-test="dci-$1"
+test="dci/$1"
 branch="$2"
 
 if find test/results/coverage/ -mindepth 1 -name '.*' -prune -o -print -quit | grep -q .; then
