@@ -278,22 +278,13 @@ class Templar:
         self._fail_on_filter_errors = True
         self._fail_on_undefined_errors = C.DEFAULT_UNDEFINED_VAR_BEHAVIOR
 
-        if USE_JINJA2_NATIVE:
-            self.environment = Environment(
-                trim_blocks=True,
-                undefined=StrictUndefined,
-                extensions=self._get_extensions(),
-                finalize=self._finalize,
-                loader=FileSystemLoader(self._basedir),
-            )
-        else:
-            self.environment = AnsibleEnvironment(
-                trim_blocks=True,
-                undefined=StrictUndefined,
-                extensions=self._get_extensions(),
-                finalize=self._finalize,
-                loader=FileSystemLoader(self._basedir),
-            )
+        self.environment = AnsibleEnvironment(
+            trim_blocks=True,
+            undefined=StrictUndefined,
+            extensions=self._get_extensions(),
+            finalize=self._finalize,
+            loader=FileSystemLoader(self._basedir),
+        )
 
         # the current rendering context under which the templar class is working
         self.cur_context = None
