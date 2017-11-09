@@ -80,6 +80,7 @@ if C.DEFAULT_JINJA2_NATIVE:
 else:
     from jinja2 import Environment
 
+
 def generate_ansible_template_vars(path):
     b_path = to_bytes(path)
     try:
