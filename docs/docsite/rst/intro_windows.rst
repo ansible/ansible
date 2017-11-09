@@ -94,7 +94,7 @@ You can specify which authentication option you wish to use by setting it to the
 Certificate
 +++++++++++
 
-Certificate authentication is similar to SSH where a certificate is assigned to a local user and instead of using a password to authenticate a certificate is used instead.
+Certificate authentication is similar to SSH where a certificate is assigned to a local user and instead of using a password to authenticate a certificate is used.
 
 
 Kerberos
