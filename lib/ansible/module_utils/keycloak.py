@@ -42,6 +42,23 @@ URL_CLIENT_ROLES = "{url}/admin/realms/{realm}/clients/{id}/roles"
 URL_REALM_ROLES = "{url}/admin/realms/{realm}/roles"
 
 
+def keycloak_argument_spec():
+    """
+    Returns argument_spec of options common to keycloak_*-modules
+
+    :return: argument_spec dict
+    """
+    return dict(
+        auth_keycloak_url=dict(type='str', aliases=['url'], required=True),
+        auth_client_id=dict(type='str', default='admin-cli'),
+        auth_realm=dict(type='str', required=True),
+        auth_client_secret=dict(type='str', default=None),
+        auth_username=dict(type='str', aliases=['username'], required=True),
+        auth_password=dict(type='str', aliases=['password'], required=True, no_log=True),
+        validate_certs=dict(type='str', default=True)
+    )
+
+
 def camel(words):
     return words.split('_')[0] + ''.join(x.capitalize() or '_' for x in words.split('_')[1:])
 

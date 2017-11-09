@@ -397,7 +397,7 @@ end_state:
     }
 '''
 
-from ansible.module_utils.keycloak import KeycloakAPI, camel
+from ansible.module_utils.keycloak import KeycloakAPI, camel, keycloak_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -422,15 +422,9 @@ def main():
 
     :return:
     """
-    argument_spec = dict(
+    argument_spec = keycloak_argument_spec()
+    meta_args = dict(
         state=dict(default='present', choices=['present', 'absent']),
-        auth_keycloak_url=dict(type='str', aliases=['url'], required=True),
-        auth_client_id=dict(type='str', default='admin-cli'),
-        auth_realm=dict(type='str', required=True),
-        auth_client_secret=dict(type='str', default=None),
-        auth_username=dict(type='str', aliases=['username'], required=True),
-        auth_password=dict(type='str', aliases=['password'], required=True, no_log=True),
-        validate_certs=dict(type='str', default=True),
         realm=dict(type='str', default='master'),
 
         id=dict(type='str'),
@@ -470,6 +464,7 @@ def main():
         protocol_mappers=dict(type='list'),
         authorization_settings=dict(type='dict'),
     )
+    argument_spec.update(meta_args)
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True,
@@ -486,10 +481,9 @@ def main():
 
     # convert module parameters to client representation parameters (if they belong in there)
     client_params = [x for x in module.params
-                     if x not in ['state', 'auth_keycloak_url', 'auth_client_id', 'auth_realm',
-                                  'auth_client_secret', 'auth_username', 'auth_password',
-                                  'validate_certs', 'realm'] and module.params.get(x) is not None]
-
+                     if x not in list(keycloak_argument_spec().keys()) + ['state', 'realm'] and
+                     module.params.get(x) is not None]
+    keycloak_argument_spec().keys()
     # See whether the client already exists in Keycloak
     if id is None:
         before_client = kc.get_client_by_clientid(module.params.get('client_id'), realm=realm)
