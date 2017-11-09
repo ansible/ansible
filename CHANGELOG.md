@@ -25,6 +25,7 @@ Ansible Changes By Release
 * Improved `become` elevation process to work on standard Administrator users without disabling UAC on Windows hosts
 * The jenkins_plugin and yum_repository plugins had their `params` option
   removed due to circumventing Ansible's option processing.
+* combine filter now accepts a list of dicts as well as dicts directly
 
 #### Deprecated Modules (to be removed in 2.9):
 * ec2_ami_find
