@@ -161,11 +161,17 @@ IAM policies for AWS
 
 Ansible needs fairly wide ranging powers to run the tests in an AWS account.  This rights can be provided to a dedicated user. These need to be configured before running the test.
 
-testing-iam-policy.json.j2
---------------------------
+testing-policies
+----------------
 
-The testing-iam-policy.json.j2 file contains a policy which can be given to the user
-running the tests to minimize the rights of that user.  Please note that while this policy does limit the user to one region, this does not fully restrict the user (primarily due to the limitations of the Amazon ARN notation). The user will still have wide privileges for viewing account definitions, and will also able to manage some resources that are not related to testing (for example, AWS lambdas with different names).  Tests should not be run in a primary production account in any case.
+``hacking/aws_config/testing_policies`` contains a set of policies that are required for all existing AWS module tests.
+The ``hacking/aws_config/setup_iam.yml`` playbook can be used to add all of those policies to an IAM group (using
+``-e iam_group=GROUP_NAME``. Once the group is created, you'll need to create a user and make the user a member of the
+group. The policies are designed to minimize the rights of that user.  Please note that while this policy does limit
+the user to one region, this does not fully restrict the user (primarily due to the limitations of the Amazon ARN
+notation). The user will still have wide privileges for viewing account definitions, and will also able to manage
+some resources that are not related to testing (for example, AWS lambdas with different names).  Tests should not
+be run in a primary production account in any case.
 
 Other Definitions required
 --------------------------
