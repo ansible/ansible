@@ -297,7 +297,7 @@ You may find the following tips useful:
 
 * When doing plugin development, it is very useful to have the ``warning()`` method during development, but it is also important to emit warnings for deadends (cases that you expect should never be triggered) or corner cases (e.g. cases where you expect misconfigurations).
 
-* It helps to look at other plugins in ansible-1.9.x and ansible-2.0 to understand how the API works and what modules, classes and methods are available.
+* It helps to look at other plugins in ansible-1.9.x and ansible-2.0 to understand how the API works and what modules, classes, and methods are available.
 
 
 Lookup plugins

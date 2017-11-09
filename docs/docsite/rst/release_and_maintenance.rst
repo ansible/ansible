@@ -71,7 +71,7 @@ Development and stable version maintenance workflow
 
 The Ansible community develops and maintains Ansible on GitHub_.
 
-New modules, plugins, features and bugfixes will always be integrated in what will become the next
+New modules, plugins, features, and bugfixes will always be integrated in what will become the next
 major version of Ansible.  This work is tracked on the ``devel`` git branch.
 
 Ansible provides bugfixes and security improvements for the most recent major release. The previous

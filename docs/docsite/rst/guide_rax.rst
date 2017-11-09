@@ -457,7 +457,7 @@ Create an isolated cloud network and build a server
 Complete Environment
 ++++++++++++++++++++
 
-Build a complete webserver environment with servers, custom networks and load balancers, install nginx and create a custom index.html
+Build a complete webserver environment with servers, custom networks and load balancers, install nginx, and create a custom index.html.
 
 .. code-block:: yaml
    

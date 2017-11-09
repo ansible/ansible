@@ -8,11 +8,11 @@ Ansible offers the following modules for orchestrating Docker containers:
         Swarm. Supports compose versions 1 and 2.
 
     docker_container
-        Manages the container lifecycle by providing the ability to create, update, stop, start and destroy a
+        Manages the container lifecycle by providing the ability to create, update, stop, start, and destroy a
         container.
 
     docker_image
-        Provides full control over images, including: build, pull, push, tag and remove.
+        Provides full control over images, including: build, pull, push, tag, and remove.
 
     docker_image_facts
         Inspects one or more images in the Docker host's image cache, providing the information as facts for making
@@ -126,7 +126,7 @@ running Ansible:
         The maximum amount of time in seconds to wait on a response from the API.
 
     DOCKER_CERT_PATH
-        Path to the directory containing the client certificate, client key and CA certificate.
+        Path to the directory containing the client certificate, client key, and CA certificate.
 
     DOCKER_SSL_VERSION
         Provide a valid SSL version number.
@@ -220,7 +220,7 @@ options. These are the same environment variables used by the Docker modules.
         to localhost.
 
     DOCKER_CERT_PATH:
-        Path to the directory containing the client certificate, client key and CA certificate.
+        Path to the directory containing the client certificate, client key, and CA certificate.
 
     DOCKER_SSL_VERSION:
         Provide a valid SSL version number. Default value determined by docker-py, which at the time of this writing

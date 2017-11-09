@@ -274,7 +274,7 @@ Alternatively, the role_skeleton and ignoring of files can be configured via ans
 Search for Roles
 ----------------
 
-Search the Galaxy database by tags, platforms, author and multiple keywords. For example:
+Search the Galaxy database by tags, platforms, author, and multiple keywords. For example:
 
 ::
 
@@ -361,7 +361,7 @@ Use ``remove`` to delete a role from *roles_path*:
 Authenticate with Galaxy
 ------------------------
 
-Using the ``import``, ``delete`` and ``setup`` commands to manage your roles on the Galaxy website requires authentication, and the ``login`` command
+Using the ``import``, ``delete``, and ``setup`` commands to manage your roles on the Galaxy website requires authentication, and the ``login`` command
 can be used to do just that. Before you can use the ``login`` command, you must create an account on the Galaxy website.
 
 The ``login`` command requires using your GitHub credentials. You can use your username and password, or you can create a `personal access token <https://help.github.com/articles/creating-an-access-token-for-command-line-use/>`_. If you choose to create a token, grant minimal access to the token, as it is used just to verify identify.

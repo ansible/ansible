@@ -59,7 +59,7 @@ Once WSL is enabled, you can open the Bash terminal. At the prompt, you can quic
     # https://github.com/Microsoft/BashOnWindows/issues/816#issuecomment-301216901 for details
     source ~/.profile
 
-After you've successfully run these commands, you can start to create your inventory, write example playbooks and start targeting systems using the plethora of available Windows modules.
+After you've successfully run these commands, you can start to create your inventory, write example playbooks, and start targeting systems using the plethora of available Windows modules.
 
 If you want to run Ansible from source for development purposes, simply uninstall the pip-installed version (which will leave all the necessary dependencies behind), then clone the Ansible source, and run the hacking script to configure it to run from source::
 

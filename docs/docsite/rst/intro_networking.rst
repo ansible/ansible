@@ -216,5 +216,5 @@ conditional.
 
 The waitfor argument must always start with result and then the
 command index in [], where 0 is the first command in the commands list,
-1 is the second command, 2 is the third and so on.
+1 is the second command, 2 is the third, and so on.
 
