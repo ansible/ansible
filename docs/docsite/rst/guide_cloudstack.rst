@@ -197,7 +197,7 @@ This is how our inventory looks like:
 
 As you can see, the public IPs for our web servers and jumphost has been assigned as variable ``public_ip`` directly in the inventory.
 
-The configure the jumphost, web servers, and database servers, we use ``group_vars``. The ``group_vars`` directory contains 4 files for configuration of the groups: cloud-vm, jumphost, webserver, and db-server. The cloud-vm is there for specifying the defaults of our cloud infrastructure.
+To configure the jumphost, web servers, and database servers, we use ``group_vars``. The ``group_vars`` directory contains 4 files for configuration of the groups: cloud-vm, jumphost, webserver, and db-server. The cloud-vm is there for specifying the defaults of our cloud infrastructure.
 
 .. code-block:: yaml
 
