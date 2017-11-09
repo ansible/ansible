@@ -237,7 +237,7 @@ def get_subnet_info(subnet):
         subnet = camel_dict_to_snake_dict(subnet)
 
     if 'tags' in subnet:
-        subnet['tags'] = boto3_tag_list_to_ansible_dict(subnet['tags'], 'key', 'value')
+        subnet['tags'] = boto3_tag_list_to_ansible_dict(subnet['tags'])
     else:
         subnet['tags'] = dict()
 
