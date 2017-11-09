@@ -1,3 +1,4 @@
+lib/ansible/modules/cloud/amazon/_ec2_ami_find.py
 lib/ansible/modules/cloud/amazon/_ec2_ami_search.py
 lib/ansible/modules/cloud/amazon/_ec2_remote_facts.py
 lib/ansible/modules/cloud/amazon/_ec2_vpc.py
@@ -7,7 +8,6 @@ lib/ansible/modules/cloud/amazon/cloudformation.py
 lib/ansible/modules/cloud/amazon/cloudfront_facts.py
 lib/ansible/modules/cloud/amazon/dynamodb_table.py
 lib/ansible/modules/cloud/amazon/ec2_ami_copy.py
-lib/ansible/modules/cloud/amazon/ec2_ami_find.py
 lib/ansible/modules/cloud/amazon/ec2_elb.py
 lib/ansible/modules/cloud/amazon/ec2_elb_lb.py
 lib/ansible/modules/cloud/amazon/ec2_eni_facts.py
