@@ -400,7 +400,8 @@ files:
   $modules/monitoring/honeybadger_deployment.py: stympy
   $modules/monitoring/icinga2_feature.py: nerzhul
   $modules/monitoring/librato_annotation.py: sedward
-  $modules/monitoring/logentries.py: ivanvanderbyl
+  $modules/monitoring/logentries.py:
+    ignored: ivanvanderbyl
   $modules/monitoring/logicmonitor.py: ethanculler woz5999
   $modules/monitoring/logstash_plugin.py: nerzhul
   $modules/monitoring/monit.py: brian-brazil dstoflet
