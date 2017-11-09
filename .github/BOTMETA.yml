@@ -153,7 +153,8 @@ files:
   $modules/cloud/amazon/sts_assume_role.py: bekelchik
   $modules/cloud/amazon/sts_session_token.py: pwnall
   $modules/cloud/atomic/: krsacme
-  $modules/cloud/azure/azure.py: jwhitbeck
+  $modules/cloud/azure/azure.py:
+    ignored: jwhitbeck
   $modules/cloud/azure/azure_rm_networkinterface.py:
     ignored: chouseknecht
     maintainers: $team_azure
