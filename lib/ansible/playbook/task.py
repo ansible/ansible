@@ -215,7 +215,7 @@ class Task(Base, Conditional, Taggable, Become):
             if k in ('action', 'local_action', 'args', 'delegate_to') or k == action or k == 'shell':
                 # we don't want to re-assign these values, which were determined by the ModuleArgsParser() above
                 continue
-            elif k.replace("with_", "") in lookup_loader:
+            elif k.startswith('with_') and k.replace("with_", "") in lookup_loader:
                 # transform into loop property
                 self._preprocess_with_loop(ds, new_ds, k, v)
             else:
