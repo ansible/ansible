@@ -142,7 +142,7 @@ Kerberos is installed and configured by default on OS X and many Linux distribut
 Configuring Kerberos
 --------------------
 
-Edit your /etc/krb5.conf (which should be installed as a result of installing packages above) and add the following information for each domain you need to connect to:
+Edit your `/etc/krb5.conf` (which should be installed as a result of installing packages above) and add the following information for each domain you need to connect to:
 
 In the section that starts with
 
