@@ -15,6 +15,7 @@ Ansible Changes By Release
 * The ``with_<lookup>`` loops are deprecated in favor of the new ``loop`` keyword
 
 #### Deprecated Modules (to be removed in 2.9):
+* ec2_ami_find
 
 #### Removed Modules (previously deprecated):
 * accelerate
@@ -29,6 +30,8 @@ Ansible Changes By Release
 * Added support to `become` `NT AUTHORITY\System`, `NT AUTHORITY\LocalService`, and `NT AUTHORITY\NetworkService` on Windows hosts
 * Fixed `become` to work with async on Windows hosts
 * Improved `become` elevation process to work on standard Administrator users without disabling UAC on Windows hosts
+* The jenkins_plugin and yum_repository plugins had their `params` option
+  removed due to circumventing Ansible's option processing.
 
 ### New Plugins
 
@@ -38,10 +41,13 @@ Ansible Changes By Release
 
 ### New Modules
 
+* Added `yaml` output plugin
+
 #### Cloud
 
   * aws_ssm_parameter_store
   * digital_ocean_sshkey_facts
+  * ec2_ami_facts
 
 #### Windows
 

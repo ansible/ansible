@@ -46,14 +46,6 @@ options:
     default: jenkins
     description:
       - Name of the Jenkins user on the OS.
-  params:
-    required: false
-    default: null
-    description:
-      - Option used to allow the user to overwrite any of the other options. To
-        remove an option, set the value of the option to C(null).
-      - Changed in 2.5.0, 2.4.1, 2.3.3 to raise an error if C(url_password) is specified in params.
-        Use the actual C(url_password) argument instead.
   state:
     required: false
     choices: [absent, present, pinned, unpinned, enabled, disabled, latest]
@@ -120,6 +112,8 @@ notes:
   - It is not possible to run the module remotely by changing the I(url)
     parameter to point to the Jenkins server. The module must be used on the
     host where Jenkins runs as it needs direct access to the plugin files.
+  - "The C(params) option was removed in Ansible 2.5 due to circumventing Ansible's
+    option handling"
 '''
 
 EXAMPLES = '''
@@ -762,16 +756,11 @@ def main():
         supports_check_mode=True,
     )
 
-    # Update module parameters by user's parameters if defined
-    if 'params' in module.params and isinstance(module.params['params'], dict):
-        if 'url_password' in module.params['params']:
-            # The params argument should be removed eventually.  Until then, raise an error if
-            # url_password is specified there as it can lead to the password being logged
-            module.fail_json(msg='Do not specify url_password in params as it may get logged')
-
-        module.params.update(module.params['params'])
-        # Remove the params
-        module.params.pop('params', None)
+    # Params was removed
+    # https://meetbot.fedoraproject.org/ansible-meeting/2017-09-28/ansible_dev_meeting.2017-09-28-15.00.log.html
+    if module.params['params']:
+        module.fail_json(msg="The params option to jenkins_plugin was removed in Ansible 2.5"
+                         "since it circumvents Ansible's option handling")
 
     # Force basic authentication
     module.params['force_basic_auth'] = True
