@@ -176,3 +176,23 @@
 #     name: "{{ vm1 | basename }}"
 #     state: revert
 #     snapshot_name: snap_a
+
+# # Test0009: Create snap_a and check in result
+# - name: 0009 - create snapshot a
+#   vmware_guest_snapshot:
+#     validate_certs: False
+#     hostname: "{{ vcsim }}"
+#     username: "{{ vcsim_instance['json']['username'] }}"
+#     password: "{{ vcsim_instance['json']['password'] }}"
+#     datacenter: "{{ dc1 | basename }}"
+#     folder: "{{ vm1 | dirname }}"
+#     name: "{{ vm1 | basename }}"
+#     state: present
+#     snapshot_name: snap_a
+#     description: "snap named a"
+#   register: snapshot_details
+
+# - name: Check if snapshot details available or not
+#   assert:
+#     that:
+#         - "snapshot_details.results['current_snapshot']['name'] == 'snap_a'
