@@ -194,7 +194,7 @@ Other Topics
 Ansible Staff
 -------------
 
-Ansible, Inc is a company supporting Ansible and building additional solutions based on
+Ansible, Inc. is a company supporting Ansible and building additional solutions based on
 Ansible.  We also do services and support for those that are interested. We also offer an
 enterprise web front end to Ansible (see Tower below).
 
