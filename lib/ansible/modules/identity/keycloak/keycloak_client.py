@@ -49,6 +49,7 @@ options:
         description:
             - Client id of client to be worked on. This is usually an alphanumeric name chosen by
               you. Either this or I(id) is required. If you specify both, I(id) takes precedence.
+              This is 'clientId' in the Keycloak REST API.
         required: false
 
     id:
@@ -70,16 +71,19 @@ options:
     root_url:
         description:
             - Root URL appended to relative URLs for this client
+              This is 'rootUrl' in the Keycloak REST API.
         required: false
 
     admin_url:
         description:
             - URL to the admin interface of the client
+              This is 'adminUrl' in the Keycloak REST API.
         required: false
 
     base_url:
         description:
             - Default URL to use when the auth server needs to redirect or link back to the client
+              This is 'baseUrl' in the Keycloak REST API.
         required: false
 
     enabled:
@@ -94,6 +98,7 @@ options:
               I(secret) can set it, while for C(client-jwt), you can use the keys C(use.jwks.url),
               C(jwks.url), and C(jwt.credential.certificate) in the I(attributes) module parameter
               to configure its behavior.
+              This is 'clientAuthenticatorType' in the Keycloak REST API.
         required: false
         choices: ['client-secret', 'client-jwt']
 
@@ -109,72 +114,86 @@ options:
         description:
             - The registration access token provides access for clients to the client registration
               service.
+              This is 'registrationAccessToken' in the Keycloak REST API.
         required: false
 
     default_roles:
         description:
             - list of default roles for this client. If the client roles referenced do not exist
               yet, they will be created.
+              This is 'defaultRoles' in the Keycloak REST API.
         required: false
 
     redirect_uris:
         description:
             - Acceptable redirect URIs for this client.
+              This is 'redirectUris' in the Keycloak REST API.
         required: false
 
     web_origins:
         description:
             - List of allowed CORS origins.
+              This is 'webOrigins' in the Keycloak REST API.
         required: false
 
     not_before:
         description:
             - Revoke any tokens issued before this date for this client (this is a UNIX timestamp).
+              This is 'notBefore' in the Keycloak REST API.
         required: false
 
     bearer_only:
         description:
             - The access type of this client is bearer-only.
+              This is 'bearerOnly' in the Keycloak REST API.
         required: false
 
     consent_required:
         description:
             - If enabled, users have to consent to client access.
+              This is 'consentRequired' in the Keycloak REST API.
         required: false
 
     standard_flow_enabled:
         description:
             - Enable standard flow for this client or not (OpenID connect).
+              This is 'standardFlowEnabled' in the Keycloak REST API.
         required: false
 
     implicit_flow_enabled:
         description:
             - Enable implicit flow for this client or not (OpenID connect).
+              This is 'implictFlowEnabled' in the Keycloak REST API.
         required: false
 
     direct_access_grants_enabled:
         description:
             - Are direct access grants enabled for this client or not (OpenID connect).
+              This is 'directAccessGrantsEnabled' in the Keycloak REST API.
         required: false
 
     service_accounts_enabled:
         description:
             - Are service accounts enabled for this client or not (OpenID connect).
+              This is 'serviceAccountsEnabled' in the Keycloak REST API.
         required: false
 
     authorization_services_enabled:
         description:
             - Are authorization services enabled for this client or not (OpenID connect).
+              This is 'authorizationServicesEnabled' in the Keycloak REST API.
         required: false
 
     public_client:
         description:
             - Is the access type for this client public or not.
+              This is 'publicClient' in the Keycloak REST API.
         required: false
 
     frontchannel_logout:
         description:
             - Is frontchannel logout enabled for this client or not.
+              This is 'frontchannelLogout' in the Keycloak REST API.
         required: false
 
     protocol:
@@ -186,61 +205,71 @@ options:
     full_scope_allowed:
         description:
             - Is the "Full Scope Allowed" feature set for this client or not.
+              This is 'fullScopeAllowed' in the Keycloak REST API.
         required: false
 
     node_re_registration_timeout:
         description:
             - Cluster node re-registration timeout for this client.
+              This is 'nodeReRegistrationTimeout' in the Keycloak REST API.
         required: false
 
     registered_nodes:
         description:
             - dict of registered cluster nodes (with C(nodename) as the key and last registration
               time as the value).
+              This is 'registeredNodes' in the Keycloak REST API.
         required: false
 
     client_template:
         description:
             - Client template to use for this client. If it does not exist this field will silently
               be dropped.
+              This is 'clientTemplate' in the Keycloak REST API.
         required: false
 
     use_template_config:
         description:
             - Whether or not to use configuration from the I(client_template).
+              This is 'useTemplateConfig' in the Keycloak REST API.
         required: false
 
     use_template_scope:
         description:
             - Whether or not to use scope configuration from the I(client_template).
+              This is 'useTemplateScope' in the Keycloak REST API.
         required: false
 
     use_template_mappers:
         description:
             - Whether or not to use mapper configuration from the I(client_template).
+              This is 'useTemplateMappers' in the Keycloak REST API.
         required: false
 
     surrogate_auth_required:
         description:
             - Whether or not surrogate auth is required.
+              This is 'surrogateAuthRequired' in the Keycloak REST API.
         required: false
 
     authorization_settings:
         description:
             - a data structure defining the authorization settings for this client. For reference,
               please see the Keycloak API docs at U(http://www.keycloak.org/docs-api/3.3/rest-api/index.html#_resourceserverrepresentation).
+              This is 'authorizationSettings' in the Keycloak REST API.
         required: false
 
     protocol_mappers:
         description:
             - a list of dicts defining protocol mappers for this client. An example of one is given
               in the examples section.
+              This is 'protocolMappers' in the Keycloak REST API.
         required: false
 
     attributes:
         description:
             - A dict of further attributes for this client. This can contain various configuration
-              settings; an example is given in the examples section.
+              settings; an example is given in the examples section.              
         required: false
 
 extends_documentation_fragment:
@@ -476,7 +505,7 @@ def main():
     kc = KeycloakAPI(module)
 
     realm = module.params.get('realm')
-    id = module.params.get('id')
+    cid = module.params.get('id')
     state = module.params.get('state')
 
     # convert module parameters to client representation parameters (if they belong in there)
@@ -485,12 +514,12 @@ def main():
                      module.params.get(x) is not None]
     keycloak_argument_spec().keys()
     # See whether the client already exists in Keycloak
-    if id is None:
+    if cid is None:
         before_client = kc.get_client_by_clientid(module.params.get('client_id'), realm=realm)
         if before_client is not None:
-            id = before_client['id']
+            cid = before_client['id']
     else:
-        before_client = kc.get_client_by_id(id, realm=realm)
+        before_client = kc.get_client_by_id(cid, realm=realm)
 
     if before_client is None:
         before_client = dict()
@@ -554,9 +583,9 @@ def main():
 
                 module.exit_json(**result)
 
-            kc.update_client(id, updated_client, realm=realm)
+            kc.update_client(cid, updated_client, realm=realm)
 
-            after_client = kc.get_client_by_id(id, realm=realm)
+            after_client = kc.get_client_by_id(cid, realm=realm)
             if before_client == after_client:
                 result['changed'] = False
             if module._diff:
@@ -576,7 +605,7 @@ def main():
             if module.check_mode:
                 module.exit_json(**result)
 
-            kc.delete_client(id, realm=realm)
+            kc.delete_client(cid, realm=realm)
             result['proposed'] = dict()
             result['end_state'] = dict()
             result['msg'] = 'Client %s has been deleted.' % before_client['clientId']

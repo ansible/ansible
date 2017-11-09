@@ -31,7 +31,7 @@ __metaclass__ = type
 
 import json
 
-from ansible.module_utils.urls import open_url, fetch_url
+from ansible.module_utils.urls import open_url
 from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 
@@ -55,7 +55,7 @@ def keycloak_argument_spec():
         auth_client_secret=dict(type='str', default=None),
         auth_username=dict(type='str', aliases=['username'], required=True),
         auth_password=dict(type='str', aliases=['password'], required=True, no_log=True),
-        validate_certs=dict(type='str', default=True)
+        validate_certs=dict(type='bool', default=True)
     )
 
 
