@@ -68,7 +68,8 @@ def exec_command(module, command):
         out = connection.exec_command(command)
     except ConnectionError as exc:
         code = getattr(exc, 'code', 1)
-        return code, '', to_text(exc, errors='surrogate_then_replace')
+        message = getattr(exc, 'err', exc)
+        return code, '', to_text(message, errors='surrogate_then_replace')
     return 0, out, ''
 
 
