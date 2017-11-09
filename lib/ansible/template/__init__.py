@@ -70,6 +70,14 @@ NON_TEMPLATED_TYPES = (bool, Number)
 
 JINJA2_OVERRIDE = '#jinja2:'
 
+USE_JINJA2_NATIVE = False
+if C.DEFAULT_JINJA2_NATIVE:
+    try:
+        from jinja2.nativetypes import NativeEnvironment as Environment
+        from jinja2.nativetypes import native_concat as j2_concat
+        USE_JINJA2_NATIVE = True
+    except ImportError:
+        pass
 
 def generate_ansible_template_vars(path):
     b_path = to_bytes(path)
@@ -270,13 +278,22 @@ class Templar:
         self._fail_on_filter_errors = True
         self._fail_on_undefined_errors = C.DEFAULT_UNDEFINED_VAR_BEHAVIOR
 
-        self.environment = AnsibleEnvironment(
-            trim_blocks=True,
-            undefined=StrictUndefined,
-            extensions=self._get_extensions(),
-            finalize=self._finalize,
-            loader=FileSystemLoader(self._basedir),
-        )
+        if USE_JINJA2_NATIVE:
+            self.environment = Environment(
+                trim_blocks=True,
+                undefined=StrictUndefined,
+                extensions=self._get_extensions(),
+                finalize=self._finalize,
+                loader=FileSystemLoader(self._basedir),
+            )
+        else:
+            self.environment = AnsibleEnvironment(
+                trim_blocks=True,
+                undefined=StrictUndefined,
+                extensions=self._get_extensions(),
+                finalize=self._finalize,
+                loader=FileSystemLoader(self._basedir),
+            )
 
         # the current rendering context under which the templar class is working
         self.cur_context = None
@@ -432,6 +449,25 @@ class Templar:
 
         if fail_on_undefined is None:
             fail_on_undefined = self._fail_on_undefined_errors
+
+        if USE_JINJA2_NATIVE:
+            if not isinstance(variable, string_types):
+                return variable
+            try:
+                result = self.do_template(
+                    variable,
+                    preserve_trailing_newlines=preserve_trailing_newlines,
+                    escape_backslashes=escape_backslashes,
+                    fail_on_undefined=fail_on_undefined,
+                    overrides=overrides,
+                    disable_lookups=disable_lookups,
+                )
+                return result
+            except AnsibleFilterError:
+                if self._fail_on_filter_errors:
+                    raise
+                else:
+                    return variable
 
         try:
             if convert_bare:
@@ -665,7 +701,14 @@ class Templar:
     def do_template(self, data, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None, disable_lookups=False):
         # For preserving the number of input newlines in the output (used
         # later in this method)
-        data_newlines = _count_newlines_from_end(data)
+
+        if USE_JINJA2_NATIVE and not isinstance(data, string_types):
+            return data
+
+        if not USE_JINJA2_NATIVE:
+            data_newlines = _count_newlines_from_end(data)
+        else:
+            data_newlines = None
 
         if fail_on_undefined is None:
             fail_on_undefined = self._fail_on_undefined_errors
@@ -678,7 +721,7 @@ class Templar:
                 myenv = self.environment.overlay(overrides)
 
             # Get jinja env overrides from template
-            if data.startswith(JINJA2_OVERRIDE):
+            if hasattr(data, 'startswith') and data.startswith(JINJA2_OVERRIDE):
                 eol = data.find('\n')
                 line = data[len(JINJA2_OVERRIDE):eol]
                 data = data[eol + 1:]
@@ -720,7 +763,7 @@ class Templar:
 
             try:
                 res = j2_concat(rf)
-                if new_context.unsafe:
+                if hasattr(new_context, 'unsafe') and new_context.unsafe:
                     res = wrap_var(res)
             except TypeError as te:
                 if 'StrictUndefined' in to_native(te):
@@ -730,6 +773,9 @@ class Templar:
                 else:
                     display.debug("failing because of a type error, template data is: %s" % to_native(data))
                     raise AnsibleError("Unexpected templating type error occurred on (%s): %s" % (to_native(data), to_native(te)))
+
+            if USE_JINJA2_NATIVE:
+                return res
 
             if preserve_trailing_newlines:
                 # The low level calls above do not preserve the newline

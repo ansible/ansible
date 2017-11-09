@@ -694,6 +694,15 @@ DEFAULT_JINJA2_EXTENSIONS:
   env: [{name: ANSIBLE_JINJA2_EXTENSIONS}]
   ini:
   - {key: jinja2_extensions, section: defaults}
+DEFAULT_JINJA2_NATIVE:
+  name: Use jinja2's NativeEnvironment for templating
+  default: False
+  description: This options preserves variable types during template operations.
+  env: [{name: ANSIBLE_JINJA2_NATIVE}]
+  ini:
+  - {key: jinja2_native, section: defaults}
+  type: boolean
+  yaml: {key: jinja2_native}
 DEFAULT_KEEP_REMOTE_FILES:
   name: Keep remote files
   default: False
