@@ -254,7 +254,8 @@
 
 - assert:
     that:
-      - "sync_result.changed == false"
+      - sync_result is not changed
+      - sync_result is failed
 
 - name: Cleanup
   file:
