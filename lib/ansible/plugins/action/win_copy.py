@@ -232,7 +232,7 @@ class ActionModule(ActionBase):
     def _create_zip_tempfile(self, files, directories):
         tmpdir = tempfile.mkdtemp()
         zip_file_path = os.path.join(tmpdir, "win_copy.zip")
-        zip_file = zipfile.ZipFile(zip_file_path, "w")
+        zip_file = zipfile.ZipFile(zip_file_path, "w", zipfile.ZIP_STORED, True)
 
         # encoding the file/dir name with base64 so Windows can unzip a unicode
         # filename and get the right name, Windows doesn't handle unicode names
