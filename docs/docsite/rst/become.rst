@@ -225,14 +225,43 @@ Administrative Rights
 ---------------------
 
 Many tasks in Windows require administrative privileges to complete. When using
-the ``runas`` become method, Ansible will automatically run the module with the
-full privileges of the remote user, unless User Account Control (UAC) Admin Approval
-Mode is enabled on the target hosts. When UAC is enabled, Ansible attempts to elevate
-module processes with administrative privileges, but uses a limited token if elevation
-fails.
+the ``runas`` become method, Ansible will attempt to run the module with the
+full privileges that are available to the remote user. If it fails to elevate
+the user token, it will continue to use the limited token during execution.
 
-There are several ways to use the ``runas`` become method with full privileges
-when UAC is enabled:
+Before Ansible 2.5, a token was only able to be elevated when UAC was disabled
+or the remote user had the ``SeTcbPrivilege`` assigned. This restriction has
+been lifted in Ansible 2.5 and a user that is a member of the
+``BUILTIN\Administrators`` group should have an elevated token during the
+module execution.
+
+To determine the type of token that Ansible was able to get, run the following
+task and check the output::
+
+    - win_shell: cmd.exe /c whoami && whoami /groups && whoami /priv
+      become: yes
+
+Under the ``GROUP INFORMATION`` section, the ``Mandatory Label`` entry
+determines whether the user has Administrative rights. Here are the labels that
+can be returned and what they mean:
+
+* ``Medium``: Ansible failed to get an elevated token and ran under a limited
+  token. Only a subset of the privileges assigned to user are available during
+  the module execution and the user does not have administrative rights.
+
+* ``High``: An elevated token was used and all the privileges assigned to the
+  user are available during the module execution.
+
+* ``System``: The ``NT AUTHORITY\System`` account is used and has the highest
+  level of privileges available.
+
+The output will also show the list of privileges that have been granted to the
+user. When ``State==Disabled``, the privileges have not been enabled but can be
+if required. In most scenarios these privileges are automatically enabled when
+required.
+
+If running on a version of Ansible that is older than 2.5 or the normal
+``runas`` escalation process fails, an elevated token can be retrieved by:
 
 * Set the ``become_user`` to ``System`` which has full control over the
   operating system.
@@ -269,6 +298,9 @@ when UAC is enabled:
       win_reboot:
       when: uac_result|changed
 
+.. Note:: Granting the ``SeTcbPrivilege`` or turning UAC off can cause Windows
+    security vulnerabilities and care should be given if these steps are taken.
+
 Local Service Accounts
 ----------------------
 
@@ -291,16 +323,18 @@ Limitations
 
 Be aware of the following limitations with ``become`` on Windows:
 
-* Running a task with ``async`` and ``become`` does not work.
+* Running a task with ``async`` and ``become`` on Windows Server 2008, 2008 R2
+  and Windows 7 does not work.
 
 * The become user logs on with an interactive session, so it must have the
   ability to do so on the Windows host. If it does not inherit the
   ``SeAllowLogOnLocally`` privilege or inherits the ``SeDenyLogOnLocally``
   privilege, the become process will fail.
 
-* Prior to Ansible version 2.3, become only worked when ``ansible_winrm_transport`` was
-  either ``basic`` or ``credssp``. This restriction has been lifted since the
-  2.4 release of Ansible.
+* Prior to Ansible version 2.3, become only worked when
+  ``ansible_winrm_transport`` was either ``basic`` or ``credssp``. This
+  restriction has been lifted since the 2.4 release of Ansible for all hosts
+  except Windows Server 2008 (non R2 version).
 
 .. seealso::
 
