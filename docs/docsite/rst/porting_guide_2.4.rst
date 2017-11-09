@@ -131,6 +131,28 @@ Developers:
 * Any callbacks inheriting from other callbacks might need to also be updated to contain the same documented options
   as the parent or the options won't be available.  This is noted in the developer guide.
 
+Template lookup plugin
+----------------------
+
+Prior to Ansible 2.4, the strings passed to the template lookup plugin would have backslashes
+escaped.  This has changed so that users have to escape backslashes themselves in 2.4.  This change
+brings the template lookup plugin inline with the template module so that the same backslash
+escaping rules apply to both.
+
+If you have a template lookup like this::
+
+    - debug:
+        msg: '{{ lookup("template", "tpl.j2") }}'
+
+And the template in :file:`tpl.j2` is::
+
+    {{ "name surname" | regex_replace("^[^\s]+\s+(.*)", "\1") }}
+
+Change the template like this::
+
+    {{ "name surname" | regex_replace("^[^\\s]+\\s+(.*)", "\\1") }}
+
+
 Networking
 ==========
 
