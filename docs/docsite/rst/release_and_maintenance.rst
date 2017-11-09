@@ -81,7 +81,7 @@ security fixes to releases which are two releases old. This work is tracked on t
 
 .. note:: Support for three major releases began with Ansible-2.4. Ansible-2.3 and older versions
     are only supported for two releases with the first stage including both security and general bug
-    fixes while the second stage includes security and critical bug fixes
+    fixes while the second stage includes security and critical bug fixes.
 
 The fixes that land in supported stable branches will eventually be released
 as a new version when necessary.

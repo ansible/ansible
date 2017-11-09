@@ -185,7 +185,7 @@ Security Group
   ``security_group_Pete_s_Fancy_Group``
 
 Tags
-  Each instance can have a variety of key/value pairs associated with it called Tags. The most common tag key is 'Name', though anything is possible. Each key/value pair is its own group of instances, again with special characters converted to underscores, in the format ``tag_KEY_VALUE``
+  Each instance can have a variety of key/value pairs associated with it called Tags. The most common tag key is 'Name', though anything is possible. Each key/value pair is its own group of instances, again with special characters converted to underscores, in the format ``tag_KEY_VALUE``.
   e.g.
   ``tag_Name_Web`` can be used as is
   ``tag_Name_redis-master-001`` becomes ``tag_Name_redis_master_001``
