@@ -164,19 +164,26 @@ class Cli:
             responses.append(out)
         return responses
 
-    def load_config(self, config, return_error=False):
+    def load_config(self, config, return_error=False, opts=None):
         """Sends configuration commands to the remote device
         """
+        if opts is None:
+            opts = {}
 
+        errors = 'surrogate_then_replace'
         rc, out, err = self.exec_command('configure')
         if rc != 0:
-            self._module.fail_json(msg='unable to enter configuration mode', output=to_text(err, errors='surrogate_then_replace'))
+            msg = 'unable to enter configuration mode'
+            self._module.fail_json(msg=msg, output=to_text(err, errors=errors))
 
         msgs = []
         for cmd in config:
             rc, out, err = self.exec_command(cmd)
-            if rc != 0:
-                self._module.fail_json(msg=to_text(err, errors='surrogate_then_replace'))
+            if opts.get('ignore_timeout') and rc == 1:
+                msgs.append(err)
+                return msgs
+            elif rc != 0:
+                self._module.fail_json(msg=to_text(err, errors=errors))
             elif out:
                 msgs.append(out)
 
@@ -243,9 +250,12 @@ class Nxapi:
 
         return dict(ins_api=msg)
 
-    def send_request(self, commands, output='text', check_status=True, return_error=False):
+    def send_request(self, commands, output='text', check_status=True,
+                     return_error=False, opts=None):
         # only 10 show commands can be encoded in each request
         # messages sent to the remote device
+        if opts is None:
+            opts = {}
         if output != 'config':
             commands = collections.deque(to_list(commands))
             stack = list()
@@ -282,7 +292,10 @@ class Nxapi:
             )
             self._nxapi_auth = headers.get('set-cookie')
 
-            if headers['status'] != 200:
+            if opts.get('ignore_timeout') and headers['status'] == -1:
+                result.append(headers['msg'])
+                return result
+            elif headers['status'] != 200:
                 self._error(**headers)
 
             try:
@@ -351,11 +364,12 @@ class Nxapi:
 
         return responses
 
-    def load_config(self, commands, return_error=False):
+    def load_config(self, commands, return_error=False, opts=None):
         """Sends the ordered set of commands to the device
         """
         commands = to_list(commands)
-        msg = self.send_request(commands, output='config', check_status=True, return_error=return_error)
+        msg = self.send_request(commands, output='config', check_status=True,
+                                return_error=return_error, opts=opts)
         if return_error:
             return msg
         else:
@@ -410,6 +424,6 @@ def run_commands(module, commands, check_rc=True):
     return conn.run_commands(to_command(module, commands), check_rc)
 
 
-def load_config(module, config, return_error=False):
+def load_config(module, config, return_error=False, opts=None):
     conn = get_connection(module)
-    return conn.load_config(config, return_error=return_error)
+    return conn.load_config(config, return_error, opts)
