@@ -262,18 +262,6 @@ def describe_subnets_with_backoff(client, **params):
     return client.describe_subnets(**params)
 
 
-def subnet_exists(conn, module, subnet_id):
-    filters = ansible_dict_to_boto3_filter_list({'subnet-id': subnet_id})
-    try:
-        subnets = get_subnet_info(describe_subnets_with_backoff(conn, Filters=filters))
-    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-        module.fail_json_aws(e, msg="Couldn't check if subnet exists")
-    if subnets and 'state' in subnets[0] and subnets[0]['state'] == "available":
-        return subnets[0]
-
-    return False
-
-
 def create_subnet(conn, module, vpc_id, cidr, ipv6_cidr=None, az=None):
     wait = module.params['wait']
     wait_timeout = module.params['wait_timeout']
@@ -294,24 +282,18 @@ def create_subnet(conn, module, vpc_id, cidr, ipv6_cidr=None, az=None):
 
     # Sometimes AWS takes its time to create a subnet and so using
     # new subnets's id to do things like create tags results in
-    # exception.  boto doesn't seem to refresh 'state' of the newly
-    # created subnet, i.e.: it's always 'pending'.
+    # exception.
     if wait and subnet.get('state') != 'available':
-        pause = 2
-        backoff = 2
-        timer = time.time() + wait_timeout
-        while time.time() < timer:
-            time.sleep(pause)
-            subnet = subnet_exists(conn, module, subnet['id'])
-            if subnet:
-                return subnet
+        delay = 5
+        max_attempts = wait_timeout / delay
+        waiter_config = dict(Delay=delay, MaxAttempts=max_attempts)
+        waiter = conn.get_waiter('subnet_available')
+        try:
+            waiter.wait(SubnetIds=[subnet['id']], WaiterConfig=waiter_config)
+            subnet['state'] = 'available'
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            module.fail_json(msg="Create subnet action timed out waiting for Subnet to become available.")
 
-            pause *= backoff
-
-        # Loop finished without returning so we fail with a timeout message
-        module.fail_json(msg="Create subnet action timed out waiting for Subnet to become available.")
-
-    # Return subnet object without waiting for state to be available
     return subnet
 
 
