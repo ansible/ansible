@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2017 Ian Philpot, <ian.philpot@microsoft.com>; 
+# Copyright (c) 2017 Ian Philpot, <ian.philpot@microsoft.com>;
 # Obezimnaka Boms, <t-ozboms@microsoft.com>
 #
 # This file is part of Ansible
@@ -109,7 +109,7 @@ extends_documentation_fragment:
     - azure
     - azure_tags
 
-author: 
+author:
     - "Obezimnaka Boms (@ozboms)"
     - "Ian Philpot (@tripdubroot)"
 '''
