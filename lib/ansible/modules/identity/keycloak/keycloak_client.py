@@ -269,7 +269,7 @@ options:
     attributes:
         description:
             - A dict of further attributes for this client. This can contain various configuration
-              settings; an example is given in the examples section.              
+              settings; an example is given in the examples section.
         required: false
 
 extends_documentation_fragment:
