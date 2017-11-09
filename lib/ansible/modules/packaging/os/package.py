@@ -52,6 +52,14 @@ EXAMPLES = '''
     name: ntpdate
     state: present
 
+# Install multiple packages
+- name: install ntp and ntpdate
+  package:
+    name:
+      - ntp
+      - ntpdate
+    state: present
+
 # This uses a variable as this changes per distribution.
 - name: remove the apache package
   package:
