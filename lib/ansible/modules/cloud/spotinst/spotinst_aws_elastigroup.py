@@ -1202,8 +1202,8 @@ def expand_strategy(eg, module):
     terminate_at_end_of_billing_hour = module.params.get('terminate_at_end_of_billing_hour')
 
     if terminate_at_end_of_billing_hour is not None:
-        eg_strategy.eg_scaling_strategy = expand_fields(scaling_strategy_fields
-                                                        , module.params, 'ScalingStrategy')
+        eg_strategy.eg_scaling_strategy = expand_fields(scaling_strategy_fields,
+                                                        module.params, 'ScalingStrategy')
 
     if persistence is not None:
         eg_strategy.persistence = expand_fields(persistence_fields, persistence, 'Persistence')
