@@ -36,6 +36,7 @@ The following is a list of module_utils files and a general description. The mod
 - netcmd.py - Defines commands and comparison operators for use in networking modules
 - netscaler.py - Utilities specifically for the netscaler network modules.
 - network.py - Functions for running commands on networking devices
+- nso.py - Utilities for modules that work with Cisco NSO.
 - nxos.py - Contains definitions and helper functions specific to Cisco NXOS networking devices
 - openstack.py - Utilities for modules that work with Openstack instances.
 - openswitch.py - Definitions and helper functions for modules that manage OpenSwitch devices
