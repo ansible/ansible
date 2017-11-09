@@ -32,6 +32,20 @@
     baseurl: "file://{{ repodir }}"
     gpgcheck: no
 
+- name: Create RPMs and put them into a repo (i686)
+  shell: "python /tmp/create-repo.py i686"
+  register: repo_i686
+
+- set_fact:
+    repodir_i686: "{{ repo_i686.stdout_lines[-1] }}"
+
+- name: Install the repo (i686)
+  yum_repository:
+    name: "fake-i686"
+    description: "fake-i686"
+    baseurl: "file://{{ repodir_i686 }}"
+    gpgcheck: no
+
 - name: Create RPMs and put them into a repo (ppc64)
   shell: "python /tmp/create-repo.py ppc64"
   register: repo_ppc64
@@ -531,4 +545,90 @@
         - "'msg' in yum_result"
         - "'rc' in yum_result"
         - "'results' in yum_result"
+# ============================================================================
+- block:
+  - name: make sure foo is not installed
+    yum:
+      name: foo
+      state: absent
+
+  - name: install foo both archs
+    yum:
+      name: "{{ item }}"
+      state: present
+    with_items:
+      - "{{ repodir }}/foo-1.1-1.x86_64.rpm"
+      - "{{ repodir_i686 }}/foo-1.1-1.i686.rpm"
+
+  - name: try to install lower version of foo from rpm file, without allow_downgrade, just one arch
+    yum:
+      name: "{{ repodir_i686 }}/foo-1.0-1.i686.rpm"
+      state: present
+    register: yum_result
+
+  - name: check foo with rpm
+    shell: rpm -q foo
+    register: rpm_result
+
+  - name: verify installation
+    assert:
+      that:
+          - "rpm_result.rc == 0"
+          - "yum_result.rc == 0"
+          - "not yum_result.changed"
+          - "not yum_result|failed"
+          - "rpm_result.stdout_lines[0].startswith('foo-1.1-1')"
+          - "rpm_result.stdout_lines[1].startswith('foo-1.1-1')"
+
+  - name: verify yum module outputs
+    assert:
+      that:
+          - "'changed' in yum_result"
+          - "'msg' in yum_result"
+          - "'rc' in yum_result"
+          - "'results' in yum_result"
+  when: ansible_architecture == "x86_64"
+# ============================================================================
+- block:
+  - name: make sure foo is not installed
+    yum:
+      name: foo
+      state: absent
+
+  - name: install foo both archs
+    yum:
+      name: "{{ item }}"
+      state: present
+    with_items:
+      - "{{ repodir }}/foo-1.0-1.x86_64.rpm"
+      - "{{ repodir_i686 }}/foo-1.0-1.i686.rpm"
+
+  - name: Update both arch in one task using rpm files
+    yum:
+      name: "{{ repodir }}/foo-1.1-1.x86_64.rpm,{{ repodir_i686 }}/foo-1.1-1.i686.rpm"
+      state: present
+    register: yum_result
+
+  - name: check foo with rpm
+    shell: rpm -q foo
+    register: rpm_result
+
+  - name: verify installation
+    assert:
+      that:
+          - "rpm_result.rc == 0"
+          - "yum_result.rc == 0"
+          - "yum_result.changed"
+          - "not yum_result|failed"
+          - "rpm_result.stdout_lines[0].startswith('foo-1.1-1')"
+          - "rpm_result.stdout_lines[1].startswith('foo-1.1-1')"
+
+  - name: verify yum module outputs
+    assert:
+      that:
+          - "'changed' in yum_result"
+          - "'msg' in yum_result"
+          - "'rc' in yum_result"
+          - "'results' in yum_result"
+  when: ansible_architecture == "x86_64"
 # ============================================================================
