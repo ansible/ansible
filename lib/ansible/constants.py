@@ -100,6 +100,11 @@ VAULT_VERSION_MIN = 1.0
 VAULT_VERSION_MAX = 1.0
 
 # FIXME: remove once play_context mangling is removed
+# the magic variable mapping dictionary below is used to translate
+# host/inventory variables to fields in the PlayContext
+# object. The dictionary values are tuples, to account for aliases
+# in variable names.
+
 MAGIC_VARIABLE_MAPPING = dict(
 
     # base
