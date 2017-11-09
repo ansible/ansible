@@ -29,7 +29,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_keyvault
 
-version_added: "2.4"
+version_added: "2.5"
 
 short_description: Create, delete and update key vaults.
 
@@ -41,10 +41,10 @@ options:
         description:
             - name of resource group.
         required: true
-    name: 
+    name:
         description:
             - name of the key vault.
-        required: 
+        required: true
     state:
         description:
             - Assert the state of the key vault. Use 'present' to create or update and
@@ -174,7 +174,7 @@ state:
     description: Current state of the key vault.
     returned: always
     type: dict
-    sample:{
+    example: {
         "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/presentation_rg/providers/Microsoft.KeyVault/vaults/ozidatamanagement",
         "location": "westus2",
         "name": "keyvault",
@@ -218,11 +218,12 @@ except ImportError:
     # This is handled in azure_rm_common
     pass
 
+
 class AzureRMKeyVault(AzureRMModuleBase):
 
     def __init__(self):
 
-        #define user inputs from playbook
+        # define user inputs from playbook
         self.module_arg_spec = dict(
             resource_group=dict(type='str', required=True),
             name=dict(type='str', required=True),
@@ -248,7 +249,7 @@ class AzureRMKeyVault(AzureRMModuleBase):
             ], default='Key, Secret, & Certificate Management', type='str')
         )
 
-        # store the results of the module operation 
+        # store the results of the module operation
         self.results = dict(
             changed=False,
             state=dict()
@@ -270,11 +271,11 @@ class AzureRMKeyVault(AzureRMModuleBase):
         self.tags = None
 
         super(AzureRMKeyVault, self).__init__(self.module_arg_spec,
-                                            supports_check_mode=True,
-                                            supports_tags=True)
+                                              supports_check_mode=True,
+                                              supports_tags=True)
 
     def exec_module(self, **kwargs):
-    
+
         # create a new vault variable in case the 'try' doesn't find a vault
         vault = None
 
@@ -297,8 +298,8 @@ class AzureRMKeyVault(AzureRMModuleBase):
             vault = self.keyvault_client.vaults.get(self.resource_group, self.name)
 
             # serialize object into a dictionary
-            results = vault.as_dict() # vault_to_dict(vault)
-            
+            results = vault.as_dict()
+
             # don't change anything if creating an existing vault (unless outdated tags), but change if deleting it
             if self.state == 'present':
                 changed = False
@@ -309,9 +310,9 @@ class AzureRMKeyVault(AzureRMModuleBase):
 
             elif self.state == 'absent':
                 changed = True
-        
+
         except CloudError:
-            # the vault does not exist (it's deleted) so create it 
+            # the vault does not exist (it's deleted) so create it
             if self.state == 'present':
                 changed = True
 
@@ -332,8 +333,8 @@ class AzureRMKeyVault(AzureRMModuleBase):
             return self.results
 
         if changed:
-             if self.state == 'present':
-                # if you want to create or update a key vault 
+            if self.state == 'present':
+                # if you want to create or update a key vault
                 if not vault:
                     # create new vault
                     self.log('Creating vault {0}'.format(self.name))
@@ -341,20 +342,19 @@ class AzureRMKeyVault(AzureRMModuleBase):
                     permission_preset = create_permissions(self)
                     access_policy_lst = [AccessPolicyEntry(self.tenant_id, self.object_id, permission_preset, application_id=self.application_id)]
                     vault_properties = VaultProperties(self.tenant_id,
-                                                        use_sku,
-                                                        access_policies=access_policy_lst,
-                                                        vault_uri=self.vault_uri,
-                                                        enabled_for_deployment=self.enabled_for_deployment,
-                                                        enabled_for_disk_encryption=self.enabled_for_disk_encryption,
-                                                        enabled_for_template_deployment=self.enabled_for_template_deployment
-                    )
+                                                       use_sku,
+                                                       access_policies=access_policy_lst,
+                                                       vault_uri=self.vault_uri,
+                                                       enabled_for_deployment=self.enabled_for_deployment,
+                                                       enabled_for_disk_encryption=self.enabled_for_disk_encryption,
+                                                       enabled_for_template_deployment=self.enabled_for_template_deployment)
                     vault = VaultCreateOrUpdateParameters(self.location, vault_properties, tags=self.tags)
                 else:
                     # update the vault
                     vault = VaultCreateOrUpdateParameters(self.location, results['properties'], tags=results['tags'])
 
                 self.results['state'] = self.create_or_update_vault(vault)
-             elif self.state == 'absent':
+            elif self.state == 'absent':
                 # delete vault
                 self.delete_vault()
                 # the delete does not actually return anything. if no exception, then we'll assume
@@ -368,7 +368,7 @@ class AzureRMKeyVault(AzureRMModuleBase):
             new_vault = self.keyvault_client.vaults.create_or_update(self.resource_group, self.name, vault)
         except Exception as exc:
             self.fail("Error creating or updating vault {0} - {1}".format(self.name, str(exc)))
-        return new_vault.as_dict() # vault_to_dict(new_vault)
+        return new_vault.as_dict()
 
     def delete_vault(self):
         try:
@@ -378,6 +378,7 @@ class AzureRMKeyVault(AzureRMModuleBase):
             self.fail("Error deleting vault {0} - {1}".format(self.name, str(exc)))
         return None
 
+
 def create_permissions(self):
     # function takes in presets for permissions and returns a permissions object with the necessary/required permissions
     fin_permissions = None
@@ -386,21 +387,34 @@ def create_permissions(self):
     c_perm = []
     # if they want the 'Key, Secret, & Certificate Management' permission preset, create and return a new permissions class with all the necessary information
     if self.permissions == 'Key, Secret, & Certificate Management':
-        k_perm = ['Get', 'List', 'Update', 'Create', 'Import', 'Delete', 'Recover', 'Backup', 'Restore']
-        s_perm = ['Get', 'List', 'Set', 'Delete', 'Recover', 'Backup', 'Restore']
-        c_perm = ['Get', 'List', 'Update', 'Create', 'Import', 'Delete', 'ManageContacts', 'ManageIssuers', 'GetIssuers', 'ListIssuers', 'SetIssuers', 'DeleteIssuers']
+        k_perm = ['Get', 'List', 'Update', 'Create', 'Import',
+                  'Delete', 'Recover', 'Backup', 'Restore']
+        s_perm = ['Get', 'List', 'Set', 'Delete', 'Recover',
+                  'Backup', 'Restore']
+        c_perm = ['Get', 'List', 'Update', 'Create', 'Import',
+                  'Delete', 'ManageContacts', 'ManageIssuers',
+                  'GetIssuers', 'ListIssuers', 'SetIssuers', 'DeleteIssuers']
     elif self.permissions == 'Key & Secret Management':
-        k_perm = ['Get', 'List', 'Update', 'Create', 'Import', 'Delete', 'Recover', 'Backup', 'Restore']
-        s_perm = ['Get', 'List', 'Set', 'Delete', 'Recover', 'Backup', 'Restore']
+        k_perm = ['Get', 'List', 'Update', 'Create', 'Import',
+                  'Delete', 'Recover', 'Backup', 'Restore']
+        s_perm = ['Get', 'List', 'Set', 'Delete', 'Recover',
+                  'Backup', 'Restore']
     elif self.permissions == 'Secret & Certificate Management':
-        s_perm = ['Get', 'List', 'Set', 'Delete', 'Recover', 'Backup', 'Restore']
-        c_perm = ['Get', 'List', 'Update', 'Create', 'Import', 'Delete', 'ManageContacts', 'ManageIssuers', 'GetIssuers', 'ListIssuers', 'SetIssuers', 'DeleteIssuers']
+        s_perm = ['Get', 'List', 'Set', 'Delete', 'Recover',
+                  'Backup', 'Restore']
+        c_perm = ['Get', 'List', 'Update', 'Create', 'Import',
+                  'Delete', 'ManageContacts', 'ManageIssuers',
+                  'GetIssuers', 'ListIssuers', 'SetIssuers', 'DeleteIssuers']
     elif self.permissions == 'Key Management':
-        k_perm = ['Get', 'List', 'Update', 'Create', 'Import', 'Delete', 'Recover', 'Backup', 'Restore']
+        k_perm = ['Get', 'List', 'Update', 'Create', 'Import',
+                  'Delete', 'Recover', 'Backup', 'Restore']
     elif self.permissions == 'Secret Management':
-        s_perm = ['Get', 'List', 'Set', 'Delete', 'Recover', 'Backup', 'Restore']
+        s_perm = ['Get', 'List', 'Set', 'Delete', 'Recover',
+                  'Backup', 'Restore']
     elif self.permissions == 'Certificate Management':
-        c_perm = ['Get', 'List', 'Update', 'Create', 'Import', 'Delete', 'ManageContacts', 'ManageIssuers', 'GetIssuers', 'ListIssuers', 'SetIssuers', 'DeleteIssuers']
+        c_perm = ['Get', 'List', 'Update', 'Create', 'Import',
+                  'Delete', 'ManageContacts', 'ManageIssuers',
+                  'GetIssuers', 'ListIssuers', 'SetIssuers', 'DeleteIssuers']
     elif self.permissions == 'SQL Server Connector':
         k_perm = ['Get', 'List', 'UnwrapKey', 'WrapKey']
     elif self.permissions == 'Azure Backup':
@@ -411,38 +425,6 @@ def create_permissions(self):
     fin_permissions = Permissions(keys=k_perm, secrets=s_perm, certificates=c_perm)
     return fin_permissions
 
-def vault_to_dict(vault):
-    # turn Vault object into a dictionary (serialization)
-    result = dict(
-        id=vault.id,
-        name=vault.name,
-        location=vault.location,
-        type=vault.type,
-        tags = vault.tags,
-        properties=None
-    )
-    if vault.properties:
-        result['properties']=dict(
-            tenant_id=vault.properties.tenant_id or None,
-            sku=dict(
-                name=vault.properties.sku.name.value
-            ) if vault.properties.sku else None,
-            vault_uri=vault.properties.vault_uri,
-            access_policies=[dict(
-                tenant_id=_.tenant_id,
-                object_id=_.object_id,
-                application_id=_.application_id,
-                permissions=dict(
-                    keys=[key for key in _.permissions.keys],
-                    secrets=[secret for secret in _.permissions.secrets],
-                    certificates=[certificate for certificate in _.permissions.certificates]
-                ) if _.permissions else None
-            ) for _ in vault.properties.access_policies] if vault.properties.access_policies else None,
-            enabled_for_deployment=vault.properties.enabled_for_deployment,
-            enabled_for_disk_encryption=vault.properties.enabled_for_disk_encryption,
-            enabled_for_template_deployment=vault.properties.enabled_for_template_deployment
-        )
-    return result 
 
 def main():
     AzureRMKeyVault()

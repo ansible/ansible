@@ -29,7 +29,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_keyvault_facts
 
-version_added: "2.4"
+version_added: "2.5"
 
 short_description: Get key vault facts.
 
@@ -65,7 +65,7 @@ EXAMPLES = '''
         resource_group: Testing
         name: foobar22
 
-    - name: Get facts for all zones in a resource group 
+    - name: Get facts for all zones in a resource group
       azure_rm_keyvault_facts:
         resource_group: Testing
         top: 50
@@ -96,6 +96,7 @@ except:
 
 AZURE_OBJECT_CLASS = 'KeyVault'
 
+
 class AzureRMKeyVaultFacts(AzureRMModuleBase):
 
     def __init__(self):
@@ -117,6 +118,7 @@ class AzureRMKeyVaultFacts(AzureRMModuleBase):
         self.name = None
         self.resource_group = None
         self.tags = None
+        self.top = None
 
         super(AzureRMKeyVaultFacts, self).__init__(self.module_arg_spec)
 
@@ -154,7 +156,7 @@ class AzureRMKeyVaultFacts(AzureRMModuleBase):
 
         # serialize result
         if item and self.has_tags(item.tags, self.tags):
-            results = [vault_to_dict(item)]
+            results = [item.as_dict()]
         return results
 
     def list_resource_group(self):
@@ -167,7 +169,7 @@ class AzureRMKeyVaultFacts(AzureRMModuleBase):
         results = []
         for item in response:
             if self.has_tags(item.tags, self.tags):
-                results.append(vault_to_dict(item))
+                results.append(item.as_dict())
         return results
 
     def list_items(self):
@@ -183,38 +185,6 @@ class AzureRMKeyVaultFacts(AzureRMModuleBase):
                 results.append(self.serialize_obj(item, AZURE_OBJECT_CLASS))
         return results
 
-def vault_to_dict(vault):
-    # turn Vault object into a dictionary (serialization)
-    result = dict(
-        id=vault.id,
-        name=vault.name,
-        location=vault.location,
-        type=vault.type,
-        tags = vault.tags,
-        properties=None
-    )
-    if vault.properties:
-        result['properties']=dict(
-            tenant_id=vault.properties.tenant_id,
-            sku=dict(
-                name=vault.properties.sku.name.value
-            ) if vault.properties.sku else None,
-            vault_uri=vault.properties.vault_uri,
-            access_policies=[dict(
-                tenant_id=_.tenant_id,
-                object_id=_.object_id,
-                application_id=_.application_id,
-                permissions=dict(
-                    keys=[key for key in _.permissions.keys],
-                    secrets=[secret for secret in _.permissions.secrets],
-                    certificates=[certificate for certificate in _.permissions.certificates]
-                ) if _.permissions else None
-            ) for _ in vault.properties.access_policies] if vault.properties.access_policies else None,
-            enabled_for_deployment=vault.properties.enabled_for_deployment,
-            enabled_for_disk_encryption=vault.properties.enabled_for_disk_encryption,
-            enabled_for_template_deployment=vault.properties.enabled_for_template_deployment
-        )
-    return result
 
 def main():
     AzureRMKeyVaultFacts()
