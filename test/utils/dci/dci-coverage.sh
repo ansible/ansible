@@ -3,12 +3,14 @@
 set -o pipefail
 
 test="dci-$1"
+branch="$2"
+CODECOV_SLUG="ansible/ansible"
 
 if find test/results/coverage/ -mindepth 1 -name '.*' -prune -o -print -quit | grep -q .; then
     stub=""
 
     # shellcheck disable=SC2086
-    test/runner/ansible-test coverage xml --color -v --requirements --group-by command --group-by version ${stub:+"$stub"}
+    test/runner/ansible-test coverage xml -v --requirements --group-by command --group-by version ${stub:+"$stub"}
 
     # upload coverage report to codecov.io only when using complete on-demand coverage
     for file in test/results/reports/coverage=*.xml; do
@@ -27,6 +29,10 @@ if find test/results/coverage/ -mindepth 1 -name '.*' -prune -o -print -quit | g
             -X fix \
             -X search \
             -X xcode \
+            -K \
+            -B "$branch" \
+            -r "ansible/ansible" \
+            -v \
         || echo "Failed to upload code coverage report to codecov.io: ${file}"
     done
 fi
