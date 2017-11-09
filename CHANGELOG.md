@@ -59,6 +59,7 @@ Ansible Changes By Release
 * Security fix to avoid provider password leaking in logs for network modules
 
 <a id="2.3.2"></a>
+* Python3 fixes for azure modules
 
 ## 2.3.2 "Ramble On" - 2017-08-04
 
