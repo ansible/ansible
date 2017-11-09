@@ -169,153 +169,112 @@ from ansible.module_utils.ec2 import (HAS_BOTO3, boto3_conn, ec2_argument_spec,
                                       get_aws_connection_info)
 
 
+def compare_dicts(dict_a, dict_b, keys):
+    for k in keys:
+        if dict_a.get(k) != dict_b.get(k):
+            return True
+    return False
+
+
 def create_metric_alarm(connection, module):
-    name = module.params.get('name')
-    metric = module.params.get('metric')
-    namespace = module.params.get('namespace')
-    statistic = module.params.get('statistic')
-    comparison = module.params.get('comparison')
-    threshold = module.params.get('threshold')
-    period = module.params.get('period')
-    evaluation_periods = module.params.get('evaluation_periods')
-    unit = module.params.get('unit')
-    description = module.params.get('description')
-    dimensions = module.params.get('dimensions')
-    alarm_actions = module.params.get('alarm_actions')
-    insufficient_data_actions = module.params.get('insufficient_data_actions')
-    ok_actions = module.params.get('ok_actions')
-    treat_missing_data = module.params.get('treat_missing_data')
-
-    warnings = []
-
-    alarms = connection.describe_alarms(AlarmNames=[name])
-
     comparisons = {
         '<=': 'LessThanOrEqualToThreshold',
         '<': 'LessThanThreshold',
         '>=': 'GreaterThanOrEqualToThreshold',
         '>': 'GreaterThanThreshold'
     }
+
+    warnings = []
+    name = module.params.get('name')
+    comparison = module.params.get('comparison')
     if comparison in ('<=', '<', '>', '>='):
         warnings.append('Using the <=, <, > and >= operators for comparison has been deprecated. Please use LessThanOrEqualToThreshold, '
                         'LessThanThreshold, GreaterThanThreshold or GreaterThanOrEqualToThreshold instead.')
         comparison = comparisons[comparison]
-
+    dimensions = module.params.get('dimensions')
     if not isinstance(dimensions, list):
         fixed_dimensions = []
         for key, value in dimensions.items():
             fixed_dimensions.append({'Name': key, 'Value': value})
         dimensions = fixed_dimensions
 
+    module_alarm = dict(
+        AlarmName=name,
+        MetricName=module.params.get('metric'),
+        Namespace=module.params.get('namespace'),
+        Statistic=module.params.get('statistic'),
+        ComparisonOperator=comparison,
+        Threshold=module.params.get('threshold'),
+        Period=module.params.get('period'),
+        EvaluationPeriods=module.params.get('evaluation_periods'),
+        Unit=module.params.get('unit'),
+        AlarmDescription=module.params.get('description'),
+        Dimensions=dimensions,
+        AlarmActions=module.params.get('alarm_actions') or [],
+        InsufficientDataActions=module.params.get('insufficient_data_actions') or [],
+        OKActions=module.params.get('ok_actions') or [],
+        TreatMissingData=module.params.get('treat_missing_data'),
+    )
+    # botocore expects params values to be set explicitly, it breaks when some of them are NULLs.
+    # If the param value is NULL, do not send in the request
+    for key, value in module_alarm.items():
+        if value is None:
+            del module_alarm[key]
+
+    alarms = connection.describe_alarms(AlarmNames=[name])
     if not alarms['MetricAlarms']:  # we create alarm
         try:
-            connection.put_metric_alarm(
-                AlarmName=name,
-                MetricName=metric,
-                Namespace=namespace,
-                Statistic=statistic,
-                ComparisonOperator=comparison,
-                Threshold=threshold,
-                Period=period,
-                EvaluationPeriods=evaluation_periods,
-                Unit=unit,
-                AlarmDescription=description,
-                Dimensions=dimensions,
-                AlarmActions=alarm_actions,
-                InsufficientDataActions=insufficient_data_actions,
-                OKActions=ok_actions,
-                TreatMissingData=treat_missing_data
-            )
+            connection.put_metric_alarm(**module_alarm)
             changed = True
             alarms = connection.describe_alarms(AlarmNames=[name])
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg=str(e))
 
     else:
-        changed = False
-        alarm = alarms['MetricAlarms'][0]
+        cloudwatch_alarm = alarms['MetricAlarms'][0]
 
         # Workaround for alarms created before TreatMissingData was introduced
-        if 'TreatMissingData' not in alarm.keys():
-            alarm['TreatMissingData'] = 'missing'
+        if 'TreatMissingData' not in module_alarm.keys():
+            module_alarm['TreatMissingData'] = 'missing'
 
-        for key, value in {
-            'MetricName': metric,
-            'Namespace': namespace,
-            'Statistic': statistic,
-            'ComparisonOperator': comparison,
-            'Threshold': threshold,
-            'Period': period,
-            'EvaluationPeriods': evaluation_periods,
-            'Unit': unit,
-            'AlarmDescription': description,
-            'Dimensions': dimensions,
-            'TreatMissingData': treat_missing_data
-        }.items():
+        changed = compare_dicts(module_alarm, cloudwatch_alarm, [
+            'AlarmName', 'MetricName', 'Namespace', 'Statistic',
+            'ComparisonOperator', 'Threshold',
+            'Period', 'EvaluationPeriods', 'Unit',
+            'AlarmDescription', 'Dimensions',
+            'AlarmActions', 'InsufficientDataActions', 'OKActions',
+            'TreatMissingData'
+        ])
+        if changed:
             try:
-                if alarm[key] != value:
-                    changed = True
-            except KeyError:
-                if value is not None:
-                    changed = True
-
-            alarm[key] = value
-
-        for key, value in {
-            'AlarmActions': alarm_actions,
-            'InsufficientDataActions': insufficient_data_actions,
-            'OKActions': ok_actions
-        }.items():
-            action = value or []
-            if alarm[key] != action:
-                changed = True
-                alarm[key] = value
-
-        try:
-            if changed:
-                connection.put_metric_alarm(
-                    AlarmName=alarm['AlarmName'],
-                    MetricName=alarm['MetricName'],
-                    Namespace=alarm['Namespace'],
-                    Statistic=alarm['Statistic'],
-                    ComparisonOperator=alarm['ComparisonOperator'],
-                    Threshold=alarm['Threshold'],
-                    Period=alarm['Period'],
-                    EvaluationPeriods=alarm['EvaluationPeriods'],
-                    Unit=alarm['Unit'],
-                    AlarmDescription=alarm['AlarmDescription'],
-                    Dimensions=alarm['Dimensions'],
-                    AlarmActions=alarm['AlarmActions'],
-                    InsufficientDataActions=alarm['InsufficientDataActions'],
-                    OKActions=alarm['OKActions'],
-                    TreatMissingData=alarm['TreatMissingData']
-                )
-        except botocore.exceptions.ClientError as e:
-            module.fail_json(msg=str(e))
+                connection.put_metric_alarm(**module_alarm)
+            except botocore.exceptions.ClientError as e:
+                module.fail_json(msg=str(e))
 
     result = alarms['MetricAlarms'][0]
     module.exit_json(
         changed=changed,
         warnings=warnings,
-        name=result['AlarmName'],
-        actions_enabled=result['ActionsEnabled'],
-        alarm_actions=result['AlarmActions'],
-        alarm_arn=result['AlarmArn'],
-        comparison=result['ComparisonOperator'],
-        description=result['AlarmDescription'],
-        dimensions=result['Dimensions'],
-        evaluation_periods=result['EvaluationPeriods'],
-        insufficient_data_actions=result['InsufficientDataActions'],
-        last_updated=result['AlarmConfigurationUpdatedTimestamp'],
-        metric=result['MetricName'],
-        namespace=result['Namespace'],
-        ok_actions=result['OKActions'],
-        period=result['Period'],
-        state_reason=result['StateReason'],
-        state_value=result['StateValue'],
-        statistic=result['Statistic'],
-        threshold=result['Threshold'],
-        unit=result['Unit'])
+        name=result.get('AlarmName'),
+        actions_enabled=result.get('ActionsEnabled'),
+        alarm_actions=result.get('AlarmActions'),
+        alarm_arn=result.get('AlarmArn'),
+        comparison=result.get('ComparisonOperator'),
+        description=result.get('AlarmDescription'),
+        dimensions=result.get('Dimensions'),
+        evaluation_periods=result.get('EvaluationPeriods'),
+        insufficient_data_actions=result.get('InsufficientDataActions'),
+        last_updated=result.get('AlarmConfigurationUpdatedTimestamp'),
+        metric=result.get('MetricName'),
+        namespace=result.get('Namespace'),
+        ok_actions=result.get('OKActions'),
+        period=result.get('Period'),
+        state_reason=result.get('StateReason'),
+        state_value=result.get('StateValue'),
+        statistic=result.get('Statistic'),
+        threshold=result.get('Threshold'),
+        unit=result.get('Unit')
+    )
 
 
 def delete_metric_alarm(connection, module):
