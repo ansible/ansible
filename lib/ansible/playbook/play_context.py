@@ -427,6 +427,8 @@ class PlayContext(Base):
         # if the final connection type is local, reset the remote_user value to that of the currently logged in user
         # this ensures any become settings are obeyed correctly
         # we store original in 'connection_user' for use of network/other modules that fallback to it as login user
+        # connection_user to be deprecated once connection=local is removed for
+        # network modules
         if new_info.connection == 'local':
             if not new_info.connection_user:
                 new_info.connection_user = new_info.remote_user
