@@ -382,7 +382,7 @@ The following shows authenticating with the Galaxy website using a GitHub userna
     Password for dsmith:
     Successfully logged into Galaxy as dsmith
 
-When you choose to use your username and password, your password is not sent to Galaxy. It is used to authenticates with GitHub and create a personal access token.
+When you choose to use your username and password, your password is not sent to Galaxy. It is used to authenticate with GitHub and create a personal access token.
 It then sends the token to Galaxy, which in turn verifies that your identity and returns a Galaxy access token. After authentication completes the GitHub token is
 destroyed.
 
