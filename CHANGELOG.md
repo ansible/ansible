@@ -7,21 +7,14 @@ Ansible Changes By Release
 
 ### Major Changes
 * Removed the previously deprecated 'accelerate' mode and all associated keywords and code.
-* Removed the previously deprecated 'accelerate' mode and all associated keywords and code.
 * New simpler and more intuitive 'loop' keyword for task loops
+* Added fact namespacing, from now on facts will be available under `ansible_facts` namespace (i.e. `ansible_facts.os_distribution`) w/o the `ansilbe_` prefix.
+  They will continue to be added into the main namespace directly, but now with a configuration toggle to enable this,
+  currently on by default, in the future it will be off.
 
 ### Deprecations
 * Previously deprecated 'hostfile' config settings have been 're-deprecated' as previously code did not warn about deprecated configuration settings.
 * The ``with_<lookup>`` loops are deprecated in favor of the new ``loop`` keyword
-
-#### Deprecated Modules (to be removed in 2.9):
-* ec2_ami_find
-
-#### Removed Modules (previously deprecated):
-* accelerate
-* boundary_meter: There was no deprecation period for this but the hosted
-  service it relied on has gone away so the module has been removed.
-  https://github.com/ansible/ansible/issues/29387
 
 ### Minor Changes
 * added a few new magic vars corresponding to configuration/command line options:
@@ -33,15 +26,26 @@ Ansible Changes By Release
 * The jenkins_plugin and yum_repository plugins had their `params` option
   removed due to circumventing Ansible's option processing.
 
+#### Deprecated Modules (to be removed in 2.9):
+* ec2_ami_find
+
+#### Removed Modules (previously deprecated):
+* accelerate
+* boundary_meter: There was no deprecation period for this but the hosted
+  service it relied on has gone away so the module has been removed.
+  https://github.com/ansible/ansible/issues/29387
+
 ### New Plugins
 
 ## Lookups
-* Added `aws_ssm` lookup plugin
-* config, allows querying Ansible settings
+* aws_ssm: Query AWS ssm data
+* config: Lookup Ansible settings
+* openshift: Return info from Openshift installation
+
+## Callbacks
+* yaml
 
 ### New Modules
-
-* Added `yaml` output plugin
 
 #### Cloud
 

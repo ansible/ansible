@@ -49,11 +49,6 @@ except ImportError:
 
 __all__ = ['PlayContext']
 
-# the magic variable mapping dictionary below is used to translate
-# host/inventory variables to fields in the PlayContext
-# object. The dictionary values are tuples, to account for aliases
-# in variable names.
-
 
 # TODO: needs to be configurable
 b_SU_PROMPT_LOCALIZATIONS = [
