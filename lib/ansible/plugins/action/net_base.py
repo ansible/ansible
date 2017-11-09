@@ -37,13 +37,6 @@ except ImportError:
 class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=None):
-        if self._play_context.connection != 'local':
-            return dict(
-                failed=True,
-                msg='invalid connection specified, expected connection=local, '
-                    'got %s' % self._play_context.connection
-            )
-
         play_context = copy.deepcopy(self._play_context)
         play_context.network_os = self._get_network_os(task_vars)
 
@@ -74,8 +67,9 @@ class ActionModule(ActionBase):
             play_context.become = self.provider['authorize'] or False
             play_context.become_pass = self.provider['auth_pass']
 
-        socket_path = self._start_connection(play_context)
-        task_vars['ansible_socket'] = socket_path
+        if self._play_context.connection == 'local':
+            socket_path = self._start_connection(play_context)
+            task_vars['ansible_socket'] = socket_path
 
         if 'fail_on_missing_module' not in self._task.args:
             self._task.args['fail_on_missing_module'] = False
