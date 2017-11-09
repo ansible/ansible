@@ -106,6 +106,16 @@ options:
         default: 'no'
         choices: ['yes', 'no']
         version_added: "2.4"
+    force:
+        description:
+            - The default is C(yes), which will replace the remote file when its md5 sum is different than the md5 file downloaded from the repository.
+              This may fail with some repositories if the md5 has not been computed;
+              or if it acts as a proxy/cache and the artifact has not been cached yet.
+            - If no, the artifact will only be transferred if the destination does not exist.
+        required: false
+        default: 'yes'
+        choices: ['yes', 'no']
+        version_added: "2.5"
 extends_documentation_fragment:
     - files
 '''
@@ -335,7 +345,6 @@ class MavenDownloader:
         else:
             return f(response)
 
-
     def download(self, artifact, filename=None):
         filename = artifact.get_filename(filename)
         if not artifact.version or artifact.version == "latest":
@@ -416,6 +425,7 @@ def main():
             dest = dict(type="path", default=None),
             validate_certs = dict(required=False, default=True, type='bool'),
             keep_name = dict(required=False, default=False, type='bool'),
+            force = dict(required=False, default=True, type='bool'),
         ),
         add_file_common_args=True
     )
@@ -441,6 +451,7 @@ def main():
     dest = module.params["dest"]
     b_dest = to_bytes(dest, errors='surrogate_or_strict')
     keep_name = module.params["keep_name"]
+    force = module.params["force"]
 
     #downloader = MavenDownloader(module, repository_url, repository_username, repository_password)
     downloader = MavenDownloader(module, repository_url)
@@ -477,7 +488,7 @@ def main():
             dest = posixpath.join(dest, "%s-%s.%s" % (artifact_id, version_part, extension))
         b_dest = to_bytes(dest, errors='surrogate_or_strict')
 
-    if os.path.lexists(b_dest) and downloader.verify_md5(dest, downloader.find_uri_for_artifact(artifact) + '.md5'):
+    if os.path.lexists(b_dest) and ((not force) or downloader.verify_md5(dest, downloader.find_uri_for_artifact(artifact) + '.md5')):
         prev_state = "present"
 
     if prev_state == "absent":
