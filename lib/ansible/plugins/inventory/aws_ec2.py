@@ -197,22 +197,30 @@ class InventoryModule(BaseInventoryPlugin):
         self.aws_access_key_id = None
         self.aws_security_token = None
 
-    def _get_group_by_value(self, group, instance):
+    def _get_group_by_tag_values(self, group, instance):
+        '''
+            :param group: The instance attribute to group by
+            :param instance: A named tuple of the instance data retrieved by boto3 describe_instances
+            :return A list of tag keys or tag values or a dict of key:value pairs
+        '''
+        tags = boto3_tag_list_to_ansible_dict(instance.instance_data.get('Tags', []))
+        if group.startswith('tag:'):
+            return tags
+        elif group.startswith('tag-key'):
+            return list(tags.keys())
+        elif group.startswith('tag-value'):
+            return list(tags.values())
+        else:
+            raise AnsibleError("To group by tags, use 'tag:name=value', 'tag-value=value', or 'tag-key=key'")
+
+    def _get_group_by_values(self, group, instance):
         '''
             :param group: The instance attribute to group by
             :param instance: a namedtuple of the instance data retrieved by boto3 describe_instances
             :return The value of the instance's group attribute.
         '''
         if 'tag' in group:
-            tags = boto3_tag_list_to_ansible_dict(instance.instance_data.get('Tags', []))
-            if group.startswith('tag:'):
-                return tags
-            elif group.startswith('tag-key'):
-                return list(tags.keys())
-            elif group.startswith('tag-value'):
-                return list(tags.values())
-            else:
-                raise AnsibleError("To group by tags, use 'tag:name=value', 'tag-value=value', or 'tag-key=key'")
+            return self._get_group_by_tag_values(group, instance)
         return self._get_boto_attr_chain(group, instance)
 
     def _compile_values(self, obj, attr):
@@ -291,15 +299,18 @@ class InventoryModule(BaseInventoryPlugin):
                 if set(sorted(tags)) <= set(sorted(found_value)):
                     return True
             elif isinstance(found_value, dict):
+                if not found_value:
+                    return False
+
                 format_tags = {}
 
+                # no specified value; check each key is in the found value dict
                 if any('=' not in tag for tag in tags):
-                    raise AnsibleError("To group using 'tag:' you need to specify a tag name "
-                                       "and a tag value: tag:name=value. Alternatively, group by tag "
-                                       "name only using tag-key=name or by value using tag-value=value")
+                    return set([key for key, value in self._get_group_by_name_and_value(tags)]).issubset(set(list(found_value)))
+
+                # a specified value; check the specified dict matches or is a subset of the found one
                 for key, value in self._get_group_by_name_and_value(tags):
                     format_tags[key] = value
-
                 return set(format_tags.items()).issubset(set(found_value.items()))
 
     def _assemble_groups(self, instances, group_by_name):
@@ -315,33 +326,39 @@ class InventoryModule(BaseInventoryPlugin):
         groups = {}
 
         for group_name, group_value in self._get_group_by_name_and_value(group_by_name):
-            groups[group_name] = {}
+            groups[group_name] = groups.get(group_name) or {}
+
 
             if group_name == 'aws_ec2' and group_value is None:
                 groups['aws_ec2'] = instances
                 continue
 
             for instance in instances:
-                found_value = self._get_group_by_value(group_name, instance)
+                found_value = self._get_group_by_values(group_name, instance)
 
-                if group_value != 'all':
+                if group_value != 'all' and not (group_name == 'tag:' and '=' not in group_value):
                     groups[group_name][group_value] = groups[group_name].get(group_value) or []
-                    if found_value == group_value:
+                    if 'tag' in group_name and self._compare_tag_groupings(group_value, found_value):
+                        groups[group_name][group_value].append(instance)
+                    elif found_value == group_value:
                         groups[group_name][group_value].append(instance)
                     elif group_value in found_value:
                         groups[group_name][group_value].append(instance)
-                    elif 'tag' in group_name and self._compare_tag_groupings(group_value, found_value):
-                        groups[group_name][group_value].append(instance)
                 else:
                     # group by all values for the given attribute
-                    if isinstance(found_value, list):
+                    if 'tag:' == group_name:
+                        if self._compare_tag_groupings(group_value, found_value):
+                            for key, value in found_value.items():
+                                tag_key_value = "%s_%s" % (key, value)
+                                groups[group_name][tag_key_value] = groups[group_name].get(tag_key_value) or []
+                                groups[group_name][tag_key_value].append(instance)
+                    elif isinstance(found_value, list):
                         for value in found_value:
                             groups[group_name][value] = groups[group_name].get(value) or []
                             groups[group_name][value].append(instance)
                     elif found_value is not None:
                         groups[group_name][found_value] = groups[group_name].get(found_value) or []
                         groups[group_name][found_value].append(instance)
-
         return groups
 
     def _get_credentials(self):
@@ -411,8 +428,6 @@ class InventoryModule(BaseInventoryPlugin):
             try:
                 paginator = connection.get_paginator('describe_instances')
                 instances = paginator.paginate(Filters=filters).build_full_result().get('Reservations')
-                if instances:
-                    instances = instances[0]
             except botocore.exceptions.ClientError as e:
                 if e.response['ResponseMetadata']['HTTPStatusCode'] == 403 and not strict_permissions:
                     instances = []
@@ -421,8 +436,8 @@ class InventoryModule(BaseInventoryPlugin):
             except botocore.exceptions.BotoCoreError as e:
                 raise AnsibleError("Failed to describe instances: %s" % to_native(e))
 
-            if instances:
-                all_instances.extend(self._format_instance_data(region, instances))
+            for instance in instances:
+                all_instances.extend(self._format_instance_data(region, instance))
 
         return sorted(all_instances, key=lambda x: x.instance_data['InstanceId'])
 
@@ -453,6 +468,7 @@ class InventoryModule(BaseInventoryPlugin):
         '''
         filtered_instances = self._get_instances_by_region(regions, filters, strict_permissions)
         groups = self._assemble_groups(filtered_instances, group_by)
+
         for group_n in groups:
             if group_n == 'aws_ec2':
                 self.inventory.add_group(group_n)

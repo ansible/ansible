@@ -107,11 +107,11 @@ instances = {
 }
 
 
-def test_get_group_by_value():
+def test_get_group_by_values():
     inv = InventoryModule()
     formatted_instance = [instance for instance in inv._format_instance_data('us-east-1', instances)][0]
     group_by = "instance-type"
-    assert inv._get_group_by_value(group_by, formatted_instance) == "t2.micro"
+    assert inv._get_group_by_values(group_by, formatted_instance) == "t2.micro"
 
 
 def test_compile_values():
@@ -144,7 +144,7 @@ def test_compare_tag_groupings_dict():
     formatted_instance = [instance for instance in inv._format_instance_data('us-east-1', instances)][0]
 
     for group_name, group_value in inv._get_group_by_name_and_value(["tag:ansible=test"]):
-        found_value = inv._get_group_by_value(group_name, formatted_instance)
+        found_value = inv._get_group_by_values(group_name, formatted_instance)
         assert inv._compare_tag_groupings(group_value, found_value)
 
 
@@ -154,7 +154,7 @@ def test_compare_tag_groupings_dict_false():
     formatted_instance = [instance for instance in inv._format_instance_data('us-east-1', instances)][0]
 
     for group_name, group_value in inv._get_group_by_name_and_value(["tag:nothere=test"]):
-        found_value = inv._get_group_by_value(group_name, formatted_instance)
+        found_value = inv._get_group_by_values(group_name, formatted_instance)
         assert not inv._compare_tag_groupings(group_value, found_value)
 
 
@@ -164,7 +164,7 @@ def test_compare_tag_groupings_list():
     formatted_instance = [instance for instance in inv._format_instance_data('us-east-1', instances)][0]
 
     for group_name, group_value in inv._get_group_by_name_and_value(["tag-value=test", "tag-value=aws_ec2"]):
-        found_value = inv._get_group_by_value(group_name, formatted_instance)
+        found_value = inv._get_group_by_values(group_name, formatted_instance)
         assert inv._compare_tag_groupings(group_value, found_value)
 
 
@@ -174,7 +174,7 @@ def test_compare_tag_groupings_list_false():
     formatted_instance = [instance for instance in inv._format_instance_data('us-east-1', instances)][0]
 
     for group_name, group_value in inv._get_group_by_name_and_value(["tag-key=nothere"]):
-        found_value = inv._get_group_by_value(group_name, formatted_instance)
+        found_value = inv._get_group_by_values(group_name, formatted_instance)
         assert not inv._compare_tag_groupings(group_value, found_value)
 
 
