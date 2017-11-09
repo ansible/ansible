@@ -85,6 +85,7 @@ options:
         description:
             - Name of an existing virtual machine with which the disk is or will be associated, this VM should be in the same resource group.
         required: false
+        version_added: 2.5
     tags:
         description:
             - Tags to assign to the managed disk.
