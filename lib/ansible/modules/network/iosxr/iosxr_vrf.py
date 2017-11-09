@@ -300,6 +300,9 @@ def main():
             load_config(module, commands, result['warnings'], commit=True)
         result['changed'] = True
 
+    if result['changed']:
+        check_declarative_intent_params(want, module)
+
     module.exit_json(**result)
 
 if __name__ == '__main__':

@@ -1,0 +1,160 @@
+- name: setup - remove vrf address to interfaces
+  iosxr_config:
+    lines:
+      - no vrf test1
+    parents: "{{ item }}"
+  with_items:
+    - interface GigabitEthernet0/0/0/0
+    - interface GigabitEthernet0/0/0/1
+
+- name: setup - delete vrf used in test
+  iosxr_config:
+    lines:
+      - no vrf test1
+      - no vrf test2
+      - no vrf test3
+
+- name: create vrf
+  iosxr_vrf: &create
+    name: test1
+    state: present
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'vrf test1' in result.commands"
+
+- name: create vrf(Idempotence)
+  iosxr_vrf: *create
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: assing vrf to interfaces
+  iosxr_vrf: &assign_vrf
+    name: test1
+    interfaces:
+      - GigabitEthernet0/0/0/0
+      - GigabitEthernet0/0/0/1
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'vrf test1' in result.commands"
+      - "'interface GigabitEthernet0/0/0/0' in result.commands"
+      - "'vrf test1' in result.commands"
+      - "'interface GigabitEthernet0/0/0/1' in result.commands"
+      - "'vrf test1' in result.commands"
+
+- name: assign vrf to interfaces(Idempotence)
+  iosxr_vrf: *assign_vrf
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: remove vrf from interface
+  iosxr_vrf: &remove_vrf
+    name: test1
+    interfaces:
+      - GigabitEthernet0/0/0/1
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'vrf test1' in result.commands"
+      - "'interface GigabitEthernet0/0/0/0' in result.commands"
+      - "'no vrf test1' in result.commands"
+
+- name: remove vrf from interface(Idempotence)
+  iosxr_vrf: *remove_vrf
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: delete vrf
+  iosxr_vrf: &delete
+    name: test1
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'no vrf test1' in result.commands"
+
+- name: delete vrf(Idempotence)
+  iosxr_vrf: *delete
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: configure vrfs using aggregate
+  iosxr_vrf: &create_aggregate
+    aggregate:
+      - { name: test2 }
+      - { name: test3 }
+    state: present
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'vrf test2' in result.commands"
+      - "'vrf test3' in result.commands"
+
+- name: configure vrfs using aggregate(Idempotence)
+  iosxr_vrf: *create_aggregate
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: delete vrfs using aggregate
+  iosxr_vrf: &delete_aggregate
+    aggregate:
+      - { name: test2 }
+      - { name: test3 }
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'no vrf test2' in result.commands"
+      - "'no vrf test3' in result.commands"
+
+- name: delete vrfs using aggregate(Idempotence)
+  iosxr_vrf: *delete_aggregate
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: teardown(part1)
+  iosxr_config:
+    lines:
+      - no vrf test1
+    parents: "{{ item }}"
+  with_items:
+    - interface GigabitEthernet0/0/0/0
+    - interface GigabitEthernet0/0/0/1
+
+- name: teardown(part2)
+  iosxr_config:
+    lines:
+      - no vrf test1
+      - no vrf test2
+      - no vrf test3
