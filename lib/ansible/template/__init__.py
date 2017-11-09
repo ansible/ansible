@@ -755,7 +755,7 @@ class Templar:
 
             try:
                 res = j2_concat(rf)
-                if hasattr(new_context, 'unsafe') and new_context.unsafe:
+                if getattr(new_context, 'unsafe', False):
                     res = wrap_var(res)
             except TypeError as te:
                 if 'StrictUndefined' in to_native(te):
