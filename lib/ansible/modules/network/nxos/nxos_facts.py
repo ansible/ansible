@@ -290,7 +290,7 @@ class Interfaces(FactsBase):
             self.facts['interfaces'] = self.populate_interfaces(data)
 
         data = self.run('show ipv6 interface', 'json')
-        if data and not isinstance(data, basestring):
+        if data and not (type(data) == str or type(data) == unicode):
             self.parse_ipv6_interfaces(data)
 
         data = self.run('show lldp neighbors')
