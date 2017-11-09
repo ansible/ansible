@@ -205,7 +205,6 @@ lib/ansible/modules/network/nxos/nxos_gir_profile_management.py
 lib/ansible/modules/network/nxos/nxos_igmp.py
 lib/ansible/modules/network/nxos/nxos_igmp_interface.py
 lib/ansible/modules/network/nxos/nxos_igmp_snooping.py
-lib/ansible/modules/network/nxos/nxos_install_os.py
 lib/ansible/modules/network/nxos/nxos_ntp_auth.py
 lib/ansible/modules/network/nxos/nxos_ntp_options.py
 lib/ansible/modules/network/nxos/nxos_nxapi.py
