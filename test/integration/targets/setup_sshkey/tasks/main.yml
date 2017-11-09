@@ -32,6 +32,23 @@
   tags:
     - prepare
 
+- name: create another random file
+  shell: mktemp /tmp/id_rsa.XXXXXX
+  register: another_sshkey
+  tags:
+    - prepare
+
+- name: generate another_sshkey
+  shell: echo 'y' | ssh-keygen -P '' -f {{another_sshkey.stdout}}
+  tags:
+    - prepare
+
+- name: record another key_material
+  command: cat {{another_sshkey.stdout}}.pub
+  register: another_key_material
+  tags:
+    - prepare
+
 - name: record fingerprint
   shell: openssl rsa -in {{sshkey.stdout}} -pubout -outform DER 2>/dev/null | openssl md5 -c
   register: fingerprint
@@ -42,6 +59,7 @@
   set_fact:
     sshkey: '{{sshkey.stdout}}'
     key_material: '{{key_material.stdout}}'
+    another_key_material: '{{another_key_material.stdout}}'
     fingerprint: '{{fingerprint.stdout.split()[1]}}'
   tags:
     - prepare
