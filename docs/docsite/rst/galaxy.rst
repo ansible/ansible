@@ -383,7 +383,7 @@ The following shows authenticating with the Galaxy website using a GitHub userna
     Successfully logged into Galaxy as dsmith
 
 When you choose to use your username and password, your password is not sent to Galaxy. It is used to authenticate with GitHub and create a personal access token.
-It then sends the token to Galaxy, which in turn verifies that your identity and returns a Galaxy access token. After authentication completes the GitHub token is
+It then sends the token to Galaxy, which in turn verifies your identity and returns a Galaxy access token. After authentication completes the GitHub token is
 destroyed.
 
 If you do not wish to use your GitHub password, or if you have two-factor authentication enabled with GitHub, use the *--github-token* option to pass a personal access token
