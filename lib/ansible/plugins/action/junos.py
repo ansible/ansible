@@ -38,14 +38,6 @@ except ImportError:
 class ActionModule(_ActionModule):
 
     def run(self, tmp=None, task_vars=None):
-
-        if self._play_context.connection != 'local':
-            return dict(
-                failed=True,
-                msg='invalid connection specified, expected connection=local, '
-                    'got %s' % self._play_context.connection
-            )
-
         module = module_loader._load_module_source(self._task.action, module_loader.find_plugin(self._task.action))
 
         if not getattr(module, 'USE_PERSISTENT_CONNECTION', False):
@@ -72,25 +64,27 @@ class ActionModule(_ActionModule):
         pc.timeout = int(provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT)
 
         display.vvv('using connection plugin %s' % pc.connection, pc.remote_addr)
-        connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
 
-        socket_path = connection.run()
-        display.vvvv('socket_path: %s' % socket_path, pc.remote_addr)
-        if not socket_path:
-            return {'failed': True,
-                    'msg': 'unable to open shell. Please see: ' +
-                           'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell'}
+        if self._play_context.connection == 'local':
+            connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
 
-        if pc.connection == 'network_cli':
-            # make sure we are in the right cli context which should be
-            # enable mode and not config module
-            rc, out, err = connection.exec_command('prompt()')
-            while str(out).strip().endswith(')#'):
-                display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
-                connection.exec_command('exit')
+            socket_path = connection.run()
+            display.vvvv('socket_path: %s' % socket_path, pc.remote_addr)
+            if not socket_path:
+                return {'failed': True,
+                        'msg': 'unable to open shell. Please see: ' +
+                               'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell'}
+
+            if pc.connection == 'network_cli':
+                # make sure we are in the right cli context which should be
+                # enable mode and not config module
                 rc, out, err = connection.exec_command('prompt()')
+                while str(out).strip().endswith(')#'):
+                    display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
+                    connection.exec_command('exit')
+                    rc, out, err = connection.exec_command('prompt()')
 
-        task_vars['ansible_socket'] = socket_path
+            task_vars['ansible_socket'] = socket_path
 
         result = super(ActionModule, self).run(tmp, task_vars)
         return result
