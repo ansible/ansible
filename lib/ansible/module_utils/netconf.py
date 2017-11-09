@@ -50,6 +50,7 @@ def send_request(module, obj, check_rc=True, ignore_warning=True):
             module.fail_json(msg=str(err))
 
         warnings = []
+        errors = []
         for rpc_error in error_list:
             message = rpc_error.find('./nc:error-message', NS_MAP).text
             severity = rpc_error.find('./nc:error-severity', NS_MAP).text
@@ -57,8 +58,27 @@ def send_request(module, obj, check_rc=True, ignore_warning=True):
             if severity == 'warning' and ignore_warning:
                 warnings.append(message)
             else:
-                module.fail_json(msg=str(err))
-        return warnings
+                err_type = rpc_error.find('./nc:error-type', NS_MAP).text
+                err_tag = rpc_error.find('./nc:error-tag', NS_MAP).text
+                err_extras = []
+
+                for tag in ['error-app-tag', 'error-path']:
+                    node = rpc_error.find('./nc:%s' % tag, NS_MAP)
+                    if node:
+                        err_extras.append(node.text)
+
+                err_info = rpc_error.find('./nc:error-info', NS_MAP)
+                if err_info:
+                    for tag in err_info.findall('*'):
+                        err_extras.append('%s: %s' % (tag.tag.split('}', 1)[1], tag.text))
+
+                extra_info = ', '.join(err_extras)
+                err_message = '[%s] %s: %s (%s)' % (err_type, err_tag, message, extra_info)
+                errors.append(err_message)
+        if errors:
+            module.fail_json(msg=', '.join(errors))
+        else:
+            return warnings
     return fromstring(out)
 
 
