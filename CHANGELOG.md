@@ -146,6 +146,8 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/31695)
 * Fix undefined variable in script inventory plugin
   (https://github.com/ansible/ansible/pull/31381)
+* Fix win_copy on Python 2.x to support files greater than 4GB
+  (https://github.com/ansible/ansible/pull/32682)
 
 <a id="2.4.1"></a>
 
