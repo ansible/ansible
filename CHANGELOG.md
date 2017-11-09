@@ -15,6 +15,7 @@ Ansible Changes By Release
 * The ``with_<lookup>`` loops are deprecated in favor of the new ``loop`` keyword
 
 #### Deprecated Modules (to be removed in 2.9):
+* ec2_ami_find
 
 #### Removed Modules (previously deprecated):
 * accelerate
@@ -46,6 +47,7 @@ Ansible Changes By Release
 
   * aws_ssm_parameter_store
   * digital_ocean_sshkey_facts
+  * ec2_ami_facts
 
 #### Windows
 
