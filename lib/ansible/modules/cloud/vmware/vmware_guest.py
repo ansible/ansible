@@ -1131,7 +1131,15 @@ class PyVmomiHelper(PyVmomi):
         if resource_pool is None:
             self.module.fail_json(msg='Could not find resource_pool "%s"' % resource_pool_name)
         return resource_pool
-
+      
+    def select_default_resource_pool_by_cluster(self,cluster_name)
+        cluster = self.cache.get_cluster(cluster_name)
+        resource_pool = cluster.resourcePool
+        if resource_pool is None:
+            self.module.fail_json(msg='Could not find resource_pool for cluster "%s"' % cluster_name)
+        return resource_pool
+  
+      
     def select_resource_pool_by_host(self, host):
         resource_pools = self.cache.get_all_objs(self.content, [vim.ResourcePool])
         for rp in resource_pools.items():
@@ -1204,6 +1212,8 @@ class PyVmomiHelper(PyVmomi):
         if self.params['esxi_hostname']:
             host = self.select_host()
             resource_pool = self.select_resource_pool_by_host(host)
+        elif self.params['cluster'] and not self.params['resource_pool']:
+            resource_pool = self.select_default_resource_pool_by_cluster(self.params['cluster'])  
         else:
             resource_pool = self.select_resource_pool_by_name(self.params['resource_pool'])
 
