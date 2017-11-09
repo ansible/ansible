@@ -582,3 +582,10 @@ netconf_loader = PluginLoader(
     'netconf_plugins',
     required_base_class='NetconfBase'
 )
+
+inventory_loader = PluginLoader(
+    'InventoryModule',
+    'ansible.plugins.inventory',
+    C.DEFAULT_INVENTORY_PLUGIN_PATH,
+    'inventory_plugins'
+)
