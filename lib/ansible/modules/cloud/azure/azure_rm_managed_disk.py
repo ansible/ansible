@@ -144,8 +144,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 try:
     from msrestazure.tools import parse_resource_id
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.compute.models import DiskCreateOption, DiskCreateOptionTypes, ManagedDiskParameters, \
-                                          DiskSku, DataDisk
+    from azure.mgmt.compute.models import DiskCreateOption, DiskCreateOptionTypes, ManagedDiskParameters, DiskSku, DataDisk
 except ImportError:
     # This is handled in azure_rm_common
     pass
@@ -274,8 +273,8 @@ class AzureRMManagedDisk(AzureRMModuleBase):
 
         if self.state == 'absent':
             changed = self.delete_managed_disk() or changed
-        
-        self.results['changed'] =  changed
+
+        self.results['changed'] = changed
         self.results['state'] = result
         return self.results
 
@@ -287,7 +286,7 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         lun = max(luns) + 1 if luns else 0
 
         # prepare the data disk
-        params = ManagedDiskParameters(id = disk.get('id'), storage_account_type = disk.get('storage_account_type'))
+        params = ManagedDiskParameters(id=disk.get('id'), storage_account_type=disk.get('storage_account_type'))
         data_disk = DataDisk(lun, DiskCreateOptionTypes.attach, managed_disk=params)
         vm.storage_profile.data_disks.append(data_disk)
         self._update_vm(vm_name, vm)
@@ -306,7 +305,7 @@ class AzureRMManagedDisk(AzureRMModuleBase):
             self.get_poller_result(poller)
         except Exception as exc:
             self.fail("Error updating virtual machine {0} - {1}".format(name, str(exc)))
-    
+
     def _get_vm(self, name):
         try:
             return self.compute_client.virtual_machines.get(self.resource_group, name, expand='instanceview')
