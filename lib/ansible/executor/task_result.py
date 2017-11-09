@@ -8,6 +8,7 @@ __metaclass__ = type
 from copy import deepcopy
 
 from ansible.parsing.dataloader import DataLoader
+from ansible.utils.helpers import data_object_shim
 from ansible.vars.manager import strip_internal_keys
 
 _IGNORE = ('failed', 'skipped')
@@ -79,15 +80,22 @@ class TaskResult:
 
         ''' returns 'clean' taskresult object '''
 
-        # FIXME: clean task_fields, _task and _host copies
-        result = TaskResult(self._host, self._task, {}, self._task_fields)
+        ignore = _IGNORE
+
+        # FIXME: clean task_fields
+        result = TaskResult(data_object_shim(self._host, shim_methods=('get_name')),
+                            data_object_shim(self._task, exclude=['DEPRECATED_ATTRIBUTES'], shim_methods=('get_name', 'get_path')), {},
+                            self._task_fields)
 
         # statuses are already reflected on the event type
-        if result._task and result._task.action in ['debug']:
-            # debug is verbose by default to display vars, no need to add invocation
-            ignore = _IGNORE + ('invocation',)
-        else:
-            ignore = _IGNORE
+        if self._task:
+            # add shim object as refs
+            if hasattr(self._task, '_parent'):
+                setattr(result._task, '_parent', data_object_shim(self._task._parent, shim_methods=('get_name', 'get_path')))
+
+            if self._task.action in ['debug']:
+                # debug is verbose by default to display vars, no need to add invocation
+                ignore = _IGNORE + ('invocation',)
 
         if self._result.get('_ansible_no_log', False):
             result._result = {"censored": "the output has been hidden due to the fact that 'no_log: true' was specified for this result"}
