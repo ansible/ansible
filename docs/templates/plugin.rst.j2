@@ -46,12 +46,16 @@ Synopsis
 
 {% if description %}
 
+{% if description is string -%}
+* @{ description | convert_symbols_to_format }@
+{% else %}
 {% for desc in description -%}
 * @{ desc | convert_symbols_to_format }@
 {% endfor %}
-
+{% endif %}
 
 {% endif %}
+
 {% if aliases is defined -%}
 
 Aliases: @{ ','.join(aliases) }@
@@ -151,9 +155,13 @@ Options
 {% endif %}
     <td></td>
     <td>
+{% if v.description is string %}
+        <div>@{ v.description | replace('\n', '\n    ') | html_ify }@</div>
+{% else %}
 {% for desc in v.description %}
         <div>@{ desc | replace('\n', '\n    ') | html_ify }@</div>
 {% endfor %}
+{% endif %}
 {% if 'aliases' in v and v.aliases %}
         </br><div style="font-size: small;">aliases: @{ v.aliases|join(', ') }@</div>
 {% endif %}
