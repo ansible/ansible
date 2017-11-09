@@ -91,33 +91,14 @@ def fail_if_missing(module, found, service, msg=''):
             module.fail_json(msg='Could not find the requested service %s: %s' % (service, msg))
 
 
-def daemonize(module, cmd):
+def fork_process():
     '''
-    Execute a command while detaching as a daemon, returns rc, stdout, and stderr.
-
-    :arg module: is an  AnsibleModule object, used for it's utility methods
-    :arg cmd: is a list or string representing the command and options to run
-
-    This is complex because daemonization is hard for people.
-    What we do is daemonize a part of this module, the daemon runs the command,
-    picks up the return code and output, and returns it to the main process.
+    This function performs the double fork process to detach from the
+    parent process and execute.
     '''
+    pid = os.fork()
 
-    # init some vars
-    chunk = 4096  # FIXME: pass in as arg?
-    errors = 'surrogate_or_strict'
-
-    # start it!
-    try:
-        pipe = os.pipe()
-        pid = os.fork()
-    except OSError:
-        module.fail_json(msg="Error while attempting to fork: %s", exception=traceback.format_exc())
-
-    # we don't do any locking as this should be a unique module/process
     if pid == 0:
-
-        os.close(pipe[0])
         # Set stdin/stdout/stderr to /dev/null
         fd = os.open(os.devnull, os.O_RDWR)
 
@@ -140,7 +121,7 @@ def daemonize(module, cmd):
         # get new process session and detach
         sid = os.setsid()
         if sid == -1:
-            module.fail_json(msg="Unable to detach session while daemonizing")
+            raise Exception("Unable to detach session while daemonizing")
 
         # avoid possible problems with cwd being removed
         os.chdir("/")
@@ -148,6 +129,38 @@ def daemonize(module, cmd):
         pid = os.fork()
         if pid > 0:
             os._exit(0)
+
+    return pid
+
+
+def daemonize(module, cmd):
+    '''
+    Execute a command while detaching as a daemon, returns rc, stdout, and stderr.
+
+    :arg module: is an  AnsibleModule object, used for it's utility methods
+    :arg cmd: is a list or string representing the command and options to run
+
+    This is complex because daemonization is hard for people.
+    What we do is daemonize a part of this module, the daemon runs the command,
+    picks up the return code and output, and returns it to the main process.
+    '''
+
+    # init some vars
+    chunk = 4096  # FIXME: pass in as arg?
+    errors = 'surrogate_or_strict'
+
+    # start it!
+    try:
+        pipe = os.pipe()
+        pid = fork_process()
+    except OSError:
+        module.fail_json(msg="Error while attempting to fork: %s", exception=traceback.format_exc())
+    except Exception as exc:
+        module.fail_json(msg=to_text(exc), exception=traceback.format_exc())
+
+    # we don't do any locking as this should be a unique module/process
+    if pid == 0:
+        os.close(pipe[0])
 
         # if command is string deal with  py2 vs py3 conversions for shlex
         if not isinstance(cmd, list):

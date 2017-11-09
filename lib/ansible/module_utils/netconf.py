@@ -27,6 +27,7 @@
 #
 from contextlib import contextmanager
 
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.connection import exec_command
 
 try:
@@ -38,7 +39,7 @@ NS_MAP = {'nc': "urn:ietf:params:xml:ns:netconf:base:1.0"}
 
 
 def send_request(module, obj, check_rc=True, ignore_warning=True):
-    request = tostring(obj)
+    request = to_text(tostring(obj), errors='surrogate_or_strict')
     rc, out, err = exec_command(module, request)
     if rc != 0 and check_rc:
         error_root = fromstring(err)
@@ -59,7 +60,7 @@ def send_request(module, obj, check_rc=True, ignore_warning=True):
             else:
                 module.fail_json(msg=str(err))
         return warnings
-    return fromstring(out)
+    return fromstring(to_bytes(out, errors='surrogate_or_strict'))
 
 
 def children(root, iterable):
