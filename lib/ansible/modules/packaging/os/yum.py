@@ -347,11 +347,13 @@ def is_group_env_installed(name):
     return False
 
 
-def is_installed(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=None, dis_repos=None, is_pkg=False, installroot='/'):
+def is_installed(module, repoq, pkgspec, conf_file, qf=None, en_repos=None, dis_repos=None, is_pkg=False, installroot='/'):
     if en_repos is None:
         en_repos = []
     if dis_repos is None:
         dis_repos = []
+    if qf is None:
+        qf = "%{epoch}:%{name}-%{version}-%{release}.%{arch}\n"
 
     if not repoq:
         pkgs = []
