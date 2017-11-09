@@ -25,6 +25,13 @@ from ansible.module_utils.urls import open_url
 import json
 import re
 
+try:
+    unicode
+    HAVE_UNICODE = True
+except NameError:
+    unicode = str
+    HAVE_UNICODE = False
+
 
 nso_argument_spec = dict(
     url=dict(required=True),
@@ -475,3 +482,66 @@ def verify_version(client):
             (version[1] == 4 and (len(version) < 3 or version[2] < 3))):
         raise ModuleFailException(
             'unsupported NSO version {0}, only 4.4.3 or later is supported'.format(version_str))
+
+
+def normalize_value(expected_value, value, key):
+    if value is None:
+        return None
+    if isinstance(expected_value, bool):
+        return value == 'true'
+    if isinstance(expected_value, int):
+        try:
+            return int(value)
+        except TypeError:
+            raise ModuleFailException(
+                'returned value {0} for {1} is not a valid integer'.format(
+                    key, value))
+    if isinstance(expected_value, float):
+        try:
+            return float(value)
+        except TypeError:
+            raise ModuleFailException(
+                'returned value {0} for {1} is not a valid float'.format(
+                    key, value))
+    if isinstance(expected_value, (list, tuple)):
+        if not isinstance(value, (list, tuple)):
+            raise ModuleFailException(
+                'returned value {0} for {1} is not a list'.format(value, key))
+        if len(expected_value) != len(value):
+            raise ModuleFailException(
+                'list length mismatch for {0}'.format(key))
+
+        normalized_value = []
+        for i in range(len(expected_value)):
+            normalized_value.append(
+                normalize_value(expected_value[i], value[i], '{0}[{1}]'.format(key, i)))
+        return normalized_value
+
+    if isinstance(expected_value, dict):
+        if not isinstance(value, dict):
+            raise ModuleFailException(
+                'returned value {0} for {1} is not a dict'.format(value, key))
+        if len(expected_value) != len(value):
+            raise ModuleFailException(
+                'dict length mismatch for {0}'.format(key))
+
+        normalized_value = {}
+        for k in expected_value.keys():
+            n_k = normalize_value(k, k, '{0}[{1}]'.format(key, k))
+            if n_k not in value:
+                raise ModuleFailException('missing {0} in value'.format(n_k))
+            normalized_value[n_k] = normalize_value(expected_value[k], value[k], '{0}[{1}]'.format(key, k))
+        return normalized_value
+
+    if HAVE_UNICODE:
+        if isinstance(expected_value, unicode) and isinstance(value, str):
+            return value.decode('utf-8')
+        if isinstance(expected_value, str) and isinstance(value, unicode):
+            return value.encode('utf-8')
+    else:
+        if hasattr(expected_value, 'encode') and hasattr(value, 'decode'):
+            return value.decode('utf-8')
+        if hasattr(expected_value, 'decode') and hasattr(value, 'encode'):
+            return value.encode('utf-8')
+
+    return value
