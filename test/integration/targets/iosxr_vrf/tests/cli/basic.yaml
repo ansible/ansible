@@ -33,7 +33,7 @@
     that:
       - "result.changed == false"
 
-- name: assing vrf to interfaces
+- name: assign vrf to interfaces
   iosxr_vrf: &assign_vrf
     name: test1
     interfaces:
@@ -44,7 +44,6 @@
 - assert:
     that:
       - "result.changed == true"
-      - "'vrf test1' in result.commands"
       - "'interface GigabitEthernet0/0/0/0' in result.commands"
       - "'vrf test1' in result.commands"
       - "'interface GigabitEthernet0/0/0/1' in result.commands"
@@ -68,7 +67,6 @@
 - assert:
     that:
       - "result.changed == true"
-      - "'vrf test1' in result.commands"
       - "'interface GigabitEthernet0/0/0/0' in result.commands"
       - "'no vrf test1' in result.commands"
 

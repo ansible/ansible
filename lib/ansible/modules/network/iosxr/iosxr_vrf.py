@@ -105,7 +105,9 @@ import time
 
 from copy import deepcopy
 
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import exec_command
 from ansible.module_utils.network_common import remove_default_spec
 from ansible.module_utils.iosxr import get_config, load_config, run_commands
 from ansible.module_utils.iosxr import iosxr_argument_spec, check_args
@@ -150,20 +152,17 @@ def map_obj_to_commands(updates, module):
                 if interfaces:
                     if not obj_in_have['interfaces']:
                         for i in interfaces:
-                            commands.extend(vrf_cmd)
                             commands.append('interface {}'.format(i))
                             commands.append('vrf {}'.format(name))
 
                     elif set(interfaces) != set(obj_in_have['interfaces']):
                         missing_interfaces = list(set(interfaces) - set(obj_in_have['interfaces']))
                         for i in missing_interfaces:
-                            commands.extend(vrf_cmd)
                             commands.append('interface {}'.format(i))
                             commands.append('vrf {}'.format(name))
 
                         superfluous_interfaces = list(set(obj_in_have['interfaces']) - set(interfaces))
                         for i in superfluous_interfaces:
-                            commands.extend(vrf_cmd)
                             commands.append('interface {}'.format(i))
                             commands.append('no vrf {}'.format(name))
 
@@ -206,9 +205,11 @@ def map_params_to_obj(module):
     return obj
 
 
-def parse_interface(cfg, name):
+def parse_interface(module, name):
     interfaces = list()
     vrf_cfg = 'vrf {}'.format(name)
+    cfg = get_config(module, flags=['interface'])
+
     int_cfg = cfg.strip().split('interface')
 
     for i in int_cfg:
@@ -220,7 +221,6 @@ def parse_interface(cfg, name):
 
 
 def map_config_to_obj(module):
-    int_cfg = get_config(module, flags=['interface'])
     output = run_commands(module, ['show vrf all'])
     lines = output[0].strip().splitlines()[1:]
 
@@ -233,7 +233,7 @@ def map_config_to_obj(module):
         obj = {}
         splitted_line = re.split(r'\s{2,}', l.strip())
         obj['name'] = splitted_line[0]
-        obj['interfaces'] = parse_interface(int_cfg, obj['name'])
+        obj['interfaces'] = parse_interface(module, obj['name'])
         objs.append(obj)
 
     return objs
@@ -242,13 +242,22 @@ def map_config_to_obj(module):
 def check_declarative_intent_params(want, module):
     if module.params['interfaces']:
         time.sleep(module.params['delay'])
-        have = map_config_to_obj(module)
 
         for w in want:
-            for i in w['interfaces']:
-                obj_in_have = search_obj_in_list(w['name'], have)
+            command = 'show vrf {} detail'.format(w['name'])
+            rc, out, err = exec_command(module, command)
+            if rc != 0:
+                module.fail_json(msg=to_text(err, errors='surrogate_then_replace'), command=command, rc=rc)
 
-                if obj_in_have and 'interfaces' in obj_in_have and i not in obj_in_have['interfaces']:
+            have_interfaces = list()
+            match = re.search(r'Interfaces:(\n \S+)*', out, re.M)
+            if match:
+                interfaces = match.group(0).strip().split('\n  ')
+                if 'Interfaces' in interfaces[0]:
+                    have_interfaces = interfaces[1:]
+
+            for i in w['interfaces']:
+                if have_interfaces and i not in have_interfaces:
                     module.fail_json(msg="Interface %s not configured on vrf %s" % (i, w['name']))
 
 
@@ -298,6 +307,7 @@ def main():
     if commands:
         if not module.check_mode:
             load_config(module, commands, result['warnings'], commit=True)
+            exec_command(module, 'end')
         result['changed'] = True
 
     if result['changed']:
