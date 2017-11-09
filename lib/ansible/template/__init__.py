@@ -37,7 +37,6 @@ try:
 except ImportError:
     from sha import sha as sha1
 
-from jinja2 import Environment
 from jinja2.exceptions import TemplateSyntaxError, UndefinedError
 from jinja2.loaders import FileSystemLoader
 from jinja2.runtime import Context, StrictUndefined
@@ -77,7 +76,9 @@ if C.DEFAULT_JINJA2_NATIVE:
         from jinja2.nativetypes import native_concat as j2_concat
         USE_JINJA2_NATIVE = True
     except ImportError:
-        pass
+        from jinja2 import Environment
+else:
+    from jinja2 import Environment
 
 def generate_ansible_template_vars(path):
     b_path = to_bytes(path)
