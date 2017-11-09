@@ -77,8 +77,8 @@ eos_top_spec = {
 eos_argument_spec.update(eos_top_spec)
 
 
-def get_argspec():
-    return eos_argument_spec
+def get_provider_argspec():
+    return eos_provider_spec
 
 
 def check_args(module, warnings):
