@@ -41,9 +41,10 @@ class ConnectionProcess(object):
     The connection process wraps around a Connection object that manages
     the connection to a remote device that persists over the playbook
     '''
-    def __init__(self, fd, play_context, socket_path):
+    def __init__(self, fd, play_context, socket_path, original_path):
         self.play_context = play_context
         self.socket_path = socket_path
+        self.original_path = original_path
 
         self.fd = fd
         self.exception = None
@@ -57,6 +58,12 @@ class ConnectionProcess(object):
             result = {}
 
             messages.append('control socket path is %s' % self.socket_path)
+
+            # If this is a relative path (~ gets expanded later) then plug the
+            # key's path on to the directory we originally came from, so we can
+            # find it now that our cwd is /
+            if self.play_context.private_key_file and self.play_context.private_key_file[0] not in '~/':
+                self.play_context.private_key_file = os.path.join(self.original_path, self.play_context.private_key_file)
 
             self.connection = connection_loader.get(self.play_context.connection, self.play_context, '/dev/null')
             self.connection._connect()
@@ -249,6 +256,7 @@ def main():
 
         if not os.path.exists(socket_path):
             messages.append('local domain socket does not exist, starting it')
+            original_path = os.getcwd()
             r, w = os.pipe()
             pid = fork_process()
 
@@ -256,7 +264,7 @@ def main():
                 try:
                     os.close(r)
                     wfd = os.fdopen(w, 'w')
-                    process = ConnectionProcess(wfd, play_context, socket_path)
+                    process = ConnectionProcess(wfd, play_context, socket_path, original_path)
                     process.start()
                 except Exception as exc:
                     messages.append(traceback.format_exc())
