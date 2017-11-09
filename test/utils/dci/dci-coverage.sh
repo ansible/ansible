@@ -4,11 +4,6 @@ set -o pipefail
 
 # Script invoked by DCI-Agents hooks/post-running.yml
 
-# Platform: $1 = (ios, openvswitch, vyos, ...)
-# Branch: $2 = (devel, stable-2.4, ...)
-
-test="dci/$1"
-branch="$2"
 
 if find test/results/coverage/ -mindepth 1 -name '.*' -prune -o -print -quit | grep -q .; then
     stub=""
@@ -26,7 +21,6 @@ if find test/results/coverage/ -mindepth 1 -name '.*' -prune -o -print -quit | g
         bash <(curl -s https://codecov.io/bash) \
             -f "${file}" \
             -F "${flags}" \
-            -n "${test}" \
             -t 83cd8957-dc76-488c-9ada-210dcea51633 \
             -X coveragepy \
             -X gcov \
@@ -34,8 +28,6 @@ if find test/results/coverage/ -mindepth 1 -name '.*' -prune -o -print -quit | g
             -X search \
             -X xcode \
             -K \
-            -B "$branch" \
-            -r "ansible/ansible" \
         || echo "Failed to upload code coverage report to codecov.io: ${file}"
     done
 fi
