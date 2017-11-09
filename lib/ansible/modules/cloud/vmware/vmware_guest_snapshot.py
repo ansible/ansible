@@ -207,18 +207,15 @@ instance:
 
 import time
 
-HAS_PYVMOMI = False
 try:
     import pyVmomi
     from pyVmomi import vim
-
-    HAS_PYVMOMI = True
 except ImportError:
     pass
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
-from ansible.module_utils.vmware import connect_to_api, vmware_argument_spec, find_vm_by_id
+from ansible.module_utils.vmware import connect_to_api, find_vm_by_id, HAS_PYVMOMI, list_snapshots, vmware_argument_spec
 
 
 class PyVmomiHelper(object):
@@ -277,7 +274,7 @@ class PyVmomiHelper(object):
         except vim.fault.RestrictedVersion as exc:
             self.module.fail_json(msg="Failed to take snapshot due to VMware Licence: %s" % to_native(exc.msg))
         except Exception as exc:
-            self.module.fail_json(msg="Failed to create snapshot of VM %s due to %s" % (self.module.params['name'], to_native(exc.msg)))
+            self.module.fail_json(msg="Failed to create snapshot of VM %s due to %s" % (self.module.params['name'], to_native(exc)))
 
         return task
 
@@ -352,7 +349,7 @@ class PyVmomiHelper(object):
             if task.info.state == 'error':
                 result = {'changed': False, 'failed': True, 'msg': task.info.error.msg}
             else:
-                result = {'changed': True, 'failed': False}
+                result = {'changed': True, 'failed': False, 'results': list_snapshots(vm)}
 
         return result
 
@@ -388,10 +385,8 @@ def main():
 
     if not vm:
         # If UUID is set, getvm select UUID, show error message accordingly.
-        if module.params['uuid'] is not None:
-            module.fail_json(msg="Unable to manage snapshots for non-existing VM %(uuid)s" % module.params)
-        else:
-            module.fail_json(msg="Unable to manage snapshots for non-existing VM %(name)s" % module.params)
+        module.fail_json(msg="Unable to manage snapshots for non-existing VM %s" % (module.params.get('uuid') or
+                                                                                    module.params.get('name')))
 
     if not module.params['snapshot_name'] and module.params['state'] != 'remove_all':
         module.fail_json(msg="snapshot_name param is required when state is '%(state)s'" % module.params)
