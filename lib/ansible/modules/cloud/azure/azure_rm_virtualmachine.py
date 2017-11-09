@@ -92,9 +92,19 @@ options:
               /home/<admin username>/.ssh/authorized_keys. Set key_data to the actual value of the public key."
     image:
         description:
-            - "A dictionary describing the Marketplace image used to build the VM. Will contain keys: publisher,
-              offer, sku and version. NOTE: set image.version to 'latest' to get the most recent version of a given
-              image."
+            - Specifies the image used to build the VM.
+            - If a string, the image is sourced from a custom image based on the
+              name.
+            - 'If a dict with the keys C(publisher), C(offer), C(sku), and
+              C(version), the image is sourced from a Marketplace image. NOTE:
+              set image.version to C(latest) to get the most recent version of a
+              given image.'
+            - 'If a dict with the keys C(name) and C(resource_group), the image
+              is sourced from a custom image based on the C(name) and
+              C(resource_group) set. NOTE: the key C(resource_group) is optional
+              and if omitted, all images in the subscription will be search for
+              by C(name).'
+            - Custom image support was added in Ansible 2.5
         required: true
     storage_account_name:
         description:
@@ -344,10 +354,10 @@ EXAMPLES = '''
     storage_container: osdisk
     storage_blob: osdisk.vhd
     image:
-    offer: CoreOS
-    publisher: CoreOS
-    sku: Stable
-    version: latest
+      offer: CoreOS
+      publisher: CoreOS
+      sku: Stable
+      version: latest
     data_disks:
     - lun: 0
       disk_size_gb: 64
@@ -357,6 +367,26 @@ EXAMPLES = '''
       disk_size_gb: 128
       storage_container_name: datadisk2
       storage_blob_name: datadisk2.vhd
+
+- name: Create a VM with a custom image
+  azure_rm_virtualmachine:
+    resource_group: Testing
+    name: testvm001
+    vm_size: Standard_DS1_v2
+    admin_username: adminUser
+    admin_password: password01
+    image: customimage001
+
+- name: Create a VM with a custom image from a particular resource group
+  azure_rm_virtualmachine:
+    resource_group: Testing
+    name: testvm001
+    vm_size: Standard_DS1_v2
+    admin_username: adminUser
+    admin_password: password01
+    image:
+      name: customimage001
+      resource_group: Testing
 
 - name: Power Off
   azure_rm_virtualmachine:
@@ -606,7 +636,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             admin_password=dict(type='str', no_log=True),
             ssh_password_enabled=dict(type='bool', default=True),
             ssh_public_keys=dict(type='list'),
-            image=dict(type='dict'),
+            image=dict(type='raw'),
             storage_account_name=dict(type='str', aliases=['storage_account']),
             storage_container_name=dict(type='str', aliases=['storage_container'], default='vhds'),
             storage_blob_name=dict(type='str', aliases=['storage_blob']),
@@ -689,6 +719,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         data_disk_requested_vhd_uri = None
         disable_ssh_password = None
         vm_dict = None
+        image_reference = None
+        custom_image = False
 
         resource_group = self.get_resource_group(self.resource_group)
         if not self.location:
@@ -717,14 +749,31 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     if not key.get('path') or not key.get('key_data'):
                         self.fail(msg)
 
-            if self.image:
-                if not self.image.get('publisher') or not self.image.get('offer') or not self.image.get('sku') \
-                   or not self.image.get('version'):
-                    self.fail("parameter error: expecting image to contain publisher, offer, sku and version keys.")
-                image_version = self.get_image_version()
-                if self.image['version'] == 'latest':
-                    self.image['version'] = image_version.name
-                    self.log("Using image version {0}".format(self.image['version']))
+            if self.image and isinstance(self.image, dict):
+                if all(key in self.image for key in ('publisher', 'offer', 'sku', 'version')):
+                    marketplace_image = self.get_marketplace_image_version()
+                    if self.image['version'] == 'latest':
+                        self.image['version'] = marketplace_image.name
+                        self.log("Using image version {0}".format(self.image['version']))
+
+                    image_reference = ImageReference(
+                        publisher=self.image['publisher'],
+                        offer=self.image['offer'],
+                        sku=self.image['sku'],
+                        version=self.image['version']
+                    )
+                elif self.image.get('name'):
+                    custom_image = True
+                    image_reference = self.get_custom_image_reference(
+                        self.image.get('name'),
+                        self.image.get('resource_group'))
+                else:
+                    self.fail("parameter error: expecting image to contain [publisher, offer, sku, version] or [name, resource_group]")
+            elif self.image and isinstance(self.image, str):
+                custom_image = True
+                image_reference = self.get_custom_image_reference(self.image)
+            elif self.image:
+                self.fail("parameter error: expecting image to be a string or dict not {0}".format(type(self.image).__name__))
 
             if self.plan:
                 if not self.plan.get('name') or not self.plan.get('product') or not self.plan.get('publisher'):
@@ -841,7 +890,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         if disable_ssh_password and not self.ssh_public_keys:
                             self.fail("Parameter error: ssh_public_keys required when disabling SSH password.")
 
-                    if not self.image:
+                    if not image_reference:
                         self.fail("Parameter error: an image is required when creating a virtual machine.")
 
                     # Get defaults
@@ -869,12 +918,15 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     nics = [NetworkInterfaceReference(id=id) for id in network_interfaces]
 
                     # os disk
-                    if not self.managed_disk_type:
-                        managed_disk = None
-                        vhd = VirtualHardDisk(uri=requested_vhd_uri)
-                    else:
+                    if self.managed_disk_type:
                         vhd = None
                         managed_disk = ManagedDiskParameters(storage_account_type=self.managed_disk_type)
+                    elif custom_image:
+                        vhd = None
+                        managed_disk = None
+                    else:
+                        vhd = VirtualHardDisk(uri=requested_vhd_uri)
+                        managed_disk = None
 
                     plan = None
                     if self.plan:
@@ -899,12 +951,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                 create_option=DiskCreateOptionTypes.from_image,
                                 caching=self.os_disk_caching,
                             ),
-                            image_reference=ImageReference(
-                                publisher=self.image['publisher'],
-                                offer=self.image['offer'],
-                                sku=self.image['sku'],
-                                version=self.image['version'],
-                            ),
+                            image_reference=image_reference,
                         ),
                         network_profile=NetworkProfile(
                             network_interfaces=nics
@@ -1349,7 +1396,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             except Exception as exc:
                 self.fail("Error deleting blob {0}:{1} - {2}".format(container_name, blob_name, str(exc)))
 
-    def get_image_version(self):
+    def get_marketplace_image_version(self):
         try:
             versions = self.compute_client.virtual_machine_images.list(self.location,
                                                                        self.image['publisher'],
@@ -1371,6 +1418,22 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                                                       self.image['offer'],
                                                                       self.image['sku'],
                                                                       self.image['version']))
+
+    def get_custom_image_reference(self, name, resource_group=None):
+        try:
+            if resource_group:
+                vm_images = self.compute_client.images.list_by_resource_group(resource_group)
+            else:
+                vm_images = self.compute_client.images.list()
+        except Exception as exc:
+            self.fail("Error fetching custom images from subscription - {0}".format(str(exc)))
+
+        for vm_image in vm_images:
+            if vm_image.name == name:
+                self.log("Using custom image id {0}".format(vm_image.id))
+                return ImageReference(id=vm_image.id)
+
+        self.fail("Error could not find image with name {0}".format(name))
 
     def get_storage_account(self, name):
         try:
