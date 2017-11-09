@@ -139,9 +139,7 @@ automatically. In 2.4, users are responsible for escaping backslashes themselves
 brings the template lookup plugin inline with the template module so that the same backslash
 escaping rules apply to both.
 
-If you have a template lookup like this
-
-.. code-block::
+If you have a template lookup like this::
 
     - debug:
         msg: '{{ lookup("template", "template.j2") }}'
