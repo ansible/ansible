@@ -23,7 +23,7 @@ class JsonRpcServer(object):
     _objects = set()
 
     def handle_request(self, request):
-        request = json.loads(request)
+        request = json.loads(to_text(request, errors='surrogate_then_replace'))
 
         method = request.get('method')
 

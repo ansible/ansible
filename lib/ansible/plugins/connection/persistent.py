@@ -22,6 +22,7 @@ import subprocess
 from ansible import constants as C
 from ansible.plugins.loader import connection_loader
 from ansible.plugins.connection import ConnectionBase
+from ansible.module_utils._text import to_text
 from ansible.module_utils.six.moves import cPickle
 from ansible.module_utils.connection import Connection as SocketConnection
 from ansible.errors import AnsibleError
@@ -94,9 +95,9 @@ class Connection(ConnectionBase):
         stdin.close()
 
         if p.returncode == 0:
-            result = json.loads(stdout)
+            result = json.loads(to_text(stdout, errors='surrogate_then_replace'))
         else:
-            result = json.loads(stderr)
+            result = json.loads(to_text(stderr, errors='surrogate_then_replace'))
 
         if 'messages' in result:
             for msg in result.get('messages'):
