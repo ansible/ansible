@@ -272,8 +272,6 @@ def main():
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
     warnings = list()
-    check_args(module, warnings)
-
     result = {'changed': False}
     if warnings:
         result['warnings'] = warnings

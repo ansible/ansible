@@ -3,6 +3,8 @@
 #  ios_config:
 #    lines:
 #      - no vlan 100
+#      - no vlan 200
+#      - no vlan 300
 #    authorize: yes
 
 #- name: setup - remove switchport settings on interfaces used in test
@@ -134,10 +136,59 @@
 #    that:
 #      - "result.changed == false"
 
+#- name: create vlans using aggregate
+#  ios_vlan: &create_aggregate
+#    aggregate:
+#      - { vlan_id: 200, name: vlan-200 }
+#      - { vlan_id: 300, name: vlan-300 }
+#    authorize: yes
+#  register: result
+
+#- assert:
+#    that:
+#      - "result.changed == true"
+#      - "'vlan 200' in result.commands"
+#      - "'name vlan-200' in result.commands"
+#      - "'vlan 300' in result.commands"
+#      - "'name vlan-300' in result.commands"
+
+#- name: create vlans using aggregate(idempotence)
+#  ios_vlan: *create_aggregate
+#  register: result
+
+#- assert:
+#    that:
+#      - "result.changed == false"
+
+#- name: delete vlans using aggregate
+#  ios_vlan: &delete_aggregate
+#    aggregate:
+#      - { vlan_id: 200, name: vlan-200 }
+#      - { vlan_id: 300, name: vlan-300 }
+#    state: absent
+#    authorize: yes
+#  register: result
+
+#- assert:
+#    that:
+#      - "result.changed == true"
+#      - "'no vlan 200' in result.commands"
+#      - "'no vlan 300' in result.commands"
+
+#- name: delete vlans using aggregate(idempotence)
+#  ios_vlan: *delete_aggregate
+#  register: result
+
+#- assert:
+#    that:
+#      - "result.changed == false"
+
 #- name: teardown(part1)
 #  ios_config:
 #    lines:
 #      - no vlan 100
+#      - no vlan 200
+#      - no vlan 300
 #    authorize: yes
 
 #- name: teardown(part2)
