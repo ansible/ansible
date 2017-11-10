@@ -882,7 +882,7 @@ class StrategyBase:
                     self._tqm._failed_hosts.pop(host.name, False)
                     self._tqm._unreachable_hosts.pop(host.name, False)
                     iterator._host_states[host.name].fail_state = iterator.FAILED_NONE
-                    msg="cleared host errors"
+                    msg = "cleared host errors"
                 else:
                     skipped = True
         elif meta_action == 'end_play':
