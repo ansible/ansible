@@ -544,7 +544,7 @@ class CLI(with_metaclass(ABCMeta, object)):
             parser.add_option('--force-handlers', default=C.DEFAULT_FORCE_HANDLERS, dest='force_handlers', action='store_true',
                               help="run handlers even if a task fails")
             parser.add_option('--flush-cache', dest='flush_cache', action='store_true',
-                              help="clear the fact cache")
+                              help="clear the fact cache for every host in inventory")
 
         if basedir_opts:
             parser.add_option('--playbook-dir', default=None, dest='basedir', action='store',
