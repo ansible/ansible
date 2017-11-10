@@ -76,6 +76,12 @@ options:
     type: 'bool'
     default: 'no'
     version_added: "2.2"
+  timeout:
+    description:
+      - Timeout in seconds for URL request.
+      - This only applies if remote_src option is set to C(yes) and C(src) contains C(://).
+    default: 10
+    version_added: "2.5"
   validate_certs:
     description:
       - This only applies if using a https URL as the source of the file.
@@ -772,6 +778,7 @@ def main():
             original_basename=dict(type='str'),  # used to handle 'dest is a directory' via template, a slight hack
             dest=dict(type='path', required=True),
             remote_src=dict(type='bool', default=False),
+            timeout=dict(type='int', default=10),
             creates=dict(type='path'),
             list_files=dict(type='bool', default=False),
             keep_newer=dict(type='bool', default=False),
@@ -787,6 +794,7 @@ def main():
     src = module.params['src']
     dest = module.params['dest']
     remote_src = module.params['remote_src']
+    timeout = module.params['timeout']
     file_args = module.load_file_common_arguments(module.params)
 
     # did tar file arrive?
@@ -798,7 +806,7 @@ def main():
             tempdir = os.path.dirname(os.path.realpath(__file__))
             package = os.path.join(tempdir, str(src.rsplit('/', 1)[1]))
             try:
-                rsp, info = fetch_url(module, src)
+                rsp, info = fetch_url(module, src, timeout=timeout)
                 # If download fails, raise a proper exception
                 if rsp is None:
                     raise Exception(info['msg'])
