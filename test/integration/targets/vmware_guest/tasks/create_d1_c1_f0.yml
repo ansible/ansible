@@ -72,6 +72,8 @@
     hardware:
         num_cpus: 1
         memory_mb: 512
+        hotadd_memory: true
+        hotadd_cpu: false
     disk:
         - size: 0gb
           type: thin
