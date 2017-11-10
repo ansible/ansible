@@ -46,7 +46,7 @@ rescue: List of tasks in a :term:`block` that run if there is a task error in th
 retries: "Number of retries before giving up in a :term:`until` loop. This setting is only used in combination with :term:`until`."
 roles: List of roles to be imported into the play
 run_once: Boolean that will bypass the host loop, forcing the task to execute on the first host available and will also apply any facts to all active hosts.
-serial: Defines the 'batch' of hosts to execute the current play until the end.
+serial: Defines the 'batch' of hosts to execute the current play until the end, the default 'batch' is all hosts in the play. If all hosts in a batch fail, the play fails.
 strategy: Allows you to choose the connection plugin to use for the play.
 tags: Tags applied to the task or included tasks, this allows selecting subsets of tasks from the command line.
 tasks: Main list of tasks to execute in the play, they run after :term:`roles` and before :term:`post_tasks`.

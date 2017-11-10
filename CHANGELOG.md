@@ -12,6 +12,13 @@ Ansible Changes By Release
   They will continue to be added into the main namespace directly, but now with a configuration toggle to enable this,
   currently on by default, in the future it will be off.
 
+### Minor Changes
+* added a few new magic vars corresponding to configuration/command line options:
+  `ansible_diff_mode`, `ansible_inventory_sources`, `ansible_limit`, `ansible_run_tags` , `ansible_forks` and `ansible_skip_tags`
+* Updated the bundled copy of the six library to 1.11.0
+* Added support to `become` `NT AUTHORITY\System`, `NT AUTHORITY\LocalService`, and `NT AUTHORITY\NetworkService` on Windows hosts
+* New CLI options for ansible-inventory, ansible-console and ansible to allow specifying a playbook_dir to be used for relative search paths.
+
 ### Deprecations
 * Previously deprecated 'hostfile' config settings have been 're-deprecated' as previously code did not warn about deprecated configuration settings.
 * The ``with_<lookup>`` loops are deprecated in favor of the new ``loop`` keyword
