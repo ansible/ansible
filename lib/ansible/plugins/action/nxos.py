@@ -23,6 +23,8 @@ import sys
 import copy
 
 from ansible import constants as C
+from ansible.module_utils._text import to_text
+from ansible.module_utils.connection import Connection
 from ansible.plugins.action.normal import ActionModule as _ActionModule
 from ansible.module_utils.network_common import load_provider
 from ansible.module_utils.nxos import nxos_provider_spec
@@ -43,6 +45,7 @@ class ActionModule(_ActionModule):
         display.vvvv('connection transport is %s' % transport, self._play_context.remote_addr)
 
         if transport == 'cli':
+            socket_path = None
             if self._play_context.connection == 'local':
                 pc = copy.deepcopy(self._play_context)
                 pc.connection = 'network_cli'
@@ -65,6 +68,20 @@ class ActionModule(_ActionModule):
                                    'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell'}
 
                 task_vars['ansible_socket'] = socket_path
+
+            # make sure we are in the right cli context which should be
+            # enable mode and not config module
+            if socket_path is None:
+                socket_path = self._connection.socket_path
+
+            conn = Connection(socket_path)
+            out = conn.get_prompt()
+            while to_text(out, errors='surrogate_then_replace').strip().endswith(')#'):
+                display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
+                conn.send_command('exit')
+                out = conn.get_prompt()
+
+
 
         else:
             provider['transport'] = 'nxapi'
