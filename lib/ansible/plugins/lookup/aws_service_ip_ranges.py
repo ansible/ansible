@@ -5,7 +5,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-lookup: aws_ip_ranges
+lookup: aws_service_ip_ranges
 author:
   - James Turner <turnerjsm@gmail.com>
 version_added: "2.5"
