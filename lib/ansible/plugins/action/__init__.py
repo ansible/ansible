@@ -177,10 +177,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             if not isinstance(environments, list):
                 environments = [environments]
 
-            # the environments as inherited need to be reversed, to make
-            # sure we merge in the parent's values first so those in the
-            # block then task 'win' in precedence
-            environments.reverse()
+            # The order of environments matters to make sure we merge
+            # in the parent's values first so those in the block then
+            # task 'win' in precedence
             for environment in environments:
                 if environment is None or len(environment) == 0:
                     continue
