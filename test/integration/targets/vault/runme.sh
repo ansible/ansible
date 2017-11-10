@@ -36,9 +36,11 @@ echo "rc was $WRONG_RC (1 is expected)"
 
 # tests related to https://github.com/ansible/ansible/issues/30993
 CMD='ansible-playbook -vvvvv --ask-vault-pass test_vault.yml'
-setsid sh -c "echo test-vault-password|${CMD}" < /dev/null > log 2>&1
-echo $?
+setsid sh -c "echo test-vault-password|${CMD}" < /dev/null > log 2>&1 && :
+WRONG_RC=$?
 cat log
+echo "rc was $WRONG_RC (0 is expected)"
+[ $WRONG_RC -eq 0 ]
 
 setsid sh -c 'tty; ansible-vault --ask-vault-pass -vvvvv view test_vault.yml' < /dev/null > log 2>&1 && :
 WRONG_RC=$?
