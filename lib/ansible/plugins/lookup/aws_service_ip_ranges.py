@@ -33,7 +33,7 @@ tasks:
 
 - name: "use list return option and iterate as a loop"
   debug: msg="{% for cidr in ec2_ranges %}{{ cidr }} {% endfor %}"
-# "52.62.0.0/15  52.64.0.0/17  52.64.128.0/17  52.65.0.0/16  52.95.241.0/24  52.95.255.16/28  54.66.0.0/16  54.79.0.0/16  54.153.128.0/17  54.206.0.0/16  54.252.0.0/16  54.253.0.0/16 "
+# "52.62.0.0/15 52.64.0.0/17 52.64.128.0/17 52.65.0.0/16 52.95.241.0/24 52.95.255.16/28 54.66.0.0/16 "
 
 - name: "Pull S3 IP ranges, and print the default return style"
   debug: msg="{{ lookup('aws_ip_ranges', region='us-east-1', service='S3') }}"
@@ -47,16 +47,16 @@ _raw:
 
 
 import json
-from six.moves import urllib
 
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
+from ansible.module_utils.urls import open_url
 
 
 class LookupModule(LookupBase):
     def run(self, terms, variables, **kwargs):
         try:
-            resp = urllib.request.urlopen('https://ip-ranges.amazonaws.com/ip-ranges.json')
+            resp = open_url('https://ip-ranges.amazonaws.com/ip-ranges.json')
             amazon_response = json.load(resp)['prefixes']
         except getattr(json.decoder, 'JSONDecodeError', ValueError) as e:
             # on Python 3+, json.decoder.JSONDecodeError is raised for bad
