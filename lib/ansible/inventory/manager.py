@@ -30,7 +30,7 @@ from ansible.inventory.data import InventoryData
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.parsing.utils.addresses import parse_address
-from ansible.plugins.loader import PluginLoader
+from ansible.plugins.loader import inventory_loader
 from ansible.utils.path import unfrackpath
 
 try:
@@ -178,7 +178,6 @@ class InventoryManager(object):
     def _setup_inventory_plugins(self):
         ''' sets up loaded inventory plugins for usage '''
 
-        inventory_loader = PluginLoader('InventoryModule', 'ansible.plugins.inventory', C.DEFAULT_INVENTORY_PLUGIN_PATH, 'inventory_plugins')
         display.vvvv('setting up inventory plugins')
 
         for name in C.INVENTORY_ENABLED:
