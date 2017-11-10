@@ -386,7 +386,8 @@ def main():
             update_cache=dict(type='bool', default=False, aliases=['update-cache']),
         ),
         required_one_of=[['name', 'update_cache', 'upgrade']],
-        supports_check_mode=True),
+        supports_check_mode=True,
+    )
 
     pacman_path = module.get_bin_path('pacman', True)
 
