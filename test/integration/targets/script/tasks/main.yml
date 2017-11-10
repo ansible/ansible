@@ -48,6 +48,17 @@
       - "script_result0.stderr == ''"
       - "script_result0.stdout == 'win'"
 
+- name: Execute a script with arguments including a unicode character
+  script: test_with_args.sh -this -that -Ӧther
+  register: unicode_args
+
+- name: Assert that script with unicode character ran successfully
+  assert:
+    that:
+      - unicode_args is success
+      - unicode_args.stdout_lines[0] == '-this'
+      - unicode_args.stdout_lines[1] == '-that'
+      - unicode_args.stdout_lines[2] == '-Ӧther'
 
 # creates
 - name: verify that afile.txt is absent
