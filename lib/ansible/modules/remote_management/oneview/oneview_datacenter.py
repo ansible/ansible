@@ -12,12 +12,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: oneview_datacenter
-short_description: Manage OneView Data Center resources
+short_description: Manage OneView Datacenter resources
 description:
-    - "Provides an interface to manage Data Center resources. Can add, update, and remove."
+    - "Provides an interface to manage Datacenter resources. Can add, update, and remove."
 version_added: "2.5"
 requirements:
-    - "python >= 2.7.9"
     - "hpOneView >= 3.1.0"
 author:
     - Alex Monteiro (@aalexmonteiro)
@@ -27,14 +26,14 @@ author:
 options:
     state:
         description:
-            - Indicates the desired state for the Data Center resource.
-              C(present) will ensure data properties are compliant with OneView.
+            - Indicates the desired state for the Datacenter resource.
               C(absent) will remove the resource from OneView, if it exists.
+              C(present) will ensure the datacenter resource exists and its properties are compliant with HPE OneView.
+        default: present
         choices: ['present', 'absent']
-        required: true
     data:
         description:
-            - List with Data Center properties and its associated states.
+            - List with Datacenter properties and its associated states.
         required: true
 
 extends_documentation_fragment:
@@ -43,7 +42,7 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = '''
-- name: Add a Data Center
+- name: Add a Datacenter
   oneview_datacenter:
     hostname: 172.16.101.48
     username: administrator
@@ -63,7 +62,7 @@ EXAMPLES = '''
   no_log: true
   delegate_to: localhost
 
-- name: Update the Data Center with specified properties (no racks)
+- name: Update the Datacenter with specified properties (no racks)
   oneview_datacenter:
     hostname: 172.16.101.48
     username: administrator
@@ -85,7 +84,7 @@ EXAMPLES = '''
   no_log: true
   delegate_to: localhost
 
-- name: Rename the Data Center
+- name: Rename the Datacenter
   oneview_datacenter:
     hostname: 172.16.101.48
     username: administrator
@@ -98,7 +97,7 @@ EXAMPLES = '''
   no_log: true
   delegate_to: localhost
 
-- name: Remove the Data Center
+- name: Remove the Datacenter
   oneview_datacenter:
     hostname: 172.16.101.48
     username: administrator
@@ -113,7 +112,7 @@ EXAMPLES = '''
 
 RETURN = '''
 datacenter:
-    description: Has the OneView facts about the Data Center.
+    description: Has the OneView facts about the Datacenter.
     returned: On state 'present'. Can be null.
     type: dict
 '''
@@ -122,19 +121,16 @@ from ansible.module_utils.oneview import OneViewModuleBase, OneViewModuleResourc
 
 
 class DatacenterModule(OneViewModuleBase):
-    MSG_CREATED = 'Data Center added successfully.'
-    MSG_UPDATED = 'Data Center updated successfully.'
-    MSG_ALREADY_PRESENT = 'Data Center is already present.'
-    MSG_DELETED = 'Data Center removed successfully.'
-    MSG_ALREADY_ABSENT = 'Data Center is already absent.'
+    MSG_CREATED = 'Datacenter added successfully.'
+    MSG_UPDATED = 'Datacenter updated successfully.'
+    MSG_ALREADY_PRESENT = 'Datacenter is already present.'
+    MSG_DELETED = 'Datacenter removed successfully.'
+    MSG_ALREADY_ABSENT = 'Datacenter is already absent.'
     MSG_RACK_NOT_FOUND = 'Rack was not found.'
     RESOURCE_FACT_NAME = 'datacenter'
 
     argument_spec = dict(
-        state=dict(
-            required=True,
-            choices=['present', 'absent']
-        ),
+        state=dict(type='str', default='present', choices=['present', 'absent']),
         data=dict(required=True, type='dict')
     )
 
