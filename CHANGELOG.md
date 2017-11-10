@@ -155,6 +155,8 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/32744)
 * Prevent host_group_vars plugin load errors when using 'path as inventory hostname'
   https://github.com/ansible/ansible/issues/32764
+* Better errors when loading malformed vault envelopes
+  (https://github.com/ansible/ansible/issues/28038)
 
 <a id="2.4.1"></a>
 
