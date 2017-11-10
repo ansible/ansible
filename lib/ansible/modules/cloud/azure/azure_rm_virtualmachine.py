@@ -102,8 +102,8 @@ options:
             - 'If a dict with the keys C(name) and C(resource_group), the image
               is sourced from a custom image based on the C(name) and
               C(resource_group) set. NOTE: the key C(resource_group) is optional
-              and if omitted, all images in the subscription will be search for
-              by C(name).'
+              and if omitted, all images in the subscription will be searched
+              for by C(name).'
             - Custom image support was added in Ansible 2.5
         required: true
     storage_account_name:
