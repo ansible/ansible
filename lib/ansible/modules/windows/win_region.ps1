@@ -151,7 +151,7 @@ Function Set-CultureLegacy($culture) {
     }
 
     $properties = Get-ItemProperty $reg_key
-    foreach($property in $properties.GetEnumerator()) {
+    foreach($property in $properties.PSObject.Properties) {
         if (Test-RegistryProperty -reg_key $reg_key -property $property.Name) {
             $name = $property.Name
             $old_value = $property.Value
