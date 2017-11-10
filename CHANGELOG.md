@@ -151,6 +151,8 @@ Ansible Changes By Release
 * Add extra error handling for wmare connect to correctly detect scenarios where
   username does not have the required logon permissions
   (https://github.com/ansible/ansible/pull/32613)
+* Fix ios_config file prompt issue while using save_when
+  (https://github.com/ansible/ansible/pull/32744)
 
 <a id="2.4.1"></a>
 
