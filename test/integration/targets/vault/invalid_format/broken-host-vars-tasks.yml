@@ -2,6 +2,6 @@
 - hosts: broken-host-vars
   gather_facts: false
   tasks:
-    - name: Display hostvars
+    - name: EXPECTED FAILURE Display hostvars
       debug:
         msg: "{{inventory_hostname}} hostvars: {{ hostvars[inventory_hostname] }}"

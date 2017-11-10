@@ -2,10 +2,11 @@
 - hosts: broken-group-vars
   gather_facts: false
   tasks:
-    - debug:
+    - name: EXPECTED FAILURE
+      debug:
         msg: "some_var_that_fails: {{ some_var_that_fails }}"
 
-    - name: Display hostvars
+    - name: EXPECTED FAILURE Display hostvars
       debug:
         msg: "{{inventory_hostname}} hostvars: {{ hostvars[inventory_hostname] }}"
 
