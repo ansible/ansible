@@ -214,11 +214,10 @@ class CLI(with_metaclass(ABCMeta, object)):
         # if an action needs an encrypt password (create_new_password=True) and we dont
         # have other secrets setup, then automatically add a password prompt as well.
         # prompts cant/shouldnt work without a tty, so dont add prompt secrets
-        if not vault_ids:
-            if ask_vault_pass or (auto_prompt and sys.stdin.isatty()):
+        if ask_vault_pass or (not vault_ids and auto_prompt):
 
-                id_slug = u'%s@%s' % (C.DEFAULT_VAULT_IDENTITY, u'prompt_ask_vault_pass')
-                vault_ids.append(id_slug)
+            id_slug = u'%s@%s' % (C.DEFAULT_VAULT_IDENTITY, u'prompt_ask_vault_pass')
+            vault_ids.append(id_slug)
 
         return vault_ids
 
