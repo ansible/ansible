@@ -16,7 +16,7 @@ DOCUMENTATION = """
 ---
 module: enos_command
 version_added: "2.5"
-author: "Anil Kumar Muraleedharan (Anil)"
+author: "Anil Kumar Muraleedharan (@amuraleedhar)"
 short_description: Run arbitrary commands on Lenovo ENOS devices
 description:
   - Sends arbitrary commands to an ENOS node and returns the results
@@ -224,4 +224,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
