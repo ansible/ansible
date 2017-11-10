@@ -62,35 +62,35 @@ options:
 """
 
 EXAMPLES = """
-- name: Set ethernet 1/1 IPv4 address
+- name: Set Eth1/1 IPv4 address
   mlnxos_l3_interface:
-    name: ethernet 1/1
+    name: Eth1/1
     ipaddress: 192.168.0.1/24
 
-- name: remove ethernet 1/1 IPv4 address
+- name: remove Eth1/1 IPv4 address
   mlnxos_l3_interface:
-    name: ethernet 1/1
+    name: Eth1/1
     ipaddress: 192.168.0.1/24
     bgp_router_as: 100
     bgp_neighbors:
       - 192.168.0.2
       - 192.168.0.3
-- name: configure bgp ethernet 1/1
+- name: configure bgp Eth1/1
   mlnxos_l3_interface:
-    name: ethernet 1/1
+    name: Eth1/1
     state: absent
 
 - name: Set IP addresses on aggregate
   mlnxos_l3_interface:
     aggregate:
-      - { name: "ethernet 1/1", ipv4: 192.168.2.10/24 }
-      - { name: "ethernet 1/2", ipv4: 192.168.3.10/24 }
+      - { name: "Eth1/1", ipv4: 192.168.2.10/24 }
+      - { name: "Eth1/2", ipv4: 192.168.3.10/24 }
 
 - name: Remove IP addresses on aggregate
   mlnxos_l3_interface:
     aggregate:
-      - { name: "ethernet 1/1" }
-      - { name: "ethernet 1/2" }
+      - { name: "Eth1/1" }
+      - { name: "Eth1/2" }
     state: absent
 """
 
@@ -101,7 +101,7 @@ commands:
               manage the device.
   type: list
   sample:
-    - interface ethernet 1/1
+    - interface Eth1/1
     - no switchport
     - ip address 1.2.3.4/24
 """
@@ -117,7 +117,6 @@ class MlnxosL3InterfaceApp(MlnxosInterfaceApp):
         super(MlnxosL3InterfaceApp, self).__init__()
         self._local_bgp_config = {}
         self._neighbor_bgp_config = []
-        self._add_bgp = False
 
     @classmethod
     def _get_element_spec(cls):
@@ -174,9 +173,9 @@ class MlnxosL3InterfaceApp(MlnxosInterfaceApp):
             if bgp_config:
                 self._set_bgp_config(bgp_config)
 
-    def _create_if_data(self, item):
+    def _create_if_data(self, name, item):
         return {
-            'name': self.get_if_name(item),
+            'name': name,
             'ipaddress': self.extract_ipaddress(item),
             'state': 'present'
         }
@@ -189,7 +188,7 @@ class MlnxosL3InterfaceApp(MlnxosInterfaceApp):
 
     def _generate_if_commands(self, name, req_if, curr_if):
         state = req_if['state']
-        interface = 'interface ' + name
+        interface_prefix = self.get_if_cmd(name)
         curr_ipaddress = curr_if.get('ipaddress')
         bgp_as = req_if['bgp_router_as'] or 0
         bgp_neighbors = req_if['bgp_neighbors'] or []
@@ -198,7 +197,7 @@ class MlnxosL3InterfaceApp(MlnxosInterfaceApp):
         if state == 'absent':
             if curr_ipaddress:
                 cmd = "no ip address"
-                self.add_command_to_interface(interface, cmd)
+                self.add_command_to_interface(interface_prefix, cmd)
                 self._commands.append('exit')
             if bgp_as and bgp_as == curr_bgp_as:
                 self._commands.append('no router bgp %s' % bgp_as)
@@ -206,16 +205,15 @@ class MlnxosL3InterfaceApp(MlnxosInterfaceApp):
             req_ipaddress = req_if.get('ipaddress')
             if curr_ipaddress != req_ipaddress:
                 cmd = "no switchport force"
-                self.add_command_to_interface(interface, cmd)
+                self.add_command_to_interface(interface_prefix, cmd)
                 cmd = "ip address %s" % req_ipaddress
-                self.add_command_to_interface(interface, cmd)
+                self.add_command_to_interface(interface_prefix, cmd)
                 self._commands.append('exit')
             if bgp_as:
                 if bgp_as != curr_bgp_as:
                     if curr_bgp_as:
                         self._commands.append(
                             'no router bgp %s' % curr_bgp_as)
-                    self._add_bgp = True
                     self._commands.append('router bgp %s' % bgp_as)
                     self._commands.append('exit')
                 for neighbor in bgp_neighbors:
@@ -226,17 +224,9 @@ class MlnxosL3InterfaceApp(MlnxosInterfaceApp):
                             break
                     if found:
                         continue
-                    self._add_bgp = True
                     self._commands.append(
                         'router bgp %s neighbor %s remote-as %s' %
                         (bgp_as, neighbor, bgp_as))
-
-    def generate_commands(self):
-        super(MlnxosL3InterfaceApp, self).generate_commands()
-        if self._add_bgp:
-            commands = ['ip routing', 'protocol bgp']
-            commands.extend(self._commands)
-            self._commands = commands
 
 
 if __name__ == '__main__':

@@ -3,7 +3,7 @@
 #
 - name: configure L3 interface
   mlnxos_l3_interface:
-    name: ethernet 1/19
+    name: Eth1/19
     ipaddress: 192.168.1.19/24
     provider:
       host: "{{ inventory_hostname }}"
@@ -13,7 +13,7 @@
     
 - name: remove L3 interface
   mlnxos_interface:
-    name: ethernet 1/20
+    name: Eth1/20
     state: absent
     provider:
       host: "{{ inventory_hostname }}"

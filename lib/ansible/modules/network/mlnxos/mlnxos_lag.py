@@ -37,7 +37,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = """
 ---
-module: mlnxos_lag
+module: mlnxos_mlag
 version_added: "2.5"
 author: "Samer Deeb (@samerd)"
 short_description: Manage Lags on MLNX-OS network devices
@@ -71,8 +71,8 @@ EXAMPLES = """
     lag_id: 5
     mtu: 1512
     members:
-      - 1/6
-      - 1/7
+      - Eth1/6
+      - Eth1/7
     lag_mode: on
 """
 
@@ -93,15 +93,20 @@ commands:
 class MlnxosLagApp(BaseMlnxosApp):
     LAG_ID_REGEX = re.compile(r"^(.*)Po(\d+)(.*)$")
     IF_NAME_REGEX = re.compile(r"^Eth(\d+\/\d+)(.*)$")
+    PORT_CHANNEL = 'port-channel'
+    CHANNEL_GROUP = 'channel-group'
 
     def init_module(self):
         """ initialize module
         """
         element_spec = dict(
-            mtu=dict(),
-            lag_id=dict(required=True),
+            lag_id=dict(required=True, type='int'),
             members=dict(required=True, type='list'),
             lag_mode=dict(required=True, choices=['active', 'on', 'passive']),
+            mtu=dict(type='int'),
+            vlan_id=dict(type='int'),
+            ipl=dict(type='int'),
+            dcb_pfc=dict(choices=['enabled', 'disabled']),
         )
         argument_spec = dict()
 
@@ -118,7 +123,14 @@ class MlnxosLagApp(BaseMlnxosApp):
             'lag_mode': module_params['lag_mode'],
             'mtu': module_params['mtu'],
             'members': module_params['members'],
+            'vlan_id': module_params['vlan_id'],
+            'ipl': module_params['ipl'],
+            'dcb_pfc': module_params['dcb_pfc'],
         }
+        raw_members = lag_params['members']
+        if raw_members:
+            members = [self.extract_if_name(member) for member in raw_members]
+            lag_params['members'] = members
 
         self.validate_param_values(lag_params)
         self._required_config = lag_params
@@ -136,16 +148,23 @@ class MlnxosLagApp(BaseMlnxosApp):
     def extract_lag_id(cls, header):
         match = cls.LAG_ID_REGEX.match(header)
         if match:
-            return match.groups()[1]
+            return match.group(2)
 
     @classmethod
     def extract_if_name(cls, member):
         match = cls.IF_NAME_REGEX.match(member)
         if match:
-            return match.groups()[0]
+            return match.group(1)
+
+    @classmethod
+    def get_lag_members(cls, lag_item):
+        lag_members = cls.get_config_attr(lag_item, "Member Ports")
+        lag_members = lag_members.split()
+        return lag_members
+
 
     def load_current_config(self):
-        interface_type = "port-channel"
+        interface_type = self.PORT_CHANNEL
         lag_config = get_interfaces_config(self._module, interface_type)
         lag_summary = get_interfaces_config(self._module, interface_type,
                                             summary=True)
@@ -153,10 +172,12 @@ class MlnxosLagApp(BaseMlnxosApp):
 
         for item in lag_config:
             lag_id = self.get_lag_id(item)
+            if lag_id:
+                lag_id = int(lag_id)
             obj = {
                 'lag_id': lag_id,
                 'mtu': self.get_mtu(item),
-                'members': None
+                'members': []
             }
             self._current_config[lag_id] = obj
 
@@ -164,36 +185,88 @@ class MlnxosLagApp(BaseMlnxosApp):
             lag_id = self.extract_lag_id(lag_name)
             if not lag_id:
                 continue
+            lag_id = int(lag_id)
             obj = self._current_config.get(lag_id)
             if not obj:
                 continue
-            lag_members = self.get_config_attr(lag_data[0], "Member Ports")
-            lag_members = lag_members.split()
+            lag_item = lag_data[0]
+            lag_members = self.get_lag_members(lag_item)
             obj['members'] = [self.extract_if_name(member) for member in
                               lag_members]
 
-    def generate_commands(self):
-        lag_id = self._required_config['lag_id']
-        mtu = self._required_config['mtu']
-        lag_mode = self._required_config['lag_mode']
-        members = self._required_config['members']
-        lag_obj = self._current_config.get(lag_id, {})
+    def _generate_port_channel_init_commands(self, lag_id, lag_obj):
         if not lag_obj:
-            self._commands.append("interface port-channel %s" % lag_id)
+            self._commands.append(
+                "interface %s %s" % (self.PORT_CHANNEL, lag_id))
             self._commands.append("exit")
-        curr_mtu = lag_obj.get('mtu')
+            curr_mtu = lag_obj.get('mtu', 0)
+            mtu = self._required_config['mtu']
+            if mtu and int(curr_mtu) != mtu:
+                self._commands.append("interface %s %s mtu %s force" %
+                                      (self.PORT_CHANNEL, lag_id, mtu))
+
+    def _generate_port_channel_final_commands(self, lag_id, lag_obj):
+        if lag_obj:
+            return
+        pch_prefix = "interface %s %s" % (self.PORT_CHANNEL, lag_id)
+        ipl = self._required_config['ipl']
+        if ipl:
+            self._commands.append("%s ipl %s" % (pch_prefix, ipl))
+        dcb_pfc = self._required_config['dcb_pfc']
+        if dcb_pfc:
+            if dcb_pfc == "enabled":
+                command = "%s dcb priority-flow-control mode on force" % \
+                    pch_prefix
+            else:
+                command = "%s no dcb priority-flow-control mode force" % \
+                    pch_prefix
+            self._commands.append(command)
+        vlan_id = self._required_config['vlan_id']
+
+        if vlan_id:
+            self._commands.append(
+                "%s switchport mode hybrid" % pch_prefix)
+            self._commands.append(
+                "%s switchport mode access vlan %s" % (pch_prefix, vlan_id))
+        self._commands.append(
+                "%s no shutdown" % pch_prefix)
+
+    def _generate_port_channel_members_commands(self, lag_id, lag_obj):
+        lag_mode = self._required_config['lag_mode']
+        dcb_pfc = self._required_config['dcb_pfc']
         curr_members = lag_obj.get('members', [])
-        if mtu and curr_mtu != mtu:
-            self._commands.append("interface port-channel %s mtu %s force" %
-                                  (lag_id, mtu))
+        members = self._required_config['members']
         if set(members) != set(curr_members):
             for member in curr_members:
+                interface_prefix = "interface ethernet %s" % member
                 self._commands.append(
-                    "no interface ethernet %s channel-group" % member)
+                    "no %s %s" % (interface_prefix, self.CHANNEL_GROUP))
             for member in members:
+                interface_prefix = "interface ethernet %s" % member
+                if dcb_pfc == "enabled":
+                    self._commands.append(
+                        "%s no dcb priority-flow-control mode force" %
+                        interface_prefix)
+                    self._commands.append(
+                        "%s switchport force" % interface_prefix)
+                    self._commands.append(
+                        "%s switchport mode access" % interface_prefix)
                 self._commands.append(
-                    "interface ethernet %s channel-group %s mode %s" %
-                    (member, lag_id, lag_mode))
+                    "%s %s %s mode %s" %
+                    (interface_prefix, self.CHANNEL_GROUP, lag_id, lag_mode))
+
+
+    def generate_commands(self):
+        lag_id = self._required_config['lag_id']
+
+        lag_obj = self._current_config.get(lag_id, {})
+        self._generate_port_channel_init_commands(lag_id, lag_obj)
+        self._generate_port_channel_members_commands(lag_id, lag_obj)
+        self._generate_port_channel_final_commands(lag_id, lag_obj)
+
+        if self._commands:
+            self._commands.append('exit')
+
 
     def check_declarative_intent_params(self, result):
         pass

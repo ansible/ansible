@@ -31,6 +31,7 @@ from ansible.module_utils.network_common import conditional, \
 from ansible.module_utils.mlnxos import get_interfaces_config
 from ansible.module_utils.mlnxos import mlnxos_argument_spec
 from ansible.modules.network.mlnxos import BaseMlnxosApp
+import cmd
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -70,9 +71,9 @@ options:
     description: List of Interfaces definitions.
   delay:
     description:
-      - Time in seconds to wait before checking for the operational state on remote
-        device. This wait is applicable for operational state argument which are
-        I(state) with values C(up)/C(down), I(tx_rate) and I(rx_rate).
+      - Time in seconds to wait before checking for the operational state on
+        remote device. This wait is applicable for operational state argument
+        which are I(state) with values C(up)/C(down).
     default: 10
   state:
     description:
@@ -85,29 +86,29 @@ options:
 EXAMPLES = """
 - name: configure interface
   mlnxos_interface:
-      name: ethernet 1/2
+      name: Eth1/2
       description: test-interface
       speed: 100 GB
       mtu: 512
 
 - name: make interface up
   mlnxos_interface:
-    name: ethernet 1/2
+    name: Eth1/2
     enabled: True
 
 - name: make interface down
   mlnxos_interface:
-    name: ethernet 1/2
+    name: Eth1/2
     enabled: False
 
 - name: Check intent arguments
   mlnxos_interface:
-    name: ethernet 1/2
+    name: Eth1/2
     state: up
 
 - name: Config + intent
   mlnxos_interface:
-    name: ethernet 1/2
+    name: Eth1/2
     enabled: False
     state: down
 """
@@ -115,10 +116,11 @@ EXAMPLES = """
 RETURN = """
 commands:
   description: The list of configuration mode commands to send to the device.
-  returned: always, except for the platforms that use Netconf transport to manage the device.
+  returned: always, except for the platforms that use Netconf transport to
+            manage the device.
   type: list
   sample:
-  - interface ethernet 1/2
+  - interface Eth1/2
   - description test-interface
   - mtu 512
 """
@@ -181,14 +183,9 @@ class MlnxosInterfaceApp(BaseMlnxosApp):
                         item[key] = module_params[key]
 
                 self.validate_param_values(item, item)
-                d = item.copy()
-
-                if d['enabled']:
-                    d['disable'] = False
-                else:
-                    d['disable'] = True
-
-                self._required_config.append(d)
+                req_item = item.copy()
+                req_item['disable'] = not req_item['enabled']
+                self._required_config.append(req_item)
 
         else:
             params = {
@@ -201,17 +198,16 @@ class MlnxosInterfaceApp(BaseMlnxosApp):
             }
 
             self.validate_param_values(params)
-            if module_params['enabled']:
-                params.update({'disable': False})
-            else:
-                params.update({'disable': True})
-
+            params['disable'] = not module_params['enabled']
             self._required_config.append(params)
 
     @classmethod
     def get_if_name(cls, item):
-        header = cls.get_config_attr(item, "header")
-        return header.replace("Eth", "ethernet ")
+        return cls.get_config_attr(item, "header")
+
+    @classmethod
+    def get_if_cmd(cls, if_name):
+        return if_name.replace("Eth", "interface ethernet ")
 
     @classmethod
     def get_admin_state(cls, item):
@@ -223,20 +219,14 @@ class MlnxosInterfaceApp(BaseMlnxosApp):
         oper_state = cls.get_config_attr(item, "Operational state")
         return str(oper_state).lower()
 
-    @classmethod
-    def search_obj_in_list(cls, name, lst):
-        for o in lst:
-            if o['name'] == name:
-                return o
-
     def add_command_to_interface(self, interface, cmd):
         if interface not in self._commands:
             self._commands.append(interface)
         self._commands.append(cmd)
 
-    def _create_if_data(self, item):
+    def _create_if_data(self, name, item):
         return {
-            'name': self.get_if_name(item),
+            'name': name,
             'description': self.get_config_attr(item, 'Description'),
             'speed': self.get_config_attr(item, 'Actual speed'),
             'mtu': self.get_mtu(item),
@@ -245,50 +235,57 @@ class MlnxosInterfaceApp(BaseMlnxosApp):
         }
 
     def load_current_config(self):
-        self._current_config = list()
+        self._current_config = dict()
         config = get_interfaces_config(self._module, "ethernet")
 
         for item in config:
-            self._current_config.append(self._create_if_data(item))
+            name = self.get_if_name(item)
+            self._current_config[name] = self._create_if_data(name, item)
 
     def generate_commands(self):
         for req_if in self._required_config:
             name = req_if['name']
-            curr_if = self.search_obj_in_list(
-                name, self._current_config)
+            curr_if = self._current_config.get(name)
             if not curr_if:
                 self._module.fail_json(
                     msg='could not find interface %s' % name)
                 continue
             self._generate_if_commands(name, req_if, curr_if)
+        if self._commands:
+            self._commands.append('exit')
 
     def _generate_if_commands(self, name, req_if, curr_if):
         args = ('speed', 'description', 'mtu')
         disable = req_if['disable']
         state = req_if['state']
-
-        interface = 'interface ' + name
+        add_exit = False
+        interface_prefix = self.get_if_cmd(name)
 
         if state == 'absent':
             curr_state = curr_if['state']
             if curr_state == "up":
-                self._commands.append('no ' + interface)
+                self._commands.append('no ' + interface_prefix)
 
         else:
-            for item in args:
-                candidate = req_if.get(item)
-                running = curr_if.get(item)
+            for attr_name in args:
+                candidate = req_if.get(attr_name)
+                running = curr_if.get(attr_name)
                 if candidate != running:
                     if candidate:
-                        cmd = item + ' ' + str(candidate)
-                        if item == "mtu":
+                        cmd = attr_name + ' ' + str(candidate)
+                        if attr_name == "mtu":
                             cmd = cmd + ' ' + 'force'
-                        self.add_command_to_interface(interface, cmd)
-
-            if disable and not curr_if.get('disable', False):
-                self.add_command_to_interface(interface, 'shutdown')
-            elif not disable and curr_if.get('disable', False):
-                self.add_command_to_interface(interface, 'no shutdown')
+                        self.add_command_to_interface(interface_prefix, cmd)
+                        add_exit = True
+            curr_disable = curr_if.get('disable', False)
+            if disable != curr_disable:
+                cmd = 'shutdown'
+                if disable:
+                    cmd = "no %s" % cmd
+                self.add_command_to_interface(interface_prefix, cmd)
+                add_exit = True
+            if add_exit:
+                self._commands.append('exit')
 
     def check_declarative_intent_params(self, result):
         failed_conditions = []
@@ -300,8 +297,7 @@ class MlnxosInterfaceApp(BaseMlnxosApp):
 
             if result['changed']:
                 sleep(req_if['delay'])
-            curr_if = self.search_obj_in_list(
-                name, self._current_config)
+            curr_if = self._current_config.get(name)
             curr_state = curr_if['state']
             if curr_state is None or not \
                     conditional(want_state, curr_state.strip()):

@@ -27,7 +27,9 @@
   mlnxos_vlan:
     vlan_id: 6 
     state: present 
-    interface: Eth1/6,Eth1/7
+    interfaces:
+      - Eth1/6
+      - Eth1/7
     mode: hybrid 
     authorize: yes
     provider:
@@ -36,46 +38,3 @@
       password: admin
       port: 22
       timeout: 10
-
-- name: run add interface to vlan
-  mlnxos_vlan:
-    vlan_id: 5
-    state: present
-    interface: Eth1/5
-    mode: hybrid
-    authorize: yes
-    provider:
-      host: "{{ inventory_hostname }}"
-      username: admin
-      password: admin
-      port: 22
-      timeout: 10
-
-- name: run remove interfaces from vlan
-  mlnxos_vlan:
-    vlan_id: 6
-    state: absent
-    interface: Eth1/6,Eth1/7
-    mode: hybrid
-    authorize: yes
-    provider:
-      host: "{{ inventory_hostname }}"
-      username: admin
-      password: admin
-      port: 22
-      timeout: 10
-
-- name: run remove interface from vlan
-  mlnxos_vlan:
-    vlan_id: 5
-    state: absent
-    interface: Eth1/5
-    mode: hybrid
-    authorize: yes
-    provider:
-      host: "{{ inventory_hostname }}"
-      username: admin
-      password: admin
-      port: 22
-      timeout: 10
-

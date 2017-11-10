@@ -28,9 +28,11 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network_common import conditional, \
     remove_default_spec
 
-from ansible.module_utils.mlnxos import get_interfaces_config
+from ansible.module_utils.mlnxos import get_interfaces_config, show_cmd
 from ansible.module_utils.mlnxos import mlnxos_argument_spec
 from ansible.modules.network.mlnxos import BaseMlnxosApp
+import re
+import json
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -141,16 +143,19 @@ def numerical_sort(iterable):
 
 
 class MlnxosVlanApp(BaseMlnxosApp):
+    IFNAME_REGEX = re.compile(r"^.*(Eth\d+\/\d+)")
 
     @classmethod
     def _get_element_spec(cls):
         return dict(
             vlan_id=dict(),
-            interface=dict(),
+            vlan_name=dict(),
+            interfaces=dict(type='list', default=[]),
             state=dict(default='present',
                        choices=['present', 'absent']),
             mode=dict(default='trunk',
-                       choices=['access', 'hybrid', 'trunk', 'dot1q-tunnel', 'access-dcb']),
+                       choices=['access', 'hybrid', 'trunk', 'dot1q-tunnel',
+                                'access-dcb']),
         )
 
     def get_required_config(self):
@@ -168,7 +173,8 @@ class MlnxosVlanApp(BaseMlnxosApp):
         else:
             params = {
                 'vlan_id': module_params['vlan_id'],
-                'interface': module_params['interface'],
+                'vlan_name': module_params['vlan_name'],
+                'interfaces': module_params['interfaces'],
                 'state': module_params['state'],
                 'mode': module_params['mode']
             }
@@ -176,23 +182,12 @@ class MlnxosVlanApp(BaseMlnxosApp):
             self._required_config.append(params)
 
     @classmethod
-    def search_obj_in_list(cls, interface, lst):
-        for o in lst:
-            if o['interface'] == interface:
-                return o
-
-    @classmethod
     def _get_aggregate_spec(cls, element_spec):
         aggregate_spec = deepcopy(element_spec)
-        aggregate_spec['name'] = dict(required=True)
+        aggregate_spec['vlan_id'] = dict(required=True)
         # remove default in aggregate spec, to handle common arguments
         remove_default_spec(aggregate_spec)
         return aggregate_spec
-
-    @classmethod
-    def get_switchport_name(cls, item):
-        header = cls.get_config_attr(item, "header")
-        return header
 
     @classmethod
     def get_switchport_command_name(cls, switchportname):
@@ -220,20 +215,31 @@ class MlnxosVlanApp(BaseMlnxosApp):
             mutually_exclusive=mutually_exclusive,
             supports_check_mode=True)
 
-    def _create_vlan_data(self, item):
+    @classmethod
+    def get_interfaces_of_vlan(cls, vlan_data):
+        ports = cls.get_config_attr(vlan_data, 'Ports')
+        members = []
+        for if_name in ports.split(","):
+            match = cls.IFNAME_REGEX.match(if_name)
+            if match:
+                members.append(match.group(1))
+        return members
+
+
+    def _create_vlan_data(self, vlan_id, vlan_data):
         return {
-            'vlan_id': self.get_config_attr(item, 'vlan_id'),
-            'interface': self.get_switchport_name(item),
-            'state': self.get_config_attr(item, 'state'),
-            'mode': self.get_config_attr(item, 'mode')
+            'vlan_id': vlan_id,
+            'interfaces': self.get_interfaces_of_vlan(vlan_data),
+            'vlan_name': self.get_config_attr(vlan_data, 'Name')
         }
 
     def load_current_config(self):
         # called in base class in run function
-        self._current_config = list()
-        config = get_interfaces_config(self._module, "ethernet")
-        for item in config:
-            self._current_config.append(self._create_vlan_data(item))
+        self._current_config = dict()
+        vlan_config = show_cmd(self._module, "show vlan")
+        for vlan_id, vlan_data in vlan_config.iteritems():
+            self._current_config[vlan_id] = \
+                self._create_vlan_data(vlan_id, vlan_data)
 
     def add_command_to_interface(self, interface, cmd):
         if interface not in self._commands:
@@ -241,70 +247,48 @@ class MlnxosVlanApp(BaseMlnxosApp):
         self._commands.append(cmd)
 
     def generate_commands(self):
-        run_action_if = []
         for req_conf in self._required_config:
-            if req_conf['interface']:
-                action_if = req_conf['interface'].split(",")
-                for if_name in action_if:
-                    curr_if = self.search_obj_in_list(
-                        if_name, self._current_config)
-                    if not curr_if:
-                        continue
-                    else:
-                        run_action_if.append(if_name)
-                if not run_action_if:
-                    self._module.fail_json(
-                        msg='could not find interfaces %s' % action_if)
-                req_conf['interface'] = ",".join(run_action_if)
+            state = req_conf['state']
+            vlan_id = req_conf['vlan_id']
+            if state == 'absent':
+                if vlan_id in self._current_config:
+                    self._commands.append('no vlan %s' % vlan_id)
             else:
-                req_conf['interface'] = None
-            self._generate_vlan_commands(req_conf) # AT get vlan_id
-
-    def _generate_vlan_commands(self, req_conf):
-        state = req_conf['state']
-        vlan_id = req_conf['vlan_id']
-        mode = req_conf['mode']
-        if req_conf['interface']:
-            if_names = req_conf['interface'].split(",")
-        else:
-            if_names = None
-        manage_vlan_only = False if if_names else True
-        if state == 'absent':
-            if manage_vlan_only:
-                cmd = "no vlan " + vlan_id
-                self._commands.append(cmd)
-            else:
-                for if_name in if_names:
-                    interface = self.get_switchport_command_name(if_name)
-    
-                    self._commands.append("interface " + interface +\
-                                          " switchport " + mode + " allowed-vlan remove " +\
-                                           vlan_id)
-        else:
-            cmd = "vlan " + vlan_id
-            self._commands.append(cmd)
-            cmd = "exit"
-            self._commands.append(cmd)
-            if not manage_vlan_only:
-                for if_name in if_names:
-                    interface = self.get_switchport_command_name(if_name)
-                    cmd = "interface " +  interface + " switchport mode " + mode
-                    self._commands.append(cmd)
-                    cmd = "interface " + interface +\
-                          " switchport " + mode + " allowed-vlan add " + vlan_id
-                    self._commands.append(cmd)
+                self._generate_vlan_commands(vlan_id, req_conf)
         if self._commands:
             self._commands.append("exit")
 
-    def get_vlan(self, vlanid):
-        """Get instance of VLAN as a dictionary
-        """
-        command = 'show vlan id %s | json' % vlanid
-        try:
-            body = self.run([command])[0]
-        except (TypeError, IndexError, KeyError):
-            return {}
-        return body
+    def _generate_vlan_commands(self, vlan_id, req_conf):
+        curr_vlan = self._current_config.get(vlan_id, {})
+        if not curr_vlan:
+            cmd = "vlan " + vlan_id
+            self._commands.append("vlan %s" % vlan_id)
+            self._commands.append("exit")
+        vlan_name = req_conf['vlan_name']
+        if vlan_name:
+            if vlan_name != curr_vlan.get('vlan_name'):
+                self._commands.append("vlan %s name %s" % (vlan_id, vlan_name))
+        curr_members = set(curr_vlan.get('interfaces', []))
+        req_members = req_conf['interfaces']
+        mode = req_conf['mode']
+        for member in req_members:
+            if member in curr_members:
+                continue
+            if_name = self.get_switchport_command_name(member)
+            cmd = "interface %s switchport mode %s" % (if_name, mode)
+            self._commands.append(cmd)
+            cmd = "interface %s switchport %s allowed-vlan add %s" % (
+                if_name, mode, vlan_id)
+            self._commands.append(cmd)
+        req_members = set(req_members)
+        for member in curr_members:
+            if member in req_members:
+                continue
+            if_name = self.get_switchport_command_name(member)
+            cmd = "interface %s switchport %s allowed-vlan remove %s" % (
+                if_name, mode, vlan_id)
+            self._commands.append(cmd)
+
 
 if __name__ == '__main__':
     MlnxosVlanApp.main()

@@ -3,7 +3,7 @@
 
 - name: configure l3 interface bgp
   mlnxos_l3_interface:
-    name: ethernet 1/19
+    name: Eth1/19
     ipaddress: 2.3.4.5/24
     bgp_router_as: 202
     bgp_neighbors:
