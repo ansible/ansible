@@ -75,7 +75,7 @@ class VarsModule(BaseVarsPlugin):
                 raise AnsibleParserError("Supplied entity must be Host or Group, got %s instead" % (type(entity)))
 
             # avoid 'chroot' type inventory hostnames /path/to/chroot
-            if not entity.startswith(os.path.sep):
+            if not entity.name.startswith(os.path.sep):
                 try:
                     found_files = []
                     # load vars
