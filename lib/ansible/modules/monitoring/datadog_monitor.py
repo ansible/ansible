@@ -117,6 +117,11 @@ options:
         required: false
         default: null
         version_added: "2.4"
+    evaluation_delay:
+        description: ["Time to delay evaluation (in seconds). It is effective for sparse values."]
+        required: false
+        default: null
+        version_added: "2.n"
     id:
         description: ["The id of the alert. If set, will be used instead of the name to locate the alert."]
         required: false
@@ -192,6 +197,7 @@ def main():
             locked=dict(required=False, default=False, type='bool'),
             require_full_window=dict(required=False, default=None, type='bool'),
             new_host_delay=dict(required=False, default=None),
+            evaluation_delay=dict(required=False, default=None),
             id=dict(required=False)
         )
     )
@@ -297,7 +303,8 @@ def install_monitor(module):
         "notify_audit": module.boolean(module.params['notify_audit']),
         "locked": module.boolean(module.params['locked']),
         "require_full_window": module.params['require_full_window'],
-        "new_host_delay": module.params['new_host_delay']
+        "new_host_delay": module.params['new_host_delay'],
+        "evaluation_delay": module.params['evaluation_delay']
     }
 
     if module.params['type'] == "service check":
