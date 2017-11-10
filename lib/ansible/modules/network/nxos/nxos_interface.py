@@ -486,7 +486,7 @@ def get_interface_config_commands(interface, intf, existing):
 
     mtu = interface.get('mtu')
     if mtu:
-        commands.append('mtu {}'.format(mtu))
+        commands.append('mtu {0}'.format(mtu))
 
     admin_state = interface.get('admin_state')
     if admin_state:
