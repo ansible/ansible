@@ -110,9 +110,6 @@ class TestCliBuildVaultIds(unittest.TestCase):
                                       create_new_password=True,
                                       auto_prompt=False)
 
-        import pprint
-        pprint.pprint(res)
-
         self.assertEqual(set(res), set(['blip@prompt', 'baz@prompt_ask_vault_pass',
                                         'default@prompt_ask_vault_pass',
                                         'some-password-file', 'qux@another-password-file',
@@ -175,14 +172,15 @@ class TestCliSetupVaultSecrets(unittest.TestCase):
         self.mock_isatty.return_value = False
         mock_prompt_secret.return_value = MagicMock(bytes=b'prompt1_password',
                                                     vault_id='prompt1',
-                                                    name='bytes_should_be_prompt1_password')
+                                                    name='bytes_should_be_prompt1_password',
+                                                    spec=vault.PromptVaultSecret)
         res = cli.CLI.setup_vault_secrets(loader=self.fake_loader,
                                           vault_ids=['prompt1@prompt'],
                                           ask_vault_pass=True,
                                           auto_prompt=False)
 
         self.assertIsInstance(res, list)
-        self.assertEqual(len(res), 1)
+        self.assertEqual(len(res), 2)
         matches = vault.match_secrets(res, ['prompt1'])
         self.assertIn('prompt1', [x[0] for x in matches])
         self.assertEquals(len(matches), 1)
@@ -213,7 +211,7 @@ class TestCliSetupVaultSecrets(unittest.TestCase):
         self.assertIsInstance(res, list)
         len_ids = len(vault_id_names)
         matches = vault.match_secrets(res, vault_id_names)
-        self.assertEqual(len(res), len_ids)
+        self.assertEqual(len(res), len_ids, 'len(res):%s does not match len_ids:%s' % (len(res), len_ids))
         self.assertEqual(len(matches), len_ids)
         for index, prompt in enumerate(vault_id_names):
             self.assertIn(prompt, [x[0] for x in matches])
@@ -235,6 +233,7 @@ class TestCliSetupVaultSecrets(unittest.TestCase):
 
     @patch('ansible.cli.PromptVaultSecret')
     def test_multiple_prompts_and_ask_vault_pass(self, mock_prompt_secret):
+        self.mock_isatty.return_value = False
         mock_prompt_secret.return_value = MagicMock(bytes=b'prompt1_password',
                                                     vault_id='prompt1')
 
@@ -244,9 +243,8 @@ class TestCliSetupVaultSecrets(unittest.TestCase):
                                                      'prompt3@prompt_ask_vault_pass'],
                                           ask_vault_pass=True)
 
-        import pprint
-        pprint.pprint(res)
-
+        # We provide some vault-ids and secrets, so auto_prompt shouldn't get triggered,
+        # so there is
         vault_id_names = ['prompt1', 'prompt2', 'prompt3', 'default']
         self._assert_ids(vault_id_names, res)
 
@@ -266,16 +264,27 @@ class TestCliSetupVaultSecrets(unittest.TestCase):
         res = cli.CLI.setup_vault_secrets(loader=self.fake_loader,
                                           vault_ids=[],
                                           create_new_password=False,
-                                          ask_vault_pass=True)
+                                          ask_vault_pass=False)
 
-        import pprint
-        pprint.pprint(res)
         self.assertIsInstance(res, list)
         matches = vault.match_secrets(res, ['default'])
         # --vault-password-file/DEFAULT_VAULT_PASSWORD_FILE is higher precendce than prompts
         # if the same vault-id ('default') regardless of cli order since it didn't matter in 2.3
+
+        self.assertEqual(matches[0][1].bytes, b'file1_password')
+        self.assertEqual(len(matches), 1)
+
+        res = cli.CLI.setup_vault_secrets(loader=self.fake_loader,
+                                          vault_ids=[],
+                                          create_new_password=False,
+                                          ask_vault_pass=True,
+                                          auto_prompt=True)
+
+        self.assertIsInstance(res, list)
+        matches = vault.match_secrets(res, ['default'])
         self.assertEqual(matches[0][1].bytes, b'file1_password')
         self.assertEqual(matches[1][1].bytes, b'prompt1_password')
+        self.assertEqual(len(matches), 2)
 
     @patch('ansible.cli.get_file_vault_secret')
     @patch('ansible.cli.PromptVaultSecret')
