@@ -869,28 +869,28 @@ class StrategyBase:
             self._inventory.refresh_inventory()
             msg = "inventory successfully refreshed"
         elif meta_action == 'clear_facts':
-            if _evaluate_conditional(target_host):
-                for host in self._inventory.get_hosts(iterator._play.hosts):
+            for host in self._inventory.get_hosts(iterator._play.hosts):
+                if _evaluate_conditional(host):
                     hostname = host.get_name()
                     self._variable_manager.clear_facts(hostname)
-                msg = "facts cleared"
-            else:
-                skipped = True
+                    msg = "facts cleared"
+                else:
+                    skipped = True
         elif meta_action == 'clear_host_errors':
-            if _evaluate_conditional(target_host):
-                for host in self._inventory.get_hosts(iterator._play.hosts):
+            for host in self._inventory.get_hosts(iterator._play.hosts):
+                if _evaluate_conditional(host):
                     self._tqm._failed_hosts.pop(host.name, False)
                     self._tqm._unreachable_hosts.pop(host.name, False)
                     iterator._host_states[host.name].fail_state = iterator.FAILED_NONE
-                msg = "cleared host errors"
-            else:
-                skipped = True
+                    msg="cleared host errors"
+                else:
+                    skipped = True
         elif meta_action == 'end_play':
-            if _evaluate_conditional(target_host):
-                for host in self._inventory.get_hosts(iterator._play.hosts):
-                    if host.name not in self._tqm._unreachable_hosts:
+            for host in self._inventory.get_hosts(iterator._play.hosts):
+                if host.name not in self._tqm._unreachable_hosts:
+                    if _evaluate_conditional(host):
                         iterator._host_states[host.name].run_state = iterator.ITERATING_COMPLETE
-                msg = "ending play"
+                        msg = "ending play"
         elif meta_action == 'reset_connection':
             connection = connection_loader.get(play_context.connection, play_context, os.devnull)
             play_context.set_options_from_plugin(connection)
