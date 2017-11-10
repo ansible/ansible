@@ -41,6 +41,62 @@ from units.mock.loader import DictDataLoader
 from units.mock.vault_helper import TextVaultSecret
 
 
+class TestUnhexlify(unittest.TestCase):
+    def test(self):
+        b_plain_data = b'some text to hexlify'
+        b_data = hexlify(b_plain_data)
+        res = vault._unhexlify(b_data)
+        self.assertEquals(res, b_plain_data)
+
+    def test_odd_length(self):
+        b_data = b'123456789abcdefghijklmnopqrstuvwxyz'
+
+        self.assertRaisesRegexp(vault.AnsibleVaultFormatError,
+                                '.*Vault format unhexlify error.*',
+                                vault._unhexlify,
+                                b_data)
+
+    def test_nonhex(self):
+        b_data = b'6z36316566653264333665333637623064303639353237620a636366633565663263336335656532'
+
+        self.assertRaisesRegexp(vault.AnsibleVaultFormatError,
+                                '.*Vault format unhexlify error.*Non-hexadecimal digit found',
+                                vault._unhexlify,
+                                b_data)
+
+
+class TestParseVaulttext(unittest.TestCase):
+    def test(self):
+        vaulttext_envelope = u'''$ANSIBLE_VAULT;1.1;AES256
+33363965326261303234626463623963633531343539616138316433353830356566396130353436
+3562643163366231316662386565383735653432386435610a306664636137376132643732393835
+63383038383730306639353234326630666539346233376330303938323639306661313032396437
+6233623062366136310a633866373936313238333730653739323461656662303864663666653563
+3138'''
+
+        b_vaulttext_envelope = to_bytes(vaulttext_envelope, errors='strict', encoding='utf-8')
+        b_vaulttext, b_version, cipher_name, vault_id = vault.parse_vaulttext_envelope(b_vaulttext_envelope)
+        res = vault.parse_vaulttext(b_vaulttext)
+        self.assertIsInstance(res[0], bytes)
+        self.assertIsInstance(res[1], bytes)
+        self.assertIsInstance(res[2], bytes)
+
+    def test_non_hex(self):
+        vaulttext_envelope = u'''$ANSIBLE_VAULT;1.1;AES256
+3336396J326261303234626463623963633531343539616138316433353830356566396130353436
+3562643163366231316662386565383735653432386435610a306664636137376132643732393835
+63383038383730306639353234326630666539346233376330303938323639306661313032396437
+6233623062366136310a633866373936313238333730653739323461656662303864663666653563
+3138'''
+
+        b_vaulttext_envelope = to_bytes(vaulttext_envelope, errors='strict', encoding='utf-8')
+        b_vaulttext, b_version, cipher_name, vault_id = vault.parse_vaulttext_envelope(b_vaulttext_envelope)
+        self.assertRaisesRegexp(vault.AnsibleVaultFormatError,
+                                '.*Vault format unhexlify error.*Non-hexadecimal digit found',
+                                vault.parse_vaulttext,
+                                b_vaulttext_envelope)
+
+
 class TestVaultSecret(unittest.TestCase):
     def test(self):
         secret = vault.VaultSecret()
