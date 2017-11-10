@@ -50,9 +50,12 @@ Ansible Changes By Release
 
 #### Cloud
 
-  * aws_ssm_parameter_store
-  * digital_ocean_sshkey_facts
-  * ec2_ami_facts
+* aws_acm_facts
+* aws_kms_facts
+* aws_ssm_parameter_store
+* digital_ocean_sshkey_facts
+* ec2_ami_facts
+* ecs_taskdefinition_facts
 
 #### Windows
 
