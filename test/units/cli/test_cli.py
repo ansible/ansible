@@ -176,8 +176,8 @@ class TestCliSetupVaultSecrets(unittest.TestCase):
                                           ask_vault_pass=True,
                                           auto_prompt=False)
 
-        import pprint
-        pprint.pprint(res)
+        # import pprint
+        # pprint.pprint(res)
         self.assertIsInstance(res, list)
         self.assertEqual(len(res), 0)
         matches = vault.match_secrets(res, ['prompt1'])

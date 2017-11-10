@@ -329,7 +329,6 @@ class PromptVaultSecret(VaultSecret):
         self._bytes = self.ask_vault_passwords()
 
     def ask_vault_passwords(self):
-        print('Prompting for vault password for vault_id=%s' % self.vault_id)
         b_vault_passwords = []
 
         for prompt_format in self.prompt_formats:

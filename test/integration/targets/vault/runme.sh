@@ -36,20 +36,37 @@ echo "rc was $WRONG_RC (1 is expected)"
 
 # tests related to https://github.com/ansible/ansible/issues/30993
 CMD='ansible-playbook -vvvvv --ask-vault-pass test_vault.yml'
-setsid sh -c "echo password|${CMD}" < /dev/null > log 2>&1 && :
-echo "cmd: ${CMD}"
+setsid sh -c "echo test-vault-password|${CMD}" < /dev/null > log 2>&1
+echo $?
 cat log
 
-setsid sh -c 'tty; ansible-vault --ask-vault-pass -vvvvv view ping_noop.yml' < /dev/null > log 2>&1
-setsid sh -c 'tty; echo passbhkjhword|ansible-playbook -vvvvv --ask-vault-pass ping_noop.yml' < /dev/null > log 2>&1
- setsid sh -c 'tty; echo password |ansible-playbook -vvvvv --ask-vault-pass ping_noop.yml' < /dev/null > log 2>&1
-setsid sh -c 'tty; echo password|ansible-playbook -vvvvv --ask-vault-pass ping_noop.yml' < /dev/null > log 2>&1
-setsid sh -c 'tty; echo password |ansible-playbook -vvvvv --ask-vault-pass ping_noop.yml' < /dev/null > log 2>&1
-setsid sh -c 'tty; echo password|ansible-vault --ask-vault-pass -vvvvv view ping_noop.yml' < /dev/null > log 2>&1
-setsid sh -c 'tty; echo password|ansible-vault -vvvvv --ask-vault-pass encrypt bar.txt' < /dev/null > log 2>&1
-setsid sh -c 'tty; echo password|ansible-vault -vvvvv encrypt bar.txt' < /dev/null > log 2>&1
-setsid sh -c 'tty; echo password|ansible-vault -vvvvv view ping_noop.yml' < /dev/null > log 2>&1
- setsid sh -c 'tty; ps -jp "$$"; echo test' < /dev/null > log 2>&1
+setsid sh -c 'tty; ansible-vault --ask-vault-pass -vvvvv view test_vault.yml' < /dev/null > log 2>&1 && :
+WRONG_RC=$?
+echo "rc was $WRONG_RC (1 is expected)"
+[ $WRONG_RC -eq 1 ]
+cat log
+
+setsid sh -c 'tty; echo passbhkjhword|ansible-playbook -vvvvv --ask-vault-pass test_vault.yml' < /dev/null > log 2>&1 && :
+WRONG_RC=$?
+echo "rc was $WRONG_RC (1 is expected)"
+[ $WRONG_RC -eq 1 ]
+cat log
+
+setsid sh -c 'tty; echo test-vault-password |ansible-playbook -vvvvv --ask-vault-pass test_vault.yml' < /dev/null > log 2>&1
+echo $?
+cat log
+
+setsid sh -c 'tty; echo test-vault-password|ansible-playbook -vvvvv --ask-vault-pass test_vault.yml' < /dev/null > log 2>&1
+echo $?
+cat log
+
+setsid sh -c 'tty; echo test-vault-password |ansible-playbook -vvvvv --ask-vault-pass test_vault.yml' < /dev/null > log 2>&1
+echo $?
+cat log
+
+setsid sh -c 'tty; echo test-vault-password|ansible-vault --ask-vault-pass -vvvvv view vaulted.inventory' < /dev/null > log 2>&1
+echo $?
+cat log
 
 # old format
 ansible-vault view "$@" --vault-password-file vault-password-ansible format_1_0_AES.yml
