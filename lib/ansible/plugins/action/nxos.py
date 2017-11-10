@@ -80,7 +80,6 @@ class ActionModule(_ActionModule):
                 display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
                 conn.send_command('exit')
                 out = conn.get_prompt()
-
         else:
             provider['transport'] = 'nxapi'
             if provider.get('host') is None:

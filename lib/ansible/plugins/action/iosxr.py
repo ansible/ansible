@@ -74,7 +74,7 @@ class ActionModule(_ActionModule):
         out = conn.get_prompt()
         while to_text(out, errors='surrogate_then_replace').strip().endswith(')#'):
             display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
-            conn.send_command('exit')
+            conn.send_command('abort')
             rc, out, err = conn.get_prompt()
 
         result = super(ActionModule, self).run(tmp, task_vars)
