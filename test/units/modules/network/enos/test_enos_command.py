@@ -101,4 +101,3 @@ class TestEnosCommandModule(TestEnosModule):
         commands = ['show version', 'show run']
         set_module_args(dict(commands=commands, wait_for=wait_for, match='all'))
         self.execute_module(failed=True)
-
