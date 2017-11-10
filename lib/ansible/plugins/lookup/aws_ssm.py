@@ -6,6 +6,70 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = '''
+    lookup: aws_ssm
+    author:
+      - Bill Wang <ozbillwang(at)gmail.com>
+      - Marat Bakeev <hawara(at)gmail.com>
+    version_added: 2.5
+    short_description: Get the value for a SSM parameter.
+    description:
+      - Get the value for an Amazon Simple Systems Manager parameter or a heirarchy of parameters. The first
+        argument you pass the lookup can either be a parameter name or a hierarchy of parameters. Hierarchies start
+        with a forward slash and end with the parameter name. Up to 5 layers may be specified.
+    options:
+      aws_profile:
+        description: The boto profile to use. You may use environment variables or the default profile as an alternative.
+      region:
+        description: The region to use. You may use environment variables ar the default profile's region as an alternative.
+      decrypt:
+        description: A boolean to indicate whether to decrypt the parameter.
+        default: false
+      bypath:
+        description: A boolean to indicate whether the parameter is provided as a hierarchy.
+        default: false
+      recursive:
+        description: A boolean to indicate whether to retrieve all parameters within a hierarchy.
+        default: false
+      shortnames:
+        description: Indicates whether to return the shortened name if using a parameter hierarchy.
+        default: false
+'''
+
+EXAMPLES = '''
+# lookup sample:
+- name: lookup ssm parameter store in the current region
+  debug: msg="{{ lookup('aws_ssm', 'Hello' ) }}"
+
+- name: lookup a key which doesn't exist, returns ""
+  debug: msg="{{ lookup('aws_ssm', 'NoKey') }}"
+
+- name: lookup ssm parameter store in nominated region
+  debug: msg="{{ lookup('aws_ssm', 'Hello', 'region=us-east-2' ) }}"
+
+- name: lookup ssm parameter store without decrypted
+  debug: msg="{{ lookup('aws_ssm', 'Hello', 'decrypt=False' ) }}"
+
+- name: lookup ssm parameter store in nominated aws profile
+  debug: msg="{{ lookup('aws_ssm', 'Hello', 'aws_profile=myprofile' ) }}"
+
+- name: lookup ssm parameter store with all options.
+  debug: msg="{{ lookup('aws_ssm', 'Hello', 'decrypt=false', 'region=us-east-2', 'aws_profile=myprofile') }}"
+
+- name: return a dictionary of ssm parameters from a hierarchy path
+  debug: msg="{{ lookup('aws_ssm', '/PATH/to/params', 'region=ap-southeast-2', 'bypath', 'recursive=true' ) }}"
+
+- name: return a dictionary of ssm parameters from a hierarchy path with shortened names (param instead of /PATH/to/param)
+  debug: msg="{{ lookup('aws_ssm', '/PATH/to/params', 'region=ap-southeast-2', 'shortnames', 'bypath', 'recursive=true' ) }}"
+
+- name: Iterate over a parameter hierarchy
+  debug: msg='key contains {{item.Name }} with value {{item.Value}} '
+  with_aws_ssm:
+    - '/TEST/test-list'
+    - 'region=ap-southeast-2'
+    - 'bypath'
+'''
+
 from ansible.module_utils.ec2 import HAS_BOTO3
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
@@ -21,38 +85,10 @@ except ImportError:
 class LookupModule(LookupBase):
     def run(self, terms, variables, **kwargs):
         '''
-        # lookup sample:
-        - name: lookup ssm parameter store in the current region
-          debug: msg="{{ lookup('aws_ssm', 'Hello' ) }}"
-
-        - name: lookup a key which doesn't exist, return ""
-          debug: msg="{{ lookup('aws_ssm', 'NoKey') }}"
-
-        - name: lookup ssm parameter store in nominated region
-          debug: msg="{{ lookup('aws_ssm', 'Hello', 'region=us-east-2' ) }}"
-
-        - name: lookup ssm parameter store without decrypted
-          debug: msg="{{ lookup('aws_ssm', 'Hello', 'decrypt=False' ) }}"
-
-        - name: lookup ssm parameter store in nominated aws profile
-          debug: msg="{{ lookup('aws_ssm', 'Hello', 'aws_profile=myprofile' ) }}"
-
-        - name: lookup ssm parameter store with all options.
-          debug: msg="{{ lookup('aws_ssm', 'Hello', 'decrypt=false', 'region=us-east-2', 'aws_profile=myprofile') }}"
-
-        - name: return a dictionary of ssm parameters from a hierarchy path
-          debug: msg="{{ lookup('aws_ssm', '/PATH/to/params', 'region=ap-southeast-2', 'bypath', 'recursive=true' ) }}"
-
-        - name: return a dictionary of ssm parameters from a hierarchy path with shortened names (param instead of /PATH/to/param)
-          debug: msg="{{ lookup('aws_ssm', '/PATH/to/params', 'region=ap-southeast-2', 'shortnames', 'bypath', 'recursive=true' ) }}"
-
-        - name: Iterate over a parameter hierarchy
-          debug: msg='key contains {{item.Name }} with value {{item.Value}} '
-          with_aws_ssm:
-            - '/TEST/test-list'
-            - 'region=ap-southeast-2'
-            - 'bypath'
-
+            :param terms: a list of plugin options
+                          e.g. ['parameter_name', 'region=us-east-1', 'aws_profile=profile', 'decrypt=false']
+            :param variables: config variables
+            :return The value of the SSM parameter or None
         '''
 
         ret = {}
