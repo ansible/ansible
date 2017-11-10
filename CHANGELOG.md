@@ -153,6 +153,8 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/32613)
 * Fix ios_config file prompt issue while using save_when
   (https://github.com/ansible/ansible/pull/32744)
+* Prevent host_group_vars plugin load errors when using 'path as inventory hostname'
+  https://github.com/ansible/ansible/issues/32764
 
 <a id="2.4.1"></a>
 
