@@ -81,8 +81,6 @@ class ActionModule(_ActionModule):
                 conn.send_command('exit')
                 out = conn.get_prompt()
 
-
-
         else:
             provider['transport'] = 'nxapi'
             if provider.get('host') is None:
