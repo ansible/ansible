@@ -83,10 +83,11 @@ commands:
 from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import exec_command
 from ansible.module_utils.network_common import remove_default_spec
 from ansible.module_utils.network_common import validate_ip_address, validate_prefix
 from ansible.module_utils.iosxr import get_config, load_config
-from ansible.module_utils.iosxr import iosxr_argument_spec, check_args
+from ansible.module_utils.iosxr import iosxr_argument_spec
 
 
 def map_obj_to_commands(updates, module):
@@ -99,6 +100,8 @@ def map_obj_to_commands(updates, module):
         admin_distance = w['admin_distance']
         state = w['state']
         del w['state']
+        if w['admin_distance'] == 'None':
+            del w['admin_distance']
 
         if state == 'absent' and w in have:
             commands.append('router static')
@@ -108,7 +111,8 @@ def map_obj_to_commands(updates, module):
         elif state == 'present' and w not in have:
             commands.append('router static')
             commands.append('address-family ipv4 unicast')
-            if not admin_distance:
+
+            if admin_distance == 'None':
                 commands.append('{0} {1}'.format(address, next_hop))
             else:
                 commands.append('{0} {1} {2}'.format(address, next_hop, admin_distance))
@@ -198,16 +202,17 @@ def main():
                            supports_check_mode=True)
 
     address = module.params['address']
-    prefix = address.split('/')[-1]
+    if address is not None:
+        prefix = address.split('/')[-1]
+
+    if address and prefix:
+        if '/' not in address or not validate_ip_address(address.split('/')[0]):
+            module.fail_json(msg='{} is not a valid IP address'.format(address))
+
+        if not validate_prefix(prefix):
+            module.fail_json(msg='Length of prefix should be between 0 and 32 bits')
+
     warnings = list()
-    check_args(module, warnings)
-
-    if '/' not in address or not validate_ip_address(address.split('/')[0]):
-        module.fail_json(msg='{} is not a valid IP address'.format(address))
-
-    if not validate_prefix(prefix):
-        module.fail_json(msg='Length of prefix should be between 0 and 32 bits')
-
     result = {'changed': False}
     result['warnings'] = warnings
 
@@ -220,6 +225,7 @@ def main():
     if commands:
         if not module.check_mode:
             load_config(module, commands, result['warnings'], commit=True)
+            exec_command(module, 'end')
         result['changed'] = True
 
     module.exit_json(**result)
