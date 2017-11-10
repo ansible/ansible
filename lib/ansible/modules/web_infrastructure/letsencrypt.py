@@ -182,7 +182,7 @@ def _upsert_lowercase_headers(func):
     @wraps(func)
     def func_wrapper(name, *args, **kwargs):
         response, info = func(name, *args, **kwargs)
-        info.update({header.lower(): value for header, value in info.items()})
+        info.update(dict((header.lower(), value) for (header, value) in info.items()))
         return response, info
     return func_wrapper
 
