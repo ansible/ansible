@@ -29,7 +29,7 @@ from ansible.module_utils._text import to_native
 from ansible.module_utils.six import string_types
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.plugins.loader import module_loader, action_loader, lookup_loader, callback_loader, cache_loader, \
-    vars_loader, connection_loader, strategy_loader, PluginLoader
+    vars_loader, connection_loader, strategy_loader, inventory_loader
 from ansible.utils import plugin_docs
 try:
     from __main__ import display
@@ -97,7 +97,7 @@ class DocCLI(CLI):
         elif plugin_type == 'vars':
             loader = vars_loader
         elif plugin_type == 'inventory':
-            loader = PluginLoader('InventoryModule', 'ansible.plugins.inventory', C.DEFAULT_INVENTORY_PLUGIN_PATH, 'inventory_plugins')
+            loader = inventory_loader
         else:
             loader = module_loader
 
