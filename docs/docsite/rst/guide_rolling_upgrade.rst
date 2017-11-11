@@ -223,7 +223,7 @@ Here is the next part of the update play::
 
 .. note::
    - The ``serial`` keyword forces the play to be executed in 'batches'. Each batch counts as a full play with a subselection of hosts.
-     This has some consequences on play behaviour,. For example, if all hosts in a batch fails, the play fails, which fails the whole run. You should also consider this when combining with ``max_fail_percentage``.
+     This has some consequences on play behavior. For example, if all hosts in a batch fails, the play fails, which in turn fails the entire run. You should consider this when combining with ``max_fail_percentage``.
 
 The ``pre_tasks`` keyword just lets you list tasks to run before the roles are called. This will make more sense in a minute. If you look at the names of these tasks, you can see that we are disabling Nagios alerts and then removing the webserver that we are currently updating from the HAProxy load balancing pool.
 
