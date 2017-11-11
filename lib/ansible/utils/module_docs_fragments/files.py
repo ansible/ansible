@@ -38,6 +38,12 @@ options:
     default: null
     description:
       - Name of the group that should own the file/directory, as would be fed to I(chown).
+  reference:
+    required: false
+    default: null
+    description:
+      - Path to the file/directory for which the user and group will be taken
+        as reference. These will be passed to I(chown).
   seuser:
     required: false
     default: null

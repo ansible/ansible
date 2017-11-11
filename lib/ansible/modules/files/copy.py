@@ -121,6 +121,14 @@ EXAMPLES = r'''
     group: foo
     mode: u+rw,g-wx,o-rwx
 
+# Copy a new "ntp.conf file into place, keeping the ownership (user and group) of the original file.
+- copy:
+    src: /mine/ntp.conf
+    dest: /etc/ntp.conf
+    reference: /mine/ntp.conf
+    mode: 0644
+    backup: yes
+
 # Copy a new "ntp.conf file into place, backing up the original if it differs from the copied version
 - copy:
     src: /mine/ntp.conf

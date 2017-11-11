@@ -686,6 +686,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
             mode=0o600,
             owner='root',
             group='root',
+            reference='/path/to/reference',
             seuser='_default',
             serole='_default',
             setype='_default',
@@ -1064,6 +1065,37 @@ class TestModuleUtilsBasic(ModuleTestCase):
 
         with patch('os.lchown', side_effect=OSError) as m:
             self.assertRaises(SystemExit, am.set_group_if_different, '/path/to/file', 'root', False)
+
+    def test_module_utils_basic_ansible_module_set_owner_and_group_from_reference_if_different(self):
+        from ansible.module_utils import basic
+        from ansible.module_utils._text import to_bytes
+        basic._ANSIBLE_ARGS = None
+
+        am = basic.AnsibleModule(
+            argument_spec=dict(),
+        )
+
+        self.assertEqual(am.set_owner_and_group_from_reference_if_different('/path/to/file', None, True), True)
+        self.assertEqual(am.set_owner_and_group_from_reference_if_different('/path/to/file', None, False), False)
+
+        user_and_groups = {
+            to_bytes('/path/to/file'): (500, 500),
+            to_bytes('/path/to/reference'): (0, 0),
+        }
+        am.user_and_group = MagicMock(side_effect=lambda x, y: user_and_groups[x])
+
+        with patch('os.lchown', return_value=None) as m:
+            self.assertEqual(am.set_owner_and_group_from_reference_if_different('/path/to/file', '/path/to/reference', False), True)
+            m.assert_called_with(b'/path/to/file', 0, 0)
+
+            m.reset_mock()
+            am.check_mode = True
+            self.assertEqual(am.set_owner_and_group_from_reference_if_different('/path/to/file', '/path/to/reference', False), True)
+            self.assertEqual(m.called, False)
+            am.check_mode = False
+
+        with patch('os.lchown', side_effect=OSError) as m:
+            self.assertRaises(SystemExit, am.set_owner_and_group_from_reference_if_different, '/path/to/file', '/path/to/reference', False)
 
     @patch('tempfile.mkstemp')
     @patch('os.umask')

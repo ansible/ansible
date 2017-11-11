@@ -198,6 +198,7 @@ FILE_COMMON_ARGUMENTS = dict(
     mode=dict(type='raw'),
     owner=dict(),
     group=dict(),
+    reference=dict(type='path'),
     seuser=dict(),
     serole=dict(),
     selevel=dict(),
@@ -895,6 +896,7 @@ class AnsibleModule(object):
         mode = params.get('mode', None)
         owner = params.get('owner', None)
         group = params.get('group', None)
+        reference = params.get('reference', None)
 
         # selinux related options
         seuser = params.get('seuser', None)
@@ -916,6 +918,7 @@ class AnsibleModule(object):
             path=path, mode=mode, owner=owner, group=group,
             seuser=seuser, serole=serole, setype=setype,
             selevel=selevel, secontext=secontext, attributes=attributes,
+            reference=reference,
         )
 
     # Detect whether using selinux that is MLS-aware.
@@ -1146,6 +1149,37 @@ class AnsibleModule(object):
             except OSError:
                 path = to_text(b_path)
                 self.fail_json(path=path, msg='chgrp failed')
+            changed = True
+        return changed
+
+    def set_owner_and_group_from_reference_if_different(self, path, reference_path, changed, diff=None, expand=True):
+        b_path = to_bytes(path, errors='surrogate_or_strict')
+        if expand:
+            b_path = os.path.expanduser(os.path.expandvars(b_path))
+        if reference_path is None:
+            return changed
+        b_reference_path = to_bytes(reference_path, errors='surrogate_or_strict')
+        orig_uid, orig_gid = self.user_and_group(b_path, expand)
+        reference_uid, reference_gid = self.user_and_group(b_reference_path, expand)
+
+        if orig_uid != reference_uid or orig_gid != reference_gid:
+            if diff is not None:
+                if 'before' not in diff:
+                    diff['before'] = {}
+                diff['before']['owner'] = orig_uid
+                diff['before']['group'] = orig_gid
+                if 'after' not in diff:
+                    diff['after'] = {}
+                diff['after']['owner'] = reference_uid
+                diff['after']['group'] = reference_gid
+
+            if self.check_mode:
+                return True
+            try:
+                os.lchown(b_path, reference_uid, reference_gid)
+            except (IOError, OSError) as e:
+                path = to_text(b_path)
+                self.fail_json(path=path, msg='chown failed: %s' % (to_text(e)))
             changed = True
         return changed
 
@@ -1415,12 +1449,17 @@ class AnsibleModule(object):
         changed = self.set_context_if_different(
             file_args['path'], file_args['secontext'], changed, diff
         )
-        changed = self.set_owner_if_different(
-            file_args['path'], file_args['owner'], changed, diff, expand
-        )
-        changed = self.set_group_if_different(
-            file_args['path'], file_args['group'], changed, diff, expand
-        )
+        if file_args['owner'] or file_args['group']:
+            changed = self.set_owner_if_different(
+                file_args['path'], file_args['owner'], changed, diff, expand
+            )
+            changed = self.set_group_if_different(
+                file_args['path'], file_args['group'], changed, diff, expand
+            )
+        elif file_args['reference']:
+            changed = self.set_owner_and_group_from_reference_if_different(
+                file_args['path'], file_args['reference'], changed, diff, expand
+            )
         changed = self.set_mode_if_different(
             file_args['path'], file_args['mode'], changed, diff, expand
         )

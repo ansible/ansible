@@ -110,6 +110,12 @@ EXAMPLES = '''
     state: touch
     mode: "u+rw,g-wx,o-rwx"
 
+# touch the same file, but copy the ownership (user and group) of another file
+- file:
+    path: /etc/foo.conf
+    state: touch
+    reference: /etc/bar.conf
+
 # create a directory if it doesn't exist
 - file:
     path: /etc/some_directory
