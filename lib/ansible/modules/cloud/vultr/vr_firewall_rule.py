@@ -197,7 +197,7 @@ class AnsibleVultrFirewallRule(Vultr):
             else:
                 cidr = "0.0.0.0/0"
         elif cidr.count('/') != 1:
-                self.fail_json(msg="CIDR has an invalid format: %s" % cidr)
+            self.fail_json(msg="CIDR has an invalid format: %s" % cidr)
 
         return cidr.split('/')
 
@@ -291,7 +291,7 @@ class AnsibleVultrFirewallRule(Vultr):
             'subnet_size': subnet_size,
             'port': port_range
         }
-        self.result['diff']['before'] = {}
+
         self.result['diff']['after'] = data
 
         if not self.module.check_mode:
@@ -314,7 +314,6 @@ class AnsibleVultrFirewallRule(Vultr):
             }
 
             self.result['diff']['before'] = firewall_rule
-            self.result['diff']['after'] = {}
 
             if not self.module.check_mode:
                 self.api_query(
