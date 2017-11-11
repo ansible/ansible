@@ -82,7 +82,7 @@ EXAMPLES = """
 - name: Delete host
   pmp:
     uri: '{{ pmp_server }}'
-    port: '{{ pmp_port }}''
+    port: '{{ pmp_port }}'
     token: '{{ user_token }}'
     state: 'absent'
     resource_name: '{{ server_name }}'
