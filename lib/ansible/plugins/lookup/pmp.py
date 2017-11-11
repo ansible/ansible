@@ -2,19 +2,26 @@
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
+from ansible.errors import AnsibleError
+from ansible.plugins.lookup import LookupBase
+from ansible.modules.web_infrastructure.pmp import PasswordManagerPro
+
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+
+    display = Display()
 __metaclass__ = type
 
 DOCUMENTATION = """
-    lookup: lastpass
+    lookup: pmp
     author:
-      -  Andrew Zenk <azenk@umn.edu>
-    version_added: "2.3"
-    requirements:
-      - lpass (command line utility)
-      - must have already logged into lastpass
-    short_description: fetch data from lastpass
+      -  Bernat Mut <bernat.mut@aireuropa.com>
+    version_added: "2.5"
+    short_description: Recover password account from Password Manager Pro (PMP)
     description:
-      - use the lpass command line utility to fetch specific fields from lastpass
+      - Use this module to  requests passwords from an specific account to PMP
     options:
       _terms:
         description: key from which you want to retrieve the field
@@ -25,71 +32,49 @@ DOCUMENTATION = """
 """
 
 EXAMPLES = """
-# need one
-"""
+  - name: passing options to the lookup
+    debug: msg={{ lookup("pmp", { "uri":"{{ pmp_server }}", "token":"{{ pmp_token }}", "resource_name":"{{ server_name }}", "account_name":"{{ user }}", "validate_certs":False }) }}"""
 
 RETURN = """
   _raw:
-    description: secrets stored
+    password: requested password
 """
-
-from subprocess import Popen, PIPE
-
-from ansible.errors import AnsibleError
-from ansible.plugins.lookup import LookupBase
-
-
-class LPassException(AnsibleError):
-    pass
-
-
-class LPass(object):
-
-    def __init__(self, path='lpass'):
-        self._cli_path = path
-
-    @property
-    def cli_path(self):
-        return self._cli_path
-
-    @property
-    def logged_in(self):
-        out, err = self._run(self._build_args("logout"), stdin="n\n", expected_rc=1)
-        return err.startswith("Are you sure you would like to log out?")
-
-    def _run(self, args, stdin=None, expected_rc=0):
-        p = Popen([self.cli_path] + args, stdout=PIPE, stderr=PIPE, stdin=PIPE)
-        out, err = p.communicate(stdin)
-        rc = p.wait()
-        if rc != expected_rc:
-            raise LPassException(err)
-        return out, err
-
-    def _build_args(self, command, args=None):
-        if args is None:
-            args = []
-        args = [command] + args
-        args += ["--color=never"]
-        return args
-
-    def get_field(self, key, field):
-        if field in ['username', 'password', 'url', 'notes', 'id', 'name']:
-            out, err = self._run(self._build_args("show", ["--{0}".format(field), key]))
-        else:
-            out, err = self._run(self._build_args("show", ["--field={0}".format(field), key]))
-        return out.strip()
 
 
 class LookupModule(LookupBase):
-
     def run(self, terms, variables=None, **kwargs):
-        lp = LPass()
 
-        if not lp.logged_in:
-            raise AnsibleError("Not logged into lastpass: please run 'lpass login' first")
+        if isinstance(terms, list):
+            return_values = []
+            for term in terms:
+                display.vvvv("Term: %s" % term)
+                uri = term.get('uri', None)
+                port = term.get('port', 7272)
+                token = term.get('token', None)
+                resource_name = term.get('resource_name', None)
+                account_name = term.get('account_name', None)
+                use_proxy = term.get('use_proxy', True)
+                validate_certs = term.get('validate_certs', True)
+                if uri is None or token is None or resource_name is None or account_name is None:
+                    raise AnsibleError("Field: uri, token, resource_name and account_name  are mandatories")
+                pmp = PasswordManagerPro(token, uri, port, use_proxy, validate_certs)
+                password = pmp.get_password(resource_name, account_name)
+                return_values.append(password)
 
-        field = kwargs.get('field', 'password')
-        values = []
-        for term in terms:
-            values.append(lp.get_field(term, field))
-        return values
+            return return_values
+        else:
+            display.vvvv("Term: %s" % terms)
+            uri = terms.get('uri', None)
+            port = terms.get('port', 7272)
+            token = terms.get('token', None)
+            resource_name = terms.get('resource_name', None)
+            account_name = terms.get('account_name', None)
+            use_proxy = terms.get('use_proxy', True)
+            validate_certs = terms.get('validate_certs', True)
+
+            if uri is None or token is None or resource_name is None or account_name is None:
+                raise AnsibleError("Field: uri, token, resource_name and account_name  are mandatories")
+
+            pmp = PasswordManagerPro(token, uri, port, use_proxy, validate_certs)
+            password = pmp.get_password(resource_name, account_name)
+            return password

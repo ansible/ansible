@@ -16,9 +16,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 module: pmp
 version_added: "2.5"
-short_description: Create and modify accounts and resources in Password Manager Pro (PMP)
+short_description: Create and delete resources in Password Manager Pro (PMP)
 description:
-  - This allows to create a resource with an account inside Password Manager Pro (PMP).
+  - This allows to create and delete a resource with an account inside Password Manager Pro (PMP).
 
 options:
   uri:
@@ -30,17 +30,16 @@ options:
     default:  7272
     description:
       - Base URI for the PMP instance.
-  operation:
+  state:
     required: true
-    aliases: [ command ]
-    choices: [ create_host ]
+    choices: [ present, absent ]
     description:
-      - The operation to perform.
+      -  Create or delete resource.
 
   token:
     required: true
     description:
-      - Token of the API user that performs the action
+      - Token of the API user that performs the action (must have enough privileges)
 
   group:
     required: false
@@ -60,12 +59,12 @@ options:
   password:
     required: true
     description:
-     - Password asociated with the user_name.
+     - Password associated with the user_name.
 
   owner:
     required: true
     description:
-     - Change the default owner, must be an exising user.
+     - Change the default owner, must be an existing user.
 
   use_proxy:
     required: false
@@ -80,21 +79,23 @@ author: "Bernat Mut (@berni69)"
 """
 
 EXAMPLES = """
-# Retrieve a password:
-- name: Retrieve Password
-  pmp:
-    uri: '{{ pmp_server }}'
-    port: '{{ pmp_port }}'
-    token: '{{ user_token }}'
-    command: 'get_password'
-    resource_name: '{{ server_name }}'
-    account_name: '{{ user_name }}'
-  register: issue
+ - name: Delete host
+   pmp:
+     uri: '{{ pmp_server }}'
+     port: '{{ pmp_port }}''
+     token: '{{ user_token }}'
+     state: 'absent'
+     resource_name: '{{ server_name }}'
+     use_proxy: False
+     validate_certs: False
+   register: pmp_out
+   delegate_to: localhost
 
 - name: Create server host
   pmp:
     uri: '{{ pmp_server }}'
     port: '{{ pmp_port }}'
+    state: 'present'
     token: '{{ user_token }}'
     resource_name: '{{ server_name }}'
     group: '{{ my_group}}'
@@ -121,17 +122,17 @@ import json
 import urllib
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import open_url
+from ansible.errors import AnsibleError
 
 
 class PasswordManagerPro:
-
     def format(self, strr):
         for key, value in self.data.items():
             strr = strr.replace('{' + key + '}', value)
         return strr
 
     def __init__(self, token="", host="", port="", use_proxy=False, validate_certs=True):
-        self.data = {'TOKEN': token, 'HOST': host, 'PORT': port}
+        self.data = {'TOKEN': token, 'HOST': host, 'PORT': str(port)}
         self.use_proxy = use_proxy
         self.validate_certs = validate_certs
 
@@ -153,7 +154,7 @@ class PasswordManagerPro:
         for acc in accounts:
             if acc['ACCOUNT NAME'] == username:
                 return acc
-        raise RuntimeError('ACCOUNT not found!')
+        raise AnsibleError('ACCOUNT not found!')
 
     def get_account_password(self):
         url = self.format(
@@ -162,7 +163,7 @@ class PasswordManagerPro:
             'operation']
         status = res['result']['status']
         if status == 'Failed':
-            raise RuntimeError(res['result']['message'])
+            raise AnsibleError(res['result']['message'])
         return res['Details']['PASSWORD']
 
     def get_resource_by_name(self, name):
@@ -171,7 +172,7 @@ class PasswordManagerPro:
         for res in resources['operation']['Details']:
             if res['RESOURCE NAME'] == name:
                 return res
-        raise RuntimeError('RESOURCE not found!')
+        raise AnsibleError('RESOURCE not found!')
 
     def get_password(self, server, username):
         resource = self.get_resource_by_name(server)
@@ -179,6 +180,21 @@ class PasswordManagerPro:
         account = self.get_account_resource_by_name(username)
         self.data['accountId'] = account['ACCOUNT ID']
         return self.get_account_password()
+
+    def delete_resource(self, resourcename):
+        try:
+            resource = self.get_resource_by_name(resourcename)
+            self.data['resourceId'] = resource['RESOURCE ID']
+        except:
+            return {'changed': False, 'msg': 'Resource doesn\'t exists'}
+
+        url = self.format('https://{HOST}:{PORT}/restapi/json/v1/resources/{resourceId}?AUTHTOKEN={TOKEN}')
+        response = json.loads(
+            open_url(url, method="DELETE", validate_certs=self.validate_certs, use_proxy=self.use_proxy).read())
+        status = response['operation']['result']['status']
+        if status == 'Failed':
+            raise AnsibleError(response['operation']['result']['message'])
+        return {'changed': True, 'msg': 'Succesfully deleted resource'}
 
     def create_resource(self, resourcename, accountname, password, ownername, resource_type='Linux', group=''):
         data = {
@@ -206,27 +222,8 @@ class PasswordManagerPro:
         res = json.loads(r.read())['operation']['result']
         status = res['status']
         if status == 'Failed':
-            raise RuntimeError(res['message'])
-        return status
-
-
-def get_password(params):
-    pmp = PasswordManagerPro(params['token'], params['uri'], params['port'], params['use_proxy'],
-                             params['validate_certs'])
-    password = pmp.get_password(params['resource_name'], params['account_name'])
-    return {'status': 'OK', 'password': password}
-
-
-def create_host(params):
-    pmp = PasswordManagerPro(params['token'], params['uri'], params['port'], params['use_proxy'],
-                             params['validate_certs'])
-    status = pmp.create_resource(params['resource_name'], params['account_name'], params['password'], params['owner'],
-                                 group=params['group'])
-    return {'status': status}
-
-
-# Defining a set of operations
-OPERATIONS = {'get_password': get_password, 'create_host': create_host}
+            raise AnsibleError(res['message'])
+        return {'changed': True, 'msg': 'Succesfully created resource'}
 
 
 def main():
@@ -235,8 +232,7 @@ def main():
         argument_spec=dict(
             uri=dict(required=True),
             port=dict(required=False, default="7272"),
-            operation=dict(choices=['get_password', 'create_host'],
-                           aliases=['command'], required=True),
+            state=dict(choices=['present', 'absent'], required=True),
             token=dict(required=True, no_log=True),
             resource_name=dict(),
             account_name=dict(),
@@ -247,20 +243,26 @@ def main():
             validate_certs=dict(default=True, type='bool'),
         ),
         required_if=[
-            ('operation', 'create_host', ['resource_name', 'account_name', 'password', 'owner']),
-            ('operation', 'get_password', ['resource_name', 'account_name']),
+            ('state', 'present', ['resource_name', 'account_name', 'password', 'owner']),
+            ('state', 'absent', ['resource_name']),
         ],
         supports_check_mode=False
     )
 
-    op = module.params['operation']
-    # Dispatch
+    state = module.params['state']
+    pmp = PasswordManagerPro(module.params['token'], module.params['uri'], module.params['port'],
+                             module.params['use_proxy'], module.params['validate_certs'])
     try:
-        ret = OPERATIONS[op](module.params)
-    except Exception as e:
-        return module.fail_json(msg=e.message)
+        if state == 'absent':
+            ret = pmp.delete_resource(module.params['resource_name'])
 
-    module.exit_json(changed=True, meta=ret)
+        elif state == 'present':
+            ret = pmp.create_resource(module.params['resource_name'], module.params['account_name'],
+                                      module.params['password'],
+                                      module.params['owner'], group=module.params['group'])
+    except AnsibleError, e:
+        ret = {'changed': False, 'msg': e.message}
+    module.exit_json(changed=ret["changed"], meta=ret["msg"])
 
 
 if __name__ == '__main__':
