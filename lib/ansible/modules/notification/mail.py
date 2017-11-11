@@ -276,7 +276,11 @@ def main():
         body = subject
 
     if pgp:
-        import gnupg
+        try:
+            import gnupg
+        except ImportError:
+            module.fail_json(rc=1, msg='OpenPGP encryption requires python-gnupg')
+
         gpg = gnupg.GPG()
         gpg.encoding = charset
 
