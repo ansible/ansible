@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# Copyright: (c) 2017, Nicolas Braud-Santoni (@nbraud) <nicolas@braud-santoni.eu>
 # Copyright: (c) 2012, Dag Wieers (@dagwieers) <dag@wieers.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -115,6 +116,15 @@ options:
     - Sets the timeout in seconds for connection attempts.
     default: 20
     version_added: '2.3'
+  gnupg:
+    choices: [ true, false ]
+    description:
+      - Use OpenPGP encryption for the mail; incompatible with attach.
+      - Defaults to C(false), unless gnupg_recipients is set.
+  gnupg_recipients:
+    default: []
+    description:
+      - A list of OpenPGP key fingerprints to encrypt the mail to.
 '''
 
 EXAMPLES = r'''
@@ -216,6 +226,8 @@ def main():
             subtype=dict(type='str', default='plain', choices=['html', 'plain']),
             secure=dict(type='str', default='try', choices=['always', 'never', 'starttls', 'try']),
             timeout=dict(type='int', default=20),
+            gnupg=dict(type='bool', default=False),
+            gnupg_recipients=dict(type='list', default=[])
         ),
         required_together=[['password', 'username']],
     )
@@ -241,8 +253,26 @@ def main():
     secure_state = False
     sender_phrase, sender_addr = parseaddr(sender)
 
+    gnupg_recipients = module.params.get('gnupg_recipients')
+    gnupg = gnupg_recipients or module.params.get('gnupg')
+
     if not body:
         body = subject
+
+    if gnupg:
+        import gnupg
+        gpg = gnupg.GPG()
+        gpg.encoding = charset
+
+        # TODO: Implement proper PGP/MIME
+        encrypted = gpg.encrypt(body, gnupg_recipients or recipients)
+        if not encrypted:
+            module.fail_json(rc=1, msg='GnuPG encryption failure: %s' % encrypted.status)
+
+        body = str(encrypted)
+
+        if attach_files:
+            module.fail_json(rc=1, msg='GnuPG-encryption does not yet support attachments')
 
     smtp = smtplib.SMTP(timeout=timeout)
 
