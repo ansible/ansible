@@ -146,6 +146,20 @@ EXAMPLES = r'''
     body: System {{ ansible_hostname }} has been successfully provisioned.
   delegate_to: localhost
 
+- name: Send an encrypted email to a bunch of users
+  mail:
+    to:
+      - jane@example.net
+      - j.d@example.doe
+    subject: Test secret
+    pgp: True
+
+- name: Send an encrypted email to a user, pinning the OpenPGP key
+  mail:
+    to: test@example.org
+    subject: Very secret secret
+    pgp_recipients: [ '0x772B11B4F2DC80E1212B3F41B0739AAD91B7CDC0' ]
+
 - name: Send e-mail to a bunch of users, attaching files
   mail:
     host: 127.0.0.1
