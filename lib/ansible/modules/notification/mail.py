@@ -208,6 +208,7 @@ EXAMPLES = r'''
 '''
 
 import os
+import re
 import smtplib
 import ssl
 import traceback
@@ -289,6 +290,16 @@ def main():
         gpg.encoding = charset
 
         if pgp_recipients:
+            from ansible.module_utils.six import string_types
+
+            def is_invalid(s):
+                not (isinstance(s, string_types) and
+                     re.match(r'^0x([0-9A-F]+|[0-9a-f]+)$', s))
+
+            invalid_recipients = filter(is_invalid, pgp_recipients)
+            if invalid_recipients:
+                module.fail_json(rc=1, msg='pgp_recipients: Expected fingerprints, got ' + ', '.join(invalid_recipients))
+
             encrypted = gpg.encrypt(body, pgp_recipients, always_trust=True)
         else:
             encrypted = gpg.encrypt(body, recipients)
