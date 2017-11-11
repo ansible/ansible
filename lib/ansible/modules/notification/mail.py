@@ -281,6 +281,10 @@ def main():
         except ImportError:
             module.fail_json(rc=1, msg='OpenPGP encryption requires python-gnupg')
 
+        # TODO: Implement proper PGP/MIME
+        if attach_files:
+            module.fail_json(rc=1, msg='OpenPGP encryption does not yet support attachments')
+
         gpg = gnupg.GPG()
         gpg.encoding = charset
 
@@ -289,10 +293,6 @@ def main():
             module.fail_json(rc=1, msg='OpenPGP encryption failure: %s' % encrypted.status)
 
         body = str(encrypted)
-
-        # TODO: Implement proper PGP/MIME
-        if attach_files:
-            module.fail_json(rc=1, msg='OpenPGP encryption does not yet support attachments')
 
     smtp = smtplib.SMTP(timeout=timeout)
 
