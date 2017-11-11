@@ -740,7 +740,7 @@ class AnsibleVultrServer(Vultr):
                 server = self._wait_for_state(state='running')
         return server
 
-    def reinstalled_server(self):
+    def reinstall_server(self):
         self.result['changed'] = True
         server = self.get_server()
         if server:
