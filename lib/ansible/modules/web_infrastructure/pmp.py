@@ -79,17 +79,17 @@ author: "Bernat Mut (@berni69)"
 """
 
 EXAMPLES = """
- - name: Delete host
-   pmp:
-     uri: '{{ pmp_server }}'
-     port: '{{ pmp_port }}''
-     token: '{{ user_token }}'
-     state: 'absent'
-     resource_name: '{{ server_name }}'
-     use_proxy: False
-     validate_certs: False
-   register: pmp_out
-   delegate_to: localhost
+- name: Delete host
+  pmp:
+    uri: '{{ pmp_server }}'
+    port: '{{ pmp_port }}''
+    token: '{{ user_token }}'
+    state: 'absent'
+    resource_name: '{{ server_name }}'
+    use_proxy: False
+    validate_certs: False
+  register: pmp_out
+  delegate_to: localhost
 
 - name: Create server host
   pmp:
@@ -102,7 +102,6 @@ EXAMPLES = """
     account_name: '{{ user_name }}'
     password: '{{ password }}'
     owner: 'DOMAIN\\USER'
-
 """
 
 RETURN = '''
@@ -111,18 +110,12 @@ status:
     returned: success
     type: string
     sample: 'OK'
-password:
-    description: password retrieved
-    returned: success
-    type: string
-    sample: "123456"
 '''
 
 import json
 import urllib
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import open_url
-from ansible.errors import AnsibleError
 
 
 class PasswordManagerPro:
@@ -154,7 +147,7 @@ class PasswordManagerPro:
         for acc in accounts:
             if acc['ACCOUNT NAME'] == username:
                 return acc
-        raise AnsibleError('ACCOUNT not found!')
+        raise ValueError('ACCOUNT not found!')
 
     def get_account_password(self):
         url = self.format(
@@ -163,7 +156,7 @@ class PasswordManagerPro:
             'operation']
         status = res['result']['status']
         if status == 'Failed':
-            raise AnsibleError(res['result']['message'])
+            raise ValueError(res['result']['message'])
         return res['Details']['PASSWORD']
 
     def get_resource_by_name(self, name):
@@ -172,7 +165,7 @@ class PasswordManagerPro:
         for res in resources['operation']['Details']:
             if res['RESOURCE NAME'] == name:
                 return res
-        raise AnsibleError('RESOURCE not found!')
+        raise ValueError('RESOURCE not found!')
 
     def get_password(self, server, username):
         resource = self.get_resource_by_name(server)
@@ -193,7 +186,7 @@ class PasswordManagerPro:
             open_url(url, method="DELETE", validate_certs=self.validate_certs, use_proxy=self.use_proxy).read())
         status = response['operation']['result']['status']
         if status == 'Failed':
-            raise AnsibleError(response['operation']['result']['message'])
+            raise ValueError(response['operation']['result']['message'])
         return {'changed': True, 'msg': 'Succesfully deleted resource'}
 
     def create_resource(self, resourcename, accountname, password, ownername, resource_type='Linux', group=''):
@@ -222,7 +215,7 @@ class PasswordManagerPro:
         res = json.loads(r.read())['operation']['result']
         status = res['status']
         if status == 'Failed':
-            raise AnsibleError(res['message'])
+            raise ValueError(res['message'])
         return {'changed': True, 'msg': 'Succesfully created resource'}
 
 
@@ -260,7 +253,7 @@ def main():
             ret = pmp.create_resource(module.params['resource_name'], module.params['account_name'],
                                       module.params['password'],
                                       module.params['owner'], group=module.params['group'])
-    except AnsibleError, e:
+    except ValueError as e:
         ret = {'changed': False, 'msg': e.message}
     module.exit_json(changed=ret["changed"], meta=ret["msg"])
 

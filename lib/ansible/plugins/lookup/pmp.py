@@ -33,7 +33,7 @@ DOCUMENTATION = """
 
 EXAMPLES = """
   - name: passing options to the lookup
-    debug: msg={{ lookup("pmp", { "uri":"{{ pmp_server }}", "token":"{{ pmp_token }}", "resource_name":"{{ server_name }}", "account_name":"{{ user }}", "validate_certs":False }) }}"""
+    debug: msg={{ lookup("pmp", { "uri":"{{ pmp_server }}", "token":"{{ pmp_token }}", "resource_name":"{{ server_name }}", "account_name":"{{ user }}" }) }}"""
 
 RETURN = """
   _raw:
