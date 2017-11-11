@@ -119,12 +119,14 @@ options:
   gnupg:
     choices: [ true, false ]
     description:
-      - Use OpenPGP encryption for the mail; incompatible with attach.
-      - Defaults to C(false), unless gnupg_recipients is set.
+      - Use OpenPGP encryption for the mail; incompatible with I(attach).
+      - Defaults to C(false), unless I(gnupg_recipients) is set.
+    version_added: '2.5'
   gnupg_recipients:
     default: []
     description:
       - A list of OpenPGP key fingerprints to encrypt the mail to.
+    version_added: '2.5'
 '''
 
 EXAMPLES = r'''
