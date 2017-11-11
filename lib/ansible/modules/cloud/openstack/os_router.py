@@ -359,23 +359,23 @@ def _validate_subnets(module, cloud):
                 if not subnet:
                     module.fail_json(msg='bhujay here subnet %s not found' % iface['subnet'])
                 internal_subnet_ids.append(subnet['id'])
-            elif  isinstance(iface, dict):
+            elif isinstance(iface, dict):
                 subnet = cloud.get_subnet(iface['subnet'])
                 if not subnet:
                     module.fail_json(msg='subnet %s not found' % iface)
                 net = cloud.get_network(iface['net'])
                 if not net:
                     module.fail_json(msg='net %s not found' % iface['net'])
-                if not ("portip" in iface): 
+                if not ("portip" in iface):
                     internal_subnet_ids.append(subnet['id'])
                 elif not iface['portip']:
                     module.fail_json(msg='put an ip in portip or  remove it from list to assign default port to router')
                 else:
                     for existing_port in cloud.list_ports(filters={'network_id': net.id}):
-                       for fixed_ip in existing_port['fixed_ips']:
-                           if iface['portip'] == fixed_ip['ip_address']:
-                               internal_port_ids.append(existing_port.id)
-                               existing_port_ips.append(fixed_ip['ip_address'])
+                        for fixed_ip in existing_port['fixed_ips']:
+                            if iface['portip'] == fixed_ip['ip_address']:
+                                internal_port_ids.append(existing_port.id)
+                                existing_port_ips.append(fixed_ip['ip_address'])
                     if not iface['portip'] in   existing_port_ips:
                         p = cloud.create_port(network_id=net.id, fixed_ips=[{'ip_address': iface['portip'], 'subnet_id': subnet.id}])
                         if p:
@@ -455,15 +455,12 @@ def main():
                 for int_s_id in subnet_internal_ids:
                     cloud.add_router_interface(router, subnet_id=int_s_id)
                 changed = True
-                # add interface by port id as well 
+                # add interface by port id as well
                 for int_p_id in internal_portids:
                     cloud.add_router_interface(router, port_id=int_p_id)
                 changed = True
             else:
                 if _needs_update(cloud, module, router, net, subnet_internal_ids, internal_portids):
-#Why after needs_update call subnet_internal_ids are getting populated with subnet ids that should 
-#be null when port id is supplied ? ????????  
-# As of now  by making another call to validate_subnet solves the problem 
                     kwargs = _build_kwargs(cloud, module, router, net)
                     updated_router = cloud.update_router(**kwargs)
 
@@ -480,7 +477,7 @@ def main():
                         for port in ports:
                             cloud.remove_router_interface(router, port_id=port['id'])
                     if internal_portids:
-                        external_ids, subnet_internal_ids, internal_portids  = _validate_subnets(module, cloud)
+                        external_ids, subnet_internal_ids, internal_portids = _validate_subnets(module, cloud)
                         for int_p_id in internal_portids:
                             cloud.add_router_interface(router, port_id=int_p_id)
                         changed = True
@@ -488,7 +485,6 @@ def main():
                         for s_id in subnet_internal_ids:
                             cloud.add_router_interface(router, subnet_id=s_id)
                         changed = True
- 
 
             module.exit_json(changed=changed,
                              router=router,
