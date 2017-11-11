@@ -376,7 +376,7 @@ def _validate_subnets(module, cloud):
                             if iface['portip'] == fixed_ip['ip_address']:
                                 internal_port_ids.append(existing_port.id)
                                 existing_port_ips.append(fixed_ip['ip_address'])
-                    if not iface['portip'] in   existing_port_ips:
+                    if not iface['portip'] in existing_port_ips:
                         p = cloud.create_port(network_id=net.id, fixed_ips=[{'ip_address': iface['portip'], 'subnet_id': subnet.id}])
                         if p:
                             internal_port_ids.append(p.id)
@@ -438,7 +438,7 @@ def main():
 
         # Validate and cache the subnet IDs so we can avoid duplicate checks
         # and expensive API calls.
-        external_ids, subnet_internal_ids, internal_portids  = _validate_subnets(module, cloud)
+        external_ids, subnet_internal_ids, internal_portids = _validate_subnets(module, cloud)
         if module.check_mode:
             module.exit_json(
                 changed=_system_state_change(cloud, module, router, net, subnet_internal_ids, internal_portids)
