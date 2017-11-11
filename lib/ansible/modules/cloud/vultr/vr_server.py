@@ -355,31 +355,60 @@ class AnsibleVultrServer(Vultr):
         name = self.module.params.get('os')
         if not name:
             return {}
-        return self.query_resource_by_key(key='name', value=name, resource='os', use_cache=True)
+
+        return self.query_resource_by_key(
+            key='name',
+            value=name,
+            resource='os',
+            use_cache=True
+        )
 
     def get_ssh_key(self):
         name = self.module.params.get('ssh_key')
         if not name:
             return {}
-        return self.query_resource_by_key(key='name', value=name, resource='sshkey', use_cache=True)
+
+        return self.query_resource_by_key(
+            key='name',
+            value=name,
+            resource='sshkey',
+            use_cache=True
+        )
 
     def get_region(self):
         name = self.module.params.get('region')
         if not name:
             return {}
-        return self.query_resource_by_key(key='name', value=name, resource='regions', use_cache=True)
+
+        return self.query_resource_by_key(
+            key='name',
+            value=name,
+            resource='regions',
+            use_cache=True
+        )
 
     def get_plan(self):
         name = self.module.params.get('plan')
         if not name:
             return {}
-        return self.query_resource_by_key(key='name', value=name, resource='plans', use_cache=True)
+
+        return self.query_resource_by_key(
+            key='name',
+            value=name,
+            resource='plans',
+            use_cache=True
+        )
 
     def get_firewall_group(self):
         name = self.module.params.get('firewall_group')
         if not name:
             return {}
-        return self.query_resource_by_key(key='description', value=name, resource='firewall', query_by='group_list')
+        return self.query_resource_by_key(
+            key='description',
+            value=name,
+            resource='firewall',
+            query_by='group_list'
+        )
 
     def get_user_data(self):
         user_data = self.module.params.get('user_data')
