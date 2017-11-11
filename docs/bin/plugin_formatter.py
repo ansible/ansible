@@ -26,11 +26,13 @@ import datetime
 import glob
 import optparse
 import os
-from pprint import PrettyPrinter
 import re
 import sys
 import warnings
 from collections import defaultdict
+from distutils.version import LooseVersion
+from pprint import PrettyPrinter
+
 try:
     from html import escape as html_escape
 except ImportError:
@@ -40,6 +42,7 @@ except ImportError:
     def html_escape(text, quote=True):
         return cgi.escape(text, quote)
 
+import jinja2
 import yaml
 from jinja2 import Environment, FileSystemLoader
 from six import iteritems, string_types
@@ -444,6 +447,10 @@ def process_plugins(module_map, templates, outputname, output_dir, ansible_versi
         display.v('about to template %s' % module)
         display.vvvvv(pp.pformat(doc))
         text = templates['plugin'].render(doc)
+        if LooseVersion(jinja2.__version__) < LooseVersion('2.10'):
+            # jinja2 < 2.10's indent filter indents blank lines.  Cleanup
+            text = re.sub(' +\n', '\n', text)
+
         write_data(text, output_dir, outputname, module)
 
 
