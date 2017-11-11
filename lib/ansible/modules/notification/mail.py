@@ -116,13 +116,13 @@ options:
     - Sets the timeout in seconds for connection attempts.
     default: 20
     version_added: '2.3'
-  gnupg:
+  pgp:
     choices: [ true, false ]
     description:
       - Use OpenPGP encryption for the mail; incompatible with I(attach).
-      - Defaults to C(false), unless I(gnupg_recipients) is set.
+      - Defaults to C(false), unless I(pgp_recipients) is set.
     version_added: '2.5'
-  gnupg_recipients:
+  pgp_recipients:
     default: []
     description:
       - A list of OpenPGP key fingerprints to encrypt the mail to.
@@ -228,8 +228,8 @@ def main():
             subtype=dict(type='str', default='plain', choices=['html', 'plain']),
             secure=dict(type='str', default='try', choices=['always', 'never', 'starttls', 'try']),
             timeout=dict(type='int', default=20),
-            gnupg=dict(type='bool', default=False),
-            gnupg_recipients=dict(type='list', default=[])
+            pgp=dict(type='bool', default=False),
+            pgp_recipients=dict(type='list', default=[])
         ),
         required_together=[['password', 'username']],
     )
@@ -255,26 +255,26 @@ def main():
     secure_state = False
     sender_phrase, sender_addr = parseaddr(sender)
 
-    gnupg_recipients = module.params.get('gnupg_recipients')
-    gnupg = gnupg_recipients or module.params.get('gnupg')
+    pgp_recipients = module.params.get('pgp_recipients')
+    pgp = pgp_recipients or module.params.get('pgp')
 
     if not body:
         body = subject
 
-    if gnupg:
+    if pgp:
         import gnupg
         gpg = gnupg.GPG()
         gpg.encoding = charset
 
-        # TODO: Implement proper PGP/MIME
-        encrypted = gpg.encrypt(body, gnupg_recipients or recipients)
+        encrypted = gpg.encrypt(body, pgp_recipients or recipients)
         if not encrypted:
-            module.fail_json(rc=1, msg='GnuPG encryption failure: %s' % encrypted.status)
+            module.fail_json(rc=1, msg='OpenPGP encryption failure: %s' % encrypted.status)
 
         body = str(encrypted)
 
+        # TODO: Implement proper PGP/MIME
         if attach_files:
-            module.fail_json(rc=1, msg='GnuPG-encryption does not yet support attachments')
+            module.fail_json(rc=1, msg='OpenPGP encryption does not yet support attachments')
 
     smtp = smtplib.SMTP(timeout=timeout)
 
