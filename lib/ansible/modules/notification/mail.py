@@ -288,7 +288,11 @@ def main():
         gpg = gnupg.GPG()
         gpg.encoding = charset
 
-        encrypted = gpg.encrypt(body, pgp_recipients or recipients)
+        if pgp_recipients:
+            encrypted = gpg.encrypt(body, pgp_recipients, always_trust=True)
+        else:
+            encrypted = gpg.encrypt(body, recipients)
+
         if not encrypted:
             module.fail_json(rc=1, msg='OpenPGP encryption failure: %s' % encrypted.status)
 
