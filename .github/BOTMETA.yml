@@ -1092,6 +1092,9 @@ files:
   lib/ansible/plugins/action/vyos:
     maintainers: $team_networking
     labels: networking
+  lib/ansible/plugins/callback/unixy.py:
+    support: community
+    maintaners: akatch
   lib/ansible/plugins/cliconf/:
     maintainers: $team_networking
     labels: networking
