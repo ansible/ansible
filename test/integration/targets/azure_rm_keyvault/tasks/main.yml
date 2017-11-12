@@ -1,10 +1,10 @@
 - name: Create random keyvault name
   set_fact:
-    keyvault_orig: "{{ resource_group | hash('md5') | truncate(16, True, '') + (65535 | random | string) }}"
-    keyvault_tags: "{{ resource_group | hash('md5') | truncate(16, True, '') + (64535 | random | string) }}"
-    keyvault_secr: "{{ resource_group | hash('md5') | truncate(16, True, '') + (63535 | random | string) }}"
-    keyvault_keys: "{{ resource_group | hash('md5') | truncate(16, True, '') + (62535 | random | string) }}"
-    keyvault_cert: "{{ resource_group | hash('md5') | truncate(16, True, '') + (61535 | random | string) }}"
+    keyvault_orig: "{{ 'ip' + resource_group | hash('md5') | truncate(16, True, '') + (65535 | random | string) }}"
+    keyvault_tags: "{{ 'ip' + resource_group | hash('md5') | truncate(16, True, '') + (64535 | random | string) }}"
+    keyvault_secr: "{{ 'ip' + resource_group | hash('md5') | truncate(16, True, '') + (63535 | random | string) }}"
+    keyvault_keys: "{{ 'ip' + resource_group | hash('md5') | truncate(16, True, '') + (62535 | random | string) }}"
+    keyvault_cert: "{{ 'ip' + resource_group | hash('md5') | truncate(16, True, '') + (61535 | random | string) }}"
 
 - name: create a kevyault
   azure_rm_keyvault:
