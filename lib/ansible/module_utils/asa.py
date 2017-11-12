@@ -26,7 +26,7 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 from ansible.module_utils._text import to_text
-from ansible.module_utils.basic import env_fallback, return_values
+from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.network_common import to_list, EntityCollection
 from ansible.module_utils.connection import Connection, exec_command
 
@@ -112,16 +112,14 @@ def to_commands(module, commands):
 
 
 def run_commands(module, commands, check_rc=True):
-    connection = get_connection(module)
-
-    commands = to_commands(module, to_list(commands))
-
     responses = list()
-
+    commands = to_commands(module, to_list(commands))
     for cmd in commands:
-        out = connection.get(**cmd)
+        cmd = module.jsonify(cmd)
+        rc, out, err = exec_command(module, cmd)
+        if check_rc and rc != 0:
+            module.fail_json(msg=to_text(err, errors='surrogate_then_replace'), rc=rc)
         responses.append(to_text(out, errors='surrogate_then_replace'))
-
     return responses
 
 
@@ -139,16 +137,33 @@ def get_config(module, flags=None):
     try:
         return _DEVICE_CONFIGS[cmd]
     except KeyError:
-        conn = get_connection(module)
-        out = conn.get(cmd)
+        rc, out, err = exec_command(module, cmd)
+        if rc != 0:
+            module.fail_json(msg='unable to retrieve current config',
+                             stderr=to_text(err, errors='surrogate_then_replace'))
+
         cfg = to_text(out, errors='surrogate_then_replace').strip()
         _DEVICE_CONFIGS[cmd] = cfg
         return cfg
 
 
-def load_config(module, config):
-    conn = get_connection(module)
-    conn.edit_config(config)
+def load_config(module, commands):
+
+    rc, out, err = exec_command(module, 'configure terminal')
+    if rc != 0:
+        module.fail_json(msg='unable to enter configuration mode',
+                         err=to_text(out, errors='surrogate_then_replace'))
+
+    for command in to_list(commands):
+        if command == 'end':
+            continue
+        rc, out, err = exec_command(module, command)
+        if rc != 0:
+            exec_command(module, 'end')
+            module.fail_json(msg=to_text(err, errors='surrogate_then_replace'),
+                             command=command, rc=rc)
+
+    exec_command(module, 'end')
 
 
 def get_defaults_flag(module):
