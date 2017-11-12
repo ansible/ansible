@@ -28,7 +28,8 @@
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback, return_values
 from ansible.module_utils.network_common import to_list, EntityCollection
-from ansible.module_utils.connection import Connection, exec_command
+from ansible.module_utils.connection import exec_command
+from ansible.module_utils.connection import Connection, ConnectionError
 
 _DEVICE_CONFIGS = {}
 _CONNECTION = None
@@ -83,7 +84,7 @@ def get_connection(module):
     global _CONNECTION
     if _CONNECTION:
         return _CONNECTION
-    _CONNECTION = Connection(module)
+    _CONNECTION = Connection(module._socket_path)
 
     context = module.params['context']
 
@@ -147,8 +148,11 @@ def get_config(module, flags=None):
 
 
 def load_config(module, config):
-    conn = get_connection(module)
-    conn.edit_config(config)
+    try:
+        conn = get_connection(module)
+        conn.edit_config(config)
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc))
 
 
 def get_defaults_flag(module):
