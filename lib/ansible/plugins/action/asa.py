@@ -41,13 +41,6 @@ class ActionModule(_ActionModule):
 
     def run(self, tmp=None, task_vars=None):
 
-        if self._play_context.connection not in ('local', 'network_cli'):
-            return dict(
-                failed=True,
-                msg='invalid connection specified, expected one of `local` or '
-                    '`network_cli`, got %s' % self._play_context.connection
-            )
-
         if self._play_context.connection == 'local':
             provider = load_provider(asa_provider_spec, self._task.args)
             pc = copy.deepcopy(self._play_context)
@@ -72,7 +65,7 @@ class ActionModule(_ActionModule):
             if not socket_path:
                 return {'failed': True,
                         'msg': 'unable to open shell. Please see: ' +
-                            'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell'}
+                        'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell'}
 
             task_vars['ansible_socket'] = socket_path
 
