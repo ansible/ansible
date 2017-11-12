@@ -12,10 +12,14 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# Make coding more python3-ish
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import pytest
-import unittest
 
-
+from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, Mock, call
 from ansible.modules.cloud.amazon import iot_thing
 from ansible.module_utils.aws.core import AnsibleAWSModule
@@ -27,7 +31,7 @@ resource_not_found_response = {'Error': {'Code': 'ResourceNotFoundException', 'M
 operation_name = 'FakeOperation'
 resource_not_found_exception = ClientError(resource_not_found_response, operation_name)
 
-fake_response = {'Error': {'Code': 'FakeException', 'Message': 'Fake Testing Error'}}
+fake_response = {'Error': {'Code': 'FakeException', 'Message': 'Fake Texesting Error'}}
 generic_client_exception = ClientError(fake_response, operation_name)
 
 
@@ -279,7 +283,7 @@ class IotThing(unittest.TestCase):
         result = iot_thing.change_principals(self.aws_module, self.client, 'mything')
 
         self.assertFalse(result[0])
-        self.assertCountEqual(['Pumbaa', 'Timon'], result[1])
+        self.assert_list_equal(['Pumbaa', 'Timon'], result[1])
 
     @patch('ansible.modules.cloud.amazon.iot_thing.list_principals')
     @patch('ansible.modules.cloud.amazon.iot_thing.detach_principal')
@@ -293,7 +297,7 @@ class IotThing(unittest.TestCase):
         result = iot_thing.change_principals(self.aws_module, self.client, 'mything')
 
         self.assertTrue(result[0])
-        self.assertCountEqual(['Pumbaa', 'Timon'], result[1])
+        self.assert_list_equal(['Pumbaa', 'Timon'], result[1])
 
     @patch('ansible.modules.cloud.amazon.iot_thing.list_principals')
     @patch('ansible.modules.cloud.amazon.iot_thing.detach_principal')
@@ -307,7 +311,7 @@ class IotThing(unittest.TestCase):
         result = iot_thing.change_principals(self.aws_module, self.client, 'mything')
 
         self.assertTrue(result[0])
-        self.assertCountEqual(['Pumbaa', 'Timon'], result[1])
+        self.assert_list_equal(['Pumbaa', 'Timon'], result[1])
 
     @patch('ansible.modules.cloud.amazon.iot_thing.list_principals')
     @patch('ansible.modules.cloud.amazon.iot_thing.detach_principal')
@@ -322,7 +326,7 @@ class IotThing(unittest.TestCase):
         result = iot_thing.change_principals(self.aws_module, self.client, 'mything')
 
         self.assertTrue(result[0])
-        self.assertCountEqual(['Pumbaa', 'Timon', 'Simba'], result[1])
+        self.assert_list_equal(['Pumbaa', 'Timon', 'Simba'], result[1])
 
     def test_change_thing_in_check_mode_type(self):
         thing = dict(version=7)
@@ -364,7 +368,7 @@ class IotThing(unittest.TestCase):
 
     def test_change_thing_in_cloud_success(self):
         iot_thing.change_thing_in_cloud(self.aws_module, self.client, dict())
-        self.client.update_thing.assert_called_once()
+        self.assertEqual(1, self.client.update_thing.call_count)
 
     def test_change_thing_in_cloud_failure(self):
         self.client.update_thing.side_effect = resource_not_found_exception
@@ -517,8 +521,8 @@ class IotThing(unittest.TestCase):
         changed = iot_thing.change_thing(self.aws_module, self.client, thing, thing_name, expected_version)
 
         self.assertFalse(changed)
-        mock_set_type_delta.assert_called_once()
-        mock_set_attribute_delta.assert_called_once()
+        self.assertEqual(1, mock_set_type_delta.call_count)
+        self.assertEqual(1, mock_set_attribute_delta.call_count)
         self.assertFalse(mock_change_in_cloud.called)
         self.assertFalse(mock_change_in_check.called)
 
@@ -547,8 +551,8 @@ class IotThing(unittest.TestCase):
         changed = iot_thing.change_thing(self.aws_module, self.client, thing, thing_name, expected_version)
 
         self.assertTrue(changed)
-        mock_set_type_delta.assert_called_once()
-        mock_set_attribute_delta.assert_called_once()
+        self.assertEqual(1, mock_set_type_delta.call_count)
+        self.assertEqual(1, mock_set_attribute_delta.call_count)
         mock_change_in_cloud.assert_called_once_with(self.aws_module, self.client, expected)
         self.assertFalse(mock_change_in_check.called)
 
@@ -572,8 +576,8 @@ class IotThing(unittest.TestCase):
         changed = iot_thing.change_thing(self.aws_module, self.client, thing, thing_name, expected_version)
 
         self.assertTrue(changed)
-        mock_set_type_delta.assert_called_once()
-        mock_set_attribute_delta.assert_called_once()
+        self.assertEqual(1, mock_set_type_delta.call_count)
+        self.assertEqual(1, mock_set_attribute_delta.call_count)
         self.assertFalse(mock_change_in_cloud.called)
         mock_change_in_check.assert_called_once_with(self.aws_module, thing, expected)
 
@@ -592,8 +596,8 @@ class IotThing(unittest.TestCase):
 
         iot_thing.update_thing(self.aws_module, thing, self.client)
 
-        mock_change_thing.assert_called_once()
-        mock_change_principals.assert_called_once()
+        self.assertEqual(1, mock_change_thing.call_count)
+        self.assertEqual(1, mock_change_principals.call_count)
         mock_describe_and_format_thing.assert_called_once_with(self.aws_module, self.client, 'mything', [], dict())
         self.assertFalse(mock_format_thing.called)
 
@@ -612,8 +616,8 @@ class IotThing(unittest.TestCase):
 
         iot_thing.update_thing(self.aws_module, thing, self.client)
 
-        mock_change_thing.assert_called_once()
-        mock_change_principals.assert_called_once()
+        self.assertEqual(1, mock_change_thing.call_count)
+        self.assertEqual(1, mock_change_principals.call_count)
         self.assertFalse(mock_describe_and_format_thing.called)
         mock_format_thing.assert_called_once_with(True, thing, ['p1'])
 
@@ -631,8 +635,8 @@ class IotThing(unittest.TestCase):
 
         iot_thing.update_thing(self.aws_module, thing, self.client)
 
-        mock_change_thing.assert_called_once()
-        mock_change_principals.assert_called_once()
+        self.assertEqual(1, mock_change_thing.call_count)
+        self.assertEqual(1, mock_change_principals.call_count)
         self.assertFalse(mock_describe_and_format_thing.called)
         mock_format_thing.assert_called_once_with(True, thing, ['p1'])
 
@@ -650,8 +654,8 @@ class IotThing(unittest.TestCase):
 
         iot_thing.update_thing(self.aws_module, thing, self.client)
 
-        mock_change_thing.assert_called_once()
-        mock_change_principals.assert_called_once()
+        self.assertEqual(1, mock_change_thing.call_count)
+        self.assertEqual(1, mock_change_principals.call_count)
         self.assertFalse(mock_describe_and_format_thing.called)
         mock_format_thing.assert_called_once_with(False, thing, ['p1'])
 
@@ -721,7 +725,7 @@ class IotThing(unittest.TestCase):
 
         self.client.create_thing.assert_called_once_with(**expected)
         self.assertEqual(2, mock_attach_principal.call_count)
-        mock_attach_principal.assert_calls(expected_attach_calls)
+        mock_attach_principal.assert_has_calls(expected_attach_calls)
         mock_describe_and_format_thing.assert_called_once_with(
             self.aws_module, self.client, thing_name, ['p1', 'p2'], dict(thing_arn='arn'))
         self.assertFalse(mock_format_thing.called)
@@ -772,3 +776,6 @@ class IotThing(unittest.TestCase):
 
     def assert_module_failed(self, msg):
         return AssertModuleFailsContext(self, msg)
+
+    def assert_list_equal(self, expected, actual):
+        self.assertSetEqual(set(expected), set(actual))
