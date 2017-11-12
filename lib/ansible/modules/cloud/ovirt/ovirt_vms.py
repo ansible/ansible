@@ -64,6 +64,30 @@ options:
         description:
             - "Mapper which maps an external virtual NIC profile to one that exists in the engine when C(state) is registered."
         version_added: "2.4"
+    cluster_mappings:
+        description:
+            - "Mapper which maps cluster name between VM's OVF and the destination cluster this VM should be registered to, relevant when C(state) is registered."
+        version_added: "2.4"
+    role_mappings:
+        description:
+            - "Mapper which maps role name between VM's OVF and the destination role this VM should be registered to, relevant when C(state) is registered."
+        version_added: "2.4"
+    domain_mappings:
+        description:
+            - "Mapper which maps domain name between VM's OVF and the destination domain this VM should be registered to, relevant when C(state) is registered."
+        version_added: "2.4"
+    affinity_mappings:
+        description:
+            - "Mapper which maps affinty name between VM's OVF and the destination affinity this VM should be registered to, relevant when C(state) is registered."
+        version_added: "2.4"
+    label_mappings:
+        description:
+            - "Mapper which maps label name between VM's OVF and the destination label this VM should be registered to, relevant when C(state) is registered."
+        version_added: "2.4"
+    lun_mappings:
+        description:
+            - "Mapper which maps lun between VM's OVF and the destination lun this VM should contain, relevant when C(state) is registered."
+        version_added: "2.4"
     reassign_bad_macs:
         description:
             - "Boolean indication whether to reassign bad macs when C(state) is registered."
@@ -411,6 +435,49 @@ ovirt_vms:
         source_profile_name: mynetwork2
         target_profile_name: target_network2
     reassign_bad_macs: "True"
+
+# Register VM with mappings
+ovirt_vms:
+    state: registered
+    storage_domain: mystorage
+    cluster: mycluster
+    id: 1111-1111-1111-1111
+    role_mappings:
+      - source:
+        - name: Role_A
+      - dest:
+        - name: Role_B
+    domain_mappings:
+      - source:
+        - name: Domain_A
+      - dest:
+        - name: Domain_B
+    lun_mappings:
+      - source:
+        - id: 1111-1111-1111-2222
+      - dest:
+        - id: 1111-1111-1111-2222
+          alias: weTestLun
+          logical_unit:
+            target: iqn.2016-08-09.brq.str-01:omachace
+            id: 1IET_000d0001
+            address: 10.34.63.204
+          interface: virtio
+    affinity_group_mappings:
+      - source:
+        - name: Affinity_A
+      - dest:
+        - name: Affinity_B
+    affinity_label_mappings:
+      - source:
+        - name: Label_A
+      - dest:
+        - name: Label_B
+    cluster_mappings:
+      - source:
+        - name: cluster_A
+      - dest:
+        - name: cluster_B
 
 # Creates a stateless VM which will always use latest template version:
 ovirt_vms:
@@ -983,6 +1050,120 @@ class VmsModule(BaseModule):
                     )
                 self.changed = True
 
+def _get_role_mappings(module):
+    if module.params['role_mappings'] is None:
+        return None
+
+    roleMappings = list()
+
+    for roleMapping in module.params['role_mappings']:
+        roleMappings.append(
+            otypes.RegistrationRoleMapping(
+                from_=otypes.Role(
+                    name=roleMapping.params['source'][0]['name'],
+                ),
+                to=otypes.Role(
+                    name=roleMapping.params['dest'][0]['name'],
+                ),
+             )
+        )
+    return roleMappings
+
+def _get_affinity_group_mappings(module):
+    if module.params['affinity_group_mappings'] is None:
+        return None
+
+    affinityGroupMappings = list()
+
+    for affinityGroupMapping in module.params['affinity_group_mappings']:
+        affinityGroupMappings.append(
+            otypes.RegistrationAffinityGroupMapping(
+                from_=otypes.AffinityGroup(
+                    name=affinityGroupMapping.params['source'][0]['name'],
+                ),
+                to=otypes.AffinityGroup(
+                    name=affinityGroupMapping.params['dest'][0]['name'],
+                ),
+             )
+        )
+    return affinityGroupMappings
+
+def _get_affinity_label_mappings(module):
+    if module.params['affinity_label_mappings'] is None:
+        return None
+
+    affinityLabelMappings = list()
+
+    for affinityLabelMapping in module.params['affinity_label_mappings']:
+        affinityLabelMappings.append(
+            otypes.RegistrationAffinityLabelMapping(
+                from_=otypes.AffinityLabel(
+                    name=affinityLabelMapping.params['source'][0]['name'],
+                ),
+                to=otypes.AffinityLabel(
+                    name=affinityLabelMapping.params['dest'][0]['name'],
+                ),
+             )
+        )
+    return affinityLabelMappings
+
+def _get_domain_mappings(module):
+    if module.params['domain_mappings'] is None:
+        return None
+
+    domainMappings = list()
+
+    for domainMapping in module.params['domain_mappings']:
+        domainMappings.append(
+            otypes.RegistrationDomainMapping(
+                from_=otypes.Domain(
+                    name=domainMapping.params['source'][0]['name'],
+                ),
+                to=otypes.Domain(
+                    name=domainMapping.params['dest'][0]['name'],
+                ),
+             )
+        )
+    return domainMappings
+
+def _get_lun_mappings(module):
+    if module.params['lun_mappings'] is None:
+        return None
+
+    lunMappings = list()
+
+    for lunMapping in module.params['lun_mappings']:
+        lunMappings.append(
+            otypes.RegistrationLunMapping(
+                from_=otypes.Lun(
+                    id=lunMapping.params['source'][0]['id'],
+                ),
+                to=otypes.Lun(
+                    LogicalUnit=lunMapping.params['dest'][0],
+                ),
+             )
+        )
+    return lunMappings
+
+def _get_cluster_mappings(module):
+    if module.params['cluster_mappings'] is None:
+        return None
+
+    clusterMappings = list()
+
+    for clusterMapping in module.params['cluster_mappings']:
+        clusterMappings.append(
+            otypes.RegistrationClusterMapping(
+                from_=otypes.Cluster(
+                    name=clusterMapping['source'][0]['name'],
+                ),
+                to=otypes.Cluster(
+                    name=clusterMapping['dest'][0]['name'],
+                ),
+             )
+        )
+    return clusterMappings
+
 
 def _get_vnic_profile_mappings(module):
     if module.params['vnic_profile_mappings'] is None:
@@ -1162,6 +1343,12 @@ def main():
         cpu_cores=dict(default=None, type='int'),
         cpu_shares=dict(default=None, type='int'),
         vnic_profile_mappings=dict(default=[], type='list'),
+        cluster_mappings=dict(default=[], type='list'),
+        role_mappings=dict(default=[], type='list'),
+        affinity_group_mappings=dict(default=[], type='list'),
+        affinity_label_mappings=dict(default=[], type='list'),
+        lun_mappings=dict(default=[], type='list'),
+        domain_mappings=dict(default=[], type='list'),
         reassign_bad_macs=dict(default=None, type='bool'),
         type=dict(choices=['server', 'desktop']),
         operating_system=dict(
@@ -1365,7 +1552,15 @@ def main():
                         name=module.params['cluster']
                     ) if module.params['cluster'] else None,
                     vnic_profile_mappings=_get_vnic_profile_mappings(module),
-                    reassign_bad_macs=module.params['reassign_bad_macs']
+                    reassign_bad_macs=module.params['reassign_bad_macs'],
+                    registration_configuration=otypes.RegistrationConfiguration(
+                        cluster_mappings=_get_cluster_mappings(module),
+                        role_mappings=_get_role_mappings(module),
+                        domain_mappings=_get_domain_mappings(module),
+                        lun_mappings=_get_lun_mappings(module),
+                        affinity_group_mappings=_get_affinity_group_mappings(module),
+                        affinity_label_mappings=_get_affinity_label_mappings(module),
+                    )
                 )
 
                 if module.params['wait']:
