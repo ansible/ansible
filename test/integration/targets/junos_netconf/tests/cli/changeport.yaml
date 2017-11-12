@@ -5,7 +5,6 @@
 - name: Setup
   junos_netconf:
     state: present
-    provider: "{{ cli }}"
   register: result
 
 
@@ -13,8 +12,7 @@
 - name: Change port
   junos_netconf:
     state: present
-    netconf_port: 22
-    provider: "{{ cli }}"
+    netconf_port: 8080
   register: result
 
 - assert:
@@ -24,24 +22,19 @@
 - name: idempotent tests
   junos_netconf:
     state: present
-    netconf_port: 22
-    provider: "{{ cli }}"
+    netconf_port: 8080
   register: result
 
 - assert:
     that:
       - "result.changed == false"
 
-- name: wait for persistent socket to timeout, this ensures new socket creation with connection type netconf
-  pause:
-    seconds: 30
-
-- name: Ensure we can communicate over 22
+- name: Ensure we can communicate over 8080
   junos_command:
     rpcs:
     - get-software-information
     provider: "{{ netconf }}"
-    port: 22
+    port: 8080
 
 # This protects against the port override above not being honoured and a bug setting the port
 - name: Ensure we can NOT communicate over default port
@@ -56,14 +49,9 @@
       - "result.failed == true"
       - "'unable to open shell' in result.msg"
 
-- name: wait for persistent socket to timeout, this ensures new socket creation with connection type netconf
-  pause:
-    seconds: 30
-
 - name: Set back netconf to default port
   junos_netconf:
     state: present
-    provider: "{{ cli }}"
   register: result
 
 - name: Ensure we can communicate over netconf

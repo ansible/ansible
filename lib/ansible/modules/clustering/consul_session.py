@@ -98,7 +98,7 @@ options:
     behavior:
         description:
           - the optional behavior that can be attached to the session when it
-            is created. This can be set to either ‘release’ or ‘delete’. This
+            is created. This can be set to either 'release' or 'delete'. This
             controls the behavior when a session is invalidated.
         default: release
         required: false

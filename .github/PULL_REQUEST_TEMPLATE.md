@@ -18,7 +18,7 @@ the change does.
 <!--- Name of the module/plugin/module/task -->
 
 ##### ANSIBLE VERSION
-<!--- Paste verbatim output from “ansible --version” between quotes below -->
+<!--- Paste verbatim output from "ansible --version" between quotes below -->
 ```
 
 ```

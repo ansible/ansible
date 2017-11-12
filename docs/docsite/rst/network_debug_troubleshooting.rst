@@ -32,7 +32,7 @@ Errors generally fall into one of the following categories:
   * Can occur when trying to pull a large amount of data
   * May actually be masking a authentication issue
 :Playbook issues:
-  * Use of ``delegate_to``, instead of ``ProxyCommand``
+  * Use of ``delegate_to``, instead of ``ProxyCommand``. See :ref:`network proxy guide <network_delegate_to_vs_ProxyCommand>` for more information.
   * Not using ``connection: local``
 
 
@@ -51,7 +51,7 @@ Enabling Networking logging and how to read the logfile
 
 Ansible 2.3 features improved logging to help diagnose and troubleshoot issues regarding Ansible Networking modules.
 
-Because logging is very verbose it is disabled by default. It can be enabled via the ``ANSIBLE_LOG_PATH`` and ``ANISBLE_DEBUG`` options::
+Because logging is very verbose it is disabled by default. It can be enabled via the :envvar:`ANSIBLE_LOG_PATH` and :envvar:`ANSIBLE_DEBUG` options::
 
    # Specify the location for the log file
    export ANSIBLE_LOG_PATH=~/ansible.log
@@ -143,7 +143,7 @@ Category "Unable to open shell"
 
 **Platforms:** Any
 
-The ``unable to open shell`` message is new in Ansible 2.3. This message means that the ``ansible-connection`` daemon has not been able to successfully talk to the remote network device. This generally means that there is an authentication issue. It is a "catch all" message, meaning you need to enable ``ANSIBLE_LOG_PATH`` to find the underlying issues.
+The ``unable to open shell`` message is new in Ansible 2.3. This message means that the ``ansible-connection`` daemon has not been able to successfully talk to the remote network device. This generally means that there is an authentication issue. It is a "catch all" message, meaning you need to enable :ref:`log_path` to find the underlying issues.
 
 
 
@@ -222,7 +222,7 @@ For example:
 
 Suggestions to resolve:
 
-If you are specifying credentials via ``password:`` (either directly or via ``provider:``) or the environment variable ``ANSIBLE_NET_PASSWORD`` it is possible that ``paramiko`` (the Python SSH library that Ansible uses) is using ssh keys, and therefore the credentials you are specifying are being ignored. To find out if this is the case, disable "look for keys". This can be done like this:
+If you are specifying credentials via ``password:`` (either directly or via ``provider:``) or the environment variable :envvar:`ANSIBLE_NET_PASSWORD` it is possible that ``paramiko`` (the Python SSH library that Ansible uses) is using ssh keys, and therefore the credentials you are specifying are being ignored. To find out if this is the case, disable "look for keys". This can be done like this:
 
 .. code-block:: yaml
 
@@ -276,7 +276,7 @@ Environment variable method::
 
 ansible.cfg
 
-.. code-block: ini
+.. code-block:: ini
 
   [paramiko_connection]
   host_key_auto_add = True
@@ -410,10 +410,10 @@ For example:
 
 Suggestions to resolve:
 
-Increase value of presistent connection idle timeout.
-Note: This value should be greater than SSH timeout ie. timeout value under defaults
-section in configuration file and less than the value of the persistent
-connection idle timeout (connect_timeout)
+Increase the value of the persistent connection idle timeout.
+Note: This value should be greater than the SSH timeout value (the timeout value under the defaults
+section in the configuration file) and less than the value of the persistent
+connection idle timeout (connect_timeout).
 
 .. code-block:: yaml
 
@@ -490,10 +490,10 @@ Add ``authorize: yes`` to the task. For example:
         authorize: yes
     register: result
 
-If the user requires a password to go into privileged mode, this can be specified with ``auth_pass``; if ``auth_pass`` isn't set, the environment variable ``ANSIBLE_NET_AUTHORIZE`` will be used instead.
+If the user requires a password to go into privileged mode, this can be specified with ``auth_pass``; if ``auth_pass`` isn't set, the environment variable :envvar:`ANSIBLE_NET_AUTHORIZE` will be used instead.
 
 
-Add `authorize: yes` to the task. For example:
+Add ``authorize: yes`` to the task. For example:
 
 .. code-block:: yaml
 
@@ -506,40 +506,41 @@ Add `authorize: yes` to the task. For example:
   register: result
 
 
-.. delete_to not honoured
-   ----------------------
+Proxy Issues
+============
 
-   FIXME Do we get an error message
+ .. _network_delegate_to_vs_ProxyCommand:
 
-   FIXME Link to howto
+delegate_to vs ProxyCommand
+---------------------------
+
+The new connection framework for Network Modules in Ansible 2.3 that uses ``cli`` transport
+no longer supports the use of the ``delegate_to`` directive.
+In order to use a bastion or intermediate jump host to connect to network devices over ``cli``
+transport, network modules now support the use of ``ProxyCommand``.
+
+To use ``ProxyCommand``, configure the proxy settings in the Ansible inventory
+file to specify the proxy host.
+
+.. code-block:: ini
+
+    [nxos]
+    nxos01
+    nxos02
+
+    [nxos:vars]
+    ansible_ssh_common_args='-o ProxyCommand="ssh -W %h:%p -q bastion01"'
 
 
+With the configuration above, simply build and run the playbook as normal with
+no additional changes necessary.  The network module will now connect to the
+network device by first connecting to the host specified in
+``ansible_ssh_common_args``, which is ``bastion01`` in the above example.
 
 
-   fixmes
-   ======
+.. note:: Using ``ProxyCommand`` with passwords via variables
 
-   Error: "number of connection attempts exceeded, unable to connect to control socket"
-   ------------------------------------------------------------------------------------
+   By design, SSH doesn't support providing passwords via environment variables.
+   This is done to prevent secrets from leaking out, for example in ``ps`` output.
 
-   **Platforms:** Any
-
-   This occurs when Ansible wasn't able to connect to the remote device and obtain a shell with the timeout.
-
-
-   This information is available when ``ANSIBLE_LOG_PATH`` is set see (FIXMELINKTOSECTION):
-
-   .. code-block:: yaml
-
-     less $ANSIBLE_LOG_PATH
-     2017-03-10 15:32:06,173 p=19677 u=fred |  connect retry timeout expired, unable to connect to control socket
-     2017-03-10 15:32:06,174 p=19677 u=fred |  persistent_connect_retry_timeout is 15 secs
-     2017-03-10 15:32:06,222 p=19669 u=fred |  fatal: [veos01]: FAILED! => {
-
-   Suggestions to resolve:
-
-   Do stuff For example:
-
-   .. code-block:: yaml
-
-   	Example stuff
+   We recommend using SSH Keys, and if needed an ssh-agent, rather than passwords, where ever possible.

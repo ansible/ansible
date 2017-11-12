@@ -19,12 +19,16 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
+from collections import MutableMapping
 import hashlib
+import os
+import re
 import string
 
-from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_bytes
+from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
+from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils.parsing.convert_bool import boolean
+from ansible.module_utils.six import string_types
 from ansible.template import Templar
 
 try:
@@ -33,17 +37,19 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
+_SAFE_GROUP = re.compile("[^A-Za-z0-9\_]")
+
 
 class BaseInventoryPlugin(object):
     """ Parses an Inventory Source"""
 
     TYPE = 'generator'
 
-    def __init__(self, cache=None):
+    def __init__(self):
 
         self.inventory = None
         self.display = display
-        self.cache = cache
+        self._cache = {}
 
     def parse(self, inventory, loader, path, cache=True):
         ''' Populates self.groups from the given data. Raises an error on any parse failure.  '''
@@ -55,18 +61,18 @@ class BaseInventoryPlugin(object):
     def verify_file(self, path):
         ''' Verify if file is usable by this plugin, base does minimal accessability check '''
 
-        b_path = to_bytes(path)
+        b_path = to_bytes(path, errors='surrogate_or_strict')
         return (os.path.exists(b_path) and os.access(b_path, os.R_OK))
 
     def get_cache_prefix(self, path):
         ''' create predictable unique prefix for plugin/inventory '''
 
         m = hashlib.sha1()
-        m.update(to_bytes(self.NAME))
+        m.update(to_bytes(self.NAME, errors='surrogate_or_strict'))
         d1 = m.hexdigest()
 
         n = hashlib.sha1()
-        n.update(to_bytes(path))
+        n.update(to_bytes(path, errors='surrogate_or_strict'))
         d2 = n.hexdigest()
 
         return 's_'.join([d1[:5], d2[:5]])
@@ -75,6 +81,9 @@ class BaseInventoryPlugin(object):
         pass
 
     def populate_host_vars(self, hosts, variables, group=None, port=None):
+        if not isinstance(variables, MutableMapping):
+            raise AnsibleParserError("Invalid data from file, expected dictionary and got:\n\n%s" % to_native(variables))
+
         for host in hosts:
             self.inventory.add_host(host, group=group, port=port)
             for k in variables:
@@ -86,26 +95,64 @@ class BaseInventoryPlugin(object):
         t.set_available_variables(variables)
         return t.do_template('%s%s%s' % (t.environment.variable_start_string, template, t.environment.variable_end_string), disable_lookups=True)
 
-    def _set_composite_vars(self, compose, variables, host):
+    def _set_composite_vars(self, compose, variables, host, strict=False):
         ''' loops over compose entries to create vars for hosts '''
         if compose and isinstance(compose, dict):
             for varname in compose:
-                composite = self._compose(compose[varname], variables)
+                try:
+                    composite = self._compose(compose[varname], variables)
+                except Exception as e:
+                    if strict:
+                        raise AnsibleOptionsError("Could set %s: %s" % (varname, to_native(e)))
+                    continue
                 self.inventory.set_variable(host, varname, composite)
 
-    def _add_host_to_composed_groups(self, groups, variables, host):
+    def _add_host_to_composed_groups(self, groups, variables, host, strict=False):
         ''' helper to create complex groups for plugins based on jinaj2 conditionals, hosts that meet the conditional are added to group'''
         # process each 'group entry'
         if groups and isinstance(groups, dict):
             self.templar.set_available_variables(variables)
             for group_name in groups:
                 conditional = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % groups[group_name]
-                result = self.templar.template(conditional)
-                if result and bool(result):
+                try:
+                    result = boolean(self.templar.template(conditional))
+                except Exception as e:
+                    if strict:
+                        raise AnsibleOptionsError("Could not add to group %s: %s" % (group_name, to_native(e)))
+                    continue
+                if result:
                     # ensure group exists
                     self.inventory.add_group(group_name)
                     # add host to group
                     self.inventory.add_child(group_name, host)
+
+    def _add_host_to_keyed_groups(self, keys, variables, host, strict=False):
+        ''' helper to create groups for plugins based on variable values and add the corresponding hosts to it'''
+        if keys and isinstance(keys, list):
+            for keyed in keys:
+                if keyed and isinstance(keyed, dict):
+                    prefix = keyed.get('prefix', '')
+                    key = keyed.get('key')
+                    if key is not None:
+                        try:
+                            groups = to_safe_group_name('%s_%s' % (prefix, self._compose(key, variables)))
+                        except Exception as e:
+                            if strict:
+                                raise AnsibleOptionsError("Could not generate group on %s: %s" % (key, to_native(e)))
+                            continue
+                        if isinstance(groups, string_types):
+                            groups = [groups]
+                        if isinstance(groups, list):
+                            for group_name in groups:
+                                if group_name not in self.inventory.groups:
+                                    self.inventory.add_group(group_name)
+                                self.inventory.add_child(group_name, host)
+                        else:
+                            raise AnsibleOptionsError("Invalid group name format, expected string or list of strings, got: %s" % type(groups))
+                    else:
+                        raise AnsibleOptionsError("No key supplied, invalid entry")
+                else:
+                    raise AnsibleOptionsError("Invalid keyed group entry, it must be a dictionary: %s " % keyed)
 
 
 class BaseFileInventoryPlugin(BaseInventoryPlugin):
@@ -113,13 +160,17 @@ class BaseFileInventoryPlugin(BaseInventoryPlugin):
 
     TYPE = 'storage'
 
-    def __init__(self, cache=None):
+    def __init__(self):
 
-        # file based inventories are always local so no need for cache
-        super(BaseFileInventoryPlugin, self).__init__(cache=None)
+        super(BaseFileInventoryPlugin, self).__init__()
 
 
 # Helper methods
+def to_safe_group_name(name):
+    ''' Converts 'bad' characters in a string to underscores so they can be used as Ansible hosts or groups '''
+    return _SAFE_GROUP.sub("_", name)
+
+
 def detect_range(line=None):
     '''
     A helper function that checks a given host line to see if it contains

@@ -1,34 +1,42 @@
 # (c) 2014, Chris Church <chris@ninemoreminutes.com>
-#
-# This file is part of Ansible.
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+DOCUMENTATION = """
+    author: Ansible Core Team
+    connection: winrm
+    short_description: Run tasks over Microsoft's WinRM
+    description:
+        - Run commands or put/fetch on a target via WinRM
+    version_added: "2.0"
+    options:
+      remote_addr:
+        description:
+            - Address of the windows machine
+        default: inventory_hostname
+        vars:
+            - name: ansible_host
+            - name: ansible_winrm_host
+      remote_user:
+        description:
+            - The user to log in as to the Windows machine
+        vars:
+            - name: ansible_user
+            - name: ansible_winrm_user
+"""
 
 import base64
 import inspect
 import os
 import re
 import shlex
-import socket
 import traceback
 import json
 import tempfile
 import subprocess
-import itertools
 
 HAVE_KERBEROS = False
 try:
@@ -44,7 +52,7 @@ from ansible.module_utils.six.moves.urllib.parse import urlunsplit
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.six import binary_type
 from ansible.plugins.connection import ConnectionBase
-from ansible.plugins.shell.powershell import exec_wrapper, become_wrapper, leaf_exec
+from ansible.plugins.shell.powershell import leaf_exec
 from ansible.utils.hashing import secure_hash
 from ansible.utils.path import makedirs_safe
 
@@ -90,20 +98,17 @@ class Connection(ConnectionBase):
 
         super(Connection, self).__init__(*args, **kwargs)
 
-    def transport_test(self, connect_timeout):
-        ''' Test the transport mechanism, if available '''
-        host = self._winrm_host
-        port = int(self._winrm_port)
-        display.vvv("attempting transport test to %s:%s" % (host, port))
-        sock = socket.create_connection((host, port), connect_timeout)
-        sock.close()
-
-    def set_host_overrides(self, host, hostvars=None):
+    def set_host_overrides(self, host, variables, templar):
         '''
         Override WinRM-specific options from host variables.
         '''
         if not HAS_WINRM:
             return
+
+        hostvars = {}
+        for k in variables:
+            if k.startswith('ansible_winrm'):
+                hostvars[k] = templar.template(variables[k])
 
         self._winrm_host = self._play_context.remote_addr
         self._winrm_port = int(self._play_context.port or 5986)
@@ -320,7 +325,9 @@ class Connection(ConnectionBase):
         self.shell_id = None
         self._connect()
 
-    def _create_raw_wrapper_payload(self, cmd, environment=dict()):
+    def _create_raw_wrapper_payload(self, cmd, environment=None):
+        environment = {} if environment is None else environment
+
         payload = {
             'module_entry': to_text(base64.b64encode(to_bytes(cmd))),
             'powershell_modules': {},

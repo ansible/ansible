@@ -5,14 +5,12 @@
       - no username ansibletest1
       - no username ansibletest2
       - no username ansibletest3
-    provider: "{{ cli }}"
 
 - name: Create user (SetUp)
   iosxr_user:
     name: ansibletest1
     configured_password: test
     state: present
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -27,7 +25,6 @@
     configured_password: test
     update_password: always
     state: present
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -42,7 +39,6 @@
     configured_password: test
     update_password: on_create
     state: present
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -57,7 +53,6 @@
     update_password: on_create
     group: sysadmin
     state: present
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -73,7 +68,6 @@
     update_password: on_create
     group: sysadmin
     state: present
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -89,7 +83,6 @@
     configured_password: test
     state: present
     group: sysadmin
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -110,7 +103,6 @@
     configured_password: test
     state: present
     group: sysadmin
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -130,7 +122,6 @@
     update_password: on_create
     state: present
     group: sysadmin
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -145,7 +136,6 @@
       - name: ansibletest2
       - name: ansibletest3
     state: absent
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -160,7 +150,6 @@
       - name: ansibletest2
       - name: ansibletest3
     state: absent
-    provider: "{{ cli }}"
   register: result
 
 - assert:

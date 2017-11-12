@@ -33,7 +33,6 @@ class AnsibleFailJson(Exception):
 class ModuleMocked():
     def fail_json(self, msg):
         raise AnsibleFailJson(msg)
-        pass
 
 
 module = ModuleMocked()

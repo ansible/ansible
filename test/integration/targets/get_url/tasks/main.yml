@@ -112,7 +112,7 @@
   assert:
     that:
       - "result|failed"
-      - "'Failed to validate the SSL certificate' in result.msg"
+      - "'Failed to validate the SSL certificate' in result.msg or (result.msg | match('hostname .* doesn.t match .*'))"
       - "stat_result.stat.exists == false"
 
 - name: test https fetch to a site with mismatched hostname and certificate and validate_certs=no

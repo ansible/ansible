@@ -1,5 +1,6 @@
 - set_fact:
     become_test_username: ansible_become_test
+    become_test_admin_username: ansible_become_admin
     gen_pw: password123! + {{ lookup('password', '/dev/null chars=ascii_letters,digits length=8') }}
 
 - name: create unprivileged user
@@ -9,16 +10,19 @@
     update_password: always
     groups: Users
 
+- name: create a privileged user
+  win_user:
+    name: "{{ become_test_admin_username }}"
+    password: "{{ gen_pw }}"
+    update_password: always
+    groups: Administrators
+
 - name: execute tests and ensure that test user is deleted regardless of success/failure
   block:
   - name: ensure current user is not the become user
     win_shell: whoami
     register: whoami_out
-
-  - name: verify output
-    assert:
-      that:
-      - not whoami_out.stdout_lines[0].endswith(become_test_username)
+    failed_when: whoami_out.stdout_lines[0].endswith(become_test_username) or whoami_out.stdout_lines[0].endswith(become_test_admin_username)
 
   - name: get become user profile dir so we can clean it up later
     vars: &become_vars
@@ -34,7 +38,21 @@
       that:
       - become_test_username in profile_dir_out.stdout_lines[0]
 
-  - name: test become runas via task vars
+  - name: get become admin user profile dir so we can clean it up later
+    vars: &admin_become_vars
+      ansible_become_user: "{{ become_test_admin_username }}"
+      ansible_become_password: "{{ gen_pw }}"
+      ansible_become_method: runas
+      ansible_become: yes
+    win_shell: $env:USERPROFILE
+    register: admin_profile_dir_out
+
+  - name: ensure profile dir contains admin test username
+    assert:
+      that:
+      - become_test_admin_username in admin_profile_dir_out.stdout_lines[0]
+
+  - name: test become runas via task vars (underprivileged user)
     vars: *become_vars
     win_shell: whoami
     register: whoami_out
@@ -44,6 +62,36 @@
       that:
       - whoami_out.stdout_lines[0].endswith(become_test_username)
 
+  - name: test become runas to ensure underprivileged user has medium integrity level
+    vars: *become_vars
+    win_shell: whoami /groups
+    register: whoami_out
+  
+  - name: verify output
+    assert:
+      that:
+      - '"Mandatory Label\Medium Mandatory Level" in whoami_out.stdout'
+
+  - name: test become runas via task vars (privileged user)
+    vars: *admin_become_vars
+    win_shell: whoami
+    register: whoami_out
+  
+  - name: verify output
+    assert:
+      that:
+      - whoami_out.stdout_lines[0].endswith(become_test_admin_username)
+
+  - name: test become runas to ensure privileged user has high integrity level
+    vars: *admin_become_vars
+    win_shell: whoami /groups
+    register: whoami_out
+  
+  - name: verify output
+    assert:
+      that:
+      - '"Mandatory Label\High Mandatory Level" in whoami_out.stdout'
+
   - name: test become runas via task keywords
     vars:
       ansible_become_password: "{{ gen_pw }}"
@@ -51,7 +99,6 @@
     become_method: runas
     become_user: "{{ become_test_username }}"
     win_shell: whoami
-
     register: whoami_out
 
   - name: verify output
@@ -70,18 +117,95 @@
       assert:
         that:
         - whoami_out.stdout_lines[0].endswith(become_test_username)
+  
+  - name: test with module that will return non-zero exit code (https://github.com/ansible/ansible/issues/30468)
+    vars: *become_vars
+    setup:
+    
+  - name: test become with SYSTEM account
+    win_command: whoami
+    become: yes
+    become_method: runas
+    become_user: SYSTEM
+    register: whoami_out
+  
+  - name: verify output
+    assert:
+      that:
+      - whoami_out.stdout_lines[0] == "nt authority\\system"
+
+  - name: test become with NetworkService account
+    win_command: whoami
+    become: yes
+    become_method: runas
+    become_user: NetworkService
+    register: whoami_out
+  
+  - name: verify output
+    assert:
+      that:
+      - whoami_out.stdout_lines[0] == "nt authority\\network service"
+
+  - name: test become with LocalService account
+    win_command: whoami
+    become: yes
+    become_method: runas
+    become_user: LocalService
+    register: whoami_out
+  
+  - name: verify output
+    assert:
+      that:
+      - whoami_out.stdout_lines[0] == "nt authority\\local service"
+
+  # Test out Async on Windows Server 2012+
+  - name: get OS version
+    win_shell: if ([System.Environment]::OSVersion.Version -ge [Version]"6.2") { $true } else { $false }
+    register: os_version
+  
+  - name: test become + async on older hosts
+    vars: *become_vars
+    win_command: whoami
+    async: 10
+    register: whoami_out
+    ignore_errors: yes
+  
+  - name: verify older hosts failed with become + async
+    assert:
+      that:
+      - whoami_out|failed
+    when: os_version.stdout_lines[0] == "False"
+
+  - name: verify newer hosts worked with become + async
+    assert:
+      that:
+      - whoami_out|success
+    when: os_version.stdout_lines[0] == "True"
 
 # FUTURE: test raw + script become behavior once they're running under the exec wrapper again
 # FUTURE: add standalone playbook tests to include password prompting and play become keywords
 
   always:
-  - name: ensure test user is deleted
+  - name: ensure underprivileged test user is deleted
     win_user:
       name: "{{ become_test_username }}"
       state: absent
-  - name: ensure test user profile is deleted
+  
+  - name: ensure privileged test user is deleted
+    win_user:
+      name: "{{ become_test_admin_username }}"
+      state: absent
+
+  - name: ensure underprivileged test user profile is deleted
     # NB: have to work around powershell limitation of long filenames until win_file fixes it
     win_shell: rmdir /S /Q {{ profile_dir_out.stdout_lines[0] }}
     args:
       executable: cmd.exe
     when: become_test_username in profile_dir_out.stdout_lines[0]
+  
+  - name: ensure privileged test user profile is deleted
+    # NB: have to work around powershell limitation of long filenames until win_file fixes it
+    win_shell: rmdir /S /Q {{ admin_profile_dir_out.stdout_lines[0] }}
+    args:
+      executable: cmd.exe
+    when: become_test_admin_username in admin_profile_dir_out.stdout_lines[0]

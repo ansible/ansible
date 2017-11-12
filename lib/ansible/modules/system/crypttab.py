@@ -1,17 +1,15 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2014, Steve <yo@groks.org>
+# Copyright: (c) 2014, Steve <yo@groks.org>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -26,9 +24,7 @@ options:
       - Name of the encrypted block device as it appears in the C(/etc/crypttab) file, or
         optionally prefixed with C(/dev/mapper/), as it appears in the filesystem. I(/dev/mapper/)
         will be stripped from I(name).
-    required: true
-    default: null
-    aliases: []
+    required: yes
   state:
     description:
       - Use I(present) to add a line to C(/etc/crypttab) or update it's definition
@@ -36,45 +32,35 @@ options:
         Use I(opts_present) to add options to those already present; options with
         different values will be updated. Use I(opts_absent) to remove options from
         the existing set.
-    required: true
-    choices: [ "present", "absent", "opts_present", "opts_absent"]
-    default: null
+    required: yes
+    choices: [ absent, opts_absent, opts_present, present ]
   backing_device:
     description:
       - Path to the underlying block device or file, or the UUID of a block-device
-        prefixed with I(UUID=)
-    required: false
-    default: null
+        prefixed with I(UUID=).
   password:
     description:
       - Encryption password, the path to a file containing the password, or
-        'none' or '-' if the password should be entered at boot.
-    required: false
-    default: "none"
+        C(none) or C(-) if the password should be entered at boot.
+    default: 'none'
   opts:
     description:
       - A comma-delimited list of options. See C(crypttab(5) ) for details.
-    required: false
   path:
     description:
       - Path to file to use instead of C(/etc/crypttab). This might be useful
         in a chroot environment.
-    required: false
     default: /etc/crypttab
-
-notes: []
-requirements: []
-author: "Steve (@groks)"
+author:
+- Steve (@groks)
 '''
 
 EXAMPLES = '''
-
-# Since column is a special character in YAML, if your string contains a column, it's better to use quotes around the string
 - name: Set the options explicitly a device which must already exist
   crypttab:
     name: luks-home
     state: present
-    opts: 'discard,cipher=aes-cbc-essiv:sha256'
+    opts: discard,cipher=aes-cbc-essiv:sha256
 
 - name: Add the 'discard' option to any existing options for all devices
   crypttab:
@@ -89,31 +75,30 @@ import os
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_bytes, to_native
+
 
 def main():
-
     module = AnsibleModule(
-        argument_spec = dict(
-            name           = dict(required=True),
-            state          = dict(required=True, choices=['present', 'absent', 'opts_present', 'opts_absent']),
-            backing_device = dict(default=None),
-            password       = dict(default=None, type='path'),
-            opts           = dict(default=None),
-            path           = dict(default='/etc/crypttab', type='path')
+        argument_spec=dict(
+            name=dict(type='str', required=True),
+            state=dict(type='str', required=True, choices=['absent', 'opts_absent', 'opts_present', 'present']),
+            backing_device=dict(type='str'),
+            password=dict(type='path'),
+            opts=dict(type='str'),
+            path=dict(type='path', default='/etc/crypttab')
         ),
-        supports_check_mode = True
+        supports_check_mode=True,
     )
 
     backing_device = module.params['backing_device']
-    password       = module.params['password']
-    opts           = module.params['opts']
-    state          = module.params['state']
-    path           = module.params['path']
-    name           = module.params['name']
+    password = module.params['password']
+    opts = module.params['opts']
+    state = module.params['state']
+    path = module.params['path']
+    name = module.params['name']
     if name.startswith('/dev/mapper/'):
         name = name[len('/dev/mapper/'):]
-
 
     if state != 'absent' and backing_device is None and password is None and opts is None:
         module.fail_json(msg="expected one or more of 'backing_device', 'password' or 'opts'",
@@ -127,8 +112,7 @@ def main():
                           ('backing_device', backing_device),
                           ('password', password),
                           ('opts', opts)):
-        if (arg is not None
-                and (' ' in arg or '\t' in arg or arg == '')):
+        if (arg is not None and (' ' in arg or '\t' in arg or arg == '')):
             module.fail_json(msg="invalid '%s': contains white space or is empty" % arg_name,
                              **module.params)
 
@@ -165,11 +149,10 @@ def main():
         if existing_line is not None:
             changed, reason = existing_line.opts.remove(opts)
 
-
     if changed and not module.check_mode:
         try:
             f = open(path, 'wb')
-            f.write(str(crypttab))
+            f.write(to_bytes(crypttab, errors='surrogate_or_strict'))
         finally:
             f.close()
 
@@ -177,7 +160,6 @@ def main():
 
 
 class Crypttab(object):
-
     _lines = []
 
     def __init__(self, path):
@@ -185,7 +167,7 @@ class Crypttab(object):
         if not os.path.exists(path):
             if not os.path.exists(os.path.dirname(path)):
                 os.makedirs(os.path.dirname(path))
-            open(path,'a').close()
+            open(path, 'a').close()
 
         try:
             f = open(path, 'r')
@@ -222,7 +204,6 @@ class Crypttab(object):
 
 
 class Line(object):
-
     def __init__(self, line=None, name=None, backing_device=None, password=None, opts=None):
         self.line = line
         self.name = name
@@ -355,8 +336,7 @@ class Options(dict):
         super(Options, self).__delitem__(key)
 
     def __ne__(self, obj):
-        return not (isinstance(obj, Options)
-                    and sorted(self.items()) == sorted(obj.items()))
+        return not (isinstance(obj, Options) and sorted(self.items()) == sorted(obj.items()))
 
     def __str__(self):
         ret = []

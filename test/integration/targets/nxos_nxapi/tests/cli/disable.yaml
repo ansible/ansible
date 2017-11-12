@@ -40,7 +40,5 @@
   assert:
     that:
       result.changed == false
-# FIXME https://github.com/ansible/ansible-modules-core/issues/4955
-  ignore_errors: yes
 
 - debug: msg="END cli/disable.yaml"

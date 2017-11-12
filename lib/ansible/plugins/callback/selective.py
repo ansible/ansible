@@ -1,60 +1,59 @@
 # (c) Fastly, inc 2016
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
-"""
-selective.py callback plugin.
-
-This callback only prints tasks that have been tagged with `print_action` or that have failed.
-Tasks that are not printed are placed with a '.'.
-
-For example:
-
-- debug: msg="This will not be printed"
-- debug: msg="But this will"
-  tags: [print_action]"
-
-This allows operators to focus on the tasks that provide value only.
-
-If you increase verbosity all tasks are printed.
-"""
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
-
-import difflib
-import os
-
-from ansible.plugins.callback import CallbackBase
-from ansible.module_utils._text import to_text
-
 __metaclass__ = type
 
+DOCUMENTATION = """
+    callback: selective
+    callback_type: stdout
+    requirements:
+      - set as main display callback
+    short_description: only print certain tasks
+    version_added: "2.4"
+    description:
+      - This callback only prints tasks that have been tagged with `print_action` or that have failed.
+        This allows operators to focus on the tasks that provide value only.
+      - Tasks that are not printed are placed with a '.'.
+      - If you increase verbosity all tasks are printed.
+    options:
+      nocolor:
+        default: False
+        description: This setting allows suppressing colorizing output
+        env:
+          - name: ANSIBLE_NOCOLOR
+          - name: ANSIBLE_SELECTIVE_DONT_COLORIZE
+        ini:
+          - section: defaults
+          - key: nocolor
+        type: boolean
+"""
 
+EXAMPLES = """
+  - debug: msg="This will not be printed"
+  - debug: msg="But this will"
+    tags: [print_action]
+"""
+
+import difflib
+
+from ansible import constants as C
+from ansible.plugins.callback import CallbackBase
+from ansible.module_utils._text import to_text
+from ansible.utils.color import codeCodes
+
+DONT_COLORIZE = False
 COLORS = {
     'normal': '\033[0m',
-    'ok': '\033[92m',
+    'ok': '\033[{0}m'.format(codeCodes[C.COLOR_OK]),
     'bold': '\033[1m',
     'not_so_bold': '\033[1m\033[34m',
-    'changed': '\033[93m',
-    'failed': '\033[91m',
+    'changed': '\033[{0}m'.format(codeCodes[C.COLOR_CHANGED]),
+    'failed': '\033[{0}m'.format(codeCodes[C.COLOR_ERROR]),
     'endc': '\033[0m',
-    'skipped': '\033[96m',
+    'skipped': '\033[{0}m'.format(codeCodes[C.COLOR_SKIP]),
 }
-
-DONT_COLORIZE = os.getenv('ANSIBLE_SELECTIVE_DONT_COLORIZE', default=False)
 
 
 def dict_diff(prv, nxt):
@@ -88,6 +87,13 @@ class CallbackModule(CallbackBase):
         self.last_skipped = False
         self.last_task_name = None
         self.printed_last_task = False
+
+    def set_options(self, options):
+
+        super(CallbackModule, self).set_options(options)
+
+        global DONT_COLORIZE
+        DONT_COLORIZE = self._plugin_options['nocolor']
 
     def _print_task(self, task_name=None):
         if task_name is None:
@@ -139,19 +145,19 @@ class CallbackModule(CallbackBase):
             change_string = colorize('FAILED!!!', color)
         else:
             color = 'changed' if changed else 'ok'
-            change_string = colorize("changed={}".format(changed), color)
+            change_string = colorize("changed={0}".format(changed), color)
 
         msg = colorize(msg, color)
 
         line_length = 120
         spaces = ' ' * (40 - len(name) - indent_level)
-        line = "{}  * {}{}- {}".format(' ' * indent_level, name, spaces, change_string)
+        line = "{0}  * {1}{2}- {3}".format(' ' * indent_level, name, spaces, change_string)
 
         if len(msg) < 50:
-            line += ' -- {}'.format(msg)
-            print("{} {}---------".format(line, '-' * (line_length - len(line))))
+            line += ' -- {0}'.format(msg)
+            print("{0} {1}---------".format(line, '-' * (line_length - len(line))))
         else:
-            print("{} {}".format(line, '-' * (line_length - len(line))))
+            print("{0} {1}".format(line, '-' * (line_length - len(line))))
             print(self._indent_text(msg, indent_level + 4))
 
         if diff:
@@ -234,7 +240,7 @@ class CallbackModule(CallbackBase):
             else:
                 color = 'ok'
 
-            msg = '{}    : ok={}\tchanged={}\tfailed={}\tunreachable={}'.format(
+            msg = '{0}    : ok={1}\tchanged={2}\tfailed={3}\tunreachable={4}'.format(
                 host, s['ok'], s['changed'], s['failures'], s['unreachable'])
             print(colorize(msg, color))
 
@@ -247,17 +253,17 @@ class CallbackModule(CallbackBase):
             line_length = 120
             spaces = ' ' * (31 - len(result._host.name) - 4)
 
-            line = "  * {}{}- {}".format(colorize(result._host.name, 'not_so_bold'),
-                                         spaces,
-                                         colorize("skipped", 'skipped'),)
+            line = "  * {0}{1}- {2}".format(colorize(result._host.name, 'not_so_bold'),
+                                            spaces,
+                                            colorize("skipped", 'skipped'),)
 
             reason = result._result.get('skipped_reason', '') or \
                 result._result.get('skip_reason', '')
             if len(reason) < 50:
-                line += ' -- {}'.format(reason)
-                print("{} {}---------".format(line, '-' * (line_length - len(line))))
+                line += ' -- {0}'.format(reason)
+                print("{0} {1}---------".format(line, '-' * (line_length - len(line))))
             else:
-                print("{} {}".format(line, '-' * (line_length - len(line))))
+                print("{0} {1}".format(line, '-' * (line_length - len(line))))
                 print(self._indent_text(reason, 8))
                 print(reason)
 

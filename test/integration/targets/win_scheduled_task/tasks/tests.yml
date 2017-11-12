@@ -1,3 +1,6 @@
+# these are the older tests that test out the deprecated args, keep here until
+# the new changes are more bedded down
+---
 - name: Remove potentially leftover scheduled task
   win_scheduled_task: &wst_absent
     name: Ansible Test
@@ -18,7 +21,6 @@
   assert:
     that:
     - add_scheduled_task.changed == true
-    - add_scheduled_task.exists == false
 
 
 - name: Add scheduled task (again)
@@ -29,14 +31,12 @@
   assert:
     that:
     - add_scheduled_task_again.changed == false
-    - add_scheduled_task_again.exists == true
   when: not in_check_mode
 
 - name: Test add_scheduled_task_again (check-mode)
   assert:
     that:
     - add_scheduled_task_again.changed == true
-    - add_scheduled_task_again.exists == false
   when: in_check_mode
 
 
@@ -56,7 +56,6 @@
     assert:
       that:
       - disable_scheduled_task.changed == true
-      - disable_scheduled_task.exists == true
 
 
   - name: Disable scheduled task (again)
@@ -69,7 +68,6 @@
     assert:
       that:
       - disable_scheduled_task_again.changed == false
-      - disable_scheduled_task_again.exists == true
 
 
   - name: Enable scheduled task
@@ -81,7 +79,6 @@
   - assert:
       that:
       - enable_scheduled_task.changed == true
-      - enable_scheduled_task.exists == true
 
   - name: Enable scheduled task (again)
     win_scheduled_task:
@@ -92,7 +89,6 @@
   - assert:
       that:
       - enable_scheduled_task_again.changed == false
-      - enable_scheduled_task_again.exists == true
 
 
 - name: Remove scheduled task
@@ -103,14 +99,12 @@
   assert:
     that:
     - remove_scheduled_task.changed == true
-    - remove_scheduled_task.exists == true
   when: not in_check_mode
 
 - name: Test remove_scheduled_task (check-mode)
   assert:
     that:
     - remove_scheduled_task.changed == false
-    - remove_scheduled_task.exists == false
   when: in_check_mode
 
 
@@ -122,7 +116,6 @@
   assert:
     that:
     - remove_scheduled_task_again.changed == false
-    - remove_scheduled_task_again.exists == false
 
 
 # Test scheduled task path creation and removal
@@ -157,7 +150,7 @@
 - name: Test add_scheduled_task_new_path_1
   assert:
     that:
-    - add_scheduled_task_new_path_1.msg == 'Added new task Ansible Test New Path 1 and task path \\non_existent_path\\ created'
+    - add_scheduled_task_new_path_1|changed
 
 
 - name: Add scheduled task new path 2
@@ -169,13 +162,13 @@
 - name: Test add_scheduled_task_new_path_2 (normal mode)
   assert:
     that:
-    - add_scheduled_task_new_path_2.msg == 'Added new task Ansible Test New Path 2'
+    - add_scheduled_task_new_path_2|changed
   when: not in_check_mode
 
 - name: Test add_scheduled_task_new_path_2 (check-mode)
   assert:
     that:
-    - add_scheduled_task_new_path_2.msg == 'Added new task Ansible Test New Path 2 and task path \\non_existent_path\\ created'
+    - add_scheduled_task_new_path_2|changed
   when: in_check_mode
 
 
@@ -186,13 +179,13 @@
 - name: Test remove_scheduled_task_new_path_2 (normal mode)
   assert:
     that:
-    - remove_scheduled_task_new_path_2.msg == 'Deleted task Ansible Test New Path 2'
+    - remove_scheduled_task_new_path_2|changed
   when: not in_check_mode
 
 - name: Test remove_scheduled_task_new_path_2 (check-mode)
   assert:
     that:
-    - remove_scheduled_task_new_path_2.msg == 'Task does not exist'
+    - not remove_scheduled_task_new_path_2|changed
   when: in_check_mode
 
 
@@ -203,13 +196,13 @@
 - name: Test remove_scheduled_task_new_path_1 (normal mode)
   assert:
     that:
-    - remove_scheduled_task_new_path_1.msg == 'Deleted task Ansible Test New Path 1 and task path \\non_existent_path\\ removed'
+    - remove_scheduled_task_new_path_1|changed
   when: not in_check_mode
 
 - name: Test remove_scheduled_task_new_path_1 (check-mode)
   assert:
     that:
-    - remove_scheduled_task_new_path_1.msg == 'Task does not exist'
+    - not remove_scheduled_task_new_path_1|changed
   when: in_check_mode
 
 
@@ -238,7 +231,6 @@
   assert:
     that:
     - add_scheduled_task_run_options_1.changed == true
-    - add_scheduled_task_run_options_1.exists == false
 
 
 - name: Execute run options tests for normal mode only (expects scheduled task)
@@ -255,7 +247,6 @@
     assert:
       that:
       - change_scheduled_task_run_options_user.changed == true
-      - change_scheduled_task_run_options_user.exists == true
 
 
   - name: Change scheduled task run options user (again)
@@ -268,7 +259,6 @@
     assert:
       that:
       - change_scheduled_task_run_options_user_again.changed == false
-      - change_scheduled_task_run_options_user_again.exists == true
 
 
   - name: Change scheduled task run options run level
@@ -282,7 +272,6 @@
     assert:
       that:
       - change_scheduled_task_run_options_runlevel.changed == true
-      - change_scheduled_task_run_options_runlevel.exists == true
 
 
   - name: Change scheduled task run options run level (again)
@@ -296,7 +285,6 @@
     assert:
       that:
       - change_scheduled_task_run_options_runlevel_again.changed == false
-      - change_scheduled_task_run_options_runlevel_again.exists == true
 
 
   # Should ignore change as account being tested is a built-in service account
@@ -312,7 +300,6 @@
     assert:
       that:
       - change_scheduled_task_run_options_store_password.changed == false
-      - change_scheduled_task_run_options_store_password.exists == true
 
 
 - name: Remove scheduled task run options 1
@@ -323,12 +310,10 @@
   assert:
     that:
     - remove_scheduled_task_run_options_1.changed == true
-    - remove_scheduled_task_run_options_1.exists == true
   when: not in_check_mode
 
 - name: Test remove_scheduled_task_run_options_1 (check-mode)
   assert:
     that:
     - remove_scheduled_task_run_options_1.changed == false
-    - remove_scheduled_task_run_options_1.exists == false
   when: in_check_mode

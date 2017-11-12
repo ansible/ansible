@@ -46,6 +46,23 @@
                 "arn:aws:rds:{{aws_region}}:{{aws_account}}:snapshot:rds-*",
                 "arn:aws:rds:{{aws_region}}:{{aws_account}}:db:rds-*"
             ]
+        },
+        {
+            "Sid": "AllowRDSParameterGroupManagement",
+            "Effect": "Allow",
+            "Action": [
+                "rds:DescribeDBParameterGroups",
+                "rds:DescribeDBParameters",
+                "rds:CreateDBParameterGroup",
+                "rds:DeleteDBParameterGroup",
+                "rds:ModifyDBParameterGroup",
+                "rds:ListTagsForResource",
+                "rds:AddTagsToResource",
+                "rds:RemoveTagsFromResource"
+            ],
+            "Resource": [
+                "arn:aws:rds:{{aws_region}}:{{aws_account}}:pg:*"
+            ]
         }
     ]
 }

@@ -1,32 +1,6 @@
-# This code is part of Ansible, but is an independent component.
-# This particular file snippet, and this file snippet only, is BSD licensed.
-# Modules you write using this snippet, which is embedded dynamically by Ansible
-# still belong to the author of the module, and may assign their own license
-# to the complete work.
-#
 # Copyright (c), Michael DeHaan <michael.dehaan@gmail.com>, 2012-2013
 # Copyright (c), Toshio Kuratomi <tkuratomi@ansible.com> 2016
-# All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without modification,
-# are permitted provided that the following conditions are met:
-#
-#    * Redistributions of source code must retain the above copyright
-#      notice, this list of conditions and the following disclaimer.
-#    * Redistributions in binary form must reproduce the above copyright notice,
-#      this list of conditions and the following disclaimer in the documentation
-#      and/or other materials provided with the distribution.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
-# USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
+# Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
 SIZE_RANGES = {
     'Y': 1 << 80,
@@ -729,8 +703,7 @@ def env_fallback(*args, **kwargs):
     for arg in args:
         if arg in os.environ:
             return os.environ[arg]
-    else:
-        raise AnsibleFallbackNotFound
+    raise AnsibleFallbackNotFound
 
 
 def _lenient_lowercase(lst):
@@ -801,17 +774,19 @@ class AnsibleModule(object):
         self._debug = False
         self._diff = False
         self._socket_path = None
+        self._shell = None
         self._verbosity = 0
         # May be used to set modifications to the environment for any
         # run_command invocation
         self.run_command_environ_update = {}
         self._warnings = []
         self._deprecations = []
+        self._clean = {}
 
         self.aliases = {}
         self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug', '_ansible_diff', '_ansible_verbosity',
                               '_ansible_selinux_special_fs', '_ansible_module_name', '_ansible_version', '_ansible_syslog_facility',
-                              '_ansible_socket']
+                              '_ansible_socket', '_ansible_shell_executable']
         self._options_context = list()
 
         if add_file_common_args:
@@ -1133,9 +1108,9 @@ class AnsibleModule(object):
                 return True
             try:
                 os.lchown(b_path, uid, -1)
-            except OSError:
+            except (IOError, OSError) as e:
                 path = to_text(b_path)
-                self.fail_json(path=path, msg='chown failed')
+                self.fail_json(path=path, msg='chown failed: %s' % (to_text(e)))
             changed = True
         return changed
 
@@ -1613,6 +1588,9 @@ class AnsibleModule(object):
             elif k == '_ansible_socket':
                 self._socket_path = v
 
+            elif k == '_ansible_shell_executable' and v:
+                self._shell = v
+
             elif check_invalid_arguments and k not in legal_inputs:
                 unsupported_parameters.add(k)
 
@@ -1621,10 +1599,10 @@ class AnsibleModule(object):
                 del self.params[k]
 
         if unsupported_parameters:
-            msg = "Unsupported parameters for (%s) module: %s" % (self._name, ','.join(sorted(list(unsupported_parameters))))
+            msg = "Unsupported parameters for (%s) module: %s" % (self._name, ', '.join(sorted(list(unsupported_parameters))))
             if self._options_context:
                 msg += " found in %s." % " -> ".join(self._options_context)
-            msg += " Supported parameters include: %s" % (','.join(sorted(spec.keys())))
+            msg += " Supported parameters include: %s" % (', '.join(sorted(spec.keys())))
             self.fail_json(msg=msg)
         if self.check_mode and not self.supports_check_mode:
             self.exit_json(skipped=True, msg="remote module (%s) does not support check mode" % self._name)
@@ -1644,7 +1622,7 @@ class AnsibleModule(object):
         for check in spec:
             count = self._count_terms(check, param)
             if count > 1:
-                msg = "parameters are mutually exclusive: %s" % (check,)
+                msg = "parameters are mutually exclusive: %s" % ', '.join(check)
                 if self._options_context:
                     msg += " found in %s" % " -> ".join(self._options_context)
                 self.fail_json(msg=msg)
@@ -1655,7 +1633,7 @@ class AnsibleModule(object):
         for check in spec:
             count = self._count_terms(check, param)
             if count == 0:
-                msg = "one of the following is required: %s" % ','.join(check)
+                msg = "one of the following is required: %s" % ', '.join(check)
                 if self._options_context:
                     msg += " found in %s" % " -> ".join(self._options_context)
                 self.fail_json(msg=msg)
@@ -1668,7 +1646,7 @@ class AnsibleModule(object):
             non_zero = [c for c in counts if c > 0]
             if len(non_zero) > 0:
                 if 0 in counts:
-                    msg = "parameters are required together: %s" % (check,)
+                    msg = "parameters are required together: %s" % ', '.join(check)
                     if self._options_context:
                         msg += " found in %s" % " -> ".join(self._options_context)
                     self.fail_json(msg=msg)
@@ -1685,7 +1663,7 @@ class AnsibleModule(object):
             if required and k not in param:
                 missing.append(k)
         if len(missing) > 0:
-            msg = "missing required arguments: %s" % ",".join(missing)
+            msg = "missing required arguments: %s" % ", ".join(missing)
             if self._options_context:
                 msg += " found in %s" % " -> ".join(self._options_context)
             self.fail_json(msg=msg)
@@ -1709,6 +1687,9 @@ class AnsibleModule(object):
             # present, else all requirements should be present.
             if is_one_of:
                 max_missing_count = len(requirements)
+                term = 'any'
+            else:
+                term = 'all'
 
             if key in param and param[key] == val:
                 for check in requirements:
@@ -1716,7 +1697,7 @@ class AnsibleModule(object):
                     if count == 0:
                         missing.append(check)
             if len(missing) and len(missing) >= max_missing_count:
-                msg = "%s is %s but the following are missing: %s" % (key, val, ','.join(missing))
+                msg = "%s is %s but %s of the following are missing: %s" % (key, val, term, ', '.join(missing))
                 if self._options_context:
                     msg += " found in %s" % " -> ".join(self._options_context)
                 self.fail_json(msg=msg)
@@ -1752,7 +1733,7 @@ class AnsibleModule(object):
                                 (param[k],) = overlap
 
                         if param[k] not in choices:
-                            choices_str = ",".join([to_native(c) for c in choices])
+                            choices_str = ", ".join([to_native(c) for c in choices])
                             msg = "value of %s must be one of: %s, got: %s" % (k, choices_str, param[k])
                             if self._options_context:
                                 msg += " found in %s" % " -> ".join(self._options_context)
@@ -2156,7 +2137,7 @@ class AnsibleModule(object):
         # and we don't want to break modules unnecessarily
         return None
 
-    def get_bin_path(self, arg, required=False, opt_dirs=[]):
+    def get_bin_path(self, arg, required=False, opt_dirs=None):
         '''
         find system executable in PATH.
         Optional arguments:
@@ -2164,6 +2145,8 @@ class AnsibleModule(object):
            - opt_dirs:  optional list of directories to search in addition to PATH
         if found return full path; otherwise return None
         '''
+        opt_dirs = [] if opt_dirs is None else opt_dirs
+
         sbin_paths = ['/sbin', '/usr/sbin', '/usr/local/sbin']
         paths = []
         for d in opt_dirs:
@@ -2288,7 +2271,7 @@ class AnsibleModule(object):
             if not self.params.get(required_param):
                 missing_params.append(required_param)
         if missing_params:
-            self.fail_json(msg="missing required arguments: %s" % ','.join(missing_params))
+            self.fail_json(msg="missing required arguments: %s" % ', '.join(missing_params))
 
     def digest_from_file(self, filename, algorithm):
         ''' Return hex digest of local file for a digest_method specified by name, or None if file is not present. '''
@@ -2533,6 +2516,7 @@ class AnsibleModule(object):
         # sadly there are some situations where we cannot ensure atomicity, but only if
         # the user insists and we get the appropriate error we update the file unsafely
         try:
+            out_dest = in_src = None
             try:
                 out_dest = open(dest, 'wb')
                 in_src = open(src, 'rb')
@@ -2554,6 +2538,41 @@ class AnsibleModule(object):
                 rpipes.remove(file_descriptor)
 
         return data
+
+    def _clean_args(self, args):
+
+        if not self._clean:
+            # create a printable version of the command for use in reporting later,
+            # which strips out things like passwords from the args list
+            to_clean_args = args
+            if PY2:
+                if isinstance(args, text_type):
+                    to_clean_args = to_bytes(args)
+            else:
+                if isinstance(args, binary_type):
+                    to_clean_args = to_text(args)
+            if isinstance(args, (text_type, binary_type)):
+                to_clean_args = shlex.split(to_clean_args)
+
+            clean_args = []
+            is_passwd = False
+            for arg in (to_native(a) for a in to_clean_args):
+                if is_passwd:
+                    is_passwd = False
+                    clean_args.append('********')
+                    continue
+                if PASSWD_ARG_RE.match(arg):
+                    sep_idx = arg.find('=')
+                    if sep_idx > -1:
+                        clean_args.append('%s=********' % arg[:sep_idx])
+                        continue
+                    else:
+                        is_passwd = True
+                arg = heuristic_log_sanitize(arg, self.no_log_values)
+                clean_args.append(arg)
+            self._clean = ' '.join(shlex_quote(arg) for arg in clean_args)
+
+        return self._clean
 
     def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None,
                     use_unsafe_shell=False, prompt_regex=None, environ_update=None, umask=None, encoding='utf-8', errors='surrogate_or_strict'):
@@ -2600,15 +2619,30 @@ class AnsibleModule(object):
             according to the encoding and errors parameters.  If you want byte
             strings on python3, use encoding=None to turn decoding to text off.
         '''
+        # used by clean args later on
+        self._clean = None
 
-        if isinstance(args, list):
-            if use_unsafe_shell:
+        if not isinstance(args, (list, binary_type, text_type)):
+            msg = "Argument 'args' to run_command must be list or string"
+            self.fail_json(rc=257, cmd=args, msg=msg)
+
+        shell = False
+        if use_unsafe_shell:
+
+            # stringify args for unsafe/direct shell usage
+            if isinstance(args, list):
                 args = " ".join([shlex_quote(x) for x in args])
+
+            # not set explicitly, check if set by controller
+            if executable:
+                args = [executable, '-c', args]
+            elif self._shell not in (None, '/bin/sh'):
+                args = [self._shell, '-c', args]
+            else:
                 shell = True
-        elif isinstance(args, (binary_type, text_type)) and use_unsafe_shell:
-            shell = True
-        elif isinstance(args, (binary_type, text_type)):
-            if not use_unsafe_shell:
+        else:
+            # ensure args are a list
+            if isinstance(args, (binary_type, text_type)):
                 # On python2.6 and below, shlex has problems with text type
                 # On python3, shlex needs a text type.
                 if PY2:
@@ -2616,18 +2650,9 @@ class AnsibleModule(object):
                 elif PY3:
                     args = to_text(args, errors='surrogateescape')
                 args = shlex.split(args)
-        else:
-            msg = "Argument 'args' to run_command must be list or string"
-            self.fail_json(rc=257, cmd=args, msg=msg)
 
-        shell = False
-        if use_unsafe_shell:
-            if executable is None:
-                executable = os.environ.get('SHELL')
-            if executable:
-                args = [executable, '-c', args]
-            else:
-                shell = True
+            # expand shellisms
+            args = [os.path.expanduser(os.path.expandvars(x)) for x in args if x is not None]
 
         prompt_re = None
         if prompt_regex:
@@ -2640,10 +2665,6 @@ class AnsibleModule(object):
                 prompt_re = re.compile(prompt_regex, re.MULTILINE)
             except re.error:
                 self.fail_json(msg="invalid prompt regular expression given to run_command")
-
-        # expand things like $HOME and ~
-        if not shell:
-            args = [os.path.expanduser(os.path.expandvars(x)) for x in args if x is not None]
 
         rc = 0
         msg = None
@@ -2678,37 +2699,6 @@ class AnsibleModule(object):
             if not os.environ['PYTHONPATH']:
                 del os.environ['PYTHONPATH']
 
-        # create a printable version of the command for use
-        # in reporting later, which strips out things like
-        # passwords from the args list
-        to_clean_args = args
-        if PY2:
-            if isinstance(args, text_type):
-                to_clean_args = to_bytes(args)
-        else:
-            if isinstance(args, binary_type):
-                to_clean_args = to_text(args)
-        if isinstance(args, (text_type, binary_type)):
-            to_clean_args = shlex.split(to_clean_args)
-
-        clean_args = []
-        is_passwd = False
-        for arg in (to_native(a) for a in to_clean_args):
-            if is_passwd:
-                is_passwd = False
-                clean_args.append('********')
-                continue
-            if PASSWD_ARG_RE.match(arg):
-                sep_idx = arg.find('=')
-                if sep_idx > -1:
-                    clean_args.append('%s=********' % arg[:sep_idx])
-                    continue
-                else:
-                    is_passwd = True
-            arg = heuristic_log_sanitize(arg, self.no_log_values)
-            clean_args.append(arg)
-        clean_args = ' '.join(shlex_quote(arg) for arg in clean_args)
-
         if data:
             st_in = subprocess.PIPE
 
@@ -2740,7 +2730,7 @@ class AnsibleModule(object):
 
         try:
             if self._debug:
-                self.log('Executing: ' + clean_args)
+                self.log('Executing: ' + self._clean_args(args))
             cmd = subprocess.Popen(args, **kwargs)
 
             # the communication logic here is essentially taken from that
@@ -2789,11 +2779,11 @@ class AnsibleModule(object):
 
             rc = cmd.returncode
         except (OSError, IOError) as e:
-            self.log("Error Executing CMD:%s Exception:%s" % (clean_args, to_native(e)))
-            self.fail_json(rc=e.errno, msg=to_native(e), cmd=clean_args)
+            self.log("Error Executing CMD:%s Exception:%s" % (self._clean_args(args), to_native(e)))
+            self.fail_json(rc=e.errno, msg=to_native(e), cmd=self._clean_args(args))
         except Exception as e:
-            self.log("Error Executing CMD:%s Exception:%s" % (clean_args, to_native(traceback.format_exc())))
-            self.fail_json(rc=257, msg=to_native(e), exception=traceback.format_exc(), cmd=clean_args)
+            self.log("Error Executing CMD:%s Exception:%s" % (self._clean_args(args), to_native(traceback.format_exc())))
+            self.fail_json(rc=257, msg=to_native(e), exception=traceback.format_exc(), cmd=self._clean_args(args))
 
         # Restore env settings
         for key, val in old_env_vals.items():
@@ -2807,7 +2797,7 @@ class AnsibleModule(object):
 
         if rc != 0 and check_rc:
             msg = heuristic_log_sanitize(stderr.rstrip(), self.no_log_values)
-            self.fail_json(cmd=clean_args, rc=rc, stdout=stdout, stderr=stderr, msg=msg)
+            self.fail_json(cmd=self._clean_args(args), rc=rc, stdout=stdout, stderr=stderr, msg=msg)
 
         # reset the pwd
         os.chdir(prev_dir)
@@ -2815,6 +2805,7 @@ class AnsibleModule(object):
         if encoding is not None:
             return (rc, to_native(stdout, encoding=encoding, errors=errors),
                     to_native(stderr, encoding=encoding, errors=errors))
+
         return (rc, stdout, stderr)
 
     def append_to_file(self, filename, str):

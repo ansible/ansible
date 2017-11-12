@@ -112,20 +112,22 @@ def nat_rules_to_dict(nat_rules):
         )
     return result
 
+
 def rule_to_string(rule):
     strings = list()
     for key, value in rule.items():
         strings.append('%s=%s' % (key, value))
     return ', '.join(strings)
 
+
 def main():
     argument_spec = vca_argument_spec()
     argument_spec.update(
         dict(
-            nat_rules = dict(type='list', default=[]),
-            gateway_name = dict(default='gateway'),
-            purge_rules = dict(default=False, type='bool'),
-            state = dict(default='present', choices=['present', 'absent'])
+            nat_rules=dict(type='list', default=[]),
+            gateway_name=dict(default='gateway'),
+            purge_rules=dict(default=False, type='bool'),
+            state=dict(default='present', choices=['present', 'absent'])
         )
     )
 

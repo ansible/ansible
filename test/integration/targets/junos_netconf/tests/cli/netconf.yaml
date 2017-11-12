@@ -5,13 +5,11 @@
 - name: Ensure netconf is enabled
   junos_netconf:
     state: present
-    provider: "{{ cli }}"
   register: result
 
 - name: idempotent tests
   junos_netconf:
     state: present
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -30,7 +28,6 @@
 - name: Disable netconf
   junos_netconf:
     state: absent
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -40,7 +37,6 @@
 - name: idempotent tests
   junos_netconf:
     state: absent
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -49,7 +45,7 @@
 
 - name: wait for persistent socket to timeout
   pause:
-    seconds: 30
+    seconds: 150
 
 - name: Ensure we can NOT talk via netconf
   junos_command:
@@ -66,7 +62,6 @@
 - name: re-enable netconf
   junos_netconf:
     state: present
-    provider: "{{ cli }}"
   register: result
 
 

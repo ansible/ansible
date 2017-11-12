@@ -27,7 +27,7 @@ import json
 from collections import Mapping
 
 from ansible.module_utils.network_common import Template
-from ansible.module_utils.six import iteritems
+from ansible.module_utils.six import iteritems, string_types
 from ansible.errors import AnsibleError
 
 try:
@@ -56,7 +56,10 @@ def re_matchall(regex, value):
         obj = {}
         if regex.groupindex:
             for name, index in iteritems(regex.groupindex):
-                obj[name] = match[index - 1]
+                if len(regex.groupindex) == 1:
+                    obj[name] = match
+                else:
+                    obj[name] = match[index - 1]
             objects.append(obj)
     return objects
 
@@ -73,20 +76,28 @@ def re_search(regex, value):
 
 
 def parse_cli(output, tmpl):
+    if not isinstance(output, string_types):
+        raise AnsibleError("parse_cli input should be a string, but was given a input of %s" % (type(output)))
+
+    if not os.path.exists(tmpl):
+        raise AnsibleError('unable to locate parse_cli template: %s' % tmpl)
+
     try:
         template = Template()
     except ImportError as exc:
         raise AnsibleError(str(exc))
 
-    spec = yaml.load(open(tmpl).read())
+    spec = yaml.safe_load(open(tmpl).read())
     obj = {}
 
     for name, attrs in iteritems(spec['keys']):
         value = attrs['value']
 
-        if template.can_template(value):
+        try:
             variables = spec.get('vars', {})
             value = template(value, variables)
+        except:
+            pass
 
         if 'start_block' in attrs and 'end_block' in attrs:
             start_block = re.compile(attrs['start_block'])
@@ -101,8 +112,6 @@ def parse_cli(output, tmpl):
                 match_end = end_block.match(line)
 
                 if match_start:
-                    if lines:
-                        blocks.append('\n'.join(lines))
                     lines = list()
                     lines.append(line)
                     block_started = True
@@ -110,6 +119,7 @@ def parse_cli(output, tmpl):
                 elif match_end:
                     if lines:
                         lines.append(line)
+                        blocks.append('\n'.join(lines))
                     block_started = False
 
                 elif block_started:
@@ -211,8 +221,11 @@ def parse_cli_textfsm(value, template):
     if not HAS_TEXTFSM:
         raise AnsibleError('parse_cli_textfsm filter requires TextFSM library to be installed')
 
+    if not isinstance(value, string_types):
+        raise AnsibleError("parse_cli_textfsm input should be a string, but was given a input of %s" % (type(value)))
+
     if not os.path.exists(template):
-        raise AnsibleError('unable to locate parse_cli template: %s' % template)
+        raise AnsibleError('unable to locate parse_cli_textfsm template: %s' % template)
 
     try:
         template = open(template)

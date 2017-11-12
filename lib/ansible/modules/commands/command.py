@@ -1,8 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>, and others
-# (c) 2016, Toshio Kuratomi <tkuratomi@ansible.com>
+# Copyright: (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>, and others
+# Copyright: (c) 2016, Toshio Kuratomi <tkuratomi@ansible.com>
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -87,6 +87,31 @@ EXAMPLES = '''
   register: myoutput
 '''
 
+RETURN = '''
+cmd:
+  description: the cmd that was run on the remote machine
+  returned: always
+  type: list
+  sample:
+  - echo
+  - hello
+delta:
+  description: cmd end time - cmd start time
+  returned: always
+  type: string
+  sample: 0:00:00.001529
+end:
+  description: cmd end time
+  returned: always
+  type: string
+  sample: '2017-09-29 22:03:48.084657'
+start:
+  description: cmd start time
+  returned: always
+  type: string
+  sample: '2017-09-29 22:03:48.083128'
+'''
+
 import datetime
 import glob
 import os
@@ -99,7 +124,7 @@ def check_command(module, commandline):
     arguments = {'chown': 'owner', 'chmod': 'mode', 'chgrp': 'group',
                  'ln': 'state=link', 'mkdir': 'state=directory',
                  'rmdir': 'state=absent', 'rm': 'state=absent', 'touch': 'state=touch'}
-    commands = {'hg': 'hg', 'curl': 'get_url or uri', 'wget': 'get_url or uri',
+    commands = {'curl': 'get_url or uri', 'wget': 'get_url or uri',
                 'svn': 'subversion', 'service': 'service',
                 'mount': 'mount', 'rpm': 'yum, dnf or zypper', 'yum': 'yum', 'apt-get': 'apt',
                 'tar': 'unarchive', 'unzip': 'unarchive', 'sed': 'template or lineinfile',
@@ -144,7 +169,7 @@ def main():
         module.warn("As of Ansible 2.4, the parameter 'executable' is no longer supported with the 'command' module. Not using '%s'." % executable)
         executable = None
 
-    if args.strip() == '':
+    if not args or args.strip() == '':
         module.fail_json(rc=256, msg="no command given")
 
     if chdir:
@@ -186,11 +211,6 @@ def main():
 
     endd = datetime.datetime.now()
     delta = endd - startd
-
-    if out is None:
-        out = b''
-    if err is None:
-        err = b''
 
     result = dict(
         cmd=args,

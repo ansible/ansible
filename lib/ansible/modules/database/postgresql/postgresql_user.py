@@ -45,80 +45,68 @@ options:
         C('str[\\"md5\\"] + md5[ password + username ]'), resulting in a total of 35 characters.  An easy way to do this is:
         C(echo \\"md5`echo -n \\"verysecretpasswordJOE\\" | md5`\\"). Note that if the provided password string is already in
         MD5-hashed format, then it is used as-is, regardless of encrypted parameter.
-    required: false
     default: null
   db:
     description:
       - name of database where permissions will be granted
-    required: false
     default: null
   fail_on_user:
     description:
       - if C(yes), fail when user can't be removed. Otherwise just log and continue
-    required: false
     default: 'yes'
     choices: [ "yes", "no" ]
   port:
     description:
       - Database port to connect to.
-    required: false
     default: 5432
   login_user:
     description:
       - User (role) used to authenticate with PostgreSQL
-    required: false
     default: postgres
   login_password:
     description:
       - Password used to authenticate with PostgreSQL
-    required: false
     default: null
   login_host:
     description:
       - Host running PostgreSQL.
-    required: false
     default: localhost
   login_unix_socket:
     description:
       - Path to a Unix domain socket for local connections
-    required: false
     default: null
   priv:
     description:
       - "PostgreSQL privileges string in the format: C(table:priv1,priv2)"
-    required: false
     default: null
   role_attr_flags:
     description:
       - "PostgreSQL role attributes string in the format: CREATEDB,CREATEROLE,SUPERUSER"
-    required: false
     default: ""
     choices: [ "[NO]SUPERUSER","[NO]CREATEROLE", "[NO]CREATEUSER", "[NO]CREATEDB",
                     "[NO]INHERIT", "[NO]LOGIN", "[NO]REPLICATION", "[NO]BYPASSRLS" ]
   state:
     description:
       - The user (role) state
-    required: false
     default: present
     choices: [ "present", "absent" ]
   encrypted:
     description:
       - whether the password is stored hashed in the database. boolean. Passwords can be passed already hashed or unhashed, and postgresql ensures the
         stored password is hashed when encrypted is set.
-    required: false
     default: false
     version_added: '1.4'
   expires:
     description:
-      - sets the user's password expiration.
-    required: false
+      - The date at which the user's password is to expire.
+      - If set to C('infinity'), user's password never expire.
+      - Note that this value should be a valid SQL date and time type.
     default: null
     version_added: '1.4'
   no_password_changes:
     description:
       - if C(yes), don't inspect database for password changes. Effective when C(pg_authid) is not accessible (such as AWS RDS). Otherwise, make
         password changes as necessary.
-    required: false
     default: 'no'
     choices: [ "yes", "no" ]
     version_added: '2.0'
@@ -127,7 +115,6 @@ options:
       - Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
       - See https://www.postgresql.org/docs/current/static/libpq-ssl.html for more information on the modes.
       - Default of C(prefer) matches libpq default.
-    required: false
     default: prefer
     choices: [disable, allow, prefer, require, verify-ca, verify-full]
     version_added: '2.3'
@@ -135,9 +122,13 @@ options:
     description:
       - Specifies the name of a file containing SSL certificate authority (CA) certificate(s). If the file exists, the server's certificate will be
         verified to be signed by one of these authorities.
-    required: false
     default: null
     version_added: '2.3'
+  conn_limit:
+    description:
+      - Specifies the user connection limit.
+    default: null
+    version_added: '2.4'
 notes:
    - The default authentication assumes that you are either logging in as or
      sudo'ing to the postgres account on the host.
@@ -188,6 +179,14 @@ EXAMPLES = '''
     priv: ALL
     state: absent
 
+# Set user's password with no expire date
+- postgresql_user:
+    db: acme
+    name: django
+    password: mysupersecretword
+    priv: "CONNECT/products:ALL"
+    expire: infinity
+
 # Example privileges string format
 # INSERT,UPDATE/table:SELECT/anothertable:ALL
 
@@ -201,7 +200,6 @@ EXAMPLES = '''
 import itertools
 import re
 import traceback
-from distutils.version import StrictVersion
 from hashlib import md5
 
 try:
@@ -219,7 +217,7 @@ from ansible.module_utils.six import iteritems
 
 
 FLAGS = ('SUPERUSER', 'CREATEROLE', 'CREATEUSER', 'CREATEDB', 'INHERIT', 'LOGIN', 'REPLICATION')
-FLAGS_BY_VERSION = {'BYPASSRLS': '9.5.0'}
+FLAGS_BY_VERSION = {'BYPASSRLS': 90500}
 
 VALID_PRIVS = dict(table=frozenset(('SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE', 'REFERENCES', 'TRIGGER', 'ALL')),
                    database=frozenset(
@@ -254,7 +252,7 @@ def user_exists(cursor, user):
     return cursor.rowcount > 0
 
 
-def user_add(cursor, user, password, role_attr_flags, encrypted, expires):
+def user_add(cursor, user, password, role_attr_flags, encrypted, expires, conn_limit):
     """Create a new database user (role)."""
     # Note: role_attr_flags escaped by parse_role_attrs and encrypted is a
     # literal
@@ -266,6 +264,8 @@ def user_add(cursor, user, password, role_attr_flags, encrypted, expires):
         query.append("PASSWORD %(password)s")
     if expires is not None:
         query.append("VALID UNTIL %(expires)s")
+    if conn_limit is not None:
+        query.append("CONNECTION LIMIT %(conn_limit)s" % {"conn_limit": conn_limit})
     query.append(role_attr_flags)
     query = ' '.join(query)
     cursor.execute(query, query_password_data)
@@ -303,7 +303,7 @@ def user_should_we_change_password(current_role_attrs, user, password, encrypted
     return pwchanging
 
 
-def user_alter(db_connection, module, user, password, role_attr_flags, encrypted, expires, no_password_changes):
+def user_alter(db_connection, module, user, password, role_attr_flags, encrypted, expires, no_password_changes, conn_limit):
     """Change user password and/or attributes. Return True if changed, False otherwise."""
     changed = False
 
@@ -319,7 +319,7 @@ def user_alter(db_connection, module, user, password, role_attr_flags, encrypted
             return False
 
     # Handle passwords.
-    if not no_password_changes and (password is not None or role_attr_flags != '' or expires is not None):
+    if not no_password_changes and (password is not None or role_attr_flags != '' or expires is not None or conn_limit is not None):
         # Select password and all flag-like columns in order to verify changes.
         try:
             select = "SELECT * FROM pg_authid where rolname=%(user)s"
@@ -352,7 +352,9 @@ def user_alter(db_connection, module, user, password, role_attr_flags, encrypted
         else:
             expires_changing = False
 
-        if not pwchanging and not role_attr_flags_changing and not expires_changing:
+        conn_limit_changing = (conn_limit is not None and conn_limit != current_role_attrs['rolconnlimit'])
+
+        if not pwchanging and not role_attr_flags_changing and not expires_changing and not conn_limit_changing:
             return False
 
         alter = ['ALTER USER %(user)s' % {"user": pg_quote_identifier(user, 'role')}]
@@ -364,6 +366,8 @@ def user_alter(db_connection, module, user, password, role_attr_flags, encrypted
             alter.append('WITH %s' % role_attr_flags)
         if expires is not None:
             alter.append("VALID UNTIL %(expires)s")
+        if conn_limit is not None:
+            alter.append("CONNECTION LIMIT %(conn_limit)s" % {"conn_limit": conn_limit})
 
         query_password_data = dict(password=password, expires=expires)
         try:
@@ -675,33 +679,17 @@ def parse_privs(privs, db):
     return o_privs
 
 
-def get_pg_server_version(cursor):
-    """
-    Queries Postgres for its server version.
-
-    server_version should be just the server version itself:
-
-    postgres=# SHOW SERVER_VERSION;
-    server_version
-    ----------------
-     9.6.2
-    (1 row)
-    """
-    cursor.execute("SHOW SERVER_VERSION")
-    return cursor.fetchone()['server_version']
-
-
 def get_valid_flags_by_version(cursor):
     """
     Some role attributes were introduced after certain versions. We want to
     compile a list of valid flags against the current Postgres version.
     """
-    current_version = StrictVersion(get_pg_server_version(cursor))
+    current_version = cursor.connection.server_version
 
     return [
         flag
         for flag, version_introduced in FLAGS_BY_VERSION.items()
-        if current_version >= StrictVersion(version_introduced)
+        if current_version >= version_introduced
     ]
 
 
@@ -730,7 +718,8 @@ def main():
             expires=dict(default=None),
             ssl_mode=dict(default='prefer', choices=[
                           'disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
-            ssl_rootcert=dict(default=None)
+            ssl_rootcert=dict(default=None),
+            conn_limit=dict(default=None)
         ),
         supports_check_mode=True
     )
@@ -750,6 +739,7 @@ def main():
         encrypted = "UNENCRYPTED"
     expires = module.params["expires"]
     sslrootcert = module.params["ssl_rootcert"]
+    conn_limit = module.params["conn_limit"]
 
     if not postgresqldb_found:
         module.fail_json(msg="the python psycopg2 module is required")
@@ -805,13 +795,17 @@ def main():
         if user_exists(cursor, user):
             try:
                 changed = user_alter(db_connection, module, user, password,
-                                     role_attr_flags, encrypted, expires, no_password_changes)
+                                     role_attr_flags, encrypted, expires, no_password_changes, conn_limit)
             except SQLParseError as e:
                 module.fail_json(msg=to_native(e), exception=traceback.format_exc())
         else:
             try:
                 changed = user_add(cursor, user, password,
-                                   role_attr_flags, encrypted, expires)
+                                   role_attr_flags, encrypted, expires, conn_limit)
+            except psycopg2.ProgrammingError as e:
+                module.fail_json(msg="Unable to add user with given requirement "
+                                     "due to : %s" % to_native(e),
+                                 exception=traceback.format_exc())
             except SQLParseError as e:
                 module.fail_json(msg=to_native(e), exception=traceback.format_exc())
         try:

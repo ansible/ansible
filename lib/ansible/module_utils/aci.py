@@ -74,9 +74,11 @@ URL_MAPPING = dict(
     epg_domain=dict(aci_class='fvRsDomAtt', mo='rsdomAtt-', key='tDn'),
     epg_provider=dict(aci_class='fvRsProv', mo='rsprov-', key='tnVzBrCPName'),
     epr_policy=dict(aci_class='fvEpRetPol', mo='epRPol-', key='name'),
+    export_policy=dict(aci_class='configExportP', mo='fabric/configexp-', key='name'),
     fc_policy=dict(aci_class='fcIfPol', mo='infra/fcIfPol-', key='name'),
     filter=dict(aci_class='vzFilter', mo='flt-', key='name'),
     gateway_addr=dict(aci_class='fvSubnet', mo='subnet-', key='ip'),
+    import_policy=dict(aci_class='configImportP', mo='fabric/configimp-', key='name'),
     l2_policy=dict(aci_class='l2IfPol', mo='infra/l2IfP-', key='name'),
     lldp_policy=dict(aci_class='lldpIfPol', mo='infra/lldpIfP-', key='name'),
     mcp=dict(aci_class='mcpIfPol', mo='infra/mcpIfP-', key='name'),
@@ -84,6 +86,8 @@ URL_MAPPING = dict(
     port_channel=dict(aci_class='lacpLagPol', mo='infra/lacplagp-', key='name'),
     port_security=dict(aci_class='l2PortSecurityPol', mo='infra/portsecurityP-', key='name'),
     rtp=dict(aci_class='l3extRouteTagPol', mo='rttag-', key='name'),
+    snapshot=dict(aci_class='configSnapshot', mo='snapshot-', key='name'),
+    snapshot_container=dict(aci_class='configSnapshotCont', mo='backupst/snapshots-', key='name'),
     subject=dict(aci_class='vzSubj', mo='subj-', key='name'),
     subject_filter=dict(aci_class='vzRsSubjFiltAtt', mo='rssubjFiltAtt-', key='tnVzFilterName'),
     taboo_contract=dict(aci_class='vzTaboo', mo='taboo-', key='name'),
@@ -504,7 +508,7 @@ class ACIModule(object):
     def delete_config(self):
         """
         This method is used to handle the logic when the modules state is equal to absent. The method only pushes a change if
-        the object exists, and if check_mode is Fasle. A successful change will mark the module as changed.
+        the object exists, and if check_mode is False. A successful change will mark the module as changed.
         """
         self.result['proposed'] = {}
 
@@ -729,7 +733,7 @@ class ACIModule(object):
     def post_config(self):
         """
         This method is used to handle the logic when the modules state is equal to present. The method only pushes a change if
-        the object has differences than what exists on the APIC, and if check_mode is Fasle. A successful change will mark the
+        the object has differences than what exists on the APIC, and if check_mode is False. A successful change will mark the
         module as changed.
         """
         if not self.result['config']:

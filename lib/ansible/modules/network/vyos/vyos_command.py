@@ -140,7 +140,7 @@ from ansible.module_utils.netcli import Conditional
 from ansible.module_utils.network_common import ComplexList
 from ansible.module_utils.six import string_types
 from ansible.module_utils.vyos import run_commands
-from ansible.module_utils.vyos import vyos_argument_spec, check_args
+from ansible.module_utils.vyos import vyos_argument_spec
 
 def to_lines(stdout):
     for item in stdout:
@@ -184,7 +184,6 @@ def main():
     module = AnsibleModule(argument_spec=spec, supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
 
     commands = parse_commands(module, warnings)
 

@@ -1,21 +1,11 @@
-# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-'''
-DOCUMENTATION:
+# Copyright (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+DOCUMENTATION = '''
     inventory: script
     version_added: "2.4"
     short_description: Executes an inventory script that returns JSON
@@ -27,8 +17,6 @@ DOCUMENTATION:
         - It takes the place of the previously hardcoded script inventory.
         - To function it requires being whitelisted in configuration, which is true by default.
 '''
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
 import os
 import subprocess
@@ -53,7 +41,7 @@ class InventoryModule(BaseInventoryPlugin):
         self._hosts = set()
 
     def verify_file(self, path):
-        ''' Verify if file is usable by this plugin, base does minimal accesability check '''
+        ''' Verify if file is usable by this plugin, base does minimal accessibility check '''
 
         valid = super(InventoryModule, self).verify_file(path)
 
@@ -84,7 +72,7 @@ class InventoryModule(BaseInventoryPlugin):
 
         try:
             cache_key = self.get_cache_prefix(path)
-            if not cache or cache_key not in inventory.cache:
+            if not cache or cache_key not in self._cache:
                 try:
                     sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 except OSError as e:
@@ -92,8 +80,7 @@ class InventoryModule(BaseInventoryPlugin):
                 (stdout, stderr) = sp.communicate()
 
                 path = to_native(path)
-                if stderr:
-                    err = to_native(stderr) + "\n"
+                err = to_native(stderr or "") + "\n"
 
                 if sp.returncode != 0:
                     raise AnsibleError("Inventory script (%s) had an execution error: %s " % (path, err))
@@ -106,11 +93,11 @@ class InventoryModule(BaseInventoryPlugin):
                     raise AnsibleError("Inventory {0} contained characters that cannot be interpreted as UTF-8: {1}".format(path, to_native(e)))
 
                 try:
-                    inventory.cache[cache_key] = self.loader.load(data, file_name=path)
+                    self._cache[cache_key] = self.loader.load(data, file_name=path)
                 except Exception as e:
                     raise AnsibleError("failed to parse executable inventory script results from {0}: {1}\n{2}".format(path, to_native(e), err))
 
-            processed = inventory.cache[cache_key]
+            processed = self._cache[cache_key]
             if not isinstance(processed, Mapping):
                 raise AnsibleError("failed to parse executable inventory script results from {0}: needs to be a json dict\n{1}".format(path, err))
 

@@ -38,43 +38,36 @@ JSON_ACTIONS = frozenset(['merge', 'override', 'update'])
 FORMATS = frozenset(['xml', 'text', 'json'])
 CONFIG_FORMATS = frozenset(['xml', 'text', 'json', 'set'])
 
-junos_argument_spec = {
+junos_provider_spec = {
     'host': dict(),
     'port': dict(type='int'),
     'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
     'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
     'timeout': dict(type='int'),
-    'provider': dict(type='dict'),
     'transport': dict()
 }
+junos_argument_spec = {
+    'provider': dict(type='dict', options=junos_provider_spec),
+}
+junos_top_spec = {
+    'host': dict(removed_in_version=2.9),
+    'port': dict(removed_in_version=2.9, type='int'),
+    'username': dict(removed_in_version=2.9),
+    'password': dict(removed_in_version=2.9, no_log=True),
+    'ssh_keyfile': dict(removed_in_version=2.9, type='path'),
+    'timeout': dict(removed_in_version=2.9, type='int'),
+    'transport': dict(removed_in_version=2.9)
+}
+junos_argument_spec.update(junos_top_spec)
 
-# Add argument's default value here
-ARGS_DEFAULT_VALUE = {}
 
-
-def get_argspec():
-    return junos_argument_spec
+def get_provider_argspec():
+    return junos_provider_spec
 
 
 def check_args(module, warnings):
-    provider = module.params['provider'] or {}
-    for key in junos_argument_spec:
-        if key not in ('provider',) and module.params[key]:
-            warnings.append('argument %s has been deprecated and will be '
-                            'removed in a future version' % key)
-
-    # set argument's default value if not provided in input
-    # This is done to avoid unwanted argument deprecation warning
-    # in case argument is not given as input (outside provider).
-    for key in ARGS_DEFAULT_VALUE:
-        if not module.params.get(key, None):
-            module.params[key] = ARGS_DEFAULT_VALUE[key]
-
-    if provider:
-        for param in ('password',):
-            if provider.get(param):
-                module.no_log_values.update(return_values(provider[param]))
+    pass
 
 
 def _validate_rollback_id(module, value):
@@ -124,7 +117,7 @@ def load_configuration(module, candidate=None, action='merge', rollback=None, fo
             if format == 'xml':
                 cfg.append(fromstring(candidate))
             else:
-                cfg.text = to_text(candidate, encoding='latin1')
+                cfg.text = to_text(candidate, encoding='latin-1')
         else:
             cfg.append(candidate)
     return send_request(module, obj)
@@ -181,16 +174,16 @@ def locked_config(module):
         unlock_configuration(module)
 
 
-def get_diff(module):
+def get_diff(module, rollback='0'):
 
-    reply = get_configuration(module, compare=True, format='text')
+    reply = get_configuration(module, compare=True, format='text', rollback=rollback)
     # if warning is received from device diff is empty.
     if isinstance(reply, list):
         return None
 
     output = reply.find('.//configuration-output')
     if output is not None:
-        return to_text(output.text, encoding='latin1').strip()
+        return to_text(output.text, encoding='latin-1').strip()
 
 
 def load_config(module, candidate, warnings, action='merge', format='xml'):
@@ -211,7 +204,13 @@ def load_config(module, candidate, warnings, action='merge', format='xml'):
 
 
 def get_param(module, key):
-    return module.params[key] or module.params['provider'].get(key)
+    if module.params.get(key):
+        value = module.params[key]
+    elif module.params.get('provider'):
+        value = module.params['provider'].get(key)
+    else:
+        value = None
+    return value
 
 
 def map_params_to_obj(module, param_to_xpath_map, param=None):

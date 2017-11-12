@@ -9,7 +9,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'core'}
 
 
 DOCUMENTATION = '''
@@ -450,7 +450,9 @@ class Ec2Metadata(object):
             data = None
         return to_text(data)
 
-    def _mangle_fields(self, fields, uri, filter_patterns=['public-keys-0']):
+    def _mangle_fields(self, fields, uri, filter_patterns=None):
+        filter_patterns = ['public-keys-0'] if filter_patterns is None else filter_patterns
+
         new_fields = {}
         for key, value in fields.items():
             split_fields = key[len(uri):].split('/')

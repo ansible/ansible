@@ -112,6 +112,14 @@ options:
             will be copied to the created template."
             - "This parameter is used only when C(state) I(present)."
         default: False
+    seal:
+        description:
+            - "'Sealing' is an operation that erases all machine-specific configurations from a filesystem:
+               This includes SSH keys, UDEV rules, MAC addresses, system ID, hostname, etc.
+               If I(true) subsequent virtual machines made from this template will avoid configuration inheritance."
+            - "This parameter is used only when C(state) I(present)."
+        default: False
+        version_added: "2.5"
 extends_documentation_fragment: ovirt
 '''
 
@@ -390,6 +398,7 @@ def main():
         cluster_mappings=dict(default=[], type='list'),
         role_mappings=dict(default=[], type='list'),
         domain_mappings=dict(default=[], type='list'),
+        seal=dict(type='bool'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -413,6 +422,7 @@ def main():
             ret = templates_module.create(
                 result_state=otypes.TemplateStatus.OK,
                 clone_permissions=module.params['clone_permissions'],
+                seal=module.params['seal'],
             )
         elif state == 'absent':
             ret = templates_module.remove()
@@ -424,7 +434,7 @@ def main():
             ret = templates_module.action(
                 entity=template,
                 action='export',
-                action_condition=lambda t: export_template is None,
+                action_condition=lambda t: export_template is None or module.params['exclusive'],
                 wait_condition=lambda t: t is not None,
                 post_action=templates_module.post_export_action,
                 storage_domain=otypes.StorageDomain(id=export_service.get().id),
@@ -472,7 +482,10 @@ def main():
                     ) if module.params['cluster'] else None,
                     **kwargs
                 )
-                template = templates_module.wait_for_import()
+                # Wait for template to appear in system:
+                template = templates_module.wait_for_import(
+                    condition=lambda t: t.status == otypes.TemplateStatus.OK
+                )
                 ret = {
                     'changed': True,
                     'id': template.id,

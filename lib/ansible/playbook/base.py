@@ -1,21 +1,7 @@
-# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -31,7 +17,7 @@ from ansible import constants as C
 from ansible.module_utils.six import iteritems, string_types, with_metaclass
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_text, to_native
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.parsing.dataloader import DataLoader
 from ansible.utils.vars import combine_vars, isidentifier, get_unique_id
@@ -150,22 +136,22 @@ class BaseMeta(type):
 class Base(with_metaclass(BaseMeta, object)):
 
     # connection/transport
-    _connection  = FieldAttribute(isa='string')
-    _port        = FieldAttribute(isa='int')
+    _connection = FieldAttribute(isa='string')
+    _port = FieldAttribute(isa='int')
     _remote_user = FieldAttribute(isa='string')
 
     # variables
     _vars = FieldAttribute(isa='dict', priority=100, inherit=False)
 
     # flags and misc. settings
-    _environment         = FieldAttribute(isa='list')
-    _no_log              = FieldAttribute(isa='bool')
-    _always_run          = FieldAttribute(isa='bool')
-    _run_once            = FieldAttribute(isa='bool')
-    _ignore_errors       = FieldAttribute(isa='bool')
-    _check_mode          = FieldAttribute(isa='bool')
-    _diff                = FieldAttribute(isa='bool')
-    _any_errors_fatal     = FieldAttribute(isa='bool', default=C.ANY_ERRORS_FATAL, always_post_validate=True)
+    _environment = FieldAttribute(isa='list')
+    _no_log = FieldAttribute(isa='bool')
+    _always_run = FieldAttribute(isa='bool')
+    _run_once = FieldAttribute(isa='bool')
+    _ignore_errors = FieldAttribute(isa='bool')
+    _check_mode = FieldAttribute(isa='bool')
+    _diff = FieldAttribute(isa='bool')
+    _any_errors_fatal = FieldAttribute(isa='bool')
 
     # param names which have been deprecated/removed
     DEPRECATED_ATTRIBUTES = [
@@ -284,8 +270,9 @@ class Base(with_metaclass(BaseMeta, object)):
             if key not in valid_attrs:
                 raise AnsibleParserError("'%s' is not a valid attribute for a %s" % (key, self.__class__.__name__), obj=ds)
 
-    def validate(self, all_vars=dict()):
+    def validate(self, all_vars=None):
         ''' validation that is done at parse time, not load time '''
+        all_vars = {} if all_vars is None else all_vars
 
         if not self._validated:
             # walk all fields in the object
@@ -446,8 +433,11 @@ class Base(with_metaclass(BaseMeta, object)):
                                          "The error was: %s" % (name, value, attribute.isa, e), obj=self.get_ds(), orig_exc=e)
             except (AnsibleUndefinedVariable, UndefinedError) as e:
                 if templar._fail_on_undefined_errors and name != 'name':
-                    raise AnsibleParserError("the field '%s' has an invalid value, which appears to include a variable that is undefined."
-                                             "The error was: %s" % (name, e), obj=self.get_ds(), orig_exc=e)
+                    if name == 'args':
+                        msg = "The task includes an option with an undefined variable. The error was: %s" % (to_native(e))
+                    else:
+                        msg = "The field '%s' has an invalid value, which includes an undefined variable. The error was: %s" % (name, to_native(e))
+                    raise AnsibleParserError(msg, obj=self.get_ds(), orig_exc=e)
 
         self._finalized = True
 

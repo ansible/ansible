@@ -1,22 +1,9 @@
-# Copyright 2015 Abhijit Menon-Sen <ams@2ndQuadrant.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
-'''
-DOCUMENTATION:
+DOCUMENTATION = '''
     inventory: ini
     version_added: "2.4"
     short_description: Uses an Ansible INI file as inventory source.
@@ -33,8 +20,12 @@ DOCUMENTATION:
     notes:
         - It takes the place of the previously hardcoded INI inventory.
         - To function it requires being whitelisted in configuration.
+        - Variable values are processed by Python's ast.literal_eval function (U(https://docs.python.org/2/library/ast.html#ast.literal_eval))
+          which could cause the value to change in some cases. See the Examples for proper quoting to prevent changes. Another option would be
+          to use the yaml format for inventory source which processes the values correctly.
+'''
 
-EXAMPLES:
+EXAMPLES = '''
   example1: |
       # example cfg file
       [web]
@@ -52,6 +43,7 @@ EXAMPLES:
       [apache]
       tomcat1
       tomcat2 myvar=34 # host specific vars override group vars
+      tomcat3 mysecret="'03#pa33w0rd'" # proper quoting to prevent value changes
 
       [nginx]
       jenkins1
@@ -77,8 +69,6 @@ EXAMPLES:
       host4 # same host as above, but member of 2 groups, will inherit vars from both
             # inventory hostnames are unique
 '''
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
 import ast
 import re
@@ -119,7 +109,7 @@ class InventoryModule(BaseFileInventoryPlugin):
             if self.loader:
                 (b_data, private) = self.loader._get_file_contents(path)
             else:
-                b_path = to_bytes(path)
+                b_path = to_bytes(path, errors='surrogate_or_strict')
                 with open(b_path, 'rb') as fh:
                     b_data = fh.read()
 
@@ -203,9 +193,7 @@ class InventoryModule(BaseFileInventoryPlugin):
 
                 if groupname in pending_declarations and state != 'vars':
                     if pending_declarations[groupname]['state'] == 'children':
-                        for parent in pending_declarations[groupname]['parents']:
-                            self.inventory.add_child(parent, groupname)
-                    del pending_declarations[groupname]
+                        self._add_pending_children(groupname, pending_declarations)
 
                 continue
             elif line.startswith('[') and line.endswith(']'):
@@ -257,6 +245,13 @@ class InventoryModule(BaseFileInventoryPlugin):
                     raise AnsibleError("%s:%d: Section [%s:vars] not valid for undefined group: %s" % (path, decl['line'], decl['name'], decl['name']))
                 elif decl['state'] == 'children':
                     raise AnsibleError("%s:%d: Section [%s:children] includes undefined group: %s" % (path, decl['line'], decl['parents'].pop(), decl['name']))
+
+    def _add_pending_children(self, group, pending):
+        for parent in pending[group]['parents']:
+            self.inventory.add_child(parent, group)
+            if parent in pending and pending[parent]['state'] == 'children':
+                self._add_pending_children(parent, pending)
+        del pending[group]
 
     def _parse_group_name(self, line):
         '''
@@ -380,14 +375,14 @@ class InventoryModule(BaseFileInventoryPlugin):
         # [naughty:children] # only get coal in their stockings
 
         self.patterns['section'] = re.compile(
-            r'''^\[
+            to_text(r'''^\[
                     ([^:\]\s]+)             # group name (see groupname below)
                     (?::(\w+))?             # optional : and tag name
                 \]
                 \s*                         # ignore trailing whitespace
                 (?:\#.*)?                   # and/or a comment till the
                 $                           # end of the line
-            ''', re.X
+            ''', errors='surrogate_or_strict'), re.X
         )
 
         # FIXME: What are the real restrictions on group names, or rather, what
@@ -396,10 +391,10 @@ class InventoryModule(BaseFileInventoryPlugin):
         # precise rules in order to support better diagnostics.
 
         self.patterns['groupname'] = re.compile(
-            r'''^
+            to_text(r'''^
                 ([^:\]\s]+)
                 \s*                         # ignore trailing whitespace
                 (?:\#.*)?                   # and/or a comment till the
                 $                           # end of the line
-            ''', re.X
+            ''', errors='surrogate_or_strict'), re.X
         )

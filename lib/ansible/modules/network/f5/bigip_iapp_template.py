@@ -1,31 +1,21 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright 2017 F5 Networks Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 F5 Networks Inc.
+# GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: bigip_iapp_template
-short_description: Manages TCL iApp templates on a BIG-IP.
+short_description: Manages TCL iApp templates on a BIG-IP
 description:
   - Manages TCL iApp templates on a BIG-IP. This module will allow you to
     deploy iApp templates to the BIG-IP and manage their lifecycle. The
@@ -66,11 +56,15 @@ options:
         be provided when creating new templates.
   state:
     description:
-      - Whether the iRule should exist or not.
+      - Whether the iApp template should exist or not.
     default: present
     choices:
       - present
       - absent
+  partition:
+    description:
+      - Device partition to manage resources on.
+    default: Common
 notes:
   - Requires the f5-sdk Python package on the host. This is as easy as pip
     install f5-sdk.
@@ -79,61 +73,60 @@ author:
   - Tim Rupp (@caphrim007)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Add the iApp contained in template iapp.tmpl
   bigip_iapp_template:
-      content: "{{ lookup('template', 'iapp.tmpl') }}"
-      password: "secret"
-      server: "lb.mydomain.com"
-      state: "present"
-      user: "admin"
+    content: "{{ lookup('template', 'iapp.tmpl') }}"
+    password: secret
+    server: lb.mydomain.com
+    state: present
+    user: admin
   delegate_to: localhost
 
 - name: Update a template in place
   bigip_iapp_template:
-      content: "{{ lookup('template', 'iapp-new.tmpl') }}"
-      password: "secret"
-      server: "lb.mydomain.com"
-      state: "present"
-      user: "admin"
+    content: "{{ lookup('template', 'iapp-new.tmpl') }}"
+    password: secret
+    server: lb.mydomain.com
+    state: present
+    user: admin
   delegate_to: localhost
 
 - name: Update a template in place that has existing services created from it.
   bigip_iapp_template:
-      content: "{{ lookup('template', 'iapp-new.tmpl') }}"
-      force: yes
-      password: "secret"
-      server: "lb.mydomain.com"
-      state: "present"
-      user: "admin"
+    content: "{{ lookup('template', 'iapp-new.tmpl') }}"
+    force: yes
+    password: secret
+    server: lb.mydomain.com
+    state: present
+    user: admin
   delegate_to: localhost
 '''
 
-RETURN = '''
+RETURN = r'''
 # only common fields returned
 '''
 
 import re
 import uuid
 
+from ansible.module_utils.f5_utils import AnsibleF5Client
+from ansible.module_utils.f5_utils import AnsibleF5Parameters
+from ansible.module_utils.f5_utils import HAS_F5SDK
+from ansible.module_utils.f5_utils import F5ModuleError
+from ansible.module_utils.six import iteritems
+from collections import defaultdict
+
+try:
+    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+    from f5.utils.iapp_parser import NonextantTemplateNameException
+except ImportError:
+    HAS_F5SDK = False
+
 try:
     from StringIO import StringIO
 except ImportError:
     from io import StringIO
-
-from f5.utils.iapp_parser import (
-    NonextantTemplateNameException
-)
-
-from ansible.module_utils.f5_utils import (
-    AnsibleF5Client,
-    AnsibleF5Parameters,
-    HAS_F5SDK,
-    F5ModuleError,
-    iteritems,
-    defaultdict,
-    iControlUnexpectedHTTPError
-)
 
 
 class Parameters(AnsibleF5Parameters):
@@ -456,9 +449,6 @@ class ArgumentSpec(object):
             content=dict()
         )
         self.f5_product_name = 'bigip'
-        self.mutually_exclusive = [
-            ['sync_device_to_group', 'sync_group_to_device']
-        ]
 
 
 def main():
@@ -470,8 +460,7 @@ def main():
     client = AnsibleF5Client(
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode,
-        f5_product_name=spec.f5_product_name,
-        mutually_exclusive=spec.mutually_exclusive
+        f5_product_name=spec.f5_product_name
     )
 
     try:

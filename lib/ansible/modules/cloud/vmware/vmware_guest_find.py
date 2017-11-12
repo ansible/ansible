@@ -38,7 +38,7 @@ options:
             - This is required if name is not supplied.
    datacenter:
         description:
-            - Destination datacenter for the deploy operation.
+            - Destination datacenter for the find operation.
         required: True
 extends_documentation_fragment: vmware.documentation
 '''
@@ -78,14 +78,13 @@ from ansible.module_utils.vmware import (
     find_datacenter_by_name
 )
 
-HAS_PYVMOMI = False
 try:
     import pyVmomi
     from pyVmomi import vim
 
     HAS_PYVMOMI = True
 except ImportError:
-    pass
+    HAS_PYVMOMI = False
 
 
 class PyVmomiHelper(object):
@@ -198,24 +197,6 @@ class PyVmomiHelper(object):
 
         self.folders = self._build_folder_tree(self.datacenter.vmFolder)
         self._build_folder_map(self.folders)
-
-    @staticmethod
-    def compile_folder_path_for_object(vobj):
-        """ make a /vm/foo/bar/baz like folder path for an object """
-
-        paths = []
-        if isinstance(vobj, vim.Folder):
-            paths.append(vobj.name)
-
-        thisobj = vobj
-        while hasattr(thisobj, 'parent'):
-            thisobj = thisobj.parent
-            if isinstance(thisobj, vim.Folder):
-                paths.append(thisobj.name)
-        paths.reverse()
-        if paths[0] == 'Datacenters':
-            paths.remove('Datacenters')
-        return '/' + '/'.join(paths)
 
 
 def main():

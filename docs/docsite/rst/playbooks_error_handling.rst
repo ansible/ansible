@@ -87,7 +87,7 @@ or based on the return code::
       register: diff_cmd
       failed_when: diff_cmd.rc == 0 or diff_cmd.rc >= 2
 
-In previous version of Ansible, this can be still be accomplished as follows::
+In previous version of Ansible, this can still be accomplished as follows::
 
     - name: this command prints FAILED when it fails
       command: /usr/bin/example-command -x -y -z

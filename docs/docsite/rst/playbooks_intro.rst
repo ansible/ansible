@@ -114,18 +114,26 @@ the web servers, and then the database servers. For example::
 
       tasks:
       - name: ensure apache is at the latest version
-        yum: name=httpd state=latest
+        yum:
+          name: httpd
+          state: latest
       - name: write the apache config file
-        template: src=/srv/httpd.j2 dest=/etc/httpd.conf
+        template:
+          src: /srv/httpd.j2
+          dest: /etc/httpd.conf
 
     - hosts: databases
       remote_user: root
 
       tasks:
       - name: ensure postgresql is at the latest version
-        yum: name=postgresql state=latest
+        yum:
+          name: postgresql
+          state: latest
       - name: ensure that postgresql is started
-        service: name=postgresql state=started
+        service:
+          name: postgresql
+          state: started
 
 You can use this method to switch between the host group you're targeting,
 the username logging into the remote servers, whether to sudo or not, and so
@@ -187,7 +195,9 @@ You can also use become on a particular task instead of the whole play::
     - hosts: webservers
       remote_user: yourname
       tasks:
-        - service: name=nginx state=started
+        - service: 
+            name: nginx
+            state: started
           become: yes
           become_method: sudo
 
@@ -302,7 +312,9 @@ the service module takes ``key=value`` arguments::
 
    tasks:
      - name: make sure apache is running
-       service: name=httpd state=started
+       service:
+         name: httpd
+         state: started
 
 The **command** and **shell** modules are the only modules that just take a list
 of arguments and don't use the ``key=value`` form.  This makes
@@ -340,12 +352,14 @@ a variable called ``vhost`` in the ``vars`` section, you could do this::
 
    tasks:
      - name: create a virtual host file for {{ vhost }}
-       template: src=somefile.j2 dest=/etc/httpd/conf.d/{{ vhost }}
+       template:
+         src: somefile.j2
+         dest: /etc/httpd/conf.d/{{ vhost }}
 
 Those same variables are usable in templates, which we'll get to later.
 
 Now in a very basic playbook all the tasks will be listed directly in that play, though it will usually
-make more sense to break up tasks using the ``include:`` directive.  We'll show that a bit later.
+make more sense to break up tasks as described in :doc:`playbooks_reuse`.
 
 .. _action_shorthand:
 
@@ -384,7 +398,9 @@ Here's an example of restarting two services when the contents of a file
 change, but only if the file changes::
 
    - name: template configuration file
-     template: src=template.j2 dest=/etc/foo.conf
+     template:
+       src: template.j2
+       dest: /etc/foo.conf
      notify:
         - restart memcached
         - restart apache
@@ -402,18 +418,26 @@ Here's an example handlers section::
 
     handlers:
         - name: restart memcached
-          service: name=memcached state=restarted
+          service:
+            name: memcached
+            state: restarted
         - name: restart apache
-          service: name=apache state=restarted
+          service:
+            name: apache
+            state: restarted
 
 As of Ansible 2.2, handlers can also "listen" to generic topics, and tasks can notify those topics as follows::
 
     handlers:
         - name: restart memcached
-          service: name=memcached state=restarted
+          service:
+            name: memcached
+            state: restarted
           listen: "restart web services"
         - name: restart apache
-          service: name=apache state=restarted
+          service:
+            name: apache
+            state:restarted
           listen: "restart web services"
 
     tasks:
@@ -458,7 +482,7 @@ Let's run a playbook using a parallelism level of 10::
 
     ansible-playbook playbook.yml -f 10
 
-.. _ansible-pull:
+.. _playbook_ansible-pull:
 
 Ansible-Pull
 ````````````

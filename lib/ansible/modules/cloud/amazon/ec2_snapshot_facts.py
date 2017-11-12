@@ -18,6 +18,7 @@ short_description: Gather facts about ec2 volume snapshots in AWS
 description:
     - Gather facts about ec2 volume snapshots in AWS
 version_added: "2.1"
+requirements: [ boto3 ]
 author: "Rob White (@wimnat)"
 options:
   snapshot_ids:
@@ -185,8 +186,8 @@ from ansible.module_utils.ec2 import (ansible_dict_to_boto3_filter_list,
 def list_ec2_snapshots(connection, module):
 
     snapshot_ids = module.params.get("snapshot_ids")
-    owner_ids = map(str, module.params.get("owner_ids"))
-    restorable_by_user_ids = module.params.get("restorable_by_user_ids")
+    owner_ids = [str(owner_id) for owner_id in module.params.get("owner_ids")]
+    restorable_by_user_ids = [str(user_id) for user_id in module.params.get("restorable_by_user_ids")]
     filters = ansible_dict_to_boto3_filter_list(module.params.get("filters"))
 
     try:

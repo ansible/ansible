@@ -45,7 +45,7 @@ WARNING_PROMPTS_RE = [
     r"[\r\n]?\[yes/no\]:\s?$"
 ]
 
-dellos10_argument_spec = {
+dellos10_provider_spec = {
     'host': dict(),
     'port': dict(type='int'),
     'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
@@ -54,24 +54,30 @@ dellos10_argument_spec = {
     'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
     'auth_pass': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS']), no_log=True),
     'timeout': dict(type='int'),
-    'provider': dict(type='dict'),
 }
+dellos10_argument_spec = {
+    'provider': dict(type='dict', options=dellos10_provider_spec),
+}
+dellos10_top_spec = {
+    'host': dict(removed_in_version=2.9),
+    'port': dict(removed_in_version=2.9, type='int'),
+    'username': dict(removed_in_version=2.9),
+    'password': dict(removed_in_version=2.9, no_log=True),
+    'ssh_keyfile': dict(removed_in_version=2.9, type='path'),
+    'authorize': dict(removed_in_version=2.9, type='bool'),
+    'auth_pass': dict(removed_in_version=2.9, no_log=True),
+    'timeout': dict(removed_in_version=2.9, type='int'),
+}
+dellos10_argument_spec.update(dellos10_top_spec)
 
 
 def check_args(module, warnings):
-    provider = module.params['provider'] or {}
-    for key in dellos10_argument_spec:
-        if key != 'provider' and module.params[key]:
-            warnings.append('argument %s has been deprecated and will be '
-                            'removed in a future version' % key)
-
-    if provider:
-        for param in ('auth_pass', 'password'):
-            if provider.get(param):
-                module.no_log_values.update(return_values(provider[param]))
+    pass
 
 
-def get_config(module, flags=[]):
+def get_config(module, flags=None):
+    flags = [] if flags is None else flags
+
     cmd = 'show running-config '
     cmd += ' '.join(flags)
     cmd = cmd.strip()

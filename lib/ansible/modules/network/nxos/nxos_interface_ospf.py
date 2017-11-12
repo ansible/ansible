@@ -394,7 +394,15 @@ def main():
                                                'message_digest_password']],
                            supports_check_mode=True)
 
-    if not module.params['interface'].startswith('loopback') and not module.params['interface'].startswith('port-channel'):
+    # Normalize interface input data.
+    #
+    # * For port-channel and loopback interfaces expection is all lower case names.
+    # * All other interfaces the expectation is an uppercase leading character
+    #   followed by lower case characters.
+    #
+    if re.match(r'(port-channel|loopback)', module.params['interface'], re.I):
+        module.params['interface'] = module.params['interface'].lower()
+    else:
         module.params['interface'] = module.params['interface'].capitalize()
 
     warnings = list()

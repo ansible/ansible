@@ -248,7 +248,7 @@ EXAMPLES = """
 
 - name: check the running-config against master config
   ios_config:
-    diff_config: intended
+    diff_against: intended
     intended_config: "{{ lookup('file', 'master.cfg') }}"
 
 - name: check the startup-config against the running-config
@@ -483,7 +483,7 @@ def main():
         if running_config.sha1 != startup_config.sha1 or module.params['save_when'] == 'always':
             result['changed'] = True
             if not module.check_mode:
-                run_commands(module, 'copy running-config startup-config')
+                run_commands(module, 'copy running-config startup-config\r')
             else:
                 module.warn('Skipping command `copy running-config startup-config` '
                             'due to check_mode.  Configuration not copied to '

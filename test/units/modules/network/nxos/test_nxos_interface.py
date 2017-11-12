@@ -37,13 +37,9 @@ class TestNxosInterfaceModule(TestNxosModule):
         self.mock_load_config = patch('ansible.modules.network.nxos.nxos_interface.load_config')
         self.load_config = self.mock_load_config.start()
 
-        self.mock_get_config = patch('ansible.modules.network.nxos.nxos_interface.get_config')
-        self.get_config = self.mock_get_config.start()
-
     def tearDown(self):
         self.mock_run_commands.stop()
         self.mock_load_config.stop()
-        self.mock_get_config.stop()
 
     def load_fixtures(self, commands=None, device=''):
         self.load_config.return_value = None

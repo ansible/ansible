@@ -295,7 +295,7 @@ new exception-catching syntax which uses the ``as`` keyword:
 Do **not** use the following syntax as it will fail on every version of Python-3:
 
 .. This code block won't highlight because python2 isn't recognized. This is necessary to pass tests under python 3.
-.. code-block:: python2
+.. code-block:: none
 
     try:
         a = 2/0

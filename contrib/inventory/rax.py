@@ -233,13 +233,17 @@ def _list_into_cache(regions):
                               'RAX_ACCESS_NETWORK', 'public', value_type='list')
     except TypeError:
         # Ansible 2.2.x and below
+        # pylint: disable=unexpected-keyword-arg
         networks = get_config(p, 'rax', 'access_network',
                               'RAX_ACCESS_NETWORK', 'public', islist=True)
     try:
         try:
+            # Ansible 2.3+
             ip_versions = map(int, get_config(p, 'rax', 'access_ip_version',
                                               'RAX_ACCESS_IP_VERSION', 4, value_type='list'))
         except TypeError:
+            # Ansible 2.2.x and below
+            # pylint: disable=unexpected-keyword-arg
             ip_versions = map(int, get_config(p, 'rax', 'access_ip_version',
                                               'RAX_ACCESS_IP_VERSION', 4, islist=True))
     except:
@@ -438,6 +442,7 @@ def setup():
                                      value_type='list')
         except TypeError:
             # Ansible 2.2.x and below
+            # pylint: disable=unexpected-keyword-arg
             region_list = get_config(p, 'rax', 'regions', 'RAX_REGION', 'all',
                                      islist=True)
 

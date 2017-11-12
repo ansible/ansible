@@ -60,7 +60,7 @@ class Cliconf(CliconfBase):
             cmd = b'show configuration'
         else:
             cmd = b'show configuration | display %s' % format
-        return self.send_command(to_bytes(cmd), errors='surrogate_or_strict')
+        return self.send_command(to_bytes(cmd, errors='surrogate_or_strict'))
 
     def edit_config(self, command):
         for cmd in chain([b'configure'], to_list(command)):

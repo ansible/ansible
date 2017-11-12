@@ -306,7 +306,6 @@ def setInterfaceOption(module, lines, iface, option, raw_value, state):
         module.fail_json(msg="Error: unsupported state %s, has to be either present or absent" % state)
 
     return changed, lines
-    pass
 
 
 def addOptionAfterLine(option, value, iface, lines, last_line_dict, iface_options):
@@ -338,7 +337,7 @@ def write_changes(module, lines, dest):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            dest=dict(default='/etc/network/interfaces', required=False),
+            dest=dict(default='/etc/network/interfaces', required=False, type='path'),
             iface=dict(required=False),
             option=dict(required=False),
             value=dict(required=False),
@@ -349,8 +348,7 @@ def main():
         supports_check_mode=True
     )
 
-    dest = os.path.expanduser(module.params['dest'])
-
+    dest = module.params['dest']
     iface = module.params['iface']
     option = module.params['option']
     value = module.params['value']

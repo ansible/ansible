@@ -136,7 +136,7 @@ options:
     required: false
   format:
     description:
-      - Target drive’s backing file’s data format.
+      - Target drive's backing file's data format.
       - Used only with clone
     default: qcow2
     choices: [ "cloop", "cow", "qcow", "qcow2", "qed", "raw", "vmdk" ]
@@ -162,7 +162,7 @@ options:
       - Values allowed are -  C("host="HOSTPCIID[;HOSTPCIID2...]",pcie="1|0",rombar="1|0",x-vga="1|0"").
       - The C(host) parameter is Host PCI device pass through. HOSTPCIID syntax is C(bus:dev.func) (hexadecimal numbers).
       - C(pcie=boolean) I(default=0) Choose the PCI-express bus (needs the q35 machine model).
-      - C(rombar=boolean) I(default=1) Specify whether or not the device’s ROM will be visible in the guest’s memory map.
+      - C(rombar=boolean) I(default=1) Specify whether or not the device's ROM will be visible in the guest's memory map.
       - C(x-vga=boolean) I(default=0) Enable vfio-vga device support.
       - /!\ This option allows direct access to host hardware. So it is no longer possible to migrate such machines - use with special care.
     required: false
@@ -187,7 +187,7 @@ options:
       - Values allowed are - C("storage:size,format=value").
       - C(storage) is the storage identifier where to create the disk.
       - C(size) is the size of the disk in GB.
-      - C(format) is the drive’s backing file’s data format. C(qcow2|raw|subvol).
+      - C(format) is the drive's backing file's data format. C(qcow2|raw|subvol).
     required: false
     default: null
   keyboard:
@@ -327,7 +327,7 @@ options:
       - Values allowed are -  C("storage:size,format=value").
       - C(storage) is the storage identifier where to create the disk.
       - C(size) is the size of the disk in GB.
-      - C(format) is the drive’s backing file’s data format. C(qcow2|raw|subvol).
+      - C(format) is the drive's backing file's data format. C(qcow2|raw|subvol).
     default: null
     required: false
   scsi:
@@ -337,7 +337,7 @@ options:
       - Values allowed are -  C("storage:size,format=value").
       - C(storage) is the storage identifier where to create the disk.
       - C(size) is the size of the disk in GB.
-      - C(format) is the drive’s backing file’s data format. C(qcow2|raw|subvol).
+      - C(format) is the drive's backing file's data format. C(qcow2|raw|subvol).
     default: null
     required: false
   scsihw:
@@ -469,7 +469,7 @@ options:
       - Values allowed are -  C("storage:size,format=value").
       - C(storage) is the storage identifier where to create the disk.
       - C(size) is the size of the disk in GB.
-      - C(format) is the drive’s backing file’s data format. C(qcow2|raw|subvol).
+      - C(format) is the drive's backing file's data format. C(qcow2|raw|subvol).
     required: false
     default: null
   vmid:

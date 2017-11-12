@@ -41,6 +41,7 @@ from __future__ import print_function
 import atexit
 import datetime
 import getpass
+import itertools
 import json
 import os
 import re
@@ -82,6 +83,14 @@ def regex_match(s, pattern):
         return True
     else:
         return False
+
+
+def select_chain_match(inlist, key, pattern):
+    '''Get a key from a list of dicts, squash values to a single list, then filter'''
+    outlist = [x[key] for x in inlist]
+    outlist = list(itertools.chain(*outlist))
+    outlist = [x for x in outlist if regex_match(x, pattern)]
+    return outlist
 
 
 class VMwareMissingHostException(Exception):
@@ -127,6 +136,7 @@ class VMWareInventory(object):
     # use jinja environments to allow for custom filters
     env = Environment()
     env.filters['regex_match'] = regex_match
+    env.filters['select_chain_match'] = select_chain_match
 
     # translation table for attributes to fetch for known vim types
 
@@ -578,18 +588,27 @@ class VMWareInventory(object):
 
                 for idx, x in enumerate(parts):
 
-                    # if the val wasn't set yet, get it from the parent
-                    if not val:
-                        try:
-                            val = getattr(vm, x)
-                        except AttributeError as e:
-                            self.debugl(e)
+                    if isinstance(val, dict):
+                        if x in val:
+                            val = val.get(x)
+                        elif x.lower() in val:
+                            val = val.get(x.lower())
                     else:
-                        # in a subkey, get the subprop from the previous attrib
-                        try:
-                            val = getattr(val, x)
-                        except AttributeError as e:
-                            self.debugl(e)
+                        # if the val wasn't set yet, get it from the parent
+                        if not val:
+                            try:
+                                val = getattr(vm, x)
+                            except AttributeError as e:
+                                self.debugl(e)
+                        else:
+                            # in a subkey, get the subprop from the previous attrib
+                            try:
+                                val = getattr(val, x)
+                            except AttributeError as e:
+                                self.debugl(e)
+
+                        # make sure it serializes
+                        val = self._process_object_types(val)
 
                     # lowercase keys if requested
                     if self.lowerkeys:
@@ -653,7 +672,7 @@ class VMWareInventory(object):
 
         return rdata
 
-    def _process_object_types(self, vobj, thisvm=None, inkey=None, level=0):
+    def _process_object_types(self, vobj, thisvm=None, inkey='', level=0):
         ''' Serialize an object '''
         rdata = {}
 

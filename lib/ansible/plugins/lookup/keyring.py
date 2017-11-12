@@ -1,41 +1,38 @@
 # (c) 2016, Samuel Boucher <boucher.samuel.c@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
-'''
-Lookup plugin to grab secrets from the OS keyring.
-========================================================================================
 
-Warning the secret will be output to the screen
+DOCUMENTATION = """
+    lookup: keyring
+    author:
+      - Samuel Boucher <boucher.samuel.c@gmail.com>
+    version_added: "2.3"
+    requirements:
+      - keyring (python library)
+    short_description: grab secrets from the OS keyring
+    description:
+      - Allows you to access data stored in the OS provided keyring/keychain.
+"""
 
-Example:
----
-- hosts: localhost
-  tasks:
-    - name : test
-      debug:
-        msg: "Password: {{item}}"
-      with_keyring:
-        - 'servicename username'
+EXAMPLES = """
+- name : output secrets to screen (BAD IDEA)
+  debug:
+    msg: "Password: {{item}}"
+  with_keyring:
+    - 'servicename username'
 
-ansible localhost -m debug -a "msg=\"{{item}}\" with_keyring= 'servicename username'"
+- name: access mysql with password from keyring
+  mysql_db: login_password={{lookup('keyring','mysql joe')}} login_user=joe
+"""
 
-'''
+RETURN = """
+  _raw:
+    description: secrets stored
+"""
+
 HAS_KEYRING = True
 
 from ansible.errors import AnsibleError

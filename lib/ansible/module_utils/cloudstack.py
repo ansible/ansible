@@ -406,7 +406,7 @@ class AnsibleCloudStack(object):
                     return self.vm_default_nic
         self.fail_json(msg="No default IP address of VM '%s' found" % self.module.params.get('vm'))
 
-    def get_vm(self, key=None):
+    def get_vm(self, key=None, filter_zone=True):
         if self.vm:
             return self._get_by_key(key, self.vm)
 
@@ -418,7 +418,7 @@ class AnsibleCloudStack(object):
             'account': self.get_account(key='name'),
             'domainid': self.get_domain(key='id'),
             'projectid': self.get_project(key='id'),
-            'zoneid': self.get_zone(key='id'),
+            'zoneid': self.get_zone(key='id') if filter_zone else None,
         }
         vms = self.query_api('listVirtualMachines', **args)
         if vms:
@@ -427,6 +427,19 @@ class AnsibleCloudStack(object):
                     self.vm = v
                     return self._get_by_key(key, self.vm)
         self.fail_json(msg="Virtual machine '%s' not found" % vm)
+
+    def get_disk_offering(self, key=None):
+        disk_offering = self.module.params.get('disk_offering')
+        if not disk_offering:
+            return None
+
+        # Do not add domain filter for disk offering listing.
+        disk_offerings = self.query_api('listDiskOfferings')
+        if disk_offerings:
+            for d in disk_offerings['diskoffering']:
+                if disk_offering in [d['displaytext'], d['name'], d['id']]:
+                    return self._get_by_key(key, d)
+        self.fail_json(msg="Disk offering '%s' not found" % disk_offering)
 
     def get_zone(self, key=None):
         if self.zone:

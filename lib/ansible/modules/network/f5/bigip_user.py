@@ -1,33 +1,29 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright 2017 F5 Networks Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 F5 Networks Inc.
+# GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: bigip_user
-short_description: Manage user accounts and user attributes on a BIG-IP.
+short_description: Manage user accounts and user attributes on a BIG-IP
 description:
-  - Manage user accounts and user attributes on a BIG-IP.
+  - Manage user accounts and user attributes on a BIG-IP. Typically this
+    module operates only on the REST API users and not the CLI users. There
+    is one exception though and that is if you specify the C(username_credential)
+    of C(root). When specifying C(root), you may only change the password.
+    Your other parameters will be ignored in this case. Changing the C(root)
+    password is not an idempotent operation. Therefore, it will change it
+    every time this module attempts to change it.
 version_added: "2.4"
 options:
   full_name:
@@ -35,7 +31,8 @@ options:
       - Full name of the user.
   username_credential:
     description:
-      - Name of the user to create, remove or modify.
+      - Name of the user to create, remove or modify. There is a special case
+        that exists for the user C(root).
     required: True
     aliases:
       - name
@@ -71,7 +68,8 @@ options:
   update_password:
     description:
       - C(always) will allow to update passwords if the user chooses to do so.
-        C(on_create) will only set the password for newly created users.
+        C(on_create) will only set the password for newly created users. When
+        C(username_credential) is C(root), this value will be forced to C(always).
     default: on_create
     choices:
       - always
@@ -88,59 +86,59 @@ author:
   - Wojciech Wypior (@wojtek0806)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Add the user 'johnd' as an admin
   bigip_user:
-      server: "lb.mydomain.com"
-      user: "admin"
-      password: "secret"
-      username_credential: "johnd"
-      password_credential: "password"
-      full_name: "John Doe"
-      partition_access: "all:admin"
-      update_password: "on_create"
-      state: "present"
+    server: lb.mydomain.com
+    user: admin
+    password: secret
+    username_credential: johnd
+    password_credential: password
+    full_name: John Doe
+    partition_access: all:admin
+    update_password: on_create
+    state: present
   delegate_to: localhost
 
 - name: Change the user "johnd's" role and shell
   bigip_user:
-      server: "lb.mydomain.com"
-      user: "admin"
-      password: "secret"
-      username_credential: "johnd"
-      partition_access: "NewPartition:manager"
-      shell: "tmsh"
-      state: "present"
+    server: lb.mydomain.com
+    user: admin
+    password: secret
+    username_credential: johnd
+    partition_access: NewPartition:manager
+    shell: tmsh
+    state: present
   delegate_to: localhost
 
 - name: Make the user 'johnd' an admin and set to advanced shell
   bigip_user:
-      server: "lb.mydomain.com"
-      user: "admin"
-      password: "secret"
-      name: "johnd"
-      partition_access: "all:admin"
-      shell: "bash"
-      state: "present"
+    server: lb.mydomain.com
+    user: admin
+    password: secret
+    name: johnd
+    partition_access: all:admin
+    shell: bash
+    state: present
   delegate_to: localhost
 
 - name: Remove the user 'johnd'
   bigip_user:
-      server: "lb.mydomain.com"
-      user: "admin"
-      password: "secret"
-      name: "johnd"
-      state: "absent"
+    server: lb.mydomain.com
+    user: admin
+    password: secret
+    name: johnd
+    state: absent
   delegate_to: localhost
 
 - name: Update password
   bigip_user:
-      server: "lb.mydomain.com"
-      user: "admin"
-      password: "secret"
-      state: "present"
-      username_credential: "johnd"
-      password_credential: "newsupersecretpassword"
+    server: lb.mydomain.com
+    user: admin
+    password: secret
+    state: present
+    username_credential: johnd
+    password_credential: newsupersecretpassword
   delegate_to: localhost
 
 # Note that the second time this task runs, it would fail because
@@ -152,43 +150,65 @@ EXAMPLES = '''
 #   * Include `ignore_errors` on this task
 - name: Change the Admin password
   bigip_user:
-      server: "lb.mydomain.com"
-      user: "admin"
-      password: "secret"
-      state: "present"
-      username_credential: "admin"
-      password_credential: "NewSecretPassword"
+    server: lb.mydomain.com
+    user: admin
+    password: secret
+    state: present
+    username_credential: admin
+    password_credential: NewSecretPassword
+  delegate_to: localhost
+
+- name: Change the root user's password
+  bigip_user:
+    server: lb.mydomain.com
+    user: admin
+    password: secret
+    username_credential: root
+    password_credential: secret
+    state: present
   delegate_to: localhost
 '''
 
-RETURN = '''
+RETURN = r'''
 full_name:
-    description: Full name of the user
-    returned: changed and success
-    type: string
-    sample: "John Doe"
+  description: Full name of the user
+  returned: changed and success
+  type: string
+  sample: John Doe
 partition_access:
-    description:
-      - List of strings containing the user's roles and which partitions they
-        are applied to. They are specified in the form "partition:role".
-    returned: changed and success
-    type: list
-    sample: "['all:admin']"
+  description:
+    - List of strings containing the user's roles and which partitions they
+      are applied to. They are specified in the form "partition:role".
+  returned: changed and success
+  type: list
+  sample: ['all:admin']
 shell:
-    description: The shell assigned to the user account
-    returned: changed and success
-    type: string
-    sample: "tmsh"
+  description: The shell assigned to the user account
+  returned: changed and success
+  type: string
+  sample: tmsh
 '''
 
+import os
+import tempfile
+
 from distutils.version import LooseVersion
-from ansible.module_utils.f5_utils import (
-    AnsibleF5Client,
-    AnsibleF5Parameters,
-    HAS_F5SDK,
-    F5ModuleError,
-    iControlUnexpectedHTTPError
-)
+from ansible.module_utils.f5_utils import AnsibleF5Client
+from ansible.module_utils.f5_utils import AnsibleF5Parameters
+from ansible.module_utils.f5_utils import defaultdict
+from ansible.module_utils.f5_utils import HAS_F5SDK
+from ansible.module_utils.f5_utils import F5ModuleError
+from ansible.module_utils.six import iteritems
+
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
+
+try:
+    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+except ImportError:
+    HAS_F5SDK = False
 
 
 class Parameters(AnsibleF5Parameters):
@@ -208,6 +228,36 @@ class Parameters(AnsibleF5Parameters):
     api_attributes = [
         'shell', 'partitionAccess', 'description', 'name', 'password'
     ]
+
+    def __init__(self, params=None):
+        self._values = defaultdict(lambda: None)
+        self._values['__warnings'] = []
+        if params:
+            self.update(params=params)
+
+    def update(self, params=None):
+        if params:
+            for k, v in iteritems(params):
+                if self.api_map is not None and k in self.api_map:
+                    map_key = self.api_map[k]
+                else:
+                    map_key = k
+
+                # Handle weird API parameters like `dns.proxy.__iter__` by
+                # using a map provided by the module developer
+                class_attr = getattr(type(self), map_key, None)
+                if isinstance(class_attr, property):
+                    # There is a mapped value for the api_map key
+                    if class_attr.fset is None:
+                        # If the mapped value does not have
+                        # an associated setter
+                        self._values[map_key] = v
+                    else:
+                        # The mapped value has a setter
+                        setattr(self, map_key, v)
+                else:
+                    # If the mapped value is not a @property
+                    self._values[map_key] = v
 
     @property
     def partition_access(self):
@@ -279,11 +329,12 @@ class ModuleManager(object):
         self.client = client
 
     def exec_module(self):
-        if self.is_version_less_than_13():
+        if self.is_root_username_credential():
+            manager = RootUserManager(self.client)
+        elif self.is_version_less_than_13():
             manager = UnparitionedManager(self.client)
         else:
             manager = PartitionedManager(self.client)
-
         return manager.exec_module()
 
     def is_version_less_than_13(self):
@@ -299,6 +350,12 @@ class ModuleManager(object):
             return True
         else:
             return False
+
+    def is_root_username_credential(self):
+        user = self.client.module.params.get('username_credential', None)
+        if user == 'root':
+            return True
+        return False
 
 
 class BaseManager(object):
@@ -347,8 +404,7 @@ class BaseManager(object):
                         # not return it.
                         if self.want.shell == 'bash':
                             self.validate_shell_parameter()
-                        if self.want.shell == 'none' and \
-                                self.have.shell is None:
+                        if self.want.shell == 'none' and self.have.shell is None:
                             self.have.shell = 'none'
                         attr1 = getattr(self.want, key)
                         attr2 = getattr(self.have, key)
@@ -538,6 +594,67 @@ class PartitionedManager(BaseManager):
         resource = self._read_one_resource_from_collection()
         if resource:
             resource.delete()
+
+
+class RootUserManager(BaseManager):
+    def exec_module(self):
+        changed = False
+        result = dict()
+        state = self.want.state
+
+        try:
+            if state == "present":
+                changed = self.present()
+            elif state == "absent":
+                raise F5ModuleError(
+                    "You may not remove the root user."
+                )
+        except iControlUnexpectedHTTPError as e:
+            raise F5ModuleError(str(e))
+
+        changes = self.changes.to_return()
+        result.update(**changes)
+        result.update(dict(changed=changed))
+        return result
+
+    def exists(self):
+        return True
+
+    def update(self):
+        file = tempfile.NamedTemporaryFile()
+        self.want.update({'tempfile': os.path.basename(file.name)})
+        self.upload_password_file_to_device()
+        self.update_on_device()
+        self.remove_password_file_from_device()
+        return True
+
+    def update_on_device(self):
+        errors = [
+            'not confirmed',
+            'change canceled'
+        ]
+        cmd = '-c "cat /var/config/rest/downloads/{0} | tmsh modify auth password root"'.format(self.want.tempfile)
+        output = self.client.api.tm.util.bash.exec_cmd(
+            'run',
+            utilCmdArgs=cmd
+        )
+        if hasattr(output, 'commandResult'):
+            result = str(output.commandResult)
+            if any(x for x in errors if x in result):
+                raise F5ModuleError(result)
+
+    def upload_password_file_to_device(self):
+        content = "{0}\n{0}\n".format(self.want.password_credential)
+        template = StringIO(content)
+        upload = self.client.api.shared.file_transfer.uploads
+        upload.upload_stringio(template, self.want.tempfile)
+        return True
+
+    def remove_password_file_from_device(self):
+        self.client.api.tm.util.unix_rm.exec_cmd(
+            'run',
+            utilCmdArgs='/var/config/rest/downloads/{0}'.format(self.want.tempfile)
+        )
 
 
 class ArgumentSpec(object):

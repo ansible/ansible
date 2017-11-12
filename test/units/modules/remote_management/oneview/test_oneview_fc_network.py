@@ -172,3 +172,7 @@ class FcNetworkModuleSpec(unittest.TestCase,
             ansible_facts=dict(fc_network=resource_data),
             msg=FcNetworkModule.MSG_ALREADY_PRESENT
         )
+
+
+if __name__ == '__main__':
+    unittest.main()

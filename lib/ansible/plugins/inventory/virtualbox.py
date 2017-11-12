@@ -1,23 +1,10 @@
-# This file is part of Ansible,
-# (c) 2012-2017, Michael DeHaan <michael.dehaan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#############################################
-'''
-DOCUMENTATION:
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+DOCUMENTATION = '''
     name: virtualbox
     plugin_type: inventory
     short_description: virtualbox inventory source
@@ -47,7 +34,9 @@ DOCUMENTATION:
             description: add hosts to group based on Jinja2 conditionals, these also run after query block
             type: dictionary
             default: {}
-EXAMPLES:
+'''
+
+EXAMPLES = '''
 # file must be named vbox.yaml or vbox.yml
 simple_config_file:
     plugin: virtualbox
@@ -57,15 +46,14 @@ simple_config_file:
     compose:
       ansible_connection: ('indows' in vbox_Guest_OS)|ternary('winrm', 'ssh')
 '''
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
 import os
 
+from collections import MutableMapping
 from subprocess import Popen, PIPE
 
 from ansible.errors import AnsibleParserError
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.inventory import BaseInventoryPlugin
 
 
@@ -73,14 +61,14 @@ class InventoryModule(BaseInventoryPlugin):
     ''' Host inventory parser for ansible using local virtualbox. '''
 
     NAME = 'virtualbox'
-    VBOX = "VBoxManage"
+    VBOX = b"VBoxManage"
 
     def _query_vbox_data(self, host, property_path):
         ret = None
         try:
-            cmd = [self.VBOX, 'guestproperty', 'get', host, property_path]
+            cmd = [self.VBOX, b'guestproperty', b'get', to_bytes(host, errors='surrogate_or_strict'), to_bytes(property_path, errors='surrogate_or_strict')]
             x = Popen(cmd, stdout=PIPE)
-            ipinfo = x.stdout.read()
+            ipinfo = to_text(x.stdout.read(), errors='surrogate_or_strict')
             if 'Value' in ipinfo:
                 a, ip = ipinfo.split(':', 1)
                 ret = ip.strip()
@@ -94,7 +82,7 @@ class InventoryModule(BaseInventoryPlugin):
         for host in hostvars:
 
             # create vars from vbox properties
-            if data.get('query') and isinstance(data['query'], dict):
+            if data.get('query') and isinstance(data['query'], MutableMapping):
                 for varname in data['query']:
                     hostvars[host][varname] = self._query_vbox_data(host, data['query'][varname])
 
@@ -181,40 +169,40 @@ class InventoryModule(BaseInventoryPlugin):
         try:
             config_data = self.loader.load_from_file(path)
         except Exception as e:
-            raise AnsibleParserError(e)
+            raise AnsibleParserError(to_native(e))
 
         if not config_data or config_data.get('plugin') != self.NAME:
             # this is not my config file
-            return False
+            raise AnsibleParserError("Incorrect plugin name in file: %s" % config_data.get('plugin', 'none found'))
 
         source_data = None
-        if cache and cache_key in inventory.cache:
+        if cache and cache_key in self._cache:
             try:
-                source_data = inventory.cache[cache_key]
+                source_data = self._cache[cache_key]
             except KeyError:
                 pass
 
         if not source_data:
-            pwfile = to_bytes(config_data.get('settings_password_file'))
+            b_pwfile = to_bytes(config_data.get('settings_password_file'), errors='surrogate_or_strict')
             running = config_data.get('running_only', False)
 
             # start getting data
-            cmd = [self.VBOX, 'list', '-l']
+            cmd = [self.VBOX, b'list', b'-l']
             if running:
-                cmd.append('runningvms')
+                cmd.append(b'runningvms')
             else:
-                cmd.append('vms')
+                cmd.append(b'vms')
 
-            if pwfile and os.path.exists(pwfile):
-                cmd.append('--settingspwfile')
-                cmd.append(pwfile)
+            if b_pwfile and os.path.exists(b_pwfile):
+                cmd.append(b'--settingspwfile')
+                cmd.append(b_pwfile)
 
             try:
                 p = Popen(cmd, stdout=PIPE)
             except Exception as e:
-                AnsibleParserError(e)
+                AnsibleParserError(to_native(e))
 
-            source_data = p.stdout.readlines()
-            inventory.cache[cache_key] = source_data
+            source_data = p.stdout.read()
+            self._cache[cache_key] = to_text(source_data, errors='surrogate_or_strict')
 
-        self._populate_from_source(source_data, config_data)
+        self._populate_from_source(source_data.splitlines(), config_data)

@@ -1,37 +1,27 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright 2017 F5 Networks Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 F5 Networks Inc.
+# GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: bigip_provision
-short_description: Manage BIG-IP module provisioning.
+short_description: Manage BIG-IP module provisioning
 description:
   - Manage BIG-IP module provisioning. This module will only provision at the
     standard levels of Dedicated, Nominal, and Minimum.
 version_added: "2.4"
 options:
-  module:
+  name:
     description:
       - The module to provision in BIG-IP.
     required: true
@@ -49,6 +39,9 @@ options:
       - pem
       - sam
       - swg
+      - vcmp
+    aliases:
+      - module
   level:
     description:
       - Sets the provisioning level for the requested modules. Changing the
@@ -82,45 +75,48 @@ author:
   - Tim Rupp (@caphrim007)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Provision PEM at "nominal" level
   bigip_provision:
-      server: "lb.mydomain.com"
-      module: "pem"
-      level: "nominal"
-      password: "secret"
-      user: "admin"
-      validate_certs: "no"
+    server: lb.mydomain.com
+    module: pem
+    level: nominal
+    password: secret
+    user: admin
+    validate_certs: no
   delegate_to: localhost
 
 - name: Provision a dedicated SWG. This will unprovision every other module
   bigip_provision:
-      server: "lb.mydomain.com"
-      module: "swg"
-      password: "secret"
-      level: "dedicated"
-      user: "admin"
-      validate_certs: "no"
+    server: lb.mydomain.com
+    module: swg
+    password: secret
+    level: dedicated
+    user: admin
+    validate_certs: no
   delegate_to: localhost
 '''
 
-RETURN = '''
+RETURN = r'''
 level:
-    description: The new provisioning level of the module.
-    returned: changed
-    type: string
-    sample: "minimum"
+  description: The new provisioning level of the module.
+  returned: changed
+  type: string
+  sample: minimum
 '''
 
 import time
 
-from ansible.module_utils.f5_utils import (
-    AnsibleF5Client,
-    AnsibleF5Parameters,
-    HAS_F5SDK,
-    F5ModuleError,
-    iControlUnexpectedHTTPError
-)
+from ansible.module_utils.f5_utils import AnsibleF5Client
+from ansible.module_utils.f5_utils import AnsibleF5Parameters
+from ansible.module_utils.f5_utils import HAS_F5SDK
+from ansible.module_utils.f5_utils import F5ModuleError
+
+try:
+    from f5.sdk_exception import LazyAttributesRequired
+    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+except ImportError:
+    HAS_F5SDK = False
 
 
 class Parameters(AnsibleF5Parameters):
@@ -213,8 +209,16 @@ class ModuleManager(object):
             return False
         if self.client.check_mode:
             return True
+
         self.update_on_device()
-        self.wait_for_module_provisioning()
+        self._wait_for_module_provisioning()
+
+        if self.want.module == 'vcmp':
+            self._wait_for_reboot()
+            self._wait_for_module_provisioning()
+
+        if self.want.module == 'asm':
+            self._wait_for_asm_ready()
         return True
 
     def should_update(self):
@@ -246,7 +250,15 @@ class ModuleManager(object):
         if self.client.check_mode:
             return True
         self.remove_from_device()
-        self.wait_for_module_provisioning()
+        self._wait_for_module_provisioning()
+
+        # For vCMP, because it has to reboot, we also wait for mcpd to become available
+        # before "moving on", or else the REST API would not be available and subsequent
+        # Tasks would fail.
+        if self.want.module == 'vcmp':
+            self._wait_for_reboot()
+            self._wait_for_module_provisioning()
+
         if self.exists():
             raise F5ModuleError("Failed to de-provision the module")
         return True
@@ -257,7 +269,7 @@ class ModuleManager(object):
         resource = resource.load()
         resource.update(level='none')
 
-    def wait_for_module_provisioning(self):
+    def _wait_for_module_provisioning(self):
         # To prevent things from running forever, the hack is to check
         # for mprov's status twice. If mprov is finished, then in most
         # cases (not ASM) the provisioning is probably ready.
@@ -266,7 +278,7 @@ class ModuleManager(object):
         # Sleep a little to let provisioning settle and begin properly
         time.sleep(5)
 
-        while nops < 4:
+        while nops < 3:
             try:
                 if not self._is_mprov_running_on_device():
                     nops += 1
@@ -275,16 +287,73 @@ class ModuleManager(object):
             except Exception:
                 # This can be caused by restjavad restarting.
                 pass
-            time.sleep(10)
+            time.sleep(5)
 
     def _is_mprov_running_on_device(self):
         output = self.client.api.tm.util.bash.exec_cmd(
             'run',
             utilCmdArgs='-c "ps aux | grep \'[m]prov\'"'
         )
-        if hasattr(output, 'commandResult'):
-            return True
+        try:
+            if hasattr(output, 'commandResult'):
+                return True
+        except LazyAttributesRequired:
+            pass
         return False
+
+    def _wait_for_asm_ready(self):
+        """Waits specifically for ASM
+
+        On older versions, ASM can take longer to actually start up than
+        all the previous checks take. This check here is specifically waiting for
+        the Policies API to stop raising errors
+        :return:
+        """
+        nops = 0
+        while nops < 3:
+            try:
+                policies = self.client.api.tm.asm.policies_s.get_collection()
+                if len(policies) >= 0:
+                    nops += 1
+                else:
+                    nops = 0
+            except Exception:
+                pass
+            time.sleep(5)
+
+    def _get_last_reboot(self):
+        output = self.client.api.tm.util.bash.exec_cmd(
+            'run',
+            utilCmdArgs='-c "/usr/bin/last reboot | head - 1"'
+        )
+        try:
+            if hasattr(output, 'commandResult'):
+                return str(output.commandResult)
+        except LazyAttributesRequired:
+            pass
+        return None
+
+    def _wait_for_reboot(self):
+        nops = 0
+
+        last_reboot = self._get_last_reboot()
+
+        # Sleep a little to let provisioning settle and begin properly
+        time.sleep(5)
+
+        while nops < 6:
+            try:
+                next_reboot = self._get_last_reboot()
+                if next_reboot is None:
+                    nops = 0
+                if next_reboot == last_reboot:
+                    nops = 0
+                else:
+                    nops += 1
+            except Exception:
+                # This can be caused by restjavad restarting.
+                pass
+            time.sleep(10)
 
 
 class ArgumentSpec(object):
@@ -296,8 +365,9 @@ class ArgumentSpec(object):
                 choices=[
                     'afm', 'am', 'sam', 'asm', 'avr', 'fps',
                     'gtm', 'lc', 'ltm', 'pem', 'swg', 'ilx',
-                    'apm'
-                ]
+                    'apm', 'vcmp'
+                ],
+                aliases=['name']
             ),
             level=dict(
                 default='nominal',

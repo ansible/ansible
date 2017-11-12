@@ -267,15 +267,15 @@ class NetAppESeriesFlashCache(object):
     @property
     def needs_more_disks(self):
         if len(self.cache_detail['driveRefs']) < self.disk_count:
-            self.debug("needs resize: current disk count %s < requested requested count %s" % (
-                len(self.cache_detail['driveRefs']), self.disk_count))
+            self.debug("needs resize: current disk count %s < requested requested count %s",
+                       len(self.cache_detail['driveRefs']), self.disk_count)
             return True
 
     @property
     def needs_less_disks(self):
         if len(self.cache_detail['driveRefs']) > self.disk_count:
-            self.debug("needs resize: current disk count %s < requested requested count %s" % (
-                len(self.cache_detail['driveRefs']), self.disk_count))
+            self.debug("needs resize: current disk count %s < requested requested count %s",
+                       len(self.cache_detail['driveRefs']), self.disk_count)
             return True
 
     @property
@@ -292,8 +292,8 @@ class NetAppESeriesFlashCache(object):
     @property
     def needs_more_capacity(self):
         if self.current_size_bytes < self.requested_size_bytes:
-            self.debug("needs resize: current capacity %sb is less than requested minimum %sb" % (
-                self.current_size_bytes, self.requested_size_bytes))
+            self.debug("needs resize: current capacity %sb is less than requested minimum %sb",
+                       self.current_size_bytes, self.requested_size_bytes)
             return True
 
     @property
@@ -405,7 +405,7 @@ def main():
     try:
         sp.apply()
     except Exception as e:
-        sp.debug("Exception in apply(): \n%s" % to_native(e))
+        sp.debug("Exception in apply(): \n%s", to_native(e))
         sp.module.fail_json(msg="Failed to create flash cache. Error[%s]" % to_native(e),
                             exception=traceback.format_exc())
 

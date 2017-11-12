@@ -98,6 +98,8 @@ def categorize_changes(args, paths, verbose_command=None):
             commands[command].add(target)
 
     for command in commands:
+        commands[command].discard('none')
+
         if any(t == 'all' for t in commands[command]):
             commands[command] = set(['all'])
 
@@ -216,6 +218,7 @@ class PathMapper(object):
         :type path: str
         :rtype: dict[str, str] | None
         """
+        dirname = os.path.dirname(path)
         filename = os.path.basename(path)
         name, ext = os.path.splitext(filename)
 
@@ -364,12 +367,18 @@ class PathMapper(object):
 
             return minimal
 
+        if path.startswith('test/cache/'):
+            return minimal
+
         if path.startswith('test/compile/'):
             return {
                 'compile': 'all',
             }
 
         if path.startswith('test/results/'):
+            return minimal
+
+        if path.startswith('test/legacy/'):
             return minimal
 
         if path.startswith('test/integration/roles/'):
@@ -398,29 +407,33 @@ class PathMapper(object):
             }
 
         if path.startswith('test/integration/'):
-            if self.prefixes.get(name) == 'network' and ext == '.yaml':
-                return minimal  # network integration test playbooks are not used by ansible-test
+            if dirname == 'test/integration':
+                if self.prefixes.get(name) == 'network' and ext == '.yaml':
+                    return minimal  # network integration test playbooks are not used by ansible-test
 
-            if filename == 'platform_agnostic.yaml':
-                return minimal  # network integration test playbook not used by ansible-test
+                if filename == 'network-all.yaml':
+                    return minimal  # network integration test playbook not used by ansible-test
 
-            for command in (
-                    'integration',
-                    'windows-integration',
-                    'network-integration',
-            ):
-                if name == command:
-                    return {
-                        command: self.integration_all_target,
-                    }
+                if filename == 'platform_agnostic.yaml':
+                    return minimal  # network integration test playbook not used by ansible-test
 
-            if name.startswith('cloud-config-'):
-                cloud_target = 'cloud/%s/' % name.split('-')[2].split('.')[0]
+                for command in (
+                        'integration',
+                        'windows-integration',
+                        'network-integration',
+                ):
+                    if name == command and ext == '.cfg':
+                        return {
+                            command: self.integration_all_target,
+                        }
 
-                if cloud_target in self.integration_targets_by_alias:
-                    return {
-                        'integration': cloud_target,
-                    }
+                if name.startswith('cloud-config-'):
+                    cloud_target = 'cloud/%s/' % name.split('-')[2].split('.')[0]
+
+                    if cloud_target in self.integration_targets_by_alias:
+                        return {
+                            'integration': cloud_target,
+                        }
 
             return {
                 'integration': self.integration_all_target,
@@ -451,6 +464,9 @@ class PathMapper(object):
 
                 test_path = os.path.dirname(test_path)
 
+        if path.startswith('test/runner/docker/'):
+            return minimal  # not used by tests, only used to build the default container
+
         if path.startswith('test/runner/lib/cloud/'):
             cloud_target = 'cloud/%s/' % name
 
@@ -465,6 +481,32 @@ class PathMapper(object):
             return {
                 'sanity': 'all',  # test infrastructure, run all sanity checks
             }
+
+        if path.startswith('test/runner/requirements/'):
+            if name in (
+                    'integration',
+                    'network-integration',
+                    'windows-integration',
+            ):
+                return {
+                    name: self.integration_all_target,
+                }
+
+            if name in (
+                    'sanity',
+                    'units',
+            ):
+                return {
+                    name: 'all',
+                }
+
+            if name.startswith('integration.cloud.'):
+                cloud_target = 'cloud/%s/' % name.split('.')[2]
+
+                if cloud_target in self.integration_targets_by_alias:
+                    return {
+                        'integration': cloud_target,
+                    }
 
         if path.startswith('test/runner/'):
             return all_tests(self.args)  # test infrastructure, run all tests

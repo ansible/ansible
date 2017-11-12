@@ -43,7 +43,7 @@ from ansible.playbook.role_include import IncludeRole
 from ansible.plugins.loader import action_loader, connection_loader, filter_loader, lookup_loader, module_loader, test_loader
 from ansible.template import Templar
 from ansible.utils.vars import combine_vars
-from ansible.vars.manager import strip_internal_keys
+from ansible.vars.clean import strip_internal_keys
 
 
 try:
@@ -454,8 +454,7 @@ class StrategyBase:
                                         self._notified_handlers[target_handler._uuid] = []
                                     if original_host not in self._notified_handlers[target_handler._uuid]:
                                         self._notified_handlers[target_handler._uuid].append(original_host)
-                                        # FIXME: should this be a callback?
-                                        display.vv("NOTIFIED HANDLER %s" % (handler_name,))
+                                        self._tqm.send_callback('v2_playbook_on_notify', target_handler, original_host)
                                 else:
                                     # As there may be more than one handler with the notified name as the
                                     # parent, so we just keep track of whether or not we found one at all
@@ -465,7 +464,7 @@ class StrategyBase:
                                             found = True
                                             if original_host not in self._notified_handlers[target_handler._uuid]:
                                                 self._notified_handlers[target_handler._uuid].append(original_host)
-                                                display.vv("NOTIFIED HANDLER %s" % (target_handler.get_name(),))
+                                                self._tqm.send_callback('v2_playbook_on_notify', target_handler, original_host)
 
                                 if handler_name in self._listening_handlers:
                                     for listening_handler_uuid in self._listening_handlers[handler_name]:
@@ -476,7 +475,7 @@ class StrategyBase:
                                             continue
                                         if original_host not in self._notified_handlers[listening_handler._uuid]:
                                             self._notified_handlers[listening_handler._uuid].append(original_host)
-                                            display.vv("NOTIFIED HANDLER %s" % (listening_handler.get_name(),))
+                                            self._tqm.send_callback('v2_playbook_on_notify', listening_handler, original_host)
 
                                 # and if none were found, then we raise an error
                                 if not found:
@@ -511,13 +510,12 @@ class StrategyBase:
                                 for target_host in host_list:
                                     self._variable_manager.set_host_variable(target_host, var_name, var_value)
                         else:
-                            cacheable = result_item.pop('ansible_facts_cacheable', True)
+                            cacheable = result_item.pop('_ansible_facts_cacheable', False)
                             for target_host in host_list:
-                                if cacheable:
+                                if not original_task.action == 'set_fact' or cacheable:
                                     self._variable_manager.set_host_facts(target_host, result_item['ansible_facts'].copy())
-
-                                # If we are setting a fact, it should populate non_persistent_facts as well
-                                self._variable_manager.set_nonpersistent_facts(target_host, result_item['ansible_facts'].copy())
+                                if original_task.action == 'set_fact':
+                                    self._variable_manager.set_nonpersistent_facts(target_host, result_item['ansible_facts'].copy())
 
                     if 'ansible_stats' in result_item and 'data' in result_item['ansible_stats'] and result_item['ansible_stats']['data']:
 
@@ -615,9 +613,6 @@ class StrategyBase:
                 new_group = self._inventory.groups[group_name]
                 new_group.add_host(self._inventory.hosts[host_name])
 
-            # clear pattern caching completely since it's unpredictable what patterns may have referenced the group
-            self._inventory.clear_pattern_cache()
-
             # reconcile inventory, ensures inventory rules are followed
             self._inventory.reconcile_inventory()
 
@@ -655,7 +650,6 @@ class StrategyBase:
             changed = True
 
         if changed:
-            self._inventory.clear_pattern_cache()
             self._inventory.reconcile_inventory()
 
         return changed

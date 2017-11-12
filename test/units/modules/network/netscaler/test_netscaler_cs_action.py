@@ -41,7 +41,6 @@ class TestNetscalerCSActionModule(TestModule):
         nssrc_modules_mock = {
             'nssrc.com.citrix.netscaler.nitro.resource.config.cs': m,
             'nssrc.com.citrix.netscaler.nitro.resource.config.cs.csaction': m,
-            'nssrc.com.citrix.netscaler.nitro.resource.config.cs.csaction': m,
             'nssrc.com.citrix.netscaler.nitro.resource.config.cs.csaction.csaction': cls.cs_action_mock,
         }
 

@@ -26,9 +26,8 @@ import copy
 
 from ansible import constants as C
 from ansible.plugins.action.normal import ActionModule as _ActionModule
-from ansible.module_utils.six import iteritems
-from ansible.module_utils.dellos9 import dellos9_argument_spec
-from ansible.module_utils.basic import AnsibleFallbackNotFound
+from ansible.module_utils.dellos9 import dellos9_provider_spec
+from ansible.module_utils.network_common import load_provider
 
 try:
     from __main__ import display
@@ -48,16 +47,17 @@ class ActionModule(_ActionModule):
                     'got %s' % self._play_context.connection
             )
 
-        provider = self.load_provider()
+        provider = load_provider(dellos9_provider_spec, self._task.args)
 
         pc = copy.deepcopy(self._play_context)
         pc.connection = 'network_cli'
         pc.network_os = 'dellos9'
-        pc.port = provider['port'] or self._play_context.port or 22
+        pc.remote_addr = provider['host'] or self._play_context.remote_addr
+        pc.port = int(provider['port'] or self._play_context.port or 22)
         pc.remote_user = provider['username'] or self._play_context.connection_user
         pc.password = provider['password'] or self._play_context.password
         pc.private_key_file = provider['ssh_keyfile'] or self._play_context.private_key_file
-        pc.timeout = provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT
+        pc.timeout = int(provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT)
         pc.become = provider['authorize'] or False
         pc.become_pass = provider['auth_pass']
 
@@ -87,30 +87,3 @@ class ActionModule(_ActionModule):
 
         result = super(ActionModule, self).run(tmp, task_vars)
         return result
-
-    def load_provider(self):
-        provider = self._task.args.get('provider', {})
-        for key, value in iteritems(dellos9_argument_spec):
-            if key != 'provider' and key not in provider:
-                if key in self._task.args:
-                    provider[key] = self._task.args[key]
-                elif 'fallback' in value:
-                    provider[key] = self._fallback(value['fallback'])
-                elif key not in provider:
-                    provider[key] = None
-        return provider
-
-    def _fallback(self, fallback):
-        strategy = fallback[0]
-        args = []
-        kwargs = {}
-
-        for item in fallback[1:]:
-            if isinstance(item, dict):
-                kwargs = item
-            else:
-                args = item
-        try:
-            return strategy(*args, **kwargs)
-        except AnsibleFallbackNotFound:
-            pass

@@ -28,9 +28,9 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.inventory.data import InventoryData
 from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.parsing.utils.addresses import parse_address
-from ansible.plugins.loader import PluginLoader
+from ansible.plugins.loader import inventory_loader
 from ansible.utils.path import unfrackpath
 
 try:
@@ -85,12 +85,13 @@ def split_host_pattern(pattern):
 
     if isinstance(pattern, list):
         return list(itertools.chain(*map(split_host_pattern, pattern)))
+    elif not isinstance(pattern, string_types):
+        pattern = to_native(pattern)
 
     # If it's got commas in it, we'll treat it as a straightforward
     # comma-separated list of patterns.
-
-    elif ',' in pattern:
-        patterns = re.split('\s*,\s*', pattern)
+    if ',' in pattern:
+        patterns = pattern.split(',')
 
     # If it doesn't, it could still be a single pattern. This accounts for
     # non-separator uses of colons: IPv6 addresses and [x:y] host ranges.
@@ -168,6 +169,7 @@ class InventoryManager(object):
         return self._inventory.get_groups_dict()
 
     def reconcile_inventory(self):
+        self.clear_caches()
         return self._inventory.reconcile_inventory()
 
     def get_host(self, hostname):
@@ -176,7 +178,6 @@ class InventoryManager(object):
     def _setup_inventory_plugins(self):
         ''' sets up loaded inventory plugins for usage '''
 
-        inventory_loader = PluginLoader('InventoryModule', 'ansible.plugins.inventory', 'inventory_plugins', 'inventory_plugins')
         display.vvvv('setting up inventory plugins')
 
         for name in C.INVENTORY_ENABLED:
@@ -189,7 +190,7 @@ class InventoryManager(object):
         if not self._inventory_plugins:
             raise AnsibleError("No inventory plugins available to generate inventory, make sure you have at least one whitelisted.")
 
-    def parse_sources(self, cache=True):
+    def parse_sources(self, cache=False):
         ''' iterate over inventory sources and parse each one to populate it'''
 
         self._setup_inventory_plugins()
@@ -213,7 +214,7 @@ class InventoryManager(object):
 
         self._inventory_plugins = []
 
-    def parse_source(self, source, cache=True):
+    def parse_source(self, source, cache=False):
         ''' Generate or update inventory for the source provided '''
 
         parsed = False
@@ -232,7 +233,7 @@ class InventoryManager(object):
 
                 # recursively deal with directory entries
                 fullpath = os.path.join(b_source, i)
-                parsed_this_one = self.parse_source(to_text(fullpath))
+                parsed_this_one = self.parse_source(to_native(fullpath))
                 display.debug(u'parsed %s as %s' % (fullpath, parsed_this_one))
                 if not parsed:
                     parsed = parsed_this_one
@@ -249,29 +250,41 @@ class InventoryManager(object):
             # try source with each plugin
             failures = []
             for plugin in self._inventory_plugins:
-                plugin_name = to_text(getattr(plugin, '_load_name', getattr(plugin, '_original_path', '')))
-                display.debug(u'Attempting to use plugin %s' % plugin_name)
+                plugin_name = to_native(getattr(plugin, '_load_name', getattr(plugin, '_original_path', '')))
+                display.debug(u'Attempting to use plugin %s (%s)' % (plugin_name, plugin._original_path))
 
                 # initialize
                 if plugin.verify_file(source):
                     try:
+                        # in case plugin fails 1/2 way we dont want partial inventory
                         plugin.parse(self._inventory, self._loader, source, cache=cache)
                         parsed = True
-                        display.vvv(u'Parsed %s inventory source with %s plugin' % (to_text(source), plugin_name))
+                        display.vvv('Parsed %s inventory source with %s plugin' % (to_text(source), plugin_name))
                         break
                     except AnsibleParserError as e:
+                        display.debug('%s was not parsable by %s' % (to_text(source), plugin_name))
+                        failures.append({'src': source, 'plugin': plugin_name, 'exc': e})
+                    except Exception as e:
+                        display.debug('%s failed to parse %s' % (plugin_name, to_text(source)))
                         failures.append({'src': source, 'plugin': plugin_name, 'exc': e})
                 else:
-                    display.debug(u'%s did not meet %s requirements' % (to_text(source), plugin_name))
+                    display.debug('%s did not meet %s requirements' % (to_text(source), plugin_name))
             else:
-                if failures:
+                if not parsed and failures:
                     # only if no plugin processed files should we show errors.
-                    for fail in failures:
-                        display.warning(u'\n* Failed to parse %s with %s inventory plugin: %s' % (to_text(fail['src']), fail['plugin'], to_text(fail['exc'])))
-                        display.vvv(fail['exc'].tb)
-
+                    if C.INVENTORY_UNPARSED_IS_FAILED:
+                        msg = "Could not parse inventory source %s with available plugins:\n" % source
+                        for fail in failures:
+                            msg += 'Plugin %s failed: %s\n' % (fail['plugin'], to_native(fail['exc']))
+                            if display.verbosity >= 3:
+                                msg += "%s\n" % fail['exc'].tb
+                        raise AnsibleParserError(msg)
+                    else:
+                        for fail in failures:
+                            display.warning(u'\n* Failed to parse %s with %s plugin: %s' % (to_text(fail['src']), fail['plugin'], to_text(fail['exc'])))
+                            display.vvv(to_text(fail['exc'].tb))
         if not parsed:
-            display.warning(u"Unable to parse %s as an inventory source" % to_text(source))
+            display.warning("Unable to parse %s as an inventory source" % to_text(source))
 
         # clear up, jic
         self._inventory.current_source = None
@@ -322,10 +335,10 @@ class InventoryManager(object):
             pattern_hash = pattern
 
         if not ignore_limits and self._subset:
-            pattern_hash += u":%s" % to_text(self._subset)
+            pattern_hash += ":%s" % to_native(self._subset)
 
         if not ignore_restrictions and self._restriction:
-            pattern_hash += u":%s" % to_text(self._restriction)
+            pattern_hash += ":%s" % to_native(self._restriction)
 
         if pattern_hash not in self._hosts_patterns_cache:
 

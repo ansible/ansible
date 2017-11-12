@@ -19,8 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
-import re
 import sys
 
 from ansible import constants as C
@@ -28,8 +26,6 @@ from ansible.errors import AnsibleError
 from ansible.inventory.group import Group
 from ansible.inventory.host import Host
 from ansible.module_utils.six import iteritems
-from ansible.module_utils._text import to_bytes
-from ansible.plugins.cache import FactCache
 from ansible.utils.vars import combine_vars
 from ansible.utils.path import basedir
 
@@ -65,15 +61,22 @@ class InventoryData(object):
             self.add_group(group)
         self.add_child('all', 'ungrouped')
 
-        # prime cache
-        self.cache = FactCache()
-
     def serialize(self):
-        data = dict()
+        self._groups_dict_cache = None
+        data = {
+            'groups': self.groups,
+            'hosts': self.hosts,
+            'local': self.locahost,
+            'source': self.current_source,
+        }
         return data
 
     def deserialize(self, data):
-        pass
+        self._groups_dict_cache = {}
+        self.hosts = data.get('hosts')
+        self.groups = data.get('groups')
+        self.localhost = data.get('local')
+        self.current_source = data.get('source')
 
     def _create_implicit_localhost(self, pattern):
 
@@ -82,44 +85,22 @@ class InventoryData(object):
         else:
             new_host = Host(pattern)
 
-            # use 'all' vars but not part of all group
-            new_host.vars = self.groups['all'].get_vars()
-
             new_host.address = "127.0.0.1"
             new_host.implicit = True
 
-            if "ansible_python_interpreter" not in new_host.vars:
-                py_interp = sys.executable
-                if not py_interp:
-                    # sys.executable is not set in some cornercases.  #13585
-                    py_interp = '/usr/bin/python'
-                    display.warning('Unable to determine python interpreter from sys.executable. Using /usr/bin/python default. '
-                                    'You can correct this by setting ansible_python_interpreter for localhost')
-                new_host.set_variable("ansible_python_interpreter", py_interp)
-
-            if "ansible_connection" not in new_host.vars:
-                new_host.set_variable("ansible_connection", 'local')
+            # set localhost defaults
+            py_interp = sys.executable
+            if not py_interp:
+                # sys.executable is not set in some cornercases. see issue #13585
+                py_interp = '/usr/bin/python'
+                display.warning('Unable to determine python interpreter from sys.executable. Using /usr/bin/python default. '
+                                'You can correct this by setting ansible_python_interpreter for localhost')
+            new_host.set_variable("ansible_python_interpreter", py_interp)
+            new_host.set_variable("ansible_connection", 'local')
 
             self.localhost = new_host
 
         return new_host
-
-    def _scan_groups_for_host(self, hostname, localhost=False):
-        ''' in case something did not update inventory correctly, fallback to group scan '''
-
-        found = None
-        for group in self.groups.values():
-            for host in group.get_hosts():
-                if hostname == host.name:
-                    found = host
-                    break
-            if found:
-                break
-
-        if found:
-            display.debug('Found host (%s) in groups but it was missing from main inventory' % hostname)
-
-        return found
 
     def reconcile_inventory(self):
         ''' Ensure inventory basic rules, run after updates '''
@@ -170,26 +151,14 @@ class InventoryData(object):
         self._groups_dict_cache = {}
 
     def get_host(self, hostname):
-        ''' fetch host object using name
-            deal with implicit localhost
-            and possible inconsistent inventory '''
+        ''' fetch host object using name deal with implicit localhost '''
 
         matching_host = self.hosts.get(hostname, None)
 
         # if host is not in hosts dict
-        if matching_host is None:
-
+        if matching_host is None and hostname in C.LOCALHOST:
             # might need to create implicit localhost
-            if hostname in C.LOCALHOST:
-                matching_host = self._create_implicit_localhost(hostname)
-
-            # might be inconsistent inventory, search groups
-            if matching_host is None:
-                matching_host = self._scan_groups_for_host(hostname)
-
-            # if found/created update hosts dict
-            if matching_host:
-                self.hosts[hostname] = matching_host
+            matching_host = self._create_implicit_localhost(hostname)
 
         return matching_host
 
@@ -218,7 +187,7 @@ class InventoryData(object):
             h = Host(host, port)
             self.hosts[host] = h
             if self.current_source:  # set to 'first source' in which host was encountered
-                self.set_variable(host, 'inventory_file', os.path.basename(self.current_source))
+                self.set_variable(host, 'inventory_file', self.current_source)
                 self.set_variable(host, 'inventory_dir', basedir(self.current_source))
             else:
                 self.set_variable(host, 'inventory_file', None)
@@ -235,7 +204,7 @@ class InventoryData(object):
         else:
             h = self.hosts[host]
 
-        if g and h not in g.get_hosts():
+        if g:
             g.add_host(h)
             self._groups_dict_cache = {}
             display.debug("Added host %s to group %s" % (host, group))

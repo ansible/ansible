@@ -94,7 +94,7 @@ options:
         description:
             - Sets the frequency at which the software sends IGMP host query
               messages. Values can range from 1 to 18000 seconds.
-              he default is 125 seconds.
+              The default is 125 seconds.
         required: false
         default: null
     last_member_qrt:
@@ -249,7 +249,10 @@ def execute_show_command(command, module, command_type='cli_show'):
             'output': 'text',
         }]
     else:
-        cmds = [command]
+        cmds = [{
+            'command': command,
+            'output': 'json',
+        }]
 
     return run_commands(module, cmds)
 
@@ -319,7 +322,7 @@ def get_igmp_interface(module, interface):
         'ConfiguredStartupQueryInterval': 'startup_query_interval',
         'StartupQueryCount': 'startup_query_count',
         'RobustnessVariable': 'robustness',
-        'QuerierTimeout': 'querier_timeout',
+        'ConfiguredQuerierTimeout': 'querier_timeout',
         'ConfiguredMaxResponseTime': 'query_mrt',
         'ConfiguredQueryInterval': 'query_interval',
         'LastMemberMTR': 'last_member_qrt',
@@ -332,16 +335,16 @@ def get_igmp_interface(module, interface):
     if body:
         resource = body['TABLE_vrf']['ROW_vrf']['TABLE_if']['ROW_if']
         igmp = apply_key_map(key_map, resource)
-        report_llg = str(resource['ReportingForLinkLocal'])
+        report_llg = str(resource['ReportingForLinkLocal']).lower()
         if report_llg == 'true':
             igmp['report_llg'] = True
         elif report_llg == 'false':
             igmp['report_llg'] = False
 
-        immediate_leave = str(resource['ImmediateLeave'])  # returns en or dis
-        if immediate_leave == 'en':
+        immediate_leave = str(resource['ImmediateLeave']).lower()  # returns en or dis
+        if immediate_leave == 'en' or immediate_leave == 'true':
             igmp['immediate_leave'] = True
-        elif immediate_leave == 'dis':
+        elif immediate_leave == 'dis' or immediate_leave == 'false':
             igmp['immediate_leave'] = False
 
     # the  next block of code is used to retrieve anything with:

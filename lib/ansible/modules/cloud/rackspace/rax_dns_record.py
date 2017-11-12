@@ -270,7 +270,6 @@ def rax_dns_record(module, comment=None, data=None, domain=None, name=None,
             record = domain.find_record(record_type, name=name, data=data)
         except pyrax.exceptions.DomainRecordNotFound as e:
             record = {}
-            pass
         except pyrax.exceptions.DomainRecordNotUnique as e:
             module.fail_json(msg='%s' % e.message)
 

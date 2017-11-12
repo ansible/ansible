@@ -15,6 +15,7 @@ from lib.util import (
     SubprocessError,
     display,
     run_command,
+    find_executable,
 )
 
 from lib.config import (
@@ -55,7 +56,8 @@ class Pep8Test(SanitySingleVersion):
         paths = sorted(i.path for i in targets.include if (os.path.splitext(i.path)[1] == '.py' or i.path.startswith('bin/')) and i.path not in skip_paths_set)
 
         cmd = [
-            'pycodestyle',
+            'python%s' % args.python_version,
+            find_executable('pycodestyle'),
             '--max-line-length', '160',
             '--config', '/dev/null',
             '--ignore', ','.join(sorted(current_ignore)),

@@ -53,11 +53,10 @@ options:
     default: None
 notes:
     - Handlers are made available to the whole play.
-    - simple dependencies seem to work fine.
-    - As with C(include) this task can be static or dynamic, If static it implies that it won't need templating nor loops nor conditionals and will
-      show included tasks in the --list options. Ansible will try to autodetect what is needed, but you can set `static` to `yes` or `no` at task
-      level to control this.
-    - This module is also supported for Windows targets.
+    - Before 2.4, as with C(include), this task could be static or dynamic, If static it implied that it won't need templating nor loops nor conditionals
+      and will show included tasks in the --list options.
+      Ansible would try to autodetect what is needed, but you can set `static` to `yes` or `no` at task level to control this.
+    - After 2.4, you can use M(import_role) for 'static' behaviour and this action for 'dynamic' one.
 '''
 
 EXAMPLES = """

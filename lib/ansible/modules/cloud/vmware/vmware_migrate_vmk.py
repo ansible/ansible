@@ -82,6 +82,7 @@ from ansible.module_utils.vmware import (vmware_argument_spec, find_dvs_by_name,
 
 
 class VMwareMigrateVmk(object):
+
     def __init__(self, module):
         self.module = module
         self.host_system = None
@@ -158,7 +159,7 @@ class VMwareMigrateVmk(object):
 
         for vnic in self.host_system.configManager.networkSystem.networkInfo.vnic:
             if vnic.device == self.device:
-                #self.vnic = vnic
+                # self.vnic = vnic
                 if vnic.spec.distributedVirtualPort is None:
                     if vnic.portgroup == self.current_portgroup_name:
                         return "migrate_vss_vds"

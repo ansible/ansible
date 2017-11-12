@@ -97,10 +97,11 @@ from ansible.module_utils.vmware import (HAS_PYVMOMI,
                                          find_dvs_by_name,
                                          vmware_argument_spec,
                                          wait_for_task
-                                        )
+                                         )
 
 
 class VMwareDVSwitch(object):
+
     def __init__(self, module):
         self.module = module
         self.dvs = None
@@ -134,7 +135,6 @@ class VMwareDVSwitch(object):
         except Exception as e:
             self.module.fail_json(msg=str(e))
 
-
     def create_dvswitch(self, network_folder):
         result = None
         changed = False
@@ -152,7 +152,7 @@ class VMwareDVSwitch(object):
         spec.productInfo.name = "DVS"
         spec.productInfo.vendor = "VMware"
 
-        for count in range(1, self.uplink_quantity+1):
+        for count in range(1, self.uplink_quantity + 1):
             spec.configSpec.uplinkPortPolicy.uplinkPortName.append("uplink%d" % count)
 
         task = network_folder.CreateDVS_Task(spec)

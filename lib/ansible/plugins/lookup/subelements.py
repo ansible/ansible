@@ -1,21 +1,86 @@
 # (c) 2013, Serge van Ginderachter <serge@vanginderachter.be>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2012-17 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+DOCUMENTATION = """
+    lookup: subelements
+    author: Serge van Ginderachter <serge@vanginderachter.be>
+    version_added: "1.4"
+    short_description: traverse nested key from a list of dictionaries
+    description:
+      - Subelements walks a list of hashes (aka dictionaries) and then traverses a list with a given (nested sub-)key inside of those records.
+    options:
+      _terms:
+         description: tuple of list of dictionaries and dictionary key to extract
+         required: True
+      skip_missing:
+        default: False
+        description:
+          - If set to True, the lookup plugin will skip the lists items that do not contain the given subkey.
+            If False, the plugin will yield an error and complain about the missing subkey.
+"""
+
+EXAMPLES = """
+- name: show var structure as it is needed for example to make sense
+  hosts: all
+  vars:
+    users:
+      - name: alice
+        authorized:
+          - /tmp/alice/onekey.pub
+          - /tmp/alice/twokey.pub
+        mysql:
+            password: mysql-password
+            hosts:
+              - "%"
+              - "127.0.0.1"
+              - "::1"
+              - "localhost"
+            privs:
+              - "*.*:SELECT"
+              - "DB1.*:ALL"
+        groups:
+          - wheel
+      - name: bob
+        authorized:
+          - /tmp/bob/id_rsa.pub
+        mysql:
+            password: other-mysql-password
+            hosts:
+              - "db1"
+            privs:
+              - "*.*:SELECT"
+              - "DB2.*:ALL"
+  tasks:
+    - name: Set authorized ssh key, extracting just that data from 'users'
+      authorized_key:
+        user: "{{ item.0.name }}"
+        key: "{{ lookup('file', item.1) }}"
+      with_subelements:
+         - "{{ users }}"
+         - authorized
+
+    - name: Setup MySQL users, given the mysql hosts and privs subkey lists
+      mysql_user:
+        name: "{{ item.0.name }}"
+        password: "{{ item.0.mysql.password }}"
+        host: "{{ item.1 }}"
+        priv: "{{ item.0.mysql.privs | join('/') }}"
+      with_subelements:
+        - "{{ users }}"
+        - mysql.hosts
+
+    - name: list groups for user that have them, dont error if they don't
+      debug: var=item
+      with_list: "{{lookup('subelements', users, 'groups', 'skip_missing=True')}}"
+"""
+
+RETURN = """
+_list:
+  description: list of subelements extracted
+"""
 
 from ansible.errors import AnsibleError
 from ansible.module_utils.six import string_types

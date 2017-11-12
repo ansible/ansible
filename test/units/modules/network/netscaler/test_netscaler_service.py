@@ -162,6 +162,7 @@ class TestNetscalerServiceModule(TestModule):
             'ansible.modules.network.netscaler.netscaler_service',
             ConfigProxy=m,
             service_exists=service_exists_mock,
+            do_state_change=Mock(return_value=Mock(errorcode=0)),
         ):
             self.module = netscaler_service
             result = self.exited()
@@ -190,6 +191,7 @@ class TestNetscalerServiceModule(TestModule):
             service_identical=service_identical_mock,
             monitor_bindings_identical=monitor_bindings_identical_mock,
             all_identical=all_identical_mock,
+            do_state_change=Mock(return_value=Mock(errorcode=0)),
         ):
             self.module = netscaler_service
             result = self.exited()
@@ -220,6 +222,7 @@ class TestNetscalerServiceModule(TestModule):
             monitor_bindings_identical=monitor_bindings_identical_mock,
             all_identical=all_identical_mock,
             sync_monitor_bindings=sync_monitor_bindings_mock,
+            do_state_change=Mock(return_value=Mock(errorcode=0)),
         ):
             self.module = netscaler_service
             result = self.exited()
@@ -247,6 +250,7 @@ class TestNetscalerServiceModule(TestModule):
             service_exists=service_exists_mock,
             service_identical=service_identical_mock,
             monitor_bindings_identical=monitor_bindings_identical_mock,
+            do_state_change=Mock(return_value=Mock(errorcode=0)),
         ):
             self.module = netscaler_service
             result = self.exited()

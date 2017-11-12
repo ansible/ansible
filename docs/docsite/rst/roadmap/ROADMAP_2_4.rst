@@ -7,6 +7,8 @@ Ansible by Red Hat, Core 2.4
 
 **Community Module Freeze: 29 August 2017**
 
+**Release Candidate 1 will be 06 September, 2017**
+
 **Target: Mid-September 2017**
 
 .. contents:: Topics
@@ -54,7 +56,7 @@ Inventory
 
 Facts
 -----
-- Configurable list of ‘fact modules’ for ``gather_facts`` **(done)**
+- Configurable list of 'fact modules' for ``gather_facts`` **(done)**
 - Fact gathering policy finer grained **(done)**
 - Make ``setup.py``/``facts`` more pluggable **(done)**
 - Improve testing of ``setup.py``/``facts.py`` **(done)**
@@ -102,8 +104,8 @@ Globalize Callbacks
 -------------------
 **(pushed out to future release)**
 - Make send_callback available to other code that cannot use it.
-- Would allow for ‘full formatting’ of output (see JSON callback)
-- Fixes static ‘include’ display problem
+- Would allow for 'full formatting' of output (see JSON callback)
+- Fixes static 'include' display problem
 
 Plugins
 -------
@@ -126,13 +128,13 @@ Runtime Check on Modules for Blacklisting
 
 Disambiguate Includes
 ---------------------
-- Create import_x for ‘static includes’ (import_task, import_play, import_role)
+- Create import_x for 'static includes' (import_task, import_playbook, import_role)
 
-  - Any directives are applied to the ‘imported’ tasks
+  - Any directives are applied to the 'imported' tasks
 
-- Create include_x for ‘dynamic includes’ (include_task, include_role)
+- Create include_x for 'dynamic includes' (include_task, include_role)
 
-  - Any directives apply to the ‘include’  itself
+  - Any directives apply to the 'include'  itself
 
 Windows
 -------
@@ -150,12 +152,12 @@ Windows
 - Module updates
 
   - Split "Windows" category into multiple subs
-  - Domain user/group management modules **(in progress)**
+  - Domain user/group management modules **(done)**
   - win_mapped_drive module **(done)**
   - win_hotfix **(done)**
   - win_updates rewrite to require become
-  - win_package changes required to deprecate win_msi
-  - win_copy re-write
+  - win_package changes required to deprecate win_msi **(done)**
+  - win_copy re-write **(done)**
 
 AWS
 ---
@@ -172,8 +174,8 @@ AWS
 
 Azure
 -----
-- Expose endpoint overrides **(in progress)**
-- Reformat/document module output to collapse internal API structures and surface important data (eg, public IPs, NICs, data disks)
+- Expose endpoint overrides **(done)**
+- Reformat/document module output to collapse internal API structures and surface important data (eg, public IPs, NICs, data disks) **(pushed to future)**
 - Add load balancer module **(in progress)**
 - Add Azure Functions module **(in progress)**
 
@@ -185,14 +187,14 @@ Google Cloud Platform
 
 Network Roadmap
 ---------------
-- Removal of ``*_template`` modules
-- Distributed Continuous Integration Infrastructure
-- RPC Connection Plugin
-- Module Work
+- Removal of ``*_template`` modules **(done)**
+- Distributed Continuous Integration Infrastructure **(done)**
+- RPC Connection Plugin **(done)**
+- Module Work 
 
-  - Declarative intent modules
-  - OpenVSwitch
-  - Minimal Viable Platform Agnostic Modules
+  - Declarative intent modules **(done)**
+  - OpenVSwitch **(done)**
+  - Minimal Viable Platform Agnostic Modules **(done)**
 
 Contributor Quality of Life
 ---------------------------

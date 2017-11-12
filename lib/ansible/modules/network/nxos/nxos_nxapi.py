@@ -131,10 +131,9 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 
 def check_args(module, warnings):
-    transport = module.params['transport']
-    provider_transport = (module.params['provider'] or {}).get('transport')
-    if 'nxapi' in (transport, provider_transport):
-        module.fail_json(msg='transport=nxapi is not supporting when configuring nxapi')
+    provider = module.params['provider']
+    if provider['transport'] == 'nxapi':
+        module.fail_json(msg='module not supported over nxapi transport')
 
     nxos_check_args(module, warnings)
 
@@ -148,9 +147,6 @@ def check_args(module, warnings):
         module.params['state'] = 'absent'
         warnings.append('state=stopped is deprecated and will be removed in a '
                         'a future release.  Please use state=absent instead')
-
-    if module.params['transport'] == 'nxapi':
-        module.fail_json(msg='module not supported over nxapi transport')
 
     for key in ['config']:
         if module.params[key]:
@@ -196,7 +192,7 @@ def map_obj_to_commands(want, have, module):
     return commands
 
 def parse_http(data):
-    http_res = [r'HTTP Port:\s+(\d+)', r'HTTP Listen on port (\d+)']
+    http_res = [r'nxapi http port (\d+)']
     http_port = None
 
     for regex in http_res:
@@ -208,7 +204,7 @@ def parse_http(data):
     return {'http': http_port is not None, 'http_port': http_port}
 
 def parse_https(data):
-    https_res = [r'HTTPS Port:\s+(\d+)', r'HTTPS Listen on port (\d+)']
+    https_res = [r'nxapi https port (\d+)']
     https_port = None
 
     for regex in https_res:
@@ -220,15 +216,19 @@ def parse_https(data):
     return {'https': https_port is not None, 'https_port': https_port}
 
 def parse_sandbox(data):
-    match = re.search(r'Sandbox:\s+(.+)$', data, re.M)
+    sandbox = [item for item in data.split('\n') if re.search(r'.*sandbox.*', item)]
     value = False
-    if match:
-        value = match.group(1) == 'Enabled'
+    if sandbox and sandbox[0] == 'nxapi sandbox':
+        value = True
     return {'sandbox': value}
 
 def map_config_to_obj(module):
-    out = run_commands(module, ['show nxapi'], check_rc=False)[0]
-    if out == '':
+    out = run_commands(module, ['show run all | inc nxapi'], check_rc=False)[0]
+    match = re.search(r'no feature nxapi', out, re.M)
+    # There are two possible outcomes when nxapi is disabled on nxos platforms.
+    # 1. Nothing is displayed in the running config.
+    # 2. The 'no feature nxapi' command is displayed in the running config.
+    if match or out == '':
         return {'state': 'absent'}
 
     out = str(out).strip()

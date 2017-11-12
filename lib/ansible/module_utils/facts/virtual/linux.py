@@ -55,7 +55,7 @@ class LinuxVirtual(Virtual):
                     virtual_facts['virtualization_role'] = 'guest'
                     return virtual_facts
 
-        if os.path.exists('/proc/vz'):
+        if os.path.exists('/proc/vz') and not os.path.exists('/proc/lve'):
             virtual_facts['virtualization_type'] = 'openvz'
             if os.path.exists('/proc/bc'):
                 virtual_facts['virtualization_role'] = 'host'

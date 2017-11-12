@@ -359,9 +359,9 @@ def get_service_by_id_or_name(consul_api, service_id_or_name):
 
 
 def parse_check(module):
-    if len(filter(None, [module.params.get('script'), module.params.get('ttl'), module.params.get('http')])) > 1:
+    if len([p for p in (module.params.get('script'), module.params.get('ttl'), module.params.get('http')) if p]) > 1:
         module.fail_json(
-            msg='check are either script, http or ttl driven, supplying more than one does not make sense')
+            msg='checks are either script, http or ttl driven, supplying more than one does not make sense')
 
     if module.params.get('check_id') or module.params.get('script') or module.params.get('ttl') or module.params.get('http'):
 
@@ -389,8 +389,8 @@ def parse_service(module):
             module.params.get('service_port'),
             module.params.get('tags'),
         )
-    elif module.params.get('service_port') and not module.params.get('service_name'):
-        module.fail_json(msg="service_port supplied but no service_name, a name is required to configure a service.")
+    elif not module.params.get('service_name'):
+        module.fail_json(msg="service_name is required to configure a service.")
 
 
 class ConsulService():

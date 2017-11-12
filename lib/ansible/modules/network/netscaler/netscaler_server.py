@@ -89,8 +89,8 @@ options:
 
     disabled:
         description:
-            - When set to C(true) the server state will be set to DISABLED.
-            - When set to C(false) the server state will be set to ENABLED.
+            - When set to C(true) the server state will be set to C(disabled).
+            - When set to C(false) the server state will be set to C(enabled).
             - >-
                 Note that due to limitations of the underlying NITRO API a C(disabled) state change alone
                 does not cause the module result to report a changed status.

@@ -163,6 +163,7 @@ class TestNetscalerServicegroupModule(TestModule):
             ConfigProxy=m,
             servicegroup_exists=servicegroup_exists_mock,
             servicemembers_identical=Mock(side_effect=[False, True]),
+            do_state_change=Mock(return_value=Mock(errorcode=0)),
             nitro_exception=self.MockException,
         ):
             self.module = netscaler_servicegroup
@@ -191,6 +192,7 @@ class TestNetscalerServicegroupModule(TestModule):
             servicegroup_identical=servicegroup_identical_mock,
             monitor_bindings_identical=monitor_bindings_identical_mock,
             servicemembers_identical=Mock(side_effect=[True, True]),
+            do_state_change=Mock(return_value=Mock(errorcode=0)),
             nitro_exception=self.MockException,
         ):
             self.module = netscaler_servicegroup
@@ -222,6 +224,7 @@ class TestNetscalerServicegroupModule(TestModule):
             nitro_exception=self.MockException,
             servicemembers_identical=Mock(side_effect=[True, True]),
             sync_monitor_bindings=sync_monitor_bindings_mock,
+            do_state_change=Mock(return_value=Mock(errorcode=0)),
         ):
             self.module = netscaler_servicegroup
             result = self.exited()
@@ -250,7 +253,7 @@ class TestNetscalerServicegroupModule(TestModule):
             sync_monitor_bindings=Mock(),
             servicemembers_identical=Mock(side_effect=[False, True]),
             sync_service_members=sync_mock,
-
+            do_state_change=Mock(return_value=Mock(errorcode=0)),
         ):
             self.module = netscaler_servicegroup
             result = self.exited()
@@ -304,7 +307,7 @@ class TestNetscalerServicegroupModule(TestModule):
             servicemembers_identical=Mock(side_effect=[False, True]),
             nitro_exception=self.MockException,
             sync_service_members=sync_mock,
-
+            do_state_change=Mock(return_value=Mock(errorcode=0)),
         ):
             self.module = netscaler_servicegroup
             result = self.failed()
@@ -332,7 +335,7 @@ class TestNetscalerServicegroupModule(TestModule):
             servicemembers_identical=Mock(side_effect=[False, True]),
             nitro_exception=self.MockException,
             sync_service_members=sync_mock,
-
+            do_state_change=Mock(return_value=Mock(errorcode=0)),
         ):
             self.module = netscaler_servicegroup
             result = self.failed()
@@ -360,7 +363,7 @@ class TestNetscalerServicegroupModule(TestModule):
             servicemembers_identical=Mock(side_effect=[False, False]),
             nitro_exception=self.MockException,
             sync_service_members=sync_mock,
-
+            do_state_change=Mock(return_value=Mock(errorcode=0)),
         ):
             self.module = netscaler_servicegroup
             result = self.failed()
@@ -388,7 +391,7 @@ class TestNetscalerServicegroupModule(TestModule):
             servicemembers_identical=Mock(side_effect=[True, True]),
             nitro_exception=self.MockException,
             sync_service_members=sync_mock,
-
+            do_state_change=Mock(return_value=Mock(errorcode=0)),
         ):
             self.module = netscaler_servicegroup
             result = self.failed()
@@ -415,6 +418,7 @@ class TestNetscalerServicegroupModule(TestModule):
             servicegroup_identical=servicegroup_identical_mock,
             servicemembers_identical=Mock(side_effect=[True, True]),
             monitor_bindings_identical=monitor_bindings_identical_mock,
+            do_state_change=Mock(return_value=Mock(errorcode=0)),
             nitro_exception=self.MockException,
         ):
             self.module = netscaler_servicegroup

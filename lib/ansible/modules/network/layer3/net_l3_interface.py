@@ -36,7 +36,7 @@ options:
     description: List of L3 interfaces definitions
   purge:
     description:
-      - Purge L3 interfaces not defined in the aggregates parameter.
+      - Purge L3 interfaces not defined in the I(aggregate) parameter.
     default: no
   state:
     description:

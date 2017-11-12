@@ -217,12 +217,12 @@ def main():
     changed = False
     if state == 'present':
         installed, missing, outdated = bower.list()
-        if len(missing):
+        if missing:
             changed = True
             bower.install()
     elif state == 'latest':
         installed, missing, outdated = bower.list()
-        if len(missing) or len(outdated):
+        if missing or outdated:
             changed = True
             bower.update()
     else:  # Absent

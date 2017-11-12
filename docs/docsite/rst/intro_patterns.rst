@@ -93,7 +93,7 @@ While we're jumping a bit ahead, additionally, you can add an exclusion criteria
 
     ansible-playbook site.yml --limit datacenter2
 
-And if you want to read the list of hosts from a file, prefix the file name with '@'.  Since Ansible 1.2::
+And if you want to read the list of hosts from a file, prefix the file name with '@'.::
 
     ansible-playbook site.yml --limit @retry_hosts.txt
 

@@ -1229,6 +1229,7 @@ class RHEV(object):
         self.__get_conn()
         return self.conn.set_VM_Host(vmname, vmhost)
 
+        # pylint: disable=unreachable
         VM = self.conn.get_VM(vmname)
         HOST = self.conn.get_Host(vmhost)
 

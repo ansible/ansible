@@ -146,7 +146,7 @@ def map_obj_to_commands(want, have, module):
     commands = list()
     state = module.params['state']
 
-    needs_update = lambda x: want.get(x) and (want.get(x) != have.get(x))
+    needs_update = lambda x: want.get(x) is not None and (want.get(x) != have.get(x))
 
     if state == 'absent':
         if have['hostname'] != 'Router':
@@ -266,12 +266,13 @@ def parse_domain_search(config):
     return matches
 
 def parse_name_servers(config):
-    match = re.findall('^ip name-server (?:vrf (\S+) )*(\S+)', config, re.M)
+    match = re.findall('^ip name-server (?:vrf (\S+) )*(.*)', config, re.M)
     matches = list()
-    for vrf, server in match:
+    for vrf, servers in match:
         if not vrf:
             vrf = None
-        matches.append({'server': server, 'vrf': vrf})
+        for server in servers.split():
+            matches.append({'server': server, 'vrf': vrf})
     return matches
 
 def parse_lookup_source(config):
