@@ -55,6 +55,53 @@ options:
             - "C(source_profile_name): The prfile name related to the source network."
             - "C(target_profile_id): The id of the target profile id to be mapped to in the engine."
         version_added: "2.5"
+    cluster_mappings:
+        description:
+            - "Mapper which maps cluster name between VM's OVF and the destination cluster this VM should be registered to,
+               relevant when C(state) is registered.
+               Cluster mapping is described by the following dictionary:"
+            - "C(source_name): The name of the source cluster."
+            - "C(dest_name): The name of the destination cluster."
+        version_added: "2.5"
+    role_mappings:
+        description:
+            - "Mapper which maps role name between VM's OVF and the destination role this VM should be registered to,
+               relevant when C(state) is registered.
+               Role mapping is described by the following dictionary:"
+            - "C(source_name): The name of the source role."
+            - "C(dest_name): The name of the destination role."
+        version_added: "2.5"
+    domain_mappings:
+        description:
+            - "Mapper which maps aaa domain name between VM's OVF and the destination aaa domain this VM should be registered to,
+               relevant when C(state) is registered.
+               The aaa domain mapping is described by the following dictionary:"
+            - "C(source_name): The name of the source aaa domain."
+            - "C(dest_name): The name of the destination aaa domain."
+        version_added: "2.5"
+    affinity_group_mappings:
+        description:
+            - "Mapper which maps affinty name between VM's OVF and the destination affinity this VM should be registered to,
+               relevant when C(state) is registered."
+        version_added: "2.5"
+    affinity_label_mappings:
+        description:
+            - "Mappper which maps affinity label name between VM's OVF and the destination label this VM should be registered to,
+               relevant when C(state) is registered."
+        version_added: "2.5"
+    lun_mappings:
+        description:
+            - "Mapper which maps lun between VM's OVF and the destination lun this VM should contain, relevant when C(state) is registered.
+               lun_mappings is described by the following dictionary:
+               - C(logical_unit_id): The logical unit number to identify a logical unit,
+               - C(logical_unit_port): The port being used to connect with the LUN disk.
+               - C(logical_unit_portal): The portal being used to connect with the LUN disk.
+               - C(logical_unit_address): The address of the block storage host.
+               - C(logical_unit_target): The iSCSI specification located on an iSCSI server
+               - C(logical_unit_username): Username to be used to connect to the block storage host.
+               - C(logical_unit_password): Password to be used to connect to the block storage host.
+               - C(storage_type): The storage type which the LUN reside on (iscsi or fcp)"
+        version_added: "2.5"
     reassign_bad_macs:
         description:
             - "Boolean indication whether to reassign bad macs when C(state) is registered."
@@ -445,6 +492,41 @@ EXAMPLES = '''
       source_profile_name: mynetwork2
       target_profile_id: 4444-4444-4444-4444
     reassign_bad_macs: "True"
+
+- name: Register VM with mappings
+  ovirt_vms:
+    state: registered
+    storage_domain: mystorage
+    cluster: mycluster
+    id: 1111-1111-1111-1111
+    role_mappings:
+      - source_name: Role_A
+        dest_name: Role_B
+    domain_mappings:
+      - source_name: Domain_A
+        dest_name: Domain_B
+    lun_mappings:
+      - source_storage_type: iscsi
+        source_logical_unit_id: 1IET_000d0001
+        source_logical_unit_port: 3260
+        source_logical_unit_portal: 1
+        source_logical_unit_address: 10.34.63.203
+        source_logical_unit_target: iqn.2016-08-09.brq.str-01:omachace
+        dest_storage_type: iscsi
+        dest_logical_unit_id: 1IET_000d0002
+        dest_logical_unit_port: 3260
+        dest_logical_unit_portal: 1
+        dest_logical_unit_address: 10.34.63.204
+        dest_logical_unit_target: iqn.2016-08-09.brq.str-02:omachace
+    affinity_group_mappings:
+      - source_name: Affinity_A
+        dest_name: Affinity_B
+    affinity_label_mappings:
+      - source_name: Label_A
+        dest_name: Label_B
+    cluster_mappings:
+      - source_name: cluster_A
+        dest_name: cluster_B
 
 - name: Creates a stateless VM which will always use latest template version
   ovirt_vms:
@@ -1040,6 +1122,131 @@ class VmsModule(BaseModule):
                 self.changed = True
 
 
+def _get_role_mappings(module):
+    roleMappings = list()
+
+    for roleMapping in module.params['role_mappings']:
+        roleMappings.append(
+            otypes.RegistrationRoleMapping(
+                from_=otypes.Role(
+                    name=roleMapping['source_name'],
+                ) if roleMapping['source_name'] else None,
+                to=otypes.Role(
+                    name=roleMapping['dest_name'],
+                ) if roleMapping['dest_name'] else None,
+            )
+        )
+    return roleMappings
+
+
+def _get_affinity_group_mappings(module):
+    affinityGroupMappings = list()
+
+    for affinityGroupMapping in module.params['affinity_group_mappings']:
+        affinityGroupMappings.append(
+            otypes.RegistrationAffinityGroupMapping(
+                from_=otypes.AffinityGroup(
+                    name=affinityGroupMapping['source_name'],
+                ) if affinityGroupMapping['source_name'] else None,
+                to=otypes.AffinityGroup(
+                    name=affinityGroupMapping['dest_name'],
+                ) if affinityGroupMapping['dest_name'] else None,
+            )
+        )
+    return affinityGroupMappings
+
+
+def _get_affinity_label_mappings(module):
+    affinityLabelMappings = list()
+
+    for affinityLabelMapping in module.params['affinity_label_mappings']:
+        affinityLabelMappings.append(
+            otypes.RegistrationAffinityLabelMapping(
+                from_=otypes.AffinityLabel(
+                    name=affinityLabelMapping['source_name'],
+                ) if affinityLabelMapping['source_name'] else None,
+                to=otypes.AffinityLabel(
+                    name=affinityLabelMapping['dest_name'],
+                ) if affinityLabelMapping['dest_name'] else None,
+            )
+        )
+    return affinityLabelMappings
+
+
+def _get_domain_mappings(module):
+    domainMappings = list()
+
+    for domainMapping in module.params['domain_mappings']:
+        domainMappings.append(
+            otypes.RegistrationDomainMapping(
+                from_=otypes.Domain(
+                    name=domainMapping['source_name'],
+                ) if domainMapping['source_name'] else None,
+                to=otypes.Domain(
+                    name=domainMapping['dest_name'],
+                ) if domainMapping['dest_name'] else None,
+            )
+        )
+    return domainMappings
+
+
+def _get_lun_mappings(module):
+    lunMappings = list()
+    for lunMapping in module.params['lun_mappings']:
+        lunMappings.append(
+            otypes.RegistrationLunMapping(
+                from_=otypes.Disk(
+                    lun_storage=otypes.HostStorage(
+                        type=otypes.StorageType(lunMapping['source_storage_type'])
+                        if (lunMapping['source_storage_type'] in
+                            ['iscsi', 'fcp']) else None,
+                        logical_units=[
+                            otypes.LogicalUnit(
+                                id=lunMapping['source_logical_unit_id'],
+                            )
+                        ],
+                    ),
+                ) if lunMapping['source_logical_unit_id'] else None,
+                to=otypes.Disk(
+                    lun_storage=otypes.HostStorage(
+                        type=otypes.StorageType(lunMapping['dest_storage_type'])
+                        if (lunMapping['dest_storage_type'] in
+                            ['iscsi', 'fcp']) else None,
+                        logical_units=[
+                            otypes.LogicalUnit(
+                                id=lunMapping['dest_logical_unit_id'],
+                                port=lunMapping['dest_logical_unit_port'],
+                                portal=lunMapping['dest_logical_unit_portal'],
+                                address=lunMapping['dest_logical_unit_address'],
+                                target=lunMapping['dest_logical_unit_target'],
+                                password=lunMapping['dest_logical_unit_password'],
+                                username=lunMapping['dest_logical_unit_username'],
+                            )
+                        ],
+                    ),
+                ) if lunMapping['dest_logical_unit_id'] else None,
+            ),
+        ),
+    return lunMappings
+
+
+def _get_cluster_mappings(module):
+    clusterMappings = list()
+
+    for clusterMapping in module.params['cluster_mappings']:
+        clusterMappings.append(
+            otypes.RegistrationClusterMapping(
+                from_=otypes.Cluster(
+                    name=clusterMapping['source_name'],
+                ),
+                to=otypes.Cluster(
+                    name=clusterMapping['dest_name'],
+                ) if clusterMapping['dest_name'] else None,
+            )
+        )
+    return clusterMappings
+
+
 def _get_vnic_profile_mappings(module):
     vnicProfileMappings = list()
 
@@ -1229,6 +1436,12 @@ def main():
         cd_iso=dict(type='str'),
         boot_devices=dict(type='list'),
         vnic_profile_mappings=dict(default=[], type='list'),
+        cluster_mappings=dict(default=[], type='list'),
+        role_mappings=dict(default=[], type='list'),
+        affinity_group_mappings=dict(default=[], type='list'),
+        affinity_label_mappings=dict(default=[], type='list'),
+        lun_mappings=dict(default=[], type='list'),
+        domain_mappings=dict(default=[], type='list'),
         reassign_bad_macs=dict(default=None, type='bool'),
         high_availability=dict(type='bool'),
         lease=dict(type='str'),
@@ -1419,7 +1632,20 @@ def main():
                     vnic_profile_mappings=_get_vnic_profile_mappings(module)
                     if module.params['vnic_profile_mappings'] else None,
                     reassign_bad_macs=module.params['reassign_bad_macs']
-                    if module.params['reassign_bad_macs'] is not None else None
+                    if module.params['reassign_bad_macs'] is not None else None,
+                    registration_configuration=otypes.RegistrationConfiguration(
+                        cluster_mappings=_get_cluster_mappings(module),
+                        role_mappings=_get_role_mappings(module),
+                        domain_mappings=_get_domain_mappings(module),
+                        lun_mappings=_get_lun_mappings(module),
+                        affinity_group_mappings=_get_affinity_group_mappings(module),
+                        affinity_label_mappings=_get_affinity_label_mappings(module),
+                    ) if (module.params['cluster_mappings']
+                          or module.params['role_mappings']
+                          or module.params['domain_mappings']
+                          or module.params['lun_mappings']
+                          or module.params['affinity_group_mappings']
+                          or module.params['affinity_label_mappings']) else None
                 )
 
                 if module.params['wait']:
