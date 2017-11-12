@@ -68,6 +68,18 @@ options:
         description:
             - "Mapper which maps an external virtual NIC profile to one that exists in the engine when C(state) is registered."
         version_added: "2.4"
+    cluster_mappings:
+        description:
+            - "Mapper which maps cluster name between Template's OVF and the destination cluster this Template should be registered to, relevant when C(state) is registered."
+        version_added: "2.4"
+    role_mappings:
+        description:
+            - "Mapper which maps role name between Template's OVF and the destination role this Template should be registered to, relevant when C(state) is registered."
+        version_added: "2.4"
+    domain_mappings:
+        description:
+            - "Mapper which maps domain name between Template's OVF and the destination domain this Template should be registered to, relevant when C(state) is registered."
+        version_added: "2.4"
     exclusive:
         description:
             - "When C(state) is I(exported) this parameter indicates if the existing templates with the
@@ -164,6 +176,28 @@ EXAMPLES = '''
       source_profile_name: mynetwork2
       target_profile_name: target_network2
 
+# Register template with mapping
+ovirt_templates:
+    state: registered
+    storage_domain: mystorage
+    cluster: mycluster
+    id: 1111-1111-1111-1111
+    role_mappings:
+      - source:
+        - name: Role_A
+      - dest:
+        - name: Role_B
+    domain_mappings:
+      - source:
+        - name: Domain_A
+      - dest:
+        - name: Domain_B
+    cluster_mappings:
+      - source:
+        - name: cluster_A
+      - dest:
+        - name: cluster_B
+
 # Import image from Glance s a template
 - ovirt_templates:
     state: imported
@@ -255,8 +289,64 @@ class TemplatesModule(BaseModule):
     def post_import_action(self, entity):
         self._service = self._connection.system_service().templates_service()
 
-def _get_vnic_profile_mappings(module):
+def _get_role_mappings(module):
+    if module.params['role_mappings'] is None:
+        return None
 
+    roleMappings = list()
+
+    for roleMapping in module.params['role_mappings']:
+        roleMappings.append(
+            otypes.RegistrationRoleMapping(
+                from_=otypes.Role(
+                    name=roleMapping.params['source'][0]['name'],
+                ),
+                to=otypes.Role(
+                    name=roleMapping.params['dest'][0]['name'],
+                ),
+             )
+        )
+    return roleMappings
+
+def _get_domain_mappings(module):
+    if module.params['domain_mappings'] is None:
+        return None
+
+    domainMappings = list()
+
+    for domainMapping in module.params['domain_mappings']:
+        domainMappings.append(
+            otypes.RegistrationDomainMapping(
+                from_=otypes.Domain(
+                    name=domainMapping.params['source'][0]['name'],
+                ),
+                to=otypes.Domain(
+                    name=domainMapping.params['dest'][0]['name'],
+                ),
+             )
+        )
+    return domainMappings
+
+def _get_cluster_mappings(module):
+    if module.params['cluster_mappings'] is None:
+        return None
+
+    clusterMappings = list()
+
+    for clusterMapping in module.params['cluster_mappings']:
+        clusterMappings.append(
+            otypes.RegistrationClusterMapping(
+                from_=otypes.Cluster(
+                    name=clusterMapping['source'][0]['name'],
+                ),
+                to=otypes.Cluster(
+                    name=clusterMapping['dest'][0]['name'],
+                ),
+             )
+        )
+    return clusterMappings
+
+def _get_vnic_profile_mappings(module):
     if module.params['vnic_profile_mappings'] is None:
         return None
 
@@ -297,6 +387,9 @@ def main():
         image_disk=dict(default=None, aliases=['glance_image_disk_name']),
         template_image_disk_name=dict(default=None),
         vnic_profile_mappings=dict(default=[], type='list'),
+        cluster_mappings=dict(default=[], type='list'),
+        role_mappings=dict(default=[], type='list'),
+        domain_mappings=dict(default=[], type='list'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -414,7 +507,12 @@ def main():
                     cluster=otypes.Cluster(
                         name=module.params['cluster']
                     ) if module.params['cluster'] else None,
-                    vnic_profile_mappings=_get_vnic_profile_mappings(module)
+                    vnic_profile_mappings=_get_vnic_profile_mappings(module),
+                    registration_configuration=otypes.RegistrationConfiguration(
+                        cluster_mappings=_get_cluster_mappings(module),
+                        role_mappings=_get_role_mappings(module),
+                        domain_mappings=_get_domain_mappings(module),
+                    )
                 )
 
                 if module.params['wait']:
