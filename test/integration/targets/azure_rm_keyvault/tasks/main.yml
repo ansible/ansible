@@ -1,7 +1,15 @@
+- name: Create random keyvault name
+  set_fact:
+    keyvault_orig: "{{ resource_group | hash('md5') | truncate(16, True, '') + (65535 | random | string) }}"
+    keyvault_tags: "{{ resource_group | hash('md5') | truncate(16, True, '') + (64535 | random | string) }}"
+    keyvault_secr: "{{ resource_group | hash('md5') | truncate(16, True, '') + (63535 | random | string) }}"
+    keyvault_keys: "{{ resource_group | hash('md5') | truncate(16, True, '') + (62535 | random | string) }}"
+    keyvault_cert: "{{ resource_group | hash('md5') | truncate(16, True, '') + (61535 | random | string) }}"
+
 - name: create a kevyault
   azure_rm_keyvault:
     resource_group: "{{ resource_group }}"
-    name: debugkey
+    name: "{{ keyvault_orig }}"
     enabled_for_deployment: True
     location: westus
     sku: premium
@@ -13,7 +21,7 @@
 - name: create a kevyault with tags
   azure_rm_keyvault:
     resource_group: "{{ resource_group }}"
-    name: debugkeytag
+    name: "{{ keyvault_tags }}"
     enabled_for_deployment: True
     location: westus
     sku: premium
@@ -28,7 +36,7 @@
 
 - name: Create a key secret and certificate management key vault
   azure_rm_keyvault:
-    name: "ozikeyvault2"
+    name: "{{ keyvault_secr }}"
     resource_group: "{{ resource_group }}"
     state: "present"
     enabled_for_deployment: True
@@ -42,7 +50,7 @@
 
 - name: Create a key management key vault
   azure_rm_keyvault:
-    name: "ozikeymanagement2"
+    name: "{{ keyvault_keys }}"
     resource_group: "{{ resource_group }}"
     state: "present"
     enabled_for_deployment: True
@@ -57,7 +65,7 @@
 
 - name: Create a certificate management key vault
   azure_rm_keyvault:
-    name: "ozicertmanagement2"
+    name: "{{ keyvault_cert }}"
     resource_group: "{{ resource_group }}"
     state: "present"
     enabled_for_deployment: True
@@ -73,34 +81,34 @@
 - name: delete a kevyault
   azure_rm_keyvault:
     resource_group: "{{ resource_group }}"
-    name: debugkey
+    name: "{{ keyvault_orig }}"
     state: absent
     location: westus
 
 - name: delete a kevyault with tags
   azure_rm_keyvault:
     resource_group: "{{ resource_group }}"
-    name: debugkeytag
+    name: "{{ keyvault_tags }}"
     state: absent
     location: westus
 
 - name: delete a key secret and certificate management key vault
   azure_rm_keyvault:
     resource_group: "{{ resource_group }}"
-    name: ozikeyvault2
+    name: "{{ keyvault_secr }}"
     state: absent
     location: westus
 
 - name: delete a key management key vault
   azure_rm_keyvault:
     resource_group: "{{ resource_group }}"
-    name: ozikeymanagement2
+    name: "{{ keyvault_keys }}"
     state: absent
     location: westus
 
 - name: delete a certificate management key vault
   azure_rm_keyvault:
     resource_group: "{{ resource_group }}"
-    name: ozicertmanagement2
+    name: "{{ keyvault_cert }}"
     state: absent
     location: westus
