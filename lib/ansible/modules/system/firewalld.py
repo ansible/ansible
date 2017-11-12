@@ -71,9 +71,12 @@ options:
     version_added: "1.9"
   state:
     description:
-      - "Should this port accept(enabled) or reject(disabled) connections."
+      - >
+        Enable or disable a setting.
+        For ports: Should this port accept(enabled) or reject(disabled) connections.
+        The states "present" and "absent" can only be used in zone level operations (i.e. when no other parameters but zone and state are set).
     required: true
-    choices: [ "enabled", "disabled" ]
+    choices: [ "enabled", "disabled", "present", "absent" ]
   timeout:
     description:
       - "The amount of time the rule should be in effect for when non-permanent."
@@ -135,6 +138,10 @@ EXAMPLES = '''
     state: enabled
     permanent: true
     zone: dmz
+
+- firewalld:
+    zone: custom
+    state: present
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -149,6 +156,7 @@ try:
 
     from firewall.client import Rich_Rule
     from firewall.client import FirewallClient
+    from firewall.client import FirewallClientZoneSettings
     fw = None
     fw_offline = False
     import_failure = False
@@ -165,7 +173,6 @@ try:
         # NOTE:
         #  online and offline operations do not share a common firewalld API
         from firewall.core.fw_test import Firewall_test
-        from firewall.client import FirewallClientZoneSettings
         fw = Firewall_test()
         fw.start()
 
@@ -728,6 +735,46 @@ class SourceTransaction(FirewallTransaction):
         self.update_fw_settings(fw_zone, fw_settings)
 
 
+class ZoneTransaction(FirewallTransaction):
+    """
+    ZoneTransaction
+    """
+
+    def __init__(self, fw, action_args=None, zone=None, desired_state=None,
+                 permanent=True, immediate=False, fw_offline=False):
+        super(ZoneTransaction, self).__init__(
+            fw, action_args=action_args, desired_state=desired_state, zone=zone,
+            permanent=permanent, immediate=immediate, fw_offline=fw_offline)
+
+        self.enabled_msg = "Added zone %s" % \
+            (self.zone)
+
+        self.disabled_msg = "Removed zone %s" % \
+            (self.zone)
+
+    def get_enabled_immediate(self):
+        raise NotImplementedError('Zone operations are always permanent')
+
+    def get_enabled_permanent(self):
+        if self.zone in fw.config().getZoneNames():
+            return True
+        else:
+            return False
+
+    def set_enabled_immediate(self):
+        raise NotImplementedError('Zone operations are always permanent')
+
+    def set_enabled_permanent(self):
+        fw.config().addZone(self.zone, FirewallClientZoneSettings())
+
+    def set_disabled_immediate(self):
+        raise NotImplementedError('Zone operations are always permanent')
+
+    def set_disabled_permanent(self):
+        zone_obj = self.fw.config().getZoneByName(self.zone)
+        zone_obj.remove()
+
+
 def main():
 
     global module
@@ -740,7 +787,7 @@ def main():
             immediate=dict(type='bool', default=False),
             source=dict(required=False, default=None),
             permanent=dict(type='bool', required=False, default=None),
-            state=dict(choices=['enabled', 'disabled'], required=True),
+            state=dict(choices=['enabled', 'disabled', 'present', 'absent'], required=True),
             timeout=dict(type='int', required=False, default=0),
             interface=dict(required=False, default=None),
             masquerade=dict(required=False, default=None),
@@ -824,6 +871,10 @@ def main():
     if modification_count > 1:
         module.fail_json(
             msg='can only operate on port, service, rich_rule, or interface at once'
+        )
+    elif modification_count > 0 and desired_state in ['absent', 'present']:
+        module.fail_json(
+            msg='absent and present state can only be used in zone level operations'
         )
 
     if service is not None:
@@ -925,6 +976,27 @@ def main():
 
         changed, transaction_msgs = transaction.run()
         msgs = msgs + transaction_msgs
+
+    ''' If there are no changes within the zone we are operating on the zone itself '''
+    if modification_count == 0 and desired_state in ['absent', 'present']:
+
+        transaction = ZoneTransaction(
+            fw,
+            action_args=(),
+            zone=zone,
+            desired_state=desired_state,
+            permanent=True,
+            immediate=False,
+            fw_offline=fw_offline
+        )
+
+        transaction.enabled_values = ['present']
+        transaction.disabled_values = ['absent']
+
+        changed, transaction_msgs = transaction.run()
+        msgs = msgs + transaction_msgs
+        if changed is True:
+            msgs.append("Changed zone %s to %s" % (zone, desired_state))
 
     if fw_offline:
         msgs.append("(offline operation: only on-disk configs were altered)")
