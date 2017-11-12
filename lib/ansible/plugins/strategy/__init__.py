@@ -34,8 +34,9 @@ from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.task_result import TaskResult
 from ansible.inventory.host import Host
 from ansible.module_utils.six.moves import queue as Queue
-from ansible.module_utils.six import iteritems, string_types
+from ansible.module_utils.six import iteritems, itervalues, string_types
 from ansible.module_utils._text import to_text
+from ansible.module_utils.connection import Connection
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.included_file import IncludedFile
 from ansible.playbook.task_include import TaskInclude
@@ -132,7 +133,15 @@ class StrategyBase:
         self._results_thread.daemon = True
         self._results_thread.start()
 
+        # holds the list of active (persistent) connections to be shutdown at
+        # play completion
+        self._active_connections = dict()
+
     def cleanup(self):
+        # close active persistent connections
+        for sock in itervalues(self._active_connections):
+            conn = Connection(sock)
+            conn.reset()
         self._final_q.put(_sentinel)
         self._results_thread.join()
 
@@ -892,8 +901,13 @@ class StrategyBase:
                         iterator._host_states[host.name].run_state = iterator.ITERATING_COMPLETE
                 msg = "ending play"
         elif meta_action == 'reset_connection':
-            connection = connection_loader.get(play_context.connection, play_context, os.devnull)
-            play_context.set_options_from_plugin(connection)
+            if target_host in self._active_connections:
+                connection = Connection(self._active_connections[target_host])
+                del self._active_connections[target_host]
+            else:
+                connection = connection_loader.get(play_context.connection, play_context, os.devnull)
+                play_context.set_options_from_plugin(connection)
+
             if connection:
                 connection.reset()
                 msg = 'reset connection'
@@ -920,3 +934,12 @@ class StrategyBase:
             if host.name not in self._tqm._unreachable_hosts:
                 hosts_left.append(host)
         return hosts_left
+
+    def update_active_connections(self, results):
+        ''' updates the current active persistent connections '''
+        for r in results:
+            if 'args' in r._task_fields:
+                socket_path = r._task_fields['args'].get('_ansible_socket')
+                if socket_path:
+                    if r._host not in self._active_connections:
+                        self._active_connections[r._host] = socket_path
