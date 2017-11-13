@@ -157,6 +157,8 @@ Ansible Changes By Release
   https://github.com/ansible/ansible/issues/32764
 * Better errors when loading malformed vault envelopes
   (https://github.com/ansible/ansible/issues/28038)
+* nxos_interface error handling
+  (https://github.com/ansible/ansible/pull/32846)
 
 <a id="2.4.1"></a>
 
