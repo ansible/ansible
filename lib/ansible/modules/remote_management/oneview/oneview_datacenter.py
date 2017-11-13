@@ -29,8 +29,8 @@ options:
             - Indicates the desired state for the Datacenter resource.
               C(absent) will remove the resource from OneView, if it exists.
               C(present) will ensure the datacenter resource exists and its properties are compliant with HPE OneView.
-        default: present
         choices: ['present', 'absent']
+        default: present
     data:
         description:
             - List with Datacenter properties and its associated states.
@@ -130,8 +130,8 @@ class DatacenterModule(OneViewModuleBase):
     RESOURCE_FACT_NAME = 'datacenter'
 
     argument_spec = dict(
-        state=dict(type='str', default='present', choices=['present', 'absent']),
-        data=dict(required=True, type='dict')
+        state=dict(type='str', default='present', choices=['absent', 'present',]),
+        data=dict(type='dict', required=True)
     )
 
     def __init__(self):
