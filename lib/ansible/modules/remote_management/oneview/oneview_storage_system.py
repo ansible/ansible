@@ -138,13 +138,12 @@ class StorageSystemModule(OneViewModuleBase):
     MSG_CREDENTIALS_MANDATORY = "The attribute 'credentials' is mandatory for Storage System creation."
 
     argument_spec = dict(
-        state=dict(type='str', default='present', choices=['present', 'absent']),
+        state=dict(type='str', default='present', choices=['absent', 'present']),
         data=dict(type='dict', required=True)
     )
 
     def __init__(self):
-        super(StorageSystemModule, self).__init__(additional_arg_spec=self.argument_spec,
-                                                  validate_etag_support=True)
+        super(StorageSystemModule, self).__init__(additional_arg_spec=self.argument_spec, validate_etag_support=True)
 
         self.resource_client = self.oneview_client.storage_systems
 
