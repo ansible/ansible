@@ -178,6 +178,8 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/32916)
 * Make IOS devices consistent ios_logging
   (https://github.com/ansible/ansible/pull/33100)
+* restore error on orphan group:vars delcaration for ini inventories
+  https://github.com/ansible/ansible/pull/32866
 
 <a id="2.4.1"></a>
 
