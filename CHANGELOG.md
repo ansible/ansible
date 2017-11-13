@@ -165,6 +165,7 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/32762)
 * fix dci failure nxos
   (https://github.com/ansible/ansible/pull/32877)
+* Do not execute `script` tasks is check mode (https://github.com/ansible/ansible/issues/30676)
 
 <a id="2.4.1"></a>
 
