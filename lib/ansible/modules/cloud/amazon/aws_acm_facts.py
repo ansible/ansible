@@ -315,12 +315,9 @@ def main():
     if not HAS_BOTO3:
         module.fail_json('boto3 and botocore are required by this module')
 
-    try:
-        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-        client = boto3_conn(module, conn_type='client', resource='acm',
-                            region=region, endpoint=ec2_url, **aws_connect_kwargs)
-    except (botocore.exceptions.NoCredentialsError, botocore.exceptions.ProfileNotFound) as e:
-        module.fail_json(msg="Can't authorize connection - " + str(e))
+    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
+    client = boto3_conn(module, conn_type='client', resource='acm',
+                        region=region, endpoint=ec2_url, **aws_connect_kwargs)
 
     certificates = get_certificates(client, module, name=module.params['name'], statuses=module.params['statuses'])
     module.exit_json(certificates=certificates)

@@ -38,8 +38,8 @@
         security_token: "{{ security_token }}"
         state: present
         zones:
-          - us-east-1c
-          - us-east-1d
+          - "{{ ec2_region }}a"
+          - "{{ ec2_region }}b"
         listeners:
           - protocol: http
             load_balancer_port: 80
@@ -61,8 +61,8 @@
         that:
           - 'info.changed'
           - 'info.elb.status == "created"'
-          - '"us-east-1c" in info.elb.zones'
-          - '"us-east-1d" in info.elb.zones'
+          - '"{{ ec2_region }}a" in info.elb.zones'
+          - '"{{ ec2_region }}b" in info.elb.zones'
           - 'info.elb.health_check.healthy_threshold == 10'
           - 'info.elb.health_check.interval == 30'
           - 'info.elb.health_check.target == "HTTP:80/index.html"'
@@ -103,7 +103,7 @@
         security_token: "{{ security_token }}"
         state: present
         zones:
-          - us-east-1b
+          - "{{ ec2_region }}c"
         listeners:
           - protocol: http
             load_balancer_port: 80
@@ -125,7 +125,7 @@
         that:
           - 'info.elb.status == "ok"'
           - 'info.changed'
-          - 'info.elb.zones[0] == "us-east-1b"'
+          - 'info.elb.zones[0] == "{{ ec2_region }}c"'
 
     # ============================================================
 
@@ -140,9 +140,9 @@
         security_token: "{{ security_token }}"
         state: present
         zones:
-          - us-east-1b
-          - us-east-1c
-          - us-east-1d
+          - "{{ ec2_region }}a"
+          - "{{ ec2_region }}b"
+          - "{{ ec2_region }}c"
         listeners:
           - protocol: http
             load_balancer_port: 80
@@ -154,9 +154,9 @@
         that:
           - 'info.changed'
           - 'info.elb.status == "ok"'
-          - '"us-east-1b" in info.elb.zones'
-          - '"us-east-1c" in info.elb.zones'
-          - '"us-east-1d" in info.elb.zones'
+          - '"{{ ec2_region }}a" in info.elb.zones'
+          - '"{{ ec2_region }}b" in info.elb.zones'
+          - '"{{ ec2_region }}c" in info.elb.zones'
 
 
     # ============================================================
@@ -172,9 +172,9 @@
         security_token: "{{ security_token }}"
         state: present
         zones:
-          - us-east-1b
-          - us-east-1c
-          - us-east-1d
+          - "{{ ec2_region }}a"
+          - "{{ ec2_region }}b"
+          - "{{ ec2_region }}c"
         listeners:
           - protocol: http
             load_balancer_port: 80
@@ -204,9 +204,9 @@
         security_token: "{{ security_token }}"
         state: present
         zones:
-          - us-east-1b
-          - us-east-1c
-          - us-east-1d
+          - "{{ ec2_region }}a"
+          - "{{ ec2_region }}b"
+          - "{{ ec2_region }}c"
         listeners:
           - protocol: http
             load_balancer_port: 8081
@@ -263,8 +263,9 @@
             load_balancer_port: 80
             instance_port: 80
         zones:
-          - us-east-1c
-          - us-east-1d
+          - "{{ ec2_region }}a"
+          - "{{ ec2_region }}b"
+          - "{{ ec2_region }}c"
       register: result
       ignore_errors: true
 
@@ -282,8 +283,9 @@
         region: "{{ ec2_region }}"
         state: present
         zones:
-          - us-east-1a
-          - us-east-1d
+          - "{{ ec2_region }}a"
+          - "{{ ec2_region }}b"
+          - "{{ ec2_region }}c"
         listeners:
           - protocol: http
             load_balancer_port: 80
@@ -307,8 +309,9 @@
         region: "{{ ec2_region }}"
         state: present
         zones:
-          - us-east-1a
-          - us-east-1d
+          - "{{ ec2_region }}a"
+          - "{{ ec2_region }}b"
+          - "{{ ec2_region }}c"
         listeners:
           - protocol: http
             load_balancer_port: 80
@@ -332,8 +335,9 @@
         region: "{{ ec2_region }}"
         state: present
         zones:
-          - us-east-1a
-          - us-east-1d
+          - "{{ ec2_region }}a"
+          - "{{ ec2_region }}b"
+          - "{{ ec2_region }}c"
         listeners:
           - protocol: http
             load_balancer_port: 80
@@ -357,8 +361,9 @@
         region: "{{ ec2_region }}"
         state: present
         zones:
-          - us-east-1a
-          - us-east-1d
+          - "{{ ec2_region }}a"
+          - "{{ ec2_region }}b"
+          - "{{ ec2_region }}c"
         listeners:
           - protocol: http
             load_balancer_port: 80
@@ -383,8 +388,9 @@
         region: "{{ ec2_region }}"
         state: present
         zones:
-          - us-east-1a
-          - us-east-1d
+          - "{{ ec2_region }}a"
+          - "{{ ec2_region }}b"
+          - "{{ ec2_region }}c"
         listeners:
           - protocol: http
             load_balancer_port: 80

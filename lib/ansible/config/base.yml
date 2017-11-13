@@ -1239,7 +1239,7 @@ HOST_KEY_CHECKING:
   type: boolean
 INVENTORY_ENABLED:
   name: Active Inventory plugins
-  default: ['host_list', 'script', 'yaml', 'ini']
+  default: ['host_list', 'script', 'yaml', 'ini', 'auto']
   description: List of enabled inventory plugins, it also determines the order in which they are used.
   env: [{name: ANSIBLE_INVENTORY_ENABLED}]
   ini:
@@ -1300,19 +1300,16 @@ NETWORK_GROUP_MODULES:
   - {key: network_group_modules, section: defaults}
   type: list
   yaml: {key: defaults.network_group_modules}
-#ONLY_NAMESPACE_FACTS:
-# Deffered to 2.5
-# FIXME: reenable when we can remove ansible_ prefix from namespaced facts
-#  default: False
-#  description:
-#    - Facts normally get injected as top level variables, this setting prevents that.
-#    - Facts are still available in the `ansible_facts` variable w/o the `ansible_` prefix.
-#  env: [{name: ANSIBLE_RESTRICT_FACTS}]
-#  ini:
-#  - {key: restrict_facts_namespace, section: defaults}
-#  type: boolean
-#  yaml: {key: defaults.restrict_facts_namespace}
-#  version_added: "2.4"
+INJECT_FACTS_AS_VARS:
+  default: True
+  description:
+    - Facts are available inside the `ansible_facts` variable, this setting also pushes them as their own vars in the main namespace.
+    - Unlike inside the `ansible_facts` dictionary, these will have an `ansible_` prefix.
+  env: [{name: ANSIBLE_INJECT_FACT_VARS}]
+  ini:
+  - {key: inject_facts_as_vars, section: defaults}
+  type: boolean
+  version_added: "2.5"
 PARAMIKO_HOST_KEY_AUTO_ADD:
   # TODO: move to plugin
   default: False

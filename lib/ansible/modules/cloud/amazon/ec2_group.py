@@ -680,11 +680,8 @@ def main():
 
     changed = False
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-    if not region:
-        module.fail_json(msg="The AWS region must be specified as an "
-                             "environment variable or in the AWS credentials "
-                             "profile.")
-    client = boto3_conn(module, conn_type='client', resource='ec2', endpoint=ec2_url, region=region, **aws_connect_params)
+    client = boto3_conn(module, conn_type='client', resource='ec2',
+                        endpoint=ec2_url, region=region, **aws_connect_params)
 
     if not has_rule_description_attr(client):
         all_rules = rules if rules else [] + rules_egress if rules_egress else []

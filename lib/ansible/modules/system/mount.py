@@ -58,13 +58,14 @@ options:
   state:
     description:
       - If C(mounted), the device will be actively mounted and appropriately
-        configured in I(fstab).
-      - If C(unmounted), the device will be unmounted without changing I(fstab).
-      - C(absent) and C(present) only deal with I(fstab) but will not affect
-        current mounting.
-      - If specifying C(mounted) and the mount point is not present, the mount
+        configured in I(fstab). If the mount point is not present, the mount
         point will be created.
-      - Similarly, specifying C(absent) will remove the mount point directory.
+      - If C(unmounted), the device will be unmounted without changing I(fstab).
+      - C(present) only specifies that the device is to be configured in
+        I(fstab) and does not trigger or require a mount.
+      - C(absent) specifies that the device mount's entry will be removed from
+        I(fstab) and will also unmount the device and remove the mount
+        point.
     required: true
     choices: [ absent, mounted, present, unmounted ]
   fstab:

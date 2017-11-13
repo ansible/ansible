@@ -146,6 +146,10 @@ options:
     type: bool
     default: 'no'
     version_added: "2.0"
+  private_key:
+    description:
+      - Specify the private key to use for SSH-based rsync connections (e.g. C(~/.ssh/id_rsa))
+    version_added: "1.6"
 notes:
    - rsync must be installed on both the local and remote host.
    - For the C(synchronize) module, the "local host" is the host `the synchronize task originates on`, and the "destination host" is the host
@@ -331,8 +335,8 @@ def is_rsh_needed(source, dest):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            src=dict(required=True),
-            dest=dict(required=True),
+            src=dict(type='str', required=True),
+            dest=dict(type='str', required=True),
             dest_port=dict(type='int'),
             delete=dict(type='bool', default=False),
             private_key=dict(type='path'),

@@ -1081,7 +1081,7 @@ class OpenBSDUser(User):
                 cmd.append(self.login_class)
 
         if self.update_password == 'always' and self.password is not None \
-           and self.password != '*' and info[1] != self.password:
+                and self.password != '*' and info[1] != self.password:
             cmd.append('-p')
             cmd.append(self.password)
 
@@ -1092,8 +1092,6 @@ class OpenBSDUser(User):
         cmd.append(self.name)
         return self.execute_command(cmd)
 
-
-# ===========================================
 
 class NetBSDUser(User):
     """
@@ -1249,8 +1247,6 @@ class NetBSDUser(User):
         cmd.append(self.name)
         return self.execute_command(cmd)
 
-
-# ===========================================
 
 class SunOS(User):
     """
@@ -1613,7 +1609,7 @@ class DarwinUser(User):
         (rc, out, err) = self.execute_command(cmd)
         if rc != 0:
             self.module.fail_json(msg='Cannot %s user "%s" to group "%s".'
-                                  % (action, self.name, group), err=err, out=out, rc=rc)
+                                      % (action, self.name, group), err=err, out=out, rc=rc)
         return (rc, out, err)
 
     def _modify_group(self):
@@ -1681,7 +1677,7 @@ class DarwinUser(User):
                 return 0
         else:
             if self.name in hidden_users:
-                del(hidden_users[hidden_users.index(self.name)])
+                del (hidden_users[hidden_users.index(self.name)])
 
                 cmd = ['defaults', 'write', plist_file, 'HiddenUsersList', '-array'] + hidden_users
                 (rc, out, err) = self.execute_command(cmd)
@@ -1784,7 +1780,7 @@ class DarwinUser(User):
                     if rc != 0:
                         self.module.fail_json(
                             msg='Cannot update property "%s" for user "%s".'
-                            % (field[0], self.name), err=err, out=out, rc=rc)
+                                % (field[0], self.name), err=err, out=out, rc=rc)
                     changed = rc
                     out += _out
                     err += _err
@@ -2241,6 +2237,7 @@ def main():
             result['ssh_public_key'] = user.get_ssh_public_key()
 
     module.exit_json(**result)
+
 
 # import module snippets
 if __name__ == '__main__':

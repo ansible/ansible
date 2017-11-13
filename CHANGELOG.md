@@ -7,20 +7,14 @@ Ansible Changes By Release
 
 ### Major Changes
 * Removed the previously deprecated 'accelerate' mode and all associated keywords and code.
-* Removed the previously deprecated 'accelerate' mode and all associated keywords and code.
 * New simpler and more intuitive 'loop' keyword for task loops
+* Added fact namespacing, from now on facts will be available under `ansible_facts` namespace (i.e. `ansible_facts.os_distribution`) w/o the `ansilbe_` prefix.
+  They will continue to be added into the main namespace directly, but now with a configuration toggle to enable this,
+  currently on by default, in the future it will be off.
 
 ### Deprecations
 * Previously deprecated 'hostfile' config settings have been 're-deprecated' as previously code did not warn about deprecated configuration settings.
 * The ``with_<lookup>`` loops are deprecated in favor of the new ``loop`` keyword
-
-#### Deprecated Modules (to be removed in 2.9):
-
-#### Removed Modules (previously deprecated):
-* accelerate
-* boundary_meter: There was no deprecation period for this but the hosted
-  service it relied on has gone away so the module has been removed.
-  https://github.com/ansible/ansible/issues/29387
 
 ### Minor Changes
 * added a few new magic vars corresponding to configuration/command line options:
@@ -29,19 +23,41 @@ Ansible Changes By Release
 * Added support to `become` `NT AUTHORITY\System`, `NT AUTHORITY\LocalService`, and `NT AUTHORITY\NetworkService` on Windows hosts
 * Fixed `become` to work with async on Windows hosts
 * Improved `become` elevation process to work on standard Administrator users without disabling UAC on Windows hosts
+* The jenkins_plugin and yum_repository plugins had their `params` option
+  removed due to circumventing Ansible's option processing.
+* combine filter now accepts a list of dicts as well as dicts directly
+* New CLI options for ansible-inventory, ansible-console and ansible to allow
+  specifying a playbook_dir to be used for relative search paths.
+
+#### Deprecated Modules (to be removed in 2.9):
+* ec2_ami_find
+
+#### Removed Modules (previously deprecated):
+* accelerate
+* boundary_meter: There was no deprecation period for this but the hosted
+  service it relied on has gone away so the module has been removed.
+  https://github.com/ansible/ansible/issues/29387
 
 ### New Plugins
 
 ## Lookups
-* Added `aws_ssm` lookup plugin
-* config, allows querying Ansible settings
+* aws_ssm: Query AWS ssm data
+* config: Lookup Ansible settings
+* openshift: Return info from Openshift installation
+
+## Callbacks
+* yaml
 
 ### New Modules
 
 #### Cloud
 
-  * aws_ssm_parameter_store
-  * digital_ocean_sshkey_facts
+* aws_acm_facts
+* aws_kms_facts
+* aws_ssm_parameter_store
+* digital_ocean_sshkey_facts
+* ec2_ami_facts
+* ecs_taskdefinition_facts
 
 #### Windows
 
@@ -82,6 +98,7 @@ Ansible Changes By Release
   - TODO: build upon this to add many features detailed in ansible-config proposal https://github.com/ansible/proposals/issues/35
 * Windows modules now support the use of multiple shared module_utils files in the form of Powershell modules (.psm1), via `#Requires -Module Ansible.ModuleUtils.Whatever.psm1`
 * Python module argument_spec now supports custom validation logic by accepting a callable as the `type` argument.
+* Windows become_method: runas is no longer marked `experimental`
 * Windows become_method: runas now works across all authtypes and will auto-elevate under UAC if WinRM user has "Act as part of the operating system" privilege
 
 ### Deprecations

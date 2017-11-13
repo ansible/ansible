@@ -48,7 +48,7 @@ DOCUMENTATION = """
     notes:
       - A great alternative to the password lookup plugin,
         if you don't need to generate random passwords on a per-host basis,
-        would be to use Using Vault in playbooks.
+        would be to use Vault in playbooks.
         Read the documentation there and consider using it first,
         it will be more desirable for most applications.
       - If the file already exists, no data will be written to it.

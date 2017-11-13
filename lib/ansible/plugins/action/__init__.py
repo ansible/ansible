@@ -36,11 +36,11 @@ from ansible.module_utils.json_utils import _filter_non_json_lines
 from ansible.module_utils.six import binary_type, string_types, text_type, iteritems, with_metaclass
 from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.connection import Connection
 from ansible.parsing.utils.jsonify import jsonify
-from ansible.playbook.play_context import MAGIC_VARIABLE_MAPPING
 from ansible.release import __version__
 from ansible.utils.unsafe_proxy import wrap_var
-from ansible.vars.manager import remove_internal_keys
+from ansible.vars.clean import remove_internal_keys
 
 
 try:
@@ -605,7 +605,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         module_args['_ansible_selinux_special_fs'] = C.DEFAULT_SELINUX_SPECIAL_FS
 
         # give the module the socket for persistent connections
-        module_args['_ansible_socket'] = task_vars.get('ansible_socket')
+        module_args['_ansible_socket'] = getattr(self._connection, 'socket_path')
+        if not module_args['_ansible_socket']:
+            module_args['_ansible_socket'] = task_vars.get('ansible_socket')
 
         # make sure all commands use the designated shell executable
         module_args['_ansible_shell_executable'] = self._play_context.executable
@@ -765,49 +767,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         display.debug("done with _execute_module (%s, %s)" % (module_name, module_args))
         return data
 
-    def _clean_returned_data(self, data):
-        remove_keys = set()
-        fact_keys = set(data.keys())
-        # first we add all of our magic variable names to the set of
-        # keys we want to remove from facts
-        for magic_var in MAGIC_VARIABLE_MAPPING:
-            remove_keys.update(fact_keys.intersection(MAGIC_VARIABLE_MAPPING[magic_var]))
-        # next we remove any connection plugin specific vars
-        for conn_path in self._shared_loader_obj.connection_loader.all(path_only=True):
-            try:
-                conn_name = os.path.splitext(os.path.basename(conn_path))[0]
-                re_key = re.compile('^ansible_%s_' % conn_name)
-                for fact_key in fact_keys:
-                    # exception for lvm tech, whic normally returns asnible_x_bridge facts that get filterd out (docker,lxc, etc)
-                    if re_key.match(fact_key) and not fact_key.endswith(('_bridge', '_gwbridge')):
-                        remove_keys.add(fact_key)
-            except AttributeError:
-                pass
-
-        # remove some KNOWN keys
-        for hard in C.RESTRICTED_RESULT_KEYS + C.INTERNAL_RESULT_KEYS:
-            if hard in fact_keys:
-                remove_keys.add(hard)
-
-        # finally, we search for interpreter keys to remove
-        re_interp = re.compile('^ansible_.*_interpreter$')
-        for fact_key in fact_keys:
-            if re_interp.match(fact_key):
-                remove_keys.add(fact_key)
-        # then we remove them (except for ssh host keys)
-        for r_key in remove_keys:
-            if not r_key.startswith('ansible_ssh_host_key_'):
-                try:
-                    r_val = to_text(data[r_key])
-                    if len(r_val) > 24:
-                        r_val = '%s ... %s' % (r_val[:13], r_val[-6:])
-                except:
-                    r_val = ' <failed to convert value to a string> '
-                display.warning("Removed restricted key from module data: %s = %s" % (r_key, r_val))
-                del data[r_key]
-
-        remove_internal_keys(data)
-
     def _parse_returned_data(self, res):
         try:
             filtered_output, warnings = _filter_non_json_lines(res.get('stdout', u''))
@@ -817,7 +776,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             data = json.loads(filtered_output)
 
             if 'ansible_facts' in data and isinstance(data['ansible_facts'], dict):
-                self._clean_returned_data(data['ansible_facts'])
                 data['ansible_facts'] = wrap_var(data['ansible_facts'])
             data['_ansible_parsed'] = True
         except ValueError:
@@ -863,7 +821,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         same_user = self._play_context.become_user == self._play_context.remote_user
         if sudoable and self._play_context.become and (allow_same_user or not same_user):
             display.debug("_low_level_execute_command(): using become for this command")
-            cmd = self._play_context.make_become_cmd(cmd, executable=executable)
+            if self._connection.transport != 'network_cli' and self._play_context.become_method != 'enable':
+                cmd = self._play_context.make_become_cmd(cmd, executable=executable)
 
         if self._connection.allow_executable:
             if executable is None:

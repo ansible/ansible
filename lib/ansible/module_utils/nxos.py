@@ -34,7 +34,7 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback, return_values
 from ansible.module_utils.network_common import to_list, ComplexList
 from ansible.module_utils.connection import exec_command
-from ansible.module_utils.six import iteritems
+from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils.urls import fetch_url
 
 _DEVICE_CONNECTION = None
@@ -127,8 +127,12 @@ class Cli:
         except KeyError:
             rc, out, err = self.exec_command(cmd)
             if rc != 0:
-                self._module.fail_json(msg=to_text(err, errors='surrogate_then_replace'))
-            cfg = to_text(out, errors='surrogate_then_replace').strip()
+                self._module.fail_json(msg=to_text(err))
+            try:
+                cfg = to_text(out, errors='surrogate_or_strict').strip()
+            except UnicodeError as e:
+                self._module.fail_json(msg=u'Failed to decode config: %s' % to_text(out))
+
             self._device_configs[cmd] = cfg
             return cfg
 
@@ -141,42 +145,54 @@ class Cli:
             if item['output'] == 'json' and not is_json(item['command']):
                 cmd = '%s | json' % item['command']
             elif item['output'] == 'text' and is_json(item['command']):
-                cmd = item['command'].split('|')[0]
+                cmd = item['command'].rsplit('|', 1)[0]
             else:
                 cmd = item['command']
 
             rc, out, err = self.exec_command(cmd)
-            out = to_text(out, errors='surrogate_then_replace')
+            try:
+                out = to_text(out, errors='surrogate_or_strict')
+            except UnicodeError:
+                self._module.fail_json(msg=u'Failed to decode output from %s: %s' % (cmd, to_text(out)))
+
             if check_rc and rc != 0:
-                self._module.fail_json(msg=to_text(err, errors='surrogate_then_replace'))
+                self._module.fail_json(msg=to_text(err))
 
             if not check_rc and rc != 0:
                 try:
                     out = self._module.from_json(err)
                 except ValueError:
-                    out = to_text(err, errors='surrogate_then_replace').strip()
+                    out = to_text(err).strip()
             else:
                 try:
                     out = self._module.from_json(out)
                 except ValueError:
-                    out = to_text(out, errors='surrogate_then_replace').strip()
+                    out = to_text(out).strip()
+
+            if item['output'] == 'json' and isinstance(out, string_types):
+                self._module.fail_json(msg='failed to retrieve output of %s in json format' % item['command'])
 
             responses.append(out)
         return responses
 
-    def load_config(self, config, return_error=False):
+    def load_config(self, config, return_error=False, opts=None):
         """Sends configuration commands to the remote device
         """
+        if opts is None:
+            opts = {}
 
         rc, out, err = self.exec_command('configure')
         if rc != 0:
-            self._module.fail_json(msg='unable to enter configuration mode', output=to_text(err, errors='surrogate_then_replace'))
+            self._module.fail_json(msg='unable to enter configuration mode', output=to_text(err))
 
         msgs = []
         for cmd in config:
             rc, out, err = self.exec_command(cmd)
-            if rc != 0:
-                self._module.fail_json(msg=to_text(err, errors='surrogate_then_replace'))
+            if opts.get('ignore_timeout') and rc == 1:
+                msgs.append(err)
+                return msgs
+            elif rc != 0:
+                self._module.fail_json(msg=to_text(err))
             elif out:
                 msgs.append(out)
 
@@ -243,9 +259,12 @@ class Nxapi:
 
         return dict(ins_api=msg)
 
-    def send_request(self, commands, output='text', check_status=True, return_error=False):
+    def send_request(self, commands, output='text', check_status=True,
+                     return_error=False, opts=None):
         # only 10 show commands can be encoded in each request
         # messages sent to the remote device
+        if opts is None:
+            opts = {}
         if output != 'config':
             commands = collections.deque(to_list(commands))
             stack = list()
@@ -282,7 +301,10 @@ class Nxapi:
             )
             self._nxapi_auth = headers.get('set-cookie')
 
-            if headers['status'] != 200:
+            if opts.get('ignore_timeout') and headers['status'] == -1:
+                result.append(headers['msg'])
+                return result
+            elif headers['status'] != 200:
                 self._error(**headers)
 
             try:
@@ -336,7 +358,7 @@ class Nxapi:
 
         for item in to_list(commands):
             if is_json(item['command']):
-                item['command'] = str(item['command']).split('|')[0]
+                item['command'] = str(item['command']).rsplit('|', 1)[0]
                 item['output'] = 'json'
 
             if all((output == 'json', item['output'] == 'text')) or all((output == 'text', item['output'] == 'json')):
@@ -351,11 +373,12 @@ class Nxapi:
 
         return responses
 
-    def load_config(self, commands, return_error=False):
+    def load_config(self, commands, return_error=False, opts=None):
         """Sends the ordered set of commands to the device
         """
         commands = to_list(commands)
-        msg = self.send_request(commands, output='config', check_status=True, return_error=return_error)
+        msg = self.send_request(commands, output='config', check_status=True,
+                                return_error=return_error, opts=opts)
         if return_error:
             return msg
         else:
@@ -410,6 +433,6 @@ def run_commands(module, commands, check_rc=True):
     return conn.run_commands(to_command(module, commands), check_rc)
 
 
-def load_config(module, config, return_error=False):
+def load_config(module, config, return_error=False, opts=None):
     conn = get_connection(module)
-    return conn.load_config(config, return_error=return_error)
+    return conn.load_config(config, return_error, opts)
