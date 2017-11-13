@@ -159,6 +159,8 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/issues/28038)
 * nxos_interface error handling
   (https://github.com/ansible/ansible/pull/32846)
+* Fix snmp bugs on Nexus 3500 platform
+  (https://github.com/ansible/ansible/pull/32773)
 
 <a id="2.4.1"></a>
 
