@@ -751,7 +751,8 @@ class StrategyBase:
         handler.name = saved_name
 
         if notified_hosts is None:
-            notified_hosts = self._notified_handlers[handler._uuid]
+            # Avoid reference's concurrent updates
+            notified_hosts = set(self._notified_handlers[handler._uuid])
 
         run_once = False
         try:
@@ -816,8 +817,10 @@ class StrategyBase:
                     display.warning(str(e))
                     continue
 
-        # wipe the notification list
-        self._notified_handlers[handler._uuid] = []
+        # remove hosts from notification list
+        left_notified_hosts = set(self._notified_handlers[handler._uuid])
+        left_notified_hosts -= notified_hosts
+        self._notified_handlers[handler._uuid] = list(left_notified_hosts)
         display.debug("done running handlers, result is: %s" % result)
         return result
 
