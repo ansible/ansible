@@ -9,7 +9,7 @@ DOCUMENTATION = '''
     callback: syslog_json
     callback_type: notification
     requirements:
-      - whietlist in configuration
+      - whitelist in configuration
     short_description: sends JSON events to syslog
     version_added: "1.9"
     description:
@@ -17,7 +17,7 @@ DOCUMENTATION = '''
       - Before 2.4 only environment variables were available for configuration
     options:
       server:
-        description: syslog server that will recieve the event
+        description: syslog server that will receive the event
         env:
         - name: SYSLOG_SERVER
         default: localhost
@@ -25,7 +25,7 @@ DOCUMENTATION = '''
           - section: callback_syslog_json
             key: syslog_server
       port:
-        description: prot on which the syslog server is listening
+        description: port on which the syslog server is listening
         env:
           - name: SYSLOG_PORT
         default: 514
@@ -33,7 +33,7 @@ DOCUMENTATION = '''
           - section: callback_syslog_json
             key: syslog_port
       facility:
-        description: syslog facitliy to log as
+        description: syslog facility to log as
         env:
           - name: SYSLOG_FACILITY
         default: user
