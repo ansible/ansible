@@ -750,8 +750,6 @@ try:
 except ImportError:
     pass
 
-DEFAULT_CREDS_PATH = "/.spotinst/credentials"
-
 eni_fields = ['description',
               'device_index',
               'secondary_private_ip_address_count',
@@ -1403,7 +1401,7 @@ def main():
         availability_zones=dict(type='list', required=True),
         block_device_mappings=dict(type='list'),
         chef=dict(type='dict'),
-        credentials_path=dict(type='path'),
+        credentials_path=dict(type='path', default="~/.spotinst/credentials"),
         do_not_update=dict(default=[], type='list'),
         down_scaling_policies=dict(type='list'),
         draining_timeout=dict(type='int'),
@@ -1469,15 +1467,11 @@ def main():
         module.fail_json(msg="the Spotinst SDK library is required. (pip install spotinst)")
 
     # Retrieve creds file variables
-    home = expanduser("~")
     creds_file_loaded_vars = dict()
 
-    if module.params.get('credentials_path') is not None:
-        credentials_path = module.params.get('credentials_path')
-    else:
-        credentials_path = DEFAULT_CREDS_PATH
+    credentials_path = module.params.get('credentials_path')
 
-    with open(home + credentials_path, "r") as creds:
+    with open(credentials_path, "r") as creds:
         for line in creds:
             eq_index = line.find('=')
             var_name = line[:eq_index].strip()
