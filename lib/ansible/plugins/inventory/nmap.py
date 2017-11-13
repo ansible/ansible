@@ -60,7 +60,7 @@ from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cachea
 class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
     NAME = 'nmap'
-    find_host = re.compile(r'^Nmap scan report for (\S+) \((\S+)\)')
+    find_host = re.compile(r'^Nmap scan report for ([\w,.,-]+) \(([\w,.,:,\[,\]]+)\)')
     find_port = re.compile(r'^(\d+)/(\w+)\s+(\w+)\s+(\w+)')
 
     def __init__(self):
