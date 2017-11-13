@@ -1,0 +1,11 @@
+
+!Command: show running-config interface Ethernet2/5
+!Time: Fri Nov 10 05:50:59 2017
+
+version 7.3(0)D1(1)
+
+interface Ethernet2/5
+  shutdown
+  no switchport
+  mac-address 0000.0000.002f
+

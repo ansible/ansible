@@ -1,0 +1,81 @@
+{
+  "TABLE_interface": {
+    "ROW_interface": [
+      {
+        "interface": "mgmt0", 
+        "name": "OOB Management", 
+        "state": "connected", 
+        "vlan": "routed", 
+        "duplex": "full", 
+        "speed": "a-1000", 
+        "type": "--"
+      }, 
+      {
+        "interface": "Ethernet2/1", 
+        "name": "to nxos9k01", 
+        "state": "connected", 
+        "vlan": "routed", 
+        "duplex": "full", 
+        "speed": "1000", 
+        "type": null
+      }, 
+      {
+        "interface": "Ethernet2/2", 
+        "name": "to nxos9k02", 
+        "state": "connected", 
+        "vlan": "routed", 
+        "duplex": "full", 
+        "speed": "1000", 
+        "type": null
+      }, 
+      {
+        "interface": "Ethernet2/3", 
+        "state": "disabled", 
+        "vlan": "routed", 
+        "duplex": "auto", 
+        "speed": "auto", 
+        "type": null
+      }, 
+      {
+        "interface": "Ethernet2/4", 
+        "state": "disabled", 
+        "vlan": "routed", 
+        "duplex": "auto", 
+        "speed": "auto", 
+        "type": null
+      }, 
+      {
+        "interface": "Ethernet2/5", 
+        "state": "disabled", 
+        "vlan": "routed", 
+        "duplex": "auto", 
+        "speed": "auto", 
+        "type": null
+      }, 
+      {
+        "interface": "Ethernet2/6", 
+        "state": "disabled", 
+        "vlan": "routed", 
+        "duplex": "auto", 
+        "speed": "auto", 
+        "type": null
+      }, 
+      {
+        "interface": "Ethernet2/7", 
+        "state": "disabled", 
+        "vlan": "routed", 
+        "duplex": "auto", 
+        "speed": "auto", 
+        "type": null
+      }, 
+      {
+        "interface": "Ethernet2/8", 
+        "state": "disabled", 
+        "vlan": "routed", 
+        "duplex": "auto", 
+        "speed": "auto", 
+        "type": null
+      }
+    ]
+  }
+}
