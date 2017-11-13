@@ -679,19 +679,17 @@ def sync_cs_policybindings(client, module):
     # Add configured bindings not in actual
     add_keys = list(set(configured_bindings.keys()) - set(actual_bindings.keys()))
     for key in add_keys:
-      log('Adding binding for policy %s' % key)
-      pdb.set_trace()
-      configured_bindings[key].add()
+        log('Adding binding for policy %s' % key)
+        configured_bindings[key].add()
 
     # Update existing if changed
     modify_keys = list(set(configured_bindings.keys()) & set(actual_bindings.keys()))
     for key in modify_keys:
-      if not configured_bindings[key].has_equal_attributes(actual_bindings[key]):
-        log('Updating binding for policy %s' % key)
-        csvserver_cspolicy_binding.delete(client, actual_bindings[key])
-        configured_bindings[key].add()
+        if not configured_bindings[key].has_equal_attributes(actual_bindings[key]):
+            log('Updating binding for policy %s' % key)
+            csvserver_cspolicy_binding.delete(client, actual_bindings[key])
+            configured_bindings[key].add()
    
-
 def ssl_certkey_bindings_identical(client, module):
     log('Checking if ssl cert key bindings are identical')
     vservername = module.params['name']
