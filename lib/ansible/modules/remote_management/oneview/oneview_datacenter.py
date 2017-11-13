@@ -130,7 +130,7 @@ class DatacenterModule(OneViewModuleBase):
     RESOURCE_FACT_NAME = 'datacenter'
 
     argument_spec = dict(
-        state=dict(type='str', default='present', choices=['absent', 'present',]),
+        state=dict(type='str', default='present', choices=['absent', 'present']),
         data=dict(type='dict', required=True)
     )
 
