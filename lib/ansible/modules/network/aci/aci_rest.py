@@ -225,16 +225,14 @@ except:
 
 # Optional, only used for XML payload
 try:
-    import lxml.etree
-    assert lxml.etree  # silence pyflakes
+    import lxml.etree  # noqa
     HAS_LXML_ETREE = True
 except ImportError:
     HAS_LXML_ETREE = False
 
 # Optional, only used for XML payload
 try:
-    from xmljson import cobra
-    assert cobra  # silence pyflakes
+    from xmljson import cobra  # noqa
     HAS_XMLJSON_COBRA = True
 except ImportError:
     HAS_XMLJSON_COBRA = False

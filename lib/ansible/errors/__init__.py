@@ -172,6 +172,11 @@ class AnsibleError(Exception):
         return error_message
 
 
+class AnsibleAssertionError(AnsibleError, AssertionError):
+    '''Invalid assertion'''
+    pass
+
+
 class AnsibleOptionsError(AnsibleError):
     ''' bad or incomplete options passed '''
     pass
