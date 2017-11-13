@@ -31,7 +31,7 @@ options:
                 - C(present) will ensure data properties are compliant with OneView.
                 - C(absent) will remove the resource from OneView, if it exists.
         choices: ['present', 'absent']
-        required: true
+        default: present
     data:
         description:
             - List with Storage System properties and its associated states.
@@ -139,10 +139,7 @@ class StorageSystemModule(OneViewModuleBase):
 
     def __init__(self):
         argument_spec = dict(
-            state=dict(
-                required=True,
-                choices=['present', 'absent']
-            ),
+            state=dict(default='present', choices=['present', 'absent']),
             data=dict(required=True, type='dict')
         )
         super(StorageSystemModule, self).__init__(additional_arg_spec=argument_spec,
