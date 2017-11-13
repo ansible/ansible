@@ -222,8 +222,10 @@ def dict_diff(base, comparable):
 
     :returns: new dict object with differences
     """
-    assert isinstance(base, dict), "`base` must be of type <dict>"
-    assert isinstance(comparable, dict), "`comparable` must be of type <dict>"
+    if not isinstance(base, dict):
+        raise AssertionError("`base` must be of type <dict>")
+    if not isinstance(comparable, dict):
+        raise AssertionError("`comparable` must be of type <dict>")
 
     updates = dict()
 
@@ -257,8 +259,10 @@ def dict_merge(base, other):
 
     :returns: new combined dict object
     """
-    assert isinstance(base, dict), "`base` must be of type <dict>"
-    assert isinstance(other, dict), "`other` must be of type <dict>"
+    if not isinstance(base, dict):
+        raise AssertionError("`base` must be of type <dict>")
+    if not isinstance(other, dict):
+        raise AssertionError("`other` must be of type <dict>")
 
     combined = dict()
 
@@ -306,7 +310,8 @@ def conditional(expr, val, cast=None):
         op, arg = match.groups()
     else:
         op = 'eq'
-        assert (' ' not in str(expr)), 'invalid expression: cannot contain spaces'
+        if ' ' in str(expr):
+            raise AssertionError('invalid expression: cannot contain spaces')
         arg = expr
 
     if cast is None and val is not None:

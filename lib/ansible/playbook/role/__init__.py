@@ -22,7 +22,7 @@ __metaclass__ = type
 import collections
 import os
 
-from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.errors import AnsibleError, AnsibleParserError, AnsibleAssertionError
 from ansible.module_utils.six import iteritems, binary_type, text_type
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
@@ -293,7 +293,8 @@ class Role(Base, Become, Conditional, Taggable):
 
     def add_parent(self, parent_role):
         ''' adds a role to the list of this roles parents '''
-        assert isinstance(parent_role, Role)
+        if not isinstance(parent_role, Role):
+            raise AnsibleAssertionError()
 
         if parent_role not in self._parents:
             self._parents.append(parent_role)
