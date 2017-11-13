@@ -302,6 +302,8 @@ class Connection(ConnectionBase):
                 A carriage return is automatically appended to this string.
         :returns: True if a prompt was found in ``resp``.  False otherwise
         '''
+        if not isinstance(prompts, list):
+            prompts = [prompts]
         prompts = [re.compile(r, re.I) for r in prompts]
         for regex in prompts:
             match = regex.search(resp)
