@@ -10,9 +10,11 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['stableinterface'],
-                    'supported_by': 'core'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.1',
+    'status': ['stableinterface'],
+    'supported_by': 'core'
+}
 
 DOCUMENTATION = '''
 ---
@@ -108,6 +110,16 @@ options:
     type: bool
     default: 'no'
     version_added: "2.4"
+  autostart:
+    description:
+      - If C(yes), the module creates the C(/usr/sbin/policy-rc.d) file which prevents automatic service startup if the
+        package contains one.
+      - If C(no), the module will remove the C(/usr/sbin/policy-rc.d) file which will cause automatic service startup
+        if the package contains one.
+      - If not set, the module won't remove the C(/usr/sbin/policy-rc.d) file if it exists.
+    required: false
+    type: bool
+    version_added: "2.6"
   only_upgrade:
     description:
       - Only upgrade a package if it is already installed.
@@ -145,8 +157,7 @@ EXAMPLES = '''
   apt:
     name: apache2
     state: present
-  environment:
-    RUNLEVEL: 1
+    autostart: no
 
 - name: Remove "foo" package
   apt:
@@ -226,7 +237,6 @@ EXAMPLES = '''
 - name: Remove dependencies that are no longer required
   apt:
     autoremove: yes
-
 '''
 
 RETURN = '''
@@ -244,13 +254,20 @@ stdout:
     description: output from apt
     returned: success, when needed
     type: string
-    sample: "Reading package lists...\nBuilding dependency tree...\nReading state information...\nThe following extra packages will be installed:\n  apache2-bin ..."
+    sample: |
+        Reading package lists...
+        Building dependency tree...
+        Reading state information...
+        The following extra packages will be installed:
+          apache2-bin ...
 stderr:
     description: error output from apt
     returned: success, when needed
     type: string
-    sample: "AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 127.0.1.1. Set the 'ServerName' directive globally to ..."
-'''  # NOQA
+    sample: >
+        AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 127.0.1.1. Set
+        the 'ServerName' directive globally to ...
+'''
 
 # added to stave off future warnings about apt api
 import warnings
@@ -446,13 +463,15 @@ def expand_pkgspec_from_fnmatches(m, pkgspec, cache):
                     try:
                         pkg_name_cache = _non_multiarch
                     except NameError:
-                        pkg_name_cache = _non_multiarch = [pkg.name for pkg in cache if ':' not in pkg.name]  # noqa: F841
+                        _non_multiarch = [pkg.name for pkg in cache if ':' not in pkg.name]
+                        pkg_name_cache = _non_multiarch
                 else:
                     # Create a cache of pkg_names including multiarch only once
                     try:
                         pkg_name_cache = _all_pkg_names
                     except NameError:
-                        pkg_name_cache = _all_pkg_names = [pkg.name for pkg in cache]  # noqa: F841
+                        _all_pkg_names = [pkg.name for pkg in cache]
+                        pkg_name_cache = _all_pkg_names
 
                 matches = fnmatch.filter(pkg_name_cache, pkgname_pattern)
 
@@ -507,8 +526,8 @@ def mark_installed_manually(m, packages):
 def install(m, pkgspec, cache, upgrade=False, default_release=None,
             install_recommends=None, force=False,
             dpkg_options=expand_dpkg_options(DPKG_OPTIONS),
-            build_dep=False, autoremove=False, only_upgrade=False,
-            allow_unauthenticated=False):
+            build_dep=False, autoremove=False, autostart=None,
+            only_upgrade=False, allow_unauthenticated=False):
     pkg_list = []
     packages = ""
     pkgspec = expand_pkgspec_from_fnmatches(m, pkgspec, cache)
@@ -535,6 +554,24 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
     packages = ' '.join(pkg_list)
 
     if packages:
+        policy_rc_file = '/usr/sbin/policy-rc.d'
+
+        if autostart is False and not os.path.isfile(policy_rc_file):
+            e = None
+
+            try:
+                f = open(policy_rc_file, 'w')
+                f.write("#!/bin/bash\nexit 101\n")
+                os.chmod(policy_rc_file, 0o755)
+                f.close()
+            except:
+                return False, dict(msg="Cannot create file %s: %s" % (policy_rc_file, e))
+        elif autostart is True and os.path.isfile(policy_rc_file):
+            try:
+                os.remove(policy_rc_file)
+            except OSError as e:
+                return False, dict(msg="Cannot remove file %s: %s" % (policy_rc_file, e))
+
         if force:
             force_yes = '--force-yes'
         else:
@@ -935,6 +972,7 @@ def main():
             dpkg_options=dict(type='str', default=DPKG_OPTIONS),
             autoremove=dict(type='bool', default=False),
             autoclean=dict(type='bool', default=False),
+            autostart=dict(type='bool', default=None),
             only_upgrade=dict(type='bool', default=False),
             force_apt_get=dict(type='bool', default=False),
             allow_unauthenticated=dict(type='bool', default=False, aliases=['allow-unauthenticated']),
@@ -984,6 +1022,7 @@ def main():
     dpkg_options = expand_dpkg_options(p['dpkg_options'])
     autoremove = p['autoremove']
     autoclean = p['autoclean']
+    autostart = p['autostart']
 
     # Deal with deprecated aliases
     if p['state'] == 'installed':
@@ -1095,6 +1134,7 @@ def main():
                 dpkg_options=dpkg_options,
                 build_dep=state_builddep,
                 autoremove=autoremove,
+                autostart=autostart,
                 only_upgrade=p['only_upgrade'],
                 allow_unauthenticated=allow_unauthenticated
             )
