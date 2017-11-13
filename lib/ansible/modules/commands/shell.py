@@ -105,6 +105,15 @@ EXAMPLES = '''
 - name: Run a command using a templated variable (always use quote filter to avoid injection)
   shell: cat {{ myfile|quote }}
 
+- name: Run a command using a here document to generate a multi-line file
+  shell:
+    cmd: |
+      cat << EOF > myfile.txt
+      This is a file
+      with mulitple
+      lines
+      EOF
+
 # You can use shell to run other executables to perform actions inline
 - name: Run expect to wait for a successful PXE boot via out-of-band CIMC
   shell: |
