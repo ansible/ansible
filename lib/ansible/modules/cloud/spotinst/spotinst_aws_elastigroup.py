@@ -23,6 +23,11 @@ description:
     Full documentation available at https://help.spotinst.com/hc/en-us/articles/115003530285-Ansible-
 options:
 
+  credentials_path:
+    description:
+      - (String) Optional parameter that allows to set a non-default credentials path.
+       Default is ~/.spotinst/credentials
+
   availability_vs_cost:
     choices:
       - availabilityOriented
