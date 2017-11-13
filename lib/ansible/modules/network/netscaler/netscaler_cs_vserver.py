@@ -690,6 +690,7 @@ def sync_cs_policybindings(client, module):
             csvserver_cspolicy_binding.delete(client, actual_bindings[key])
             configured_bindings[key].add()
 
+
 def ssl_certkey_bindings_identical(client, module):
     log('Checking if ssl cert key bindings are identical')
     vservername = module.params['name']
