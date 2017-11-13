@@ -30,20 +30,13 @@ options:
     options:
       description:
         - "List with options to gather additional facts about Managed SAN.
-          Options allowed:
-          C(endpoints) gets the list of endpoints in the SAN identified by name.
-          C(wwn) gets the list of Managed SANs associated with an informed WWN C(locate)."
-    params:
-      description:
-        - List of params to delimit, filter and sort the list of resources.
-        - "params allowed:
-           C(start): The first item to return, using 0-based indexing.
-           C(count): The number of resources to return.
-           C(query): A general query string to narrow the list of resources returned.
-           C(sort): The sort order of the returned data set."
+        - Options allowed:
+            - C(endpoints) gets the list of endpoints in the SAN identified by name.
+            - C(wwn) gets the list of Managed SANs associated with an informed WWN C(locate)."
 
 extends_documentation_fragment:
     - oneview
+    - oneview.factsparams
 '''
 
 EXAMPLES = '''
@@ -137,11 +130,7 @@ from ansible.module_utils.oneview import OneViewModuleBase
 
 
 class ManagedSanFactsModule(OneViewModuleBase):
-    argument_spec = dict(
-        name=dict(type='str'),
-        options=dict(type='list'),
-        params=dict(type='dict')
-    )
+    argument_spec = dict(name=dict(type='str'), options=dict(type='list'), params=dict(type='dict'))
 
     def __init__(self):
         super(ManagedSanFactsModule, self).__init__(additional_arg_spec=self.argument_spec)
