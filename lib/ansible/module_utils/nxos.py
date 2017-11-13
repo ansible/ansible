@@ -127,8 +127,12 @@ class Cli:
         except KeyError:
             rc, out, err = self.exec_command(cmd)
             if rc != 0:
-                self._module.fail_json(msg=to_text(err, errors='surrogate_then_replace'))
-            cfg = to_text(out, errors='surrogate_then_replace').strip()
+                self._module.fail_json(msg=to_text(err))
+            try:
+                cfg = to_text(out, errors='surrogate_or_strict').strip()
+            except UnicodeError as e:
+                self._module.fail_json(msg=u'Failed to decode config: %s' % to_text(out))
+
             self._device_configs[cmd] = cfg
             return cfg
 
@@ -141,25 +145,29 @@ class Cli:
             if item['output'] == 'json' and not is_json(item['command']):
                 cmd = '%s | json' % item['command']
             elif item['output'] == 'text' and is_json(item['command']):
-                cmd = item['command'].split('|')[0]
+                cmd = item['command'].rsplit('|', 1)[0]
             else:
                 cmd = item['command']
 
             rc, out, err = self.exec_command(cmd)
-            out = to_text(out, errors='surrogate_then_replace')
+            try:
+                out = to_text(out, errors='surrogate_or_strict')
+            except UnicodeError:
+                self._module.fail_json(msg=u'Failed to decode output from %s: %s' % (cmd, to_text(out)))
+
             if check_rc and rc != 0:
-                self._module.fail_json(msg=to_text(err, errors='surrogate_then_replace'))
+                self._module.fail_json(msg=to_text(err))
 
             if not check_rc and rc != 0:
                 try:
                     out = self._module.from_json(err)
                 except ValueError:
-                    out = to_text(err, errors='surrogate_then_replace').strip()
+                    out = to_text(err).strip()
             else:
                 try:
                     out = self._module.from_json(out)
                 except ValueError:
-                    out = to_text(out, errors='surrogate_then_replace').strip()
+                    out = to_text(out).strip()
 
             responses.append(out)
         return responses
@@ -170,11 +178,9 @@ class Cli:
         if opts is None:
             opts = {}
 
-        errors = 'surrogate_then_replace'
         rc, out, err = self.exec_command('configure')
         if rc != 0:
-            msg = 'unable to enter configuration mode'
-            self._module.fail_json(msg=msg, output=to_text(err, errors=errors))
+            self._module.fail_json(msg='unable to enter configuration mode', output=to_text(err))
 
         msgs = []
         for cmd in config:
@@ -183,7 +189,7 @@ class Cli:
                 msgs.append(err)
                 return msgs
             elif rc != 0:
-                self._module.fail_json(msg=to_text(err, errors=errors))
+                self._module.fail_json(msg=to_text(err))
             elif out:
                 msgs.append(out)
 
@@ -349,7 +355,7 @@ class Nxapi:
 
         for item in to_list(commands):
             if is_json(item['command']):
-                item['command'] = str(item['command']).split('|')[0]
+                item['command'] = str(item['command']).rsplit('|', 1)[0]
                 item['output'] = 'json'
 
             if all((output == 'json', item['output'] == 'text')) or all((output == 'text', item['output'] == 'json')):
