@@ -743,7 +743,6 @@ __metaclass__ = type
 
 import os
 import time
-from os.path import expanduser
 from ansible.module_utils.basic import AnsibleModule
 
 try:
