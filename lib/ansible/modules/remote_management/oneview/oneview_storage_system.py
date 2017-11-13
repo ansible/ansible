@@ -137,12 +137,13 @@ class StorageSystemModule(OneViewModuleBase):
                                    "(credentials.ip_hostname if API version lower than 500 )."
     MSG_CREDENTIALS_MANDATORY = "The attribute 'credentials' is mandatory for Storage System creation."
 
+    argument_spec = dict(
+        state=dict(type='str', default='present', choices=['present', 'absent']),
+        data=dict(type='dict', required=True)
+    )
+
     def __init__(self):
-        argument_spec = dict(
-            state=dict(default='present', choices=['present', 'absent']),
-            data=dict(required=True, type='dict')
-        )
-        super(StorageSystemModule, self).__init__(additional_arg_spec=argument_spec,
+        super(StorageSystemModule, self).__init__(additional_arg_spec=self.argument_spec,
                                                   validate_etag_support=True)
 
         self.resource_client = self.oneview_client.storage_systems
