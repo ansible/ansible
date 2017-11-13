@@ -34,7 +34,7 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback, return_values
 from ansible.module_utils.network_common import to_list, ComplexList
 from ansible.module_utils.connection import exec_command
-from ansible.module_utils.six import iteritems
+from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils.urls import fetch_url
 
 _DEVICE_CONNECTION = None
@@ -168,6 +168,9 @@ class Cli:
                     out = self._module.from_json(out)
                 except ValueError:
                     out = to_text(out).strip()
+
+            if item['output'] == 'json' and isinstance(out, string_types):
+                self._module.fail_json(msg='failed to retrieve output of %s in json format' % item['command'])
 
             responses.append(out)
         return responses
