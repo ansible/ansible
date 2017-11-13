@@ -97,3 +97,11 @@ class TestNxosBgpNeighborAfModule(TestNxosModule):
             changed=True, sort=False,
             commands=['router bgp 65535', 'neighbor 3.3.3.5', 'address-family ipv4 unicast', 'maximum-prefix 20 20']
         )
+
+    def test_nxos_bgp_neighbor_af_disable_peer_as_check(self):
+        set_module_args(dict(asn=65535, neighbor='3.3.3.5', afi='ipv4',
+                             safi='unicast', disable_peer_as_check=True))
+        self.execute_module(
+            changed=True,
+            commands=['router bgp 65535', 'neighbor 3.3.3.5', 'address-family ipv4 unicast', 'disable-peer-as-check']
+        )
