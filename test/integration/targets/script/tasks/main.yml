@@ -48,6 +48,20 @@
       - "script_result0.stderr == ''"
       - "script_result0.stdout == 'win'"
 
+- name: Execute a script with a space in the path
+  script: "'space path/test.sh'"
+  register: _space_path_test
+  tags:
+    - spacepath
+
+- name: Assert that script with space in path ran successfully
+  assert:
+    that:
+      - _space_path_test is success
+      - _space_path_test.stdout == 'Script with space in path'
+  tags:
+    - spacepath
+
 - name: Execute a script with arguments including a unicode character
   script: test_with_args.sh -this -that -Ӧther
   register: unicode_args
