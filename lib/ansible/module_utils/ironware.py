@@ -67,7 +67,8 @@ def get_connection(module):
 
 
 def to_commands(module, commands):
-    assert isinstance(commands, list), 'argument must be of type <list>'
+    if not isinstance(commands, list):
+        raise AssertionError('argument must be of type <list>')
 
     transform = EntityCollection(module, command_spec)
     commands = transform(commands)

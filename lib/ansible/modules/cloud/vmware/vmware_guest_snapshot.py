@@ -342,7 +342,7 @@ class PyVmomiHelper(object):
             task = vm.RemoveAllSnapshots()
         else:
             # This should not happen
-            assert False
+            raise AssertionError()
 
         if task:
             self.wait_for_task(task)

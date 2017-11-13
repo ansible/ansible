@@ -20,7 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible import constants as C
-from ansible.errors import AnsibleParserError
+from ansible.errors import AnsibleParserError, AnsibleAssertionError
 from ansible.module_utils.six import string_types
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
@@ -116,7 +116,8 @@ class Play(Base, Taggable, Become):
         Adjusts play datastructure to cleanup old/legacy items
         '''
 
-        assert isinstance(ds, dict), 'while preprocessing data (%s), ds should be a dict but was a %s' % (ds, type(ds))
+        if not isinstance(ds, dict):
+            raise AnsibleAssertionError('while preprocessing data (%s), ds should be a dict but was a %s' % (ds, type(ds)))
 
         # The use of 'user' in the Play datastructure was deprecated to
         # line up with the same change for Tasks, due to the fact that

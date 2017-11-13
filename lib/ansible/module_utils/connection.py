@@ -95,7 +95,8 @@ class ConnectionError(Exception):
 class Connection:
 
     def __init__(self, socket_path):
-        assert socket_path is not None, 'socket_path must be a value'
+        if socket_path is None:
+            raise AssertionError('socket_path must be a value')
         self.socket_path = socket_path
 
     def __getattr__(self, name):

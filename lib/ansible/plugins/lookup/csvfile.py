@@ -51,7 +51,7 @@ import codecs
 import csv
 from collections import MutableSequence
 
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.plugins.lookup import LookupBase
 from ansible.module_utils._text import to_bytes, to_native, to_text
 
@@ -124,7 +124,8 @@ class LookupModule(LookupBase):
             try:
                 for param in params[1:]:
                     name, value = param.split('=')
-                    assert(name in paramvals)
+                    if name not in paramvals:
+                        raise AnsibleAssertionError('%s not in paramvals' % name)
                     paramvals[name] = value
             except (ValueError, AssertionError) as e:
                 raise AnsibleError(e)

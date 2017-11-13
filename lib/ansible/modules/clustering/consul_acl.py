@@ -236,8 +236,9 @@ def set_acl(consul_client, configuration):
     acls_as_json = decode_acls_as_json(consul_client.acl.list())
     existing_acls_mapped_by_name = dict((acl.name, acl) for acl in acls_as_json if acl.name is not None)
     existing_acls_mapped_by_token = dict((acl.token, acl) for acl in acls_as_json)
-    assert None not in existing_acls_mapped_by_token, "expecting ACL list to be associated to a token: %s" \
-                                                      % existing_acls_mapped_by_token[None]
+    if None in existing_acls_mapped_by_token:
+        raise AssertionError("expecting ACL list to be associated to a token: %s" %
+                             existing_acls_mapped_by_token[None])
 
     if configuration.token is None and configuration.name and configuration.name in existing_acls_mapped_by_name:
         # No token but name given so can get token from name
@@ -246,8 +247,10 @@ def set_acl(consul_client, configuration):
     if configuration.token and configuration.token in existing_acls_mapped_by_token:
         return update_acl(consul_client, configuration)
     else:
-        assert configuration.token not in existing_acls_mapped_by_token
-        assert configuration.name not in existing_acls_mapped_by_name
+        if configuration.token in existing_acls_mapped_by_token:
+            raise AssertionError()
+        if configuration.name in existing_acls_mapped_by_name:
+            raise AssertionError()
         return create_acl(consul_client, configuration)
 
 
@@ -266,7 +269,8 @@ def update_acl(consul_client, configuration):
         rules_as_hcl = encode_rules_as_hcl_string(configuration.rules)
         updated_token = consul_client.acl.update(
             configuration.token, name=name, type=configuration.token_type, rules=rules_as_hcl)
-        assert updated_token == configuration.token
+        if updated_token != configuration.token:
+            raise AssertionError()
 
     return Output(changed=changed, token=configuration.token, rules=configuration.rules, operation=UPDATE_OPERATION)
 
@@ -379,12 +383,14 @@ def encode_rules_as_json(rules):
     rules_as_json = defaultdict(dict)
     for rule in rules:
         if rule.pattern is not None:
-            assert rule.pattern not in rules_as_json[rule.scope]
+            if rule.pattern in rules_as_json[rule.scope]:
+                raise AssertionError()
             rules_as_json[rule.scope][rule.pattern] = {
                 _POLICY_JSON_PROPERTY: rule.policy
             }
         else:
-            assert rule.scope not in rules_as_json
+            if rule.scope in rules_as_json:
+                raise AssertionError()
             rules_as_json[rule.scope] = rule.policy
     return rules_as_json
 
@@ -577,7 +583,8 @@ def get_consul_client(configuration):
     token = configuration.management_token
     if token is None:
         token = configuration.token
-    assert token is not None, "Expecting the management token to always be set"
+    if token is None:
+        raise AssertionError("Expecting the management token to always be set")
     return consul.Consul(host=configuration.host, port=configuration.port, scheme=configuration.scheme,
                          verify=configuration.validate_certs, token=token)
 

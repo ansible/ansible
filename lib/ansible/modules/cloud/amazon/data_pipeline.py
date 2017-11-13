@@ -285,7 +285,8 @@ def check_dp_status(client, dp_id, status):
     :returns: True or False
 
     """
-    assert isinstance(status, list)
+    if not isinstance(status, list):
+        raise AssertionError()
     if pipeline_field(client, dp_id, field="@pipelineState") in status:
         return True
     else:
