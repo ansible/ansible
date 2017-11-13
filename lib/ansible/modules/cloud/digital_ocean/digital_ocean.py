@@ -237,7 +237,8 @@ class Droplet(JsonfyMixIn):
                 self.update_attr(json)
 
     def power_on(self):
-        assert self.status == 'off', 'Can only power on a closed one.'
+        if self.status != 'off':
+            raise AssertionError('Can only power on a closed one.')
         json = self.manager.power_on_droplet(self.id)
         self.update_attr(json)
 

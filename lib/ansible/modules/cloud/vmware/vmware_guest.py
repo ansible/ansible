@@ -424,8 +424,10 @@ class PyVmomiDeviceHelper(object):
         diskspec.device.backing.diskMode = 'persistent'
         diskspec.device.controllerKey = scsi_ctl.device.key
 
-        assert self.next_disk_unit_number != 7
-        assert disk_index != 7
+        if self.next_disk_unit_number == 7:
+            raise AssertionError()
+        if disk_index == 7:
+            raise AssertionError()
         """
         Configure disk unit number.
         """
@@ -1127,7 +1129,8 @@ class PyVmomiHelper(PyVmomi):
         return datastore, datastore_name
 
     def obj_has_parent(self, obj, parent):
-        assert obj is not None and parent is not None
+        if obj is None and parent is None:
+            raise AssertionError()
         current_parent = obj
 
         while True:
@@ -1573,7 +1576,7 @@ def main():
                 result["failed"] = False
         else:
             # This should not happen
-            assert False
+            raise AssertionError()
     # VM doesn't exist
     else:
         if module.params['state'] in ['poweredon', 'poweredoff', 'present', 'restarted', 'suspended']:

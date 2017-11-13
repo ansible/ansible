@@ -22,6 +22,7 @@ __metaclass__ = type
 
 from collections import MutableMapping, MutableSet, MutableSequence
 
+from ansible.errors import AnsibleAssertionError
 from ansible.module_utils.six import string_types
 from ansible.parsing.plugin_docs import read_docstring
 from ansible.parsing.yaml.loader import AnsibleLoader
@@ -59,7 +60,8 @@ def add_fragments(doc, filename):
             fragment_name, fragment_var = fragment_slug, 'DOCUMENTATION'
 
         fragment_class = fragment_loader.get(fragment_name)
-        assert fragment_class is not None
+        if fragment_class is None:
+            raise AnsibleAssertionError('fragment_class is None')
 
         fragment_yaml = getattr(fragment_class, fragment_var, '{}')
         fragment = AnsibleLoader(fragment_yaml, file_name=filename).get_single_data()

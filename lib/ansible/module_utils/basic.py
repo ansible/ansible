@@ -2248,7 +2248,8 @@ class AnsibleModule(object):
     def fail_json(self, **kwargs):
         ''' return from the module, with an error message '''
 
-        assert 'msg' in kwargs, "implementation error -- msg to explain the error is required"
+        if 'msg' not in kwargs:
+            raise AssertionError("implementation error -- msg to explain the error is required")
         kwargs['failed'] = True
 
         # add traceback if debug or high verbosity and it is missing
