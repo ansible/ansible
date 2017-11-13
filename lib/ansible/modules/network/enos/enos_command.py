@@ -83,8 +83,6 @@ vars:
     username: admin
     password: admin
     timeout: 30
-    authorize: True
-    auth_pass:
 
 ---
 - name: test contains operator
@@ -178,10 +176,6 @@ def main():
     spec.update(enos_argument_spec)
 
     module = AnsibleModule(argument_spec=spec, supports_check_mode=True)
-
-    warnings = list()
-    check_args(module, warnings)
-
     result = {'changed': False}
 
     wait_for = module.params['wait_for'] or list()
