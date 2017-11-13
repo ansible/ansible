@@ -15,6 +15,13 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+from ansible.module_utils.basic import AnsibleModule
+
+from ansible.module_utils.mlnxos import mlnxos_argument_spec, check_args
+from ansible.module_utils.mlnxos import show_command
+from ansible.modules.network.mlnxos import BaseMlnxosApp
+
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'network'}
@@ -104,20 +111,14 @@ ansible_net_interfaces:
   returned: when interfaces is configured
   type: dict
 """
-import re
-
-from ansible.module_utils.mlnxos import show_command
-from ansible.module_utils.mlnxos import mlnxos_argument_spec, check_args
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import iteritems
-from ansible.module_utils.six.moves import zip
-from ansible.modules.network.mlnxos import BaseMlnxosApp
 
 
 class MlnxosFactsApp(BaseMlnxosApp):
+    def __init__(self):
+        super(MlnxosFactsApp, self).__init__()
+        self.gather_subset = None
 
     def get_runable_subset(self):
-
         runable_subsets = set()
         exclude_subsets = set()
         for subset in self.gather_subset:
@@ -135,7 +136,7 @@ class MlnxosFactsApp(BaseMlnxosApp):
                 exclude = False
 
             if subset not in VALID_SUBSETS:
-                module.fail_json(msg='Bad subset')
+                self._module.fail_json(msg='Bad subset')
 
             if exclude:
                 exclude_subsets.add(subset)
@@ -146,7 +147,7 @@ class MlnxosFactsApp(BaseMlnxosApp):
             runable_subsets.update(VALID_SUBSETS)
 
         runable_subsets.difference_update(exclude_subsets)
-        if(len(runable_subsets) == 0):
+        if not runable_subsets:
             runable_subsets.add('version')
         return runable_subsets
 
@@ -177,7 +178,7 @@ class MlnxosFactsApp(BaseMlnxosApp):
             facts.update(inst.facts)
 
         ansible_facts = dict()
-        for key, value in iteritems(facts):
+        for key, value in facts.iteritems():
             key = 'ansible_net_%s' % key
             ansible_facts[key] = value
 
@@ -256,6 +257,7 @@ FACT_SUBSETS = dict(
 )
 
 VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())
+
 
 if __name__ == '__main__':
     MlnxosFactsApp.main()

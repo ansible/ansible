@@ -157,18 +157,14 @@ class MlnxosLagApp(BaseMlnxosApp):
         req_mac = self._required_config.get('mac_address')
 
         if req_group != current_group or req_ip != current_ip:
-            ip, mask = req_ip.split('/')
+            ipaddr, mask = req_ip.split('/')
             self._commands.append(
-                'mlag-vip %s ip %s /%s force' % (req_group, ip, mask))
+                'mlag-vip %s ip %s /%s force' % (req_group, ipaddr, mask))
         if req_mac != current_mac:
             self._commands.append(
                 'mlag system-mac %s' % (req_mac))
         if self._commands:
             self._commands.append('no mlag shutdown')
-
-
-
-
 
     def _generate_no_mlag_vip_cmds(self):
         if self._current_config.get('group_name'):

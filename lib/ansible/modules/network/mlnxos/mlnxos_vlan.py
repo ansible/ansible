@@ -21,18 +21,13 @@
 
 from __future__ import absolute_import, division, print_function
 
-from copy import deepcopy
-from time import sleep
+import re
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network_common import conditional, \
-    remove_default_spec
 
-from ansible.module_utils.mlnxos import get_interfaces_config, show_cmd
 from ansible.module_utils.mlnxos import mlnxos_argument_spec
+from ansible.module_utils.mlnxos import show_cmd
 from ansible.modules.network.mlnxos import BaseMlnxosApp
-import re
-import json
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -111,35 +106,18 @@ EXAMPLES = """
 """
 
 RETURN = """
+commands:
+  description: The list of configuration mode commands to send to the device.
+  returned: always, except for the platforms that use Netconf transport to
+            manage the device.
+  type: list
+  sample:
+    - vlan 234
+    - exit
+    - interface ethernet Eth1/1 switchport mode access
+    - interface ethernet Eth1/1 switchport access allowed-vlan add 234
+    - interface ethernet Eth1/1 switchport access allowed-vlan remove 234
 """
-
-
-def vlan_range_to_list(vlans):
-    result = []
-    if vlans:
-        for part in vlans.split(','):
-            if part == 'none':
-                break
-            if '-' in part:
-                start, end = part.split('-')
-                start, end = int(start), int(end)
-                result.extend([str(i) for i in range(start, end + 1)])
-            else:
-                result.append(part)
-    return result
-
-def numerical_sort(iterable):
-    """Sort list of strings (VLAN IDs) that are digits in numerical order.
-    """
-    as_int_list = []
-    for vlan in iterable:
-        as_int_list.append(int(vlan))
-    as_int_list.sort()
-
-    as_str_list = []
-    for vlan in as_int_list:
-        as_str_list.append(str(vlan))
-    return as_str_list
 
 
 class MlnxosVlanApp(BaseMlnxosApp):
@@ -148,46 +126,28 @@ class MlnxosVlanApp(BaseMlnxosApp):
     @classmethod
     def _get_element_spec(cls):
         return dict(
-            vlan_id=dict(),
+            vlan_id=dict(required=True),
             vlan_name=dict(),
             interfaces=dict(type='list', default=[]),
             state=dict(default='present',
                        choices=['present', 'absent']),
             mode=dict(default='trunk',
-                       choices=['access', 'hybrid', 'trunk', 'dot1q-tunnel',
-                                'access-dcb']),
+                      choices=['access', 'hybrid', 'trunk', 'dot1q-tunnel',
+                               'access-dcb']),
         )
 
     def get_required_config(self):
         self._required_config = list()
         module_params = self._module.params
-        aggregate = module_params.get('aggregate')
-        if aggregate:
-            for item in aggregate:
-                for key in item:
-                    if item.get(key) is None:
-                        item[key] = module_params[key]
-
-                self.validate_param_values(item, item)
-                self._required_config.append(item.copy())
-        else:
-            params = {
-                'vlan_id': module_params['vlan_id'],
-                'vlan_name': module_params['vlan_name'],
-                'interfaces': module_params['interfaces'],
-                'state': module_params['state'],
-                'mode': module_params['mode']
-            }
-            self.validate_param_values(params)
-            self._required_config.append(params)
-
-    @classmethod
-    def _get_aggregate_spec(cls, element_spec):
-        aggregate_spec = deepcopy(element_spec)
-        aggregate_spec['vlan_id'] = dict(required=True)
-        # remove default in aggregate spec, to handle common arguments
-        remove_default_spec(aggregate_spec)
-        return aggregate_spec
+        params = {
+            'vlan_id': module_params['vlan_id'],
+            'vlan_name': module_params['vlan_name'],
+            'interfaces': module_params['interfaces'],
+            'state': module_params['state'],
+            'mode': module_params['mode']
+        }
+        self.validate_param_values(params)
+        self._required_config.append(params)
 
     @classmethod
     def get_switchport_command_name(cls, switchportname):
@@ -197,22 +157,11 @@ class MlnxosVlanApp(BaseMlnxosApp):
         """ main entry point for module execution
         """
         element_spec = self._get_element_spec()
-        aggregate_spec = self._get_aggregate_spec(element_spec)
-        if aggregate_spec:
-            argument_spec = dict(
-                aggregate=dict(type='list', elements='dict',
-                               options=aggregate_spec),
-            )
-        else:
-            argument_spec = dict()
+        argument_spec = dict()
         argument_spec.update(element_spec)
         argument_spec.update(mlnxos_argument_spec)
-        required_one_of = [['vlan_id', 'aggregate']]
-        mutually_exclusive = [['vlan_id', 'aggregate']]
         self._module = AnsibleModule(
             argument_spec=argument_spec,
-            required_one_of=required_one_of,
-            mutually_exclusive=mutually_exclusive,
             supports_check_mode=True)
 
     @classmethod
@@ -224,7 +173,6 @@ class MlnxosVlanApp(BaseMlnxosApp):
             if match:
                 members.append(match.group(1))
         return members
-
 
     def _create_vlan_data(self, vlan_id, vlan_data):
         return {

@@ -33,6 +33,7 @@ class BaseMlnxosApp(object):
     def get_required_config(self):
         pass
 
+    # pylint: disable=unused-argument
     def check_declarative_intent_params(self, result):
         return None
 
@@ -55,8 +56,8 @@ class BaseMlnxosApp(object):
     @classmethod
     def get_mtu(cls, item):
         mtu = cls.get_config_attr(item, "MTU")
-        ll = mtu.split()
-        return ll[0]
+        mtu_parts = mtu.split()
+        return mtu_parts[0]
 
     def validate_mtu(self, value):
         if value and not 1500 <= int(value) <= 9612:

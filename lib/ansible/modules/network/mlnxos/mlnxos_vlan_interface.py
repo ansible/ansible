@@ -21,12 +21,7 @@
 
 from __future__ import absolute_import, division, print_function
 
-from copy import deepcopy
-from time import sleep
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network_common import conditional, \
-    remove_default_spec
 
 from ansible.module_utils.mlnxos import get_interfaces_config, show_cmd
 from ansible.module_utils.mlnxos import mlnxos_argument_spec
@@ -40,69 +35,84 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = """
 ---
-module: mlnxos_interface
+module: mlnxos_vlan_interface
 version_added: "2.5"
 author: "Samer Deeb (@samerd)"
-short_description: Manage Interface on MLNX-OS network devices
+short_description: Manage VLAN Interface on MLNX-OS network devices
 description:
-  - This module provides declarative management of vlan
+  - This module provides declarative management of vlan interface management
     on MLNX-OS network devices.
 notes:
   -
 options:
   vlan_id:
     description:
-      - Single VLAN ID.
-    required: false
-    default: null
-  interface:
-    description:
-      - number of interface
-    required: false
-    default: null
+      - VLAN ID.
+    required: true
   state:
     description:
-      - create or remove vlan
+      - vlan interface state
+    required: false
     default: present
     choices: ['present', 'absent']
-  mode:
+  ipaddress:
     description:
-      - set interface mode
-    default: hybrid
-    choices: ['access', 'hybrid', 'trunk', 'dot1q-tunnel', 'access-dcb']
+      - ip addesss of the vlan interface
+  ipl:
+    description:
+      - ipl ID
+    required: false
+  ipl_peer:
+    description:
+      - IPL peer IP address
+    required: false
+  magp:
+    description:
+      - magp ID
+    required: false
+  magp_router_ip:
+    description:
+      - MAGP router ip address
+    required: false
+  magp_router_mac:
+    description:
+      - MAGP router MAC address
+    required: false
 """
 
 EXAMPLES = """
-- name: run add vlan
-  mlnxos_vlan:
-    vlan_id: 13
+- name: run add vlan interface with ipl
+  mlnxos_vlan_interface:
+    vlan_id: 322
     state: present
-    interface: Eth1/13,Eth1/14
-    mode: hybrid
-    authorize: yes
-    provider:
-      host: "{{ inventory_hostname }}"
-- name: run remove vlan
-  mlnxos_vlan:
-    vlan_id: 13
-    state: absent
-    interface: Eth1/13,Eth1/14
-    mode: hybrid
-    authorize: yes
-    provider:
-      host: "{{ inventory_hostname }}"
+    ipaddress: 192.168.7.1/24
+    ipl: 1
+    ipl_peer: 192.168.7.2
+
+- name: run add vlan interface with magp
+  mlnxos_vlan_interface:
+    vlan_id: 320
+    state: present
+    ipaddress: 192.168.8.1/24
+    magp: 103
+    magp_router_ip: 192.168.8.2
+    magp_router_mac: AA:1B:2C:3D:4E:5F
 """
 
 RETURN = """
 commands:
-  description: The list of configuration mode commands to send to the device.
-  returned: always, except for the platforms that use Netconf transport to manage the device.
-  type: list
-  sample:
- interface ethernet <<interface_ID>> switchport mode <<mode>>
- interface ethernet <<interface_ID>> switchport <<mode>> allowed-vlan add <VLAN_ID>
- interface ethernet <<interface_ID>> switchport <<mode>> allowed-vlan remove <VLAN_ID>
+    description: The list of configuration mode commands to send to the device.
+      returned: always, except for the platforms that use Netconf transport to
+                manage the device.
+    type: list
+    sample:
+        vlan 234
+        exit
+        interface ethernet Eth1/1 switchport mode access
+        interface ethernet Eth1/1 switchport access allowed-vlan add 234
+        interface ethernet Eth1/1 switchport access allowed-vlan remove 234
 """
+
 
 class MlnxosVlanInterfaceApp(BaseMlnxosApp):
 

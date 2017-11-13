@@ -17,7 +17,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
 import json
 import re
@@ -53,7 +52,8 @@ class TerminalModule(TerminalBase):
         cmd = {u'command': u'enable'}
         if passwd:
             # Note: python-3.5 cannot combine u"" and r"" together.  Thus make
-            # an r string and use to_text to ensure it's text on both py2 and py3.
+            # an r string and use to_text to ensure it's text on both py2 and
+            # py3.
             cmd[u'prompt'] = to_text(r"[\r\n]?password: $",
                                      errors='surrogate_or_strict')
             cmd[u'answer'] = passwd

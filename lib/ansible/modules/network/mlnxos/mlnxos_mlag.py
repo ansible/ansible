@@ -75,14 +75,14 @@ EXAMPLES = """
 RETURN = """
 commands:
   description: The list of configuration mode commands to send to the device.
-  returned: always, except for the platforms that use Netconf transport to
+  returned: always
   type: list
   sample:
-    - interface port-channel 5
+    - interface mlag-port-channel 5
     - exit
-    - interface port-channel 5 mtu 1500 force
-    - interface ethernet 1/16 channel-group 5 mode on
-    - interface ethernet 1/17 channel-group 5 mode on
+    - interface mlag-port-channel 5 mtu 1500 force
+    - interface ethernet 1/16 mlag-channel-group 5 mode on
+    - interface ethernet 1/17 mlag-channel-group 5 mode on
 """
 
 

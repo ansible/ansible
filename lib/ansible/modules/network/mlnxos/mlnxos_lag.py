@@ -79,7 +79,7 @@ EXAMPLES = """
 RETURN = """
 commands:
   description: The list of configuration mode commands to send to the device.
-  returned: always, except for the platforms that use Netconf transport to
+  returned: always
   type: list
   sample:
     - interface port-channel 5
@@ -162,7 +162,6 @@ class MlnxosLagApp(BaseMlnxosApp):
         lag_members = lag_members.split()
         return lag_members
 
-
     def load_current_config(self):
         interface_type = self.PORT_CHANNEL
         lag_config = get_interfaces_config(self._module, interface_type)
@@ -194,7 +193,7 @@ class MlnxosLagApp(BaseMlnxosApp):
             obj['members'] = [self.extract_if_name(member) for member in
                               lag_members]
 
-    def _generate_port_channel_init_commands(self, lag_id, lag_obj):
+    def _generate_initial_commands(self, lag_id, lag_obj):
         if not lag_obj:
             self._commands.append(
                 "interface %s %s" % (self.PORT_CHANNEL, lag_id))
@@ -205,7 +204,7 @@ class MlnxosLagApp(BaseMlnxosApp):
                 self._commands.append("interface %s %s mtu %s force" %
                                       (self.PORT_CHANNEL, lag_id, mtu))
 
-    def _generate_port_channel_final_commands(self, lag_id, lag_obj):
+    def _generate_final_commands(self, lag_id, lag_obj):
         if lag_obj:
             return
         pch_prefix = "interface %s %s" % (self.PORT_CHANNEL, lag_id)
@@ -229,9 +228,9 @@ class MlnxosLagApp(BaseMlnxosApp):
             self._commands.append(
                 "%s switchport mode access vlan %s" % (pch_prefix, vlan_id))
         self._commands.append(
-                "%s no shutdown" % pch_prefix)
+            "%s no shutdown" % pch_prefix)
 
-    def _generate_port_channel_members_commands(self, lag_id, lag_obj):
+    def _generate_port_channel_commands(self, lag_id, lag_obj):
         lag_mode = self._required_config['lag_mode']
         dcb_pfc = self._required_config['dcb_pfc']
         curr_members = lag_obj.get('members', [])
@@ -255,18 +254,16 @@ class MlnxosLagApp(BaseMlnxosApp):
                     "%s %s %s mode %s" %
                     (interface_prefix, self.CHANNEL_GROUP, lag_id, lag_mode))
 
-
     def generate_commands(self):
         lag_id = self._required_config['lag_id']
 
         lag_obj = self._current_config.get(lag_id, {})
-        self._generate_port_channel_init_commands(lag_id, lag_obj)
-        self._generate_port_channel_members_commands(lag_id, lag_obj)
-        self._generate_port_channel_final_commands(lag_id, lag_obj)
+        self._generate_initial_commands(lag_id, lag_obj)
+        self._generate_port_channel_commands(lag_id, lag_obj)
+        self._generate_final_commands(lag_id, lag_obj)
 
         if self._commands:
             self._commands.append('exit')
-
 
     def check_declarative_intent_params(self, result):
         pass

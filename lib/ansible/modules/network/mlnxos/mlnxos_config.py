@@ -15,6 +15,17 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+import re
+import time
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.netcfg import NetworkConfig, dumps
+from ansible.module_utils.six import iteritems
+
+from ansible.module_utils.mlnxos import check_args as mlnxos_check_args
+from ansible.module_utils.mlnxos import mlnxos_argument_spec
+from ansible.module_utils.mlnxos import run_commands, get_config, load_config
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -29,12 +40,12 @@ author: "Alex Tabachnik"
 short_description: Manage Mellanox OS configuration sections
 description:
   - Mellanox OS configurations use a simple block indent file syntax
-    for segmenting configuration into sections.  This module provides
+    for segmenting configuration into sections. This module provides
     an implementation for working with MLNXOS configuration sections in
     a deterministic way.
 extends_documentation_fragment: mlnxos
 notes:
-  - Tested against mlnx 15.6
+  -
 options:
   lines:
     description:
@@ -59,8 +70,8 @@ options:
       - Specifies the source path to the file that contains the configuration
         or configuration template to load.  The path to the source file can
         either be the full path on the Ansible control host or a relative
-        path from the playbook or role root directory.  This argument is mutually
-        exclusive with I(lines).
+        path from the playbook or role root directory.  This argument is
+        mutually exclusive with I(lines).
     required: false
     default: null
     version_added: "2.2"
@@ -121,8 +132,8 @@ options:
         cause the module to push the contents of I(src) into the device
         without first checking if already configured.
       - Note this argument should be considered deprecated.  To achieve
-        the equivalent, set the C(match=none) which is idempotent.  This argument
-        will be removed in a future release.
+        the equivalent, set the C(match=none) which is idempotent.
+        This argument will be removed in a future release.
     required: false
     default: false
     type: bool
@@ -279,17 +290,6 @@ backup_path:
   type: string
   sample: /playbooks/ansible/backup/mlnxos_config.2017-11-01@12:15:35
 """
-import re
-import time
-
-from ansible.module_utils.mlnxos import run_commands, get_config, load_config
-#from ansible.module_utils.mlnxos import get_defaults_flag
-from ansible.module_utils.mlnxos import mlnxos_argument_spec
-from ansible.module_utils.mlnxos import check_args as mlnxos_check_args
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcli import Conditional
-from ansible.module_utils.netcfg import NetworkConfig, dumps
-from ansible.module_utils.six import iteritems
 
 
 def check_args(module, warnings):
@@ -333,7 +333,6 @@ def load_banners(module, banners):
     for key, value in iteritems(banners):
         key += ' %s' % delimiter
         for cmd in ['config terminal', key, value, delimiter, 'end']:
-            obj = {'command': cmd, 'sendonly': True}
             run_commands(module, [cmd])
         time.sleep(0.1)
         run_commands(module, ['\n'])
@@ -343,9 +342,8 @@ def get_running_config(module, current_config=None):
     contents = module.params['running_config']
     if not contents:
         if not module.params['defaults'] and current_config:
-            contents, banners = extract_banners(current_config.config_text)
+            contents, _ = extract_banners(current_config.config_text)
         else:
-            #flags = get_defaults_flag(module) if module.params['defaults'] else []
             flags = []
             contents = get_config(module, flags=flags)
     contents, banners = extract_banners(contents)
@@ -379,7 +377,8 @@ def main():
         before=dict(type='list'),
         after=dict(type='list'),
 
-        match=dict(default='line', choices=['line', 'strict', 'exact', 'none']),
+        match=dict(default='line',
+                   choices=['line', 'strict', 'exact', 'none']),
         replace=dict(default='line', choices=['line', 'block']),
         multiline_delimiter=dict(default='@'),
 
@@ -389,7 +388,8 @@ def main():
         defaults=dict(type='bool', default=False),
         backup=dict(type='bool', default=False),
 
-        save_when=dict(choices=['always', 'never', 'modified'], default='never'),
+        save_when=dict(choices=['always', 'never', 'modified'],
+                       default='never'),
 
         diff_against=dict(choices=['startup', 'intended', 'running']),
         diff_ignore_lines=dict(type='list'),
@@ -424,7 +424,8 @@ def main():
 
     config = None
 
-    if module.params['backup'] or (module._diff and module.params['diff_against'] == 'running'):
+    if module.params['backup'] or (module._diff and
+                                   module.params['diff_against'] == 'running'):
         contents = get_config(module)
         config = NetworkConfig(indent=1, contents=contents)
         if module.params['backup']:
@@ -440,7 +441,8 @@ def main():
         if match != 'none':
             config, have_banners = get_running_config(module, config)
             path = module.params['parents']
-            configobjs = candidate.difference(config, path=path, match=match, replace=replace)
+            configobjs = candidate.difference(config, path=path, match=match,
+                                              replace=replace)
         else:
             configobjs = candidate.items
             have_banners = {}
@@ -476,19 +478,24 @@ def main():
     diff_ignore_lines = module.params['diff_ignore_lines']
 
     if module.params['save_when'] != 'never':
-        output = run_commands(module, ['show running-config', 'show startup-config'])
+        output = run_commands(module, ['show running-config',
+                                       'show startup-config'])
 
-        running_config = NetworkConfig(indent=1, contents=output[0], ignore_lines=diff_ignore_lines)
-        startup_config = NetworkConfig(indent=1, contents=output[1], ignore_lines=diff_ignore_lines)
+        running_config = NetworkConfig(indent=1, contents=output[0],
+                                       ignore_lines=diff_ignore_lines)
+        startup_config = NetworkConfig(indent=1, contents=output[1],
+                                       ignore_lines=diff_ignore_lines)
 
-        if running_config.sha1 != startup_config.sha1 or module.params['save_when'] == 'always':
+        if running_config.sha1 != startup_config.sha1 or \
+                module.params['save_when'] == 'always':
             result['changed'] = True
             if not module.check_mode:
                 run_commands(module, 'copy running-config startup-config')
             else:
-                module.warn('Skipping command `copy running-config startup-config` '
-                            'due to check_mode.  Configuration not copied to '
-                            'non-volatile storage')
+                module.warn(
+                    'Skipping command `copy running-config startup-config` '
+                    'due to check_mode.  Configuration not copied to '
+                    'non-volatile storage')
 
     if module._diff:
         if not running_config:
@@ -498,11 +505,13 @@ def main():
             contents = running_config.config_text
 
         # recreate the object in order to process diff_ignore_lines
-        running_config = NetworkConfig(indent=1, contents=contents, ignore_lines=diff_ignore_lines)
+        running_config = NetworkConfig(indent=1, contents=contents,
+                                       ignore_lines=diff_ignore_lines)
 
         if module.params['diff_against'] == 'running':
             if module.check_mode:
-                module.warn("unable to perform diff against running-config due to check mode")
+                module.warn("unable to perform diff against running-config "
+                            "due to check mode")
                 contents = None
             else:
                 contents = config.config_text
@@ -518,12 +527,14 @@ def main():
             contents = module.params['intended_config']
 
         if contents is not None:
-            base_config = NetworkConfig(indent=1, contents=contents, ignore_lines=diff_ignore_lines)
+            base_config = NetworkConfig(indent=1, contents=contents,
+                                        ignore_lines=diff_ignore_lines)
 
             if running_config.sha1 != base_config.sha1:
                 result.update({
                     'changed': True,
-                    'diff': {'before': str(base_config), 'after': str(running_config)}
+                    'diff': {'before': str(base_config),
+                             'after': str(running_config)}
                 })
 
     module.exit_json(**result)

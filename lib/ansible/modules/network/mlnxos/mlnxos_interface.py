@@ -31,7 +31,6 @@ from ansible.module_utils.network_common import conditional, \
 from ansible.module_utils.mlnxos import get_interfaces_config
 from ansible.module_utils.mlnxos import mlnxos_argument_spec
 from ansible.modules.network.mlnxos import BaseMlnxosApp
-import cmd
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',

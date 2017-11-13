@@ -24,18 +24,14 @@ import sys
 from ansible import constants as C
 from ansible.module_utils.network_common import load_provider
 from ansible.plugins.action.normal import ActionModule as _ActionModule
+from ansible.utils.display import Display
 
 from ansible.module_utils.mlnxos import mlnxos_provider_spec
-
-
-__metaclass__ = type
-
 
 
 try:
     from __main__ import display
 except ImportError:
-    from ansible.utils.display import Display
     display = Display()
 
 
