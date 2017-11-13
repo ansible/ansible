@@ -69,6 +69,11 @@ options:
     required: false
     default: null
     choices: ['layer2','layer3']
+  mtu:
+    description:
+      - MTU for a specific interface. Must be an even number between 576 and 9216.
+    required: false
+    version_added: 2.5
   ip_forward:
     description:
       - Enable/Disable ip forward feature on SVIs.
@@ -140,7 +145,6 @@ commands:
     type: list
     sample: ["interface port-channel101", "shutdown"]
 '''
-
 from ansible.module_utils.nxos import load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
@@ -252,6 +256,9 @@ def get_interface(intf, module):
     mode_map = {
         'eth_mode': 'mode'
     }
+    mtu_map = {
+        'eth_mtu': 'mtu'
+    }
     loop_map = {
         'state': 'admin_state'
     }
@@ -292,6 +299,7 @@ def get_interface(intf, module):
             if intf_type == 'ethernet':
                 key_map.update(base_key_map)
                 key_map.update(mode_map)
+                key_map.update(mtu_map)
                 temp_dict = apply_key_map(key_map, interface_table)
                 temp_dict = apply_value_map(mode_value_map, temp_dict)
                 interface.update(temp_dict)
@@ -356,6 +364,7 @@ def get_intf_args(interface):
 
     if intf_type in ['ethernet', 'portchannel']:
         arguments.extend(['mode'])
+        arguments.extend(['mtu'])
     if intf_type == 'svi':
         arguments.extend(['ip_forward', 'fabric_forwarding_anycast_gateway'])
 
@@ -475,6 +484,10 @@ def get_interface_config_commands(interface, intf, existing):
             command = 'no switchport'
         commands.append(command)
 
+    mtu = interface.get('mtu')
+    if mtu:
+        commands.append('mtu {0}'.format(mtu))
+
     admin_state = interface.get('admin_state')
     if admin_state:
         command = get_admin_state(interface, intf, admin_state)
@@ -588,6 +601,7 @@ def main():
         admin_state=dict(default='up', choices=['up', 'down'], required=False),
         description=dict(required=False, default=None),
         mode=dict(choices=['layer2', 'layer3'], required=False),
+        mtu=dict(type='int', required=False),
         interface_type=dict(required=False, choices=['loopback', 'portchannel', 'svi', 'nve']),
         ip_forward=dict(required=False, choices=['enable', 'disable']),
         fabric_forwarding_anycast_gateway=dict(required=False, type='bool'),
@@ -610,6 +624,7 @@ def main():
     admin_state = module.params['admin_state']
     description = module.params['description']
     mode = module.params['mode']
+    mtu = str(module.params['mtu'])
     ip_forward = module.params['ip_forward']
     fabric_forwarding_anycast_gateway = module.params['fabric_forwarding_anycast_gateway']
     state = module.params['state']
@@ -633,7 +648,7 @@ def main():
                                  ' are only available for SVIs.')
 
         args = dict(interface=interface, admin_state=admin_state,
-                    description=description, mode=mode, ip_forward=ip_forward,
+                    description=description, mode=mode, mtu=mtu, ip_forward=ip_forward,
                     fabric_forwarding_anycast_gateway=fabric_forwarding_anycast_gateway)
         if (normalized_interface.startswith('Eth') or normalized_interface.startswith('po'))\
            and "." in normalized_interface:
