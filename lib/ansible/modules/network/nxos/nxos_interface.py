@@ -275,12 +275,12 @@ def get_interface(intf, module):
     try:
         body = execute_show_command(command, module)[0]
     except IndexError:
-        body = {}
+        return {}
     if body:
         try:
             interface_table = body['TABLE_interface']['ROW_interface']
         except KeyError:
-            interface_table = {}
+            return {}
         if interface_table:
             if interface_table.get('eth_mode') == 'fex-fabric':
                 module.fail_json(msg='nxos_interface does not support interfaces with mode "fex-fabric"')
@@ -373,7 +373,7 @@ def get_interfaces_dict(module):
     try:
         body = execute_show_command(command, module)[0]
     except IndexError:
-        body = {}
+        return {}
 
     interfaces = {
         'ethernet': [],
