@@ -26,7 +26,7 @@ from ansible import constants as C
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.six import PY3
 from ansible.module_utils.six.moves import cPickle
-from ansible.module_utils.connection import send_data, recv_data
+from ansible.module_utils.connection import Connection, send_data, recv_data
 from ansible.module_utils.service import fork_process
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import connection_loader
@@ -293,6 +293,9 @@ def main():
 
         else:
             messages.append('found existing local domain socket, using it!')
+            conn = Connection(socket_path)
+            pc_data = to_text(init_data)
+            messages.extend(conn.update_play_context(pc_data))
 
     result.update({
         'messages': messages,
