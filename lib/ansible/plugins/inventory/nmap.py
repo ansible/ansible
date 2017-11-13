@@ -116,7 +116,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             p = Popen(cmd, stdout=PIPE, stderr=PIPE)
             stdout, stderr = p.communicate()
             if p.returncode != 0:
-                raise AnsibleParserError('Failed to run nmap, rc=$s: %s' % (p.returncode, to_native(stderr)))
+                raise AnsibleParserError('Failed to run nmap, rc=%s: %s' % (p.returncode, to_native(stderr)))
 
             # parse results
             host = None
