@@ -419,6 +419,8 @@ class VMWareInventory(object):
                 self.debugl('%d custom fields collected' % len(self.custom_fields))
         except vmodl.RuntimeFault as exc:
             self.debugl("Unable to gather custom fields due to %s" % exc.msg)
+        except IndexError as exc:
+            self.debugl("Unable to gather custom fields due to %s" % exc)
 
         return instance_tuples
 
