@@ -270,20 +270,20 @@ files:
   $modules/cloud/rackspace/rax_cdb_user.py: jails
   $modules/cloud/rackspace/rax_clb_nodes.py: neuroid
   $modules/cloud/rackspace/rax_clb_ssl.py: smashwilson
-  $modules/cloud/rackspace/rax_dns.py: sivel
-  $modules/cloud/rackspace/rax_dns_record.py: sivel
-  $modules/cloud/rackspace/rax_facts.py: sivel
-  $modules/cloud/rackspace/rax_files.py: angstwad sivel
-  $modules/cloud/rackspace/rax_files_objects.py: angstwad sivel
-  $modules/cloud/rackspace/rax_keypair.py: sivel
-  $modules/cloud/rackspace/rax_meta.py: sivel
+  $modules/cloud/rackspace/rax_dns.py:
+  $modules/cloud/rackspace/rax_dns_record.py:
+  $modules/cloud/rackspace/rax_facts.py:
+  $modules/cloud/rackspace/rax_files.py:
+  $modules/cloud/rackspace/rax_files_objects.py:
+  $modules/cloud/rackspace/rax_keypair.py:
+  $modules/cloud/rackspace/rax_meta.py:
   $modules/cloud/rackspace/rax_mon_alarm.py: smashwilson
   $modules/cloud/rackspace/rax_mon_check.py: smashwilson
   $modules/cloud/rackspace/rax_mon_entity.py: smashwilson
   $modules/cloud/rackspace/rax_mon_notification.py: smashwilson
   $modules/cloud/rackspace/rax_mon_notification_plan.py: smashwilson
-  $modules/cloud/rackspace/rax_scaling_group.py: sivel
-  $modules/cloud/rackspace/rax_scaling_policy.py: sivel
+  $modules/cloud/rackspace/rax_scaling_group.py:
+  $modules/cloud/rackspace/rax_scaling_policy.py:
   $modules/cloud/smartos/imgadm.py: jasperla
   $modules/cloud/smartos/smartos_image_facts.py: xen0l
   $modules/cloud/smartos/vmadm.py: jasperla
@@ -742,8 +742,8 @@ files:
   $modules/windows/win_firewall.py: if-meaton
   $modules/windows/win_firewall_rule.ps1: TimothyVandenbrande ar7z1
   $modules/windows/win_firewall_rule.py: TimothyVandenbrande ar7z1
-  $modules/windows/win_get_url.ps1: angstwad jhawkesworth
-  $modules/windows/win_get_url.py: angstwad jhawkesworth
+  $modules/windows/win_get_url.ps1: jhawkesworth
+  $modules/windows/win_get_url.py: jhawkesworth
   $modules/windows/win_group_membership.ps1: andrewsaraceni
   $modules/windows/win_group_membership.py: andrewsaraceni
   $modules/windows/win_group.ps1: chrishoffman
@@ -766,8 +766,8 @@ files:
   $modules/windows/win_mapped_drive.py: jborean93
   $modules/windows/win_msg.ps1: $team_windows
   $modules/windows/win_msg.py: $team_windows
-  $modules/windows/win_msi.ps1: sivel
-  $modules/windows/win_msi.py: sivel
+  $modules/windows/win_msi.ps1:
+  $modules/windows/win_msi.py:
   $modules/windows/win_nssm.ps1:
     maintainers: smadam813
     ignored: georgefrank h0nIg
@@ -835,8 +835,8 @@ files:
   $modules/windows/win_updates.py: nitzmahone
   $modules/windows/win_uri.ps1: blakfeld
   $modules/windows/win_uri.py: blakfeld
-  $modules/windows/win_user.ps1: angstwad cchurch nitzmahone
-  $modules/windows/win_user.py: angstwad cchurch nitzmahone
+  $modules/windows/win_user.ps1: cchurch nitzmahone
+  $modules/windows/win_user.py: cchurch nitzmahone
   $modules/windows/win_user_right.ps1: jborean93
   $modules/windows/win_user_right.py: jborean93
   $modules/windows/win_wakeonlan.ps1: dagwieers
