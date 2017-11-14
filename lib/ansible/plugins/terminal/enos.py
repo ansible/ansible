@@ -99,3 +99,4 @@ class TerminalModule(TerminalBase):
 
         elif prompt.endswith(b'#'):
             self._exec_cli_command(b'disable')
+
