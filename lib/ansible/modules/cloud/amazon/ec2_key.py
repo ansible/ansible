@@ -78,12 +78,6 @@ EXAMPLES = '''
     name: my_keypair
     key_material: "{{ lookup('file', '/path/to/public_key/id_rsa.pub') }}"
 
-- name: another way to create a key pair using key_material from a file
-  ec2_key:
-    name: my_keypair
-    key_material: "{{ item }}"
-  with_file: /path/to/public_key/id_rsa.pub
-
 # try creating a key pair with the name of an already existing keypair
 # but don't overwrite it even if the key is different (force=false)
 - name: try creating a key pair with name of an already existing keypair
