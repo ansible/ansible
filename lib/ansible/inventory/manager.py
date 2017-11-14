@@ -524,12 +524,12 @@ class InventoryManager(object):
         if matching_groups:
             for groupname in matching_groups:
                 results.extend(self._inventory.groups[groupname].get_hosts())
-        else:
-            # pattern might match host
-            matching_hosts = self._match_list(self._inventory.hosts, pattern)
-            if matching_hosts:
-                for hostname in matching_hosts:
-                    results.append(self._inventory.hosts[hostname])
+
+        # check if pattern matches host
+        matching_hosts = self._match_list(self._inventory.hosts, pattern)
+        if matching_hosts:
+            for hostname in matching_hosts:
+                results.append(self._inventory.hosts[hostname])
 
         if not results and pattern in C.LOCALHOST:
             # get_host autocreates implicit when needed
