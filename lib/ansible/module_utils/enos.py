@@ -146,7 +146,6 @@ def run_commands(module, commands, check_rc=True):
 
 def load_config(module, config):
     try:
-        conn.edit_config(config)
         conn = get_connection(module)
         conn.edit_config(config)
     except ConnectionError as exc:
