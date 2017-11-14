@@ -23,7 +23,7 @@
       provider: "{{ cli }}"
       username: "{{ nxos_cli_user | default('admin') }}"
       password: "{{ nxos_cli_pass | default('admin') }}"
-      host: "{{ inventory_hostname }}"
+      host: "{{ ansible_host }}"
     register: result
 
   - assert: &true
@@ -50,7 +50,7 @@
       provider: "{{ cli }}"
       username: "{{ nxos_cli_user | default('admin') }}"
       password: "{{ nxos_cli_pass | default('admin') }}"
-      host: "{{ inventory_hostname }}"
+      host: "{{ ansible_host }}"
     register: result
 
   - assert: *true
