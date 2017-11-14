@@ -162,7 +162,7 @@ class Cli:
                 except ValueError:
                     out = to_text(out, errors='surrogate_then_replace').strip()
 
-            if item['output'] == 'json' and out != 'ok' and isinstance(out, string_types):
+            if item['output'] == 'json' and out != '' and isinstance(out, string_types):
                 self._module.fail_json(msg='failed to retrieve output of %s in json format' % item['command'])
 
             responses.append(out)
