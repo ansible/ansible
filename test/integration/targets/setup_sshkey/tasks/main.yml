@@ -33,7 +33,7 @@
     - prepare
 
 - name: record fingerprint
-  shell: ssh-keygen -lf {{sshkey.stdout}}.pub
+  shell: openssl rsa -in {{sshkey.stdout}} -pubout -outform DER 2>/dev/null | openssl md5 -c
   register: fingerprint
   tags:
     - prepare
