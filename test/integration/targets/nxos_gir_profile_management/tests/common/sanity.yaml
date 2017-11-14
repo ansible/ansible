@@ -87,6 +87,8 @@
 
   - assert: *false
 
+  when: not (platform | match('N35')) and not titanium
+
   rescue:
 
   - debug: msg="TRANSPORT:{{ connection.transport }} nxos_gir_profile_management failure detected"
