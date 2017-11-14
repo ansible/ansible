@@ -30,7 +30,7 @@ class TestModule(object):
         return {
             # file testing
             'is_dir': isdir,
-            'dir': isdir,
+            'directory': isdir,
             'is_file': isfile,
             'file': isfile,
             'is_link': islink,

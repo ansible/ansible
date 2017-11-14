@@ -133,7 +133,7 @@ Testing paths
 The following tests can provide information about a path on the controller::
 
     - debug: msg="path is a directory"
-      when: mypath is dir
+      when: mypath is directory
 
     - debug: msg="path is a file"
       when: mypath is file
