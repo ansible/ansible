@@ -6,7 +6,7 @@
     # ============================================================
     # TODO create simple ansible sts_get_caller_identity module
     - blockinfile:
-        path: /tmp/sts.py
+        path: "{{ output_dir }}/sts.py"
         create: yes
         block: |
           #!/usr/bin/env python
@@ -16,7 +16,7 @@
           print(response['Account'])
 
     - name: get the aws account id
-      command: python /tmp/sts.py
+      command: python "{{ output_dir }}/sts.py"
       environment:
         AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
         AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
