@@ -62,12 +62,14 @@ class TestNxosInterfaceModule(TestNxosModule):
     def test_nxos_interface_up(self):
         set_module_args(dict(interface='loopback0'))
         result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'], ['interface loopback0', 'no shutdown'])
+        self.assertIn('interface loopback0', result['commands'])
+        self.assertIn('no shutdown', result['commands'])
 
     def test_nxos_interface_down(self):
         set_module_args(dict(interface='loopback0', admin_state='down'))
         result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'], ['interface loopback0', 'shutdown'])
+        self.assertIn('interface loopback0', result['commands'])
+        self.assertIn('shutdown', result['commands'])
 
     def test_nxos_interface_delete(self):
         set_module_args(dict(interface='loopback0', state='absent'))
