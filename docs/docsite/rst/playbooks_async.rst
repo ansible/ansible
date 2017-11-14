@@ -33,7 +33,7 @@ poll value is 10 seconds if you do not specify a value for `poll`::
    default.
 
 Alternatively, if you do not need to wait on the task to complete, you may
-"fire and forget" by specifying a poll value of 0::
+run the task asynchronously by specifying a poll value of 0::
 
     ---
 
@@ -48,21 +48,20 @@ Alternatively, if you do not need to wait on the task to complete, you may
         poll: 0
 
 .. note::
-   You shouldn't "fire and forget" with operations that require
-   exclusive locks, such as yum transactions, if you expect to run other
+   You shouldn't attempt run a task asynchronously by specifying a poll value of 0:: to with operations that require
+   exclusive locks (such as yum transactions) if you expect to run other
    commands later in the playbook against those same resources.
 
 .. note::
    Using a higher value for ``--forks`` will result in kicking off asynchronous
    tasks even faster.  This also increases the efficiency of polling.
 
-If you would like to perform a variation of the "fire and forget" where you
-"fire and forget, check on it later" you can perform a task similar to the
+If you would like to perform a task asynchroniusly and check on it later you can perform a task similar to the
 following::
 
       ---
       # Requires ansible 1.8+
-      - name: 'YUM - fire and forget task'
+      - name: 'YUM - async task'
         yum:
           name: docker-io
           state: installed
@@ -70,7 +69,7 @@ following::
         poll: 0
         register: yum_sleeper
 
-      - name: 'YUM - check on fire and forget task'
+      - name: 'YUM - check on async task'
         async_status:
           jid: "{{ yum_sleeper.ansible_job_id }}"
         register: job_result
