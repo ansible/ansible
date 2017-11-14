@@ -69,16 +69,30 @@ options:
       description:
         - Manage disk option.
         - Drive letter which will be set for the partition on selected disk.
-        - If a drive letter is passed the module will try to set the partition on the selected disk with this drive letter.
-        - If this drive letter is already in use on the target the module will be canceled.
-        - If no drive_letter option value was passed the module will use a free drive letter on the target randomly.
-        - If no free drive lettter is left on the target the module will be canceled.
+        - If you pass a drive letter to the module it will use this drive letter if it is a free drive
+          letter on the target. If the passed drive letter is not a free drive letter on the target,
+          the module will be canceled.
+        - If no drive_letter option value was passed but a valid value for option access_path
+          was passed to the module it will will create this partition access path and no drive letter for
+          the partition on selected disk.
+        - If no drive_letter option value and no value for option access_path was passed to the module,
+          it will set a free drive letter for the partition randomly and no partition access path on selected disk. 
+          If in this case no free drive lettter is left on the target, the module will be canceled.
+        - If a valid value for drive_letter and for access_path option was passed to the module,
+          it will setup this partition drive letter and access path on selected disk.
+  access_path:
+      description:
+        - Manage disk option.
+        - Access path which will be set on partition of selected disk.
+        - The module validates whether the passed value is already in use as access path by another disk,
+          is a proper path/directory/folder on the target, is already in use as a link and whether it is empty (no files or folders inside).
+        - This option has some dependencies with the option drive_letter. For more information read the drive_letter option description.
   file_system:
       description:
         - Manage disk option.
         - File system which will be set on selected disk.
         - Maximum volume size for ntfs is 256000gb, for refs it's the maximum Size option value 18446744073709551615gb.
-        - If the disk size of the selected disk does not match with the passed value for option
+        - If the disk size of selected disk does not match with the passed value for option
           file_system (e.g. "ntfs" over 256000gb) the module will be canceled.
       default: ntfs
       choices:
@@ -87,7 +101,7 @@ options:
   label:
       description:
         - Manage disk option.
-        - File system label which should be set for the file system on the selected disk.
+        - File system label which should be set for the file system on selected disk.
       default: ansible_disk
   allocation_unit_size:
       description:
@@ -171,6 +185,7 @@ EXAMPLES = r'''
     # set_disk_by
     partition_style_set: gpt
     drive_letter: f
+    access_path: C:\Test
     file_system: refs
     label: application_disk
     allocation_unit_size: 64
@@ -223,6 +238,11 @@ change_log:
             returned: success or failed
             type: string
             sample: "Initial partition Basic was created successfully on partition style gpt"
+        access_path:
+            description: Detailed information about access path creation on the partition of selected disk.
+            returned: success or failed
+            type: string
+            sample: "Partition access path C:\\Test was created successfully for partition Basic"
         formatting:
             description: Detailed information about volume creation on partitoned disk.
             returned: success or failed
