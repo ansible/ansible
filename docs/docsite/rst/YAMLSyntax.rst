@@ -117,10 +117,8 @@ This really has nothing to do with Ansible, but will give you a feel for the for
         3 A-Levels
         BSc in the Internet of Things
 
-That's all you really need to know about YAML to start writing `Ansible` playbooks.
-
-Gotchas
-=======
+Limitations and Workarounds
+===========================
 
 Colons in YAML
 --------------
