@@ -25,7 +25,7 @@
       provider: "{{ nxapi }}"
       username: "{{ nxos_nxapi_user | default('admin') }}"
       password: "{{ nxos_nxapi_pass | default('admin') }}"
-      host: "{{ inventory_hostname }}"
+      host: "{{ ansible_host }}"
     register: result
 
   - assert: &true
@@ -53,7 +53,7 @@
       provider: "{{ nxapi }}"
       username: "{{ nxos_nxapi_user | default('admin') }}"
       password: "{{ nxos_nxapi_pass | default('admin') }}"
-      host: "{{ inventory_hostname }}"
+      host: "{{ ansible_host }}"
     register: result
 
   - assert: *true
