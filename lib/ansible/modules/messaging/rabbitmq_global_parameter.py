@@ -9,7 +9,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -132,21 +132,25 @@ def main():
     state = module.params['state']
     node = module.params['node']
 
+    result = dict(changed=False)
     rabbitmq_global_parameter = RabbitMqParameter(module, name, value, node)
 
-    changed = False
     if rabbitmq_global_parameter.get():
         if state == 'absent':
             rabbitmq_global_parameter.delete()
-            changed = True
+            result['changed'] = True
         else:
             if rabbitmq_global_parameter.has_modifications():
                 rabbitmq_global_parameter.set()
-                changed = True
+                result['changed'] = True
     elif state == 'present':
         rabbitmq_global_parameter.set()
-        changed = True
+        result['changed'] = True
 
-    module.exit_json(changed=changed, name=name, value=value, state=state)
+    result['name'] = name
+    result['value'] = value
+    result['state'] = state
+    
+    module.exit_json(**result) 
 
 main()
