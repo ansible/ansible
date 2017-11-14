@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-import re
+from __future__ import absolute_import, division, print_function
 
-from ansible.module_utils.mlnxos import get_bgp_summary
+from ansible.module_utils.basic import AnsibleModule  # noqa:F401
+
 from ansible.modules.network.mlnxos.mlnxos_interface import MlnxosInterfaceApp
 
 
@@ -46,12 +47,6 @@ options:
   ipaddress:
     description:
       - IPv4 of the L3 interface: format 1.2.3.4/24
-  bgp_router_as:
-    description:
-      - bgp router AS number
-  bgp_neighbors:
-    description:
-      - list of bgp neighbor router IP addresses
   aggregate:
     description: List of L3 interfaces definitions
   state:
@@ -68,14 +63,6 @@ EXAMPLES = """
     ipaddress: 192.168.0.1/24
 
 - name: remove Eth1/1 IPv4 address
-  mlnxos_l3_interface:
-    name: Eth1/1
-    ipaddress: 192.168.0.1/24
-    bgp_router_as: 100
-    bgp_neighbors:
-      - 192.168.0.2
-      - 192.168.0.3
-- name: configure bgp Eth1/1
   mlnxos_l3_interface:
     name: Eth1/1
     state: absent
@@ -108,23 +95,11 @@ commands:
 
 
 class MlnxosL3InterfaceApp(MlnxosInterfaceApp):
-    LOCAL_AS_REGEX = \
-        r"BGP router identifier ([0-9\.]+), local AS number (\d+)"
-    NEIGHBOR_REGEX = \
-        r"^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\s+\d+\s+(\d+)"
-
-    def __init__(self):
-        super(MlnxosL3InterfaceApp, self).__init__()
-        self._local_bgp_config = {}
-        self._neighbor_bgp_config = []
-
     @classmethod
     def _get_element_spec(cls):
         return dict(
             name=dict(),
             ipaddress=dict(),
-            bgp_router_as=dict(type='int'),
-            bgp_neighbors=dict(type='list'),
             state=dict(default='present',
                        choices=['present', 'absent'])
         )
@@ -146,32 +121,9 @@ class MlnxosL3InterfaceApp(MlnxosInterfaceApp):
                 'name': module_params['name'],
                 'ipaddress': module_params['ipaddress'],
                 'state': module_params['state'],
-                'bgp_router_as': module_params['bgp_router_as'],
-                'bgp_neighbors': module_params['bgp_neighbors'],
             }
             self.validate_param_values(params)
             self._required_config.append(params)
-
-    def _set_bgp_config(self, bgp_config):
-        match = re.search(self.LOCAL_AS_REGEX, bgp_config, re.M)
-        if match:
-            self._local_bgp_config['bgp_router_ip'] = match.group(1)
-            self._local_bgp_config['bgp_router_as'] = int(match.group(2))
-        matches = re.findall(self.NEIGHBOR_REGEX, bgp_config, re.M) or []
-        for match in matches:
-            self._neighbor_bgp_config.append((match[0], int(match[1])))
-
-    def load_current_config(self):
-        super(MlnxosL3InterfaceApp, self).load_current_config()
-        needed_bgp = False
-        for req_if in self._required_config:
-            if req_if['bgp_router_as']:
-                needed_bgp = True
-                break
-        if needed_bgp:
-            bgp_config = get_bgp_summary(self._module)
-            if bgp_config:
-                self._set_bgp_config(bgp_config)
 
     def _create_if_data(self, name, item):
         return {
@@ -190,17 +142,12 @@ class MlnxosL3InterfaceApp(MlnxosInterfaceApp):
         state = req_if['state']
         interface_prefix = self.get_if_cmd(name)
         curr_ipaddress = curr_if.get('ipaddress')
-        bgp_as = req_if['bgp_router_as'] or 0
-        bgp_neighbors = req_if['bgp_neighbors'] or []
-        curr_bgp_as = self._local_bgp_config.get('bgp_router_as', 0)
 
         if state == 'absent':
             if curr_ipaddress:
                 cmd = "no ip address"
                 self.add_command_to_interface(interface_prefix, cmd)
                 self._commands.append('exit')
-            if bgp_as and bgp_as == curr_bgp_as:
-                self._commands.append('no router bgp %s' % bgp_as)
         else:
             req_ipaddress = req_if.get('ipaddress')
             if curr_ipaddress != req_ipaddress:
@@ -209,24 +156,6 @@ class MlnxosL3InterfaceApp(MlnxosInterfaceApp):
                 cmd = "ip address %s" % req_ipaddress
                 self.add_command_to_interface(interface_prefix, cmd)
                 self._commands.append('exit')
-            if bgp_as:
-                if bgp_as != curr_bgp_as:
-                    if curr_bgp_as:
-                        self._commands.append(
-                            'no router bgp %s' % curr_bgp_as)
-                    self._commands.append('router bgp %s' % bgp_as)
-                    self._commands.append('exit')
-                for neighbor in bgp_neighbors:
-                    found = False
-                    for curr_neighbor in self._neighbor_bgp_config:
-                        if curr_neighbor == (neighbor, bgp_as):
-                            found = True
-                            break
-                    if found:
-                        continue
-                    self._commands.append(
-                        'router bgp %s neighbor %s remote-as %s' %
-                        (bgp_as, neighbor, bgp_as))
 
 
 if __name__ == '__main__':

@@ -46,9 +46,6 @@ description:
     on MLNX-OS network devices.
 notes:
   -
-  =dict(),
-            group_name=dict(),
-
 options:
   ipaddress:
     description:
