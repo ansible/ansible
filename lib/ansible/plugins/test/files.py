@@ -21,7 +21,6 @@ __metaclass__ = type
 
 from os.path import isdir, isfile, isabs, exists, lexists, islink, samefile, ismount
 from ansible import errors
-from ansible.plugins.test import renamed_deprecation
 
 
 class TestModule(object):
@@ -30,20 +29,20 @@ class TestModule(object):
     def tests(self):
         return {
             # file testing
-            'is_dir': renamed_deprecation(isdir, 'dir', '2.9'),
+            'is_dir': isdir,
             'dir': isdir,
-            'is_file': renamed_deprecation(isfile, 'file', '2.9'),
+            'is_file': isfile,
             'file': isfile,
-            'is_link': renamed_deprecation(islink, 'link', '2.9'),
+            'is_link': islink,
             'link': islink,
             'exists': exists,
             'link_exists': lexists,
 
             # path testing
-            'is_abs': renamed_deprecation(isabs, 'abs', '2.9'),
+            'is_abs': isabs,
             'abs': isabs,
-            'is_same_file': renamed_deprecation(samefile, 'same_file', '2.9'),
+            'is_same_file': samefile,
             'same_file': samefile,
-            'is_mount': renamed_deprecation(ismount, 'mount', '2.9'),
+            'is_mount': ismount,
             'mount': ismount,
         }

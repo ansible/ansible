@@ -25,7 +25,6 @@ from collections import MutableMapping, MutableSequence
 from distutils.version import LooseVersion, StrictVersion
 
 from ansible import errors
-from ansible.plugins.test import renamed_deprecation
 
 
 def failed(result):
@@ -146,7 +145,7 @@ class TestModule(object):
             'regex': regex,
 
             # version comparison
-            'version_compare': renamed_deprecation(version_compare, 'version', '2.9'),
+            'version_compare': version_compare,
             'version': version_compare,
 
             # lists
