@@ -115,10 +115,10 @@ class RabbitMqGlobalParameter(object):
 
 def main():
     arg_spec = dict(
-        name=dict(required=True),
-        value=dict(default=None),
+        name=dict(type='str', required=True),
+        value=dict(type='str', default=None),
         state=dict(default='present', choices=['present', 'absent']),
-        node=dict(default='rabbit')
+        node=dict(type='str', default='rabbit')
     )
     module = AnsibleModule(
         argument_spec=arg_spec,
