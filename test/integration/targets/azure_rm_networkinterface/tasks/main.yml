@@ -1,0 +1,76 @@
+- name: Create virtual network
+  azure_rm_virtualnetwork:
+      resource_group: "{{ resource_group_secondary }}"
+      name: testnic001
+      address_prefixes: "10.10.0.0/16"
+
+- name: Add subnet
+  azure_rm_subnet:
+      resource_group: "{{ resource_group_secondary }}"
+      name: testnic001
+      address_prefix: "10.10.0.0/24"
+      virtual_network: testnic001
+
+- name: Create NIC
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: testnic001
+      virtual_network: testnic001
+      subnet: testnic001
+      public_ip_name: testnic001
+      public_ip_allocation_method: Static
+      security_group: testnic001
+  register: output
+
+- assert:
+    that:
+      - output.state.ip_configuration.subnet.name == 'testnic001'
+
+- name: Update the NIC with mutilple ip configurations
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: testnic001
+      security_group: testnic001
+      virtual_network: testnic001
+      subnet: testnic001
+      ip_configurations:
+        - name: ipconfig-add
+          public_ip_name: testnic002
+        - name: default
+          public_ip_name: testnic001
+          primary: True
+          public_ip_allocation_method: Static
+        - name: ipconfig1
+  register: output
+
+- assert:
+    that:
+      - not output.state.ip_configuration
+      - output.state.ip_configurations | length == 3
+
+- name: Remove one ip configuration
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: testnic001
+      security_group: testnic001
+      virtual_network: testnic001
+      subnet: testnic001
+      ip_configurations:
+        - name: ipconfig-add
+          public_ip_name: testnic002
+        - name: default
+          public_ip_name: testnic001
+          public_ip_allocation_method: Static
+          primary: True
+  register: output
+
+- assert:
+    that:
+      - not output.state.ip_configuration
+      - output.state.ip_configurations | length == 2
+
+- name: Delete the NIC
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: testnic001
+      state: absent
