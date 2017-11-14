@@ -22,13 +22,11 @@ options:
   region:
     description: 'The AWS region to narrow the ranges to. Examples: us-east-1, eu-west-2, ap-southeast-1'
     default: null
-  wantlist:
-    default: false
 """
 
 EXAMPLES = """
 vars:
-  ec2_ranges: "{{ lookup('aws_ip_ranges', region='ap-southeast-2', service='EC2', wantlist=True) }}"
+  ec2_ranges: "{{ lookup('aws_service_ip_ranges', region='ap-southeast-2', service='EC2', wantlist=True) }}"
 tasks:
 
 - name: "use list return option and iterate as a loop"
@@ -36,7 +34,7 @@ tasks:
 # "52.62.0.0/15 52.64.0.0/17 52.64.128.0/17 52.65.0.0/16 52.95.241.0/24 52.95.255.16/28 54.66.0.0/16 "
 
 - name: "Pull S3 IP ranges, and print the default return style"
-  debug: msg="{{ lookup('aws_ip_ranges', region='us-east-1', service='S3') }}"
+  debug: msg="{{ lookup('aws_service_ip_ranges', region='us-east-1', service='S3') }}"
 # "52.92.16.0/20,52.216.0.0/15,54.231.0.0/17"
 """
 
@@ -51,6 +49,8 @@ import json
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 from ansible.module_utils.urls import open_url
+from ansible.module_utils._text import to_native
+from ansible.module_utils.six.moves.urllib.error import HTTPError, URLError
 
 
 class LookupModule(LookupBase):
@@ -61,9 +61,15 @@ class LookupModule(LookupBase):
         except getattr(json.decoder, 'JSONDecodeError', ValueError) as e:
             # on Python 3+, json.decoder.JSONDecodeError is raised for bad
             # JSON. On 2.x it's a ValueError
-            raise AnsibleError("Could not decode AWS IP ranges: %s" % e)
-        except Exception as e:
-            raise AnsibleError("Encountered Exception while looking up Prefix dictionary: %s" % e)
+            raise AnsibleError("Could not decode AWS IP ranges: %s" % to_native(e))
+        except HTTPError as e:
+            raise AnsibleError("Received HTTP error while pulling IP ranges: %s" % to_native(e))
+        except URLError as e:
+            raise AnsibleError("Failed look up IP range service: %s" % to_native(e))
+        except SSLValidationError as e:
+            raise AnsibleError("Error validating the server's certificate for: %s" % to_native(e))
+        except ConnectionError as e:
+            raise AnsibleError("Error connecting to IP range service: %s" % to_native(e))
 
         if 'region' in kwargs:
             region = kwargs['region']
