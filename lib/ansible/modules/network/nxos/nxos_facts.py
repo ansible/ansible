@@ -171,7 +171,7 @@ import re
 from ansible.module_utils.nxos import run_commands, get_config
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import iteritems
+from ansible.module_utils.six import string_types, iteritems
 
 
 class FactsBase(object):
@@ -290,7 +290,7 @@ class Interfaces(FactsBase):
             self.facts['interfaces'] = self.populate_interfaces(data)
 
         data = self.run('show ipv6 interface', 'json')
-        if data:
+        if data and not isinstance(data, string_types):
             self.parse_ipv6_interfaces(data)
 
         data = self.run('show lldp neighbors')
