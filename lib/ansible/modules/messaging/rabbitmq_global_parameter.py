@@ -17,11 +17,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: rabbitmq_global_parameter
+author: "Juergen Kirschbaum (@jgkirschbaum)"
+version_added: "2.4"
+
 short_description: Adds or removes global parameters to RabbitMQ
 description:
   - Manage dynamic, cluster-wide global parameters for RabbitMQ
-version_added: "2.4"
-author: '"Juergen Kirschbaum (@jgkirschbaum)"'
 options:
   name:
     description:
@@ -50,7 +51,7 @@ EXAMPLES = '''
 # Set the global parameter 'cluster_name' to a value of 'mq-cluster' (in quotes)
 - rabbitmq_global_parameter:
     name: cluster_name
-    value: '"mq-cluster"'
+    value: "{{ 'mq-cluster' | to_json }}"
     state: present
 '''
 
@@ -67,7 +68,8 @@ value:
     sample: "the-cluster-name"
 '''
 
-from ansible.module_utils.basic import AnsibleModule, json
+import json
+from ansible.module_utils.basic import AnsibleModule
 
 
 class RabbitMqParameter(object):
