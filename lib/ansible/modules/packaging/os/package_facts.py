@@ -120,7 +120,7 @@ if __name__ == 'main':
     module = AnsibleModule(argument_spec=dict(manager=dict()))
     manager = module.params['manager']
     packages = {}
-    results = {'ansible_facts': packages }
+    results = {'ansible_facts': packages}
 
     if manager is None or manager == 'auto':
 
@@ -147,6 +147,6 @@ if __name__ == 'main':
                 module.fail_json(msg='Could not detect supported package manager')
     except Exception as e:
         from traceback import format_tb
-        module.fail_json(msg='Failed to retrieve packages: %s' % to_text(e), exception=traceback.format_tb(sys.exc_info()[2])))
+        module.fail_json(msg='Failed to retrieve packages: %s' % to_text(e), exception=traceback.format_tb(sys.exc_info()[2]))
 
     module.exit_json(**results)
