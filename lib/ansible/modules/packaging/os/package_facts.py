@@ -16,7 +16,7 @@ module: package_facts
 short_description: package information as facts
 description:
     - Return information about installed packages as facts
-optoins:
+options:
     manager:
         - The package manager used by the system so we can query the package information
     default: autodetect
@@ -128,12 +128,12 @@ if __name__ == 'main':
 
         # detect!
         for manager_lib in ('rpm', 'apt'):
-        try:
-            dummy = __import__(manager_lib)
-            manager = manager_lib
-            break
-        except ImportError:
-            pass
+            try:
+                dummy = __import__(manager_lib)
+                manager = manager_lib
+                break
+            except ImportError:
+                pass
 
         # FIXME: add more detection methods
     try:
