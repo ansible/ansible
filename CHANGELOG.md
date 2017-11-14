@@ -166,6 +166,7 @@ Ansible Changes By Release
 * fix dci failure nxos
   (https://github.com/ansible/ansible/pull/32877)
 * Do not execute `script` tasks is check mode (https://github.com/ansible/ansible/issues/30676)
+* Keep newlines when reading LXC container config file (https://github.com/ansible/ansible/pull/32219)
 
 <a id="2.4.1"></a>
 
