@@ -16,17 +16,24 @@ description:
   - Can create, update, or delete Spotinst AWS Elastigroups
     Launch configuration is part of the elastigroup configuration,
     so no additional modules are necessary for handling the launch configuration.
-    This module requires that you install the spotinst Python SDK (pip install spotinst)
     You will have to have a credentials file in this location - <home>/.spotinst/credentials
     The credentials file must contain a row that looks like this
     token = <YOUR TOKEN>
     Full documentation available at https://help.spotinst.com/hc/en-us/articles/115003530285-Ansible-
+requirements:
+  - spotinst >= 1.0.21
+  - python >= 2.7
 options:
 
   credentials_path:
     description:
       - (String) Optional parameter that allows to set a non-default credentials path.
        Default is ~/.spotinst/credentials
+
+  account_id:
+    description:
+      - (String) Optional parameter that allows to set an account-id inside the module configuration
+       By default this is retrieved from the credentials path
 
   availability_vs_cost:
     choices:
@@ -754,7 +761,7 @@ try:
 except ImportError:
     pass
 
-eni_fields = ['description',
+eni_fields = ('description',
               'device_index',
               'secondary_private_ip_address_count',
               'associate_public_ip_address',
@@ -763,19 +770,19 @@ eni_fields = ['description',
               'network_interface_id',
               'private_ip_address',
               'subnet_id',
-              'associate_ipv6_address']
+              'associate_ipv6_address')
 
-private_ip_fields = ['private_ip_address',
-                     'primary']
+private_ip_fields = ('private_ip_address',
+                     'primary')
 
-capacity_fields = [dict(ansible_field_name='min_size',
+capacity_fields = (dict(ansible_field_name='min_size',
                         spotinst_field_name='minimum'),
                    dict(ansible_field_name='max_size',
                         spotinst_field_name='maximum'),
                    'target',
-                   'unit']
+                   'unit')
 
-lspec_fields = ['user_data',
+lspec_fields = ('user_data',
                 'key_pair',
                 'tenancy',
                 'shutdown_script',
@@ -785,14 +792,14 @@ lspec_fields = ['user_data',
                 'health_check_type',
                 'health_check_grace_period',
                 'health_check_unhealthy_duration_before_replacement',
-                'security_group_ids']
+                'security_group_ids')
 
-iam_fields = [dict(ansible_field_name='iam_role_name',
+iam_fields = (dict(ansible_field_name='iam_role_name',
                    spotinst_field_name='name'),
               dict(ansible_field_name='iam_role_arn',
-                   spotinst_field_name='arn')]
+                   spotinst_field_name='arn'))
 
-scheduled_task_fields = ['adjustment',
+scheduled_task_fields = ('adjustment',
                          'adjustment_percentage',
                          'batch_size_percentage',
                          'cron_expression',
@@ -802,9 +809,9 @@ scheduled_task_fields = ['adjustment',
                          'is_enabled',
                          'scale_target_capacity',
                          'scale_min_capacity',
-                         'scale_max_capacity']
+                         'scale_max_capacity')
 
-scaling_policy_fields = ['policy_name',
+scaling_policy_fields = ('policy_name',
                          'namespace',
                          'metric_name',
                          'dimensions',
@@ -814,9 +821,9 @@ scaling_policy_fields = ['policy_name',
                          'threshold',
                          'cooldown',
                          'unit',
-                         'operator']
+                         'operator')
 
-tracking_policy_fields = ['policy_name',
+tracking_policy_fields = ('policy_name',
                           'namespace',
                           'source',
                           'metric_name',
@@ -824,78 +831,78 @@ tracking_policy_fields = ['policy_name',
                           'unit',
                           'cooldown',
                           'target',
-                          'threshold']
+                          'threshold')
 
-action_fields = ['action_type',
+action_fields = ('action_type',
                  'adjustment',
                  'min_target_capacity',
                  'max_target_capacity',
                  'target',
                  'minimum',
-                 'maximum']
+                 'maximum')
 
-signal_fields = ['name',
-                 'timeout']
+signal_fields = ('name',
+                 'timeout')
 
-multai_lb_fields = ['balancer_id',
+multai_lb_fields = ('balancer_id',
                     'project_id',
                     'target_set_id',
                     'az_awareness',
-                    'auto_weight']
+                    'auto_weight')
 
-persistence_fields = ['should_persist_root_device',
+persistence_fields = ('should_persist_root_device',
                       'should_persist_block_devices',
-                      'should_persist_private_ip']
+                      'should_persist_private_ip')
 
-strategy_fields = ['risk',
+strategy_fields = ('risk',
                    'utilize_reserved_instances',
                    'fallback_to_od',
                    'on_demand_count',
                    'availability_vs_cost',
                    'draining_timeout',
                    'spin_up_time',
-                   'lifetime_period']
+                   'lifetime_period')
 
-ebs_fields = ['delete_on_termination',
+ebs_fields = ('delete_on_termination',
               'encrypted',
               'iops',
               'snapshot_id',
               'volume_type',
-              'volume_size']
+              'volume_size')
 
-bdm_fields = ['device_name',
+bdm_fields = ('device_name',
               'virtual_name',
-              'no_device']
+              'no_device')
 
-kubernetes_fields = ['api_server',
-                     'token']
+kubernetes_fields = ('api_server',
+                     'token')
 
-right_scale_fields = ['account_id',
-                      'refresh_token']
+right_scale_fields = ('account_id',
+                      'refresh_token')
 
-rancher_fields = ['access_key',
+rancher_fields = ('access_key',
                   'secret_key',
-                  'master_host']
+                  'master_host')
 
-chef_fields = ['chef_server',
+chef_fields = ('chef_server',
                'organization',
                'user',
                'pem_key',
-               'chef_version']
+               'chef_version')
 
-az_fields = ['name',
+az_fields = ('name',
              'subnet_id',
-             'placement_group_name']
+             'placement_group_name')
 
-opsworks_fields = ['layer_id']
+opsworks_fields = ('layer_id')
 
-scaling_strategy_fields = ['terminate_at_end_of_billing_hour']
+scaling_strategy_fields = ('terminate_at_end_of_billing_hour')
 
-mesosphere_fields = ['api_server']
+mesosphere_fields = ('api_server')
 
-ecs_fields = ['cluster_name']
+ecs_fields = ('cluster_name')
 
-multai_fields = ['multai_token']
+multai_fields = ('multai_token')
 
 
 def handle_elastigroup(client, module):
@@ -917,20 +924,12 @@ def handle_elastigroup(client, module):
             group_id = external_group_id
     else:
         groups = client.get_elastigroups()
-        group_found, group_id = find_group_with_same_name(groups, name)
-        if group_found is True:
-            should_create = False
-        else:
-            should_create = True
+        should_create, group_id = find_group_with_same_name(groups, name)
 
     if should_create is True:
         if state == 'present':
             eg = expand_elastigroup(module, is_update=False)
-
-            processLog = open("/var/log/spotinst/ansible-module.log", 'a+')
-            processLog.write(str(" [INFO] " + message + "\n"))
-            processLog.close()
-
+            module.debug(str(" [INFO] " + message + "\n"))
             group = client.create_elastigroup(group=eg)
             group_id = group['id']
             message = 'Created group Successfully.'
@@ -1008,15 +1007,11 @@ def retrieve_group_instances(client, module, group_id):
 
 
 def find_group_with_same_name(groups, name):
-    group_found = False
-    group_id = ""
     for group in groups:
         if group['name'] == name:
-            group_found = True
-            group_id = group.get('id')
-            break
+            return False, group.get('id')
 
-    return group_found, group_id
+    return True, None
 
 
 def expand_elastigroup(module, is_update):
@@ -1102,7 +1097,7 @@ def expand_ebs_volume_pool(eg_compute, ebs_volumes_list):
             if eg_volume.device_name is not None:
                 eg_volumes.append(eg_volume)
 
-        if eg_volumes.__sizeof__() > 0:
+        if len(eg_volumes) > 0:
             eg_compute.ebs_volume_pool = eg_volumes
 
 
@@ -1213,7 +1208,7 @@ def expand_strategy(eg, module):
     if signals is not None:
         eg_signals = expand_list(signals, signal_fields, 'Signal')
 
-        if eg_signals.__sizeof__() > 0:
+        if len(eg_signals) > 0:
             eg_strategy.signals = eg_signals
 
     eg.strategy = eg_strategy
@@ -1227,7 +1222,7 @@ def expand_multai(eg, module):
     if multai_load_balancers is not None:
         eg_multai_load_balancers = expand_list(multai_load_balancers, multai_lb_fields, 'MultaiLoadBalancer')
 
-        if eg_multai_load_balancers.__sizeof__() > 0:
+        if len(eg_multai_load_balancers) > 0:
             eg_multai.balancers = eg_multai_load_balancers
             eg.multai = eg_multai
 
@@ -1240,7 +1235,7 @@ def expand_scheduled_tasks(eg, module):
 
         eg_tasks = expand_list(scheduled_tasks, scheduled_task_fields, 'ScheduledTask')
 
-        if eg_tasks.__sizeof__() > 0:
+        if len(eg_tasks) > 0:
             eg_scheduling.tasks = eg_tasks
             eg.scheduling = eg_scheduling
 
@@ -1266,7 +1261,7 @@ def expand_load_balancers(eg_launchspec, load_balancers, target_group_arns):
                     eg_elb.type = 'TARGET_GROUP'
                     eg_total_lbs.append(eg_elb)
 
-        if eg_total_lbs.__sizeof__() > 0:
+        if len(eg_total_lbs) > 0:
             eg_load_balancers_config.load_balancers = eg_total_lbs
             eg_launchspec.load_balancers_config = eg_load_balancers_config
 
@@ -1284,7 +1279,7 @@ def expand_tags(eg_launchspec, tags):
 
             eg_tags.append(eg_tag)
 
-        if eg_tags.__sizeof__() > 0:
+        if len(eg_tags) > 0:
             eg_launchspec.tags = eg_tags
 
 
@@ -1300,7 +1295,7 @@ def expand_block_device_mappings(eg_launchspec, bdms):
 
             eg_bdms.append(eg_bdm)
 
-        if eg_bdms.__sizeof__() > 0:
+        if len(eg_bdms) > 0:
             eg_launchspec.block_device_mappings = eg_bdms
 
 
@@ -1318,7 +1313,7 @@ def expand_network_interfaces(eg_launchspec, enis):
 
             eg_enis.append(eg_eni)
 
-        if eg_enis.__sizeof__() > 0:
+        if len(eg_enis) > 0:
             eg_launchspec.network_interfaces = eg_enis
 
 
@@ -1331,17 +1326,17 @@ def expand_scaling(eg, module):
 
     if up_scaling_policies is not None:
         eg_up_scaling_policies = expand_scaling_policies(up_scaling_policies)
-        if eg_up_scaling_policies.__sizeof__() > 0:
+        if len(eg_up_scaling_policies) > 0:
             eg_scaling.up = eg_up_scaling_policies
 
     if down_scaling_policies is not None:
         eg_down_scaling_policies = expand_scaling_policies(down_scaling_policies)
-        if eg_down_scaling_policies.__sizeof__() > 0:
+        if len(eg_down_scaling_policies) > 0:
             eg_scaling.down = eg_down_scaling_policies
 
     if target_tracking_policies is not None:
         eg_target_tracking_policies = expand_target_tracking_policies(target_tracking_policies)
-        if eg_target_tracking_policies.__sizeof__() > 0:
+        if len(eg_target_tracking_policies) > 0:
             eg_scaling.target = eg_target_tracking_policies
 
     if eg_scaling.down is not None or eg_scaling.up is not None or eg_scaling.target is not None:
@@ -1455,6 +1450,7 @@ def main():
         target_group_arns=dict(type='list'),
         tenancy=dict(type='str'),
         terminate_at_end_of_billing_hour=dict(type='bool'),
+        token=dict(type='str'),
         unit=dict(type='str'),
         user_data=dict(type='str'),
         utilize_reserved_instances=dict(type='bool'),
@@ -1483,15 +1479,17 @@ def main():
             creds_file_loaded_vars[var_name] = string_value
     # End of creds file retrieval
 
-    token = os.environ.get('SPOTINST_TOKEN')
+    token = module.params.get('token')
+    if not token:
+        token = os.environ.get('SPOTINST_TOKEN')
     if not token:
         token = creds_file_loaded_vars.get("token")
 
-    account = os.environ.get('ACCOUNT')
+    account = module.params.get('account_id')
+    if not account:
+        account = os.environ.get('ACCOUNT')
     if not account:
         account = creds_file_loaded_vars.get("account")
-    if not account:
-        account = module.params.get('account_id')
 
     client = spotinst.SpotinstClient(auth_token=token, print_output=False)
 
