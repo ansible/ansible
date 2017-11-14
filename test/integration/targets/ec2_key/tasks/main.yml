@@ -219,8 +219,7 @@
            - 'result.key.name == "{{ec2_key_name}}"'
            - '"fingerprint" in result.key'
            - '"private_key" not in result.key'
-           # FIXME - why don't the fingerprints match?
-           # - 'result.key.fingerprint == "{{fingerprint}}"'
+           - 'result.key.fingerprint == "{{fingerprint}}"'
 
     # ============================================================
     - name: test state=absent with key_material
@@ -267,8 +266,7 @@
            - 'result.results[0].key.name == "{{ec2_key_name}}"'
            - '"fingerprint" in result.results[0].key'
            - '"private_key" not in result.results[0].key'
-           # FIXME - why doesn't result.key.fingerprint == {{fingerprint}}
-           # - 'result.key.fingerprint == "{{fingerprint}}"'
+           - 'result.results[0].key.fingerprint == "{{fingerprint}}"'
 
     # ============================================================
     - name: test state=present with key_material with_files (expect changed=false)
@@ -296,8 +294,7 @@
            - 'result.results[0].key.name == "{{ec2_key_name}}"'
            - '"fingerprint" in result.results[0].key'
            - '"private_key" not in result.results[0].key'
-           # FIXME - why doesn't result.key.fingerprint == {{fingerprint}}
-           # - 'result.key.fingerprint == "{{fingerprint}}"'
+           - 'result.results[0].key.fingerprint == "{{fingerprint}}"'
 
     # ============================================================
     - name: test state=absent with key_material (expect changed=true)
