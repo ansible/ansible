@@ -509,7 +509,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
             new_nic = self.get_poller_result(poller)
             return nic_to_dict(new_nic)
         except Exception as exc:
-            self.fail("Error creating or updating network interface {0} - {1}".format(self.name, str(creation_exc)))
+            self.fail("Error creating or updating network interface {0} - {1}".format(self.name, str(exc)))
 
     def delete_nic(self):
         try:
