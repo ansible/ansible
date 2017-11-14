@@ -296,21 +296,16 @@ def main():
             pc_data = to_text(init_data)
             try:
                 messages.extend(conn.update_play_context(pc_data))
-            except ConnectionError as exc:
+            except Exception as exc:
                 # Only network_cli has update_play context, so missing this is
                 # not fatal e.g. netconf
-                if exc.code == -32601:
+                if isinstance(exc, ConnectionError) and getattr(exc, 'code') == -32601:
                     pass
                 else:
                     result.update({
                         'error': to_text(exc),
                         'exception': traceback.format_exc()
                     })
-            except Exception as exc:
-                result.update({
-                    'error': to_text(exc),
-                    'exception': traceback.format_exc()
-                })
 
     result.update({
         'messages': messages,
