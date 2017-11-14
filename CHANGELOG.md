@@ -167,6 +167,8 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/32877)
 * Do not execute `script` tasks is check mode (https://github.com/ansible/ansible/issues/30676)
 * Keep newlines when reading LXC container config file (https://github.com/ansible/ansible/pull/32219)
+* Fix a trraceback in os_floating_ip when required instance is already present in the cloud:
+  https://github.com/ansible/ansible/pull/32887
 
 <a id="2.4.1"></a>
 
