@@ -26,12 +26,11 @@ from ansible import constants as C
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.six import PY3
 from ansible.module_utils.six.moves import cPickle
-from ansible.module_utils.connection import send_data, recv_data
+from ansible.module_utils.connection import Connection, ConnectionError, send_data, recv_data
 from ansible.module_utils.service import fork_process
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import connection_loader
 from ansible.utils.path import unfrackpath, makedirs_safe
-from ansible.errors import AnsibleError
 from ansible.utils.display import Display
 from ansible.utils.jsonrpc import JsonRpcServer
 
@@ -293,6 +292,20 @@ def main():
 
         else:
             messages.append('found existing local domain socket, using it!')
+            conn = Connection(socket_path)
+            pc_data = to_text(init_data)
+            try:
+                messages.extend(conn.update_play_context(pc_data))
+            except Exception as exc:
+                # Only network_cli has update_play context, so missing this is
+                # not fatal e.g. netconf
+                if isinstance(exc, ConnectionError) and getattr(exc, 'code') == -32601:
+                    pass
+                else:
+                    result.update({
+                        'error': to_text(exc),
+                        'exception': traceback.format_exc()
+                    })
 
     result.update({
         'messages': messages,

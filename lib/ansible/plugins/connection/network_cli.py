@@ -56,8 +56,10 @@ from collections import Sequence
 
 from ansible import constants as C
 from ansible.errors import AnsibleConnectionFailure
-from ansible.module_utils.six import BytesIO, binary_type
+from ansible.module_utils.six import PY3, BytesIO, binary_type
+from ansible.module_utils.six.moves import cPickle
 from ansible.module_utils._text import to_bytes, to_text
+from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import cliconf_loader, terminal_loader, connection_loader
 from ansible.plugins.connection import ConnectionBase
 from ansible.plugins.connection.local import Connection as LocalConnection
@@ -134,19 +136,28 @@ class Connection(ConnectionBase):
     def fetch_file(self, in_path, out_path):
         return self._local.fetch_file(in_path, out_path)
 
-    def update_play_context(self, play_context):
+    def update_play_context(self, pc_data):
         """Updates the play context information for the connection"""
+        pc_data = to_bytes(pc_data)
+        if PY3:
+            pc_data = cPickle.loads(pc_data, encoding='bytes')
+        else:
+            pc_data = cPickle.loads(pc_data)
+        play_context = PlayContext()
+        play_context.deserialize(pc_data)
 
-        display.vvvv('updating play_context for connection', host=self._play_context.remote_addr)
-
+        messages = ['updating play_context for connection']
         if self._play_context.become is False and play_context.become is True:
             auth_pass = play_context.become_pass
             self._terminal.on_authorize(passwd=auth_pass)
+            messages.append('authorizing connection')
 
         elif self._play_context.become is True and not play_context.become:
             self._terminal.on_deauthorize()
+            messages.append('deauthorizing connection')
 
         self._play_context = play_context
+        return messages
 
     def _connect(self):
         '''
