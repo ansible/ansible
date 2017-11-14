@@ -7,14 +7,13 @@ Ansible Changes By Release
 
 ### Major Changes
 * Removed the previously deprecated 'accelerate' mode and all associated keywords and code.
-* New simpler and more intuitive 'loop' keyword for task loops
+* New simpler and more intuitive 'loop' keyword for task loops. The ``with_<lookup>`` loops will be deprecated in the near future and eventually removed.
 * Added fact namespacing, from now on facts will be available under `ansible_facts` namespace (i.e. `ansible_facts.os_distribution`) w/o the `ansilbe_` prefix.
   They will continue to be added into the main namespace directly, but now with a configuration toggle to enable this,
   currently on by default, in the future it will be off.
 
 ### Deprecations
 * Previously deprecated 'hostfile' config settings have been 're-deprecated' as previously code did not warn about deprecated configuration settings.
-* The ``with_<lookup>`` loops are deprecated in favor of the new ``loop`` keyword
 
 ### Minor Changes
 * added a few new magic vars corresponding to configuration/command line options:
