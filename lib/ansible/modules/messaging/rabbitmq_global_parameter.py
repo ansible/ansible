@@ -127,8 +127,8 @@ def main():
 
     name = module.params['name']
     value = module.params['value']
-    #if isinstance(value, str):
-    #    value = json.loads(value)
+    if isinstance(value, str):
+        value = json.loads(value)
     state = module.params['state']
     node = module.params['node']
 
