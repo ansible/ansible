@@ -130,6 +130,7 @@ class TestModule(object):
             'failure': failed,
             'succeeded': success,
             'success': success,
+            'successful': success,
 
             # changed testing
             'changed': changed,
