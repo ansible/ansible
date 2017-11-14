@@ -151,7 +151,7 @@ class Connection(ConnectionBase):
 
         super(Connection, self).__init__(*args, **kwargs)
 
-    def set_options(self, task_keys=None var_options=None, direct=None):
+    def set_options(self, task_keys=None, var_options=None, direct=None):
         if not HAS_WINRM:
             return
 
