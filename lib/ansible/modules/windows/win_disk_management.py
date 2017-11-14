@@ -76,7 +76,7 @@ options:
           was passed to the module it will will create this partition access path and no drive letter for
           the partition on selected disk.
         - If no drive_letter option value and no value for option access_path was passed to the module,
-          it will set a free drive letter for the partition randomly and no partition access path on selected disk. 
+          it will set a free drive letter for the partition randomly and no partition access path on selected disk.
           If in this case no free drive lettter is left on the target, the module will be canceled.
         - If a valid value for drive_letter and for access_path option was passed to the module,
           it will setup this partition drive letter and access path on selected disk.
