@@ -23,8 +23,8 @@
       local_file: "./nxos.yaml"
       file_system: "bootflash:"
       provider: "{{ nxapi }}"
-      username: "{{ nxos_nxapi_user | default('admin') }}"
-      password: "{{ nxos_nxapi_pass | default('admin') }}"
+      username: "{{ ansible_ssh_user }}"
+      password: "{{ ansible_ssh_pass }}"
       host: "{{ ansible_host }}"
     register: result
 
@@ -51,8 +51,8 @@
       remote_file: "nxos.yaml"
       file_system: "bootflash:"
       provider: "{{ nxapi }}"
-      username: "{{ nxos_nxapi_user | default('admin') }}"
-      password: "{{ nxos_nxapi_pass | default('admin') }}"
+      username: "{{ ansible_ssh_user }}"
+      password: "{{ ansible_ssh_pass }}"
       host: "{{ ansible_host }}"
     register: result
 
