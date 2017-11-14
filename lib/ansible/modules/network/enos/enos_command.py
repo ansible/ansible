@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright: Ansible Project
+# Copyright (C) 2017 Lenovo, Inc.
 # GNU General Public License v3.0+
 # (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import absolute_import, division, print_function
@@ -42,7 +42,6 @@ options:
         See examples.
     required: false
     default: null
-    aliases: ['waitfor']
   match:
     description:
       - The I(match) argument is used in conjunction with the
@@ -166,7 +165,7 @@ def main():
         # { command: <str>, prompt: <str>, response: <str> }
         commands=dict(type='list', required=True),
 
-        wait_for=dict(type='list', aliases=['waitfor']),
+        wait_for=dict(type='list'),
         match=dict(default='all', choices=['all', 'any']),
 
         retries=dict(default=10, type='int'),
