@@ -235,7 +235,9 @@ class Hardware(FactsBase):
 
     def populate(self):
         super(Hardware, self).populate()
-        data = self.responses[0]
+        data = self.run(['show system memory'])
+        data = to_text(data, errors='surrogate_or_strict').strip()
+        data = data.replace(r"\n", "\n")
         if data:
             self.facts['memtotal_mb'] = self.parse_memtotal(data)
             self.facts['memfree_mb'] = self.parse_memfree(data)
