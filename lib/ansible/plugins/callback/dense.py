@@ -482,7 +482,8 @@ class CallbackModule_dense(CallbackModule_default):
         hosts = sorted(stats.processed.keys())
         for h in hosts:
             t = stats.summarize(h)
-            self._display.display(u"%s : %s %s %s %s" % (
+            # 63 is the maximum hostname length allowed by RFC 1035
+            self._display.display(u"%-63s : %s %s %s %s" % (
                 hostcolor(h, t),
                 colorize(u'ok', t['ok'], C.COLOR_OK),
                 colorize(u'changed', t['changed'], C.COLOR_CHANGED),

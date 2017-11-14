@@ -240,8 +240,10 @@ class CallbackModule(CallbackBase):
             else:
                 color = 'ok'
 
-            msg = '{0}    : ok={1}\tchanged={2}\tfailed={3}\tunreachable={4}'.format(
-                host, s['ok'], s['changed'], s['failures'], s['unreachable'])
+            # 63 is the maximum hostname length allowed by RFC 1035
+            msg = '{0:63} : ok={1}\tchanged={2}\tfailed={3}\tunreachable={4}' \
+                  .format(host, s['ok'], s['changed'],
+                          s['failures'], s['unreachable'])
             print(colorize(msg, color))
 
     def v2_runner_on_skipped(self, result, **kwargs):
