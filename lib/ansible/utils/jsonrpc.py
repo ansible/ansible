@@ -83,7 +83,7 @@ class JsonRpcServer(object):
 
     def response(self, result=None):
         response = self.header()
-        response['result'] = result or 'ok'
+        response['result'] = result
         return response
 
     def error(self, code, message, data=None):
