@@ -23,6 +23,8 @@ import sys
 import copy
 
 from ansible import constants as C
+from ansible.module_utils._text import to_text
+from ansible.module_utils.connection import Connection
 from ansible.module_utils.eos import eos_provider_spec
 from ansible.plugins.action.normal import ActionModule as _ActionModule
 from ansible.module_utils.network_common import load_provider
@@ -38,6 +40,7 @@ class ActionModule(_ActionModule):
 
     def run(self, tmp=None, task_vars=None):
 
+        socket_path = None
         if self._play_context.connection == 'local':
             provider = load_provider(eos_provider_spec, self._task.args)
             transport = provider['transport'] or 'cli'
@@ -94,6 +97,19 @@ class ActionModule(_ActionModule):
                     provider['authorize'] = False
 
                 self._task.args['provider'] = provider
+
+        if (self._play_context.connection == 'local' and transport == 'cli') or self._play_context.connection == 'network_cli':
+            # make sure we are in the right cli context which should be
+            # enable mode and not config module
+            if socket_path is None:
+                socket_path = self._connection.socket_path
+
+            conn = Connection(socket_path)
+            out = conn.get_prompt()
+            while '(config' in to_text(out, errors='surrogate_then_replace').strip():
+                display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
+                conn.send_command('exit')
+                out = conn.get_prompt()
 
         result = super(ActionModule, self).run(tmp, task_vars)
         return result
