@@ -300,8 +300,13 @@ def main():
             except ConnectionError as exc:
                 # Only network_cli has update_play context, so missing this is
                 # not fatal e.g. netconf
-                if to_text(exc) != 'Method not found':
-                    raise
+                if exc.code == -32601:
+                    pass
+                else:
+                    result.update({
+                        'error': to_text(exc),
+                        'exception': traceback.format_exc()
+                    })
 
     result.update({
         'messages': messages,
