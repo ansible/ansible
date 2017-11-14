@@ -16,7 +16,7 @@
       resource_group: "{{ resource_group }}"
       name: testnic001
       virtual_network: testnic001
-      vertual_network_resource_group: "{{ resource_group_secondary }}"
+      virtual_network_resource_group: "{{ resource_group_secondary }}"
       subnet: testnic001
       public_ip_name: testnic001
       public_ip_allocation_method: Static
@@ -33,7 +33,7 @@
       name: testnic001
       security_group: testnic001
       virtual_network: testnic001
-      vertual_network_resource_group: "{{ resource_group_secondary }}"
+      virtual_network_resource_group: "{{ resource_group_secondary }}"
       subnet: testnic001
       ip_configurations:
         - name: ipconfig-add
@@ -56,7 +56,7 @@
       name: testnic001
       security_group: testnic001
       virtual_network: testnic001
-      vertual_network_resource_group: "{{ resource_group_secondary }}"
+      virtual_network_resource_group: "{{ resource_group_secondary }}"
       subnet: testnic001
       ip_configurations:
         - name: ipconfig-add
