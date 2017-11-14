@@ -117,9 +117,7 @@ def deb_package_list():
 if __name__ == 'main':
 
     global module
-    module = AnsibleModule(
-        argument_spec = dict(manager=dict())
-    )
+    module = AnsibleModule(argument_spec=dict(manager=dict()))
     manager = module.params['manager']
     packages = {}
     results = {'ansible_facts': packages }
