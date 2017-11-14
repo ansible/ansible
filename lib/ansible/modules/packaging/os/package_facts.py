@@ -68,13 +68,14 @@ ansible_facts:
 import sys
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_text
 
 
 def rpm_package_list():
 
     try:
         import rpm
-    except ImportError as e:
+    except ImportError:
         module.fail_json('Unable to use the rpm python bindings, please ensure they are installed under the python the module runs under')
 
     trans_set = rpm.TransactionSet()
@@ -97,7 +98,7 @@ def deb_package_list():
 
     try:
         import apt
-    except ImportError as e:
+    except ImportError:
         module.fail_json('Unable to use the apt python bindings, please ensure they are installed under the python the module runs under')
 
     apt_cache = apt.Cache()
@@ -148,6 +149,6 @@ if __name__ == 'main':
                 module.fail_json(msg='Could not detect supported package manager')
     except Exception as e:
         from traceback import format_tb
-        module.fail_json(msg='Failed to retrieve packages: %s' % to_text(e), exception=traceback.format_tb(sys.exc_info()[2]))
+        module.fail_json(msg='Failed to retrieve packages: %s' % to_text(e), exception=format_tb(sys.exc_info()[2]))
 
     module.exit_json(**results)
