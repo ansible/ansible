@@ -20,6 +20,7 @@ $Number = Get-AnsibleParam -obj $params -name "number" -type "int"
 # Set attributes partition
 $SetPartitionStyle = Get-AnsibleParam -obj $params -name "partition_style_set" -type "str" -default "gpt" -ValidateSet "gpt","mbr"
 $DriveLetter = Get-AnsibleParam -obj $params -name "drive_letter" -type "str" -ValidateSet "a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z"
+$PartitionAccessPath = Get-AnsibleParam -obj $params -name "access_path" -type "str"
 # Set attributes file system
 $FileSystem = Get-AnsibleParam -obj $params -name "file_system" -type "str" -default "ntfs" -ValidateSet "ntfs","refs"
 $Label = Get-AnsibleParam -obj $params -name "label" -type "str" -default "ansible_disk"
@@ -40,8 +41,25 @@ if ($Size -ne $null) {
         Fail-Json -obj $result -message "Size option value must be at least 1gb"
     }
 }
-if ([int32]2147483647 -lt $Number) {
-    Fail-Json -obj $result -message "Number option must be of type int32"
+if ($Number -ne $null) {
+    if ([int32]2147483647 -lt $Number) {
+        Fail-Json -obj $result -message "Number option must be of type int32"
+    }
+}
+if ($PartitionAccessPath -ne $null) {
+    if ((-not ((Get-Partition).AccessPaths -like "$PartitionAccessPath*")) -and (Test-Path $PartitionAccessPath -PathType Container) -and ((Get-Item $PartitionAccessPath).LinkType -eq $null)) {
+        if (-not (Get-ChildItem $PartitionAccessPath)) {
+            $true
+        } else {
+            Fail-Json -obj $result -message "$PartitionAccessPath is not an empty folder (contains files and/or folders)"                                    
+        }
+    } elseif ((Get-Partition).AccessPaths -like "$PartitionAccessPath*") {
+        Fail-Json -obj $result -message "$PartitionAccessPath is already in use as access path by another disk"
+    } elseif (-not (Test-Path $PartitionAccessPath -PathType Container)) {
+        Fail-Json -obj $result -message "$PartitionAccessPath is not a valid path/directory/folder on the target for option SetPartitionStyle"
+    } elseif((Get-Item $PartitionAccessPath).LinkType -ne $null) {
+        Fail-Json -obj $result -message "$PartitionAccessPath is already in use as a link of type $((Get-Item $PartitionAccessPath).LinkType)"
+    }
 }
 
 # Functions
@@ -148,9 +166,21 @@ function Create-Partition {
                 $Disk,
                 $SetDriveLetter
         )
-        $Partition = $Disk | New-Partition -UseMaximumSize -DriveLetter $SetDriveLetter
+        if ($SetDriveLetter -ne $null) {
+            $Partition = $Disk | New-Partition -UseMaximumSize -DriveLetter $SetDriveLetter
+        } else {
+            $Partition = $Disk | New-Partition -UseMaximumSize
+        }
 
         return $Partition
+}
+
+function Add-AccessPath {
+        param(
+                $Partition,
+                $Path
+        )
+        $null = $Partition | Add-PartitionAccessPath -AccessPath $Path
 }
 
 function Create-Volume {
@@ -452,12 +482,98 @@ if ($PartNumber -ge 1) {
 }
 
 # Check set option values
-# Check drive letter
-if ($DriveLetter -ne $null) {
+# Check drive letter and access path
+if (($DriveLetter -eq $null) -and ($PartitionAccessPath -eq $null)) {
+        # Use random drive letter
+        try {
+            $DriveLetter = Get-ChildItem Function:[a-z]: -Name | Where-Object {
+                -not (Test-Path -Path $_)
+            } | Get-Random
+        } catch {
+            if ($SetOnline) {
+                try {
+                    Set-OperationalStatus -Disk $disk -Deactivate
+                } catch {
+                    $OPStatusFailed = $true
+                } finally {
+                    if (-not $OPStatusFailed) {
+                        if ($diff_mode) {
+                            $result.change_log.operational_status = "Disk set online and now offline again"
+                        }
+                        $result.changed = $true
+                    } else {
+                        if ($diff_mode) {
+                            $result.change_log.operational_status = "Disk failed to set offline again"
+                        }
+                    }
+                }
+            }
+            if ($SetWriteable) {
+                try {
+                    Set-DiskWriteable -Disk $disk -Deactivate
+                } catch {
+                    $ROStatusFailed = $true
+                } finally {
+                    if (-not $ROStatusFailed) {
+                        if ($diff_mode) {
+                            $result.change_log.writeable_status = "Disk set writeable and now read-only again"
+                        }
+                        $result.changed = $true
+                    } else {
+                        if ($diff_mode) {
+                            $result.change_log.writeable_status = "Disk failed to set read-only again"
+                        }
+                    }
+                }
+            }
+            Fail-Json -obj $result -message "The check to get free drive letters on the target failed"
+        }
+        if ($DriveLetter) {
+            $DriveLetter = $DriveLetter.TrimEnd(":")
+        } else {
+            if ($SetOnline) {
+                try {
+                    Set-OperationalStatus -Disk $disk -Deactivate
+                } catch {
+                    $OPStatusFailed = $true
+                } finally {
+                    if (-not $OPStatusFailed) {
+                        if ($diff_mode) {
+                            $result.change_log.operational_status = "Disk set online and now offline again"
+                        }
+                        $result.changed = $true
+                    } else {
+                        if ($diff_mode) {
+                            $result.change_log.operational_status = "Disk failed to set offline again"
+                        }
+                    }
+                }
+            }
+            if ($SetWriteable) {
+                try {
+                    Set-DiskWriteable -Disk $disk -Deactivate
+                } catch {
+                    $ROStatusFailed = $true
+                } finally {
+                    if (-not $ROStatusFailed) {
+                        if ($diff_mode) {
+                            $result.change_log.writeable_status = "Disk set writeable and now read-only again"
+                        }
+                        $result.changed = $true
+                    } else {
+                        if ($diff_mode) {
+                            $result.change_log.writeable_status = "Disk failed to set read-only again"
+                        }
+                    }
+                }
+            }
+            Fail-Json -obj $result -message "No free drive letter left on the target"
+        }
+} elseif ($DriveLetter -eq [string]) {
     # Use defined drive letter
     try {
         $CheckLetter = Get-ChildItem Function:[$DriveLetter]: | Foreach-Object {
-            Test-Path -Path $_ -IsValid
+            Test-Path -Path $_
         }
     } catch {
         if ($SetOnline) {
@@ -536,92 +652,6 @@ if ($DriveLetter -ne $null) {
             }
         }
         Fail-Json -obj $result -message "The drive letter $DriveLetter is set on another partition on this target already which is not allowed"
-    }
-} else {
-    # Use random drive letter
-    try {
-        $DriveLetter = Get-ChildItem Function:[a-z]: -Name | Where-Object {
-            -not (Test-Path -Path $_ -IsValid)
-        } | Get-Random
-    } catch {
-        if ($SetOnline) {
-            try {
-                Set-OperationalStatus -Disk $disk -Deactivate
-            } catch {
-                $OPStatusFailed = $true
-            } finally {
-                if (-not $OPStatusFailed) {
-                    if ($diff_mode) {
-                        $result.change_log.operational_status = "Disk set online and now offline again"
-                    }
-                    $result.changed = $true
-                } else {
-                    if ($diff_mode) {
-                        $result.change_log.operational_status = "Disk failed to set offline again"
-                    }
-                }
-            }
-        }
-        if ($SetWriteable) {
-            try {
-                Set-DiskWriteable -Disk $disk -Deactivate
-            } catch {
-                $ROStatusFailed = $true
-            } finally {
-                if (-not $ROStatusFailed) {
-                    if ($diff_mode) {
-                        $result.change_log.writeable_status = "Disk set writeable and now read-only again"
-                    }
-                    $result.changed = $true
-                } else {
-                    if ($diff_mode) {
-                        $result.change_log.writeable_status = "Disk failed to set read-only again"
-                    }
-                }
-            }
-        }
-        Fail-Json -obj $result -message "The check to get free drive letters on the target failed"
-    }
-    if ($DriveLetter) {
-        $DriveLetter = $DriveLetter.TrimEnd(":").ToLower()
-    } else {
-        if ($SetOnline) {
-            try {
-                Set-OperationalStatus -Disk $disk -Deactivate
-            } catch {
-                $OPStatusFailed = $true
-            } finally {
-                if (-not $OPStatusFailed) {
-                    if ($diff_mode) {
-                        $result.change_log.operational_status = "Disk set online and now offline again"
-                    }
-                    $result.changed = $true
-                } else {
-                    if ($diff_mode) {
-                        $result.change_log.operational_status = "Disk failed to set offline again"
-                    }
-                }
-            }
-        }
-        if ($SetWriteable) {
-            try {
-                Set-DiskWriteable -Disk $disk -Deactivate
-            } catch {
-                $ROStatusFailed = $true
-            } finally {
-                if (-not $ROStatusFailed) {
-                    if ($diff_mode) {
-                        $result.change_log.writeable_status = "Disk set writeable and now read-only again"
-                    }
-                    $result.changed = $true
-                } else {
-                    if ($diff_mode) {
-                        $result.change_log.writeable_status = "Disk failed to set read-only again"
-                    }
-                }
-            }
-        }
-        Fail-Json -obj $result -message "No free drive letter left on the target"
     }
 }
 # Check file system
@@ -917,11 +947,88 @@ if (-not $check_mode) {
         Fail-Json -obj $result -message "Failed to create the partition on the disk: $($_.Exception.Message)"
     }
     if ($diff_mode) {
-        $result.change_log.partitioning = "Initial partition $($CPartition.Type) was created successfully on partition style $SetPartitionStyle"
+        if (($DriveLetter -eq $null) -and ($PartitionAccessPath -eq $null)) {
+            $result.change_log.partitioning = "Initial partition $($CPartition.Type) with random drive letter $DriveLetter was created successfully on partition style $SetPartitionStyle"
+        } elseif ($DriveLetter -eq $null) {
+            $result.change_log.partitioning = "Initial partition $($CPartition.Type) with no drive letter was created successfully on partition style $SetPartitionStyle"
+        } else {
+            $result.change_log.partitioning = "Initial partition $($CPartition.Type) with passed drive letter $DriveLetter was created successfully on partition style $SetPartitionStyle"
+        }
     }
     $result.changed = $true
 } else {
     $result.change_log.partitioning = "Disk will not be partitioned due to activated check_mode"
+}
+
+# Add partition access path
+if (-not $PartitionAccessPath -eq [String]::Empty) {
+    if (-not $check_mode) {
+        try {
+            Add-AccessPath -Partition $CPartition -Path $PartitionAccessPath
+        } catch {
+            if ($SetOnline) {
+                try {
+                    Set-OperationalStatus -Disk $disk -Deactivate
+                } catch {
+                    $OPStatusFailed = $true
+                } finally {
+                    if (-not $OPStatusFailed) {
+                        if ($diff_mode) {
+                            $result.change_log.operational_status = "Disk set online and now offline again"
+                        }
+                        $result.changed = $true
+                    } else {
+                        if ($diff_mode) {
+                            $result.change_log.operational_status = "Disk failed to set offline again"
+                        }
+                    }
+                }
+            }
+            if ($SetWriteable) {
+                try {
+                    Set-DiskWriteable -Disk $disk -Deactivate
+                } catch {
+                    $ROStatusFailed = $true
+                } finally {
+                    if (-not $ROStatusFailed) {
+                        if ($diff_mode) {
+                            $result.change_log.writeable_status = "Disk set writeable and now read-only again"
+                        }
+                        $result.changed = $true
+                    } else {
+                        if ($diff_mode) {
+                            $result.change_log.writeable_status = "Disk failed to set read-only again"
+                        }
+                    }
+                }
+            }
+            if ($StopSuccess) {
+                try {
+                    Manage-ShellHWService -Action "Start"
+                } catch {
+                    $StartFailed = $true
+                } finally {
+                    if (-not $StartFailed) {
+                        if ($diff_mode) {
+                            $result.change_log.shellhw_service_state = "Set from 'Stopped' to 'Running' again"
+                        }
+                        $result.changed = $true
+                    } else {
+                        if ($diff_mode) {
+                            $result.change_log.shellhw_service_state = "Could not be set from 'Stopped' to 'Running' again"
+                        }
+                    }
+                }
+            }
+            Fail-Json -obj $result -message "Failed to create partition access path: $($_.Exception.Message)"
+        }
+        if ($diff_mode) {
+            $result.change_log.access_path = "Partition access path $PartitionAccessPath was created successfully for partition $($CPartition.Type)"
+        }
+        $result.changed = $true
+    } else {
+        $result.change_log.access_path = "Partition access path will not be added to partition due to activated check_mode"
+    }
 }
 
 # Create volume
@@ -995,7 +1102,7 @@ if (-not $check_mode) {
         Fail-Json -obj $result -message "Failed to create the volume on the disk: $($_.Exception.Message)"
     }
     if ($diff_mode) {
-        $result.change_log.formatting = "Volume $($CVolume.FileSystem) was created successfully on partition $($CPartition.Type)"
+        $result.change_log.formatting = "Volume $($CVolume.FileSystem) with allocation unit size $AllocUnitSize and label $Label was created successfully on partition $($CPartition.Type)"
     }
     $result.changed = $true
 } else {
