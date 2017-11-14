@@ -138,8 +138,9 @@ class Connection(ConnectionBase):
 
     def update_play_context(self, pc_data):
         """Updates the play context information for the connection"""
+        pc_data = to_bytes(pc_data)
         if PY3:
-            pc_data = cPickle.loads(to_bytes(pc_data), encoding='bytes')
+            pc_data = cPickle.loads(pc_data, encoding='bytes')
         else:
             pc_data = cPickle.loads(pc_data)
         play_context = PlayContext()
