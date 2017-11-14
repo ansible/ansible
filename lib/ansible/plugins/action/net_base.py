@@ -21,6 +21,8 @@ import sys
 import copy
 
 from ansible import constants as C
+from ansible.module_utils._text import to_text
+from ansible.module_utils.connection import Connection
 from ansible.errors import AnsibleError
 from ansible.plugins.action import ActionBase
 from ansible.module_utils.network_common import load_provider
@@ -67,9 +69,22 @@ class ActionModule(ActionBase):
             play_context.become = self.provider['authorize'] or False
             play_context.become_pass = self.provider['auth_pass']
 
+        socket_path = None
         if self._play_context.connection == 'local':
             socket_path = self._start_connection(play_context)
             task_vars['ansible_socket'] = socket_path
+
+        if play_context.connection == 'network_cli':
+            # make sure we are in the right cli context which should be
+            # enable mode and not config module
+            if socket_path is None:
+                socket_path = self._connection.socket_path
+
+            conn = Connection(socket_path)
+            out = conn.get_prompt()
+            if to_text(out, errors='surrogate_then_replace').strip().endswith(')#'):
+                display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
+                conn.send_command('exit')
 
         if 'fail_on_missing_module' not in self._task.args:
             self._task.args['fail_on_missing_module'] = False
@@ -118,13 +133,6 @@ class ActionModule(ActionBase):
             return {'failed': True,
                     'msg': 'unable to open shell. Please see: ' +
                            'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell'}
-
-        # make sure we are in the right cli context which should be
-        # enable mode and not config module
-        rc, out, err = connection.exec_command('prompt()')
-        if str(out).strip().endswith(')#'):
-            display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
-            connection.exec_command('exit')
 
         if self._play_context.become_method == 'enable':
             self._play_context.become = False
