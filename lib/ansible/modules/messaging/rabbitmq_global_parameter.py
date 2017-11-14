@@ -72,7 +72,7 @@ import json
 from ansible.module_utils.basic import AnsibleModule
 
 
-class RabbitMqParameter(object):
+class RabbitMqGlobalParameter(object):
     def __init__(self, module, name, value, node):
         self.module = module
         self.name = name
@@ -133,7 +133,7 @@ def main():
     node = module.params['node']
 
     result = dict(changed=False)
-    rabbitmq_global_parameter = RabbitMqParameter(module, name, value, node)
+    rabbitmq_global_parameter = RabbitMqGlobalParameter(module, name, value, node)
 
     if rabbitmq_global_parameter.get():
         if state == 'absent':
