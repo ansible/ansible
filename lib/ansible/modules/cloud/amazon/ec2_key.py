@@ -102,6 +102,37 @@ EXAMPLES = '''
     name: example
     state: absent
 '''
+
+RETURN = '''
+changed:
+  description: whether a keypair was created/deleted
+  returned: always
+  type: bool
+  sample: true
+key:
+  description: details of the keypair (this is set to null when state is absent)
+  returned: always
+  type: complex
+  contains:
+    fingerprint:
+      description: fingerprint of the key
+      returned: when state is present
+      type: string
+      sample: 'b0:22:49:61:d9:44:9d:0c:7e:ac:8a:32:93:21:6c:e8:fb:59:62:43'
+    name:
+      description: name of the keypair
+      returned: when state is present
+      type: string
+      sample: my_keypair
+    private_key:
+      description: private key of a newly created keypair
+      returned: when a new keypair is created by AWS (key_material is not provided)
+      type: string
+      sample: '-----BEGIN RSA PRIVATE KEY-----
+        MIIEowIBAAKC...
+        -----END RSA PRIVATE KEY-----'
+'''
+
 import random
 import string
 import time
