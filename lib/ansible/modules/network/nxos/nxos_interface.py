@@ -488,6 +488,9 @@ def get_interface_config_commands(interface, intf, existing):
     if mtu != 'None':
         commands.append('mtu {0}'.format(mtu))
 
+    if 'mtu None' in commands:
+        commands.pop()
+
     admin_state = interface.get('admin_state')
     if admin_state:
         command = get_admin_state(interface, intf, admin_state)
