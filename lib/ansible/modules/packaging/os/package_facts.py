@@ -18,9 +18,10 @@ description:
     - Return information about installed packages as facts
 options:
     manager:
+      description:
         - The package manager used by the system so we can query the package information
-    default: autodetect
-    required: False
+      default: autodetect
+      required: False
 version_added: "2.5"
 author:
     - Matthew Jones
