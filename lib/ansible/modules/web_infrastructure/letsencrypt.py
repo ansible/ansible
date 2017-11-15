@@ -41,11 +41,19 @@ requirements:
   - "python >= 2.6"
   - openssl
 options:
-  account_key:
+  account_key_path:
     description:
-      - "File containing the Let's Encrypt account RSA key."
+      - "Path to a file containing the Let's Encrypt account RSA key."
       - "Can be created with C(openssl rsa ...)."
-    required: true
+      - "Mutually exclusive with C(account_key_content)."
+      - "Required if C(account_key_content) is not used."
+    aliases: [ account_key ]
+  account_key_content:
+    description:
+      - "Content of the Let's Encrypt account RSA key."
+      - "Mutually exclusive with C(account_key_path)."
+      - "Required if C(account_key_path) is not used."
+    version_added: "2.5"
   account_email:
     description:
       - "The email address associated with this account."
@@ -98,8 +106,23 @@ options:
 '''
 
 EXAMPLES = '''
-- letsencrypt:
-    account_key: /etc/pki/cert/private/account.key
+- name: Create a challenge for sample.com using a account key from a variable.
+  letsencrypt:
+    account_key_content: "{{ account_private_key }}"
+    csr: /etc/pki/cert/csr/sample.com.csr
+    dest: /etc/httpd/ssl/sample.com.crt
+  register: sample_com_challenge
+
+- name: Create a challenge for sample.com using a account key from hashi vault.
+  letsencrypt:
+    account_key_content: "{{ lookup('hashi_vault', 'secret=secret/account_private_key:value') }}"
+    csr: /etc/pki/cert/csr/sample.com.csr
+    dest: /etc/httpd/ssl/sample.com.crt
+  register: sample_com_challenge
+
+- name: Create a challenge for sample.com using a account key file.
+  letsencrypt:
+    account_key_path: /etc/pki/cert/private/account.key
     csr: /etc/pki/cert/csr/sample.com.csr
     dest: /etc/httpd/ssl/sample.com.crt
   register: sample_com_challenge
@@ -112,8 +135,9 @@ EXAMPLES = '''
 #     content: "{{ sample_com_challenge['challenge_data']['sample.com']['http-01']['resource_value'] }}"
 #     when: sample_com_challenge is changed
 
-- letsencrypt:
-    account_key: /etc/pki/cert/private/account.key
+- name: Let the challenge be validated and retrieve the cert
+  letsencrypt:
+    account_key_path: /etc/pki/cert/private/account.key
     csr: /etc/pki/cert/csr/sample.com.csr
     dest: /etc/httpd/ssl/sample.com.crt
     data: "{{ sample_com_challenge }}"
@@ -321,7 +345,10 @@ class ACMEAccount(object):
 
     def __init__(self, module):
         self.module = module
-        self.key = module.params['account_key']
+        self.agreement = module.params['agreement']
+        # account_key path and content are mutually exclusive
+        self.key = module.params['account_key_path']
+        self.key_content = module.params['account_key_content']
         self.email = module.params['account_email']
         self.data = module.params['data']
         self.directory = ACMEDirectory(module)
@@ -333,10 +360,19 @@ class ACMEAccount(object):
         self._authz_list_uri = None
         self._certs_list_uri = None
 
-        if not os.path.exists(self.key):
-            module.fail_json(msg="Account key %s not found" % (self.key))
-
         self._openssl_bin = module.get_bin_path('openssl', True)
+
+        # Create a key file from content, key (path) and key content are mutually exclusive
+        if self.key_content is not None:
+            _, tmpsrc = tempfile.mkstemp()
+            f = open(tmpsrc, 'wb')
+            try:
+                f.write(self.key_content)
+                self.key = tmpsrc
+            except Exception as err:
+                os.remove(tmpsrc)
+                module.fail_json(msg="failed to create temporary content file: %s" % to_native(err), exception=traceback.format_exc())
+            f.close()
 
         pub_hex, pub_exp = self._parse_account_key(self.key)
         self.jws_header = {
@@ -801,11 +837,16 @@ class ACMEClient(object):
                 self.cert_days = get_cert_days(self.module, self.dest)
                 self.changed = True
 
+        # Clean up temporary account key file
+        if self.account_key_content is not None:
+            os.remove(self.key)
+
 
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            account_key=dict(required=True, type='path'),
+            account_key_path=dict(type='path', aliases=['account_key']),
+            account_key_content=dict(type='str'),
             account_email=dict(required=False, default=None, type='str'),
             acme_directory=dict(required=False, default='https://acme-staging.api.letsencrypt.org/directory', type='str'),
             agreement=dict(required=False, type='str'),
@@ -815,6 +856,12 @@ def main():
             fullchain=dict(required=False, default=True, type='bool'),
             dest=dict(required=True, aliases=['cert'], type='path'),
             remaining_days=dict(required=False, default=10, type='int'),
+        ),
+        required_one_of=(
+            ['account_key_path', 'account_key_content'],
+        ),
+        mutually_exclusive=(
+            ['account_key_path', 'account_key_content'],
         ),
         supports_check_mode=True,
     )
