@@ -117,7 +117,8 @@ options:
     default: 20
     version_added: '2.3'
   pgp:
-    choices: [ true, false ]
+    type: bool
+    default: no
     description:
       - Use OpenPGP encryption for the mail; incompatible with I(attach).
       - Defaults to C(false), unless I(pgp_recipients) is set.
