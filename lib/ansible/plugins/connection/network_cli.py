@@ -119,7 +119,7 @@ class Connection(ConnectionBase):
             try:
                 cmd = json.loads(to_text(cmd, errors='surrogate_or_strict'))
                 kwargs = {'command': to_bytes(cmd['command'], errors='surrogate_or_strict')}
-                for key in ('prompts', 'answer', 'send_only'):
+                for key in ('prompt', 'answer', 'send_only'):
                     if key in cmd:
                         kwargs[key] = to_bytes(cmd[key], errors='surrogate_or_strict')
                 return self.send(**kwargs)
@@ -280,7 +280,7 @@ class Connection(ConnectionBase):
                 resp = self._strip(self._last_response)
                 return self._sanitize(resp, command)
 
-    def send(self, command, prompts=None, answer=None, send_only=False):
+    def send(self, command, prompt=None, answer=None, send_only=False):
         '''
         Sends the command to the device in the opened shell
         '''
@@ -289,7 +289,7 @@ class Connection(ConnectionBase):
             self._ssh_shell.sendall(b'%s\r' % command)
             if send_only:
                 return
-            response = self.receive(command, prompts, answer)
+            response = self.receive(command, prompt, answer)
             return to_text(response, errors='surrogate_or_strict')
         except (socket.timeout, AttributeError):
             display.vvvv(traceback.format_exc(), host=self._play_context.remote_addr)
