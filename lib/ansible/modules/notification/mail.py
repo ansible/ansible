@@ -230,6 +230,11 @@ except ImportError:
     HAS_GNUPG=False
 
 
+def pgp_fingerprint(s):
+    from ansible.module_utils.six import string_types
+    isinstance(s, string_types) and re.match(r'^0x([0-9A-F]+|[0-9a-f]+)$', s)
+
+
 def main():
 
     module = AnsibleModule(
@@ -251,7 +256,8 @@ def main():
             secure=dict(type='str', default='try', choices=['always', 'never', 'starttls', 'try']),
             timeout=dict(type='int', default=20),
             pgp=dict(type='bool', default=False),
-            pgp_recipients=dict(type='list', default=[])
+            pgp_recipients=dict(type=lambda l: all(pgp_fingerprint(x) for x in l),
+                                default=[])
         ),
         required_together=[['password', 'username']],
     )
@@ -295,16 +301,6 @@ def main():
         gpg.encoding = charset
 
         if pgp_recipients:
-            from ansible.module_utils.six import string_types
-
-            def is_invalid(s):
-                not (isinstance(s, string_types) and
-                     re.match(r'^0x([0-9A-F]+|[0-9a-f]+)$', s))
-
-            invalid_recipients = filter(is_invalid, pgp_recipients)
-            if invalid_recipients:
-                module.fail_json(rc=1, msg='pgp_recipients: Expected fingerprints, got ' + ', '.join(invalid_recipients))
-
             encrypted = gpg.encrypt(body, pgp_recipients, always_trust=True)
         else:
             encrypted = gpg.encrypt(body, recipients)
