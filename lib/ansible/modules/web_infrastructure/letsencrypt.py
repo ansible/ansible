@@ -50,25 +50,20 @@ options:
     description:
       - "The email address associated with this account."
       - "It will be used for certificate expiration warnings."
-    required: false
-    default: null
   acme_directory:
     description:
       - "The ACME directory to use. This is the entry point URL to access
          CA server API."
       - "For safety reasons the default is set to the Let's Encrypt staging server.
          This will create technically correct, but untrusted certificates."
-    required: false
     default: https://acme-staging.api.letsencrypt.org/directory
   agreement:
     description:
       - "URI to a terms of service document you agree to when using the
          ACME service at C(acme_directory)."
-    required: false
     default: 'https://letsencrypt.org/documents/LE-SA-v1.1.1-August-1-2016.pdf'
   challenge:
     description: The challenge to be performed.
-    required: false
     choices: [ 'http-01', 'dns-01', 'tls-sni-02']
     default: 'http-01'
   csr:
@@ -85,24 +80,20 @@ options:
       - "The data to validate ongoing challenges."
       - "The value that must be used here will be provided by a previous use
          of this module."
-    required: false
-    default: null
   dest:
     description: The destination file for the certificate.
     required: true
     aliases: ['cert']
   fullchain:
     description: Include the full certificate chain in the destination file.
-    required: false
     default: false
-    version_added: 2.4
+    version_added: 2.5
   remaining_days:
     description:
       - "The number of days the certificate must have left being valid.
          If C(cert_days < remaining_days), then it will be renewed.
          If the certificate is not renewed, module return values will not
          include C(challenge_data)."
-    required: false
     default: 10
 '''
 
