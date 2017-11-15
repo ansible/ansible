@@ -219,14 +219,14 @@ elasticache_clusters:
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict, HAS_BOTO3, AWSRetry
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, AWSRetry
 from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict
 
 
 try:
     import botocore
 except ImportError:
-    pass  # caught by imported HAS_BOTO3
+    pass  # handled by AnsibleAWSModule
 
 
 @AWSRetry.exponential_backoff()
@@ -296,16 +296,9 @@ def main():
     )
     module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
 
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 and botocore are required.')
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-    if not region:
-        module.fail_json(msg="Region must be specified for this module")
-    try:
-        client = boto3_conn(module, conn_type='client', resource='elasticache',
-                            region=region, endpoint=ec2_url, **aws_connect_kwargs)
-    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-        module.fail_json_aws(e, msg="Can't authorize connection")
+    client = boto3_conn(module, conn_type='client', resource='elasticache',
+                        region=region, endpoint=ec2_url, **aws_connect_kwargs)
 
     module.exit_json(elasticache_clusters=get_elasticache_clusters(client, module, region))
 
