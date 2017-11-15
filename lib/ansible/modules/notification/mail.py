@@ -222,6 +222,12 @@ from email.header import Header
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 
+try:
+    import gnupg
+    HAS_GNUPG=True
+except ImportError:
+    HAS_GNUPG=False
+
 
 def main():
 
@@ -277,10 +283,8 @@ def main():
         body = subject
 
     if pgp:
-        try:
-            import gnupg
-        except ImportError:
-            module.fail_json(rc=1, msg='OpenPGP encryption requires python-gnupg')
+        if not HAS_GNUPG:
+            module.fail_json(msg='OpenPGP encryption requires python-gnupg')
 
         # TODO: Implement proper PGP/MIME
         if attach_files:
