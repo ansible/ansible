@@ -260,6 +260,13 @@ options:
             promotion_code:
                 description:
                     - optional promotion code
+    custom_data:
+        description:
+            - A base-64 encoded string of custom data with a maximum length of 65535 bytes. When creating a virtual machine,
+              this data will be saved as a file on that virtual machine.
+        required: false
+        default: null
+        version_added: 2.5
 
 extends_documentation_fragment:
     - azure
@@ -656,7 +663,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             restarted=dict(type='bool', default=False),
             started=dict(type='bool', default=True),
             data_disks=dict(type='list'),
-            plan=dict(type='dict')
+            plan=dict(type='dict'),
+            custom_data=dict(type='str'),
         )
 
         self.resource_group = None
@@ -691,6 +699,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.differences = None
         self.data_disks = None
         self.plan = None
+        self.custom_data = None
 
         self.results = dict(
             changed=False,
@@ -893,6 +902,10 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     if not image_reference:
                         self.fail("Parameter error: an image is required when creating a virtual machine.")
 
+                    if self.custom_data:
+                        if len(self.custom_data) > 65535:
+                            self.fail("Parameter error: provided custom_data exceeds maximum length (65535). ")
+
                     # Get defaults
                     if not self.network_interface_names:
                         default_nic = self.create_default_nic()
@@ -939,6 +952,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         os_profile=OSProfile(
                             admin_username=self.admin_username,
                             computer_name=self.short_hostname,
+                            custom_data=self.custom_data,
                         ),
                         hardware_profile=HardwareProfile(
                             vm_size=self.vm_size
