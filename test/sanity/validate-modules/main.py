@@ -375,14 +375,24 @@ class ModuleValidator(Validator):
                 msg='sys.exit() call found. Should be exit_json/fail_json'
             )
 
-    def _check_for_gpl3_header(self):
-        if ('GNU General Public License' not in self.text and
-                'version 3' not in self.text):
+    def _check_gpl3_header(self):
+        header = '\n'.join(self.text.split('\n')[:20])
+        if ('GNU General Public License' not in header and
+                'version 3' not in header):
             self.reporter.error(
                 path=self.object_path,
                 code=105,
-                msg='GPLv3 license header not found'
+                msg='GPLv3 license header not found in the first 20 lines of the module'
             )
+        if self._is_new_module():
+            if len([line for line in self.text.split('\n')
+                    if 'GNU General Public License' in line]) > 1:
+                self.reporter.error(
+                    path=self.object_path,
+                    code=108,
+                    msg='GPLv3 simple license header not found: '
+                        'https://docs.ansible.com/ansible/devel/dev_guide/developing_modules_documenting.html#copyright'
+                )
 
     def _check_for_tabs(self):
         for line_no, line in enumerate(self.text.splitlines()):
@@ -1119,7 +1129,7 @@ class ModuleValidator(Validator):
             self._validate_ps_replacers()
             self._find_ps_docs_py_file()
 
-        self._check_for_gpl3_header()
+        self._check_gpl3_header()
         if not self._just_docs():
             self._check_interpreter(powershell=self._powershell_module())
             self._check_type_instead_of_isinstance(
