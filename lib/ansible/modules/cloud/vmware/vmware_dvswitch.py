@@ -37,7 +37,7 @@ options:
         required: True
     switch_version:
         description:
-            - The version of the switch to create. 
+            - The version of the switch to create.
             - Needed if you have a vcenter version > ESXi version to join DVS. If not specified version=version of vcenter
         required: False
         version_added: 2.5
