@@ -202,6 +202,7 @@ def main():
     argument_spec.update(dict(datacenter_name=dict(required=True, type='str'),
                               switch_name=dict(required=True, type='str'),
                               mtu=dict(required=True, type='int'),
+                              switch_version=dict(type='str'),
                               uplink_quantity=dict(required=True, type='int'),
                               discovery_proto=dict(required=True, choices=['cdp', 'lldp'], type='str'),
                               discovery_operation=dict(required=True, choices=['both', 'none', 'advertise', 'listen'], type='str'),
