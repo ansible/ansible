@@ -172,6 +172,8 @@ Ansible Changes By Release
 * Fix for modifying existing application load balancers using certificates (https://github.com/ansible/ansible/pull/28217)
 * Fix --ask-vault-pass with no tty and password from stdin
   (https://github.com/ansible/ansible/issues/30993)
+* Fix for IIS windows modules to use hashtables instead of PSCustomObject
+  (https://github.com/ansible/ansible/pull/32710)
 
 <a id="2.4.1"></a>
 
