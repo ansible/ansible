@@ -26,6 +26,45 @@ FORMAT_1_2_HEADER="\$ANSIBLE_VAULT;1.2;AES256"
 
 VAULT_PASSWORD_FILE=vault-password
 
+# Use linux setsid to test without a tty. No setsid if osx/bsd though...
+if [ -x "$(command -v setsid)" ]; then
+    # tests related to https://github.com/ansible/ansible/issues/30993
+    CMD='ansible-playbook -vvvvv --ask-vault-pass test_vault.yml'
+    setsid sh -c "echo test-vault-password|${CMD}" < /dev/null > log 2>&1 && :
+    WRONG_RC=$?
+    cat log
+    echo "rc was $WRONG_RC (0 is expected)"
+    [ $WRONG_RC -eq 0 ]
+
+    setsid sh -c 'tty; ansible-vault --ask-vault-pass -vvvvv view test_vault.yml' < /dev/null > log 2>&1 && :
+    WRONG_RC=$?
+    echo "rc was $WRONG_RC (1 is expected)"
+    [ $WRONG_RC -eq 1 ]
+    cat log
+
+    setsid sh -c 'tty; echo passbhkjhword|ansible-playbook -vvvvv --ask-vault-pass test_vault.yml' < /dev/null > log 2>&1 && :
+    WRONG_RC=$?
+    echo "rc was $WRONG_RC (1 is expected)"
+    [ $WRONG_RC -eq 1 ]
+    cat log
+
+    setsid sh -c 'tty; echo test-vault-password |ansible-playbook -vvvvv --ask-vault-pass test_vault.yml' < /dev/null > log 2>&1
+    echo $?
+    cat log
+
+    setsid sh -c 'tty; echo test-vault-password|ansible-playbook -vvvvv --ask-vault-pass test_vault.yml' < /dev/null > log 2>&1
+    echo $?
+    cat log
+
+    setsid sh -c 'tty; echo test-vault-password |ansible-playbook -vvvvv --ask-vault-pass test_vault.yml' < /dev/null > log 2>&1
+    echo $?
+    cat log
+
+    setsid sh -c 'tty; echo test-vault-password|ansible-vault --ask-vault-pass -vvvvv view vaulted.inventory' < /dev/null > log 2>&1
+    echo $?
+    cat log
+fi
+
 # old format
 ansible-vault view "$@" --vault-password-file vault-password-ansible format_1_0_AES.yml
 

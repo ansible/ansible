@@ -170,6 +170,8 @@ Ansible Changes By Release
 * Fix a trraceback in os_floating_ip when required instance is already present in the cloud:
   https://github.com/ansible/ansible/pull/32887
 * Fix for modifying existing application load balancers using certificates (https://github.com/ansible/ansible/pull/28217)
+* Fix --ask-vault-pass with no tty and password from stdin
+  (https://github.com/ansible/ansible/issues/30993)
 
 <a id="2.4.1"></a>
 
