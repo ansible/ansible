@@ -41,7 +41,7 @@ requirements:
   - "python >= 2.6"
   - openssl
 options:
-  account_key_path:
+  account_key_src:
     description:
       - "Path to a file containing the Let's Encrypt account RSA key."
       - "Can be created with C(openssl rsa ...)."
@@ -51,8 +51,8 @@ options:
   account_key_content:
     description:
       - "Content of the Let's Encrypt account RSA key."
-      - "Mutually exclusive with C(account_key_path)."
-      - "Required if C(account_key_path) is not used."
+      - "Mutually exclusive with C(account_key_src)."
+      - "Required if C(account_key_src) is not used."
     version_added: "2.5"
   account_email:
     description:
@@ -122,7 +122,7 @@ EXAMPLES = '''
 
 - name: Create a challenge for sample.com using a account key file.
   letsencrypt:
-    account_key_path: /etc/pki/cert/private/account.key
+    account_key_src: /etc/pki/cert/private/account.key
     csr: /etc/pki/cert/csr/sample.com.csr
     dest: /etc/httpd/ssl/sample.com.crt
   register: sample_com_challenge
@@ -137,7 +137,7 @@ EXAMPLES = '''
 
 - name: Let the challenge be validated and retrieve the cert
   letsencrypt:
-    account_key_path: /etc/pki/cert/private/account.key
+    account_key_src: /etc/pki/cert/private/account.key
     csr: /etc/pki/cert/csr/sample.com.csr
     dest: /etc/httpd/ssl/sample.com.crt
     data: "{{ sample_com_challenge }}"
@@ -347,7 +347,7 @@ class ACMEAccount(object):
         self.module = module
         self.agreement = module.params['agreement']
         # account_key path and content are mutually exclusive
-        self.key = module.params['account_key_path']
+        self.key = module.params['account_key_src']
         self.key_content = module.params['account_key_content']
         self.email = module.params['account_email']
         self.data = module.params['data']
@@ -845,7 +845,7 @@ class ACMEClient(object):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            account_key_path=dict(type='path', aliases=['account_key']),
+            account_key_src=dict(type='path', aliases=['account_key']),
             account_key_content=dict(type='str'),
             account_email=dict(required=False, default=None, type='str'),
             acme_directory=dict(required=False, default='https://acme-staging.api.letsencrypt.org/directory', type='str'),
@@ -858,10 +858,10 @@ def main():
             remaining_days=dict(required=False, default=10, type='int'),
         ),
         required_one_of=(
-            ['account_key_path', 'account_key_content'],
+            ['account_key_src', 'account_key_content'],
         ),
         mutually_exclusive=(
-            ['account_key_path', 'account_key_content'],
+            ['account_key_src', 'account_key_content'],
         ),
         supports_check_mode=True,
     )
