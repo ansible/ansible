@@ -288,7 +288,7 @@ def main():
 
         # TODO: Implement proper PGP/MIME
         if attach_files:
-            module.fail_json(rc=1, msg='OpenPGP encryption does not yet support attachments')
+            module.fail_json(msg='OpenPGP encryption does not yet support attachments')
 
         gpg = gnupg.GPG()
         gpg.encoding = charset
