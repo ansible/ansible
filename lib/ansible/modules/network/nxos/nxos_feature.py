@@ -153,8 +153,7 @@ def validate_feature(module, mode='show'):
             'ssh': 'sshServer',
             'tacacs+': 'tacacs',
             'telnet': 'telnetServer',
-            'ethernet-link-oam': 'elo',
-            'port-security': 'eth_port_sec'
+            'ethernet-link-oam': 'elo'
         },
         'config': {
             'nve': 'nv overlay',
@@ -168,8 +167,7 @@ def validate_feature(module, mode='show'):
             'sshServer': 'ssh',
             'tacacs': 'tacacs+',
             'telnetServer': 'telnet',
-            'elo': 'ethernet-link-oam',
-            'eth_port_sec': 'port-security'
+            'elo': 'ethernet-link-oam'
         }
     }
 
