@@ -1,0 +1,26 @@
+- name: cast things to other things
+  set_fact:
+      cast_int_two: "{{ i_two|to_text }}"
+      cast_string_two: "{{ 2|to_text }}"
+      uncast_int_two: "{{ i_two|to_text }}"
+      uncast_string_two: "{{ s_two|int }}"
+      cast_dict_string: "{{ a_dict|to_text }}"
+
+- debug: 
+    var: cast_int_two
+- debug: 
+    var: cast_string_two
+- debug: 
+    var: uncast_string_two
+
+- assert:
+    that:
+        - 'cast_int_two == "2"'
+        - 'cast_int_two|type_debug in ["string", "unicode"]'
+        - 'cast_string_two == "2"'
+        - 'cast_string_two|type_debug in ["string", "unicode"]'
+        - 'uncast_int_two == "2"'
+        - 'uncast_int_two|type_debug in ["string", "unicode"]'
+        - 'uncast_string_two == 2'
+        - 'uncast_string_two|type_debug == "int"'
+        - 'cast_dict_string|type_debug in ["string", "unicode"]'

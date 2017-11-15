@@ -72,7 +72,7 @@ USE_JINJA2_NATIVE = False
 if C.DEFAULT_JINJA2_NATIVE:
     try:
         from jinja2.nativetypes import NativeEnvironment as Environment
-        from jinja2.nativetypes import native_concat as j2_concat
+        from ansible.template.native_helpers import ansible_native_concat as j2_concat
         USE_JINJA2_NATIVE = True
     except ImportError:
         from jinja2 import Environment
@@ -445,7 +445,7 @@ class Templar:
             fail_on_undefined = self._fail_on_undefined_errors
 
         if USE_JINJA2_NATIVE:
-            if not isinstance(variable, string_types):
+            if not isinstance(variable, string_types) or not variable:
                 return variable
             try:
                 result = self.do_template(
@@ -457,7 +457,7 @@ class Templar:
                     disable_lookups=disable_lookups,
                 )
                 return result
-            except AnsibleFilterError:
+            except AnsibleFilterError as e:
                 if self._fail_on_filter_errors:
                     raise
                 else:

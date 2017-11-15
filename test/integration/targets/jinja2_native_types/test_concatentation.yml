@@ -1,0 +1,30 @@
+- name: add two ints
+  set_fact:
+      integer_sum: "{{ i_one + i_two }}"
+
+- debug: var=integer_sum
+- assert:
+    that:
+        - 'integer_sum == 3'
+        - 'integer_sum|type_debug == "int"'
+
+- name: add casted string and int
+  set_fact:
+      integer_sum2: "{{ s_one|int + i_two }}"
+
+- debug: var=integer_sum2
+- assert:
+    that:
+        - 'integer_sum2 == 3'
+        - 'integer_sum2|type_debug == "int"'
+
+- name: concatenate int and string
+  set_fact:
+      string_sum: "{{ [(i_one|to_text), s_two]|join('') }}"
+
+- debug:
+    msg: "{{ string_sum }}"
+- assert:
+    that:
+        - 'string_sum == "12"'
+        - 'string_sum|type_debug in ["string", "unicode"]'

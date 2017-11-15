@@ -49,7 +49,10 @@ class ActionModule(ActionBase):
 
         if verbosity <= self._display.verbosity:
             if 'msg' in self._task.args:
-                result['msg'] = self._task.args['msg']
+                # FIXME - not sure why these are not being templated correctly
+                # with native types
+                #result['msg'] = self._task.args['msg']
+                result['msg'] = self._templar.template(self._task.args['msg'], convert_bare=True, fail_on_undefined=True, bare_deprecated=False)
 
             elif 'var' in self._task.args:
                 try:

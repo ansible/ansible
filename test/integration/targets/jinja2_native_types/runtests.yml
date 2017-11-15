@@ -1,0 +1,28 @@
+- name: concatenate strings and numbers
+  hosts: localhost
+  gather_facts: False
+  vars:
+      i_one: 1
+      i_two: 2
+      i_three: 3
+      s_one: "1"
+      s_two: "2"
+      s_three: "3"
+      a_dict:
+          foo: bar
+          baz: bang
+  tasks:
+
+      - name: check jinja version
+        shell: python -c 'import jinja2; print(jinja2.__version__)'
+        register: jinja2_version
+
+      - name: make sure jinja is the right version
+        set_fact:
+            is_native: "{{ jinja2_version.stdout | version_compare('2.10', '>=') }}"
+
+      - include: test_casting.yml
+        when: is_native
+
+      - include: test_concatentation.yml
+        when: is_native
