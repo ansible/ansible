@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import ast
 import base64
 import crypt
 import glob
@@ -479,6 +480,9 @@ class FilterModule(object):
 
             # uuid
             'to_uuid': to_uuid,
+
+            # ast
+            'from_ast': ast.literal_eval,
 
             # json
             'to_json': to_json,
