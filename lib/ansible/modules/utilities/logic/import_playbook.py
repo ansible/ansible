@@ -28,7 +28,7 @@ options:
     description:
       - The name of the imported playbook is specified directly without any other option.
 notes:
-  - This is a feature of Ansible, rather than a module, and cannot be overridden like a module.
+  - This is a core feature of Ansible, rather than a module, and cannot be overridden like a module.
 '''
 
 EXAMPLES = """
