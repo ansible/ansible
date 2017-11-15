@@ -169,6 +169,7 @@ Ansible Changes By Release
 * Keep newlines when reading LXC container config file (https://github.com/ansible/ansible/pull/32219)
 * Fix a trraceback in os_floating_ip when required instance is already present in the cloud:
   https://github.com/ansible/ansible/pull/32887
+* Fix for modifying existing application load balancers using certificates (https://github.com/ansible/ansible/pull/28217)
 
 <a id="2.4.1"></a>
 
