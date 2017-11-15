@@ -48,7 +48,7 @@ import json
 
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
-from ansible.module_utils.urls import open_url
+from ansible.module_utils.urls import open_url, ConnectionError, SSLValidationError
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six.moves.urllib.error import HTTPError, URLError
 
@@ -64,10 +64,10 @@ class LookupModule(LookupBase):
             raise AnsibleError("Could not decode AWS IP ranges: %s" % to_native(e))
         except HTTPError as e:
             raise AnsibleError("Received HTTP error while pulling IP ranges: %s" % to_native(e))
-        except URLError as e:
-            raise AnsibleError("Failed look up IP range service: %s" % to_native(e))
         except SSLValidationError as e:
             raise AnsibleError("Error validating the server's certificate for: %s" % to_native(e))
+        except URLError as e:
+            raise AnsibleError("Failed look up IP range service: %s" % to_native(e))
         except ConnectionError as e:
             raise AnsibleError("Error connecting to IP range service: %s" % to_native(e))
 
