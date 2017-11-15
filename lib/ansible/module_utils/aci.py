@@ -716,9 +716,10 @@ class ACIModule(object):
         if child_configs:
             children = []
             for child in child_configs:
+                child_copy = child.copy()
                 has_value = False
-                for root_key in child.keys():
-                    for final_keys, values in child[root_key]['attributes'].items():
+                for root_key in child_copy.keys():
+                    for final_keys, values in child_copy[root_key]['attributes'].items():
                         if values is None:
                             child[root_key]['attributes'].pop(final_keys)
                         else:
