@@ -894,15 +894,15 @@ az_fields = ('name',
              'subnet_id',
              'placement_group_name')
 
-opsworks_fields = ('layer_id')
+opsworks_fields = ('layer_id',)
 
-scaling_strategy_fields = ('terminate_at_end_of_billing_hour')
+scaling_strategy_fields = ('terminate_at_end_of_billing_hour',)
 
-mesosphere_fields = ('api_server')
+mesosphere_fields = ('api_server',)
 
-ecs_fields = ('cluster_name')
+ecs_fields = ('cluster_name',)
 
-multai_fields = ('multai_token')
+multai_fields = ('multai_token',)
 
 
 def handle_elastigroup(client, module):
@@ -1105,12 +1105,6 @@ def expand_launch_spec(eg_compute, module, is_update, do_not_update):
     eg_launch_spec = expand_fields(lspec_fields, module.params, 'LaunchSpecification')
 
     eg_launch_spec.iam_role = expand_fields(iam_fields, module.params, 'IamRole')
-
-    # Validate iam role
-    if eg_launch_spec.iam_role is not None:
-        if eg_launch_spec.iam_role.name is not None:
-            if eg_launch_spec.iam_role.arn is not None:
-                delattr(eg_launch_spec, 'iam_role')
 
     tags = module.params['tags']
     load_balancers = module.params['load_balancers']
