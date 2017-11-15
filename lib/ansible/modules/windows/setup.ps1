@@ -80,6 +80,7 @@ $ip_props = [System.Net.NetworkInformation.IPGlobalProperties]::GetIPGlobalPrope
 $osversion = [Environment]::OSVersion
 $user = [Security.Principal.WindowsIdentity]::GetCurrent()
 $netcfg = Get-WmiObject win32_NetworkAdapterConfiguration
+$winsystemlocale = Get-WinSystemLocale
 
 $ActiveNetcfg = @()
 $ActiveNetcfg += $netcfg | where {$_.ipaddress -ne $null}
@@ -192,6 +193,7 @@ $ansible_facts = @{
     ansible_user_id = $env:username
     ansible_user_sid = $user.User.Value
     ansible_windows_domain = $win32_cs.Domain
+    ansible_windows_systemlocale = ([string] $winsystemlocale.Name)
 
     # Win32_PhysicalMemory is empty on some virtual platforms
     ansible_memtotal_mb = ([math]::round($win32_cs.TotalPhysicalMemory / 1024 / 1024))
