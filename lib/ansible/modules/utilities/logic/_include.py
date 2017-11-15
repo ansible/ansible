@@ -39,7 +39,7 @@ options:
     description:
       - This module allows you to specify the name of the file directly without any other options.
 notes:
-  - This is a feature of Ansible, rather than a module, and cannot be overridden like a module.
+  - This is a core feature of Ansible, rather than a module, and cannot be overridden like a module.
   - This module is also supported for Windows targets.
 '''
 
