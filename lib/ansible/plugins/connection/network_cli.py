@@ -164,6 +164,7 @@ class Connection(ConnectionBase):
 
         p = connection_loader.get('paramiko', self._play_context, '/dev/null')
         p.set_options(direct={'look_for_keys': bool(self._play_context.password and not self._play_context.private_key_file)})
+        p.force_persistence = self.force_persistence
         ssh = p._connect()
         self.ssh = ssh.ssh
 
