@@ -9,7 +9,7 @@
 - name: verify setup instance
   assert:
     that:
-    - instance|success
+    - instance is successful
 
 - name: setup snapshot policy absent
   cs_snapshot_policy:
@@ -20,7 +20,7 @@
 - name: verify setup snapshot policy absent
   assert:
     that:
-    - snapshot|success
+    - snapshot is successful
 
 - name: create snapshot policy in check mode
   cs_snapshot_policy:
@@ -32,7 +32,7 @@
 - name: verify  create snapshot policy in check mode
   assert:
     that:
-    - snapshot|changed
+    - snapshot is changed
 
 - name: create snapshot policy
   cs_snapshot_policy:
@@ -43,7 +43,7 @@
 - name: verify  create snapshot policy
   assert:
     that:
-    - snapshot|changed
+    - snapshot is changed
     - snapshot.schedule == "5"
     - snapshot.interval_type == "hourly"
     - snapshot.volume != ""
@@ -57,7 +57,7 @@
 - name: verify create snapshot policy idempotence
   assert:
     that:
-    - not snapshot|changed
+    - snapshot is not changed
     - snapshot.schedule == "5"
     - snapshot.interval_type == "hourly"
     - snapshot.volume != ""
@@ -72,7 +72,7 @@
 - name: verify update snapshot policy
   assert:
     that:
-    - snapshot|changed
+    - snapshot is changed
     - snapshot.schedule == "5"
     - snapshot.interval_type == "hourly"
     - snapshot.volume != ""
@@ -89,7 +89,7 @@
 - name: verify update snapshot policy in check mode
   assert:
     that:
-    - snapshot|changed
+    - snapshot is changed
     - snapshot.schedule == "5"
     - snapshot.interval_type == "hourly"
     - snapshot.volume != ""
@@ -107,7 +107,7 @@
 - name: verify update snapshot policy
   assert:
     that:
-    - snapshot|changed
+    - snapshot is changed
     - snapshot.schedule == "6"
     - snapshot.interval_type == "hourly"
     - snapshot.volume != ""
@@ -125,7 +125,7 @@
 - name: verify update snapshot policy idempotence
   assert:
     that:
-    - not snapshot|changed
+    - snapshot is not changed
     - snapshot.schedule == "6"
     - snapshot.interval_type == "hourly"
     - snapshot.volume != ""
@@ -142,7 +142,7 @@
 - name: verify remove snapshot policy in check mode
   assert:
     that:
-    - snapshot|changed
+    - snapshot is changed
     - snapshot.schedule == "6"
     - snapshot.interval_type == "hourly"
     - snapshot.volume != ""
@@ -158,7 +158,7 @@
 - name: verify remove snapshot policy
   assert:
     that:
-    - snapshot|changed
+    - snapshot is changed
     - snapshot.schedule == "6"
     - snapshot.interval_type == "hourly"
     - snapshot.volume != ""
@@ -174,4 +174,4 @@
 - name: verify remove snapshot policy idempotence
   assert:
     that:
-    - not snapshot|changed
+    - snapshot is not changed

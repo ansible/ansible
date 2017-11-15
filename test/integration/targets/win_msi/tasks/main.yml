@@ -38,8 +38,8 @@
 - name: check win_msi install result
   assert:
     that:
-      - "not win_msi_install_result|failed"
-      - "win_msi_install_result|changed"
+      - "win_msi_install_result is not failed"
+      - "win_msi_install_result is changed"
 
 - name: install msi again with creates argument
   win_msi:
@@ -53,8 +53,8 @@
   ignore_errors: true
   assert: 
     that:
-      - "not win_msi_install_again_result|failed"
-      - "not win_msi_install_again_result|changed"
+      - "win_msi_install_again_result is not failed"
+      - "win_msi_install_again_result is not changed"
 
 - name: uninstall msi
   win_msi:
@@ -66,5 +66,5 @@
 - name: check win_msi uninstall result
   assert: 
     that:
-      - "not win_msi_uninstall_result|failed"
-      - "win_msi_uninstall_result|changed"
+      - "win_msi_uninstall_result is not failed"
+      - "win_msi_uninstall_result is changed"

@@ -10,7 +10,7 @@
 - name: verify  update instance ssh key non existent
   assert:
     that:
-    - instance|failed
+    - instance is failed
     - 'instance.msg == "SSH key not found: {{ cs_resource_prefix }}-sshkey2"'
 
 - name: test create instance without keypair in check mode
@@ -23,8 +23,8 @@
 - name: verify create instance without keypair in check mode
   assert:
     that:
-    - instance|success
-    - instance|changed
+    - instance is successful
+    - instance is changed
 
 - name: test create instance without keypair
   cs_instance:
@@ -35,8 +35,8 @@
 - name: verify create instance without keypair
   assert:
     that:
-    - instance|success
-    - instance|changed
+    - instance is successful
+    - instance is changed
     - instance.ssh_key is not defined
 
 - name: test create instance without keypair idempotence
@@ -48,8 +48,8 @@
 - name: verify create instance without keypair idempotence
   assert:
     that:
-    - instance|success
-    - not instance|changed
+    - instance is successful
+    - instance is not changed
     - instance.ssh_key is not defined
 
 - name: setup ssh key2
@@ -58,7 +58,7 @@
 - name: verify setup ssh key2
   assert:
     that:
-    - sshkey|success
+    - sshkey is successful
 
 - name: test update instance ssh key2 in check mode
   cs_instance:
@@ -70,7 +70,7 @@
 - name: verify update instance ssh key2 in check mode
   assert:
     that:
-    - instance|changed
+    - instance is changed
     - instance.ssh_key is not defined
 
 - name: test update instance ssh key2
@@ -82,7 +82,7 @@
 - name: verify update instance ssh key2
   assert:
     that:
-    - instance|changed
+    - instance is changed
     - instance.ssh_key == "{{ cs_resource_prefix }}-sshkey2"
 
 - name: test update instance ssh key2 idempotence
@@ -94,7 +94,7 @@
 - name: verify update instance ssh key2 idempotence
   assert:
     that:
-    - not instance|changed
+    - instance is not changed
     - instance.ssh_key == "{{ cs_resource_prefix }}-sshkey2"
 
 - name: cleanup ssh key2
@@ -105,7 +105,7 @@
 - name: verify cleanup ssh key2
   assert:
     that:
-    - sshkey2|success
+    - sshkey2 is successful
 
 - name: test update instance ssh key2 idempotence2
   cs_instance:
@@ -117,7 +117,7 @@
 - name: verify update instance ssh key2 idempotence2
   assert:
     that:
-    - instance|failed
+    - instance is failed
     - 'instance.msg == "SSH key not found: {{ cs_resource_prefix }}-sshkey2"'
 
 - name: test update instance ssh key in check mode
@@ -130,7 +130,7 @@
 - name: verify update instance ssh key in check mode
   assert:
     that:
-    - instance|changed
+    - instance is changed
     - instance.ssh_key is not defined
 
 - name: test update instance ssh key
@@ -142,7 +142,7 @@
 - name: verify update instance ssh key
   assert:
     that:
-    - instance|changed
+    - instance is changed
     - instance.ssh_key == "{{ cs_resource_prefix }}-sshkey"
 
 - name: test update instance ssh key idempotence
@@ -154,7 +154,7 @@
 - name: verify update instance ssh key idempotence
   assert:
     that:
-    - not instance|changed
+    - instance is not changed
     - instance.ssh_key == "{{ cs_resource_prefix }}-sshkey"
 
 - name: cleanup expunge instance
@@ -165,4 +165,4 @@
 - name: verify cleanup expunge instance
   assert:
     that:
-    - instance|success
+    - instance is successful

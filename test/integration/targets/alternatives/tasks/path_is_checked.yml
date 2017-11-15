@@ -9,4 +9,4 @@
 - name: Check previous task failed
   assert:
     that:
-      - 'alternative|failed'
+      - 'alternative is failed'

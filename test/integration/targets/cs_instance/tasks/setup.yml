@@ -5,7 +5,7 @@
 - name: verify setup ssh key
   assert:
     that:
-    - sshkey|success
+    - sshkey is successful
 
 - name: setup affinity group
   cs_affinitygroup: name={{ cs_resource_prefix }}-ag
@@ -13,7 +13,7 @@
 - name: verify setup affinity group
   assert:
     that:
-    - ag|success
+    - ag is successful
 
 - name: setup security group
   cs_securitygroup: name={{ cs_resource_prefix }}-sg
@@ -21,4 +21,4 @@
 - name: verify setup security group
   assert:
     that:
-    - sg|success
+    - sg is successful

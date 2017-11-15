@@ -124,8 +124,7 @@
       - "'local' == ['localhost']|map('extract',hostvars,'ansible_connection')|list|first"
       - "'local' == ['localhost']|map('extract',hostvars,['ansible_connection'])|list|first"
   # map was added to jinja2 in version 2.7
-  when: "{{ ( lookup('pipe', '{{ ansible_python[\"executable\"] }} -c \"import jinja2; print(jinja2.__version__)\"') |
-              version_compare('2.7', '>=') ) }}"
+  when: "{{ ( lookup('pipe', '{{ ansible_python[\"executable\"] }} -c \"import jinja2; print(jinja2.__version__)\"')  is version('2.7', '>=') ) }}"
 
 - name: Test json_query filter
   assert:
@@ -167,5 +166,5 @@
 - name: Verify urlsplit filter showed an error message
   assert:
     that:
-      - _bad_urlsplit_filter | failed
+      - _bad_urlsplit_filter is failed
       - "'unknown URL component' in _bad_urlsplit_filter.msg"

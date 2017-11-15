@@ -150,7 +150,7 @@
 - name: Test add_scheduled_task_new_path_1
   assert:
     that:
-    - add_scheduled_task_new_path_1|changed
+    - add_scheduled_task_new_path_1 is changed
 
 
 - name: Add scheduled task new path 2
@@ -162,13 +162,13 @@
 - name: Test add_scheduled_task_new_path_2 (normal mode)
   assert:
     that:
-    - add_scheduled_task_new_path_2|changed
+    - add_scheduled_task_new_path_2 is changed
   when: not in_check_mode
 
 - name: Test add_scheduled_task_new_path_2 (check-mode)
   assert:
     that:
-    - add_scheduled_task_new_path_2|changed
+    - add_scheduled_task_new_path_2 is changed
   when: in_check_mode
 
 
@@ -179,13 +179,13 @@
 - name: Test remove_scheduled_task_new_path_2 (normal mode)
   assert:
     that:
-    - remove_scheduled_task_new_path_2|changed
+    - remove_scheduled_task_new_path_2 is changed
   when: not in_check_mode
 
 - name: Test remove_scheduled_task_new_path_2 (check-mode)
   assert:
     that:
-    - not remove_scheduled_task_new_path_2|changed
+    - remove_scheduled_task_new_path_2 is not changed
   when: in_check_mode
 
 
@@ -196,13 +196,13 @@
 - name: Test remove_scheduled_task_new_path_1 (normal mode)
   assert:
     that:
-    - remove_scheduled_task_new_path_1|changed
+    - remove_scheduled_task_new_path_1 is changed
   when: not in_check_mode
 
 - name: Test remove_scheduled_task_new_path_1 (check-mode)
   assert:
     that:
-    - not remove_scheduled_task_new_path_1|changed
+    - remove_scheduled_task_new_path_1 is not changed
   when: in_check_mode
 
 

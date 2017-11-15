@@ -26,7 +26,7 @@
 - name: verify that the file was marked as changed (DOS)
   assert:
     that:
-      - 'template_result|changed'
+      - 'template_result is changed'
 
 - name: fill in a basic template again (DOS)
   win_template:
@@ -37,7 +37,7 @@
 - name: verify that the template was not changed (DOS)
   assert:
     that:
-      - 'not template_result2|changed'
+      - 'template_result2 is not changed'
 
 # VERIFY DOS CONTENTS
 - name: copy known good into place (DOS)
@@ -69,7 +69,7 @@
 - name: verify that the file was marked as changed (Unix)
   assert:
     that:
-      - 'template_result|changed'
+      - 'template_result is changed'
 
 - name: fill in a basic template again (Unix)
   win_template:
@@ -81,7 +81,7 @@
 - name: verify that the template was not changed (Unix)
   assert:
     that:
-      - 'not template_result2|changed'
+      - 'template_result2 is not changed'
 
 # VERIFY UNIX CONTENTS
 - name: copy known good into place (Unix)

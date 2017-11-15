@@ -88,7 +88,7 @@
       that:
         - "result.changed == false"
 
-  when: (platform | search("N7K|N9K"))
+  when: (platform is search("N7K|N9K"))
 
   always:
   - name: "Apply N7K specific cleanup config"

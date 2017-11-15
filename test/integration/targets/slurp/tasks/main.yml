@@ -31,8 +31,8 @@
     that:
       - 'slurp_existing.content'
       - 'slurp_existing.encoding == "base64"'
-      - 'not slurp_existing|changed'
-      - 'not slurp_existing|failed'
+      - 'slurp_existing is not changed'
+      - 'slurp_existing is not failed'
       - '"{{ slurp_existing.content | b64decode }}" == "We are at the café"'
 
 - name: Create a binary file to test with
@@ -51,8 +51,8 @@
     that:
       - "slurp_binary.content"
       - "slurp_binary.encoding == 'base64'"
-      - "not slurp_binary|changed"
-      - "not slurp_binary|failed"
+      - "slurp_binary is not changed"
+      - "slurp_binary is not failed"
 
 - name: test slurping a non-existent file
   slurp:
@@ -63,9 +63,9 @@
 - name: check slurp missing result
   assert:
     that:
-      - "slurp_missing|failed"
+      - "slurp_missing is failed"
       - "slurp_missing.msg"
-      - "not slurp_missing|changed"
+      - "slurp_missing is not changed"
 
 - name: Create a directory to test with
   file:
@@ -81,9 +81,9 @@
 - name: check slurp directory result
   assert:
     that:
-      - "slurp_dir|failed"
+      - "slurp_dir is failed"
       - "slurp_dir.msg"
-      - "not slurp_dir|changed"
+      - "slurp_dir is not changed"
 
 - name: test slurp with missing argument
   action: slurp
@@ -93,6 +93,6 @@
 - name: check slurp with missing argument result
   assert:
     that:
-      - "slurp_no_args|failed"
+      - "slurp_no_args is failed"
       - "slurp_no_args.msg"
-      - "not slurp_no_args|changed"
+      - "slurp_no_args is not changed"

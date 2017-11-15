@@ -4,12 +4,12 @@
 - name: use python-apt
   set_fact:
     python_apt: python-apt
-  when: ansible_python_version | version_compare('3', '<')
+  when: ansible_python_version is version('3', '<')
 
 - name: use python3-apt
   set_fact:
     python_apt: python3-apt
-  when: ansible_python_version | version_compare('3', '>=')
+  when: ansible_python_version is version('3', '>=')
 
 # UNINSTALL 'python-apt'
 #  The `apt` module has the smarts to auto-install `python-apt`.  To test, we
@@ -22,7 +22,7 @@
 - name: uninstall {{ python_apt }} with apt
   apt: pkg={{ python_apt }} state=absent purge=yes
   register: apt_result
-  when: dpkg_result|success
+  when: dpkg_result is successful
 
 # UNINSTALL 'hello'
 #   With 'python-apt' uninstalled, the first call to 'apt' should install

@@ -8,7 +8,7 @@
 
 - assert:
     that:
-      - git_result | failed
+      - git_result is failed
 
 - name: MISSING-HOSTKEY | checkout git@github.com repo with accept_hostkey (expected pass)
   git:
@@ -22,7 +22,7 @@
 
 - assert:
     that:
-      - git_result | changed
+      - git_result is changed
   when: github_ssh_private_key is defined
 
 - name: MISSING-HOSTKEY | clear checkout_dir
@@ -44,5 +44,5 @@
 
 - assert:
     that:
-      - git_result | changed
+      - git_result is changed
   when: github_ssh_private_key is defined

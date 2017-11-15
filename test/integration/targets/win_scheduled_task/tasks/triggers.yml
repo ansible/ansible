@@ -19,7 +19,7 @@
 - name: assert results of create boot trigger (check mode)
   assert:
     that:
-    - trigger_boot_check|changed
+    - trigger_boot_check is changed
     - trigger_boot_result_check.task_exists == False
 
 - name: create boot trigger
@@ -41,7 +41,7 @@
 - name: assert results of create boot trigger
   assert:
     that:
-    - trigger_boot|changed
+    - trigger_boot is changed
     - trigger_boot_result.task_exists == True
     - trigger_boot_result.triggers|count == 1
     - trigger_boot_result.triggers[0].type == "TASK_TRIGGER_BOOT"
@@ -62,7 +62,7 @@
 - name: assert results of create boot trigger (idempotent)
   assert:
     that:
-    - not trigger_boot_again|changed
+    - trigger_boot_again is not changed
 
 - name: create daily trigger (check mode)
   win_scheduled_task:
@@ -85,7 +85,7 @@
 - name: assert results of create daily trigger (check mode)
   assert:
     that:
-    - trigger_daily_check|changed
+    - trigger_daily_check is changed
     - trigger_daily_result_check.task_exists == True
     - trigger_daily_result_check.triggers|count == 1
     - trigger_daily_result_check.triggers[0].type == "TASK_TRIGGER_BOOT"
@@ -113,7 +113,7 @@
 - name: assert results of create daily trigger
   assert:
     that:
-    - trigger_daily|changed
+    - trigger_daily is changed
     - trigger_daily_result.task_exists == True
     - trigger_daily_result.triggers|count == 1
     - trigger_daily_result.triggers[0].type == "TASK_TRIGGER_DAILY"
@@ -135,7 +135,7 @@
 - name: assert results of create daily trigger (idempotent)
   assert:
     that:
-    - not trigger_daily_again|changed
+    - trigger_daily_again is not changed
 
 - name: create logon trigger (check mode)
   win_scheduled_task:
@@ -157,7 +157,7 @@
 - name: assert results of create logon trigger
   assert:
     that:
-    - trigger_logon_check|changed
+    - trigger_logon_check is changed
     - trigger_logon_result_check.task_exists == True
     - trigger_logon_result_check.triggers|count == 1
     - trigger_logon_result_check.triggers[0].type == "TASK_TRIGGER_DAILY"
@@ -184,7 +184,7 @@
 - name: assert results of create logon trigger
   assert:
     that:
-    - trigger_logon|changed
+    - trigger_logon is changed
     - trigger_logon_result.task_exists == True
     - trigger_logon_result.triggers|count == 1
     - trigger_logon_result.triggers[0].type == "TASK_TRIGGER_LOGON"
@@ -205,7 +205,7 @@
 - name: assert results of create logon trigger (idempotent)
   assert:
     that:
-    - not trigger_logon_again|changed
+    - trigger_logon_again is not changed
 
 - name: create monthly dow trigger (check mode)
   win_scheduled_task:
@@ -230,7 +230,7 @@
 - name: assert results of create monthly dow trigger (check mode)
   assert:
     that:
-    - trigger_monthlydow_check|changed
+    - trigger_monthlydow_check is changed
     - trigger_monthlydow_result_check.task_exists == True
     - trigger_monthlydow_result_check.triggers|count == 1
     - trigger_monthlydow_result_check.triggers[0].type == "TASK_TRIGGER_LOGON"
@@ -260,7 +260,7 @@
 - name: assert results of create monthly dow trigger
   assert:
     that:
-    - trigger_monthlydow|changed
+    - trigger_monthlydow is changed
     - trigger_monthlydow_result.task_exists == True
     - trigger_monthlydow_result.triggers|count == 1
     - trigger_monthlydow_result.triggers[0].type == "TASK_TRIGGER_MONTHLYDOW"
@@ -286,7 +286,7 @@
 - name: assert results of create monthly dow trigger (idempotent)
   assert:
     that:
-    - not trigger_monthlydow_again|changed
+    - trigger_monthlydow_again is not changed
 
 - name: create task with multiple triggers (check mode)
   win_scheduled_task:
@@ -318,7 +318,7 @@
 - name: assert results of create task with multiple triggers (check mode)
   assert:
     that:
-    - create_multiple_triggers_check|changed
+    - create_multiple_triggers_check is changed
     - create_multiple_triggers_result_check.task_exists == True
     - create_multiple_triggers_result_check.triggers|count == 1
     - create_multiple_triggers_result_check.triggers[0].type == "TASK_TRIGGER_MONTHLYDOW"
@@ -357,7 +357,7 @@
 - name: assert results of create task with multiple triggers
   assert:
     that:
-    - create_multiple_triggers|changed
+    - create_multiple_triggers is changed
     - create_multiple_triggers_result.task_exists == True
     - create_multiple_triggers_result.triggers|count == 2
     - create_multiple_triggers_result.triggers[0].type == "TASK_TRIGGER_MONTHLY"
@@ -396,7 +396,7 @@
 - name: assert results of create task with multiple triggers (idempotent)
   assert:
     that:
-    - not create_multiple_triggers_again|changed
+    - create_multiple_triggers_again is not changed
 
 - name: change task with multiple triggers (check mode)
   win_scheduled_task:
@@ -422,7 +422,7 @@
 - name: assert results of change task with multiple triggers (check mode)
   assert:
     that:
-    - change_multiple_triggers_check|changed
+    - change_multiple_triggers_check is changed
     - change_multiple_triggers_result_check.task_exists == True
     - change_multiple_triggers_result_check.triggers|count == 2
     - change_multiple_triggers_result_check.triggers[0].type == "TASK_TRIGGER_MONTHLY"
@@ -461,7 +461,7 @@
 - name: assert results of change task with multiple triggers
   assert:
     that:
-    - change_multiple_triggers|changed
+    - change_multiple_triggers is changed
     - change_multiple_triggers_result.task_exists == True
     - change_multiple_triggers_result.triggers|count == 2
     - change_multiple_triggers_result.triggers[0].type == "TASK_TRIGGER_WEEKLY"
@@ -491,7 +491,7 @@
 - name: assert results of change task with multiple triggers (idempotent)
   assert:
     that:
-    - not change_multiple_triggers_again|changed
+    - change_multiple_triggers_again is not changed
 
 - name: remove trigger from multiple triggers (check mode)
   win_scheduled_task:
@@ -514,7 +514,7 @@
 - name: assert results of remove trigger from multiple triggers (check mode)
   assert:
     that:
-    - remove_single_trigger_check|changed
+    - remove_single_trigger_check is changed
     - remove_single_trigger_result_check.task_exists == True
     - remove_single_trigger_result_check.triggers|count == 2
     - remove_single_trigger_result_check.triggers[0].type == "TASK_TRIGGER_WEEKLY"
@@ -547,7 +547,7 @@
 - name: assert results of remove trigger from multiple triggers
   assert:
     that:
-    - remove_single_trigger|changed
+    - remove_single_trigger is changed
     - remove_single_trigger_result.task_exists == True
     - remove_single_trigger_result.triggers|count == 1
     - remove_single_trigger_result.triggers[0].type == "TASK_TRIGGER_REGISTRATION"
@@ -569,7 +569,7 @@
 - name: assert results of remove trigger from multiple triggers (idempotent)
   assert:
     that:
-    - not remove_single_trigger_again|changed
+    - remove_single_trigger_again is not changed
 
 - name: remove all triggers (check mode)
   win_scheduled_task:
@@ -590,7 +590,7 @@
 - name: assert results of remove all triggers (check mode)
   assert:
     that:
-    - remove_triggers_check|changed
+    - remove_triggers_check is changed
     - remove_triggers_result_check.task_exists == True
     - remove_triggers_result_check.triggers|count == 1
     - remove_triggers_result_check.triggers[0].type == "TASK_TRIGGER_REGISTRATION"
@@ -616,7 +616,7 @@
 - name: assert results of remove all triggers
   assert:
     that:
-    - remove_triggers|changed
+    - remove_triggers is changed
     - remove_triggers_result.task_exists == True
     - remove_triggers_result.triggers|count == 0
 
@@ -632,4 +632,4 @@
 - name: assert results of remove all triggers (idempotent)
   assert:
     that:
-    - not remove_triggers_again|changed
+    - remove_triggers_again is not changed
