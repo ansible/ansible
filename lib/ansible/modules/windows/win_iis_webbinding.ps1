@@ -58,14 +58,19 @@ if ((Get-Module "WebAdministration" -ErrorAction SilentlyContinue) -eq $null){
 }
 
 function Create-Binding-Info {
-  return New-Object psobject @{
+  $binding_info = New-Object psobject @{
     "bindingInformation" = $args[0].bindingInformation
     "certificateHash" = $args[0].certificateHash
     "certificateStoreName" = $args[0].certificateStoreName
     "isDsMapperEnabled" = $args[0].isDsMapperEnabled
     "protocol" = $args[0].protocol
-    "sslFlags" = $args[0].sslFlags
   }
+
+  if(Get-Member -InputObject $args[0] -MemberType Properties -Name sslFlags ) {
+      $binding_info | Add-Member -NotePropertyName sslFlags -NotePropertyValue $args[0].sslFlags
+  }
+
+  return $binding_info
 }
 
 # Result
