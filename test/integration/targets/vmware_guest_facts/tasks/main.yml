@@ -112,6 +112,7 @@
 # Testcase 0004: Get details about virtual machines with two snapshots using UUID
 - name: Create first snapshot
   vmware_guest_snapshot:
+    validate_certs: False
     hostname: "{{ vcsim }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
@@ -123,6 +124,7 @@
 
 - name: Create second snapshot
   vmware_guest_snapshot:
+    validate_certs: False
     hostname: "{{ vcsim }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
