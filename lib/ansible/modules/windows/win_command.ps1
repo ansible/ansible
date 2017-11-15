@@ -6,6 +6,7 @@
 
 #Requires -Module Ansible.ModuleUtils.Legacy
 #Requires -Module Ansible.ModuleUtils.CommandUtil
+#Requires -Module Ansible.ModuleUtils.FileUtil
 
 # TODO: add check mode support
 
@@ -25,24 +26,6 @@ $raw_command_line = $raw_command_line.Trim()
 $result = @{
     changed = $true
     cmd = $raw_command_line
-}
-
-Function Test-FilePath($path) {
-    # Test-Path/Get-Item fails on files that are locked like C:\pagefile.sys
-    # Get-ChildItem -Path -Filter works fine without any performance
-    # degredations so use that instead
-    $directory = Split-Path -Path $path -Parent
-    $filename = Split-Path -Path $path -Leaf
-
-    $file = Get-ChildItem -Path $directory -Filter $filename -Force -ErrorAction SilentlyContinue
-    if ($file -ne $null) {
-        if ($file -is [Array] -and $file.Count -gt 1) {
-            Fail-Json -obj $result -message "found multiple files at path '$path', make sure no wildcards are set in the path"
-        }
-        return $true
-    } else {
-        return $false
-    }
 }
 
 if ($creates -and $(Test-FilePath -path $creates)) {

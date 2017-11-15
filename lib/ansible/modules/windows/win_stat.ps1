@@ -1,21 +1,11 @@
 #!powershell
 # This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# WANT_JSON
-# POWERSHELL_COMMON
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+#Requires -Module Ansible.ModuleUtils.Legacy
+#Requires -Module Ansible.ModuleUtils.FileUtil
 
 # C# code to determine link target, copied from http://chrisbensen.blogspot.com.au/2010/06/getfinalpathnamebyhandle.html
 $symlink_util = @"
@@ -69,21 +59,6 @@ function Date_To_Timestamp($start_date, $end_date)
     }
 }
 
-Function Get-File($path) {
-    # Test-Path/Get-Item fails on files that are locked like C:\pagefile.sys
-    # Get-ChildItem -Path -Filter works fine without any performance
-    # degredations so use that instead
-    $directory = Split-Path -Path $path -Parent
-    $filename = Split-Path -Path $path -Leaf
-
-    $file = Get-ChildItem -Path $directory -Filter $filename -Force -ErrorAction SilentlyContinue
-    if ($file -is [Array] -and $file.Count -gt 1) {
-        Fail-Json -obj $result -message "found multiple files at path '$path', make sure no wildcards are set in the path"
-    }
-
-    return $file
-}
-
 $params = Parse-Args $args -supports_check_mode $true
 
 $path = Get-AnsibleParam -obj $params -name "path" -type "path" -failifempty $true -aliases "dest","name"
@@ -103,7 +78,7 @@ if ($get_md5 -eq $true -and (Get-Member -inputobject $params -name "get_md5") ) 
     Add-DeprecationWarning -obj $result -message "The parameter 'get_md5' is being replaced with 'checksum_algorithm: md5'" -version 2.7
 }
 
-$info = Get-File -path $path
+$info = Get-FileItem -path $path
 If ($info -ne $null)
 {
     $result.stat.exists = $true

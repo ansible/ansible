@@ -5,6 +5,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
+#Requires -Module Ansible.ModuleUtils.FileUtil
 
 $ErrorActionPreference = "Stop"
 
@@ -49,24 +50,6 @@ if ($port -ne $null) {
 
     if ($exclude_hosts -ne $null -and $state -ne "drained") {
         Fail-Json $result "exclude_hosts should be used when state=drained in the win_wait_for module"
-    }
-}
-
-Function Test-FilePath($path) {
-    # Test-Path/Get-Item fails on files that are locked like C:\pagefile.sys
-    # Get-ChildItem -Path -Filter works fine without any performance
-    # degredations so use that instead
-    $directory = Split-Path -Path $path -Parent
-    $filename = Split-Path -Path $path -Leaf
-
-    $file = Get-ChildItem -Path $directory -Filter $filename -Force -ErrorAction SilentlyContinue
-    if ($file -ne $null) {
-        if ($file -is [Array] -and $file.Count -gt 1) {
-            Fail-Json -obj $result -message "found multiple files at path '$path', make sure no wildcards are set in the path"
-        }
-        return $true
-    } else {
-        return $false
     }
 }
 
@@ -136,7 +119,7 @@ if ($path -eq $null -and $port -eq $null -and $state -eq "drained") {
         $complete = $false
         while (((Get-Date) - $start_time).TotalSeconds -lt $timeout) {
             $attempts += 1
-            if (Test-FileExists -path $path) {
+            if (Test-FilePath -path $path) {
                 if ($search_regex -eq $null) {
                     $complete = $true
                     break
@@ -167,7 +150,7 @@ if ($path -eq $null -and $port -eq $null -and $state -eq "drained") {
         $complete = $false
         while (((Get-Date) - $start_time).TotalSeconds -lt $timeout) {
             $attempts += 1
-            if (Test-FileExists -path $path) {
+            if (Test-FilePath -path $path) {
                 if ($search_regex -ne $null) {
                     $file_contents = Get-Content -Path $path -Raw
                     if ($file_contents -notmatch $search_regex) {
