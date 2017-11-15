@@ -48,6 +48,7 @@ from lib.util import (
     find_pip,
     find_executable,
     raw_command,
+    get_coverage_path,
 )
 
 from lib.ansible_util import (
@@ -320,6 +321,8 @@ def command_network_integration(args):
     instances = []  # type: list [lib.thread.WrappedThread]
 
     if args.platform:
+        get_coverage_path(args)  # initialize before starting threads
+
         configs = dict((config['platform_version'], config) for config in args.metadata.instance_config)
 
         for platform_version in args.platform:
@@ -478,6 +481,8 @@ def command_windows_integration(args):
     instances = []  # type: list [lib.thread.WrappedThread]
 
     if args.windows:
+        get_coverage_path(args)  # initialize before starting threads
+
         configs = dict((config['platform_version'], config) for config in args.metadata.instance_config)
 
         for version in args.windows:
