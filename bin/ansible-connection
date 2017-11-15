@@ -299,7 +299,7 @@ def main():
             except Exception as exc:
                 # Only network_cli has update_play context, so missing this is
                 # not fatal e.g. netconf
-                if isinstance(exc, ConnectionError) and getattr(exc, 'code') == -32601:
+                if isinstance(exc, ConnectionError) and getattr(exc, 'code', None) == -32601:
                     pass
                 else:
                     result.update({
