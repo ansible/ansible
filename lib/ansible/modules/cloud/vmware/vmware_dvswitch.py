@@ -19,7 +19,7 @@ module: vmware_dvswitch
 short_description: Create or remove a distributed vSwitch
 description:
     - Create or remove a distributed vSwitch
-version_added: 2.4
+version_added: "2.5"
 author: "Joseph Callen (@jcpowermac)"
 notes:
     - Tested on vSphere 5.5
