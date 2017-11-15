@@ -34,7 +34,6 @@ options:
         will only be downloaded if the destination does not exist. Generally
         should be C(yes) only for small local files.
       - Prior to 0.6, this module behaved as if C(yes) was the default.
-    version_added: '0.7'
     default: 'no'
     type: bool
     aliases: [ thirsty ]
@@ -85,7 +84,7 @@ options:
   name:
     description:
       - name used to create / delete the host
-      - this does not need to be the FQDN, but does needs to be uniuqe
+      - this does not need to be the FQDN, but does needs to be unique
     required: true
   zone:
     description:
@@ -104,7 +103,7 @@ options:
     description:
       - the name used to display the host
     required: false
-    default: <name>
+    default: if none is give it is the value of the <name> parameter
   ip:
     description:
       - the ip-addres of the host
