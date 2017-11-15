@@ -18,7 +18,7 @@ DOCUMENTATION = '''
 ---
 module: rabbitmq_global_parameter
 author: "Juergen Kirschbaum (@jgkirschbaum)"
-version_added: "2.4"
+version_added: "2.5"
 
 short_description: Adds or removes global parameters to RabbitMQ
 description:
@@ -150,8 +150,8 @@ def main():
     result['name'] = name
     result['value'] = value
     result['state'] = state
-    
-    module.exit_json(**result) 
+
+    module.exit_json(**result)
 
 if __name__ == '__main__':
     main()
