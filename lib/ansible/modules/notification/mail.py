@@ -225,9 +225,9 @@ from ansible.module_utils._text import to_native
 
 try:
     import gnupg
-    HAS_GNUPG=True
+    HAS_GNUPG = True
 except ImportError:
-    HAS_GNUPG=False
+    HAS_GNUPG = False
 
 
 def pgp_fingerprint(s):
