@@ -26,13 +26,13 @@ $params = Parse-Args $args;
 # Name parameter
 $name = Get-Attr $params "name" $FALSE;
 If ($name -eq $FALSE) {
-    Fail-Json (New-Object psobject) "missing required argument: name";
+    Fail-Json @{} "missing required argument: name";
 }
 
 # Site
 $site = Get-Attr $params "site" $FALSE;
 If ($site -eq $FALSE) {
-    Fail-Json (New-Object psobject) "missing required argument: site";
+    Fail-Json @{} "missing required argument: site";
 }
 
 # Application
@@ -53,8 +53,8 @@ if ((Get-Module "WebAdministration" -ErrorAction SilentlyContinue) -eq $null) {
 }
 
 # Result
-$result = New-Object psobject @{
-  directory = New-Object psobject
+$result = @{
+  directory = @{}
   changed = $false
 };
 
@@ -76,13 +76,13 @@ try {
   # Add directory
   If(($state -eq 'present') -and (-not $directory)) {
     If ($physical_path -eq $FALSE) {
-      Fail-Json (New-Object psobject) "missing required arguments: physical_path"
+      Fail-Json @{} "missing required arguments: physical_path"
     }
     If (-not (Test-Path $physical_path)) {
-      Fail-Json (New-Object psobject) "specified folder must already exist: physical_path"
+      Fail-Json @{} "specified folder must already exist: physical_path"
     }
 
-    $directory_parameters = New-Object psobject @{
+    $directory_parameters = @{
       Site = $site
       Name = $name
       PhysicalPath = $physical_path
@@ -108,7 +108,7 @@ try {
     # Change Physical Path if needed
     if($physical_path) {
       If (-not (Test-Path $physical_path)) {
-        Fail-Json (New-Object psobject) "specified folder must already exist: physical_path"
+        Fail-Json @{} "specified folder must already exist: physical_path"
       }
 
       $vdir_folder = Get-Item $directory.PhysicalPath
@@ -125,7 +125,7 @@ try {
 
 # Result
 $directory = Get-WebVirtualDirectory -Site $site -Name $name
-$result.directory = New-Object psobject @{
+$result.directory = @{
   PhysicalPath = $directory.PhysicalPath
 }
 

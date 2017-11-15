@@ -69,7 +69,7 @@ Function Get-PropertyObject($hive, $net_hive, $path, $property) {
         $raw_value = $value
     }
 
-    $object = New-Object PSObject @{
+    $object = @{
         raw_value = $raw_value
         value = $value
         type = $type
