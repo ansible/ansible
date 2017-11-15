@@ -90,38 +90,17 @@ instance:
 try:
     import pyVmomi
     from pyVmomi import vim
-
-    HAS_PYVMOMI = True
 except ImportError:
-    HAS_PYVMOMI = False
+    pass
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text
-from ansible.module_utils.vmware import connect_to_api, find_vm_by_id, gather_vm_facts, vmware_argument_spec
+from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec
 
 
-class PyVmomiHelper(object):
+class PyVmomiHelper(PyVmomi):
     def __init__(self, module):
-        if not HAS_PYVMOMI:
-            module.fail_json(msg='pyvmomi module required')
-
-        self.module = module
-        self.params = module.params
-        self.content = connect_to_api(self.module)
-
-    def getvm(self, name=None, uuid=None, folder=None):
-        vm = None
-        match_first = False
-        if uuid:
-            vm = find_vm_by_id(self.content, vm_id=uuid, vm_id_type="uuid")
-        elif folder and name:
-            if self.params['name_match'] == 'first':
-                match_first = True
-            vm = find_vm_by_id(self.content, vm_id=name, vm_id_type="inventory_path", folder=folder, match_first=match_first)
-        return vm
-
-    def gather_facts(self, vm):
-        return gather_vm_facts(self.content, vm)
+        super(PyVmomiHelper, self).__init__(module)
 
 
 def main():
@@ -142,9 +121,7 @@ def main():
 
     pyv = PyVmomiHelper(module)
     # Check if the VM exists before continuing
-    vm = pyv.getvm(name=module.params['name'],
-                   folder=module.params['folder'],
-                   uuid=module.params['uuid'])
+    vm = pyv.get_vm()
 
     # VM already exists
     if vm:
@@ -153,12 +130,7 @@ def main():
         except Exception as exc:
             module.fail_json(msg="Fact gather failed with exception %s" % to_text(exc))
     else:
-        msg = "Unable to gather facts for non-existing VM "
-        if module.params['name']:
-            msg += "%(name)s" % module.params
-        elif module.params['uuid']:
-            msg += "%(uuid)s" % module.params
-        module.fail_json(msg=msg)
+        module.fail_json(msg="Unable to gather facts for non-existing VM %s" % module.params.get('uuid') or module.params.get('name'))
 
 
 if __name__ == '__main__':
