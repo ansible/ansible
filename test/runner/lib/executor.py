@@ -317,10 +317,10 @@ def command_network_integration(args):
 
     all_targets = tuple(walk_network_integration_targets(include_hidden=True))
     internal_targets = command_integration_filter(args, all_targets, init_callback=network_init)
+    instances = []  # type: list [lib.thread.WrappedThread]
 
     if args.platform:
         configs = dict((config['platform_version'], config) for config in args.metadata.instance_config)
-        instances = []  # type: list [lib.thread.WrappedThread]
 
         for platform_version in args.platform:
             platform, version = platform_version.split('/', 1)
@@ -346,7 +346,15 @@ def command_network_integration(args):
             with open(filename, 'w') as inventory_fd:
                 inventory_fd.write(inventory)
 
-    command_integration_filtered(args, internal_targets, all_targets)
+    success = False
+
+    try:
+        command_integration_filtered(args, internal_targets, all_targets)
+        success = True
+    finally:
+        if args.remote_terminate == 'always' or (args.remote_terminate == 'success' and success):
+            for instance in instances:
+                instance.result.stop()
 
 
 def network_init(args, internal_targets):
@@ -467,10 +475,10 @@ def command_windows_integration(args):
 
     all_targets = tuple(walk_windows_integration_targets(include_hidden=True))
     internal_targets = command_integration_filter(args, all_targets, init_callback=windows_init)
+    instances = []  # type: list [lib.thread.WrappedThread]
 
     if args.windows:
         configs = dict((config['platform_version'], config) for config in args.metadata.instance_config)
-        instances = []  # type: list [lib.thread.WrappedThread]
 
         for version in args.windows:
             config = configs['windows/%s' % version]
@@ -492,7 +500,15 @@ def command_windows_integration(args):
             with open(filename, 'w') as inventory_fd:
                 inventory_fd.write(inventory)
 
-    command_integration_filtered(args, internal_targets, all_targets)
+    success = False
+
+    try:
+        command_integration_filtered(args, internal_targets, all_targets)
+        success = True
+    finally:
+        if args.remote_terminate == 'always' or (args.remote_terminate == 'success' and success):
+            for instance in instances:
+                instance.result.stop()
 
 
 def windows_init(args, internal_targets):  # pylint: disable=locally-disabled, unused-argument
