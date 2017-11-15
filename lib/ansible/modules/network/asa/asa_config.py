@@ -248,7 +248,7 @@ def run(module, result):
 
     if module.params['save']:
         if not module.check_mode:
-            module.config.save_config()
+            run_commands(module, 'write mem')
         result['changed'] = True
 
 def main():
