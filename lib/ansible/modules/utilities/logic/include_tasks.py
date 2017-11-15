@@ -28,7 +28,7 @@ options:
       - The name of the imported file is specified directly without any other option.
       - Unlike M(import_tasks), most keywords, including loops and conditionals, apply to this statement.
 notes:
-  - This is a feature of the Ansible Engine, rather than a module, and cannot be overridden like a module.
+  - This is a core feature of the Ansible, rather than a module, and cannot be overridden like a module.
 '''
 
 EXAMPLES = """
