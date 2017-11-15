@@ -1,0 +1,43 @@
+
+# This task for configuring lossless RoCE on switch
+
+- name: run some lossy roce configuration commands
+  mlnxos_config:
+    lines:
+      ## Interface Ethernet buffer configuration
+      - traffic pool roce_lossless type lossless
+      - traffic pool roce_lossless memory percent 50.00
+      - traffic pool roce_lossless map switch-priority 4
+      ## DCBX PFC configuration
+      - dcb priority-flow-control enable force
+      - dcb priority-flow-control priority 4 enable
+      - interface ethernet 1/1-1/16 dcb priority-flow-control mode on force
+      - interface ethernet 1/17-1/32 dcb priority-flow-control mode on force
+      - interface port-channel 32 dcb priority-flow-control mode on force
+      - interface port-channel 52 dcb priority-flow-control mode on force
+      ## LLDP configuration
+      - lldp
+      ## QoS switch configuration
+      - interface ethernet 1/1-1/16 qos trust L3   
+      - interface port-channel 32 qos trust L3
+      - interface port-channel 52 qos trust L3
+      - interface ethernet 1/1-1/16 traffic-class 0 congestion-control ecn minimum-absolute 150 maximum-absolute 1500
+      - interface ethernet 1/1-1/16 traffic-class 4 congestion-control ecn minimum-absolute 150 maximum-absolute 1500
+      - interface port-channel 32 traffic-class 0 congestion-control ecn minimum-absolute 150 maximum-absolute 1500
+      - interface port-channel 32 traffic-class 4 congestion-control ecn minimum-absolute 150 maximum-absolute 1500
+      - interface port-channel 52 traffic-class 0 congestion-control ecn minimum-absolute 150 maximum-absolute 1500
+      - interface port-channel 52 traffic-class 6 congestion-control ecn minimum-absolute 150 maximum-absolute 1500
+      ## DCBX ETS configuration
+      - interface ethernet 1/1-1/16 traffic-class 6 dcb ets strict
+      - interface port-channel 32 traffic-class 6 dcb ets strict
+      - interface port-channel 52 traffic-class 6 dcb ets strict
+    provider:
+      host: "{{ inventory_hostname }}"
+      username: admin
+      password: admin
+      port: 22
+      timeout: 10
+      authorize: yes
+    username: admin
+    password: admin
+
