@@ -158,7 +158,7 @@ class LookupModule(LookupBase):
                                 continue
 
                         for entry in block:
-                            if 'lines' not in entry:
+                            if 'template' not in entry:
                                 raise AnsibleError("missing required block entry `lines`")
                             templated_values = self._process_block(entry, item_data)
 
@@ -178,7 +178,7 @@ class LookupModule(LookupBase):
                                 continue
 
                         for entry in block:
-                            if 'lines' not in block:
+                            if 'template' not in entry:
                                 raise AnsibleError("missing required block entry `lines`")
                             templated_values = self._process_block(entry, item_data)
 
@@ -189,11 +189,11 @@ class LookupModule(LookupBase):
                     for entry in block:
                         if when:
                             conditional = "{%% if %s %%}True{%% else %%}False{%% endif %%}"
-                            if not self.template(conditional % when, item_data, fail_on_undefined=False):
+                            if not self.template(conditional % when, template_vars, fail_on_undefined=False):
                                 display.vvvvv("block '%s' skipped due to conditional check failure" % name)
                                 continue
 
-                        if 'lines' not in block:
+                        if 'template' not in entry:
                             raise AnsibleError("missing required block entry `lines`")
 
                         templated_values = self._process_block(entry, template_vars)
@@ -213,7 +213,7 @@ class LookupModule(LookupBase):
 
     def _template_items(self, block, data):
         name = block.get('name')
-        items = to_list(block['lines'])
+        items = to_list(block['template'])
 
         required = block.get('required')
 
