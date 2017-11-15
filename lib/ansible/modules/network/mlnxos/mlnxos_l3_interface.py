@@ -20,9 +20,8 @@
 #
 from __future__ import absolute_import, division, print_function
 
-from ansible.module_utils.basic import AnsibleModule  # noqa:F401
-
 from ansible.modules.network.mlnxos.mlnxos_interface import MlnxosInterfaceApp
+from ansible.module_utils.mlnxos import get_interfaces_config
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -49,6 +48,10 @@ options:
       - IPv4 of the L3 interface: format 1.2.3.4/24
   aggregate:
     description: List of L3 interfaces definitions
+  if_type:
+    description: interface type
+    default: ethernet
+    choices: ['ethernet', 'loopback']
   state:
     description:
       - State of the L3 interface configuration.
@@ -100,6 +103,8 @@ class MlnxosL3InterfaceApp(MlnxosInterfaceApp):
         return dict(
             name=dict(),
             ipaddress=dict(),
+            if_type=dict(default='ethernet',
+                         choices=['ethernet', 'loopback']),
             state=dict(default='present',
                        choices=['present', 'absent'])
         )
@@ -120,16 +125,28 @@ class MlnxosL3InterfaceApp(MlnxosInterfaceApp):
             params = {
                 'name': module_params['name'],
                 'ipaddress': module_params['ipaddress'],
+                'if_type': module_params['if_type'],
                 'state': module_params['state'],
             }
             self.validate_param_values(params)
             self._required_config.append(params)
 
-    def _create_if_data(self, name, item):
+    def load_current_config(self):
+        super(MlnxosL3InterfaceApp, self).load_current_config()
+        config = get_interfaces_config(self._module, "loopback")
+
+        for item in config:
+            name = self.get_if_name(item)
+            name = name.split()[1]
+            self._current_config[name] = self._create_if_data(
+                name, item, 'loopback')
+
+    def _create_if_data(self, name, item, if_type='ethernet'):
         return {
             'name': name,
             'ipaddress': self.extract_ipaddress(item),
-            'state': 'present'
+            'state': 'present',
+            'if_type': if_type
         }
 
     @classmethod
@@ -137,11 +154,18 @@ class MlnxosL3InterfaceApp(MlnxosInterfaceApp):
         ipaddress = cls.get_config_attr(item, "IP Address")
         if ipaddress:
             return ipaddress.replace(" ", "")
+        return cls.get_config_attr(item, "Internet Address")
+
+    def _is_allowed_missing_interface(self, req_if):
+        return req_if['if_type'] == 'loopback'
 
     def _generate_if_commands(self, name, req_if, curr_if):
         state = req_if['state']
-        interface_prefix = self.get_if_cmd(name)
-        curr_ipaddress = curr_if.get('ipaddress')
+        if req_if['if_type'] == 'ethernet':
+            interface_prefix = self.get_if_cmd(name)
+        else:
+            interface_prefix = "interface loopback %s" % name
+        curr_ipaddress = curr_if.get('ipaddress') if curr_if else None
 
         if state == 'absent':
             if curr_ipaddress:
@@ -151,11 +175,14 @@ class MlnxosL3InterfaceApp(MlnxosInterfaceApp):
         else:
             req_ipaddress = req_if.get('ipaddress')
             if curr_ipaddress != req_ipaddress:
-                cmd = "no switchport force"
-                self.add_command_to_interface(interface_prefix, cmd)
+                if req_if['if_type'] == 'ethernet':
+                    cmd = "no switchport force"
+                    self.add_command_to_interface(interface_prefix, cmd)
                 cmd = "ip address %s" % req_ipaddress
                 self.add_command_to_interface(interface_prefix, cmd)
                 self._commands.append('exit')
+        with open('/tmp/l3.log', 'w') as fp:
+            fp.write(str(self._commands))
 
 
 if __name__ == '__main__':

@@ -241,11 +241,14 @@ class MlnxosInterfaceApp(BaseMlnxosApp):
             name = self.get_if_name(item)
             self._current_config[name] = self._create_if_data(name, item)
 
+    def _is_allowed_missing_interface(self, req_if):
+        return False
+
     def generate_commands(self):
         for req_if in self._required_config:
             name = req_if['name']
             curr_if = self._current_config.get(name)
-            if not curr_if:
+            if not curr_if and not self._is_allowed_missing_interface(req_if):
                 self._module.fail_json(
                     msg='could not find interface %s' % name)
                 continue
