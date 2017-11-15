@@ -37,8 +37,8 @@ options:
         required: True
     switch_version:
         description:
-            - The version of the switch to create. Needed if you have a vcenter version > ESXi version to join this DVS. If not specified ersion = version of vcenter
-        required: False    
+            - The version of the switch to create. Needed if you have a vcenter version > ESXi version to join DVS. If not specified version=version of vcenter
+        required: False
     mtu:
         description:
             - The switch maximum transmission unit
@@ -157,7 +157,7 @@ class VMwareDVSwitch(object):
         spec.productInfo = vim.dvs.ProductSpec()
         spec.productInfo.name = "DVS"
         spec.productInfo.vendor = "VMware"
-        spec.productInfo.version = self.switch_version 
+        spec.productInfo.version = self.switch_version
 
         for count in range(1, self.uplink_quantity + 1):
             spec.configSpec.uplinkPortPolicy.uplinkPortName.append("uplink%d" % count)
