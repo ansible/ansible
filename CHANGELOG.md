@@ -167,7 +167,7 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/32877)
 * Do not execute `script` tasks is check mode (https://github.com/ansible/ansible/issues/30676)
 * Keep newlines when reading LXC container config file (https://github.com/ansible/ansible/pull/32219)
-* Fix a trraceback in os_floating_ip when required instance is already present in the cloud:
+* Fix a traceback in os_floating_ip when required instance is already present in the cloud:
   https://github.com/ansible/ansible/pull/32887
 * Fix for modifying existing application load balancers using certificates (https://github.com/ansible/ansible/pull/28217)
 * Fix --ask-vault-pass with no tty and password from stdin
