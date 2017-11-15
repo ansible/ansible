@@ -95,6 +95,37 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
+manageiq_policies:
+    description:
+      - List current policy_profile and policies for a provider in ManageIQ
+    returned: always
+    type: dict
+    sample: '{
+        "changed": false,
+        "profiles": [
+            {
+                "policies": [
+                    {
+                        "active": true,
+                        "description": "OpenSCAP",
+                        "name": "openscap policy"
+                    },
+                    {
+                        "active": true,
+                        "description": "Analyse incoming container images",
+                        "name": "analyse incoming container images"
+                    },
+                    {
+                        "active": true,
+                        "description": "Schedule compliance after smart state analysis",
+                        "name": "schedule compliance after smart state analysis"
+                    }
+                ],
+                "profile_description": "OpenSCAP profile",
+                "profile_name": "openscap profile"
+            }
+        ]
+    }'
 '''
 
 from ansible.module_utils.basic import AnsibleModule
