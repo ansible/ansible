@@ -193,6 +193,24 @@ options:
         - The interval of weeks to run on, e.g. C(1) means every week while
           C(2) means every other week.
         - Optional when C(type=weekly).
+      repetition:
+        description:
+        - This controls how often the task is run and how long it is repeated
+          after the task is started.
+        suboptions:
+          duration:
+            description:
+            - How long the pattern is repeated.
+            - Is in the ISO 8601 Duration format C(P[n]Y[n]M[n]DT[n]H[n]M[n]S).
+          interval:
+            description:
+            - Amount of time between earch restart of the task.
+            - Is in the ISO 8601 Duration format C(P[n]Y[n]M[n]DT[n]H[n]M[n]S).
+          stop_at_duration_end:
+            description:
+            - Boolean value that indicates if a running instance of the task
+              is stopped at the end of the repetition pattern.
+            type: bool
     version_added: '2.5'
   days_of_week:
     description:
