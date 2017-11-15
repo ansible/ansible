@@ -48,21 +48,11 @@ def ansible_native_concat(nodes):
     else:
         out = u''.join([text_type(v) for v in chain(head, nodes)])
 
-    # import q; q(out)
-    # import q; q(len(head))
-    # import q; q(len(nodes))
-
     #  short circuit literal_eval when possible
     if len(head) >= len(nodes) and not isinstance(out, list):
-        # import q; q(out)
         return out
 
     try:
-        # import q; q(out)
-        # eout = literal_eval(out)
-        # import q; q(type(eout))
-        # import q; q(eout)
-        # return eout
         return literal_eval(out)
     except (ValueError, SyntaxError, MemoryError):
         return out
