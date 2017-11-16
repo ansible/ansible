@@ -64,8 +64,6 @@ def recv_data(s):
 
 def exec_command(module, command):
     connection = Connection(module._socket_path)
-    if command == 'prompt()':
-        return 0, connection.get_prompt(), ''
     try:
         out = connection.exec_command(command)
     except ConnectionError as exc:
