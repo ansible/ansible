@@ -23,6 +23,7 @@ from operator import attrgetter
 from ansible.cli import CLI
 from ansible.errors import AnsibleOptionsError
 from ansible.parsing.dataloader import DataLoader
+from ansible.module_utils.json_utils import jsonify
 
 try:
     from __main__ import display
@@ -179,7 +180,7 @@ class InventoryCLI(CLI):
             results = yaml.dump(stuff, Dumper=AnsibleDumper, default_flow_style=False)
         else:
             import json
-            results = json.dumps(stuff, sort_keys=True, indent=4)
+            results = jsonify(stuff, sort_keys=True, indent=4)
 
         return results
 
