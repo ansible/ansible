@@ -38,7 +38,7 @@
   ios_config:
     replace: line
     lines:
-      - "ip http server"
+      - "no ip http server"
     save_when: modified
     authorize: yes
   register: result
