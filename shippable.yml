@@ -57,8 +57,6 @@ matrix:
     - env: TEST=linux/ubuntu1604/3
     - env: TEST=linux/ubuntu1604py3/3
 build:
-  pre_ci:
-    - docker images drydock/u16pytall
   pre_ci_boot:
     image_name: drydock/u16pytall
     image_tag: v5.4.1
