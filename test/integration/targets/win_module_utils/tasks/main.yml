@@ -76,6 +76,15 @@
     that:
     - argv_test.data == 'success'
 
+- name: call module with symbolic link tests
+  symbolic_link_test:
+    path: C:\ansible testing
+  register: symbolic_link
+
+- assert:
+    that:
+    - symbolic_link.data == 'success'
+
 - name: remove testing folder
   win_file:
     path: C:\ansible testing
