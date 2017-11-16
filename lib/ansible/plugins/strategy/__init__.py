@@ -762,6 +762,7 @@ class StrategyBase:
             pass
 
         host_results = []
+        handled_hosts = []
         for host in notified_hosts:
             if not handler.has_triggered(host) and (not iterator.is_failed(host) or play_context.force_handlers):
                 if handler._uuid not in iterator._task_uuid_cache:
@@ -769,6 +770,7 @@ class StrategyBase:
                 task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=handler)
                 self.add_tqm_variables(task_vars, play=iterator._play)
                 self._queue_task(host, handler, task_vars, play_context)
+                handled_hosts.append(host)
                 if run_once:
                     break
 
@@ -815,7 +817,10 @@ class StrategyBase:
                     continue
 
         # wipe the notification list
-        self._notified_handlers[handler._uuid] = []
+        if run_once:
+            self._notified_handlers[handler._uuid] = []
+        else:
+            self._notified_handlers[handler._uuid] = [h for h in self._notified_handlers[handler._uuid] if h not in handled_hosts]
         display.debug("done running handlers, result is: %s" % result)
         return result
 
