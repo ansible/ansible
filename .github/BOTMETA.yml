@@ -293,16 +293,17 @@ files:
   $modules/cloud/vmware/vca_fw.py: privateip
   $modules/cloud/vmware/vca_nat.py: privateip
   $modules/cloud/vmware/vca_vapp.py: privateip
+  $modules/cloud/vmware/vcenter_license.py: dagwieers
   $modules/cloud/vmware/vmware_cluster.py: $team_ansible jcpowermac
   $modules/cloud/vmware/vmware_datacenter.py: $team_ansible jcpowermac kamsz
   $modules/cloud/vmware/vmware_dns_config.py: $team_ansible jcpowermac
   $modules/cloud/vmware/vmware_dvs_host.py: $team_ansible jcpowermac
   $modules/cloud/vmware/vmware_dvs_portgroup.py: $team_ansible jcpowermac
   $modules/cloud/vmware/vmware_dvswitch.py: $team_ansible jcpowermac
-  $modules/cloud/vmware/vmware_guest.py: $team_vmware
+  $modules/cloud/vmware/vmware_guest.py: dagwieers
   $modules/cloud/vmware/vmware_guest_facts.py: nerzhul
   $modules/cloud/vmware/vmware_guest_find.py: $team_vmware
-  $modules/cloud/vmware/vmware_host.py: $team_ansible jcpowermac
+  $modules/cloud/vmware/vmware_host.py: $team_ansible jcpowermac dagwieers
   $modules/cloud/vmware/vmware_local_user_manager.py: $team_ansible
   $modules/cloud/vmware/vmware_maintenancemode.py: $team_ansible
   $modules/cloud/vmware/vmware_migrate_vmk.py: $team_ansible jcpowermac
@@ -318,7 +319,7 @@ files:
   $modules/cloud/vmware/vmware_vsan_cluster.py: $team_ansible
   $modules/cloud/vmware/vmware_vswitch.py: akasurde jcpowermac
   $modules/cloud/vmware/vsphere_copy.py: dagwieers
-  $modules/cloud/vmware/vsphere_guest.py: $team_ansible rhoop
+  $modules/cloud/vmware/vsphere_guest.py: $team_ansible rhoop dagwieers
   $modules/cloud/webfaction/: quentinsf
   $modules/clustering/consul.py: sgargan
   $modules/clustering/consul_acl.py: sgargan
@@ -1222,6 +1223,6 @@ macros:
   team_rhn: alikins barnabycourt flossware vritant
   team_tower: ghjm jlaska matburt wwitzel3
   team_ucs: dsoper2 johnamcdonough vallard vvb
-  team_vmware: dagwieers dav1x jctanner nerzhul akasurde
+  team_vmware: dav1x jctanner nerzhul akasurde
   team_windows: dagwieers jborean93 jhawkesworth
   team_ipa: Nosmoht akasurde
