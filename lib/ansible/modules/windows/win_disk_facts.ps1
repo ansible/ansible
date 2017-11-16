@@ -46,9 +46,6 @@ if ($disk) {
         $result.ansible_facts.ansible_disk."disk_$($i)".serial_number = "$([string]$disks.SerialNumber)"
         $result.ansible_facts.ansible_disk."disk_$($i)".unique_id = "$([string]$disks.UniqueId)"    
         $result.ansible_facts.ansible_disk."disk_$($i)".guid = "$([string]$disks.Guid)"
-
-
-        
         $i++
     }
 } else {
