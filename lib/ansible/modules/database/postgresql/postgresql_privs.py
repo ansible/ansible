@@ -240,11 +240,11 @@ EXAMPLES = """
     privs: ALL
     type: database
     role: librarian
-    
+ 
 # ALTER DEFAULT PRIVILEGES ON DATABASE library TO librarian
 # Objs must be set, ALL_DEFAULT to TABLES/SEQUENCES/TYPES/FUNCTIONS
 # ALL_DEFAULT works only with privs=ALL
-# For specific 
+# For specific
 - postgresql_privs:
     db: library
     objs: ALL_DEFAULT
@@ -256,14 +256,14 @@ EXAMPLES = """
 # ALTER DEFAULT PRIVILEGES ON DATABASE library TO reader
 # Objs must be set, ALL_DEFAULT to TABLES/SEQUENCES/TYPES/FUNCTIONS
 # ALL_DEFAULT works only with privs=ALL
-# For specific 
+# For specific
 - postgresql_privs:
     db: library
     objs: TABLES,SEQUENCES
     privs: SELECT
     type: default_privs
     role: reader
-    
+
 - postgresql_privs:
     db: library
     objs: TYPES
@@ -606,7 +606,7 @@ class QueryBuilder(object):
         if self._state == 'present':
             self.build_present()
         elif self._state == 'absent':
-            self._build_absent()
+            self.build_absent()
         else:
             self.build_absent()
         return '\n'.join(self.query)
