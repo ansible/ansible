@@ -19,11 +19,11 @@ from ansible.module_utils.six.moves import cPickle
 from ansible.module_utils._text import to_text
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.task import Task
-from ansible.plugins.connection import ConnectionBase
 from ansible.template import Templar
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.unsafe_proxy import UnsafeProxy, wrap_var
 from ansible.vars.clean import namespace_facts, clean_facts
+from ansible.utils.vars import combine_vars
 
 try:
     from __main__ import display
@@ -480,18 +480,14 @@ class TaskExecutor:
                 not getattr(self._connection, 'connected', False) or
                 self._play_context.remote_addr != self._connection._play_context.remote_addr):
             self._connection = self._get_connection(variables=variables, templar=templar)
-            if getattr(self._connection, '_socket_path'):
-                variables['ansible_socket'] = self._connection._socket_path
-            # only template the vars if the connection actually implements set_host_overrides
-            # NB: this is expensive, and should be removed once connection-specific vars are being handled by play_context
-            sho_impl = getattr(type(self._connection), 'set_host_overrides', None)
-            if sho_impl and sho_impl != ConnectionBase.set_host_overrides:
-                self._connection.set_host_overrides(self._host, variables, templar)
         else:
             # if connection is reused, its _play_context is no longer valid and needs
             # to be replaced with the one templated above, in case other data changed
             self._connection._play_context = self._play_context
 
+        self._set_connection_options(variables, templar)
+
+        # get handler
         self._handler = self._get_action_handler(connection=self._connection, templar=templar)
 
         # And filter out any fields which were set to default(omit), and got the omit token value
@@ -734,6 +730,7 @@ class TaskExecutor:
         if not connection:
             raise AnsibleError("the connection plugin '%s' was not found" % conn_type)
 
+        # FIXME: remove once all plugins pull all data from self._options
         self._play_context.set_options_from_plugin(connection)
 
         if any(((connection.supports_persistence and C.USE_PERSISTENT_CONNECTIONS), connection.force_persistence)):
@@ -744,6 +741,29 @@ class TaskExecutor:
             setattr(connection, '_socket_path', socket_path)
 
         return connection
+
+    def _set_connection_options(self, variables, templar):
+
+        # create copy with delegation built in
+        final_vars = combine_vars(variables, variables.get('ansible_delegated_vars', dict()).get(self._task.delegate_to, dict()))
+
+        # grab list of usable vars for this plugin
+        option_vars = C.config.get_plugin_vars('connection', self._connection._load_name)
+
+        # create dict of 'templated vars'
+        options = {'_extras': {}}
+        for k in option_vars:
+            if k in final_vars:
+                options[k] = templar.template(final_vars[k])
+
+        # add extras if plugin supports them
+        if getattr(self._connection, 'allow_extras', False):
+            for k in final_vars:
+                if k.startswith('ansible_%s_' % self._connection._load_name) and k not in options:
+                    options['_extras'][k] = templar.template(final_vars[k])
+
+        # set options with 'templated vars' specific to this plugin
+        self._connection.set_options(var_options=options)
 
     def _get_action_handler(self, connection, templar):
         '''

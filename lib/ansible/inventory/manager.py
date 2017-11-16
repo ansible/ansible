@@ -183,6 +183,7 @@ class InventoryManager(object):
         for name in C.INVENTORY_ENABLED:
             plugin = inventory_loader.get(name)
             if plugin:
+                plugin.set_options()
                 self._inventory_plugins.append(plugin)
             else:
                 display.warning('Failed to load inventory plugin, skipping %s' % name)
@@ -282,7 +283,8 @@ class InventoryManager(object):
                     else:
                         for fail in failures:
                             display.warning(u'\n* Failed to parse %s with %s plugin: %s' % (to_text(fail['src']), fail['plugin'], to_text(fail['exc'])))
-                            display.vvv(to_text(fail['exc'].tb))
+                            if hasattr(fail['exc'], 'tb'):
+                                display.vvv(to_text(fail['exc'].tb))
         if not parsed:
             display.warning("Unable to parse %s as an inventory source" % to_text(source))
 

@@ -246,6 +246,9 @@ class FactCache(MutableMapping):
         # Backwards compat: self._display isn't really needed, just import the global display and use that.
         self._display = display
 
+        # in memory cache so plugins don't expire keys mid run
+        self._cache = {}
+
     def __getitem__(self, key):
         if not self._plugin.contains(key):
             raise KeyError

@@ -249,9 +249,6 @@ class CallbackModule(CallbackBase):
         # self.set_options({'api': 'data.logentries.com', 'port': 80,
         # 'tls_port': 10000, 'use_tls': True, 'flatten': False, 'token': 'ae693734-4c5b-4a44-8814-1d2feb5c8241'})
 
-    def set_option(self, name, value):
-        raise AnsibleError("The Logentries callabck plugin does not suport setting individual options.")
-
     def set_options(self, options):
 
         super(CallbackModule, self).set_options(options)
