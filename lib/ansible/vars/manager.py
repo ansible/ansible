@@ -518,7 +518,7 @@ class VariableManager:
             items = [None]
 
         delegated_host_vars = dict()
-        item_var = task.loop_control.loop_var or 'item'
+        item_var = getattr(task.loop_control, 'loop_var', 'item')
         for item in items:
             # update the variables with the item value for templating, in case we need it
             if item is not None:
