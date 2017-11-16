@@ -154,7 +154,7 @@ Mock objects (from https://docs.python.org/3/library/unittest.mock.html) can be 
 useful in building unit tests for special / difficult cases, but they can also
 lead to complex and confusing coding situations.  One good use for mocks would be in
 simulating an API. As for 'six', the 'mock' python package is bundled with Ansible (use
-'import ansible.compat.tests.mock'). See for example
+``import ansible.compat.tests.mock``). See for example
 
 Ensuring failure cases are visible with mock objects
 ----------------------------------------------------
@@ -466,7 +466,7 @@ mock for Ansible.get_bin_path::
 Restructuring modules to enable testing module set up and other processes
 -------------------------------------------------------------------------
 
-Often modules have a main() function which sets up the module and then performs other
+Often modules have a ``main()`` function which sets up the module and then performs other
 actions. This can make it difficult to check argument processing. This can be made easier by
 moving module configuration and initialization into a separate function. For example::
 
@@ -510,7 +510,7 @@ This now makes it possible to run tests against the module initiation function::
 
 See also ``test/units/module_utils/aws/test_rds.py``
 
-Note that the argument_spec dictionary is visible in a module variable. This has
+Note that the ``argument_spec`` dictionary is visible in a module variable. This has
 advantages, both in allowing explicit testing of the arguments and in allowing the easy
 creation of module objects for testing.
 
