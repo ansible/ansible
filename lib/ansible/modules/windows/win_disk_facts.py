@@ -13,9 +13,9 @@ DOCUMENTATION = r'''
 ---
 module: win_disk_facts
 version_added: '2.5'
-short_description: Show disks and disks information of the target host
+short_description: Show the attached disks and disk information of the target host
 description:
-   - With the module you can retrieve and output detailed information about the attached disks on the target.
+   - With the module you can retrieve and output detailed information about the attached disks of the target.
 requirements:
     - Windows 8.1 / Windows 2012R2 (NT 6.3) or newer
 author:
