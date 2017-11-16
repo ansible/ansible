@@ -44,6 +44,7 @@ options:
               use specified algorithm.
             - This option is deprecated in Ansible 2.3 and is replaced with
               C(checksum_algorithm=md5).
+            - This option will be removed in Ansible 2.7
         required: no
         default: True
     get_checksum:
@@ -199,7 +200,7 @@ stat:
             type: string
             sample: C:\temp
         md5:
-            description: The MD5 checksum of a file (Between Ansible 1.9 and 2.2 this was returned as a SHA1 hash)
+            description: The MD5 checksum of a file (Between Ansible 1.9 and 2.2 this was returned as a SHA1 hash), will be removed in 2.7
             returned: success, path exist, path is a file, get_md5 == True, md5 is supported
             type: string
             sample: 09cb79e8fc7453c84a07f644e441fd81623b7f98

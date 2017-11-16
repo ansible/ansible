@@ -6,6 +6,7 @@
 
 #Requires -Module Ansible.ModuleUtils.Legacy
 #Requires -Module Ansible.ModuleUtils.CommandUtil
+#Requires -Module Ansible.ModuleUtils.FileUtil
 
 # TODO: add check mode support
 
@@ -55,11 +56,11 @@ $result = @{
     cmd = $raw_command_line
 }
 
-If($creates -and $(Test-Path $creates)) {
+if ($creates -and $(Test-FilePath -path $creates)) {
     Exit-Json @{msg="skipped, since $creates exists";cmd=$raw_command_line;changed=$false;skipped=$true;rc=0}
 }
 
-If($removes -and -not $(Test-Path $removes)) {
+if ($removes -and -not $(Test-FilePath -path $removes)) {
     Exit-Json @{msg="skipped, since $removes does not exist";cmd=$raw_command_line;changed=$false;skipped=$true;rc=0}
 }
 
