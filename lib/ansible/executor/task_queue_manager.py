@@ -178,7 +178,7 @@ class TaskQueueManager:
             else:
                 self._stdout_callback = callback_loader.get(self._stdout_callback)
                 try:
-                    self._stdout_callback.set_options(C.config.get_plugin_options('callback', self._stdout_callback._load_name))
+                    self._stdout_callback.set_options()
                 except AttributeError:
                     display.deprecated("%s stdout callback, does not support setting 'options', it will work for now, "
                                        " but this will be required in the future and should be updated,"
@@ -207,7 +207,7 @@ class TaskQueueManager:
 
             callback_obj = callback_plugin()
             try:
-                callback_obj .set_options(C.config.get_plugin_options('callback', callback_plugin._load_name))
+                callback_obj.set_options()
             except AttributeError:
                     display.deprecated("%s callback, does not support setting 'options', it will work for now, "
                                        " but this will be required in the future and should be updated, "

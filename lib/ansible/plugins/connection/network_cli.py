@@ -48,23 +48,18 @@ import json
 import logging
 import re
 import os
-import signal
 import socket
 import traceback
 
-from collections import Sequence
-
 from ansible import constants as C
 from ansible.errors import AnsibleConnectionFailure
-from ansible.module_utils.six import PY3, BytesIO, binary_type
+from ansible.module_utils.six import BytesIO, PY3
 from ansible.module_utils.six.moves import cPickle
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import cliconf_loader, terminal_loader, connection_loader
 from ansible.plugins.connection import ConnectionBase
-from ansible.plugins.connection.local import Connection as LocalConnection
-from ansible.plugins.connection.paramiko_ssh import Connection as ParamikoSshConnection
-from ansible.utils.path import unfrackpath, makedirs_safe
+from ansible.utils.path import unfrackpath
 
 try:
     from __main__ import display
@@ -91,7 +86,8 @@ class Connection(ConnectionBase):
         self._last_response = None
         self._history = list()
 
-        self._local = LocalConnection(play_context, new_stdin, *args, **kwargs)
+        self._local = connection_loader.get('local', play_context, '/dev/null')
+        self._local.set_options()
 
         self._terminal = None
         self._cliconf = None
@@ -166,10 +162,9 @@ class Connection(ConnectionBase):
         if self.connected:
             return
 
-        if self._play_context.password and not self._play_context.private_key_file:
-            C.PARAMIKO_LOOK_FOR_KEYS = False
-
-        ssh = ParamikoSshConnection(self._play_context, '/dev/null')._connect()
+        p = connection_loader.get('paramiko', self._play_context, '/dev/null')
+        p.set_options(direct={'look_for_keys': bool(self._play_context.password and not self._play_context.private_key_file)})
+        ssh = p._connect()
         self.ssh = ssh.ssh
 
         display.vvvv('ssh connection done, setting terminal', host=self._play_context.remote_addr)

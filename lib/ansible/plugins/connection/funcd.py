@@ -49,10 +49,11 @@ except ImportError:
 class Connection(object):
     ''' Func-based connections '''
 
+    has_pipelining = False
+
     def __init__(self, runner, host, port, *args, **kwargs):
         self.runner = runner
         self.host = host
-        self.has_pipelining = False
         # port is unused, this go on func
         self.port = port
 

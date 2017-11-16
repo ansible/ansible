@@ -65,6 +65,7 @@ class ConnectionProcess(object):
                 self.play_context.private_key_file = os.path.join(self.original_path, self.play_context.private_key_file)
 
             self.connection = connection_loader.get(self.play_context.connection, self.play_context, '/dev/null')
+            self.connection.set_options()
             self.connection._connect()
             self.srv.register(self.connection)
             messages.append('connection to remote device started successfully')
@@ -143,7 +144,7 @@ class ConnectionProcess(object):
             if self.connection:
                 self.connection.close()
 
-        except:
+        except Exception:
             pass
 
         finally:
@@ -271,7 +272,7 @@ def main():
                     wfd = os.fdopen(w, 'w')
                     process = ConnectionProcess(wfd, play_context, socket_path, original_path)
                     process.start()
-                except Exception as exc:
+                except Exception:
                     messages.append(traceback.format_exc())
                     rc = 1
 

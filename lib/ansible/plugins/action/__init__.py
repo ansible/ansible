@@ -612,6 +612,21 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # make sure all commands use the designated shell executable
         module_args['_ansible_shell_executable'] = self._play_context.executable
 
+    def _update_connection_options(self, options, variables=None):
+        ''' ensures connections have the appropriate information '''
+        update = {}
+
+        if getattr(self.connection, 'glob_option_vars', False):
+            # if the connection allows for it, pass any variables matching it.
+            if variables is not None:
+                for varname in variables:
+                    if varname.match('ansible_%s_' % self.connection._load_name):
+                        update[varname] = variables[varname]
+
+        # always override existing with options
+        update.update(options)
+        self.connection.set_options(update)
+
     def _execute_module(self, module_name=None, module_args=None, tmp=None, task_vars=None, persist_files=False, delete_remote_tmp=True, wrap_async=False):
         '''
         Transfer and run a module along with its arguments.
