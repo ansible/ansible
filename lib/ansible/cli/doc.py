@@ -44,6 +44,9 @@ class DocCLI(CLI):
         provides a printout of their DOCUMENTATION strings,
         and it can create a short "snippet" which can be pasted into a playbook.  '''
 
+    # default ignore list for detailed views
+    IGNORE = ('module', 'docuri', 'version_added', 'short_description', 'now_date', 'plainexamples', 'returndocs')
+
     def __init__(self, args):
 
         super(DocCLI, self).__init__(args)
@@ -394,6 +397,10 @@ class DocCLI(CLI):
             for config in ('env', 'ini', 'yaml', 'vars'):
                 if config in opt and opt[config]:
                     conf[config] = opt.pop(config)
+                    for ignore in self.IGNORE:
+                        for item in conf[config]:
+                            if ignore in item:
+                                del item[ignore]
 
             if conf:
                 text.append(self._dump_yaml({'set_via': conf}, opt_indent))
@@ -441,7 +448,7 @@ class DocCLI(CLI):
 
     def get_man_text(self, doc):
 
-        IGNORE = frozenset(['module', 'docuri', 'version_added', 'short_description', 'now_date', 'plainexamples', 'returndocs', self.options.type])
+        self.IGNORE = self.IGNORE + (self.options.type,)
         opt_indent = "        "
         text = []
         pad = display.columns * 0.20
@@ -492,7 +499,7 @@ class DocCLI(CLI):
 
         # Generic handler
         for k in sorted(doc):
-            if k in IGNORE or not doc[k]:
+            if k in self.IGNORE or not doc[k]:
                 continue
             if isinstance(doc[k], string_types):
                 text.append('%s: %s' % (k.upper(), textwrap.fill(CLI.tty_ify(doc[k]), limit - (len(k) + 2), subsequent_indent=opt_indent)))

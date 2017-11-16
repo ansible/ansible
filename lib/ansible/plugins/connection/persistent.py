@@ -14,13 +14,11 @@ DOCUMENTATION = """
     version_added: "2.3"
 """
 import os
-import sys
 import pty
 import json
 import subprocess
 
 from ansible import constants as C
-from ansible.plugins.loader import connection_loader
 from ansible.plugins.connection import ConnectionBase
 from ansible.module_utils._text import to_text
 from ansible.module_utils.six.moves import cPickle

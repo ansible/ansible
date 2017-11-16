@@ -116,17 +116,6 @@ class ConnectionBase(AnsiblePlugin):
 
         raise AnsibleError("Internal Error: this connection module does not support running commands via %s" % self._play_context.become_method)
 
-    def set_host_overrides(self, host, hostvars=None):
-        '''
-        An optional method, which can be used to set connection plugin parameters
-        from variables set on the host (or groups to which the host belongs)
-
-        Any connection plugin using this should first initialize its attributes in
-        an overridden `def __init__(self):`, and then use `host.get_vars()` to find
-        variables which may be used to set those attributes in this method.
-        '''
-        pass
-
     @staticmethod
     def _split_ssh_args(argstring):
         """
