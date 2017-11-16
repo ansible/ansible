@@ -295,8 +295,8 @@ class CallbackModule(CallbackBase):
                     if option.startswith('_') or option in ['read_file', 'ensure_value', 'read_module']:
                         continue
                     val = getattr(self._options, option)
-                    if val:
-                        self._display.vvvv('%s: %s' % (option, val))
+                    if val and self._display.verbosity > 3:
+                        self._display.display('%s: %s' % (option, val), color=C.COLOR_VERBOSE, screen_only=True)
 
     def v2_runner_retry(self, result):
         task_name = result.task_name or result._task
@@ -306,4 +306,5 @@ class CallbackModule(CallbackBase):
         self._display.display(msg, color=C.COLOR_DEBUG)
 
     def v2_playbook_on_notify(self, handler, host):
-        self._display.vv("NOTIFIED HANDLER %s for %s" % (handler.get_name(), host))
+        if self._display.verbosity > 1:
+            self._display.display("NOTIFIED HANDLER %s for %s" % (handler.get_name(), host), color=C.COLOR_VERBOSE, screen_only=True)
