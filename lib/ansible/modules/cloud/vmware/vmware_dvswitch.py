@@ -22,7 +22,7 @@ description:
 version_added: 2.0
 author: "Joseph Callen (@jcpowermac)"
 notes:
-    - Tested on vSphere 5.5
+    - Tested on vSphere 6.5
 requirements:
     - "python >= 2.6"
     - PyVmomi
@@ -37,7 +37,7 @@ options:
         required: True
     switch_version:
         description:
-            - The version of the switch to create.
+            - The version of the switch to create. Can be 6.5.0, 6.0.0, 5.5.0, 5.1.0, 5.0.0 with a vcenter running vSphere 6.5
             - Needed if you have a vcenter version > ESXi version to join DVS. If not specified version=version of vcenter
         required: False
         version_added: 2.5
@@ -83,7 +83,7 @@ EXAMPLES = '''
     password: vcenter_password
     datacenter_name: datacenter
     switch_name: dvSwitch
-    switch_version: 6.0
+    switch_version: 6.0.0
     mtu: 9000
     uplink_quantity: 2
     discovery_proto: lldp
