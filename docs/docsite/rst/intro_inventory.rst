@@ -283,7 +283,7 @@ the 'raleigh' group might look like::
 It is okay if these files do not exist, as this is an optional feature.
 
 As an advanced use case, you can create *directories* named after your groups or hosts, and
-Ansible will read all the files in these directories. An example with the 'raleigh' group::
+Ansible will read all the files in these directories in lexicographical order. An example with the 'raleigh' group::
 
     /etc/ansible/group_vars/raleigh/db_settings
     /etc/ansible/group_vars/raleigh/cluster_settings
