@@ -27,16 +27,16 @@ notes:
 
 EXAMPLES = r'''
 - name: get disk facts
-   win_disk_facts:
+  win_disk_facts:
 - name: output first disk size
-   debug:
-       var: ansible_facts.ansible_disk.disk_0.size
+  debug:
+    var: ansible_facts.ansible_disk.disk_0.size
 
 - name: get disk facts
-   win_disk_facts:
+  win_disk_facts:
 - name: output second disk serial number
-   debug:
-       var: ansible_facts.ansible_disk.disk_1.serial_number
+  debug:
+    var: ansible_facts.ansible_disk.disk_1.serial_number
 '''
 
 RETURN = r'''
