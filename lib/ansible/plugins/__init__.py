@@ -47,6 +47,9 @@ def get_plugin_class(obj):
 
 class AnsiblePlugin(with_metaclass(ABCMeta, object)):
 
+    # allow extra passthrough parameters
+    allow_extras = False
+
     def __init__(self):
         self._options = {}
 
@@ -59,8 +62,28 @@ class AnsiblePlugin(with_metaclass(ABCMeta, object)):
     def set_option(self, option, value):
         self._options[option] = value
 
-    def set_options(self, options):
-        self._options = options
+    def set_options(self, task_keys=None, var_options=None, direct=None):
+        '''
+        Sets the _options attribute with the configuration/keyword information for this plugin
+
+        :arg task_keys: Dict with playbook keywords that affect this option
+        :arg var_options: Dict with either 'conneciton variables'
+        :arg direct: Dict with 'direct assignment'
+        '''
+
+        if not self._options:
+            # load config options if we have not done so already, if vars provided we should be mostly done
+            self._options = C.config.get_plugin_options(get_plugin_class(self), self._load_name, keys=task_keys, variables=var_options)
+
+        # they can be direct options overriding config
+        if direct:
+            for k in self._options:
+                if k in direct:
+                    self.set_option(k, direct[k])
+
+        # allow extras/wildcards from vars that are not directly consumed in configuration
+        if self.allow_extras and var_options and '_extras' in var_options:
+            self.set_option('_extras', var_options['_extras'])
 
     def _check_required(self):
         # FIXME: standarize required check based on config

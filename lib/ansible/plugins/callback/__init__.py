@@ -26,7 +26,7 @@ import warnings
 from copy import deepcopy
 
 from ansible import constants as C
-from ansible.plugins import AnsiblePlugin
+from ansible.plugins import AnsiblePlugin, get_plugin_class
 from ansible.module_utils._text import to_text
 from ansible.utils.color import stringc
 from ansible.vars.clean import strip_internal_keys
@@ -81,8 +81,22 @@ class CallbackBase(AnsiblePlugin):
     ''' helper for callbacks, so they don't all have to include deepcopy '''
     _copy_result = deepcopy
 
-    def set_options(self, options):
-        self._plugin_options = options
+    def set_option(self, k, v):
+        self._plugin_options[k] = v
+
+    def set_options(self, task_keys=None, var_options=None, direct=None):
+        ''' This is different than the normal plugin method as callbacks get called early and really don't accept keywords.
+            Also _options was already taken for CLI args and callbacks use _plugin_options instead.
+        '''
+
+        # load from config
+        self._plugin_options = C.config.get_plugin_options(get_plugin_class(self), self._load_name, keys=task_keys, variables=var_options)
+
+        # or parse specific options
+        if direct:
+            for k in direct:
+                if k in self._plugin_options:
+                    self.set_option(k, direct[k])
 
     def _dump_results(self, result, indent=None, sort_keys=True, keep_invocation=False):
 

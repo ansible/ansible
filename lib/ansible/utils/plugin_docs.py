@@ -22,8 +22,9 @@ __metaclass__ = type
 
 from collections import MutableMapping, MutableSet, MutableSequence
 
-from ansible.errors import AnsibleAssertionError
+from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_native
 from ansible.parsing.plugin_docs import read_docstring
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.plugins.loader import fragment_loader
@@ -40,6 +41,22 @@ BLACKLIST = {
     'MODULE': frozenset(('async_wrapper',)),
     'CACHE': frozenset(('base',)),
 }
+
+
+def merge_fragment(target, source):
+
+    for key, value in source.items():
+        if key in target:
+            # assumes both structures have same type
+            if isinstance(target[key], MutableMapping):
+                value.update(target[key])
+            elif isinstance(target[key], MutableSet):
+                value.add(target[key])
+            elif isinstance(target[key], MutableSequence):
+                value = sorted(frozenset(value + target[key]))
+            else:
+                raise Exception("Attempt to extend a documentation fragement, invalid type for %s" % key)
+            target[key] = value
 
 
 def add_fragments(doc, filename):
@@ -76,18 +93,18 @@ def add_fragments(doc, filename):
         if 'options' not in fragment:
             raise Exception("missing options in fragment (%s), possibly misformatted?: %s" % (fragment_name, filename))
 
-        for key, value in fragment.items():
-            if key in doc:
-                # assumes both structures have same type
-                if isinstance(doc[key], MutableMapping):
-                    value.update(doc[key])
-                elif isinstance(doc[key], MutableSet):
-                    value.add(doc[key])
-                elif isinstance(doc[key], MutableSequence):
-                    value = sorted(frozenset(value + doc[key]))
-                else:
-                    raise Exception("Attempt to extend a documentation fragement (%s) of unknown type: %s" % (fragment_name, filename))
-            doc[key] = value
+        # ensure options themselves are directly merged
+        if 'options' in doc:
+            try:
+                merge_fragment(doc['options'], fragment.pop('options'))
+            except Exception as e:
+                raise AnsibleError("%s options (%s) of unknown type: %s" % (to_native(e), fragment_name, filename))
+
+        # merge rest of the sections
+        try:
+            merge_fragment(doc, fragment)
+        except Exception as e:
+            raise AnsibleError("%s (%s) of unknown type: %s" % (to_native(e), fragment_name, filename))
 
 
 def get_docstring(filename, verbose=False):

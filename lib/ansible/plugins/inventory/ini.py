@@ -208,7 +208,7 @@ class InventoryModule(BaseFileInventoryPlugin):
             # the current group.
             if state == 'hosts':
                 hosts, port, variables = self._parse_host_definition(line)
-                self.populate_host_vars(hosts, variables, groupname, port)
+                self._populate_host_vars(hosts, variables, groupname, port)
 
             # [groupname:vars] contains variable definitions that must be
             # applied to the current group.

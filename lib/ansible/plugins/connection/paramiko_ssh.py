@@ -15,6 +15,7 @@ DOCUMENTATION = """
         - This is needed on the Ansible control machine to be reasonably efficient with connections.
           Thus paramiko is faster for most users on these platforms.
           Users with ControlPersist capability can consider using -c ssh or configuring the transport in the configuration file.
+        - This plugin also borrows a lot of settings from the ssh plugin as they both cover the same protocol.
     version_added: "0.1"
     options:
       remote_addr:
@@ -28,26 +29,94 @@ DOCUMENTATION = """
       remote_user:
         description:
             - User to login/authenticate as
+            - Can be set from the CLI via the ``--user`` or ``-u`` options.
         vars:
             - name: ansible_user
             - name: ansible_ssh_user
             - name: ansible_paramiko_user
+        env:
+            - name: ANSIBLE_REMOTE_USER
+            - name: ANSIBLE_PARAMIKO_REMOTE_USER
+              version_added: '2.5'
+        ini:
+            - section: defaults
+              key: remote_user
+            - section: paramiko_connection
+              key: remote_user
+              version_added: '2.5'
+      password:
+        description:
+          - Secret used to either login the ssh server or as a passphrase for ssh keys that require it
+          - Can be set from the CLI via the ``--ask-pass`` option.
+        vars:
+            - name: ansible_password
+            - name: ansible_ssh_pass
+            - name: ansible_paramiko_pass
+              version_added: '2.5'
+      host_key_auto_add:
+        description: 'TODO: write it'
+        env: [{name: ANSIBLE_PARAMIKO_HOST_KEY_AUTO_ADD}]
+        ini:
+          - {key: host_key_auto_add, section: paramiko_connection}
+        type: boolean
+      look_for_keys:
+        default: True
+        description: 'TODO: write it'
+        env: [{name: ANSIBLE_PARAMIKO_LOOK_FOR_KEYS}]
+        ini:
+        - {key: look_for_keys, section: paramiko_connection}
+        type: boolean
+      proxy_command:
+        default: ''
+        description:
+            - Proxy information for running the connection via a jumphost
+            - Also this plugin will scan 'ssh_args', 'ssh_extra_args' and 'ssh_common_args' from the 'ssh' plugin settings for proxy information if set.
+        env: [{name: ANSIBLE_PARAMIKO_PROXY_COMMAND}]
+        ini:
+          - {key: proxy_command, section: paramiko_connection}
+      pty:
+        default: True
+        description: 'TODO: write it'
+        env:
+          - name: ANSIBLE_PARAMIKO_PTY
+        ini:
+          - section: paramiko_connection
+            key: pty
+        type: boolean
+      record_host_keys:
+        default: True
+        description: 'TODO: write it'
+        env: [{name: ANSIBLE_PARAMIKO_RECORD_HOST_KEYS}]
+        ini:
+          - section: paramiko_connection
+            key: record_host_keys
+        type: boolean
+      host_key_checking:
+        description: 'Set this to "False" if you want to avoid host key checking by the underlying tools Ansible uses to connect to the host'
+        type: boolean
+        default: True
+        env:
+          - name: ANSIBLE_HOST_KEY_CHECKING
+          - name: ANSIBLE_SSH_HOST_KEY_CHECKING
+            version_added: '2.5'
+          - name: ANSIBLE_PARAMIKO_HOST_KEY_CHECKING
+            version_added: '2.5'
+        ini:
+          - section: defaults
+            key: host_key_checking
+          - section: paramiko_connection
+            key: host_key_checking
+            version_added: '2.5'
+        vars:
+          - name: ansible_host_key_checking
+            version_added: '2.5'
+          - name: ansible_ssh_host_key_checking
+            version_added: '2.5'
+          - name: ansible_paramiko_host_key_checking
+            version_added: '2.5'
 # TODO:
-#getattr(self._play_context, 'ssh_extra_args', '') or '',
-#getattr(self._play_context, 'ssh_common_args', '') or '',
-#getattr(self._play_context, 'ssh_args', '') or '',
-#C.HOST_KEY_CHECKING
-#C.PARAMIKO_HOST_KEY_AUTO_ADD
 #C.USE_PERSISTENT_CONNECTIONS:
-#            ssh.connect(
-#                look_for_keys=C.PARAMIKO_LOOK_FOR_KEYS,
-#                key_filename,
-#                password=self._play_context.password,
-#                timeout=self._play_context.timeout,
-#                port=port,
-#proxy_command = proxy_command or C.PARAMIKO_PROXY_COMMAND
-#C.PARAMIKO_PTY
-#C.PARAMIKO_RECORD_HOST_KEYS
+#timeout=self._play_context.timeout,
 """
 
 import warnings
@@ -110,10 +179,11 @@ class MyAddPolicy(object):
     def __init__(self, new_stdin, connection):
         self._new_stdin = new_stdin
         self.connection = connection
+        self._options = connection._options
 
     def missing_host_key(self, client, hostname, key):
 
-        if all((C.HOST_KEY_CHECKING, not C.PARAMIKO_HOST_KEY_AUTO_ADD)):
+        if all((self._options['host_key_checking'], not self._options['host_key_auto_add'])):
 
             fingerprint = hexlify(key.get_fingerprint())
             ktype = key.get_name()
@@ -194,7 +264,7 @@ class Connection(ConnectionBase):
                 if proxy_command:
                     break
 
-        proxy_command = proxy_command or C.PARAMIKO_PROXY_COMMAND
+        proxy_command = proxy_command or self._options['proxy_command']
 
         sock_kwarg = {}
         if proxy_command:
@@ -229,7 +299,7 @@ class Connection(ConnectionBase):
 
         self.keyfile = os.path.expanduser("~/.ssh/known_hosts")
 
-        if C.HOST_KEY_CHECKING:
+        if self._options['host_key_checking']:
             for ssh_known_hosts in ("/etc/ssh/ssh_known_hosts", "/etc/openssh/ssh_known_hosts"):
                 try:
                     # TODO: check if we need to look at several possible locations, possible for loop
@@ -257,7 +327,7 @@ class Connection(ConnectionBase):
                 self._play_context.remote_addr,
                 username=self._play_context.remote_user,
                 allow_agent=allow_agent,
-                look_for_keys=C.PARAMIKO_LOOK_FOR_KEYS,
+                look_for_keys=self._options['look_for_keys'],
                 key_filename=key_filename,
                 password=self._play_context.password,
                 timeout=self._play_context.timeout,
@@ -301,7 +371,7 @@ class Connection(ConnectionBase):
         # sudo usually requires a PTY (cf. requiretty option), therefore
         # we give it one by default (pty=True in ansble.cfg), and we try
         # to initialise from the calling environment when sudoable is enabled
-        if C.PARAMIKO_PTY and sudoable:
+        if self._options['pty'] and sudoable:
             chan.get_pty(term=os.getenv('TERM', 'vt100'), width=int(os.getenv('COLUMNS', 0)), height=int(os.getenv('LINES', 0)))
 
         display.vvv("EXEC %s" % cmd, host=self._play_context.remote_addr)
@@ -454,7 +524,7 @@ class Connection(ConnectionBase):
             if self.sftp is not None:
                 self.sftp.close()
 
-        if C.HOST_KEY_CHECKING and C.PARAMIKO_RECORD_HOST_KEYS and self._any_keys_added():
+        if self._options['host_key_checking'] and self._options['record_host_keys'] and self._any_keys_added():
 
             # add any new SSH host keys -- warning -- this could be slow
             # (This doesn't acquire the connection lock because it needs
