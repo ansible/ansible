@@ -240,7 +240,7 @@ EXAMPLES = """
     privs: ALL
     type: database
     role: librarian
- 
+
 # ALTER DEFAULT PRIVILEGES ON DATABASE library TO librarian
 # Objs must be set, ALL_DEFAULT to TABLES/SEQUENCES/TYPES/FUNCTIONS
 # ALL_DEFAULT works only with privs=ALL
