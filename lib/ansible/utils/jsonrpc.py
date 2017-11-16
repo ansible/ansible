@@ -9,6 +9,7 @@ import traceback
 
 from ansible import constants as C
 from ansible.module_utils._text import to_text
+from ansible.module_utils.six import binary_type
 
 
 try:
@@ -83,6 +84,8 @@ class JsonRpcServer(object):
 
     def response(self, result=None):
         response = self.header()
+        if isinstance(result, binary_type):
+            result = to_text(result)
         response['result'] = result
         return response
 
