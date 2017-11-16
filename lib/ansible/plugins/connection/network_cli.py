@@ -78,7 +78,6 @@ class Connection(ConnectionBase):
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
 
-        self.ssh = None
         self._ssh_shell = None
 
         self._matched_prompt = None
@@ -166,11 +165,10 @@ class Connection(ConnectionBase):
         p.set_options(direct={'look_for_keys': bool(self._play_context.password and not self._play_context.private_key_file)})
         p.force_persistence = self.force_persistence
         ssh = p._connect()
-        self.ssh = ssh.ssh
 
         display.vvvv('ssh connection done, setting terminal', host=self._play_context.remote_addr)
 
-        self._ssh_shell = self.ssh.invoke_shell()
+        self._ssh_shell = ssh.ssh.invoke_shell()
         self._ssh_shell.settimeout(self._play_context.timeout)
 
         network_os = self._play_context.network_os
