@@ -4,3 +4,4 @@ jinja2
 setuptools<33.0.0
 mock
 voluptuous==0.8.8
+cryptography < 2.1.0  # cryptography 2.1.0 requires a newer pip
