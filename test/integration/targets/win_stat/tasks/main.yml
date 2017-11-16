@@ -295,6 +295,9 @@
     - stat_readonly.stat.size == 3
 
 # Requires more work once modular powershell utils are in
+- name: weird issue, need to access the file in anyway to get the correct date stats
+  win_command: powershell.exe Test-Path {{win_output_dir}}\win_stat\nested\hard-link.ps1
+
 - name: test win_stat on hard link file
   win_stat:
     path: "{{win_output_dir}}\\win_stat\\nested\\hard-link.ps1"
@@ -541,3 +544,13 @@
   win_file:
     path: "{{win_output_dir}}\\win_stat"
     state: absent
+
+- name: get stat of pagefile
+  win_stat:
+    path: C:\pagefile.sys
+  register: pagefile_stat
+
+- name: assert get stat of pagefile
+  assert:
+    that:
+    - pagefile_stat.stat.exists == True
