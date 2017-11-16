@@ -86,7 +86,7 @@
 - name: validate result
   assert:
     that:
-    - cmdout|skipped
+    - cmdout is skipped
     - cmdout.msg is search('exists')
 
 - name: ensure testfile is still present

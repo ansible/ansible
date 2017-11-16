@@ -114,7 +114,7 @@
 - name: validate result
   assert:
     that:
-    - shellout|skipped
+    - shellout is skipped
     - shellout.msg is search('exists')
 
 - name: ensure testfile is still present
