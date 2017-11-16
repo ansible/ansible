@@ -180,6 +180,8 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/33100)
 * restore error on orphan group:vars delcaration for ini inventories
   https://github.com/ansible/ansible/pull/32866
+* restore host/group_vars merge order
+  https://github.com/ansible/ansible/pull/32963
 
 <a id="2.4.1"></a>
 
