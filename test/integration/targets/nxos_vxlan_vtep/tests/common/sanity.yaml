@@ -2,6 +2,10 @@
 - - debug: msg="START TRANSPORT:{{ connection.transport }} nxos_vxlan_vtep sanity test"
 
 - block:
+  - name: "Apply N7K specific setup config"
+    include: targets/nxos_vxlan_vtep/tasks/platform/n7k/setup.yaml
+    when: platform | match('N7K')
+
   - name: "Enable feature nv overlay"
     nxos_config: 
       commands:
@@ -9,28 +13,56 @@
       provider: "{{ connection }}"
       match: none
 
-  - name: configure vxlan_vtep
-    nxos_vxlan_vtep: &configure
-      interface: nve1
-      description: default
-      host_reachability: true
-      source_interface: Loopback0
-      source_interface_hold_down_time: 30
-      shutdown: true
-      provider: "{{ connection }}"
-    register: result
+  - block:
+    - name: configure vxlan_vtep
+      nxos_vxlan_vtep: &configure9
+        interface: nve1
+        description: default
+        host_reachability: true
+        source_interface: Loopback0
+        source_interface_hold_down_time: 30
+        shutdown: true
+        provider: "{{ connection }}"
+      register: result
+  
+    - assert: &true
+        that:
+          - "result.changed == true"
+  
+    - name: "Conf Idempotence"
+      nxos_vxlan_vtep: *configure9
+      register: result
 
-  - assert: &true
-      that:
-        - "result.changed == true"
+    - assert: &false
+        that:
+          - "result.changed == false"
 
-  - name: "Conf Idempotence"
-    nxos_vxlan_vtep: *configure
-    register: result
+    when: (platform | search('N9K'))
 
-  - assert: &false
-      that:
-        - "result.changed == false"
+  - block:
+    - name: configure vxlan_vtep
+      nxos_vxlan_vtep: &configure7
+        interface: nve1
+        description: default
+        host_reachability: true
+        source_interface: Loopback0
+        shutdown: true
+        provider: "{{ connection }}"
+      register: result
+  
+    - assert:
+        that:
+          - "result.changed == true"
+  
+    - name: "Conf Idempotence"
+      nxos_vxlan_vtep: *configure7
+      register: result
+
+    - assert:
+        that:
+          - "result.changed == false"
+
+    when: (platform | search('N7K'))
 
   - name: remove vxlan_vtep
     nxos_vxlan_vtep: &remove
@@ -44,17 +76,25 @@
       provider: "{{ connection }}"
     register: result
 
-  - assert: *true
+  - assert:
+      that:
+        - "result.changed == true"
 
   - name: "Remove Idempotence"
     nxos_vxlan_vtep: *remove
     register: result
 
-  - assert: *false
+  - assert:
+      that:
+        - "result.changed == false"
 
-  when: (platform | search('N9K'))
+  when: (platform | search("N7K|N9K"))
 
   always:
+  - name: "Apply N7K specific cleanup config"
+    include: targets/nxos_vxlan_vtep/tasks/platform/n7k/cleanup.yaml
+    when: platform | match('N7K')
+
   - name: "Disable feature nv overlay"
     nxos_feature: 
       feature: nve

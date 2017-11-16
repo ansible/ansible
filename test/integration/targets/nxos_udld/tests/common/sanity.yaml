@@ -1,0 +1,67 @@
+---
+- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_udld sanity test"
+
+- set_fact: udld_run="true"
+- set_fact: udld_run="false"
+  when: ((platform | search('N9K-F')) and (imagetag and (imagetag | version_compare('F3', 'lt'))))
+- set_fact: udld_run="false"
+  when: titanium
+
+- block:
+  - name: "Enable feature udld"
+    nxos_feature: 
+      feature: udld
+      state: enabled
+      provider: "{{ connection }}"
+
+  - name: Reset udld
+    nxos_udld:
+      reset: True
+      provider: "{{ connection }}"
+
+  - name: Ensure udld agg mode is globally disabled and msg time is 20
+    nxos_udld: &conf1
+      aggressive: disabled
+      msg_time: 20
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: "Conf1 Idempotence"
+    nxos_udld: *conf1
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+
+  - name: Ensure udld agg mode is globally enabled and msg time is 15
+    nxos_udld: &conf2
+      aggressive: enabled
+      msg_time: 15
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "conf2 Idempotence"
+    nxos_udld: *conf2
+    register: result
+
+  - assert: *false
+
+  when: udld_run
+
+  always:
+  - name: "Disable udld"
+    nxos_feature: 
+      feature: udld
+      state: disabled
+      provider: "{{ connection }}"
+    ignore_errors: yes
+
+- debug: msg="END TRANSPORT:{{ connection.transport }} nxos_udld sanity test"

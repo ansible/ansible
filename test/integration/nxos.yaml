@@ -80,6 +80,33 @@
 
     - block:
       - include_role:
+          name: nxos_udld
+        when: "limit_to in ['*', 'nxos_udld']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_udld' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_udld_interface
+        when: "limit_to in ['*', 'nxos_udld_interface']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_udld_interface' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_vxlan_vtep_vni
+        when: "limit_to in ['*', 'nxos_vxlan_vtep_vni']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_vxlan_vtep_vni' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
           name: nxos_mtu
         when: "limit_to in ['*', 'nxos_mtu']"
       rescue:
