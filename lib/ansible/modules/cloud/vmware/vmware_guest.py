@@ -1522,7 +1522,7 @@ def main():
         name=dict(type='str', required=True),
         name_match=dict(type='str', choices=['first', 'last'], default='first'),
         uuid=dict(type='str'),
-        folder=dict(type='str', default='/vm'),
+        folder=dict(type='str'),
         guest_id=dict(type='str'),
         disk=dict(type='list', default=[]),
         cdrom=dict(type='dict', default={}),
@@ -1543,6 +1543,9 @@ def main():
                            supports_check_mode=True,
                            mutually_exclusive=[
                                ['cluster', 'esxi_hostname'],
+                           ],
+                           required_together=[
+                               ['name', 'folder'],
                            ],
                            )
 
