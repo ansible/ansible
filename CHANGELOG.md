@@ -174,6 +174,8 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/issues/30993)
 * Fix for IIS windows modules to use hashtables instead of PSCustomObject
   (https://github.com/ansible/ansible/pull/32710)
+* Fix nxos_snmp_host bug
+  (https://github.com/ansible/ansible/pull/32916)
 
 <a id="2.4.1"></a>
 
