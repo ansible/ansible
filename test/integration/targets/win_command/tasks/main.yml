@@ -77,6 +77,18 @@
     - cmdout|skipped
     - cmdout.msg is search('exists')
 
+- name: test creates with hidden system file, should skip
+  win_command: echo no
+  args:
+    creates: C:\pagefile.sys
+  register: cmdout
+
+- name: validate result
+  assert:
+    that:
+    - cmdout|skipped
+    - cmdout.msg is search('exists')
+
 - name: ensure testfile is still present
   win_stat:
     path: c:\testfile.txt
