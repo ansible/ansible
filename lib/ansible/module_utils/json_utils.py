@@ -28,6 +28,7 @@ try:
 except ImportError:
     import simplejson as json
 
+from datetime import datetime
 from collections import Set
 from itertools import repeat
 
@@ -39,6 +40,8 @@ class _SetEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, Set):
             return list(obj)
+        elif isinstance(obj, datetime):
+            return obj.isoformat()
         return super(_SetEncoder, self).default(obj)
 
 
