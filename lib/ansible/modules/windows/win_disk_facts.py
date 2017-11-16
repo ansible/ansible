@@ -71,15 +71,65 @@ ansible_facts:
                     type: complex
                     contains:
                         number:
-                            description: Number of the particular disk on the target.
+                            description: Number of the particular disk.
                             returned: always
                             type: string
                             sample: "0"
                         size:
-                            description: Size in gb of the particular disk on the target.
+                            description: Size in gb of the particular disk.
                             returned: always
                             type: string
                             sample: "100gb"
+                        partition_style:
+                            description: Partition style of the particular disk.
+                            returned: always
+                            type: string
+                            sample: "MBR"
+                        partition_count:
+                            description: Number of partitions on the particular disk.
+                            returned: always
+                            type: string
+                            sample: "4"
+                        operational_status:
+                            description: Operational status of the particular disk.
+                            returned: always
+                            type: string
+                            sample: "Online"
+                        sector_size:
+                            description: Sector size of the particular disk.
+                            returned: always
+                            type: string
+                            sample: "512"
+                        read_only:
+                            description: Read only status of the particular disk.
+                            returned: always
+                            type: string
+                            sample: "True"
+                        boot_disk:
+                            description: Information whether the particular disk is a bootable disk.
+                            returned: always
+                            type: string
+                            sample: "False"
+                        system_disk:
+                            description: Information whether the particular disk is a system disk.
+                            returned: always
+                            type: string
+                            sample: "True"
+                        clustered:
+                            description: Information whether the particular disk is clustered (part of a failover cluster).
+                            returned: always
+                            type: string
+                            sample: "False"
+                        model:
+                            description: Model specification of the particular disk.
+                            returned: always
+                            type: string
+                            sample: "VirtIO"
+                        firmware_version:
+                            description: Firmware version of the particular disk.
+                            returned: always
+                            type: string
+                            sample: "0001"
                         location:
                             description: Location of the particular disk on the target.
                             returned: always
@@ -95,19 +145,9 @@ ansible_facts:
                             returned: always
                             type: string
                             sample: "3141463431303031"
-                        operational_status:
-                            description: Operational status of the particular disk on the target.
-                            returned: always
+                        guid:
+                            description: GUID of the particular disk on the target.
+                            returned: if available
                             type: string
-                            sample: "Online"
-                        partition_style:
-                            description: Partition style of the particular disk on the target.
-                            returned: always
-                            type: string
-                            sample: "MBR"
-                        read_only:
-                            description: Read only status of the particular disk on the target.
-                            returned: always
-                            type: string
-                            sample: "False"
+                            sample: "{efa5f928-57b9-47fc-ae3e-902e85fbe77f}"
 '''

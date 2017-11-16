@@ -37,15 +37,13 @@ if ($disk) {
         $result.ansible_facts.ansible_disk."disk_$($i)".read_only = "$([string]$DROState = $disks.IsReadOnly)$DROState"
         $result.ansible_facts.ansible_disk."disk_$($i)".boot_disk = "$([string]$BootState = $disks.IsBoot)$BootState"
         $result.ansible_facts.ansible_disk."disk_$($i)".system_disk = "$([string]$SystemState = $disks.IsSystem)$SystemState"
-        $result.ansible_facts.ansible_disk."disk_$($i)".scale_out = "$([string]$ScaleOutState = $disks.IsScaleOut)$ScaleOutState"
-        $result.ansible_facts.ansible_disk."disk_$($i)".highly_available = "$([string]$HiglyAvailState = $disks.IsHighlyAvailable)$HiglyAvailState"
         $result.ansible_facts.ansible_disk."disk_$($i)".clustered = "$([string]$ClusteredState = $disks.IsClustered)$ClusteredState"
         $result.ansible_facts.ansible_disk."disk_$($i)".model = "$([string]$disks.Model)"
         $result.ansible_facts.ansible_disk."disk_$($i)".firmware_version = "$([string]$disks.FirmwareVersion)"
         $result.ansible_facts.ansible_disk."disk_$($i)".location = "$([string]$disks.Location)"
         $result.ansible_facts.ansible_disk."disk_$($i)".serial_number = "$([string]$disks.SerialNumber)"
         $result.ansible_facts.ansible_disk."disk_$($i)".unique_id = "$([string]$disks.UniqueId)"    
-        $result.ansible_facts.ansible_disk."disk_$($i)".guid = "$([string]$disks.Guid)"
+        $result.ansible_facts.ansible_disk."disk_$($i)".guid = "$([string]$disks.Guid)"    
         $i++
     }
 } else {
