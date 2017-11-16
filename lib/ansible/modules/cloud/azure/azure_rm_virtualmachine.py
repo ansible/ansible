@@ -6,6 +6,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+import json
 __metaclass__ = type
 
 
@@ -1112,6 +1113,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                 caching=vm_dict['properties']['storageProfile']['osDisk']['caching'],
                             ),
                             image_reference=self.compute_models.ImageReference(
+                                id=vm_dict['properties']['storageProfile']['imageReference']['id'],
+                            ) if 'id' in vm_dict['properties']['storageProfile']['imageReference'].keys() else self.compute_models.ImageReference(
                                 publisher=vm_dict['properties']['storageProfile']['imageReference']['publisher'],
                                 offer=vm_dict['properties']['storageProfile']['imageReference']['offer'],
                                 sku=vm_dict['properties']['storageProfile']['imageReference']['sku'],
