@@ -87,10 +87,10 @@ try:
 except ImportError:
     pass  # caught by imported boto3
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import (ansible_dict_to_boto3_filter_list, ansible_dict_to_boto3_tag_list,
                                       ec2_argument_spec, camel_dict_to_snake_dict, get_aws_connection_info,
-                                      boto3_conn, boto3_tag_list_to_ansible_dict, HAS_BOTO3)
+                                      boto3_conn, boto3_tag_list_to_ansible_dict, AWSRetry)
 
 
 def get_subnet_info(subnet):
@@ -113,9 +113,17 @@ def get_subnet_info(subnet):
     return subnet
 
 
-def subnet_exists(conn, subnet_id):
+@AWSRetry.exponential_backoff()
+def describe_subnets_with_backoff(client, **params):
+    return client.describe_subnets(**params)
+
+
+def subnet_exists(conn, module, subnet_id):
     filters = ansible_dict_to_boto3_filter_list({'subnet-id': subnet_id})
-    subnets = get_subnet_info(conn.describe_subnets(Filters=filters))
+    try:
+        subnets = get_subnet_info(describe_subnets_with_backoff(conn, Filters=filters))
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Couldn't check if subnet exists")
     if len(subnets) > 0 and 'state' in subnets[0] and subnets[0]['state'] == "available":
         return subnets[0]
     else:
@@ -123,58 +131,61 @@ def subnet_exists(conn, subnet_id):
 
 
 def create_subnet(conn, module, vpc_id, cidr, az, check_mode):
+    if check_mode:
+        return
+    params = dict(VpcId=vpc_id, CidrBlock=cidr)
+    if az:
+        params['AvailabilityZone'] = az
     try:
-        new_subnet = get_subnet_info(conn.create_subnet(VpcId=vpc_id, CidrBlock=cidr, AvailabilityZone=az))
-        # Sometimes AWS takes its time to create a subnet and so using
-        # new subnets's id to do things like create tags results in
-        # exception.  boto doesn't seem to refresh 'state' of the newly
-        # created subnet, i.e.: it's always 'pending'.
-        subnet = False
-        while subnet is False:
-            subnet = subnet_exists(conn, new_subnet['id'])
-            time.sleep(0.1)
-    except botocore.exceptions.ClientError as e:
-        if e.response['Error']['Code'] == "DryRunOperation":
-            subnet = None
-        else:
-            module.fail_json(msg=e.message, exception=traceback.format_exc(),
-                             **camel_dict_to_snake_dict(e.response))
+        new_subnet = get_subnet_info(conn.create_subnet(**params))
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Couldn't create subnet")
+    # Sometimes AWS takes its time to create a subnet and so using
+    # new subnets's id to do things like create tags results in
+    # exception.  boto doesn't seem to refresh 'state' of the newly
+    # created subnet, i.e.: it's always 'pending'.
+    subnet = False
+    while subnet is False:
+        subnet = subnet_exists(conn, module, new_subnet['id'])
+        time.sleep(0.1)
 
     return subnet
 
 
 def ensure_tags(conn, module, subnet, tags, add_only, check_mode):
-    try:
-        cur_tags = subnet['tags']
+    cur_tags = subnet['tags']
 
-        to_delete = dict((k, cur_tags[k]) for k in cur_tags if k not in tags)
-        if to_delete and not add_only and not check_mode:
+    to_delete = dict((k, cur_tags[k]) for k in cur_tags if k not in tags)
+    if to_delete and not add_only and not check_mode:
+        try:
             conn.delete_tags(Resources=[subnet['id']], Tags=ansible_dict_to_boto3_tag_list(to_delete))
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            module.fail_json_aws(e, msg="Couldn't delete tags")
 
-        to_add = dict((k, tags[k]) for k in tags if k not in cur_tags or cur_tags[k] != tags[k])
-        if to_add and not check_mode:
+    to_add = dict((k, tags[k]) for k in tags if k not in cur_tags or cur_tags[k] != tags[k])
+    if to_add and not check_mode:
+        try:
             conn.create_tags(Resources=[subnet['id']], Tags=ansible_dict_to_boto3_tag_list(to_add))
-
-    except botocore.exceptions.ClientError as e:
-        if e.response['Error']['Code'] != "DryRunOperation":
-            module.fail_json(msg=e.message, exception=traceback.format_exc(),
-                             **camel_dict_to_snake_dict(e.response))
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            module.fail_json_aws(e, msg="Couldn't create tags")
 
 
 def ensure_map_public(conn, module, subnet, map_public, check_mode):
     if check_mode:
         return
-
     try:
         conn.modify_subnet_attribute(SubnetId=subnet['id'], MapPublicIpOnLaunch={'Value': map_public})
-    except botocore.exceptions.ClientError as e:
-        module.fail_json(msg=e.message, exception=traceback.format_exc(),
-                         **camel_dict_to_snake_dict(e.response))
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Couldn't modify subnet attribute")
 
 
-def get_matching_subnet(conn, vpc_id, cidr):
+def get_matching_subnet(conn, module, vpc_id, cidr):
     filters = ansible_dict_to_boto3_filter_list({'vpc-id': vpc_id, 'cidr-block': cidr})
-    subnets = get_subnet_info(conn.describe_subnets(Filters=filters))
+    try:
+        subnets = get_subnet_info(conn.describe_subnets(Filters=filters))
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Couldn't get matching subnet")
+
     if len(subnets) > 0:
         return subnets[0]
     else:
@@ -182,7 +193,7 @@ def get_matching_subnet(conn, vpc_id, cidr):
 
 
 def ensure_subnet_present(conn, module, vpc_id, cidr, az, tags, map_public, check_mode):
-    subnet = get_matching_subnet(conn, vpc_id, cidr)
+    subnet = get_matching_subnet(conn, module, vpc_id, cidr)
     changed = False
     if subnet is None:
         if not check_mode:
@@ -211,7 +222,7 @@ def ensure_subnet_present(conn, module, vpc_id, cidr, az, tags, map_public, chec
 
 
 def ensure_subnet_absent(conn, module, vpc_id, cidr, check_mode):
-    subnet = get_matching_subnet(conn, vpc_id, cidr)
+    subnet = get_matching_subnet(conn, module, vpc_id, cidr)
     if subnet is None:
         return {'changed': False}
 
@@ -219,9 +230,8 @@ def ensure_subnet_absent(conn, module, vpc_id, cidr, check_mode):
         if not check_mode:
             conn.delete_subnet(SubnetId=subnet['id'], DryRun=check_mode)
         return {'changed': True}
-    except botocore.exceptions.ClientError as e:
-        module.fail_json(msg=e.message, exception=traceback.format_exc(),
-                         **camel_dict_to_snake_dict(e.response))
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Couldn't delete subnet")
 
 
 def main():
@@ -237,10 +247,7 @@ def main():
         )
     )
 
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
-
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 and botocore are required for this module')
+    module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
 
