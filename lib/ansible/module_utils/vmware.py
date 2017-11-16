@@ -274,6 +274,7 @@ def gather_vm_facts(content, vm):
         'hw_guest_id': vm.summary.guest.guestId,
         'hw_product_uuid': vm.config.uuid,
         'hw_processor_count': vm.config.hardware.numCPU,
+        'hw_cores_per_socket': vm.config.hardware.numCoresPerSocket,
         'hw_memtotal_mb': vm.config.hardware.memoryMB,
         'hw_interfaces': [],
         'guest_tools_status': _get_vm_prop(vm, ('guest', 'toolsRunningStatus')),
