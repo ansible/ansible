@@ -227,51 +227,6 @@
            - 'result.group_id.startswith("sg-")'
 
     # ============================================================
-    - name: test state=present for ipv6 (expected changed=true)
-      ec2_group:
-        name: '{{ec2_group_name}}'
-        description: '{{ec2_group_description}}'
-        <<: *aws_connection_info
-        state: present
-        rules:
-        - proto: "tcp"
-          from_port: 8182
-          to_port: 8182
-          cidr_ipv6: "64:ff9b::/96"
-      register: result
-
-    - name: assert state=present (expected changed=true)
-      assert:
-        that:
-           - 'result.changed'
-           - 'result.group_id.startswith("sg-")'
-
-    # ============================================================
-    - name: test rules_egress state=present for ipv6 (expected changed=true)
-      ec2_group:
-        name: '{{ec2_group_name}}'
-        description: '{{ec2_group_description}}'
-        <<: *aws_connection_info
-        state: present
-        rules:
-        - proto: "tcp"
-          from_port: 8182
-          to_port: 8182
-          cidr_ipv6: "64:ff9b::/96"
-        rules_egress:
-        - proto: "tcp"
-          from_port: 8181
-          to_port: 8181
-          cidr_ipv6: "64:ff9b::/96"
-      register: result
-
-    - name: assert state=present (expected changed=true)
-      assert:
-        that:
-           - 'result.changed'
-           - 'result.group_id.startswith("sg-")'
-
-    # ============================================================
     - name: test state=present for ipv4 (expected changed=true)
       ec2_group:
         name: '{{ec2_group_name}}'
@@ -551,6 +506,59 @@
           - 'result.changed'
           - 'result.vpc_id == vpc_result.vpc.id'
           - 'result.group_id.startswith("sg-")'
+
+    # ============================================================
+    - name: test state=present for ipv6 (expected changed=true)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        vpc_id: '{{ vpc_result.vpc.id }}'
+        state: present
+        rules:
+        - proto: "tcp"
+          from_port: 8182
+          to_port: 8182
+          cidr_ipv6: "64:ff9b::/96"
+      register: result
+
+    - name: assert state=present (expected changed=true)
+      assert:
+        that:
+           - 'result.changed'
+           - 'result.group_id.startswith("sg-")'
+
+    # ============================================================
+    - name: test rules_egress state=present for ipv6 (expected changed=true)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        vpc_id: '{{ vpc_result.vpc.id }}'
+        state: present
+        rules:
+        - proto: "tcp"
+          from_port: 8182
+          to_port: 8182
+          cidr_ipv6: "64:ff9b::/96"
+        rules_egress:
+        - proto: "tcp"
+          from_port: 8181
+          to_port: 8181
+          cidr_ipv6: "64:ff9b::/96"
+      register: result
+
+    - name: assert state=present (expected changed=true)
+      assert:
+        that:
+           - 'result.changed'
+           - 'result.group_id.startswith("sg-")'
 
     # ============================================================
 
