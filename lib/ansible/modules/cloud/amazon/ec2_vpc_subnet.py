@@ -474,7 +474,7 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            az=dict(default='', required=False),
+            az=dict(default=None, required=False),
             cidr=dict(default=None, required=True),
             ipv6_cidr=dict(default='', required=False),
             state=dict(default='present', choices=['present', 'absent']),
