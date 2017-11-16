@@ -88,7 +88,7 @@ def jsonify(data, **kwargs):
         # Old systems using old simplejson module does not support encoding keyword.
         except TypeError:
             try:
-                new_data = json_dict_bytes_to_unicode(data, encoding=encoding, **kwargs)
+                new_data = json_dict_bytes_to_unicode(data, encoding=encoding)
             except UnicodeDecodeError:
                 continue
             return json.dumps(new_data, cls=_SetEncoder, **kwargs)
