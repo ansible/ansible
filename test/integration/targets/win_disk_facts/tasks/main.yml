@@ -1,0 +1,13 @@
+# NOTE: The win_disk_facts module only works on Win2012R2+
+
+- name: Test Windows capabilities
+  raw: Get-Command Get-Disk -ErrorAction SilentlyContinue; return $?
+  failed_when: no
+  register: new_diskfacts
+
+- name: Only run tests when Windows is capable
+  when: new_diskfacts.rc == 0
+  block:
+
+  - name: Test in normal mode
+    include: tests.yml

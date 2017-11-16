@@ -1,0 +1,9 @@
+- name: get disk facts on the target
+  win_disk_facts:
+  register: disks_found
+
+- name: assert disk facts
+  assert:
+    that:
+    - disks_found.changed == false
+    - not disks_found.ansible_facts.ansible_disk.total_disks_found == '0'

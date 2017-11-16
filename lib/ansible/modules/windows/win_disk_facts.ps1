@@ -23,8 +23,8 @@ try {
     Fail-Json -obj $result -message "Failed to search the disks on the target: $($_.Exception.Message)"
 }
 if ($disk) {
-    $diskcount = $disk | Measure-Object | Select-Object  -ExpandProperty Count
-    $result.ansible_facts.ansible_disk.total_disks_found = "$diskcount"
+    [string]$diskcount = $disk | Measure-Object | Select-Object  -ExpandProperty Count
+    $result.ansible_facts.ansible_disk.total_disks_found = $diskcount
     $i = 0
     foreach ($disks in $disk) {
         $result.ansible_facts.ansible_disk["disk_$($i)"] += @{}
