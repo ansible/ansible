@@ -72,7 +72,7 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
-for root, _, filenames in os.walk(args.path):
+for root, dirs, filenames in os.walk(args.path):
     for name in filenames:
         if os.path.splitext(name)[1] not in ('.yml', '.yaml'):
             continue
