@@ -419,8 +419,8 @@
   assert: 
     that:
       - not win_stat_missing.stat.exists
-      - not win_stat_missing|failed
-      - not win_stat_missing|changed
+      - win_stat_missing is not failed
+      - win_stat_missing is not changed
 
 - name: test win_stat module without path argument
   win_stat:
