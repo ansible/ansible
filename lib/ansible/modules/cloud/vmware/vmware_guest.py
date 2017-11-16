@@ -42,7 +42,7 @@ options:
     description:
     - Name of the VM to work with.
     - VM names in vCenter are not necessarily unique, which may be problematic, see C(name_match).
-    required: yes
+    - This is required if uuid is not supplied.
   name_match:
     description:
     - If multiple VMs matching the name, use the first or last found.
@@ -1519,7 +1519,7 @@ def main():
         is_template=dict(type='bool', default=False),
         annotation=dict(type='str', aliases=['notes']),
         customvalues=dict(type='list', default=[]),
-        name=dict(type='str', required=True),
+        name=dict(type='str'),
         name_match=dict(type='str', choices=['first', 'last'], default='first'),
         uuid=dict(type='str'),
         folder=dict(type='str', default='/vm'),
@@ -1543,6 +1543,9 @@ def main():
                            supports_check_mode=True,
                            mutually_exclusive=[
                                ['cluster', 'esxi_hostname'],
+                           ],
+                           required_one_of=[
+                               ['name', 'uuid']
                            ],
                            )
 
