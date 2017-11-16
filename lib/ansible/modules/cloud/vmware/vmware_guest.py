@@ -1580,8 +1580,9 @@ def main():
     # VM doesn't exist
     else:
         if module.params['state'] in ['poweredon', 'poweredoff', 'present', 'restarted', 'suspended']:
-            # Create it ...
             result = pyv.deploy_vm()
+            if result['failed']:
+                module.fail_json(msg='Failed to create a virtual machine : %s' % result['msg'])
 
     if result['failed']:
         module.fail_json(**result)
