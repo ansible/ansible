@@ -628,6 +628,16 @@ Ansible Changes By Release
   * rundeck_project
 
 #### Windows
+- sensu
+  * sensu_client
+  * sensu_silence
+  * sensu_handler
+- vmware
+  * vcenter_license
+  * vcenter_folder
+  * vmware_guest_find
+  * vmware_guest_tools_wait
+- windows
   * win_defrag
   * win_domain_group
   * win_domain_user
