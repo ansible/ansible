@@ -119,9 +119,9 @@ class CallbackModule(CallbackBase):
 
         super(CallbackModule, self).__init__()
 
-    def set_options(self, options):
+    def set_options(self, task_keys=None, var_options=None, direct=None):
 
-        super(CallbackModule, self).set_options(options)
+        super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
 
         self.sort_order = self._plugin_options['sort_order']
         if self.sort_order is not None:
