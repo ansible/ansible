@@ -13,20 +13,30 @@ DOCUMENTATION = '''
         - Uses a <name>.aws_ec2.yaml (or <name>.aws_ec2.yml) YAML configuration file.
     options:
         boto_profile:
-          description: The boto profile to use. If not provided, the environment variables AWS_PROFILE and AWS_DEFAULT_PROFILE
-              will be checked.
+          description: The boto profile to use.
+          env:
+              - name: AWS_PROFILE
+              - name: AWS_DEFAULT_PROFILE
         aws_access_key_id:
-          description: The AWS access key to use. If not provided, the environment variables AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY,
-              and EC2_ACCESS_KEY will be checked. If you have specified a profile, you don't need to provide
+          description: The AWS access key to use. If you have specified a profile, you don't need to provide
               an access key/secret key/session token.
-        aws_secret_key_id:
-          description: The AWS secret key that corresponds to the access key. If not provided, the environment variables
-              AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, and EC2_SECRET_KEY will be checked. If you have specified a profile,
+          env:
+              - name: AWS_ACCESS_KEY_ID
+              - name: AWS_ACCESS_KEY
+              - name: EC2_ACCESS_KEY
+        aws_secret_access_key:
+          description: The AWS secret key that corresponds to the access key. If you have specified a profile,
               you don't need to provide an access key/secret key/session token.
+          env:
+              - name: AWS_SECRET_ACCESS_KEY
+              - name: AWS_SECRET_KEY
+              - name: EC2_SECRET_KEY
         aws_security_token:
-          description: The AWS security token if using temporary access and secret keys. If not provided in the config file, the
-              environment variables AWS_SECURITY_TOKEN, AWS_SESSION_TOKEN, EC2_SECURITY_TOKEN will be checked.
-              If you have specified a profile, you don't need to provide an access key/secret key/session token.
+          description: The AWS security token if using temporary access and secret keys.
+          env:
+              - name: AWS_SECURITY_TOKEN
+              - name: AWS_SESSION_TOKEN
+              - name: EC2_SECURITY_TOKEN
         regions:
           description: A list of regions in which to describe EC2 instances. By default this is all regions except us-gov-west-1
               and cn-north-1.
@@ -392,9 +402,9 @@ class InventoryModule(BaseInventoryPlugin):
                     try:
                         connection = boto3.session.Session(profile_name=self.boto_profile).client('ec2', region)
                     except (botocore.exceptions.ProfileNotFound, botocore.exceptions.PartialCredentialsError) as e:
-                        raise AnsibleError("Insufficient credentials found.")
+                        raise AnsibleError("Insufficient credentials found: %s" % to_native(e))
                 else:
-                    raise AnsibleError("Insufficient credentials found.")
+                    raise AnsibleError("Insufficient credentials found: %s" % to_native(e))
             yield connection, region
 
     def _format_instance_data(self, region, instances):
@@ -515,42 +525,16 @@ class InventoryModule(BaseInventoryPlugin):
             for hostvar in host.instance_data.keys():
                 self.inventory.set_variable(hostname, hostvar, host.instance_data[hostvar])
 
-    def _find_cred(self, possible_env_vars):
-        '''
-            :param possible_env_vars: the possible environment variables to check for a credential
-        '''
-        for env_var in possible_env_vars:
-            if os.environ.get(env_var):
-                return os.environ.get(env_var)
-
     def _set_credentials(self, config_data):
         '''
             :param config_data: contents of the inventory config file
         '''
 
-        self.boto_profile = config_data.get('boto_profile')
-        self.aws_access_key_id = config_data.get('aws_access_key_id')
-        self.aws_secret_access_key = config_data.get('aws_secret_access_key')
-        self.aws_security_token = config_data.get('aws_security_token')
+        self.boto_profile = self._options['boto_profile']
+        self.aws_access_key_id = self._options['aws_access_key_id']
+        self.aws_secret_key_id = self._options['aws_secret_access_key']
+        self.aws_security_token = self._options['aws_security_token']
 
-        if not self.boto_profile:
-            self.boto_profile = self._find_cred(possible_env_vars=('AWS_PROFILE',
-                                                                   'AWS_DEFAULT_PROFILE'))
-
-        if not self.aws_access_key_id:
-            self.aws_access_key_id = self._find_cred(possible_env_vars=('AWS_ACCESS_KEY_ID',
-                                                                        'AWS_ACCESS_KEY',
-                                                                        'EC2_ACCESS_KEY'))
-
-        if not self.aws_secret_access_key:
-            self.aws_secret_access_key = self._find_cred(possible_env_vars=('AWS_SECRET_ACCESS_KEY',
-                                                                            'AWS_SECRET_KEY',
-                                                                            'EC2_SECRET_KEY'))
-
-        if not self.aws_security_token:
-            self.aws_security_token = self._find_cred(possible_env_vars=('AWS_SECURITY_TOKEN',
-                                                                         'AWS_SESSION_TOKEN',
-                                                                         'EC2_SECURITY_TOKEN'))
         if not self.boto_profile and not (self.aws_access_key_id and self.aws_secret_access_key):
             raise AnsibleError("Insufficient boto credentials found. Please provide them in your "
                                "inventory configuration file or set them as environment variables.")
@@ -644,10 +628,10 @@ class InventoryModule(BaseInventoryPlugin):
     def parse(self, inventory, loader, path, cache=True):
 
         super(InventoryModule, self).parse(inventory, loader, path)
-
         config_data = self._validate_config(loader, path)
+        self.set_options(direct=config_data)
 
-        self._set_cache(inventory, path, cache)
+        # self._set_cache(inventory, path, cache)
         self._set_credentials(config_data)
 
         # get user specifications
