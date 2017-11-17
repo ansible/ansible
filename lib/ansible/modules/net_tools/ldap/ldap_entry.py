@@ -106,32 +106,24 @@ RETURN = """
 
 import traceback
 
-try:
-    import ldap
-    import ldap.modlist
-    import ldap.sasl
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_native
+from ansible.module_utils.ldap import LdapGeneric, gen_specs, HAS_LDAP
 
-    HAS_LDAP = True
+try:
+    import ldap.modlist
+    # HAS_LDAP imported from ansible.module_utils.ldap
 except ImportError:
     HAS_LDAP = False
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ldap import gen_specs
-from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_native
 
-
-class LdapEntry(object):
+class LdapEntry(LdapGeneric):
     def __init__(self, module):
+        LdapGeneric.__init__(self, module)
+
         # Shortcuts
-        self.module = module
-        self.bind_dn = self.module.params['bind_dn']
-        self.bind_pw = self.module.params['bind_pw']
-        self.dn = self.module.params['dn']
-        self.server_uri = self.module.params['server_uri']
-        self.start_tls = self.module.params['start_tls']
         self.state = self.module.params['state']
-        self.verify_cert = self.module.params['validate_certs']
 
         # Add the objectClass into the list of attributes
         self.module.params['attributes']['objectClass'] = (
@@ -140,9 +132,6 @@ class LdapEntry(object):
         # Load attributes
         if self.state == 'present':
             self.attrs = self._load_attrs()
-
-        # Establish connection
-        self.connection = self._connect_to_ldap()
 
     def _load_attrs(self):
         """ Turn attribute's value to array. """
@@ -193,31 +182,6 @@ class LdapEntry(object):
             is_present = True
 
         return is_present
-
-    def _connect_to_ldap(self):
-        if not self.verify_cert:
-            ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
-
-        connection = ldap.initialize(self.server_uri)
-
-        if self.start_tls:
-            try:
-                connection.start_tls_s()
-            except ldap.LDAPError as e:
-                self.module.fail_json(msg="Cannot start TLS.", details=to_native(e),
-                                      exception=traceback.format_exc())
-
-        try:
-            if self.bind_dn is not None:
-                connection.simple_bind_s(self.bind_dn, self.bind_pw)
-            else:
-                connection.sasl_interactive_bind_s('', ldap.sasl.external())
-        except ldap.LDAPError as e:
-            self.module.fail_json(
-                msg="Cannot bind to the server.", details=to_native(e),
-                exception=traceback.format_exc())
-
-        return connection
 
 
 def main():
