@@ -370,7 +370,7 @@ class CloudflareAPI(object):
 
         if content:
             try:
-                result = json.loads(to_text(content, errors='surrogate_then_strict'))
+                result = json.loads(to_text(content, errors='surrogate_or_strict'))
             except (json.JSONDecodeError, UnicodeError) as e:
                 error_msg += "; Failed to parse API response with error {0}: {1}".format(to_native(e), content)
 
