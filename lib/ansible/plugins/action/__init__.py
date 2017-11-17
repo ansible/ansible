@@ -478,7 +478,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         module_args = dict(
             path=path,
             follow=follow,
-            get_md5=False,
             get_checksum=checksum,
             checksum_algo='sha1',
         )

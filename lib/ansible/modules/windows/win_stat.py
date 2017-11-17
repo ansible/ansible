@@ -42,28 +42,29 @@ options:
               and 2.2 this is no longer an MD5, but a SHA1 instead. As of Ansible
               2.3 this is back to an MD5. Will return None if host is unable to
               use specified algorithm.
-            - This option is deprecated in Ansible 2.3 and is replaced with
-              C(checksum_algorithm=md5).
-            - This option will be removed in Ansible 2.7
-        required: no
-        default: True
+            - The default of this option changed from C(yes) to C(no) in Ansible 2.5
+              and will be removed altogether in Ansible 2.9.
+            - Use C(get_checksum=true) with C(checksum_algorithm=md5) to return an
+              md5 hash under the C(checksum) return value.
+        type: bool
+        default: 'no'
     get_checksum:
         description:
             - Whether to return a checksum of the file (default sha1)
-        required: no
-        default: True
+        type: bool
+        default: 'yes'
         version_added: "2.1"
     checksum_algorithm:
         description:
             - Algorithm to determine checksum of file. Will throw an error if
               the host is unable to use specified algorithm.
-        required: no
         default: sha1
         choices: ['md5', 'sha1', 'sha256', 'sha384', 'sha512']
         version_added: "2.3"
 notes:
      - For non-Windows targets, use the M(stat) module instead.
-author: "Chris Church (@cchurch)"
+author:
+- Chris Church (@cchurch)
 '''
 
 EXAMPLES = r'''
@@ -200,8 +201,8 @@ stat:
             type: string
             sample: C:\temp
         md5:
-            description: The MD5 checksum of a file (Between Ansible 1.9 and 2.2 this was returned as a SHA1 hash), will be removed in 2.7
-            returned: success, path exist, path is a file, get_md5 == True, md5 is supported
+            description: The MD5 checksum of a file (Between Ansible 1.9 and 2.2 this was returned as a SHA1 hash), will be removed in 2.9
+            returned: success, path exist, path is a file, get_md5 == True
             type: string
             sample: 09cb79e8fc7453c84a07f644e441fd81623b7f98
         owner:
