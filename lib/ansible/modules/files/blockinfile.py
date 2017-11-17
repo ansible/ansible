@@ -79,13 +79,13 @@ options:
     type: bool
     default: 'no'
   marker_begin:
-    description: 
+    description:
       - This will be inserted at {mark} in the opening ansible block marker.
     default: 'BEGIN'
     version_added: "2.5"
   marker_end:
     required: false
-    description: 
+    description:
       - This will be inserted at {mark} in the closing ansible block marker.
     default: 'END'
     version_added: "2.5"
@@ -204,7 +204,7 @@ def main():
             backup=dict(type='bool', default=False),
             validate=dict(type='str'),
             marker_begin=dict(type='str', default='BEGIN'),
-            marker_end = dict(type='str', default='END'),
+            marker_end=dict(type='str', default='END'),
         ),
         mutually_exclusive=[['insertbefore', 'insertafter']],
         add_file_common_args=True,
