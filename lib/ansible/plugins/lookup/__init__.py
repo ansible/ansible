@@ -34,6 +34,7 @@ __all__ = ['LookupBase']
 
 
 class LookupBase(AnsiblePlugin):
+
     def __init__(self, loader=None, templar=None, **kwargs):
 
         super(LookupBase, self).__init__()
@@ -43,7 +44,6 @@ class LookupBase(AnsiblePlugin):
 
         # Backwards compat: self._display isn't really needed, just import the global display and use that.
         self._display = display
-
 
     def get_basedir(self, variables):
         if 'role_path' in variables:
