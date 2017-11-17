@@ -49,6 +49,15 @@ except ImportError:
 
 class StrategyModule(StrategyBase):
 
+    def _filter_notified_hosts(self, notified_hosts):
+        '''
+        Filter notified hosts accordingly to strategy
+        '''
+
+        # We act only on hosts that are ready to flush handlers
+        return [host for host in notified_hosts
+                if host in self._flushed_hosts and self._flushed_hosts[host]]
+
     def run(self, iterator, play_context):
         '''
         The "free" strategy is a bit more complex, in that it allows tasks to
