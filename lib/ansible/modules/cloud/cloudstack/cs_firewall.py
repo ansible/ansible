@@ -1,22 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# (c) 2015, René Moser <mail@renemoser.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2015, René Moser <mail@renemoser.net>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
@@ -36,106 +23,86 @@ options:
     description:
       - Public IP address the ingress rule is assigned to.
       - Required if C(type=ingress).
-    required: false
-    default: null
   network:
     description:
       - Network the egress rule is related to.
       - Required if C(type=egress).
-    required: false
-    default: null
   state:
     description:
       - State of the firewall rule.
-    required: false
-    default: 'present'
-    choices: [ 'present', 'absent' ]
+    default: present
+    choices: [ present, absent ]
   type:
     description:
       - Type of the firewall rule.
-    required: false
-    default: 'ingress'
-    choices: [ 'ingress', 'egress' ]
+    default: ingress
+    choices: [ ingress, egress ]
   protocol:
     description:
       - Protocol of the firewall rule.
-      - C(all) is only available if C(type=egress)
-    required: false
-    default: 'tcp'
-    choices: [ 'tcp', 'udp', 'icmp', 'all' ]
-  cidr:
+      - C(all) is only available if C(type=egress).
+    default: tcp
+    choices: [ tcp, udp, icmp, all ]
+  cidrs:
     description:
-      - CIDR (full notation) to be used for firewall rule.
-    required: false
-    default: '0.0.0.0/0'
+      - List of CIDRs (full notation) to be used for firewall rule.
+      - Since version 2.5, it is a list of CIDR.
+    default: 0.0.0.0/0
+    aliases: [ cidr ]
   start_port:
     description:
-      - Start port for this rule. Considered if C(protocol=tcp) or C(protocol=udp).
-    required: false
-    default: null
-    aliases: [ 'port' ]
+      - Start port for this rule.
+      - Considered if C(protocol=tcp) or C(protocol=udp).
+    aliases: [ port ]
   end_port:
     description:
-      - End port for this rule. Considered if C(protocol=tcp) or C(protocol=udp). If not specified, equal C(start_port).
-    required: false
-    default: null
+      - End port for this rule. Considered if C(protocol=tcp) or C(protocol=udp).
+      - If not specified, equal C(start_port).
   icmp_type:
     description:
-      - Type of the icmp message being sent. Considered if C(protocol=icmp).
-    required: false
-    default: null
+      - Type of the icmp message being sent.
+      - Considered if C(protocol=icmp).
   icmp_code:
     description:
-      - Error code for this icmp message. Considered if C(protocol=icmp).
-    required: false
-    default: null
+      - Error code for this icmp message.
+      - Considered if C(protocol=icmp).
   domain:
     description:
       - Domain the firewall rule is related to.
-    required: false
-    default: null
   account:
     description:
       - Account the firewall rule is related to.
-    required: false
-    default: null
   project:
     description:
       - Name of the project the firewall rule is related to.
-    required: false
-    default: null
   zone:
     description:
       - Name of the zone in which the virtual machine is in.
       - If not set, default zone is used.
-    required: false
-    default: null
   poll_async:
     description:
       - Poll async jobs until job has finished.
-    required: false
     default: true
+    type: bool
   tags:
     description:
       - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).
       - "To delete all tags, set a empty list e.g. C(tags: [])."
-    required: false
-    default: null
-    aliases: [ 'tag' ]
+    aliases: [ tag ]
     version_added: "2.4"
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-# Allow inbound port 80/tcp from 1.2.3.4 to 4.3.2.1
-- local_action:
+- name: Allow inbound port 80/tcp from 1.2.3.4 to 4.3.2.1
+  local_action:
     module: cs_firewall
     ip_address: 4.3.2.1
     port: 80
     cidr: 1.2.3.4/32
 
-# Allow inbound tcp/udp port 53 to 4.3.2.1
-- local_action:
+- name: Allow inbound tcp/udp port 53 to 4.3.2.1
+  local_action:
     module: cs_firewall
     ip_address: 4.3.2.1
     port: 53
@@ -144,8 +111,8 @@ EXAMPLES = '''
   - tcp
   - udp
 
-# Ensure firewall rule is removed
-- local_action:
+- name: Ensure firewall rule is removed
+  local_action:
     module: cs_firewall
     ip_address: 4.3.2.1
     start_port: 8000
@@ -153,15 +120,15 @@ EXAMPLES = '''
     cidr: 17.0.0.0/8
     state: absent
 
-# Allow all outbound traffic
-- local_action:
+- name: Allow all outbound traffic
+  local_action:
     module: cs_firewall
     network: my_network
     type: egress
     protocol: all
 
-# Allow only HTTP outbound traffic for an IP
-- local_action:
+- name: Allow only HTTP outbound traffic for an IP
+  local_action:
     module: cs_firewall
     network: my_network
     type: egress
@@ -187,10 +154,16 @@ type:
   type: string
   sample: ingress
 cidr:
-  description: CIDR of the rule.
+  description: CIDR string of the rule.
   returned: success
   type: string
   sample: 0.0.0.0/0
+cidrs:
+  description: CIDR list of the rule.
+  returned: success
+  type: list
+  sample: [ '0.0.0.0/0' ]
+  version_added: "2.5"
 protocol:
   description: Protocol of the rule.
   returned: success
@@ -249,7 +222,7 @@ class AnsibleCloudStackFirewall(AnsibleCloudStack):
 
     def get_firewall_rule(self):
         if not self.firewall_rule:
-            cidr = self.module.params.get('cidr')
+            cidrs = self.module.params.get('cidrs')
             protocol = self.module.params.get('protocol')
             start_port = self.module.params.get('start_port')
             end_port = self.get_or_fallback('end_port', 'start_port')
@@ -284,7 +257,7 @@ class AnsibleCloudStackFirewall(AnsibleCloudStack):
 
             if firewall_rules and 'firewallrule' in firewall_rules:
                 for rule in firewall_rules['firewallrule']:
-                    type_match = self._type_cidr_match(rule, cidr)
+                    type_match = self._type_cidrs_match(rule, cidrs)
 
                     protocol_match = (
                         self._tcp_udp_match(rule, protocol, start_port, end_port) or
@@ -320,8 +293,8 @@ class AnsibleCloudStackFirewall(AnsibleCloudStack):
             icmp_type == rule['icmptype']
         )
 
-    def _type_cidr_match(self, rule, cidr):
-        return cidr == rule['cidrlist']
+    def _type_cidrs_match(self, rule, cidrs):
+        return ",".join(cidrs) == rule['cidrlist']
 
     def create_firewall_rule(self):
         firewall_rule = self.get_firewall_rule()
@@ -329,7 +302,7 @@ class AnsibleCloudStackFirewall(AnsibleCloudStack):
             self.result['changed'] = True
 
             args = {
-                'cidrlist': self.module.params.get('cidr'),
+                'cidrlist': self.module.params.get('cidrs'),
                 'protocol': self.module.params.get('protocol'),
                 'startport': self.module.params.get('start_port'),
                 'endport': self.get_or_fallback('end_port', 'start_port'),
@@ -383,6 +356,8 @@ class AnsibleCloudStackFirewall(AnsibleCloudStack):
             self.result['type'] = self.module.params.get('type')
             if self.result['type'] == 'egress':
                 self.result['network'] = self.get_network(key='displaytext')
+            if 'cidrlist' in firewall_rule:
+                self.result['cidrs'] = firewall_rule['cidrlist'].split(',') or [firewall_rule['cidrlist']]
         return self.result
 
 
@@ -391,7 +366,7 @@ def main():
     argument_spec.update(dict(
         ip_address=dict(),
         network=dict(),
-        cidr=dict(default='0.0.0.0/0'),
+        cidrs=dict(type='list', default='0.0.0.0/0', aliases=['cidr']),
         protocol=dict(choices=['tcp', 'udp', 'icmp', 'all'], default='tcp'),
         type=dict(choices=['ingress', 'egress'], default='ingress'),
         icmp_type=dict(type='int'),
