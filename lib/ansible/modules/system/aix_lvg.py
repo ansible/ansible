@@ -229,7 +229,7 @@ def create_extend_vg(module, vg, pvs, pp_size, vg_type, force, vg_validation):
 
         if not module.check_mode:
             extendvg_cmd = module.get_bin_path('extendvg', True)
-            rc, _, err = module.run_command(
+            rc, output, err = module.run_command(
                 "%s %s %s" % (extendvg_cmd, vg, ' '.join(pvs)))
             if rc == 0:
                 changed = True
@@ -252,7 +252,7 @@ def create_extend_vg(module, vg, pvs, pp_size, vg_type, force, vg_validation):
 
         if not module.check_mode:
             mkvg_cmd = module.get_bin_path('mkvg', True)
-            rc, _, err = module.run_command(
+            rc, output, err = module.run_command(
                 "%s %s %s %s -y %s %s" % (
                     mkvg_cmd, vg_opt[vg_type], pp_size, force_opt[force],
                     vg, ' '.join(pvs)))
@@ -311,7 +311,7 @@ def reduce_vg(module, vg, pvs, vg_validation):
 
         if not module.check_mode:
             reducevg_cmd = module.get_bin_path('reducevg', True)
-            rc, _, err = module.run_command(
+            rc, output, err = module.run_command(
                 "%s -df %s %s" % (reducevg_cmd, vg, ' '.join(pvs_to_remove)))
 
             if rc == 0:
