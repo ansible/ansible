@@ -57,8 +57,11 @@ EXAMPLES = '''
     - name: "a value from a locally running etcd"
       debug: msg={{ lookup('etcd', 'foo/bar') }}
 
-    - name: "a values from a folder on a locally running etcd"
-      debug: msg={{ lookup('etcd', 'foo') }}
+    - name: "values from multiple folders on a locally running etcd"
+      debug: msg={{ lookup('etcd', 'foo', 'bar', 'baz') }}
+
+    - name: "since Ansible 2.5 you can set server options inline"
+      debug: msg="{{ lookup('etcd', 'foo', version='v2', url='http://192.168.0.27:4001') }}"
 '''
 
 RETURN = '''
