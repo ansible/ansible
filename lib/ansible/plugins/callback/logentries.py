@@ -111,7 +111,6 @@ try:
 except ImportError:
     HAS_FLATDICT = False
 
-from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_text, to_native
 from ansible.plugins.callback import CallbackBase
 
@@ -249,9 +248,9 @@ class CallbackModule(CallbackBase):
         # self.set_options({'api': 'data.logentries.com', 'port': 80,
         # 'tls_port': 10000, 'use_tls': True, 'flatten': False, 'token': 'ae693734-4c5b-4a44-8814-1d2feb5c8241'})
 
-    def set_options(self, options):
+    def set_options(self, task_keys=None, var_options=None, direct=None):
 
-        super(CallbackModule, self).set_options(options)
+        super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
 
         # get options
         try:
