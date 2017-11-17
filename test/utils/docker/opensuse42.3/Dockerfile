@@ -1,6 +1,6 @@
 FROM opensuse:42.3
 
-RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
+RUN zypper --non-interactive --gpg-auto-import-keys refresh --services --force && \
     zypper --non-interactive install --force systemd-sysvinit && \
     zypper --non-interactive install --auto-agree-with-licenses --no-recommends \
     acl \
@@ -47,7 +47,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     which \
     zip \
     && \
-    zypper clean
+    zypper clean --all
 
 # systemd path differs from rhel
 ENV LIBSYSTEMD=/usr/lib/systemd/system
