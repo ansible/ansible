@@ -42,33 +42,10 @@ author:
 requirements:
   - python-ldap
 options:
-  bind_dn:
-    description:
-      - A DN to bind with. If this is omitted, we'll try a SASL bind with
-        the EXTERNAL mechanism. If this is blank, we'll use an anonymous
-        bind.
-  bind_pw:
-    description:
-      - The password to use with I(bind_dn).
-  dn:
-    description:
-      - The DN of the entry to modify.
-    required: true
   name:
     description:
       - The name of the attribute to modify.
     required: true
-  server_uri:
-    description:
-      - A URI to the LDAP server. The default value lets the underlying
-        LDAP client library look for a UNIX domain socket in its default
-        location.
-    default: ldapi:///
-  start_tls:
-    description:
-      - If true, we'll use the START_TLS LDAP extension.
-    type: bool
-    default: 'no'
   state:
     description:
       - The state of the attribute values. If C(present), all given
@@ -85,13 +62,7 @@ options:
         strings. The complex argument format is required in order to pass
         a list of strings (see examples).
     required: true
-  validate_certs:
-    description:
-      - If C(no), SSL certificates will not be validated. This should only be
-        used on sites using self-signed certificates.
-    type: bool
-    default: 'yes'
-    version_added: "2.4"
+extends_documentation_fragment: ldap.documentation
 """
 
 
@@ -188,6 +159,7 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
+from ansible.module_utils.ldap import gen_specs
 
 
 class LdapAttr(object):
@@ -294,20 +266,14 @@ class LdapAttr(object):
 
 def main():
     module = AnsibleModule(
-        argument_spec={
-            'bind_dn': dict(default=None),
-            'bind_pw': dict(default='', no_log=True),
-            'dn': dict(required=True),
-            'name': dict(required=True),
-            'params': dict(type='dict'),
-            'server_uri': dict(default='ldapi:///'),
-            'start_tls': dict(default=False, type='bool'),
-            'state': dict(
+        argument_spec=gen_specs(
+            name=dict(required=True),
+            params=dict(type='dict'),
+            state=dict(
                 default='present',
                 choices=['present', 'absent', 'exact']),
-            'values': dict(required=True, type='raw'),
-            'validate_certs': dict(default=True, type='bool'),
-        },
+            values=dict(required=True, type='raw'),
+        ),
         supports_check_mode=True,
     )
 

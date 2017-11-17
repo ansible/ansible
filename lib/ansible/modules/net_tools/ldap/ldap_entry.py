@@ -36,18 +36,6 @@ author:
 requirements:
   - python-ldap
 options:
-  bind_dn:
-    description:
-      - A DN to bind with. If this is omitted, we'll try a SASL bind with
-        the EXTERNAL mechanism. If this is blank, we'll use an anonymous
-        bind.
-  bind_pw:
-    description:
-      - The password to use with I(bind_dn).
-  dn:
-    description:
-      - The DN of the entry to add or remove.
-    required: true
   attributes:
     description:
       - If I(state=present), attributes necessary to create an entry. Existing
@@ -63,29 +51,12 @@ options:
       - List of options which allows to overwrite any of the task or the
         I(attributes) options. To remove an option, set the value of the option
         to C(null).
-  server_uri:
-    description:
-      - A URI to the LDAP server. The default value lets the underlying
-        LDAP client library look for a UNIX domain socket in its default
-        location.
-    default: ldapi:///
-  start_tls:
-    description:
-      - If true, we'll use the START_TLS LDAP extension.
-    type: bool
-    default: 'no'
   state:
     description:
       - The target state of the entry.
     choices: [present, absent]
     default: present
-  validate_certs:
-    description:
-      - If C(no), SSL certificates will not be validated. This should only be
-        used on sites using self-signed certificates.
-    type: bool
-    default: 'yes'
-    version_added: "2.4"
+extends_documentation_fragment: ldap.documentation
 """
 
 
@@ -145,6 +116,7 @@ except ImportError:
     HAS_LDAP = False
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ldap import gen_specs
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native
 
@@ -250,18 +222,12 @@ class LdapEntry(object):
 
 def main():
     module = AnsibleModule(
-        argument_spec={
-            'attributes': dict(default={}, type='dict'),
-            'bind_dn': dict(),
-            'bind_pw': dict(default='', no_log=True),
-            'dn': dict(required=True),
-            'objectClass': dict(type='raw'),
-            'params': dict(type='dict'),
-            'server_uri': dict(default='ldapi:///'),
-            'start_tls': dict(default=False, type='bool'),
-            'state': dict(default='present', choices=['present', 'absent']),
-            'validate_certs': dict(default=True, type='bool'),
-        },
+        argument_spec=gen_specs(
+            attributes=dict(default={}, type='dict'),
+            objectClass=dict(type='raw'),
+            params=dict(type='dict'),
+            state=dict(default='present', choices=['present', 'absent']),
+        ),
         supports_check_mode=True,
     )
 
