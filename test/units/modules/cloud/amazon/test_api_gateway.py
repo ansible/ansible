@@ -23,20 +23,13 @@ from __future__ import (absolute_import, division, print_function)
 from nose.plugins.skip import SkipTest
 import pytest
 import sys
-import json
-from ansible.module_utils._text import to_bytes
-from ansible.module_utils import basic
 from ansible.module_utils.ec2 import HAS_BOTO3
+from units.modules.utils import set_module_args
 
 if not HAS_BOTO3:
     raise SkipTest("test_api_gateway.py requires the `boto3` and `botocore` modules")
 
 import ansible.modules.cloud.amazon.aws_api_gateway as agw
-
-
-def set_module_args(args):
-    args = json.dumps({'ANSIBLE_MODULE_ARGS': args})
-    basic._ANSIBLE_ARGS = to_bytes(args)
 
 
 exit_return_dict = {}

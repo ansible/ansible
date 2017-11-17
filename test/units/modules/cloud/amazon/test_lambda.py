@@ -20,12 +20,11 @@
 from __future__ import (absolute_import, division, print_function)
 
 import copy
-import json
 import pytest
 
 from ansible.compat.tests.mock import MagicMock, Mock, patch
 from ansible.module_utils import basic
-from ansible.module_utils._text import to_bytes
+from units.modules.utils import set_module_args
 
 
 boto3 = pytest.importorskip("boto3")
@@ -33,11 +32,6 @@ boto3 = pytest.importorskip("boto3")
 # lambda is a keyword so we have to hack this.
 _temp = __import__("ansible.modules.cloud.amazon.lambda")
 lda = getattr(_temp.modules.cloud.amazon, "lambda")
-
-
-def set_module_args(args):
-    args = json.dumps({'ANSIBLE_MODULE_ARGS': args})
-    basic._ANSIBLE_ARGS = to_bytes(args)
 
 
 base_lambda_config = {

@@ -19,11 +19,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.nxos import nxos_hsrp
-from .nxos_module import TestNxosModule, load_fixture, set_module_args
+from .nxos_module import TestNxosModule, set_module_args
 
 
 class TestNxosHsrpModule(TestNxosModule):
@@ -31,6 +29,7 @@ class TestNxosHsrpModule(TestNxosModule):
     module = nxos_hsrp
 
     def setUp(self):
+        super(TestNxosHsrpModule, self).setUp()
         self.mock_run_commands = patch('ansible.modules.network.nxos.nxos_hsrp.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
@@ -38,6 +37,7 @@ class TestNxosHsrpModule(TestNxosModule):
         self.load_config = self.mock_load_config.start()
 
     def tearDown(self):
+        super(TestNxosHsrpModule, self).tearDown()
         self.mock_run_commands.stop()
         self.mock_load_config.stop()
 

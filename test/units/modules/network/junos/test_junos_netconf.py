@@ -21,7 +21,8 @@ __metaclass__ = type
 
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.junos import junos_netconf
-from .junos_module import TestJunosModule, set_module_args
+from units.modules.utils import set_module_args
+from .junos_module import TestJunosModule
 
 
 class TestJunosCommandModule(TestJunosModule):
@@ -29,6 +30,8 @@ class TestJunosCommandModule(TestJunosModule):
     module = junos_netconf
 
     def setUp(self):
+        super(TestJunosCommandModule, self).setUp()
+
         self.mock_exec_command = patch('ansible.modules.network.junos.junos_netconf.exec_command')
         self.exec_command = self.mock_exec_command.start()
 
@@ -42,6 +45,7 @@ class TestJunosCommandModule(TestJunosModule):
         self.commit_configuration = self.mock_commit_configuration.start()
 
     def tearDown(self):
+        super(TestJunosCommandModule, self).tearDown()
         self.mock_exec_command.stop()
         self.mock_lock_configuration.stop()
         self.mock_unlock_configuration.stop()

@@ -23,7 +23,8 @@ import json
 
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.vyos import vyos_command
-from .vyos_module import TestVyosModule, load_fixture, set_module_args
+from units.modules.utils import set_module_args
+from .vyos_module import TestVyosModule, load_fixture
 
 
 class TestVyosCommandModule(TestVyosModule):
@@ -31,10 +32,12 @@ class TestVyosCommandModule(TestVyosModule):
     module = vyos_command
 
     def setUp(self):
+        super(TestVyosCommandModule, self).setUp()
         self.mock_run_commands = patch('ansible.modules.network.vyos.vyos_command.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
     def tearDown(self):
+        super(TestVyosCommandModule, self).tearDown()
         self.mock_run_commands.stop()
 
     def load_fixtures(self, commands=None):

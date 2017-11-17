@@ -16,10 +16,9 @@ if sys.version_info < (2, 7):
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, mock_open, Mock
-from ansible.module_utils import basic
-from ansible.module_utils._text import to_bytes
 from ansible.module_utils.f5_utils import AnsibleF5Client
 from ansible.module_utils.six import PY3
+from units.modules.utils import set_module_args
 
 try:
     from library.bigip_irule import Parameters
@@ -41,11 +40,6 @@ except ImportError:
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}
-
-
-def set_module_args(args):
-    args = json.dumps({'ANSIBLE_MODULE_ARGS': args})
-    basic._ANSIBLE_ARGS = to_bytes(args)
 
 
 def load_fixture(name):

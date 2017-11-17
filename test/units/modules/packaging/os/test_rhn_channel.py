@@ -1,28 +1,18 @@
 import json
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch
-from ansible.module_utils import basic
-from ansible.module_utils.six.moves import xmlrpc_client
-from ansible.module_utils._text import to_bytes
 from ansible.modules.packaging.os import rhn_channel
 
-from ..utils import (set_module_args, AnsibleExitJson, AnsibleFailJson,
-                     exit_json, fail_json, get_method_name, mock_request)
+from units.modules.packaging.utils import mock_request
+from units.modules.utils import set_module_args, AnsibleExitJson, AnsibleFailJson, ModuleTestCase
 
 
-class TestRhnChannel(unittest.TestCase):
+class TestRhnChannel(ModuleTestCase):
 
     def setUp(self):
+        super(TestRhnChannel, self).setUp()
+
         self.module = rhn_channel
         self.module.HAS_UP2DATE_CLIENT = True
-
-        self.mock_exit_fail = patch.multiple(basic.AnsibleModule, exit_json=exit_json, fail_json=fail_json)
-        self.mock_exit_fail.start()
-        self.addCleanup(self.mock_exit_fail.stop)
-
-    def tearDown(self):
-        pass
 
     def test_without_required_parameters(self):
         """Failure must occurs when all parameters are missing"""

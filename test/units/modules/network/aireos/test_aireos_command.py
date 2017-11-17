@@ -23,7 +23,8 @@ import json
 
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.aireos import aireos_command
-from .aireos_module import TestCiscoWlcModule, load_fixture, set_module_args
+from units.modules.utils import set_module_args
+from .aireos_module import TestCiscoWlcModule, load_fixture
 
 
 class TestCiscoWlcCommandModule(TestCiscoWlcModule):
@@ -31,10 +32,12 @@ class TestCiscoWlcCommandModule(TestCiscoWlcModule):
     module = aireos_command
 
     def setUp(self):
+        super(TestCiscoWlcCommandModule, self).setUp()
         self.mock_run_commands = patch('ansible.modules.network.aireos.aireos_command.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
     def tearDown(self):
+        super(TestCiscoWlcCommandModule, self).tearDown()
         self.mock_run_commands.stop()
 
     def load_fixtures(self, commands=None):
