@@ -1,0 +1,13 @@
+test_iis_site_name: default web site
+
+http_binding:
+  protocol: http
+  port: 80
+  ip: '*'
+  host_header: test.com
+
+https_binding:
+  protocol: https
+  port: 443
+  ip: '*'
+  host_header: test.com

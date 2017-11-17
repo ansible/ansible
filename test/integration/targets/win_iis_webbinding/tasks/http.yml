@@ -1,0 +1,339 @@
+#cm add
+#changed true, check nothing present
+- name: CM add http binding no header
+  win_iis_webbinding:
+    name: "{{ test_iis_site_name }}"
+    state: present
+    protocol: http
+    ip: '*'
+    port: 80
+  register: http_no_header
+  check_mode: yes
+
+- name: CM get binding info no header
+  test_win__webbindings:
+    name: "{{ test_iis_site_name }}"
+    protocol: http
+    ip: '*'
+    port: 80
+  register: get_http_no_header
+
+- name: CM add http binding with header
+  win_iis_webbinding:
+    name: "{{ test_iis_site_name }}"
+    state: present
+    host_header: test.com
+    protocol: http
+    ip: '*'
+    port: 80
+  register: http_header
+  check_mode: yes
+
+- name: CM get binding info header
+  test_win__webbindings:
+    name: "{{ test_iis_site_name }}"
+    host_header: test.com
+    protocol: http
+    ip: '*'
+    port: 80
+  register: get_http_header
+
+- name: CM assert changed, but not added
+  assert:
+    that:
+    - http_no_header | changed
+    - http_no_header.added is not defined and get_http_no_header.binding is not defined
+    - http_header | changed
+    - http_header.added is not defined and get_http_header.binding is not defined
+
+#add
+#changed true, new bindings present
+- name: add http binding no header
+  win_iis_webbinding:
+    name: "{{ test_iis_site_name }}"
+    state: present
+    protocol: http
+    ip: '*'
+    port: 80
+  register: http_no_header
+
+- name: get binding info no header
+  test_win__webbindings:
+    name: "{{ test_iis_site_name }}"
+    protocol: http
+    ip: '*'
+    port: 80
+  register: get_http_no_header
+
+- name: add http binding with header
+  win_iis_webbinding:
+    name: "{{ test_iis_site_name }}"
+    state: present
+    host_header: test.com
+    protocol: http
+    ip: '*'
+    port: 80
+  register: http_header
+
+- name: get binding info header
+  test_win__webbindings:
+    name: "{{ test_iis_site_name }}"
+    host_header: test.com
+    protocol: http
+    ip: '*'
+    port: 80
+  register: get_http_header
+
+- name: assert changed and added
+  assert:
+    that:
+    - http_no_header | changed
+    - http_no_header.added is defined
+    - http_no_header.added.ip == '*'
+    - http_no_header.added.port == '80'
+    - http_no_header.added.protocol == 'http'
+    - http_header | changed
+    - http_header.added is defined
+    - http_header.added.ip == '*'
+    - http_header.added.port == '80'
+    - http_header.added.protocol == 'http'
+    - http_header.added.host_header == 'test.com'
+
+#add idem
+#changed false
+- name: idem add http binding no header
+  win_iis_webbinding:
+    name: "{{ test_iis_site_name }}"
+    state: present
+    protocol: http
+    ip: '*'
+    port: 80
+  register: http_no_header
+
+- name: idem add http binding with header
+  win_iis_webbinding:
+    name: "{{ test_iis_site_name }}"
+    state: present
+    host_header: test.com
+    protocol: http
+    ip: '*'
+    port: 80
+  register: http_header
+
+- name: idem assert not changed
+  assert:
+    that:
+    - not http_no_header | changed
+    - not http_header | changed
+
+#modify
+#can't test modify for http, it will add a new binding instead since
+#there's no way to match existing bindings against the new parameters
+
+#cm remove
+#changed true, bindings still present
+- name: cm remove http binding no header
+  win_iis_webbinding:
+    name: "{{ test_iis_site_name }}"
+    state: absent
+    protocol: http
+    ip: '*'
+    port: 80
+  register: http_no_header
+  check_mode: yes
+
+- name: get binding info no header
+  test_win__webbindings:
+    name: "{{ test_iis_site_name }}"
+    protocol: http
+    ip: '*'
+    port: 80
+  register: get_http_no_header
+
+- name: cm remove http binding with header
+  win_iis_webbinding:
+    name: "{{ test_iis_site_name }}"
+    state: absent
+    host_header: test.com
+    protocol: http
+    ip: '*'
+    port: 80
+  register: http_header
+  check_mode: yes
+
+- name: get binding info header
+  test_win__webbindings:
+    name: "{{ test_iis_site_name }}"
+    host_header: test.com
+    protocol: http
+    ip: '*'
+    port: 80
+  register: get_http_header
+
+- name: cm remove assert changed, but still present
+  assert:
+    that:
+    - http_no_header | changed
+    - http_no_header.removed is defined
+    - http_no_header.removed.ip == '*'
+    - http_no_header.removed.port == '80'
+    - http_no_header.removed.protocol == 'http'
+    - get_http_no_header.binding is defined
+    - get_http_no_header.binding.ip == '*'
+    - get_http_no_header.binding.port == '80'
+    - get_http_no_header.binding.protocol == 'http'
+    - http_header | changed
+    - http_header.removed is defined
+    - http_header.removed.ip == '*'
+    - http_header.removed.port == '80'
+    - http_header.removed.protocol == 'http'
+    - http_header.removed.host_header == 'test.com'
+    - get_http_header.binding is defined
+    - get_http_header.binding.ip == '*'
+    - get_http_header.binding.port == '80'
+    - get_http_header.binding.protocol == 'http'
+    - get_http_header.binding.host_header == 'test.com'
+
+
+#remove
+#changed true, bindings gone
+- name: remove http binding no header
+  win_iis_webbinding:
+    name: "{{ test_iis_site_name }}"
+    state: absent
+    protocol: http
+    ip: '*'
+    port: 80
+  register: http_no_header
+
+- name: get binding info no header
+  test_win__webbindings:
+    name: "{{ test_iis_site_name }}"
+    protocol: http
+    ip: '*'
+    port: 80
+  register: get_http_no_header
+
+- name: remove http binding with header
+  win_iis_webbinding:
+    name: "{{ test_iis_site_name }}"
+    state: absent
+    host_header: test.com
+    protocol: http
+    ip: '*'
+    port: 80
+  register: http_header
+
+- name: get binding info header
+  test_win__webbindings:
+    name: "{{ test_iis_site_name }}"
+    host_header: test.com
+    protocol: http
+    ip: '*'
+    port: 80
+  register: get_http_header
+
+- name: remove assert changed and gone
+  assert:
+    that:
+    - http_no_header | changed
+    - http_no_header.removed is defined
+    - http_no_header.removed.ip == '*'
+    - http_no_header.removed.port == '80'
+    - http_no_header.removed.protocol == 'http'
+    - get_http_no_header.binding is not defined
+    - http_header | changed
+    - http_header.removed is defined
+    - http_header.removed.ip == '*'
+    - http_header.removed.port == '80'
+    - http_header.removed.protocol == 'http'
+    - http_header.removed.host_header == 'test.com'
+    - get_http_header.binding is not defined
+
+#remove idem
+#change false, bindings gone
+- name: idem remove http binding no header
+  win_iis_webbinding:
+    name: "{{ test_iis_site_name }}"
+    state: absent
+    protocol: http
+    ip: '*'
+    port: 80
+  register: http_no_header
+
+- name: get binding info no header
+  test_win__webbindings:
+    name: "{{ test_iis_site_name }}"
+    protocol: http
+    ip: '*'
+    port: 80
+  register: get_http_no_header
+
+- name: idem remove http binding with header
+  win_iis_webbinding:
+    name: "{{ test_iis_site_name }}"
+    state: absent
+    host_header: test.com
+    protocol: http
+    ip: '*'
+    port: 80
+  register: http_header
+
+- name: get binding info header
+  test_win__webbindings:
+    name: "{{ test_iis_site_name }}"
+    host_header: test.com
+    protocol: http
+    ip: '*'
+    port: 80
+  register: get_http_header
+
+- name: idem remove assert changed and gone
+  assert:
+    that:
+    - not http_no_header | changed
+    - http_no_header.removed is not defined
+    - get_http_no_header.binding is not defined
+    - not http_header | changed
+    - http_header.removed is not defined
+    - get_http_header.binding is not defined
+
+#bulk remove cm
+#add multiple bindings - verify they're present
+- name: bulk add http binding with header
+  win_iis_webbinding:
+    name: "{{ test_iis_site_name }}"
+    state: present
+    host_header: "{{ item }}"
+    protocol: http
+    ip: '*'
+    port: 80
+  register: http_header
+  with_items:
+   - test1.com
+   - test2.com
+   - test3.com
+
+- debug:
+    var: http_header
+
+# - name: assert that multiple bindings are present
+#   assert:
+#     that:
+#     - http_header.added
+
+#cm remove with host_header: '*' - verify changed true and that bulk remove tries to get them all
+#remove with host_header: '*'
+
+- name: bulk remove http binding with header
+  win_iis_webbinding:
+    name: "{{ test_iis_site_name }}"
+    state: present
+    host_header: '*'
+    protocol: http
+    ip: '*'
+    port: 80
+  register: http_header
+
+- debug:
+    var: http_header
