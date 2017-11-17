@@ -378,7 +378,7 @@ def get_interfaces_dict(module):
             keys.  Each value is a list of interfaces of given interface (key)
             type.
     """
-    command = 'show interface status'
+    command = 'show interface'
     try:
         body = execute_show_command(command, module)[0]
     except IndexError:
