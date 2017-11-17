@@ -34,22 +34,23 @@ DOCUMENTATION = '''
             type: list
             elements: string
             required: True
-        _etcd_url:
+        url:
             description:
                 - Environment variable with the url for the etcd server
             default: 'http://127.0.0.1:4001'
             env:
               - name: ANSIBLE_ETCD_URL
-            yaml:
-              - key: etcd.url
-        _etcd_version:
+        version:
             description:
                 - Environment variable with the etcd protocol version
             default: 'v1'
             env:
               - name: ANSIBLE_ETCD_VERSION
-            yaml:
-              - key: etcd.version
+        validate_certs:
+            description:
+                - toggle checking that the ssl ceritificates are valid, you normally only want to turn this off with self-signed certs.
+            default: True
+            type: boolean
 '''
 
 EXAMPLES = '''
@@ -68,12 +69,7 @@ RETURN = '''
         elements: strings
 '''
 
-import os
-
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 
 from ansible.plugins.lookup import LookupBase
 from ansible.module_utils.urls import open_url
@@ -102,18 +98,10 @@ from ansible.module_utils.urls import open_url
 #
 #
 #
-ANSIBLE_ETCD_URL = 'http://127.0.0.1:4001'
-if os.getenv('ANSIBLE_ETCD_URL') is not None:
-    ANSIBLE_ETCD_URL = os.environ['ANSIBLE_ETCD_URL']
-
-ANSIBLE_ETCD_VERSION = 'v1'
-if os.getenv('ANSIBLE_ETCD_VERSION') is not None:
-    ANSIBLE_ETCD_VERSION = os.environ['ANSIBLE_ETCD_VERSION']
 
 
 class Etcd:
-    def __init__(self, url=ANSIBLE_ETCD_URL, version=ANSIBLE_ETCD_VERSION,
-                 validate_certs=True):
+    def __init__(self, url, version, validate_certs):
         self.url = url
         self.version = version
         self.baseurl = '%s/%s/keys' % (self.url, self.version)
@@ -143,7 +131,7 @@ class Etcd:
         try:
             r = open_url(url, validate_certs=self.validate_certs)
             data = r.read()
-        except:
+        except Exception:
             return None
 
         try:
@@ -161,7 +149,7 @@ class Etcd:
             if 'errorCode' in item:
                 # Here return an error when an unknown entry responds
                 value = "ENOENT"
-        except:
+        except Exception:
             raise
 
         return value
@@ -171,9 +159,11 @@ class LookupModule(LookupBase):
 
     def run(self, terms, variables, **kwargs):
 
-        validate_certs = kwargs.get('validate_certs', True)
-        url = kwargs.get('url', '')
-        version = kwargs.get('version', '')
+        self.set_options(var_options=variables, direct=kwargs)
+
+        validate_certs = self._options['validate_certs']
+        url = self._options['url']
+        version = self._options['version']
 
         etcd = Etcd(url=url, version=version, validate_certs=validate_certs)
 
