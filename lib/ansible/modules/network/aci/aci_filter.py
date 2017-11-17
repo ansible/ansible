@@ -17,7 +17,7 @@ short_description: Manages top level filter objects on Cisco ACI fabrics (vz:Fil
 description:
 - Manages top level filter objects on Cisco ACI fabrics.
 - More information from the internal APIC class
-  I(vz:Filter) at U(https://developer.cisco.com/media/mim-ref/MO-vzFilter.html).
+  I(vz:Filter) at U(https://pubhub-prod.s3.amazonaws.com/media/apic-mim-ref/docs/MO-vzFilter.html).
 - This modules does not manage filter entries, see M(aci_filter_entry) for this functionality.
 author:
 - Swetha Chunduri (@schunduri)
@@ -121,9 +121,24 @@ def main():
     filter_name = module.params['filter']
     description = module.params['description']
     state = module.params['state']
+    tenant = module.params['tenant']
 
     aci = ACIModule(module)
-    aci.construct_url(root_class="tenant", subclass_1="filter")
+    aci.construct_url(
+        root_class=dict(
+            aci_class='fvTenant',
+            aci_rn='tn-{}'.format(tenant),
+            filter_target='(fvTenant.name, "{}")'.format(tenant),
+            module_object=tenant,
+        ),
+        subclass_1=dict(
+            aci_class='vzFilter',
+            aci_rn='flt-{}'.format(filter_name),
+            filter_target='(vzFilter.name, "{}")'.format(filter_name),
+            module_object=filter_name,
+        ),
+    )
+
     aci.get_existing()
 
     if state == 'present':

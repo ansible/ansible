@@ -17,7 +17,7 @@ short_description: Manage action rule profiles on Cisco ACI fabrics (rtctrl:Attr
 description:
 - Manage action rule profiles on Cisco ACI fabrics.
 - More information from the internal APIC class
-  I(rtctrl:AttrP) at U(https://developer.cisco.com/media/mim-ref/MO-rtctrlAttrP.html).
+  I(rtctrl:AttrP) at U(https://pubhub-prod.s3.amazonaws.com/media/apic-mim-ref/docs/MO-rtctrlAttrP.html).
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
@@ -91,9 +91,24 @@ def main():
     action_rule = module.params['action_rule']
     description = module.params['description']
     state = module.params['state']
+    tenant = module.params['tenant']
 
     aci = ACIModule(module)
-    aci.construct_url(root_class='tenant', subclass_1='action_rule')
+    aci.construct_url(
+        root_class=dict(
+            aci_class='fvTenant',
+            aci_rn='tn-{}'.format(tenant),
+            filter_target='(fvTenant.name, "{}")'.format(tenant),
+            module_object=tenant,
+        ),
+        subclass_1=dict(
+            aci_class='rtctrlAttrP',
+            aci_rn='attr-{}'.format(action_rule),
+            filter_target='(rtctrlAttrP.name, "{}")'.format(action_rule),
+            module_object=action_rule,
+        ),
+    )
+
     aci.get_existing()
 
     if state == 'present':

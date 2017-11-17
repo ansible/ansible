@@ -18,7 +18,7 @@ description:
 - Connect to external virtual and physical domains by using
   attachable Access Entity Profiles (AEP) on Cisco ACI fabrics.
 - More information from the internal APIC class
-  I(infra:AttEntityP) at U(https://developer.cisco.com/media/mim-ref/MO-infraAttEntityP.html).
+  I(infra:AttEntityP) at U(https://pubhub-prod.s3.amazonaws.com/media/apic-mim-ref/docs/MO-infraAttEntityP.html).
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
@@ -108,7 +108,14 @@ def main():
     state = module.params['state']
 
     aci = ACIModule(module)
-    aci.construct_url(root_class="aep")
+    aci.construct_url(
+        root_class=dict(
+            aci_class='infraAttEntityP',
+            aci_rn='infra/attentp-{}'.format(aep),
+            filter_target='(infraAttEntityP.name, "{}")'.format(aep),
+            module_object=aep,
+        ),
+    )
     aci.get_existing()
 
     if state == 'present':

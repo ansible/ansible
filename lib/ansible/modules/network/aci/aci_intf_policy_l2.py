@@ -17,7 +17,7 @@ short_description: Manage Layer 2 interface policies on Cisco ACI fabrics (l2:If
 description:
 - Manage Layer 2 interface policies on Cisco ACI fabrics.
 - More information from the internal APIC class
-  I(l2:IfPol) at U(https://developer.cisco.com/media/mim-ref/MO-l2IfPol.html).
+  I(l2:IfPol) at U(https://pubhub-prod.s3.amazonaws.com/media/apic-mim-ref/docs/MO-l2IfPol.html).
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
@@ -111,7 +111,15 @@ def main():
     state = module.params['state']
 
     aci = ACIModule(module)
-    aci.construct_url(root_class='l2_policy')
+    aci.construct_url(
+        root_class=dict(
+            aci_class='l2IfPol',
+            aci_rn='infra/l2IfP-{}'.format(l2_policy),
+            filter_target='(l2IfPol.name, "{}")'.format(l2_policy),
+            module_object=l2_policy,
+        ),
+    )
+
     aci.get_existing()
 
     if state == 'present':

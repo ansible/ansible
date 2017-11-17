@@ -17,7 +17,7 @@ short_description: Manage Bridge Domains (BD) on Cisco ACI Fabrics (fv:BD)
 description:
 - Manages Bridge Domains (BD) on Cisco ACI Fabrics.
 - More information from the internal APIC class
-  I(fv:BD) at U(https://developer.cisco.com/media/mim-ref/MO-fvBD.html).
+  I(fv:BD) at U(https://pubhub-prod.s3.amazonaws.com/media/apic-mim-ref/docs/MO-fvBD.html).
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
@@ -270,6 +270,7 @@ def main():
     limit_ip_learn = module.params['limit_ip_learn']
     multi_dest = module.params['multi_dest']
     state = module.params['state']
+    tenant = module.params['tenant']
     vrf = module.params['vrf']
 
     # Give warning when fvSubnet parameters are passed as those have been moved to the aci_subnet module
@@ -278,7 +279,22 @@ def main():
                             The new modules still supports 'gateway_ip' and 'subnet_mask' along with more features"]
 
     aci = ACIModule(module)
-    aci.construct_url(root_class="tenant", subclass_1="bd", child_classes=['fvRsCtx', 'fvRsIgmpsn', 'fvRsBDToNdP', 'fvRsBdToEpRet'])
+    aci.construct_url(
+        root_class=dict(
+            aci_class='fvTenant',
+            aci_rn='tn-{}'.format(tenant),
+            filter_target='(fvTenant.name, "{}")'.format(tenant),
+            module_object=tenant,
+        ),
+        subclass_1=dict(
+            aci_class='fvBD',
+            aci_rn='BD-{}'.format(bd),
+            filter_target='(fvBD.name, "{}")'.format(bd),
+            module_object=bd,
+        ),
+        child_classes=['fvRsCtx', 'fvRsIgmpsn', 'fvRsBDToNdP', 'fvRsBdToEpRet'],
+    )
+
     aci.get_existing()
 
     if state == 'present':

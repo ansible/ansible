@@ -18,7 +18,7 @@ description:
 - Provides rollback and rollback preview functionality for Cisco ACI fabric.
 - Config Rollbacks are done using snapshots C(aci_snapshot) with the configImportP class.
 - More information from the internal APIC class
-  I(config:ImportP) at U(https://developer.cisco.com/media/mim-ref/MO-configImportP.html).
+  I(config:ImportP) at U(https://pubhub-prod.s3.amazonaws.com/media/apic-mim-ref/docs/MO-configImportP.html).
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
@@ -196,7 +196,15 @@ def main():
 
         filename = 'ce2_{0}-{1}'.format(export_policy, snapshot)
 
-        aci.construct_url(root_class="import_policy")
+        aci.construct_url(
+            root_class=dict(
+                aci_class='configImportP',
+                aci_rn='fabric/configimp-{}'.format(import_policy),
+                filter_target='(configImportP.name, "{}")'.format(import_policy),
+                module_object=import_policy,
+            ),
+        )
+
         aci.get_existing()
 
         # Filter out module parameters with null values

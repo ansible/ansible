@@ -17,7 +17,7 @@ short_description: Manage monitoring policies on Cisco ACI fabrics (mon:EPGPol)
 description:
 - Manage monitoring policies on Cisco ACI fabrics.
 - More information from the internal APIC class
-  I(mon:EPGPol) at U(https://developer.cisco.com/media/mim-ref/MO-monEPGPol.html).
+  I(mon:EPGPol) at U(https://pubhub-prod.s3.amazonaws.com/media/apic-mim-ref/docs/MO-monEPGPol.html).
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
@@ -93,9 +93,24 @@ def main():
     monitoring_policy = module.params['monitoring_policy']
     description = module.params['description']
     state = module.params['state']
+    tenant = module.params['tenant']
 
     aci = ACIModule(module)
-    aci.construct_url(root_class='tenant', subclass_1='monitoring_policy')
+    aci.construct_url(
+        root_class=dict(
+            aci_class='fvTenant',
+            aci_rn='tn-{}'.format(tenant),
+            filter_target='(fvTenant.name, "{}")'.format(tenant),
+            module_object=tenant,
+        ),
+        subclass_1=dict(
+            aci_class='monEPGPol',
+            aci_rn='monepg-{}'.format(monitoring_policy),
+            filter_target='(monEPGPol.name, "{}")'.format(monitoring_policy),
+            module_object=monitoring_policy,
+        ),
+    )
+
     aci.get_existing()
 
     if state == 'present':

@@ -17,7 +17,7 @@ short_description: Manage Fibre Channel interface policies on Cisco ACI fabrics 
 description:
 - Manage ACI Fiber Channel interface policies on Cisco ACI fabrics.
 - More information from the internal APIC class
-  I(fc:IfPol) at U(https://developer.cisco.com/media/mim-ref/MO-fcIfPol.html).
+  I(fc:IfPol) at U(https://pubhub-prod.s3.amazonaws.com/media/apic-mim-ref/docs/MO-fcIfPol.html).
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
@@ -93,7 +93,15 @@ def main():
     state = module.params['state']
 
     aci = ACIModule(module)
-    aci.construct_url(root_class='fc_policy')
+    aci.construct_url(
+        root_class=dict(
+            aci_class='fcIfPol',
+            aci_rn='infra/fcIfPol-{}'.format(fc_policy),
+            filter_target='(fcIfPol.name, "{}")'.format(fc_policy),
+            module_object=fc_policy,
+        ),
+    )
+
     aci.get_existing()
 
     if state == 'present':

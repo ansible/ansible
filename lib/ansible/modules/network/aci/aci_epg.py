@@ -17,7 +17,7 @@ short_description: Manage End Point Groups (EPG) on Cisco ACI fabrics (fv:AEPg)
 description:
 - Manage End Point Groups (EPG) on Cisco ACI fabrics.
 - More information from the internal APIC class
-  I(fv:AEPg) at U(https://developer.cisco.com/media/mim-ref/MO-fvAEPg.html).
+  I(fv:AEPg) at U(https://pubhub-prod.s3.amazonaws.com/media/apic-mim-ref/docs/MO-fvAEPg.html).
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
@@ -193,9 +193,32 @@ def main():
     intra_epg_isolation = module.params['intra_epg_isolation']
     fwd_control = module.params['fwd_control']
     state = module.params['state']
+    tenant = module.params['tenant']
+    ap = module.params['ap']
 
     aci = ACIModule(module)
-    aci.construct_url(root_class="tenant", subclass_1="ap", subclass_2="epg", child_classes=['fvRsBd'])
+    aci.construct_url(
+        root_class=dict(
+            aci_class='fvTenant',
+            aci_rn='tn-{}'.format(tenant),
+            filter_target='(fvTenant.name, "{}")'.format(tenant),
+            module_object=tenant,
+        ),
+        subclass_1=dict(
+            aci_class='fvAp',
+            aci_rn='ap-{}'.format(ap),
+            filter_target='(fvAp.name, "{}")'.format(ap),
+            module_object=ap,
+        ),
+        subclass_2=dict(
+            aci_class='fvAEPg',
+            aci_rn='epg-{}'.format(epg),
+            filter_target='(fvAEPg.name, "{}")'.format(epg),
+            module_object=epg,
+        ),
+        child_classes=['fvRsBd'],
+    )
+
     aci.get_existing()
 
     if state == 'present':

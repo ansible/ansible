@@ -17,7 +17,7 @@ short_description: Manage port security on Cisco ACI fabrics (l2:PortSecurityPol
 description:
 - Manage port security on Cisco ACI fabrics.
 - More information from the internal APIC class
-  I(l2:PortSecurityPol) at U(https://developer.cisco.com/media/mim-ref/MO-l2PortSecurityPol.html).
+  I(l2:PortSecurityPol) at U(https://pubhub-prod.s3.amazonaws.com/media/apic-mim-ref/docs/MO-l2PortSecurityPol.html).
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
@@ -94,7 +94,15 @@ def main():
     state = module.params['state']
 
     aci = ACIModule(module)
-    aci.construct_url(root_class='port_security')
+    aci.construct_url(
+        root_class=dict(
+            aci_class='l2PortSecurityPol',
+            aci_rn='infra/portsecurityP-{}'.format(port_security),
+            filter_target='(l2PortSecurityPol.name, "{}")'.format(port_security),
+            module_object=port_security,
+        ),
+    )
+
     aci.get_existing()
 
     if state == 'present':

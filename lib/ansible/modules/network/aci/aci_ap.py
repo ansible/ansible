@@ -17,7 +17,7 @@ short_description: Manage top level Application Profile (AP) objects on Cisco AC
 description:
 - Manage top level Application Profile (AP) objects on Cisco ACI fabrics
 - More information from the internal APIC class
-  I(fv:Ap) at U(https://developer.cisco.com/media/mim-ref/MO-fvAp.html).
+  I(fv:Ap) at U(https://pubhub-prod.s3.amazonaws.com/media/apic-mim-ref/docs/MO-fvAp.html).
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
@@ -120,9 +120,24 @@ def main():
     ap = module.params['ap']
     description = module.params['description']
     state = module.params['state']
+    tenant = module.params['tenant']
 
     aci = ACIModule(module)
-    aci.construct_url(root_class='tenant', subclass_1='ap')
+    aci.construct_url(
+        root_class=dict(
+            aci_class='fvTenant',
+            aci_rn='tn-{}'.format(tenant),
+            filter_target='(fvTenant.name, "{}")'.format(tenant),
+            module_object=tenant,
+        ),
+        subclass_1=dict(
+            aci_class='fvAp',
+            aci_rn='ap-{}'.format(ap),
+            filter_target='(fvAp.name, "{}")'.format(ap),
+            module_object=ap,
+        ),
+    )
+
     aci.get_existing()
 
     if state == 'present':

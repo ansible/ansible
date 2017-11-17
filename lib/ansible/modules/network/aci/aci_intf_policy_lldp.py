@@ -17,7 +17,7 @@ short_description: Manage LLDP interface policies on Cisco ACI fabrics (lldp:IfP
 description:
 - Manage LLDP interface policies on Cisco ACI fabrics.
 - More information from the internal APIC class
-  I(lldp:IfPol) at U(https://developer.cisco.com/media/mim-ref/MO-lldpIfPol.html).
+  I(lldp:IfPol) at U(https://pubhub-prod.s3.amazonaws.com/media/apic-mim-ref/docs/MO-lldpIfPol.html).
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
@@ -102,7 +102,15 @@ def main():
     state = module.params['state']
 
     aci = ACIModule(module)
-    aci.construct_url(root_class='lldp_policy')
+    aci.construct_url(
+        root_class=dict(
+            aci_class='lldpIfPol',
+            aci_rn='infra/lldpIfP-{}'.format(lldp_policy),
+            filter_target='(lldpIfPol.name, "{}")'.format(lldp_policy),
+            module_object=lldp_policy,
+        ),
+    )
+
     aci.get_existing()
 
     if state == 'present':
